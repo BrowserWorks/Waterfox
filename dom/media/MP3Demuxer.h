@@ -10,6 +10,7 @@
 #include "MediaDataDemuxer.h"
 #include "MediaResource.h"
 #include "mp4_demuxer/ByteReader.h"
+#include <vector>
 
 namespace mozilla {
 namespace mp3 {
@@ -28,11 +29,6 @@ public:
   bool IsSeekable() const override;
   void NotifyDataArrived() override;
   void NotifyDataRemoved() override;
-  // Do not shift the calculated buffered range by the start time of the first
-  // decoded frame. The mac MP3 decoder will buffer some samples and the first
-  // frame returned has typically a start time that is non-zero, causing our
-  // buffered range to have a negative start time.
-  bool ShouldComputeStartTime() const override { return false; }
 
 private:
   // Synchronous initialization.
@@ -232,8 +228,11 @@ public:
     // Returns true iff Xing/Info TOC (table of contents) is present.
     bool IsTOCPresent() const;
 
-    // Returns whether the header is valid (containing reasonable field values).
+    // Returns whether the header is valid (type XING or VBRI).
     bool IsValid() const;
+
+    // Returns whether the header is valid and contains reasonable non-zero field values.
+    bool IsComplete() const;
 
     // Returns the byte offset for the given duration percentage as a factor
     // (0: begin, 1.0: end).
@@ -301,10 +300,8 @@ public:
   // Returns the currently parsed frame. Reset via Reset or EndFrameSession.
   const Frame& CurrentFrame() const;
 
-#ifdef ENABLE_TESTS
   // Returns the previously parsed frame. Reset via Reset.
   const Frame& PrevFrame() const;
-#endif
 
   // Returns the first parsed frame. Reset via Reset.
   const Frame& FirstFrame() const;
@@ -315,8 +312,12 @@ public:
   // Returns the parsed VBR header info. Note: check for validity by type.
   const VBRHeader& VBRInfo() const;
 
-  // Resets the parser. Don't use between frames as first frame data is reset.
+  // Resets the parser.
   void Reset();
+
+  // Resets all frame data, but not the ID3Header.
+  // Don't use between frames as first frame data is reset.
+  void ResetFrameData();
 
   // Clear the last parsed frame to allow for next frame parsing, i.e.:
   // - sets PrevFrame to CurrentFrame
@@ -347,9 +348,7 @@ private:
   // previously parsed frame for debugging and the currently parsed frame.
   Frame mFirstFrame;
   Frame mFrame;
-#ifdef ENABLE_TESTS
   Frame mPrevFrame;
-#endif
 };
 
 // The MP3 demuxer used to extract MPEG frames and side information out of
@@ -376,10 +375,8 @@ public:
   // Returns the estimated current seek position time.
   media::TimeUnit SeekPosition() const;
 
-#ifdef ENABLE_TESTS
   const FrameParser::Frame& LastFrame() const;
   RefPtr<MediaRawData> DemuxSample();
-#endif
 
   const ID3Parser::ID3Header& ID3Header() const;
   const FrameParser::VBRHeader& VBRInfo() const;
@@ -404,7 +401,12 @@ private:
   // Seeks by scanning the stream up to the given time for more accurate results.
   media::TimeUnit ScanUntil(const media::TimeUnit& aTime);
 
-  // Finds the next valid frame and returns its byte range.
+  // Finds the first valid frame and returns its byte range if found
+  // or a null-byte range otherwise.
+  MediaByteRange FindFirstFrame();
+
+  // Finds the next valid frame and returns its byte range if found
+  // or a null-byte range otherwise.
   MediaByteRange FindNextFrame();
 
   // Skips the next frame given the provided byte range.

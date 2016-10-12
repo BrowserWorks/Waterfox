@@ -568,7 +568,7 @@ function run_pac3_test() {
 
 function run_pac4_test() {
   var appId = 10;
-  var isInBrowser = true;
+  var isInIsolatedMozBrowser = true;
   var appOrigin = "apps://browser.gaiamobile.com";
 
   // We have to setup a profile, otherwise indexed db used by webapps
@@ -589,7 +589,7 @@ function run_pac4_test() {
   var pac = 'data:text/plain,' +
             'function FindProxyForURL(url, host) {' +
             ' if (myAppId() == ' + appId +
-            ' && isInBrowser() == ' + isInBrowser +
+            ' && isInIsolatedMozBrowser() == ' + isInIsolatedMozBrowser +
             ' && myAppOrigin() == "' + appOrigin + '")' +
             '   return "PROXY foopy:8080; DIRECT";' +
             '}';
@@ -598,12 +598,42 @@ function run_pac4_test() {
     loadUsingSystemPrincipal: true
   });
   channel.notificationCallbacks =
-    AppsUtils.createLoadContext(appId, isInBrowser);
+    AppsUtils.createLoadContext(appId, isInIsolatedMozBrowser);
 
   // Configure PAC
   prefs.setIntPref("network.proxy.type", 2);
   prefs.setCharPref("network.proxy.autoconfig_url", pac);
 
+  var req = pps.asyncResolve(channel, 0, new TestResolveCallback("http", run_pac5_test));
+}
+
+function run_pac5_test() {
+  // Bug 1251332
+  let wRange = [
+    ["SUN", "MON", "SAT", "MON"], // for Sun
+    ["SUN", "TUE", "SAT", "TUE"], // for Mon
+    ["MON", "WED", "SAT", "WED"], // for Tue
+    ["TUE", "THU", "SAT", "THU"], // for Wed
+    ["WED", "FRI", "WED", "SUN"], // for Thu
+    ["THU", "SAT", "THU", "SUN"], // for Fri
+    ["FRI", "SAT", "FRI", "SUN"], // for Sat
+  ];
+  let today = (new Date()).getDay();
+  var pac = 'data:text/plain,' +
+            'function FindProxyForURL(url, host) {' +
+            '  if (weekdayRange("' + wRange[today][0] + '", "' + wRange[today][1] + '") &&' +
+            '      weekdayRange("' + wRange[today][2] + '", "' + wRange[today][3] + '")) {' +
+            '    return "PROXY foopy:8080; DIRECT";' +
+            '  }' +
+            '}';
+  var channel = NetUtil.newChannel({
+    uri: "http://www.mozilla.org/",
+    loadUsingSystemPrincipal: true
+  });
+  // Configure PAC
+
+  prefs.setIntPref("network.proxy.type", 2);
+  prefs.setCharPref("network.proxy.autoconfig_url", pac);
   var req = pps.asyncResolve(channel, 0, new TestResolveCallback("http", finish_pac_test));
 }
 
@@ -745,7 +775,7 @@ function host_filters_1()
   uriStrUseProxyList = [ "http://www.mozilla.com/",
                              "http://mail.google.com/",
                              "http://somehost.domain.co.uk/",
-                             "http://somelocalhost/" ];  
+                             "http://somelocalhost/" ];
   check_host_filters(uriStrUseProxyList, false, host_filters_2);
 }
 
@@ -769,7 +799,7 @@ function host_filters_4()
 {
   // Cleanup
   prefs.setCharPref("network.proxy.no_proxies_on", "");
-  do_check_eq(prefs.getCharPref("network.proxy.no_proxies_on"), "");  
+  do_check_eq(prefs.getCharPref("network.proxy.no_proxies_on"), "");
 
   run_myipaddress_test();
 }
@@ -811,7 +841,7 @@ function myipaddress_callback(pi)
   do_check_neq(pi.host, null);
   do_check_neq(pi.host, "127.0.0.1");
   do_check_neq(pi.host, "::1");
-  
+
   run_myipaddress_test_2();
 }
 
@@ -849,7 +879,7 @@ function myipaddress2_callback(pi)
   do_check_neq(pi.host, null);
   do_check_neq(pi.host, "127.0.0.1");
   do_check_neq(pi.host, "::1");
-  
+
   run_failed_script_test();
 }
 
@@ -932,7 +962,7 @@ function run_isresolvable_test()
 
   var pac = 'data:text/plain,' +
             'function FindProxyForURL(url, host) {' +
-            ' if (isResolvable("nonexistant.lan"))' +
+            ' if (isResolvable("nonexistant.lan.onion"))' +
             '   return "DIRECT";' +
             ' return "PROXY 127.0.0.1:1234";' +
             '}';

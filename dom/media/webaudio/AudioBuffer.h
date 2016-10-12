@@ -10,6 +10,8 @@
 #include "nsWrapperCache.h"
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/StaticPtr.h"
+#include "mozilla/StaticMutex.h"
 #include "nsAutoPtr.h"
 #include "nsTArray.h"
 #include "AudioContext.h"
@@ -27,8 +29,8 @@ class AudioContext;
 
 /**
  * An AudioBuffer keeps its data either in the mJSChannels objects, which
- * are Float32Arrays, or in mSharedChannels if the mJSChannels objects have
- * been neutered.
+ * are Float32Arrays, or in mSharedChannels if the mJSChannels objects' buffers
+ * are detached.
  */
 class AudioBuffer final : public nsWrapperCache
 {
@@ -39,15 +41,15 @@ public:
   Create(AudioContext* aContext, uint32_t aNumberOfChannels,
          uint32_t aLength, float aSampleRate,
          already_AddRefed<ThreadSharedFloatArrayBufferList> aInitialContents,
-         JSContext* aJSContext, ErrorResult& aRv);
+         ErrorResult& aRv);
 
   static already_AddRefed<AudioBuffer>
   Create(AudioContext* aContext, uint32_t aNumberOfChannels,
          uint32_t aLength, float aSampleRate,
-         JSContext* aJSContext, ErrorResult& aRv)
+         ErrorResult& aRv)
   {
     return Create(aContext, aNumberOfChannels, aLength, aSampleRate,
-                  nullptr, aJSContext, aRv);
+                  nullptr, aRv);
   }
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
@@ -55,9 +57,9 @@ public:
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(AudioBuffer)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(AudioBuffer)
 
-  nsPIDOMWindow* GetParentObject() const
+  nsPIDOMWindowInner* GetParentObject() const
   {
-    nsCOMPtr<nsPIDOMWindow> parentObject = do_QueryReferent(mOwnerWindow);
+    nsCOMPtr<nsPIDOMWindowInner> parentObject = do_QueryReferent(mOwnerWindow);
     return parentObject;
   }
 
@@ -68,7 +70,7 @@ public:
     return mSampleRate;
   }
 
-  int32_t Length() const
+  uint32_t Length() const
   {
     return mLength;
   }
@@ -119,10 +121,10 @@ protected:
 
   nsWeakPtr mOwnerWindow;
   // Float32Arrays
-  nsAutoTArray<JS::Heap<JSObject*>, 2> mJSChannels;
+  AutoTArray<JS::Heap<JSObject*>, 2> mJSChannels;
 
   // mSharedChannels aggregates the data from mJSChannels. This is non-null
-  // if and only if the mJSChannels are neutered.
+  // if and only if the mJSChannels' buffers are detached.
   RefPtr<ThreadSharedFloatArrayBufferList> mSharedChannels;
 
   uint32_t mLength;

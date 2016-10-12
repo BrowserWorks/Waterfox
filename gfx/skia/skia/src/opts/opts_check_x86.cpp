@@ -12,7 +12,6 @@
 #include "SkBlitMask.h"
 #include "SkBlitRow.h"
 #include "SkBlitRow_opts_SSE2.h"
-#include "SkBlitRow_opts_SSE4.h"
 #include "SkOncePtr.h"
 #include "SkRTConf.h"
 
@@ -161,17 +160,6 @@ void SkBitmapProcState::platformProcs() {
         }
     }
 
-    /* Check fSampleProc16 */
-    if (fSampleProc16 == S32_D16_filter_DX) {
-        if (ssse3) {
-            fSampleProc16 = S32_D16_filter_DX_SSSE3;
-        } else {
-            fSampleProc16 = S32_D16_filter_DX_SSE2;
-        }
-    } else if (ssse3 && fSampleProc16 == S32_D16_filter_DXDY) {
-        fSampleProc16 = S32_D16_filter_DXDY_SSSE3;
-    }
-
     /* Check fMatrixProc */
     if (fMatrixProc == ClampX_ClampY_filter_scale) {
         fMatrixProc = ClampX_ClampY_filter_scale_SSE2;
@@ -226,21 +214,11 @@ SkBlitRow::ColorProc16 SkBlitRow::PlatformColorFactory565(unsigned flags) {
 static const SkBlitRow::Proc32 platform_32_procs_SSE2[] = {
     nullptr,                               // S32_Opaque,
     S32_Blend_BlitRow32_SSE2,           // S32_Blend,
-    S32A_Opaque_BlitRow32_SSE2,         // S32A_Opaque
-    S32A_Blend_BlitRow32_SSE2,          // S32A_Blend,
-};
-
-static const SkBlitRow::Proc32 platform_32_procs_SSE4[] = {
-    nullptr,                               // S32_Opaque,
-    S32_Blend_BlitRow32_SSE2,           // S32_Blend,
-    S32A_Opaque_BlitRow32_SSE4,         // S32A_Opaque
+    nullptr,                            // Ported to SkOpts
     S32A_Blend_BlitRow32_SSE2,          // S32A_Blend,
 };
 
 SkBlitRow::Proc32 SkBlitRow::PlatformProcs32(unsigned flags) {
-    if (supports_simd(SK_CPU_SSE_LEVEL_SSE41)) {
-        return platform_32_procs_SSE4[flags];
-    } else
     if (supports_simd(SK_CPU_SSE_LEVEL_SSE2)) {
         return platform_32_procs_SSE2[flags];
     } else {

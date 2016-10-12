@@ -47,11 +47,11 @@ function testSteps()
     { dbName: "dbL", dbVersion: 1 },
 
     // This one lives in storage/default/1007+f+app+++system.gaiamobile.org
-    { appId: 1007, inMozBrowser: false, url: "app://system.gaiamobile.org",
+    { appId: 1007, inIsolatedMozBrowser: false, url: "app://system.gaiamobile.org",
       dbName: "dbM", dbVersion: 1 },
 
     // This one lives in storage/default/1007+t+https+++developer.cdn.mozilla.net
-    { appId: 1007, inMozBrowser: true, url: "https://developer.cdn.mozilla.net",
+    { appId: 1007, inIsolatedMozBrowser: true, url: "https://developer.cdn.mozilla.net",
       dbName: "dbN", dbVersion: 1 },
 
     // This one lives in storage/default/http+++127.0.0.1
@@ -75,6 +75,30 @@ function testSteps()
     // This one lives in storage/default/file++++++index.html
     { url: "file://///index.html", dbName: "dbS", dbVersion: 1 },
 
+    // This one lives in storage/permanent/resource+++fx-share-addon-at-mozilla-dot-org-fx-share-addon-data
+    { url: "resource://fx-share-addon-at-mozilla-dot-org-fx-share-addon-data",
+      dbName: "dbU", dbOptions: { version: 1, storage: "persistent" } },
+
+    // This one lives in storage/temporary/http+++localhost+81
+    // The .metadata file was intentionally removed for this origin directory
+    // to test restoring during upgrade.
+    { url: "http://localhost:81", dbName: "dbV",
+      dbOptions: { version: 1, storage: "temporary" } },
+
+    // This one lives in storage/temporary/http+++localhost+82
+    // The .metadata file was intentionally truncated for this origin directory
+    // to test restoring during upgrade.
+    { url: "http://localhost:82", dbName: "dbW",
+      dbOptions: { version: 1, storage: "temporary" } },
+
+    // This one lives in storage/temporary/1007+f+app+++system.gaiamobile.org
+    { appId: 1007, inIsolatedMozBrowser: false, url: "app://system.gaiamobile.org",
+      dbName: "dbX", dbOptions: { version: 1, storage: "temporary" } },
+
+    // This one lives in storage/temporary/1007+t+https+++developer.cdn.mozilla.net
+    { appId: 1007, inIsolatedMozBrowser: true, url: "https://developer.cdn.mozilla.net",
+      dbName: "dbY", dbOptions: { version: 1, storage: "temporary" } },
+
     // This one lives in storage/temporary/http+++localhost
     { url: "http://localhost", dbName: "dbZ",
       dbOptions: { version: 1, storage: "temporary" } }
@@ -93,7 +117,7 @@ function testSteps()
       let principal =
         ssm.createCodebasePrincipal(uri,
                                     {appId: params.appId || ssm.NO_APPID,
-                                     inBrowser: params.inMozBrowser});
+                                     inIsolatedMozBrowser: params.inIsolatedMozBrowser});
       if ("dbVersion" in params) {
         request = indexedDB.openForPrincipal(principal, params.dbName,
                                              params.dbVersion);

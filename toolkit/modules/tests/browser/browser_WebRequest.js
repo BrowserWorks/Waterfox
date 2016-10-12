@@ -51,6 +51,7 @@ function onBeforeRequest(details)
   if (details.url.indexOf("_bad.") != -1) {
     return {cancel: true};
   }
+  return undefined;
 }
 
 var sendHeaders = [];
@@ -70,6 +71,7 @@ function onBeforeSendHeaders(details)
   if (details.url.indexOf("_redirect.") != -1) {
     return {redirectUrl: details.url.replace("_redirect.", "_good.")};
   }
+  return undefined;
 }
 
 var beforeRedirect = [];
@@ -117,6 +119,7 @@ const expected_requested = [BASE + "/file_WebRequest_page1.html",
                             BASE + "/file_WebRequest_page2.html",
                             BASE + "/nonexistent_script_url.js",
                             BASE +  "/WebRequest_redirection.sjs",
+                            BASE + "/dummy_page.html",
                             BASE + "/xhr_resource"];
 
 const expected_sendHeaders = [BASE + "/file_WebRequest_page1.html",

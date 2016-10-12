@@ -10,6 +10,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import org.mozilla.gecko.GeckoProfile;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.db.BrowserContract.ExpirePriority;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.favicons.decoders.LoadFaviconResult;
@@ -42,7 +43,7 @@ public interface BrowserDB {
     public abstract Searches getSearches();
     public abstract TabsAccessor getTabsAccessor();
     public abstract URLMetadata getURLMetadata();
-    public abstract ReadingListAccessor getReadingListAccessor();
+    @RobocopTarget UrlAnnotations getUrlAnnotations();
 
     /**
      * Add default bookmarks to the database.
@@ -73,15 +74,10 @@ public interface BrowserDB {
     /**
      * @return a cursor over top sites (high-ranking bookmarks and history).
      * Can return <code>null</code>.
+     * Returns no more than <code>limit</code> results.
+     * Suggested sites will be limited to being within the first <code>suggestedRangeLimit</code> results.
      */
-    public abstract Cursor getTopSites(ContentResolver cr, int limit);
-
-    /**
-     * @return a cursor over top sites (high-ranking bookmarks and history).
-     * Can return <code>null</code>.
-     * Returns no more than <code>maxLimit</code> results.
-     */
-    public abstract Cursor getTopSites(ContentResolver cr, int minLimit, int maxLimit);
+    public abstract Cursor getTopSites(ContentResolver cr, int suggestedRangeLimit, int limit);
 
     public abstract void updateVisitedHistory(ContentResolver cr, String uri);
 
@@ -96,6 +92,8 @@ public interface BrowserDB {
      * Can return <code>null</code>.
      */
     public abstract Cursor getRecentHistory(ContentResolver cr, int limit);
+
+    public abstract Cursor getHistoryForURL(ContentResolver cr, String uri);
 
     public abstract Cursor getRecentHistoryBetweenTime(ContentResolver cr, int historyLimit, long start, long end);
 
@@ -113,14 +111,18 @@ public interface BrowserDB {
     public abstract boolean isBookmark(ContentResolver cr, String uri);
     public abstract boolean addBookmark(ContentResolver cr, String title, String uri);
     public abstract Cursor getBookmarkForUrl(ContentResolver cr, String url);
+    public abstract Cursor getBookmarksForPartialUrl(ContentResolver cr, String partialUrl);
     public abstract void removeBookmarksWithURL(ContentResolver cr, String uri);
     public abstract void registerBookmarkObserver(ContentResolver cr, ContentObserver observer);
     public abstract void updateBookmark(ContentResolver cr, int id, String uri, String title, String keyword);
+    public abstract boolean hasBookmarkWithGuid(ContentResolver cr, String guid);
 
     /**
      * Can return <code>null</code>.
      */
     public abstract Cursor getBookmarksInFolder(ContentResolver cr, long folderId);
+
+    public abstract int getBookmarkCountForFolder(ContentResolver cr, long folderId);
 
     /**
      * Get the favicon from the database, if any, associated with the given favicon URL. (That is,
@@ -168,12 +170,12 @@ public interface BrowserDB {
             String faviconUrl, String faviconGuid, byte[] data);
 
 
-    public abstract Cursor getPinnedSites(ContentResolver cr, int limit);
     public abstract void pinSite(ContentResolver cr, String url, String title, int position);
     public abstract void unpinSite(ContentResolver cr, int position);
 
     public abstract boolean hideSuggestedSite(String url);
     public abstract void setSuggestedSites(SuggestedSites suggestedSites);
+    public abstract SuggestedSites getSuggestedSites();
     public abstract boolean hasSuggestedImageUrl(String url);
     public abstract String getSuggestedImageUrlForUrl(String url);
     public abstract int getSuggestedBackgroundColorForUrl(String url);

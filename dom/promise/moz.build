@@ -14,7 +14,8 @@ EXPORTS.mozilla.dom += [
 UNIFIED_SOURCES += [
     'Promise.cpp',
     'PromiseCallback.cpp',
-    'PromiseDebugging.cpp'
+    'PromiseDebugging.cpp',
+    'PromiseNativeHandler.cpp',
 ]
 
 LOCAL_INCLUDES += [
@@ -32,3 +33,6 @@ MOCHITEST_MANIFESTS += ['tests/mochitest.ini']
 MOCHITEST_CHROME_MANIFESTS += ['tests/chrome.ini']
 
 XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

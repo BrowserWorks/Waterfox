@@ -23,12 +23,12 @@ NS_IMPL_RELEASE_INHERITED(TextTrackList, DOMEventTargetHelper)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(TextTrackList)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
-TextTrackList::TextTrackList(nsPIDOMWindow* aOwnerWindow)
+TextTrackList::TextTrackList(nsPIDOMWindowInner* aOwnerWindow)
   : DOMEventTargetHelper(aOwnerWindow)
 {
 }
 
-TextTrackList::TextTrackList(nsPIDOMWindow* aOwnerWindow,
+TextTrackList::TextTrackList(nsPIDOMWindowInner* aOwnerWindow,
                              TextTrackManager* aTextTrackManager)
  : DOMEventTargetHelper(aOwnerWindow)
  , mTextTrackManager(aTextTrackManager)
@@ -136,7 +136,7 @@ TextTrackList::DidSeek()
   }
 }
 
-class TrackEventRunner final: public nsRunnable
+class TrackEventRunner final: public Runnable
 {
 public:
   TrackEventRunner(TextTrackList* aList, nsIDOMEvent* aEvent)
@@ -209,6 +209,14 @@ void
 TextTrackList::SetTextTrackManager(TextTrackManager* aTextTrackManager)
 {
   mTextTrackManager = aTextTrackManager;
+}
+
+void
+TextTrackList::SetCuesInactive()
+{
+  for (uint32_t i = 0; i < Length(); i++) {
+    mTextTracks[i]->SetCuesInactive();
+  }
 }
 
 } // namespace dom

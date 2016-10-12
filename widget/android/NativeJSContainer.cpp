@@ -39,18 +39,8 @@ bool CheckThread()
     return true;
 }
 
-bool
-CheckJSCall(bool result)
-{
-    if (!result) {
-        jni::ThrowException("java/lang/UnsupportedOperationException",
-                            "JSAPI call failed");
-    }
-    return result;
-}
-
-template<class C> bool
-CheckJNIArgument(const jni::Ref<C>& arg)
+template<class C, typename T> bool
+CheckJNIArgument(const jni::Ref<C, T>& arg)
 {
     if (!arg) {
         jni::ThrowException("java/lang/IllegalArgumentException",
@@ -127,6 +117,16 @@ class NativeJSContainerImpl final
                                 "Null JSObject");
         }
         return !!mJSObject;
+    }
+
+    bool CheckJSCall(bool result) const
+    {
+        if (!result) {
+            JS_ClearPendingException(mJSContext);
+            jni::ThrowException("java/lang/UnsupportedOperationException",
+                                "JSAPI call failed");
+        }
+        return result;
     }
 
     // Check that a JS Value contains a particular property type as indicaed by
@@ -246,8 +246,8 @@ class NativeJSContainerImpl final
         if (!CheckJSCall(autoStr.init(mJSContext, str))) {
             return nullptr;
         }
-        // Param<String> can automatically convert a nsString to jstring.
-        return jni::Param<jni::String>(autoStr, mEnv);
+        // StringParam can automatically convert a nsString to jstring.
+        return jni::StringParam(autoStr, mEnv);
     }
 
     jni::String::LocalRef
@@ -374,8 +374,7 @@ class NativeJSContainerImpl final
     ObjectNewArray(JS::HandleObject array, size_t length)
     {
         auto jarray = Prop::NativeArray::Adopt(mEnv, mEnv->NewObjectArray(
-                length,
-                jni::Accessor::EnsureClassRef<typename Prop::ClassType>(mEnv),
+                length, typename Prop::ClassType::Context().ClassRef(),
                 nullptr));
         if (!jarray) {
             return nullptr;
@@ -436,6 +435,7 @@ class NativeJSContainerImpl final
         if (!JS_IsArrayObject(mJSContext, obj, &isArray) ||
             !isArray ||
             !JS_GetArrayLength(mJSContext, obj, &length)) {
+            JS_ClearPendingException(mJSContext);
             return false;
         }
         if (!length) {
@@ -445,8 +445,11 @@ class NativeJSContainerImpl final
         // We only check to see the first element is the target type. If the
         // array has mixed types, we'll throw an error during actual conversion.
         JS::RootedValue element(mJSContext);
-        return JS_GetElement(mJSContext, obj, 0, &element) &&
-               (this->*Prop::InValue)(element);
+        if (!JS_GetElement(mJSContext, obj, 0, &element)) {
+            JS_ClearPendingException(mJSContext);
+            return false;
+        }
+        return (this->*Prop::InValue)(element);
     }
 
     template<class Prop> typename Prop::NativeArray
@@ -815,7 +818,7 @@ public:
                                       JS::NullHandleValue, AppendJSON, &json))) {
             return nullptr;
         }
-        return jni::Param<jni::String>(json, mEnv);
+        return jni::StringParam(json, mEnv);
     }
 };
 

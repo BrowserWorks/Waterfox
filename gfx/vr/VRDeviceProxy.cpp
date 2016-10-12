@@ -79,11 +79,19 @@ VRDeviceProxy::ZeroSensor()
 }
 
 VRHMDSensorState
-VRDeviceProxy::GetSensorState(double timeOffset)
+VRDeviceProxy::GetSensorState()
 {
   VRManagerChild *vm = VRManagerChild::Get();
   Unused << vm->SendKeepSensorTracking(mDeviceInfo.mDeviceID);
   return mSensorState;
+}
+
+VRHMDSensorState
+VRDeviceProxy::GetImmediateSensorState()
+{
+  // XXX TODO - Need to perform IPC call to get the current sensor
+  // state rather than the predictive state used for the frame rendering.
+  return GetSensorState();
 }
 
 void
@@ -132,6 +140,10 @@ public:
   NS_IMETHOD SetRotation(uint32_t aRotation) override { return NS_ERROR_NOT_AVAILABLE; }
   NS_IMETHOD GetContentsScaleFactor(double* aContentsScaleFactor) override {
     *aContentsScaleFactor = 1.0;
+    return NS_OK;
+  }
+  NS_IMETHOD GetDefaultCSSScaleFactor(double* aScaleFactor) override {
+    *aScaleFactor = 1.0;
     return NS_OK;
   }
 

@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests if the global search results are expanded/collapsed on click, and
@@ -13,7 +15,11 @@ var gTab, gPanel, gDebugger;
 var gEditor, gSources, gSearchView, gSearchBox;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -47,11 +53,11 @@ function doSearch() {
       info("Debugger editor text:\n" + gEditor.getText());
 
       ok(isCaretPos(gPanel, 6),
-        "The editor shouldn't have jumped to a matching line yet.");
+        "The editor shouldn't have jumped to a matching line yet. (1)");
       ok(getSelectedSourceURL(gSources).includes("-02.js"),
-        "The current source shouldn't have changed after a global search.");
+        "The current source shouldn't have changed after a global search. (2)");
       is(gSources.visibleItems.length, 2,
-        "Not all the sources are shown after the global search.");
+        "Not all the sources are shown after the global search. (3)");
 
       deferred.resolve();
     });
@@ -73,17 +79,17 @@ function testExpandCollapse() {
   EventUtils.sendMouseEvent({ type: "click" }, secondHeader);
 
   is(item0.instance.expanded, false,
-    "The first source results should be collapsed on click.")
+    "The first source results should be collapsed on click. (2)");
   is(item1.instance.expanded, false,
-    "The second source results should be collapsed on click.")
+    "The second source results should be collapsed on click. (2)");
 
   EventUtils.sendMouseEvent({ type: "click" }, firstHeader);
   EventUtils.sendMouseEvent({ type: "click" }, secondHeader);
 
   is(item0.instance.expanded, true,
-    "The first source results should be expanded on an additional click.");
+    "The first source results should be expanded on an additional click. (3)");
   is(item1.instance.expanded, true,
-    "The second source results should be expanded on an additional click.");
+    "The second source results should be expanded on an additional click. (3)");
 }
 
 function testClickLineToJump() {
@@ -98,13 +104,13 @@ function testClickLineToJump() {
     info("Debugger editor text:\n" + gEditor.getText());
 
     ok(isCaretPos(gPanel, 1, 5),
-      "The editor didn't jump to the correct line (1).");
+      "The editor didn't jump to the correct line (4).");
     is(gEditor.getSelection(), "A",
-      "The editor didn't select the correct text (1).");
+      "The editor didn't select the correct text (4).");
     ok(getSelectedSourceURL(gSources).includes("-01.js"),
-      "The currently shown source is incorrect (1).");
+      "The currently shown source is incorrect (4).");
     is(gSources.visibleItems.length, 2,
-      "Not all the sources are shown after the global search (1).");
+      "Not all the sources are shown after the global search (4).");
 
     deferred.resolve();
   });
@@ -122,18 +128,18 @@ function testClickMatchToJump() {
   let secondMatches = sourceResults[1].querySelectorAll(".dbg-results-line-contents-string[match=true]");
   let lastMatch = Array.slice(secondMatches).pop();
 
-  waitForSourceAndCaret(gPanel, "-02.js", 1, 1).then(() => {
+  waitForSourceAndCaret(gPanel, "-02.js", 13, 3).then(() => {
     info("Current source url:\n" + getSelectedSourceURL(gSources));
     info("Debugger editor text:\n" + gEditor.getText());
 
     ok(isCaretPos(gPanel, 13, 3),
-      "The editor didn't jump to the correct line (2).");
+      "The editor didn't jump to the correct line (5).");
     is(gEditor.getSelection(), "a",
-      "The editor didn't select the correct text (2).");
+      "The editor didn't select the correct text (5).");
     ok(getSelectedSourceURL(gSources).includes("-02.js"),
-      "The currently shown source is incorrect (2).");
+      "The currently shown source is incorrect (5).");
     is(gSources.visibleItems.length, 2,
-      "Not all the sources are shown after the global search (2).");
+      "Not all the sources are shown after the global search (5).");
 
     deferred.resolve();
   });
@@ -143,7 +149,7 @@ function testClickMatchToJump() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

@@ -88,13 +88,15 @@ static bool can_ignore_bilerp_constraint(const GrTextureProducer& producer,
 //////////////////////////////////////////////////////////////////////////////
 
 void SkGpuDevice::drawTextureProducer(GrTextureProducer* producer,
-                                      bool alphaOnly,
                                       const SkRect* srcRect,
                                       const SkRect* dstRect,
                                       SkCanvas::SrcRectConstraint constraint,
                                       const SkMatrix& viewMatrix,
                                       const GrClip& clip,
                                       const SkPaint& paint) {
+    // This is the funnel for all non-tiled bitmap/image draw calls. Log a histogram entry.
+    SK_HISTOGRAM_BOOLEAN("DrawTiled", false);
+
     // Figure out the actual dst and src rect by clipping the src rect to the bounds of the
     // adjuster. If the src rect is clipped then the dst rect must be recomputed. Also determine
     // the matrix that maps the src rect to the dst rect.
@@ -135,12 +137,11 @@ void SkGpuDevice::drawTextureProducer(GrTextureProducer* producer,
         }
     }
 
-    this->drawTextureProducerImpl(producer, alphaOnly, clippedSrcRect, clippedDstRect, constraint,
-                                  viewMatrix, srcToDstMatrix, clip, paint);
+    this->drawTextureProducerImpl(producer, clippedSrcRect, clippedDstRect, constraint, viewMatrix,
+                                  srcToDstMatrix, clip, paint);
 }
 
 void SkGpuDevice::drawTextureProducerImpl(GrTextureProducer* producer,
-                                          bool alphaTexture,
                                           const SkRect& clippedSrcRect,
                                           const SkRect& clippedDstRect,
                                           SkCanvas::SrcRectConstraint constraint,
@@ -156,7 +157,7 @@ void SkGpuDevice::drawTextureProducerImpl(GrTextureProducer* producer,
     // The shader expects proper local coords, so we can't replace local coords with texture coords
     // if the shader will be used. If we have a mask filter we will change the underlying geometry
     // that is rendered.
-    bool canUseTextureCoordsAsLocalCoords = !use_shader(alphaTexture, paint) && !mf;
+    bool canUseTextureCoordsAsLocalCoords = !use_shader(producer->isAlphaOnly(), paint) && !mf;
 
     bool doBicubic;
     GrTextureParams::FilterMode fm =
@@ -170,7 +171,7 @@ void SkGpuDevice::drawTextureProducerImpl(GrTextureProducer* producer,
     } else {
         constraintMode = GrTextureAdjuster::kYes_FilterConstraint;
     }
-    
+
     // If we have to outset for AA then we will generate texture coords outside the src rect. The
     // same happens for any mask filter that extends the bounds rendered in the dst.
     // This is conservative as a mask filter does not have to expand the bounds rendered.
@@ -204,7 +205,8 @@ void SkGpuDevice::drawTextureProducerImpl(GrTextureProducer* producer,
     }
 
     GrPaint grPaint;
-    if (!SkPaintToGrPaintWithTexture(fContext, paint, viewMatrix, fp, alphaTexture, &grPaint)) {
+    if (!SkPaintToGrPaintWithTexture(fContext, paint, viewMatrix, fp, producer->isAlphaOnly(),
+                                     this->surfaceProps().allowSRGBInputs(), &grPaint)) {
         return;
     }
 

@@ -15,7 +15,7 @@ AllowShortFunctionsOnASingleLine: All
 AlwaysBreakAfterDefinitionReturnType: true
 AlwaysBreakTemplateDeclarations: false
 AlwaysBreakBeforeMultilineStrings: false
-BreakBeforeBinaryOperators: None
+BreakBeforeBinaryOperators: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
 BinPackParameters: true
@@ -61,4 +61,5 @@ CommentPragmas:  '^ IWYU pragma:'
 ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
 SpaceBeforeParens: ControlStatements
 DisableFormat:   false
+SortIncludes: false
 ...

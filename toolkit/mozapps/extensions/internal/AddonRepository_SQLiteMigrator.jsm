@@ -10,6 +10,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
+/*globals AddonManagerPrivate*/
 Cu.import("resource://gre/modules/FileUtils.jsm");
 
 const KEY_PROFILEDIR  = "ProfD";
@@ -397,7 +398,7 @@ this.AddonRepository_SQLiteMigrator = {
 
     for (let prop of PROP_SINGLE) {
       addon[prop] = aRow.getResultByName(prop)
-    };
+    }
 
     return addon;
   },

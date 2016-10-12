@@ -1,0 +1,106 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#ifndef SEEK_TASK_H
+#define SEEK_TASK_H
+
+#include "mozilla/MozPromise.h"
+#include "MediaCallbackID.h"
+#include "SeekJob.h"
+
+namespace mozilla {
+
+class AbstractThread;
+class MediaData;
+class MediaDecoderReaderWrapper;
+class MediaInfo;
+
+namespace media {
+class TimeUnit;
+}
+
+struct SeekTaskResolveValue
+{
+  RefPtr<MediaData> mSeekedAudioData;
+  RefPtr<MediaData> mSeekedVideoData;
+  bool mIsAudioQueueFinished;
+  bool mIsVideoQueueFinished;
+  bool mNeedToStopPrerollingAudio;
+  bool mNeedToStopPrerollingVideo;
+};
+
+struct SeekTaskRejectValue
+{
+  bool mIsAudioQueueFinished;
+  bool mIsVideoQueueFinished;
+  bool mNeedToStopPrerollingAudio;
+  bool mNeedToStopPrerollingVideo;
+};
+
+class SeekTask {
+
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(SeekTask)
+
+public:
+  static const bool IsExclusive = true;
+
+  using SeekTaskPromise =
+    MozPromise<SeekTaskResolveValue, SeekTaskRejectValue, IsExclusive>;
+
+  virtual void Discard() = 0;
+
+  virtual RefPtr<SeekTaskPromise> Seek(const media::TimeUnit& aDuration) = 0;
+
+  virtual bool NeedToResetMDSM() const = 0;
+
+  SeekJob& GetSeekJob();
+
+  bool Exists() const;
+
+protected:
+  SeekTask(const void* aDecoderID,
+           AbstractThread* aThread,
+           MediaDecoderReaderWrapper* aReader,
+           SeekJob&& aSeekJob);
+
+  virtual ~SeekTask();
+
+  void Resolve(const char* aCallSite);
+
+  void RejectIfExist(const char* aCallSite);
+
+  void AssertOwnerThread() const;
+
+  AbstractThread* OwnerThread() const;
+
+  /*
+   * Data shared with MDSM.
+   */
+  const void* mDecoderID; // For logging.
+  const RefPtr<AbstractThread> mOwnerThread;
+  const RefPtr<MediaDecoderReaderWrapper> mReader;
+
+  /*
+   * Internal state.
+   */
+  SeekJob mSeekJob;
+  MozPromiseHolder<SeekTaskPromise> mSeekTaskPromise;
+  bool mIsDiscarded;
+
+  /*
+   * Information which are going to be returned to MDSM.
+   */
+  RefPtr<MediaData> mSeekedAudioData;
+  RefPtr<MediaData> mSeekedVideoData;
+  bool mIsAudioQueueFinished;
+  bool mIsVideoQueueFinished;
+  bool mNeedToStopPrerollingAudio;
+  bool mNeedToStopPrerollingVideo;
+};
+
+} // namespace mozilla
+
+#endif /* SEEK_TASK_H */

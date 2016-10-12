@@ -16,6 +16,7 @@
 #include "nsWhitespaceTokenizer.h"
 
 #include "mozilla/BinarySearch.h"
+#include "mozilla/dom/Element.h"
 
 using namespace mozilla;
 using namespace mozilla::a11y;
@@ -34,7 +35,7 @@ static const uint32_t kGenericAccType = 0;
  *  via the object attribute "xml-roles".
  */
 
-static nsRoleMapEntry sWAIRoleMaps[] =
+static const nsRoleMapEntry sWAIRoleMaps[] =
 {
   { // alert
     &nsGkAtoms::alert,
@@ -43,7 +44,7 @@ static nsRoleMapEntry sWAIRoleMaps[] =
     eNoValue,
     eNoAction,
     eNoLiveAttr,
-    kGenericAccType,
+    eAlert,
     kNoReqStates
   },
   { // alertdialog
@@ -759,7 +760,7 @@ static nsRoleMapEntry sWAIRoleMaps[] =
   }
 };
 
-static nsRoleMapEntry sLandmarkRoleMap = {
+static const nsRoleMapEntry sLandmarkRoleMap = {
   &nsGkAtoms::_empty,
   roles::NOTHING,
   kUseNativeRole,
@@ -860,13 +861,11 @@ struct RoleComparator
 
 }
 
-nsRoleMapEntry*
-aria::GetRoleMap(nsINode* aNode)
+const nsRoleMapEntry*
+aria::GetRoleMap(dom::Element* aEl)
 {
-  nsIContent* content = nsCoreUtils::GetRoleContent(aNode);
   nsAutoString roles;
-  if (!content ||
-      !content->GetAttr(kNameSpaceID_None, nsGkAtoms::role, roles) ||
+  if (!aEl || !aEl->GetAttr(kNameSpaceID_None, nsGkAtoms::role, roles) ||
       roles.IsEmpty()) {
     // We treat role="" as if the role attribute is absent (per aria spec:8.1.1)
     return nullptr;

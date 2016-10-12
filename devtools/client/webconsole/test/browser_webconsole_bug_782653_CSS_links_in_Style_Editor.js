@@ -1,8 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* ***** BEGIN LICENSE BLOCK *****
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- * ***** END LICENSE BLOCK ***** */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -28,22 +27,22 @@ function testViewSource() {
   waitForMessages({
     webconsole: hud,
     messages: [{
-      text: "'font-weight'",
+      text: "\u2018font-weight\u2019",
       category: CATEGORY_CSS,
       severity: SEVERITY_WARNING,
     },
     {
-      text: "'color'",
+      text: "\u2018color\u2019",
       category: CATEGORY_CSS,
       severity: SEVERITY_WARNING,
     }],
   }).then(([error1Rule, error2Rule]) => {
     let error1Msg = [...error1Rule.matched][0];
     let error2Msg = [...error2Rule.matched][0];
-    nodes = [error1Msg.querySelector(".message-location"),
-             error2Msg.querySelector(".message-location")];
-    ok(nodes[0], ".message-location node for the first error");
-    ok(nodes[1], ".message-location node for the second error");
+    nodes = [error1Msg.querySelector(".message-location .frame-link"),
+             error2Msg.querySelector(".message-location .frame-link")];
+    ok(nodes[0], ".frame-link node for the first error");
+    ok(nodes[1], ".frame-link node for the second error");
 
     let target = TargetFactory.forTab(gBrowser.selectedTab);
     let toolbox = gDevTools.getToolbox(target);
@@ -52,7 +51,7 @@ function testViewSource() {
       deferred.resolve(panel);
     });
 
-    EventUtils.sendMouseEvent({ type: "click" }, nodes[0]);
+    EventUtils.sendMouseEvent({ type: "click" }, nodes[0].querySelector(".frame-link-filename"));
   });
 
   return deferred.promise;
@@ -66,33 +65,33 @@ function onStyleEditorReady(panel) {
   ok(StyleEditorUI, "Style Editor UI is defined");
 
   function fireEvent(toolbox, href, line) {
-    toolbox.once("styleeditor-selected", function(evt) {
+    toolbox.once("styleeditor-selected", function (evt) {
       info(evt + " event fired");
 
       checkStyleEditorForSheetAndLine(href, line - 1).then(deferred.resolve);
     });
 
-    EventUtils.sendMouseEvent({ type: "click" }, nodes[1]);
+    EventUtils.sendMouseEvent({ type: "click" }, nodes[1].querySelector(".frame-link-filename"));
   }
 
-  waitForFocus(function() {
+  waitForFocus(function () {
     info("style editor window focused");
 
-    let href = nodes[0].getAttribute("title");
-    let line = nodes[0].sourceLine;
+    let href = nodes[0].getAttribute("data-url");
+    let line = nodes[0].getAttribute("data-line");
     ok(line, "found source line");
 
-    checkStyleEditorForSheetAndLine(href, line - 1).then(function() {
+    checkStyleEditorForSheetAndLine(href, line - 1).then(function () {
       info("first check done");
 
       let target = TargetFactory.forTab(gBrowser.selectedTab);
       let toolbox = gDevTools.getToolbox(target);
 
-      href = nodes[1].getAttribute("title");
-      line = nodes[1].sourceLine;
+      href = nodes[1].getAttribute("data-url");
+      line = nodes[1].getAttribute("data-line");
       ok(line, "found source line");
 
-      toolbox.selectTool("webconsole").then(function() {
+      toolbox.selectTool("webconsole").then(function () {
         info("webconsole selected");
         fireEvent(toolbox, href, line);
       });

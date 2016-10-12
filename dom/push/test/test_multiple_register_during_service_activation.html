@@ -12,6 +12,7 @@ http://creativecommons.org/licenses/publicdomain/
 <head>
   <title>Test for Bug 1150812</title>
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/dom/push/test/test_utils.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
   <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
 </head>
@@ -54,19 +55,21 @@ http://creativecommons.org/licenses/publicdomain/
       });
   }
 
-var defaultServerURL = SpecialPowers.getCharPref("dom.push.serverURL");
-
   function setupMultipleSubscriptions(swr) {
-
     // We need to do this to restart service so that a queue will be formed.
-    SpecialPowers.pushPrefEnv({"set": [["dom.push.serverURL", defaultServerURL]]},
-                              null);
+    let promiseTeardown = teardownMockPushSocket();
+    setupMockPushSocket(new MockWebSocket());
+
+    var pushSubscription;
     return Promise.all([
       subscribe(swr),
       subscribe(swr)
     ]).then(a => {
       ok(a[0].endpoint == a[1].endpoint, "setupMultipleSubscriptions - Got the same endpoint back.");
-      return a[0];
+      pushSubscription = a[0];
+      return promiseTeardown;
+    }).then(_ => {
+      return pushSubscription;
     }, err => {
       ok(false, "could not register for push notification");
       throw err;
@@ -100,13 +103,7 @@ var defaultServerURL = SpecialPowers.getCharPref("dom.push.serverURL");
     }).then(SimpleTest.finish);
   }
 
-  SpecialPowers.pushPrefEnv({"set": [
-    ["dom.push.enabled", true],
-    ["dom.serviceWorkers.exemptFromPerDomainMax", true],
-    ["dom.serviceWorkers.enabled", true],
-    ["dom.serviceWorkers.testing.enabled", true],
-    ["dom.push.serverURL", "wss://something.org"]
-    ]}, runTest);
+  setupPrefsAndMockSocket(new MockWebSocket()).then(_ => runTest());
   SpecialPowers.addPermission("desktop-notification", true, document);
   SimpleTest.waitForExplicitFinish();
 </script>

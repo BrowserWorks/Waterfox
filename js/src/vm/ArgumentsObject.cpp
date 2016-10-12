@@ -21,7 +21,7 @@ using namespace js;
 using namespace js::gc;
 
 static void
-CopyStackFrameArguments(const AbstractFramePtr frame, HeapValue* dst, unsigned totalArgs)
+CopyStackFrameArguments(const AbstractFramePtr frame, GCPtrValue* dst, unsigned totalArgs)
 {
     MOZ_ASSERT_IF(frame.isInterpreterFrame(), !frame.asInterpreterFrame()->runningInJit());
 
@@ -68,7 +68,7 @@ struct CopyFrameArgs
       : frame_(frame)
     { }
 
-    void copyArgs(JSContext*, HeapValue* dst, unsigned totalArgs) const {
+    void copyArgs(JSContext*, GCPtrValue* dst, unsigned totalArgs) const {
         CopyStackFrameArguments(frame_, dst, totalArgs);
     }
 
@@ -90,7 +90,7 @@ struct CopyJitFrameArgs
       : frame_(frame), callObj_(callObj)
     { }
 
-    void copyArgs(JSContext*, HeapValue* dstBase, unsigned totalArgs) const {
+    void copyArgs(JSContext*, GCPtrValue* dstBase, unsigned totalArgs) const {
         unsigned numActuals = frame_->numActualArgs();
         unsigned numFormals = jit::CalleeTokenToFunction(frame_->calleeToken())->nargs();
         MOZ_ASSERT(numActuals <= totalArgs);
@@ -100,12 +100,12 @@ struct CopyJitFrameArgs
         /* Copy all arguments. */
         Value* src = frame_->argv() + 1;  /* +1 to skip this. */
         Value* end = src + numActuals;
-        HeapValue* dst = dstBase;
+        GCPtrValue* dst = dstBase;
         while (src != end)
             (dst++)->init(*src++);
 
         if (numActuals < numFormals) {
-            HeapValue* dstEnd = dstBase + totalArgs;
+            GCPtrValue* dstEnd = dstBase + totalArgs;
             while (dst != dstEnd)
                 (dst++)->init(UndefinedValue());
         }
@@ -128,7 +128,7 @@ struct CopyScriptFrameIterArgs
       : iter_(iter)
     { }
 
-    void copyArgs(JSContext* cx, HeapValue* dstBase, unsigned totalArgs) const {
+    void copyArgs(JSContext* cx, GCPtrValue* dstBase, unsigned totalArgs) const {
         /* Copy actual arguments. */
         iter_.unaliasedForEachActual(cx, CopyToHeap(dstBase));
 
@@ -140,8 +140,8 @@ struct CopyScriptFrameIterArgs
         MOZ_ASSERT(Max(numActuals, numFormals) == totalArgs);
 
         if (numActuals < numFormals) {
-            HeapValue* dst = dstBase + numActuals;
-            HeapValue* dstEnd = dstBase + totalArgs;
+            GCPtrValue* dst = dstBase + numActuals;
+            GCPtrValue* dstEnd = dstBase + totalArgs;
             while (dst != dstEnd)
                 (dst++)->init(UndefinedValue());
         }
@@ -675,13 +675,7 @@ ArgumentsObject::objectMovedDuringMinorGC(JSTracer* trc, JSObject* dst, JSObject
  * stack frame with their corresponding property values in the frame's
  * arguments object.
  */
-const Class MappedArgumentsObject::class_ = {
-    "Arguments",
-    JSCLASS_DELAY_METADATA_CALLBACK |
-    JSCLASS_HAS_RESERVED_SLOTS(MappedArgumentsObject::RESERVED_SLOTS) |
-    JSCLASS_HAS_CACHED_PROTO(JSProto_Object) |
-    JSCLASS_SKIP_NURSERY_FINALIZE |
-    JSCLASS_BACKGROUND_FINALIZE,
+const ClassOps MappedArgumentsObject::classOps_ = {
     nullptr,                 /* addProperty */
     ArgumentsObject::obj_delProperty,
     nullptr,                 /* getProperty */
@@ -696,17 +690,21 @@ const Class MappedArgumentsObject::class_ = {
     ArgumentsObject::trace
 };
 
+const Class MappedArgumentsObject::class_ = {
+    "Arguments",
+    JSCLASS_DELAY_METADATA_BUILDER |
+    JSCLASS_HAS_RESERVED_SLOTS(MappedArgumentsObject::RESERVED_SLOTS) |
+    JSCLASS_HAS_CACHED_PROTO(JSProto_Object) |
+    JSCLASS_SKIP_NURSERY_FINALIZE |
+    JSCLASS_BACKGROUND_FINALIZE,
+    &MappedArgumentsObject::classOps_
+};
+
 /*
  * Unmapped arguments is significantly less magical than mapped arguments, so
  * it is represented by a different class while sharing some functionality.
  */
-const Class UnmappedArgumentsObject::class_ = {
-    "Arguments",
-    JSCLASS_DELAY_METADATA_CALLBACK |
-    JSCLASS_HAS_RESERVED_SLOTS(UnmappedArgumentsObject::RESERVED_SLOTS) |
-    JSCLASS_HAS_CACHED_PROTO(JSProto_Object) |
-    JSCLASS_SKIP_NURSERY_FINALIZE |
-    JSCLASS_BACKGROUND_FINALIZE,
+const ClassOps UnmappedArgumentsObject::classOps_ = {
     nullptr,                 /* addProperty */
     ArgumentsObject::obj_delProperty,
     nullptr,                 /* getProperty */
@@ -719,4 +717,14 @@ const Class UnmappedArgumentsObject::class_ = {
     nullptr,                 /* hasInstance */
     nullptr,                 /* construct   */
     ArgumentsObject::trace
+};
+
+const Class UnmappedArgumentsObject::class_ = {
+    "Arguments",
+    JSCLASS_DELAY_METADATA_BUILDER |
+    JSCLASS_HAS_RESERVED_SLOTS(UnmappedArgumentsObject::RESERVED_SLOTS) |
+    JSCLASS_HAS_CACHED_PROTO(JSProto_Object) |
+    JSCLASS_SKIP_NURSERY_FINALIZE |
+    JSCLASS_BACKGROUND_FINALIZE,
+    &UnmappedArgumentsObject::classOps_
 };

@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that overridden variables in the VariablesView are styled properly.
@@ -8,8 +10,12 @@
 const TAB_URL = EXAMPLE_URL + "doc_scope-variable-2.html";
 
 function test() {
-  Task.spawn(function*() {
-    let [tab,, panel] = yield initDebugger(TAB_URL);
+  Task.spawn(function* () {
+    let options = {
+      source: TAB_URL,
+      line: 1
+    };
+    let [tab,, panel] = yield initDebugger(TAB_URL, options);
     let win = panel.panelWin;
     let events = win.EVENTS;
     let variables = win.DebuggerView.Variables;
@@ -18,8 +24,10 @@ function test() {
     let committedLocalScopeHierarchy = promise.defer();
     variables.oncommit = committedLocalScopeHierarchy.resolve;
 
+
+    let onCaretAndScopes = waitForCaretAndScopes(panel, 23);
     callInTab(tab, "test");
-    yield waitForSourceAndCaretAndScopes(panel, ".html", 23);
+    yield onCaretAndScopes;
     yield committedLocalScopeHierarchy.promise;
 
     let firstScope = variables.getScopeAtIndex(0);

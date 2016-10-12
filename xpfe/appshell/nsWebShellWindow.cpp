@@ -256,7 +256,7 @@ nsWebShellWindow::WindowMoved(nsIWidget* aWidget, int32_t x, int32_t y)
 {
   nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
   if (pm) {
-    nsCOMPtr<nsPIDOMWindow> window =
+    nsCOMPtr<nsPIDOMWindowOuter> window =
       mDocShell ? mDocShell->GetWindow() : nullptr;
     pm->AdjustPopupsOnWindowChange(window);
   }
@@ -281,7 +281,7 @@ nsWebShellWindow::WindowResized(nsIWidget* aWidget, int32_t aWidth, int32_t aHei
 {
   nsCOMPtr<nsIBaseWindow> shellAsWin(do_QueryInterface(mDocShell));
   if (shellAsWin) {
-    shellAsWin->SetPositionAndSize(0, 0, aWidth, aHeight, false);
+    shellAsWin->SetPositionAndSize(0, 0, aWidth, aHeight, 0);
   }
   // Persist size, but not immediately, in case this OS is firing
   // repeated size events as the user drags the sizing handle
@@ -296,7 +296,7 @@ nsWebShellWindow::RequestWindowClose(nsIWidget* aWidget)
   // Maintain a reference to this as it is about to get destroyed.
   nsCOMPtr<nsIXULWindow> xulWindow(this);
 
-  nsCOMPtr<nsPIDOMWindow> window(mDocShell ? mDocShell->GetWindow() : nullptr);
+  nsCOMPtr<nsPIDOMWindowOuter> window(mDocShell ? mDocShell->GetWindow() : nullptr);
   nsCOMPtr<EventTarget> eventTarget = do_QueryInterface(window);
 
   nsCOMPtr<nsIPresShell> presShell = mDocShell->GetPresShell();
@@ -338,7 +338,7 @@ nsWebShellWindow::SizeModeChanged(nsSizeMode sizeMode)
   // cases this will merge with the similar call in NS_SIZE and
   // write the attribute values only once.
   SetPersistenceTimer(PAD_MISC);
-  nsCOMPtr<nsPIDOMWindow> ourWindow =
+  nsCOMPtr<nsPIDOMWindowOuter> ourWindow =
     mDocShell ? mDocShell->GetWindow() : nullptr;
   if (ourWindow) {
     MOZ_ASSERT(ourWindow->IsOuterWindow());
@@ -356,14 +356,18 @@ nsWebShellWindow::SizeModeChanged(nsSizeMode sizeMode)
         // SetFullScreen call ensures that the window really exit from
         // fullscreen even if it entered fullscreen for both Fullscreen
         // Mode and Fullscreen API.
-        ourWindow->SetFullscreenInternal(
-          nsPIDOMWindow::eForForceExitFullscreen, false);
+        ourWindow->SetFullscreenInternal(FullscreenReason::ForForceExitFullscreen, false);
         ourWindow->SetFullScreen(false);
       }
     }
 
     // And always fire a user-defined sizemodechange event on the window
     ourWindow->DispatchCustomEvent(NS_LITERAL_STRING("sizemodechange"));
+  }
+
+  nsIPresShell* presShell;
+  if ((presShell = GetPresShell())) {
+    presShell->GetPresContext()->SizeModeChanged(sizeMode);
   }
 
   // Note the current implementation of SetSizeMode just stores
@@ -374,10 +378,21 @@ nsWebShellWindow::SizeModeChanged(nsSizeMode sizeMode)
 }
 
 void
+nsWebShellWindow::UIResolutionChanged()
+{
+  nsCOMPtr<nsPIDOMWindowOuter> ourWindow =
+    mDocShell ? mDocShell->GetWindow() : nullptr;
+  if (ourWindow) {
+    MOZ_ASSERT(ourWindow->IsOuterWindow());
+    ourWindow->DispatchCustomEvent(NS_LITERAL_STRING("resolutionchange"));
+  }
+}
+
+void
 nsWebShellWindow::FullscreenChanged(bool aInFullscreen)
 {
   if (mDocShell) {
-    if (nsCOMPtr<nsPIDOMWindow> ourWindow = mDocShell->GetWindow()) {
+    if (nsCOMPtr<nsPIDOMWindowOuter> ourWindow = mDocShell->GetWindow()) {
       ourWindow->FinishFullscreenChange(aInFullscreen);
     }
   }
@@ -425,7 +440,7 @@ nsWebShellWindow::WindowActivated()
   nsCOMPtr<nsIXULWindow> xulWindow(this);
 
   // focusing the window could cause it to close, so keep a reference to it
-  nsCOMPtr<nsIDOMWindow> window = mDocShell ? mDocShell->GetWindow() : nullptr;
+  nsCOMPtr<nsPIDOMWindowOuter> window = mDocShell ? mDocShell->GetWindow() : nullptr;
   nsCOMPtr<nsIFocusManager> fm = do_GetService(FOCUSMANAGER_CONTRACTID);
   if (fm && window)
     fm->WindowRaised(window);
@@ -441,7 +456,7 @@ nsWebShellWindow::WindowDeactivated()
 {
   nsCOMPtr<nsIXULWindow> xulWindow(this);
 
-  nsCOMPtr<nsPIDOMWindow> window =
+  nsCOMPtr<nsPIDOMWindowOuter> window =
     mDocShell ? mDocShell->GetWindow() : nullptr;
   nsCOMPtr<nsIFocusManager> fm = do_GetService(FOCUSMANAGER_CONTRACTID);
   if (fm && window)
@@ -567,11 +582,11 @@ nsWebShellWindow::OnStateChange(nsIWebProgress *aProgress,
     return NS_OK;
 
   // If this document notification is for a frame then ignore it...
-  nsCOMPtr<nsIDOMWindow> eventWin;
+  nsCOMPtr<mozIDOMWindowProxy> eventWin;
   aProgress->GetDOMWindow(getter_AddRefs(eventWin));
-  nsCOMPtr<nsPIDOMWindow> eventPWin(do_QueryInterface(eventWin));
+  auto* eventPWin = nsPIDOMWindowOuter::From(eventWin);
   if (eventPWin) {
-    nsPIDOMWindow *rootPWin = eventPWin->GetPrivateRoot();
+    nsPIDOMWindowOuter *rootPWin = eventPWin->GetPrivateRoot();
     if (eventPWin != rootPWin)
       return NS_OK;
   }

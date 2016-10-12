@@ -52,4 +52,16 @@ RESOURCE_FILES += [
     'urlparse_unx.dat',
 ]
 
+USE_LIBS += ['static:js']
+
+if CONFIG['ENABLE_INTL_API'] and CONFIG['MOZ_ICU_DATA_ARCHIVE']:
+    # The ICU libraries linked into libmozjs will not include the ICU data,
+    # so link it directly.
+    USE_LIBS += ['icudata']
+
 CXXFLAGS += CONFIG['TK_CFLAGS']
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-shadow']

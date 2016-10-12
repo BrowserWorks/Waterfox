@@ -14,6 +14,7 @@
 #include "js/Utility.h"
 
 struct JSRuntime;
+class JSTracer;
 
 namespace js {
 
@@ -75,7 +76,7 @@ class ProfileEntry
         CATEGORY_MASK = ~ALL
     };
 
-    // Keep these in sync with devtools/client/performance/modules/global.js
+    // Keep these in sync with devtools/client/performance/modules/categories.js
     enum class Category : uint32_t {
         OTHER    = 0x10,
         CSS      = 0x20,
@@ -172,6 +173,8 @@ class ProfileEntry
     // We can't know the layout of JSScript, so look in vm/SPSProfiler.cpp.
     JS_FRIEND_API(jsbytecode*) pc() const volatile;
     JS_FRIEND_API(void) setPC(jsbytecode* pc) volatile;
+
+    void trace(JSTracer* trc);
 
     // The offset of a pc into a script's code can actually be 0, so to
     // signify a nullptr pc, use a -1 index. This is checked against in

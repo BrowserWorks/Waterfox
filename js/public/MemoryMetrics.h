@@ -166,10 +166,11 @@ struct ClassInfo
 #define FOR_EACH_SIZE(macro) \
     macro(Objects, GCHeapUsed, objectsGCHeap) \
     macro(Objects, MallocHeap, objectsMallocHeapSlots) \
-    macro(Objects, MallocHeap, objectsMallocHeapElementsNonAsmJS) \
+    macro(Objects, MallocHeap, objectsMallocHeapElementsNormal) \
     macro(Objects, MallocHeap, objectsMallocHeapElementsAsmJS) \
+    macro(Objects, NonHeap,    objectsNonHeapElementsNormal) \
     macro(Objects, NonHeap,    objectsNonHeapElementsAsmJS) \
-    macro(Objects, NonHeap,    objectsNonHeapElementsMapped) \
+    macro(Objects, NonHeap,    objectsNonHeapElementsShared) \
     macro(Objects, NonHeap,    objectsNonHeapCodeAsmJS) \
     macro(Objects, MallocHeap, objectsMallocHeapMisc) \
     \
@@ -396,8 +397,6 @@ struct NotableStringInfo : public StringInfo
 struct ScriptSourceInfo
 {
 #define FOR_EACH_SIZE(macro) \
-    macro(_, MallocHeap, compressed) \
-    macro(_, MallocHeap, uncompressed) \
     macro(_, MallocHeap, misc)
 
     ScriptSourceInfo()
@@ -468,12 +467,11 @@ struct RuntimeSizes
     macro(_, MallocHeap, object) \
     macro(_, MallocHeap, atomsTable) \
     macro(_, MallocHeap, contexts) \
-    macro(_, MallocHeap, dtoa) \
     macro(_, MallocHeap, temporary) \
     macro(_, MallocHeap, interpreterStack) \
     macro(_, MallocHeap, mathCache) \
+    macro(_, MallocHeap, sharedImmutableStringsCache) \
     macro(_, MallocHeap, uncompressedSourceCache) \
-    macro(_, MallocHeap, compressedSourceSet) \
     macro(_, MallocHeap, scriptData)
 
     RuntimeSizes()
@@ -712,7 +710,9 @@ struct CompartmentStats
     macro(Other,   MallocHeap, crossCompartmentWrappersTable) \
     macro(Other,   MallocHeap, regexpCompartment) \
     macro(Other,   MallocHeap, savedStacksSet) \
-    macro(Other,   MallocHeap, nonSyntacticLexicalScopesTable)
+    macro(Other,   MallocHeap, nonSyntacticLexicalScopesTable) \
+    macro(Other,   MallocHeap, jitCompartment) \
+    macro(Other,   MallocHeap, privateData)
 
     CompartmentStats()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -734,6 +734,8 @@ struct CompartmentStats
         other.allClasses = nullptr;
         MOZ_ASSERT(!other.isTotals);
     }
+
+    CompartmentStats(const CompartmentStats&) = delete; // disallow copying
 
     ~CompartmentStats() {
         // |allClasses| is usually deleted and set to nullptr before this

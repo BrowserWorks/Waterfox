@@ -53,13 +53,8 @@ function addGCFunction(caller, reason)
 
 function addCallEdge(caller, callee, suppressed)
 {
-    if (!(caller in calleeGraph))
-        calleeGraph[caller] = [];
-    calleeGraph[caller].push({callee:callee, suppressed:suppressed});
-
-    if (!(callee in callerGraph))
-        callerGraph[callee] = [];
-    callerGraph[callee].push({caller:caller, suppressed:suppressed});
+    addToKeyedList(calleeGraph, caller, {callee:callee, suppressed:suppressed});
+    addToKeyedList(callerGraph, callee, {caller:caller, suppressed:suppressed});
 }
 
 // Map from identifier to full "mangled|readable" name. Or sometimes to a
@@ -73,6 +68,8 @@ function loadCallgraph(file)
 {
     var suppressedFieldCalls = {};
     var resolvedFunctions = {};
+
+    var numGCCalls = 0;
 
     for (var line of readFileLines_gen(file)) {
         line = line.replace(/\n/, "");
@@ -119,6 +116,13 @@ function loadCallgraph(file)
             var callee = idToMangled[match[2]];
             addCallEdge(callerField, callee, false);
             resolvedFunctions[callerField] = true;
+        } else if (match = tag == 'T' && /^T (\d+) (.*)/.exec(line)) {
+            var mangled = idToMangled[match[1]];
+            var tag = match[2];
+            if (tag == 'GC Call') {
+                addGCFunction(mangled, "GC");
+                numGCCalls++;
+            }
         }
     }
 
@@ -161,13 +165,11 @@ function loadCallgraph(file)
         suppressedFunctions[name] = true;
     }
 
-    for (var gcName of [ 'void js::gc::GCRuntime::collect(uint8, js::SliceBudget, uint32)',
-                         'void js::gc::GCRuntime::minorGC(uint32)',
-                         'void js::gc::GCRuntime::minorGC(uint32)' ])
-    {
-        assert(gcName in mangledName, "GC function not found: " + gcName);
-        addGCFunction(mangledName[gcName], "GC");
-    }
+    // Sanity check to make sure the callgraph has some functions annotated as
+    // GC Calls. This is mostly a check to be sure the earlier processing
+    // succeeded (as opposed to, say, running on empty xdb files because you
+    // didn't actually compile anything interesting.)
+    assert(numGCCalls > 0, "No GC functions found!");
 
     // Initialize the worklist to all known gcFunctions.
     var worklist = [];

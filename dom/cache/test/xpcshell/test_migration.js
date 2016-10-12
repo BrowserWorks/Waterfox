@@ -22,6 +22,7 @@ function run_test() {
       ok(request.redirect === 'follow', 'request.redirect should default to "follow"');
       ok(request.cache === 'default', 'request.cache should have been updated to "default"' + request.cache);
       ok(request.mode === 'navigate', 'request.mode should have been updated to "navigate"');
+      ok(request.referrerPolicy === 'no-referrer-when-downgrade', 'request.referrerPolicy should have been updated to "no-referrer-when-downgrade"');
     });
     return Promise.all(requestList.map(function(request) {
       return cache.match(request);
@@ -30,6 +31,12 @@ function run_test() {
     ok(responseList.length > 0, 'should have at least one response in cache');
     responseList.forEach(function(response) {
       ok(response, 'each response in list should be non-null');
+      // reponse.url is a empty string in current test file. It should test for
+      // not being a empty string once thet test file is updated.
+      ok(typeof response.url === 'string', 'each response.url in list should be a string');
+      // reponse.redirected may be changed once test file is updated. It should
+      // be false since current reponse.url is a empty string.
+      ok(response.redirected === false, 'each response.redirected in list should be false');
       do_check_eq(response.headers.get('Content-Type'), 'text/plain;charset=UTF-8',
                   'the response should have the correct header');
     });

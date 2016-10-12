@@ -53,7 +53,7 @@ NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTION(mozPersonalDictionary, mEncoder)
 
-class mozPersonalDictionaryLoader final : public nsRunnable
+class mozPersonalDictionaryLoader final : public mozilla::Runnable
 {
 public:
   explicit mozPersonalDictionaryLoader(mozPersonalDictionary *dict) : mDict(dict)
@@ -65,16 +65,7 @@ public:
     mDict->SyncLoad();
 
     // Release the dictionary on the main thread
-    mozPersonalDictionary *dict;
-    mDict.forget(&dict);
-
-    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-    if (mainThread) {
-      NS_ProxyRelease(mainThread, static_cast<mozIPersonalDictionary *>(dict));
-    } else {
-      // It's better to leak the dictionary than to release it on a wrong thread
-      NS_WARNING("Cannot get main thread, leaking mozPersonalDictionary.");
-    }
+    NS_ReleaseOnMainThread(mDict.forget());
 
     return NS_OK;
   }
@@ -83,7 +74,7 @@ private:
   RefPtr<mozPersonalDictionary> mDict;
 };
 
-class mozPersonalDictionarySave final : public nsRunnable
+class mozPersonalDictionarySave final : public mozilla::Runnable
 {
 public:
   explicit mozPersonalDictionarySave(mozPersonalDictionary *aDict,
@@ -145,16 +136,8 @@ public:
     }
 
     // Release the dictionary on the main thread.
-    mozPersonalDictionary *dict;
-    mDict.forget(&dict);
+    NS_ReleaseOnMainThread(mDict.forget());
 
-    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-    if (mainThread) {
-      NS_ProxyRelease(mainThread, static_cast<mozIPersonalDictionary *>(dict));
-    } else {
-      // It's better to leak the dictionary than to release it on a wrong thread.
-      NS_WARNING("Cannot get main thread, leaking mozPersonalDictionary.");
-    }
     return NS_OK;
   }
 

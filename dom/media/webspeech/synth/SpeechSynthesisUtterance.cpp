@@ -13,6 +13,8 @@
 #include "SpeechSynthesisUtterance.h"
 #include "SpeechSynthesisVoice.h"
 
+#include <stdlib.h>
+
 namespace mozilla {
 namespace dom {
 
@@ -25,7 +27,7 @@ NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 NS_IMPL_ADDREF_INHERITED(SpeechSynthesisUtterance, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(SpeechSynthesisUtterance, DOMEventTargetHelper)
 
-SpeechSynthesisUtterance::SpeechSynthesisUtterance(nsPIDOMWindow* aOwnerWindow,
+SpeechSynthesisUtterance::SpeechSynthesisUtterance(nsPIDOMWindowInner* aOwnerWindow,
                                                    const nsAString& text)
   : DOMEventTargetHelper(aOwnerWindow)
   , mText(text)
@@ -63,7 +65,7 @@ SpeechSynthesisUtterance::Constructor(GlobalObject& aGlobal,
                                       const nsAString& aText,
                                       ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = do_QueryInterface(aGlobal.GetAsSupports());
+  nsCOMPtr<nsPIDOMWindowInner> win = do_QueryInterface(aGlobal.GetAsSupports());
 
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
@@ -120,7 +122,7 @@ SpeechSynthesisUtterance::Volume() const
 void
 SpeechSynthesisUtterance::SetVolume(float aVolume)
 {
-  mVolume = aVolume;
+  mVolume = std::max<float>(std::min<float>(aVolume, 1), 0);
 }
 
 float
@@ -132,7 +134,7 @@ SpeechSynthesisUtterance::Rate() const
 void
 SpeechSynthesisUtterance::SetRate(float aRate)
 {
-  mRate = aRate;
+  mRate = std::max<float>(std::min<float>(aRate, 10), 0.1f);
 }
 
 float
@@ -144,7 +146,7 @@ SpeechSynthesisUtterance::Pitch() const
 void
 SpeechSynthesisUtterance::SetPitch(float aPitch)
 {
-  mPitch = aPitch;
+  mPitch = std::max<float>(std::min<float>(aPitch, 2), 0);
 }
 
 void

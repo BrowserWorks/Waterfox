@@ -36,8 +36,6 @@ typedef _cairo_surface cairo_surface_t;
 struct _cairo_scaled_font;
 typedef _cairo_scaled_font cairo_scaled_font_t;
 
-struct ID3D10Device1;
-struct ID3D10Texture2D;
 struct ID3D11Texture2D;
 struct ID3D11Device;
 struct ID2D1Device;
@@ -138,13 +136,13 @@ struct StrokeOptions {
  */
 struct DrawSurfaceOptions {
   /// For constructor parameter description, see member data documentation.
-  explicit DrawSurfaceOptions(Filter aFilter = Filter::LINEAR,
+  explicit DrawSurfaceOptions(SamplingFilter aSamplingFilter = SamplingFilter::LINEAR,
                               SamplingBounds aSamplingBounds = SamplingBounds::UNBOUNDED)
-    : mFilter(aFilter)
+    : mSamplingFilter(aSamplingFilter)
     , mSamplingBounds(aSamplingBounds)
   { }
 
-  Filter mFilter;                 /**< Filter used when resampling source surface
+  SamplingFilter mSamplingFilter; /**< SamplingFilter used when resampling source surface
                                        region to the destination region. */
   SamplingBounds mSamplingBounds; /**< This indicates whether the implementation is
                                        allowed to sample pixels outside the source
@@ -289,11 +287,12 @@ class SurfacePattern : public Pattern
 public:
   /// For constructor parameter description, see member data documentation.
   SurfacePattern(SourceSurface *aSourceSurface, ExtendMode aExtendMode,
-                 const Matrix &aMatrix = Matrix(), Filter aFilter = Filter::GOOD,
+                 const Matrix &aMatrix = Matrix(),
+                 SamplingFilter aSamplingFilter = SamplingFilter::GOOD,
                  const IntRect &aSamplingRect = IntRect())
     : mSurface(aSourceSurface)
     , mExtendMode(aExtendMode)
-    , mFilter(aFilter)
+    , mSamplingFilter(aSamplingFilter)
     , mMatrix(aMatrix)
     , mSamplingRect(aSamplingRect)
   {}
@@ -306,7 +305,7 @@ public:
   RefPtr<SourceSurface> mSurface; //!< Surface to use for drawing
   ExtendMode mExtendMode;         /**< This determines how the image is extended
                                        outside the bounds of the image */
-  Filter mFilter;                 //!< Resampling filter for resampling the image.
+  SamplingFilter mSamplingFilter; //!< Resampling filter for resampling the image.
   Matrix mMatrix;                 //!< Transforms the pattern into user space
 
   IntRect mSamplingRect;          /**< Rect that must not be sampled outside of,
@@ -541,9 +540,18 @@ public:
   /** This returns a PathBuilder object that contains a copy of the contents of
    * this path and is still writable.
    */
-  virtual already_AddRefed<PathBuilder> CopyToBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const = 0;
+  inline already_AddRefed<PathBuilder> CopyToBuilder() const {
+    return CopyToBuilder(GetFillRule());
+  }
+  inline already_AddRefed<PathBuilder> TransformedCopyToBuilder(const Matrix &aTransform) const {
+    return TransformedCopyToBuilder(aTransform, GetFillRule());
+  }
+  /** This returns a PathBuilder object that contains a copy of the contents of
+   * this path, converted to use the specified FillRule, and still writable.
+   */
+  virtual already_AddRefed<PathBuilder> CopyToBuilder(FillRule aFillRule) const = 0;
   virtual already_AddRefed<PathBuilder> TransformedCopyToBuilder(const Matrix &aTransform,
-                                                             FillRule aFillRule = FillRule::FILL_WINDING) const = 0;
+                                                             FillRule aFillRule) const = 0;
 
   /** This function checks if a point lies within a path. It allows passing a
    * transform that will transform the path to the coordinate space in which
@@ -638,6 +646,7 @@ public:
   virtual ~ScaledFont() {}
 
   typedef void (*FontFileDataOutput)(const uint8_t *aData, uint32_t aLength, uint32_t aIndex, Float aGlyphSize, void *aBaton);
+  typedef void (*FontDescriptorOutput)(const uint8_t *aData, uint32_t aLength, Float aFontSize, void *aBaton);
 
   virtual FontType GetType() const = 0;
 
@@ -656,6 +665,8 @@ public:
   virtual void CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, BackendType aBackendType, const Matrix *aTransformHint = nullptr) = 0;
 
   virtual bool GetFontFileData(FontFileDataOutput, void *) { return false; }
+
+  virtual bool GetFontDescriptor(FontDescriptorOutput, void *) { return false; }
 
   void AddUserData(UserDataKey *key, void *userData, void (*destroy)(void*)) {
     mUserData.Add(key, userData, destroy);
@@ -949,6 +960,15 @@ public:
                            const DrawOptions &aOptions = DrawOptions()) = 0;
 
   /**
+   * Draw aSurface using the 3D transform aMatrix. The DrawTarget's transform
+   * and clip are applied after the 3D transform.
+   *
+   * If the transform fails (i.e. because aMatrix is singular), false is returned and nothing is drawn.
+   */
+  virtual bool Draw3DTransformedSurface(SourceSurface* aSurface,
+                                        const Matrix4x4& aMatrix);
+
+  /**
    * Push a clip to the DrawTarget.
    *
    * @param aPath The path to clip to
@@ -988,14 +1008,14 @@ public:
                          SourceSurface* aMask,
                          const Matrix& aMaskTransform,
                          const IntRect& aBounds = IntRect(),
-                         bool aCopyBackground = false) { MOZ_CRASH(); }
+                         bool aCopyBackground = false) { MOZ_CRASH("GFX: PushLayer"); }
 
   /**
    * This balances a call to PushLayer and proceeds to blend the layer back
    * onto the background. This blend will blend the temporary surface back
    * onto the target in device space using POINT sampling and operator over.
    */
-  virtual void PopLayer() { MOZ_CRASH(); }
+  virtual void PopLayer() { MOZ_CRASH("GFX: PopLayer"); }
 
   /**
    * Create a SourceSurface optimized for use with this DrawTarget from
@@ -1004,9 +1024,9 @@ public:
    * The SourceSurface does not take ownership of aData, and may be freed at any time.
    */
   virtual already_AddRefed<SourceSurface> CreateSourceSurfaceFromData(unsigned char *aData,
-                                                                  const IntSize &aSize,
-                                                                  int32_t aStride,
-                                                                  SurfaceFormat aFormat) const = 0;
+                                                                      const IntSize &aSize,
+                                                                      int32_t aStride,
+                                                                      SurfaceFormat aFormat) const = 0;
 
   /**
    * Create a SourceSurface optimized for use with this DrawTarget from an
@@ -1160,7 +1180,7 @@ public:
                                  const IntSize &aSize,
                                  SurfaceFormat aFormat)
   {
-    MOZ_CRASH();
+    MOZ_CRASH("GFX: InitWithGrContext");
   }
 #endif
 
@@ -1248,7 +1268,7 @@ public:
     CreateRecordingDrawTarget(DrawEventRecorder *aRecorder, DrawTarget *aDT);
 
   static already_AddRefed<DrawTarget>
-    CreateDrawTargetForData(BackendType aBackend, unsigned char* aData, const IntSize &aSize, int32_t aStride, SurfaceFormat aFormat);
+    CreateDrawTargetForData(BackendType aBackend, unsigned char* aData, const IntSize &aSize, int32_t aStride, SurfaceFormat aFormat, bool aUninitialized = false);
 
   static already_AddRefed<ScaledFont>
     CreateScaledFontForNativeFont(const NativeFont &aNativeFont, Float aSize);
@@ -1291,15 +1311,28 @@ public:
   static already_AddRefed<DataSourceSurface>
     CreateDataSourceSurfaceWithStride(const IntSize &aSize, SurfaceFormat aFormat, int32_t aStride, bool aZero = false);
 
+  typedef void (*SourceSurfaceDeallocator)(void* aClosure);
+
   /**
    * This creates a simple data source surface for some existing data. It will
-   * wrap this data and the data for this source surface. The caller is
-   * responsible for deallocating the memory only after destruction of the
-   * surface.
+   * wrap this data and the data for this source surface.
+   *
+   * We can provide a custom destroying function for |aData|. This will be
+   * called in the surface dtor using |aDeallocator| and the |aClosure|. If
+   * there are errors during construction(return a nullptr surface), the caller
+   * is responsible for the deallocation.
+   *
+   * If there is no destroying function, the caller is responsible for
+   * deallocating the aData memory only after destruction of this
+   * DataSourceSurface.
    */
   static already_AddRefed<DataSourceSurface>
-    CreateWrappingDataSourceSurface(uint8_t *aData, int32_t aStride,
-                                    const IntSize &aSize, SurfaceFormat aFormat);
+    CreateWrappingDataSourceSurface(uint8_t *aData,
+                                    int32_t aStride,
+                                    const IntSize &aSize,
+                                    SurfaceFormat aFormat,
+                                    SourceSurfaceDeallocator aDeallocator = nullptr,
+                                    void* aClosure = nullptr);
 
   static void
     CopyDataSourceSurface(DataSourceSurface* aSource,
@@ -1355,17 +1388,13 @@ public:
 #endif
 
 #ifdef WIN32
-  static already_AddRefed<DrawTarget> CreateDrawTargetForD3D10Texture(ID3D10Texture2D *aTexture, SurfaceFormat aFormat);
-  static already_AddRefed<DrawTarget>
-    CreateDualDrawTargetForD3D10Textures(ID3D10Texture2D *aTextureA,
-                                         ID3D10Texture2D *aTextureB,
-                                         SurfaceFormat aFormat);
-
-  static void SetDirect3D10Device(ID3D10Device1 *aDevice);
-  static ID3D10Device1 *GetDirect3D10Device();
   static already_AddRefed<DrawTarget> CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceFormat aFormat);
 
-  static void SetDirect3D11Device(ID3D11Device *aDevice);
+  /*
+   * Attempts to create and install a D2D1 device from the supplied Direct3D11 device.
+   * Returns true on success, or false on failure and leaves the D2D1/Direct3D11 devices unset.
+   */
+  static bool SetDirect3D11Device(ID3D11Device *aDevice);
   static ID3D11Device *GetDirect3D11Device();
   static ID2D1Device *GetD2D1Device();
   static bool SupportsD2D1();
@@ -1385,7 +1414,6 @@ public:
 
 private:
   static ID2D1Device *mD2D1Device;
-  static ID3D10Device1 *mD3D10Device;
   static ID3D11Device *mD3D11Device;
 #endif
 

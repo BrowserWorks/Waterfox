@@ -20,6 +20,7 @@
 #include "nsRegionFwd.h"                // for nsIntRegion
 #include "nsStringGlue.h"               // for nsCString
 #include "xpcom-config.h"               // for CPP_THROW_NEW
+#include "mozilla/ArrayView.h"          // for ArrayView
 #include "mozilla/Move.h"               // for mozilla::Move
 #include "mozilla/gfx/MatrixFwd.h"      // for mozilla::gfx::Matrix4x4
 
@@ -46,20 +47,23 @@ enum class VisitSide {
 	RIGHT
 };
 
-class nsRegionRectIterator;
-
 class nsRegion
 {
-
-  friend class nsRegionRectIterator;
-
 public:
+  typedef nsRect RectType;
+  typedef nsPoint PointType;
+  typedef nsMargin MarginType;
+
   nsRegion () { pixman_region32_init(&mImpl); }
   MOZ_IMPLICIT nsRegion (const nsRect& aRect) { pixman_region32_init_rect(&mImpl,
                                                                           aRect.x,
                                                                           aRect.y,
                                                                           aRect.width,
                                                                           aRect.height); }
+  explicit nsRegion (mozilla::gfx::ArrayView<pixman_box32_t> aRects)
+  {
+    pixman_region32_init_rects(&mImpl, aRects.Data(), aRects.Length());
+  }
   nsRegion (const nsRegion& aRegion) { pixman_region32_init(&mImpl); pixman_region32_copy(&mImpl,aRegion.Impl()); }
   nsRegion (nsRegion&& aRegion) { mImpl = aRegion.mImpl; pixman_region32_init(&aRegion.mImpl); }
   nsRegion& operator = (nsRegion&& aRegion) {
@@ -293,9 +297,9 @@ public:
    * @param aToAPP the APP to scale to
    * @note this can turn an empty region into a non-empty region
    */
-  MOZ_WARN_UNUSED_RESULT nsRegion
+  MOZ_MUST_USE nsRegion
     ScaleToOtherAppUnitsRoundOut (int32_t aFromAPP, int32_t aToAPP) const;
-  MOZ_WARN_UNUSED_RESULT nsRegion
+  MOZ_MUST_USE nsRegion
     ScaleToOtherAppUnitsRoundIn (int32_t aFromAPP, int32_t aToAPP) const;
   nsRegion& ScaleRoundOut(float aXScale, float aYScale);
   nsRegion& ScaleInverseRoundOut(float aXScale, float aYScale);
@@ -351,6 +355,45 @@ public:
   void VisitEdges(visitFn, void *closure);
 
   nsCString ToString() const;
+
+  class RectIterator
+  {
+    int mCurrent;               // Index of the current entry
+    int mLimit;                 // Index one past the final entry.
+    mutable nsRect mTmp;        // The most recently gotten rectangle.
+    pixman_box32_t *mBoxes;
+
+  public:
+    explicit RectIterator(const nsRegion& aRegion)
+    {
+      mCurrent = 0;
+      mBoxes = pixman_region32_rectangles(aRegion.Impl(), &mLimit);
+      // Work around pixman bug. Sometimes pixman creates regions with 1 rect
+      // that's empty.
+      if (mLimit == 1 && nsRegion::BoxToRect(mBoxes[0]).IsEmpty()) {
+        mLimit = 0;
+      }
+    }
+
+    bool Done() const { return mCurrent == mLimit; }
+
+    const nsRect& Get() const
+    {
+      MOZ_ASSERT(!Done());
+      mTmp = nsRegion::BoxToRect(mBoxes[mCurrent]);
+      NS_ASSERTION(!mTmp.IsEmpty(), "Shouldn't return empty rect");
+      return mTmp;
+    }
+
+    void Next()
+    {
+      MOZ_ASSERT(!Done());
+      mCurrent++;
+    }
+  };
+
+  RectIterator RectIter() const { return RectIterator(*this); }
+
 private:
   pixman_region32_t mImpl;
 
@@ -412,55 +455,6 @@ private:
   {
     return const_cast<pixman_region32_t*>(&mImpl);
   }
-
-};
-
-
-class nsRegionRectIterator
-{
-  const nsRegion*  mRegion;
-  int i;
-  int n;
-  nsRect rect;
-  pixman_box32_t *boxes;
-
-public:
-  explicit nsRegionRectIterator (const nsRegion& aRegion)
-  {
-    mRegion = &aRegion;
-    i = 0;
-    boxes = pixman_region32_rectangles(aRegion.Impl(), &n);
-    // Work around pixman bug. Sometimes pixman creates regions with 1 rect
-    // that's empty.
-    if (n == 1 && nsRegion::BoxToRect(boxes[0]).IsEmpty()) {
-      n = 0;
-    }
-  }
-
-  const nsRect* Next ()
-  {
-    if (i == n)
-      return nullptr;
-    rect = nsRegion::BoxToRect(boxes[i]);
-    NS_ASSERTION(!rect.IsEmpty(), "Shouldn't return empty rect");
-    i++;
-    return &rect;
-  }
-
-  const nsRect* Prev ()
-  {
-    if (i == -1)
-      return nullptr;
-    rect = nsRegion::BoxToRect(boxes[i]);
-    NS_ASSERTION(!rect.IsEmpty(), "Shouldn't return empty rect");
-    i--;
-    return &rect;
-  }
-
-  void Reset ()
-  {
-    i = 0;
-  }
 };
 
 namespace mozilla {
@@ -486,6 +480,7 @@ public:
 
   BaseIntRegion () {}
   MOZ_IMPLICIT BaseIntRegion (const Rect& aRect) : mImpl (ToRect(aRect)) {}
+  explicit BaseIntRegion (mozilla::gfx::ArrayView<pixman_box32_t> aRects) : mImpl (aRects) {}
   BaseIntRegion (const BaseIntRegion& aRegion) : mImpl (aRegion.mImpl) {}
   BaseIntRegion (BaseIntRegion&& aRegion) : mImpl (mozilla::Move(aRegion.mImpl)) {}
   Derived& operator = (const Rect& aRect) { mImpl = ToRect (aRect); return This(); }
@@ -701,10 +696,8 @@ public:
   nsRegion ToAppUnits (nscoord aAppUnitsPerPixel) const
   {
     nsRegion result;
-    RectIterator rgnIter(*this);
-    const Rect* currentRect;
-    while ((currentRect = rgnIter.Next())) {
-      nsRect appRect = ::ToAppUnits(*currentRect, aAppUnitsPerPixel);
+    for (auto iter = RectIter(); !iter.Done(); iter.Next()) {
+      nsRect appRect = ::ToAppUnits(iter.Get(), aAppUnitsPerPixel);
       result.Or(result, appRect);
     }
     return result;
@@ -770,35 +763,26 @@ public:
 
   class RectIterator
   {
-    nsRegionRectIterator mImpl;
-    Rect mTmp;
+    nsRegion::RectIterator mImpl; // The underlying iterator.
+    mutable Rect mTmp;            // The most recently gotten rectangle.
 
   public:
-    explicit RectIterator (const BaseIntRegion& aRegion) : mImpl (aRegion.mImpl) {}
+    explicit RectIterator(const BaseIntRegion& aRegion)
+      : mImpl(aRegion.mImpl)
+    {}
 
-    const Rect* Next ()
+    bool Done() const { return mImpl.Done(); }
+
+    const Rect& Get() const
     {
-      const nsRect* r = mImpl.Next();
-      if (!r)
-        return nullptr;
-      mTmp = FromRect (*r);
-      return &mTmp;
+      mTmp = FromRect(mImpl.Get());
+      return mTmp;
     }
 
-    const Rect* Prev ()
-    {
-      const nsRect* r = mImpl.Prev();
-      if (!r)
-        return nullptr;
-      mTmp = FromRect (*r);
-      return &mTmp;
-    }
-
-    void Reset ()
-    {
-      mImpl.Reset ();
-    }
+    void Next() { mImpl.Next(); }
   };
+
+  RectIterator RectIter() const { return RectIterator(*this); }
 
 protected:
   // Expose enough to derived classes from them to define conversions
@@ -840,10 +824,15 @@ class IntRegionTyped :
   static_assert(IsPixel<units>::value, "'units' must be a coordinate system tag");
 
 public:
+  typedef IntRectTyped<units> RectType;
+  typedef IntPointTyped<units> PointType;
+  typedef IntMarginTyped<units> MarginType;
+
   // Forward constructors.
   IntRegionTyped() {}
   MOZ_IMPLICIT IntRegionTyped(const IntRectTyped<units>& aRect) : Super(aRect) {}
   IntRegionTyped(const IntRegionTyped& aRegion) : Super(aRegion) {}
+  explicit IntRegionTyped(mozilla::gfx::ArrayView<pixman_box32_t> aRects) : Super(aRects) {}
   IntRegionTyped(IntRegionTyped&& aRegion) : Super(mozilla::Move(aRegion)) {}
 
   // Assignment operators need to be forwarded as well, otherwise the compiler
@@ -875,6 +864,5 @@ private:
 } // namespace mozilla
 
 typedef mozilla::gfx::IntRegion nsIntRegion;
-typedef nsIntRegion::RectIterator nsIntRegionRectIterator;
 
 #endif

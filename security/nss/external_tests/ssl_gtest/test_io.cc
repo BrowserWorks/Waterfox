@@ -27,7 +27,7 @@ static PRDescIdentity test_fd_identity = PR_INVALID_IO_LAYER;
   PR_ASSERT(PR_FALSE);                           \
   PR_SetError(PR_NOT_IMPLEMENTED_ERROR, 0)
 
-#define LOG(a) std::cerr << name_ << ": " << a << std::endl;
+#define LOG(a) std::cerr << name_ << ": " << a << std::endl
 
 class Packet : public DataBuffer {
  public:
@@ -47,7 +47,9 @@ class Packet : public DataBuffer {
 
 // Implementation of NSPR methods
 static PRStatus DummyClose(PRFileDesc *f) {
+  DummyPrSocket *io = reinterpret_cast<DummyPrSocket *>(f->secret);
   f->secret = nullptr;
+  delete io;
   return PR_SUCCESS;
 }
 
@@ -256,7 +258,10 @@ DummyPrSocket::~DummyPrSocket() {
 
 void DummyPrSocket::Reset() {
   delete filter_;
-  peer_ = nullptr;
+  if (peer_) {
+    peer_->SetPeer(nullptr);
+    peer_ = nullptr;
+  }
   while (!input_.empty())
   {
     Packet* front = input_.front();
@@ -358,11 +363,22 @@ int32_t DummyPrSocket::Write(const void *buf, int32_t length) {
   DataBuffer packet(static_cast<const uint8_t*>(buf),
                     static_cast<size_t>(length));
   DataBuffer filtered;
-  if (filter_ && filter_->Filter(packet, &filtered)) {
-    LOG("Filtered packet: " << filtered);
-    peer_->PacketReceived(filtered);
-  } else {
-    peer_->PacketReceived(packet);
+  PacketFilter::Action action = PacketFilter::KEEP;
+  if (filter_) {
+    action = filter_->Filter(packet, &filtered);
+  }
+  switch (action) {
+    case PacketFilter::CHANGE:
+      LOG("Original packet: " << packet);
+      LOG("Filtered packet: " << filtered);
+      peer_->PacketReceived(filtered);
+      break;
+    case PacketFilter::DROP:
+      LOG("Droppped packet: " << packet);
+      break;
+    case PacketFilter::KEEP:
+      peer_->PacketReceived(packet);
+      break;
   }
   // libssl can't handle it if this reports something other than the length
   // of what was passed in (or less, but we're not doing partial writes).
@@ -432,7 +448,8 @@ void Poller::SetTimer(uint32_t timer_ms, PollTarget *target, PollCallback cb,
 }
 
 bool Poller::Poll() {
-  std::cerr << "Poll()\n";
+  std::cerr << "Poll() waiters = " << waiters_.size()
+            << " timers = " << timers_.size() << std::endl;
   PRIntervalTime timeout = PR_INTERVAL_NO_TIMEOUT;
   PRTime now = PR_Now();
   bool fired = false;

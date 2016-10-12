@@ -4,96 +4,76 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <string>
+#include <sstream>
 #include "GfxTexturesReporter.h"
-#include "GLDefs.h"
+#include "gfxPrefs.h"
+
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#endif
 
 using namespace mozilla;
 using namespace mozilla::gl;
 
 NS_IMPL_ISUPPORTS(GfxTexturesReporter, nsIMemoryReporter)
 
-Atomic<int32_t> GfxTexturesReporter::sAmount(0);
-Atomic<int32_t> GfxTexturesReporter::sTileWasteAmount(0);
+Atomic<size_t> GfxTexturesReporter::sAmount(0);
+Atomic<size_t> GfxTexturesReporter::sPeakAmount(0);
+Atomic<size_t> GfxTexturesReporter::sTileWasteAmount(0);
 
-static uint32_t
-GetBitsPerTexel(GLenum format, GLenum type)
+std::string
+FormatBytes(size_t amount)
 {
-    // If there is no defined format or type, we're not taking up any memory
-    if (!format || !type) {
-        return 0;
+    std::stringstream stream;
+    int depth = 0;
+    double val = amount;
+    while (val > 1024) {
+        val /= 1024;
+        depth++;
     }
 
-    if (format == LOCAL_GL_DEPTH_COMPONENT) {
-        if (type == LOCAL_GL_UNSIGNED_SHORT)
-            return 2*8;
-        else if (type == LOCAL_GL_UNSIGNED_INT)
-            return 4*8;
-    } else if (format == LOCAL_GL_DEPTH_STENCIL) {
-        if (type == LOCAL_GL_UNSIGNED_INT_24_8_EXT)
-            return 4*8;
-    }
+    const char* unit;
+    switch(depth) {
+      case 0:
+      unit = "bytes";
+      break;
+      case 1:
+      unit = "KB";
+      break;
+      case 2:
+      unit = "MB";
+      break;
+      case 3:
+      unit = "GB";
+      break;
+  }
 
-    if (type == LOCAL_GL_UNSIGNED_BYTE || type == LOCAL_GL_FLOAT) {
-        uint32_t multiplier = type == LOCAL_GL_FLOAT ? 32 : 8;
-        switch (format) {
-            case LOCAL_GL_ALPHA:
-            case LOCAL_GL_LUMINANCE:
-                return 1 * multiplier;
-            case LOCAL_GL_LUMINANCE_ALPHA:
-                return 2 * multiplier;
-            case LOCAL_GL_RGB:
-                return 3 * multiplier;
-            case LOCAL_GL_RGBA:
-                return 4 * multiplier;
-            case LOCAL_GL_COMPRESSED_RGB_PVRTC_2BPPV1:
-            case LOCAL_GL_COMPRESSED_RGBA_PVRTC_2BPPV1:
-                return 2;
-            case LOCAL_GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-            case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-            case LOCAL_GL_ATC_RGB:
-            case LOCAL_GL_COMPRESSED_RGB_PVRTC_4BPPV1:
-            case LOCAL_GL_COMPRESSED_RGBA_PVRTC_4BPPV1:
-            case LOCAL_GL_ETC1_RGB8_OES:
-            case LOCAL_GL_COMPRESSED_RGB8_ETC2:
-            case LOCAL_GL_COMPRESSED_SRGB8_ETC2:
-            case LOCAL_GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-            case LOCAL_GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-            case LOCAL_GL_COMPRESSED_R11_EAC:
-            case LOCAL_GL_COMPRESSED_SIGNED_R11_EAC:
-                return 4;
-            case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-            case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-            case LOCAL_GL_ATC_RGBA_EXPLICIT_ALPHA:
-            case LOCAL_GL_ATC_RGBA_INTERPOLATED_ALPHA:
-            case LOCAL_GL_COMPRESSED_RGBA8_ETC2_EAC:
-            case LOCAL_GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
-            case LOCAL_GL_COMPRESSED_RG11_EAC:
-            case LOCAL_GL_COMPRESSED_SIGNED_RG11_EAC:
-                return 8;
-            default:
-                break;
-        }
-    } else if (type == LOCAL_GL_UNSIGNED_SHORT_4_4_4_4 ||
-               type == LOCAL_GL_UNSIGNED_SHORT_5_5_5_1 ||
-               type == LOCAL_GL_UNSIGNED_SHORT_5_6_5)
-    {
-        return 2*8;
-    }
-
-    MOZ_ASSERT(false);
-    return 0;
+  stream << val << " " << unit;
+  return stream.str();
 }
 
 /* static */ void
-GfxTexturesReporter::UpdateAmount(MemoryUse action, GLenum format,
-                                  GLenum type, int32_t tileWidth,
-                                  int32_t tileHeight)
+GfxTexturesReporter::UpdateAmount(MemoryUse action, size_t amount)
 {
-    int64_t bitsPerTexel = GetBitsPerTexel(format, type);
-    int64_t bytes = int64_t(tileWidth) * int64_t(tileHeight) * bitsPerTexel/8;
     if (action == MemoryFreed) {
-        sAmount -= bytes;
+        MOZ_RELEASE_ASSERT(amount <= sAmount);
+        sAmount -= amount;
+
+        if (gfxPrefs::GfxLoggingTextureUsageEnabled()) {
+            printf_stderr("Current texture usage: %s\n", FormatBytes(sAmount).c_str());
+        }
     } else {
-        sAmount += bytes;
+        sAmount += amount;
+        if (sAmount > sPeakAmount) {
+            sPeakAmount.exchange(sAmount);
+            if (gfxPrefs::GfxLoggingPeakTextureUsageEnabled()) {
+                printf_stderr("Peak texture usage: %s\n", FormatBytes(sPeakAmount).c_str());
+            }
+        }
     }
+
+#ifdef MOZ_CRASHREPORTER
+    CrashReporter::AnnotateTexturesSize(sAmount);
+#endif
 }

@@ -42,7 +42,7 @@ UIEvent::UIEvent(EventTarget* aOwner,
   }
   else {
     mEventIsInternal = true;
-    mEvent->time = PR_Now();
+    mEvent->mTime = PR_Now();
   }
   
   // Fill mDetail and mView according to the mEvent (widget-generated
@@ -50,14 +50,14 @@ UIEvent::UIEvent(EventTarget* aOwner,
   switch(mEvent->mClass) {
     case eUIEventClass:
     {
-      mDetail = mEvent->AsUIEvent()->detail;
+      mDetail = mEvent->AsUIEvent()->mDetail;
       break;
     }
 
     case eScrollPortEventClass:
     {
       InternalScrollPortEvent* scrollEvent = mEvent->AsScrollPortEvent();
-      mDetail = (int32_t)scrollEvent->orient;
+      mDetail = static_cast<int32_t>(scrollEvent->mOrient);
       break;
     }
 
@@ -87,8 +87,8 @@ UIEvent::Constructor(const GlobalObject& aGlobal,
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
   RefPtr<UIEvent> e = new UIEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);
-  aRv = e->InitUIEvent(aType, aParam.mBubbles, aParam.mCancelable, aParam.mView,
-                       aParam.mDetail);
+  e->InitUIEvent(aType, aParam.mBubbles, aParam.mCancelable, aParam.mView,
+                 aParam.mDetail);
   e->SetTrusted(trusted);
   return e.forget();
 }
@@ -125,18 +125,18 @@ UIEvent::GetMovementPoint()
        mEvent->mClass != eDragEventClass &&
        mEvent->mClass != ePointerEventClass &&
        mEvent->mClass != eSimpleGestureEventClass) ||
-       !mEvent->AsGUIEvent()->widget) {
+       !mEvent->AsGUIEvent()->mWidget) {
     return nsIntPoint(0, 0);
   }
 
   // Calculate the delta between the last screen point and the current one.
-  nsIntPoint current = DevPixelsToCSSPixels(mEvent->refPoint, mPresContext);
-  nsIntPoint last = DevPixelsToCSSPixels(mEvent->lastRefPoint, mPresContext);
+  nsIntPoint current = DevPixelsToCSSPixels(mEvent->mRefPoint, mPresContext);
+  nsIntPoint last = DevPixelsToCSSPixels(mEvent->mLastRefPoint, mPresContext);
   return current - last;
 }
 
 NS_IMETHODIMP
-UIEvent::GetView(nsIDOMWindow** aView)
+UIEvent::GetView(mozIDOMWindowProxy** aView)
 {
   *aView = mView;
   NS_IF_ADDREF(*aView);
@@ -150,20 +150,29 @@ UIEvent::GetDetail(int32_t* aDetail)
   return NS_OK;
 }
 
+void
+UIEvent::InitUIEvent(const nsAString& typeArg,
+                     bool canBubbleArg,
+                     bool cancelableArg,
+                     nsGlobalWindow* viewArg,
+                     int32_t detailArg)
+{
+  auto* view = viewArg ? viewArg->AsInner() : nullptr;
+  InitUIEvent(typeArg, canBubbleArg, cancelableArg, view, detailArg);
+}
+
 NS_IMETHODIMP
 UIEvent::InitUIEvent(const nsAString& typeArg,
                      bool canBubbleArg,
                      bool cancelableArg,
-                     nsIDOMWindow* viewArg,
+                     mozIDOMWindow* viewArg,
                      int32_t detailArg)
 {
-  if (viewArg) {
-    nsCOMPtr<nsPIDOMWindow> view = do_QueryInterface(viewArg);
-    NS_ENSURE_TRUE(view, NS_ERROR_INVALID_ARG);
-  }
   Event::InitEvent(typeArg, canBubbleArg, cancelableArg);
+
   mDetail = detailArg;
-  mView = viewArg;
+  mView = viewArg ? nsPIDOMWindowInner::From(viewArg)->GetOuterWindow() :
+                    nullptr;
 
   return NS_OK;
 }
@@ -183,7 +192,7 @@ UIEvent::PageX() const
     return mPagePoint.x;
   }
 
-  return Event::GetPageCoords(mPresContext, mEvent, mEvent->refPoint,
+  return Event::GetPageCoords(mPresContext, mEvent, mEvent->mRefPoint,
                               mClientPoint).x;
 }
 
@@ -202,7 +211,7 @@ UIEvent::PageY() const
     return mPagePoint.y;
   }
 
-  return Event::GetPageCoords(mPresContext, mEvent, mEvent->refPoint,
+  return Event::GetPageCoords(mPresContext, mEvent, mEvent->mRefPoint,
                               mClientPoint).y;
 }
 
@@ -343,7 +352,7 @@ bool
 UIEvent::IsChar() const
 {
   WidgetKeyboardEvent* keyEvent = mEvent->AsKeyboardEvent();
-  return keyEvent ? keyEvent->isChar : false;
+  return keyEvent ? keyEvent->mIsChar : false;
 }
 
 mozilla::dom::Event*
@@ -356,20 +365,20 @@ NS_IMETHODIMP
 UIEvent::DuplicatePrivateData()
 {
   mClientPoint =
-    Event::GetClientCoords(mPresContext, mEvent, mEvent->refPoint,
+    Event::GetClientCoords(mPresContext, mEvent, mEvent->mRefPoint,
                            mClientPoint);
   mMovementPoint = GetMovementPoint();
   mLayerPoint = GetLayerPoint();
   mPagePoint =
-    Event::GetPageCoords(mPresContext, mEvent, mEvent->refPoint, mClientPoint);
-  // GetScreenPoint converts mEvent->refPoint to right coordinates.
+    Event::GetPageCoords(mPresContext, mEvent, mEvent->mRefPoint, mClientPoint);
+  // GetScreenPoint converts mEvent->mRefPoint to right coordinates.
   CSSIntPoint screenPoint =
-    Event::GetScreenCoords(mPresContext, mEvent, mEvent->refPoint);
+    Event::GetScreenCoords(mPresContext, mEvent, mEvent->mRefPoint);
   nsresult rv = Event::DuplicatePrivateData();
   if (NS_SUCCEEDED(rv)) {
     CSSToLayoutDeviceScale scale = mPresContext ? mPresContext->CSSToDevPixelScale()
                                                 : CSSToLayoutDeviceScale(1);
-    mEvent->refPoint = RoundedToInt(screenPoint * scale);
+    mEvent->mRefPoint = RoundedToInt(screenPoint * scale);
   }
   return rv;
 }
@@ -389,7 +398,7 @@ UIEvent::Serialize(IPC::Message* aMsg, bool aSerializeInterfaceType)
 }
 
 NS_IMETHODIMP_(bool)
-UIEvent::Deserialize(const IPC::Message* aMsg, void** aIter)
+UIEvent::Deserialize(const IPC::Message* aMsg, PickleIterator* aIter)
 {
   NS_ENSURE_TRUE(Event::Deserialize(aMsg, aIter), false);
   NS_ENSURE_TRUE(IPC::ReadParam(aMsg, aIter, &mDetail), false);
@@ -459,7 +468,7 @@ UIEvent::GetModifierStateInternal(const nsAString& aKey)
 {
   WidgetInputEvent* inputEvent = mEvent->AsInputEvent();
   MOZ_ASSERT(inputEvent, "mEvent must be WidgetInputEvent or derived class");
-  return ((inputEvent->modifiers & WidgetInputEvent::GetModifier(aKey)) != 0);
+  return ((inputEvent->mModifiers & WidgetInputEvent::GetModifier(aKey)) != 0);
 }
 
 void
@@ -475,11 +484,11 @@ UIEvent::InitModifiers(const EventModifierInit& aParam)
     return;
   }
 
-  inputEvent->modifiers = MODIFIER_NONE;
+  inputEvent->mModifiers = MODIFIER_NONE;
 
 #define SET_MODIFIER(aName, aValue) \
   if (aParam.m##aName) { \
-    inputEvent->modifiers |= aValue; \
+    inputEvent->mModifiers |= aValue; \
   } \
 
   SET_MODIFIER(CtrlKey,                 MODIFIER_CONTROL)

@@ -14,9 +14,10 @@
 
 class GrProcessor;
 class GrProcessorKeyBuilder;
-class GrGLSLFPBuilder;
-class GrGLSLFragmentBuilder;
 class GrGLSLCaps;
+class GrGLSLFPBuilder;
+class GrGLSLFPFragmentBuilder;
+class GrGLSLUniformHandler;
 
 class GrGLSLFragmentProcessor {
 public:
@@ -51,24 +52,24 @@ public:
      */
 
     struct EmitArgs {
-        EmitArgs(GrGLSLFPBuilder* builder,
-                 GrGLSLFragmentBuilder* fragBuilder,
+        EmitArgs(GrGLSLFPFragmentBuilder* fragBuilder,
+                 GrGLSLUniformHandler* uniformHandler,
                  const GrGLSLCaps* caps,
                  const GrFragmentProcessor& fp,
                  const char* outputColor,
                  const char* inputColor,
                  const GrGLSLTransformedCoordsArray& coords,
                  const TextureSamplerArray& samplers)
-            : fBuilder(builder)
-            , fFragBuilder(fragBuilder)
+            : fFragBuilder(fragBuilder)
+            , fUniformHandler(uniformHandler)
             , fGLSLCaps(caps)
             , fFp(fp)
             , fOutputColor(outputColor)
             , fInputColor(inputColor)
             , fCoords(coords)
             , fSamplers(samplers) {}
-        GrGLSLFPBuilder* fBuilder;
-        GrGLSLFragmentBuilder* fFragBuilder;
+        GrGLSLFPFragmentBuilder* fFragBuilder;
+        GrGLSLUniformHandler* fUniformHandler;
         const GrGLSLCaps* fGLSLCaps;
         const GrFragmentProcessor& fFp;
         const char* fOutputColor;

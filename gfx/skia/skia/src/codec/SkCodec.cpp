@@ -7,33 +7,45 @@
 
 #include "SkBmpCodec.h"
 #include "SkCodec.h"
-#include "SkData.h"
-#include "SkCodec_libgif.h"
-#include "SkCodec_libico.h"
-#include "SkCodec_libpng.h"
-#include "SkCodec_wbmp.h"
 #include "SkCodecPriv.h"
-#if !defined(GOOGLE3)
+#include "SkColorSpace.h"
+#include "SkData.h"
+#include "SkGifCodec.h"
+#include "SkIcoCodec.h"
 #include "SkJpegCodec.h"
+#ifdef SK_CODEC_DECODES_PNG
+#include "SkPngCodec.h"
 #endif
+#include "SkRawCodec.h"
 #include "SkStream.h"
+#include "SkWbmpCodec.h"
 #include "SkWebpCodec.h"
 
 struct DecoderProc {
-    bool (*IsFormat)(SkStream*);
+    bool (*IsFormat)(const void*, size_t);
     SkCodec* (*NewFromStream)(SkStream*);
 };
 
 static const DecoderProc gDecoderProcs[] = {
-#if !defined(GOOGLE3)
+#ifdef SK_CODEC_DECODES_JPEG
     { SkJpegCodec::IsJpeg, SkJpegCodec::NewFromStream },
 #endif
+#ifdef SK_CODEC_DECODES_WEBP
     { SkWebpCodec::IsWebp, SkWebpCodec::NewFromStream },
+#endif
+#ifdef SK_CODEC_DECODES_GIF
     { SkGifCodec::IsGif, SkGifCodec::NewFromStream },
+#endif
+#ifdef SK_CODEC_DECODES_PNG
     { SkIcoCodec::IsIco, SkIcoCodec::NewFromStream },
+#endif
     { SkBmpCodec::IsBmp, SkBmpCodec::NewFromStream },
     { SkWbmpCodec::IsWbmp, SkWbmpCodec::NewFromStream }
 };
+
+size_t SkCodec::MinBufferedBytesNeeded() {
+    return WEBP_VP8_HEADER_SIZE;
+}
 
 SkCodec* SkCodec::NewFromStream(SkStream* stream,
                                 SkPngChunkReader* chunkReader) {
@@ -42,39 +54,57 @@ SkCodec* SkCodec::NewFromStream(SkStream* stream,
     }
 
     SkAutoTDelete<SkStream> streamDeleter(stream);
-    
-    SkAutoTDelete<SkCodec> codec(nullptr);
-    // PNG is special, since we want to be able to supply an SkPngChunkReader.
-    // But this code follows the same pattern as the loop.
-    const bool isPng = SkPngCodec::IsPng(stream);
-    if (!stream->rewind()) {
-        return NULL;
-    }
-    if (isPng) {
-        codec.reset(SkPngCodec::NewFromStream(streamDeleter.detach(), chunkReader));
-    } else {
-        for (DecoderProc proc : gDecoderProcs) {
-            const bool correctFormat = proc.IsFormat(stream);
-            if (!stream->rewind()) {
-                return nullptr;
-            }
-            if (correctFormat) {
-                codec.reset(proc.NewFromStream(streamDeleter.detach()));
-                break;
-            }
+
+    // 14 is enough to read all of the supported types.
+    const size_t bytesToRead = 14;
+    SkASSERT(bytesToRead <= MinBufferedBytesNeeded());
+
+    char buffer[bytesToRead];
+    size_t bytesRead = stream->peek(buffer, bytesToRead);
+
+    // It is also possible to have a complete image less than bytesToRead bytes
+    // (e.g. a 1 x 1 wbmp), meaning peek() would return less than bytesToRead.
+    // Assume that if bytesRead < bytesToRead, but > 0, the stream is shorter
+    // than bytesToRead, so pass that directly to the decoder.
+    // It also is possible the stream uses too small a buffer for peeking, but
+    // we trust the caller to use a large enough buffer.
+
+    if (0 == bytesRead) {
+        // TODO: After implementing peek in CreateJavaOutputStreamAdaptor.cpp, this
+        // printf could be useful to notice failures.
+        // SkCodecPrintf("Encoded image data failed to peek!\n");
+
+        // It is possible the stream does not support peeking, but does support
+        // rewinding.
+        // Attempt to read() and pass the actual amount read to the decoder.
+        bytesRead = stream->read(buffer, bytesToRead);
+        if (!stream->rewind()) {
+            SkCodecPrintf("Encoded image data could not peek or rewind to determine format!\n");
+            return nullptr;
         }
     }
 
-    // Set the max size at 128 megapixels (512 MB for kN32).
-    // This is about 4x smaller than a test image that takes a few minutes for
-    // dm to decode and draw.
-    const int32_t maxSize = 1 << 27;
-    if (codec && codec->getInfo().width() * codec->getInfo().height() > maxSize) {
-        SkCodecPrintf("Error: Image size too large, cannot decode.\n");
-        return nullptr;
-    } else {
-        return codec.detach();
+    // PNG is special, since we want to be able to supply an SkPngChunkReader.
+    // But this code follows the same pattern as the loop.
+#ifdef SK_CODEC_DECODES_PNG
+    if (SkPngCodec::IsPng(buffer, bytesRead)) {
+        return SkPngCodec::NewFromStream(streamDeleter.release(), chunkReader);
+    } else
+#endif
+    {
+        for (DecoderProc proc : gDecoderProcs) {
+            if (proc.IsFormat(buffer, bytesRead)) {
+                return proc.NewFromStream(streamDeleter.release());
+            }
+        }
+
+#ifdef SK_CODEC_DECODES_RAW
+        // Try to treat the input as RAW if all the other checks failed.
+        return SkRawCodec::NewFromStream(streamDeleter.release());
+#endif
     }
+
+    return nullptr;
 }
 
 SkCodec* SkCodec::NewFromData(SkData* data, SkPngChunkReader* reader) {
@@ -84,10 +114,13 @@ SkCodec* SkCodec::NewFromData(SkData* data, SkPngChunkReader* reader) {
     return NewFromStream(new SkMemoryStream(data), reader);
 }
 
-SkCodec::SkCodec(const SkImageInfo& info, SkStream* stream)
+SkCodec::SkCodec(const SkImageInfo& info, SkStream* stream, sk_sp<SkColorSpace> colorSpace,
+        Origin origin)
     : fSrcInfo(info)
     , fStream(stream)
     , fNeedsRewind(false)
+    , fColorSpace(colorSpace)
+    , fOrigin(origin)
     , fDstInfo()
     , fOptions()
     , fCurrScanline(-1)
@@ -142,15 +175,6 @@ SkCodec::Result SkCodec::getPixels(const SkImageInfo& info, void* pixels, size_t
         }
         ctableCount = nullptr;
         ctable = nullptr;
-    }
-
-    {
-        SkAlphaType canonical;
-        if (!SkColorTypeValidateAlphaType(info.colorType(), info.alphaType(), &canonical)
-            || canonical != info.alphaType())
-        {
-            return kInvalidConversion;
-        }
     }
 
     if (!this->rewindIfNeeded()) {
@@ -330,27 +354,32 @@ void SkCodec::fillIncompleteImage(const SkImageInfo& info, void* dst, size_t row
         ZeroInitialized zeroInit, int linesRequested, int linesDecoded) {
 
     void* fillDst;
-    const uint32_t fillValue = this->getFillValue(info.colorType(), info.alphaType());
+    const uint32_t fillValue = this->getFillValue(info.colorType());
     const int linesRemaining = linesRequested - linesDecoded;
     SkSampler* sampler = this->getSampler(false);
+
+    int fillWidth = info.width();
+    if (fOptions.fSubset) {
+        fillWidth = fOptions.fSubset->width();
+    }
 
     switch (this->getScanlineOrder()) {
         case kTopDown_SkScanlineOrder:
         case kNone_SkScanlineOrder: {
-            const SkImageInfo fillInfo = info.makeWH(info.width(), linesRemaining);
+            const SkImageInfo fillInfo = info.makeWH(fillWidth, linesRemaining);
             fillDst = SkTAddOffset<void>(dst, linesDecoded * rowBytes);
             fill_proc(fillInfo, fillDst, rowBytes, fillValue, zeroInit, sampler);
             break;
         }
         case kBottomUp_SkScanlineOrder: {
             fillDst = dst;
-            const SkImageInfo fillInfo = info.makeWH(info.width(), linesRemaining);
+            const SkImageInfo fillInfo = info.makeWH(fillWidth, linesRemaining);
             fill_proc(fillInfo, fillDst, rowBytes, fillValue, zeroInit, sampler);
             break;
         }
         case kOutOfOrder_SkScanlineOrder: {
             SkASSERT(1 == linesRequested || this->getInfo().height() == linesRequested);
-            const SkImageInfo fillInfo = info.makeWH(info.width(), 1);
+            const SkImageInfo fillInfo = info.makeWH(fillWidth, 1);
             for (int srcY = linesDecoded; srcY < linesRequested; srcY++) {
                 fillDst = SkTAddOffset<void>(dst, this->outputScanline(srcY) * rowBytes);
                 fill_proc(fillInfo, fillDst, rowBytes, fillValue, zeroInit, sampler);

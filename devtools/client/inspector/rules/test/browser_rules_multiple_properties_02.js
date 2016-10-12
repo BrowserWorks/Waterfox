@@ -9,16 +9,18 @@
 
 const TEST_URI = "<div>Test Element</div>";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode("div", inspector);
-  yield testMultiValues(inspector, view);
-});
 
-function* testMultiValues(inspector, view) {
   let ruleEditor = getRuleViewRuleEditor(view, 0);
+  // Expect 2 ruleview-changed events.
+  // - one when focusing the property-name editor
+  // - one after pressing RETURN, which will focus the property-value editor
+  let onDone = waitForNEvents(view, "ruleview-changed", 2);
   yield createNewRuleViewProperty(ruleEditor, "width:");
+  yield onDone;
 
   is(ruleEditor.rule.textProps.length, 1,
     "Should have created a new text property.");
@@ -26,11 +28,13 @@ function* testMultiValues(inspector, view) {
     "Should have created a property editor.");
 
   // Value is focused, lets add multiple rules here and make sure they get added
+  onDone = view.once("ruleview-changed");
   let onMutation = inspector.once("markupmutation");
-  let valueEditor = ruleEditor.propertyList.children[0].querySelector("input");
-  valueEditor.value = "height: 10px;color:blue";
+  let input = view.styleDocument.activeElement;
+  input.value = "height: 10px;color:blue";
   EventUtils.synthesizeKey("VK_RETURN", {}, view.styleWindow);
   yield onMutation;
+  yield onDone;
 
   is(ruleEditor.rule.textProps.length, 2,
     "Should have added the changed value.");
@@ -50,4 +54,4 @@ function* testMultiValues(inspector, view) {
     "Should have correct property name");
   is(ruleEditor.rule.textProps[1].value, "blue",
     "Should have correct property value");
-}
+});

@@ -9,7 +9,7 @@
 
 const TEST_URI = URL_ROOT + "doc_keyframeanimation.html";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab(TEST_URI);
   let {inspector, view} = yield openRuleView();
   yield testPacman(inspector, view);
@@ -65,15 +65,9 @@ function* testMoxy(inspector, view) {
   });
 }
 
-function* testNode(selector, inspector, view) {
-  let element = getNode(selector);
+function* assertKeyframeRules(selector, inspector, view, expected) {
   yield selectNode(selector, inspector);
   let elementStyle = view._elementStyle;
-  return {element, elementStyle};
-}
-
-function* assertKeyframeRules(selector, inspector, view, expected) {
-  let {element, elementStyle} = yield testNode(selector, inspector, view);
 
   let rules = {
     elementRules: elementStyle.rules.filter(rule => !rule.keyframes),
@@ -93,8 +87,6 @@ function* assertKeyframeRules(selector, inspector, view, expected) {
       keyframeRule.domRule.keyText + " selector heading is correct");
     i++;
   }
-
-  return {rules, element, elementStyle};
 }
 
 function assertGutters(view, expected) {

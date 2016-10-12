@@ -150,6 +150,9 @@ const void* SkROBuffer::Iter::data() const {
 }
 
 size_t SkROBuffer::Iter::size() const {
+    if (!fBlock) {
+        return 0;
+    }
     return SkTMin(fBlock->fUsed, fRemaining);
 }
 
@@ -165,7 +168,9 @@ SkRWBuffer::SkRWBuffer(size_t initialCapacity) : fHead(nullptr), fTail(nullptr),
 
 SkRWBuffer::~SkRWBuffer() {
     this->validate();
-    fHead->unref();
+    if (fHead) {
+        fHead->unref();
+    }
 }
 
 void SkRWBuffer::append(const void* src, size_t length) {

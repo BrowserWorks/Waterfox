@@ -63,8 +63,6 @@ nsChromeTreeOwner::InitGlobals()
 {
   NS_ASSERTION(gLiterals == nullptr, "already initialized");
   gLiterals = new nsChromeTreeOwnerLiterals();
-  if (!gLiterals)
-    return NS_ERROR_OUT_OF_MEMORY;
   return NS_OK;
 }
 
@@ -359,7 +357,7 @@ NS_IMETHODIMP nsChromeTreeOwner::InitWindow(nativeWindow aParentNativeWindow,
    nsIWidget* parentWidget, int32_t x, int32_t y, int32_t cx, int32_t cy)   
 {
    // Ignore widget parents for now.  Don't think those are a vaild thing to call.
-   NS_ENSURE_SUCCESS(SetPositionAndSize(x, y, cx, cy, false), NS_ERROR_FAILURE);
+   NS_ENSURE_SUCCESS(SetPositionAndSize(x, y, cx, cy, 0), NS_ERROR_FAILURE);
 
    return NS_OK;
 }
@@ -388,6 +386,12 @@ NS_IMETHODIMP nsChromeTreeOwner::GetDevicePixelsPerDesktopPixel(double *aScale)
    return mXULWindow->GetDevicePixelsPerDesktopPixel(aScale);
 }
 
+NS_IMETHODIMP nsChromeTreeOwner::SetPositionDesktopPix(int32_t x, int32_t y)
+{
+   NS_ENSURE_STATE(mXULWindow);
+   return mXULWindow->SetPositionDesktopPix(x, y);
+}
+
 NS_IMETHODIMP nsChromeTreeOwner::SetPosition(int32_t x, int32_t y)
 {
    NS_ENSURE_STATE(mXULWindow);
@@ -413,10 +417,10 @@ NS_IMETHODIMP nsChromeTreeOwner::GetSize(int32_t* cx, int32_t* cy)
 }
 
 NS_IMETHODIMP nsChromeTreeOwner::SetPositionAndSize(int32_t x, int32_t y, int32_t cx,
-   int32_t cy, bool fRepaint)
+   int32_t cy, uint32_t aFlags)
 {
    NS_ENSURE_STATE(mXULWindow);
-   return mXULWindow->SetPositionAndSize(x, y, cx, cy, fRepaint);
+   return mXULWindow->SetPositionAndSize(x, y, cx, cy, aFlags);
 }
 
 NS_IMETHODIMP nsChromeTreeOwner::GetPositionAndSize(int32_t* x, int32_t* y, int32_t* cx,
@@ -548,12 +552,13 @@ NS_IMETHODIMP nsChromeTreeOwner::OnLocationChange(nsIWebProgress* aWebProgress,
 
   if (aWebProgress) {
     NS_ENSURE_STATE(mXULWindow);
-    nsCOMPtr<nsIDOMWindow> progressWin;
+    nsCOMPtr<mozIDOMWindowProxy> progressWin;
     aWebProgress->GetDOMWindow(getter_AddRefs(progressWin));
 
     nsCOMPtr<nsIDocShell> docshell;
     mXULWindow->GetDocShell(getter_AddRefs(docshell));
-    nsCOMPtr<nsIDOMWindow> ourWin(do_QueryInterface(docshell));
+    // XXXkhuey this is totally wrong, bug 1223303.
+    nsCOMPtr<mozIDOMWindowProxy> ourWin(do_QueryInterface(docshell));
 
     if (ourWin != progressWin)
       itsForYou = false;

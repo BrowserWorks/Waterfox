@@ -62,11 +62,11 @@ class JsepCodecDescription {
           && (mChannels == entry->channels)) {
         return ParametersMatch(fmt, remoteMsection);
       }
-    } else if (fmt.compare("9") && mName == "G722") {
+    } else if (!fmt.compare("9") && mName == "G722") {
       return true;
-    } else if (fmt.compare("0") && mName == "PCMU") {
+    } else if (!fmt.compare("0") && mName == "PCMU") {
       return true;
-    } else if (fmt.compare("8") && mName == "PCMA") {
+    } else if (!fmt.compare("8") && mName == "PCMA") {
       return true;
     }
     return false;
@@ -130,14 +130,73 @@ class JsepAudioCodecDescription : public JsepCodecDescription {
       : JsepCodecDescription(mozilla::SdpMediaSection::kAudio, defaultPt, name,
                              clock, channels, enabled),
         mPacketSize(packetSize),
-        mBitrate(bitRate)
+        mBitrate(bitRate),
+        mMaxPlaybackRate(0),
+        mForceMono(false),
+        mFECEnabled(false)
   {
   }
 
   JSEP_CODEC_CLONE(JsepAudioCodecDescription)
 
+  SdpFmtpAttributeList::OpusParameters
+  GetOpusParameters(const std::string& pt,
+                    const SdpMediaSection& msection) const
+  {
+    // Will contain defaults if nothing else
+    SdpFmtpAttributeList::OpusParameters result;
+    auto* params = msection.FindFmtp(pt);
+
+    if (params && params->codec_type == SdpRtpmapAttributeList::kOpus) {
+      result =
+        static_cast<const SdpFmtpAttributeList::OpusParameters&>(*params);
+    }
+
+    return result;
+  }
+
+  void
+  AddParametersToMSection(SdpMediaSection& msection) const override
+  {
+    if (mDirection == sdp::kSend) {
+      return;
+    }
+
+    if (mName == "opus") {
+      SdpFmtpAttributeList::OpusParameters opusParams(
+          GetOpusParameters(mDefaultPt, msection));
+      if (mMaxPlaybackRate) {
+        opusParams.maxplaybackrate = mMaxPlaybackRate;
+      }
+      if (mChannels == 2 && !mForceMono) {
+        // We prefer to receive stereo, if available.
+        opusParams.stereo = 1;
+      }
+      msection.SetFmtp(SdpFmtpAttributeList::Fmtp(mDefaultPt, opusParams));
+    }
+  }
+
+  bool
+  Negotiate(const std::string& pt,
+            const SdpMediaSection& remoteMsection) override
+  {
+    JsepCodecDescription::Negotiate(pt, remoteMsection);
+    if (mName == "opus" && mDirection == sdp::kSend) {
+      SdpFmtpAttributeList::OpusParameters opusParams(
+          GetOpusParameters(mDefaultPt, remoteMsection));
+
+      mMaxPlaybackRate = opusParams.maxplaybackrate;
+      mForceMono = !opusParams.stereo;
+    }
+
+    return true;
+  }
+
   uint32_t mPacketSize;
   uint32_t mBitrate;
+  uint32_t mMaxPlaybackRate;
+  bool mForceMono;
+  bool mFECEnabled;
 };
 
 class JsepVideoCodecDescription : public JsepCodecDescription {
@@ -148,6 +207,8 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
                             bool enabled = true)
       : JsepCodecDescription(mozilla::SdpMediaSection::kVideo, defaultPt, name,
                              clock, 0, enabled),
+        mTmmbrEnabled(false),
+        mRembEnabled(false),
         mPacketizationMode(0)
   {
     // Add supported rtcp-fb types
@@ -158,7 +219,22 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
 
   virtual void
   EnableTmmbr() {
-    mCcmFbTypes.push_back(SdpRtcpFbAttributeList::tmmbr);
+    // EnableTmmbr can be called multiple times due to multiple calls to
+    // PeerConnectionImpl::ConfigureJsepSessionCodecs
+    if (!mTmmbrEnabled) {
+      mTmmbrEnabled = true;
+      mCcmFbTypes.push_back(SdpRtcpFbAttributeList::tmmbr);
+    }
+  }
+
+  virtual void
+  EnableRemb() {
+    // EnableRemb can be called multiple times due to multiple calls to
+    // PeerConnectionImpl::ConfigureJsepSessionCodecs
+    if (!mRembEnabled) {
+      mRembEnabled = true;
+      mOtherFbTypes.push_back({ "", SdpRtcpFbAttributeList::kRemb, "", ""});
+    }
   }
 
   void
@@ -200,8 +276,7 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
       // Hard-coded, may need to change someday?
       h264Params.level_asymmetry_allowed = true;
 
-      msection.SetFmtp(
-          SdpFmtpAttributeList::Fmtp(mDefaultPt, "", h264Params));
+      msection.SetFmtp(SdpFmtpAttributeList::Fmtp(mDefaultPt, h264Params));
     } else if (mName == "VP8" || mName == "VP9") {
       if (mDirection == sdp::kRecv) {
         // VP8 and VP9 share the same SDP parameters thus far
@@ -210,8 +285,7 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
 
         vp8Params.max_fs = mConstraints.maxFs;
         vp8Params.max_fr = mConstraints.maxFps;
-        msection.SetFmtp(
-            SdpFmtpAttributeList::Fmtp(mDefaultPt, "", vp8Params));
+        msection.SetFmtp(SdpFmtpAttributeList::Fmtp(mDefaultPt, vp8Params));
       }
     }
   }
@@ -235,6 +309,9 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
     }
     for (const std::string& type : mCcmFbTypes) {
       rtcpfbs.PushEntry(mDefaultPt, SdpRtcpFbAttributeList::kCcm, type);
+    }
+    for (const auto& fb : mOtherFbTypes) {
+      rtcpfbs.PushEntry(mDefaultPt, fb.type, fb.parameter, fb.extra);
     }
 
     msection.SetRtcpFbs(rtcpfbs);
@@ -292,12 +369,25 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
   }
 
   void
+  NegotiateRtcpFb(const SdpMediaSection& remoteMsection,
+                  std::vector<SdpRtcpFbAttributeList::Feedback>* supportedFbs) {
+    std::vector<SdpRtcpFbAttributeList::Feedback> temp;
+    for (auto& fb : *supportedFbs) {
+      if (remoteMsection.HasRtcpFb(mDefaultPt, fb.type, fb.parameter)) {
+        temp.push_back(fb);
+      }
+    }
+    *supportedFbs = temp;
+  }
+
+  void
   NegotiateRtcpFb(const SdpMediaSection& remote)
   {
     // Removes rtcp-fb types that the other side doesn't support
     NegotiateRtcpFb(remote, SdpRtcpFbAttributeList::kAck, &mAckFbTypes);
     NegotiateRtcpFb(remote, SdpRtcpFbAttributeList::kNack, &mNackFbTypes);
     NegotiateRtcpFb(remote, SdpRtcpFbAttributeList::kCcm, &mCcmFbTypes);
+    NegotiateRtcpFb(remote, &mOtherFbTypes);
   }
 
   virtual bool
@@ -543,11 +633,25 @@ class JsepVideoCodecDescription : public JsepCodecDescription {
     return true;
   }
 
+  virtual bool
+  RtcpFbRembIsSet() const
+  {
+    for (const auto& fb : mOtherFbTypes) {
+      if (fb.type == SdpRtcpFbAttributeList::kRemb) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   JSEP_CODEC_CLONE(JsepVideoCodecDescription)
 
   std::vector<std::string> mAckFbTypes;
   std::vector<std::string> mNackFbTypes;
   std::vector<std::string> mCcmFbTypes;
+  std::vector<SdpRtcpFbAttributeList::Feedback> mOtherFbTypes;
+  bool mTmmbrEnabled;
+  bool mRembEnabled;
 
   // H264-specific stuff
   uint32_t mProfileLevelId;

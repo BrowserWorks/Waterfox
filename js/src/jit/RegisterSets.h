@@ -7,7 +7,6 @@
 #ifndef jit_RegisterSets_h
 #define jit_RegisterSets_h
 
-#include "mozilla/Alignment.h"
 #include "mozilla/MathAlgorithms.h"
 
 #include "jit/JitAllocPolicy.h"
@@ -26,8 +25,8 @@ struct AnyRegister {
     Code code_;
 
   public:
-    AnyRegister()
-    { }
+    AnyRegister() = default;
+
     explicit AnyRegister(Register gpr) {
         code_ = gpr.code();
     }
@@ -122,7 +121,9 @@ class ValueOperand
     Register payloadReg() const {
         return payload_;
     }
-
+    bool aliases(Register reg) const {
+        return type_ == reg || payload_ == reg;
+    }
     Register scratchReg() const {
         return payloadReg();
     }
@@ -144,7 +145,9 @@ class ValueOperand
     Register valueReg() const {
         return value_;
     }
-
+    bool aliases(Register reg) const {
+        return value_ == reg;
+    }
     Register scratchReg() const {
         return valueReg();
     }
@@ -156,7 +159,7 @@ class ValueOperand
     }
 #endif
 
-    ValueOperand() {}
+    ValueOperand() = default;
 };
 
 // Registers to hold either either a typed or untyped value.
@@ -165,46 +168,25 @@ class TypedOrValueRegister
     // Type of value being stored.
     MIRType type_;
 
-    // Space to hold either an AnyRegister or a ValueOperand.
     union U {
-        mozilla::AlignedStorage2<AnyRegister> typed;
-        mozilla::AlignedStorage2<ValueOperand> value;
+        AnyRegister typed;
+        ValueOperand value;
     } data;
-
-    AnyRegister& dataTyped() {
-        MOZ_ASSERT(hasTyped());
-        return *data.typed.addr();
-    }
-    ValueOperand& dataValue() {
-        MOZ_ASSERT(hasValue());
-        return *data.value.addr();
-    }
-
-    AnyRegister dataTyped() const {
-        MOZ_ASSERT(hasTyped());
-        return *data.typed.addr();
-    }
-    const ValueOperand& dataValue() const {
-        MOZ_ASSERT(hasValue());
-        return *data.value.addr();
-    }
 
   public:
 
-    TypedOrValueRegister()
-      : type_(MIRType_None)
-    {}
+    TypedOrValueRegister() = default;
 
     TypedOrValueRegister(MIRType type, AnyRegister reg)
       : type_(type)
     {
-        dataTyped() = reg;
+        data.typed = reg;
     }
 
     MOZ_IMPLICIT TypedOrValueRegister(ValueOperand value)
-      : type_(MIRType_Value)
+      : type_(MIRType::Value)
     {
-        dataValue() = value;
+        data.value = value;
     }
 
     MIRType type() const {
@@ -212,19 +194,21 @@ class TypedOrValueRegister
     }
 
     bool hasTyped() const {
-        return type() != MIRType_None && type() != MIRType_Value;
+        return type() != MIRType::None && type() != MIRType::Value;
     }
 
     bool hasValue() const {
-        return type() == MIRType_Value;
+        return type() == MIRType::Value;
     }
 
     AnyRegister typedReg() const {
-        return dataTyped();
+        MOZ_ASSERT(hasTyped());
+        return data.typed;
     }
 
     ValueOperand valueReg() const {
-        return dataValue();
+        MOZ_ASSERT(hasValue());
+        return data.value;
     }
 
     AnyRegister scratchReg() {
@@ -242,17 +226,17 @@ class ConstantOrRegister
 
     // Space to hold either a Value or a TypedOrValueRegister.
     union U {
-        mozilla::AlignedStorage2<Value> constant;
-        mozilla::AlignedStorage2<TypedOrValueRegister> reg;
+        Value constant;
+        TypedOrValueRegister reg;
     } data;
 
     Value& dataValue() {
         MOZ_ASSERT(constant());
-        return *data.constant.addr();
+        return data.constant;
     }
     TypedOrValueRegister& dataReg() {
         MOZ_ASSERT(!constant());
-        return *data.reg.addr();
+        return data.reg;
     }
 
   public:
@@ -285,18 +269,18 @@ class ConstantOrRegister
     }
 };
 
-struct Int32Key {
+struct RegisterOrInt32Constant {
     bool isRegister_;
     union {
         Register reg_;
         int32_t constant_;
     };
 
-    explicit Int32Key(Register reg)
+    explicit RegisterOrInt32Constant(Register reg)
       : isRegister_(true), reg_(reg)
     { }
 
-    explicit Int32Key(int32_t index)
+    explicit RegisterOrInt32Constant(int32_t index)
       : isRegister_(false), constant_(index)
     { }
 
@@ -805,6 +789,14 @@ class SpecializedRegSet : public Accessors
 #endif
     }
 
+    bool aliases(ValueOperand v) const {
+#ifdef JS_NUNBOX32
+        return has(v.typeReg()) || has(v.payloadReg());
+#else
+        return has(v.valueReg());
+#endif
+    }
+
     RegType takeAnyExcluding(RegType preclude) {
         RegType reg = getAnyExcluding(preclude);
         take(reg);
@@ -1274,6 +1266,13 @@ class ABIArg
     Register gpr() const {
         MOZ_ASSERT(kind() == GPR);
         return Register::FromCode(u.gpr_);
+    }
+    Register64 gpr64() const {
+#ifdef JS_PUNBOX64
+        return Register64(gpr());
+#else
+        MOZ_CRASH("NYI");
+#endif
     }
     Register evenGpr() const {
         MOZ_ASSERT(isGeneralRegPair());

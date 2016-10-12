@@ -9,13 +9,13 @@
  * view.
  */
 
-XPCOMUtils.defineLazyGetter(this, "osString", function() {
+XPCOMUtils.defineLazyGetter(this, "osString", function () {
   return Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).OS;
 });
 
 const TEST_URI = URL_ROOT + "doc_copystyles.html";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab(TEST_URI);
   let { inspector, view } = yield openRuleView();
   let contextmenu = view._contextmenu;
@@ -144,7 +144,7 @@ add_task(function*() {
       }
     },
     {
-      setup: function*() {
+      setup: function* () {
         yield disableProperty(view, 0);
       },
       desc: "Test Copy Rule with Disabled Property",
@@ -167,7 +167,7 @@ add_task(function*() {
       }
     },
     {
-      setup: function*() {
+      setup: function* () {
         yield disableProperty(view, 4);
       },
       desc: "Test Copy Rule with Disabled Property with Comment",
@@ -259,7 +259,7 @@ function* checkCopyStyle(view, node, menuItem, expectedPattern, hidden) {
   try {
     yield waitForClipboard(() => menuItem.click(),
       () => checkClipboardData(expectedPattern));
-  } catch(e) {
+  } catch (e) {
     failedClipboard(expectedPattern);
   }
 
@@ -268,11 +268,8 @@ function* checkCopyStyle(view, node, menuItem, expectedPattern, hidden) {
 
 function* disableProperty(view, index) {
   let ruleEditor = getRuleViewRuleEditor(view, 1);
-  let propEditor = ruleEditor.rule.textProps[index].editor;
-
-  info("Disabling a property");
-  propEditor.enable.click();
-  yield ruleEditor.rule._applyingModifications;
+  let textProp = ruleEditor.rule.textProps[index];
+  yield togglePropStatus(view, textProp);
 }
 
 function checkClipboardData(expectedPattern) {

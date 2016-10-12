@@ -37,7 +37,7 @@ struct ParamTraits<mozilla::gfx::VRDeviceUpdate>
     WriteParam(aMsg, aParam.mSensorState);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     if (!ReadParam(aMsg, aIter, &(aResult->mDeviceInfo)) ||
         !ReadParam(aMsg, aIter, &(aResult->mSensorState))) {
@@ -58,7 +58,7 @@ struct ParamTraits<mozilla::gfx::VRSensorUpdate>
     WriteParam(aMsg, aParam.mSensorState);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     if (!ReadParam(aMsg, aIter, &(aResult->mDeviceID)) ||
         !ReadParam(aMsg, aIter, &(aResult->mSensorState))) {
@@ -92,7 +92,7 @@ struct ParamTraits<mozilla::gfx::VRDeviceInfo>
     }
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     if (!ReadParam(aMsg, aIter, &(aResult->mType)) ||
         !ReadParam(aMsg, aIter, &(aResult->mDeviceID)) ||
@@ -127,6 +127,7 @@ struct ParamTraits<mozilla::gfx::VRHMDSensorState>
   static void Write(Message* aMsg, const paramType& aParam)
   {
     WriteParam(aMsg, aParam.timestamp);
+    WriteParam(aMsg, aParam.inputFrameID);
     WriteParam(aMsg, aParam.flags);
     WriteParam(aMsg, aParam.orientation[0]);
     WriteParam(aMsg, aParam.orientation[1]);
@@ -149,9 +150,10 @@ struct ParamTraits<mozilla::gfx::VRHMDSensorState>
     WriteParam(aMsg, aParam.linearAcceleration[2]);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     if (!ReadParam(aMsg, aIter, &(aResult->timestamp)) ||
+        !ReadParam(aMsg, aIter, &(aResult->inputFrameID)) ||
         !ReadParam(aMsg, aIter, &(aResult->flags)) ||
         !ReadParam(aMsg, aIter, &(aResult->orientation[0])) ||
         !ReadParam(aMsg, aIter, &(aResult->orientation[1])) ||
@@ -191,7 +193,7 @@ struct ParamTraits<mozilla::gfx::VRFieldOfView>
     WriteParam(aMsg, aParam.leftDegrees);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     if (!ReadParam(aMsg, aIter, &(aResult->upDegrees)) ||
         !ReadParam(aMsg, aIter, &(aResult->rightDegrees)) ||

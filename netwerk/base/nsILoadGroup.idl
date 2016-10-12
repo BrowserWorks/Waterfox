@@ -8,7 +8,7 @@
 interface nsISimpleEnumerator;
 interface nsIRequestObserver;
 interface nsIInterfaceRequestor;
-interface nsISchedulingContext;
+interface nsIRequestContext;
 
 typedef unsigned long nsLoadFlags;
 
@@ -58,7 +58,7 @@ interface nsILoadGroup : nsIRequest
      * By the time this call ends, aRequest will have been removed from the
      * loadgroup, even if this function throws an exception.
      */
-    void removeRequest(in nsIRequest aRequest, 
+    void removeRequest(in nsIRequest aRequest,
                        in nsISupports aContext,
                        in nsresult aStatus);
 
@@ -83,7 +83,7 @@ interface nsILoadGroup : nsIRequest
      * Context for managing things like js/css connection blocking,
      * and per-tab connection grouping.
      */
-    [noscript] readonly attribute nsID schedulingContextID;
+    [noscript] readonly attribute nsID requestContextID;
 
     /**
      * The set of load flags that will be added to all new requests added to
@@ -97,4 +97,10 @@ interface nsILoadGroup : nsIRequest
      * the docShell has created the default request.)
      */
     attribute nsLoadFlags defaultLoadFlags;
+
+    /**
+     * The cached user agent override created by UserAgentOverrides.jsm. Used
+     * for all sub-resource requests in the loadgroup.
+     */
+    attribute ACString userAgentOverrideCache;
 };

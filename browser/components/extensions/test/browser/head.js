@@ -7,7 +7,8 @@
  *          clickBrowserAction clickPageAction
  *          getBrowserActionPopup getPageActionPopup
  *          closeBrowserAction closePageAction
- *          promisePopupShown
+ *          promisePopupShown promisePopupHidden
+ *          getPanelForNode
  */
 
 var {AppConstants} = Cu.import("resource://gre/modules/AppConstants.jsm");
@@ -59,6 +60,23 @@ function promisePopupShown(popup) {
   });
 }
 
+function promisePopupHidden(popup) {
+  return new Promise(resolve => {
+    let onPopupHidden = event => {
+      popup.removeEventListener("popuphidden", onPopupHidden);
+      resolve();
+    };
+    popup.addEventListener("popuphidden", onPopupHidden);
+  });
+}
+
+function getPanelForNode(node) {
+  while (node.localName != "panel") {
+    node = node.parentNode;
+  }
+  return node;
+}
+
 function getBrowserActionWidget(extension) {
   return CustomizableUI.getWidget(makeWidgetId(extension.id) + "-browser-action");
 }
@@ -69,7 +87,7 @@ function getBrowserActionPopup(extension, win = window) {
   if (group.areaType == CustomizableUI.TYPE_TOOLBAR) {
     return win.document.getElementById("customizationui-widget-panel");
   }
-  return null;
+  return win.PanelUI.panel;
 }
 
 var clickBrowserAction = Task.async(function* (extension, win = window) {
@@ -119,9 +137,10 @@ function clickPageAction(extension, win = window) {
 function closePageAction(extension, win = window) {
   let node = getPageActionPopup(extension, win);
   if (node) {
-    node.hidePopup();
+    return promisePopupShown(node).then(() => {
+      node.hidePopup();
+    });
   }
 
   return Promise.resolve();
 }
-

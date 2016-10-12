@@ -176,7 +176,7 @@ LossyTwoByteCharsToNewLatin1CharsZ(js::ExclusiveContext* cx,
 
 template <typename CharT>
 extern UTF8CharsZ
-CharsToNewUTF8CharsZ(js::ExclusiveContext* maybeCx, const mozilla::Range<const CharT> chars);
+CharsToNewUTF8CharsZ(js::ExclusiveContext* maybeCx, const mozilla::Range<CharT> chars);
 
 uint32_t
 Utf8ToOneUcs4Char(const uint8_t* utf8Buffer, int utf8Length);
@@ -206,11 +206,20 @@ JS_PUBLIC_API(size_t)
 GetDeflatedUTF8StringLength(JSFlatString* s);
 
 /*
- * Encode |src| as UTF8. The caller must ensure |dst| has enough space.
- * Does not write the null terminator.
+ * Encode |src| as UTF8. The caller must either ensure |dst| has enough space
+ * to encode the entire string or pass the length of the buffer as |dstlenp|,
+ * in which case the function will encode characters from the string until
+ * the buffer is exhausted. Does not write the null terminator.
+ *
+ * If |dstlenp| is provided, it will be updated to hold the number of bytes
+ * written to the buffer. If |numcharsp| is provided, it will be updated to hold
+ * the number of Unicode characters written to the buffer (which can be less
+ * than the length of the string, if the buffer is exhausted before the string
+ * is fully encoded).
  */
 JS_PUBLIC_API(void)
-DeflateStringToUTF8Buffer(JSFlatString* src, mozilla::RangedPtr<char> dst);
+DeflateStringToUTF8Buffer(JSFlatString* src, mozilla::RangedPtr<char> dst,
+                          size_t* dstlenp = nullptr, size_t* numcharsp = nullptr);
 
 } // namespace JS
 

@@ -18,6 +18,7 @@ const Census = module.exports = createClass({
     onCollapse: PropTypes.func.isRequired,
     onFocus: PropTypes.func.isRequired,
     onViewSourceInDebugger: PropTypes.func.isRequired,
+    onViewIndividuals: PropTypes.func.isRequired,
     diffing: diffingModel,
   },
 
@@ -29,10 +30,11 @@ const Census = module.exports = createClass({
       onFocus,
       diffing,
       onViewSourceInDebugger,
+      onViewIndividuals,
     } = this.props;
 
     const report = census.report;
-    let parentMap = createParentMap(report);
+    let parentMap = census.parentMap;
     const { totalBytes, totalCount } = report;
 
     const getPercentBytes = totalBytes === 0
@@ -65,7 +67,9 @@ const Census = module.exports = createClass({
           expanded,
           getPercentBytes,
           getPercentCount,
-          showSign: !!diffing,
+          diffing,
+          inverted: census.display.inverted,
+          onViewIndividuals,
         }),
       getRoots: () => report.children || [],
       getKey: node => node.id,

@@ -16,7 +16,7 @@
 #include "nsTArray.h"
 
 #define SERVICEWORKERREGISTRAR_FILE "serviceworker.txt"
-#define SERVICEWORKERREGISTRAR_VERSION "3"
+#define SERVICEWORKERREGISTRAR_VERSION "4"
 #define SERVICEWORKERREGISTRAR_TERMINATOR "#"
 #define SERVICEWORKERREGISTRAR_TRUE "true"
 #define SERVICEWORKERREGISTRAR_FALSE "false"
@@ -65,6 +65,8 @@ protected:
   nsresult ReadData();
   nsresult WriteData();
   void DeleteData();
+
+  void RegisterServiceWorkerInternal(const ServiceWorkerRegistrationData& aData);
 
   ServiceWorkerRegistrar();
   virtual ~ServiceWorkerRegistrar();

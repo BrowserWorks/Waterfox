@@ -55,6 +55,7 @@ static constexpr Register CallTempReg5 = { Registers::x14 };
 static constexpr Register PreBarrierReg = { Registers::x1 };
 
 static constexpr Register ReturnReg = { Registers::x0 };
+static constexpr Register64 ReturnReg64(ReturnReg);
 static constexpr Register JSReturnReg = { Registers::x2 };
 static constexpr Register FramePointer = { Registers::fp };
 static constexpr Register ZeroRegister = { Registers::sp };
@@ -137,13 +138,11 @@ static constexpr Register AsmJSIonExitRegD2 = r4;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherRegExpReg = CallTempReg0;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherStringReg = CallTempReg1;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherLastIndexReg = CallTempReg2;
-static MOZ_CONSTEXPR_VAR Register RegExpMatcherStickyReg = CallTempReg3;
 
 // Registerd used in RegExpTester instruction (do not use ReturnReg).
 static MOZ_CONSTEXPR_VAR Register RegExpTesterRegExpReg = CallTempReg0;
 static MOZ_CONSTEXPR_VAR Register RegExpTesterStringReg = CallTempReg1;
 static MOZ_CONSTEXPR_VAR Register RegExpTesterLastIndexReg = CallTempReg2;
-static MOZ_CONSTEXPR_VAR Register RegExpTesterStickyReg = CallTempReg3;
 
 static constexpr Register JSReturnReg_Type = r3;
 static constexpr Register JSReturnReg_Data = r2;
@@ -176,6 +175,14 @@ static_assert(CodeAlignment % SimdMemoryAlignment == 0,
 static const uint32_t AsmJSStackAlignment = SimdMemoryAlignment;
 static const int32_t AsmJSGlobalRegBias = 1024;
 
+// Does this architecture support SIMD conversions between Uint32x4 and Float32x4?
+static MOZ_CONSTEXPR_VAR bool SupportsUint32x4FloatConversions = false;
+
+// Does this architecture support comparisons of unsigned integer vectors?
+static MOZ_CONSTEXPR_VAR bool SupportsUint8x16Compares = false;
+static MOZ_CONSTEXPR_VAR bool SupportsUint16x8Compares = false;
+static MOZ_CONSTEXPR_VAR bool SupportsUint32x4Compares = false;
+
 class Assembler : public vixl::Assembler
 {
   public:
@@ -207,6 +214,9 @@ class Assembler : public vixl::Assembler
     void bind(Label* label) { bind(label, nextOffset()); }
     void bind(Label* label, BufferOffset boff);
     void bind(RepatchLabel* label);
+    void bindLater(Label* label, wasm::JumpTarget target) {
+        MOZ_CRASH("NYI");
+    }
 
     bool oom() const {
         return AssemblerShared::oom() ||
@@ -257,9 +267,6 @@ class Assembler : public vixl::Assembler
     }
 
     void retarget(Label* cur, Label* next);
-    void retargetWithOffset(size_t baseOffset, const LabelBase* label, LabelBase* target) {
-        MOZ_CRASH("NYI");
-    }
 
     // The buffer is about to be linked. Ensure any constant pools or
     // excess bookkeeping has been flushed to the instruction stream.
@@ -443,20 +450,22 @@ class ABIArgGenerator
     ABIArg& current() { return current_; }
     uint32_t stackBytesConsumedSoFar() const { return stackOffset_; }
 
-  public:
-    static const Register NonArgReturnReg0;
-    static const Register NonArgReturnReg1;
-    static const Register NonVolatileReg;
-    static const Register NonArg_VolatileReg;
-    static const Register NonReturn_VolatileReg0;
-    static const Register NonReturn_VolatileReg1;
-
   protected:
     unsigned intRegIndex_;
     unsigned floatRegIndex_;
     uint32_t stackOffset_;
     ABIArg current_;
 };
+
+static MOZ_CONSTEXPR_VAR Register ABINonArgReg0 = r8;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReg1 = r9;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReturnReg0 = r8;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReturnReg1 = r9;
+
+// Registers used for asm.js/wasm table calls. These registers must be disjoint
+// from the ABI argument registers and from each other.
+static MOZ_CONSTEXPR_VAR Register WasmTableCallPtrReg = ABINonArgReg0;
+static MOZ_CONSTEXPR_VAR Register WasmTableCallSigReg = ABINonArgReg1;
 
 static inline bool
 GetIntArgReg(uint32_t usedIntArgs, uint32_t usedFloatArgs, Register* out)
@@ -494,6 +503,18 @@ GetTempRegForIntArg(uint32_t usedIntArgs, uint32_t usedFloatArgs, Register* out)
         return false;
     *out = CallTempNonArgRegs[usedIntArgs];
     return true;
+}
+
+inline Imm32
+Imm64::firstHalf() const
+{
+    return low();
+}
+
+inline Imm32
+Imm64::secondHalf() const
+{
+    return hi();
 }
 
 void PatchJump(CodeLocationJump& jump_, CodeLocationLabel label,

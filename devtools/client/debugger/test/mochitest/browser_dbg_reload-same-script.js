@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests if the same source is shown after a page is reloaded.
@@ -13,13 +15,17 @@ function test() {
   // Debug test slaves are a bit slow at this test.
   requestLongerTimeout(2);
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: FIRST_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = aPanel.panelWin;
     const gTarget = gDebugger.gTarget;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
+    const queries = gDebugger.require("./content/queries");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
     let gStep = 0;
@@ -50,33 +56,33 @@ function test() {
 
     function performTest() {
       switch (gStep++) {
-      case 0:
-        testCurrentSource(FIRST_URL, null);
-        reloadPage().then(performTest);
-        break;
-      case 1:
-        testCurrentSource(FIRST_URL);
-        reloadPage().then(performTest);
-        break;
-      case 2:
-        testCurrentSource(FIRST_URL);
-        switchAndReload(SECOND_URL).then(performTest);
-        break;
-      case 3:
-        testCurrentSource(SECOND_URL);
-        reloadPage().then(performTest);
-        break;
-      case 4:
-        testCurrentSource(SECOND_URL);
-        reloadPage().then(performTest);
-        break;
-      case 5:
-        testCurrentSource(SECOND_URL);
-        closeDebuggerAndFinish(gPanel);
-        break;
+        case 0:
+          testCurrentSource(FIRST_URL, null);
+          reloadPage().then(performTest);
+          break;
+        case 1:
+          testCurrentSource(FIRST_URL);
+          reloadPage().then(performTest);
+          break;
+        case 2:
+          testCurrentSource(FIRST_URL);
+          switchAndReload(SECOND_URL).then(performTest);
+          break;
+        case 3:
+          testCurrentSource(SECOND_URL);
+          reloadPage().then(performTest);
+          break;
+        case 4:
+          testCurrentSource(SECOND_URL);
+          reloadPage().then(performTest);
+          break;
+        case 5:
+          testCurrentSource(SECOND_URL);
+          closeDebuggerAndFinish(gPanel);
+          break;
       }
     }
 
-    waitForSourceShown(gPanel, FIRST_URL).then(performTest);
+    performTest();
   });
 }

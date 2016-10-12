@@ -10,11 +10,9 @@
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/OwningNonNull.h"
-#include "mozilla/Pair.h"
 #include "mozilla/PseudoElementHashEntry.h"
 #include "mozilla/RefPtr.h"
 #include "nsCSSProperty.h"
-#include "nsCSSPseudoElements.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsDataHashtable.h"
 #include "nsIStyleRuleProcessor.h"
@@ -30,6 +28,8 @@ namespace mozilla {
 
 class EffectSet;
 class RestyleTracker;
+struct AnimationPerformanceWarning;
+struct NonOwningAnimationTarget;
 
 namespace dom {
 class Animation;
@@ -94,7 +94,7 @@ public:
   // The specified steps taken to update the animation rule depend on
   // |aRestyleType| whose values are described above.
   void RequestRestyle(dom::Element* aElement,
-                      nsCSSPseudoElements::Type aPseudoType,
+                      CSSPseudoElementType aPseudoType,
                       RestyleType aRestyleType,
                       CascadeLevel aCascadeLevel);
 
@@ -103,7 +103,7 @@ public:
   // need to perform this step when triggering transitions *without* also
   // invalidating the animation style rule (which RequestRestyle would do).
   void PostRestyleForAnimation(dom::Element* aElement,
-                               nsCSSPseudoElements::Type aPseudoType,
+                               CSSPseudoElementType aPseudoType,
                                CascadeLevel aCascadeLevel);
 
   // Posts an animation restyle for any elements whose animation style rule
@@ -111,16 +111,24 @@ public:
   // posted because updates on the main thread are throttled.
   void PostRestyleForThrottledAnimations();
 
+  // Called when the style context on the specified (pseudo-) element might
+  // have changed so that any context-sensitive values stored within
+  // animation effects (e.g. em-based endpoints used in keyframe effects)
+  // can be re-resolved to computed values.
+  void UpdateEffectProperties(nsStyleContext* aStyleContext,
+                              dom::Element* aElement,
+                              CSSPseudoElementType aPseudoType);
+
   // Updates the animation rule stored on the EffectSet for the
   // specified (pseudo-)element for cascade level |aLevel|.
   // If the animation rule is not marked as needing an update,
   // no work is done.
   void MaybeUpdateAnimationRule(dom::Element* aElement,
-                                nsCSSPseudoElements::Type aPseudoType,
+                                CSSPseudoElementType aPseudoType,
                                 CascadeLevel aCascadeLevel);
 
   nsIStyleRule* GetAnimationRule(dom::Element* aElement,
-                                 nsCSSPseudoElements::Type aPseudoType,
+                                 CSSPseudoElementType aPseudoType,
                                  CascadeLevel aCascadeLevel);
 
   bool HasPendingStyleUpdates() const;
@@ -155,14 +163,14 @@ public:
   // animation level of the cascade have changed.
   static void
   MaybeUpdateCascadeResults(dom::Element* aElement,
-                            nsCSSPseudoElements::Type aPseudoType,
+                            CSSPseudoElementType aPseudoType,
                             nsStyleContext* aStyleContext);
 
   // An overload of MaybeUpdateCascadeResults that uses the style context
   // of the primary frame of the specified (pseudo-)element, when available.
   static void
   MaybeUpdateCascadeResults(dom::Element* aElement,
-                            nsCSSPseudoElements::Type aPseudoType);
+                            CSSPseudoElementType aPseudoType);
 
   // Update the mWinsInCascade member for each property in effects targetting
   // the specified (pseudo-)element.
@@ -172,7 +180,7 @@ public:
   // other cases we should call MaybeUpdateCascadeResults.
   static void
   UpdateCascadeResults(dom::Element* aElement,
-                       nsCSSPseudoElements::Type aPseudoType,
+                       CSSPseudoElementType aPseudoType,
                        nsStyleContext* aStyleContext);
 
   // Helper to fetch the corresponding element and pseudo-type from a frame.
@@ -184,8 +192,15 @@ public:
   // Returns an empty result when a suitable element cannot be found including
   // when the frame represents a pseudo-element on which we do not support
   // animations.
-  static Maybe<Pair<dom::Element*, nsCSSPseudoElements::Type>>
+  static Maybe<NonOwningAnimationTarget>
   GetAnimationElementAndPseudoForFrame(const nsIFrame* aFrame);
+
+  // Associates a performance warning with effects on |aFrame| that animates
+  // |aProperty|.
+  static void SetPerformanceWarning(
+    const nsIFrame* aFrame,
+    nsCSSProperty aProperty,
+    const AnimationPerformanceWarning& aWarning);
 
 private:
   ~EffectCompositor() = default;
@@ -193,12 +208,12 @@ private:
   // Rebuilds the animation rule corresponding to |aCascadeLevel| on the
   // EffectSet associated with the specified (pseudo-)element.
   static void ComposeAnimationRule(dom::Element* aElement,
-                                   nsCSSPseudoElements::Type aPseudoType,
+                                   CSSPseudoElementType aPseudoType,
                                    CascadeLevel aCascadeLevel,
                                    TimeStamp aRefreshTime);
 
   static dom::Element* GetElementToRestyle(dom::Element* aElement,
-                                           nsCSSPseudoElements::Type
+                                           CSSPseudoElementType
                                              aPseudoType);
 
   // Get the properties in |aEffectSet| that we are able to animate on the
@@ -212,7 +227,7 @@ private:
   static void
   UpdateCascadeResults(EffectSet& aEffectSet,
                        dom::Element* aElement,
-                       nsCSSPseudoElements::Type aPseudoType,
+                       CSSPseudoElementType aPseudoType,
                        nsStyleContext* aStyleContext);
 
   static nsPresContext* GetPresContext(dom::Element* aElement);

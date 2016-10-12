@@ -15,6 +15,7 @@
 #include "mozilla/gfx/Rect.h"           // for Rect
 #include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/Effects.h"     // for EffectChain
+#include "mozilla/layers/ImageHost.h"   // for ImageHost
 #include "mozilla/layers/TextureHost.h"  // for TextureHost, etc
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "nsAString.h"
@@ -50,7 +51,7 @@ ImageLayerComposite::SetCompositableHost(CompositableHost* aHost)
 {
   switch (aHost->GetType()) {
     case CompositableType::IMAGE:
-      mImageHost = aHost;
+      mImageHost = static_cast<ImageHost*>(aHost);
       return true;
     default:
       return false;
@@ -79,6 +80,16 @@ ImageLayerComposite::GetLayer()
 }
 
 void
+ImageLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
+{
+  LayerComposite::SetLayerManager(aManager);
+  mManager = aManager;
+  if (mImageHost) {
+    mImageHost->SetCompositor(mCompositor);
+  }
+}
+
+void
 ImageLayerComposite::RenderLayer(const IntRect& aClipRect)
 {
   if (!mImageHost || !mImageHost->IsAttached()) {
@@ -95,12 +106,12 @@ ImageLayerComposite::RenderLayer(const IntRect& aClipRect)
   mCompositor->MakeCurrent();
 
   RenderWithAllMasks(this, mCompositor, aClipRect,
-                     [&](EffectChain& effectChain, const Rect& clipRect) {
+                     [&](EffectChain& effectChain, const IntRect& clipRect) {
     mImageHost->SetCompositor(mCompositor);
     mImageHost->Composite(this, effectChain,
                           GetEffectiveOpacity(),
                           GetEffectiveTransformForBuffer(),
-                          GetEffectFilter(),
+                          GetSamplingFilter(),
                           clipRect);
   });
   mImageHost->BumpFlashCounter();
@@ -143,6 +154,37 @@ ImageLayerComposite::ComputeEffectiveTransforms(const gfx::Matrix4x4& aTransform
   ComputeEffectiveTransformForMaskLayers(aTransformToSurface);
 }
 
+bool
+ImageLayerComposite::IsOpaque()
+{
+  if (!mImageHost ||
+      !mImageHost->IsAttached()) {
+    return false;
+  }
+
+  if (mScaleMode == ScaleMode::STRETCH) {
+    return mImageHost->IsOpaque();
+  }
+  return false;
+}
+
+nsIntRegion
+ImageLayerComposite::GetFullyRenderedRegion()
+{
+  if (!mImageHost ||
+      !mImageHost->IsAttached()) {
+    return GetShadowVisibleRegion().ToUnknownRegion();
+  }
+
+  if (mScaleMode == ScaleMode::STRETCH) {
+    nsIntRegion shadowVisibleRegion;
+    shadowVisibleRegion.And(GetShadowVisibleRegion().ToUnknownRegion(), nsIntRegion(gfx::IntRect(0, 0, mScaleToSize.width, mScaleToSize.height)));
+    return shadowVisibleRegion;
+  }
+
+  return GetShadowVisibleRegion().ToUnknownRegion();
+}
+
 CompositableHost*
 ImageLayerComposite::GetCompositableHost()
 {
@@ -157,22 +199,23 @@ void
 ImageLayerComposite::CleanupResources()
 {
   if (mImageHost) {
+    mImageHost->CleanupResources();
     mImageHost->Detach(this);
   }
   mImageHost = nullptr;
 }
 
-gfx::Filter
-ImageLayerComposite::GetEffectFilter()
+gfx::SamplingFilter
+ImageLayerComposite::GetSamplingFilter()
 {
-  return mFilter;
+  return mSamplingFilter;
 }
 
 void
 ImageLayerComposite::GenEffectChain(EffectChain& aEffect)
 {
   aEffect.mLayerRef = this;
-  aEffect.mPrimaryEffect = mImageHost->GenEffect(GetEffectFilter());
+  aEffect.mPrimaryEffect = mImageHost->GenEffect(GetSamplingFilter());
 }
 
 void

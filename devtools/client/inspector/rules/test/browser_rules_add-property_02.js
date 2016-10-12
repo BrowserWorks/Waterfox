@@ -4,71 +4,63 @@
 
 "use strict";
 
-// Tests all sorts of additions and updates of properties in the rule-view.
-// FIXME: TO BE SPLIT IN *MANY* SMALLER TESTS
+// Test adding a valid property to a CSS rule, and navigating through the fields
+// by pressing ENTER.
 
 const TEST_URI = `
   <style type="text/css">
     #testid {
-      background-color: blue;
+      color: blue;
     }
-    .testclass, .unmatched {
-      background-color: green;
-    };
   </style>
-  <div id='testid' class='testclass'>Styled Node</div>
-  <div id='testid2'>Styled Node</div>
+  <div id='testid'>Styled Node</div>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
-  yield testCreateNew(inspector, view);
-});
+  yield selectNode("#testid", inspector);
 
-function* testCreateNew(inspector, ruleView) {
-  // Create a new property.
-  let elementRuleEditor = getRuleViewRuleEditor(ruleView, 0);
-  let editor = yield focusEditableField(ruleView, elementRuleEditor.closeBrace);
-
-  is(inplaceEditor(elementRuleEditor.newPropSpan), editor,
-    "Next focused editor should be the new property editor.");
-
+  info("Focus the new property name field");
+  let ruleEditor = getRuleViewRuleEditor(view, 1);
+  let editor = yield focusNewRuleViewProperty(ruleEditor);
   let input = editor.input;
 
+  is(inplaceEditor(ruleEditor.newPropSpan), editor,
+    "Next focused editor should be the new property editor.");
   ok(input.selectionStart === 0 && input.selectionEnd === input.value.length,
     "Editor contents are selected.");
 
   // Try clicking on the editor's input again, shouldn't cause trouble
   // (see bug 761665).
-  EventUtils.synthesizeMouse(input, 1, 1, {}, ruleView.styleWindow);
+  EventUtils.synthesizeMouse(input, 1, 1, {}, view.styleWindow);
   input.select();
 
   info("Entering the property name");
-  input.value = "background-color";
+  editor.input.value = "background-color";
 
   info("Pressing RETURN and waiting for the value field focus");
-  let onFocus = once(elementRuleEditor.element, "focus", true);
-  EventUtils.sendKey("return", ruleView.styleWindow);
-  yield onFocus;
-  yield elementRuleEditor.rule._applyingModifications;
+  // Pressing ENTER triggeres 2 changed events, one for the new property, and
+  // one for the preview.
+  let onNameAdded = waitForNEvents(view, "ruleview-changed", 2);
+  EventUtils.synthesizeKey("VK_RETURN", {}, view.styleWindow);
+  yield onNameAdded;
 
-  editor = inplaceEditor(ruleView.styleDocument.activeElement);
+  editor = inplaceEditor(view.styleDocument.activeElement);
 
-  is(elementRuleEditor.rule.textProps.length, 1,
+  is(ruleEditor.rule.textProps.length, 2,
     "Should have created a new text property.");
-  is(elementRuleEditor.propertyList.children.length, 1,
+  is(ruleEditor.propertyList.children.length, 2,
     "Should have created a property editor.");
-  let textProp = elementRuleEditor.rule.textProps[0];
+  let textProp = ruleEditor.rule.textProps[1];
   is(editor, inplaceEditor(textProp.editor.valueSpan),
     "Should be editing the value span now.");
 
-  let onMutated = inspector.once("markupmutation");
+  info("Entering the property value");
+  let onValueAdded = view.once("ruleview-changed");
   editor.input.value = "purple";
-  let onBlur = once(editor.input, "blur");
-  EventUtils.sendKey("return", ruleView.styleWindow);
-  yield onBlur;
-  yield onMutated;
+  EventUtils.synthesizeKey("VK_RETURN", {}, view.styleWindow);
+  yield onValueAdded;
 
   is(textProp.value, "purple", "Text prop should have been changed.");
-}
+});

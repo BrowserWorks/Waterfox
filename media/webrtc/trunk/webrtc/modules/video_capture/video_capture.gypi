@@ -78,15 +78,15 @@
             }],  # linux
             ['OS=="mac"', {
               'sources': [
-                'mac/qtkit/video_capture_qtkit.h',
-                'mac/qtkit/video_capture_qtkit.mm',
-                'mac/qtkit/video_capture_qtkit_info.h',
-                'mac/qtkit/video_capture_qtkit_info.mm',
-                'mac/qtkit/video_capture_qtkit_info_objc.h',
-                'mac/qtkit/video_capture_qtkit_info_objc.mm',
-                'mac/qtkit/video_capture_qtkit_objc.h',
-                'mac/qtkit/video_capture_qtkit_objc.mm',
-                'mac/qtkit/video_capture_qtkit_utility.h',
+                'mac/avfoundation/video_capture_avfoundation.h',
+                'mac/avfoundation/video_capture_avfoundation.mm',
+                'mac/avfoundation/video_capture_avfoundation_info.h',
+                'mac/avfoundation/video_capture_avfoundation_info.mm',
+                'mac/avfoundation/video_capture_avfoundation_info_objc.h',
+                'mac/avfoundation/video_capture_avfoundation_info_objc.mm',
+                'mac/avfoundation/video_capture_avfoundation_objc.h',
+                'mac/avfoundation/video_capture_avfoundation_objc.mm',
+                'mac/avfoundation/video_capture_avfoundation_utility.h',
                 'mac/video_capture_mac.mm',
               ],
               'link_settings': {
@@ -94,7 +94,6 @@
                   'OTHER_LDFLAGS': [
                     '-framework Cocoa',
                     '-framework CoreVideo',
-                    '-framework QTKit',
                   ],
                 },
               },

@@ -19,7 +19,7 @@ add_task(function* () {
     manifest: {
       "permissions": ["tabs"],
 
-      "background": { "page": "bg/background.html" },
+      "background": {"page": "bg/background.html"},
     },
 
     files: {
@@ -31,17 +31,6 @@ add_task(function* () {
       </head></html>`,
 
       "bg/background.js": function() {
-        // Wrap API methods in promise-based variants.
-        let promiseTabs = {};
-        Object.keys(browser.tabs).forEach(method => {
-          promiseTabs[method] = (...args) => {
-            return new Promise(resolve => {
-              browser.tabs[method](...args, resolve);
-            });
-          };
-        });
-
-
         let activeTab;
         let activeWindow;
 
@@ -51,53 +40,53 @@ add_task(function* () {
             windowId: activeWindow,
             active: true,
             pinned: false,
-            url: "chrome://browser/content/newtab/newTab.xhtml",
+            url: "about:newtab",
           };
 
           let tests = [
             {
-              create: { url: "http://example.com/" },
-              result: { url: "http://example.com/" },
+              create: {url: "http://example.com/"},
+              result: {url: "http://example.com/"},
             },
             {
-              create: { url: "blank.html" },
-              result: { url: browser.runtime.getURL("bg/blank.html") },
+              create: {url: "blank.html"},
+              result: {url: browser.runtime.getURL("bg/blank.html")},
             },
             {
               create: {},
-              result: { url: "chrome://browser/content/newtab/newTab.xhtml" },
+              result: {url: "about:newtab"},
             },
             {
-              create: { active: false },
-              result: { active: false },
+              create: {active: false},
+              result: {active: false},
             },
             {
-              create: { active: true },
-              result: { active: true },
+              create: {active: true},
+              result: {active: true},
             },
             {
-              create: { pinned: true },
-              result: { pinned: true, index: 0 },
+              create: {pinned: true},
+              result: {pinned: true, index: 0},
             },
             {
-              create: { pinned: true, active: true },
-              result: { pinned: true, active: true, index: 0 },
+              create: {pinned: true, active: true},
+              result: {pinned: true, active: true, index: 0},
             },
             {
-              create: { pinned: true, active: false },
-              result: { pinned: true, active: false, index: 0 },
+              create: {pinned: true, active: false},
+              result: {pinned: true, active: false, index: 0},
             },
             {
-              create: { index: 1 },
-              result: { index: 1 },
+              create: {index: 1},
+              result: {index: 1},
             },
             {
-              create: { index: 1, active: false },
-              result: { index: 1, active: false },
+              create: {index: 1, active: false},
+              result: {index: 1, active: false},
             },
             {
-              create: { windowId: activeWindow },
-              result: { windowId: activeWindow },
+              create: {windowId: activeWindow},
+              result: {windowId: activeWindow},
             },
           ];
 
@@ -112,18 +101,29 @@ add_task(function* () {
 
             browser.test.log(`Testing tabs.create(${JSON.stringify(test.create)}), expecting ${JSON.stringify(test.result)}`);
 
-            let tabId;
             let updatedPromise = new Promise(resolve => {
               let onUpdated = (changedTabId, changed) => {
-                if (changedTabId === tabId && changed.url) {
+                if (changed.url) {
                   browser.tabs.onUpdated.removeListener(onUpdated);
-                  resolve(changed.url);
+                  resolve({tabId: changedTabId, url: changed.url});
                 }
               };
               browser.tabs.onUpdated.addListener(onUpdated);
             });
 
-            promiseTabs.create(test.create).then(tab => {
+            let createdPromise = new Promise(resolve => {
+              let onCreated = tab => {
+                browser.test.assertTrue("id" in tab, `Expected tabs.onCreated callback to receive tab object`);
+                resolve();
+              };
+              browser.tabs.onCreated.addListener(onCreated);
+            });
+
+            let tabId;
+            Promise.all([
+              browser.tabs.create(test.create),
+              createdPromise,
+            ]).then(([tab]) => {
               tabId = tab.id;
 
               for (let key of Object.keys(expected)) {
@@ -136,12 +136,13 @@ add_task(function* () {
               }
 
               return updatedPromise;
-            }).then(url => {
-              browser.test.assertEq(expected.url, url, `Expected value for tab.url`);
+            }).then(updated => {
+              browser.test.assertEq(tabId, updated.tabId, `Expected value for tab.id`);
+              browser.test.assertEq(expected.url, updated.url, `Expected value for tab.url`);
 
-              return promiseTabs.remove(tabId);
+              return browser.tabs.remove(tabId);
             }).then(() => {
-              return promiseTabs.update(activeTab, { active: true });
+              return browser.tabs.update(activeTab, {active: true});
             }).then(() => {
               nextTest();
             });
@@ -150,7 +151,7 @@ add_task(function* () {
           nextTest();
         }
 
-        browser.tabs.query({ active: true, currentWindow: true }, tabs => {
+        browser.tabs.query({active: true, currentWindow: true}, tabs => {
           activeTab = tabs[0].id;
           activeWindow = tabs[0].windowId;
 

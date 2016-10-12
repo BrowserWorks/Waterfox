@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test that non-enumerable variables and properties can be hidden
@@ -11,12 +13,16 @@ const TAB_URL = EXAMPLE_URL + "doc_recursion-stack.html";
 var gTab, gPanel, gDebugger;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
 
-    waitForSourceAndCaretAndScopes(gPanel, ".html", 14).then(performTest);
+    waitForCaretAndScopes(gPanel, 14).then(performTest);
     callInTab(gTab, "simpleCall");
   });
 }
@@ -98,7 +104,7 @@ function performTest() {
   });
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

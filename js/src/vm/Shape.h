@@ -115,7 +115,6 @@ class TenuringTracer;
 
 typedef JSGetterOp GetterOp;
 typedef JSSetterOp SetterOp;
-typedef JSPropertyDescriptor PropertyDescriptor;
 
 /* Limit on the number of slotful properties in an object. */
 static const uint32_t SHAPE_INVALID_SLOT = JS_BIT(24) - 1;
@@ -218,16 +217,19 @@ class ShapeTable {
         return mallocSizeOf(this) + mallocSizeOf(entries_);
     }
 
-    /*
-     * NB: init and change are fallible but do not report OOM, so callers can
-     * cope or ignore. They do however use the context's calloc method in
-     * order to update the malloc counter on success.
-     */
+    // init() is fallible and reports OOM to the context.
     bool init(ExclusiveContext* cx, Shape* lastProp);
-    bool change(int log2Delta, ExclusiveContext* cx);
+
+    // change() is fallible but does not report OOM.
+    bool change(ExclusiveContext* cx, int log2Delta);
 
     template<MaybeAdding Adding>
     Entry& search(jsid id);
+
+    void trace(JSTracer* trc);
+#ifdef JSGC_HASH_TABLE_CHECKS
+    void checkAfterMovingGC();
+#endif
 
   private:
     Entry& getEntry(uint32_t i) const {
@@ -377,7 +379,7 @@ class BaseShape : public gc::TenuredCell
                                          * dictionary last properties. */
 
     /* For owned BaseShapes, the canonical unowned BaseShape. */
-    HeapPtrUnownedBaseShape unowned_;
+    GCPtrUnownedBaseShape unowned_;
 
     /* For owned BaseShapes, the shape's shape table. */
     ShapeTable*      table_;
@@ -447,11 +449,10 @@ class BaseShape : public gc::TenuredCell
     /* For JIT usage */
     static inline size_t offsetOfFlags() { return offsetof(BaseShape, flags); }
 
-    static inline ThingRootKind rootKind() { return THING_ROOT_BASE_SHAPE; }
+    static const JS::TraceKind TraceKind = JS::TraceKind::BaseShape;
 
     void traceChildren(JSTracer* trc);
-
-    void fixupAfterMovingGC() {}
+    void traceChildrenSkipShapeTable(JSTracer* trc);
 
   private:
     static void staticAsserts() {
@@ -460,6 +461,8 @@ class BaseShape : public gc::TenuredCell
                       "Things inheriting from gc::Cell must have a size that's "
                       "a multiple of gc::CellSize");
     }
+
+    void traceShapeTable(JSTracer* trc);
 };
 
 class UnownedBaseShape : public BaseShape {};
@@ -520,10 +523,9 @@ struct StackBaseShape : public DefaultHasher<ReadBarriered<UnownedBaseShape*>>
     static inline bool match(ReadBarriered<UnownedBaseShape*> key, const Lookup& lookup);
 };
 
-typedef HashSet<ReadBarriered<UnownedBaseShape*>,
-                StackBaseShape,
-                SystemAllocPolicy> BaseShapeSet;
-
+using BaseShapeSet = JS::GCHashSet<ReadBarriered<UnownedBaseShape*>,
+                                   StackBaseShape,
+                                   SystemAllocPolicy>;
 
 class Shape : public gc::TenuredCell
 {
@@ -537,10 +539,11 @@ class Shape : public gc::TenuredCell
     friend struct StackBaseShape;
     friend struct StackShape;
     friend struct JS::ubi::Concrete<Shape>;
+    friend class js::gc::RelocationOverlay;
 
   protected:
-    HeapPtrBaseShape    base_;
-    PreBarrieredId      propid_;
+    GCPtrBaseShape base_;
+    PreBarrieredId propid_;
 
     enum SlotInfo : uint32_t
     {
@@ -573,15 +576,15 @@ class Shape : public gc::TenuredCell
     uint8_t             attrs;          /* attributes, see jsapi.h JSPROP_* */
     uint8_t             flags;          /* flags, see below for defines */
 
-    HeapPtrShape        parent;        /* parent node, reverse for..in order */
+    GCPtrShape   parent;          /* parent node, reverse for..in order */
     /* kids is valid when !inDictionary(), listp is valid when inDictionary(). */
     union {
-        KidsPointer kids;       /* null, single child, or a tagged ptr
-                                   to many-kids data structure */
-        HeapPtrShape* listp;    /* dictionary list starting at shape_
-                                   has a double-indirect back pointer,
-                                   either to the next shape's parent if not
-                                   last, else to obj->shape_ */
+        KidsPointer kids;         /* null, single child, or a tagged ptr
+                                     to many-kids data structure */
+        GCPtrShape* listp;        /* dictionary list starting at shape_
+                                     has a double-indirect back pointer,
+                                     either to the next shape's parent if not
+                                     last, else to obj->shape_ */
     };
 
     template<MaybeAdding Adding = MaybeAdding::NotAdding>
@@ -590,9 +593,10 @@ class Shape : public gc::TenuredCell
     static inline Shape* searchNoHashify(Shape* start, jsid id);
 
     void removeFromDictionary(NativeObject* obj);
-    void insertIntoDictionary(HeapPtrShape* dictp);
+    void insertIntoDictionary(GCPtrShape* dictp);
 
-    inline void initDictionaryShape(const StackShape& child, uint32_t nfixed, HeapPtrShape* dictp);
+    inline void initDictionaryShape(const StackShape& child, uint32_t nfixed,
+                                    GCPtrShape* dictp);
 
     /* Replace the base shape of the last shape in a non-dictionary lineage with base. */
     static Shape* replaceLastProperty(ExclusiveContext* cx, StackBaseShape& base,
@@ -649,7 +653,7 @@ class Shape : public gc::TenuredCell
         return *(AccessorShape*)this;
     }
 
-    const HeapPtrShape& previous() const { return parent; }
+    const GCPtrShape& previous() const { return parent; }
     JSCompartment* compartment() const { return base()->compartment(); }
     JSCompartment* maybeCompartment() const { return compartment(); }
 
@@ -949,7 +953,7 @@ class Shape : public gc::TenuredCell
     void finalize(FreeOp* fop);
     void removeChild(Shape* child);
 
-    static inline ThingRootKind rootKind() { return THING_ROOT_SHAPE; }
+    static const JS::TraceKind TraceKind = JS::TraceKind::Shape;
 
     void traceChildren(JSTracer* trc);
 
@@ -958,6 +962,7 @@ class Shape : public gc::TenuredCell
 
     void fixupAfterMovingGC();
     void fixupGetterSetterForBarrier(JSTracer* trc);
+    void updateBaseShapeAfterMovingGC();
 
     /* For JIT usage */
     static inline size_t offsetOfBase() { return offsetof(Shape, base_); }
@@ -1006,7 +1011,7 @@ StackBaseShape::StackBaseShape(Shape* shape)
 
 class MOZ_RAII AutoRooterGetterSetter
 {
-    class Inner : private JS::CustomAutoRooter
+    class Inner final : private JS::CustomAutoRooter
     {
       public:
         inline Inner(ExclusiveContext* cx, uint8_t attrs, GetterOp* pgetter_, SetterOp* psetter_);
@@ -1081,42 +1086,47 @@ struct InitialShapeEntry
      * certain classes (e.g. String, RegExp) which may add certain baked-in
      * properties.
      */
-    ReadBarrieredShape shape;
+    ReadBarriered<Shape*> shape;
 
     /*
      * Matching prototype for the entry. The shape of an object determines its
      * prototype, but the prototype cannot be determined from the shape itself.
      */
-    TaggedProto proto;
+    ReadBarriered<TaggedProto> proto;
 
     /* State used to determine a match on an initial shape. */
     struct Lookup {
         const Class* clasp;
-        TaggedProto hashProto;
-        TaggedProto matchProto;
+        TaggedProto proto;
         uint32_t nfixed;
         uint32_t baseFlags;
 
         Lookup(const Class* clasp, TaggedProto proto, uint32_t nfixed, uint32_t baseFlags)
-          : clasp(clasp),
-            hashProto(proto), matchProto(proto),
-            nfixed(nfixed), baseFlags(baseFlags)
+          : clasp(clasp), proto(proto), nfixed(nfixed), baseFlags(baseFlags)
         {}
     };
 
     inline InitialShapeEntry();
-    inline InitialShapeEntry(const ReadBarrieredShape& shape, TaggedProto proto);
+    inline InitialShapeEntry(const ReadBarriered<Shape*>& shape,
+                             const ReadBarriered<TaggedProto>& proto);
 
     inline Lookup getLookup() const;
 
     static inline HashNumber hash(const Lookup& lookup);
     static inline bool match(const InitialShapeEntry& key, const Lookup& lookup);
     static void rekey(InitialShapeEntry& k, const InitialShapeEntry& newKey) { k = newKey; }
+
+    bool needsSweep() {
+        Shape* ushape = shape.unbarrieredGet();
+        JSObject* protoObj = proto.raw();
+        return (gc::IsAboutToBeFinalizedUnbarriered(&ushape) ||
+                (proto.isObject() && gc::IsAboutToBeFinalizedUnbarriered(&protoObj)));
+    }
 };
 
-typedef HashSet<InitialShapeEntry, InitialShapeEntry, SystemAllocPolicy> InitialShapeSet;
+using InitialShapeSet = JS::GCHashSet<InitialShapeEntry, InitialShapeEntry, SystemAllocPolicy>;
 
-struct StackShape : public JS::Traceable
+struct StackShape
 {
     /* For performance, StackShape only roots when absolutely necessary. */
     UnownedBaseShape* base;
@@ -1341,7 +1351,7 @@ Shape::setterObject() const
 }
 
 inline void
-Shape::initDictionaryShape(const StackShape& child, uint32_t nfixed, HeapPtrShape* dictp)
+Shape::initDictionaryShape(const StackShape& child, uint32_t nfixed, GCPtrShape* dictp)
 {
     if (child.isAccessorShape())
         new (this) AccessorShape(child, nfixed);
@@ -1400,9 +1410,6 @@ Shape::matches(const StackShape& other) const
            matchesParamsAfterId(other.base, other.slot_, other.attrs, other.flags,
                                 other.rawGetter, other.rawSetter);
 }
-
-template<> struct RootKind<Shape*> : SpecificRootKind<Shape*, THING_ROOT_SHAPE> {};
-template<> struct RootKind<BaseShape*> : SpecificRootKind<BaseShape*, THING_ROOT_BASE_SHAPE> {};
 
 // Property lookup hooks on objects are required to return a non-nullptr shape
 // to signify that the property has been found. For cases where the property is

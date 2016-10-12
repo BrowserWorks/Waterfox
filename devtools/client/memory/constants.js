@@ -12,9 +12,9 @@ exports.ALLOCATION_RECORDING_OPTIONS = {
 
 // If TREE_ROW_HEIGHT changes, be sure to change `var(--heap-tree-row-height)`
 // in `devtools/client/themes/memory.css`
-exports.TREE_ROW_HEIGHT = 14;
+exports.TREE_ROW_HEIGHT = 18;
 
-/*** Actions ******************************************************************/
+/** * Actions ******************************************************************/
 
 const actions = exports.actions = {};
 
@@ -30,6 +30,12 @@ actions.READ_SNAPSHOT_END = "read-snapshot-end";
 // When a census is being performed on a heap snapshot
 actions.TAKE_CENSUS_START = "take-census-start";
 actions.TAKE_CENSUS_END = "take-census-end";
+actions.TAKE_CENSUS_ERROR = "take-census-error";
+
+// When a tree map is being calculated on a heap snapshot
+actions.TAKE_TREE_MAP_START = "take-tree-map-start";
+actions.TAKE_TREE_MAP_END = "take-tree-map-end";
+actions.TAKE_TREE_MAP_ERROR = "take-tree-map-error";
 
 // When requesting that the server start/stop recording allocation stacks.
 actions.TOGGLE_RECORD_ALLOCATION_STACKS_START = "toggle-record-allocation-stacks-start";
@@ -65,14 +71,18 @@ actions.TAKE_CENSUS_DIFF_START = "take-census-diff-start";
 actions.TAKE_CENSUS_DIFF_END = "take-census-diff-end";
 actions.DIFFING_ERROR = "diffing-error";
 
-// Fired to set a new breakdown.
-actions.SET_BREAKDOWN = "set-breakdown";
+// Fired to set a new census display.
+actions.SET_CENSUS_DISPLAY = "set-census-display";
 
-// Fired to change the breakdown that controls the dominator tree labels.
-actions.SET_DOMINATOR_TREE_BREAKDOWN = "set-dominator-tree-breakdown";
+// Fired to change the display that controls the dominator tree labels.
+actions.SET_LABEL_DISPLAY = "set-label-display";
+
+// Fired to set a tree map display
+actions.SET_TREE_MAP_DISPLAY = "set-tree-map-display";
 
 // Fired when changing between census or dominators view.
 actions.CHANGE_VIEW = "change-view";
+actions.POP_VIEW = "pop-view";
 
 // Fired when there is an error processing a snapshot or taking a census.
 actions.SNAPSHOT_ERROR = "snapshot-error";
@@ -91,6 +101,11 @@ actions.FOCUS_CENSUS_NODE = "focus-census-node";
 actions.FOCUS_DIFFING_CENSUS_NODE = "focus-diffing-census-node";
 actions.FOCUS_DOMINATOR_TREE_NODE = "focus-dominator-tree-node";
 
+actions.FOCUS_INDIVIDUAL = "focus-individual";
+actions.FETCH_INDIVIDUALS_START = "fetch-individuals-start";
+actions.FETCH_INDIVIDUALS_END = "fetch-individuals-end";
+actions.INDIVIDUALS_ERROR = "individuals-error";
+
 actions.COMPUTE_DOMINATOR_TREE_START = "compute-dominator-tree-start";
 actions.COMPUTE_DOMINATOR_TREE_END = "compute-dominator-tree-end";
 actions.FETCH_DOMINATOR_TREE_START = "fetch-dominator-tree-start";
@@ -101,82 +116,112 @@ actions.FETCH_IMMEDIATELY_DOMINATED_END = "fetch-immediately-dominated-end";
 actions.EXPAND_DOMINATOR_TREE_NODE = "expand-dominator-tree-node";
 actions.COLLAPSE_DOMINATOR_TREE_NODE = "collapse-dominator-tree-node";
 
-/*** Breakdowns ***************************************************************/
+actions.RESIZE_SHORTEST_PATHS = "resize-shortest-paths";
 
-const COUNT = { by: "count", count: true, bytes: true };
-const INTERNAL_TYPE = { by: "internalType", then: COUNT };
-const ALLOCATION_STACK = { by: "allocationStack", then: COUNT, noStack: COUNT };
-const OBJECT_CLASS = { by: "objectClass", then: COUNT, other: COUNT };
+/** * Census Displays ***************************************************************/
 
-const breakdowns = exports.breakdowns = {
-  coarseType: {
-    displayName: "Coarse Type",
-    breakdown: {
-      by: "coarseType",
-      objects: OBJECT_CLASS,
-      strings: COUNT,
-      scripts: {
-        by: "filename",
-        then: INTERNAL_TYPE,
-        noFilename: INTERNAL_TYPE
-      },
-      other: INTERNAL_TYPE,
-    }
-  },
-
-  allocationStack: {
-    displayName: "Allocation Stack",
-    breakdown: ALLOCATION_STACK,
-  },
-
-  objectClass: {
-    displayName: "Object Class",
-    breakdown: OBJECT_CLASS,
-  },
-
-  internalType: {
-    displayName: "Internal Type",
-    breakdown: INTERNAL_TYPE,
-  },
-};
-
-const DOMINATOR_TREE_LABEL_COARSE_TYPE = {
+const COUNT = Object.freeze({ by: "count", count: true, bytes: true });
+const INTERNAL_TYPE = Object.freeze({ by: "internalType", then: COUNT });
+const ALLOCATION_STACK = Object.freeze({ by: "allocationStack", then: COUNT, noStack: COUNT });
+const OBJECT_CLASS = Object.freeze({ by: "objectClass", then: COUNT, other: COUNT });
+const COARSE_TYPE = Object.freeze({
   by: "coarseType",
   objects: OBJECT_CLASS,
+  strings: COUNT,
   scripts: {
+    by: "filename",
+    then: INTERNAL_TYPE,
+    noFilename: INTERNAL_TYPE
+  },
+  other: INTERNAL_TYPE,
+});
+
+exports.censusDisplays = Object.freeze({
+  coarseType: Object.freeze({
+    displayName: "Type",
+    get tooltip() {
+      // Importing down here is necessary because of the circular dependency
+      // this introduces with `./utils.js`.
+      const { L10N } = require("./utils");
+      return L10N.getStr("censusDisplays.coarseType.tooltip");
+    },
+    inverted: true,
+    breakdown: COARSE_TYPE
+  }),
+
+  allocationStack: Object.freeze({
+    displayName: "Call Stack",
+    get tooltip() {
+      const { L10N } = require("./utils");
+      return L10N.getStr("censusDisplays.allocationStack.tooltip");
+    },
+    inverted: false,
+    breakdown: ALLOCATION_STACK,
+  }),
+
+  invertedAllocationStack: Object.freeze({
+    displayName: "Inverted Call Stack",
+    get tooltip() {
+      const { L10N } = require("./utils");
+      return L10N.getStr("censusDisplays.invertedAllocationStack.tooltip");
+    },
+    inverted: true,
+    breakdown: ALLOCATION_STACK,
+  }),
+});
+
+const DOMINATOR_TREE_LABEL_COARSE_TYPE = Object.freeze({
+  by: "coarseType",
+  objects: OBJECT_CLASS,
+  scripts: Object.freeze({
     by: "internalType",
-    then: {
+    then: Object.freeze({
       by: "filename",
       then: COUNT,
       noFilename: COUNT,
-    },
-  },
+    }),
+  }),
   strings: INTERNAL_TYPE,
   other: INTERNAL_TYPE,
-};
+});
 
-const dominatorTreeBreakdowns = exports.dominatorTreeBreakdowns = {
-  coarseType: {
-    displayName: "Coarse Type",
+exports.labelDisplays = Object.freeze({
+  coarseType: Object.freeze({
+    displayName: "Type",
+    get tooltip() {
+      const { L10N } = require("./utils");
+      return L10N.getStr("dominatorTreeDisplays.coarseType.tooltip");
+    },
     breakdown: DOMINATOR_TREE_LABEL_COARSE_TYPE
-  },
+  }),
 
-  allocationStack: {
-    displayName: "Allocation Stack",
-    breakdown: {
+  allocationStack: Object.freeze({
+    displayName: "Call Stack",
+    get tooltip() {
+      const { L10N } = require("./utils");
+      return L10N.getStr("dominatorTreeDisplays.allocationStack.tooltip");
+    },
+    breakdown: Object.freeze({
       by: "allocationStack",
       then: DOMINATOR_TREE_LABEL_COARSE_TYPE,
       noStack: DOMINATOR_TREE_LABEL_COARSE_TYPE,
+    }),
+  }),
+});
+
+exports.treeMapDisplays = Object.freeze({
+  coarseType: Object.freeze({
+    displayName: "Type",
+    get tooltip() {
+      const { L10N } = require("./utils");
+      return L10N.getStr("treeMapDisplays.coarseType.tooltip");
     },
-  },
+    breakdown: COARSE_TYPE,
+    inverted: false,
+  })
+});
 
-  internalType: {
-    displayName: "Internal Type",
-    breakdown: INTERNAL_TYPE,
-  },
-};
-
-/*** View States **************************************************************/
+/** * View States **************************************************************/
 
 /**
  * The various main views that the tool can be in.
@@ -185,8 +230,10 @@ const viewState = exports.viewState = Object.create(null);
 viewState.CENSUS = "view-state-census";
 viewState.DIFFING = "view-state-diffing";
 viewState.DOMINATOR_TREE = "view-state-dominator-tree";
+viewState.TREE_MAP = "view-state-tree-map";
+viewState.INDIVIDUALS = "view-state-individuals";
 
-/*** Snapshot States **********************************************************/
+/** * Snapshot States **********************************************************/
 
 const snapshotState = exports.snapshotState = Object.create(null);
 
@@ -194,9 +241,9 @@ const snapshotState = exports.snapshotState = Object.create(null);
  * Various states a snapshot can be in.
  * An FSM describing snapshot states:
  *
- *     SAVING -> SAVED -> READING -> READ     SAVED_CENSUS
- *                       ↗                ↘     ↑  ↓
- *              IMPORTING                   SAVING_CENSUS
+ *     SAVING -> SAVED -> READING -> READ
+ *                       ↗
+ *              IMPORTING
  *
  * Any of these states may go to the ERROR state, from which they can never
  * leave (mwah ha ha ha!)
@@ -207,10 +254,38 @@ snapshotState.SAVING = "snapshot-state-saving";
 snapshotState.SAVED = "snapshot-state-saved";
 snapshotState.READING = "snapshot-state-reading";
 snapshotState.READ = "snapshot-state-read";
-snapshotState.SAVING_CENSUS = "snapshot-state-saving-census";
-snapshotState.SAVED_CENSUS = "snapshot-state-saved-census";
 
-/*** Diffing States ***********************************************************/
+/*
+ * Various states the census model can be in.
+ *
+ *     SAVING <-> SAVED
+ *       |
+ *       V
+ *     ERROR
+ */
+
+const censusState = exports.censusState = Object.create(null);
+
+censusState.SAVING = "census-state-saving";
+censusState.SAVED = "census-state-saved";
+censusState.ERROR = "census-state-error";
+
+/*
+ * Various states the tree map model can be in.
+ *
+ *     SAVING <-> SAVED
+ *       |
+ *       V
+ *     ERROR
+ */
+
+const treeMapState = exports.treeMapState = Object.create(null);
+
+treeMapState.SAVING = "tree-map-state-saving";
+treeMapState.SAVED = "tree-map-state-saved";
+treeMapState.ERROR = "tree-map-state-error";
+
+/** * Diffing States ***********************************************************/
 
 /*
  * Various states the diffing model can be in.
@@ -234,7 +309,7 @@ diffingState.TOOK_DIFF = "diffing-state-took-diff";
 // An error occurred while computing the diff.
 diffingState.ERROR = "diffing-state-error";
 
-/*** Dominator Tree States ****************************************************/
+/** * Dominator Tree States ****************************************************/
 
 /*
  * Various states the dominator tree model can be in.
@@ -250,3 +325,18 @@ dominatorTreeState.FETCHING = "dominator-tree-state-fetching";
 dominatorTreeState.LOADED = "dominator-tree-state-loaded";
 dominatorTreeState.INCREMENTAL_FETCHING = "dominator-tree-state-incremental-fetching";
 dominatorTreeState.ERROR = "dominator-tree-state-error";
+
+/** * States for Individuals Model *********************************************/
+
+/*
+ * Various states the individuals model can be in.
+ *
+ *     COMPUTING_DOMINATOR_TREE -> FETCHING -> FETCHED
+ *
+ * Any state may lead to the ERROR state, from which it can never leave.
+ */
+const individualsState = exports.individualsState = Object.create(null);
+individualsState.COMPUTING_DOMINATOR_TREE = "individuals-state-computing-dominator-tree";
+individualsState.FETCHING = "individuals-state-fetching";
+individualsState.FETCHED = "individuals-state-fetched";
+individualsState.ERROR = "individuals-state-error";

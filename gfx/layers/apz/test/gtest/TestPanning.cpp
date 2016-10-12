@@ -28,7 +28,7 @@ protected:
     allowedTouchBehaviors.AppendElement(aBehavior);
 
     // Pan down
-    PanAndCheckStatus(apzc, mcc, touchStart, touchEnd, aShouldBeConsumed, &allowedTouchBehaviors);
+    PanAndCheckStatus(apzc, touchStart, touchEnd, aShouldBeConsumed, &allowedTouchBehaviors);
     apzc->SampleContentTransformForFrame(&viewTransformOut, pointOut);
 
     if (aShouldTriggerScroll) {
@@ -44,7 +44,7 @@ protected:
     apzc->CancelAnimation();
 
     // Pan back
-    PanAndCheckStatus(apzc, mcc, touchEnd, touchStart, aShouldBeConsumed, &allowedTouchBehaviors);
+    PanAndCheckStatus(apzc, touchEnd, touchStart, aShouldBeConsumed, &allowedTouchBehaviors);
     apzc->SampleContentTransformForFrame(&viewTransformOut, pointOut);
 
     EXPECT_EQ(ParentLayerPoint(), pointOut);
@@ -64,7 +64,7 @@ protected:
     // Pan down
     nsTArray<uint32_t> allowedTouchBehaviors;
     allowedTouchBehaviors.AppendElement(mozilla::layers::AllowedTouchBehavior::VERTICAL_PAN);
-    PanAndCheckStatus(apzc, mcc, touchStart, touchEnd, true, &allowedTouchBehaviors, &blockId);
+    PanAndCheckStatus(apzc, touchStart, touchEnd, true, &allowedTouchBehaviors, &blockId);
 
     // Send the signal that content has handled and preventDefaulted the touch
     // events. This flushes the event queue.
@@ -80,6 +80,7 @@ protected:
 
 TEST_F(APZCPanningTester, Pan) {
   SCOPED_GFX_PREF(TouchActionEnabled, bool, false);
+  SCOPED_GFX_PREF(APZVelocityBias, float, 0.0); // Velocity bias can cause extra repaint requests
   DoPanTest(true, true, mozilla::layers::AllowedTouchBehavior::NONE);
 }
 
@@ -93,22 +94,26 @@ TEST_F(APZCPanningTester, Pan) {
 // events.
 TEST_F(APZCPanningTester, PanWithTouchActionAuto) {
   SCOPED_GFX_PREF(TouchActionEnabled, bool, true);
+  SCOPED_GFX_PREF(APZVelocityBias, float, 0.0); // Velocity bias can cause extra repaint requests
   DoPanTest(true, true, mozilla::layers::AllowedTouchBehavior::HORIZONTAL_PAN
                       | mozilla::layers::AllowedTouchBehavior::VERTICAL_PAN);
 }
 
 TEST_F(APZCPanningTester, PanWithTouchActionNone) {
   SCOPED_GFX_PREF(TouchActionEnabled, bool, true);
+  SCOPED_GFX_PREF(APZVelocityBias, float, 0.0); // Velocity bias can cause extra repaint requests
   DoPanTest(false, false, 0);
 }
 
 TEST_F(APZCPanningTester, PanWithTouchActionPanX) {
   SCOPED_GFX_PREF(TouchActionEnabled, bool, true);
+  SCOPED_GFX_PREF(APZVelocityBias, float, 0.0); // Velocity bias can cause extra repaint requests
   DoPanTest(false, true, mozilla::layers::AllowedTouchBehavior::HORIZONTAL_PAN);
 }
 
 TEST_F(APZCPanningTester, PanWithTouchActionPanY) {
   SCOPED_GFX_PREF(TouchActionEnabled, bool, true);
+  SCOPED_GFX_PREF(APZVelocityBias, float, 0.0); // Velocity bias can cause extra repaint requests
   DoPanTest(true, true, mozilla::layers::AllowedTouchBehavior::VERTICAL_PAN);
 }
 
@@ -121,4 +126,3 @@ TEST_F(APZCPanningTester, PanWithPreventDefault) {
   SCOPED_GFX_PREF(TouchActionEnabled, bool, false);
   DoPanWithPreventDefaultTest();
 }
-

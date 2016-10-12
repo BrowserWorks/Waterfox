@@ -159,6 +159,7 @@ nsHttpConnection::StartSpdy(uint8_t spdyVersion)
 
     mUsingSpdyVersion = spdyVersion;
     mEverUsedSpdy = true;
+    mSpdySession = ASpdySession::NewSpdySession(spdyVersion, mSocketTransport);
 
     if (!mReportedSpdy) {
         mReportedSpdy = true;
@@ -209,7 +210,6 @@ nsHttpConnection::StartSpdy(uint8_t spdyVersion)
         mProxyConnectInProgress = false;
     }
 
-    mSpdySession = ASpdySession::NewSpdySession(spdyVersion, mSocketTransport);
     bool spdyProxy = mConnInfo->UsingHttpsProxy() && !mTLSFilter;
     if (spdyProxy) {
         RefPtr<nsHttpConnectionInfo> wildCardProxyCi;
@@ -264,6 +264,9 @@ nsHttpConnection::StartSpdy(uint8_t spdyVersion)
         mTransaction = mSpdySession;
     } else {
         mTLSFilter->SetProxiedTransaction(mSpdySession);
+    }
+    if (mDontReuse) {
+        mSpdySession->DontReuse();
     }
 }
 
@@ -348,7 +351,7 @@ nsresult
 nsHttpConnection::Activate(nsAHttpTransaction *trans, uint32_t caps, int32_t pri)
 {
     MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
-    LOG(("nsHttpConnection::Activate [this=%p trans=%x caps=%x]\n",
+    LOG(("nsHttpConnection::Activate [this=%p trans=%p caps=%x]\n",
          this, trans, caps));
 
     if (!trans->IsNullTransaction())
@@ -657,6 +660,7 @@ nsHttpConnection::InitSSLParams(bool connectingToProxy, bool proxyStartSSL)
 void
 nsHttpConnection::DontReuse()
 {
+    LOG(("nsHttpConnection::DontReuse %p spdysession=%p\n", this, mSpdySession.get()));
     mKeepAliveMask = false;
     mKeepAlive = false;
     mDontReuse = true;
@@ -789,11 +793,12 @@ nsHttpConnection::SupportsPipelining(nsHttpResponseHead *responseHead)
     }
 
     // check for bad origin servers
-    const char *val = responseHead->PeekHeader(nsHttp::Server);
+    nsAutoCString val;
+    responseHead->GetHeader(nsHttp::Server, val);
 
     // If there is no server header we will assume it should not be banned
     // as facebook and some other prominent sites do this
-    if (!val)
+    if (val.IsEmpty())
         return true;
 
     // The blacklist is indexed by the first character. All of these servers are
@@ -815,11 +820,11 @@ nsHttpConnection::SupportsPipelining(nsHttpResponseHead *responseHead)
         { nullptr }, { nullptr }, { nullptr }                              // x - z
     };
 
-    int index = val[0] - 'A'; // the whole table begins with capital letters
+    int index = val.get()[0] - 'A'; // the whole table begins with capital letters
     if ((index >= 0) && (index <= 25))
     {
         for (int i = 0; bad_servers[index][i] != nullptr; i++) {
-            if (!PL_strncmp (val, bad_servers[index][i], strlen (bad_servers[index][i]))) {
+            if (val.Equals(bad_servers[index][i])) {
                 LOG(("looks like this server does not support pipelining"));
                 gHttpHandler->ConnMgr()->PipelineFeedbackInfo(
                     mConnInfo, nsHttpConnectionMgr::RedBannedServer, this , 0);
@@ -964,21 +969,22 @@ nsHttpConnection::OnHeadersAvailable(nsAHttpTransaction *trans,
     // specified then we use our advertized timeout value.
     bool foundKeepAliveMax = false;
     if (mKeepAlive) {
-        const char *val = responseHead->PeekHeader(nsHttp::Keep_Alive);
+        nsAutoCString keepAlive;
+        responseHead->GetHeader(nsHttp::Keep_Alive, keepAlive);
 
         if (!mUsingSpdyVersion) {
-            const char *cp = PL_strcasestr(val, "timeout=");
+            const char *cp = PL_strcasestr(keepAlive.get(), "timeout=");
             if (cp)
                 mIdleTimeout = PR_SecondsToInterval((uint32_t) atoi(cp + 8));
             else
                 mIdleTimeout = gHttpHandler->IdleTimeout();
 
-            cp = PL_strcasestr(val, "max=");
+            cp = PL_strcasestr(keepAlive.get(), "max=");
             if (cp) {
-                int val = atoi(cp + 4);
-                if (val > 0) {
+                int maxUses = atoi(cp + 4);
+                if (maxUses > 0) {
                     foundKeepAliveMax = true;
-                    mRemainingConnectionUses = static_cast<uint32_t>(val);
+                    mRemainingConnectionUses = static_cast<uint32_t>(maxUses);
                 }
             }
         }
@@ -1031,25 +1037,32 @@ nsHttpConnection::OnHeadersAvailable(nsAHttpTransaction *trans,
         }
     }
 
-    const char *upgradeReq = requestHead->PeekHeader(nsHttp::Upgrade);
+    nsAutoCString upgradeReq;
+    bool hasUpgradeReq = NS_SUCCEEDED(requestHead->GetHeader(nsHttp::Upgrade,
+                                                             upgradeReq));
     // Don't use persistent connection for Upgrade unless there's an auth failure:
     // some proxies expect to see auth response on persistent connection.
-    if (upgradeReq && responseStatus != 401 && responseStatus != 407) {
+    if (hasUpgradeReq && responseStatus != 401 && responseStatus != 407) {
         LOG(("HTTP Upgrade in play - disable keepalive\n"));
         DontReuse();
     }
 
     if (responseStatus == 101) {
-        const char *upgradeResp = responseHead->PeekHeader(nsHttp::Upgrade);
-        if (!upgradeReq || !upgradeResp ||
-            !nsHttp::FindToken(upgradeResp, upgradeReq,
+        nsAutoCString upgradeResp;
+        bool hasUpgradeResp = NS_SUCCEEDED(responseHead->GetHeader(
+                                                nsHttp::Upgrade,
+                                                upgradeResp));
+        if (!hasUpgradeReq || !hasUpgradeResp ||
+            !nsHttp::FindToken(upgradeResp.get(), upgradeReq.get(),
                                HTTP_HEADER_VALUE_SEPS)) {
             LOG(("HTTP 101 Upgrade header mismatch req = %s, resp = %s\n",
-                 upgradeReq, upgradeResp));
+                 upgradeReq.get(),
+                 !upgradeResp.IsEmpty() ? upgradeResp.get() :
+                     "RESPONSE's nsHttp::Upgrade is empty"));
             Close(NS_ERROR_ABORT);
         }
         else {
-            LOG(("HTTP Upgrade Response to %s\n", upgradeResp));
+            LOG(("HTTP Upgrade Response to %s\n", upgradeResp.get()));
         }
     }
 
@@ -1345,7 +1358,7 @@ nsHttpConnection::ResumeRecv()
 }
 
 
-class HttpConnectionForceIO : public nsRunnable
+class HttpConnectionForceIO : public Runnable
 {
 public:
   HttpConnectionForceIO(nsHttpConnection *aConn, bool doRecv)
@@ -1595,8 +1608,8 @@ nsHttpConnection::OnSocketWritable()
 
             LOG(("  writing transaction request stream\n"));
             mProxyConnectInProgress = false;
-            rv = mTransaction->ReadSegments(this, nsIOService::gDefaultSegmentSize,
-                                            &transactionBytes);
+            rv = mTransaction->ReadSegmentsAgain(this, nsIOService::gDefaultSegmentSize,
+                                                 &transactionBytes, &again);
             mContentBytesWritten += transactionBytes;
         }
 
@@ -1647,7 +1660,7 @@ nsHttpConnection::OnSocketWritable()
             again = false;
         }
         // write more to the socket until error or end-of-request...
-    } while (again);
+    } while (again && gHttpHandler->Active());
 
     return rv;
 }
@@ -1765,28 +1778,33 @@ nsHttpConnection::OnSocketReadable()
             break;
         }
 
-        rv = mTransaction->WriteSegments(this, nsIOService::gDefaultSegmentSize, &n);
+        mSocketInCondition = NS_OK;
+        rv = mTransaction->
+            WriteSegmentsAgain(this, nsIOService::gDefaultSegmentSize, &n, &again);
+        LOG(("nsHttpConnection::OnSocketReadable %p trans->ws rv=%x n=%d socketin=%x\n",
+             this, rv, n, mSocketInCondition));
         if (NS_FAILED(rv)) {
             // if the transaction didn't want to take any more data, then
             // wait for the transaction to call ResumeRecv.
-            if (rv == NS_BASE_STREAM_WOULD_BLOCK)
+            if (rv == NS_BASE_STREAM_WOULD_BLOCK) {
                 rv = NS_OK;
+            }
             again = false;
-        }
-        else {
+        } else {
             mCurrentBytesRead += n;
             mTotalBytesRead += n;
             if (NS_FAILED(mSocketInCondition)) {
                 // continue waiting for the socket if necessary...
-                if (mSocketInCondition == NS_BASE_STREAM_WOULD_BLOCK)
+                if (mSocketInCondition == NS_BASE_STREAM_WOULD_BLOCK) {
                     rv = ResumeRecv();
-                else
+                } else {
                     rv = mSocketInCondition;
+                }
                 again = false;
             }
         }
         // read more from the socket until error...
-    } while (again);
+    } while (again && gHttpHandler->Active());
 
     return rv;
 }
@@ -1856,11 +1874,13 @@ nsHttpConnection::MakeConnectString(nsAHttpTransaction *trans,
     // may seem redundant in this case; see bug 82388).
     request->SetHeader(nsHttp::Host, result);
 
-    const char *val = trans->RequestHead()->PeekHeader(nsHttp::Proxy_Authorization);
-    if (val) {
+    nsAutoCString val;
+    if (NS_SUCCEEDED(trans->RequestHead()->GetHeader(
+                         nsHttp::Proxy_Authorization,
+                         val))) {
         // we don't know for sure if this authorization is intended for the
         // SSL proxy, so we add it just in case.
-        request->SetHeader(nsHttp::Proxy_Authorization, nsDependentCString(val));
+        request->SetHeader(nsHttp::Proxy_Authorization, val);
     }
 
     result.Truncate();

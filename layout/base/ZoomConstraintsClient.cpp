@@ -48,6 +48,9 @@ ZoomConstraintsClient::~ZoomConstraintsClient()
 static nsIWidget*
 GetWidget(nsIPresShell* aShell)
 {
+  if (!aShell) {
+    return nullptr;
+  }
   if (nsIFrame* rootFrame = aShell->GetRootFrame()) {
 #if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_UIKIT)
     return rootFrame->GetNearestWidget();
@@ -105,8 +108,8 @@ ZoomConstraintsClient::Init(nsIPresShell* aPresShell, nsIDocument* aDocument)
   mPresShell = aPresShell;
   mDocument = aDocument;
 
-  if (nsCOMPtr<nsPIDOMWindow> window = mDocument->GetWindow()) {
-    mEventTarget = window->GetChromeEventHandler();
+  if (nsCOMPtr<nsPIDOMWindowOuter> window = mDocument->GetWindow()) {
+    mEventTarget = window->GetParentTarget();
   }
   if (mEventTarget) {
     mEventTarget->AddEventListener(DOM_META_ADDED, this, false);
@@ -149,7 +152,7 @@ ZoomConstraintsClient::Observe(nsISupports* aSubject, const char* aTopic, const 
     // We need to run this later because all the pref change listeners need
     // to execute before we can be guaranteed that gfxPrefs::ForceUserScalable()
     // returns the updated value.
-    NS_DispatchToMainThread(NS_NewRunnableMethod(
+    NS_DispatchToMainThread(NewRunnableMethod(
       this, &ZoomConstraintsClient::RefreshZoomConstraints));
   }
   return NS_OK;

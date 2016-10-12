@@ -119,7 +119,7 @@ nsNativeTheme::GetContentState(nsIFrame* aFrame, uint8_t aWidgetType)
 #endif    
 #if defined(XP_MACOSX) || defined(XP_WIN)
   nsIDocument* doc = aFrame->GetContent()->OwnerDoc();
-  nsPIDOMWindow* window = doc->GetWindow();
+  nsPIDOMWindowOuter* window = doc->GetWindow();
   if (window && !window->ShouldShowFocusRing())
     flags &= ~NS_EVENT_STATE_FOCUS;
 #endif
@@ -231,7 +231,7 @@ nsNativeTheme::IsButtonTypeMenu(nsIFrame* aFrame)
 bool
 nsNativeTheme::IsPressedButton(nsIFrame* aFrame)
 {
-  EventStates eventState = GetContentState(aFrame, NS_THEME_TOOLBAR_BUTTON);
+  EventStates eventState = GetContentState(aFrame, NS_THEME_TOOLBARBUTTON);
   if (IsDisabled(aFrame, eventState))
     return false;
 
@@ -295,9 +295,9 @@ nsNativeTheme::IsWidgetStyled(nsPresContext* aPresContext, nsIFrame* aFrame,
    * Progress bar appearance should be the same for the bar and the container
    * frame. nsProgressFrame owns the logic and will tell us what we should do.
    */
-  if (aWidgetType == NS_THEME_PROGRESSBAR_CHUNK ||
+  if (aWidgetType == NS_THEME_PROGRESSCHUNK ||
       aWidgetType == NS_THEME_PROGRESSBAR) {
-    nsProgressFrame* progressFrame = do_QueryFrame(aWidgetType == NS_THEME_PROGRESSBAR_CHUNK
+    nsProgressFrame* progressFrame = do_QueryFrame(aWidgetType == NS_THEME_PROGRESSCHUNK
                                        ? aFrame->GetParent() : aFrame);
     if (progressFrame) {
       return !progressFrame->ShouldUseNativeStyle();
@@ -308,9 +308,9 @@ nsNativeTheme::IsWidgetStyled(nsPresContext* aPresContext, nsIFrame* aFrame,
    * Meter bar appearance should be the same for the bar and the container
    * frame. nsMeterFrame owns the logic and will tell us what we should do.
    */
-  if (aWidgetType == NS_THEME_METERBAR_CHUNK ||
+  if (aWidgetType == NS_THEME_METERCHUNK ||
       aWidgetType == NS_THEME_METERBAR) {
-    nsMeterFrame* meterFrame = do_QueryFrame(aWidgetType == NS_THEME_METERBAR_CHUNK
+    nsMeterFrame* meterFrame = do_QueryFrame(aWidgetType == NS_THEME_METERCHUNK
                                        ? aFrame->GetParent() : aFrame);
     if (meterFrame) {
       return !meterFrame->ShouldUseNativeStyle();
@@ -332,8 +332,8 @@ nsNativeTheme::IsWidgetStyled(nsPresContext* aPresContext, nsIFrame* aFrame,
     }
   }
 
-  if (aWidgetType == NS_THEME_SPINNER_UP_BUTTON ||
-      aWidgetType == NS_THEME_SPINNER_DOWN_BUTTON) {
+  if (aWidgetType == NS_THEME_SPINNER_UPBUTTON ||
+      aWidgetType == NS_THEME_SPINNER_DOWNBUTTON) {
     nsNumberControlFrame* numberControlFrame =
       nsNumberControlFrame::GetNumberControlFrameForSpinButton(aFrame);
     if (numberControlFrame) {
@@ -346,7 +346,7 @@ nsNativeTheme::IsWidgetStyled(nsPresContext* aPresContext, nsIFrame* aFrame,
           aWidgetType == NS_THEME_TEXTFIELD ||
           aWidgetType == NS_THEME_TEXTFIELD_MULTILINE ||
           aWidgetType == NS_THEME_LISTBOX ||
-          aWidgetType == NS_THEME_DROPDOWN) &&
+          aWidgetType == NS_THEME_MENULIST) &&
          aFrame->GetContent()->IsHTMLElement() &&
          aPresContext->HasAuthorSpecifiedRules(aFrame,
                                                NS_AUTHOR_SPECIFIED_BORDER |
@@ -486,12 +486,10 @@ nsNativeTheme::IsFirstTab(nsIFrame* aFrame)
   if (!aFrame)
     return false;
 
-  nsIFrame* first = aFrame->GetParent()->GetFirstPrincipalChild();
-  while (first) {
+  for (nsIFrame* first : aFrame->GetParent()->PrincipalChildList()) {
     if (first->GetRect().width > 0 &&
         first->GetContent()->IsXULElement(nsGkAtoms::tab))
       return (first == aFrame);
-    first = first->GetNextSibling();
   }
   return false;
 }
@@ -518,7 +516,7 @@ nsNativeTheme::IsNextToSelectedTab(nsIFrame* aFrame, int32_t aOffset)
 
   int32_t thisTabIndex = -1, selectedTabIndex = -1;
 
-  nsIFrame* currentTab = aFrame->GetParent()->GetFirstPrincipalChild();
+  nsIFrame* currentTab = aFrame->GetParent()->PrincipalChildList().FirstChild();
   for (int32_t i = 0; currentTab; currentTab = currentTab->GetNextSibling()) {
     if (currentTab->GetRect().width == 0)
       continue;

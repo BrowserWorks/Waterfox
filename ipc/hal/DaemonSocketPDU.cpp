@@ -35,17 +35,17 @@ DaemonSocketPDU::DaemonSocketPDU(uint8_t aService, uint8_t aOpcode,
   MOZ_COUNT_CTOR_INHERITED(DaemonSocketPDU, UnixSocketIOBuffer);
 
   // Allocate memory
-  size_t availableSpace = HEADER_SIZE + aPayloadSize;
+  size_t availableSpace = PDU_HEADER_SIZE + aPayloadSize;
   ResetBuffer(new uint8_t[availableSpace], 0, 0, availableSpace);
 
   // Reserve PDU header
-  uint8_t* data = Append(HEADER_SIZE);
+  uint8_t* data = Append(PDU_HEADER_SIZE);
   MOZ_ASSERT(data);
 
   // Setup PDU header
-  data[OFF_SERVICE] = aService;
-  data[OFF_OPCODE] = aOpcode;
-  memcpy(data + OFF_LENGTH, &aPayloadSize, sizeof(aPayloadSize));
+  data[PDU_OFF_SERVICE] = aService;
+  data[PDU_OFF_OPCODE] = aOpcode;
+  memcpy(data + PDU_OFF_LENGTH, &aPayloadSize, sizeof(aPayloadSize));
 }
 
 DaemonSocketPDU::DaemonSocketPDU(size_t aPayloadSize)
@@ -53,7 +53,7 @@ DaemonSocketPDU::DaemonSocketPDU(size_t aPayloadSize)
 {
   MOZ_COUNT_CTOR_INHERITED(DaemonSocketPDU, UnixSocketIOBuffer);
 
-  size_t availableSpace = HEADER_SIZE + aPayloadSize;
+  size_t availableSpace = PDU_HEADER_SIZE + aPayloadSize;
   ResetBuffer(new uint8_t[availableSpace], 0, 0, availableSpace);
 }
 
@@ -69,9 +69,9 @@ void
 DaemonSocketPDU::GetHeader(uint8_t& aService, uint8_t& aOpcode,
                               uint16_t& aPayloadSize)
 {
-  memcpy(&aService, GetData(OFF_SERVICE), sizeof(aService));
-  memcpy(&aOpcode, GetData(OFF_OPCODE), sizeof(aOpcode));
-  memcpy(&aPayloadSize, GetData(OFF_LENGTH), sizeof(aPayloadSize));
+  memcpy(&aService, GetData(PDU_OFF_SERVICE), sizeof(aService));
+  memcpy(&aOpcode, GetData(PDU_OFF_OPCODE), sizeof(aOpcode));
+  memcpy(&aPayloadSize, GetData(PDU_OFF_LENGTH), sizeof(aPayloadSize));
 }
 
 ssize_t
@@ -119,7 +119,7 @@ DaemonSocketPDU::Receive(int aFd)
   iv.iov_base = GetData(0);
   iv.iov_len = GetAvailableSpace();
 
-  uint8_t cmsgbuf[CMSG_SPACE(sizeof(int))];
+  uint8_t cmsgbuf[CMSG_SPACE(sizeof(int)* MAX_NFDS)];
 
   struct msghdr msg;
   memset(&msg, 0, sizeof(msg));
@@ -140,36 +140,45 @@ DaemonSocketPDU::Receive(int aFd)
 
   SetRange(0, res);
 
-  struct cmsghdr *chdr = CMSG_FIRSTHDR(&msg);
+  struct cmsghdr* chdr = CMSG_FIRSTHDR(&msg);
 
   for (; chdr; chdr = CMSG_NXTHDR(&msg, chdr)) {
     if (NS_WARN_IF(!CMSGHDR_CONTAINS_FD(chdr))) {
       continue;
     }
-    // Retrieve sent file descriptor. If multiple file descriptors
-    // have been sent, we close all but the final one.
-    mReceivedFd = *(static_cast<int*>(CMSG_DATA(chdr)));
+    // Retrieve sent file descriptors.
+    size_t fdCount = (chdr->cmsg_len - CMSG_ALIGN(sizeof(struct cmsghdr))) / sizeof(int);
+    for (size_t i = 0; i < fdCount; i++) {
+      int* receivedFd = static_cast<int*>(CMSG_DATA(chdr)) + i;
+      mReceivedFds.AppendElement(*receivedFd);
+    }
   }
 
   return res;
 }
 
-int
-DaemonSocketPDU::AcquireFd()
+nsTArray<int>
+DaemonSocketPDU::AcquireFds()
 {
-  return mReceivedFd.forget();
+  // Forget all RAII object to avoid closing the fds.
+  nsTArray<int> fds;
+  for (auto& fd : mReceivedFds) {
+    fds.AppendElement(fd.forget());
+  }
+  mReceivedFds.Clear();
+  return fds;
 }
 
 nsresult
 DaemonSocketPDU::UpdateHeader()
 {
   size_t len = GetPayloadSize();
-  if (len >= MAX_PAYLOAD_LENGTH) {
+  if (len >= PDU_MAX_PAYLOAD_LENGTH) {
     return NS_ERROR_ILLEGAL_VALUE;
   }
   uint16_t len16 = static_cast<uint16_t>(len);
 
-  memcpy(GetData(OFF_LENGTH), &len16, sizeof(len16));
+  memcpy(GetData(PDU_OFF_LENGTH), &len16, sizeof(len16));
 
   return NS_OK;
 }
@@ -177,9 +186,9 @@ DaemonSocketPDU::UpdateHeader()
 size_t
 DaemonSocketPDU::GetPayloadSize() const
 {
-  MOZ_ASSERT(GetSize() >= HEADER_SIZE);
+  MOZ_ASSERT(GetSize() >= PDU_HEADER_SIZE);
 
-  return GetSize() - HEADER_SIZE;
+  return GetSize() - PDU_HEADER_SIZE;
 }
 
 void

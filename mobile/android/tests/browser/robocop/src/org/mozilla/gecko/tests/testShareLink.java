@@ -18,7 +18,7 @@ import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.jayway.android.robotium.solo.Condition;
+import com.robotium.solo.Condition;
 
 /**
  * This test covers the opening and content of the Share Link pop-up list
@@ -34,7 +34,7 @@ public class testShareLink extends AboutHomeTest {
         blockForGeckoReady();
 
         // FIXME: This is a temporary hack workaround for a permissions problem.
-        openAboutHomeTab(AboutHomeTabs.READING_LIST);
+        openAboutHomeTab(AboutHomeTabs.HISTORY);
 
         inputAndLoadUrl(url);
         verifyUrlBarTitle(url); // Waiting for page title to ensure the page is loaded

@@ -22,7 +22,6 @@ add_task(function* test_reconnect_retry() {
   let channelID;
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -58,7 +57,7 @@ add_task(function* test_reconnect_retry() {
   let registration = yield PushService.register({
     scope: 'https://example.com/page/1',
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
   });
   let retryEndpoint = 'https://example.org/push/' + channelID;
   equal(registration.endpoint, retryEndpoint, 'Wrong endpoint for retried request');
@@ -66,9 +65,9 @@ add_task(function* test_reconnect_retry() {
   registration = yield PushService.register({
     scope: 'https://example.com/page/2',
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
   });
-  notEqual(registration.endpoint, retryEndpoint, 'Wrong endpoint for new request')
+  notEqual(registration.endpoint, retryEndpoint, 'Wrong endpoint for new request');
 
   equal(registers, 3, 'Wrong registration count');
 });

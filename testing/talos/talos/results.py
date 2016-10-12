@@ -19,16 +19,15 @@ from talos import output, utils, filter
 class TalosResults(object):
     """Container class for Talos results"""
 
-    def __init__(self, title, date, browser_config):
+    def __init__(self):
         self.results = []
-
-        # info needed for graphserver
-        self.title = title
-        self.date = date
-        self.browser_config = browser_config
+        self.extra_options = []
 
     def add(self, test_results):
         self.results.append(test_results)
+
+    def add_extra_option(self, extra_option):
+        self.extra_options.append(extra_option)
 
     def check_output_formats(self, output_formats):
         """check output formats"""
@@ -89,20 +88,17 @@ class TalosResults(object):
 class TestResults(object):
     """container object for all test results across cycles"""
 
-    def __init__(self, test_config, global_counters=None, extensions=None):
+    def __init__(self, test_config, global_counters=None, framework=None):
         self.results = []
         self.test_config = test_config
         self.format = None
         self.global_counters = global_counters or {}
         self.all_counter_results = []
-        self.extensions = extensions
+        self.framework = framework
         self.using_xperf = False
 
     def name(self):
         return self.test_config['name']
-
-    def extension(self):
-        return self.test_config['test_name_extension']
 
     def mainthread(self):
         return self.test_config['mainthread']

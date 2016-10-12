@@ -6,7 +6,7 @@
 #include "PathD2D.h"
 #include "HelpersD2D.h"
 #include <math.h>
-#include "DrawTargetD2D.h"
+#include "DrawTargetD2D1.h"
 #include "Logging.h"
 
 namespace mozilla {
@@ -90,6 +90,31 @@ private:
   bool mNeedsFigureEnded;
 };
 
+class MOZ_STACK_CLASS AutoRestoreFP
+{
+public:
+  AutoRestoreFP()
+  {
+    // save the current floating point control word
+    _controlfp_s(&savedFPSetting, 0, 0);
+    UINT unused;
+    // set the floating point control word to its default value
+    _controlfp_s(&unused, _CW_DEFAULT, MCW_PC);
+  }
+  ~AutoRestoreFP()
+  {
+    UINT unused;
+    // restore the saved floating point control word
+    _controlfp_s(&unused, savedFPSetting, MCW_PC);
+  }
+private:
+  UINT savedFPSetting;
+};
+
+// Note that overrides of ID2D1SimplifiedGeometrySink methods in this class may
+// get called from D2D with nonstandard floating point settings (see comments in
+// bug 1134549) - use AutoRestoreFP to reset the floating point control word to
+// what we expect
 class StreamingGeometrySink : public ID2D1SimplifiedGeometrySink
 {
 public:
@@ -129,11 +154,18 @@ public:
   STDMETHOD_(void, SetFillMode)(D2D1_FILL_MODE aMode)
   { return; }
   STDMETHOD_(void, BeginFigure)(D2D1_POINT_2F aPoint, D2D1_FIGURE_BEGIN aBegin)
-  { mSink->MoveTo(ToPoint(aPoint)); }
+  {
+    AutoRestoreFP resetFloatingPoint;
+    mSink->MoveTo(ToPoint(aPoint));
+  }
   STDMETHOD_(void, AddLines)(const D2D1_POINT_2F *aLines, UINT aCount)
-  { for (UINT i = 0; i < aCount; i++) { mSink->LineTo(ToPoint(aLines[i])); } }
+  {
+    AutoRestoreFP resetFloatingPoint;
+    for (UINT i = 0; i < aCount; i++) { mSink->LineTo(ToPoint(aLines[i])); }
+  }
   STDMETHOD_(void, AddBeziers)(const D2D1_BEZIER_SEGMENT *aSegments, UINT aCount)
   {
+    AutoRestoreFP resetFloatingPoint;
     for (UINT i = 0; i < aCount; i++) {
       mSink->BezierTo(ToPoint(aSegments[i].point1), ToPoint(aSegments[i].point2), ToPoint(aSegments[i].point3));
     }
@@ -145,6 +177,7 @@ public:
 
   STDMETHOD_(void, EndFigure)(D2D1_FIGURE_END aEnd)
   {
+    AutoRestoreFP resetFloatingPoint;
     if (aEnd == D2D1_FIGURE_END_CLOSED) {
       return mSink->Close();
     }
@@ -334,7 +367,7 @@ PathBuilderD2D::Finish()
 
   HRESULT hr = mSink->Close();
   if (FAILED(hr)) {
-    gfxDebug() << "Failed to close PathSink. Code: " << hexa(hr);
+    gfxCriticalNote << "Failed to close PathSink. Code: " << hexa(hr);
     return nullptr;
   }
 
@@ -351,7 +384,7 @@ already_AddRefed<PathBuilder>
 PathD2D::TransformedCopyToBuilder(const Matrix &aTransform, FillRule aFillRule) const
 {
   RefPtr<ID2D1PathGeometry> path;
-  HRESULT hr = DrawTargetD2D::factory()->CreatePathGeometry(getter_AddRefs(path));
+  HRESULT hr = DrawTargetD2D1::factory()->CreatePathGeometry(getter_AddRefs(path));
 
   if (FAILED(hr)) {
     gfxWarning() << "Failed to create PathGeometry. Code: " << hexa(hr);
@@ -371,13 +404,17 @@ PathD2D::TransformedCopyToBuilder(const Matrix &aTransform, FillRule aFillRule) 
 
   if (mEndedActive) {
     OpeningGeometrySink wrapSink(sink);
-    mGeometry->Simplify(D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-                        D2DMatrix(aTransform),
-                        &wrapSink);
+    hr = mGeometry->Simplify(D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
+                             D2DMatrix(aTransform),
+                             &wrapSink);
   } else {
-    mGeometry->Simplify(D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
-                        D2DMatrix(aTransform),
-                        sink);
+    hr = mGeometry->Simplify(D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES,
+                             D2DMatrix(aTransform),
+                             sink);
+  }
+  if (FAILED(hr)) {
+    gfxWarning() << "Failed to simplify PathGeometry to tranformed copy. Code: " << hexa(hr) << " Active: " << mEndedActive;
+    return nullptr;
   }
 
   RefPtr<PathBuilderD2D> pathBuilder = new PathBuilderD2D(sink, path, aFillRule, mBackendType);

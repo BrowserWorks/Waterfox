@@ -18,12 +18,24 @@ DisplayItemScrollClip::IsAncestor(const DisplayItemScrollClip* aAncestor,
     return true;
   }
 
-  for (const DisplayItemScrollClip* sc = aDescendant; sc; sc = sc->mCrossStackingContextParent) {
+  for (const DisplayItemScrollClip* sc = aDescendant; sc; sc = sc->mParent) {
     if (sc == aAncestor) {
       return true;
     }
   }
 
+  return false;
+}
+
+bool
+DisplayItemScrollClip::HasRoundedCorners() const
+{
+  for (const DisplayItemScrollClip* scrollClip = this;
+       scrollClip; scrollClip = scrollClip->mParent) {
+    if (scrollClip->mClip->GetRoundedRectCount() > 0) {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -33,9 +45,10 @@ DisplayItemScrollClip::ToString(const DisplayItemScrollClip* aScrollClip)
   nsAutoCString str;
   for (const DisplayItemScrollClip* scrollClip = aScrollClip;
        scrollClip; scrollClip = scrollClip->mParent) {
-    str.AppendPrintf("<%s>", scrollClip->mClip ? scrollClip->mClip->ToString().get() : "null");
+    str.AppendPrintf("<%s>%s", scrollClip->mClip ? scrollClip->mClip->ToString().get() : "null",
+                     scrollClip->mIsAsyncScrollable ? " [async-scrollable]" : "");
     if (scrollClip->mParent) {
-      str.Append(" ");
+      str.Append(", ");
     }
   }
   return str;

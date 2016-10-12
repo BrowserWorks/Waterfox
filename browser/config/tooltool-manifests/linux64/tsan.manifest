@@ -1,8 +1,6 @@
 [
 {
-"clang_version": "r241773"
-}, 
-{
+"version": "clang 3.6.2/r241773",
 "size": 89690541, 
 "digest": "470d258d9785a120fcba65eee90daa632a42affa0f97f57d70fc8285bd76bcc27d4d0d70b6c37577ab271a04c843b6269425391a8d6df1967718dba26dd3a73d", 
 "algorithm": "sha512", 
@@ -10,10 +8,11 @@
 "unpack": true
 },
 {
-"size": 12057960,
-"digest": "6105d6432943141cffb40020dc5ba3a793650bdeb3af9bd5e56d3796c5f03df9962a73e521646cd71fbfb5e266c1e74716ad722fb6055589dfb7d35175bca89e",
+"size": 12072532,
+"digest": "3915f8ec396c56a8a92e6f9695b70f09ce9d1582359d1258e37e3fd43a143bc974410e4cfc27f500e095f34a8956206e0ebf799b7287f0f38def0d5e34ed71c9",
 "algorithm": "sha512",
 "filename": "gtk3.tar.xz",
+"setup": "setup.sh",
 "unpack": true
 }
 ]

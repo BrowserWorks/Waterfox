@@ -138,7 +138,7 @@ FakeDirectAudioSynth::Speak(const nsAString& aText, const nsAString& aUri,
                             float aVolume, float aRate, float aPitch,
                             nsISpeechTask* aTask)
 {
-  class Runnable final : public nsRunnable
+  class Runnable final : public mozilla::Runnable
   {
   public:
     Runnable(nsISpeechTask* aTask, const nsAString& aText) :
@@ -201,7 +201,7 @@ FakeIndirectAudioSynth::Speak(const nsAString& aText, const nsAString& aUri,
                               float aVolume, float aRate, float aPitch,
                               nsISpeechTask* aTask)
 {
-  class DispatchStart final : public nsRunnable
+  class DispatchStart final : public Runnable
   {
   public:
     explicit DispatchStart(nsISpeechTask* aTask) :
@@ -220,7 +220,7 @@ FakeIndirectAudioSynth::Speak(const nsAString& aText, const nsAString& aUri,
     nsCOMPtr<nsISpeechTask> mTask;
   };
 
-  class DispatchEnd final : public nsRunnable
+  class DispatchEnd final : public Runnable
   {
   public:
     DispatchEnd(nsISpeechTask* aTask, const nsAString& aText) :
@@ -240,7 +240,7 @@ FakeIndirectAudioSynth::Speak(const nsAString& aText, const nsAString& aUri,
     nsString mText;
   };
 
-  class DispatchError final : public nsRunnable
+  class DispatchError final : public Runnable
   {
   public:
     DispatchError(nsISpeechTask* aTask, const nsAString& aText) :
@@ -318,7 +318,7 @@ nsFakeSynthServices::~nsFakeSynthServices()
 static void
 AddVoices(nsISpeechService* aService, const VoiceDetails* aVoices, uint32_t aLength)
 {
-  nsSynthVoiceRegistry* registry = nsSynthVoiceRegistry::GetInstance();
+  RefPtr<nsSynthVoiceRegistry> registry = nsSynthVoiceRegistry::GetInstance();
   for (uint32_t i = 0; i < aLength; i++) {
     NS_ConvertUTF8toUTF16 name(aVoices[i].name);
     NS_ConvertUTF8toUTF16 uri(aVoices[i].uri);
@@ -330,6 +330,8 @@ AddVoices(nsISpeechService* aService, const VoiceDetails* aVoices, uint32_t aLen
       registry->SetDefaultVoice(uri, true);
     }
   }
+
+  registry->NotifyVoicesChanged();
 }
 
 void
@@ -349,12 +351,12 @@ nsFakeSynthServices::Observe(nsISupports* aSubject, const char* aTopic,
                              const char16_t* aData)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  if(NS_WARN_IF(!(!strcmp(aTopic, "profile-after-change")))) {
+  if(NS_WARN_IF(!(!strcmp(aTopic, "speech-synth-started")))) {
     return NS_ERROR_UNEXPECTED;
   }
 
   if (Preferences::GetBool("media.webspeech.synth.test")) {
-    Init();
+    NS_DispatchToMainThread(NewRunnableMethod(this, &nsFakeSynthServices::Init));
   }
 
   return NS_OK;

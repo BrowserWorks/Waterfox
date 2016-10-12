@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Make sure we can attach to addon actors.
 
@@ -16,7 +18,7 @@ function test() {
 
   let transport = DebuggerServer.connectPipe();
   gClient = new DebuggerClient(transport);
-  gClient.connect((aType, aTraits) => {
+  gClient.connect().then(([aType, aTraits]) => {
     is(aType, "browser",
       "Root actor should identify itself as a browser.");
 
@@ -34,13 +36,13 @@ function test() {
   });
 }
 
-function installAddon () {
+function installAddon() {
   return addAddon(ADDON3_URL).then(aAddon => {
     gAddon = aAddon;
   });
 }
 
-function attachAddonThread ([aGrip, aResponse]) {
+function attachAddonThread([aGrip, aResponse]) {
   info("attached addon actor for URL");
   let deferred = promise.defer();
 
@@ -53,12 +55,12 @@ function attachAddonThread ([aGrip, aResponse]) {
 }
 
 function testDebugger() {
-  info('Entering testDebugger');
+  info("Entering testDebugger");
   let deferred = promise.defer();
 
   once(gClient, "paused").then(() => {
     ok(true, "Should be able to attach to addon actor");
-    gThreadClient.resume(deferred.resolve)
+    gThreadClient.resume(deferred.resolve);
   });
 
   Services.obs.notifyObservers(null, "debuggerAttached", null);
@@ -85,13 +87,13 @@ function uninstallAddon() {
   return removeAddon(gAddon);
 }
 
-function closeConnection () {
+function closeConnection() {
   let deferred = promise.defer();
   gClient.close(deferred.resolve);
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gClient = null;
   gAddon = null;
   gThreadClient = null;

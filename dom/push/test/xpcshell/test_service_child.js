@@ -3,13 +3,27 @@
 
 'use strict';
 
+Cu.importGlobalProperties(["crypto"]);
+
 const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
-var db, service;
+var db;
+
+function done() {
+  do_test_finished();
+  run_next_test();
+}
+
+function generateKey() {
+  return crypto.subtle.generateKey({
+    name: "ECDSA",
+    namedCurve: "P-256",
+  }, true, ["sign", "verify"]).then(cryptoKey =>
+    crypto.subtle.exportKey("raw", cryptoKey.publicKey)
+  ).then(publicKey => new Uint8Array(publicKey));
+}
 
 function run_test() {
-  service = Cc['@mozilla.org/push/Service;1']
-              .getService(Ci.nsIPushService);
   if (isParent) {
     do_get_profile();
   }
@@ -26,11 +40,12 @@ if (isParent) {
 
 add_test(function test_subscribe_success() {
   do_test_pending();
-  service.subscribe(
+  PushServiceComponent.subscribe(
     'https://example.com/sub/ok',
     Services.scriptSecurityManager.getSystemPrincipal(),
     (result, subscription) => {
       ok(Components.isSuccessCode(result), 'Error creating subscription');
+      ok(subscription.isSystemSubscription, 'Expected system subscription');
       ok(subscription.endpoint.startsWith('https://example.org/push'), 'Wrong endpoint prefix');
       equal(subscription.pushCount, 0, 'Wrong push count');
       equal(subscription.lastPush, 0, 'Wrong last push time');
@@ -42,9 +57,72 @@ add_test(function test_subscribe_success() {
   );
 });
 
+add_test(function test_subscribeWithKey_error() {
+  do_test_pending();
+
+  let invalidKey = [0, 1];
+  PushServiceComponent.subscribeWithKey(
+    'https://example.com/sub-key/invalid',
+    Services.scriptSecurityManager.getSystemPrincipal(),
+    invalidKey.length,
+    invalidKey,
+    (result, subscription) => {
+      ok(!Components.isSuccessCode(result), 'Expected error creating subscription with invalid key');
+      equal(result, Cr.NS_ERROR_DOM_PUSH_INVALID_KEY_ERR, 'Wrong error code for invalid key');
+      strictEqual(subscription, null, 'Unexpected subscription');
+
+      do_test_finished();
+      run_next_test();
+    }
+  );
+});
+
+add_test(function test_subscribeWithKey_success() {
+  do_test_pending();
+
+  generateKey().then(key => {
+    PushServiceComponent.subscribeWithKey(
+      'https://example.com/sub-key/ok',
+      Services.scriptSecurityManager.getSystemPrincipal(),
+      key.length,
+      key,
+      (result, subscription) => {
+        ok(Components.isSuccessCode(result), 'Error creating subscription with key');
+        notStrictEqual(subscription, null, 'Expected subscription');
+        done();
+      }
+    );
+  }, error => {
+    ok(false, "Error generating app server key");
+    done();
+  });
+});
+
+add_test(function test_subscribeWithKey_conflict() {
+  do_test_pending();
+
+  generateKey().then(differentKey => {
+    PushServiceComponent.subscribeWithKey(
+      'https://example.com/sub-key/ok',
+      Services.scriptSecurityManager.getSystemPrincipal(),
+      differentKey.length,
+      differentKey,
+      (result, subscription) => {
+        ok(!Components.isSuccessCode(result), 'Expected error creating subscription with conflicting key');
+        equal(result, Cr.NS_ERROR_DOM_PUSH_MISMATCHED_KEY_ERR, 'Wrong error code for mismatched key');
+        strictEqual(subscription, null, 'Unexpected subscription');
+        done();
+      }
+    );
+  }, error => {
+    ok(false, "Error generating different app server key");
+    done();
+  });
+});
+
 add_test(function test_subscribe_error() {
   do_test_pending();
-  service.subscribe(
+  PushServiceComponent.subscribe(
     'https://example.com/sub/fail',
     Services.scriptSecurityManager.getSystemPrincipal(),
     (result, subscription) => {
@@ -59,7 +137,7 @@ add_test(function test_subscribe_error() {
 
 add_test(function test_getSubscription_exists() {
   do_test_pending();
-  service.getSubscription(
+  PushServiceComponent.getSubscription(
     'https://example.com/get/ok',
     Services.scriptSecurityManager.getSystemPrincipal(),
     (result, subscription) => {
@@ -78,7 +156,7 @@ add_test(function test_getSubscription_exists() {
 
 add_test(function test_getSubscription_missing() {
   do_test_pending();
-  service.getSubscription(
+  PushServiceComponent.getSubscription(
     'https://example.com/get/missing',
     Services.scriptSecurityManager.getSystemPrincipal(),
     (result, subscription) => {
@@ -93,7 +171,7 @@ add_test(function test_getSubscription_missing() {
 
 add_test(function test_getSubscription_error() {
   do_test_pending();
-  service.getSubscription(
+  PushServiceComponent.getSubscription(
     'https://example.com/get/fail',
     Services.scriptSecurityManager.getSystemPrincipal(),
     (result, subscription) => {
@@ -108,7 +186,7 @@ add_test(function test_getSubscription_error() {
 
 add_test(function test_unsubscribe_success() {
   do_test_pending();
-  service.unsubscribe(
+  PushServiceComponent.unsubscribe(
     'https://example.com/unsub/ok',
     Services.scriptSecurityManager.getSystemPrincipal(),
     (result, success) => {
@@ -123,7 +201,7 @@ add_test(function test_unsubscribe_success() {
 
 add_test(function test_unsubscribe_nonexistent() {
   do_test_pending();
-  service.unsubscribe(
+  PushServiceComponent.unsubscribe(
     'https://example.com/unsub/ok',
     Services.scriptSecurityManager.getSystemPrincipal(),
     (result, success) => {
@@ -138,7 +216,7 @@ add_test(function test_unsubscribe_nonexistent() {
 
 add_test(function test_unsubscribe_error() {
   do_test_pending();
-  service.unsubscribe(
+  PushServiceComponent.unsubscribe(
     'https://example.com/unsub/fail',
     Services.scriptSecurityManager.getSystemPrincipal(),
     (result, success) => {
@@ -159,10 +237,12 @@ add_test(function test_subscribe_app_principal() {
   );
 
   do_test_pending();
-  service.subscribe('https://example.net/scope/1', principal, (result, subscription) => {
+  PushServiceComponent.subscribe('https://example.net/scope/1', principal, (result, subscription) => {
     ok(Components.isSuccessCode(result), 'Error creating subscription');
     ok(subscription.endpoint.startsWith('https://example.org/push'),
       'Wrong push endpoint in app subscription');
+    ok(!subscription.isSystemSubscription,
+      'Unexpected system subscription for app principal');
     equal(subscription.quota, 16, 'Wrong quota for app subscription');
 
     do_test_finished();
@@ -176,9 +256,11 @@ add_test(function test_subscribe_origin_principal() {
     Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(scope);
 
   do_test_pending();
-  service.subscribe(scope, principal, (result, subscription) => {
+  PushServiceComponent.subscribe(scope, principal, (result, subscription) => {
     ok(Components.isSuccessCode(result),
       'Expected error creating subscription with origin principal');
+    ok(!subscription.isSystemSubscription,
+      'Unexpected system subscription for origin principal');
     equal(subscription.quota, 16, 'Wrong quota for origin subscription');
 
     do_test_finished();
@@ -188,14 +270,14 @@ add_test(function test_subscribe_origin_principal() {
 
 add_test(function test_subscribe_null_principal() {
   do_test_pending();
-  service.subscribe(
+  PushServiceComponent.subscribe(
     'chrome://push/null-principal',
     Services.scriptSecurityManager.createNullPrincipal({}),
     (result, subscription) => {
       ok(!Components.isSuccessCode(result),
-        'Expected error creating subscription with expanded principal');
+        'Expected error creating subscription with null principal');
       strictEqual(subscription, null,
-        'Unexpected subscription with expanded principal');
+        'Unexpected subscription with null principal');
 
       do_test_finished();
       run_next_test();
@@ -205,7 +287,7 @@ add_test(function test_subscribe_null_principal() {
 
 add_test(function test_subscribe_missing_principal() {
   do_test_pending();
-  service.subscribe('chrome://push/missing-principal', null,
+  PushServiceComponent.subscribe('chrome://push/missing-principal', null,
     (result, subscription) => {
       ok(!Components.isSuccessCode(result),
         'Expected error creating subscription without principal');

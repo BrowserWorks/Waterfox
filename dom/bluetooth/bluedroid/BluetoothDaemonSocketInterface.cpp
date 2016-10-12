@@ -6,8 +6,9 @@
 
 #include "BluetoothDaemonSocketInterface.h"
 #include "BluetoothSocketMessageWatcher.h"
-#include "nsXULAppAPI.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/unused.h"
+#include "nsXULAppAPI.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
 
@@ -32,9 +33,9 @@ BluetoothDaemonSocketModule::ListenCmd(BluetoothSocketType aType,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsAutoPtr<DaemonSocketPDU> pdu(
-    new DaemonSocketPDU(SERVICE_ID, OPCODE_LISTEN,
-                        0));
+  UniquePtr<DaemonSocketPDU> pdu =
+    MakeUnique<DaemonSocketPDU>(SERVICE_ID, OPCODE_LISTEN,
+                                0);
 
   nsresult rv = PackPDU(
     aType,
@@ -45,11 +46,11 @@ BluetoothDaemonSocketModule::ListenCmd(BluetoothSocketType aType,
   if (NS_FAILED(rv)) {
     return rv;
   }
-  rv = Send(pdu, aRes);
+  rv = Send(pdu.get(), aRes);
   if (NS_FAILED(rv)) {
     return rv;
   }
-  Unused << pdu.forget();
+  Unused << pdu.release();
   return rv;
 }
 
@@ -63,9 +64,9 @@ BluetoothDaemonSocketModule::ConnectCmd(const BluetoothAddress& aBdAddr,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsAutoPtr<DaemonSocketPDU> pdu(
-    new DaemonSocketPDU(SERVICE_ID, OPCODE_CONNECT,
-                        0));
+  UniquePtr<DaemonSocketPDU> pdu =
+    MakeUnique<DaemonSocketPDU>(SERVICE_ID, OPCODE_CONNECT,
+                                0);
 
   nsresult rv = PackPDU(
     aBdAddr,
@@ -76,31 +77,32 @@ BluetoothDaemonSocketModule::ConnectCmd(const BluetoothAddress& aBdAddr,
   if (NS_FAILED(rv)) {
     return rv;
   }
-  rv = Send(pdu, aRes);
+  rv = Send(pdu.get(), aRes);
   if (NS_FAILED(rv)) {
     return rv;
   }
-  Unused << pdu.forget();
+  Unused << pdu.release();
   return rv;
 }
 
 /* |DeleteTask| deletes a class instance on the I/O thread
  */
 template <typename T>
-class DeleteTask final : public Task
+class DeleteTask final : public Runnable
 {
 public:
   DeleteTask(T* aPtr)
   : mPtr(aPtr)
   { }
 
-  void Run() override
+  NS_IMETHOD Run() override
   {
     mPtr = nullptr;
+    return NS_OK;
   }
 
 private:
-  nsAutoPtr<T> mPtr;
+  UniquePtr<T> mPtr;
 };
 
 /* |AcceptWatcher| specializes SocketMessageWatcher for Accept
@@ -133,7 +135,7 @@ public:
     }
 
     MessageLoopForIO::current()->PostTask(
-      FROM_HERE, new DeleteTask<AcceptWatcher>(this));
+      MakeAndAddRef<DeleteTask<AcceptWatcher>>(this));
   }
 };
 
@@ -144,8 +146,8 @@ BluetoothDaemonSocketModule::AcceptCmd(int aFd,
   MOZ_ASSERT(NS_IsMainThread());
 
   /* receive Bluedroid's socket-setup messages and client fd */
-  Task* t = new SocketMessageWatcherTask(new AcceptWatcher(aFd, aRes));
-  XRE_GetIOMessageLoop()->PostTask(FROM_HERE, t);
+  XRE_GetIOMessageLoop()->PostTask(
+    MakeAndAddRef<SocketMessageWatcherTask>(new AcceptWatcher(aFd, aRes)));
 
   return NS_OK;
 }
@@ -156,8 +158,8 @@ BluetoothDaemonSocketModule::CloseCmd(BluetoothSocketResultHandler* aRes)
   MOZ_ASSERT(NS_IsMainThread());
 
   /* stop the watcher corresponding to |aRes| */
-  Task* t = new DeleteSocketMessageWatcherTask(aRes);
-  XRE_GetIOMessageLoop()->PostTask(FROM_HERE, t);
+  XRE_GetIOMessageLoop()->PostTask(
+    MakeAndAddRef<DeleteSocketMessageWatcherTask>(aRes));
 
   return NS_OK;
 }
@@ -221,7 +223,11 @@ public:
   {
     DaemonSocketPDU& pdu = GetPDU();
 
-    aArg1 = pdu.AcquireFd();
+    auto receiveFds = pdu.AcquireFds();
+    if (NS_WARN_IF(receiveFds.Length() == 0)) {
+      return NS_ERROR_ILLEGAL_VALUE;
+    }
+    aArg1 = receiveFds[0];
 
     if (NS_WARN_IF(aArg1 < 0)) {
       return NS_ERROR_ILLEGAL_VALUE;
@@ -268,7 +274,7 @@ public:
     }
 
     MessageLoopForIO::current()->PostTask(
-      FROM_HERE, new DeleteTask<ConnectWatcher>(this));
+      MakeAndAddRef<DeleteTask<ConnectWatcher>>(this));
   }
 };
 
@@ -278,7 +284,14 @@ BluetoothDaemonSocketModule::ConnectRsp(const DaemonSocketPDUHeader& aHeader,
                                         BluetoothSocketResultHandler* aRes)
 {
   /* the file descriptor is attached in the PDU's ancillary data */
-  int fd = aPDU.AcquireFd();
+  auto receiveFds = aPDU.AcquireFds();
+  if (receiveFds.Length() == 0) {
+    ErrorRunnable::Dispatch(aRes, &BluetoothSocketResultHandler::OnError,
+                            ConstantInitOp1<BluetoothStatus>(STATUS_FAIL));
+    return;
+  }
+  int fd = -1;
+  fd = receiveFds[0];
   if (fd < 0) {
     ErrorRunnable::Dispatch(aRes, &BluetoothSocketResultHandler::OnError,
                             ConstantInitOp1<BluetoothStatus>(STATUS_FAIL));
@@ -286,8 +299,8 @@ BluetoothDaemonSocketModule::ConnectRsp(const DaemonSocketPDUHeader& aHeader,
   }
 
   /* receive Bluedroid's socket-setup messages */
-  Task* t = new SocketMessageWatcherTask(new ConnectWatcher(fd, aRes));
-  XRE_GetIOMessageLoop()->PostTask(FROM_HERE, t);
+  XRE_GetIOMessageLoop()->PostTask(
+    MakeAndAddRef<SocketMessageWatcherTask>(new ConnectWatcher(fd, aRes)));
 }
 
 //

@@ -11,6 +11,7 @@ EXPORTS += [
 UNIFIED_SOURCES += [
     'OmxDataDecoder.cpp',
     'OmxDecoderModule.cpp',
+    'OmxPlatformLayer.cpp',
     'OmxPromiseLayer.cpp',
 ]
 
@@ -44,3 +45,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and (CONFIG['ANDROID_VERSION'] == '19'
     ]
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

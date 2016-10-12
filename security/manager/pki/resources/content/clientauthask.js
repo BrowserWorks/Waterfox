@@ -3,7 +3,8 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
+/* import-globals-from pippki.js */
+"use strict";
 
 const nsIDialogParamBlock = Components.interfaces.nsIDialogParamBlock;
 
@@ -28,14 +29,13 @@ function onLoad()
     var rememberSetting = true;
 
     var pref = Components.classes['@mozilla.org/preferences-service;1']
-	       .getService(Components.interfaces.nsIPrefService);
+                         .getService(Components.interfaces.nsIPrefService);
     if (pref) {
       pref = pref.getBranch(null);
       try {
-	rememberSetting = 
+	rememberSetting =
 	  pref.getBoolPref("security.remember_cert_checkbox_default_setting");
-      }
-      catch(e) {
+      } catch (e) {
 	// pref is missing
       }
     }
@@ -53,9 +53,9 @@ function onLoad()
 
     var selectElement = document.getElementById("nicknames");
     itemCount = dialogParams.GetInt(0);
-    for (var i=0; i < itemCount; i++) {
+    for (let i = 0; i < itemCount; i++) {
         var menuItemNode = document.createElement("menuitem");
-        var nick = dialogParams.GetString(i+3);
+        let nick = dialogParams.GetString(i + 3);
         menuItemNode.setAttribute("value", i);
         menuItemNode.setAttribute("label", nick); // this is displayed
         selectElement.firstChild.appendChild(menuItemNode);
@@ -69,8 +69,8 @@ function onLoad()
 
 function setDetails()
 {
-  var index = parseInt(document.getElementById("nicknames").value);
-  var details = dialogParams.GetString(index+itemCount+3);
+  let index = parseInt(document.getElementById("nicknames").value);
+  let details = dialogParams.GetString(index + itemCount + 3);
   document.getElementById("details").value = details;
 }
 
@@ -81,17 +81,24 @@ function onCertSelected()
 
 function doOK()
 {
-  dialogParams.SetInt(0,1);
-  var index = parseInt(document.getElementById("nicknames").value);
+  // Signal that the user accepted.
+  dialogParams.SetInt(0, 1);
+  let index = parseInt(document.getElementById("nicknames").value);
+  // Signal the index of the selected cert in the list of cert nicknames
+  // provided.
   dialogParams.SetInt(1, index);
+  // Signal whether the user wanted to remember the selection.
   dialogParams.SetInt(2, rememberBox.checked);
   return true;
 }
 
 function doCancel()
 {
-  dialogParams.SetInt(0,0);
+  // Signal that the user cancelled.
+  dialogParams.SetInt(0, 0);
+  // Signal some invalid index value since a cert hasn't actually been chosen.
   dialogParams.SetInt(1, -1); // invalid value
+  // Signal whether the user wanted to remember the "selection".
   dialogParams.SetInt(2, rememberBox.checked);
   return true;
 }

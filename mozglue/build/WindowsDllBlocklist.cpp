@@ -3,6 +3,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#ifdef MOZ_MEMORY
+#define MOZ_MEMORY_IMPL
+#include "mozmemory_wrap.h"
+#define MALLOC_FUNCS MALLOC_FUNCS_MALLOC
+// See mozmemory_wrap.h for more details. This file is part of libmozglue, so
+// it needs to use _impl suffixes.
+#define MALLOC_DECL(name, return_type, ...) \
+  extern "C" MOZ_MEMORY_API return_type name ## _impl(__VA_ARGS__);
+#include "malloc_decls.h"
+#endif
+
 #include <windows.h>
 #include <winternl.h>
 #include <io.h>
@@ -12,13 +23,13 @@
 #include <map>
 #pragma warning( pop )
 
-#define MOZ_NO_MOZALLOC
 #include "nsAutoPtr.h"
 
 #include "nsWindowsDllInterceptor.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WindowsVersion.h"
 #include "nsWindowsHelpers.h"
+#include "WindowsDllBlocklist.h"
 
 using namespace mozilla;
 
@@ -66,6 +77,8 @@ static DllBlockInfo sWindowsDllBlocklist[] = {
   // { "uxtheme.dll", ALL_VERSIONS },
   // { "uxtheme.dll", 0x0000123400000000ULL },
   // The DLL name must be in lowercase!
+  // The version field is a maximum, that is, we block anything that is
+  // less-than or equal to that version.
   
   // NPFFAddon - Known malware
   { "npffaddon.dll", ALL_VERSIONS},
@@ -115,9 +128,6 @@ static DllBlockInfo sWindowsDllBlocklist[] = {
 
   // sprotector.dll crashes, bug 957258
   {"sprotector.dll", ALL_VERSIONS},
-
-  // Topcrash with Websense Endpoint, bug 828184
-  {"qipcap.dll", MAKE_VERSION(7, 6, 815, 1)},
 
   // leave these two in always for tests
   { "mozdllblockingtest.dll", ALL_VERSIONS },
@@ -188,6 +198,27 @@ static DllBlockInfo sWindowsDllBlocklist[] = {
   { "grabdll.dll", MAKE_VERSION(2, 6, 1, 0) },
   { "grabkernel.dll", MAKE_VERSION(1, 0, 0, 1) },
 
+  // ESET, bug 1229252
+  { "eoppmonitor.dll", ALL_VERSIONS },
+
+  // SS2OSD, bug 1262348
+  { "ss2osd.dll", ALL_VERSIONS },
+  { "ss2devprops.dll", ALL_VERSIONS },
+
+  // NHASUSSTRIXOSD.DLL, bug 1269244
+  { "nhasusstrixosd.dll", ALL_VERSIONS },
+  { "nhasusstrixdevprops.dll", ALL_VERSIONS },
+
+  // Crashes with PremierOpinion/RelevantKnowledge, bug 1277846
+  { "opls.dll", ALL_VERSIONS },
+  { "opls64.dll", ALL_VERSIONS },
+  { "pmls.dll", ALL_VERSIONS },
+  { "pmls64.dll", ALL_VERSIONS },
+  { "prls.dll", ALL_VERSIONS },
+  { "prls64.dll", ALL_VERSIONS },
+  { "rlls.dll", ALL_VERSIONS },
+  { "rlls64.dll", ALL_VERSIONS },
+
   { nullptr, 0 }
 };
 
@@ -211,6 +242,7 @@ static const int kUser32BeforeBlocklistParameterLen =
   sizeof(kUser32BeforeBlocklistParameter) - 1;
 
 static DWORD sThreadLoadingXPCOMModule;
+static bool sBlocklistInitAttempted;
 static bool sBlocklistInitFailed;
 static bool sUser32BeforeBlocklist;
 
@@ -486,7 +518,10 @@ getFullPath (PWCHAR filePath, wchar_t* fname)
   // path name.  For example, its numerical value can be 1.  Passing a non-valid
   // pointer to SearchPathW will cause a crash, so we need to check to see if we
   // are handed a valid pointer, and otherwise just pass nullptr to SearchPathW.
-  PWCHAR sanitizedFilePath = (intptr_t(filePath) < 4096) ? nullptr : filePath;
+  PWCHAR sanitizedFilePath = nullptr;
+  if ((uintptr_t(filePath) >= 65536) && ((uintptr_t(filePath) & 1) == 0)) {
+    sanitizedFilePath = filePath;
+  }
 
   // figure out the length of the string that we need
   DWORD pathlen = SearchPathW(sanitizedFilePath, fname, L".dll", 0, nullptr,
@@ -718,9 +753,13 @@ WindowsDllInterceptor NtDllIntercept;
 
 } // namespace
 
-NS_EXPORT void
+MFBT_API void
 DllBlocklist_Initialize()
 {
+  if (sBlocklistInitAttempted) {
+    return;
+  }
+  sBlocklistInitAttempted = true;
 #if defined(_MSC_VER) && _MSC_VER < 1900 && defined(_M_X64)
   // The code below is not blocklist-related, but is the best place for it.
   // This is the earliest place where msvcr120.dll is loaded, and this
@@ -739,6 +778,8 @@ DllBlocklist_Initialize()
   if (GetModuleHandleA("user32.dll")) {
     sUser32BeforeBlocklist = true;
   }
+  // Catch any missing DELAYLOADS for user32.dll
+  MOZ_ASSERT(!sUser32BeforeBlocklist);
 
   NtDllIntercept.Init("ntdll.dll");
 
@@ -757,7 +798,7 @@ DllBlocklist_Initialize()
   }
 }
 
-NS_EXPORT void
+MFBT_API void
 DllBlocklist_SetInXPCOMLoadOnMainThread(bool inXPCOMLoadOnMainThread)
 {
   if (inXPCOMLoadOnMainThread) {
@@ -768,7 +809,7 @@ DllBlocklist_SetInXPCOMLoadOnMainThread(bool inXPCOMLoadOnMainThread)
   }
 }
 
-NS_EXPORT void
+MFBT_API void
 DllBlocklist_WriteNotes(HANDLE file)
 {
   DWORD nBytes;

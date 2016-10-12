@@ -197,15 +197,6 @@ public:
 
   virtual bool OnThread() = 0;
 
-  // These are invoked on the MSG thread (or MainThread in shutdown)
-  virtual void SetInputListener(AudioDataListener *aListener) {
-    mAudioInput = aListener;
-  }
-  // XXX do we need the param?  probably no
-  virtual void RemoveInputListener(AudioDataListener *aListener) {
-    mAudioInput = nullptr;
-  }
-
 protected:
   GraphTime StateComputedTime() const;
 
@@ -235,9 +226,6 @@ protected:
   };
   // This must be access with the monitor.
   WaitState mWaitState;
-
-  // Callback for mic data, if any
-  AudioDataListener *mAudioInput;
 
   // This is used on the main thread (during initialization), and the graph
   // thread. No monitor needed because we know the graph thread does not run
@@ -421,6 +409,17 @@ public:
                      uint32_t aFrames,
                      uint32_t aSampleRate) override;
 
+  // These are invoked on the MSG thread (we don't call this if not LIFECYCLE_RUNNING)
+  virtual void SetInputListener(AudioDataListener *aListener) {
+    MOZ_ASSERT(OnThread());
+    mAudioInput = aListener;
+  }
+  // XXX do we need the param?  probably no
+  virtual void RemoveInputListener(AudioDataListener *aListener) {
+    MOZ_ASSERT(OnThread());
+    mAudioInput = nullptr;
+  }
+
   AudioCallbackDriver* AsAudioCallbackDriver() override {
     return this;
   }
@@ -430,14 +429,6 @@ public:
   void EnqueueStreamAndPromiseForOperation(MediaStream* aStream,
                                          void* aPromise,
                                          dom::AudioContextOperation aOperation);
-
-  bool IsSwitchingDevice() {
-#ifdef XP_MACOSX
-    return mSelfReference;
-#else
-    return false;
-#endif
-  }
 
   /**
    * Whether the audio callback is processing. This is for asserting only.
@@ -486,6 +477,9 @@ private:
   /* The sample rate for the aforementionned cubeb stream. This is set on
    * initialization and can be read safely afterwards. */
   uint32_t mSampleRate;
+  /* The number of input channels from cubeb.  Should be set before opening cubeb
+   * and then be static. */
+  uint32_t mInputChannels;
   /* Approximation of the time between two callbacks. This is used to schedule
    * video frames. This is in milliseconds. Only even used (after
    * inizatialization) on the audio callback thread. */
@@ -519,7 +513,7 @@ private:
    * shutdown of the audio stream. */
   nsCOMPtr<nsIThread> mInitShutdownThread;
   /* This must be accessed with the graph monitor held. */
-  nsAutoTArray<StreamAndPromiseForOperation, 1> mPromisesForOperation;
+  AutoTArray<StreamAndPromiseForOperation, 1> mPromisesForOperation;
   /* This is set during initialization, and can be read safely afterwards. */
   dom::AudioChannel mAudioChannel;
   /* Used to queue us to add the mixer callback on first run. */
@@ -532,21 +526,9 @@ private:
    * True if microphone is being used by this process. This is synchronized by
    * the graph's monitor. */
   bool mMicrophoneActive;
-
-#ifdef XP_MACOSX
-  /* Implements the workaround for the osx audio stack when changing output
-   * devices. See comments in .cpp */
-  bool OSXDeviceSwitchingWorkaround();
-  /* Self-reference that keep this driver alive when switching output audio
-   * device and making the graph running temporarily off a SystemClockDriver.  */
-  SelfReference<AudioCallbackDriver> mSelfReference;
-  /* While switching devices, we keep track of the number of callbacks received,
-   * since OSX seems to still call us _sometimes_. */
-  uint32_t mCallbackReceivedWhileSwitching;
-#endif
 };
 
-class AsyncCubebTask : public nsRunnable
+class AsyncCubebTask : public Runnable
 {
 public:
 

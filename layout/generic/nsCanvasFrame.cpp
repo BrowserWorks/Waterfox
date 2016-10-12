@@ -310,8 +310,9 @@ nsDisplayCanvasBackgroundImage::Paint(nsDisplayListBuilder* aBuilder,
     dt = destDT->CreateSimilarDrawTarget(IntSize(ceil(destRect.width),
                                                  ceil(destRect.height)),
                                          SurfaceFormat::B8G8R8A8);
-    if (dt) {
-      RefPtr<gfxContext> ctx = new gfxContext(dt);
+    if (dt && dt->IsValid()) {
+      RefPtr<gfxContext> ctx = gfxContext::ForDrawTarget(dt);
+      MOZ_ASSERT(ctx); // already checked draw target above
       ctx->SetMatrix(ctx->CurrentMatrix().Translate(-destRect.x, -destRect.y));
       nsRenderingContext context(ctx);
       PaintInternal(aBuilder, &context, bgClipRect, &bgClipRect);
@@ -324,6 +325,42 @@ nsDisplayCanvasBackgroundImage::Paint(nsDisplayListBuilder* aBuilder,
 #endif
   PaintInternal(aBuilder, aCtx, mVisibleRect, &bgClipRect);
 }
+
+bool
+nsDisplayCanvasBackgroundImage::IsSingleFixedPositionImage(nsDisplayListBuilder* aBuilder,
+                                                           const nsRect& aClipRect,
+                                                           gfxRect* aDestRect)
+{
+  if (!mBackgroundStyle)
+    return false;
+
+  if (mBackgroundStyle->mImage.mLayers.Length() != 1)
+    return false;
+
+
+  nsPresContext* presContext = mFrame->PresContext();
+  uint32_t flags = aBuilder->GetBackgroundPaintFlags();
+  nsRect borderArea = nsRect(ToReferenceFrame(), mFrame->GetSize());
+  const nsStyleImageLayers::Layer &layer = mBackgroundStyle->mImage.mLayers[mLayer];
+
+  if (layer.mAttachment != NS_STYLE_IMAGELAYER_ATTACHMENT_FIXED)
+    return false;
+
+   nsBackgroundLayerState state =
+     nsCSSRendering::PrepareImageLayer(presContext, mFrame, flags,
+                                       borderArea, aClipRect, layer);
+
+
+  // We only care about images here, not gradients.
+  if (!mIsRasterImage)
+    return false;
+
+  int32_t appUnitsPerDevPixel = presContext->AppUnitsPerDevPixel();
+  *aDestRect = nsLayoutUtils::RectToGfxRect(state.mFillArea, appUnitsPerDevPixel);
+
+  return true;
+}
+
 
 void
 nsDisplayCanvasThemedBackground::Paint(nsDisplayListBuilder* aBuilder,
@@ -407,28 +444,49 @@ nsCanvasFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       return;
     }
 
+    const DisplayItemScrollClip* scrollClip =
+      aBuilder->ClipState().GetCurrentInnermostScrollClip();
+
     bool needBlendContainer = false;
 
     // Create separate items for each background layer.
-    NS_FOR_VISIBLE_BACKGROUND_LAYERS_BACK_TO_FRONT(i, bg) {
-      if (bg->mLayers[i].mImage.IsEmpty()) {
+    const nsStyleImageLayers& layers = bg->mImage;
+    NS_FOR_VISIBLE_IMAGE_LAYERS_BACK_TO_FRONT(i, layers) {
+      if (layers.mLayers[i].mImage.IsEmpty()) {
         continue;
       }
-      if (bg->mLayers[i].mBlendMode != NS_STYLE_BLEND_NORMAL) {
+      if (layers.mLayers[i].mBlendMode != NS_STYLE_BLEND_NORMAL) {
         needBlendContainer = true;
       }
-      aLists.BorderBackground()->AppendNewToTop(
-        new (aBuilder) nsDisplayCanvasBackgroundImage(aBuilder, this, i, bg));
+
+      nsDisplayList thisItemList;
+      nsDisplayCanvasBackgroundImage* bgItem =
+        new (aBuilder) nsDisplayCanvasBackgroundImage(aBuilder, this, i, bg);
+      if (bgItem->ShouldFixToViewport(aBuilder)) {
+        thisItemList.AppendNewToTop(
+          nsDisplayFixedPosition::CreateForFixedBackground(aBuilder, this, bgItem, i));
+      } else {
+        thisItemList.AppendNewToTop(bgItem);
+      }
+
+      if (layers.mLayers[i].mBlendMode != NS_STYLE_BLEND_NORMAL) {
+        thisItemList.AppendNewToTop(
+          new (aBuilder) nsDisplayBlendMode(aBuilder, this, &thisItemList,
+                                            layers.mLayers[i].mBlendMode,
+                                            scrollClip, i + 1));
+      }
+      aLists.BorderBackground()->AppendToTop(&thisItemList);
     }
 
     if (needBlendContainer) {
       aLists.BorderBackground()->AppendNewToTop(
-        new (aBuilder) nsDisplayBlendContainer(aBuilder, this, aLists.BorderBackground()));
+        nsDisplayBlendContainer::CreateForBackgroundBlendMode(aBuilder, this,
+                                                              aLists.BorderBackground(),
+                                                              scrollClip));
     }
   }
 
-  nsIFrame* kid;
-  for (kid = GetFirstPrincipalChild(); kid; kid = kid->GetNextSibling()) {
+  for (nsIFrame* kid : PrincipalChildList()) {
     // Put our child into its own pseudo-stack.
     BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
   }
@@ -566,7 +624,7 @@ nsCanvasFrame::Reflow(nsPresContext*           aPresContext,
       kidReflowState(aPresContext, aReflowState, kidFrame,
                      aReflowState.AvailableSize(kidFrame->GetWritingMode()));
 
-    if (aReflowState.IsBResize() &&
+    if (aReflowState.IsBResizeForWM(kidReflowState.GetWritingMode()) &&
         (kidFrame->GetStateBits() & NS_FRAME_CONTAINS_RELATIVE_BSIZE)) {
       // Tell our kid it's being block-dir resized too.  Bit of a
       // hack for framesets.

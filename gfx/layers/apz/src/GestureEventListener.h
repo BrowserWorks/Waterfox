@@ -10,13 +10,14 @@
 #include "InputData.h"                  // for MultiTouchInput, etc
 #include "Units.h"
 #include "mozilla/EventForwards.h"      // for nsEventStatus
-#include "nsAutoPtr.h"                  // for nsRefPtr
+#include "mozilla/RefPtr.h"             // for RefPtr
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"                   // for nsTArray
 
-class CancelableTask;
-
 namespace mozilla {
+
+class CancelableRunnable;
+
 namespace layers {
 
 class AsyncPanZoomController;
@@ -137,7 +138,7 @@ private:
   nsEventStatus HandleInputTouchMove();
   nsEventStatus HandleInputTouchCancel();
   void HandleInputTimeoutLongTap();
-  void HandleInputTimeoutMaxTap();
+  void HandleInputTimeoutMaxTap(bool aDuringFastFling);
 
   void TriggerSingleTapConfirmedEvent();
 
@@ -214,7 +215,7 @@ private:
    * CancelLongTapTimeoutTask: Cancel the mLongTapTimeoutTask and also set
    * it to null.
    */
-  CancelableTask *mLongTapTimeoutTask;
+  RefPtr<CancelableRunnable> mLongTapTimeoutTask;
   void CancelLongTapTimeoutTask();
   void CreateLongTapTimeoutTask();
 
@@ -227,7 +228,7 @@ private:
    * CancelMaxTapTimeoutTask: Cancel the mMaxTapTimeoutTask and also set
    * it to null.
    */
-  CancelableTask *mMaxTapTimeoutTask;
+  RefPtr<CancelableRunnable> mMaxTapTimeoutTask;
   void CancelMaxTapTimeoutTask();
   void CreateMaxTapTimeoutTask();
 };

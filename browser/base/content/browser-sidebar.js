@@ -191,8 +191,12 @@ var SidebarUI = {
     return new Promise((resolve, reject) => {
       let sidebarBroadcaster = document.getElementById(commandID);
       if (!sidebarBroadcaster || sidebarBroadcaster.localName != "broadcaster") {
-        reject(new Error("Invalid sidebar broadcaster specified"));
+        reject(new Error("Invalid sidebar broadcaster specified: " + commandID));
         return;
+      }
+
+      if (this.isOpen && commandID != this.currentID) {
+        BrowserUITelemetry.countSidebarEvent(this.currentID, "hide");
       }
 
       let broadcasters = document.getElementsByAttribute("group", "sidebar");
@@ -257,6 +261,7 @@ var SidebarUI = {
       selBrowser.messageManager.sendAsyncMessage("Sidebar:VisibilityChange",
         {commandID: commandID, isOpen: true}
       );
+      BrowserUITelemetry.countSidebarEvent(commandID, "show");
     });
   },
 
@@ -294,6 +299,7 @@ var SidebarUI = {
     selBrowser.messageManager.sendAsyncMessage("Sidebar:VisibilityChange",
       {commandID: commandID, isOpen: false}
     );
+    BrowserUITelemetry.countSidebarEvent(commandID, "hide");
   },
 };
 

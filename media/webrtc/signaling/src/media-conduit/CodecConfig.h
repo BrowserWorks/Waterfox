@@ -29,19 +29,25 @@ struct AudioCodecConfig
   int mChannels;
   int mRate;
 
+  bool mFECEnabled;
+
+  // OPUS-specific
+  int mMaxPlaybackRate;
+
   /* Default constructor is not provided since as a consumer, we
    * can't decide the default configuration for the codec
    */
   explicit AudioCodecConfig(int type, std::string name,
-                            int freq,int pacSize,
-                            int channels, int rate)
+                            int freq, int pacSize,
+                            int channels, int rate, bool FECEnabled)
                                                    : mType(type),
                                                      mName(name),
                                                      mFreq(freq),
                                                      mPacSize(pacSize),
                                                      mChannels(channels),
-                                                     mRate(rate)
-
+                                                     mRate(rate),
+                                                     mFECEnabled(FECEnabled),
+                                                     mMaxPlaybackRate(0)
   {
   }
 };
@@ -77,6 +83,9 @@ public:
   std::vector<std::string> mAckFbTypes;
   std::vector<std::string> mNackFbTypes;
   std::vector<std::string> mCcmFbTypes;
+  // Don't pass mOtherFbTypes from JsepVideoCodecDescription because we'd have
+  // to drag SdpRtcpFbAttributeList::Feedback along too.
+  bool mRembFbSet;
 
   EncodingConstraints mEncodingConstraints;
   struct SimulcastEncoding {
@@ -143,6 +152,9 @@ public:
     }
     return false;
   }
+
+  bool RtcpFbRembIsSet() const { return mRembFbSet; }
+
 };
 }
 #endif

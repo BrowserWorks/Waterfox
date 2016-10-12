@@ -28,8 +28,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
+
+import java.util.Locale;
 
 public class LoginDoorHanger extends DoorHanger {
     private static final String LOGTAG = "LoginDoorHanger";
@@ -77,10 +81,13 @@ public class LoginDoorHanger extends DoorHanger {
     }
 
     @Override
-    protected OnClickListener makeOnButtonClickListener(final int id) {
+    protected OnClickListener makeOnButtonClickListener(final int id, final String telemetryExtra) {
         return new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
+                final String expandedExtra = mType.toString().toLowerCase(Locale.US) + "-" + telemetryExtra;
+                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.DOORHANGER, expandedExtra);
+
                 final JSONObject response = new JSONObject();
                 try {
                     response.put("callback", id);

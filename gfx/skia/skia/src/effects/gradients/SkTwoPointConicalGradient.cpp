@@ -122,10 +122,10 @@ SkFixed TwoPtRadialContext::nextT() {
     // find_quad_roots returns the values sorted, so we start with the last
     float t = roots[countRoots - 1];
     float r = lerp(fRec.fRadius, fRec.fDRadius, t);
-    if (r <= 0) {
+    if (r < 0) {
         t = roots[0];   // might be the same as roots[countRoots-1]
         r = lerp(fRec.fRadius, fRec.fDRadius, t);
-        if (r <= 0) {
+        if (r < 0) {
             return TwoPtRadial::kDontDrawT;
         }
     }
@@ -211,7 +211,7 @@ bool SkTwoPointConicalGradient::isOpaque() const {
     return false;
 }
 
-size_t SkTwoPointConicalGradient::contextSize() const {
+size_t SkTwoPointConicalGradient::onContextSize(const ContextRec&) const {
     return sizeof(TwoPointConicalGradientContext);
 }
 
@@ -224,9 +224,6 @@ SkTwoPointConicalGradient::TwoPointConicalGradientContext::TwoPointConicalGradie
         const SkTwoPointConicalGradient& shader, const ContextRec& rec)
     : INHERITED(shader, rec)
 {
-    // we don't have a span16 proc
-    fFlags &= ~kHasSpan16_Flag;
-
     // in general, we might discard based on computed-radius, so clear
     // this flag (todo: sometimes we can detect that we never discard...)
     fFlags &= ~kOpaqueAlpha_Flag;
@@ -264,10 +261,9 @@ void SkTwoPointConicalGradient::TwoPointConicalGradientContext::shadeSpan(
         SkScalar dy, fy = srcPt.fY;
 
         if (fDstToIndexClass == kFixedStepInX_MatrixClass) {
-            SkFixed fixedX, fixedY;
-            (void)fDstToIndex.fixedStepInX(SkIntToScalar(y), &fixedX, &fixedY);
-            dx = SkFixedToScalar(fixedX);
-            dy = SkFixedToScalar(fixedY);
+            const auto step = fDstToIndex.fixedStepInX(SkIntToScalar(y));
+            dx = step.fX;
+            dy = step.fY;
         } else {
             SkASSERT(fDstToIndexClass == kLinear_MatrixClass);
             dx = fDstToIndex.getScaleX();
@@ -309,7 +305,7 @@ SkShader::GradientType SkTwoPointConicalGradient::asAGradient(
     return kConical_GradientType;
 }
 
-SkFlattenable* SkTwoPointConicalGradient::CreateProc(SkReadBuffer& buffer) {
+sk_sp<SkFlattenable> SkTwoPointConicalGradient::CreateProc(SkReadBuffer& buffer) {
     DescriptorScope desc;
     if (!desc.unflatten(buffer)) {
         return nullptr;
@@ -342,9 +338,9 @@ SkFlattenable* SkTwoPointConicalGradient::CreateProc(SkReadBuffer& buffer) {
         }
     }
 
-    return SkGradientShader::CreateTwoPointConical(c1, r1, c2, r2, desc.fColors, desc.fPos,
-                                                   desc.fCount, desc.fTileMode, desc.fGradFlags,
-                                                   desc.fLocalMatrix);
+    return SkGradientShader::MakeTwoPointConical(c1, r1, c2, r2, desc.fColors, desc.fPos,
+                                                 desc.fCount, desc.fTileMode, desc.fGradFlags,
+                                                 desc.fLocalMatrix);
 }
 
 void SkTwoPointConicalGradient::flatten(SkWriteBuffer& buffer) const {

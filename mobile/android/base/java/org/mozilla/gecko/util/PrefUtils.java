@@ -27,14 +27,10 @@ public class PrefUtils {
             return defaultVal;
         }
 
-        if (Versions.preHC) {
-            return getFromJSON(prefs, key);
-        }
-
         // If this is Android version >= 11, try to use a Set<String>.
         try {
             return prefs.getStringSet(key, new HashSet<String>());
-        } catch(ClassCastException ex) {
+        } catch (ClassCastException ex) {
             // A ClassCastException means we've upgraded from a pre-v11 Android to a new one
             final Set<String> val = getFromJSON(prefs, key);
             SharedPreferences.Editor edit = prefs.edit();
@@ -47,7 +43,7 @@ public class PrefUtils {
         try {
             final String val = prefs.getString(key, "[]");
             return JSONUtils.parseStringSet(new JSONArray(val));
-        } catch(JSONException ex) {
+        } catch (JSONException ex) {
             Log.i(LOGTAG, "Unable to parse JSON", ex);
         }
 
@@ -68,13 +64,7 @@ public class PrefUtils {
     public static SharedPreferences.Editor putStringSet(final SharedPreferences.Editor editor,
                                     final String key,
                                     final Set<String> vals) {
-        if (Versions.preHC) {
-            final JSONArray json = new JSONArray(vals);
-            editor.putString(key, json.toString());
-        } else {
-            editor.putStringSet(key, vals);
-        }
-
+        editor.putStringSet(key, vals);
         return editor;
     }
 }

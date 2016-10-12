@@ -12,7 +12,7 @@
 #include "js/Date.h"
 #include "js/Value.h"
 #include "jsfriendapi.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/FloatingPoint.h"
 #include "mozIStorageStatement.h"
 #include "mozIStorageValueArray.h"
@@ -470,7 +470,7 @@ Key::EncodeLocaleString(const nsDependentString& aString, uint8_t aTypeOffset,
   }
   MOZ_ASSERT(collator);
 
-  nsAutoTArray<uint8_t, 128> keyBuffer;
+  AutoTArray<uint8_t, 128> keyBuffer;
   int32_t sortKeyLength = ucol_getSortKey(collator, ustr, length,
                                           keyBuffer.Elements(),
                                           keyBuffer.Length());

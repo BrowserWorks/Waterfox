@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "DrawTargetD2D.h"
+#include "DrawTargetD2D1.h"
 #include "ScaledFontDWrite.h"
 #include "PathD2D.h"
 
@@ -115,12 +115,82 @@ ScaledFontDWrite::GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget 
 
 
 #ifdef USE_SKIA
+bool
+ScaledFontDWrite::DefaultToArialFont(IDWriteFontCollection* aSystemFonts)
+{
+  // If we can't find the same font face as we're given, fallback to arial
+  static const WCHAR fontFamilyName[] = L"Arial";
+
+  UINT32 fontIndex;
+  BOOL exists;
+  HRESULT hr = aSystemFonts->FindFamilyName(fontFamilyName, &fontIndex, &exists);
+  if (FAILED(hr)) {
+    gfxCriticalNote << "Failed to get backup arial font font from system fonts. Code: " << hexa(hr);
+    return false;
+  }
+
+  hr = aSystemFonts->GetFontFamily(fontIndex, getter_AddRefs(mFontFamily));
+  if (FAILED(hr)) {
+    gfxCriticalNote << "Failed to get font family for arial. Code: " << hexa(hr);
+    return false;
+  }
+
+  hr = mFontFamily->GetFirstMatchingFont(DWRITE_FONT_WEIGHT_NORMAL,
+                                         DWRITE_FONT_STRETCH_NORMAL,
+                                         DWRITE_FONT_STYLE_NORMAL,
+                                         getter_AddRefs(mFont));
+  if (FAILED(hr)) {
+    gfxCriticalNote << "Failed to get a matching font for arial. Code: " << hexa(hr);
+    return false;
+  }
+
+  return true;
+}
+
+// This can happen if we have mixed backends which create DWrite
+// fonts in a mixed environment. e.g. a cairo content backend
+// but Skia canvas backend.
+bool
+ScaledFontDWrite::GetFontDataFromSystemFonts(IDWriteFactory* aFactory)
+{
+  MOZ_ASSERT(mFontFace);
+  RefPtr<IDWriteFontCollection> systemFonts;
+  HRESULT hr = aFactory->GetSystemFontCollection(getter_AddRefs(systemFonts));
+  if (FAILED(hr)) {
+    gfxCriticalNote << "Failed to get system font collection from file data. Code: " << hexa(hr);
+    return false;
+  }
+
+  hr = systemFonts->GetFontFromFontFace(mFontFace, getter_AddRefs(mFont));
+  if (FAILED(hr)) {
+    gfxCriticalNote << "Failed to get system font from font face. Code: " << hexa(hr);
+    return DefaultToArialFont(systemFonts);
+  }
+
+  hr = mFont->GetFontFamily(getter_AddRefs(mFontFamily));
+  if (FAILED(hr)) {
+    gfxCriticalNote << "Failed to get font family from font face. Code: " << hexa(hr);
+    return DefaultToArialFont(systemFonts);
+  }
+
+  return true;
+}
+
 SkTypeface*
 ScaledFontDWrite::GetSkTypeface()
 {
-  MOZ_ASSERT(mFont);
   if (!mTypeface) {
-    IDWriteFactory *factory = DrawTargetD2D::GetDWriteFactory();
+    IDWriteFactory *factory = DrawTargetD2D1::GetDWriteFactory();
+    if (!factory) {
+      return nullptr;
+    }
+
+    if (!mFont || !mFontFamily) {
+      if (!GetFontDataFromSystemFonts(factory)) {
+        return nullptr;
+      }
+    }
+
     mTypeface = SkCreateTypefaceFromDWriteFont(factory, mFontFace, mFont, mFontFamily);
   }
   return mTypeface;
@@ -137,6 +207,10 @@ ScaledFontDWrite::CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *a
 
   PathBuilderD2D *pathBuilderD2D =
     static_cast<PathBuilderD2D*>(aBuilder);
+
+  if (pathBuilderD2D->IsFigureActive()) {
+    gfxCriticalNote << "Attempting to copy glyphs to PathBuilderD2D with active figure.";
+  }
 
   CopyGlyphsToSink(aBuffer, pathBuilderD2D->GetSink());
 }
@@ -158,9 +232,13 @@ ScaledFontDWrite::CopyGlyphsToSink(const GlyphBuffer &aBuffer, ID2D1GeometrySink
     offsets[i].ascenderOffset = -aBuffer.mGlyphs[i].mPosition.y;
   }
 
-  mFontFace->GetGlyphRunOutline(mSize, &indices.front(), &advances.front(),
-                                &offsets.front(), aBuffer.mNumGlyphs,
-                                FALSE, FALSE, aSink);
+  HRESULT hr =
+    mFontFace->GetGlyphRunOutline(mSize, &indices.front(), &advances.front(),
+                                  &offsets.front(), aBuffer.mNumGlyphs,
+                                  FALSE, FALSE, aSink);
+  if (FAILED(hr)) {
+    gfxCriticalNote << "Failed to copy glyphs to geometry sink. Code: " << hexa(hr);
+  }
 }
 
 bool

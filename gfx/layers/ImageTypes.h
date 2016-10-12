@@ -17,6 +17,12 @@ enum class ImageFormat {
   PLANAR_YCBCR,
 
   /**
+   * The NV_IMAGE format creates a NVImage. The PLANAR_YCBCR together with this
+   * complete the YUV format family.
+   */
+  NV_IMAGE,
+
+  /**
    * The GRALLOC_PLANAR_YCBCR format creates a GrallocImage, a subtype of
    * PlanarYCbCrImage. It takes a PlanarYCbCrImage data or the raw gralloc
    * data and can be used as a texture by Gonk backend directly.
@@ -99,7 +105,8 @@ enum class StereoMode {
   LEFT_RIGHT,
   RIGHT_LEFT,
   BOTTOM_TOP,
-  TOP_BOTTOM
+  TOP_BOTTOM,
+  MAX,
 };
 
 } // namespace mozilla

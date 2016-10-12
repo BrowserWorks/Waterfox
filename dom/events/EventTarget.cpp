@@ -6,6 +6,7 @@
 
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/dom/EventTarget.h"
+#include "mozilla/dom/EventTargetBinding.h"
 #include "nsThreadUtils.h"
 
 namespace mozilla {
@@ -14,12 +15,12 @@ namespace dom {
 void
 EventTarget::RemoveEventListener(const nsAString& aType,
                                  EventListener* aListener,
-                                 bool aUseCapture,
+                                 const EventListenerOptionsOrBoolean& aOptions,
                                  ErrorResult& aRv)
 {
   EventListenerManager* elm = GetExistingListenerManager();
   if (elm) {
-    elm->RemoveEventListener(aType, aListener, aUseCapture);
+    elm->RemoveEventListener(aType, aListener, aOptions);
   }
 }
 
@@ -40,7 +41,7 @@ EventTarget::SetEventHandler(const nsAString& aType,
     return;
   }
   if (NS_IsMainThread()) {
-    nsCOMPtr<nsIAtom> type = do_GetAtom(aType);
+    nsCOMPtr<nsIAtom> type = NS_Atomize(aType);
     SetEventHandler(type, EmptyString(), aHandler);
     return;
   }
@@ -61,6 +62,16 @@ EventTarget::HasApzAwareListeners() const
 {
   EventListenerManager* elm = GetExistingListenerManager();
   return elm && elm->HasApzAwareListeners();
+}
+
+bool
+EventTarget::DispatchEvent(JSContext* aCx,
+                           Event& aEvent,
+                           ErrorResult& aRv)
+{
+  bool result = false;
+  aRv = DispatchEvent(&aEvent, &result);
+  return !aEvent.DefaultPrevented(aCx);
 }
 
 } // namespace dom

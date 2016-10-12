@@ -1,17 +1,20 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 // Test that opening the toolbox doesn't throw when the previously selected
 // tool is not supported.
 
 const testToolDefinition = {
-    id: "test-tool",
-    isTargetSupported: () => true,
-    visibilityswitch: "devtools.test-tool.enabled",
-    url: "about:blank",
-    label: "someLabel",
-    build: (iframeWindow, toolbox) => {
+  id: "test-tool",
+  isTargetSupported: () => true,
+  visibilityswitch: "devtools.test-tool.enabled",
+  url: "about:blank",
+  label: "someLabel",
+  build: (iframeWindow, toolbox) => {
       return {
         target: toolbox.target,
         toolbox: toolbox,
@@ -20,9 +23,9 @@ const testToolDefinition = {
         panelDoc: iframeWindow.document
       };
     }
-  };
+};
 
-add_task(function*() {
+add_task(function* () {
   gDevTools.registerTool(testToolDefinition);
   let tab = yield addTab("about:blank");
   let target = TargetFactory.forTab(tab);

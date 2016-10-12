@@ -64,36 +64,30 @@ NS_IMETHODIMP AudioChannelAgent::GetAudioChannelType(int32_t *aAudioChannelType)
 }
 
 NS_IMETHODIMP
-AudioChannelAgent::Init(nsIDOMWindow* aWindow, int32_t aChannelType,
+AudioChannelAgent::Init(mozIDOMWindow* aWindow, int32_t aChannelType,
                         nsIAudioChannelAgentCallback *aCallback)
 {
-  return InitInternal(aWindow, aChannelType, aCallback,
-                      /* useWeakRef = */ false);
+  return InitInternal(nsPIDOMWindowInner::From(aWindow), aChannelType,
+                      aCallback, /* useWeakRef = */ false);
 }
 
 NS_IMETHODIMP
-AudioChannelAgent::InitWithWeakCallback(nsIDOMWindow* aWindow,
+AudioChannelAgent::InitWithWeakCallback(mozIDOMWindow* aWindow,
                                         int32_t aChannelType,
                                         nsIAudioChannelAgentCallback *aCallback)
 {
-  return InitInternal(aWindow, aChannelType, aCallback,
-                      /* useWeakRef = */ true);
+  return InitInternal(nsPIDOMWindowInner::From(aWindow), aChannelType,
+                      aCallback, /* useWeakRef = */ true);
 }
 
 nsresult
-AudioChannelAgent::FindCorrectWindow(nsIDOMWindow* aWindow)
+AudioChannelAgent::FindCorrectWindow(nsPIDOMWindowInner* aWindow)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aWindow);
-  MOZ_ASSERT(window->IsInnerWindow());
+  MOZ_ASSERT(aWindow->IsInnerWindow());
 
-  mWindow = window->GetScriptableTop();
+  mWindow = aWindow->GetScriptableTop();
   if (NS_WARN_IF(!mWindow)) {
     return NS_OK;
-  }
-
-  mWindow = mWindow->GetOuterWindow();
-  if (NS_WARN_IF(!mWindow)) {
-    return NS_ERROR_FAILURE;
   }
 
   // From here we do an hack for nested iframes.
@@ -103,17 +97,17 @@ AudioChannelAgent::FindCorrectWindow(nsIDOMWindow* aWindow)
   // iframe (what is controlled by the system app).
   // For doing this we go recursively back into the chain of windows until we
   // find apps that are not the system one.
-  window = mWindow->GetParent();
-  if (!window || window == mWindow) {
+  nsCOMPtr<nsPIDOMWindowOuter> outerParent = mWindow->GetParent();
+  if (!outerParent || outerParent == mWindow) {
     return NS_OK;
   }
 
-  window = window->GetCurrentInnerWindow();
-  if (!window) {
+  nsCOMPtr<nsPIDOMWindowInner> parent = outerParent->GetCurrentInnerWindow();
+  if (!parent) {
     return NS_OK;
   }
 
-  nsCOMPtr<nsIDocument> doc = window->GetExtantDoc();
+  nsCOMPtr<nsIDocument> doc = parent->GetExtantDoc();
   if (!doc) {
     return NS_OK;
   }
@@ -152,11 +146,12 @@ AudioChannelAgent::FindCorrectWindow(nsIDOMWindow* aWindow)
     return NS_OK;
   }
 
-  return FindCorrectWindow(window);
+  return FindCorrectWindow(parent);
 }
 
 nsresult
-AudioChannelAgent::InitInternal(nsIDOMWindow* aWindow, int32_t aChannelType,
+AudioChannelAgent::InitInternal(nsPIDOMWindowInner* aWindow,
+                                int32_t aChannelType,
                                 nsIAudioChannelAgentCallback *aCallback,
                                 bool aUseWeakRef)
 {
@@ -182,9 +177,8 @@ AudioChannelAgent::InitInternal(nsIDOMWindow* aWindow, int32_t aChannelType,
     return NS_OK;
   }
 
-  nsCOMPtr<nsPIDOMWindow> pInnerWindow = do_QueryInterface(aWindow);
-  MOZ_ASSERT(pInnerWindow->IsInnerWindow());
-  mInnerWindowID = pInnerWindow->WindowID();
+  MOZ_ASSERT(aWindow->IsInnerWindow());
+  mInnerWindowID = aWindow->WindowID();
 
   nsresult rv = FindCorrectWindow(aWindow);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -207,17 +201,12 @@ AudioChannelAgent::InitInternal(nsIDOMWindow* aWindow, int32_t aChannelType,
   return NS_OK;
 }
 
-NS_IMETHODIMP AudioChannelAgent::NotifyStartedPlaying(float *aVolume,
-                                                      bool* aMuted)
+NS_IMETHODIMP
+AudioChannelAgent::NotifyStartedPlaying(AudioPlaybackConfig* aConfig,
+                                        bool aAudible)
 {
-  MOZ_ASSERT(aVolume);
-  MOZ_ASSERT(aMuted);
-
-  // Window-less AudioChannelAgents are muted by default.
-  if (!mWindow) {
-    *aVolume = 0;
-    *aMuted = true;
-    return NS_OK;
+  if (NS_WARN_IF(!aConfig)) {
+    return NS_ERROR_FAILURE;
   }
 
   RefPtr<AudioChannelService> service = AudioChannelService::GetOrCreate();
@@ -226,20 +215,26 @@ NS_IMETHODIMP AudioChannelAgent::NotifyStartedPlaying(float *aVolume,
     return NS_ERROR_FAILURE;
   }
 
+  MOZ_ASSERT(AudioChannelService::AudibleState::eAudible == true &&
+             AudioChannelService::AudibleState::eNotAudible == false);
   service->RegisterAudioChannelAgent(this,
-    static_cast<AudioChannel>(mAudioChannelType));
+    static_cast<AudioChannelService::AudibleState>(aAudible));
 
-  service->GetState(mWindow, mAudioChannelType, aVolume, aMuted);
+  AudioPlaybackConfig config = service->GetMediaConfig(mWindow,
+                                                       mAudioChannelType);
 
   MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
-         ("AudioChannelAgent, NotifyStartedPlaying, this = %p, mute = %d, "
-          "volume = %f\n", this, *aMuted, *aVolume));
+         ("AudioChannelAgent, NotifyStartedPlaying, this = %p, "
+          "audible = %d, mute = %d, volume = %f, suspend = %d\n", this,
+          aAudible, config.mMuted, config.mVolume, config.mSuspend));
 
+  aConfig->SetConfig(config.mVolume, config.mMuted, config.mSuspend);
   mIsRegToService = true;
   return NS_OK;
 }
 
-NS_IMETHODIMP AudioChannelAgent::NotifyStoppedPlaying()
+NS_IMETHODIMP
+AudioChannelAgent::NotifyStoppedPlaying()
 {
   if (mAudioChannelType == AUDIO_AGENT_CHANNEL_ERROR ||
       !mIsRegToService) {
@@ -255,6 +250,25 @@ NS_IMETHODIMP AudioChannelAgent::NotifyStoppedPlaying()
   }
 
   mIsRegToService = false;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+AudioChannelAgent::NotifyStartedAudible(bool aAudible, uint32_t aReason)
+{
+  MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
+         ("AudioChannelAgent, NotifyStartedAudible, this = %p, "
+          "audible = %d, reason = %d\n", this, aAudible, aReason));
+
+  RefPtr<AudioChannelService> service = AudioChannelService::GetOrCreate();
+  if (NS_WARN_IF(!service)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  service->AudioAudibleChanged(
+    this,
+    static_cast<AudioChannelService::AudibleState>(aAudible),
+    static_cast<AudioChannelService::AudibleChangedReasons>(aReason));
   return NS_OK;
 }
 
@@ -276,19 +290,49 @@ AudioChannelAgent::WindowVolumeChanged()
     return;
   }
 
-  float volume = 1.0;
-  bool muted = false;
+  AudioPlaybackConfig config = GetMediaConfig();
+  MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
+         ("AudioChannelAgent, WindowVolumeChanged, this = %p, mute = %d, "
+          "volume = %f\n", this, config.mMuted, config.mVolume));
 
-  RefPtr<AudioChannelService> service = AudioChannelService::GetOrCreate();
-  if (service) {
-    service->GetState(mWindow, mAudioChannelType, &volume, &muted);
+  callback->WindowVolumeChanged(config.mVolume, config.mMuted);
+}
+
+void
+AudioChannelAgent::WindowSuspendChanged(nsSuspendedTypes aSuspend)
+{
+  nsCOMPtr<nsIAudioChannelAgentCallback> callback = GetCallback();
+  if (!callback) {
+    return;
+  }
+
+  if (!IsDisposableSuspend(aSuspend)) {
+    aSuspend = GetMediaConfig().mSuspend;
   }
 
   MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
-         ("AudioChannelAgent, WindowVolumeChanged, this = %p, mute = %d, "
-          "volume = %f\n", this, muted, volume));
+         ("AudioChannelAgent, WindowSuspendChanged, this = %p, "
+          "suspended = %d\n", this, aSuspend));
 
-  callback->WindowVolumeChanged(volume, muted);
+  callback->WindowSuspendChanged(aSuspend);
+}
+
+AudioPlaybackConfig
+AudioChannelAgent::GetMediaConfig()
+{
+  RefPtr<AudioChannelService> service = AudioChannelService::GetOrCreate();
+  AudioPlaybackConfig config(1.0, false, nsISuspendedTypes::NONE_SUSPENDED);
+  if (service) {
+    config = service->GetMediaConfig(mWindow, mAudioChannelType);
+  }
+  return config;
+}
+
+bool
+AudioChannelAgent::IsDisposableSuspend(nsSuspendedTypes aSuspend) const
+{
+  return (aSuspend == nsISuspendedTypes::SUSPENDED_PAUSE_DISPOSABLE ||
+          aSuspend == nsISuspendedTypes::SUSPENDED_STOP_DISPOSABLE);
 }
 
 uint64_t

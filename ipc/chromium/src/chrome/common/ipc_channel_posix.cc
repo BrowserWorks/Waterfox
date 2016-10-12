@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -32,6 +34,9 @@
 #include "chrome/common/ipc_message_utils.h"
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/UniquePtr.h"
+
+// Work around possible OS limitations.
+static const size_t kMaxIOVecSize = 256;
 
 #ifdef MOZ_TASK_TRACER
 #include "GeckoTaskTracerImpl.h"
@@ -141,110 +146,6 @@ int ChannelNameToClientFD(const std::string& channel_id) {
 //------------------------------------------------------------------------------
 const size_t kMaxPipeNameLength = sizeof(((sockaddr_un*)0)->sun_path);
 
-// Creates a Fifo with the specified name ready to listen on.
-bool CreateServerFifo(const std::string& pipe_name, int* server_listen_fd) {
-  DCHECK(server_listen_fd);
-  DCHECK_GT(pipe_name.length(), 0u);
-  DCHECK_LT(pipe_name.length(), kMaxPipeNameLength);
-
-  if (pipe_name.length() == 0 || pipe_name.length() >= kMaxPipeNameLength) {
-    return false;
-  }
-
-  // Create socket.
-  int fd = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (fd < 0) {
-    return false;
-  }
-
-  // Make socket non-blocking
-  if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-    HANDLE_EINTR(close(fd));
-    return false;
-  }
-
-  // Delete any old FS instances.
-  unlink(pipe_name.c_str());
-
-  // Create unix_addr structure
-  struct sockaddr_un unix_addr;
-  memset(&unix_addr, 0, sizeof(unix_addr));
-  unix_addr.sun_family = AF_UNIX;
-  snprintf(unix_addr.sun_path, kMaxPipeNameLength, "%s", pipe_name.c_str());
-  size_t unix_addr_len = offsetof(struct sockaddr_un, sun_path) +
-      strlen(unix_addr.sun_path) + 1;
-
-  // Bind the socket.
-  if (bind(fd, reinterpret_cast<const sockaddr*>(&unix_addr),
-           unix_addr_len) != 0) {
-    HANDLE_EINTR(close(fd));
-    return false;
-  }
-
-  // Start listening on the socket.
-  const int listen_queue_length = 1;
-  if (listen(fd, listen_queue_length) != 0) {
-    HANDLE_EINTR(close(fd));
-    return false;
-  }
-
-  *server_listen_fd = fd;
-  return true;
-}
-
-// Accept a connection on a fifo.
-bool ServerAcceptFifoConnection(int server_listen_fd, int* server_socket) {
-  DCHECK(server_socket);
-
-  int accept_fd = HANDLE_EINTR(accept(server_listen_fd, NULL, 0));
-  if (accept_fd < 0)
-    return false;
-  if (fcntl(accept_fd, F_SETFL, O_NONBLOCK) == -1) {
-    HANDLE_EINTR(close(accept_fd));
-    return false;
-  }
-
-  *server_socket = accept_fd;
-  return true;
-}
-
-bool ClientConnectToFifo(const std::string &pipe_name, int* client_socket) {
-  DCHECK(client_socket);
-  DCHECK_LT(pipe_name.length(), kMaxPipeNameLength);
-
-  // Create socket.
-  int fd = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (fd < 0) {
-    CHROMIUM_LOG(ERROR) << "fd is invalid";
-    return false;
-  }
-
-  // Make socket non-blocking
-  if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-    CHROMIUM_LOG(ERROR) << "fcntl failed";
-    HANDLE_EINTR(close(fd));
-    return false;
-  }
-
-  // Create server side of socket.
-  struct sockaddr_un  server_unix_addr;
-  memset(&server_unix_addr, 0, sizeof(server_unix_addr));
-  server_unix_addr.sun_family = AF_UNIX;
-  snprintf(server_unix_addr.sun_path, kMaxPipeNameLength, "%s",
-           pipe_name.c_str());
-  size_t server_unix_addr_len = offsetof(struct sockaddr_un, sun_path) +
-      strlen(server_unix_addr.sun_path) + 1;
-
-  if (HANDLE_EINTR(connect(fd, reinterpret_cast<sockaddr*>(&server_unix_addr),
-                           server_unix_addr_len)) != 0) {
-    HANDLE_EINTR(close(fd));
-    return false;
-  }
-
-  *client_socket = fd;
-  return true;
-}
-
 bool SetCloseOnExec(int fd) {
   int flags = fcntl(fd, F_GETFD);
   if (flags == -1)
@@ -264,7 +165,6 @@ Channel::ChannelImpl::ChannelImpl(const std::wstring& channel_id, Mode mode,
                                   Listener* listener)
     : factory_(this) {
   Init(mode, listener);
-  uses_fifo_ = CommandLine::ForCurrentProcess()->HasSwitch(switches::kIPCUseFIFO);
 
   if (!CreatePipe(channel_id, mode)) {
     // The pipe may have been closed already.
@@ -288,8 +188,8 @@ void Channel::ChannelImpl::Init(Mode mode, Listener* listener) {
 
   mode_ = mode;
   is_blocked_on_write_ = false;
-  message_send_bytes_written_ = 0;
-  uses_fifo_ = false;
+  partial_write_iter_.reset();
+  input_buf_offset_ = 0;
   server_listen_pipe_ = -1;
   pipe_ = -1;
   client_pipe_ = -1;
@@ -307,56 +207,38 @@ bool Channel::ChannelImpl::CreatePipe(const std::wstring& channel_id,
                                       Mode mode) {
   DCHECK(server_listen_pipe_ == -1 && pipe_ == -1);
 
-  if (uses_fifo_) {
-    // This only happens in unit tests; see the comment above PipeMap.
-    // TODO(playmobil): We shouldn't need to create fifos on disk.
-    // TODO(playmobil): If we do, they should be in the user data directory.
-    // TODO(playmobil): Cleanup any stale fifos.
-    pipe_name_ = "/var/tmp/chrome_" + WideToASCII(channel_id);
-    if (mode == MODE_SERVER) {
-      if (!CreateServerFifo(pipe_name_, &server_listen_pipe_)) {
-        return false;
-      }
-    } else {
-      if (!ClientConnectToFifo(pipe_name_, &pipe_)) {
-        return false;
-      }
-      waiting_connect_ = false;
+  // socketpair()
+  pipe_name_ = WideToASCII(channel_id);
+  if (mode == MODE_SERVER) {
+    int pipe_fds[2];
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipe_fds) != 0) {
+      return false;
+    }
+    // Set both ends to be non-blocking.
+    if (fcntl(pipe_fds[0], F_SETFL, O_NONBLOCK) == -1 ||
+        fcntl(pipe_fds[1], F_SETFL, O_NONBLOCK) == -1) {
+      HANDLE_EINTR(close(pipe_fds[0]));
+      HANDLE_EINTR(close(pipe_fds[1]));
+      return false;
+    }
+
+    if (!SetCloseOnExec(pipe_fds[0]) ||
+        !SetCloseOnExec(pipe_fds[1])) {
+      HANDLE_EINTR(close(pipe_fds[0]));
+      HANDLE_EINTR(close(pipe_fds[1]));
+      return false;
+    }
+
+    pipe_ = pipe_fds[0];
+    client_pipe_ = pipe_fds[1];
+
+    if (pipe_name_.length()) {
+      Singleton<PipeMap>()->Insert(pipe_name_, client_pipe_);
     }
   } else {
-    // socketpair()
-    pipe_name_ = WideToASCII(channel_id);
-    if (mode == MODE_SERVER) {
-      int pipe_fds[2];
-      if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipe_fds) != 0) {
-        return false;
-      }
-      // Set both ends to be non-blocking.
-      if (fcntl(pipe_fds[0], F_SETFL, O_NONBLOCK) == -1 ||
-          fcntl(pipe_fds[1], F_SETFL, O_NONBLOCK) == -1) {
-        HANDLE_EINTR(close(pipe_fds[0]));
-        HANDLE_EINTR(close(pipe_fds[1]));
-        return false;
-      }
-
-      if (!SetCloseOnExec(pipe_fds[0]) ||
-          !SetCloseOnExec(pipe_fds[1])) {
-        HANDLE_EINTR(close(pipe_fds[0]));
-        HANDLE_EINTR(close(pipe_fds[1]));
-        return false;
-      }
-
-      pipe_ = pipe_fds[0];
-      client_pipe_ = pipe_fds[1];
-
-      if (pipe_name_.length()) {
-        Singleton<PipeMap>()->Insert(pipe_name_, client_pipe_);
-      }
-    } else {
-      pipe_ = ChannelNameToClientFD(pipe_name_);
-      DCHECK(pipe_ > 0);
-      waiting_connect_ = false;
-    }
+    pipe_ = ChannelNameToClientFD(pipe_name_);
+    DCHECK(pipe_ > 0);
+    waiting_connect_ = false;
   }
 
   // Create the Hello message to be sent when Connect is called
@@ -385,45 +267,18 @@ bool Channel::ChannelImpl::EnqueueHelloMessage() {
   return true;
 }
 
-void Channel::ChannelImpl::ClearAndShrinkInputOverflowBuf()
-{
-  // If input_overflow_buf_ has grown, shrink it back to its normal size.
-  static size_t previousCapacityAfterClearing = 0;
-  if (input_overflow_buf_.capacity() > previousCapacityAfterClearing) {
-    // This swap trick is the closest thing C++ has to a guaranteed way
-    // to shrink the capacity of a string.
-    std::string tmp;
-    tmp.reserve(Channel::kReadBufferSize);
-    input_overflow_buf_.swap(tmp);
-    previousCapacityAfterClearing = input_overflow_buf_.capacity();
-  } else {
-    input_overflow_buf_.clear();
-  }
-}
-
 bool Channel::ChannelImpl::Connect() {
-  if (mode_ == MODE_SERVER && uses_fifo_) {
-    if (server_listen_pipe_ == -1) {
-      return false;
-    }
-    MessageLoopForIO::current()->WatchFileDescriptor(
-        server_listen_pipe_,
-        true,
-        MessageLoopForIO::WATCH_READ,
-        &server_listen_connection_watcher_,
-        this);
-  } else {
-    if (pipe_ == -1) {
-      return false;
-    }
-    MessageLoopForIO::current()->WatchFileDescriptor(
-        pipe_,
-        true,
-        MessageLoopForIO::WATCH_READ,
-        &read_watcher_,
-        this);
-    waiting_connect_ = false;
+  if (pipe_ == -1) {
+    return false;
   }
+
+  MessageLoopForIO::current()->WatchFileDescriptor(
+      pipe_,
+      true,
+      MessageLoopForIO::WATCH_READ,
+      &read_watcher_,
+      this);
+  waiting_connect_ = false;
 
   if (!waiting_connect_)
     return ProcessOutgoingMessages();
@@ -431,10 +286,8 @@ bool Channel::ChannelImpl::Connect() {
 }
 
 bool Channel::ChannelImpl::ProcessIncomingMessages() {
-  ssize_t bytes_read = 0;
-
   struct msghdr msg = {0};
-  struct iovec iov = {input_buf_, Channel::kReadBufferSize};
+  struct iovec iov;
 
   msg.msg_iov = &iov;
   msg.msg_iovlen = 1;
@@ -443,27 +296,30 @@ bool Channel::ChannelImpl::ProcessIncomingMessages() {
   for (;;) {
     msg.msg_controllen = sizeof(input_cmsg_buf_);
 
-    if (bytes_read == 0) {
-      if (pipe_ == -1)
-        return false;
+    if (pipe_ == -1)
+      return false;
 
-      // Read from pipe.
-      // recvmsg() returns 0 if the connection has closed or EAGAIN if no data
-      // is waiting on the pipe.
-      bytes_read = HANDLE_EINTR(recvmsg(pipe_, &msg, MSG_DONTWAIT));
+    // In some cases the beginning of a message will be stored in input_buf_. We
+    // don't want to overwrite that, so we store the new data after it.
+    iov.iov_base = input_buf_ + input_buf_offset_;
+    iov.iov_len = Channel::kReadBufferSize - input_buf_offset_;
 
-      if (bytes_read < 0) {
-        if (errno == EAGAIN) {
-          return true;
-        } else {
-          CHROMIUM_LOG(ERROR) << "pipe error (" << pipe_ << "): " << strerror(errno);
-          return false;
-        }
-      } else if (bytes_read == 0) {
-        // The pipe has closed...
-        Close();
+    // Read from pipe.
+    // recvmsg() returns 0 if the connection has closed or EAGAIN if no data
+    // is waiting on the pipe.
+    ssize_t bytes_read = HANDLE_EINTR(recvmsg(pipe_, &msg, MSG_DONTWAIT));
+
+    if (bytes_read < 0) {
+      if (errno == EAGAIN) {
+        return true;
+      } else {
+        CHROMIUM_LOG(ERROR) << "pipe error (" << pipe_ << "): " << strerror(errno);
         return false;
       }
+    } else if (bytes_read == 0) {
+      // The pipe has closed...
+      Close();
+      return false;
     }
     DCHECK(bytes_read);
 
@@ -517,24 +373,8 @@ bool Channel::ChannelImpl::ProcessIncomingMessages() {
     }
 
     // Process messages from input buffer.
-    const char *p;
-    const char *overflowp;
-    const char *end;
-    if (input_overflow_buf_.empty()) {
-      overflowp = NULL;
-      p = input_buf_;
-      end = p + bytes_read;
-    } else {
-      if (input_overflow_buf_.size() >
-         static_cast<size_t>(kMaximumMessageSize - bytes_read)) {
-        ClearAndShrinkInputOverflowBuf();
-        CHROMIUM_LOG(ERROR) << "IPC message is too big";
-        return false;
-      }
-      input_overflow_buf_.append(input_buf_, bytes_read);
-      overflowp = p = input_overflow_buf_.data();
-      end = p + input_overflow_buf_.size();
-    }
+    const char *p = input_buf_;
+    const char *end = input_buf_ + input_buf_offset_ + bytes_read;
 
     // A pointer to an array of |num_fds| file descriptors which includes any
     // fds that have spilled over from a previous read.
@@ -554,107 +394,154 @@ bool Channel::ChannelImpl::ProcessIncomingMessages() {
       num_fds = input_overflow_fds_.size();
     }
 
+    // The data for the message we're currently reading consists of any data
+    // stored in incoming_message_ followed by data in input_buf_ (followed by
+    // other messages).
+
     while (p < end) {
-      const char* message_tail = Message::FindNext(p, end);
-      if (message_tail) {
-        int len = static_cast<int>(message_tail - p);
-        Message m(p, len);
-        if (m.header()->num_fds) {
-          // the message has file descriptors
-          const char* error = NULL;
-          if (m.header()->num_fds > num_fds - fds_i) {
-            // the message has been completely received, but we didn't get
-            // enough file descriptors.
-            error = "Message needs unreceived descriptors";
-          }
+      // Try to figure out how big the message is. Size is 0 if we haven't read
+      // enough of the header to know the size.
+      uint32_t message_length = 0;
+      if (incoming_message_.isSome()) {
+        message_length = incoming_message_.ref().size();
+      } else {
+        message_length = Message::MessageSize(p, end);
+      }
 
-          if (m.header()->num_fds >
-              FileDescriptorSet::MAX_DESCRIPTORS_PER_MESSAGE) {
-            // There are too many descriptors in this message
-            error = "Message requires an excessive number of descriptors";
-          }
+      if (!message_length) {
+        // We haven't seen the full message header.
+        MOZ_ASSERT(incoming_message_.isNothing());
 
-          if (error) {
-            CHROMIUM_LOG(WARNING) << error
-                                  << " channel:" << this
-                                  << " message-type:" << m.type()
-                                  << " header()->num_fds:" << m.header()->num_fds
-                                  << " num_fds:" << num_fds
-                                  << " fds_i:" << fds_i;
-            // close the existing file descriptors so that we don't leak them
-            for (unsigned i = fds_i; i < num_fds; ++i)
-              HANDLE_EINTR(close(fds[i]));
-            input_overflow_fds_.clear();
-            // abort the connection
-            return false;
-          }
+        // Move everything we have to the start of the buffer. We'll finish
+        // reading this message when we get more data. For now we leave it in
+        // input_buf_.
+        memmove(input_buf_, p, end - p);
+        input_buf_offset_ = end - p;
+
+        break;
+      }
+
+      input_buf_offset_ = 0;
+
+      bool partial;
+      if (incoming_message_.isSome()) {
+        // We already have some data for this message stored in
+        // incoming_message_. We want to append the new data there.
+        Message& m = incoming_message_.ref();
+
+        // How much data from this message remains to be added to
+        // incoming_message_?
+        MOZ_ASSERT(message_length > m.CurrentSize());
+        uint32_t remaining = message_length - m.CurrentSize();
+
+        // How much data from this message is stored in input_buf_?
+        uint32_t in_buf = std::min(remaining, uint32_t(end - p));
+
+        m.InputBytes(p, in_buf);
+        p += in_buf;
+
+        // Are we done reading this message?
+        partial = in_buf != remaining;
+      } else {
+        // How much data from this message is stored in input_buf_?
+        uint32_t in_buf = std::min(message_length, uint32_t(end - p));
+
+        incoming_message_.emplace(p, in_buf);
+        p += in_buf;
+
+        // Are we done reading this message?
+        partial = in_buf != message_length;
+      }
+
+      if (partial) {
+        break;
+      }
+
+      Message& m = incoming_message_.ref();
+
+      if (m.header()->num_fds) {
+        // the message has file descriptors
+        const char* error = NULL;
+        if (m.header()->num_fds > num_fds - fds_i) {
+          // the message has been completely received, but we didn't get
+          // enough file descriptors.
+          error = "Message needs unreceived descriptors";
+        }
+
+        if (m.header()->num_fds >
+            FileDescriptorSet::MAX_DESCRIPTORS_PER_MESSAGE) {
+          // There are too many descriptors in this message
+          error = "Message requires an excessive number of descriptors";
+        }
+
+        if (error) {
+          CHROMIUM_LOG(WARNING) << error
+                                << " channel:" << this
+                                << " message-type:" << m.type()
+                                << " header()->num_fds:" << m.header()->num_fds
+                                << " num_fds:" << num_fds
+                                << " fds_i:" << fds_i;
+          // close the existing file descriptors so that we don't leak them
+          for (unsigned i = fds_i; i < num_fds; ++i)
+            HANDLE_EINTR(close(fds[i]));
+          input_overflow_fds_.clear();
+          // abort the connection
+          return false;
+        }
 
 #if defined(OS_MACOSX)
-          // Send a message to the other side, indicating that we are now
-          // responsible for closing the descriptor.
-          Message *fdAck = new Message(MSG_ROUTING_NONE,
-                                       RECEIVED_FDS_MESSAGE_TYPE,
-                                       IPC::Message::PRIORITY_NORMAL);
-          DCHECK(m.fd_cookie() != 0);
-          fdAck->set_fd_cookie(m.fd_cookie());
-          OutputQueuePush(fdAck);
+        // Send a message to the other side, indicating that we are now
+        // responsible for closing the descriptor.
+        Message *fdAck = new Message(MSG_ROUTING_NONE,
+                                     RECEIVED_FDS_MESSAGE_TYPE,
+                                     IPC::Message::PRIORITY_NORMAL);
+        DCHECK(m.fd_cookie() != 0);
+        fdAck->set_fd_cookie(m.fd_cookie());
+        OutputQueuePush(fdAck);
 #endif
 
-          m.file_descriptor_set()->SetDescriptors(
-              &fds[fds_i], m.header()->num_fds);
-          fds_i += m.header()->num_fds;
-        }
+        m.file_descriptor_set()->SetDescriptors(
+                                                &fds[fds_i], m.header()->num_fds);
+        fds_i += m.header()->num_fds;
+      }
 #ifdef IPC_MESSAGE_DEBUG_EXTRA
-        DLOG(INFO) << "received message on channel @" << this <<
-                      " with type " << m.type();
+      DLOG(INFO) << "received message on channel @" << this <<
+        " with type " << m.type();
 #endif
 
 #ifdef MOZ_TASK_TRACER
-        AutoSaveCurTraceInfo saveCurTraceInfo;
-        SetCurTraceInfo(m.header()->source_event_id,
-                        m.header()->parent_task_id,
-                        m.header()->source_event_type);
+      AutoSaveCurTraceInfo saveCurTraceInfo;
+      SetCurTraceInfo(m.header()->source_event_id,
+                      m.header()->parent_task_id,
+                      m.header()->source_event_type);
 #endif
 
-        if (m.routing_id() == MSG_ROUTING_NONE &&
-            m.type() == HELLO_MESSAGE_TYPE) {
-          // The Hello message contains only the process id.
-          listener_->OnChannelConnected(MessageIterator(m).NextInt());
+      if (m.routing_id() == MSG_ROUTING_NONE &&
+          m.type() == HELLO_MESSAGE_TYPE) {
+        // The Hello message contains only the process id.
+        listener_->OnChannelConnected(MessageIterator(m).NextInt());
 #if defined(OS_MACOSX)
-        } else if (m.routing_id() == MSG_ROUTING_NONE &&
-                   m.type() == RECEIVED_FDS_MESSAGE_TYPE) {
-          DCHECK(m.fd_cookie() != 0);
-          CloseDescriptors(m.fd_cookie());
+      } else if (m.routing_id() == MSG_ROUTING_NONE &&
+                 m.type() == RECEIVED_FDS_MESSAGE_TYPE) {
+        DCHECK(m.fd_cookie() != 0);
+        CloseDescriptors(m.fd_cookie());
 #endif
-        } else {
-          listener_->OnMessageReceived(m);
-        }
-        p = message_tail;
       } else {
-        // Last message is partial.
-        break;
+        listener_->OnMessageReceived(mozilla::Move(m));
       }
+
+      incoming_message_.reset();
     }
-    if (end == p) {
-      ClearAndShrinkInputOverflowBuf();
-    } else if (!overflowp) {
-      // p is from input_buf_
-      input_overflow_buf_.assign(p, end - p);
-    } else if (p > overflowp) {
-      // p is from input_overflow_buf_
-      input_overflow_buf_.erase(0, p - overflowp);
-    }
+
     input_overflow_fds_ = std::vector<int>(&fds[fds_i], &fds[num_fds]);
 
     // When the input data buffer is empty, the overflow fds should be too. If
     // this is not the case, we probably have a rogue renderer which is trying
     // to fill our descriptor table.
-    if (input_overflow_buf_.empty() && !input_overflow_fds_.empty()) {
+    if (incoming_message_.isNothing() && input_buf_offset_ == 0 && !input_overflow_fds_.empty()) {
       // We close these descriptors in Close()
       return false;
     }
-
-    bytes_read = 0;  // Get more data.
   }
 
   return true;
@@ -682,7 +569,12 @@ bool Channel::ChannelImpl::ProcessOutgoingMessages() {
         int[FileDescriptorSet::MAX_DESCRIPTORS_PER_MESSAGE]));
     char buf[tmp];
 
-    if (message_send_bytes_written_ == 0 &&
+    if (partial_write_iter_.isNothing()) {
+      Pickle::BufferList::IterImpl iter(msg->Buffers());
+      partial_write_iter_.emplace(iter);
+    }
+
+    if (partial_write_iter_.value().Data() == msg->Buffers().Start() &&
         !msg->file_descriptor_set()->empty()) {
       // This is the first chunk of a message which has descriptors to send
       struct cmsghdr *cmsg;
@@ -710,16 +602,41 @@ bool Channel::ChannelImpl::ProcessOutgoingMessages() {
 #endif
     }
 
-    size_t amt_to_write = msg->size() - message_send_bytes_written_;
-    DCHECK(amt_to_write != 0);
-    const char *out_bytes = reinterpret_cast<const char*>(msg->data()) +
-        message_send_bytes_written_;
+    struct iovec iov[kMaxIOVecSize];
+    size_t iov_count = 0;
+    size_t amt_to_write = 0;
 
-    struct iovec iov = {const_cast<char*>(out_bytes), amt_to_write};
-    msgh.msg_iov = &iov;
-    msgh.msg_iovlen = 1;
+    // How much of this message have we written so far?
+    Pickle::BufferList::IterImpl iter = partial_write_iter_.value();
+
+    // Store the unwritten part of the first segment to write into the iovec.
+    iov[0].iov_base = const_cast<char*>(iter.Data());
+    iov[0].iov_len = iter.RemainingInSegment();
+    amt_to_write += iov[0].iov_len;
+    iter.Advance(msg->Buffers(), iov[0].iov_len);
+    iov_count++;
+
+    // Store remaining segments to write into iovec.
+    while (!iter.Done()) {
+      char* data = iter.Data();
+      size_t size = iter.RemainingInSegment();
+
+      // Don't add more than kMaxIOVecSize to the iovec so that we avoid
+      // OS-dependent limits.
+      if (iov_count < kMaxIOVecSize) {
+        iov[iov_count].iov_base = data;
+        iov[iov_count].iov_len = size;
+        iov_count++;
+      }
+      amt_to_write += size;
+      iter.Advance(msg->Buffers(), size);
+    }
+
+    msgh.msg_iov = iov;
+    msgh.msg_iovlen = iov_count;
 
     ssize_t bytes_written = HANDLE_EINTR(sendmsg(pipe_, &msgh, MSG_DONTWAIT));
+
 #if !defined(OS_MACOSX)
     // On OSX CommitAll gets called later, once we get the RECEIVED_FDS_MESSAGE_TYPE
     // message.
@@ -763,9 +680,9 @@ bool Channel::ChannelImpl::ProcessOutgoingMessages() {
     }
 
     if (static_cast<size_t>(bytes_written) != amt_to_write) {
+      // If write() fails with EAGAIN then bytes_written will be -1.
       if (bytes_written > 0) {
-        // If write() fails with EAGAIN then bytes_written will be -1.
-        message_send_bytes_written_ += bytes_written;
+        partial_write_iter_.ref().AdvanceAcrossSegments(msg->Buffers(), bytes_written);
       }
 
       // Tell libevent to call us back once things are unblocked.
@@ -778,7 +695,7 @@ bool Channel::ChannelImpl::ProcessOutgoingMessages() {
           this);
       return true;
     } else {
-      message_send_bytes_written_ = 0;
+      partial_write_iter_.reset();
 
 #if defined(OS_MACOSX)
       if (!msg->file_descriptor_set()->empty())
@@ -847,32 +764,6 @@ void Channel::ChannelImpl::CloseClientFileDescriptor() {
 
 // Called by libevent when we can read from th pipe without blocking.
 void Channel::ChannelImpl::OnFileCanReadWithoutBlocking(int fd) {
-  bool send_server_hello_msg = false;
-  if (waiting_connect_ && mode_ == MODE_SERVER) {
-    // In the case of a socketpair() the server starts listening on its end
-    // of the pipe in Connect().
-    DCHECK(uses_fifo_);
-
-    if (!ServerAcceptFifoConnection(server_listen_pipe_, &pipe_)) {
-      Close();
-    }
-
-    // No need to watch the listening socket any longer since only one client
-    // can connect.  So unregister with libevent.
-    server_listen_connection_watcher_.StopWatchingFileDescriptor();
-
-    // Start watching our end of the socket.
-    MessageLoopForIO::current()->WatchFileDescriptor(
-        pipe_,
-        true,
-        MessageLoopForIO::WATCH_READ,
-        &read_watcher_,
-        this);
-
-    waiting_connect_ = false;
-    send_server_hello_msg = true;
-  }
-
   if (!waiting_connect_ && fd == pipe_) {
     if (!ProcessIncomingMessages()) {
       Close();
@@ -880,16 +771,6 @@ void Channel::ChannelImpl::OnFileCanReadWithoutBlocking(int fd) {
       // The OnChannelError() call may delete this, so we need to exit now.
       return;
     }
-  }
-
-  // If we're a server and handshaking, then we want to make sure that we
-  // only send our handshake message after we've processed the client's.
-  // This gives us a chance to kill the client if the incoming handshake
-  // is invalid.
-  if (send_server_hello_msg) {
-    // This should be our first write so there's no chance we can block here...
-    DCHECK(is_blocked_on_write_ == false);
-    ProcessOutgoingMessages();
   }
 }
 
@@ -959,11 +840,6 @@ void Channel::ChannelImpl::Close() {
     Singleton<PipeMap>()->Remove(pipe_name_);
     HANDLE_EINTR(close(client_pipe_));
     client_pipe_ = -1;
-  }
-
-  if (uses_fifo_) {
-    // Unlink the FIFO
-    unlink(pipe_name_.c_str());
   }
 
   while (!output_queue_.empty()) {

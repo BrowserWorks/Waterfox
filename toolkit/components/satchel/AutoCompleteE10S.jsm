@@ -86,6 +86,7 @@ this.AutoCompleteE10S = {
     messageManager.addMessageListener("FormAutoComplete:GetSelectedIndex", this);
     messageManager.addMessageListener("FormAutoComplete:MaybeOpenPopup", this);
     messageManager.addMessageListener("FormAutoComplete:ClosePopup", this);
+    messageManager.addMessageListener("FormAutoComplete:Disconnect", this);
     messageManager.addMessageListener("FormAutoComplete:RemoveEntry", this);
   },
 
@@ -146,8 +147,22 @@ this.AutoCompleteE10S = {
     this._showPopup(results);
   },
 
-  removeEntry(index) {
-    this._resultCache.removeValueAt(index, true);
+  removeLogin(login) {
+    Services.logins.removeLogin(login);
+
+    // It's possible to race and have the deleted login no longer be in our
+    // resultCache's logins, so we remove it from the database above and only
+    // deal with our resultCache below.
+    let idx = this._resultCache.logins.findIndex(cur => {
+      return login.guid === cur.QueryInterface(Ci.nsILoginMetaInfo).guid
+    });
+    if (idx !== -1) {
+      this.removeEntry(idx, false);
+    }
+  },
+
+  removeEntry(index, updateDB = true) {
+    this._resultCache.removeValueAt(index, updateDB);
 
     let selectedIndex = this.popup.selectedIndex;
     this.showPopupWithResults(this._popupCache.browserWindow,
@@ -190,10 +205,17 @@ this.AutoCompleteE10S = {
       message.data.datalistResult = null;
     }
 
+    let previousResult = null;
+    let previousSearchString = message.data.previousSearchString;
+    let searchString = message.data.untrimmedSearchString.toLowerCase();
+    if (previousSearchString && previousSearchString.length > 1 &&
+        searchString.includes(previousSearchString)) {
+      previousResult = this._resultCache;
+    }
     formAutoComplete.autoCompleteSearchAsync(message.data.inputName,
                                              message.data.untrimmedSearchString,
                                              message.data.mockField,
-                                             null,
+                                             previousResult,
                                              message.data.datalistResult,
                                              { onSearchCompletion:
                                                this.onSearchComplete.bind(this) });
@@ -239,7 +261,16 @@ this.AutoCompleteE10S = {
       case "FormAutoComplete:ClosePopup":
         this.popup.closePopup();
         break;
+
+      case "FormAutoComplete:Disconnect":
+        // The controller stopped controlling the current input, so clear
+        // any cached data.  This is necessary cause otherwise we'd clear data
+        // only when starting a new search, but the next input could not support
+        // autocomplete and it would end up inheriting the existing data.
+        AutoCompleteE10SView.clearResults();
+        break;
     }
+    return undefined;
   },
 
   handleEnter: function(aIsPopupSelection) {

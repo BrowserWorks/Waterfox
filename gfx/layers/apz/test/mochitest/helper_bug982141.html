@@ -59,30 +59,27 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=982141
       // Reconstruct the APZC tree structure in the last paint.
       var apzcTree = buildApzcTree(compositorTestData.paints[lastCompositorPaintSeqNo]);
 
-      // The apzc tree for this page should consist of a single root APZC
-      // and a child APZC for the scrollable <div>.
-      SimpleTest.is(apzcTree.children.length, 1, "expected a single root APZC");
-      var rootApzc = apzcTree.children[0];
-      SimpleTest.is(rootApzc.children.length, 1, "expected a single child APZC");
-      var childScrollId = rootApzc.children[0].scrollId;
+      // The apzc tree for this page should consist of a single child APZC on
+      // the RCD node (the child is for scrollable <div>). Note that in e10s/B2G
+      // cases the RCD will be the root of the tree but on Fennec it will not.
+      var rcd = findRcdNode(apzcTree);
+      SimpleTest.ok(rcd != null, "found the RCD node");
+      SimpleTest.is(rcd.children.length, 1, "expected a single child APZC");
+      var childScrollId = rcd.children[0].scrollId;
 
       // We should have content-side data for the same paint.
       SimpleTest.ok(lastCompositorPaintSeqNo in contentTestData.paints,
                     "expected a content paint with sequence number" + lastCompositorPaintSeqNo);
       var correspondingContentPaint = contentTestData.paints[lastCompositorPaintSeqNo];
 
-      // This content-side data should have a displayport for our scrollable <div>.
-      SimpleTest.ok(childScrollId in correspondingContentPaint,
-                    "expected scroll frame data for scroll id " + childScrollId);
-      SimpleTest.ok("displayport" in correspondingContentPaint[childScrollId],
-                    "expected a displayport for scroll id " + childScrollId);
-      var childDisplayport = correspondingContentPaint[childScrollId]["displayport"];
-      var dpFields = childDisplayport.replace(/[()\s]+/g, '').split(',');
-      SimpleTest.is(dpFields.length, 4, "expected displayport string of form (x,y,w,h)");
-      var dpWidth = dpFields[2];
-      var dpHeight = dpFields[3];
-      SimpleTest.ok(dpWidth >= 50 && dpHeight >= 50,
-                    "expected a displayport at least as large as the scrollable element");
+      var dp = getPropertyAsRect(correspondingContentPaint, childScrollId, 'displayport');
+      var subframe = document.getElementById('subframe');
+      // The clientWidth and clientHeight may be less than 50 if there are scrollbars showing.
+      // In general they will be (50 - <scrollbarwidth>, 50 - <scrollbarheight>).
+      SimpleTest.ok(subframe.clientWidth > 0, "Expected a non-zero clientWidth, got: " + subframe.clientWidth);
+      SimpleTest.ok(subframe.clientHeight > 0, "Expected a non-zero clientHeight, got: " + subframe.clientHeight);
+      SimpleTest.ok(dp.w >= subframe.clientWidth && dp.h >= subframe.clientHeight,
+                    "expected a displayport at least as large as the scrollable element, got " + JSON.stringify(dp));
 
       window.opener.finishTest();
     }
@@ -91,7 +88,12 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=982141
 <body style="overflow: hidden;"><!-- This combined with the user-scalable=no ensures the root frame is not scrollable -->
   <a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=982141">Mozilla Bug 982141</a>
   <!-- A scrollable subframe, with enough content to make it have a nonzero scroll range -->
-  <div style="height: 50px; width: 50px; overflow: scroll">
+  <div id="subframe" style="height: 50px; width: 50px; overflow: scroll">
+    <div style="width: 100px">
+      Wide content so that the vertical scrollbar for the parent div
+      doesn't eat into the 50px width and reduce the width of the
+      displayport.
+    </div>
     Line 1<br>
     Line 2<br>
     Line 3<br>

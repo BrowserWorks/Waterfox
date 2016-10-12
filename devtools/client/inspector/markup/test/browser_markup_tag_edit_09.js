@@ -8,7 +8,7 @@
 
 const TEST_URL = URL_ROOT + "doc_markup_svg_attributes.html";
 
-add_task(function*() {
+add_task(function* () {
   let {inspector, testActor} = yield openInspectorForURL(TEST_URL);
 
   yield inspector.markup.expandAll();
@@ -26,7 +26,7 @@ function* testWellformedMixedCase(inspector, testActor) {
   let onMutated = inspector.once("markupmutation");
 
   info("Focusing the viewBox attribute editor");
-  let {editor} = yield getContainerForSelector("svg", inspector);
+  let {editor} = yield focusNode("svg", inspector);
   let attr = editor.attrElements.get("viewBox").querySelector(".editable");
   attr.focus();
   EventUtils.sendKey("return", inspector.panelWin);
@@ -52,7 +52,7 @@ function* testMalformedMixedCase(inspector, testActor) {
   let onMutated = inspector.once("markupmutation");
 
   info("Focusing the viewBox attribute editor");
-  let {editor} = yield getContainerForSelector("svg", inspector);
+  let {editor} = yield focusNode("svg", inspector);
   let attr = editor.attrElements.get("viewBox").querySelector(".editable");
   attr.focus();
   EventUtils.sendKey("return", inspector.panelWin);

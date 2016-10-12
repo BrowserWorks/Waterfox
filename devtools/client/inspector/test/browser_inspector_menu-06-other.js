@@ -14,7 +14,8 @@ add_task(function* () {
   yield testScrollIntoView();
   function* testShowDOMProperties() {
     info("Testing 'Show DOM Properties' menu item.");
-    let showDOMPropertiesNode = inspector.panelDoc.getElementById("node-menu-showdomproperties");
+    let showDOMPropertiesNode = inspector.panelDoc.getElementById(
+      "node-menu-showdomproperties");
     ok(showDOMPropertiesNode, "the popup menu has a show dom properties item");
 
     let consoleOpened = toolbox.once("webconsole-ready");
@@ -27,7 +28,7 @@ add_task(function* () {
     let messagesAdded = webconsoleUI.once("new-messages");
     yield messagesAdded;
     info("Checking if 'inspect($0)' was evaluated");
-    ok(webconsoleUI.jsterm.history[0] === 'inspect($0)');
+    ok(webconsoleUI.jsterm.history[0] === "inspect($0)");
     yield toolbox.toggleSplitConsole();
   }
   function* testDuplicateNode() {

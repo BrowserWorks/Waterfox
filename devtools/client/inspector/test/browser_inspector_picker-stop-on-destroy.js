@@ -17,7 +17,7 @@ add_task(function* () {
   yield selectNode("p", inspector);
 
   info("Inspector displayed and ready, starting the picker.");
-  yield toolbox.highlighterUtils.startPicker();
+  yield startPicker(toolbox);
 
   info("Destroying the toolbox.");
   yield toolbox.destroy();
@@ -26,5 +26,5 @@ add_task(function* () {
        "toolbox is destroyed.");
   yield pickerStopped;
 
-  ok(true, "picker-stopped event fired after switch tools, so picker is closed.");
+  ok(true, "picker-stopped event fired after switch tools so picker is closed");
 });

@@ -15,13 +15,10 @@ const TRANSITIONS_PREF = "devtools.styleeditor.transitions";
 
 const CSS_TEXT = "* { color: blue }";
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-
 const {FileUtils} = Components.utils.import("resource://gre/modules/FileUtils.jsm", {});
 const {NetUtil} = Components.utils.import("resource://gre/modules/NetUtil.jsm", {});
 
-add_task(function*() {
+add_task(function* () {
   yield new Promise(resolve => {
     SpecialPowers.pushPrefEnv({"set": [
       [TRANSITIONS_PREF, false]
@@ -53,10 +50,8 @@ add_task(function*() {
 
   yield editor.getSourceEditor();
 
-  let element = content.document.querySelector("div");
-  let style = content.getComputedStyle(element, null);
-
-  is(style.color, "rgb(255, 0, 102)", "div is red before saving file");
+  let color = yield getComputedStyleProperty({selector: "div", name: "color"});
+  is(color, "rgb(255, 0, 102)", "div is red before saving file");
 
   // let styleApplied = promise.defer();
   let styleApplied = editor.once("style-applied");
@@ -75,7 +70,8 @@ add_task(function*() {
 
   yield styleApplied;
 
-  is(style.color, "rgb(0, 0, 255)", "div is blue after saving file");
+  color = yield getComputedStyleProperty({selector: "div", name: "color"});
+  is(color, "rgb(0, 0, 255)", "div is blue after saving file");
 });
 
 function editSCSS(editor) {
@@ -83,7 +79,7 @@ function editSCSS(editor) {
 
   editor.sourceEditor.setText(CSS_TEXT);
 
-  editor.saveToFile(null, function(file) {
+  editor.saveToFile(null, function (file) {
     ok(file, "Scss file should be saved");
     deferred.resolve();
   });
@@ -125,7 +121,6 @@ function copy(srcChromeURL, destFilePath) {
 function read(srcChromeURL) {
   let scriptableStream = Cc["@mozilla.org/scriptableinputstream;1"]
     .getService(Ci.nsIScriptableInputStream);
-  let principal = Services.scriptSecurityManager.getSystemPrincipal();
 
   let channel = NetUtil.newChannel({
     uri: srcChromeURL,
@@ -144,7 +139,7 @@ function read(srcChromeURL) {
   return data;
 }
 
-function write(aData, aFile) {
+function write(data, file) {
   let deferred = promise.defer();
 
   let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
@@ -152,15 +147,15 @@ function write(aData, aFile) {
 
   converter.charset = "UTF-8";
 
-  let istream = converter.convertToInputStream(aData);
-  let ostream = FileUtils.openSafeFileOutputStream(aFile);
+  let istream = converter.convertToInputStream(data);
+  let ostream = FileUtils.openSafeFileOutputStream(file);
 
-  NetUtil.asyncCopy(istream, ostream, function(status) {
+  NetUtil.asyncCopy(istream, ostream, function (status) {
     if (!Components.isSuccessCode(status)) {
-      info("Coudln't write to " + aFile.path);
+      info("Coudln't write to " + file.path);
       return;
     }
-    deferred.resolve(aFile);
+    deferred.resolve(file);
   });
 
   return deferred.promise;

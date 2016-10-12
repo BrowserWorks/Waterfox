@@ -1,12 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* ***** BEGIN LICENSE BLOCK *****
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- *
- * Contributor(s):
- *  Tanvi Vyas <tanvi@mozilla.com>
- *
- * ***** END LICENSE BLOCK ***** */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Tests that the Web Console Mixed Content messages are displayed
 
@@ -34,8 +29,8 @@ add_task(function* () {
   Services.prefs.clearUserPref("security.mixed_content.block_active_content");
 });
 
-var testMixedContent = Task.async(function*(hud) {
-  content.location = TEST_HTTPS_URI;
+var testMixedContent = Task.async(function* (hud) {
+  BrowserTestUtils.loadURI(gBrowser.selectedBrowser, TEST_HTTPS_URI);
 
   let results = yield waitForMessages({
     webconsole: hud,

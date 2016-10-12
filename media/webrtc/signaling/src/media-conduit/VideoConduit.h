@@ -139,6 +139,21 @@ public:
   virtual MediaConduitErrorCode SetReceiverTransport(RefPtr<TransportInterface> aTransport) override;
 
   /**
+   * Function to set the encoding bitrate limits based on incoming frame size and rate
+   * @param width, height: dimensions of the frame
+   * @param cap: user-enforced max bitrate, or 0
+   * @param aLastFramerateTenths: holds the current input framerate
+   * @param out_start, out_min, out_max: bitrate results
+   */
+  void SelectBitrates(unsigned short width,
+                      unsigned short height,
+                      unsigned int cap,
+                      mozilla::Atomic<int32_t, mozilla::Relaxed>& aLastFramerateTenths,
+                      unsigned int& out_min,
+                      unsigned int& out_start,
+                      unsigned int& out_max);
+
+  /**
    * Function to select and change the encoding resolution based on incoming frame size
    * and current available bandwidth.
    * @param width, height: dimensions of the frame
@@ -391,6 +406,7 @@ private:
   uint32_t mMinBitrate;
   uint32_t mStartBitrate;
   uint32_t mMaxBitrate;
+  uint32_t mMinBitrateEstimate;
 
   static const unsigned int sAlphaNum = 7;
   static const unsigned int sAlphaDen = 8;

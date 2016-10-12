@@ -12,6 +12,7 @@
 
 #include "jscntxt.h"
 
+#include "builtin/SelfHostingDefines.h"
 #include "gc/Marking.h"
 #include "gc/Zone.h"
 #include "proxy/Proxy.h"
@@ -56,6 +57,13 @@ enum RegExpFlag
     NoFlags         = 0x00,
     AllFlags        = 0x1f
 };
+
+static_assert(IgnoreCaseFlag == REGEXP_IGNORECASE_FLAG &&
+              GlobalFlag == REGEXP_GLOBAL_FLAG &&
+              MultilineFlag == REGEXP_MULTILINE_FLAG &&
+              StickyFlag == REGEXP_STICKY_FLAG &&
+              UnicodeFlag == REGEXP_UNICODE_FLAG,
+              "Flag values should be in sync with self-hosted JS");
 
 enum RegExpRunStatus
 {
@@ -108,7 +116,7 @@ class RegExpShared
 
     struct RegExpCompilation
     {
-        RelocatablePtrJitCode jitCode;
+        HeapPtr<jit::JitCode*> jitCode;
         uint8_t* byteCode;
 
         RegExpCompilation() : byteCode(nullptr) {}
@@ -120,19 +128,19 @@ class RegExpShared
     };
 
     /* Source to the RegExp, for lazy compilation. */
-    RelocatablePtrAtom source;
+    HeapPtr<JSAtom*>     source;
 
     RegExpFlag         flags;
     size_t             parenCount;
     bool               canStringMatch;
     bool               marked_;
 
-    RegExpCompilation  compilationArray[8];
+    RegExpCompilation  compilationArray[4];
 
-    static int CompilationIndex(CompilationMode mode, bool sticky, bool latin1) {
+    static int CompilationIndex(CompilationMode mode, bool latin1) {
         switch (mode) {
-          case Normal:    return sticky ? (latin1 ? 0 : 1) : (latin1 ? 2 : 3);
-          case MatchOnly: return sticky ? (latin1 ? 4 : 5) : (latin1 ? 6 : 7);
+          case Normal:    return latin1 ? 0 : 1;
+          case MatchOnly: return latin1 ? 2 : 3;
         }
         MOZ_CRASH();
     }
@@ -142,19 +150,19 @@ class RegExpShared
 
     /* Internal functions. */
     bool compile(JSContext* cx, HandleLinearString input,
-                 CompilationMode mode, bool sticky, ForceByteCodeEnum force);
+                 CompilationMode mode, ForceByteCodeEnum force);
     bool compile(JSContext* cx, HandleAtom pattern, HandleLinearString input,
-                 CompilationMode mode, bool sticky, ForceByteCodeEnum force);
+                 CompilationMode mode, ForceByteCodeEnum force);
 
     bool compileIfNecessary(JSContext* cx, HandleLinearString input,
-                            CompilationMode mode, bool sticky, ForceByteCodeEnum force);
+                            CompilationMode mode, ForceByteCodeEnum force);
 
-    const RegExpCompilation& compilation(CompilationMode mode, bool sticky, bool latin1) const {
-        return compilationArray[CompilationIndex(mode, sticky, latin1)];
+    const RegExpCompilation& compilation(CompilationMode mode, bool latin1) const {
+        return compilationArray[CompilationIndex(mode, latin1)];
     }
 
-    RegExpCompilation& compilation(CompilationMode mode, bool sticky, bool latin1) {
-        return compilationArray[CompilationIndex(mode, sticky, latin1)];
+    RegExpCompilation& compilation(CompilationMode mode, bool latin1) {
+        return compilationArray[CompilationIndex(mode, latin1)];
     }
 
   public:
@@ -164,7 +172,7 @@ class RegExpShared
     // Execute this RegExp on input starting from searchIndex, filling in
     // matches if specified and otherwise only determining if there is a match.
     RegExpRunStatus execute(JSContext* cx, HandleLinearString input, size_t searchIndex,
-                            bool sticky, MatchPairs* matches, size_t* endIndex);
+                            MatchPairs* matches, size_t* endIndex);
 
     // Register a table with this RegExpShared, and take ownership.
     bool addTable(uint8_t* table) {
@@ -189,18 +197,17 @@ class RegExpShared
     bool sticky() const                 { return flags & StickyFlag; }
     bool unicode() const                { return flags & UnicodeFlag; }
 
-    bool isCompiled(CompilationMode mode, bool sticky, bool latin1,
+    bool isCompiled(CompilationMode mode, bool latin1,
                     ForceByteCodeEnum force = DontForceByteCode) const {
-        return compilation(mode, sticky, latin1).compiled(force);
+        return compilation(mode, latin1).compiled(force);
     }
     bool isCompiled() const {
-        return isCompiled(Normal, true, true) || isCompiled(Normal, true, false)
-            || isCompiled(Normal, false, true) || isCompiled(Normal, false, false)
-            || isCompiled(MatchOnly, true, true) || isCompiled(MatchOnly, true, false)
-            || isCompiled(MatchOnly, false, true) || isCompiled(MatchOnly, false, false);
+        return isCompiled(Normal, true) || isCompiled(Normal, false)
+            || isCompiled(MatchOnly, true) || isCompiled(MatchOnly, false);
     }
 
     void trace(JSTracer* trc);
+    bool needsSweep(JSRuntime* rt);
 
     bool marked() const { return marked_; }
     void clearMarked() { marked_ = false; }
@@ -217,24 +224,14 @@ class RegExpShared
         return offsetof(RegExpShared, parenCount);
     }
 
-    static size_t offsetOfStickyLatin1JitCode(CompilationMode mode) {
+    static size_t offsetOfLatin1JitCode(CompilationMode mode) {
         return offsetof(RegExpShared, compilationArray)
-             + (CompilationIndex(mode, true, true) * sizeof(RegExpCompilation))
+             + (CompilationIndex(mode, true) * sizeof(RegExpCompilation))
              + offsetof(RegExpCompilation, jitCode);
     }
-    static size_t offsetOfNotStickyLatin1JitCode(CompilationMode mode) {
+    static size_t offsetOfTwoByteJitCode(CompilationMode mode) {
         return offsetof(RegExpShared, compilationArray)
-             + (CompilationIndex(mode, false, true) * sizeof(RegExpCompilation))
-             + offsetof(RegExpCompilation, jitCode);
-    }
-    static size_t offsetOfStickyTwoByteJitCode(CompilationMode mode) {
-        return offsetof(RegExpShared, compilationArray)
-             + (CompilationIndex(mode, true, false) * sizeof(RegExpCompilation))
-             + offsetof(RegExpCompilation, jitCode);
-    }
-    static size_t offsetOfNotStickyTwoByteJitCode(CompilationMode mode) {
-        return offsetof(RegExpShared, compilationArray)
-             + (CompilationIndex(mode, false, false) * sizeof(RegExpCompilation))
+             + (CompilationIndex(mode, false) * sizeof(RegExpCompilation))
              + offsetof(RegExpCompilation, jitCode);
     }
 
@@ -325,6 +322,23 @@ class RegExpCompartment
      */
     ReadBarriered<ArrayObject*> matchResultTemplateObject_;
 
+    /*
+     * The shape of RegExp.prototype object that satisfies following:
+     *   * RegExp.prototype.global getter is not modified
+     *   * RegExp.prototype.sticky getter is not modified
+     *   * RegExp.prototype.exec is an own data property
+     *   * RegExp.prototype[@@match] is an own data property
+     *   * RegExp.prototype[@@search] is an own data property
+     */
+    ReadBarriered<Shape*> optimizableRegExpPrototypeShape_;
+
+    /*
+     * The shape of RegExp instance that satisfies following:
+     *   * lastProperty is lastIndex
+     *   * prototype is RegExp.prototype
+     */
+    ReadBarriered<Shape*> optimizableRegExpInstanceShape_;
+
     ArrayObject* createMatchResultTemplateObject(JSContext* cx);
 
   public:
@@ -348,6 +362,26 @@ class RegExpCompartment
         return createMatchResultTemplateObject(cx);
     }
 
+    Shape* getOptimizableRegExpPrototypeShape() {
+        return optimizableRegExpPrototypeShape_;
+    }
+    void setOptimizableRegExpPrototypeShape(Shape* shape) {
+        optimizableRegExpPrototypeShape_ = shape;
+    }
+    Shape* getOptimizableRegExpInstanceShape() {
+        return optimizableRegExpInstanceShape_;
+    }
+    void setOptimizableRegExpInstanceShape(Shape* shape) {
+        optimizableRegExpInstanceShape_ = shape;
+    }
+
+    static size_t offsetOfOptimizableRegExpPrototypeShape() {
+        return offsetof(RegExpCompartment, optimizableRegExpPrototypeShape_);
+    }
+    static size_t offsetOfOptimizableRegExpInstanceShape() {
+        return offsetof(RegExpCompartment, optimizableRegExpInstanceShape_);
+    }
+
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
 };
 
@@ -355,15 +389,14 @@ class RegExpObject : public NativeObject
 {
     static const unsigned LAST_INDEX_SLOT          = 0;
     static const unsigned SOURCE_SLOT              = 1;
-    static const unsigned GLOBAL_FLAG_SLOT         = 2;
-    static const unsigned IGNORE_CASE_FLAG_SLOT    = 3;
-    static const unsigned MULTILINE_FLAG_SLOT      = 4;
-    static const unsigned STICKY_FLAG_SLOT         = 5;
-    static const unsigned UNICODE_FLAG_SLOT        = 6;
+    static const unsigned FLAGS_SLOT               = 2;
+
+    static_assert(RegExpObject::FLAGS_SLOT == REGEXP_FLAGS_SLOT,
+                  "FLAGS_SLOT values should be in sync with self-hosted JS");
 
   public:
-    static const unsigned RESERVED_SLOTS = 7;
-    static const unsigned PRIVATE_SLOT = 7;
+    static const unsigned RESERVED_SLOTS = 3;
+    static const unsigned PRIVATE_SLOT = 3;
 
     static const Class class_;
 
@@ -371,22 +404,13 @@ class RegExpObject : public NativeObject
     // allocate a bigger MatchResult.
     static const size_t MaxPairCount = 14;
 
-    /*
-     * Note: The regexp statics flags are OR'd into the provided flags,
-     * so this function is really meant for object creation during code
-     * execution, as opposed to during something like XDR.
-     */
     static RegExpObject*
-    create(ExclusiveContext* cx, RegExpStatics* res, const char16_t* chars, size_t length,
-           RegExpFlag flags, frontend::TokenStream* ts, LifoAlloc& alloc);
+    create(ExclusiveContext* cx, const char16_t* chars, size_t length, RegExpFlag flags,
+           frontend::TokenStream* ts, LifoAlloc& alloc);
 
     static RegExpObject*
-    createNoStatics(ExclusiveContext* cx, const char16_t* chars, size_t length, RegExpFlag flags,
-                    frontend::TokenStream* ts, LifoAlloc& alloc);
-
-    static RegExpObject*
-    createNoStatics(ExclusiveContext* cx, HandleAtom atom, RegExpFlag flags,
-                    frontend::TokenStream* ts, LifoAlloc& alloc);
+    create(ExclusiveContext* cx, HandleAtom atom, RegExpFlag flags,
+           frontend::TokenStream* ts, LifoAlloc& alloc);
 
     /*
      * Compute the initial shape to associate with fresh RegExp objects,
@@ -400,13 +424,25 @@ class RegExpObject : public NativeObject
 
     static unsigned lastIndexSlot() { return LAST_INDEX_SLOT; }
 
+    static bool isInitialShape(NativeObject* nobj) {
+        Shape* shape = nobj->lastProperty();
+        if (!shape->hasSlot())
+            return false;
+        if (shape->maybeSlot() != LAST_INDEX_SLOT)
+            return false;
+        return true;
+    }
+
     const Value& getLastIndex() const { return getSlot(LAST_INDEX_SLOT); }
 
     void setLastIndex(double d) {
         setSlot(LAST_INDEX_SLOT, NumberValue(d));
     }
 
-    void zeroLastIndex() {
+    void zeroLastIndex(ExclusiveContext* cx) {
+        MOZ_ASSERT(lookupPure(cx->names().lastIndex)->writable(),
+                   "can't infallibly zero a non-writable lastIndex on a "
+                   "RegExp that's been exposed to script");
         setSlot(LAST_INDEX_SLOT, Int32Value(0));
     }
 
@@ -418,43 +454,24 @@ class RegExpObject : public NativeObject
         setSlot(SOURCE_SLOT, StringValue(source));
     }
 
-    RegExpFlag getFlags() const {
-        unsigned flags = 0;
-        flags |= global() ? GlobalFlag : 0;
-        flags |= ignoreCase() ? IgnoreCaseFlag : 0;
-        flags |= multiline() ? MultilineFlag : 0;
-        flags |= sticky() ? StickyFlag : 0;
-        flags |= unicode() ? UnicodeFlag : 0;
-        return RegExpFlag(flags);
-    }
-
     /* Flags. */
 
-    void setIgnoreCase(bool enabled) {
-        setSlot(IGNORE_CASE_FLAG_SLOT, BooleanValue(enabled));
+    static unsigned flagsSlot() { return FLAGS_SLOT; }
+
+    RegExpFlag getFlags() const {
+        return RegExpFlag(getFixedSlot(FLAGS_SLOT).toInt32());
+    }
+    void setFlags(RegExpFlag flags) {
+        setSlot(FLAGS_SLOT, Int32Value(flags));
     }
 
-    void setGlobal(bool enabled) {
-        setSlot(GLOBAL_FLAG_SLOT, BooleanValue(enabled));
-    }
+    bool ignoreCase() const { return getFlags() & IgnoreCaseFlag; }
+    bool global() const     { return getFlags() & GlobalFlag; }
+    bool multiline() const  { return getFlags() & MultilineFlag; }
+    bool sticky() const     { return getFlags() & StickyFlag; }
+    bool unicode() const    { return getFlags() & UnicodeFlag; }
 
-    void setMultiline(bool enabled) {
-        setSlot(MULTILINE_FLAG_SLOT, BooleanValue(enabled));
-    }
-
-    void setSticky(bool enabled) {
-        setSlot(STICKY_FLAG_SLOT, BooleanValue(enabled));
-    }
-
-    void setUnicode(bool enabled) {
-        setSlot(UNICODE_FLAG_SLOT, BooleanValue(enabled));
-    }
-
-    bool ignoreCase() const { return getFixedSlot(IGNORE_CASE_FLAG_SLOT).toBoolean(); }
-    bool global() const     { return getFixedSlot(GLOBAL_FLAG_SLOT).toBoolean(); }
-    bool multiline() const  { return getFixedSlot(MULTILINE_FLAG_SLOT).toBoolean(); }
-    bool sticky() const     { return getFixedSlot(STICKY_FLAG_SLOT).toBoolean(); }
-    bool unicode() const    { return getFixedSlot(UNICODE_FLAG_SLOT).toBoolean(); }
+    static bool isOriginalFlagGetter(JSNative native, RegExpFlag* mask);
 
     bool getShared(JSContext* cx, RegExpGuard* g);
 
@@ -465,12 +482,11 @@ class RegExpObject : public NativeObject
 
     static void trace(JSTracer* trc, JSObject* obj);
 
-    static bool initFromAtom(ExclusiveContext* cx, Handle<RegExpObject*> regexp, HandleAtom source,
-                             RegExpFlag flags);
+    void initIgnoringLastIndex(HandleAtom source, RegExpFlag flags);
+
+    void initAndZeroLastIndex(HandleAtom source, RegExpFlag flags, ExclusiveContext* cx);
 
   private:
-    bool init(ExclusiveContext* cx, HandleAtom source, RegExpFlag flags);
-
     /*
      * Precondition: the syntax for |source| has already been validated.
      * Side effect: sets the private field.
@@ -483,10 +499,6 @@ class RegExpObject : public NativeObject
     /* Call setShared in preference to setPrivate. */
     void setPrivate(void* priv) = delete;
 };
-
-JSString*
-str_replace_regexp_raw(JSContext* cx, HandleString string, Handle<RegExpObject*> regexp,
-                       HandleString replacement);
 
 /*
  * Parse regexp flags. Report an error and return false if an invalid
@@ -514,8 +526,16 @@ XDRScriptRegExpObject(XDRState<mode>* xdr, MutableHandle<RegExpObject*> objp);
 extern JSObject*
 CloneScriptRegExpObject(JSContext* cx, RegExpObject& re);
 
-JSAtom*
+/* Escape all slashes and newlines in the given string. */
+extern JSAtom*
 EscapeRegExpPattern(JSContext* cx, HandleAtom src);
+
+template <typename CharT>
+extern bool
+HasRegExpMetaChars(const CharT* chars, size_t length);
+
+extern bool
+StringHasRegExpMetaChars(JSLinearString* str);
 
 } /* namespace js */
 

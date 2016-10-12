@@ -56,7 +56,7 @@ public:
 
   void SetPlaying(bool aPlaying) override;
 
-  void Redraw() override;
+  void Redraw(const VideoInfo& aInfo) override;
 
   void Start(int64_t aStartTime, const MediaInfo& aInfo) override;
 
@@ -125,8 +125,6 @@ private:
   // The presentation end time of the last video frame which has been displayed
   // in microseconds.
   int64_t mVideoFrameEndTime;
-
-  uint32_t mOldDroppedCount;
 
   // Event listeners for VideoQueue
   MediaEventListener mPushListener;

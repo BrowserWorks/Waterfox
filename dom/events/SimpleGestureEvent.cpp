@@ -26,8 +26,8 @@ SimpleGestureEvent::SimpleGestureEvent(EventTarget* aOwner,
     mEventIsInternal = false;
   } else {
     mEventIsInternal = true;
-    mEvent->time = PR_Now();
-    mEvent->refPoint.x = mEvent->refPoint.y = 0;
+    mEvent->mTime = PR_Now();
+    mEvent->mRefPoint = LayoutDeviceIntPoint(0, 0);
     static_cast<WidgetMouseEventBase*>(mEvent)->inputSource =
       nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
   }
@@ -43,7 +43,7 @@ NS_INTERFACE_MAP_END_INHERITING(MouseEvent)
 uint32_t
 SimpleGestureEvent::AllowedDirections()
 {
-  return mEvent->AsSimpleGestureEvent()->allowedDirections;
+  return mEvent->AsSimpleGestureEvent()->mAllowedDirections;
 }
 
 NS_IMETHODIMP
@@ -57,14 +57,14 @@ SimpleGestureEvent::GetAllowedDirections(uint32_t* aAllowedDirections)
 NS_IMETHODIMP
 SimpleGestureEvent::SetAllowedDirections(uint32_t aAllowedDirections)
 {
-  mEvent->AsSimpleGestureEvent()->allowedDirections = aAllowedDirections;
+  mEvent->AsSimpleGestureEvent()->mAllowedDirections = aAllowedDirections;
   return NS_OK;
 }
 
 uint32_t
 SimpleGestureEvent::Direction()
 {
-  return mEvent->AsSimpleGestureEvent()->direction;
+  return mEvent->AsSimpleGestureEvent()->mDirection;
 }
 
 NS_IMETHODIMP
@@ -78,7 +78,7 @@ SimpleGestureEvent::GetDirection(uint32_t* aDirection)
 double
 SimpleGestureEvent::Delta()
 {
-  return mEvent->AsSimpleGestureEvent()->delta;
+  return mEvent->AsSimpleGestureEvent()->mDelta;
 }
 
 NS_IMETHODIMP
@@ -92,7 +92,7 @@ SimpleGestureEvent::GetDelta(double* aDelta)
 uint32_t
 SimpleGestureEvent::ClickCount()
 {
-  return mEvent->AsSimpleGestureEvent()->clickCount;
+  return mEvent->AsSimpleGestureEvent()->mClickCount;
 }
 
 NS_IMETHODIMP
@@ -103,11 +103,11 @@ SimpleGestureEvent::GetClickCount(uint32_t* aClickCount)
   return NS_OK;
 }
 
-NS_IMETHODIMP
+void
 SimpleGestureEvent::InitSimpleGestureEvent(const nsAString& aTypeArg,
                                            bool aCanBubbleArg,
                                            bool aCancelableArg,
-                                           nsIDOMWindow* aViewArg,
+                                           nsGlobalWindow* aViewArg,
                                            int32_t aDetailArg,
                                            int32_t aScreenX, 
                                            int32_t aScreenY,
@@ -118,27 +118,23 @@ SimpleGestureEvent::InitSimpleGestureEvent(const nsAString& aTypeArg,
                                            bool aShiftKeyArg,
                                            bool aMetaKeyArg,
                                            uint16_t aButton,
-                                           nsIDOMEventTarget* aRelatedTarget,
+                                           EventTarget* aRelatedTarget,
                                            uint32_t aAllowedDirectionsArg,
                                            uint32_t aDirectionArg,
                                            double aDeltaArg,
                                            uint32_t aClickCountArg)
 {
-  nsresult rv =
-    MouseEvent::InitMouseEvent(aTypeArg, aCanBubbleArg, aCancelableArg,
-                               aViewArg, aDetailArg,
-                               aScreenX, aScreenY, aClientX, aClientY,
-                               aCtrlKeyArg, aAltKeyArg, aShiftKeyArg,
-                               aMetaKeyArg, aButton, aRelatedTarget);
-  NS_ENSURE_SUCCESS(rv, rv);
+  MouseEvent::InitMouseEvent(aTypeArg, aCanBubbleArg, aCancelableArg,
+                             aViewArg, aDetailArg,
+                             aScreenX, aScreenY, aClientX, aClientY,
+                             aCtrlKeyArg, aAltKeyArg, aShiftKeyArg,
+                             aMetaKeyArg, aButton, aRelatedTarget);
 
   WidgetSimpleGestureEvent* simpleGestureEvent = mEvent->AsSimpleGestureEvent();
-  simpleGestureEvent->allowedDirections = aAllowedDirectionsArg;
-  simpleGestureEvent->direction = aDirectionArg;
-  simpleGestureEvent->delta = aDeltaArg;
-  simpleGestureEvent->clickCount = aClickCountArg;
-
-  return NS_OK;
+  simpleGestureEvent->mAllowedDirections = aAllowedDirectionsArg;
+  simpleGestureEvent->mDirection = aDirectionArg;
+  simpleGestureEvent->mDelta = aDeltaArg;
+  simpleGestureEvent->mClickCount = aClickCountArg;
 }
 
 } // namespace dom

@@ -196,6 +196,8 @@ public:
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf);
 
+  static void ReportToConsole(const nsAString& aMessage);
+
 protected:
   virtual ~nsPrefBranch();
 
@@ -215,11 +217,6 @@ protected:
   void RemoveExpiredCallback(PrefCallback *aCallback);
   const char *getPrefName(const char *aPrefName);
   void       freeObserverList(void);
-
-  friend PLDHashOperator
-    FreeObserverFunc(PrefCallback *aKey,
-                     nsAutoPtr<PrefCallback> &aCallback,
-                     void *aArgs);
 
 private:
   int32_t               mPrefRootLength;

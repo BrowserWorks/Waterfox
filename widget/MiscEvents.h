@@ -110,9 +110,9 @@ public:
                      nsIAtom* aCommand, nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, eUnidentifiedEvent, aWidget,
                      eCommandEventClass)
-    , command(aCommand)
+    , mCommand(aCommand)
   {
-    userType = aEventType;
+    mSpecifiedEventType = aEventType;
   }
 
   virtual WidgetEvent* Duplicate() const override
@@ -121,13 +121,13 @@ public:
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
     WidgetCommandEvent* result =
-      new WidgetCommandEvent(false, userType, command, nullptr);
+      new WidgetCommandEvent(false, mSpecifiedEventType, mCommand, nullptr);
     result->AssignCommandEventData(*this, true);
     result->mFlags = mFlags;
     return result;
   }
 
-  nsCOMPtr<nsIAtom> command;
+  nsCOMPtr<nsIAtom> mCommand;
 
   // XXX Not tested by test_assign_event_data.html
   void AssignCommandEventData(const WidgetCommandEvent& aEvent,
@@ -135,7 +135,7 @@ public:
   {
     AssignGUIEventData(aEvent, aCopyTargets);
 
-    // command must have been initialized with the constructor.
+    // mCommand must have been initialized with the constructor.
   }
 };
 
@@ -156,7 +156,7 @@ public:
 
   WidgetPluginEvent(bool aIsTrusted, EventMessage aMessage, nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, ePluginEventClass)
-    , retargetToFocusedDocument(false)
+    , mRetargetToFocusedDocument(false)
   {
   }
 
@@ -175,14 +175,14 @@ public:
 
   // If true, this event needs to be retargeted to focused document.
   // Otherwise, never retargeted. Defaults to false.
-  bool retargetToFocusedDocument;
+  bool mRetargetToFocusedDocument;
 
   void AssignPluginEventData(const WidgetPluginEvent& aEvent,
                              bool aCopyTargets)
   {
     AssignGUIEventData(aEvent, aCopyTargets);
 
-    retargetToFocusedDocument = aEvent.retargetToFocusedDocument;
+    mRetargetToFocusedDocument = aEvent.mRetargetToFocusedDocument;
   }
 
 protected:

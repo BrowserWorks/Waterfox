@@ -67,7 +67,29 @@ void
 nsSVGViewBox::Init()
 {
   mHasBaseVal = false;
+  // We shouldn't use mBaseVal for rendering (its usages should be guarded with
+  // "mHasBaseVal" checks), but just in case we do by accident, this will
+  // ensure that we treat it as "none" and ignore its numeric values:
+  mBaseVal.none = true;
+
   mAnimVal = nullptr;
+}
+
+bool
+nsSVGViewBox::HasRect() const
+{
+  // Check mAnimVal if we have one; otherwise, check mBaseVal if we have one;
+  // otherwise, just return false (we clearly do not have a rect).
+  const nsSVGViewBoxRect* rect = mAnimVal;
+  if (!rect) {
+    if (!mHasBaseVal) {
+      // no anim val, no base val --> no viewbox rect
+      return false;
+    }
+    rect = &mBaseVal;
+  }
+
+  return !rect->none && rect->width >= 0 && rect->height >= 0;
 }
 
 void

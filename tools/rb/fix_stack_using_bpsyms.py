@@ -43,7 +43,10 @@ class SymbolFile:
         # http://code.google.com/p/google-breakpad/wiki/SymbolFiles
         if line.startswith("FUNC "):
           # FUNC <address> <size> <stack_param_size> <name>
-          (junk, rva, size, ss, name) = line.split(None, 4)
+          bits = line.split(None, 4)
+          if len(bits) < 5:
+            bits.append('unnamed_function')
+          (junk, rva, size, ss, name) = bits
           rva = int(rva,16)
           funcs[rva] = name
           addrs.append(rva)
@@ -85,7 +88,14 @@ def findIdForPath(path):
   # We should always be packaged with a "fileid" executable.
   fileid_exe = os.path.join(here, 'fileid')
   if not os.path.isfile(fileid_exe):
-    raise Exception("Could not find fileid executable in %s" % here)
+    fileid_exe = fileid_exe + '.exe'
+    if not os.path.isfile(fileid_exe):
+      raise Exception("Could not find fileid executable in %s" % here)
+
+  if not os.path.isfile(path):
+    for suffix in ('.exe', '.dll'):
+      if os.path.isfile(path + suffix):
+        path = path + suffix
   try:
     return subprocess.check_output([fileid_exe, path]).rstrip()
   except subprocess.CalledProcessError as e:
@@ -96,11 +106,12 @@ def guessSymbolFile(full_path, symbolsDir):
   """Guess a symbol file based on an object file's basename, ignoring the path and UUID."""
   fn = os.path.basename(full_path)
   d1 = os.path.join(symbolsDir, fn)
+  root, _ = os.path.splitext(fn)
+  if os.path.exists(os.path.join(symbolsDir, root) + '.pdb'):
+    d1 = os.path.join(symbolsDir, root) + '.pdb'
+    fn = root
   if not os.path.exists(d1):
-    fn = fn + ".pdb"
-    d1 = os.path.join(symbolsDir, fn)
-    if not os.path.exists(d1):
-      return None
+    return None
   uuids = os.listdir(d1)
   if len(uuids) == 0:
     raise Exception("Missing symbol file for " + fn)
@@ -108,8 +119,6 @@ def guessSymbolFile(full_path, symbolsDir):
     uuid = findIdForPath(full_path)
   else:
     uuid = uuids[0]
-  if fn.endswith(".pdb"):
-    fn = fn[:-4]
   return os.path.join(d1, uuid, fn + ".sym")
 
 parsedSymbolFiles = {}

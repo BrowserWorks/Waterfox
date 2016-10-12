@@ -49,7 +49,7 @@ const testData = [
   }
 ];
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode("#testid", inspector);
@@ -72,15 +72,13 @@ function* runTestData(view, {value, commitKey, modifiers, expected}) {
   info("Entering test data " + value);
   let onRuleViewChanged = view.once("ruleview-changed");
   EventUtils.sendString(value, view.styleWindow);
-
-  info("Waiting for focus on the field");
-  let onBlur = once(editor.input, "blur");
+  yield onRuleViewChanged;
 
   info("Entering the commit key " + commitKey + " " + modifiers);
+  onRuleViewChanged = view.once("ruleview-changed");
+  let onBlur = once(editor.input, "blur");
   EventUtils.synthesizeKey(commitKey, modifiers);
   yield onBlur;
-  // No matter if we escape or commit the change, the preview throttle is going
-  // to update the property value
   yield onRuleViewChanged;
 
   if (commitKey === "VK_ESCAPE") {

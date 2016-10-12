@@ -29,13 +29,14 @@ function runTests() {
 
   SimpleTest.waitForExplicitFinish();
 
-  var {getSettingsFront, _setDefaultSettings} = require("devtools/server/actors/settings");
+  var {getSettingsFront} = require("devtools/shared/fronts/settings");
+  var {_setDefaultSettings} = require("devtools/server/actors/settings");
 
   DebuggerServer.init(function () { return true; });
   DebuggerServer.addBrowserActors();
 
   var client = new DebuggerClient(DebuggerServer.connectPipe());
-  client.connect(function onConnect() {
+  client.connect().then(function onConnect() {
     client.listTabs(function onListTabs(aResponse) {
       var s = getSettingsFront(client, aResponse);
 

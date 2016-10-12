@@ -115,29 +115,25 @@ MacroAssemblerX86::loadConstantFloat32(float f, FloatRegister dest)
 }
 
 void
-MacroAssemblerX86::loadConstantInt32x4(const SimdConstant& v, FloatRegister dest)
+MacroAssemblerX86::loadConstantSimd128Int(const SimdConstant& v, FloatRegister dest)
 {
-    MOZ_ASSERT(v.type() == SimdConstant::Int32x4);
-    if (maybeInlineInt32x4(v, dest))
+    if (maybeInlineSimd128Int(v, dest))
         return;
     SimdData* i4 = getSimdData(v);
     if (!i4)
         return;
-    MOZ_ASSERT(i4->type() == SimdConstant::Int32x4);
     masm.vmovdqa_mr(nullptr, dest.encoding());
     propagateOOM(i4->uses.append(CodeOffset(masm.size())));
 }
 
 void
-MacroAssemblerX86::loadConstantFloat32x4(const SimdConstant& v, FloatRegister dest)
+MacroAssemblerX86::loadConstantSimd128Float(const SimdConstant& v, FloatRegister dest)
 {
-    MOZ_ASSERT(v.type() == SimdConstant::Float32x4);
-    if (maybeInlineFloat32x4(v, dest))
+    if (maybeInlineSimd128Float(v, dest))
         return;
     SimdData* f4 = getSimdData(v);
     if (!f4)
         return;
-    MOZ_ASSERT(f4->type() == SimdConstant::Float32x4);
     masm.vmovaps_mr(nullptr, dest.encoding());
     propagateOOM(f4->uses.append(CodeOffset(masm.size())));
 }
@@ -174,11 +170,7 @@ MacroAssemblerX86::finish()
         CodeOffset cst(masm.currentOffset());
         for (CodeOffset use : v.uses)
             addCodeLabel(CodeLabel(use, cst));
-        switch (v.type()) {
-          case SimdConstant::Int32x4:   masm.int32x4Constant(v.value.asInt32x4());     break;
-          case SimdConstant::Float32x4: masm.float32x4Constant(v.value.asFloat32x4()); break;
-          default: MOZ_CRASH("unexpected SimdConstant type");
-        }
+        masm.simd128Constant(v.value.bytes());
         if (!enoughMemory_)
             return;
     }
@@ -203,11 +195,13 @@ MacroAssemblerX86::handleFailureWithHandlerTail(void* handler)
     Label bailout;
 
     loadPtr(Address(esp, offsetof(ResumeFromException, kind)), eax);
-    branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_ENTRY_FRAME), &entryFrame);
-    branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_CATCH), &catch_);
-    branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_FINALLY), &finally);
-    branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_FORCED_RETURN), &return_);
-    branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
+    asMasm().branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_ENTRY_FRAME),
+                      &entryFrame);
+    asMasm().branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_CATCH), &catch_);
+    asMasm().branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_FINALLY), &finally);
+    asMasm().branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_FORCED_RETURN),
+                      &return_);
+    asMasm().branch32(Assembler::Equal, eax, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
 
     breakpoint(); // Invalid kind.
 
@@ -255,7 +249,8 @@ MacroAssemblerX86::handleFailureWithHandlerTail(void* handler)
         Label skipProfilingInstrumentation;
         // Test if profiler enabled.
         AbsoluteAddress addressOfEnabled(GetJitContext()->runtime->spsProfiler().addressOfEnabled());
-        branch32(Assembler::Equal, addressOfEnabled, Imm32(0), &skipProfilingInstrumentation);
+        asMasm().branch32(Assembler::Equal, addressOfEnabled, Imm32(0),
+                          &skipProfilingInstrumentation);
         profilerExitFrame();
         bind(&skipProfilingInstrumentation);
     }
@@ -268,90 +263,6 @@ MacroAssemblerX86::handleFailureWithHandlerTail(void* handler)
     loadPtr(Address(esp, offsetof(ResumeFromException, bailoutInfo)), ecx);
     movl(Imm32(BAILOUT_RETURN_OK), eax);
     jmp(Operand(esp, offsetof(ResumeFromException, target)));
-}
-
-void
-MacroAssemblerX86::branchTestValue(Condition cond, const ValueOperand& value, const Value& v, Label* label)
-{
-    jsval_layout jv = JSVAL_TO_IMPL(v);
-    if (v.isMarkable())
-        cmpPtr(value.payloadReg(), ImmGCPtr(reinterpret_cast<gc::Cell*>(v.toGCThing())));
-    else
-        cmpPtr(value.payloadReg(), ImmWord(jv.s.payload.i32));
-
-    if (cond == Equal) {
-        Label done;
-        j(NotEqual, &done);
-        {
-            cmp32(value.typeReg(), Imm32(jv.s.tag));
-            j(Equal, label);
-        }
-        bind(&done);
-    } else {
-        MOZ_ASSERT(cond == NotEqual);
-        j(NotEqual, label);
-
-        cmp32(value.typeReg(), Imm32(jv.s.tag));
-        j(NotEqual, label);
-    }
-}
-
-template <typename T>
-void
-MacroAssemblerX86::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest,
-                                     MIRType slotType)
-{
-    if (valueType == MIRType_Double) {
-        storeDouble(value.reg().typedReg().fpu(), dest);
-        return;
-    }
-
-    // Store the type tag if needed.
-    if (valueType != slotType)
-        storeTypeTag(ImmType(ValueTypeFromMIRType(valueType)), Operand(dest));
-
-    // Store the payload.
-    if (value.constant())
-        storePayload(value.value(), Operand(dest));
-    else
-        storePayload(value.reg().typedReg().gpr(), Operand(dest));
-}
-
-template void
-MacroAssemblerX86::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const Address& dest,
-                                     MIRType slotType);
-
-template void
-MacroAssemblerX86::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const BaseIndex& dest,
-                                     MIRType slotType);
-
-void
-MacroAssemblerX86::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp,
-                                           Label* label)
-{
-    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-    MOZ_ASSERT(ptr != temp);
-    MOZ_ASSERT(temp != InvalidReg);  // A temp register is required for x86.
-
-    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
-    movePtr(ImmWord(-ptrdiff_t(nursery.start())), temp);
-    asMasm().addPtr(ptr, temp);
-    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
-              temp, Imm32(nursery.nurserySize()), label);
-}
-
-void
-MacroAssemblerX86::branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp,
-                                              Label* label)
-{
-    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-
-    Label done;
-
-    branchTestObject(Assembler::NotEqual, value, cond == Assembler::Equal ? &done : label);
-    branchPtrInNurseryRange(cond, value.payloadReg(), temp, label);
-
-    bind(&done);
 }
 
 void
@@ -494,5 +405,123 @@ MacroAssembler::callWithABINoProfiler(const Address& fun, MoveOp::Type result)
     call(fun);
     callWithABIPost(stackAdjust, result);
 }
+
+// ===============================================================
+// Branch functions
+
+void
+MacroAssembler::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp,
+                                        Label* label)
+{
+    MOZ_ASSERT(ptr != temp);
+    branchPtrInNurseryRangeImpl(cond, ptr, temp, label);
+}
+
+void
+MacroAssembler::branchPtrInNurseryRange(Condition cond, const Address& address, Register temp,
+                                        Label* label)
+{
+    branchPtrInNurseryRangeImpl(cond, address, temp, label);
+}
+
+template <typename T>
+void
+MacroAssembler::branchPtrInNurseryRangeImpl(Condition cond, const T& ptr, Register temp,
+                                            Label* label)
+{
+    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+    MOZ_ASSERT(temp != InvalidReg);  // A temp register is required for x86.
+
+    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
+    movePtr(ImmWord(-ptrdiff_t(nursery.start())), temp);
+    addPtr(ptr, temp);
+    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
+              temp, Imm32(nursery.nurserySize()), label);
+}
+
+void
+MacroAssembler::branchValueIsNurseryObject(Condition cond, const Address& address, Register temp,
+                                           Label* label)
+{
+    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+
+    Label done;
+
+    branchTestObject(Assembler::NotEqual, address, cond == Assembler::Equal ? &done : label);
+    branchPtrInNurseryRange(cond, address, temp, label);
+
+    bind(&done);
+}
+
+void
+MacroAssembler::branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp,
+                                           Label* label)
+{
+    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+
+    Label done;
+
+    branchTestObject(Assembler::NotEqual, value, cond == Assembler::Equal ? &done : label);
+    branchPtrInNurseryRange(cond, value.payloadReg(), temp, label);
+
+    bind(&done);
+}
+
+void
+MacroAssembler::branchTestValue(Condition cond, const ValueOperand& lhs,
+                                const Value& rhs, Label* label)
+{
+    MOZ_ASSERT(cond == Equal || cond == NotEqual);
+    jsval_layout jv = JSVAL_TO_IMPL(rhs);
+    if (rhs.isMarkable())
+        cmpPtr(lhs.payloadReg(), ImmGCPtr(reinterpret_cast<gc::Cell*>(rhs.toGCThing())));
+    else
+        cmpPtr(lhs.payloadReg(), ImmWord(jv.s.payload.i32));
+
+    if (cond == Equal) {
+        Label done;
+        j(NotEqual, &done);
+        {
+            cmp32(lhs.typeReg(), Imm32(jv.s.tag));
+            j(Equal, label);
+        }
+        bind(&done);
+    } else {
+        j(NotEqual, label);
+
+        cmp32(lhs.typeReg(), Imm32(jv.s.tag));
+        j(NotEqual, label);
+    }
+}
+
+// ========================================================================
+// Memory access primitives.
+template <typename T>
+void
+MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest,
+                                     MIRType slotType)
+{
+    if (valueType == MIRType::Double) {
+        storeDouble(value.reg().typedReg().fpu(), dest);
+        return;
+    }
+
+    // Store the type tag if needed.
+    if (valueType != slotType)
+        storeTypeTag(ImmType(ValueTypeFromMIRType(valueType)), Operand(dest));
+
+    // Store the payload.
+    if (value.constant())
+        storePayload(value.value(), Operand(dest));
+    else
+        storePayload(value.reg().typedReg().gpr(), Operand(dest));
+}
+
+template void
+MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const Address& dest,
+                                     MIRType slotType);
+template void
+MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const BaseIndex& dest,
+                                     MIRType slotType);
 
 //}}} check_macroassembler_style

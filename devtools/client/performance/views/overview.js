@@ -75,7 +75,7 @@ var OverviewView = {
   /**
    * Unbinds events.
    */
-  destroy: Task.async(function*() {
+  destroy: Task.async(function* () {
     PerformanceController.off(EVENTS.PREF_CHANGED, this._onPrefChanged);
     PerformanceController.off(EVENTS.THEME_CHANGED, this._onThemeChanged);
     PerformanceController.off(EVENTS.RECORDING_STATE_CHANGE, this._onRecordingStateChange);
@@ -121,7 +121,7 @@ var OverviewView = {
    * @param object interval
    *        The { startTime, endTime }, in milliseconds.
    */
-  setTimeInterval: function(interval, options = {}) {
+  setTimeInterval: function (interval, options = {}) {
     let recording = PerformanceController.getCurrentRecording();
     if (recording == null) {
       throw new Error("A recording should be available in order to set the selection.");
@@ -143,7 +143,7 @@ var OverviewView = {
    * @return object
    *         The { startTime, endTime }, in milliseconds.
    */
-  getTimeInterval: function() {
+  getTimeInterval: function () {
     let recording = PerformanceController.getCurrentRecording();
     if (recording == null) {
       throw new Error("A recording should be available in order to get the selection.");
@@ -170,7 +170,7 @@ var OverviewView = {
    * @param number resolution
    *        The fps graph resolution. @see Graphs.js
    */
-  render: Task.async(function *(resolution) {
+  render: Task.async(function* (resolution) {
     if (this.isDisabled()) {
       return;
     }
@@ -179,7 +179,7 @@ var OverviewView = {
     yield this.graphs.render(recording.getAllData(), resolution);
 
     // Finished rendering all graphs in this overview.
-    this.emit(EVENTS.OVERVIEW_RENDERED, resolution);
+    this.emit(EVENTS.UI_OVERVIEW_RENDERED, resolution);
   }),
 
   /**
@@ -187,7 +187,7 @@ var OverviewView = {
    * and uses data fetched from the controller to render
    * data into all the corresponding overview graphs.
    */
-  _onRecordingTick: Task.async(function *() {
+  _onRecordingTick: Task.async(function* () {
     yield this.render(FRAMERATE_GRAPH_LOW_RES_INTERVAL);
     this._prepareNextTick();
   }),
@@ -276,19 +276,19 @@ var OverviewView = {
       return;
     }
 
-    this.emit(EVENTS.OVERVIEW_RANGE_SELECTED, this.getTimeInterval());
+    this.emit(EVENTS.UI_OVERVIEW_RANGE_SELECTED, this.getTimeInterval());
   },
 
   _onGraphRendered: function (_, graphName) {
     switch (graphName) {
       case "timeline":
-        this.emit(EVENTS.MARKERS_GRAPH_RENDERED);
+        this.emit(EVENTS.UI_MARKERS_GRAPH_RENDERED);
         break;
       case "memory":
-        this.emit(EVENTS.MEMORY_GRAPH_RENDERED);
+        this.emit(EVENTS.UI_MEMORY_GRAPH_RENDERED);
         break;
       case "framerate":
-        this.emit(EVENTS.FRAMERATE_GRAPH_RENDERED);
+        this.emit(EVENTS.UI_FRAMERATE_GRAPH_RENDERED);
         break;
     }
   },
@@ -368,8 +368,8 @@ var OverviewView = {
  * @param {function?} fn
  * @return {function}
  */
-function OverviewViewOnStateChange (fn) {
-  return function _onRecordingStateChange (eventName, recording) {
+function OverviewViewOnStateChange(fn) {
+  return function _onRecordingStateChange(eventName, recording) {
     // Normalize arguments for the RECORDING_STATE_CHANGE event,
     // as it also has a `state` argument.
     if (typeof recording === "string") {
@@ -412,7 +412,7 @@ function OverviewViewOnStateChange (fn) {
     if (fn) {
       fn.apply(this, arguments);
     }
-  }
+  };
 }
 
 // Decorates the OverviewView as an EventEmitter

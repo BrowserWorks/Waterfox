@@ -226,7 +226,7 @@ NativeKeyBindings::GetInstance(NativeKeyBindingsType aType)
 
     default:
       // fallback to multiline editor case in release build
-      MOZ_ASSERT(false, "aType is invalid or not yet implemented");
+      MOZ_FALLTHROUGH_ASSERT("aType is invalid or not yet implemented");
     case nsIWidget::NativeKeyBindingsForMultiLineEditor:
     case nsIWidget::NativeKeyBindingsForRichTextEditor:
       if (!sInstanceForMultiLineEditor) {
@@ -303,8 +303,8 @@ NativeKeyBindings::Execute(const WidgetKeyboardEvent& aEvent,
 
   guint keyval;
 
-  if (aEvent.charCode) {
-    keyval = gdk_unicode_to_keyval(aEvent.charCode);
+  if (aEvent.mCharCode) {
+    keyval = gdk_unicode_to_keyval(aEvent.mCharCode);
   } else {
     keyval =
       static_cast<GdkEventKey*>(aEvent.mNativeKeyEvent)->keyval;
@@ -314,11 +314,11 @@ NativeKeyBindings::Execute(const WidgetKeyboardEvent& aEvent,
     return true;
   }
 
-  for (uint32_t i = 0; i < aEvent.alternativeCharCodes.Length(); ++i) {
+  for (uint32_t i = 0; i < aEvent.mAlternativeCharCodes.Length(); ++i) {
     uint32_t ch = aEvent.IsShift() ?
-      aEvent.alternativeCharCodes[i].mShiftedCharCode :
-      aEvent.alternativeCharCodes[i].mUnshiftedCharCode;
-    if (ch && ch != aEvent.charCode) {
+      aEvent.mAlternativeCharCodes[i].mShiftedCharCode :
+      aEvent.mAlternativeCharCodes[i].mUnshiftedCharCode;
+    if (ch && ch != aEvent.mCharCode) {
       keyval = gdk_unicode_to_keyval(ch);
       if (ExecuteInternal(aEvent, aCallback, aCallbackData, keyval)) {
         return true;

@@ -2,7 +2,7 @@
 # waitpid to dispatch tasks.  This avoids several deadlocks that are possible
 # with fork/exec + threads + Python.
 
-import errno, os, select
+import errno, os, select, sys
 from datetime import datetime, timedelta
 from progressbar import ProgressBar
 from results import NullTestOutput, TestOutput, escape_cmdline
@@ -48,13 +48,6 @@ def spawn_test(test, prefix, passthrough, run_skipped, show_cmd):
 
     os.execvp(cmd[0], cmd)
 
-def total_seconds(td):
-    """
-    Return the total number of seconds contained in the duration as a float
-    """
-    return (float(td.microseconds) \
-            + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
-
 def get_max_wait(tasks, timeout):
     """
     Return the maximum time we can wait before any task should time out.
@@ -73,8 +66,8 @@ def get_max_wait(tasks, timeout):
             if remaining < wait:
                 wait = remaining
 
-    # Return the wait time in seconds, clamped to zero.
-    return max(total_seconds(wait), 0)
+    # Return the wait time in seconds, clamped between zero and max_wait.
+    return max(wait.total_seconds(), 0)
 
 def flush_input(fd, frags):
     """
@@ -110,7 +103,13 @@ def read_input(tasks, timeout):
         # us to respond immediately and not leave cores idle.
         exlist.append(t.stdout)
 
-    readable, _, _ = select.select(rlist, [], exlist, timeout)
+    readable = []
+    try:
+        readable, _, _ = select.select(rlist, [], exlist, timeout)
+    except OverflowError as e:
+        print >> sys.stderr, "timeout value", timeout
+        raise
+
     for fd in readable:
         flush_input(fd, outmap[fd])
 
@@ -176,7 +175,7 @@ def reap_zombies(tasks, timeout):
                 ''.join(ended.out),
                 ''.join(ended.err),
                 returncode,
-                total_seconds(datetime.now() - ended.start),
+                (datetime.now() - ended.start).total_seconds(),
                 timed_out(ended, timeout)))
     return tasks, finished
 

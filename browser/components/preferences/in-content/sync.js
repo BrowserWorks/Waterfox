@@ -184,12 +184,6 @@ var gSyncPane = {
     this._populateComputerName(Weave.Service.clientsEngine.localName);
   },
 
-  _closeSyncStatusMessageBox: function() {
-    document.getElementById("syncStatusMessage").removeAttribute("message-type");
-    document.getElementById("syncStatusMessageTitle").textContent = "";
-    document.getElementById("syncStatusMessageDescription").textContent = "";
-  },
-
   _setupEventListeners: function() {
     function setEventListener(aId, aEventType, aCallback)
     {
@@ -197,9 +191,6 @@ var gSyncPane = {
               .addEventListener(aEventType, aCallback.bind(gSyncPane));
     }
 
-    setEventListener("syncStatusMessageClose", "command", function () {
-      gSyncPane._closeSyncStatusMessageBox();
-    });
     setEventListener("noAccountSetup", "click", function (aEvent) {
       aEvent.stopPropagation();
       gSyncPane.openSetup(null);
@@ -271,9 +262,7 @@ var gSyncPane = {
       gSyncPane.signIn();
       return false;
     });
-    setEventListener("verifiedManage", "click",
-      gSyncPane.manageFirefoxAccount);
-    setEventListener("fxaUnlinkButton", "click", function () {
+    setEventListener("fxaUnlinkButton", "command", function () {
       gSyncPane.unlinkFirefoxAccount(true);
     });
     setEventListener("verifyFxaAccount", "command",
@@ -376,11 +365,14 @@ var gSyncPane = {
           return fxAccounts.getSignedInUserProfile();
         }
       }).then(data => {
+        let fxaLoginStatus = document.getElementById("fxaLoginStatus");
         if (data && profileInfoEnabled) {
           if (data.displayName) {
-            fxaEmailAddress1Label.hidden = true;
+            fxaLoginStatus.setAttribute("hasName", true);
             displayNameLabel.hidden = false;
             displayNameLabel.textContent = data.displayName;
+          } else {
+            fxaLoginStatus.removeAttribute("hasName");
           }
           if (data.avatar) {
             let bgImage = "url(\"" + data.avatar + "\")";
@@ -397,6 +389,8 @@ var gSyncPane = {
             };
             img.src = data.avatar;
           }
+        } else {
+          fxaLoginStatus.removeAttribute("hasName");
         }
       }, err => {
         FxAccountsCommon.log.error(err);
@@ -423,19 +417,6 @@ var gSyncPane = {
       document.getElementById("syncComputerName").value = Weave.Service.clientsEngine.localName;
       document.getElementById("tosPP-normal").hidden = this._usingCustomServer;
     }
-  },
-
-  // Called whenever one of the sync engine preferences is changed.
-  onPreferenceChanged: function() {
-    let prefElts = document.querySelectorAll("#syncEnginePrefs > preference");
-    let syncEnabled = false;
-    for (let elt of prefElts) {
-      if (elt.name.startsWith("services.sync.") && elt.value) {
-        syncEnabled = true;
-        break;
-      }
-    }
-    Services.prefs.setBoolPref("services.sync.enabled", syncEnabled);
   },
 
   startOver: function (showDialog) {
@@ -563,13 +544,34 @@ var gSyncPane = {
     this._openAboutAccounts("reauth");
   },
 
-  openChangeProfileImage: function() {
-    fxAccounts.promiseAccountsChangeProfileURI(this._getEntryPoint(), "avatar")
-      .then(url => {
+
+  clickOrSpaceOrEnterPressed: function(event) {
+    // Note: charCode is deprecated, but 'char' not yet implemented.
+    // Replace charCode with char when implemented, see Bug 680830
+    if ((event.type == "click" && event.button == 0) ||    // button 0 = 'main button', typically left click.
+        (event.type == "keypress" &&
+        (event.charCode == KeyEvent.DOM_VK_SPACE || event.keyCode == KeyEvent.DOM_VK_RETURN))) {
+      return true;
+    } else {
+      return false;
+    }
+  },
+
+  openChangeProfileImage: function(event) {
+    if (this.clickOrSpaceOrEnterPressed(event)) {
+      fxAccounts.promiseAccountsChangeProfileURI(this._getEntryPoint(), "avatar")
+          .then(url => {
         this.openContentInBrowser(url, {
           replaceQueryString: true
         });
       });
+    }
+  },
+
+  openManageFirefoxAccount: function(event) {
+    if (this.clickOrSpaceOrEnterPressed(event)) {
+      this.manageFirefoxAccount();
+    }
   },
 
   manageFirefoxAccount: function() {
@@ -582,31 +584,23 @@ var gSyncPane = {
   },
 
   verifyFirefoxAccount: function() {
-    this._closeSyncStatusMessageBox();
-    let changesyncStatusMessage = (data) => {
+    let showVerifyNotification = (data) => {
       let isError = !data;
-      let syncStatusMessage = document.getElementById("syncStatusMessage");
-      let syncStatusMessageTitle = document.getElementById("syncStatusMessageTitle");
-      let syncStatusMessageDescription = document.getElementById("syncStatusMessageDescription");
       let maybeNot = isError ? "Not" : "";
       let sb = this._accountsStringBundle;
       let title = sb.GetStringFromName("verification" + maybeNot + "SentTitle");
       let email = !isError && data ? data.email : "";
-      let description = sb.formatStringFromName("verification" + maybeNot + "SentFull", [email], 1)
-
-      syncStatusMessageTitle.textContent = title;
-      syncStatusMessageDescription.textContent = description;
-      let messageType = isError ? "verify-error" : "verify-success";
-      syncStatusMessage.setAttribute("message-type", messageType);
+      let body = sb.formatStringFromName("verification" + maybeNot + "SentBody", [email], 1);
+      new Notification(title, { body })
     }
 
     let onError = () => {
-      changesyncStatusMessage();
+      showVerifyNotification();
     };
 
     let onSuccess = data => {
       if (data) {
-        changesyncStatusMessage(data);
+        showVerifyNotification(data);
       } else {
         onError();
       }
@@ -626,14 +620,11 @@ var gSyncPane = {
     if (confirm) {
       // We use a string bundle shared with aboutAccounts.
       let sb = Services.strings.createBundle("chrome://browser/locale/syncSetup.properties");
-      let continueLabel = sb.GetStringFromName("continue.label");
+      let disconnectLabel = sb.GetStringFromName("disconnect.label");
       let title = sb.GetStringFromName("disconnect.verify.title");
-      let brandBundle = Services.strings.createBundle("chrome://branding/locale/brand.properties");
-      let brandShortName = brandBundle.GetStringFromName("brandShortName");
-      let body = sb.GetStringFromName("disconnect.verify.heading") +
+      let body = sb.GetStringFromName("disconnect.verify.bodyHeading") +
                  "\n\n" +
-                 sb.formatStringFromName("disconnect.verify.description",
-                                         [brandShortName], 1);
+                 sb.GetStringFromName("disconnect.verify.bodyText");
       let ps = Services.prompt;
       let buttonFlags = (ps.BUTTON_POS_0 * ps.BUTTON_TITLE_IS_STRING) +
                         (ps.BUTTON_POS_1 * ps.BUTTON_TITLE_CANCEL) +
@@ -646,7 +637,7 @@ var gSyncPane = {
       bag.setPropertyAsBool("allowTabModal", true);
 
       let pressed = prompt.confirmEx(title, body, buttonFlags,
-                                     continueLabel, null, null, null, {});
+                                     disconnectLabel, null, null, null, {});
 
       if (pressed != 0) { // 0 is the "continue" button
         return;

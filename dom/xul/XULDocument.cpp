@@ -92,6 +92,10 @@
 #include "nsJSUtils.h"
 #include "mozilla/dom/URL.h"
 #include "nsIContentPolicy.h"
+#include "mozAutoDocUpdate.h"
+#include "xpcpublic.h"
+#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheetHandleInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -687,7 +691,7 @@ XULDocument::SynchronizeBroadcastListener(Element *aBroadcaster,
     }
     else {
         // Find out if the attribute is even present at all.
-        nsCOMPtr<nsIAtom> name = do_GetAtom(aAttr);
+        nsCOMPtr<nsIAtom> name = NS_Atomize(aAttr);
 
         nsAutoString value;
         if (aBroadcaster->GetAttr(kNameSpaceID_None, name, value)) {
@@ -768,7 +772,7 @@ XULDocument::AddBroadcastListenerFor(Element& aBroadcaster, Element& aListener,
     }
 
     // Only add the listener if it's not there already!
-    nsCOMPtr<nsIAtom> attr = do_GetAtom(aAttr);
+    nsCOMPtr<nsIAtom> attr = NS_Atomize(aAttr);
 
     for (size_t i = entry->mListeners.Length() - 1; i != (size_t)-1; --i) {
         BroadcastListener* bl = entry->mListeners[i];
@@ -812,7 +816,7 @@ XULDocument::RemoveBroadcastListenerFor(Element& aBroadcaster,
     auto entry = static_cast<BroadcasterMapEntry*>
                             (mBroadcasterMap->Search(&aBroadcaster));
     if (entry) {
-        nsCOMPtr<nsIAtom> attr = do_GetAtom(aAttr);
+        nsCOMPtr<nsIAtom> attr = NS_Atomize(aAttr);
         for (size_t i = entry->mListeners.Length() - 1; i != (size_t)-1; --i) {
             BroadcastListener* bl = entry->mListeners[i];
             nsCOMPtr<Element> blListener = do_QueryReferent(bl->mListener);
@@ -911,6 +915,11 @@ static bool
 ShouldPersistAttribute(Element* aElement, nsIAtom* aAttribute)
 {
     if (aElement->IsXULElement(nsGkAtoms::window)) {
+        // This is not an element of the top document, its owner is
+        // not an nsXULWindow. Persist it.
+        if (aElement->OwnerDoc()->GetParentDocument()) {
+            return true;
+        }
         // The following attributes of xul:window should be handled in
         // nsXULWindow::SavePersistentAttributes instead of here.
         if (aAttribute == nsGkAtoms::screenX ||
@@ -1007,7 +1016,7 @@ XULDocument::AttributeChanged(nsIDocument* aDocument,
     if (ShouldPersistAttribute(aElement, aAttribute) && !persist.IsEmpty() &&
         // XXXldb This should check that it's a token, not just a substring.
         persist.Find(nsDependentAtomString(aAttribute)) >= 0) {
-        nsContentUtils::AddScriptRunner(NS_NewRunnableMethodWithArgs
+        nsContentUtils::AddScriptRunner(NewRunnableMethod
             <nsIContent*, int32_t, nsIAtom*>
             (this, &XULDocument::DoPersist, aElement, kNameSpaceID_None,
             aAttribute));
@@ -1177,7 +1186,7 @@ already_AddRefed<nsINodeList>
 XULDocument::GetElementsByAttribute(const nsAString& aAttribute,
                                     const nsAString& aValue)
 {
-    nsCOMPtr<nsIAtom> attrAtom(do_GetAtom(aAttribute));
+    nsCOMPtr<nsIAtom> attrAtom(NS_Atomize(aAttribute));
     void* attrValue = new nsString(aValue);
     RefPtr<nsContentList> list = new nsContentList(this,
                                             MatchAttribute,
@@ -1208,7 +1217,7 @@ XULDocument::GetElementsByAttributeNS(const nsAString& aNamespaceURI,
                                       const nsAString& aValue,
                                       ErrorResult& aRv)
 {
-    nsCOMPtr<nsIAtom> attrAtom(do_GetAtom(aAttribute));
+    nsCOMPtr<nsIAtom> attrAtom(NS_Atomize(aAttribute));
     void* attrValue = new nsString(aValue);
 
     int32_t nameSpaceId = kNameSpaceID_Wildcard;
@@ -1269,7 +1278,7 @@ XULDocument::Persist(const nsAString& aID,
             return NS_ERROR_NOT_IMPLEMENTED;
         }
 
-        tag = do_GetAtom(aAttr);
+        tag = NS_Atomize(aAttr);
         NS_ENSURE_TRUE(tag, NS_ERROR_OUT_OF_MEMORY);
 
         nameSpaceID = kNameSpaceID_None;
@@ -1831,7 +1840,7 @@ XULDocument::RemoveElementFromRefMap(Element* aElement)
         if (!entry)
             return;
         if (entry->RemoveElement(aElement)) {
-            mRefMap.RawRemoveEntry(entry);
+            mRefMap.RemoveEntry(entry);
         }
     }
 }
@@ -2124,7 +2133,7 @@ XULDocument::ApplyPersistentAttributesToElements(const nsAString &aID,
             return rv;
         }
 
-        nsCOMPtr<nsIAtom> attr = do_GetAtom(attrstr);
+        nsCOMPtr<nsIAtom> attr = NS_Atomize(attrstr);
         if (NS_WARN_IF(!attr)) {
             return NS_ERROR_OUT_OF_MEMORY;
         }
@@ -2677,20 +2686,6 @@ XULDocument::LoadOverlayInternal(nsIURI* aURI, bool aIsDynamic,
     return NS_OK;
 }
 
-static PLDHashOperator
-FirePendingMergeNotification(nsIURI* aKey, nsCOMPtr<nsIObserver>& aObserver, void* aClosure)
-{
-    aObserver->Observe(aKey, "xul-overlay-merged", EmptyString().get());
-
-    typedef nsInterfaceHashtable<nsURIHashKey,nsIObserver> table;
-    table* observers = static_cast<table*>(aClosure);
-    if (observers) {
-      observers->Remove(aKey);
-    }
-
-    return PL_DHASH_REMOVE;
-}
-
 nsresult
 XULDocument::ResumeWalk()
 {
@@ -2981,10 +2976,14 @@ XULDocument::DoneWalking()
     // XXXldb This is where we should really be setting the chromehidden
     // attribute.
 
-    uint32_t count = mOverlaySheets.Length();
-    for (uint32_t i = 0; i < count; ++i) {
-        AddStyleSheet(mOverlaySheets[i]);
+    {
+        mozAutoDocUpdate updateBatch(this, UPDATE_STYLE, true);
+        uint32_t count = mOverlaySheets.Length();
+        for (uint32_t i = 0; i < count; ++i) {
+            AddStyleSheet(mOverlaySheets[i]);
+        }
     }
+
     mOverlaySheets.Clear();
 
     if (!mDocumentLoaded) {
@@ -3041,9 +3040,23 @@ XULDocument::DoneWalking()
 
         // Walk the set of pending load notifications and notify any observers.
         // See below for detail.
-        if (mPendingOverlayLoadNotifications)
-            mPendingOverlayLoadNotifications->Enumerate(
-                FirePendingMergeNotification, mOverlayLoadObservers.get());
+        if (mPendingOverlayLoadNotifications) {
+            nsInterfaceHashtable<nsURIHashKey,nsIObserver>* observers =
+                mOverlayLoadObservers.get();
+            for (auto iter = mPendingOverlayLoadNotifications->Iter();
+                 !iter.Done();
+                 iter.Next()) {
+                nsIURI* aKey = iter.Key();
+                iter.Data()->Observe(aKey, "xul-overlay-merged",
+                                     EmptyString().get());
+
+                if (observers) {
+                  observers->Remove(aKey);
+                }
+
+                iter.Remove();
+            }
+        }
     }
     else {
         if (mOverlayLoadObservers) {
@@ -3093,7 +3106,7 @@ XULDocument::DoneWalking()
 }
 
 NS_IMETHODIMP
-XULDocument::StyleSheetLoaded(CSSStyleSheet* aSheet,
+XULDocument::StyleSheetLoaded(StyleSheetHandle aSheet,
                               bool aWasAlternate,
                               nsresult aStatus)
 {
@@ -3123,7 +3136,7 @@ XULDocument::MaybeBroadcast()
         if (!nsContentUtils::IsSafeToRunScript()) {
             if (!mInDestructor) {
                 nsContentUtils::AddScriptRunner(
-                    NS_NewRunnableMethod(this, &XULDocument::MaybeBroadcast));
+                    NewRunnableMethod(this, &XULDocument::MaybeBroadcast));
             }
             return;
         }
@@ -3134,7 +3147,7 @@ XULDocument::MaybeBroadcast()
                 if (mDelayedAttrChangeBroadcasts[i].mNeedsAttrChange) {
                     nsCOMPtr<nsIContent> listener =
                         do_QueryInterface(mDelayedAttrChangeBroadcasts[i].mListener);
-                    nsString value = mDelayedAttrChangeBroadcasts[i].mAttr;
+                    const nsString& value = mDelayedAttrChangeBroadcasts[i].mAttr;
                     if (mDelayedAttrChangeBroadcasts[i].mSetAttr) {
                         listener->SetAttr(kNameSpaceID_None, attrName, value,
                                           true);
@@ -3496,10 +3509,9 @@ XULDocument::ExecuteScript(nsXULPrototypeScript *aScript)
     // We're about to run script via JS::CloneAndExecuteScript, so we need an
     // AutoEntryScript. This is Gecko specific and not in any spec.
     AutoEntryScript aes(mScriptGlobalObject, "precompiled XUL <script> element");
-    aes.TakeOwnershipOfErrorReporting();
     JSContext* cx = aes.cx();
     JS::Rooted<JSObject*> baseGlobal(cx, JS::CurrentGlobalOrNull(cx));
-    NS_ENSURE_TRUE(nsContentUtils::GetSecurityManager()->ScriptAllowed(baseGlobal), NS_OK);
+    NS_ENSURE_TRUE(xpc::Scriptability::Get(baseGlobal).Allowed(), NS_OK);
 
     JSAddonId* addonId = mCurrentPrototype ? MapURIToAddonID(mCurrentPrototype->GetURI()) : nullptr;
     JS::Rooted<JSObject*> global(cx, xpc::GetAddonScope(cx, baseGlobal, addonId));
@@ -3722,11 +3734,11 @@ XULDocument::AddPrototypeSheets()
     for (int32_t i = 0; i < sheets.Count(); i++) {
         nsCOMPtr<nsIURI> uri = sheets[i];
 
-        RefPtr<CSSStyleSheet> incompleteSheet;
+        StyleSheetHandle::RefPtr incompleteSheet;
         rv = CSSLoader()->LoadSheet(uri,
                                     mCurrentPrototype->DocumentPrincipal(),
                                     EmptyCString(), this,
-                                    getter_AddRefs(incompleteSheet));
+                                    &incompleteSheet);
 
         // XXXldb We need to prevent bogus sheets from being held in the
         // prototype's list, but until then, don't propagate the failure
@@ -4469,7 +4481,7 @@ XULDocument::GetWindowRoot()
     return nullptr;
   }
 
-    nsCOMPtr<nsPIDOMWindow> piWin = mDocumentContainer->GetWindow();
+    nsCOMPtr<nsPIDOMWindowOuter> piWin = mDocumentContainer->GetWindow();
     return piWin ? piWin->GetTopWindowRoot() : nullptr;
 }
 

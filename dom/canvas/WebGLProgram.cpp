@@ -10,6 +10,7 @@
 #include "mozilla/dom/WebGL2RenderingContextBinding.h"
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
 #include "mozilla/RefPtr.h"
+#include "nsPrintfCString.h"
 #include "WebGLActiveInfo.h"
 #include "WebGLContext.h"
 #include "WebGLShader.h"
@@ -342,7 +343,6 @@ QueryProgramInfo(WebGLProgram* prog, gl::GLContext* gl)
 
 webgl::LinkedProgramInfo::LinkedProgramInfo(WebGLProgram* prog)
     : prog(prog)
-    , fragDataMap(nullptr)
 { }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -569,8 +569,9 @@ WebGLProgram::GetFragDataLocation(const nsAString& userName_wide) const
     const NS_LossyConvertUTF16toASCII userName(userName_wide);
 
     nsCString mappedName;
-    if (!LinkInfo()->FindFragData(userName, &mappedName))
-        return -1;
+    if (!FindActiveOutputMappedNameByUserName(userName, &mappedName)) {
+        mappedName = userName;
+    }
 
     gl::GLContext* gl = mContext->GL();
     gl->MakeCurrent();
@@ -785,8 +786,14 @@ WebGLProgram::GetUniformLocation(const nsAString& userName_wide) const
     const NS_LossyConvertUTF16toASCII userName(userName_wide);
 
     nsDependentCString baseUserName;
-    bool isArray;
-    size_t arrayIndex;
+    bool isArray = false;
+    // GLES 2.0.25, Section 2.10, p35
+    // If the the uniform location is an array, then the location of the first
+    // element of that array can be retrieved by either using the name of the
+    // uniform array, or the name of the uniform array appended with "[0]".
+    // The ParseName() can't recognize this rule. So always initialize
+    // arrayIndex with 0.
+    size_t arrayIndex = 0;
     if (!ParseName(userName, &baseUserName, &isArray, &arrayIndex))
         return nullptr;
 
@@ -811,7 +818,8 @@ WebGLProgram::GetUniformLocation(const nsAString& userName_wide) const
         return nullptr;
 
     RefPtr<WebGLUniformLocation> locObj = new WebGLUniformLocation(mContext, LinkInfo(),
-                                                                     loc, activeInfo);
+                                                                   loc, arrayIndex,
+                                                                   activeInfo);
     return locObj.forget();
 }
 
@@ -885,7 +893,7 @@ WebGLProgram::UniformBlockBinding(GLuint uniformBlockIndex, GLuint uniformBlockB
     gl->fUniformBlockBinding(mGLName, uniformBlockIndex, uniformBlockBinding);
 }
 
-bool
+void
 WebGLProgram::LinkProgram()
 {
     mContext->InvalidateBufferFetching(); // we do it early in this function
@@ -897,18 +905,18 @@ WebGLProgram::LinkProgram()
     if (!mVertShader || !mVertShader->IsCompiled()) {
         mLinkLog.AssignLiteral("Must have a compiled vertex shader attached.");
         mContext->GenerateWarning("linkProgram: %s", mLinkLog.BeginReading());
-        return false;
+        return;
     }
 
     if (!mFragShader || !mFragShader->IsCompiled()) {
         mLinkLog.AssignLiteral("Must have an compiled fragment shader attached.");
         mContext->GenerateWarning("linkProgram: %s", mLinkLog.BeginReading());
-        return false;
+        return;
     }
 
     if (!mFragShader->CanLinkTo(mVertShader, &mLinkLog)) {
         mContext->GenerateWarning("linkProgram: %s", mLinkLog.BeginReading());
-        return false;
+        return;
     }
 
     gl::GLContext* gl = mContext->gl;
@@ -925,14 +933,14 @@ WebGLProgram::LinkProgram()
             mLinkLog.AssignLiteral("Programs with more than 16 samplers are disallowed on"
                                    " Mesa drivers to avoid crashing.");
             mContext->GenerateWarning("linkProgram: %s", mLinkLog.BeginReading());
-            return false;
+            return;
         }
 
         // Bug 1203135: Mesa crashes internally if we exceed the reported maximum attribute count.
         if (mVertShader->NumAttributes() > mContext->MaxVertexAttribs()) {
             mLinkLog.AssignLiteral("Number of attributes exceeds Mesa's reported max attribute count.");
             mContext->GenerateWarning("linkProgram: %s", mLinkLog.BeginReading());
-            return false;
+            return;
         }
     }
 
@@ -954,8 +962,21 @@ WebGLProgram::LinkProgram()
                                                     &mTempMappedVaryings);
     }
 
-    if (LinkAndUpdate())
-        return true;
+    LinkAndUpdate();
+    if (IsLinked()) {
+        // Check if the attrib name conflicting to uniform name
+        for (const auto& uniform : mMostRecentLinkInfo->uniformMap) {
+            if (mMostRecentLinkInfo->attribMap.find(uniform.first) != mMostRecentLinkInfo->attribMap.end()) {
+                mLinkLog = nsPrintfCString("The uniform name (%s) conflicts with attribute name.",
+                                           uniform.first.get());
+                mMostRecentLinkInfo = nullptr;
+                break;
+            }
+        }
+    }
+
+    if (mMostRecentLinkInfo)
+        return;
 
     // Failed link.
     if (mContext->ShouldGenerateWarnings()) {
@@ -970,8 +991,6 @@ WebGLProgram::LinkProgram()
                                       mLinkLog.BeginReading());
         }
     }
-
-    return false;
 }
 
 bool
@@ -1013,7 +1032,7 @@ WebGLProgram::ValidateProgram() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool
+void
 WebGLProgram::LinkAndUpdate()
 {
     mMostRecentLinkInfo = nullptr;
@@ -1039,15 +1058,21 @@ WebGLProgram::LinkAndUpdate()
     GLint ok = 0;
     gl->fGetProgramiv(mGLName, LOCAL_GL_LINK_STATUS, &ok);
     if (!ok)
-        return false;
+        return;
 
     mMostRecentLinkInfo = QueryProgramInfo(this, gl);
+    MOZ_RELEASE_ASSERT(mMostRecentLinkInfo);
+}
 
-    MOZ_ASSERT(mMostRecentLinkInfo);
-    if (!mMostRecentLinkInfo)
-        mLinkLog.AssignLiteral("Failed to gather program info.");
+bool
+WebGLProgram::FindActiveOutputMappedNameByUserName(const nsACString& userName,
+                                                   nsCString* const out_mappedName) const
+{
+    if (mFragShader->FindActiveOutputMappedNameByUserName(userName, out_mappedName)) {
+        return true;
+    }
 
-    return mMostRecentLinkInfo;
+    return false;
 }
 
 bool

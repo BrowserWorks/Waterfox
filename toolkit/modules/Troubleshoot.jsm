@@ -178,8 +178,13 @@ this.Troubleshoot = {
 var dataProviders = {
 
   application: function application(done) {
+
+    let sysInfo = Cc["@mozilla.org/system-info;1"].
+                  getService(Ci.nsIPropertyBag2);
+
     let data = {
       name: Services.appinfo.name,
+      osVersion: sysInfo.getProperty("name") + " " + sysInfo.getProperty("version"),
       version: AppConstants.MOZ_APP_VERSION_DISPLAY,
       buildID: Services.appinfo.appBuildID,
       userAgent: Cc["@mozilla.org/network/protocol;1?name=http"].
@@ -204,7 +209,7 @@ var dataProviders = {
 
     data.numTotalWindows = 0;
     data.numRemoteWindows = 0;
-    let winEnumer = Services.ww.getWindowEnumerator("navigator:browser");
+    let winEnumer = Services.wm.getEnumerator("navigator:browser");
     while (winEnumer.hasMoreElements()) {
       data.numTotalWindows++;
       let remote = winEnumer.getNext().
@@ -237,7 +242,11 @@ var dataProviders = {
       extensions.sort(function (a, b) {
         if (a.isActive != b.isActive)
           return b.isActive ? 1 : -1;
-        let lc = a.name.localeCompare(b.name);
+
+        // In some unfortunate cases addon names can be null.
+        let aname = a.name || null;
+        let bname = b.name || null;
+        let lc = aname.localeCompare(bname);
         if (lc != 0)
           return lc;
         if (a.version != b.version)
@@ -318,6 +327,13 @@ var dataProviders = {
     }
     catch (e) {}
 
+    let promises = [];
+    // done will be called upon all pending promises being resolved.
+    // add your pending promise to promises when adding new ones.
+    function completed() {
+      Promise.all(promises).then(() => done(data));
+    }
+
     data.numTotalWindows = 0;
     data.numAcceleratedWindows = 0;
     let winEnumer = Services.ww.getWindowEnumerator();
@@ -333,7 +349,6 @@ var dataProviders = {
         data.numTotalWindows++;
         data.windowLayerManagerType = winUtils.layerManagerType;
         data.windowLayerManagerRemote = winUtils.layerManagerRemote;
-        data.supportsHardwareH264 = winUtils.supportsHardwareH264Decoding;
       }
       catch (e) {
         continue;
@@ -341,6 +356,16 @@ var dataProviders = {
       if (data.windowLayerManagerType != "Basic")
         data.numAcceleratedWindows++;
     }
+
+    let winUtils = Services.wm.getMostRecentWindow("").
+                   QueryInterface(Ci.nsIInterfaceRequestor).
+                   getInterface(Ci.nsIDOMWindowUtils)
+    data.supportsHardwareH264 = "Unknown";
+    let promise = winUtils.supportsHardwareH264Decoding;
+    promise.then(function(v) {
+      data.supportsHardwareH264 = v;
+    });
+    promises.push(promise);
 
     if (!data.numAcceleratedWindows && gfxInfo) {
       let win = AppConstants.platform == "win";
@@ -350,7 +375,7 @@ var dataProviders = {
     }
 
     if (!gfxInfo) {
-      done(data);
+      completed();
       return;
     }
 
@@ -448,7 +473,10 @@ var dataProviders = {
       }
     }
 
-    done(data);
+    data.featureLog = gfxInfo.getFeatureLog();
+    data.crashGuards = gfxInfo.getActiveCrashGuards();
+
+    completed();
   },
 
   javaScript: function javaScript(done) {

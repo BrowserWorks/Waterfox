@@ -73,7 +73,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct nr_socket_vtbl_ nr_socket_vtbl;
 typedef struct nr_socket_ nr_socket;
 
-#if defined(MOZILLA_INTERNAL_API) && !defined(MOZILLA_XPCOMRT_API)
+#if defined(MOZILLA_INTERNAL_API)
 namespace mozilla {
 namespace dom {
 class TCPSocketChild;
@@ -95,6 +95,10 @@ public:
     memset(&my_addr_, 0, sizeof(my_addr_));
   }
   virtual ~NrSocketBase() {}
+
+  // Factory method; will create either an NrSocket, NrUdpSocketIpc, or
+  // NrTcpSocketIpc as appropriate.
+  static int CreateSocket(nr_transport_addr *addr, RefPtr<NrSocketBase> *sock);
 
   // the nr_socket APIs
   virtual int create(nr_transport_addr *addr) = 0;
@@ -132,8 +136,9 @@ public:
     return my_addr_;
   }
 
-protected:
   void fire_callback(int how);
+
+protected:
 
   bool connect_invoked_;
   nr_transport_addr my_addr_;

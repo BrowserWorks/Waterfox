@@ -114,14 +114,9 @@ HTMLAllCollection::GetDocumentAllList(const nsAString& aID)
     return docAllList;
   }
 
-  Element* root = mDocument->GetRootElement();
-  if (!root) {
-    return nullptr;
-  }
-
-  nsCOMPtr<nsIAtom> id = do_GetAtom(aID);
+  nsCOMPtr<nsIAtom> id = NS_Atomize(aID);
   RefPtr<nsContentList> docAllList =
-    new nsContentList(root, DocAllResultMatch, nullptr, nullptr, true, id);
+    new nsContentList(mDocument, DocAllResultMatch, nullptr, nullptr, true, id);
   mNamedMap.Put(aID, docAllList);
   return docAllList;
 }
@@ -165,15 +160,11 @@ HTMLAllCollection::NamedGetter(const nsAString& aID,
 }
 
 void
-HTMLAllCollection::GetSupportedNames(unsigned aFlags, nsTArray<nsString>& aNames)
+HTMLAllCollection::GetSupportedNames(nsTArray<nsString>& aNames)
 {
-  if (!(aFlags & JSITER_HIDDEN)) {
-    return;
-  }
-
   // XXXbz this is very similar to nsContentList::GetSupportedNames,
   // but has to check IsAllNamedElement for the name case.
-  nsAutoTArray<nsIAtom*, 8> atoms;
+  AutoTArray<nsIAtom*, 8> atoms;
   for (uint32_t i = 0; i < Length(); ++i) {
     nsIContent *content = Item(i);
     if (content->HasID()) {

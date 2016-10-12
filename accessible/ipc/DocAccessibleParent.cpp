@@ -9,12 +9,17 @@
 #include "mozilla/a11y/Platform.h"
 #include "ProxyAccessible.h"
 #include "mozilla/dom/TabParent.h"
+#include "xpcAccessibleDocument.h"
+#include "xpcAccEvents.h"
+#include "nsAccUtils.h"
+#include "nsCoreUtils.h"
 
 namespace mozilla {
 namespace a11y {
 
 bool
-DocAccessibleParent::RecvShowEvent(const ShowEventData& aData)
+DocAccessibleParent::RecvShowEvent(const ShowEventData& aData,
+                                   const bool& aFromUser)
 {
   if (mShutdown)
     return true;
@@ -41,8 +46,15 @@ DocAccessibleParent::RecvShowEvent(const ShowEventData& aData)
     return true;
   }
 
-  DebugOnly<uint32_t> consumed = AddSubtree(parent, aData.NewTree(), 0, newChildIdx);
+  uint32_t consumed = AddSubtree(parent, aData.NewTree(), 0, newChildIdx);
   MOZ_ASSERT(consumed == aData.NewTree().Length());
+
+  // XXX This shouldn't happen, but if we failed to add children then the below
+  // is pointless and can crash.
+  if (!consumed) {
+    return true;
+  }
+
 #ifdef DEBUG
   for (uint32_t i = 0; i < consumed; i++) {
     uint64_t id = aData.NewTree()[i].ID();
@@ -51,6 +63,21 @@ DocAccessibleParent::RecvShowEvent(const ShowEventData& aData)
 #endif
 
   MOZ_DIAGNOSTIC_ASSERT(CheckDocTree());
+
+  ProxyAccessible* target = parent->ChildAt(newChildIdx);
+  ProxyShowHideEvent(target, parent, true, aFromUser);
+
+  if (!nsCoreUtils::AccEventObserversExist()) {
+    return true;
+  }
+
+  uint32_t type = nsIAccessibleEvent::EVENT_SHOW;
+  xpcAccessibleGeneric* xpcAcc = GetXPCAccessible(target);
+  xpcAccessibleDocument* doc = GetAccService()->GetXPCDocument(this);
+  nsIDOMNode* node = nullptr;
+  RefPtr<xpcAccEvent> event = new xpcAccEvent(type, xpcAcc, doc, node,
+                                              aFromUser);
+  nsCoreUtils::DispatchAccEvent(Move(event));
 
   return true;
 }
@@ -99,7 +126,8 @@ DocAccessibleParent::AddSubtree(ProxyAccessible* aParent,
 }
 
 bool
-DocAccessibleParent::RecvHideEvent(const uint64_t& aRootID)
+DocAccessibleParent::RecvHideEvent(const uint64_t& aRootID,
+                                   const bool& aFromUser)
 {
   if (mShutdown)
     return true;
@@ -126,10 +154,31 @@ DocAccessibleParent::RecvHideEvent(const uint64_t& aRootID)
   }
 
   ProxyAccessible* parent = root->Parent();
+  ProxyShowHideEvent(root, parent, false, aFromUser);
+
+  RefPtr<xpcAccHideEvent> event = nullptr;
+  if (nsCoreUtils::AccEventObserversExist()) {
+    uint32_t type = nsIAccessibleEvent::EVENT_HIDE;
+    xpcAccessibleGeneric* xpcAcc = GetXPCAccessible(root);
+    xpcAccessibleGeneric* xpcParent = GetXPCAccessible(parent);
+    ProxyAccessible* next = root->NextSibling();
+    xpcAccessibleGeneric* xpcNext = next ? GetXPCAccessible(next) : nullptr;
+    ProxyAccessible* prev = root->PrevSibling();
+    xpcAccessibleGeneric* xpcPrev = prev ? GetXPCAccessible(prev) : nullptr;
+    xpcAccessibleDocument* doc = GetAccService()->GetXPCDocument(this);
+    nsIDOMNode* node = nullptr;
+    event = new xpcAccHideEvent(type, xpcAcc, doc, node, aFromUser, xpcParent,
+                                xpcNext, xpcPrev);
+  }
+
   parent->RemoveChild(root);
   root->Shutdown();
 
   MOZ_DIAGNOSTIC_ASSERT(CheckDocTree());
+
+  if (event) {
+    nsCoreUtils::DispatchAccEvent(Move(event));
+  }
 
   return true;
 }
@@ -144,6 +193,19 @@ DocAccessibleParent::RecvEvent(const uint64_t& aID, const uint32_t& aEventType)
   }
 
   ProxyEvent(proxy, aEventType);
+
+  if (!nsCoreUtils::AccEventObserversExist()) {
+    return true;
+  }
+
+  xpcAccessibleGeneric* xpcAcc = GetXPCAccessible(proxy);
+  xpcAccessibleDocument* doc = GetAccService()->GetXPCDocument(this);
+  nsIDOMNode* node = nullptr;
+  bool fromUser = true; // XXX fix me
+  RefPtr<xpcAccEvent> event = new xpcAccEvent(aEventType, xpcAcc, doc, node,
+                                              fromUser);
+  nsCoreUtils::DispatchAccEvent(Move(event));
+
   return true;
 }
 
@@ -159,6 +221,23 @@ DocAccessibleParent::RecvStateChangeEvent(const uint64_t& aID,
   }
 
   ProxyStateChangeEvent(target, aState, aEnabled);
+
+  if (!nsCoreUtils::AccEventObserversExist()) {
+    return true;
+  }
+
+  xpcAccessibleGeneric* xpcAcc = GetXPCAccessible(target);
+  xpcAccessibleDocument* doc = GetAccService()->GetXPCDocument(this);
+  uint32_t type = nsIAccessibleEvent::EVENT_STATE_CHANGE;
+  bool extra;
+  uint32_t state = nsAccUtils::To32States(aState, &extra);
+  bool fromUser = true; // XXX fix this
+  nsIDOMNode* node = nullptr; // XXX can we do better?
+  RefPtr<xpcAccStateChangeEvent> event =
+    new xpcAccStateChangeEvent(type, xpcAcc, doc, node, fromUser, state, extra,
+                               aEnabled);
+  nsCoreUtils::DispatchAccEvent(Move(event));
+
   return true;
 }
 
@@ -172,6 +251,20 @@ DocAccessibleParent::RecvCaretMoveEvent(const uint64_t& aID, const int32_t& aOff
   }
 
   ProxyCaretMoveEvent(proxy, aOffset);
+
+  if (!nsCoreUtils::AccEventObserversExist()) {
+    return true;
+  }
+
+  xpcAccessibleGeneric* xpcAcc = GetXPCAccessible(proxy);
+  xpcAccessibleDocument* doc = GetAccService()->GetXPCDocument(this);
+  nsIDOMNode* node = nullptr;
+  bool fromUser = true; // XXX fix me
+  uint32_t type = nsIAccessibleEvent::EVENT_TEXT_CARET_MOVED;
+  RefPtr<xpcAccCaretMoveEvent> event =
+    new xpcAccCaretMoveEvent(type, xpcAcc, doc, node, fromUser, aOffset);
+  nsCoreUtils::DispatchAccEvent(Move(event));
+
   return true;
 }
 
@@ -190,6 +283,45 @@ DocAccessibleParent::RecvTextChangeEvent(const uint64_t& aID,
   }
 
   ProxyTextChangeEvent(target, aStr, aStart, aLen, aIsInsert, aFromUser);
+
+  if (!nsCoreUtils::AccEventObserversExist()) {
+    return true;
+  }
+
+  xpcAccessibleGeneric* xpcAcc = GetXPCAccessible(target);
+  xpcAccessibleDocument* doc = GetAccService()->GetXPCDocument(this);
+  uint32_t type = aIsInsert ? nsIAccessibleEvent::EVENT_TEXT_INSERTED :
+                              nsIAccessibleEvent::EVENT_TEXT_REMOVED;
+  nsIDOMNode* node = nullptr;
+  RefPtr<xpcAccTextChangeEvent> event =
+    new xpcAccTextChangeEvent(type, xpcAcc, doc, node, aFromUser, aStart, aLen,
+                              aIsInsert, aStr);
+  nsCoreUtils::DispatchAccEvent(Move(event));
+
+  return true;
+}
+
+bool
+DocAccessibleParent::RecvSelectionEvent(const uint64_t& aID,
+                                        const uint64_t& aWidgetID,
+                                        const uint32_t& aType)
+{
+  ProxyAccessible* target = GetAccessible(aID);
+  ProxyAccessible* widget = GetAccessible(aWidgetID);
+  if (!target || !widget) {
+    NS_ERROR("invalid id in selection event");
+    return true;
+  }
+
+  ProxySelectionEvent(target, widget, aType);
+  if (!nsCoreUtils::AccEventObserversExist()) {
+    return true;
+  }
+  xpcAccessibleGeneric* xpcTarget = GetXPCAccessible(target);
+  xpcAccessibleDocument* xpcDoc = GetAccService()->GetXPCDocument(this);
+  RefPtr<xpcAccEvent> event = new xpcAccEvent(aType, xpcTarget, xpcDoc,
+                                              nullptr, false);
+  nsCoreUtils::DispatchAccEvent(Move(event));
 
   return true;
 }
@@ -225,6 +357,14 @@ DocAccessibleParent::AddChildDoc(DocAccessibleParent* aChildDoc,
 
   ProxyAccessible* outerDoc = e->mProxy;
   MOZ_ASSERT(outerDoc);
+
+  // OuterDocAccessibles are expected to only have a document as a child.
+  // However for compatibility we tolerate replacing one document with another
+  // here.
+  if (outerDoc->ChildrenCount() > 1 ||
+      (outerDoc->ChildrenCount() == 1 && !outerDoc->ChildAt(0)->IsDoc())) {
+    return false;
+  }
 
   aChildDoc->mParent = outerDoc;
   outerDoc->SetChildDoc(aChildDoc);
@@ -267,6 +407,8 @@ DocAccessibleParent::Destroy()
     ProxyDestroyed(iter.Get()->mProxy);
     iter.Remove();
   }
+
+  DocManager::NotifyOfRemoteDocShutdown(this);
   ProxyDestroyed(this);
   if (mParentDoc)
     mParentDoc->RemoveChildDoc(this);
@@ -290,5 +432,13 @@ DocAccessibleParent::CheckDocTree() const
   return true;
 }
 
+xpcAccessibleGeneric*
+DocAccessibleParent::GetXPCAccessible(ProxyAccessible* aProxy)
+{
+  xpcAccessibleDocument* doc = GetAccService()->GetXPCDocument(this);
+  MOZ_ASSERT(doc);
+
+  return doc->GetXPCAccessible(aProxy);
+}
 } // a11y
 } // mozilla

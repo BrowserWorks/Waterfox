@@ -24,6 +24,7 @@
 
 #include <stdarg.h>
 
+#include "js/GCAnnotations.h"
 #include "js/Value.h"
 #include "nscore.h"
 #include "nsStringGlue.h"
@@ -35,6 +36,7 @@ namespace IPC {
 class Message;
 template <typename> struct ParamTraits;
 } // namespace IPC
+class PickleIterator;
 
 namespace mozilla {
 
@@ -184,6 +186,18 @@ public:
     return true;
   }
 
+  // Use StealExceptionFromJSContext to convert a pending exception on a
+  // JSContext to an ErrorResult.  This function must be called only when a
+  // JSAPI operation failed.  It assumes that lack of pending exception on the
+  // JSContext means an uncatchable exception was thrown.
+  //
+  // Codepaths that might call this method must call MightThrowJSException even
+  // if the relevant JSAPI calls do not fail.
+  //
+  // When this function returns, JS_IsExceptionPending(cx) will definitely be
+  // false.
+  void StealExceptionFromJSContext(JSContext* cx);
+
   template<dom::ErrNum errorNumber, typename... Ts>
   void ThrowTypeError(Ts&&... messageArgs)
   {
@@ -202,10 +216,10 @@ public:
 
   // Facilities for throwing a preexisting JS exception value via this
   // ErrorResult.  The contract is that any code which might end up calling
-  // ThrowJSException() must call MightThrowJSException() even if no exception
-  // is being thrown.  Code that conditionally calls ToJSValue on this
-  // ErrorResult only if Failed() must first call WouldReportJSException even if
-  // this ErrorResult has not failed.
+  // ThrowJSException() or StealExceptionFromJSContext() must call
+  // MightThrowJSException() even if no exception is being thrown.  Code that
+  // conditionally calls ToJSValue on this ErrorResult only if Failed() must
+  // first call WouldReportJSException even if this ErrorResult has not failed.
   //
   // The exn argument to ThrowJSException can be in any compartment.  It does
   // not have to be in the compartment of cx.  If someone later uses it, they
@@ -223,9 +237,9 @@ public:
 
   // Flag on the ErrorResult that whatever needs throwing has been
   // thrown on the JSContext already and we should not mess with it.
-  void NoteJSContextException() {
-    mResult = NS_ERROR_DOM_EXCEPTION_ON_JSCONTEXT;
-  }
+  // If nothing was thrown, this becomes an uncatchable exception.
+  void NoteJSContextException(JSContext* aCx);
+
   // Check whether the ErrorResult says to just throw whatever is on
   // the JSContext already.
   bool IsJSContextException() {
@@ -294,10 +308,10 @@ private:
 
   friend struct IPC::ParamTraits<ErrorResult>;
   void SerializeMessage(IPC::Message* aMsg) const;
-  bool DeserializeMessage(const IPC::Message* aMsg, void** aIter);
+  bool DeserializeMessage(const IPC::Message* aMsg, PickleIterator* aIter);
 
   void SerializeDOMExceptionInfo(IPC::Message* aMsg) const;
-  bool DeserializeDOMExceptionInfo(const IPC::Message* aMsg, void** aIter);
+  bool DeserializeDOMExceptionInfo(const IPC::Message* aMsg, PickleIterator* aIter);
 
   // Helper method that creates a new Message for this ErrorResult,
   // and returns the arguments array from that Message.

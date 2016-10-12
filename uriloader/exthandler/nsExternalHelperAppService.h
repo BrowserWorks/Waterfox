@@ -39,7 +39,7 @@
 class nsExternalAppHandler;
 class nsIMIMEInfo;
 class nsITransfer;
-class nsIDOMWindow;
+class nsPIDOMWindowOuter;
 
 /**
  * The helper app service. Responsible for handling content that Mozilla
@@ -146,7 +146,7 @@ protected:
    * where level should be 2 for errors, 3 for debug messages from the cross-
    * platform nsExternalHelperAppService, and 4 for os-specific debug messages.
    */
-  static PRLogModuleInfo* mLog;
+  static mozilla::LazyLogModule mLog;
 
   // friend, so that it can access the nspr log module.
   friend class nsExternalAppHandler;
@@ -277,7 +277,7 @@ protected:
    * Used to close the window on a timer, to avoid any exceptions that are
    * thrown if we try to close the window before it's fully loaded.
    */
-  nsCOMPtr<nsIDOMWindow> mWindowToClose;
+  nsCOMPtr<nsPIDOMWindowOuter> mWindowToClose;
   nsCOMPtr<nsITimer> mTimer;
 
   /**

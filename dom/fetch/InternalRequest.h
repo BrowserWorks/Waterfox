@@ -78,6 +78,7 @@ namespace dom {
  */
 
 class Request;
+class IPCInternalRequest;
 
 #define kFETCH_CLIENT_REFERRER_STR "about:client"
 
@@ -88,11 +89,12 @@ class InternalRequest final
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(InternalRequest)
 
-  InternalRequest()
+  explicit InternalRequest(const nsACString& aURL)
     : mMethod("GET")
     , mHeaders(new InternalHeaders(HeadersGuardEnum::None))
     , mContentPolicyType(nsIContentPolicy::TYPE_FETCH)
     , mReferrer(NS_LITERAL_STRING(kFETCH_CLIENT_REFERRER_STR))
+    , mReferrerPolicy(ReferrerPolicy::_empty)
     , mMode(RequestMode::No_cors)
     , mCredentialsMode(RequestCredentials::Omit)
     , mResponseTainting(LoadTainting::Basic)
@@ -111,25 +113,29 @@ public:
     , mUnsafeRequest(false)
     , mUseURLCredentials(false)
   {
+    MOZ_ASSERT(!aURL.IsEmpty());
+    AddURL(aURL);
   }
 
   InternalRequest(const nsACString& aURL,
                   const nsACString& aMethod,
                   already_AddRefed<InternalHeaders> aHeaders,
+                  RequestCache aCacheMode,
                   RequestMode aMode,
                   RequestRedirect aRequestRedirect,
                   RequestCredentials aRequestCredentials,
                   const nsAString& aReferrer,
+                  ReferrerPolicy aReferrerPolicy,
                   nsContentPolicyType aContentPolicyType)
     : mMethod(aMethod)
-    , mURL(aURL)
     , mHeaders(aHeaders)
     , mContentPolicyType(aContentPolicyType)
     , mReferrer(aReferrer)
+    , mReferrerPolicy(aReferrerPolicy)
     , mMode(aMode)
     , mCredentialsMode(aRequestCredentials)
     , mResponseTainting(LoadTainting::Basic)
-    , mCacheMode(RequestCache::Default)
+    , mCacheMode(aCacheMode)
     , mRedirectMode(aRequestRedirect)
     , mAuthenticationFlag(false)
     , mForceOriginHeader(false)
@@ -141,7 +147,13 @@ public:
     , mUnsafeRequest(false)
     , mUseURLCredentials(false)
   {
+    MOZ_ASSERT(!aURL.IsEmpty());
+    AddURL(aURL);
   }
+
+  explicit InternalRequest(const IPCInternalRequest& aIPCRequest);
+
+  void ToIPC(IPCInternalRequest* aIPCRequest);
 
   already_AddRefed<InternalRequest> Clone();
 
@@ -165,16 +177,34 @@ public:
            mMethod.LowerCaseEqualsASCII("head");
   }
 
+  // GetURL should get the request's current url. A request has an associated
+  // current url. It is a pointer to the last fetch URL in request's url list.
   void
-  GetURL(nsCString& aURL) const
+  GetURL(nsACString& aURL) const
   {
-    aURL.Assign(mURL);
+    MOZ_RELEASE_ASSERT(!mURLList.IsEmpty(), "Internal Request's urlList should not be empty.");
+
+    aURL.Assign(mURLList.LastElement());
+  }
+
+  // AddURL should append the url into url list.
+  // Normally we strip the fragment from the URL in Request::Constructor.
+  // If internal code is directly constructing this object they must
+  // strip the fragment first.  Since these should be well formed URLs we
+  // can use a simple check for a fragment here.  The full parser is
+  // difficult to use off the main thread.
+  void
+  AddURL(const nsACString& aURL)
+  {
+    MOZ_ASSERT(!aURL.IsEmpty());
+    mURLList.AppendElement(aURL);
+    MOZ_ASSERT(mURLList.LastElement().Find(NS_LITERAL_CSTRING("#")) == kNotFound);
   }
 
   void
-  SetURL(const nsACString& aURL)
+  GetURLList(nsTArray<nsCString>& aURLList)
   {
-    mURL.Assign(aURL);
+    aURLList.Assign(mURLList);
   }
 
   void
@@ -222,6 +252,18 @@ public:
 #endif
 
     mReferrer.Assign(aReferrer);
+  }
+
+  ReferrerPolicy
+  ReferrerPolicy_() const
+  {
+    return mReferrerPolicy;
+  }
+
+  void
+  SetReferrerPolicy(ReferrerPolicy aReferrerPolicy)
+  {
+    mReferrerPolicy = aReferrerPolicy;
   }
 
   bool
@@ -313,6 +355,9 @@ public:
   void
   SetContentPolicyType(nsContentPolicyType aContentPolicyType);
 
+  void
+  OverrideContentPolicyType(nsContentPolicyType aContentPolicyType);
+
   RequestContext
   Context() const
   {
@@ -403,8 +448,20 @@ public:
   bool
   IsClientRequest() const;
 
+  void
+  MaybeSkipCacheIfPerformingRevalidation();
+
+  bool
+  IsContentPolicyTypeOverridden() const
+  {
+    return mContentPolicyTypeOverridden;
+  }
+
   static RequestMode
   MapChannelToRequestMode(nsIChannel* aChannel);
+
+  static RequestCredentials
+  MapChannelToRequestCredentials(nsIChannel* aChannel);
 
 private:
   // Does not copy mBodyStream.  Use fallible Clone() for complete copy.
@@ -422,8 +479,8 @@ private:
   IsWorkerContentPolicy(nsContentPolicyType aContentPolicyType);
 
   nsCString mMethod;
-  // mURL always stores the url with the ref stripped
-  nsCString mURL;
+  // mURLList: a list of one or more fetch URLs
+  nsTArray<nsCString> mURLList;
   RefPtr<InternalHeaders> mHeaders;
   nsCOMPtr<nsIInputStream> mBodyStream;
 
@@ -433,6 +490,7 @@ private:
   // "about:client": client (default)
   // URL: an URL
   nsString mReferrer;
+  ReferrerPolicy mReferrerPolicy;
 
   RequestMode mMode;
   RequestCredentials mCredentialsMode;
@@ -452,6 +510,10 @@ private:
   // use it to check if Service Workers are simply fetching intercepted Request
   // objects without modifying them.
   bool mCreatedByFetchEvent = false;
+  // This is only set when Request.overrideContentPolicyType() has been set.
+  // It is illegal to pass such a Request object to a fetch() method unless
+  // if the caller has chrome privileges.
+  bool mContentPolicyTypeOverridden = false;
 };
 
 } // namespace dom

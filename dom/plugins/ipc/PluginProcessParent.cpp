@@ -27,13 +27,6 @@ using mozilla::plugins::LaunchCompleteTask;
 using mozilla::plugins::PluginProcessParent;
 using base::ProcessArchitecture;
 
-template<>
-struct RunnableMethodTraits<PluginProcessParent>
-{
-    static void RetainCallee(PluginProcessParent* obj) { }
-    static void ReleaseCallee(PluginProcessParent* obj) { }
-};
-
 PluginProcessParent::PluginProcessParent(const std::string& aPluginFilePath) :
     GeckoChildProcessHost(GeckoProcessType_Plugin),
     mPluginFilePath(aPluginFilePath),
@@ -96,21 +89,29 @@ AddSandboxAllowedFiles(int32_t aSandboxLevel,
     }
 
     // Level 2 and above is now using low integrity, so we need to give write
-    // access to the Flash directories. Access also has to be given to create
-    // the parent directories as they may not exist.
+    // access to the Flash directories.
     // This should be made Flash specific (Bug 1171396).
     AddSandboxAllowedFile(aAllowedFilesReadWrite, dirSvc, NS_WIN_APPDATA_DIR,
                           NS_LITERAL_STRING("\\Macromedia\\Flash Player\\*"));
-    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
-                          NS_LITERAL_STRING("\\Macromedia\\Flash Player"));
-    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
-                          NS_LITERAL_STRING("\\Macromedia"));
+    AddSandboxAllowedFile(aAllowedFilesReadWrite, dirSvc, NS_WIN_LOCAL_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Macromedia\\Flash Player\\*"));
     AddSandboxAllowedFile(aAllowedFilesReadWrite, dirSvc, NS_WIN_APPDATA_DIR,
                           NS_LITERAL_STRING("\\Adobe\\Flash Player\\*"));
+
+    // Access also has to be given to create the parent directories as they may
+    // not exist.
     AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
-                          NS_LITERAL_STRING("\\Adobe\\Flash Player"));
+                          NS_LITERAL_STRING("\\Macromedia"));
+    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Macromedia\\Flash Player"));
+    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_LOCAL_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Macromedia"));
+    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_LOCAL_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Macromedia\\Flash Player"));
     AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
                           NS_LITERAL_STRING("\\Adobe"));
+    AddSandboxAllowedFile(aAllowedDirectories, dirSvc, NS_WIN_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Adobe\\Flash Player"));
 
     // Write access to the Temp directory is needed in some mochitest crash
     // tests.
@@ -194,8 +195,7 @@ PluginProcessParent::Delete()
       return;
   }
 
-  ioLoop->PostTask(FROM_HERE,
-                   NewRunnableMethod(this, &PluginProcessParent::Delete));
+  ioLoop->PostTask(NewNonOwningRunnableMethod(this, &PluginProcessParent::Delete));
 }
 
 void
@@ -239,7 +239,7 @@ PluginProcessParent::OnChannelConnected(int32_t peer_pid)
     GeckoChildProcessHost::OnChannelConnected(peer_pid);
     if (mLaunchCompleteTask && !mRunCompleteTaskImmediately) {
         mLaunchCompleteTask->SetLaunchSucceeded();
-        mMainMsgLoop->PostTask(FROM_HERE, mTaskFactory.NewRunnableMethod(
+        mMainMsgLoop->PostTask(mTaskFactory.NewRunnableMethod(
                                    &PluginProcessParent::RunLaunchCompleteTask));
     }
 }
@@ -249,7 +249,7 @@ PluginProcessParent::OnChannelError()
 {
     GeckoChildProcessHost::OnChannelError();
     if (mLaunchCompleteTask && !mRunCompleteTaskImmediately) {
-        mMainMsgLoop->PostTask(FROM_HERE, mTaskFactory.NewRunnableMethod(
+        mMainMsgLoop->PostTask(mTaskFactory.NewRunnableMethod(
                                    &PluginProcessParent::RunLaunchCompleteTask));
     }
 }

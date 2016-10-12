@@ -1,7 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -30,8 +30,7 @@ add_task(function* () {
       category: CATEGORY_SERVER,
       severity: SEVERITY_LOG,
     }],
-  })
-
+  });
   // Clean up filter
   hud.setFilterState("serverlog", false);
   yield updateServerLoggingListener(hud);
@@ -49,11 +48,10 @@ add_task(function* () {
   yield updateServerLoggingListener(hud);
 
   BrowserReloadSkipCache();
-
   // Note that the test is also checking out the (printf like)
   // formatters and encoding of UTF8 characters (see the one at the end).
-  let text = "Object { best: \"Firefox\", reckless: \"Chrome\", new_ie: \"Safari\", new_new_ie: \"Edge\" }";
-
+  let text = "Object { best: \"Firefox\", reckless: \"Chrome\", " +
+    "new_ie: \"Safari\", new_new_ie: \"Edge\" }";
   yield waitForMessages({
     webconsole: hud,
     messages: [{
@@ -61,8 +59,7 @@ add_task(function* () {
       category: CATEGORY_SERVER,
       severity: SEVERITY_LOG,
     }],
-  })
-
+  });
   // Clean up filter
   hud.setFilterState("serverlog", false);
   yield updateServerLoggingListener(hud);

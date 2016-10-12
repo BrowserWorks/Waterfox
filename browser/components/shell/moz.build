@@ -21,7 +21,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     XPIDL_SOURCES += [
         'nsIMacShellService.idl',
     ]
-elif CONFIG['MOZ_WIDGET_GTK']:
+elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
     XPIDL_SOURCES += [
         'nsIGNOMEShellService.idl',
     ]
@@ -36,7 +36,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     SOURCES += [
         'nsMacShellService.cpp',
     ]
-elif CONFIG['MOZ_WIDGET_GTK']:
+elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
     SOURCES += [
         'nsGNOMEShellService.cpp',
     ]
@@ -60,6 +60,3 @@ CXXFLAGS += CONFIG['TK_CFLAGS']
 
 with Files('**'):
     BUG_COMPONENT = ('Firefox', 'Shell Integration')
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

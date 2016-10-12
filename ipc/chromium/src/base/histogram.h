@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2011 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -51,8 +53,6 @@
 
 #include "base/time.h"
 #include "base/lock.h"
-
-class Pickle;
 
 namespace base {
 
@@ -299,13 +299,6 @@ class Histogram {
     kNoFlags = 0,
     kUmaTargetedHistogramFlag = 0x1,  // Histogram should be UMA uploaded.
 
-    // Indicate that the histogram was pickled to be sent across an IPC Channel.
-    // If we observe this flag on a histogram being aggregated into after IPC,
-    // then we are running in a single process mode, and the aggregation should
-    // not take place (as we would be aggregating back into the source
-    // histogram!).
-    kIPCSerializationSourceFlag = 0x10,
-
     kHexRangePrintingFlag = 0x8000  // Fancy bucket-naming supported.
   };
 
@@ -353,13 +346,10 @@ class Histogram {
     void Resize(const Histogram& histogram);
 
     // Accessor for histogram to make routine additions.
-    void AccumulateWithLinearStats(Sample value, Count count, size_t index);
+    void Accumulate(Sample value, Count count, size_t index);
 
     // Arithmetic manipulation of corresponding elements of the set.
     void Add(const SampleSet& other);
-
-    bool Serialize(Pickle* pickle) const;
-    bool Deserialize(void** iter, const Pickle& pickle);
 
     size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf);
 
@@ -375,15 +365,6 @@ class Histogram {
     int64_t sum(const OffTheBooksMutexAutoLock& ev) const {
        return sum_;
     }
-    uint64_t sum_squares(const OffTheBooksMutexAutoLock& ev) const {
-       return sum_squares_;
-    }
-    double log_sum(const OffTheBooksMutexAutoLock& ev) const {
-       return log_sum_;
-    }
-    double log_sum_squares(const OffTheBooksMutexAutoLock& ev) const {
-       return log_sum_squares_;
-    }
     int64_t redundant_count(const OffTheBooksMutexAutoLock& ev) const {
        return redundant_count_;
     }
@@ -396,9 +377,6 @@ class Histogram {
     const SampleSet& operator=(const SampleSet& other) {
        counts_          = other.counts_;
        sum_             = other.sum_;
-       sum_squares_     = other.sum_squares_;
-       log_sum_         = other.log_sum_;
-       log_sum_squares_ = other.log_sum_squares_;
        redundant_count_ = other.redundant_count_;
        return *this;
     }
@@ -415,13 +393,6 @@ class Histogram {
     // Save simple stats locally.  Note that this MIGHT get done in base class
     // without shared memory at some point.
     int64_t sum_;         // sum of samples.
-    uint64_t sum_squares_; // sum of squares of samples.
-
-    // These fields may or may not be updated at the discretion of the
-    // histogram.  We use the natural log and compute ln(sample+1) so that
-    // zeros are handled sanely.
-    double log_sum_;      // sum of logs of samples.
-    double log_sum_squares_; // sum of squares of logs of samples
 
     // To help identify memory corruption, we reduntantly save the number of
     // samples we've accumulated into all of our buckets.  We can compare this
@@ -489,21 +460,6 @@ class Histogram {
   void SetFlags(Flags flags) { flags_ = static_cast<Flags> (flags_ | flags); }
   void ClearFlags(Flags flags) { flags_ = static_cast<Flags>(flags_ & ~flags); }
   int flags() const { return flags_; }
-
-  // Convenience methods for serializing/deserializing the histograms.
-  // Histograms from Renderer process are serialized and sent to the browser.
-  // Browser process reconstructs the histogram from the pickled version
-  // accumulates the browser-side shadow copy of histograms (that mirror
-  // histograms created in the renderer).
-
-  // Serialize the given snapshot of a Histogram into a String. Uses
-  // Pickle class to flatten the object.
-  static std::string SerializeHistogramInfo(const Histogram& histogram,
-                                            const SampleSet& snapshot);
-  // The following method accepts a list of pickled histograms and
-  // builds a histogram and updates shadow copy of histogram data in the
-  // browser process.
-  static bool DeserializeHistogramInfo(const std::string& histogram_info);
 
   // Check to see if bucket ranges, counts and tallies in the snapshot are
   // consistent with the bucket ranges and checksums in our histogram.  This can

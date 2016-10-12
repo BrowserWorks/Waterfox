@@ -32,13 +32,18 @@ SharedSurfaceTextureData::~SharedSurfaceTextureData()
 {}
 
 void
-SharedSurfaceTextureData::Deallocate(ISurfaceAllocator*)
+SharedSurfaceTextureData::Deallocate(ClientIPCAllocator*)
 {}
 
-gfx::IntSize
-SharedSurfaceTextureData::GetSize() const
+void
+SharedSurfaceTextureData::FillInfo(TextureData::Info& aInfo) const
 {
-  return mSurf->mSize;
+  aInfo.size = mSurf->mSize;
+  aInfo.format = gfx::SurfaceFormat::UNKNOWN;
+  aInfo.hasIntermediateBuffer = false;
+  aInfo.hasSynchronization = false;
+  aInfo.supportsMoz2D = false;
+  aInfo.canExposeMappedData = false;
 }
 
 bool
@@ -50,7 +55,7 @@ SharedSurfaceTextureData::Serialize(SurfaceDescriptor& aOutDescriptor)
 
 SharedSurfaceTextureClient::SharedSurfaceTextureClient(SharedSurfaceTextureData* aData,
                                                        TextureFlags aFlags,
-                                                       ISurfaceAllocator* aAllocator)
+                                                       ClientIPCAllocator* aAllocator)
 : TextureClient(aData, aFlags, aAllocator)
 {
   mWorkaroundAnnoyingSharedSurfaceLifetimeIssues = true;
@@ -58,7 +63,7 @@ SharedSurfaceTextureClient::SharedSurfaceTextureClient(SharedSurfaceTextureData*
 
 already_AddRefed<SharedSurfaceTextureClient>
 SharedSurfaceTextureClient::Create(UniquePtr<gl::SharedSurface> surf, gl::SurfaceFactory* factory,
-                                   ISurfaceAllocator* aAllocator, TextureFlags aFlags)
+                                   ClientIPCAllocator* aAllocator, TextureFlags aFlags)
 {
   if (!surf) {
     return nullptr;

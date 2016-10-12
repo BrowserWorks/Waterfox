@@ -36,6 +36,9 @@ public:
                        PromiseDebuggingStateHolder& aState,
                        ErrorResult& aRv);
 
+  static void GetPromiseID(GlobalObject&, JS::Handle<JSObject*>, nsString&,
+                           ErrorResult&);
+
   static void GetAllocationStack(GlobalObject&, JS::Handle<JSObject*> aPromise,
                                  JS::MutableHandle<JSObject*> aStack,
                                  ErrorResult& aRv);
@@ -46,6 +49,8 @@ public:
                                    JS::Handle<JSObject*> aPromise,
                                    JS::MutableHandle<JSObject*> aStack,
                                    ErrorResult& aRv);
+
+#ifndef SPIDERMONKEY_PROMISE
   static void GetDependentPromises(GlobalObject&,
                                    JS::Handle<JSObject*> aPromise,
                                    nsTArray<RefPtr<Promise>>& aPromises,
@@ -55,23 +60,25 @@ public:
                                    ErrorResult& aRv);
   static double GetTimeToSettle(GlobalObject&, JS::Handle<JSObject*> aPromise,
                                 ErrorResult& aRv);
-
-  static void GetPromiseID(GlobalObject&, JS::Handle<JSObject*>, nsString&,
-                           ErrorResult&);
+#endif // SPIDERMONKEY_PROMISE
 
   // Mechanism for watching uncaught instances of Promise.
+  // XXXbz figure out the plan
   static void AddUncaughtRejectionObserver(GlobalObject&,
                                            UncaughtRejectionObserver& aObserver);
   static bool RemoveUncaughtRejectionObserver(GlobalObject&,
                                               UncaughtRejectionObserver& aObserver);
 
+#ifndef SPIDERMONKEY_PROMISE
   // Mark a Promise as having been left uncaught at script completion.
   static void AddUncaughtRejection(Promise&);
   // Mark a Promise previously added with `AddUncaughtRejection` as
   // eventually consumed.
   static void AddConsumedRejection(Promise&);
+#endif // SPIDERMONKEY_PROMISE
   // Propagate the informations from AddUncaughtRejection
   // and AddConsumedRejection to observers.
+  // XXXbz figure out the plan.
   static void FlushUncaughtRejections();
 
 protected:

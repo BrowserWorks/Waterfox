@@ -16,6 +16,7 @@
 #include "prenv.h"
 
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPtr.h"
 
 namespace mozilla {
 namespace gl {
@@ -640,7 +641,7 @@ CreateWindowOffscreenContext()
 }
 
 /*static*/ already_AddRefed<GLContext>
-GLContextProviderWGL::CreateHeadless(CreateContextFlags)
+GLContextProviderWGL::CreateHeadless(CreateContextFlags, nsACString& aFailureId)
 {
     if (!sWGLLib.EnsureInitialized()) {
         return nullptr;
@@ -675,43 +676,34 @@ GLContextProviderWGL::CreateHeadless(CreateContextFlags)
 /*static*/ already_AddRefed<GLContext>
 GLContextProviderWGL::CreateOffscreen(const IntSize& size,
                                       const SurfaceCaps& minCaps,
-                                      CreateContextFlags flags)
+                                      CreateContextFlags flags,
+                                      nsACString& aFailureId)
 {
-    RefPtr<GLContext> gl = CreateHeadless(flags);
+    RefPtr<GLContext> gl = CreateHeadless(flags, aFailureId);
     if (!gl)
         return nullptr;
 
-    if (!gl->InitOffscreen(size, minCaps))
+    if (!gl->InitOffscreen(size, minCaps)) {
+        aFailureId = NS_LITERAL_CSTRING("FEATURE_FAILURE_WGL_INIT");
         return nullptr;
+    }
 
     return gl.forget();
 }
 
-static RefPtr<GLContextWGL> gGlobalContext;
+static StaticRefPtr<GLContext> gGlobalContext;
 
 /*static*/ GLContext*
 GLContextProviderWGL::GetGlobalContext()
 {
-    if (!sWGLLib.EnsureInitialized()) {
-        return nullptr;
-    }
-
     static bool triedToCreateContext = false;
-
-    if (!triedToCreateContext && !gGlobalContext) {
+    if (!triedToCreateContext) {
         triedToCreateContext = true;
 
-        // conveniently, we already have what we need...
-        SurfaceCaps dummyCaps = SurfaceCaps::Any();
-        gGlobalContext = new GLContextWGL(dummyCaps,
-                                          nullptr, true,
-                                          sWGLLib.GetWindowDC(),
-                                          sWGLLib.GetWindowGLContext());
-        if (!gGlobalContext->Init()) {
-            NS_WARNING("Global context GLContext initialization failed?");
-            gGlobalContext = nullptr;
-            return nullptr;
-        }
+        MOZ_RELEASE_ASSERT(!gGlobalContext);
+        nsCString discardFailureId;
+        RefPtr<GLContext> temp = CreateHeadless(CreateContextFlags::NONE, discardFailureId);
+        gGlobalContext = temp;
     }
 
     return static_cast<GLContext*>(gGlobalContext);

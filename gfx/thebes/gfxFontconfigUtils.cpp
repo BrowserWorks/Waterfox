@@ -617,13 +617,13 @@ gfxFontconfigUtils::UpdateFontListInternal(bool aForce)
                     bool added = entry->AddFont(font);
 
                     if (!entry->mKey) {
-                        // The reference to the font pattern keeps the pointer to
-                        // string for the key valid.  If adding the font failed
-                        // then the entry must be removed.
+                        // The reference to the font pattern keeps the pointer
+                        // to string for the key valid.  If adding the font
+                        // failed then the entry must be removed.
                         if (added) {
                             entry->mKey = family;
                         } else {
-                            mFontsByFamily.RawRemoveEntry(entry);
+                            mFontsByFamily.RemoveEntry(entry);
                         }
                     }
                 }
@@ -985,7 +985,7 @@ gfxFontconfigUtils::GetLangSupportEntry(const FcChar8 *aLang, bool aWithFonts)
 #endif
     };
 
-    nsAutoTArray<FcPattern*,100> fonts;
+    AutoTArray<FcPattern*,100> fonts;
 
     for (unsigned fs = 0; fs < ArrayLength(fontSets); ++fs) {
         FcFontSet *fontSet = fontSets[fs];

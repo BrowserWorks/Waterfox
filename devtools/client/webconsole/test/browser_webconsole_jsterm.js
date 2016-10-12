@@ -1,7 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -61,7 +61,7 @@ function* testJSTerm(hud) {
 
   yield waitForSuccess({
     name: "clear() worked",
-    validator: function() {
+    validator: function () {
       return jsterm.outputNode.childNodes.length == 0;
     }
   });
@@ -109,7 +109,7 @@ function* testJSTerm(hud) {
   // check for occurrences of Object XRayWrapper, bug 604430
   jsterm.clearOutput();
   yield jsterm.execute("document");
-  yield checkResult(function(node) {
+  yield checkResult(function (node) {
     return node.textContent.search(/\[object xraywrapper/i) == -1;
   }, "document - no XrayWrapper");
 
@@ -130,7 +130,7 @@ function* testJSTerm(hud) {
   // check that pprint(function) shows function source, bug 618344
   jsterm.clearOutput();
   yield jsterm.execute("pprint(function() { var someCanaryValue = 42; })");
-  yield checkResult(function(node) {
+  yield checkResult(function (node) {
     return node.textContent.indexOf("someCanaryValue") > -1;
   }, "pprint(function) shows source");
 
@@ -142,4 +142,54 @@ function* testJSTerm(hud) {
   jsterm.clearOutput();
   yield jsterm.execute("undefined");
   yield checkResult("undefined", "undefined is printed");
+
+  // check that thrown strings produce error messages,
+  // and the message text matches that of a stringified error object
+  // bug 1099071
+  jsterm.clearOutput();
+  yield jsterm.execute("throw '';");
+  yield checkResult((node) => {
+    return node.parentNode.getAttribute("severity") === "error" &&
+      node.textContent === new Error("").toString();
+  }, "thrown empty string generates error message");
+
+  jsterm.clearOutput();
+  yield jsterm.execute("throw 'tomatoes';");
+  yield checkResult((node) => {
+    return node.parentNode.getAttribute("severity") === "error" &&
+      node.textContent === new Error("tomatoes").toString();
+  }, "thrown non-empty string generates error message");
+
+  jsterm.clearOutput();
+  yield jsterm.execute("throw { foo: 'bar' };");
+  yield checkResult((node) => {
+    return node.parentNode.getAttribute("severity") === "error" &&
+      node.textContent === Object.prototype.toString();
+  }, "thrown object generates error message");
+
+  // check that errors with entires in errordocs.js display links
+  // alongside their messages.
+  const ErrorDocs = require("devtools/server/actors/errordocs");
+
+  const ErrorDocStatements = {
+    "JSMSG_BAD_RADIX": "(42).toString(0);",
+    "JSMSG_BAD_ARRAY_LENGTH": "([]).length = -1",
+    "JSMSG_NEGATIVE_REPETITION_COUNT": "'abc'.repeat(-1);",
+    "JSMSG_BAD_FORMAL": "var f = Function('x y', 'return x + y;');",
+    "JSMSG_PRECISION_RANGE": "77.1234.toExponential(-1);",
+  };
+
+  for (let errorMessageName of Object.keys(ErrorDocStatements)) {
+    let url = ErrorDocs.GetURL(errorMessageName);
+
+    jsterm.clearOutput();
+    yield jsterm.execute(ErrorDocStatements[errorMessageName]);
+    yield checkResult((node) => {
+      return node.parentNode.getElementsByTagName("a")[0].title == url;
+    }, `error links to ${url}`);
+  }
+
+  // Ensure that dom errors, with error numbers outside of the range
+  // of valid js.msg errors, don't cause crashes (bug 1270721).
+  yield jsterm.execute("new Request('',{redirect:'foo'})");
 }

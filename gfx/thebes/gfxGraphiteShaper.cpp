@@ -86,7 +86,7 @@ gfxGraphiteShaper::ShapeText(DrawTarget      *aDrawTarget,
                              const char16_t *aText,
                              uint32_t         aOffset,
                              uint32_t         aLength,
-                             int32_t          aScript,
+                             Script           aScript,
                              bool             aVertical,
                              gfxShapedText   *aShapedText)
 {
@@ -206,10 +206,10 @@ gfxGraphiteShaper::SetGlyphsFromSegment(DrawTarget      *aDrawTarget,
     uint32_t glyphCount = gr_seg_n_slots(aSegment);
 
     // identify clusters; graphite may have reordered/expanded/ligated glyphs.
-    AutoFallibleTArray<Cluster,SMALL_GLYPH_RUN> clusters;
-    AutoFallibleTArray<uint16_t,SMALL_GLYPH_RUN> gids;
-    AutoFallibleTArray<float,SMALL_GLYPH_RUN> xLocs;
-    AutoFallibleTArray<float,SMALL_GLYPH_RUN> yLocs;
+    AutoTArray<Cluster,SMALL_GLYPH_RUN> clusters;
+    AutoTArray<uint16_t,SMALL_GLYPH_RUN> gids;
+    AutoTArray<float,SMALL_GLYPH_RUN> xLocs;
+    AutoTArray<float,SMALL_GLYPH_RUN> yLocs;
 
     if (!clusters.SetLength(aLength, fallible) ||
         !gids.SetLength(glyphCount, fallible) ||
@@ -262,6 +262,11 @@ gfxGraphiteShaper::SetGlyphsFromSegment(DrawTarget      *aDrawTarget,
         NS_ASSERTION(cIndex < aLength, "cIndex beyond word length");
         ++clusters[cIndex].nGlyphs;
 
+        // bump |after| index if it falls in the middle of a surrogate pair
+        if (NS_IS_HIGH_SURROGATE(aText[after]) && after < aLength - 1 &&
+            NS_IS_LOW_SURROGATE(aText[after + 1])) {
+            after++;
+        }
         // extend cluster if necessary to reach the glyph's "after" index
         if (clusters[cIndex].baseChar + clusters[cIndex].nChars < after + 1) {
             clusters[cIndex].nChars = after + 1 - clusters[cIndex].baseChar;
@@ -313,7 +318,7 @@ gfxGraphiteShaper::SetGlyphsFromSegment(DrawTarget      *aDrawTarget,
             charGlyphs[offs].SetSimpleGlyph(appAdvance, gids[c.baseGlyph]);
         } else {
             // not a one-to-one mapping with simple metrics: use DetailedGlyph
-            nsAutoTArray<gfxShapedText::DetailedGlyph,8> details;
+            AutoTArray<gfxShapedText::DetailedGlyph,8> details;
             float clusterLoc;
             for (uint32_t j = c.baseGlyph; j < c.baseGlyph + c.nGlyphs; ++j) {
                 gfxShapedText::DetailedGlyph* d = details.AppendElement();

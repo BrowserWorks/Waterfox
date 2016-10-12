@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2009 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -6,8 +8,7 @@
 #define CHROME_COMMON_CHILD_THREAD_H_
 
 #include "base/thread.h"
-#include "chrome/common/ipc_sync_channel.h"
-#include "chrome/common/message_router.h"
+#include "chrome/common/ipc_channel.h"
 #include "mozilla/UniquePtr.h"
 
 class ResourceDispatcher;
@@ -59,7 +60,7 @@ class ChildThread : public IPC::Channel::Listener,
 
  private:
   // IPC::Channel::Listener implementation:
-  virtual void OnMessageReceived(const IPC::Message& msg);
+  virtual void OnMessageReceived(IPC::Message&& msg);
   virtual void OnChannelError();
 
 #ifdef MOZ_NUWA_PROCESS
@@ -71,10 +72,6 @@ class ChildThread : public IPC::Channel::Listener,
 
   std::wstring channel_name_;
   mozilla::UniquePtr<IPC::Channel> channel_;
-
-  // Used only on the background render thread to implement message routing
-  // functionality to the consumers of the ChildThread.
-  MessageRouter router_;
 
   Thread::Options options_;
 

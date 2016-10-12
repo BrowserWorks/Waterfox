@@ -7,7 +7,7 @@
 "use strict";
 
 const { Cu } = require("chrome");
-Cu.import("resource://gre/modules/Services.jsm");
+const Services = require("Services");
 
 const EXPAND_TAB = "devtools.editor.expandtab";
 const TAB_SIZE = "devtools.editor.tabsize";
@@ -77,7 +77,7 @@ function getIndentationFromIteration(iterFunc) {
  *                  getIndentationFromIteration
  */
 function getIndentationFromString(string) {
-  let iteratorFn = function(start, end, callback) {
+  let iteratorFn = function (start, end, callback) {
     let split = string.split(/\r\n|\r|\n|\f/);
     split.slice(start, end).forEach(callback);
   };

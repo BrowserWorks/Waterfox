@@ -18,6 +18,7 @@
 #include "mozilla/ipc/URIUtils.h"
 #include "SerializedLoadContext.h"
 #include "mozilla/ipc/BackgroundUtils.h"
+#include "nsIPrompt.h"
 
 using namespace mozilla::ipc;
 
@@ -284,14 +285,10 @@ FTPChannelChild::RecvOnStartRequest(const nsresult& aChannelStatus,
 
   LOG(("FTPChannelChild::RecvOnStartRequest [this=%p]\n", this));
 
-  if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(new FTPStartRequestEvent(this, aChannelStatus,
-                                              aContentLength, aContentType,
-                                              aLastModified, aEntityID, aURI));
-  } else {
-    DoOnStartRequest(aChannelStatus, aContentLength, aContentType,
-                     aLastModified, aEntityID, aURI);
-  }
+  mEventQ->RunOrEnqueue(new FTPStartRequestEvent(this, aChannelStatus,
+                                                 aContentLength, aContentType,
+                                                 aLastModified, aEntityID,
+                                                 aURI));
   return true;
 }
 
@@ -379,15 +376,10 @@ FTPChannelChild::RecvOnDataAvailable(const nsresult& channelStatus,
 
   LOG(("FTPChannelChild::RecvOnDataAvailable [this=%p]\n", this));
 
-  if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(
-      new FTPDataAvailableEvent(this, channelStatus, data, offset, count));
-  } else {
-    MOZ_RELEASE_ASSERT(!mDivertingToParent,
-                       "ShouldEnqueue when diverting to parent!");
+  mEventQ->RunOrEnqueue(new FTPDataAvailableEvent(this, channelStatus, data,
+                                                  offset, count),
+                        mDivertingToParent);
 
-    DoOnDataAvailable(channelStatus, data, offset, count);
-  }
   return true;
 }
 
@@ -450,7 +442,7 @@ FTPChannelChild::DoOnDataAvailable(const nsresult& channelStatus,
 
   if (mUnknownDecoderInvolved) {
     mUnknownDecoderEventQ.AppendElement(
-      new MaybeDivertOnDataFTPEvent(this, data, offset, count));
+      MakeUnique<MaybeDivertOnDataFTPEvent>(this, data, offset, count));
   }
 
   // NOTE: the OnDataAvailable contract requires the client to read all the data
@@ -480,23 +472,31 @@ class FTPStopRequestEvent : public ChannelEvent
 {
 public:
   FTPStopRequestEvent(FTPChannelChild* aChild,
-                      const nsresult& aChannelStatus)
+                      const nsresult& aChannelStatus,
+                      const nsCString &aErrorMsg,
+                      bool aUseUTF8)
     : mChild(aChild)
     , mChannelStatus(aChannelStatus)
+    , mErrorMsg(aErrorMsg)
+    , mUseUTF8(aUseUTF8)
   {
   }
   void Run()
   {
-    mChild->DoOnStopRequest(mChannelStatus);
+    mChild->DoOnStopRequest(mChannelStatus, mErrorMsg, mUseUTF8);
   }
 
 private:
   FTPChannelChild* mChild;
   nsresult mChannelStatus;
+  nsCString mErrorMsg;
+  bool mUseUTF8;
 };
 
 bool
-FTPChannelChild::RecvOnStopRequest(const nsresult& aChannelStatus)
+FTPChannelChild::RecvOnStopRequest(const nsresult& aChannelStatus,
+                                   const nsCString &aErrorMsg,
+                                   const bool &aUseUTF8)
 {
   MOZ_RELEASE_ASSERT(!mFlushedForDiversion,
     "Should not be receiving any more callbacks from parent!");
@@ -504,13 +504,37 @@ FTPChannelChild::RecvOnStopRequest(const nsresult& aChannelStatus)
   LOG(("FTPChannelChild::RecvOnStopRequest [this=%p status=%x]\n",
        this, aChannelStatus));
 
-  if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(new FTPStopRequestEvent(this, aChannelStatus));
-  } else {
-    DoOnStopRequest(aChannelStatus);
-  }
+  mEventQ->RunOrEnqueue(new FTPStopRequestEvent(this, aChannelStatus, aErrorMsg,
+                                                aUseUTF8));
   return true;
 }
+
+class nsFtpChildAsyncAlert : public Runnable
+{
+public:
+  nsFtpChildAsyncAlert(nsIPrompt *aPrompter, nsString aResponseMsg)
+    : mPrompter(aPrompter)
+    , mResponseMsg(aResponseMsg)
+  {
+    MOZ_COUNT_CTOR(nsFtpChildAsyncAlert);
+  }
+protected:
+  virtual ~nsFtpChildAsyncAlert()
+  {
+    MOZ_COUNT_DTOR(nsFtpChildAsyncAlert);
+  }
+public:
+  NS_IMETHOD Run()
+  {
+    if (mPrompter) {
+      mPrompter->Alert(nullptr, mResponseMsg.get());
+    }
+    return NS_OK;
+  }
+private:
+  nsCOMPtr<nsIPrompt> mPrompter;
+  nsString mResponseMsg;
+};
 
 class MaybeDivertOnStopFTPEvent : public ChannelEvent
 {
@@ -539,7 +563,9 @@ FTPChannelChild::MaybeDivertOnStop(const nsresult& aChannelStatus)
 }
 
 void
-FTPChannelChild::DoOnStopRequest(const nsresult& aChannelStatus)
+FTPChannelChild::DoOnStopRequest(const nsresult& aChannelStatus,
+                                 const nsCString &aErrorMsg,
+                                 bool aUseUTF8)
 {
   LOG(("FTPChannelChild::DoOnStopRequest [this=%p status=%x]\n",
        this, aChannelStatus));
@@ -557,7 +583,7 @@ FTPChannelChild::DoOnStopRequest(const nsresult& aChannelStatus)
 
   if (mUnknownDecoderInvolved) {
     mUnknownDecoderEventQ.AppendElement(
-      new MaybeDivertOnStopFTPEvent(this, aChannelStatus));
+      MakeUnique<MaybeDivertOnStopFTPEvent>(this, aChannelStatus));
   }
 
   { // Ensure that all queued ipdl events are dispatched before
@@ -565,6 +591,23 @@ FTPChannelChild::DoOnStopRequest(const nsresult& aChannelStatus)
     mIsPending = false;
     AutoEventEnqueuer ensureSerialDispatch(mEventQ);
     (void)mListener->OnStopRequest(this, mListenerContext, aChannelStatus);
+
+    if (NS_FAILED(aChannelStatus) && !aErrorMsg.IsEmpty()) {
+      nsCOMPtr<nsIPrompt> prompter;
+      GetCallback(prompter);
+      if (prompter) {
+        nsCOMPtr<nsIRunnable> alertEvent;
+        if (aUseUTF8) {
+          alertEvent = new nsFtpChildAsyncAlert(prompter,
+                             NS_ConvertUTF8toUTF16(aErrorMsg));
+        } else {
+          alertEvent = new nsFtpChildAsyncAlert(prompter,
+                             NS_ConvertASCIItoUTF16(aErrorMsg));
+        }
+        NS_DispatchToMainThread(alertEvent);
+      }
+    }
+
     mListener = nullptr;
     mListenerContext = nullptr;
 
@@ -593,11 +636,7 @@ FTPChannelChild::RecvFailedAsyncOpen(const nsresult& statusCode)
 {
   LOG(("FTPChannelChild::RecvFailedAsyncOpen [this=%p status=%x]\n",
        this, statusCode));
-  if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(new FTPFailedAsyncOpenEvent(this, statusCode));
-  } else {
-    DoFailedAsyncOpen(statusCode);
-  }
+  mEventQ->RunOrEnqueue(new FTPFailedAsyncOpenEvent(this, statusCode));
   return true;
 }
 
@@ -649,11 +688,7 @@ FTPChannelChild::RecvFlushedForDiversion()
   LOG(("FTPChannelChild::RecvFlushedForDiversion [this=%p]\n", this));
   MOZ_ASSERT(mDivertingToParent);
 
-  if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(new FTPFlushedForDiversionEvent(this));
-  } else {
-    MOZ_CRASH();
-  }
+  mEventQ->RunOrEnqueue(new FTPFlushedForDiversionEvent(this), true);
   return true;
 }
 
@@ -699,11 +734,7 @@ class FTPDeleteSelfEvent : public ChannelEvent
 bool
 FTPChannelChild::RecvDeleteSelf()
 {
-  if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(new FTPDeleteSelfEvent(this));
-  } else {
-    DoDeleteSelf();
-  }
+  mEventQ->RunOrEnqueue(new FTPDeleteSelfEvent(this));
   return true;
 }
 

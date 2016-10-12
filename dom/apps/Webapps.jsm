@@ -73,9 +73,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "OfflineCacheInstaller",
 XPCOMUtils.defineLazyModuleGetter(this, "SystemMessagePermissionsChecker",
   "resource://gre/modules/SystemMessagePermissionsChecker.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "WebappOSUtils",
-  "resource://gre/modules/WebappOSUtils.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
   "resource://gre/modules/NetUtil.jsm");
 
@@ -135,9 +132,7 @@ function supportSystemMessages() {
 // Minimum delay between two progress events while downloading, in ms.
 const MIN_PROGRESS_EVENT_DELAY = 1500;
 
-const WEBAPP_RUNTIME = Services.appinfo.ID == "webapprt@mozilla.org";
-
-const chromeWindowType = WEBAPP_RUNTIME ? "webapprt:webapp" : "navigator:browser";
+const chromeWindowType = "navigator:browser";
 
 XPCOMUtils.defineLazyServiceGetter(this, "ppmm",
                                    "@mozilla.org/parentprocessmessagemanager;1",
@@ -146,15 +141,6 @@ XPCOMUtils.defineLazyServiceGetter(this, "ppmm",
 XPCOMUtils.defineLazyServiceGetter(this, "cpmm",
                                    "@mozilla.org/childprocessmessagemanager;1",
                                    "nsIMessageSender");
-
-XPCOMUtils.defineLazyGetter(this, "interAppCommService", function() {
-  return Cc["@mozilla.org/inter-app-communication-service;1"]
-         .getService(Ci.nsIInterAppCommService);
-});
-
-XPCOMUtils.defineLazyServiceGetter(this, "dataStoreService",
-                                   "@mozilla.org/datastore-service;1",
-                                   "nsIDataStoreService");
 
 XPCOMUtils.defineLazyServiceGetter(this, "appsService",
                                    "@mozilla.org/AppsService;1",
@@ -180,10 +166,8 @@ XPCOMUtils.defineLazyGetter(this, "permMgr", function() {
 #elifdef ANDROID
   const DIRECTORY_NAME = "webappsDir";
 #else
-  // If we're executing in the context of the webapp runtime, the data files
-  // are in a different directory (currently the Firefox profile that installed
-  // the webapp); otherwise, they're in the current profile.
-  const DIRECTORY_NAME = WEBAPP_RUNTIME ? "WebappRegD" : "ProfD";
+  // Mulet, B2G Desktop, etc.
+  const DIRECTORY_NAME = "ProfD";
 #endif
 
 // We'll use this to identify privileged apps that have been preinstalled
@@ -203,7 +187,6 @@ this.DOMApplicationRegistry = {
   // Path to the webapps.json file where we store the registry data.
   appsFile: null,
   webapps: { },
-  allAppsLaunchable: false,
   _updateHandlers: [ ],
   _pendingUninstalls: {},
   _contentActions: new Map(),
@@ -216,7 +199,6 @@ this.DOMApplicationRegistry = {
                      "Webapps:GetSelf",
                      "Webapps:CheckInstalled",
                      "Webapps:GetInstalled",
-                     "Webapps:GetNotInstalled",
                      "Webapps:Launch",
                      "Webapps:LocationChange",
                      "Webapps:InstallPackage",
@@ -263,11 +245,6 @@ this.DOMApplicationRegistry = {
                                         this.getFullAppByManifestURL.bind(this));
 
     MessageBroadcaster.init(this.getAppByManifestURL);
-
-    if (AppConstants.MOZ_B2GDROID) {
-      Cu.import("resource://gre/modules/AndroidUtils.jsm");
-      AndroidUtils.init(this);
-    }
   },
 
   // loads the current registry, that could be empty on first run.
@@ -464,18 +441,6 @@ this.DOMApplicationRegistry = {
     }
   }),
 
-  updateDataStoreForApp: Task.async(function*(aId) {
-    if (!this.webapps[aId]) {
-      return;
-    }
-
-    // Create or Update the DataStore for this app
-    let results = yield this._readManifests([{ id: aId }]);
-    let app = this.webapps[aId];
-    this.updateDataStore(app.localId, app.origin, app.manifestURL,
-                         results[0].manifest, app.appStatus);
-  }),
-
   appKind: function(aApp, aManifest) {
     if (aApp.origin.startsWith("android://")) {
       return this.kAndroid;
@@ -537,7 +502,7 @@ this.DOMApplicationRegistry = {
 
   // Installs a 3rd party app.
   installPreinstalledApp: function installPreinstalledApp(aId) {
-    if (!AppConstants.MOZ_B2GDROID && AppConstants.platform !== "gonk") {
+    if (AppConstants.platform !== "gonk") {
       return false;
     }
 
@@ -699,10 +664,9 @@ this.DOMApplicationRegistry = {
         if (id in data || this.webapps[id].removable)
           continue;
         // Remove the permissions, cookies and private data for this app.
+        // Both permission and cookie managers observe the "clear-origin-data"
+        // event.
         let localId = this.webapps[id].localId;
-        let attrs = { appId: localId };
-        permMgr.removePermissionsWithAttributes(JSON.stringify(attrs));
-        Services.cookies.removeCookiesForApp(localId, false);
         this._clearPrivateData(localId, false);
         delete this.webapps[id];
       }
@@ -806,12 +770,8 @@ this.DOMApplicationRegistry = {
           }
         }
 
-        if (AppConstants.MOZ_B2GDROID || AppConstants.MOZ_B2G) {
+        if (AppConstants.MOZ_B2G) {
           yield this.installSystemApps();
-        }
-
-        if (AppConstants.MOZ_B2GDROID) {
-          yield AndroidUtils.installAndroidApps();
         }
 
         // At first run, install preloaded apps and set up their permissions.
@@ -831,50 +791,8 @@ this.DOMApplicationRegistry = {
         Services.prefs.setBoolPref("dom.apps.reset-permissions", true);
       }
 
-      // DataStores must be initialized at startup.
-      for (let id in this.webapps) {
-        yield this.updateDataStoreForApp(id);
-      }
-
       yield this.registerAppsHandlers(runUpdate);
     }.bind(this)).then(null, Cu.reportError);
-  },
-
-  updateDataStore: function(aId, aOrigin, aManifestURL, aManifest) {
-    if (!aManifest) {
-      debug("updateDataStore: no manifest for " + aOrigin);
-      return;
-    }
-
-    let uri = Services.io.newURI(aOrigin, null, null);
-    let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                   .getService(Ci.nsIScriptSecurityManager);
-    let principal = secMan.createCodebasePrincipal(uri, {appId: aId});
-    if (!dataStoreService.checkPermission(principal)) {
-      return;
-    }
-
-    if ('datastores-owned' in aManifest) {
-      for (let name in aManifest['datastores-owned']) {
-        let readonly = "access" in aManifest['datastores-owned'][name]
-                         ? aManifest['datastores-owned'][name].access == 'readonly'
-                         : false;
-
-        dataStoreService.installDataStore(aId, name, aOrigin, aManifestURL,
-                                          readonly);
-      }
-    }
-
-    if ('datastores-access' in aManifest) {
-      for (let name in aManifest['datastores-access']) {
-        let readonly = ("readonly" in aManifest['datastores-access'][name]) &&
-                       !aManifest['datastores-access'][name].readonly
-                         ? false : true;
-
-        dataStoreService.installAccessDataStore(aId, name, aOrigin,
-                                                aManifestURL, readonly);
-      }
-    }
   },
 
   // |aEntryPoint| is either the entry_point name or the null in which case we
@@ -942,69 +860,6 @@ this.DOMApplicationRegistry = {
     });
   },
 
-  // |aEntryPoint| is either the entry_point name or the null in which case we
-  // use the root of the manifest.
-  //
-  // TODO Bug 908094 Refine _registerInterAppConnectionsForEntryPoint(...).
-  _registerInterAppConnectionsForEntryPoint: function(aManifest, aApp,
-                                                      aEntryPoint) {
-    let root = aManifest;
-    if (aEntryPoint && aManifest.entry_points[aEntryPoint]) {
-      root = aManifest.entry_points[aEntryPoint];
-    }
-
-    let connections = root.connections;
-    if (!connections) {
-      return;
-    }
-
-    if ((typeof connections) !== "object") {
-      debug("|connections| is not an object. Skipping: " + connections);
-      return;
-    }
-
-    let manifest = new ManifestHelper(aManifest, aApp.origin, aApp.manifestURL);
-    let launchPathURI = Services.io.newURI(manifest.fullLaunchPath(aEntryPoint),
-                                           null, null);
-    let manifestURI = Services.io.newURI(aApp.manifestURL, null, null);
-
-    for (let keyword in connections) {
-      let connection = connections[keyword];
-
-      // Resolve the handler path from origin. If |handler_path| is absent,
-      // use |launch_path| as default.
-      let fullHandlerPath;
-      let handlerPath = connection.handler_path;
-      if (handlerPath) {
-        try {
-          fullHandlerPath = manifest.resolveURL(handlerPath);
-        } catch(e) {
-          debug("Connection's handler path is invalid. Skipping: keyword: " +
-                keyword + " handler_path: " + handlerPath);
-          continue;
-        }
-      }
-      let handlerPageURI = fullHandlerPath
-                           ? Services.io.newURI(fullHandlerPath, null, null)
-                           : launchPathURI;
-
-      if (SystemMessagePermissionsChecker
-            .isSystemMessagePermittedToRegister("connection",
-                                                aApp.manifestURL,
-                                                aApp.origin,
-                                                aManifest)) {
-        msgmgr.registerPage("connection", handlerPageURI, manifestURI);
-      }
-
-      interAppCommService.
-        registerConnection(keyword,
-                           handlerPageURI,
-                           manifestURI,
-                           connection.description,
-                           connection.rules);
-    }
-  },
-
   _registerSystemMessages: function(aManifest, aApp) {
     this._registerSystemMessagesForEntryPoint(aManifest, aApp, null);
 
@@ -1014,19 +869,6 @@ this.DOMApplicationRegistry = {
 
     for (let entryPoint in aManifest.entry_points) {
       this._registerSystemMessagesForEntryPoint(aManifest, aApp, entryPoint);
-    }
-  },
-
-  _registerInterAppConnections: function(aManifest, aApp) {
-    this._registerInterAppConnectionsForEntryPoint(aManifest, aApp, null);
-
-    if (!aManifest.entry_points) {
-      return;
-    }
-
-    for (let entryPoint in aManifest.entry_points) {
-      this._registerInterAppConnectionsForEntryPoint(aManifest, aApp,
-                                                     entryPoint);
     }
   },
 
@@ -1199,7 +1041,6 @@ this.DOMApplicationRegistry = {
         }
         app.kind = this.appKind(app, aResult.manifest);
         this._registerSystemMessages(manifest, app);
-        this._registerInterAppConnections(manifest, app);
         appsToRegister.push({ manifest: manifest, app: app });
         UserCustomizations.register(app);
         Langpacks.register(app, manifest);
@@ -1218,9 +1059,6 @@ this.DOMApplicationRegistry = {
       Services.obs.removeObserver(this, "memory-pressure");
       cpmm = null;
       ppmm = null;
-      if (AppConstants.MOZ_B2GDROID) {
-        AndroidUtils.uninit();
-      }
     } else if (aTopic == "memory-pressure") {
       // Clear the manifest cache on memory pressure.
       this._manifestCache = {};
@@ -1283,10 +1121,6 @@ this.DOMApplicationRegistry = {
   },
 
   receiveMessage: function(aMessage) {
-    // nsIPrefBranch throws if pref does not exist, faster to simply write
-    // the pref instead of first checking if it is false.
-    Services.prefs.setBoolPref("dom.mozApps.used", true);
-
     let msg = aMessage.data || {};
     let mm = aMessage.target;
     msg.mm = mm;
@@ -1316,7 +1150,6 @@ this.DOMApplicationRegistry = {
                   (checkPermission("homescreen-webapps-manage") && isCurrentHomescreen);
         break;
 
-      case "Webapps:GetNotInstalled":
       case "Webapps:ApplyDownload":
       case "Webapps:Import":
       case "Webapps:ExtractManifest":
@@ -1379,7 +1212,7 @@ this.DOMApplicationRegistry = {
     this.registryReady.then( () => {
       switch (aMessage.name) {
         case "Webapps:Install": {
-          if (AppConstants.platform == "android" && !AppConstants.MOZ_B2GDROID) {
+          if (AppConstants.platform == "android") {
             Services.obs.notifyObservers(mm, "webapps-runtime-install", JSON.stringify(msg));
           } else {
             this.doInstall(msg, mm);
@@ -1390,7 +1223,7 @@ this.DOMApplicationRegistry = {
           this.getSelf(msg, mm);
           break;
         case "Webapps:Uninstall":
-          if (AppConstants.platform == "android" && !AppConstants.MOZ_B2GDROID) {
+          if (AppConstants.platform == "android") {
             Services.obs.notifyObservers(mm, "webapps-runtime-uninstall", JSON.stringify(msg));
           } else {
             this.doUninstall(msg, mm);
@@ -1408,11 +1241,8 @@ this.DOMApplicationRegistry = {
         case "Webapps:GetInstalled":
           this.getInstalled(msg, mm);
           break;
-        case "Webapps:GetNotInstalled":
-          this.getNotInstalled(msg, mm);
-          break;
         case "Webapps:InstallPackage": {
-          if (AppConstants.platform == "android" && !AppConstants.MOZ_B2GDROID) {
+          if (AppConstants.platform == "android") {
             Services.obs.notifyObservers(mm, "webapps-runtime-install-package", JSON.stringify(msg));
           } else {
             this.doInstallPackage(msg, mm);
@@ -1998,8 +1828,6 @@ this.DOMApplicationRegistry = {
           manifestURL: app.manifestURL },
         true);
     }
-    this.updateDataStore(this.webapps[id].localId, app.origin,
-                         app.manifestURL, newManifest);
     MessageBroadcaster.broadcastMessage("Webapps:UpdateState", {
       app: app,
       manifest: newManifest,
@@ -2094,7 +1922,6 @@ this.DOMApplicationRegistry = {
       }
       this._registerSystemMessages(aNewManifest, aApp);
       this._registerActivities(aNewManifest, aApp, true);
-      this._registerInterAppConnections(aNewManifest, aApp);
     } else {
       // Nothing else to do but notifying we're ready.
       this.notifyAppsRegistryReady();
@@ -2316,6 +2143,11 @@ this.DOMApplicationRegistry = {
                   .createInstance(Ci.nsIXMLHttpRequest);
       xhr.open("GET", aData.manifestURL, true);
       xhr.channel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
+      if (xhr.channel.loadInfo) {
+        xhr.channel.loadInfo.originAttributes = { appId: app.installerAppId,
+                                                  inIsolatedMozBrowser: app.installerIsBrowser
+                                                };
+      }
       headers.forEach(function(aHeader) {
         debug("Adding header: " + aHeader.name + ": " + aHeader.value);
         xhr.setRequestHeader(aHeader.name, aHeader.value);
@@ -2443,9 +2275,6 @@ this.DOMApplicationRegistry = {
         }, true);
       }
 
-      this.updateDataStore(this.webapps[aId].localId, aApp.origin,
-                           aApp.manifestURL, aApp.manifest);
-
       aApp.name = aNewManifest.name;
       aApp.csp = manifest.csp || "";
       aApp.updateTime = Date.now();
@@ -2554,8 +2383,7 @@ this.DOMApplicationRegistry = {
 
       // Disallow reinstalls from the same manifest url for now.
       for (let id in this.webapps) {
-        if (this.webapps[id].manifestURL == app.manifestURL &&
-            this._isLaunchable(this.webapps[id])) {
+        if (this.webapps[id].manifestURL == app.manifestURL) {
           sendError("REINSTALL_FORBIDDEN");
           return false;
         }
@@ -2626,6 +2454,10 @@ this.DOMApplicationRegistry = {
                 .createInstance(Ci.nsIXMLHttpRequest);
     xhr.open("GET", app.manifestURL, true);
     xhr.channel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
+    if (xhr.channel.loadInfo) {
+      xhr.channel.loadInfo.originAttributes = { appId: aData.appId,
+                                                inIsolatedMozBrowser: aData.isBrowser};
+    }
     xhr.channel.notificationCallbacks = AppsUtils.createLoadContext(aData.appId,
                                                                     aData.isBrowser);
     xhr.responseType = "json";
@@ -2686,7 +2518,7 @@ this.DOMApplicationRegistry = {
 
       // Disallow reinstalls from the same manifest URL for now.
       let id = this._appIdForManifestURL(app.manifestURL);
-      if (id !== null && this._isLaunchable(this.webapps[id])) {
+      if (id !== null) {
         sendError("REINSTALL_FORBIDDEN");
         return false;
       }
@@ -2741,6 +2573,10 @@ this.DOMApplicationRegistry = {
                 .createInstance(Ci.nsIXMLHttpRequest);
     xhr.open("GET", app.manifestURL, true);
     xhr.channel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
+    if (xhr.channel.loadInfo) {
+      xhr.channel.loadInfo.originAttributes = { appId: aData.appId,
+                                                inIsolatedMozBrowser: aData.isBrowser};
+    }
     xhr.channel.notificationCallbacks = AppsUtils.createLoadContext(aData.appId,
                                                                     aData.isBrowser);
     xhr.responseType = "json";
@@ -2998,7 +2834,7 @@ this.DOMApplicationRegistry = {
     app.manifestHash = AppsUtils.computeHash(JSON.stringify(aUpdateManifest ||
                                                             aManifest));
 
-    let zipFile = WebappOSUtils.getPackagePath(app);
+    let zipFile = app.basePath + "/" + app.id;
     app.packageHash = yield this._computeFileHash(zipFile);
 
     app.role = aManifest.role || "";
@@ -3093,9 +2929,6 @@ this.DOMApplicationRegistry = {
           this.doUninstall.bind(this, aData, aData.mm)
         );
       }
-
-      this.updateDataStore(this.webapps[id].localId,  this.webapps[id].origin,
-                           this.webapps[id].manifestURL, jsonManifest);
     }
 
     for (let prop of ["installState", "downloadAvailable", "downloading",
@@ -3148,13 +2981,7 @@ this.DOMApplicationRegistry = {
     if (!aData.isPackage) {
       this.updateAppHandlers(null, app.manifest, app);
       if (aInstallSuccessCallback) {
-        try {
-          yield aInstallSuccessCallback(app, app.manifest);
-        } catch (e) {
-          // Ignore exceptions during the local installation of
-          // an app. If it fails, the app will anyway be considered
-          // as not installed because isLaunchable will return false.
-        }
+        yield aInstallSuccessCallback(app, app.manifest);
       }
     }
 
@@ -3240,17 +3067,8 @@ this.DOMApplicationRegistry = {
       }, true);
     }
 
-    this.updateDataStore(this.webapps[aId].localId, aNewApp.origin,
-                         aNewApp.manifestURL, aManifest);
-
     if (aInstallSuccessCallback) {
-      try {
-        yield aInstallSuccessCallback(aNewApp, aManifest, zipFile.path);
-      } catch (e) {
-        // Ignore exceptions during the local installation of
-        // an app. If it fails, the app will anyway be considered
-        // as not installed because isLaunchable will return false.
-      }
+      yield aInstallSuccessCallback(aNewApp, aManifest, zipFile.path);
     }
 
     MessageBroadcaster.broadcastMessage("Webapps:UpdateState", {
@@ -3490,21 +3308,15 @@ this.DOMApplicationRegistry = {
     let requestChannel;
 
     let appURI = NetUtil.newURI(aNewApp.origin, null, null);
-    let principal =
-      Services.scriptSecurityManager.createCodebasePrincipal(appURI,
-                                                             {appId: aNewApp.localId});
-
     if (aIsLocalFileInstall) {
       requestChannel = NetUtil.newChannel({
         uri: aFullPackagePath,
-        loadingPrincipal: principal,
-        contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER}
+        loadUsingSystemPrincipal: true}
       ).QueryInterface(Ci.nsIFileChannel);
     } else {
       requestChannel = NetUtil.newChannel({
         uri: aFullPackagePath,
-        loadingPrincipal: principal,
-        contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER}
+        loadUsingSystemPrincipal: true}
       ).QueryInterface(Ci.nsIHttpChannel);
       requestChannel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
     }
@@ -3542,10 +3354,10 @@ this.DOMApplicationRegistry = {
 
       // nsILoadContext
       appId: aOldApp.installerAppId,
-      isInBrowserElement: aOldApp.installerIsBrowser,
+      isInIsolatedMozBrowserElement: aOldApp.installerIsBrowser,
       originAttributes: {
         appId: aOldApp.installerAppId,
-        inBrowser: aOldApp.installerIsBrowser
+        inIsolatedMozBrowser: aOldApp.installerIsBrowser
       },
       usePrivateBrowsing: false,
       isContent: false,
@@ -4031,7 +3843,7 @@ this.DOMApplicationRegistry = {
         debug("Setting origin to " + uri.prePath +
               " for " + aOldApp.manifestURL);
         let newId = uri.prePath.substring(6); // "app://".length
-        if (newId in this.webapps && this._isLaunchable(this.webapps[newId])) {
+        if (newId in this.webapps) {
           throw "DUPLICATE_ORIGIN";
         }
         aOldApp.origin = uri.prePath;
@@ -4310,8 +4122,7 @@ this.DOMApplicationRegistry = {
 
     for (let id in this.webapps) {
       if (this.webapps[id].origin == aData.origin &&
-          this.webapps[id].localId == aData.appId &&
-          this._isLaunchable(this.webapps[id])) {
+          this.webapps[id].localId == aData.appId) {
         let app = AppsUtils.cloneAppObject(this.webapps[id]);
         aData.apps.push(app);
         tmp.push({ id: id });
@@ -4336,8 +4147,7 @@ this.DOMApplicationRegistry = {
     let tmp = [];
 
     for (let appId in this.webapps) {
-      if (this.webapps[appId].manifestURL == aData.manifestURL &&
-          this._isLaunchable(this.webapps[appId])) {
+      if (this.webapps[appId].manifestURL == aData.manifestURL) {
         aData.app = AppsUtils.cloneAppObject(this.webapps[appId]);
         tmp.push({ id: appId });
         break;
@@ -4358,8 +4168,7 @@ this.DOMApplicationRegistry = {
     let tmp = [];
 
     for (let id in this.webapps) {
-      if (this.webapps[id].installOrigin == aData.origin &&
-          this._isLaunchable(this.webapps[id])) {
+      if (this.webapps[id].installOrigin == aData.origin) {
         aData.apps.push(AppsUtils.cloneAppObject(this.webapps[id]));
         tmp.push({ id: id });
       }
@@ -4369,24 +4178,6 @@ this.DOMApplicationRegistry = {
       for (let i = 0; i < aResult.length; i++)
         aData.apps[i].manifest = aResult[i].manifest;
       aMm.sendAsyncMessage("Webapps:GetInstalled:Return:OK", this.formatMessage(aData));
-    });
-  },
-
-  getNotInstalled: function(aData, aMm) {
-    aData.apps = [];
-    let tmp = [];
-
-    for (let id in this.webapps) {
-      if (!this._isLaunchable(this.webapps[id])) {
-        aData.apps.push(AppsUtils.cloneAppObject(this.webapps[id]));
-        tmp.push({ id: id });
-      }
-    }
-
-    this._readManifests(tmp).then((aResult) => {
-      for (let i = 0; i < aResult.length; i++)
-        aData.apps[i].manifest = aResult[i].manifest;
-      aMm.sendAsyncMessage("Webapps:GetNotInstalled:Return:OK", this.formatMessage(aData));
     });
   },
 
@@ -4483,10 +4274,12 @@ this.DOMApplicationRegistry = {
         return "INVALID_SEGMENTS_NUMBER";
       }
 
-      // We need to translate the base64 alphabet used in JWT to our base64 alphabet
-      // before calling atob.
-      let decodedReceipt = JSON.parse(atob(segments[1].replace(/-/g, '+')
-                                                      .replace(/_/g, '/')));
+      let jwtBuffer = ChromeUtils.base64URLDecode(segments[1], {
+        // JWT/JWS prohibits padding per RFC 7515, section 2.
+        padding: "reject",
+      });
+      let textDecoder = new TextDecoder("utf-8");
+      let decodedReceipt = JSON.parse(textDecoder.decode(jwtBuffer));
       if (!decodedReceipt) {
         return "INVALID_RECEIPT_ENCODING";
       }
@@ -4805,18 +4598,8 @@ this.DOMApplicationRegistry = {
     return OS.Path.dirname(this.appsFile);
   },
 
-  updateDataStoreEntriesFromLocalId: function(aLocalId) {
-    let app = appsService.getAppByLocalId(aLocalId);
-    if (app) {
-      this.updateDataStoreForApp(app.id);
-    }
-  },
-
-  _isLaunchable: function(aApp) {
-    if (this.allAppsLaunchable)
-      return true;
-
-    return WebappOSUtils.isLaunchable(aApp);
+  areAnyAppsInstalled: function() {
+    return AppsUtils.areAnyAppsInstalled(this.webapps);
   },
 
   _notifyCategoryAndObservers: function(subject, topic, data,  msg) {
@@ -4908,7 +4691,7 @@ this.DOMApplicationRegistry = {
   _clearOriginData: function(appId, browserOnly) {
     let attributes = {appId: appId};
     if (browserOnly) {
-      attributes.inBrowser = true;
+      attributes.inIsolatedMozBrowser = true;
     }
     this._notifyCategoryAndObservers(null, "clear-origin-data", JSON.stringify(attributes));
   }

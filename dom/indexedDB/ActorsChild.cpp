@@ -743,10 +743,10 @@ DispatchErrorEvent(IDBRequest* aRequest,
   MOZ_ASSERT(!transaction || transaction->IsOpen() || transaction->IsAborted());
 
   if (transaction && transaction->IsOpen()) {
-    WidgetEvent* internalEvent = aEvent->GetInternalNSEvent();
+    WidgetEvent* internalEvent = aEvent->WidgetEventPtr();
     MOZ_ASSERT(internalEvent);
 
-    if (internalEvent->mFlags.mExceptionHasBeenRisen) {
+    if (internalEvent->mFlags.mExceptionWasRaised) {
       transaction->Abort(NS_ERROR_DOM_INDEXEDDB_ABORT_ERR);
     } else if (doDefault) {
       transaction->Abort(request);
@@ -816,12 +816,12 @@ DispatchSuccessEvent(ResultHelper* aResultHelper,
   MOZ_ASSERT_IF(transaction,
                 transaction->IsOpen() || transaction->IsAborted());
 
-  WidgetEvent* internalEvent = aEvent->GetInternalNSEvent();
+  WidgetEvent* internalEvent = aEvent->WidgetEventPtr();
   MOZ_ASSERT(internalEvent);
 
   if (transaction &&
       transaction->IsOpen() &&
-      internalEvent->mFlags.mExceptionHasBeenRisen) {
+      internalEvent->mFlags.mExceptionWasRaised) {
     transaction->Abort(NS_ERROR_DOM_INDEXEDDB_ABORT_ERR);
   }
 }
@@ -898,7 +898,7 @@ protected:
   Recv__delete__(const uint32_t& aPermission) override;
 };
 
-class WorkerPermissionChallenge final : public nsRunnable
+class WorkerPermissionChallenge final : public Runnable
                                       , public WorkerFeature
 {
 public:
@@ -929,7 +929,7 @@ public:
   }
 
   virtual bool
-  Notify(JSContext* aCx, workers::Status aStatus) override
+  Notify(workers::Status aStatus) override
   {
     // We don't care about the notification. We just want to keep the
     // mWorkerPrivate alive.
@@ -943,7 +943,7 @@ public:
       RefPtr<WorkerPermissionOperationCompleted> runnable =
         new WorkerPermissionOperationCompleted(mWorkerPrivate, this);
 
-      MOZ_ALWAYS_TRUE(runnable->Dispatch(nullptr));
+      MOZ_ALWAYS_TRUE(runnable->Dispatch());
       return;
     }
 
@@ -959,8 +959,7 @@ public:
     mActor = nullptr;
 
     mWorkerPrivate->AssertIsOnWorkerThread();
-    JSContext* cx = mWorkerPrivate->GetJSContext();
-    mWorkerPrivate->RemoveFeature(cx, this);
+    mWorkerPrivate->RemoveFeature(this);
   }
 
 private:
@@ -975,7 +974,7 @@ private:
       wp = wp->GetParent();
     }
 
-    nsPIDOMWindow* window = wp->GetWindow();
+    nsPIDOMWindowInner* window = wp->GetWindow();
     if (!window) {
       return true;
     }
@@ -1412,14 +1411,11 @@ BackgroundFactoryRequestChild::RecvPermissionChallenge(
       new WorkerPermissionChallenge(workerPrivate, this, mFactory,
                                     aPrincipalInfo);
 
-    JSContext* cx = workerPrivate->GetJSContext();
-    MOZ_ASSERT(cx);
-
-    if (NS_WARN_IF(!workerPrivate->AddFeature(cx, challenge))) {
+    if (NS_WARN_IF(!workerPrivate->AddFeature(challenge))) {
       return false;
     }
 
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(challenge)));
+    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(challenge));
     return true;
   }
 
@@ -1431,7 +1427,7 @@ BackgroundFactoryRequestChild::RecvPermissionChallenge(
   }
 
   if (XRE_IsParentProcess()) {
-    nsCOMPtr<nsPIDOMWindow> window = mFactory->GetParentObject();
+    nsCOMPtr<nsPIDOMWindowInner> window = mFactory->GetParentObject();
     MOZ_ASSERT(window);
 
     nsCOMPtr<Element> ownerElement =
@@ -1794,7 +1790,7 @@ BackgroundDatabaseChild::RecvVersionChange(const uint64_t& aOldVersion,
   RefPtr<IDBDatabase> kungFuDeathGrip = mDatabase;
 
   // Handle bfcache'd windows.
-  if (nsPIDOMWindow* owner = mDatabase->GetOwner()) {
+  if (nsPIDOMWindowInner* owner = mDatabase->GetOwner()) {
     // The database must be closed if the window is already frozen.
     bool shouldAbortAndClose = owner->IsFrozen();
 
@@ -2534,8 +2530,10 @@ BackgroundRequestChild::Recv__delete__(const RequestResponse& aResponse)
  * BackgroundCursorChild
  ******************************************************************************/
 
+// Does not need to be threadsafe since this only runs on one thread, but
+// inheriting from CancelableRunnable is easy.
 class BackgroundCursorChild::DelayedActionRunnable final
-  : public nsICancelableRunnable
+  : public CancelableRunnable
 {
   using ActionFunc = void (BackgroundCursorChild::*)();
 
@@ -2556,15 +2554,12 @@ public:
     MOZ_ASSERT(mActionFunc);
   }
 
-  // Does not need to be threadsafe since this only runs on one thread.
-  NS_DECL_ISUPPORTS
-
 private:
   ~DelayedActionRunnable()
   { }
 
   NS_DECL_NSIRUNNABLE
-  NS_DECL_NSICANCELABLERUNNABLE
+  nsresult Cancel() override;
 };
 
 BackgroundCursorChild::BackgroundCursorChild(IDBRequest* aRequest,
@@ -2681,7 +2676,7 @@ BackgroundCursorChild::SendContinueInternal(const CursorRequestParams& aParams,
   if (!mCachedResponses.IsEmpty()) {
     nsCOMPtr<nsIRunnable> continueRunnable = new DelayedActionRunnable(
       this, &BackgroundCursorChild::SendDelayedContinueInternal);
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToCurrentThread(continueRunnable)));
+    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToCurrentThread(continueRunnable));
   } else {
     MOZ_ALWAYS_TRUE(PBackgroundIDBCursorChild::SendContinue(params, key));
   }
@@ -2770,7 +2765,7 @@ BackgroundCursorChild::HandleResponse(const void_t& aResponse)
   if (!mCursor) {
     nsCOMPtr<nsIRunnable> deleteRunnable = new DelayedActionRunnable(
       this, &BackgroundCursorChild::SendDeleteMeInternal);
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToCurrentThread(deleteRunnable)));
+    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToCurrentThread(deleteRunnable));
   }
 }
 
@@ -3001,10 +2996,6 @@ BackgroundCursorChild::RecvResponse(const CursorResponse& aResponse)
   return true;
 }
 
-NS_IMPL_ISUPPORTS(BackgroundCursorChild::DelayedActionRunnable,
-                  nsIRunnable,
-                  nsICancelableRunnable)
-
 NS_IMETHODIMP
 BackgroundCursorChild::
 DelayedActionRunnable::Run()
@@ -3022,7 +3013,7 @@ DelayedActionRunnable::Run()
   return NS_OK;
 }
 
-NS_IMETHODIMP
+nsresult
 BackgroundCursorChild::
 DelayedActionRunnable::Cancel()
 {

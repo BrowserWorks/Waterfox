@@ -20,8 +20,7 @@
 #include <utils/AndroidThreads.h>
 #endif
 
-extern mozilla::LogModule* GetPDMLog();
-#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+#define LOG(...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 using namespace android;
 
@@ -176,7 +175,7 @@ GonkDecoderManager::ProcessInput(bool aEndOfStream)
     }
   } else {
     GMDD_LOG("input processed: error#%d", rv);
-    mDecodeCallback->Error();
+    mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
   }
 }
 
@@ -190,7 +189,7 @@ GonkDecoderManager::ProcessFlush()
   mWaitOutput.Clear();
   if (mDecoder->flush() != OK) {
     GMDD_LOG("flush error");
-    mDecodeCallback->Error();
+    mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
   }
   mIsFlushing = false;
   lock.NotifyAll();
@@ -226,7 +225,7 @@ GonkDecoderManager::ProcessToDo(bool aEndOfStream)
   mToDo.clear();
 
   if (NumQueuedSamples() > 0 && ProcessQueuedSamples() < 0) {
-    mDecodeCallback->Error();
+    mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
     return;
   }
 
@@ -248,11 +247,12 @@ GonkDecoderManager::ProcessToDo(bool aEndOfStream)
       MOZ_ASSERT(mWaitOutput.Length() == 1);
       mWaitOutput.RemoveElementAt(0);
       mDecodeCallback->DrainComplete();
+      ResetEOS();
       return;
     } else if (rv == NS_ERROR_NOT_AVAILABLE) {
       break;
     } else {
-      mDecodeCallback->Error();
+      mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
       return;
     }
   }
@@ -270,6 +270,17 @@ GonkDecoderManager::ProcessToDo(bool aEndOfStream)
       mToDo->setInt32("input-eos", 1);
     }
     mDecoder->requestActivityNotification(mToDo);
+  }
+}
+
+void
+GonkDecoderManager::ResetEOS()
+{
+  // After eos, android::MediaCodec needs to be flushed to receive next input
+  mWaitOutput.Clear();
+  if (mDecoder->flush() != OK) {
+    GMDD_LOG("flush error");
+    mDecodeCallback->Error(MediaDataDecoderError::FATAL_ERROR);
   }
 }
 
@@ -319,7 +330,6 @@ GonkDecoderManager::OnTaskLooper()
 #endif
 
 GonkMediaDataDecoder::GonkMediaDataDecoder(GonkDecoderManager* aManager,
-                                           FlushableTaskQueue* aTaskQueue,
                                            MediaDataDecoderCallback* aCallback)
   : mManager(aManager)
 {

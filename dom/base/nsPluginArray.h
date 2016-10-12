@@ -29,8 +29,8 @@ public:
   // nsIObserver
   NS_DECL_NSIOBSERVER
 
-  explicit nsPluginArray(nsPIDOMWindow* aWindow);
-  nsPIDOMWindow* GetParentObject() const;
+  explicit nsPluginArray(nsPIDOMWindowInner* aWindow);
+  nsPIDOMWindowInner* GetParentObject() const;
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsPluginArray registers itself as an observer with a weak reference.
@@ -49,9 +49,8 @@ public:
   void Refresh(bool aReloadDocuments);
   nsPluginElement* IndexedGetter(uint32_t aIndex, bool &aFound);
   nsPluginElement* NamedGetter(const nsAString& aName, bool &aFound);
-  bool NameIsEnumerable(const nsAString& aName);
   uint32_t Length();
-  void GetSupportedNames(unsigned, nsTArray<nsString>& aRetval);
+  void GetSupportedNames(nsTArray<nsString>& aRetval);
 
 private:
   virtual ~nsPluginArray();
@@ -59,7 +58,7 @@ private:
   bool AllowPlugins() const;
   void EnsurePlugins();
 
-  nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsCOMPtr<nsPIDOMWindowInner> mWindow;
   nsTArray<RefPtr<nsPluginElement> > mPlugins;
 };
 
@@ -70,9 +69,10 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(nsPluginElement)
 
-  nsPluginElement(nsPIDOMWindow* aWindow, nsIInternalPluginTag* aPluginTag);
+  nsPluginElement(nsPIDOMWindowInner* aWindow,
+                  nsIInternalPluginTag* aPluginTag);
 
-  nsPIDOMWindow* GetParentObject() const;
+  nsPIDOMWindowInner* GetParentObject() const;
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsIInternalPluginTag* PluginTag() const
@@ -90,9 +90,8 @@ public:
   nsMimeType* NamedItem(const nsAString& name);
   nsMimeType* IndexedGetter(uint32_t index, bool &found);
   nsMimeType* NamedGetter(const nsAString& name, bool &found);
-  bool NameIsEnumerable(const nsAString& aName);
   uint32_t Length();
-  void GetSupportedNames(unsigned, nsTArray<nsString>& retval);
+  void GetSupportedNames(nsTArray<nsString>& retval);
 
   nsTArray<RefPtr<nsMimeType> >& MimeTypes();
 
@@ -101,7 +100,7 @@ protected:
 
   void EnsurePluginMimeTypes();
 
-  nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsCOMPtr<nsPIDOMWindowInner> mWindow;
   nsCOMPtr<nsIInternalPluginTag> mPluginTag;
   nsTArray<RefPtr<nsMimeType> > mMimeTypes;
 };

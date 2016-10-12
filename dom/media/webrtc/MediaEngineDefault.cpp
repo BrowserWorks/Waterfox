@@ -49,7 +49,8 @@ MediaEngineDefaultVideoSource::MediaEngineDefaultVideoSource()
   , mMonitor("Fake video")
   , mCb(16), mCr(16)
 {
-  mImageContainer = layers::LayerManager::CreateImageContainer();
+  mImageContainer =
+    layers::LayerManager::CreateImageContainer(layers::ImageContainer::ASYNCHRONOUS);
 }
 
 MediaEngineDefaultVideoSource::~MediaEngineDefaultVideoSource()
@@ -87,7 +88,8 @@ MediaEngineDefaultVideoSource::GetBestFitnessDistance(
 nsresult
 MediaEngineDefaultVideoSource::Allocate(const dom::MediaTrackConstraints &aConstraints,
                                         const MediaEnginePrefs &aPrefs,
-                                        const nsString& aDeviceId)
+                                        const nsString& aDeviceId,
+                                        const nsACString& aOrigin)
 {
   if (mState != kReleased) {
     return NS_ERROR_FAILURE;
@@ -144,7 +146,8 @@ static void ReleaseFrame(layers::PlanarYCbCrData& aData)
 }
 
 nsresult
-MediaEngineDefaultVideoSource::Start(SourceMediaStream* aStream, TrackID aID)
+MediaEngineDefaultVideoSource::Start(SourceMediaStream* aStream, TrackID aID,
+                                     const PrincipalHandle& aPrincipalHandle)
 {
   if (mState != kAllocated) {
     return NS_ERROR_FAILURE;
@@ -249,7 +252,7 @@ MediaEngineDefaultVideoSource::Notify(nsITimer* aTimer)
 		     0, 0);
 #endif
 
-  bool setData = ycbcr_image->SetData(data);
+  bool setData = ycbcr_image->CopyData(data);
   MOZ_ASSERT(setData);
 
   // SetData copies data, so we can free the frame
@@ -271,7 +274,8 @@ void
 MediaEngineDefaultVideoSource::NotifyPull(MediaStreamGraph* aGraph,
                                           SourceMediaStream *aSource,
                                           TrackID aID,
-                                          StreamTime aDesiredTime)
+                                          StreamTime aDesiredTime,
+                                          const PrincipalHandle& aPrincipalHandle)
 {
   // AddTrack takes ownership of segment
   VideoSegment segment;
@@ -287,7 +291,7 @@ MediaEngineDefaultVideoSource::NotifyPull(MediaStreamGraph* aGraph,
   if (delta > 0) {
     // nullptr images are allowed
     IntSize size(image ? mOpts.mWidth : 0, image ? mOpts.mHeight : 0);
-    segment.AppendFrame(image.forget(), delta, size);
+    segment.AppendFrame(image.forget(), delta, size, aPrincipalHandle);
     // This can fail if either a) we haven't added the track yet, or b)
     // we've removed or finished the track.
     aSource->AppendToTrack(aID, &segment);
@@ -357,6 +361,7 @@ NS_IMPL_ISUPPORTS(MediaEngineDefaultAudioSource, nsITimerCallback)
 
 MediaEngineDefaultAudioSource::MediaEngineDefaultAudioSource()
   : MediaEngineAudioSource(kReleased)
+  , mPrincipalHandle(PRINCIPAL_HANDLE_NONE)
   , mTimer(nullptr)
 {
 }
@@ -396,7 +401,8 @@ MediaEngineDefaultAudioSource::GetBestFitnessDistance(
 nsresult
 MediaEngineDefaultAudioSource::Allocate(const dom::MediaTrackConstraints &aConstraints,
                                         const MediaEnginePrefs &aPrefs,
-                                        const nsString& aDeviceId)
+                                        const nsString& aDeviceId,
+                                        const nsACString& aOrigin)
 {
   if (mState != kReleased) {
     return NS_ERROR_FAILURE;
@@ -420,7 +426,8 @@ MediaEngineDefaultAudioSource::Deallocate()
 }
 
 nsresult
-MediaEngineDefaultAudioSource::Start(SourceMediaStream* aStream, TrackID aID)
+MediaEngineDefaultAudioSource::Start(SourceMediaStream* aStream, TrackID aID,
+                                     const PrincipalHandle& aPrincipalHandle)
 {
   if (mState != kAllocated) {
     return NS_ERROR_FAILURE;
@@ -453,6 +460,9 @@ MediaEngineDefaultAudioSource::Start(SourceMediaStream* aStream, TrackID aID)
 
   // Remember TrackID so we can finish later
   mTrackID = aID;
+
+  // Remember PrincipalHandle since we don't append in NotifyPull.
+  mPrincipalHandle = aPrincipalHandle;
 
   mLastNotify = TimeStamp::Now();
 
@@ -510,9 +520,9 @@ MediaEngineDefaultAudioSource::AppendToSegment(AudioSegment& aSegment,
   int16_t* dest = static_cast<int16_t*>(buffer->Data());
 
   mSineGenerator->generate(dest, aSamples);
-  nsAutoTArray<const int16_t*,1> channels;
+  AutoTArray<const int16_t*,1> channels;
   channels.AppendElement(dest);
-  aSegment.AppendFrames(buffer.forget(), channels, aSamples);
+  aSegment.AppendFrames(buffer.forget(), channels, aSamples, mPrincipalHandle);
 }
 
 NS_IMETHODIMP

@@ -16,6 +16,7 @@ if here not in sys.path:
 from automation import Automation
 from b2gautomation import B2GRemoteAutomation
 from runreftestmulet import run_test_harness as run_mulet_reftests
+from output import OutputHandler
 from remotereftest import RemoteReftestResolver, ReftestServer
 from runreftest import RefTest
 import reftestcommandline
@@ -51,6 +52,7 @@ class ProfileConfigParser(ConfigParser.RawConfigParser):
 class B2GRemoteReftest(RefTest):
 
     _devicemanager = None
+    use_marionette = False
     localProfile = None
     remoteApp = ''
     profile = None
@@ -249,9 +251,6 @@ class B2GRemoteReftest(RefTest):
         prefs["reftest.browser.iframe.enabled"] = False
         prefs["reftest.remote"] = True
 
-        # Set a future policy version to avoid the telemetry prompt.
-        prefs["toolkit.telemetry.prompted"] = 999
-        prefs["toolkit.telemetry.notifiedOptOut"] = 999
         # Make sure we disable system updates
         prefs["app.update.enabled"] = False
         prefs["app.update.url"] = ""
@@ -311,6 +310,8 @@ class B2GRemoteReftest(RefTest):
                timeout=None, debuggerInfo=None,
                symbolsPath=None, options=None,
                valgrindPath=None, valgrindArgs=None, valgrindSuppFiles=None):
+
+        outputHandler = OutputHandler(self.log, options.utilityPath, options.symbolsPath)
         status = self.automation.runApp(None, env,
                                         binary,
                                         profile.profile,
@@ -319,12 +320,13 @@ class B2GRemoteReftest(RefTest):
                                         xrePath=options.xrePath,
                                         debuggerInfo=debuggerInfo,
                                         symbolsPath=symbolsPath,
-                                        timeout=timeout)
+                                        timeout=timeout,
+                                        outputHandler=outputHandler)
         return status
 
 
 def run_remote_reftests(parser, options):
-    auto = B2GRemoteAutomation(None, "fennec", context_chrome=True)
+    auto = B2GRemoteAutomation(None, "fennec")
 
     # create our Marionette instance
     kwargs = {}
@@ -380,7 +382,6 @@ def run_remote_reftests(parser, options):
     auto.setProduct("b2g")
     auto.test_script = os.path.join(here, 'b2g_start_script.js')
     auto.test_script_args = [options.remoteWebServer, options.httpPort]
-    auto.logFinish = "REFTEST TEST-START | Shutdown"
 
     reftest = B2GRemoteReftest(auto, dm, options, here)
     parser.validate(options, reftest)

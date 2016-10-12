@@ -12,6 +12,7 @@
 #include "mozilla/ClearOnShutdown.h" // for ClearOnShutdown
 #include "mozilla/dom/CheckerboardReportServiceBinding.h" // for dom::CheckerboardReports
 #include "nsContentUtils.h" // for nsContentUtils
+#include "nsXULAppAPI.h"
 
 namespace mozilla {
 namespace layers {
@@ -131,8 +132,9 @@ CheckerboardReportService::IsEnabled(JSContext* aCtx, JSObject* aGlobal)
   if (!XRE_IsParentProcess()) {
     return false;
   }
-
-  return nsContentUtils::IsSpecificAboutPage(aGlobal, "about:checkerboard");
+  // Allow privileged code or about:checkerboard (unprivileged) to access this.
+  return nsContentUtils::IsCallerChrome()
+      || nsContentUtils::IsSpecificAboutPage(aGlobal, "about:checkerboard");
 }
 
 /*static*/ already_AddRefed<CheckerboardReportService>

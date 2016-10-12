@@ -119,6 +119,24 @@ function OnInitialLoad()
     LogWarning("Using browser remote="+ gBrowserIsRemote +"\n");
 }
 
+function SetFailureTimeout(cb, timeout)
+{
+  var targetTime = Date.now() + timeout;
+
+  var wrapper = function() {
+    // Timeouts can fire prematurely in some cases (e.g. in chaos mode). If this
+    // happens, set another timeout for the remaining time.
+    let remainingMs = targetTime - Date.now();
+    if (remainingMs > 0) {
+      SetFailureTimeout(cb, remainingMs);
+    } else {
+      cb();
+    }
+  }
+
+  gFailureTimeout = setTimeout(wrapper, timeout);
+}
+
 function StartTestURI(type, uri, timeout)
 {
     // Reset gExplicitPendingPaintCount in case there was a timeout or
@@ -136,7 +154,7 @@ function StartTestURI(type, uri, timeout)
     if (gFailureTimeout != null) {
         SendException("program error managing timeouts\n");
     }
-    gFailureTimeout = setTimeout(LoadFailed, timeout);
+    SetFailureTimeout(LoadFailed, timeout);
 
     LoadURI(gCurrentURL);
 }
@@ -567,7 +585,10 @@ function WaitForTestEnd(contentRootElement, inPrintMode, spellCheckedElements) {
 
             var willSnapshot = (gCurrentTestType != TYPE_SCRIPT) &&
                                (gCurrentTestType != TYPE_LOAD);
-            if (willSnapshot && windowUtils().flushApzRepaints()) {
+            var noFlush =
+                !(contentRootElement &&
+                  contentRootElement.classList.contains("reftest-no-flush"));
+            if (noFlush && willSnapshot && windowUtils().flushApzRepaints()) {
                 LogInfo("MakeProgress: done requesting APZ flush");
             } else {
                 LogInfo("MakeProgress: APZ flush not required");

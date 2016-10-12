@@ -21,7 +21,7 @@
 #include "nsHttpHandler.h"
 #include "nsIHttpChannelInternal.h"
 #include "nsIForcePendingChannel.h"
-#include "nsIUploadChannel.h"
+#include "nsIFormPOSTActionChannel.h"
 #include "nsIUploadChannel2.h"
 #include "nsIProgressEventSink.h"
 #include "nsIURI.h"
@@ -66,7 +66,7 @@ class HttpBaseChannel : public nsHashPropertyBag
                       , public nsIEncodedChannel
                       , public nsIHttpChannel
                       , public nsIHttpChannelInternal
-                      , public nsIUploadChannel
+                      , public nsIFormPOSTActionChannel
                       , public nsIUploadChannel2
                       , public nsISupportsPriority
                       , public nsIClassOfService
@@ -83,6 +83,7 @@ protected:
 public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIUPLOADCHANNEL
+  NS_DECL_NSIFORMPOSTACTIONCHANNEL
   NS_DECL_NSIUPLOADCHANNEL2
   NS_DECL_NSITRACEABLECHANNEL
   NS_DECL_NSITIMEDCHANNEL
@@ -91,7 +92,8 @@ public:
 
   virtual nsresult Init(nsIURI *aURI, uint32_t aCaps, nsProxyInfo *aProxyInfo,
                         uint32_t aProxyResolveFlags,
-                        nsIURI *aProxyURI);
+                        nsIURI *aProxyURI,
+                        const nsID& aChannelId);
 
   // nsIRequest
   NS_IMETHOD GetName(nsACString& aName) override;
@@ -154,6 +156,9 @@ public:
   NS_IMETHOD SetResponseHeader(const nsACString& header,
                                const nsACString& value, bool merge) override;
   NS_IMETHOD VisitResponseHeaders(nsIHttpHeaderVisitor *visitor) override;
+  NS_IMETHOD GetOriginalResponseHeader(const nsACString &aHeader,
+                                       nsIHttpHeaderVisitor *aVisitor) override;
+  NS_IMETHOD VisitOriginalResponseHeaders(nsIHttpHeaderVisitor *aVisitor) override;
   NS_IMETHOD GetAllowPipelining(bool *value) override;
   NS_IMETHOD SetAllowPipelining(bool value) override;
   NS_IMETHOD GetAllowSTS(bool *value) override;
@@ -167,14 +172,16 @@ public:
   NS_IMETHOD GetResponseStatusText(nsACString& aValue) override;
   NS_IMETHOD GetRequestSucceeded(bool *aValue) override;
   NS_IMETHOD RedirectTo(nsIURI *newURI) override;
-  NS_IMETHOD GetSchedulingContextID(nsID *aSCID) override;
+  NS_IMETHOD GetRequestContextID(nsID *aRCID) override;
   NS_IMETHOD GetTransferSize(uint64_t *aTransferSize) override;
   NS_IMETHOD GetDecodedBodySize(uint64_t *aDecodedBodySize) override;
   NS_IMETHOD GetEncodedBodySize(uint64_t *aEncodedBodySize) override;
-  NS_IMETHOD SetSchedulingContextID(const nsID aSCID) override;
+  NS_IMETHOD SetRequestContextID(const nsID aRCID) override;
   NS_IMETHOD GetIsMainDocumentChannel(bool* aValue) override;
   NS_IMETHOD SetIsMainDocumentChannel(bool aValue) override;
   NS_IMETHOD GetProtocolVersion(nsACString & aProtocolVersion) override;
+  NS_IMETHOD GetChannelId(nsACString& aChannelId) override;
+  NS_IMETHOD SetChannelId(const nsACString& aChannelId) override;
 
   // nsIHttpChannelInternal
   NS_IMETHOD GetDocumentURI(nsIURI **aDocumentURI) override;
@@ -215,6 +222,8 @@ public:
   NS_IMETHOD SetCorsMode(uint32_t aCorsMode) override;
   NS_IMETHOD GetRedirectMode(uint32_t* aRedirectMode) override;
   NS_IMETHOD SetRedirectMode(uint32_t aRedirectMode) override;
+  NS_IMETHOD GetFetchCacheMode(uint32_t* aFetchCacheMode) override;
+  NS_IMETHOD SetFetchCacheMode(uint32_t aFetchCacheMode) override;
   NS_IMETHOD GetTopWindowURI(nsIURI **aTopWindowURI) override;
   NS_IMETHOD GetProxyURI(nsIURI **proxyURI) override;
   virtual void SetCorsPreflightParameters(const nsTArray<nsCString>& unsafeHeaders) override;
@@ -302,10 +311,6 @@ public: /* Necko internal use only... */
     // the new mUploadStream.
     void EnsureUploadStreamIsCloneableComplete(nsresult aStatus);
 
-    // Returns an https URI for channels that need to go through secure
-    // upgrades.
-    static nsresult GetSecureUpgradedURI(nsIURI* aURI, nsIURI** aUpgradedURI);
-
 protected:
   nsCOMArray<nsISecurityConsoleMessage> mSecurityConsoleMessages;
 
@@ -317,6 +322,8 @@ protected:
   void ReleaseListeners();
 
   nsPerformance* GetPerformance();
+  nsIURI* GetReferringPage();
+  nsPIDOMWindowInner* GetInnerDOMWindow();
 
   void AddCookiesToRequest();
   virtual nsresult SetupReplacementChannel(nsIURI *,
@@ -488,10 +495,12 @@ protected:
   bool mCorsIncludeCredentials;
   uint32_t mCorsMode;
   uint32_t mRedirectMode;
+  uint32_t mFetchCacheMode;
 
-  // This parameter is used to ensure that we do not call OnStartRequest more
-  // than once.
+  // These parameters are used to ensure that we do not call OnStartRequest and
+  // OnStopRequest more than once.
   bool mOnStartRequestCalled;
+  bool mOnStopRequestCalled;
 
   uint64_t mTransferSize;
   uint64_t mDecodedBodySize;
@@ -500,8 +509,8 @@ protected:
   // The network interface id that's associated with this channel.
   nsCString mNetworkInterfaceId;
 
-  nsID mSchedulingContextID;
-  bool EnsureSchedulingContextID();
+  nsID mRequestContextID;
+  bool EnsureRequestContextID();
 
   bool                              mRequireCORSPreflight;
   nsTArray<nsCString>               mUnsafeHeaders;
@@ -509,6 +518,8 @@ protected:
   nsCOMPtr<nsIConsoleReportCollector> mReportCollector;
 
   bool mForceMainDocumentChannel;
+
+  nsID mChannelId;
 };
 
 // Share some code while working around C++'s absurd inability to handle casting
@@ -579,11 +590,11 @@ inline void HttpAsyncAborter<T>::HandleAsyncAbort()
 
 template <class T>
 nsresult HttpAsyncAborter<T>::AsyncCall(void (T::*funcPtr)(),
-                                   nsRunnableMethod<T> **retval)
+                                        nsRunnableMethod<T> **retval)
 {
   nsresult rv;
 
-  RefPtr<nsRunnableMethod<T> > event = NS_NewRunnableMethod(mThis, funcPtr);
+  RefPtr<nsRunnableMethod<T>> event = NewRunnableMethod(mThis, funcPtr);
   rv = NS_DispatchToCurrentThread(event);
   if (NS_SUCCEEDED(rv) && retval) {
     *retval = event;

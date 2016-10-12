@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -12,9 +14,14 @@
 
 #include <string>
 
+#include "nspr.h"
 #include "base/eintr_wrapper.h"
 
-extern "C" char **environ __attribute__((__visibility__("default")));
+namespace {
+
+static mozilla::EnvironmentLog gProcessLog("MOZ_PROCESS_LOG");
+
+}  // namespace
 
 namespace base {
 
@@ -66,6 +73,7 @@ bool LaunchApp(const std::vector<std::string>& argv,
   // Existing variables are overwritten by env_vars_to_set.
   int pos = 0;
   environment_map combined_env_vars = env_vars_to_set;
+  char **environ = PR_DuplicateEnvironment();
   while(environ[pos] != NULL) {
     std::string varString = environ[pos];
     std::string varName = varString.substr(0, varString.find_first_of('='));
@@ -73,8 +81,9 @@ bool LaunchApp(const std::vector<std::string>& argv,
     if (combined_env_vars.find(varName) == combined_env_vars.end()) {
       combined_env_vars[varName] = varValue;
     }
-    pos++;
+    PR_Free(environ[pos++]);
   }
+  PR_Free(environ);
   int varsLen = combined_env_vars.size() + 1;
 
   char** vars = new char*[varsLen];
@@ -132,6 +141,8 @@ bool LaunchApp(const std::vector<std::string>& argv,
   if (!spawn_succeeded || !process_handle_valid) {
     retval = false;
   } else {
+    gProcessLog.print("==> process %d launched child process %d\n",
+                      GetCurrentProcId(), pid);
     if (wait)
       HANDLE_EINTR(waitpid(pid, 0, 0));
 

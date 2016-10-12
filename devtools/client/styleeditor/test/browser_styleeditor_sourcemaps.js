@@ -47,14 +47,14 @@ const contents = {
     "jZjA2O1xuXG4jaGVhZGVyIHtcbiAgY29sb3I6ICRwaW5rO1xufSJdfQ==*/"
   ].join("\n"),
   "test-stylus.styl": [
-   "paulrougetpink = #f06;",
-   "",
-   "div",
-   "  color: paulrougetpink",
-   "",
-  "span",
-  "  background-color: #EEE",
-  ""
+    "paulrougetpink = #f06;",
+    "",
+    "div",
+    "  color: paulrougetpink",
+    "",
+    "span",
+    "  background-color: #EEE",
+    ""
   ].join("\n"),
   "test-stylus.css": [
     "div {",
@@ -77,7 +77,7 @@ const origNames = ["sourcemaps.scss", "contained.scss", "test-stylus.styl"];
 
 waitForExplicitFinish();
 
-add_task(function*() {
+add_task(function* () {
   let {ui} = yield openStyleEditorForURL(TESTCASE_URI);
 
   is(ui.editors.length, 4,

@@ -1,7 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Tests that the $0 console helper works as intended.
 
@@ -48,7 +48,7 @@ function setupHighlighterTests() {
   openInspector().then(runSelectionTests);
 }
 
-var runSelectionTests = Task.async(function*(aInspector) {
+var runSelectionTests = Task.async(function* (aInspector) {
   inspector = aInspector;
 
   let onPickerStarted = inspector.toolbox.once("picker-started");
@@ -104,6 +104,6 @@ function test() {
     waitForFocus(createDocument, content);
   }, true);
 
-  content.location = "data:text/html;charset=utf-8,test for highlighter " +
-                     "helper in web console";
+  BrowserTestUtils.loadURI(gBrowser.selectedBrowser,
+    "data:text/html;charset=utf-8,test for highlighter helper in web console");
 }

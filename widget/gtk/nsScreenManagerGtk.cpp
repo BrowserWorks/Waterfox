@@ -4,10 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsScreenManagerGtk.h"
+
+#include "mozilla/RefPtr.h"
 #include "nsScreenGtk.h"
 #include "nsIComponentManager.h"
 #include "nsRect.h"
-#include "nsAutoPtr.h"
 #include "nsGtkUtils.h"
 
 #define SCREEN_MANAGER_LIBRARY_LOAD_FAILED ((PRLibrary*)1)
@@ -237,30 +238,12 @@ nsScreenManagerGtk :: ScreenForId ( uint32_t aId, nsIScreen **outScreen )
 // Returns the screen that contains the rectangle. If the rect overlaps
 // multiple screens, it picks the screen with the greatest area of intersection.
 //
-// The coordinates are in CSS pixels (not app units) and in screen coordinates.
+// The coordinates are in desktop pixels.
 //
 NS_IMETHODIMP
-nsScreenManagerGtk :: ScreenForRect( int32_t aX, int32_t aY,
-                                     int32_t aWidth, int32_t aHeight,
-                                     nsIScreen **aOutScreen )
-{
-  uint32_t scale = nsScreenGtk::GetDPIScale();
-  return ScreenForRectPix(aX*scale, aY*scale, aWidth*scale, aHeight*scale,
-                          aOutScreen);
-}
-
-//
-// ScreenForRectPix
-//
-// Returns the screen that contains the rectangle. If the rect overlaps
-// multiple screens, it picks the screen with the greatest area of intersection.
-//
-// The coordinates are in device (X11) pixels.
-//
-nsresult
-nsScreenManagerGtk :: ScreenForRectPix( int32_t aX, int32_t aY,
-                                        int32_t aWidth, int32_t aHeight,
-                                        nsIScreen **aOutScreen )
+nsScreenManagerGtk::ScreenForRect(int32_t aX, int32_t aY,
+                                  int32_t aWidth, int32_t aHeight,
+                                  nsIScreen **aOutScreen)
 {
   nsresult rv;
   rv = EnsureInit();
@@ -374,7 +357,7 @@ nsScreenManagerGtk :: ScreenForNativeWidget (void *aWidget, nsIScreen **outScree
     gdk_window_get_geometry(GDK_WINDOW(aWidget), &x, &y, &width, &height);
 #endif
     gdk_window_get_origin(GDK_WINDOW(aWidget), &x, &y);
-    rv = ScreenForRectPix(x, y, width, height, outScreen);
+    rv = ScreenForRect(x, y, width, height, outScreen);
   } else {
     rv = GetPrimaryScreen(outScreen);
   }

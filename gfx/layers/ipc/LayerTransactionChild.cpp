@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "LayerTransactionChild.h"
+#include "mozilla/gfx/Logging.h"
 #include "mozilla/layers/CompositableClient.h"  // for CompositableChild
 #include "mozilla/layers/PCompositableChild.h"  // for PCompositableChild
 #include "mozilla/layers/PLayerChild.h"  // for PLayerChild
@@ -27,7 +28,7 @@ LayerTransactionChild::Destroy()
     return;
   }
   // mDestroyed is used to prevent calling Send__delete__() twice.
-  // When this function is called from CompositorChild::Destroy(),
+  // When this function is called from CompositorBridgeChild::Destroy(),
   // under Send__delete__() call, this function is called from
   // ShadowLayerForwarder's destructor.
   // When it happens, IPCOpen() is still true.
@@ -35,14 +36,6 @@ LayerTransactionChild::Destroy()
   mDestroyed = true;
   MOZ_ASSERT(0 == ManagedPLayerChild().Count(),
              "layers should have been cleaned up by now");
-
-  const ManagedContainer<PTextureChild>& textures = ManagedPTextureChild();
-  for (auto iter = textures.ConstIter(); !iter.Done(); iter.Next()) {
-    TextureClient* texture = TextureClient::AsTextureClient(iter.Get()->GetKey());
-    if (texture) {
-      texture->Destroy();
-    }
-  }
 
   SendShutdown();
 }
@@ -123,21 +116,6 @@ LayerTransactionChild::ActorDestroy(ActorDestroyReason why)
     NS_RUNTIMEABORT("ActorDestroy by IPC channel failure at LayerTransactionChild");
   }
 #endif
-}
-
-PTextureChild*
-LayerTransactionChild::AllocPTextureChild(const SurfaceDescriptor&,
-                                          const LayersBackend&,
-                                          const TextureFlags&)
-{
-  MOZ_ASSERT(!mDestroyed);
-  return TextureClient::CreateIPDLActor();
-}
-
-bool
-LayerTransactionChild::DeallocPTextureChild(PTextureChild* actor)
-{
-  return TextureClient::DestroyIPDLActor(actor);
 }
 
 } // namespace layers

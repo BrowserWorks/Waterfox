@@ -45,7 +45,6 @@ static const uint32_t ACCEPT_FOR_N_DAYS = 3;
 static const bool kDefaultPolicy = true;
 static const char kCookiesLifetimePolicy[] = "network.cookie.lifetimePolicy";
 static const char kCookiesLifetimeDays[] = "network.cookie.lifetime.days";
-static const char kCookiesAlwaysAcceptSession[] = "network.cookie.alwaysAcceptSessionCookies";
 
 static const char kCookiesPrefsMigrated[] = "network.cookie.prefsMigrated";
 // obsolete pref names for migration
@@ -76,7 +75,6 @@ nsCookiePermission::Init()
   if (prefBranch) {
     prefBranch->AddObserver(kCookiesLifetimePolicy, this, false);
     prefBranch->AddObserver(kCookiesLifetimeDays, this, false);
-    prefBranch->AddObserver(kCookiesAlwaysAcceptSession, this, false);
     PrefChanged(prefBranch, nullptr);
 
     // migration code for original cookie prefs
@@ -121,12 +119,7 @@ nsCookiePermission::PrefChanged(nsIPrefBranch *aPrefBranch,
   if (PREF_CHANGED(kCookiesLifetimeDays) &&
       NS_SUCCEEDED(aPrefBranch->GetIntPref(kCookiesLifetimeDays, &val)))
     // save cookie lifetime in seconds instead of days
-    mCookiesLifetimeSec = val * 24 * 60 * 60;
-
-  bool bval;
-  if (PREF_CHANGED(kCookiesAlwaysAcceptSession) &&
-      NS_SUCCEEDED(aPrefBranch->GetBoolPref(kCookiesAlwaysAcceptSession, &bval)))
-    mCookiesAlwaysAcceptSession = bval;
+    mCookiesLifetimeSec = (int64_t)val * 24 * 60 * 60;
 }
 
 NS_IMETHODIMP

@@ -31,6 +31,8 @@ using mozilla::layers::SurfaceDescriptorX11 from "gfxipc/ShadowLayerUtils.h";
 using nsIntRect from "nsRect.h";
 using mozilla::gfx::SurfaceFormat from "mozilla/gfx/Types.h";
 using struct DxgiAdapterDesc from "mozilla/D3DMessageUtils.h";
+using struct mozilla::widget::CandidateWindowPosition from "ipc/nsGUIEventIPC.h";
+using class mozilla::NativeEventData from "ipc/nsGUIEventIPC.h";
 
 namespace mozilla {
 namespace plugins {
@@ -96,6 +98,8 @@ child:
   intr NPP_GetValue_NPPVpluginNativeAccessibleAtkPlugId()
     returns (nsCString plug_id, NPError result);
 
+  intr NPP_SetValue_NPNVCSSZoomFactor(double value) returns (NPError result);
+
   intr NPP_SetValue_NPNVmuteAudioBool(bool muted) returns (NPError result);
 
   intr NPP_HandleEvent(NPRemoteEvent event)
@@ -136,6 +140,16 @@ child:
 
   intr NPP_Destroy()
     returns (NPError rv);
+
+  // HandledWindowedPluginKeyEvent() is always called after posting a native
+  // key event with OnWindowedPluginKeyEvent().
+  //
+  // @param aKeyEventData      The key event which was posted to the parent
+  //                           process.
+  // @param aIsConsumed        true if aKeyEventData is consumed in the
+  //                           parent process.  Otherwise, false.
+  async HandledWindowedPluginKeyEvent(NativeEventData aKeyEventData,
+                                      bool aIsConsumed);
 
 parent:
   intr NPN_GetValue_NPNVWindowNPObject()
@@ -264,10 +278,16 @@ parent:
                             returns (uint8_t[] aDist, int32_t aLength);
   // Set candidate window position.
   //
-  // @param aX  x position of candidate window
-  // @param aY  y position of candidate window
-  async SetCandidateWindow(int32_t aX, int32_t aY);
-  sync RequestCommitOrCancel(bool aCommitted);
+  // @param aPosition  position information of candidate window
+  async SetCandidateWindow(CandidateWindowPosition aPosition);
+  async RequestCommitOrCancel(bool aCommitted);
+
+  // Notifies the parent process of a plugin instance receiving key event
+  // directly.
+  //
+  // @param aKeyEventData       The native key event which will be sent to
+  //                            plugin from native event handler.
+  async OnWindowedPluginKeyEvent(NativeEventData aKeyEventData);
 
 both:
   async PPluginScriptableObject();

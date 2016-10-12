@@ -53,6 +53,7 @@ function run_test() {
 
   do_get_profile();
   setPrefs({
+    'testing.allowInsecureServerURL': true,
     'http2.retryInterval': 1000,
     'http2.maxRetries': 2
   });
@@ -81,7 +82,7 @@ add_task(function* test1() {
 
   let originAttributes = ChromeUtils.originAttributesToSuffix({
     appId: Ci.nsIScriptSecurityManager.NO_APP_ID,
-    inBrowser: false,
+    inIsolatedMozBrowser: false,
   });
   let newRecord = yield PushService.register({
     scope: 'https://example.com/retry5xxCode',

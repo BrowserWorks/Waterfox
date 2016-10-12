@@ -80,6 +80,7 @@ def build_dict(config, env=os.environ):
     # other CPUs will wind up with unknown bits
 
     d['debug'] = substs.get('MOZ_DEBUG') == '1'
+    d['nightly_build'] = substs.get('NIGHTLY_BUILD') == '1'
     d['release_build'] = substs.get('RELEASE_BUILD') == '1'
     d['pgo'] = substs.get('MOZ_PGO') == '1'
     d['crashreporter'] = bool(substs.get('MOZ_CRASHREPORTER'))
@@ -92,7 +93,9 @@ def build_dict(config, env=os.environ):
     d['tests_enabled'] = substs.get('ENABLE_TESTS') == "1"
     d['bin_suffix'] = substs.get('BIN_SUFFIX', '')
     d['addon_signing'] = substs.get('MOZ_ADDON_SIGNING') == '1'
+    d['require_signing'] = substs.get('MOZ_REQUIRE_SIGNING') == '1'
     d['official'] = bool(substs.get('MOZILLA_OFFICIAL'))
+    d['sm_promise'] = bool(substs.get('SPIDERMONKEY_PROMISE'))
 
     def guess_platform():
         if d['buildapp'] in ('browser', 'mulet'):

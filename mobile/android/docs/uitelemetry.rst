@@ -148,9 +148,8 @@ Events
 ``sanitize.1``
   Sent when the user chooses to clear private data.
 
-``save.1`` ``unsave.1``
+``save.1``, ``unsave.1``
   Saving or unsaving a resource (reader, bookmark, etc.) for viewing later.
-  Note: Only used in JavaScript for now.
 
 ``search.1``
   Sent when the user performs a search. Currently used in the search activity.
@@ -197,6 +196,9 @@ Methods
 ``dialog``
   Action triggered from a dialog.
 
+``doorhanger``
+  Action triggered from a doorhanger popup prompt.
+
 ``griditem``
   Action triggered from a griditem, such as those used in Top Sites panel.
 
@@ -221,6 +223,9 @@ Methods
 ``pageaction``
   Action triggered from a pageaction, displayed in the URL bar.
 
+``service``
+  Action triggered from an automatic system making a decision.
+
 ``settings``
   Action triggered from a content page.
 
@@ -229,6 +234,9 @@ Methods
 
 ``suggestion``
   Action triggered from a suggested result, like those from search engines or default tiles.
+
+``system``
+  Action triggered from an OS level action, like application foreground / background.
 
 ``toast``
   Action triggered from an unobtrusive, temporary notification.

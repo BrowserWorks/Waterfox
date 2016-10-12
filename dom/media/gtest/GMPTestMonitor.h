@@ -29,14 +29,15 @@ public:
 private:
   void MarkFinished()
   {
+    MOZ_ASSERT(NS_IsMainThread());
     mFinished = true;
   }
 
 public:
   void SetFinished()
   {
-    NS_DispatchToMainThread(NS_NewNonOwningRunnableMethod(this,
-                                                          &GMPTestMonitor::MarkFinished));
+    NS_DispatchToMainThread(mozilla::NewNonOwningRunnableMethod(this,
+                                                                &GMPTestMonitor::MarkFinished));
   }
 
 private:

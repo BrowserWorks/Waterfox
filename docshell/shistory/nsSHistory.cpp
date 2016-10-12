@@ -59,16 +59,9 @@ int32_t nsSHistory::sHistoryMaxTotalViewers = -1;
 // entries were touched, so that we can evict older entries first.
 static uint32_t gTouchCounter = 0;
 
-static PRLogModuleInfo*
-GetSHistoryLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("nsSHistory");
-  }
-  return sLog;
-}
-#define LOG(format) MOZ_LOG(GetSHistoryLog(), mozilla::LogLevel::Debug, format)
+static LazyLogModule gSHistoryLog("nsSHistory");
+
+#define LOG(format) MOZ_LOG(gSHistoryLog, mozilla::LogLevel::Debug, format)
 
 // This macro makes it easier to print a log message which includes a URI's
 // spec.  Example use:
@@ -78,7 +71,7 @@ GetSHistoryLog()
 //
 #define LOG_SPEC(format, uri)                              \
   PR_BEGIN_MACRO                                           \
-    if (MOZ_LOG_TEST(GetSHistoryLog(), LogLevel::Debug)) {     \
+    if (MOZ_LOG_TEST(gSHistoryLog, LogLevel::Debug)) {     \
       nsAutoCString _specStr(NS_LITERAL_CSTRING("(null)"));\
       if (uri) {                                           \
         uri->GetSpec(_specStr);                            \
@@ -96,7 +89,7 @@ GetSHistoryLog()
 //
 #define LOG_SHENTRY_SPEC(format, shentry)                  \
   PR_BEGIN_MACRO                                           \
-    if (MOZ_LOG_TEST(GetSHistoryLog(), LogLevel::Debug)) {     \
+    if (MOZ_LOG_TEST(gSHistoryLog, LogLevel::Debug)) {     \
       nsCOMPtr<nsIURI> uri;                                \
       shentry->GetURI(getter_AddRefs(uri));                \
       LOG_SPEC(format, uri);                               \
@@ -409,7 +402,7 @@ nsSHistory::AddEntry(nsISHEntry* aSHEntry, bool aPersist)
 
   nsCOMPtr<nsIURI> uri;
   aSHEntry->GetURI(getter_AddRefs(uri));
-  NOTIFY_LISTENERS(OnHistoryNewEntry, (uri));
+  NOTIFY_LISTENERS(OnHistoryNewEntry, (uri, currentIndex));
 
   // If a listener has changed mIndex, we need to get currentTxn again,
   // otherwise we'll be left at an inconsistent state (see bug 320742)
@@ -1390,10 +1383,8 @@ nsSHistory::RemoveEntries(nsTArray<uint64_t>& aIDs, int32_t aStartIndex)
     --index;
   }
   if (didRemove && mRootDocShell) {
-    nsCOMPtr<nsIRunnable> ev =
-      NS_NewRunnableMethod(static_cast<nsDocShell*>(mRootDocShell),
-                           &nsDocShell::FireDummyOnLocationChange);
-    NS_DispatchToCurrentThread(ev);
+    NS_DispatchToCurrentThread(NewRunnableMethod(static_cast<nsDocShell*>(mRootDocShell),
+                                                 &nsDocShell::FireDummyOnLocationChange));
   }
 }
 
@@ -1405,7 +1396,7 @@ nsSHistory::RemoveDynEntries(int32_t aOldIndex, int32_t aNewIndex)
   nsCOMPtr<nsISHEntry> originalSH;
   GetEntryAtIndex(aOldIndex, false, getter_AddRefs(originalSH));
   nsCOMPtr<nsISHContainer> originalContainer = do_QueryInterface(originalSH);
-  nsAutoTArray<uint64_t, 16> toBeRemovedEntries;
+  AutoTArray<uint64_t, 16> toBeRemovedEntries;
   if (originalContainer) {
     nsTArray<uint64_t> originalDynDocShellIDs;
     GetDynamicChildren(originalContainer, originalDynDocShellIDs, true);
@@ -1501,6 +1492,12 @@ nsSHistory::LoadURIWithOptions(const char16_t* aURI,
                                nsIInputStream* aPostStream,
                                nsIInputStream* aExtraHeaderStream,
                                nsIURI* aBaseURI)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHistory::SetOriginAttributesBeforeLoading(JS::HandleValue aOriginAttributes)
 {
   return NS_OK;
 }

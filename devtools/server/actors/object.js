@@ -8,10 +8,9 @@
 
 const { Cu, Ci } = require("chrome");
 const { GeneratedLocation } = require("devtools/server/actors/common");
-const { DebuggerServer } = require("devtools/server/main")
+const { DebuggerServer } = require("devtools/server/main");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const { assert, dumpn } = DevToolsUtils;
-const PromiseDebugging = require("PromiseDebugging");
 
 loader.lazyRequireGetter(this, "ThreadSafeChromeUtils");
 
@@ -77,7 +76,7 @@ ObjectActor.prototype = {
   /**
    * Returns a grip for this actor for returning in a protocol message.
    */
-  grip: function() {
+  grip: function () {
     this.hooks.incrementGripDepth();
 
     let g = {
@@ -102,7 +101,7 @@ ObjectActor.prototype = {
         if (this.obj.class != "Function") {
           g.ownPropertyLength = this.obj.getOwnPropertyNames().length;
         }
-      } catch(e) {}
+      } catch (e) {}
 
       let raw = this.obj.unsafeDereference();
 
@@ -137,10 +136,9 @@ ObjectActor.prototype = {
   /**
    * Returns an object exposing the internal Promise state.
    */
-  _createPromiseState: function() {
+  _createPromiseState: function () {
     const { state, value, reason } = getPromiseState(this.obj);
     let promiseState = { state };
-    let rawPromise = this.obj.unsafeDereference();
 
     if (state == "fulfilled") {
       promiseState.value = this.hooks.createValueGrip(value);
@@ -148,14 +146,12 @@ ObjectActor.prototype = {
       promiseState.reason = this.hooks.createValueGrip(reason);
     }
 
-    promiseState.creationTimestamp = Date.now() -
-      PromiseDebugging.getPromiseLifetime(rawPromise);
+    promiseState.creationTimestamp = Date.now() - this.obj.promiseLifetime;
 
-    // If the promise is not settled, avoid adding the timeToSettle property
-    // and catch the error thrown by PromiseDebugging.getTimeToSettle.
-    try {
-      promiseState.timeToSettle = PromiseDebugging.getTimeToSettle(rawPromise);
-    } catch(e) {}
+    // Only add the timeToSettle property if the Promise isn't pending.
+    if (state !== "pending") {
+      promiseState.timeToSettle = this.obj.promiseTimeToResolution;
+    }
 
     return promiseState;
   },
@@ -163,7 +159,7 @@ ObjectActor.prototype = {
   /**
    * Releases this actor from the pool.
    */
-  release: function() {
+  release: function () {
     if (this.registeredPool.objectActors) {
       this.registeredPool.objectActors.delete(this.obj);
     }
@@ -176,7 +172,7 @@ ObjectActor.prototype = {
    * Handle a protocol request to provide the definition site of this function
    * object.
    */
-  onDefinitionSite: function() {
+  onDefinitionSite: function () {
     if (this.obj.class != "Function") {
       return {
         from: this.actorID,
@@ -210,7 +206,7 @@ ObjectActor.prototype = {
    * Handle a protocol request to provide the names of the properties defined on
    * the object and not its prototype.
    */
-  onOwnPropertyNames: function() {
+  onOwnPropertyNames: function () {
     return { from: this.actorID,
              ownPropertyNames: this.obj.getOwnPropertyNames() };
   },
@@ -222,8 +218,18 @@ ObjectActor.prototype = {
    * @param request object
    *        The protocol request object.
    */
-  onEnumProperties: function(request) {
+  onEnumProperties: function (request) {
     let actor = new PropertyIteratorActor(this, request.options);
+    this.registeredPool.addActor(actor);
+    this.iterators.add(actor);
+    return { iterator: actor.grip() };
+  },
+
+  /**
+   * Creates an actor to iterate over entries of a Map/Set-like object.
+   */
+  onEnumEntries: function () {
+    let actor = new PropertyIteratorActor(this, { enumEntries: true });
     this.registeredPool.addActor(actor);
     this.iterators.add(actor);
     return { iterator: actor.grip() };
@@ -233,7 +239,7 @@ ObjectActor.prototype = {
    * Handle a protocol request to provide the prototype and own properties of
    * the object.
    */
-  onPrototypeAndProperties: function() {
+  onPrototypeAndProperties: function () {
     let ownProperties = Object.create(null);
     let names;
     try {
@@ -268,10 +274,20 @@ ObjectActor.prototype = {
    *         An object that maps property names to safe getter descriptors as
    *         defined by the remote debugging protocol.
    */
-  _findSafeGetterValues: function(ownProperties, limit = 0) {
+  _findSafeGetterValues: function (ownProperties, limit = 0) {
     let safeGetterValues = Object.create(null);
     let obj = this.obj;
     let level = 0, i = 0;
+
+    // Most objects don't have any safe getters but inherit some from their
+    // prototype. Avoid calling getOwnPropertyNames on objects that may have
+    // many properties like Array, strings or js objects. That to avoid
+    // freezing firefox when doing so.
+    if (TYPED_ARRAY_CLASSES.includes(this.obj.class) ||
+        ["Array", "Object", "String"].includes(this.obj.class)) {
+      obj = obj.proto;
+      level++;
+    }
 
     while (obj) {
       let getters = this._findSafeGetters(obj);
@@ -346,7 +362,7 @@ ObjectActor.prototype = {
    *         A Set of names of safe getters. This result is cached for each
    *         Debugger.Object.
    */
-  _findSafeGetters: function(object) {
+  _findSafeGetters: function (object) {
     if (object._safeGetters) {
       return object._safeGetters;
     }
@@ -354,7 +370,7 @@ ObjectActor.prototype = {
     let getters = new Set();
     let names = [];
     try {
-      names = object.getOwnPropertyNames()
+      names = object.getOwnPropertyNames();
     } catch (ex) {
       // Calling getOwnPropertyNames() on some wrapped native prototypes is not
       // allowed: "cannot modify properties of a WrappedNative". See bug 952093.
@@ -384,7 +400,7 @@ ObjectActor.prototype = {
   /**
    * Handle a protocol request to provide the prototype of the object.
    */
-  onPrototype: function() {
+  onPrototype: function () {
     return { from: this.actorID,
              prototype: this.hooks.createValueGrip(this.obj.proto) };
   },
@@ -396,7 +412,7 @@ ObjectActor.prototype = {
    * @param request object
    *        The protocol request object.
    */
-  onProperty: function(request) {
+  onProperty: function (request) {
     if (!request.name) {
       return { error: "missingParameter",
                message: "no property name was specified" };
@@ -409,7 +425,7 @@ ObjectActor.prototype = {
   /**
    * Handle a protocol request to provide the display string for the object.
    */
-  onDisplayString: function() {
+  onDisplayString: function () {
     const string = stringify(this.obj);
     return { from: this.actorID,
              displayString: this.hooks.createValueGrip(string) };
@@ -429,7 +445,7 @@ ObjectActor.prototype = {
    *         The property descriptor, or undefined if this is not an enumerable
    *         property and onlyEnumerable=true.
    */
-  _propertyDescriptor: function(name, onlyEnumerable) {
+  _propertyDescriptor: function (name, onlyEnumerable) {
     let desc;
     try {
       desc = this.obj.getOwnPropertyDescriptor(name);
@@ -474,7 +490,7 @@ ObjectActor.prototype = {
    * @param request object
    *        The protocol request object.
    */
-  onDecompile: function(request) {
+  onDecompile: function (request) {
     if (this.obj.class !== "Function") {
       return { error: "objectNotFunction",
                message: "decompile request is only valid for object grips " +
@@ -488,7 +504,7 @@ ObjectActor.prototype = {
   /**
    * Handle a protocol request to provide the parameters of a function.
    */
-  onParameterNames: function() {
+  onParameterNames: function () {
     if (this.obj.class !== "Function") {
       return { error: "objectNotFunction",
                message: "'parameterNames' request is only valid for object " +
@@ -501,7 +517,7 @@ ObjectActor.prototype = {
   /**
    * Handle a protocol request to release a thread-lifetime grip.
    */
-  onRelease: function() {
+  onRelease: function () {
     this.release();
     return {};
   },
@@ -509,7 +525,7 @@ ObjectActor.prototype = {
   /**
    * Handle a protocol request to provide the lexical scope of a function.
    */
-  onScope: function() {
+  onScope: function () {
     if (this.obj.class !== "Function") {
       return { error: "objectNotFunction",
                message: "scope request is only valid for object grips with a" +
@@ -534,16 +550,14 @@ ObjectActor.prototype = {
    *         Returns an object containing an array of object grips of the
    *         dependent promises
    */
-  onDependentPromises: function() {
+  onDependentPromises: function () {
     if (this.obj.class != "Promise") {
       return { error: "objectNotPromise",
                message: "'dependentPromises' request is only valid for " +
                         "object grips with a 'Promise' class." };
     }
 
-    let rawPromise = this.obj.unsafeDereference();
-    let promises = PromiseDebugging.getDependentPromises(rawPromise).map(p =>
-      this.hooks.createValueGrip(this.obj.makeDebuggeeValue(p)));
+    let promises = this.obj.promiseDependentPromises.map(p => this.hooks.createValueGrip(p));
 
     return { promises };
   },
@@ -551,15 +565,14 @@ ObjectActor.prototype = {
   /**
    * Handle a protocol request to get the allocation stack of a promise.
    */
-  onAllocationStack: function() {
+  onAllocationStack: function () {
     if (this.obj.class != "Promise") {
       return { error: "objectNotPromise",
                message: "'allocationStack' request is only valid for " +
                         "object grips with a 'Promise' class." };
     }
 
-    let rawPromise = this.obj.unsafeDereference();
-    let stack = PromiseDebugging.getAllocationStack(rawPromise);
+    let stack = this.obj.promiseAllocationSite;
     let allocationStacks = [];
 
     while (stack) {
@@ -581,15 +594,14 @@ ObjectActor.prototype = {
   /**
    * Handle a protocol request to get the fulfillment stack of a promise.
    */
-  onFulfillmentStack: function() {
+  onFulfillmentStack: function () {
     if (this.obj.class != "Promise") {
       return { error: "objectNotPromise",
                message: "'fulfillmentStack' request is only valid for " +
                         "object grips with a 'Promise' class." };
     }
 
-    let rawPromise = this.obj.unsafeDereference();
-    let stack = PromiseDebugging.getFullfillmentStack(rawPromise);
+    let stack = this.obj.promiseResolutionSite;
     let fulfillmentStacks = [];
 
     while (stack) {
@@ -611,15 +623,14 @@ ObjectActor.prototype = {
   /**
    * Handle a protocol request to get the rejection stack of a promise.
    */
-  onRejectionStack: function() {
+  onRejectionStack: function () {
     if (this.obj.class != "Promise") {
       return { error: "objectNotPromise",
                message: "'rejectionStack' request is only valid for " +
                         "object grips with a 'Promise' class." };
     }
 
-    let rawPromise = this.obj.unsafeDereference();
-    let stack = PromiseDebugging.getRejectionStack(rawPromise);
+    let stack = this.obj.promiseResolutionSite;
     let rejectionStacks = [];
 
     while (stack) {
@@ -647,13 +658,13 @@ ObjectActor.prototype = {
    *         Returns an object containing the source location of the SavedFrame
    *         stack.
    */
-  _getSourceOriginalLocation: function(stack) {
+  _getSourceOriginalLocation: function (stack) {
     let source;
 
     // Catch any errors if the source actor cannot be found
     try {
       source = this.hooks.sources().getSourceActorByURL(stack.source);
-    } catch(e) {}
+    } catch (e) {}
 
     if (!source) {
       return null;
@@ -689,7 +700,8 @@ ObjectActor.prototype.requestTypes = {
   "dependentPromises": ObjectActor.prototype.onDependentPromises,
   "allocationStack": ObjectActor.prototype.onAllocationStack,
   "fulfillmentStack": ObjectActor.prototype.onFulfillmentStack,
-  "rejectionStack": ObjectActor.prototype.onRejectionStack
+  "rejectionStack": ObjectActor.prototype.onRejectionStack,
+  "enumEntries": ObjectActor.prototype.onEnumEntries,
 };
 
 /**
@@ -699,8 +711,9 @@ ObjectActor.prototype.requestTypes = {
  *        The object actor.
  * @param options Object
  *        A dictionary object with various boolean attributes:
- *        - ignoreSafeGetters Boolean
- *          If true, do not iterate over safe getters.
+ *        - enumEntries Boolean
+ *          If true, enumerates the entries of a Map or Set object
+ *          instead of enumerating properties.
  *        - ignoreIndexedProperties Boolean
  *          If true, filters out Array items.
  *          e.g. properties names between `0` and `object.length`.
@@ -717,31 +730,107 @@ ObjectActor.prototype.requestTypes = {
  *          Regarding value filtering it just compare to the stringification
  *          of the property value.
  */
-function PropertyIteratorActor(objectActor, options){
-  this.objectActor = objectActor;
+function PropertyIteratorActor(objectActor, options) {
+  if (options.enumEntries) {
+    let cls = objectActor.obj.class;
+    if (cls == "Map") {
+      this.iterator = enumMapEntries(objectActor);
+    } else if (cls == "WeakMap") {
+      this.iterator = enumWeakMapEntries(objectActor);
+    } else if (cls == "Set") {
+      this.iterator = enumSetEntries(objectActor);
+    } else if (cls == "WeakSet") {
+      this.iterator = enumWeakSetEntries(objectActor);
+    } else {
+      throw new Error("Unsupported class to enumerate entries from: " + cls);
+    }
+  } else if (options.ignoreNonIndexedProperties && !options.query) {
+    this.iterator = enumArrayProperties(objectActor, options);
+  } else {
+    this.iterator = enumObjectProperties(objectActor, options);
+  }
+}
 
-  let ownProperties = Object.create(null);
-  let names = [];
-  try {
-    names = this.objectActor.obj.getOwnPropertyNames();
-  } catch (ex) {}
+PropertyIteratorActor.prototype = {
+  actorPrefix: "propertyIterator",
 
-  let safeGetterValues = {};
-  let safeGetterNames = [];
-  if (!options.ignoreSafeGetters) {
-    // Merge the safe getter values into the existing properties list.
-    safeGetterValues = this.objectActor._findSafeGetterValues(names);
-    safeGetterNames = Object.keys(safeGetterValues);
-    for (let name of safeGetterNames) {
-      if (names.indexOf(name) === -1) {
-        names.push(name);
+  grip() {
+    return {
+      type: this.actorPrefix,
+      actor: this.actorID,
+      count: this.iterator.size
+    };
+  },
+
+  names({ indexes }) {
+    let list = [];
+    for (let idx of indexes) {
+      list.push(this.iterator.propertyName(idx));
+    }
+    return {
+      names: indexes
+    };
+  },
+
+  slice({ start, count }) {
+    let ownProperties = Object.create(null);
+    for (let i = start, m = start + count; i < m; i++) {
+      let name = this.iterator.propertyName(i);
+      ownProperties[name] = this.iterator.propertyDescription(i);
+    }
+    return {
+      ownProperties
+    };
+  },
+
+  all() {
+    return this.slice({ start: 0, count: this.length });
+  }
+};
+
+PropertyIteratorActor.prototype.requestTypes = {
+  "names": PropertyIteratorActor.prototype.names,
+  "slice": PropertyIteratorActor.prototype.slice,
+  "all": PropertyIteratorActor.prototype.all,
+};
+
+function enumArrayProperties(objectActor, options) {
+  let length = DevToolsUtils.getProperty(objectActor.obj, "length");
+  if (typeof length !== "number") {
+    // Pseudo arrays are flagged as ArrayLike if they have
+    // subsequent indexed properties without having any length attribute.
+    length = 0;
+    let names = objectActor.obj.getOwnPropertyNames();
+    for (let key of names) {
+      if (isNaN(key) || key != length++) {
+        break;
       }
     }
   }
 
-  if (options.ignoreIndexedProperties || options.ignoreNonIndexedProperties) {
-    let length = DevToolsUtils.getProperty(this.objectActor.obj, "length");
-    if (typeof(length) !== "number") {
+  return {
+    size: length,
+    propertyName(index) {
+      return index;
+    },
+    propertyDescription(index) {
+      return objectActor._propertyDescriptor(index);
+    }
+  };
+}
+
+function enumObjectProperties(objectActor, options) {
+  let names = [];
+  try {
+    names = objectActor.obj.getOwnPropertyNames();
+  } catch (ex) {
+    // Calling getOwnPropertyNames() on some wrapped native prototypes is not
+    // allowed: "cannot modify properties of a WrappedNative". See bug 952093.
+  }
+
+  if (options.ignoreNonIndexedProperties || options.ignoreIndexedProperties) {
+    let length = DevToolsUtils.getProperty(objectActor.obj, "length");
+    if (typeof length !== "number") {
       // Pseudo arrays are flagged as ArrayLike if they have
       // subsequent indexed properties without having any length attribute.
       length = 0;
@@ -752,21 +841,25 @@ function PropertyIteratorActor(objectActor, options){
       }
     }
 
+    // It appears that getOwnPropertyNames always returns indexed properties
+    // first, so we can safely slice `names` for/against indexed properties.
+    // We do such clever operation to optimize very large array inspection,
+    // like webaudio buffers.
     if (options.ignoreIndexedProperties) {
-      names = names.filter(i => {
-        // Use parseFloat in order to reject floats...
-        // (parseInt converts floats to integer)
-        // (Number(str) converts spaces to 0)
-        i = parseFloat(i);
-        return !Number.isInteger(i) || i < 0 || i >= length;
-      });
+      // Keep items after `length` index
+      names = names.slice(length);
+    } else if (options.ignoreNonIndexedProperties) {
+      // Remove `length` first items
+      names.splice(length);
     }
+  }
 
-    if (options.ignoreNonIndexedProperties) {
-      names = names.filter(i => {
-        i = parseFloat(i);
-        return Number.isInteger(i) && i >= 0 && i < length;
-      });
+  let safeGetterValues = objectActor._findSafeGetterValues(names, 0);
+  let safeGetterNames = Object.keys(safeGetterValues);
+  // Merge the safe getter values into the existing properties list.
+  for (let name of safeGetterNames) {
+    if (!names.includes(name)) {
+      names.push(name);
     }
   }
 
@@ -781,8 +874,11 @@ function PropertyIteratorActor(objectActor, options){
       // and then on attribute values
       let desc;
       try {
-        desc = this.obj.getOwnPropertyDescriptor(name);
-      } catch(e) {}
+        desc = objectActor.obj.getOwnPropertyDescriptor(name);
+      } catch (e) {
+        // Calling getOwnPropertyDescriptor on wrapped native prototypes is not
+        // allowed (bug 560072).
+      }
       if (desc && desc.value &&
           String(desc.value).includes(query)) {
         return true;
@@ -795,69 +891,190 @@ function PropertyIteratorActor(objectActor, options){
     names.sort();
   }
 
-  // Now build the descriptor list
-  for (let name of names) {
-    let desc = this.objectActor._propertyDescriptor(name);
-    if (!desc) {
-      desc = safeGetterValues[name];
+  return {
+    size: names.length,
+    propertyName(index) {
+      return names[index];
+    },
+    propertyDescription(index) {
+      let name = names[index];
+      let desc = objectActor._propertyDescriptor(name);
+      if (!desc) {
+        desc = safeGetterValues[name];
+      } else if (name in safeGetterValues) {
+        // Merge the safe getter values into the existing properties list.
+        let { getterValue, getterPrototypeLevel } = safeGetterValues[name];
+        desc.getterValue = getterValue;
+        desc.getterPrototypeLevel = getterPrototypeLevel;
+      }
+      return desc;
     }
-    else if (name in safeGetterValues) {
-      // Merge the safe getter values into the existing properties list.
-      let { getterValue, getterPrototypeLevel } = safeGetterValues[name];
-      desc.getterValue = getterValue;
-      desc.getterPrototypeLevel = getterPrototypeLevel;
-    }
-    ownProperties[name] = desc;
-  }
-
-  this.names = names;
-  this.ownProperties = ownProperties;
+  };
 }
 
-PropertyIteratorActor.prototype = {
-  actorPrefix: "propertyIterator",
+/**
+ * Helper function to create a grip from a Map/Set entry
+ */
+function gripFromEntry({ obj, hooks }, entry) {
+  return hooks.createValueGrip(
+    makeDebuggeeValueIfNeeded(obj, Cu.unwaiveXrays(entry)));
+}
 
-  grip: function() {
-    return {
-      type: "propertyIterator",
-      actor: this.actorID,
-      count: this.names.length
-    };
-  },
+function enumMapEntries(objectActor) {
+  // Iterating over a Map via .entries goes through various intermediate
+  // objects - an Iterator object, then a 2-element Array object, then the
+  // actual values we care about. We don't have Xrays to Iterator objects,
+  // so we get Opaque wrappers for them. And even though we have Xrays to
+  // Arrays, the semantics often deny access to the entires based on the
+  // nature of the values. So we need waive Xrays for the iterator object
+  // and the tupes, and then re-apply them on the underlying values until
+  // we fix bug 1023984.
+  //
+  // Even then though, we might want to continue waiving Xrays here for the
+  // same reason we do so for Arrays above - this filtering behavior is likely
+  // to be more confusing than beneficial in the case of Object previews.
+  let raw = objectActor.obj.unsafeDereference();
 
-  names: function({ indexes }) {
-    let list = [];
-    for (let idx of indexes) {
-      list.push(this.names[idx]);
+  let keys = [...Cu.waiveXrays(Map.prototype.keys.call(raw))];
+  return {
+    [Symbol.iterator]: function* () {
+      for (let key of keys) {
+        let value = Map.prototype.get.call(raw, key);
+        yield [ key, value ].map(val => gripFromEntry(objectActor, val));
+      }
+    },
+    size: keys.length,
+    propertyName(index) {
+      return index;
+    },
+    propertyDescription(index) {
+      let key = keys[index];
+      let val = Map.prototype.get.call(raw, key);
+      return {
+        enumerable: true,
+        value: {
+          type: "mapEntry",
+          preview: {
+            key: gripFromEntry(objectActor, key),
+            value: gripFromEntry(objectActor, val)
+          }
+        }
+      };
     }
-    return {
-      names: list
-    };
-  },
+  };
+}
 
-  slice: function({ start, count }) {
-    let names = this.names.slice(start, start + count);
-    let props = Object.create(null);
-    for (let name of names) {
-      props[name] = this.ownProperties[name];
+function enumWeakMapEntries(objectActor) {
+  // We currently lack XrayWrappers for WeakMap, so when we iterate over
+  // the values, the temporary iterator objects get created in the target
+  // compartment. However, we _do_ have Xrays to Object now, so we end up
+  // Xraying those temporary objects, and filtering access to |it.value|
+  // based on whether or not it's Xrayable and/or callable, which breaks
+  // the for/of iteration.
+  //
+  // This code is designed to handle untrusted objects, so we can safely
+  // waive Xrays on the iterable, and relying on the Debugger machinery to
+  // make sure we handle the resulting objects carefully.
+  let raw = objectActor.obj.unsafeDereference();
+  let keys = Cu.waiveXrays(
+    ThreadSafeChromeUtils.nondeterministicGetWeakMapKeys(raw));
+
+  return {
+    [Symbol.iterator]: function* () {
+      for (let key of keys) {
+        let value = WeakMap.prototype.get.call(raw, key);
+        yield [ key, value ].map(val => gripFromEntry(objectActor, val));
+      }
+    },
+    size: keys.length,
+    propertyName(index) {
+      return index;
+    },
+    propertyDescription(index) {
+      let key = keys[index];
+      let val = WeakMap.prototype.get.call(raw, key);
+      return {
+        enumerable: true,
+        value: {
+          type: "mapEntry",
+          preview: {
+            key: gripFromEntry(objectActor, key),
+            value: gripFromEntry(objectActor, val)
+          }
+        }
+      };
     }
-    return {
-      ownProperties: props
-    };
-  },
+  };
+}
 
-  all: function() {
-    return {
-      ownProperties: this.ownProperties
-    };
-  }
-};
+function enumSetEntries(objectActor) {
+  // We currently lack XrayWrappers for Set, so when we iterate over
+  // the values, the temporary iterator objects get created in the target
+  // compartment. However, we _do_ have Xrays to Object now, so we end up
+  // Xraying those temporary objects, and filtering access to |it.value|
+  // based on whether or not it's Xrayable and/or callable, which breaks
+  // the for/of iteration.
+  //
+  // This code is designed to handle untrusted objects, so we can safely
+  // waive Xrays on the iterable, and relying on the Debugger machinery to
+  // make sure we handle the resulting objects carefully.
+  let raw = objectActor.obj.unsafeDereference();
+  let values = [...Cu.waiveXrays(Set.prototype.values.call(raw))];
 
-PropertyIteratorActor.prototype.requestTypes = {
-  "names": PropertyIteratorActor.prototype.names,
-  "slice": PropertyIteratorActor.prototype.slice,
-  "all": PropertyIteratorActor.prototype.all,
-};
+  return {
+    [Symbol.iterator]: function* () {
+      for (let item of values) {
+        yield gripFromEntry(objectActor, item);
+      }
+    },
+    size: values.length,
+    propertyName(index) {
+      return index;
+    },
+    propertyDescription(index) {
+      let val = values[index];
+      return {
+        enumerable: true,
+        value: gripFromEntry(objectActor, val)
+      };
+    }
+  };
+}
+
+function enumWeakSetEntries(objectActor) {
+  // We currently lack XrayWrappers for WeakSet, so when we iterate over
+  // the values, the temporary iterator objects get created in the target
+  // compartment. However, we _do_ have Xrays to Object now, so we end up
+  // Xraying those temporary objects, and filtering access to |it.value|
+  // based on whether or not it's Xrayable and/or callable, which breaks
+  // the for/of iteration.
+  //
+  // This code is designed to handle untrusted objects, so we can safely
+  // waive Xrays on the iterable, and relying on the Debugger machinery to
+  // make sure we handle the resulting objects carefully.
+  let raw = objectActor.obj.unsafeDereference();
+  let keys = Cu.waiveXrays(
+    ThreadSafeChromeUtils.nondeterministicGetWeakSetKeys(raw));
+
+  return {
+    [Symbol.iterator]: function* () {
+      for (let item of keys) {
+        yield gripFromEntry(objectActor, item);
+      }
+    },
+    size: keys.length,
+    propertyName(index) {
+      return index;
+    },
+    propertyDescription(index) {
+      let val = keys[index];
+      return {
+        enumerable: true,
+        value: gripFromEntry(objectActor, val)
+      };
+    }
+  };
+}
 
 /**
  * Functions for adding information to ObjectActor grips for the purpose of
@@ -876,19 +1093,19 @@ PropertyIteratorActor.prototype.requestTypes = {
  * information for the debugger object, or true otherwise.
  */
 DebuggerServer.ObjectActorPreviewers = {
-  String: [function(objectActor, grip) {
+  String: [function (objectActor, grip) {
     return wrappedPrimitivePreviewer("String", String, objectActor, grip);
   }],
 
-  Boolean: [function(objectActor, grip) {
+  Boolean: [function (objectActor, grip) {
     return wrappedPrimitivePreviewer("Boolean", Boolean, objectActor, grip);
   }],
 
-  Number: [function(objectActor, grip) {
+  Number: [function (objectActor, grip) {
     return wrappedPrimitivePreviewer("Number", Number, objectActor, grip);
   }],
 
-  Function: [function({obj, hooks}, grip) {
+  Function: [function ({obj, hooks}, grip) {
     if (obj.name) {
       grip.name = obj.name;
     }
@@ -931,7 +1148,7 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
-  RegExp: [function({obj, hooks}, grip) {
+  RegExp: [function ({obj, hooks}, grip) {
     // Avoid having any special preview for the RegExp.prototype itself.
     if (!obj.proto || obj.proto.class != "RegExp") {
       return false;
@@ -942,7 +1159,7 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
-  Date: [function({obj, hooks}, grip) {
+  Date: [function ({obj, hooks}, grip) {
     let time = Date.prototype.getTime.call(obj.unsafeDereference());
 
     grip.preview = {
@@ -951,7 +1168,7 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
-  Array: [function({obj, hooks}, grip) {
+  Array: [function ({obj, hooks}, grip) {
     let length = DevToolsUtils.getProperty(obj, "length");
     if (typeof length != "number") {
       return false;
@@ -993,8 +1210,8 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
-  Set: [function({obj, hooks}, grip) {
-    let size = DevToolsUtils.getProperty(obj, "size");
+  Set: [function (objectActor, grip) {
+    let size = DevToolsUtils.getProperty(objectActor.obj, "size");
     if (typeof size != "number") {
       return false;
     }
@@ -1005,26 +1222,13 @@ DebuggerServer.ObjectActorPreviewers = {
     };
 
     // Avoid recursive object grips.
-    if (hooks.getGripDepth() > 1) {
+    if (objectActor.hooks.getGripDepth() > 1) {
       return true;
     }
 
-    let raw = obj.unsafeDereference();
     let items = grip.preview.items = [];
-    // We currently lack XrayWrappers for Set, so when we iterate over
-    // the values, the temporary iterator objects get created in the target
-    // compartment. However, we _do_ have Xrays to Object now, so we end up
-    // Xraying those temporary objects, and filtering access to |it.value|
-    // based on whether or not it's Xrayable and/or callable, which breaks
-    // the for/of iteration.
-    //
-    // This code is designed to handle untrusted objects, so we can safely
-    // waive Xrays on the iterable, and relying on the Debugger machinery to
-    // make sure we handle the resulting objects carefully.
-    for (let item of Cu.waiveXrays(Set.prototype.values.call(raw))) {
-      item = Cu.unwaiveXrays(item);
-      item = makeDebuggeeValueIfNeeded(obj, item);
-      items.push(hooks.createValueGrip(item));
+    for (let item of enumSetEntries(objectActor)) {
+      items.push(item);
       if (items.length == OBJECT_PREVIEW_MAX_ITEMS) {
         break;
       }
@@ -1033,35 +1237,22 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
-  WeakSet: [function({obj, hooks}, grip) {
-    let raw = obj.unsafeDereference();
+  WeakSet: [function (objectActor, grip) {
+    let enumEntries = enumWeakSetEntries(objectActor);
 
-    // We currently lack XrayWrappers for WeakSet, so when we iterate over
-    // the values, the temporary iterator objects get created in the target
-    // compartment. However, we _do_ have Xrays to Object now, so we end up
-    // Xraying those temporary objects, and filtering access to |it.value|
-    // based on whether or not it's Xrayable and/or callable, which breaks
-    // the for/of iteration.
-    //
-    // This code is designed to handle untrusted objects, so we can safely
-    // waive Xrays on the iterable, and relying on the Debugger machinery to
-    // make sure we handle the resulting objects carefully.
-    let keys = Cu.waiveXrays(ThreadSafeChromeUtils.nondeterministicGetWeakSetKeys(raw));
     grip.preview = {
       kind: "ArrayLike",
-      length: keys.length,
+      length: enumEntries.size
     };
 
     // Avoid recursive object grips.
-    if (hooks.getGripDepth() > 1) {
+    if (objectActor.hooks.getGripDepth() > 1) {
       return true;
     }
 
     let items = grip.preview.items = [];
-    for (let item of keys) {
-      item = Cu.unwaiveXrays(item);
-      item = makeDebuggeeValueIfNeeded(obj, item);
-      items.push(hooks.createValueGrip(item));
+    for (let item of enumEntries) {
+      items.push(item);
       if (items.length == OBJECT_PREVIEW_MAX_ITEMS) {
         break;
       }
@@ -1070,8 +1261,8 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
-  Map: [function({obj, hooks}, grip) {
-    let size = DevToolsUtils.getProperty(obj, "size");
+  Map: [function (objectActor, grip) {
+    let size = DevToolsUtils.getProperty(objectActor.obj, "size");
     if (typeof size != "number") {
       return false;
     }
@@ -1081,31 +1272,13 @@ DebuggerServer.ObjectActorPreviewers = {
       size: size,
     };
 
-    if (hooks.getGripDepth() > 1) {
+    if (objectActor.hooks.getGripDepth() > 1) {
       return true;
     }
 
-    let raw = obj.unsafeDereference();
     let entries = grip.preview.entries = [];
-    // Iterating over a Map via .entries goes through various intermediate
-    // objects - an Iterator object, then a 2-element Array object, then the
-    // actual values we care about. We don't have Xrays to Iterator objects,
-    // so we get Opaque wrappers for them. And even though we have Xrays to
-    // Arrays, the semantics often deny access to the entires based on the
-    // nature of the values. So we need waive Xrays for the iterator object
-    // and the tupes, and then re-apply them on the underlying values until
-    // we fix bug 1023984.
-    //
-    // Even then though, we might want to continue waiving Xrays here for the
-    // same reason we do so for Arrays above - this filtering behavior is likely
-    // to be more confusing than beneficial in the case of Object previews.
-    for (let keyValuePair of Cu.waiveXrays(Map.prototype.entries.call(raw))) {
-      let key = Cu.unwaiveXrays(keyValuePair[0]);
-      let value = Cu.unwaiveXrays(keyValuePair[1]);
-      key = makeDebuggeeValueIfNeeded(obj, key);
-      value = makeDebuggeeValueIfNeeded(obj, value);
-      entries.push([hooks.createValueGrip(key),
-                    hooks.createValueGrip(value)]);
+    for (let entry of enumMapEntries(objectActor)) {
+      entries.push(entry);
       if (entries.length == OBJECT_PREVIEW_MAX_ITEMS) {
         break;
       }
@@ -1114,37 +1287,21 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
-  WeakMap: [function({obj, hooks}, grip) {
-    let raw = obj.unsafeDereference();
-    // We currently lack XrayWrappers for WeakMap, so when we iterate over
-    // the values, the temporary iterator objects get created in the target
-    // compartment. However, we _do_ have Xrays to Object now, so we end up
-    // Xraying those temporary objects, and filtering access to |it.value|
-    // based on whether or not it's Xrayable and/or callable, which breaks
-    // the for/of iteration.
-    //
-    // This code is designed to handle untrusted objects, so we can safely
-    // waive Xrays on the iterable, and relying on the Debugger machinery to
-    // make sure we handle the resulting objects carefully.
-    let rawEntries = Cu.waiveXrays(ThreadSafeChromeUtils.nondeterministicGetWeakMapKeys(raw));
+  WeakMap: [function (objectActor, grip) {
+    let enumEntries = enumWeakMapEntries(objectActor);
 
     grip.preview = {
       kind: "MapLike",
-      size: rawEntries.length,
+      size: enumEntries.size
     };
 
-    if (hooks.getGripDepth() > 1) {
+    if (objectActor.hooks.getGripDepth() > 1) {
       return true;
     }
 
     let entries = grip.preview.entries = [];
-    for (let key of rawEntries) {
-      let value = Cu.unwaiveXrays(WeakMap.prototype.get.call(raw, key));
-      key = Cu.unwaiveXrays(key);
-      key = makeDebuggeeValueIfNeeded(obj, key);
-      value = makeDebuggeeValueIfNeeded(obj, value);
-      entries.push([hooks.createValueGrip(key),
-                    hooks.createValueGrip(value)]);
+    for (let entry of enumEntries) {
+      entries.push(entry);
       if (entries.length == OBJECT_PREVIEW_MAX_ITEMS) {
         break;
       }
@@ -1153,7 +1310,7 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
-  DOMStringMap: [function({obj, hooks}, grip, rawObj) {
+  DOMStringMap: [function ({obj, hooks}, grip, rawObj) {
     if (!rawObj) {
       return false;
     }
@@ -1650,10 +1807,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
 ];
 
 /**
- * Call PromiseDebugging.getState on this Debugger.Object's referent and wrap
- * the resulting `value` or `reason` properties in a Debugger.Object instance.
- *
- * See dom/webidl/PromiseDebugging.webidl
+ * Get thisDebugger.Object referent's `promiseState`.
  *
  * @returns Object
  *          An object of one of the following forms:
@@ -1667,14 +1821,8 @@ function getPromiseState(obj) {
       "Can't call `getPromiseState` on `Debugger.Object`s that don't " +
       "refer to Promise objects.");
   }
-
-  const state = PromiseDebugging.getState(obj.unsafeDereference());
-  return {
-    state: state.state,
-    value: obj.makeDebuggeeValue(state.value),
-    reason: obj.makeDebuggeeValue(state.reason)
-  };
-};
+  return obj.promiseState;
+}
 
 /**
  * Determine if a given value is non-primitive.
@@ -1818,8 +1966,8 @@ var stringifiers = {
     const name = DevToolsUtils.getProperty(obj, "name") || "<unknown>";
 
     return '[Exception... "' + message + '" ' +
-           'code: "' + code +'" ' +
-           'nsresult: "0x' + result + ' (' + name + ')"]';
+           'code: "' + code + '" ' +
+           'nsresult: "0x' + result + " (" + name + ')"]';
   },
   Promise: obj => {
     const { state, value, reason } = getPromiseState(obj);
@@ -1869,7 +2017,7 @@ function LongStringActor(string) {
 LongStringActor.prototype = {
   actorPrefix: "longString",
 
-  disconnect: function() {
+  disconnect: function () {
     // Because longStringActors is not a weak map, we won't automatically leave
     // it so we need to manually leave on disconnect so that we don't leak
     // memory.
@@ -1879,7 +2027,7 @@ LongStringActor.prototype = {
   /**
    * Returns a grip for this actor for returning in a protocol message.
    */
-  grip: function() {
+  grip: function () {
     return {
       "type": "longString",
       "initial": this.string.substring(
@@ -1895,7 +2043,7 @@ LongStringActor.prototype = {
    * @param request object
    *        The protocol request object.
    */
-  onSubstring: function(request) {
+  onSubstring: function (request) {
     return {
       "from": this.actorID,
       "substring": this.string.substring(request.start, request.end)
@@ -1914,7 +2062,7 @@ LongStringActor.prototype = {
     return {};
   },
 
-  _releaseActor: function() {
+  _releaseActor: function () {
     if (this.registeredPool && this.registeredPool.longStringActors) {
       delete this.registeredPool.longStringActors[this.string];
     }
@@ -1960,7 +2108,7 @@ function createValueGrip(value, pool, makeObjectGrip) {
       if (value === null) {
         return { type: "null" };
       }
-    else if (value.optimizedOut ||
+      else if (value.optimizedOut ||
              value.uninitialized ||
              value.missingArguments) {
         // The slot is optimized out, an uninitialized binding, or

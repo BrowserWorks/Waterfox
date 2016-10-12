@@ -32,16 +32,18 @@ const TEST_DATA = [
     search: "background-color:#00F"
   },
   {
-    desc: "Tests that the search filter works properly for parsed property names",
+    desc: "Tests that the search filter works properly for parsed property " +
+          "names",
     search: "background:"
   },
   {
-    desc: "Tests that the search filter works properly for parsed property values",
+    desc: "Tests that the search filter works properly for parsed property " +
+          "values",
     search: ":00F"
   },
 ];
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode("#testid", inspector);

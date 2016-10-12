@@ -68,7 +68,7 @@ const uint16_t BluetoothGattCharacteristic::sHandleCount = 2;
 
 // Constructor of BluetoothGattCharacteristic in ATT client role
 BluetoothGattCharacteristic::BluetoothGattCharacteristic(
-  nsPIDOMWindow* aOwner,
+  nsPIDOMWindowInner* aOwner,
   BluetoothGattService* aService,
   const BluetoothGattCharAttribute& aChar)
   : mOwner(aOwner)
@@ -94,7 +94,7 @@ BluetoothGattCharacteristic::BluetoothGattCharacteristic(
 
 // Constructor of BluetoothGattCharacteristic in ATT server role
 BluetoothGattCharacteristic::BluetoothGattCharacteristic(
-  nsPIDOMWindow* aOwner,
+  nsPIDOMWindowInner* aOwner,
   BluetoothGattService* aService,
   const nsAString& aCharacteristicUuid,
   const GattPermissions& aPermissions,
@@ -332,7 +332,7 @@ public:
 
     JSContext* cx = jsapi.cx();
     if (!ToJSValue(cx, v.get_ArrayOfuint8_t(), aValue)) {
-      JS_ClearPendingException(cx);
+      jsapi.ClearException();
       return false;
     }
 

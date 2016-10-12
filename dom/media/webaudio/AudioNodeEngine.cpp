@@ -9,6 +9,11 @@
 #include "mozilla/arm.h"
 #include "AudioNodeEngineNEON.h"
 #endif
+#ifdef USE_SSE2
+#include "mozilla/SSE.h"
+#include "AlignmentUtils.h"
+#include "AudioNodeEngineSSE2.h"
+#endif
 
 namespace mozilla {
 
@@ -71,6 +76,38 @@ void AudioBufferAddWithScale(const float* aInput,
     return;
   }
 #endif
+
+#ifdef USE_SSE2
+  if (mozilla::supports_sse2()) {
+    if (aScale == 1.0f) {
+      while (aSize && (!IS_ALIGNED16(aInput) || !IS_ALIGNED16(aOutput))) {
+        *aOutput += *aInput;
+        ++aOutput;
+        ++aInput;
+        --aSize;
+      }
+    } else {
+      while (aSize && (!IS_ALIGNED16(aInput) || !IS_ALIGNED16(aOutput))) {
+        *aOutput += *aInput*aScale;
+        ++aOutput;
+        ++aInput;
+        --aSize;
+      }
+    }
+
+    // we need to round aSize down to the nearest multiple of 16
+    uint32_t alignedSize = aSize & ~0x0F;
+    if (alignedSize > 0) {
+      AudioBufferAddWithScale_SSE(aInput, aScale, aOutput, alignedSize);
+
+      // adjust parameters for use with scalar operations below
+      aInput += alignedSize;
+      aOutput += alignedSize;
+      aSize -= alignedSize;
+    }
+  }
+#endif
+
   if (aScale == 1.0f) {
     for (uint32_t i = 0; i < aSize; ++i) {
       aOutput[i] += aInput[i];
@@ -104,6 +141,14 @@ AudioBlockCopyChannelWithScale(const float* aInput,
       return;
     }
 #endif
+
+#ifdef USE_SSE2
+    if (mozilla::supports_sse2()) {
+      AudioBlockCopyChannelWithScale_SSE(aInput, aScale, aOutput);
+      return;
+    }
+#endif
+
     for (uint32_t i = 0; i < WEBAUDIO_BLOCK_SIZE; ++i) {
       aOutput[i] = aInput[i]*aScale;
     }
@@ -116,6 +161,14 @@ BufferComplexMultiply(const float* aInput,
                       float* aOutput,
                       uint32_t aSize)
 {
+
+#ifdef USE_SSE2
+  if (mozilla::supports_sse()) {
+    BufferComplexMultiply_SSE(aInput, aScale, aOutput, aSize);
+    return;
+  }
+#endif
+
   for (uint32_t i = 0; i < aSize * 2; i += 2) {
     float real1 = aInput[i];
     float imag1 = aInput[i + 1];
@@ -152,6 +205,14 @@ AudioBlockCopyChannelWithScale(const float aInput[WEBAUDIO_BLOCK_SIZE],
     return;
   }
 #endif
+
+#ifdef USE_SSE2
+  if (mozilla::supports_sse2()) {
+    AudioBlockCopyChannelWithScale_SSE(aInput, aScale, aOutput);
+    return;
+  }
+#endif
+
   for (uint32_t i = 0; i < WEBAUDIO_BLOCK_SIZE; ++i) {
     aOutput[i] = aInput[i]*aScale[i];
   }
@@ -178,6 +239,14 @@ AudioBufferInPlaceScale(float* aBlock,
     return;
   }
 #endif
+
+#ifdef USE_SSE2
+  if (mozilla::supports_sse2()) {
+    AudioBufferInPlaceScale_SSE(aBlock, aScale, aSize);
+    return;
+  }
+#endif
+
   for (uint32_t i = 0; i < aSize; ++i) {
     *aBlock++ *= aScale;
   }
@@ -216,6 +285,15 @@ AudioBlockPanStereoToStereo(const float aInputL[WEBAUDIO_BLOCK_SIZE],
     AudioBlockPanStereoToStereo_NEON(aInputL, aInputR,
                                      aGainL, aGainR, aIsOnTheLeft,
                                      aOutputL, aOutputR);
+    return;
+  }
+#endif
+
+#ifdef USE_SSE2
+  if (mozilla::supports_sse2()) {
+    AudioBlockPanStereoToStereo_SSE(aInputL, aInputR,
+                                    aGainL, aGainR, aIsOnTheLeft,
+                                    aOutputL, aOutputR);
     return;
   }
 #endif
@@ -269,6 +347,27 @@ float
 AudioBufferSumOfSquares(const float* aInput, uint32_t aLength)
 {
   float sum = 0.0f;
+
+#ifdef USE_SSE2
+  if (mozilla::supports_sse()) {
+    const float* alignedInput = ALIGNED16(aInput);
+    float vLength = (aLength >> 4) << 4;
+
+    // use scalar operations for any unaligned data at the beginning
+    while (aInput != alignedInput) {
+        sum += *aInput * *aInput;
+        ++aInput;
+    }
+
+    sum += AudioBufferSumOfSquares_SSE(alignedInput, vLength);
+
+    // adjust aInput and aLength to use scalar operations for any
+    // remaining values
+    aInput = alignedInput + 1;
+    aLength -= vLength;
+  }
+#endif
+
   while (aLength--) {
     sum += *aInput * *aInput;
     ++aInput;

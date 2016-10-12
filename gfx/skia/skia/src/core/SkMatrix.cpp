@@ -156,7 +156,7 @@ uint8_t SkMatrix::computeTypeMask() const {
     } else {
         // Only test for scale explicitly if not affine, since affine sets the
         // scale bit.
-        if ((m00 - kScalar1Int) | (m11 - kScalar1Int)) {
+        if ((m00 ^ kScalar1Int) | (m11 ^ kScalar1Int)) {
             mask |= kScale_Mask;
         }
 
@@ -380,7 +380,16 @@ void SkMatrix::preScale(SkScalar sx, SkScalar sy) {
     fMat[kMScaleY] *= sy;
     fMat[kMPersp1] *= sy;
 
-    this->orTypeMask(kScale_Mask);
+    // Attempt to simplify our type when applying an inverse scale.
+    // TODO: The persp/affine preconditions are in place to keep the mask consistent with
+    //       what computeTypeMask() would produce (persp/skew always implies kScale).
+    //       We should investigate whether these flag dependencies are truly needed.
+    if (fMat[kMScaleX] == 1 && fMat[kMScaleY] == 1
+        && !(fTypeMask & (kPerspective_Mask | kAffine_Mask))) {
+        this->clearTypeMask(kScale_Mask);
+    } else {
+        this->orTypeMask(kScale_Mask);
+    }
 }
 
 void SkMatrix::postScale(SkScalar sx, SkScalar sy, SkScalar px, SkScalar py) {
@@ -1141,30 +1150,19 @@ const SkMatrix::MapXYProc SkMatrix::gMapXYProcs[] = {
 // if its nearly zero (just made up 26, perhaps it should be bigger or smaller)
 #define PerspNearlyZero(x)  SkScalarNearlyZero(x, (1.0f / (1 << 26)))
 
-bool SkMatrix::fixedStepInX(SkScalar y, SkFixed* stepX, SkFixed* stepY) const {
-    if (PerspNearlyZero(fMat[kMPersp0])) {
-        if (stepX || stepY) {
-            if (PerspNearlyZero(fMat[kMPersp1]) &&
-                    PerspNearlyZero(fMat[kMPersp2] - 1)) {
-                if (stepX) {
-                    *stepX = SkScalarToFixed(fMat[kMScaleX]);
-                }
-                if (stepY) {
-                    *stepY = SkScalarToFixed(fMat[kMSkewY]);
-                }
-            } else {
-                SkScalar z = y * fMat[kMPersp1] + fMat[kMPersp2];
-                if (stepX) {
-                    *stepX = SkScalarToFixed(fMat[kMScaleX] / z);
-                }
-                if (stepY) {
-                    *stepY = SkScalarToFixed(fMat[kMSkewY] / z);
-                }
-            }
-        }
-        return true;
+bool SkMatrix::isFixedStepInX() const {
+  return PerspNearlyZero(fMat[kMPersp0]);
+}
+
+SkVector SkMatrix::fixedStepInX(SkScalar y) const {
+    SkASSERT(PerspNearlyZero(fMat[kMPersp0]));
+    if (PerspNearlyZero(fMat[kMPersp1]) &&
+        PerspNearlyZero(fMat[kMPersp2] - 1)) {
+        return SkVector::Make(fMat[kMScaleX], fMat[kMSkewY]);
+    } else {
+        SkScalar z = y * fMat[kMPersp1] + fMat[kMPersp2];
+        return SkVector::Make(fMat[kMScaleX] / z, fMat[kMSkewY] / z);
     }
-    return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1475,9 +1473,15 @@ template <MinMaxOrBoth MIN_MAX_OR_BOTH> bool get_scale_factor(SkMatrix::TypeMask
             results[1] = apluscdiv2 + x;
         }
     }
+    if (SkScalarIsNaN(results[0])) {
+        return false;
+    }
     SkASSERT(results[0] >= 0);
     results[0] = SkScalarSqrt(results[0]);
     if (kBoth_MinMaxOrBoth == MIN_MAX_OR_BOTH) {
+        if (SkScalarIsNaN(results[1])) {
+            return false;
+        }
         SkASSERT(results[1] >= 0);
         results[1] = SkScalarSqrt(results[1]);
     }
@@ -1604,8 +1608,14 @@ void SkMatrix::toString(SkString* str) const {
 
 #include "SkMatrixUtils.h"
 
-bool SkTreatAsSprite(const SkMatrix& mat, int width, int height,
-                     unsigned subpixelBits) {
+bool SkTreatAsSprite(const SkMatrix& mat, const SkISize& size, const SkPaint& paint) {
+    // Our path aa is 2-bits, and our rect aa is 8, so we could use 8,
+    // but in practice 4 seems enough (still looks smooth) and allows
+    // more slightly fractional cases to fall into the fast (sprite) case.
+    static const unsigned kAntiAliasSubpixelBits = 4;
+
+    const unsigned subpixelBits = paint.isAntiAlias() ? kAntiAliasSubpixelBits : 0;
+
     // quick reject on affine or perspective
     if (mat.getType() & ~(SkMatrix::kScale_Mask | SkMatrix::kTranslate_Mask)) {
         return false;
@@ -1622,7 +1632,7 @@ bool SkTreatAsSprite(const SkMatrix& mat, int width, int height,
     }
 
     SkRect dst;
-    SkIRect isrc = { 0, 0, width, height };
+    SkIRect isrc = SkIRect::MakeSize(size);
 
     {
         SkRect src;
@@ -1635,10 +1645,10 @@ bool SkTreatAsSprite(const SkMatrix& mat, int width, int height,
                 SkScalarRoundToInt(mat.getTranslateY()));
 
     if (subpixelBits) {
-        isrc.fLeft <<= subpixelBits;
-        isrc.fTop <<= subpixelBits;
-        isrc.fRight <<= subpixelBits;
-        isrc.fBottom <<= subpixelBits;
+        isrc.fLeft = SkLeftShift(isrc.fLeft, subpixelBits);
+        isrc.fTop = SkLeftShift(isrc.fTop, subpixelBits);
+        isrc.fRight = SkLeftShift(isrc.fRight, subpixelBits);
+        isrc.fBottom = SkLeftShift(isrc.fBottom, subpixelBits);
 
         const float scale = 1 << subpixelBits;
         dst.fLeft *= scale;
@@ -1779,4 +1789,3 @@ void SkRSXform::toQuad(SkScalar width, SkScalar height, SkPoint quad[4]) const {
     quad[3].set(m01 * height + m02, m11 * height + m12);
 #endif
 }
-

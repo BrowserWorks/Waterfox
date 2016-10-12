@@ -463,7 +463,7 @@ AltSvcCache::GetAltServiceMapping(const nsACString &scheme, const nsACString &ho
   return nullptr;
 }
 
-class ProxyClearHostMapping : public nsRunnable {
+class ProxyClearHostMapping : public Runnable {
 public:
   explicit ProxyClearHostMapping(const nsACString &host, int32_t port)
     : mHost(host)
@@ -547,13 +547,6 @@ NS_IMETHODIMP
 AltSvcOverride::GetIgnoreIdle(bool *ignoreIdle)
 {
   *ignoreIdle = true;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-AltSvcOverride::GetIgnorePossibleSpdyConnections(bool *ignorePossibleSpdyConnections)
-{
-  *ignorePossibleSpdyConnections = true;
   return NS_OK;
 }
 

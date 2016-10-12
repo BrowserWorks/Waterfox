@@ -31,17 +31,17 @@ public:
     return this;
   }
 
-  enum orientType
+  enum OrientType
   {
-    vertical   = 0,
-    horizontal = 1,
-    both       = 2
+    eVertical,
+    eHorizontal,
+    eBoth
   };
 
   InternalScrollPortEvent(bool aIsTrusted, EventMessage aMessage,
                           nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, eScrollPortEventClass)
-    , orient(vertical)
+    , mOrient(eVertical)
   {
   }
 
@@ -57,14 +57,14 @@ public:
     return result;
   }
 
-  orientType orient;
+  OrientType mOrient;
 
   void AssignScrollPortEventData(const InternalScrollPortEvent& aEvent,
                                  bool aCopyTargets)
   {
     AssignGUIEventData(aEvent, aCopyTargets);
 
-    orient = aEvent.orient;
+    mOrient = aEvent.mOrient;
   }
 };
 
@@ -175,14 +175,14 @@ public:
     return result;
   }
 
-  nsCOMPtr<dom::DataTransfer> clipboardData;
+  nsCOMPtr<dom::DataTransfer> mClipboardData;
 
   void AssignClipboardEventData(const InternalClipboardEvent& aEvent,
                                 bool aCopyTargets)
   {
     AssignEventData(aEvent, aCopyTargets);
 
-    clipboardData = aEvent.clipboardData;
+    mClipboardData = aEvent.mClipboardData;
   }
 };
 
@@ -197,8 +197,8 @@ public:
 
   InternalFocusEvent(bool aIsTrusted, EventMessage aMessage)
     : InternalUIEvent(aIsTrusted, aMessage, eFocusEventClass)
-    , fromRaise(false)
-    , isRefocus(false)
+    , mFromRaise(false)
+    , mIsRefocus(false)
   {
   }
 
@@ -213,18 +213,18 @@ public:
   }
 
   /// The possible related target
-  nsCOMPtr<dom::EventTarget> relatedTarget;
+  nsCOMPtr<dom::EventTarget> mRelatedTarget;
 
-  bool fromRaise;
-  bool isRefocus;
+  bool mFromRaise;
+  bool mIsRefocus;
 
   void AssignFocusEventData(const InternalFocusEvent& aEvent, bool aCopyTargets)
   {
     AssignUIEventData(aEvent, aCopyTargets);
 
-    relatedTarget = aCopyTargets ? aEvent.relatedTarget : nullptr;
-    fromRaise = aEvent.fromRaise;
-    isRefocus = aEvent.isRefocus;
+    mRelatedTarget = aCopyTargets ? aEvent.mRelatedTarget : nullptr;
+    mFromRaise = aEvent.mFromRaise;
+    mIsRefocus = aEvent.mIsRefocus;
   }
 };
 
@@ -242,9 +242,8 @@ public:
 
   InternalTransitionEvent(bool aIsTrusted, EventMessage aMessage)
     : WidgetEvent(aIsTrusted, aMessage, eTransitionEventClass)
-    , elapsedTime(0.0)
+    , mElapsedTime(0.0)
   {
-    mFlags.mCancelable = false;
   }
 
   virtual WidgetEvent* Duplicate() const override
@@ -258,18 +257,18 @@ public:
     return result;
   }
 
-  nsString propertyName;
-  float elapsedTime;
-  nsString pseudoElement;
+  nsString mPropertyName;
+  nsString mPseudoElement;
+  float mElapsedTime;
 
   void AssignTransitionEventData(const InternalTransitionEvent& aEvent,
                                  bool aCopyTargets)
   {
     AssignEventData(aEvent, aCopyTargets);
 
-    propertyName = aEvent.propertyName;
-    elapsedTime = aEvent.elapsedTime;
-    pseudoElement = aEvent.pseudoElement;
+    mPropertyName = aEvent.mPropertyName;
+    mElapsedTime = aEvent.mElapsedTime;
+    mPseudoElement = aEvent.mPseudoElement;
   }
 };
 
@@ -287,9 +286,8 @@ public:
 
   InternalAnimationEvent(bool aIsTrusted, EventMessage aMessage)
     : WidgetEvent(aIsTrusted, aMessage, eAnimationEventClass)
-    , elapsedTime(0.0)
+    , mElapsedTime(0.0)
   {
-    mFlags.mCancelable = false;
   }
 
   virtual WidgetEvent* Duplicate() const override
@@ -303,18 +301,18 @@ public:
     return result;
   }
 
-  nsString animationName;
-  float elapsedTime;
-  nsString pseudoElement;
+  nsString mAnimationName;
+  nsString mPseudoElement;
+  float mElapsedTime;
 
   void AssignAnimationEventData(const InternalAnimationEvent& aEvent,
                                 bool aCopyTargets)
   {
     AssignEventData(aEvent, aCopyTargets);
 
-    animationName = aEvent.animationName;
-    elapsedTime = aEvent.elapsedTime;
-    pseudoElement = aEvent.pseudoElement;
+    mAnimationName = aEvent.mAnimationName;
+    mElapsedTime = aEvent.mElapsedTime;
+    mPseudoElement = aEvent.mPseudoElement;
   }
 };
 
@@ -330,7 +328,6 @@ public:
   InternalSVGZoomEvent(bool aIsTrusted, EventMessage aMessage)
     : WidgetGUIEvent(aIsTrusted, aMessage, nullptr, eSVGZoomEventClass)
   {
-    mFlags.mCancelable = false;
   }
 
   virtual WidgetEvent* Duplicate() const override
@@ -366,8 +363,6 @@ public:
   InternalSMILTimeEvent(bool aIsTrusted, EventMessage aMessage)
     : InternalUIEvent(aIsTrusted, aMessage, eSMILTimeEventClass)
   {
-    mFlags.mBubbles = false;
-    mFlags.mCancelable = false;
   }
 
   virtual WidgetEvent* Duplicate() const override

@@ -17,7 +17,7 @@
 #include "nsXPCOMCIDInternal.h"
 
 #include "mozilla/layers/ImageBridgeChild.h"
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/AsyncTransactionTracker.h"
 #include "mozilla/layers/SharedBufferManagerChild.h"
 
@@ -148,9 +148,6 @@ extern nsresult nsStringInputStreamConstructor(nsISupports*, REFNSIID, void**);
 #endif
 #include "vpx_mem/vpx_mem.h"
 #endif
-#ifdef MOZ_WEBM
-#include "nestegg/nestegg.h"
-#endif
 
 #include "GeckoProfiler.h"
 
@@ -158,6 +155,10 @@ extern nsresult nsStringInputStreamConstructor(nsISupports*, REFNSIID, void**);
 #include "js/Initialization.h"
 
 #include "gfxPlatform.h"
+
+#if EXPOSE_INTL_API
+#include "unicode/putil.h"
+#endif
 
 using namespace mozilla;
 using base::AtExitManager;
@@ -187,23 +188,23 @@ extern nsresult CreateAnonTempFileRemover();
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsProcess)
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsIDImpl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsStringImpl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsCStringImpl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRBoolImpl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRUint8Impl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRUint16Impl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRUint32Impl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRUint64Impl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRTimeImpl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsCharImpl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRInt16Impl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRInt32Impl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRInt64Impl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsFloatImpl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsDoubleImpl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsVoidImpl)
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsInterfacePointerImpl)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsID)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsString)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsCString)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRBool)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRUint8)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRUint16)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRUint32)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRUint64)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRTime)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsChar)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRInt16)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRInt32)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsPRInt64)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsFloat)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsDouble)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsVoid)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsSupportsInterfacePointer)
 
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsConsoleService, Init)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsAtomService)
@@ -437,33 +438,6 @@ NS_IMPL_ISUPPORTS(VPXReporter, nsIMemoryReporter)
 CountingAllocatorBase<VPXReporter>::sAmount(0);
 #endif /* MOZ_VPX */
 
-#ifdef MOZ_WEBM
-class NesteggReporter final
-  : public nsIMemoryReporter
-  , public CountingAllocatorBase<NesteggReporter>
-{
-public:
-  NS_DECL_ISUPPORTS
-
-private:
-  NS_IMETHODIMP
-  CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
-                 bool aAnonymize) override
-  {
-    return MOZ_COLLECT_REPORT(
-      "explicit/media/libnestegg", KIND_HEAP, UNITS_BYTES, MemoryAllocated(),
-      "Memory allocated through libnestegg for WebM media files.");
-  }
-
-  ~NesteggReporter() {}
-};
-
-NS_IMPL_ISUPPORTS(NesteggReporter, nsIMemoryReporter)
-
-/* static */ template<> Atomic<size_t>
-CountingAllocatorBase<NesteggReporter>::sAmount(0);
-#endif /* MOZ_WEBM */
-
 static double
 TimeSinceProcessCreation()
 {
@@ -487,6 +461,8 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
   mozPoisonValueInit();
 
   NS_LogInit();
+
+  NS_InitAtomTable();
 
   mozilla::LogModule::Init();
 
@@ -523,7 +499,7 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
 
   MessageLoop* messageLoop = MessageLoop::current();
   if (!messageLoop) {
-    sMessageLoop = new MessageLoopForUI(MessageLoop::TYPE_MOZILLA_UI);
+    sMessageLoop = new MessageLoopForUI(MessageLoop::TYPE_MOZILLA_PARENT);
     sMessageLoop->set_thread_name("Gecko");
     // Set experimental values for main thread hangs:
     // 128ms for transient hangs and 8192ms for permanent hangs
@@ -680,17 +656,21 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
                         memmove);
 #endif
 
-#ifdef MOZ_WEBM
-  // And for libnestegg.
-  // libnestegg expects that its realloc implementation will free
-  // the pointer argument when a size of 0 is passed in, so we need
-  // the special version of the counting realloc.
-  nestegg_set_halloc_func(NesteggReporter::CountingFreeingRealloc);
+#if EXPOSE_INTL_API && defined(MOZ_ICU_DATA_ARCHIVE)
+  nsCOMPtr<nsIFile> greDir;
+  nsDirectoryService::gService->Get(NS_GRE_DIR,
+                                    NS_GET_IID(nsIFile),
+                                    getter_AddRefs(greDir));
+  MOZ_ASSERT(greDir);
+  nsAutoCString nativeGREPath;
+  greDir->GetNativePath(nativeGREPath);
+  u_setDataDirectory(nativeGREPath.get());
 #endif
 
   // Initialize the JS engine.
-  if (!JS_Init()) {
-    NS_RUNTIMEABORT("JS_Init failed");
+  const char* jsInitFailureReason = JS_InitWithFailureDiagnostic();
+  if (jsInitFailureReason) {
+    NS_RUNTIMEABORT(jsInitFailureReason);
   }
 
   rv = nsComponentManagerImpl::gComponentManager->Init();
@@ -746,9 +726,6 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
   RegisterStrongMemoryReporter(new OggReporter());
 #ifdef MOZ_VPX
   RegisterStrongMemoryReporter(new VPXReporter());
-#endif
-#ifdef MOZ_WEBM
-  RegisterStrongMemoryReporter(new NesteggReporter());
 #endif
 
   mozilla::Telemetry::Init();
@@ -968,18 +945,6 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   NS_ShutdownNativeCharsetUtils();
 #endif
 
-#if defined(XP_WIN)
-  // This exit(0) call is intended to be temporary, to get shutdown leak
-  // checking working on Linux.
-  // On Windows XP debug, there are intermittent failures in
-  // dom/media/tests/mochitest/test_peerConnection_basicH264Video.html
-  // if we don't exit early in a child process. See bug 1073310.
-  if (XRE_IsContentProcess() && !IsVistaOrLater()) {
-      NS_WARNING("Exiting child process early!");
-      exit(0);
-  }
-#endif
-
   // Shutdown xpcom. This will release all loaders and cause others holding
   // a refcount to the component manager to release it.
   if (nsComponentManagerImpl::gComponentManager) {
@@ -1022,7 +987,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   nsComponentManagerImpl::gComponentManager = nullptr;
   nsCategoryManager::Destroy();
 
-  NS_PurgeAtomTable();
+  NS_ShutdownAtomTable();
 
   NS_IF_RELEASE(gDebug);
 
@@ -1054,13 +1019,13 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   NS_LogTerm();
 
 #if defined(MOZ_WIDGET_GONK)
-  // This exit(0) call is intended to be temporary, to get shutdown leak
-  // checking working on Linux.
+  // This _exit(0) call is intended to be temporary, to get shutdown leak
+  // checking working on non-B2G platforms.
   // On debug B2G, the child process crashes very late.  Instead, just
   // give up so at least we exit cleanly. See bug 1071866.
   if (XRE_IsContentProcess()) {
       NS_WARNING("Exiting child process early!");
-      exit(0);
+      _exit(0);
   }
 #endif
 

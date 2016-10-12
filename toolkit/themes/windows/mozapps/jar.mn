@@ -7,7 +7,6 @@ toolkit.jar:
   skin/classic/mozapps/downloads/downloadIcon.png            (downloads/downloadIcon.png)
   skin/classic/mozapps/downloads/downloads.css               (downloads/downloads.css)
 * skin/classic/mozapps/extensions/extensions.css             (extensions/extensions.css)
-* skin/classic/mozapps/extensions/selectAddons.css           (extensions/selectAddons.css)
   skin/classic/mozapps/extensions/category-search.png        (extensions/category-search.png)
   skin/classic/mozapps/extensions/category-discover.png      (extensions/category-discover.png)
   skin/classic/mozapps/extensions/category-plugins.png       (extensions/category-plugins.png)
@@ -25,9 +24,6 @@ toolkit.jar:
   skin/classic/mozapps/passwordmgr/key.png                   (passwordmgr/key.png)
   skin/classic/mozapps/passwordmgr/key-16.png                (passwordmgr/key-16.png)
   skin/classic/mozapps/passwordmgr/key-64.png                (passwordmgr/key-64.png)
-#ifdef MOZ_PLACES
-  skin/classic/mozapps/places/defaultFavicon.png             (places/defaultFavicon.png)
-#endif
   skin/classic/mozapps/plugins/pluginGeneric.png             (plugins/pluginGeneric.png)
   skin/classic/mozapps/plugins/pluginBlocked.png             (plugins/pluginBlocked.png)
   skin/classic/mozapps/plugins/pluginGeneric-16.png          (plugins/pluginGeneric-16.png)

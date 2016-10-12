@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2006-2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -27,18 +29,6 @@ std::wstring SysUTF8ToWide(const StringPiece& utf8);
 // change between reboots).
 std::string SysWideToNativeMB(const std::wstring& wide);
 std::wstring SysNativeMBToWide(const StringPiece& native_mb);
-
-// Windows-specific ------------------------------------------------------------
-
-#if defined(OS_WIN)
-
-// Converts between 8-bit and wide strings, using the given code page. The
-// code page identifier is one accepted by the Windows function
-// MultiByteToWideChar().
-std::wstring SysMultiByteToWide(const StringPiece& mb, uint32_t code_page);
-std::string SysWideToMultiByte(const std::wstring& wide, uint32_t code_page);
-
-#endif  // defined(OS_WIN)
 
 }  // namespace base
 

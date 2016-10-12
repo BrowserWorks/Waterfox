@@ -250,8 +250,6 @@
   V(subSaturate, (BinaryFunc<Int8x16, SubSaturate, Int8x16>), 2)                      \
   V(shiftLeftByScalar, (BinaryScalar<Int8x16, ShiftLeft>), 2)                         \
   V(shiftRightByScalar, (BinaryScalar<Int8x16, ShiftRightArithmetic>), 2)             \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Int8x16, ShiftRightArithmetic>), 2)   \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Int8x16, ShiftRightLogical>), 2)         \
   V(xor, (BinaryFunc<Int8x16, Xor, Int8x16>), 2)
 
 #define INT8X16_TERNARY_FUNCTION_LIST(V)                                              \
@@ -301,8 +299,6 @@
   V(subSaturate, (BinaryFunc<Uint8x16, SubSaturate, Uint8x16>), 2)                    \
   V(shiftLeftByScalar, (BinaryScalar<Uint8x16, ShiftLeft>), 2)                        \
   V(shiftRightByScalar, (BinaryScalar<Uint8x16, ShiftRightLogical>), 2)               \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Uint8x16, ShiftRightArithmetic>), 2)  \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Uint8x16, ShiftRightLogical>), 2)        \
   V(xor, (BinaryFunc<Uint8x16, Xor, Uint8x16>), 2)
 
 #define UINT8X16_TERNARY_FUNCTION_LIST(V)                                             \
@@ -352,8 +348,6 @@
   V(subSaturate, (BinaryFunc<Int16x8, SubSaturate, Int16x8>), 2)                      \
   V(shiftLeftByScalar, (BinaryScalar<Int16x8, ShiftLeft>), 2)                         \
   V(shiftRightByScalar, (BinaryScalar<Int16x8, ShiftRightArithmetic>), 2)             \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Int16x8, ShiftRightArithmetic>), 2)   \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Int16x8, ShiftRightLogical>), 2)         \
   V(xor, (BinaryFunc<Int16x8, Xor, Int16x8>), 2)
 
 #define INT16X8_TERNARY_FUNCTION_LIST(V)                                              \
@@ -403,8 +397,6 @@
   V(subSaturate, (BinaryFunc<Uint16x8, SubSaturate, Uint16x8>), 2)                    \
   V(shiftLeftByScalar, (BinaryScalar<Uint16x8, ShiftLeft>), 2)                        \
   V(shiftRightByScalar, (BinaryScalar<Uint16x8, ShiftRightLogical>), 2)               \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Uint16x8, ShiftRightArithmetic>), 2)  \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Uint16x8, ShiftRightLogical>), 2)        \
   V(xor, (BinaryFunc<Uint16x8, Xor, Uint16x8>), 2)
 
 #define UINT16X8_TERNARY_FUNCTION_LIST(V)                                             \
@@ -456,8 +448,6 @@
   V(sub, (BinaryFunc<Int32x4, Sub, Int32x4>), 2)                                      \
   V(shiftLeftByScalar, (BinaryScalar<Int32x4, ShiftLeft>), 2)                         \
   V(shiftRightByScalar, (BinaryScalar<Int32x4, ShiftRightArithmetic>), 2)             \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Int32x4, ShiftRightArithmetic>), 2)   \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Int32x4, ShiftRightLogical>), 2)         \
   V(xor, (BinaryFunc<Int32x4, Xor, Int32x4>), 2)
 
 #define INT32X4_TERNARY_FUNCTION_LIST(V)                                              \
@@ -512,8 +502,6 @@
   V(sub, (BinaryFunc<Uint32x4, Sub, Uint32x4>), 2)                                    \
   V(shiftLeftByScalar, (BinaryScalar<Uint32x4, ShiftLeft>), 2)                        \
   V(shiftRightByScalar, (BinaryScalar<Uint32x4, ShiftRightLogical>), 2)               \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Uint32x4, ShiftRightArithmetic>), 2)  \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Uint32x4, ShiftRightLogical>), 2)        \
   V(xor, (BinaryFunc<Uint32x4, Xor, Uint32x4>), 2)
 
 #define UINT32X4_TERNARY_FUNCTION_LIST(V)                                             \
@@ -586,9 +574,7 @@
 // Bitwise shifts defined on integer SIMD types.
 #define FOREACH_SHIFT_SIMD_OP(_)      \
     _(shiftLeftByScalar)              \
-    _(shiftRightByScalar)             \
-    _(shiftRightArithmeticByScalar)   \
-    _(shiftRightLogicalByScalar)
+    _(shiftRightByScalar)
 
 // Unary arithmetic operators defined on numeric SIMD types.
 #define FOREACH_NUMERIC_SIMD_UNOP(_)  \
@@ -615,6 +601,11 @@
     _(maxNum)                         \
     _(minNum)
 
+// Binary operations on small integer (< 32 bits) vectors.
+#define FOREACH_SMINT_SIMD_BINOP(_)   \
+    _(addSaturate)                    \
+    _(subSaturate)
+
 // Comparison operators defined on numeric SIMD types.
 #define FOREACH_COMP_SIMD_OP(_)       \
     _(lessThan)                       \
@@ -640,6 +631,7 @@
     FOREACH_NUMERIC_SIMD_BINOP(_)     \
     FOREACH_FLOAT_SIMD_UNOP(_)        \
     FOREACH_FLOAT_SIMD_BINOP(_)       \
+    FOREACH_SMINT_SIMD_BINOP(_)       \
     FOREACH_COMP_SIMD_OP(_)
 
 /*
@@ -740,13 +732,43 @@
     FORALL_SIMD_NONCAST_OP(_)         \
     _(fromFloat32x4)                  \
     _(fromFloat32x4Bits)              \
+    _(fromInt8x16Bits)                \
+    _(fromInt16x8Bits)                \
     _(fromInt32x4)                    \
-    _(fromInt32x4Bits)
+    _(fromInt32x4Bits)                \
+    _(fromUint8x16Bits)               \
+    _(fromUint16x8Bits)               \
+    _(fromUint32x4)                   \
+    _(fromUint32x4Bits)
 
-// All operations on Int32x4 in the asm.js world
+// All operations on Int8x16 or Uint8x16 in the asm.js world.
+// Note: this does not include conversions and casts to/from Uint8x16 because
+// this list is shared between Int8x16 and Uint8x16.
+#define FORALL_INT8X16_ASMJS_OP(_)    \
+    FORALL_INT_SIMD_OP(_)             \
+    FOREACH_SMINT_SIMD_BINOP(_)       \
+    _(fromInt16x8Bits)                \
+    _(fromInt32x4Bits)                \
+    _(fromFloat32x4Bits)
+
+// All operations on Int16x8 or Uint16x8 in the asm.js world.
+// Note: this does not include conversions and casts to/from Uint16x8 because
+// this list is shared between Int16x8 and Uint16x8.
+#define FORALL_INT16X8_ASMJS_OP(_)    \
+    FORALL_INT_SIMD_OP(_)             \
+    FOREACH_SMINT_SIMD_BINOP(_)       \
+    _(fromInt8x16Bits)                \
+    _(fromInt32x4Bits)                \
+    _(fromFloat32x4Bits)
+
+// All operations on Int32x4 or Uint32x4 in the asm.js world.
+// Note: this does not include conversions and casts to/from Uint32x4 because
+// this list is shared between Int32x4 and Uint32x4.
 #define FORALL_INT32X4_ASMJS_OP(_)    \
     FORALL_INT_SIMD_OP(_)             \
     FOREACH_MEMORY_X4_SIMD_OP(_)      \
+    _(fromInt8x16Bits)                \
+    _(fromInt16x8Bits)                \
     _(fromFloat32x4)                  \
     _(fromFloat32x4Bits)
 
@@ -754,28 +776,11 @@
 #define FORALL_FLOAT32X4_ASMJS_OP(_)  \
     FORALL_FLOAT_SIMD_OP(_)           \
     FOREACH_MEMORY_X4_SIMD_OP(_)      \
+    _(fromInt8x16Bits)                \
+    _(fromInt16x8Bits)                \
+    _(fromInt32x4Bits)                \
     _(fromInt32x4)                    \
-    _(fromInt32x4Bits)
-
-// TODO: remove when all SIMD calls are inlined (bug 1112155)
-#define ION_COMMONX4_SIMD_OP(_)      \
-    FOREACH_NUMERIC_SIMD_BINOP(_)    \
-    _(extractLane)                   \
-    _(replaceLane)                   \
-    _(select)                        \
-    _(splat)                         \
-    _(neg)                           \
-    _(swizzle)                       \
-    _(shuffle)                       \
-    _(load)                          \
-    _(load1)                         \
-    _(load2)                         \
-    _(load3)                         \
-    _(store)                         \
-    _(store1)                        \
-    _(store2)                        \
-    _(store3)                        \
-    _(check)
+    _(fromUint32x4)
 
 namespace js {
 
@@ -783,7 +788,7 @@ namespace js {
 // It must be kept in sync with the enumeration of values in
 // TypedObjectConstants.h; in particular we need to ensure that Count is
 // appropriately set with respect to the number of actual types.
-enum class SimdType : uint8_t {
+enum class SimdType {
     Int8x16   = JS_SIMDTYPEREPR_INT8X16,
     Int16x8   = JS_SIMDTYPEREPR_INT16X8,
     Int32x4   = JS_SIMDTYPEREPR_INT32X4,
@@ -799,13 +804,121 @@ enum class SimdType : uint8_t {
     Count
 };
 
+// The integer SIMD types have a lot of operations that do the exact same thing
+// for signed and unsigned integer types. Sometimes it is simpler to treat
+// signed and unsigned integer SIMD types as the same type, using a SimdSign to
+// distinguish the few cases where there is a difference.
+enum class SimdSign {
+    // Signedness is not applicable to this type. (i.e., Float or Bool).
+    NotApplicable,
+    // Treat as an unsigned integer with a range 0 .. 2^N-1.
+    Unsigned,
+    // Treat as a signed integer in two's complement encoding.
+    Signed,
+};
+
+// Get the signedness of a SIMD type.
+inline SimdSign
+GetSimdSign(SimdType t)
+{
+    switch(t) {
+      case SimdType::Int8x16:
+      case SimdType::Int16x8:
+      case SimdType::Int32x4:
+        return SimdSign::Signed;
+
+      case SimdType::Uint8x16:
+      case SimdType::Uint16x8:
+      case SimdType::Uint32x4:
+        return SimdSign::Unsigned;
+
+      default:
+        return SimdSign::NotApplicable;
+    }
+}
+
+inline bool
+IsSignedIntSimdType(SimdType type)
+{
+    return GetSimdSign(type) == SimdSign::Signed;
+}
+
+// Get the boolean SIMD type with the same shape as t.
+//
+// This is the result type of a comparison operation, and it can also be used to
+// identify the geometry of a SIMD type.
+inline SimdType
+GetBooleanSimdType(SimdType t)
+{
+    switch(t) {
+      case SimdType::Int8x16:
+      case SimdType::Uint8x16:
+      case SimdType::Bool8x16:
+        return SimdType::Bool8x16;
+
+      case SimdType::Int16x8:
+      case SimdType::Uint16x8:
+      case SimdType::Bool16x8:
+        return SimdType::Bool16x8;
+
+      case SimdType::Int32x4:
+      case SimdType::Uint32x4:
+      case SimdType::Float32x4:
+      case SimdType::Bool32x4:
+        return SimdType::Bool32x4;
+
+      case SimdType::Float64x2:
+      case SimdType::Bool64x2:
+        return SimdType::Bool64x2;
+
+      case SimdType::Count:
+        break;
+    }
+    MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Bad SIMD type");
+}
+
+// Get the number of lanes in a SIMD type.
+inline unsigned
+GetSimdLanes(SimdType t)
+{
+    switch(t) {
+      case SimdType::Int8x16:
+      case SimdType::Uint8x16:
+      case SimdType::Bool8x16:
+        return 16;
+
+      case SimdType::Int16x8:
+      case SimdType::Uint16x8:
+      case SimdType::Bool16x8:
+        return 8;
+
+      case SimdType::Int32x4:
+      case SimdType::Uint32x4:
+      case SimdType::Float32x4:
+      case SimdType::Bool32x4:
+        return 4;
+
+      case SimdType::Float64x2:
+      case SimdType::Bool64x2:
+        return 2;
+
+      case SimdType::Count:
+        break;
+    }
+    MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Bad SIMD type");
+}
+
 // Complete set of SIMD operations.
 //
 // No SIMD types implement all of these operations.
 //
 // C++ defines keywords and/or/xor/not, so prepend Fn_ to all named functions to
 // avoid clashes.
-enum class SimdOperation : uint8_t {
+//
+// Note: because of a gcc < v4.8's compiler bug, uint8_t can't be used as the
+// storage class here. See bug 1243810. See also
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64037 .
+enum class SimdOperation {
     // The constructor call. No Fn_ prefix here.
     Constructor,
 
@@ -828,14 +941,17 @@ enum class SimdOperation : uint8_t {
     Fn_fromUint32x4Bits,
     Fn_fromFloat32x4Bits,
     Fn_fromFloat64x2Bits,
+
+    Last = Fn_fromFloat64x2Bits
 };
 
 class SimdObject : public JSObject
 {
   public:
     static const Class class_;
-    static bool toString(JSContext* cx, unsigned int argc, Value* vp);
-    static bool resolve(JSContext* cx, JS::HandleObject obj, JS::HandleId, bool* resolved);
+    static MOZ_MUST_USE bool toString(JSContext* cx, unsigned int argc, Value* vp);
+    static MOZ_MUST_USE bool resolve(JSContext* cx, JS::HandleObject obj, JS::HandleId,
+                                     bool* resolved);
 };
 
 // These classes implement the concept containing the following constraints:
@@ -859,7 +975,7 @@ struct Float32x4 {
     typedef float Elem;
     static const unsigned lanes = 4;
     static const SimdType type = SimdType::Float32x4;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         double d;
         if (!ToNumber(cx, v, &d))
             return false;
@@ -875,7 +991,7 @@ struct Float64x2 {
     typedef double Elem;
     static const unsigned lanes = 2;
     static const SimdType type = SimdType::Float64x2;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         return ToNumber(cx, v, out);
     }
     static Value ToValue(Elem value) {
@@ -887,7 +1003,7 @@ struct Int8x16 {
     typedef int8_t Elem;
     static const unsigned lanes = 16;
     static const SimdType type = SimdType::Int8x16;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         return ToInt8(cx, v, out);
     }
     static Value ToValue(Elem value) {
@@ -899,7 +1015,7 @@ struct Int16x8 {
     typedef int16_t Elem;
     static const unsigned lanes = 8;
     static const SimdType type = SimdType::Int16x8;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         return ToInt16(cx, v, out);
     }
     static Value ToValue(Elem value) {
@@ -911,7 +1027,7 @@ struct Int32x4 {
     typedef int32_t Elem;
     static const unsigned lanes = 4;
     static const SimdType type = SimdType::Int32x4;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         return ToInt32(cx, v, out);
     }
     static Value ToValue(Elem value) {
@@ -923,7 +1039,7 @@ struct Uint8x16 {
     typedef uint8_t Elem;
     static const unsigned lanes = 16;
     static const SimdType type = SimdType::Uint8x16;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         return ToUint8(cx, v, out);
     }
     static Value ToValue(Elem value) {
@@ -935,7 +1051,7 @@ struct Uint16x8 {
     typedef uint16_t Elem;
     static const unsigned lanes = 8;
     static const SimdType type = SimdType::Uint16x8;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         return ToUint16(cx, v, out);
     }
     static Value ToValue(Elem value) {
@@ -947,7 +1063,7 @@ struct Uint32x4 {
     typedef uint32_t Elem;
     static const unsigned lanes = 4;
     static const SimdType type = SimdType::Uint32x4;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         return ToUint32(cx, v, out);
     }
     static Value ToValue(Elem value) {
@@ -959,7 +1075,7 @@ struct Bool8x16 {
     typedef int8_t Elem;
     static const unsigned lanes = 16;
     static const SimdType type = SimdType::Bool8x16;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         *out = ToBoolean(v) ? -1 : 0;
         return true;
     }
@@ -972,7 +1088,7 @@ struct Bool16x8 {
     typedef int16_t Elem;
     static const unsigned lanes = 8;
     static const SimdType type = SimdType::Bool16x8;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         *out = ToBoolean(v) ? -1 : 0;
         return true;
     }
@@ -985,7 +1101,7 @@ struct Bool32x4 {
     typedef int32_t Elem;
     static const unsigned lanes = 4;
     static const SimdType type = SimdType::Bool32x4;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         *out = ToBoolean(v) ? -1 : 0;
         return true;
     }
@@ -998,7 +1114,7 @@ struct Bool64x2 {
     typedef int64_t Elem;
     static const unsigned lanes = 2;
     static const SimdType type = SimdType::Bool64x2;
-    static bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
+    static MOZ_MUST_USE bool Cast(JSContext* cx, JS::HandleValue v, Elem* out) {
         *out = ToBoolean(v) ? -1 : 0;
         return true;
     }
@@ -1007,9 +1123,14 @@ struct Bool64x2 {
     }
 };
 
-bool IsSignedIntSimdType(SimdType type);
+// Get the well known name of the SIMD.* object corresponding to type.
+PropertyName* SimdTypeToName(const JSAtomState& atoms, SimdType type);
 
-PropertyName* SimdTypeToName(JSContext* cx, SimdType type);
+// Check if name is the well known name of a SIMD type.
+// Returns true and sets *type iff name is known.
+bool IsSimdTypeName(const JSAtomState& atoms, const PropertyName* name, SimdType* type);
+
+const char* SimdTypeToString(SimdType type);
 
 template<typename V>
 JSObject* CreateSimd(JSContext* cx, const typename V::Elem* data);
@@ -1018,7 +1139,7 @@ template<typename V>
 bool IsVectorObject(HandleValue v);
 
 template<typename V>
-bool ToSimdConstant(JSContext* cx, HandleValue v, jit::SimdConstant* out);
+MOZ_MUST_USE bool ToSimdConstant(JSContext* cx, HandleValue v, jit::SimdConstant* out);
 
 JSObject*
 InitSimdClass(JSContext* cx, HandleObject obj);
@@ -1031,76 +1152,76 @@ extern const JSJitInfo JitInfo_SimdFloat32x4_extractLane;
 } // namespace jit
 
 #define DECLARE_SIMD_FLOAT32X4_FUNCTION(Name, Func, Operands)   \
-extern bool                                                     \
+extern MOZ_MUST_USE bool                                        \
 simd_float32x4_##Name(JSContext* cx, unsigned argc, Value* vp);
 FLOAT32X4_FUNCTION_LIST(DECLARE_SIMD_FLOAT32X4_FUNCTION)
 #undef DECLARE_SIMD_FLOAT32X4_FUNCTION
 
 #define DECLARE_SIMD_FLOAT64X2_FUNCTION(Name, Func, Operands)   \
-extern bool                                                     \
+extern MOZ_MUST_USE bool                                        \
 simd_float64x2_##Name(JSContext* cx, unsigned argc, Value* vp);
 FLOAT64X2_FUNCTION_LIST(DECLARE_SIMD_FLOAT64X2_FUNCTION)
 #undef DECLARE_SIMD_FLOAT64X2_FUNCTION
 
 #define DECLARE_SIMD_INT8X16_FUNCTION(Name, Func, Operands)     \
-extern bool                                                     \
+extern MOZ_MUST_USE bool                                        \
 simd_int8x16_##Name(JSContext* cx, unsigned argc, Value* vp);
 INT8X16_FUNCTION_LIST(DECLARE_SIMD_INT8X16_FUNCTION)
 #undef DECLARE_SIMD_INT8X16_FUNCTION
 
 #define DECLARE_SIMD_INT16X8_FUNCTION(Name, Func, Operands)     \
-extern bool                                                     \
+extern MOZ_MUST_USE bool                                        \
 simd_int16x8_##Name(JSContext* cx, unsigned argc, Value* vp);
 INT16X8_FUNCTION_LIST(DECLARE_SIMD_INT16X8_FUNCTION)
 #undef DECLARE_SIMD_INT16X8_FUNCTION
 
-#define DECLARE_SIMD_INT32x4_FUNCTION(Name, Func, Operands)     \
-extern bool                                                     \
+#define DECLARE_SIMD_INT32X4_FUNCTION(Name, Func, Operands)     \
+extern MOZ_MUST_USE bool                                        \
 simd_int32x4_##Name(JSContext* cx, unsigned argc, Value* vp);
-INT32X4_FUNCTION_LIST(DECLARE_SIMD_INT32x4_FUNCTION)
-#undef DECLARE_SIMD_INT32x4_FUNCTION
+INT32X4_FUNCTION_LIST(DECLARE_SIMD_INT32X4_FUNCTION)
+#undef DECLARE_SIMD_INT32X4_FUNCTION
 
 #define DECLARE_SIMD_UINT8X16_FUNCTION(Name, Func, Operands)    \
-extern bool                                                     \
+extern MOZ_MUST_USE bool                                        \
 simd_uint8x16_##Name(JSContext* cx, unsigned argc, Value* vp);
 UINT8X16_FUNCTION_LIST(DECLARE_SIMD_UINT8X16_FUNCTION)
 #undef DECLARE_SIMD_UINT8X16_FUNCTION
 
 #define DECLARE_SIMD_UINT16X8_FUNCTION(Name, Func, Operands)    \
-extern bool                                                     \
+extern MOZ_MUST_USE bool                                        \
 simd_uint16x8_##Name(JSContext* cx, unsigned argc, Value* vp);
 UINT16X8_FUNCTION_LIST(DECLARE_SIMD_UINT16X8_FUNCTION)
 #undef DECLARE_SIMD_UINT16X8_FUNCTION
 
-#define DECLARE_SIMD_UINT32x4_FUNCTION(Name, Func, Operands)    \
-extern bool                                                     \
+#define DECLARE_SIMD_UINT32X4_FUNCTION(Name, Func, Operands)    \
+extern MOZ_MUST_USE bool                                        \
 simd_uint32x4_##Name(JSContext* cx, unsigned argc, Value* vp);
-UINT32X4_FUNCTION_LIST(DECLARE_SIMD_UINT32x4_FUNCTION)
-#undef DECLARE_SIMD_UINT32x4_FUNCTION
+UINT32X4_FUNCTION_LIST(DECLARE_SIMD_UINT32X4_FUNCTION)
+#undef DECLARE_SIMD_UINT32X4_FUNCTION
 
 #define DECLARE_SIMD_BOOL8X16_FUNCTION(Name, Func, Operands)    \
-extern bool                                                     \
+extern MOZ_MUST_USE bool                                        \
 simd_bool8x16_##Name(JSContext* cx, unsigned argc, Value* vp);
 BOOL8X16_FUNCTION_LIST(DECLARE_SIMD_BOOL8X16_FUNCTION)
 #undef DECLARE_SIMD_BOOL8X16_FUNCTION
 
 #define DECLARE_SIMD_BOOL16X8_FUNCTION(Name, Func, Operands)    \
-extern bool                                                     \
+extern MOZ_MUST_USE bool                                        \
 simd_bool16x8_##Name(JSContext* cx, unsigned argc, Value* vp);
 BOOL16X8_FUNCTION_LIST(DECLARE_SIMD_BOOL16X8_FUNCTION)
 #undef DECLARE_SIMD_BOOL16X8_FUNCTION
 
 #define DECLARE_SIMD_BOOL32X4_FUNCTION(Name, Func, Operands)    \
-extern bool                                                     \
+extern MOZ_MUST_USE bool                                        \
 simd_bool32x4_##Name(JSContext* cx, unsigned argc, Value* vp);
 BOOL32X4_FUNCTION_LIST(DECLARE_SIMD_BOOL32X4_FUNCTION)
 #undef DECLARE_SIMD_BOOL32X4_FUNCTION
 
-#define DECLARE_SIMD_BOOL64x2_FUNCTION(Name, Func, Operands)    \
-extern bool                                                     \
+#define DECLARE_SIMD_BOOL64X2_FUNCTION(Name, Func, Operands)    \
+extern MOZ_MUST_USE bool                                        \
 simd_bool64x2_##Name(JSContext* cx, unsigned argc, Value* vp);
-BOOL64X2_FUNCTION_LIST(DECLARE_SIMD_BOOL64x2_FUNCTION)
-#undef DECLARE_SIMD_BOOL64x2_FUNCTION
+BOOL64X2_FUNCTION_LIST(DECLARE_SIMD_BOOL64X2_FUNCTION)
+#undef DECLARE_SIMD_BOOL64X2_FUNCTION
 
 }  /* namespace js */
 

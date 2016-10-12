@@ -41,6 +41,8 @@ StructuredCloneData::Copy(const StructuredCloneData& aData)
     NS_ENSURE_TRUE(mSharedData, false);
   }
 
+  PortIdentifiers().AppendElements(aData.PortIdentifiers());
+
   MOZ_ASSERT(BlobImpls().IsEmpty());
   BlobImpls().AppendElements(aData.BlobImpls());
 
@@ -67,9 +69,18 @@ StructuredCloneData::Write(JSContext* aCx,
                            JS::Handle<JS::Value> aValue,
                            ErrorResult &aRv)
 {
+  Write(aCx, aValue, JS::UndefinedHandleValue, aRv);
+}
+
+void
+StructuredCloneData::Write(JSContext* aCx,
+                           JS::Handle<JS::Value> aValue,
+                           JS::Handle<JS::Value> aTransfer,
+                           ErrorResult &aRv)
+{
   MOZ_ASSERT(!Data());
 
-  StructuredCloneHolder::Write(aCx, aValue, aRv);
+  StructuredCloneHolder::Write(aCx, aValue, aTransfer, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
@@ -87,14 +98,13 @@ StructuredCloneData::WriteIPCParams(IPC::Message* aMsg) const
   WriteParam(aMsg, DataLength());
 
   if (DataLength()) {
-    // Structured clone data must be 64-bit aligned.
-    aMsg->WriteBytes(Data(), DataLength(), sizeof(uint64_t));
+    aMsg->WriteBytes(Data(), DataLength());
   }
 }
 
 bool
 StructuredCloneData::ReadIPCParams(const IPC::Message* aMsg,
-                                   void** aIter)
+                                   PickleIterator* aIter)
 {
   MOZ_ASSERT(!Data());
 
@@ -107,17 +117,13 @@ StructuredCloneData::ReadIPCParams(const IPC::Message* aMsg,
     return true;
   }
 
-  uint64_t* dataBuffer = nullptr;
-  const char** buffer =
-    const_cast<const char**>(reinterpret_cast<char**>(&dataBuffer));
-  // Structured clone data must be 64-bit aligned.
-  if (!aMsg->ReadBytes(aIter, buffer, dataLength, sizeof(uint64_t))) {
+  mSharedData = SharedJSAllocatedData::AllocateForExternalData(dataLength);
+  NS_ENSURE_TRUE(mSharedData, false);
+
+  if (!aMsg->ReadBytesInto(aIter, mSharedData->Data(), dataLength)) {
+    mSharedData = nullptr;
     return false;
   }
-
-  mSharedData = SharedJSAllocatedData::CreateFromExternalData(dataBuffer,
-                                                              dataLength);
-  NS_ENSURE_TRUE(mSharedData, false);
 
   return true;
 }

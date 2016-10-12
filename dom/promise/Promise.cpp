@@ -15,6 +15,8 @@
 
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/DOMError.h"
+#include "mozilla/dom/DOMException.h"
+#include "mozilla/dom/DOMExceptionBinding.h"
 #include "mozilla/dom/MediaStreamError.h"
 #include "mozilla/dom/PromiseBinding.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -50,8 +52,9 @@ Atomic<uintptr_t> gIDGenerator(0);
 
 using namespace workers;
 
+#ifndef SPIDERMONKEY_PROMISE
 // This class processes the promise's callbacks with promise's result.
-class PromiseReactionJob final : public nsRunnable
+class PromiseReactionJob final : public Runnable
 {
 public:
   PromiseReactionJob(Promise* aPromise,
@@ -78,10 +81,14 @@ protected:
   Run() override
   {
     NS_ASSERT_OWNINGTHREAD(PromiseReactionJob);
-    ThreadsafeAutoJSContext cx;
-    JS::Rooted<JSObject*> wrapper(cx, mPromise->GetWrapper());
-    MOZ_ASSERT(wrapper); // It was preserved!
-    JSAutoCompartment ac(cx, wrapper);
+
+    MOZ_ASSERT(mPromise->GetWrapper()); // It was preserved!
+
+    AutoJSAPI jsapi;
+    if (!jsapi.Init(mPromise->GetWrapper())) {
+      return NS_ERROR_FAILURE;
+    }
+    JSContext* cx = jsapi.cx();
 
     JS::Rooted<JS::Value> value(cx, mValue);
     if (!MaybeWrapValue(cx, &value)) {
@@ -91,16 +98,11 @@ protected:
     }
 
     JS::Rooted<JSObject*> asyncStack(cx, mPromise->mAllocationStack);
-    JS::Rooted<JSString*> asyncCause(cx, JS_NewStringCopyZ(cx, "Promise"));
-    if (!asyncCause) {
-      JS_ClearPendingException(cx);
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
 
     {
       Maybe<JS::AutoSetAsyncStackForNewCalls> sas;
       if (asyncStack) {
-        sas.emplace(cx, asyncStack, asyncCause);
+        sas.emplace(cx, asyncStack, "Promise");
       }
       mCallback->Call(cx, value);
     }
@@ -178,7 +180,7 @@ GetPromise(JSContext* aCx, JS::Handle<JSObject*> aFunc)
 
 // Runnable to resolve thenables.
 // Equivalent to the specification's ResolvePromiseViaThenableTask.
-class PromiseResolveThenableJob final : public nsRunnable
+class PromiseResolveThenableJob final : public Runnable
 {
 public:
   PromiseResolveThenableJob(Promise* aPromise,
@@ -204,12 +206,16 @@ protected:
   Run() override
   {
     NS_ASSERT_OWNINGTHREAD(PromiseResolveThenableJob);
-    ThreadsafeAutoJSContext cx;
-    JS::Rooted<JSObject*> wrapper(cx, mPromise->GetWrapper());
-    MOZ_ASSERT(wrapper); // It was preserved!
+
+    MOZ_ASSERT(mPromise->GetWrapper()); // It was preserved!
+
+    AutoJSAPI jsapi;
     // If we ever change which compartment we're working in here, make sure to
     // fix the fast-path for resolved-with-a-Promise in ResolveInternal.
-    JSAutoCompartment ac(cx, wrapper);
+    if (!jsapi.Init(mPromise->GetWrapper())) {
+      return NS_ERROR_FAILURE;
+    }
+    JSContext* cx = jsapi.cx();
 
     JS::Rooted<JSObject*> resolveFunc(cx,
       mPromise->CreateThenableFunction(cx, mPromise, PromiseCallback::Resolve));
@@ -317,7 +323,7 @@ struct MOZ_STACK_CLASS Promise::PromiseCapability
   // purposes it's simpler to store them as JS::Value.
 
   // [[Promise]].
-  JS::Rooted<JS::Value> mPromise;
+  JS::Rooted<JSObject*> mPromise;
   // [[Resolve]].  Value in the context compartment.
   JS::Rooted<JS::Value> mResolve;
   // [[Reject]].  Value in the context compartment.
@@ -340,7 +346,7 @@ Promise::PromiseCapability::RejectWithException(JSContext* aCx,
   // or at least the parts of it that happen if we have an abrupt completion.
 
   MOZ_ASSERT(!aRv.Failed());
-  MOZ_ASSERT(mNativePromise || !mPromise.isUndefined(),
+  MOZ_ASSERT(mNativePromise || mPromise,
              "NewPromiseCapability didn't succeed");
 
   JS::Rooted<JS::Value> exn(aCx);
@@ -363,54 +369,69 @@ Promise::PromiseCapability::RejectWithException(JSContext* aCx,
   JS::Rooted<JS::Value> ignored(aCx);
   if (!JS::Call(aCx, JS::UndefinedHandleValue, mReject, JS::HandleValueArray(exn),
                 &ignored)) {
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(aCx);
   }
 }
 
 JS::Value
 Promise::PromiseCapability::PromiseValue() const
 {
-  MOZ_ASSERT(mNativePromise || !mPromise.isUndefined(),
+  MOZ_ASSERT(mNativePromise || mPromise,
              "NewPromiseCapability didn't succeed");
 
   if (mNativePromise) {
     return JS::ObjectValue(*mNativePromise->GetWrapper());
   }
 
-  return mPromise;
+  return JS::ObjectValue(*mPromise);
 }
+
+#endif // SPIDERMONKEY_PROMISE
 
 // Promise
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(Promise)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Promise)
+#ifndef SPIDERMONKEY_PROMISE
 #if defined(DOM_PROMISE_DEPRECATED_REPORTING)
   tmp->MaybeReportRejectedOnce();
 #else
   tmp->mResult = JS::UndefinedValue();
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
+#endif // SPIDERMONKEY_PROMISE
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mGlobal)
+#ifndef SPIDERMONKEY_PROMISE
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mResolveCallbacks)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mRejectCallbacks)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
+#else // SPIDERMONKEY_PROMISE
+  tmp->mPromiseObj = nullptr;
+#endif // SPIDERMONKEY_PROMISE
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Promise)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGlobal)
+#ifndef SPIDERMONKEY_PROMISE
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mResolveCallbacks)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRejectCallbacks)
+#endif // SPIDERMONKEY_PROMISE
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(Promise)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mResult)
+#ifndef SPIDERMONKEY_PROMISE
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mResult)
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mAllocationStack)
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mRejectionStack)
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mFullfillmentStack)
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
+#else // SPIDERMONKEY_PROMISE
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mPromiseObj);
+#endif // SPIDERMONKEY_PROMISE
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
+#ifndef SPIDERMONKEY_PROMISE
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(Promise)
   if (tmp->IsBlack()) {
     JS::ExposeValueToActiveJS(tmp->mResult);
@@ -434,18 +455,22 @@ NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_END
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(Promise)
   return tmp->IsBlack();
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
+#endif // SPIDERMONKEY_PROMISE
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(Promise)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(Promise)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Promise)
+#ifndef SPIDERMONKEY_PROMISE
   NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
+#endif // SPIDERMONKEY_PROMISE
   NS_INTERFACE_MAP_ENTRY(nsISupports)
   NS_INTERFACE_MAP_ENTRY(Promise)
 NS_INTERFACE_MAP_END
 
 Promise::Promise(nsIGlobalObject* aGlobal)
   : mGlobal(aGlobal)
+#ifndef SPIDERMONKEY_PROMISE
   , mResult(JS::UndefinedValue())
   , mAllocationStack(nullptr)
   , mRejectionStack(nullptr)
@@ -459,21 +484,374 @@ Promise::Promise(nsIGlobalObject* aGlobal)
   , mIsLastInChain(true)
   , mWasNotifiedAsUncaught(false)
   , mID(0)
+#else // SPIDERMONKEY_PROMISE
+  , mPromiseObj(nullptr)
+#endif // SPIDERMONKEY_PROMISE
 {
   MOZ_ASSERT(mGlobal);
 
   mozilla::HoldJSObjects(this);
 
+#ifndef SPIDERMONKEY_PROMISE
   mCreationTimestamp = TimeStamp::Now();
+#endif // SPIDERMONKEY_PROMISE
 }
 
 Promise::~Promise()
 {
+#ifndef SPIDERMONKEY_PROMISE
 #if defined(DOM_PROMISE_DEPRECATED_REPORTING)
   MaybeReportRejectedOnce();
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
+#endif // SPIDERMONKEY_PROMISE
   mozilla::DropJSObjects(this);
 }
+
+#ifdef SPIDERMONKEY_PROMISE
+
+bool
+Promise::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto,
+                    JS::MutableHandle<JSObject*> aWrapper)
+{
+#ifdef DEBUG
+  binding_detail::AssertReflectorHasGivenProto(aCx, mPromiseObj, aGivenProto);
+#endif // DEBUG
+  JS::ExposeObjectToActiveJS(mPromiseObj);
+  aWrapper.set(mPromiseObj);
+  return true;
+}
+
+// static
+already_AddRefed<Promise>
+Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv)
+{
+  if (!aGlobal) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+  RefPtr<Promise> p = new Promise(aGlobal);
+  p->CreateWrapper(nullptr, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+  return p.forget();
+}
+
+// static
+already_AddRefed<Promise>
+Promise::Resolve(nsIGlobalObject* aGlobal, JSContext* aCx,
+                 JS::Handle<JS::Value> aValue, ErrorResult& aRv)
+{
+  JSAutoCompartment ac(aCx, aGlobal->GetGlobalJSObject());
+  JS::Rooted<JSObject*> p(aCx,
+                          JS::CallOriginalPromiseResolve(aCx, aValue));
+  if (!p) {
+    aRv.NoteJSContextException(aCx);
+    return nullptr;
+  }
+
+  return CreateFromExisting(aGlobal, p);
+}
+
+// static
+already_AddRefed<Promise>
+Promise::Reject(nsIGlobalObject* aGlobal, JSContext* aCx,
+                JS::Handle<JS::Value> aValue, ErrorResult& aRv)
+{
+  JSAutoCompartment ac(aCx, aGlobal->GetGlobalJSObject());
+  JS::Rooted<JSObject*> p(aCx,
+                          JS::CallOriginalPromiseReject(aCx, aValue));
+  if (!p) {
+    aRv.NoteJSContextException(aCx);
+    return nullptr;
+  }
+
+  return CreateFromExisting(aGlobal, p);
+}
+
+// static
+already_AddRefed<Promise>
+Promise::All(const GlobalObject& aGlobal,
+             const nsTArray<RefPtr<Promise>>& aPromiseList, ErrorResult& aRv)
+{
+  nsCOMPtr<nsIGlobalObject> global;
+  global = do_QueryInterface(aGlobal.GetAsSupports());
+  if (!global) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+
+  JSContext* cx = aGlobal.Context();
+
+  JS::AutoObjectVector promises(cx);
+  if (!promises.reserve(aPromiseList.Length())) {
+    aRv.NoteJSContextException(cx);
+    return nullptr;
+  }
+
+  for (auto& promise : aPromiseList) {
+    JS::Rooted<JSObject*> promiseObj(cx, promise->PromiseObj());
+    // Just in case, make sure these are all in the context compartment.
+    if (!JS_WrapObject(cx, &promiseObj)) {
+      aRv.NoteJSContextException(cx);
+      return nullptr;
+    }
+    promises.infallibleAppend(promiseObj);
+  }
+
+  JS::Rooted<JSObject*> result(cx, JS::GetWaitForAllPromise(cx, promises));
+  if (!result) {
+    aRv.NoteJSContextException(cx);
+    return nullptr;
+  }
+
+  return CreateFromExisting(global, result);
+}
+
+void
+Promise::Then(JSContext* aCx,
+              // aCalleeGlobal may not be in the compartment of aCx, when called over
+              // Xrays.
+              JS::Handle<JSObject*> aCalleeGlobal,
+              AnyCallback* aResolveCallback, AnyCallback* aRejectCallback,
+              JS::MutableHandle<JS::Value> aRetval,
+              ErrorResult& aRv)
+{
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
+  // Let's hope this does the right thing with Xrays...  Ensure everything is
+  // just in the caller compartment; that ought to do the trick.  In theory we
+  // should consider aCalleeGlobal, but in practice our only caller is
+  // DOMRequest::Then, which is not working with a Promise subclass, so things
+  // should be OK.
+  JS::Rooted<JSObject*> promise(aCx, PromiseObj());
+  if (!JS_WrapObject(aCx, &promise)) {
+    aRv.NoteJSContextException(aCx);
+    return;
+  }
+
+  JS::Rooted<JSObject*> resolveCallback(aCx);
+  if (aResolveCallback) {
+    resolveCallback = aResolveCallback->Callback();
+    if (!JS_WrapObject(aCx, &resolveCallback)) {
+      aRv.NoteJSContextException(aCx);
+      return;
+    }
+  }
+
+  JS::Rooted<JSObject*> rejectCallback(aCx);
+  if (aRejectCallback) {
+    rejectCallback = aRejectCallback->Callback();
+    if (!JS_WrapObject(aCx, &rejectCallback)) {
+      aRv.NoteJSContextException(aCx);
+      return;
+    }
+  }
+
+  JS::Rooted<JSObject*> retval(aCx);
+  retval = JS::CallOriginalPromiseThen(aCx, promise, resolveCallback,
+                                       rejectCallback);
+  if (!retval) {
+    aRv.NoteJSContextException(aCx);
+    return;
+  }
+
+  aRetval.setObject(*retval);
+}
+
+// We need a dummy function to pass to JS::NewPromiseObject.
+static bool
+DoNothingPromiseExecutor(JSContext*, unsigned aArgc, JS::Value* aVp)
+{
+  JS::CallArgs args = CallArgsFromVp(aArgc, aVp);
+  args.rval().setUndefined();
+  return true;
+}
+
+void
+Promise::CreateWrapper(JS::Handle<JSObject*> aDesiredProto, ErrorResult& aRv)
+{
+  AutoJSAPI jsapi;
+  if (!jsapi.Init(mGlobal)) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return;
+  }
+  JSContext* cx = jsapi.cx();
+
+  JSFunction* doNothingFunc =
+    JS_NewFunction(cx, DoNothingPromiseExecutor, /* nargs = */ 2,
+                   /* flags = */ 0, nullptr);
+  if (!doNothingFunc) {
+    JS_ClearPendingException(cx);
+    aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
+
+  JS::Rooted<JSObject*> doNothingObj(cx, JS_GetFunctionObject(doNothingFunc));
+  mPromiseObj = JS::NewPromiseObject(cx, doNothingObj, aDesiredProto);
+  if (!mPromiseObj) {
+    JS_ClearPendingException(cx);
+    aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
+}
+
+void
+Promise::MaybeResolve(JSContext* aCx,
+                      JS::Handle<JS::Value> aValue)
+{
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
+  JS::Rooted<JSObject*> p(aCx, PromiseObj());
+  if (!JS::ResolvePromise(aCx, p, aValue)) {
+    // Now what?  There's nothing sane to do here.
+    JS_ClearPendingException(aCx);
+  }
+}
+
+void
+Promise::MaybeReject(JSContext* aCx,
+                     JS::Handle<JS::Value> aValue)
+{
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
+  JS::Rooted<JSObject*> p(aCx, PromiseObj());
+  if (!JS::RejectPromise(aCx, p, aValue)) {
+    // Now what?  There's nothing sane to do here.
+    JS_ClearPendingException(aCx);
+  }
+}
+
+#define SLOT_NATIVEHANDLER 0
+#define SLOT_NATIVEHANDLER_TASK 1
+
+enum class NativeHandlerTask : int32_t {
+  Resolve,
+  Reject
+};
+
+static bool
+NativeHandlerCallback(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
+{
+  JS::CallArgs args = CallArgsFromVp(aArgc, aVp);
+
+  JS::Rooted<JS::Value> v(aCx,
+                          js::GetFunctionNativeReserved(&args.callee(),
+                                                        SLOT_NATIVEHANDLER));
+  MOZ_ASSERT(v.isObject());
+
+  PromiseNativeHandler* handler;
+  if (NS_FAILED(UNWRAP_OBJECT(PromiseNativeHandler, &v.toObject(),
+                              handler))) {
+    return Throw(aCx, NS_ERROR_UNEXPECTED);
+  }
+
+  v = js::GetFunctionNativeReserved(&args.callee(), SLOT_NATIVEHANDLER_TASK);
+  NativeHandlerTask task = static_cast<NativeHandlerTask>(v.toInt32());
+
+  if (task == NativeHandlerTask::Resolve) {
+    handler->ResolvedCallback(aCx, args.get(0));
+  } else {
+    MOZ_ASSERT(task == NativeHandlerTask::Reject);
+    handler->RejectedCallback(aCx, args.get(0));
+  }
+
+  return true;
+}
+
+static JSObject*
+CreateNativeHandlerFunction(JSContext* aCx, JS::Handle<JSObject*> aHolder,
+                            NativeHandlerTask aTask)
+{
+  JSFunction* func = js::NewFunctionWithReserved(aCx, NativeHandlerCallback,
+                                                 /* nargs = */ 1,
+                                                 /* flags = */ 0, nullptr);
+  if (!func) {
+    return nullptr;
+  }
+
+  JS::Rooted<JSObject*> obj(aCx, JS_GetFunctionObject(func));
+
+  JS::ExposeObjectToActiveJS(aHolder);
+  js::SetFunctionNativeReserved(obj, SLOT_NATIVEHANDLER,
+                                JS::ObjectValue(*aHolder));
+  js::SetFunctionNativeReserved(obj, SLOT_NATIVEHANDLER_TASK,
+                                JS::Int32Value(static_cast<int32_t>(aTask)));
+
+  return obj;
+}
+
+void
+Promise::AppendNativeHandler(PromiseNativeHandler* aRunnable)
+{
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
+  AutoJSAPI jsapi;
+  if (NS_WARN_IF(!jsapi.Init(mGlobal))) {
+    // Our API doesn't allow us to return a useful error.  Not like this should
+    // happen anyway.
+    return;
+  }
+
+  JSContext* cx = jsapi.cx();
+  JS::Rooted<JSObject*> handlerWrapper(cx);
+  // Note: PromiseNativeHandler is NOT wrappercached.  So we can't use
+  // ToJSValue here, because it will try to do XPConnect wrapping on it, sadly.
+  if (NS_WARN_IF(!aRunnable->WrapObject(cx, nullptr, &handlerWrapper))) {
+    // Again, no way to report errors.
+    jsapi.ClearException();
+    return;
+  }
+
+  JS::Rooted<JSObject*> resolveFunc(cx);
+  resolveFunc =
+    CreateNativeHandlerFunction(cx, handlerWrapper, NativeHandlerTask::Resolve);
+  if (NS_WARN_IF(!resolveFunc)) {
+    jsapi.ClearException();
+    return;
+  }
+
+  JS::Rooted<JSObject*> rejectFunc(cx);
+  rejectFunc =
+    CreateNativeHandlerFunction(cx, handlerWrapper, NativeHandlerTask::Reject);
+  if (NS_WARN_IF(!rejectFunc)) {
+    jsapi.ClearException();
+    return;
+  }
+
+  JS::Rooted<JSObject*> promiseObj(cx, PromiseObj());
+  if (NS_WARN_IF(!JS::AddPromiseReactions(cx, promiseObj, resolveFunc,
+                                          rejectFunc))) {
+    jsapi.ClearException();
+    return;
+  }
+}
+
+void
+Promise::HandleException(JSContext* aCx)
+{
+  JS::Rooted<JS::Value> exn(aCx);
+  if (JS_GetPendingException(aCx, &exn)) {
+    JS_ClearPendingException(aCx);
+    // This is only called from MaybeSomething, so it's OK to MaybeReject here,
+    // unlike in the version that's used when !SPIDERMONKEY_PROMISE.
+    MaybeReject(aCx, exn);
+  }
+}
+
+// static
+already_AddRefed<Promise>
+Promise::CreateFromExisting(nsIGlobalObject* aGlobal,
+                            JS::Handle<JSObject*> aPromiseObj)
+{
+  MOZ_ASSERT(js::GetObjectCompartment(aGlobal->GetGlobalJSObject()) ==
+             js::GetObjectCompartment(aPromiseObj));
+  RefPtr<Promise> p = new Promise(aGlobal);
+  p->mPromiseObj = aPromiseObj;
+  return p.forget();
+}
+
+#else // SPIDERMONKEY_PROMISE
 
 JSObject*
 Promise::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
@@ -485,6 +863,10 @@ already_AddRefed<Promise>
 Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv,
                 JS::Handle<JSObject*> aDesiredProto)
 {
+  if (!aGlobal) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
   RefPtr<Promise> p = new Promise(aGlobal);
   p->CreateWrapper(aDesiredProto, aRv);
   if (aRv.Failed()) {
@@ -527,6 +909,8 @@ void
 Promise::MaybeResolve(JSContext* aCx,
                       JS::Handle<JS::Value> aValue)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   MaybeResolveInternal(aCx, aValue);
 }
 
@@ -534,18 +918,36 @@ void
 Promise::MaybeReject(JSContext* aCx,
                      JS::Handle<JS::Value> aValue)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   MaybeRejectInternal(aCx, aValue);
 }
 
+#endif // SPIDERMONKEY_PROMISE
+
 void
 Promise::MaybeReject(const RefPtr<MediaStreamError>& aArg) {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   MaybeSomething(aArg, &Promise::MaybeReject);
+}
+
+void
+Promise::MaybeRejectWithNull()
+{
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
+  MaybeSomething(JS::NullHandleValue, &Promise::MaybeReject);
 }
 
 bool
 Promise::PerformMicroTaskCheckpoint()
 {
+  MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
+
   CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+
+  // On the main thread, we always use the main promise micro task queue.
   std::queue<nsCOMPtr<nsIRunnable>>& microtaskQueue =
     runtime->GetPromiseMicroTaskQueue();
 
@@ -553,10 +955,7 @@ Promise::PerformMicroTaskCheckpoint()
     return false;
   }
 
-  Maybe<AutoSafeJSContext> cx;
-  if (NS_IsMainThread()) {
-    cx.emplace();
-  }
+  AutoSafeJSContext cx;
 
   do {
     nsCOMPtr<nsIRunnable> runnable = microtaskQueue.front();
@@ -568,14 +967,78 @@ Promise::PerformMicroTaskCheckpoint()
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return false;
     }
-    if (cx.isSome()) {
-      JS_CheckForInterrupt(cx.ref());
-    }
+    JS_CheckForInterrupt(cx);
     runtime->AfterProcessMicrotask();
   } while (!microtaskQueue.empty());
 
   return true;
 }
+
+void
+Promise::PerformWorkerMicroTaskCheckpoint()
+{
+  MOZ_ASSERT(!NS_IsMainThread(), "Wrong thread!");
+
+  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+
+  for (;;) {
+    // For a normal microtask checkpoint, we try to use the debugger microtask
+    // queue first. If the debugger queue is empty, we use the normal microtask
+    // queue instead.
+    std::queue<nsCOMPtr<nsIRunnable>>* microtaskQueue =
+      &runtime->GetDebuggerPromiseMicroTaskQueue();
+
+    if (microtaskQueue->empty()) {
+      microtaskQueue = &runtime->GetPromiseMicroTaskQueue();
+      if (microtaskQueue->empty()) {
+        break;
+      }
+    }
+
+    nsCOMPtr<nsIRunnable> runnable = microtaskQueue->front();
+    MOZ_ASSERT(runnable);
+
+    // This function can re-enter, so we remove the element before calling.
+    microtaskQueue->pop();
+    nsresult rv = runnable->Run();
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return;
+    }
+    runtime->AfterProcessMicrotask();
+  }
+}
+
+void
+Promise::PerformWorkerDebuggerMicroTaskCheckpoint()
+{
+  MOZ_ASSERT(!NS_IsMainThread(), "Wrong thread!");
+
+  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+
+  for (;;) {
+    // For a debugger microtask checkpoint, we always use the debugger microtask
+    // queue.
+    std::queue<nsCOMPtr<nsIRunnable>>* microtaskQueue =
+      &runtime->GetDebuggerPromiseMicroTaskQueue();
+
+    if (microtaskQueue->empty()) {
+      break;
+    }
+
+    nsCOMPtr<nsIRunnable> runnable = microtaskQueue->front();
+    MOZ_ASSERT(runnable);
+
+    // This function can re-enter, so we remove the element before calling.
+    microtaskQueue->pop();
+    nsresult rv = runnable->Run();
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return;
+    }
+    runtime->AfterProcessMicrotask();
+  }
+}
+
+#ifndef SPIDERMONKEY_PROMISE
 
 /* static */ bool
 Promise::JSCallback(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
@@ -759,6 +1222,11 @@ Promise::CallInitFunction(const GlobalObject& aGlobal,
   aRv.WouldReportJSException();
 
   if (aRv.Failed()) {
+    if (aRv.IsUncatchableException()) {
+      // Just propagate this to the caller.
+      return;
+    }
+
     // There are two possibilities here.  Either we've got a rethrown exception,
     // or we reported that already and synthesized a generic NS_ERROR_FAILURE on
     // the ErrorResult.  In the former case, it doesn't much matter how we get
@@ -858,13 +1326,13 @@ Promise::NewPromiseCapability(JSContext* aCx, nsIGlobalObject* aGlobal,
     // the canonical Promise for that compartment actually makes sense.
     JS::Rooted<JS::Value> constructorValue(aCx, aConstructor);
     if (!MaybeWrapObjectValue(aCx, &constructorValue)) {
-      aRv.NoteJSContextException();
+      aRv.NoteJSContextException(aCx);
       return;
     }
 
     JSObject* defaultCtor = PromiseBinding::GetConstructorObject(aCx, global);
     if (!defaultCtor) {
-      aRv.NoteJSContextException();
+      aRv.NoteJSContextException(aCx);
       return;
     }
     if (defaultCtor == &constructorValue.toObject()) {
@@ -888,7 +1356,7 @@ Promise::NewPromiseCapability(JSContext* aCx, nsIGlobalObject* aGlobal,
           CreateFunction(aCx, aCapability.mNativePromise,
                          PromiseCallback::Resolve);
         if (!resolveFuncObj) {
-          aRv.NoteJSContextException();
+          aRv.NoteJSContextException(aCx);
           return;
         }
         aCapability.mResolve.setObject(*resolveFuncObj);
@@ -897,7 +1365,7 @@ Promise::NewPromiseCapability(JSContext* aCx, nsIGlobalObject* aGlobal,
           CreateFunction(aCx, aCapability.mNativePromise,
                          PromiseCallback::Reject);
         if (!rejectFuncObj) {
-          aRv.NoteJSContextException();
+          aRv.NoteJSContextException(aCx);
           return;
         }
         aCapability.mReject.setObject(*rejectFuncObj);
@@ -931,11 +1399,11 @@ Promise::NewPromiseCapability(JSContext* aCx, nsIGlobalObject* aGlobal,
   // Step 6 and step 7.
   JS::Rooted<JS::Value> getCapabilities(aCx,
                                         JS::ObjectValue(*getCapabilitiesObj));
-  JS::Rooted<JS::Value> promiseVal(aCx);
+  JS::Rooted<JSObject*> promiseObj(aCx);
   if (!JS::Construct(aCx, aConstructor,
                      JS::HandleValueArray(getCapabilities),
-                     &promiseVal)) {
-    aRv.NoteJSContextException();
+                     &promiseObj)) {
+    aRv.NoteJSContextException(aCx);
     return;
   }
 
@@ -959,7 +1427,7 @@ Promise::NewPromiseCapability(JSContext* aCx, nsIGlobalObject* aGlobal,
   aCapability.mReject = v;
 
   // Step 10.
-  aCapability.mPromise = promiseVal;
+  aCapability.mPromise = promiseObj;
 
   // Step 11 doesn't need anything, since the PromiseCapability was passed in.
 }
@@ -996,7 +1464,7 @@ Promise::Resolve(const GlobalObject& aGlobal, JS::Handle<JS::Value> aThisv,
     if (NS_SUCCEEDED(rv)) {
       JS::Rooted<JS::Value> constructor(cx);
       if (!JS_GetProperty(cx, valueObj, "constructor", &constructor)) {
-        aRv.NoteJSContextException();
+        aRv.NoteJSContextException(cx);
         return;
       }
 
@@ -1028,7 +1496,7 @@ Promise::Resolve(const GlobalObject& aGlobal, JS::Handle<JS::Value> aThisv,
                   capability.mResolve, JS::HandleValueArray(value),
                   &ignored)) {
       // Step 7.
-      aRv.NoteJSContextException();
+      aRv.NoteJSContextException(cx);
       return;
     }
   }
@@ -1093,7 +1561,7 @@ Promise::Reject(const GlobalObject& aGlobal, JS::Handle<JS::Value> aThisv,
                   capability.mReject, JS::HandleValueArray(value),
                   &ignored)) {
       // Step 6.
-      aRv.NoteJSContextException();
+      aRv.NoteJSContextException(cx);
       return;
     }
   }
@@ -1133,7 +1601,7 @@ SpeciesConstructor(JSContext* aCx,
   JS::Rooted<JS::Value> constructorVal(aCx);
   if (!JS_GetProperty(aCx, promise, "constructor", &constructorVal)) {
     // Step 3.
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(aCx);
     return;
   }
 
@@ -1156,7 +1624,7 @@ SpeciesConstructor(JSContext* aCx,
   JS::Rooted<JSObject*> constructorObj(aCx, &constructorVal.toObject());
   if (!JS_GetPropertyById(aCx, constructorObj, species, &speciesVal)) {
     // Step 7.
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(aCx);
     return;
   }
 
@@ -1182,13 +1650,15 @@ Promise::Then(JSContext* aCx, JS::Handle<JSObject*> aCalleeGlobal,
               AnyCallback* aResolveCallback, AnyCallback* aRejectCallback,
               JS::MutableHandle<JS::Value> aRetval, ErrorResult& aRv)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   // Implements
   // http://www.ecma-international.org/ecma-262/6.0/#sec-promise.prototype.then
 
   // Step 1.
   JS::Rooted<JS::Value> promiseVal(aCx, JS::ObjectValue(*GetWrapper()));
   if (!MaybeWrapObjectValue(aCx, &promiseVal)) {
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(aCx);
     return;
   }
   JS::Rooted<JSObject*> promiseObj(aCx, &promiseVal.toObject());
@@ -1206,13 +1676,13 @@ Promise::Then(JSContext* aCx, JS::Handle<JSObject*> aCalleeGlobal,
     JSObject* defaultCtor =
       PromiseBinding::GetConstructorObject(aCx, calleeGlobal);
     if (!defaultCtor) {
-      aRv.NoteJSContextException();
+      aRv.NoteJSContextException(aCx);
       return;
     }
     defaultCtorVal.setObject(*defaultCtor);
   }
   if (!MaybeWrapObjectValue(aCx, &defaultCtorVal)) {
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(aCx);
     return;
   }
 
@@ -1226,7 +1696,7 @@ Promise::Then(JSContext* aCx, JS::Handle<JSObject*> aCalleeGlobal,
   // Step 5.
   GlobalObject globalObj(aCx, GetWrapper());
   if (globalObj.Failed()) {
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(aCx);
     return;
   }
   nsCOMPtr<nsIGlobalObject> globalObject =
@@ -1274,11 +1744,11 @@ Promise::Then(JSContext* aCx, JS::Handle<JSObject*> aCalleeGlobal,
     RefPtr<AnyCallback> rejectFunc =
       new AnyCallback(aCx, rejectObj, GetIncumbentGlobal());
 
-    if (!capability.mPromise.isObject()) {
+    if (!capability.mPromise) {
       aRv.ThrowTypeError<MSG_ILLEGAL_PROMISE_CONSTRUCTOR>();
       return;
     }
-    JS::Rooted<JSObject*> newPromiseObj(aCx, &capability.mPromise.toObject());
+    JS::Rooted<JSObject*> newPromiseObj(aCx, capability.mPromise);
     // We want to store the reflector itself.
     newPromiseObj = js::CheckedUnwrap(newPromiseObj);
     if (!newPromiseObj) {
@@ -1318,6 +1788,8 @@ Promise::Catch(JSContext* aCx, AnyCallback* aRejectCallback,
                JS::MutableHandle<JS::Value> aRetval,
                ErrorResult& aRv)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   // Implements
   // http://www.ecma-international.org/ecma-262/6.0/#sec-promise.prototype.catch
 
@@ -1325,7 +1797,7 @@ Promise::Catch(JSContext* aCx, AnyCallback* aRejectCallback,
   // overridden Promise.prototype.then.
   JS::Rooted<JS::Value> promiseVal(aCx, JS::ObjectValue(*GetWrapper()));
   if (!MaybeWrapObjectValue(aCx, &promiseVal)) {
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(aCx);
     return;
   }
   JS::Rooted<JSObject*> promiseObj(aCx, &promiseVal.toObject());
@@ -1336,14 +1808,14 @@ Promise::Catch(JSContext* aCx, AnyCallback* aRejectCallback,
     callbacks[1].setObject(*aRejectCallback->Callable());
     // It could be in any compartment, so put it in ours.
     if (!MaybeWrapObjectValue(aCx, callbacks[1])) {
-      aRv.NoteJSContextException();
+      aRv.NoteJSContextException(aCx);
       return;
     }
   } else {
     callbacks[1].setNull();
   }
   if (!JS_CallFunctionName(aCx, promiseObj, "then", callbacks, aRetval)) {
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(aCx);
   }
 }
 
@@ -1385,21 +1857,20 @@ public:
   {
     MOZ_ASSERT(mCountdown > 0);
 
-    ThreadsafeAutoSafeJSContext cx;
-    JSAutoCompartment ac(cx, mValues);
-    {
+    AutoJSAPI jsapi;
+    if (!jsapi.Init(mValues)) {
+      return;
+    }
+    JSContext* cx = jsapi.cx();
 
-      AutoDontReportUncaught silenceReporting(cx);
-      JS::Rooted<JS::Value> value(cx, aValue);
-      JS::Rooted<JSObject*> values(cx, mValues);
-      if (!JS_WrapValue(cx, &value) ||
-          !JS_DefineElement(cx, values, index, value, JSPROP_ENUMERATE)) {
-        MOZ_ASSERT(JS_IsExceptionPending(cx));
-        JS::Rooted<JS::Value> exn(cx);
-        JS_GetPendingException(cx, &exn);
-
-        mPromise->MaybeReject(cx, exn);
-      }
+    JS::Rooted<JS::Value> value(cx, aValue);
+    JS::Rooted<JSObject*> values(cx, mValues);
+    if (!JS_WrapValue(cx, &value) ||
+        !JS_DefineElement(cx, values, index, value, JSPROP_ENUMERATE)) {
+      MOZ_ASSERT(JS_IsExceptionPending(cx));
+      JS::Rooted<JS::Value> exn(cx);
+      jsapi.StealException(&exn);
+      mPromise->MaybeReject(cx, exn);
     }
 
     --mCountdown;
@@ -1603,7 +2074,7 @@ Promise::All(const GlobalObject& aGlobal, JS::Handle<JS::Value> aThisv,
   // want to do that anyway.
   aRetval.set(capability.PromiseValue());
   if (!MaybeWrapValue(cx, aRetval)) {
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(cx);
     return;
   }
 
@@ -1890,7 +2361,7 @@ Promise::Race(const GlobalObject& aGlobal, JS::Handle<JS::Value> aThisv,
   // want to do that anyway.
   aRetval.set(capability.PromiseValue());
   if (!MaybeWrapValue(cx, aRetval)) {
-    aRv.NoteJSContextException();
+    aRv.NoteJSContextException(cx);
     return;
   }
 
@@ -1970,6 +2441,8 @@ Promise::PromiseSpecies(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
 void
 Promise::AppendNativeHandler(PromiseNativeHandler* aRunnable)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   RefPtr<PromiseCallback> resolveCb =
     new NativePromiseCallback(aRunnable, Resolved);
 
@@ -1978,6 +2451,8 @@ Promise::AppendNativeHandler(PromiseNativeHandler* aRunnable)
 
   AppendCallbacks(resolveCb, rejectCb);
 }
+
+#endif // SPIDERMONKEY_PROMISE
 
 JSObject*
 Promise::GlobalJSObject() const
@@ -1991,11 +2466,12 @@ Promise::Compartment() const
   return js::GetObjectCompartment(GlobalJSObject());
 }
 
+#ifndef SPIDERMONKEY_PROMISE
 void
 Promise::AppendCallbacks(PromiseCallback* aResolveCallback,
                          PromiseCallback* aRejectCallback)
 {
-  if (mGlobal->IsDying()) {
+  if (!mGlobal || mGlobal->IsDying()) {
     return;
   }
 
@@ -2027,54 +2503,15 @@ Promise::AppendCallbacks(PromiseCallback* aResolveCallback,
     TriggerPromiseReactions();
   }
 }
+#endif // SPIDERMONKEY_PROMISE
 
-class WrappedWorkerRunnable final : public WorkerSameThreadRunnable
-{
-public:
-  WrappedWorkerRunnable(workers::WorkerPrivate* aWorkerPrivate, nsIRunnable* aRunnable)
-    : WorkerSameThreadRunnable(aWorkerPrivate)
-    , mRunnable(aRunnable)
-  {
-    MOZ_ASSERT(aRunnable);
-    MOZ_COUNT_CTOR(WrappedWorkerRunnable);
-  }
-
-  bool
-  WorkerRun(JSContext* aCx, workers::WorkerPrivate* aWorkerPrivate) override
-  {
-    NS_ASSERT_OWNINGTHREAD(WrappedWorkerRunnable);
-    mRunnable->Run();
-    return true;
-  }
-
-private:
-  virtual
-  ~WrappedWorkerRunnable()
-  {
-    MOZ_COUNT_DTOR(WrappedWorkerRunnable);
-    NS_ASSERT_OWNINGTHREAD(WrappedWorkerRunnable);
-  }
-
-  nsCOMPtr<nsIRunnable> mRunnable;
-  NS_DECL_OWNINGTHREAD
-};
-
-/* static */ void
-Promise::DispatchToMicroTask(nsIRunnable* aRunnable)
-{
-  MOZ_ASSERT(aRunnable);
-
-  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
-  std::queue<nsCOMPtr<nsIRunnable>>& microtaskQueue =
-    runtime->GetPromiseMicroTaskQueue();
-
-  microtaskQueue.push(aRunnable);
-}
-
+#ifndef SPIDERMONKEY_PROMISE
 #if defined(DOM_PROMISE_DEPRECATED_REPORTING)
 void
 Promise::MaybeReportRejected()
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   if (mState != Rejected || mHadRejectCallback || mResult.isUndefined()) {
     return;
   }
@@ -2096,17 +2533,30 @@ Promise::MaybeReportRejected()
   }
 
   js::ErrorReport report(cx);
-  if (!report.init(cx, val)) {
-    JS_ClearPendingException(cx);
-    return;
+  RefPtr<Exception> exp;
+  bool isObject = val.isObject();
+  if (!isObject || NS_FAILED(UNWRAP_OBJECT(Exception, &val.toObject(), exp))) {
+    if (!isObject ||
+        NS_FAILED(UNWRAP_OBJECT(DOMException, &val.toObject(), exp))) {
+      if (!report.init(cx, val, js::ErrorReport::NoSideEffects)) {
+        NS_WARNING("Couldn't convert the unhandled rejected value to an exception.");
+        JS_ClearPendingException(cx);
+        return;
+      }
+    }
   }
 
   RefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
   bool isMainThread = MOZ_LIKELY(NS_IsMainThread());
   bool isChrome = isMainThread ? nsContentUtils::IsSystemPrincipal(nsContentUtils::ObjectPrincipal(obj))
                                : GetCurrentThreadWorkerPrivate()->IsChromeWorker();
-  nsPIDOMWindow* win = isMainThread ? xpc::WindowGlobalOrNull(obj) : nullptr;
-  xpcReport->Init(report.report(), report.message(), isChrome, win ? win->WindowID() : 0);
+  nsGlobalWindow* win = isMainThread ? xpc::WindowGlobalOrNull(obj) : nullptr;
+  uint64_t windowID = win ? win->AsInner()->WindowID() : 0;
+  if (exp) {
+    xpcReport->Init(cx, exp, isChrome, windowID);
+  } else {
+    xpcReport->Init(report.report(), report.message(), isChrome, windowID);
+  }
 
   // Now post an event to do the real reporting async
   // Since Promises preserve their wrapper, it is essential to RefPtr<> the
@@ -2128,6 +2578,8 @@ void
 Promise::MaybeResolveInternal(JSContext* aCx,
                               JS::Handle<JS::Value> aValue)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   if (mResolvePending) {
     return;
   }
@@ -2139,6 +2591,8 @@ void
 Promise::MaybeRejectInternal(JSContext* aCx,
                              JS::Handle<JS::Value> aValue)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   if (mResolvePending) {
     return;
   }
@@ -2149,6 +2603,8 @@ Promise::MaybeRejectInternal(JSContext* aCx,
 void
 Promise::HandleException(JSContext* aCx)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   JS::Rooted<JS::Value> exn(aCx);
   if (JS_GetPendingException(aCx, &exn)) {
     JS_ClearPendingException(aCx);
@@ -2160,10 +2616,14 @@ void
 Promise::ResolveInternal(JSContext* aCx,
                          JS::Handle<JS::Value> aValue)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
+  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+
   mResolvePending = true;
 
   if (aValue.isObject()) {
-    AutoDontReportUncaught silenceReporting(aCx);
+    MOZ_ASSERT(JS::ContextOptionsRef(aCx).autoJSAPIOwnsErrorReporting());
     JS::Rooted<JSObject*> valueObj(aCx, &aValue.toObject());
 
     // Thenables.
@@ -2201,7 +2661,7 @@ Promise::ResolveInternal(JSContext* aCx,
         new PromiseInit(nullptr, thenObj, mozilla::dom::GetIncumbentGlobal());
       RefPtr<PromiseResolveThenableJob> task =
         new PromiseResolveThenableJob(this, valueObj, thenCallback);
-      DispatchToMicroTask(task);
+      runtime->DispatchToMicroTask(task);
       return;
     }
   }
@@ -2213,6 +2673,8 @@ void
 Promise::RejectInternal(JSContext* aCx,
                         JS::Handle<JS::Value> aValue)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   mResolvePending = true;
 
   MaybeSettle(aValue, Rejected);
@@ -2224,14 +2686,13 @@ Promise::Settle(JS::Handle<JS::Value> aValue, PromiseState aState)
   MOZ_ASSERT(mGlobal,
              "We really should have a global here.  Except we sometimes don't "
              "in the wild for some odd reason");
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   if (!mGlobal || mGlobal->IsDying()) {
     return;
   }
 
   mSettlementTimestamp = TimeStamp::Now();
-
-  SetResult(aValue);
-  SetState(aState);
 
   AutoJSAPI jsapi;
   jsapi.Init();
@@ -2239,6 +2700,16 @@ Promise::Settle(JS::Handle<JS::Value> aValue, PromiseState aState)
   JS::RootedObject wrapper(cx, GetWrapper());
   MOZ_ASSERT(wrapper); // We preserved it
   JSAutoCompartment ac(cx, wrapper);
+
+  JS::Rooted<JS::Value> value(cx, aValue);
+
+  if (!JS_WrapValue(cx, &value)) {
+    JS_ClearPendingException(cx);
+    value = JS::UndefinedValue();
+  }
+  SetResult(value);
+  SetState(aState);
+
   JS::dbg::onPromiseSettled(cx, wrapper);
 
   if (aState == PromiseState::Rejected &&
@@ -2261,7 +2732,7 @@ Promise::Settle(JS::Handle<JS::Value> aValue, PromiseState aState)
     worker->AssertIsOnWorkerThread();
 
     mFeature = new PromiseReportRejectFeature(this);
-    if (NS_WARN_IF(!worker->AddFeature(worker->GetJSContext(), mFeature))) {
+    if (NS_WARN_IF(!worker->AddFeature(mFeature))) {
       // To avoid a false RemoveFeature().
       mFeature = nullptr;
       // Worker is shutting down, report rejection immediately since it is
@@ -2278,6 +2749,8 @@ void
 Promise::MaybeSettle(JS::Handle<JS::Value> aValue,
                      PromiseState aState)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   // Promise.all() or Promise.race() implementations will repeatedly call
   // Resolve/RejectInternal rather than using the Maybe... forms. Stop SetState
   // from asserting.
@@ -2291,6 +2764,10 @@ Promise::MaybeSettle(JS::Handle<JS::Value> aValue,
 void
 Promise::TriggerPromiseReactions()
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
+  CycleCollectedJSRuntime* runtime = CycleCollectedJSRuntime::Get();
+
   nsTArray<RefPtr<PromiseCallback>> callbacks;
   callbacks.SwapElements(mState == Resolved ? mResolveCallbacks
                                             : mRejectCallbacks);
@@ -2300,7 +2777,7 @@ Promise::TriggerPromiseReactions()
   for (uint32_t i = 0; i < callbacks.Length(); ++i) {
     RefPtr<PromiseReactionJob> task =
       new PromiseReactionJob(this, callbacks[i], mResult);
-    DispatchToMicroTask(task);
+    runtime->DispatchToMicroTask(task);
   }
 }
 
@@ -2308,16 +2785,18 @@ Promise::TriggerPromiseReactions()
 void
 Promise::RemoveFeature()
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   if (mFeature) {
     workers::WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
     MOZ_ASSERT(worker);
-    worker->RemoveFeature(worker->GetJSContext(), mFeature);
+    worker->RemoveFeature(mFeature);
     mFeature = nullptr;
   }
 }
 
 bool
-PromiseReportRejectFeature::Notify(JSContext* aCx, workers::Status aStatus)
+PromiseReportRejectFeature::Notify(workers::Status aStatus)
 {
   MOZ_ASSERT(aStatus > workers::Running);
   mPromise->MaybeReportRejectedOnce();
@@ -2329,6 +2808,8 @@ PromiseReportRejectFeature::Notify(JSContext* aCx, workers::Status aStatus)
 bool
 Promise::CaptureStack(JSContext* aCx, JS::Heap<JSObject*>& aTarget)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   JS::Rooted<JSObject*> stack(aCx);
   if (!JS::CaptureCurrentStack(aCx, &stack)) {
     return false;
@@ -2340,6 +2821,8 @@ Promise::CaptureStack(JSContext* aCx, JS::Heap<JSObject*>& aTarget)
 void
 Promise::GetDependentPromises(nsTArray<RefPtr<Promise>>& aPromises)
 {
+  NS_ASSERT_OWNINGTHREAD(Promise);
+
   // We want to return promises that correspond to then() calls, Promise.all()
   // calls, and Promise.race() calls.
   //
@@ -2362,6 +2845,8 @@ Promise::GetDependentPromises(nsTArray<RefPtr<Promise>>& aPromises)
     }
   }
 }
+
+#endif // SPIDERMONKEY_PROMISE
 
 // A WorkerRunnable to resolve/reject the Promise on the worker thread.
 // Calling thread MUST hold PromiseWorkerProxy's mutex before creating this.
@@ -2399,7 +2884,7 @@ public:
     (workerPromise->*mFunc)(aCx, value);
 
     // Release the Promise because it has been resolved/rejected for sure.
-    mPromiseWorkerProxy->CleanUp(aCx);
+    mPromiseWorkerProxy->CleanUp();
     return true;
   }
 
@@ -2449,7 +2934,9 @@ PromiseWorkerProxy::PromiseWorkerProxy(workers::WorkerPrivate* aWorkerPrivate,
   , mCleanedUp(false)
   , mCallbacks(aCallbacks)
   , mCleanUpLock("cleanUpLock")
+#ifdef DEBUG
   , mFeatureAdded(false)
+#endif
 {
 }
 
@@ -2485,12 +2972,13 @@ PromiseWorkerProxy::AddRefObject()
   MOZ_ASSERT(mWorkerPrivate);
   mWorkerPrivate->AssertIsOnWorkerThread();
   MOZ_ASSERT(!mFeatureAdded);
-  if (!mWorkerPrivate->AddFeature(mWorkerPrivate->GetJSContext(),
-                                  this)) {
+  if (!mWorkerPrivate->AddFeature(this)) {
     return false;
   }
 
+#ifdef DEBUG
   mFeatureAdded = true;
+#endif
   // Maintain a reference so that we have a valid object to clean up when
   // removing the feature.
   AddRef();
@@ -2557,35 +3045,35 @@ PromiseWorkerProxy::RunCallback(JSContext* aCx,
   RefPtr<PromiseWorkerProxyRunnable> runnable =
     new PromiseWorkerProxyRunnable(this, aFunc);
 
-  runnable->Dispatch(aCx);
+  runnable->Dispatch();
 }
 
 void
 PromiseWorkerProxy::ResolvedCallback(JSContext* aCx,
                                      JS::Handle<JS::Value> aValue)
 {
-  RunCallback(aCx, aValue, &Promise::ResolveInternal);
+  RunCallback(aCx, aValue, &Promise::MaybeResolve);
 }
 
 void
 PromiseWorkerProxy::RejectedCallback(JSContext* aCx,
                                      JS::Handle<JS::Value> aValue)
 {
-  RunCallback(aCx, aValue, &Promise::RejectInternal);
+  RunCallback(aCx, aValue, &Promise::MaybeReject);
 }
 
 bool
-PromiseWorkerProxy::Notify(JSContext* aCx, Status aStatus)
+PromiseWorkerProxy::Notify(Status aStatus)
 {
   if (aStatus >= Canceling) {
-    CleanUp(aCx);
+    CleanUp();
   }
 
   return true;
 }
 
 void
-PromiseWorkerProxy::CleanUp(JSContext* aCx)
+PromiseWorkerProxy::CleanUp()
 {
   // Can't release Mutex while it is still locked, so scope the lock.
   {
@@ -2599,14 +3087,15 @@ PromiseWorkerProxy::CleanUp(JSContext* aCx)
 
     MOZ_ASSERT(mWorkerPrivate);
     mWorkerPrivate->AssertIsOnWorkerThread();
-    MOZ_ASSERT(mWorkerPrivate->GetJSContext() == aCx);
 
     // Release the Promise and remove the PromiseWorkerProxy from the features of
     // the worker thread since the Promise has been resolved/rejected or the
     // worker thread has been cancelled.
     MOZ_ASSERT(mFeatureAdded);
-    mWorkerPrivate->RemoveFeature(mWorkerPrivate->GetJSContext(), this);
+    mWorkerPrivate->RemoveFeature(this);
+#ifdef DEBUG
     mFeatureAdded = false;
+#endif
     CleanProperties();
   }
   Release();
@@ -2647,6 +3136,7 @@ void Promise::MaybeRejectBrokenly(const nsAString& aArg) {
   MaybeSomething(aArg, &Promise::MaybeReject);
 }
 
+#ifndef SPIDERMONKEY_PROMISE
 uint64_t
 Promise::GetID() {
   if (mID != 0) {
@@ -2654,6 +3144,7 @@ Promise::GetID() {
   }
   return mID = ++gIDGenerator;
 }
+#endif // SPIDERMONKEY_PROMISE
 
 } // namespace dom
 } // namespace mozilla

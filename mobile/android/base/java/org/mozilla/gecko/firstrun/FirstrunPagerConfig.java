@@ -8,11 +8,11 @@ package org.mozilla.gecko.firstrun;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
-import com.keepsafe.switchboard.SwitchBoard;
-import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.util.Experiments;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -24,52 +24,28 @@ public class FirstrunPagerConfig {
     public static final String KEY_TEXT = "textRes";
     public static final String KEY_SUBTEXT = "subtextRes";
 
-    public static final String ONBOARDING_A = "onboarding-a";
-    public static final String ONBOARDING_B = "onboarding-b";
-    public static final String ONBOARDING_C = "onboarding-c";
-
-    public static List<FirstrunPanelConfig> getDefault(Context context) {
+   public static List<FirstrunPanelConfig> getDefault(Context context) {
         final List<FirstrunPanelConfig> panels = new LinkedList<>();
 
-        if (isInExperimentLocal(context, ONBOARDING_A)) {
-            panels.add(new FirstrunPanelConfig(WelcomePanel.class.getName(), WelcomePanel.TITLE_RES));
-            Telemetry.startUISession(TelemetryContract.Session.EXPERIMENT, ONBOARDING_A);
-        } else if (isInExperimentLocal(context, ONBOARDING_B)) {
-            panels.add(SimplePanelConfigs.urlbarPanelConfig);
-            panels.add(SimplePanelConfigs.bookmarksPanelConfig);
-            panels.add(SimplePanelConfigs.syncPanelConfig);
-            panels.add(new FirstrunPanelConfig(SyncPanel.class.getName(), SyncPanel.TITLE_RES));
-            Telemetry.startUISession(TelemetryContract.Session.EXPERIMENT, ONBOARDING_B);
-        } else if (isInExperimentLocal(context, ONBOARDING_C)) {
+        if (Experiments.isInExperimentLocal(context, Experiments.ONBOARDING3_B)) {
             panels.add(SimplePanelConfigs.urlbarPanelConfig);
             panels.add(SimplePanelConfigs.bookmarksPanelConfig);
             panels.add(SimplePanelConfigs.dataPanelConfig);
             panels.add(SimplePanelConfigs.syncPanelConfig);
-            panels.add(new FirstrunPanelConfig(SyncPanel.class.getName(), SyncPanel.TITLE_RES));
-            Telemetry.startUISession(TelemetryContract.Session.EXPERIMENT, ONBOARDING_C);
+            panels.add(SimplePanelConfigs.signInPanelConfig);
+            Telemetry.startUISession(TelemetryContract.Session.EXPERIMENT, Experiments.ONBOARDING3_B);
+            GeckoSharedPrefs.forProfile(context).edit().putString(Experiments.PREF_ONBOARDING_VERSION, Experiments.ONBOARDING3_B).apply();
+        } else if (Experiments.isInExperimentLocal(context, Experiments.ONBOARDING3_C)) {
+            panels.add(SimplePanelConfigs.tabqueuePanelConfig);
+            panels.add(SimplePanelConfigs.readerviewPanelConfig);
+            panels.add(SimplePanelConfigs.accountPanelConfig);
+            Telemetry.startUISession(TelemetryContract.Session.EXPERIMENT, Experiments.ONBOARDING3_C);
+            GeckoSharedPrefs.forProfile(context).edit().putString(Experiments.PREF_ONBOARDING_VERSION, Experiments.ONBOARDING3_C).apply();
         } else {
-            Log.d(LOGTAG, "Not in an experiment!");
-            panels.add(new FirstrunPanelConfig(WelcomePanel.class.getName(), WelcomePanel.TITLE_RES));
+            Log.e(LOGTAG, "Not in an experiment!");
+            panels.add(SimplePanelConfigs.signInPanelConfig);
         }
-
         return panels;
-    }
-
-    /*
-     * Wrapper method for using local bucketing rather than server-side.
-     * This needs to match the server-side bucketing used on mozilla-switchboard.herokuapp.com.
-     */
-    private static boolean isInExperimentLocal(Context context, String name) {
-        if (AppConstants.MOZ_SWITCHBOARD) {
-            if (SwitchBoard.isInBucket(context, 0, 33)) {
-                return ONBOARDING_A.equals(name);
-            } else if (SwitchBoard.isInBucket(context, 33, 66)) {
-                return ONBOARDING_B.equals(name);
-            } else if (SwitchBoard.isInBucket(context, 66, 100)) {
-                return ONBOARDING_C.equals(name);
-            }
-        }
-        return false;
     }
 
     public static List<FirstrunPanelConfig> getRestricted() {
@@ -117,10 +93,15 @@ public class FirstrunPagerConfig {
         }
     }
 
-    protected static class SimplePanelConfigs {
+    private static class SimplePanelConfigs {
         public static final FirstrunPanelConfig urlbarPanelConfig = new FirstrunPanelConfig(FirstrunPanel.class.getName(), R.string.firstrun_panel_title_welcome, R.drawable.firstrun_urlbar, R.string.firstrun_urlbar_message, R.string.firstrun_urlbar_subtext);
         public static final FirstrunPanelConfig bookmarksPanelConfig = new FirstrunPanelConfig(FirstrunPanel.class.getName(), R.string.firstrun_bookmarks_title, R.drawable.firstrun_bookmarks, R.string.firstrun_bookmarks_message, R.string.firstrun_bookmarks_subtext);
-        public static final FirstrunPanelConfig syncPanelConfig = new FirstrunPanelConfig(FirstrunPanel.class.getName(), R.string.firstrun_sync_title, R.drawable.firstrun_sync, R.string.firstrun_sync_message, R.string.firstrun_sync_subtext);
         public static final FirstrunPanelConfig dataPanelConfig = new FirstrunPanelConfig(DataPanel.class.getName(), R.string.firstrun_data_title, R.drawable.firstrun_data_off, R.string.firstrun_data_message, R.string.firstrun_data_subtext);
+        public static final FirstrunPanelConfig syncPanelConfig = new FirstrunPanelConfig(FirstrunPanel.class.getName(), R.string.firstrun_sync_title, R.drawable.firstrun_sync, R.string.firstrun_sync_message, R.string.firstrun_sync_subtext);
+        public static final FirstrunPanelConfig signInPanelConfig = new FirstrunPanelConfig(SyncPanel.class.getName(), R.string.pref_sync, R.drawable.firstrun_signin, R.string.firstrun_signin_message, R.string.firstrun_welcome_button_browser);
+
+        public static final FirstrunPanelConfig tabqueuePanelConfig = new FirstrunPanelConfig(TabQueuePanel.class.getName(), R.string.firstrun_tabqueue_title, R.drawable.firstrun_tabqueue_off, R.string.firstrun_tabqueue_message_off, R.string.firstrun_tabqueue_subtext_off);
+        public static final FirstrunPanelConfig readerviewPanelConfig = new FirstrunPanelConfig(FirstrunPanel.class.getName(), R.string.firstrun_readerview_title, R.drawable.firstrun_readerview, R.string.firstrun_readerview_message, R.string.firstrun_readerview_subtext);
+        public static final FirstrunPanelConfig accountPanelConfig = new FirstrunPanelConfig(SyncPanel.class.getName(), R.string.firstrun_account_title, R.drawable.firstrun_account, R.string.firstrun_account_message, R.string.firstrun_button_notnow);
     }
 }

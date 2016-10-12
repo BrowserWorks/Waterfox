@@ -8,13 +8,17 @@
 #ifndef _nsStyleContext_h_
 #define _nsStyleContext_h_
 
-#include "mozilla/RestyleLogging.h"
 #include "mozilla/Assertions.h"
-#include "nsRuleNode.h"
-#include "nsCSSPseudoElements.h"
+#include "mozilla/RestyleLogging.h"
+#include "mozilla/StyleContextSource.h"
+#include "nsStyleSet.h"
 
 class nsIAtom;
 class nsPresContext;
+
+namespace mozilla {
+enum class CSSPseudoElementType : uint8_t;
+} // namespace mozilla
 
 /**
  * An nsStyleContext represents the computed style data for an element.
@@ -34,8 +38,6 @@ class nsPresContext;
  *  1. the |nsIFrame|s that are using the style context and
  *  2. any *child* style contexts (this might be the reverse of
  *     expectation, but it makes sense in this case)
- * Style contexts participate in the mark phase of rule node garbage
- * collection.
  */
 
 class nsStyleContext final
@@ -60,14 +62,23 @@ public:
    *                   matches.  See |nsRuleNode| and |nsIStyleRule|.
    * @param aSkipParentDisplayBasedStyleFixup
    *                 If set, this flag indicates that we should skip
-   *                 the chunk of ApplyStyleFixups() that applies to 
-   *                 special cases where a child element's style may 
-   *                 need to be modified based on its parent's display 
+   *                 the chunk of ApplyStyleFixups() that applies to
+   *                 special cases where a child element's style may
+   *                 need to be modified based on its parent's display
    *                 value.
    */
   nsStyleContext(nsStyleContext* aParent, nsIAtom* aPseudoTag,
-                 nsCSSPseudoElements::Type aPseudoType,
-                 nsRuleNode* aRuleNode,
+                 mozilla::CSSPseudoElementType aPseudoType,
+                 already_AddRefed<nsRuleNode> aRuleNode,
+                 bool aSkipParentDisplayBasedStyleFixup);
+
+  // Version of the above that takes a ServoComputedValues instead of a Gecko
+  // nsRuleNode.
+  nsStyleContext(nsStyleContext* aParent,
+                 nsPresContext* aPresContext,
+                 nsIAtom* aPseudoTag,
+                 mozilla::CSSPseudoElementType aPseudoType,
+                 already_AddRefed<ServoComputedValues> aComputedValues,
                  bool aSkipParentDisplayBasedStyleFixup);
 
   void* operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW;
@@ -132,30 +143,65 @@ public:
     return mRefCnt == 1;
   }
 
-  nsPresContext* PresContext() const { return mRuleNode->PresContext(); }
+  nsPresContext* PresContext() const {
+#ifdef MOZ_STYLO
+    return mPresContext;
+#else
+    return mSource.AsGeckoRuleNode()->PresContext();
+#endif
+  }
 
   nsStyleContext* GetParent() const { return mParent; }
 
   nsIAtom* GetPseudo() const { return mPseudoTag; }
-  nsCSSPseudoElements::Type GetPseudoType() const {
-    return static_cast<nsCSSPseudoElements::Type>(mBits >>
-                                                  NS_STYLE_CONTEXT_TYPE_SHIFT);
+  mozilla::CSSPseudoElementType GetPseudoType() const {
+    return static_cast<mozilla::CSSPseudoElementType>(
+             mBits >> NS_STYLE_CONTEXT_TYPE_SHIFT);
   }
 
   // Find, if it already exists *and is easily findable* (i.e., near the
   // start of the child list), a style context whose:
   //  * GetPseudo() matches aPseudoTag
-  //  * RuleNode() matches aRules
-  //  * !GetStyleIfVisited() == !aRulesIfVisited, and, if they're
-  //    non-null, GetStyleIfVisited()->RuleNode() == aRulesIfVisited
+  //  * mSource matches aSource
+  //  * !!GetStyleIfVisited() == !!aSourceIfVisited, and, if they're
+  //    non-null, GetStyleIfVisited()->mSource == aSourceIfVisited
   //  * RelevantLinkVisited() == aRelevantLinkVisited
   already_AddRefed<nsStyleContext>
-  FindChildWithRules(const nsIAtom* aPseudoTag, nsRuleNode* aRules,
-                     nsRuleNode* aRulesIfVisited,
+  FindChildWithRules(const nsIAtom* aPseudoTag,
+                     mozilla::NonOwningStyleContextSource aSource,
+                     mozilla::NonOwningStyleContextSource aSourceIfVisited,
                      bool aRelevantLinkVisited);
+  /**
+   * Get the color property that should be used to fill text.
+   */
+  nsCSSProperty GetTextFillColorProp() {
+    return StyleText()->mWebkitTextFillColorForeground
+           ? eCSSProperty_color : eCSSProperty__webkit_text_fill_color;
+  }
+
+  /**
+   * Get the color that should be used to fill text: either
+   * the current foreground color, or a separately-specified text fill color.
+   */
+  nscolor GetTextFillColor() {
+    return (GetTextFillColorProp() == eCSSProperty_color)
+           ? StyleColor()->mColor : StyleText()->mWebkitTextFillColor;
+  }
+
+  /**
+   * Get the color that should be used to stroke text: either
+   * the current foreground color, or a separately-specified text stroke color.
+   */
+  nscolor GetTextStrokeColor() {
+    const nsStyleText* textStyle = StyleText();
+    return textStyle->mWebkitTextStrokeColorForeground
+           ? StyleColor()->mColor : textStyle->mWebkitTextStrokeColor;
+  }
 
   // Does this style context or any of its ancestors have text
   // decoration lines?
+  // Differs from nsStyleTextReset::HasTextDecorationLines, which tests
+  // only the data for a single context.
   bool HasTextDecorationLines() const
     { return !!(mBits & NS_STYLE_HAS_TEXT_DECORATION_LINES); }
 
@@ -172,6 +218,11 @@ public:
   // Does this style context or any of its ancestors have display:none set?
   bool IsInDisplayNoneSubtree() const
     { return !!(mBits & NS_STYLE_IN_DISPLAY_NONE_SUBTREE); }
+
+  // Is this horizontal-in-vertical (tate-chu-yoko) text? This flag is
+  // only set on style contexts whose pseudo is nsCSSAnonBoxes::mozText.
+  bool IsTextCombined() const
+    { return !!(mBits & NS_STYLE_IS_TEXT_COMBINED); }
 
   // Does this style context represent the style for a pseudo-element or
   // inherit data from such a style context?  Whether this returns true
@@ -270,14 +321,12 @@ public:
     return mBits & nsCachedStyleData::GetBitForSID(aSID);
   }
 
-  nsRuleNode* RuleNode() { return mRuleNode; }
-  void AddStyleBit(const uint64_t& aBit) { mBits |= aBit; }
+  nsRuleNode* RuleNode() {
+    MOZ_RELEASE_ASSERT(mSource.IsGeckoRuleNode());
+    return mSource.AsGeckoRuleNode();
+  }
 
-  /*
-   * Mark this style context's rule node (and its ancestors) to prevent
-   * it from being garbage collected.
-   */
-  void Mark();
+  void AddStyleBit(const uint64_t& aBit) { mBits |= aBit; }
 
   /*
    * Get the style data for a style struct.  This is the most important
@@ -457,9 +506,20 @@ public:
     return cachedData;
   }
 
+  mozilla::NonOwningStyleContextSource StyleSource() const { return mSource.AsRaw(); }
+
 private:
   // Private destructor, to discourage deletion outside of Release():
   ~nsStyleContext();
+
+  // Delegated Helper constructor.
+  nsStyleContext(nsStyleContext* aParent,
+                 mozilla::OwningStyleContextSource&& aSource,
+                 nsIAtom* aPseudoTag,
+                 mozilla::CSSPseudoElementType aPseudoType);
+
+  // Helper post-contruct hook.
+  void FinishConstruction(bool aSkipParentDisplayBasedStyleFixup);
 
   void AddChild(nsStyleContext* aChild);
   void RemoveChild(nsStyleContext* aChild);
@@ -467,7 +527,21 @@ private:
   void* GetUniqueStyleData(const nsStyleStructID& aSID);
   void* CreateEmptyStyleData(const nsStyleStructID& aSID);
 
+  void SetStyleBits();
   void ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup);
+
+  const void* StyleStructFromServoComputedValues(nsStyleStructID aSID) {
+    switch (aSID) {
+#define STYLE_STRUCT(name_, checkdata_cb_)                                    \
+      case eStyleStruct_##name_:                                              \
+        return Servo_GetStyle##name_(mSource.AsServoComputedValues());
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+      default:
+        MOZ_ASSERT_UNREACHABLE("unexpected nsStyleStructID value");
+        return nullptr;
+    }
+  }
 
 #ifdef DEBUG
   struct AutoCheckDependency {
@@ -514,8 +588,16 @@ private:
       }                                                                 \
       /* Have the rulenode deal */                                      \
       AUTO_CHECK_DEPENDENCY(eStyleStruct_##name_);                      \
-      const nsStyle##name_ * newData =                                  \
-        mRuleNode->GetStyle##name_<aComputeData>(this, mBits);          \
+      const nsStyle##name_ * newData;                                   \
+      if (mSource.IsGeckoRuleNode()) {                                  \
+        newData = mSource.AsGeckoRuleNode()->                           \
+          GetStyle##name_<aComputeData>(this, mBits);                   \
+      } else {                                                          \
+        newData =                                                       \
+          Servo_GetStyle##name_(mSource.AsServoComputedValues());       \
+        /* the Servo-backed StyleContextSource owns the struct */       \
+        AddStyleBit(NS_STYLE_INHERIT_BIT(name_));                       \
+      }                                                                 \
       /* always cache inherited data on the style context; the rule */  \
       /* node set the bit in mBits for us if needed. */                 \
       mCachedInheritedData.mStyleStructs[eStyleStruct_##name_] =        \
@@ -534,7 +616,31 @@ private:
       }                                                                 \
       /* Have the rulenode deal */                                      \
       AUTO_CHECK_DEPENDENCY(eStyleStruct_##name_);                      \
-      return mRuleNode->GetStyle##name_<aComputeData>(this);            \
+      const nsStyle##name_ * newData;                                   \
+      if (mSource.IsGeckoRuleNode()) {                                  \
+        newData = mSource.AsGeckoRuleNode()->                           \
+          GetStyle##name_<aComputeData>(this);                          \
+      } else {                                                          \
+        newData =                                                       \
+          Servo_GetStyle##name_(mSource.AsServoComputedValues());       \
+        /* The Servo-backed StyleContextSource owns the struct.         \
+         *                                                              \
+         * XXXbholley: Unconditionally caching reset structs here       \
+         * defeats the memory optimization where we lazily allocate     \
+         * mCachedResetData, so that we can avoid performing an FFI     \
+         * call each time we want to get the style structs. We should   \
+         * measure the tradeoffs at some point. If the FFI overhead is  \
+         * low and the memory win significant, we should consider       \
+         * _always_ grabbing the struct over FFI, and potentially       \
+         * giving mCachedInheritedData the same treatment.              \
+         *                                                              \
+         * Note that there is a similar comment in StyleData().         \
+         */                                                             \
+        AddStyleBit(NS_STYLE_INHERIT_BIT(name_));                       \
+        SetStyle(eStyleStruct_##name_,                                  \
+                 const_cast<nsStyle##name_*>(newData));                 \
+      }                                                                 \
+      return newData;                                                   \
     }
   #include "nsStyleStructList.h"
   #undef STYLE_STRUCT_RESET
@@ -557,7 +663,7 @@ private:
   bool ShouldLogRestyle() { return true; }
 #endif
 
-  nsStyleContext* mParent; // STRONG
+  RefPtr<nsStyleContext> mParent;
 
   // Children are kept in two circularly-linked lists.  The list anchor
   // is not part of the list (null for empty), and we point to the first
@@ -579,20 +685,23 @@ private:
   // the relevant atom.
   nsCOMPtr<nsIAtom> mPseudoTag;
 
-  // The rule node is the node in the lexicographic tree of rule nodes
-  // (the "rule tree") that indicates which style rules are used to
-  // compute the style data, and in what cascading order.  The least
-  // specific rule matched is the one whose rule node is a child of the
-  // root of the rule tree, and the most specific rule matched is the
-  // |mRule| member of |mRuleNode|.
-  nsRuleNode* const       mRuleNode;
+  // The source for our style data, either a Gecko nsRuleNode or a Servo
+  // ComputedValues struct. This never changes after construction, except
+  // when it's released and nulled out during teardown.
+  const mozilla::OwningStyleContextSource mSource;
+
+#ifdef MOZ_STYLO
+  // In Gecko, we can get this off the rule node. We make this conditional
+  // on stylo builds to avoid the memory bloat on release.
+  nsPresContext* mPresContext;
+#endif
 
   // mCachedInheritedData and mCachedResetData point to both structs that
   // are owned by this style context and structs that are owned by one of
   // this style context's ancestors (which are indirectly owned since this
   // style context owns a reference to its parent).  If the bit in |mBits|
   // is set for a struct, that means that the pointer for that struct is
-  // owned by an ancestor or by mRuleNode rather than by this style context.
+  // owned by an ancestor or by the rule node rather than by this style context.
   // Since style contexts typically have some inherited data but only sometimes
   // have reset data, we always allocate the mCachedInheritedData, but only
   // sometimes allocate the mCachedResetData.
@@ -601,7 +710,7 @@ private:
 
   // mBits stores a number of things:
   //  - It records (using the style struct bits) which structs are
-  //    inherited from the parent context or owned by mRuleNode (i.e.,
+  //    inherited from the parent context or owned by the rule node (i.e.,
   //    not owned by the style context).
   //  - It also stores the additional bits listed at the top of
   //    nsStyleStruct.h.
@@ -629,7 +738,16 @@ private:
 already_AddRefed<nsStyleContext>
 NS_NewStyleContext(nsStyleContext* aParentContext,
                    nsIAtom* aPseudoTag,
-                   nsCSSPseudoElements::Type aPseudoType,
+                   mozilla::CSSPseudoElementType aPseudoType,
                    nsRuleNode* aRuleNode,
                    bool aSkipParentDisplayBasedStyleFixup);
+
+already_AddRefed<nsStyleContext>
+NS_NewStyleContext(nsStyleContext* aParentContext,
+                   nsPresContext* aPresContext,
+                   nsIAtom* aPseudoTag,
+                   mozilla::CSSPseudoElementType aPseudoType,
+                   already_AddRefed<ServoComputedValues> aComputedValues,
+                   bool aSkipParentDisplayBasedStyleFixup);
+
 #endif

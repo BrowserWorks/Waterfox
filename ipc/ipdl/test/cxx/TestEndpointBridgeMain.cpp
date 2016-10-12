@@ -3,17 +3,11 @@
 
 #include "TestEndpointBridgeMain.h"
 
+#include "base/task.h"
 #include "IPDLUnitTests.h"      // fail etc.
 #include "IPDLUnitTestSubprocess.h"
 
 using namespace std;
-
-template<>
-struct RunnableMethodTraits<mozilla::_ipdltest::TestEndpointBridgeMainSubChild>
-{
-  static void RetainCallee(mozilla::_ipdltest::TestEndpointBridgeMainSubChild* obj) { }
-  static void ReleaseCallee(mozilla::_ipdltest::TestEndpointBridgeMainSubChild* obj) { }
-};
 
 namespace mozilla {
 namespace _ipdltest {
@@ -78,11 +72,9 @@ TestEndpointBridgeMainSubParent::ActorDestroy(ActorDestroyReason why)
   // which needs the top-level actor (this) to stay alive a little
   // longer so other things can be cleaned up.
   MessageLoop::current()->PostTask(
-    FROM_HERE,
-    new DeleteTask<TestEndpointBridgeMainSubParent>(this));
+    do_AddRef(new DeleteTask<TestEndpointBridgeMainSubParent>(this)));
   XRE_GetIOMessageLoop()->PostTask(
-    FROM_HERE,
-    new DeleteTask<Transport>(GetTransport()));
+    do_AddRef(new DeleteTask<Transport>(GetTransport())));
 }
 
 //-----------------------------------------------------------------------------
@@ -126,8 +118,7 @@ TestEndpointBridgeMainChild::ActorDestroy(ActorDestroyReason why)
   }
   // NB: this is kosher because QuitChild() joins with the IO thread
   XRE_GetIOMessageLoop()->PostTask(
-    FROM_HERE,
-    new DeleteTask<IPDLUnitTestSubprocess>(mSubprocess));
+    do_AddRef(new DeleteTask<IPDLUnitTestSubprocess>(mSubprocess)));
   QuitChild();
 }
 
@@ -174,8 +165,7 @@ TestEndpointBridgeSubParent::ActorDestroy(ActorDestroyReason why)
   // which needs the top-level actor (this) to stay alive a little
   // longer so other things can be cleaned up.
   MessageLoop::current()->PostTask(
-    FROM_HERE,
-    new DeleteTask<TestEndpointBridgeSubParent>(this));
+    do_AddRef(new DeleteTask<TestEndpointBridgeSubParent>(this)));
 }
 
 //-----------------------------------------------------------------------------
@@ -238,8 +228,7 @@ TestEndpointBridgeMainSubChild::RecvHi()
   // Need to close the channel without message-processing frames on
   // the C++ stack
   MessageLoop::current()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(this, &TestEndpointBridgeMainSubChild::Close));
+    NewNonOwningRunnableMethod(this, &TestEndpointBridgeMainSubChild::Close));
   return true;
 }
 
@@ -263,11 +252,9 @@ TestEndpointBridgeMainSubChild::ActorDestroy(ActorDestroyReason why)
   // which needs the top-level actor (this) to stay alive a little
   // longer so other things can be cleaned up.
   MessageLoop::current()->PostTask(
-    FROM_HERE,
-    new DeleteTask<TestEndpointBridgeMainSubChild>(this));
+    do_AddRef(new DeleteTask<TestEndpointBridgeMainSubChild>(this)));
   XRE_GetIOMessageLoop()->PostTask(
-    FROM_HERE,
-    new DeleteTask<Transport>(GetTransport()));
+    do_AddRef(new DeleteTask<Transport>(GetTransport())));
 }
 
 } // namespace mozilla

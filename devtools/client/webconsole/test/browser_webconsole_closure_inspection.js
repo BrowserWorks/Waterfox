@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Check that inspecting a closure in the variables view sidebar works when
 // execution is paused.
@@ -32,9 +32,11 @@ function test() {
         let deferred = promise.defer();
         fetchScopes(hud, toolbox, panelWin, deferred);
 
-        let button = content.document.querySelector("button");
-        ok(button, "button element found");
-        EventUtils.synthesizeMouseAtCenter(button, {}, content);
+        ContentTask.spawn(gBrowser.selectedBrowser, {}, function* () {
+          let button = content.document.querySelector("button");
+          ok(button, "button element found");
+          button.click();
+        });
 
         return deferred.promise;
       });

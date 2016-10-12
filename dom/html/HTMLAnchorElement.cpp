@@ -39,6 +39,12 @@ ASSERT_NODE_FLAGS_SPACE(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET + 2);
 
 #undef ANCHOR_ELEMENT_FLAG_BIT
 
+// static
+const DOMTokenListSupportedToken HTMLAnchorElement::sSupportedRelValues[] = {
+  "noreferrer",
+  nullptr
+};
+
 HTMLAnchorElement::~HTMLAnchorElement()
 {
 }
@@ -94,18 +100,6 @@ int32_t
 HTMLAnchorElement::TabIndexDefault()
 {
   return 0;
-}
-
-void
-HTMLAnchorElement::GetItemValueText(DOMString& aValue)
-{
-  GetHref(aValue);
-}
-
-void
-HTMLAnchorElement::SetItemValueText(const nsAString& aValue)
-{
-  SetHref(aValue);
 }
 
 bool
@@ -302,7 +296,7 @@ nsDOMTokenList*
 HTMLAnchorElement::RelList()
 {
   if (!mRelList) {
-    mRelList = new nsDOMTokenList(this, nsGkAtoms::rel);
+    mRelList = new nsDOMTokenList(this, nsGkAtoms::rel, sSupportedRelValues);
   }
   return mRelList;
 }

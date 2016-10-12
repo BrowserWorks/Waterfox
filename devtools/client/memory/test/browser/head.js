@@ -8,8 +8,13 @@ Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/framework/test/shared-head.js",
   this);
 
-var { snapshotState: states } = require("devtools/client/memory/constants");
-var { breakdownEquals, breakdownNameToSpec } = require("devtools/client/memory/utils");
+// Load the shared Redux helpers into this compartment.
+Services.scriptloader.loadSubScript(
+  "chrome://mochitests/content/browser/devtools/client/framework/test/shared-redux-head.js",
+  this);
+
+var { censusDisplays, snapshotState: states } = require("devtools/client/memory/constants");
+var { L10N } = require("devtools/client/memory/utils");
 
 Services.prefs.setBoolPref("devtools.memory.enabled", true);
 
@@ -67,33 +72,8 @@ function makeMemoryTest(url, generator) {
   });
 }
 
-
-function waitUntilState (store, predicate) {
-  let deferred = promise.defer();
-  let unsubscribe = store.subscribe(check);
-
-  function check () {
-    if (predicate(store.getState())) {
-      unsubscribe();
-      deferred.resolve()
-    }
-  }
-
-  // Fire the check immediately incase the action has already occurred
-  check();
-
-  return deferred.promise;
-}
-
-function waitUntilSnapshotState (store, expected) {
-  let predicate = () => {
-    let snapshots = store.getState().snapshots;
-    info(snapshots.map(x => x.state));
-    return snapshots.length === expected.length &&
-           expected.every((state, i) => state === "*" || snapshots[i].state === state);
-  };
-  info(`Waiting for snapshots to be of state: ${expected}`);
-  return waitUntilState(store, predicate);
+function dumpn(msg) {
+  dump(`MEMORY-TEST: ${msg}\n`);
 }
 
 /**
@@ -120,39 +100,41 @@ function waitUntilDominatorTreeState(store, expected) {
   return waitUntilState(store, predicate);
 }
 
-function takeSnapshot (window) {
+function takeSnapshot(window) {
   let { gStore, document } = window;
   let snapshotCount = gStore.getState().snapshots.length;
-  info(`Taking snapshot...`);
+  info("Taking snapshot...");
   document.querySelector(".devtools-toolbar .take-snapshot").click();
   return waitUntilState(gStore, () => gStore.getState().snapshots.length === snapshotCount + 1);
 }
 
-function clearSnapshots (window) {
+function clearSnapshots(window) {
   let { gStore, document } = window;
   document.querySelector(".devtools-toolbar .clear-snapshots").click();
   return waitUntilState(gStore, () => gStore.getState().snapshots.every(
-    (snapshot) => snapshot.state !== states.SAVED_CENSUS)
+    (snapshot) => snapshot.state !== states.READ)
   );
 }
 
 /**
- * Sets breakdown and waits for currently selected breakdown to use it
- * and be completed the census.
+ * Sets the current requested display and waits for the selected snapshot to use
+ * it and complete the new census that entails.
  */
-function setBreakdown (window, type) {
-  info(`Setting breakdown to ${type}...`);
+function setCensusDisplay(window, display) {
+  info(`Setting census display to ${display}...`);
   let { gStore, gHeapAnalysesClient } = window;
   // XXX: Should handle this via clicking the DOM, but React doesn't
   // fire the onChange event, so just change it in the store.
-  // window.document.querySelector(`.select-breakdown`).value = type;
-  gStore.dispatch(require("devtools/client/memory/actions/breakdown")
-                         .setBreakdownAndRefresh(gHeapAnalysesClient, breakdownNameToSpec(type)));
+  // window.document.querySelector(`.select-display`).value = type;
+  gStore.dispatch(require("devtools/client/memory/actions/census-display")
+                         .setCensusDisplayAndRefresh(gHeapAnalysesClient, display));
 
   return waitUntilState(window.gStore, () => {
     let selected = window.gStore.getState().snapshots.find(s => s.selected);
-    return selected.state === states.SAVED_CENSUS &&
-           breakdownEquals(breakdownNameToSpec(type), selected.census.breakdown);
+    return selected.state === states.READ &&
+      selected.census &&
+      selected.census.state === censusState.SAVED &&
+      selected.census.display === display;
   });
 }
 
@@ -165,4 +147,98 @@ function setBreakdown (window, type) {
 function getDisplayedSnapshotStatus(document) {
   const status = document.querySelector(".snapshot-status");
   return status ? status.textContent.trim() : null;
+}
+
+/**
+ * Get the index of the currently selected snapshot.
+ *
+ * @return {Number}
+ */
+function getSelectedSnapshotIndex(store) {
+  let snapshots = store.getState().snapshots;
+  let selectedSnapshot = snapshots.find(s => s.selected);
+  return snapshots.indexOf(selectedSnapshot);
+}
+
+/**
+ * Returns a promise that will resolve when the snapshot with provided index
+ * becomes selected.
+ *
+ * @return {Promise}
+ */
+function waitUntilSnapshotSelected(store, snapshotIndex) {
+  return waitUntilState(store, state =>
+    state.snapshots[snapshotIndex] &&
+    state.snapshots[snapshotIndex].selected === true);
+}
+
+
+/**
+ * Wait until the state has censuses in a certain state.
+ *
+ * @return {Promise}
+ */
+function waitUntilCensusState(store, getCensus, expected) {
+  let predicate = () => {
+    let snapshots = store.getState().snapshots;
+
+    info("Current census state:" +
+             snapshots.map(x => getCensus(x) ? getCensus(x).state : null));
+
+    return snapshots.length === expected.length &&
+           expected.every((state, i) => {
+             let census = getCensus(snapshots[i]);
+             return (state === "*") ||
+                    (!census && !state) ||
+                    (census && census.state === state);
+           });
+  };
+  info(`Waiting for snapshot censuses to be of state: ${expected}`);
+  return waitUntilState(store, predicate);
+}
+
+/**
+ * Mock out the requestAnimationFrame.
+ *
+ * @return {Object}
+ * @function nextFrame
+ *           Call the last queued function
+ * @function raf
+ *           The mocked raf function
+ * @function timesCalled
+ *           How many times the RAF has been called
+ */
+function createRAFMock() {
+  let queuedFns = [];
+  let mock = { timesCalled: 0 };
+
+  mock.nextFrame = function () {
+    let thisQueue = queuedFns;
+    queuedFns = [];
+    for (var i = 0; i < thisQueue.length; i++) {
+      thisQueue[i]();
+    }
+  };
+
+  mock.raf = function (fn) {
+    mock.timesCalled++;
+    queuedFns.push(fn);
+  };
+  return mock;
+}
+
+/**
+ * Test to see if two floats are equivalent.
+ *
+ * @param {Float} a
+ * @param {Float} b
+ * @return {Boolean}
+ */
+function floatEquality(a, b) {
+  const EPSILON = 0.00000000001;
+  const equals = Math.abs(a - b) < EPSILON;
+  if (!equals) {
+    info(`${a} not equal to ${b}`);
+  }
+  return equals;
 }

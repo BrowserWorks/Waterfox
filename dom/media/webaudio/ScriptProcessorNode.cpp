@@ -368,7 +368,7 @@ private:
     // Compute the playback time in the coordinate system of the destination
     double playbackTime = mDestination->StreamTimeToSeconds(playbackTick);
 
-    class Command final : public nsRunnable
+    class Command final : public Runnable
     {
     public:
       Command(AudioNodeStream* aStream,
@@ -429,7 +429,7 @@ private:
           inputBuffer =
             AudioBuffer::Create(context, inputChannelCount,
                                 aNode->BufferSize(), context->SampleRate(),
-                                mInputBuffer.forget(), cx, rv);
+                                mInputBuffer.forget(), rv);
           if (rv.Failed()) {
             return nullptr;
           }

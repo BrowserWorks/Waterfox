@@ -7,7 +7,6 @@
 #include "QuotaManagerService.h"
 
 #include "ActorsChild.h"
-#include "mozIApplicationClearPrivateDataParams.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Hal.h"
@@ -62,7 +61,7 @@ TestingPrefChangedCallback(const char* aPrefName,
 }
 
 class AbortOperationsRunnable final
-  : public nsRunnable
+  : public Runnable
 {
   ContentParentId mContentParentId;
 
@@ -279,8 +278,8 @@ QuotaManagerService::AbortOperationsForProcess(ContentParentId aContentParentId)
   RefPtr<AbortOperationsRunnable> runnable =
     new AbortOperationsRunnable(aContentParentId);
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-    mBackgroundThread->Dispatch(runnable, NS_DISPATCH_NORMAL)));
+  MOZ_ALWAYS_SUCCEEDS(
+    mBackgroundThread->Dispatch(runnable, NS_DISPATCH_NORMAL));
 }
 
 nsresult
@@ -463,8 +462,8 @@ QuotaManagerService::PerformIdleMaintenance()
       do_GetService(kIdleServiceContractId);
     MOZ_ASSERT(idleService);
 
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      idleService->AddIdleObserver(this, kIdleObserverTimeSec)));
+    MOZ_ALWAYS_SUCCEEDS(
+      idleService->AddIdleObserver(this, kIdleObserverTimeSec));
 
     mIdleObserverRegistered = true;
   }
@@ -481,8 +480,8 @@ QuotaManagerService::RemoveIdleObserver()
       do_GetService(kIdleServiceContractId);
     MOZ_ASSERT(idleService);
 
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      idleService->RemoveIdleObserver(this, kIdleObserverTimeSec)));
+    MOZ_ALWAYS_SUCCEEDS(
+      idleService->RemoveIdleObserver(this, kIdleObserverTimeSec));
 
     mIdleObserverRegistered = false;
   }
@@ -643,34 +642,15 @@ QuotaManagerService::Observe(nsISupports* aSubject,
     return NS_OK;
   }
 
-  if (!strcmp(aTopic, TOPIC_WEB_APP_CLEAR_DATA)) {
-    nsCOMPtr<mozIApplicationClearPrivateDataParams> params =
-      do_QueryInterface(aSubject);
-    if (NS_WARN_IF(!params)) {
-      return NS_ERROR_UNEXPECTED;
-    }
-
-    uint32_t appId;
-    nsresult rv = params->GetAppId(&appId);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    bool browserOnly;
-    rv = params->GetBrowserOnly(&browserOnly);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
+  if (!strcmp(aTopic, "clear-origin-data")) {
     RefPtr<Request> request = new Request();
 
-    ClearAppParams requestParams;
-    requestParams.appId() = appId;
-    requestParams.browserOnly() = browserOnly;
+    ClearOriginsParams requestParams;
+    requestParams.pattern() = nsDependentString(aData);
 
     nsAutoPtr<PendingRequestInfo> info(new RequestInfo(request, requestParams));
 
-    rv = InitiateRequest(info);
+    nsresult rv = InitiateRequest(info);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }

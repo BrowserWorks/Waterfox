@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Check that variables view is linked to the inspector for highlighting and
 // selecting DOM nodes
@@ -33,19 +33,19 @@ function onQSAexecuted(msg) {
   let anchor = msg.querySelector("a");
   ok(anchor, "object link found");
 
-  gJSTerm.once("variablesview-fetched", onNodeListVviewFetched);
+  gJSTerm.once("variablesview-fetched", onNodeListViewFetched);
 
   executeSoon(() =>
     EventUtils.synthesizeMouse(anchor, 2, 2, {}, gWebConsole.iframeWindow)
   );
 }
 
-function onNodeListVviewFetched(aEvent, aVar) {
-  gVariablesView = aVar._variablesView;
+function onNodeListViewFetched(event, variable) {
+  gVariablesView = variable._variablesView;
   ok(gVariablesView, "variables view object");
 
   // Transform the vview into an array we can filter properties from
-  let props = [...aVar].map(([id, prop]) => [id, prop]);
+  let props = [...variable].map(([id, prop]) => [id, prop]);
 
   // These properties are the DOM nodes ones
   props = props.filter(v => v[0].match(/[0-9]+/));

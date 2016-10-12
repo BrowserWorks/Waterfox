@@ -35,15 +35,12 @@ class AvdInfo(object):
        Simple class to contain an AVD description.
     """
     def __init__(self, description, name, tooltool_manifest, extra_args,
-                 port, uses_sut, sut_port, sut_port2):
+                 port):
         self.description = description
         self.name = name
         self.tooltool_manifest = tooltool_manifest
         self.extra_args = extra_args
         self.port = port
-        self.uses_sut = uses_sut
-        self.sut_port = sut_port
-        self.sut_port2 = sut_port2
 
 
 """
@@ -53,32 +50,19 @@ class AvdInfo(object):
    and the parameters for each reflect those used in mozharness.
 """
 AVD_DICT = {
-    '2.3': AvdInfo('Android 2.3',
-                   'mozemulator-2.3',
-                   'testing/config/tooltool-manifests/androidarm/releng.manifest',
-                   ['-debug',
-                    'init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket',
-                    '-qemu', '-m', '1024', '-cpu', 'cortex-a9'],
-                   5554,
-                   True,
-                   20701, 20700),
     '4.3': AvdInfo('Android 4.3',
                    'mozemulator-4.3',
                    'testing/config/tooltool-manifests/androidarm_4_3/releng.manifest',
                    ['-show-kernel', '-debug',
                     'init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket'],
-                   5554,
-                   False,
-                   0, 0),
+                   5554),
     'x86': AvdInfo('Android 4.2 x86',
                    'mozemulator-x86',
                    'testing/config/tooltool-manifests/androidx86/releng.manifest',
                    ['-debug',
                     'init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket',
                     '-qemu', '-m', '1024', '-enable-kvm'],
-                   5554,
-                   False,
-                   0, 0)
+                   5554)
 }
 
 def verify_android_device(build_obj, install=False, xre=False, debugger=False):
@@ -242,7 +226,7 @@ def run_firefox_for_android(build_obj, params):
         #
         #   adb shell am start -a android.activity.MAIN -n org.mozilla.fennec_$USER -d <url param> --es args "<params>"
         #
-        app = "%s/.App" % build_obj.substs['ANDROID_PACKAGE_NAME']
+        app = "%s/org.mozilla.gecko.BrowserApp" % build_obj.substs['ANDROID_PACKAGE_NAME']
         cmd = ['am', 'start', '-a', 'android.activity.MAIN', '-n', app]
         if params:
             for p in params:
@@ -259,6 +243,26 @@ def run_firefox_for_android(build_obj, params):
         _log_warning("unable to launch Firefox for Android")
         return 1
     return 0
+
+def grant_runtime_permissions(build_obj, app):
+    """
+       Grant required runtime permissions to the specified app (typically org.mozilla.fennec_$USER).
+    """
+    adb_path = _find_sdk_exe(build_obj.substs, 'adb', False)
+    if not adb_path:
+        adb_path = 'adb'
+    dm = DeviceManagerADB(autoconnect=False, adbPath=adb_path, retryLimit=1)
+    dm.default_timeout = 10
+    try:
+        sdk_level = dm.shellCheckOutput(['getprop', 'ro.build.version.sdk'])
+        if sdk_level and int(sdk_level) >= 23:
+            _log_info("Granting important runtime permissions to %s" % app)
+            dm.shellCheckOutput(['pm', 'grant', app, 'android.permission.WRITE_EXTERNAL_STORAGE'])
+            dm.shellCheckOutput(['pm', 'grant', app, 'android.permission.ACCESS_FINE_LOCATION'])
+            dm.shellCheckOutput(['pm', 'grant', app, 'android.permission.CAMERA'])
+            dm.shellCheckOutput(['pm', 'grant', app, 'android.permission.WRITE_CONTACTS'])
+    except DMError:
+        _log_warning("Unable to grant runtime permissions to %s" % app)
 
 class AndroidEmulator(object):
 
@@ -350,9 +354,13 @@ class AndroidEmulator(object):
         """
         avd = os.path.join(
             EMULATOR_HOME_DIR, 'avd', self.avd_info.name + '.avd')
+        ini_file = os.path.join(
+            EMULATOR_HOME_DIR, 'avd', self.avd_info.name + '.ini')
         if force and os.path.exists(avd):
             shutil.rmtree(avd)
         if not os.path.exists(avd):
+            if os.path.exists(ini_file):
+                os.remove(ini_file)
             url = '%s/%s' % (TRY_URL, self.avd_info.tooltool_manifest)
             _download_file(url, 'releng.manifest', EMULATOR_HOME_DIR)
             _tooltool_fetch()
@@ -426,9 +434,6 @@ class AndroidEmulator(object):
 
         if not self._verify_emulator():
             return False
-        if self.avd_info.uses_sut:
-            if not self._verify_sut():
-                return False
         return True
 
     def wait(self):
@@ -494,15 +499,6 @@ class AndroidEmulator(object):
                 if tn is not None:
                     res = tn.read_until('OK', 10)
                     self._telnet_cmd(tn, 'avd status')
-                    if self.avd_info.uses_sut:
-                        cmd = 'redir add tcp:%s:%s' % \
-                           (str(self.avd_info.sut_port),
-                            str(self.avd_info.sut_port))
-                        self._telnet_cmd(tn, cmd)
-                        cmd = 'redir add tcp:%s:%s' % \
-                            (str(self.avd_info.sut_port2),
-                             str(self.avd_info.sut_port2))
-                        self._telnet_cmd(tn, cmd)
                     self._telnet_cmd(tn, 'redir list')
                     self._telnet_cmd(tn, 'network status')
                     tn.write('quit\n')
@@ -522,42 +518,12 @@ class AndroidEmulator(object):
                     return False
         return telnet_ok
 
-    def _verify_sut(self):
-        sut_ok = False
-        while(not sut_ok):
-            try:
-                tn = telnetlib.Telnet('localhost', self.avd_info.sut_port, 10)
-                if tn is not None:
-                    _log_debug(
-                        "Connected to port %d" % self.avd_info.sut_port)
-                    res = tn.read_until('$>', 10)
-                    if res.find('$>') == -1:
-                        _log_debug("Unexpected SUT response: %s" % res)
-                    else:
-                        _log_debug("SUT response: %s" % res)
-                        sut_ok = True
-                    tn.write('quit\n')
-                    tn.read_all()
-            except:
-                _log_debug("Caught exception while verifying sutagent")
-            finally:
-                if tn is not None:
-                    tn.close()
-            if not sut_ok:
-                time.sleep(10)
-                if self.proc.proc.poll() is not None:
-                    _log_warning("Emulator has already completed!")
-                    return False
-        return sut_ok
-
     def _get_avd_type(self, requested):
         if requested in AVD_DICT.keys():
             return requested
         if self.substs:
             if not self.substs['TARGET_CPU'].startswith('arm'):
                 return 'x86'
-            if self.substs['MOZ_ANDROID_MIN_SDK_VERSION'] == '9':
-                return '2.3'
         return '4.3'
 
 def _find_sdk_exe(substs, exe, tools):
@@ -671,7 +637,8 @@ def _tooltool_fetch():
     def outputHandler(line):
         _log_debug(line)
     _download_file(TOOLTOOL_URL, 'tooltool.py', EMULATOR_HOME_DIR)
-    command = ['python', 'tooltool.py', 'fetch', '-o', '-m', 'releng.manifest']
+    command = [sys.executable, 'tooltool.py',
+               'fetch', '-o', '-m', 'releng.manifest']
     proc = ProcessHandler(
         command, processOutputLine=outputHandler, storeOutput=False,
         cwd=EMULATOR_HOME_DIR)
@@ -713,9 +680,7 @@ def _get_device_platform(substs):
         pie = '-pie'
     if substs['TARGET_CPU'].startswith('arm'):
         return 'arm%s' % pie
-    if sdk_level and sdk_level >= 21:
-        _log_warning("PIE gdbserver is not yet available for x86: you may not be able to debug on this platform")
-    return 'x86'
+    return 'x86%s' % pie
 
 def _update_gdbinit(substs, path):
     if os.path.exists(path):

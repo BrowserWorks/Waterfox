@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -11,7 +13,7 @@ const LEARN_MORE_URI = "https://developer.mozilla.org/Firefox/Privacy/Tracking_P
 const PREF = "privacy.trackingprotection.enabled";
 const {UrlClassifierTestUtils} = Cu.import("resource://testing-common/UrlClassifierTestUtils.jsm", {});
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   Services.prefs.clearUserPref(PREF);
   UrlClassifierTestUtils.cleanupTestTrackers();
 });
@@ -29,7 +31,7 @@ add_task(function* testMessagesAppear() {
     messages: [
       {
         name: "Was blocked because tracking protection is enabled",
-        text: "The resource at \"http://tracking.example.com/\" was blocked because tracking protection is enabled",
+        text: "The resource at \u201chttp://tracking.example.com/\u201d was blocked because tracking protection is enabled",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_WARNING,
         objects: true,

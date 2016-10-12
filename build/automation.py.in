@@ -396,7 +396,7 @@ class Automation(object):
     self.log.info("Can't trigger Breakpad, just killing process")
     self.killPid(processPID)
 
-  def waitForFinish(self, proc, utilityPath, timeout, maxTime, startTime, debuggerInfo, symbolsPath):
+  def waitForFinish(self, proc, utilityPath, timeout, maxTime, startTime, debuggerInfo, symbolsPath, outputHandler=None):
     """ Look for timeout or crashes and return the status after the process terminates """
     stackFixerFunction = None
     didTimeout = False
@@ -436,7 +436,12 @@ class Automation(object):
       while line != "" and not didTimeout:
         if stackFixerFunction:
           line = stackFixerFunction(line)
-        self.log.info(line.rstrip().decode("UTF-8", "ignore"))
+
+        if outputHandler is None:
+            self.log.info(line.rstrip().decode("UTF-8", "ignore"))
+        else:
+            outputHandler(line)
+
         if "TEST-START" in line and "|" in line:
           self.lastTestSeen = line.split("|")[1].strip()
         if not debuggerInfo and "TEST-UNEXPECTED-FAIL" in line and "Test timed out" in line:
@@ -448,11 +453,13 @@ class Automation(object):
           # Kill the application.
           hitMaxTime = True
           self.log.info("TEST-UNEXPECTED-FAIL | %s | application ran for longer than allowed maximum time of %d seconds", self.lastTestSeen, int(maxTime))
+          self.log.error("Force-terminating active process(es).");
           self.killAndGetStack(proc.pid, utilityPath, debuggerInfo)
       if didTimeout:
         if line:
           self.log.info(line.rstrip().decode("UTF-8", "ignore"))
         self.log.info("TEST-UNEXPECTED-FAIL | %s | application timed out after %d seconds with no output", self.lastTestSeen, int(timeout))
+        self.log.error("Force-terminating active process(es).");
         if browserProcessId == -1:
           browserProcessId = proc.pid
         self.killAndGetStack(browserProcessId, utilityPath, debuggerInfo)
@@ -530,7 +537,7 @@ class Automation(object):
              debuggerInfo = None, symbolsPath = None,
              timeout = -1, maxTime = None, onLaunch = None,
              detectShutdownLeaks = False, screenshotOnFail=False, testPath=None, bisectChunk=None,
-             valgrindPath=None, valgrindArgs=None, valgrindSuppFiles=None):
+             valgrindPath=None, valgrindArgs=None, valgrindSuppFiles=None, outputHandler=None):
     """
     Run the app, log the duration it took to execute, return the status code.
     Kills the app if it runs for longer than |maxTime| seconds, or outputs nothing for |timeout| seconds.
@@ -579,7 +586,8 @@ class Automation(object):
       # app is launched.
       onLaunch()
 
-    status = self.waitForFinish(proc, utilityPath, timeout, maxTime, startTime, debuggerInfo, symbolsPath)
+    status = self.waitForFinish(proc, utilityPath, timeout, maxTime, startTime, debuggerInfo, symbolsPath,
+                                outputHandler=outputHandler)
     self.log.info("INFO | automation.py | Application ran for: %s", str(datetime.now() - startTime))
 
     # Do a final check for zombie child processes.

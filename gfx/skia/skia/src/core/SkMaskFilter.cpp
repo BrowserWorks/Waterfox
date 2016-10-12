@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2006 The Android Open Source Project
  *
@@ -19,7 +18,6 @@
 #if SK_SUPPORT_GPU
 #include "GrTexture.h"
 #include "SkGr.h"
-#include "SkGrPixelRef.h"
 #endif
 
 SkMaskFilter::NinePatch::~NinePatch() {
@@ -349,7 +347,6 @@ bool SkMaskFilter::filterMaskGPU(GrTexture* src,
 void SkMaskFilter::computeFastBounds(const SkRect& src, SkRect* dst) const {
     SkMask  srcM, dstM;
 
-    srcM.fImage = nullptr;
     srcM.fBounds = src.roundOut();
     srcM.fRowBytes = 0;
     srcM.fFormat = SkMask::kA8_Format;

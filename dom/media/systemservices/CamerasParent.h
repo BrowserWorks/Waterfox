@@ -86,7 +86,7 @@ public:
   static already_AddRefed<CamerasParent> Create();
 
   // Messages received form the child. These run on the IPC/PBackground thread.
-  virtual bool RecvAllocateCaptureDevice(const int&, const nsCString&) override;
+  virtual bool RecvAllocateCaptureDevice(const int&, const nsCString&, const nsCString&) override;
   virtual bool RecvReleaseCaptureDevice(const int&, const int &) override;
   virtual bool RecvNumberOfCaptureDevices(const int&) override;
   virtual bool RecvNumberOfCapabilities(const int&, const nsCString&) override;
@@ -129,7 +129,8 @@ protected:
   void CloseEngines();
   void StopIPC();
   void StopVideoCapture();
-  nsresult DispatchToVideoCaptureThread(nsRunnable *event);
+  // Can't take already_AddRefed because it can fail in stupid ways.
+  nsresult DispatchToVideoCaptureThread(Runnable* event);
 
   EngineHelper mEngines[CaptureEngine::MaxEngine];
   nsTArray<CallbackHelper*> mCallbacks;

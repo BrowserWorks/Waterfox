@@ -14,6 +14,7 @@
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/WeakPtr.h"
 
 class nsTextInputListener;
@@ -155,8 +156,7 @@ public:
     // Whether the value change should be notified to the frame/contet nor not.
     eSetValue_Notify                = 1 << 2
   };
-  MOZ_WARN_UNUSED_RESULT bool SetValue(const nsAString& aValue,
-                                       uint32_t aFlags);
+  MOZ_MUST_USE bool SetValue(const nsAString& aValue, uint32_t aFlags);
   void GetValue(nsAString& aValue, bool aIgnoreWrap) const;
   void EmptyValue() { if (mValue) mValue->Truncate(); }
   bool IsEmpty() const { return mValue ? mValue->IsEmpty() : true; }
@@ -293,7 +293,7 @@ private:
   nsCOMPtr<mozilla::dom::Element> mPlaceholderDiv;
   nsTextControlFrame* mBoundFrame;
   RefPtr<nsTextInputListener> mTextListener;
-  nsAutoPtr<nsCString> mValue;
+  mozilla::Maybe<nsString> mValue;
   RefPtr<nsAnonDivObserver> mMutationObserver;
   mutable nsString mCachedValue; // Caches non-hard-wrapped value on a multiline control.
   // mValueBeingSet is available only while SetValue() is requesting to commit

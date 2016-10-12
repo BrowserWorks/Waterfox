@@ -1,6 +1,7 @@
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 var {Toolbox} = require("devtools/client/framework/toolbox");
 
@@ -26,10 +27,10 @@ function testBottomHost(aToolbox) {
 
   // switch to another tab and test toolbox.raise()
   gBrowser.selectedTab = tab2;
-  executeSoon(function() {
+  executeSoon(function () {
     is(gBrowser.selectedTab, tab2, "Correct tab is selected before calling raise");
     toolbox.raise();
-    executeSoon(function() {
+    executeSoon(function () {
       is(gBrowser.selectedTab, tab1, "Correct tab was selected after calling raise");
 
       toolbox.switchHost(Toolbox.HostType.WINDOW).then(testWindowHost).then(null, console.error);
@@ -46,14 +47,14 @@ function testWindowHost() {
   let onToolboxFocus = () => {
     toolbox._host._window.removeEventListener("focus", onToolboxFocus, true);
     info("focusing main window.");
-    window.focus()
+    window.focus();
   };
   // Need to wait for toolbox window to get focus.
   toolbox._host._window.addEventListener("focus", onToolboxFocus, true);
 }
 
 function onFocus() {
-  info("Main window is focused before calling toolbox.raise()")
+  info("Main window is focused before calling toolbox.raise()");
   window.removeEventListener("focus", onFocus, true);
 
   // Check if toolbox window got focus.
@@ -71,7 +72,7 @@ function onFocus() {
 function cleanup() {
   Services.prefs.setCharPref("devtools.toolbox.host", Toolbox.HostType.BOTTOM);
 
-  toolbox.destroy().then(function() {
+  toolbox.destroy().then(function () {
     toolbox = target = null;
     gBrowser.removeCurrentTab();
     gBrowser.removeCurrentTab();

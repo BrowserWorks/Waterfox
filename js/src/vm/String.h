@@ -316,6 +316,8 @@ class JSString : public js::gc::TenuredCell
     /* Avoid lame compile errors in JSRope::flatten */
     friend class JSRope;
 
+    friend class js::gc::RelocationOverlay;
+
   protected:
     template <typename CharT>
     MOZ_ALWAYS_INLINE
@@ -492,7 +494,7 @@ class JSString : public js::gc::TenuredCell
         return offsetof(JSString, d.s.u2.nonInlineCharsTwoByte);
     }
 
-    static inline js::ThingRootKind rootKind() { return js::THING_ROOT_STRING; }
+    static const JS::TraceKind TraceKind = JS::TraceKind::String;
 
 #ifdef DEBUG
     void dump();
@@ -1136,7 +1138,7 @@ NameToId(PropertyName* name)
     return NON_INTEGER_ATOM_TO_JSID(name);
 }
 
-using PropertyNameVector = js::GCVector<PropertyName*>;
+using PropertyNameVector = JS::GCVector<PropertyName*>;
 
 template <typename CharT>
 void

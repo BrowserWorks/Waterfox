@@ -83,7 +83,9 @@ BrowserAddonActor.prototype = {
       id: this.id,
       name: this._addon.name,
       url: this.url,
+      iconURL: this._addon.iconURL,
       debuggable: this._addon.isDebuggable,
+      temporarilyInstalled: this._addon.temporarilyInstalled,
       consoleActor: this._consoleActor.actorID,
 
       traits: {
@@ -155,7 +157,14 @@ BrowserAddonActor.prototype = {
     return { type: "detached" };
   },
 
-  preNest: function() {
+  onReload: function BAA_onReload() {
+    return this._addon.reload()
+      .then(() => {
+        return {}; // send an empty response
+      });
+  },
+
+  preNest: function () {
     let e = Services.wm.getEnumerator(null);
     while (e.hasMoreElements()) {
       let win = e.getNext();
@@ -166,7 +175,7 @@ BrowserAddonActor.prototype = {
     }
   },
 
-  postNest: function() {
+  postNest: function () {
     let e = Services.wm.getEnumerator(null);
     while (e.hasMoreElements()) {
       let win = e.getNext();
@@ -192,11 +201,7 @@ BrowserAddonActor.prototype = {
     } catch (e) {}
 
     if (global instanceof Ci.nsIDOMWindow) {
-      let id = {};
-      if (mapURIToAddonID(global.document.documentURIObject, id)) {
-        return id.value === this.id;
-      }
-      return false;
+      return mapURIToAddonID(global.document.documentURIObject) == this.id;
     }
 
     // Check the global for a __URI__ property and then try to map that to an
@@ -215,9 +220,8 @@ BrowserAddonActor.prototype = {
         return false;
       }
 
-      let id = {};
-      if (mapURIToAddonID(uri, id)) {
-        return id.value === this.id;
+      if (mapURIToAddonID(uri) == this.id) {
+        return true;
       }
     }
 
@@ -229,7 +233,7 @@ BrowserAddonActor.prototype = {
    * sure every script and source with a URL is stored when debugging
    * add-ons.
    */
-  _allowSource: function(aSource) {
+  _allowSource: function (aSource) {
     // XPIProvider.jsm evals some code in every add-on's bootstrap.js. Hide it.
     if (aSource.url === "resource://gre/modules/addons/XPIProvider.jsm") {
       return false;
@@ -249,7 +253,8 @@ BrowserAddonActor.prototype = {
 
 BrowserAddonActor.prototype.requestTypes = {
   "attach": BrowserAddonActor.prototype.onAttach,
-  "detach": BrowserAddonActor.prototype.onDetach
+  "detach": BrowserAddonActor.prototype.onDetach,
+  "reload": BrowserAddonActor.prototype.onReload
 };
 
 /**
@@ -316,7 +321,7 @@ update(AddonConsoleActor.prototype, {
         case "ConsoleAPI":
           if (!this.consoleAPIListener) {
             this.consoleAPIListener =
-              new ConsoleAPIListener(null, this, "addon/" + this.addon.id);
+              new ConsoleAPIListener(null, this, { addonId: this.addon.id });
             this.consoleAPIListener.init();
           }
           startedListeners.push(listener);

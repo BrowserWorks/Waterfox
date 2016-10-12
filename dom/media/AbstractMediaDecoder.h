@@ -37,11 +37,6 @@ static inline bool IsCurrentThread(nsIThread* aThread) {
   return NS_GetCurrentThread() == aThread;
 }
 
-enum class MediaDecoderEventVisibility : int8_t {
-  Observable,
-  Suppressed
-};
-
 /**
  * The AbstractMediaDecoder class describes the public interface for a media decoder
  * and is used by the MediaReader classes.
@@ -64,10 +59,11 @@ public:
                                    uint32_t aDropped) = 0;
 
   virtual AbstractCanonical<media::NullableTimeUnit>* CanonicalDurationOrNull() { return nullptr; };
+  virtual AbstractCanonical<Maybe<double>>* CanonicalExplicitDuration() { return nullptr; }
 
   // Return an event that will be notified when data arrives in MediaResource.
   // MediaDecoderReader will register with this event to receive notifications
-  // in order to udpate buffer ranges.
+  // in order to update buffer ranges.
   // Return null if this decoder doesn't support the event.
   virtual MediaEventSource<void>* DataArrivedEvent()
   {
@@ -79,10 +75,9 @@ protected:
 public:
   void DispatchUpdateEstimatedMediaDuration(int64_t aDuration)
   {
-    nsCOMPtr<nsIRunnable> r =
-      NS_NewRunnableMethodWithArg<int64_t>(this, &AbstractMediaDecoder::UpdateEstimatedMediaDuration,
-                                           aDuration);
-    NS_DispatchToMainThread(r);
+    NS_DispatchToMainThread(NewRunnableMethod<int64_t>(this,
+                                                       &AbstractMediaDecoder::UpdateEstimatedMediaDuration,
+                                                       aDuration));
   }
 
   virtual VideoFrameContainer* GetVideoFrameContainer() = 0;

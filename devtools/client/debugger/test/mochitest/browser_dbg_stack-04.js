@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test that stackframes are cleared after resume.
@@ -11,14 +13,18 @@ var gTab, gPanel, gDebugger;
 var gFrames, gClassicFrames;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gFrames = gDebugger.DebuggerView.StackFrames;
     gClassicFrames = gDebugger.DebuggerView.StackFramesClassicList;
 
-    waitForSourceAndCaretAndScopes(gPanel, ".html", 1).then(performTest);
+    waitForCaretAndScopes(gPanel, 1).then(performTest);
     callInTab(gTab, "evalCall");
   });
 }
@@ -43,7 +49,7 @@ function performTest() {
   gDebugger.gThreadClient.resume();
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

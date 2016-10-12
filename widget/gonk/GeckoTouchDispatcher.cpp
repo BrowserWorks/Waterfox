@@ -29,7 +29,7 @@
 #include "mozilla/TouchEvents.h"
 #include "mozilla/dom/Touch.h"
 #include "mozilla/layers/APZThreadUtils.h"
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "nsAppShell.h"
 #include "nsDebug.h"
 #include "nsThreadUtils.h"
@@ -88,7 +88,7 @@ void
 GeckoTouchDispatcher::SetCompositorVsyncScheduler(mozilla::layers::CompositorVsyncScheduler *aObserver)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  // We assume on b2g that there is only 1 CompositorParent
+  // We assume on b2g that there is only 1 CompositorBridgeParent
   MOZ_ASSERT(mCompositorVsyncScheduler == nullptr);
   mCompositorVsyncScheduler = aObserver;
 }
@@ -115,7 +115,7 @@ GeckoTouchDispatcher::NotifyTouch(MultiTouchInput& aTouch, TimeStamp aEventTime)
       // move events because we might end up dispatching events out of order.
       // Instead, fall back to a non-resampling in-order dispatch until we're
       // done processing the non-move events.
-      layers::APZThreadUtils::RunOnControllerThread(NewRunnableMethod(
+      layers::APZThreadUtils::RunOnControllerThread(NewRunnableMethod<MultiTouchInput>(
         this, &GeckoTouchDispatcher::DispatchTouchEvent, aTouch));
       return;
     }
@@ -127,7 +127,7 @@ GeckoTouchDispatcher::NotifyTouch(MultiTouchInput& aTouch, TimeStamp aEventTime)
       MutexAutoLock lock(mTouchQueueLock);
       mInflightNonMoveEvents++;
     }
-    layers::APZThreadUtils::RunOnControllerThread(NewRunnableMethod(
+    layers::APZThreadUtils::RunOnControllerThread(NewRunnableMethod<MultiTouchInput>(
       this, &GeckoTouchDispatcher::DispatchTouchNonMoveEvent, aTouch));
   }
 }

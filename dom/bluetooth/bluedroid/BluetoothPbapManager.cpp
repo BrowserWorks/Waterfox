@@ -10,16 +10,15 @@
 #include "BluetoothService.h"
 #include "BluetoothSocket.h"
 #include "BluetoothUtils.h"
-#include "BluetoothUuid.h"
+#include "BluetoothUuidHelper.h"
 
 #include "mozilla/dom/BluetoothPbapParametersBinding.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/ipc/BlobParent.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
-#include "nsAutoPtr.h"
 #include "nsIInputStream.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
@@ -258,7 +257,7 @@ BluetoothPbapManager::Listen()
 // Virtual function of class SocketConsumer
 void
 BluetoothPbapManager::ReceiveSocketData(BluetoothSocket* aSocket,
-                                        nsAutoPtr<UnixSocketBuffer>& aMessage)
+                                        UniquePtr<UnixSocketBuffer>& aMessage)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -795,14 +794,14 @@ BluetoothPbapManager::ReplyToConnect(const nsAString& aPassword)
     // The request-digest is required and calculated as follows:
     //   H(nonce ":" password)
     uint32_t hashStringLength = DIGEST_LENGTH + aPassword.Length() + 1;
-    nsAutoArrayPtr<char> hashString(new char[hashStringLength]);
+    UniquePtr<char[]> hashString(new char[hashStringLength]);
 
-    memcpy(hashString, mRemoteNonce, DIGEST_LENGTH);
+    memcpy(hashString.get(), mRemoteNonce, DIGEST_LENGTH);
     hashString[DIGEST_LENGTH] = ':';
     memcpy(&hashString[DIGEST_LENGTH + 1],
            NS_ConvertUTF16toUTF8(aPassword).get(),
            aPassword.Length());
-    MD5Hash(hashString, hashStringLength);
+    MD5Hash(hashString.get(), hashStringLength);
 
     // 2 tag-length-value triplets: <request-digest:16><nonce:16>
     uint8_t digestResponse[(DIGEST_LENGTH + 2) * 2];
@@ -1090,8 +1089,8 @@ BluetoothPbapManager::ReplyToGet(uint16_t aPhonebookSize)
 
       // Read vCard data from input stream
       uint32_t numRead = 0;
-      nsAutoArrayPtr<char> buf(new char[remainingPacketSize]);
-      rv = mVCardDataStream->Read(buf, remainingPacketSize, &numRead);
+      UniquePtr<char[]> buf(new char[remainingPacketSize]);
+      rv = mVCardDataStream->Read(buf.get(), remainingPacketSize, &numRead);
       if (NS_FAILED(rv)) {
         BT_LOGR("Failed to read from input stream. rv=0x%x",
                 static_cast<uint32_t>(rv));

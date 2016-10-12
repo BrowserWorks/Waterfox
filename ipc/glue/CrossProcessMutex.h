@@ -1,5 +1,6 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -9,7 +10,7 @@
 #include "base/process.h"
 #include "mozilla/Mutex.h"
 
-#if defined(OS_LINUX) || defined(XP_DARWIN)
+#if !defined(OS_WIN) && !defined(OS_NETBSD) && !defined(OS_OPENBSD)
 #include <pthread.h>
 #include "SharedMemoryBasic.h"
 #include "mozilla/Atomics.h"
@@ -34,7 +35,7 @@ struct ParamTraits;
 namespace mozilla {
 #if defined(OS_WIN)
 typedef HANDLE CrossProcessMutexHandle;
-#elif defined(OS_LINUX) || defined(OS_MACOSX)
+#elif !defined(OS_NETBSD) && !defined(OS_OPENBSD)
 typedef mozilla::ipc::SharedMemoryBasic::Handle CrossProcessMutexHandle;
 #else
 // Stub for other platforms. We can't use uintptr_t here since different
@@ -100,7 +101,7 @@ private:
 
 #if defined(OS_WIN)
   HANDLE mMutex;
-#elif defined(OS_LINUX) || defined(OS_MACOSX)
+#elif !defined(OS_NETBSD) && !defined(OS_OPENBSD)
   RefPtr<mozilla::ipc::SharedMemoryBasic> mSharedBuffer;
   pthread_mutex_t* mMutex;
   mozilla::Atomic<int32_t>* mCount;

@@ -8,7 +8,6 @@
 #ifdef MOZ_WIDGET_GONK
 
 #include "mozilla/layers/TextureClient.h"
-#include "mozilla/layers/ISurfaceAllocator.h" // For IsSurfaceDescriptorValid
 #include "mozilla/layers/FenceUtils.h" // for FenceHandle
 #include "mozilla/layers/ShadowLayerUtilsGralloc.h"
 #include <ui/GraphicBuffer.h>
@@ -46,46 +45,36 @@ public:
 
   virtual void Unlock() override;
 
-  virtual gfx::IntSize GetSize() const override { return mSize; }
-
-  virtual gfx::SurfaceFormat GetFormat() const override { return mFormat; }
+  virtual void FillInfo(TextureData::Info& aInfo) const override;
 
   virtual already_AddRefed<gfx::DrawTarget> BorrowDrawTarget() override;
 
-  virtual bool CanExposeMappedData() const override { return true; }
-
   virtual bool BorrowMappedData(MappedTextureData& aMap) override;
 
-  virtual bool SupportsMoz2D() const override { return true; }
+  virtual void Deallocate(ClientIPCAllocator*) override;
 
-  virtual bool HasInternalBuffer() const override { return false; }
-
-  virtual bool HasSynchronization() const override { return true; }
-
-  virtual void Deallocate(ISurfaceAllocator*) override;
-
-  virtual void Forget(ISurfaceAllocator*) override;
+  virtual void Forget(ClientIPCAllocator*) override;
 
   static GrallocTextureData* CreateForDrawing(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
                                               gfx::BackendType aMoz2dBackend,
-                                              ISurfaceAllocator* aAllocator);
+                                              ClientIPCAllocator* aAllocator);
 
   static GrallocTextureData* CreateForYCbCr(gfx::IntSize aYSize, gfx::IntSize aCbCrSize,
-                                            ISurfaceAllocator* aAllocator);
+                                            ClientIPCAllocator* aAllocator);
 
   static GrallocTextureData* CreateForGLRendering(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
-                                                  ISurfaceAllocator* aAllocator);
+                                                  ClientIPCAllocator* aAllocator);
 
   static GrallocTextureData* Create(gfx::IntSize aSize, AndroidFormat aFormat,
                                     gfx::BackendType aMoz2DBackend, uint32_t aUsage,
-                                    ISurfaceAllocator* aAllocator);
+                                    ClientIPCAllocator* aAllocator);
 
 
   static already_AddRefed<TextureClient>
   TextureClientFromSharedSurface(gl::SharedSurface* abstractSurf, TextureFlags flags);
 
   virtual TextureData*
-  CreateSimilar(ISurfaceAllocator* aAllocator,
+  CreateSimilar(ClientIPCAllocator* aAllocator,
                 TextureFlags aFlags = TextureFlags::DEFAULT,
                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const override;
 
@@ -108,6 +97,8 @@ public:
   ~GrallocTextureData();
 
   virtual TextureFlags GetTextureFlags() const override;
+
+  virtual GrallocTextureData* AsGrallocTextureData() { return this; }
 
 protected:
   GrallocTextureData(MaybeMagicGrallocBufferHandle aGrallocHandle,

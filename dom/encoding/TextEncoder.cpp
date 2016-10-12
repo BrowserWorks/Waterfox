@@ -6,34 +6,17 @@
 
 #include "mozilla/dom/TextEncoder.h"
 #include "mozilla/dom/EncodingUtils.h"
+#include "mozilla/UniquePtrExtensions.h"
 #include "nsContentUtils.h"
 
 namespace mozilla {
 namespace dom {
 
 void
-TextEncoder::Init(const nsAString& aEncoding, ErrorResult& aRv)
+TextEncoder::Init()
 {
-  nsAutoString label(aEncoding);
-  EncodingUtils::TrimSpaceCharacters(label);
-
-  // Let encoding be the result of getting an encoding from label.
-  // If encoding is failure, or is none of utf-8, utf-16, and utf-16be,
-  // throw a RangeError (https://encoding.spec.whatwg.org/#dom-textencoder).
-  if (!EncodingUtils::FindEncodingForLabel(label, mEncoding)) {
-    aRv.ThrowRangeError<MSG_ENCODING_NOT_SUPPORTED>(label);
-    return;
-  }
-
-  if (!mEncoding.EqualsLiteral("UTF-8") &&
-      !mEncoding.EqualsLiteral("UTF-16LE") &&
-      !mEncoding.EqualsLiteral("UTF-16BE")) {
-    aRv.ThrowRangeError<MSG_DOM_ENCODING_NOT_UTF>();
-    return;
-  }
-
-  // Create an encoder object for mEncoding.
-  mEncoder = EncodingUtils::EncoderForEncoding(mEncoding);
+  // Create an encoder object for utf-8.
+  mEncoder = EncodingUtils::EncoderForEncoding(NS_LITERAL_CSTRING("UTF-8"));
 }
 
 void
@@ -54,18 +37,18 @@ TextEncoder::Encode(JSContext* aCx,
   }
   // Need a fallible allocator because the caller may be a content
   // and the content can specify the length of the string.
-  nsAutoArrayPtr<char> buf(new (fallible) char[maxLen + 1]);
+  auto buf = MakeUniqueFallible<char[]>(maxLen + 1);
   if (!buf) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
   }
 
   int32_t dstLen = maxLen;
-  rv = mEncoder->Convert(data, &srcLen, buf, &dstLen);
+  rv = mEncoder->Convert(data, &srcLen, buf.get(), &dstLen);
 
   // Now reset the encoding algorithm state to the default values for encoding.
   int32_t finishLen = maxLen - dstLen;
-  rv = mEncoder->Finish(buf + dstLen, &finishLen);
+  rv = mEncoder->Finish(&buf[dstLen], &finishLen);
   if (NS_SUCCEEDED(rv)) {
     dstLen += finishLen;
   }
@@ -91,8 +74,7 @@ TextEncoder::Encode(JSContext* aCx,
 void
 TextEncoder::GetEncoding(nsAString& aEncoding)
 {
-  CopyASCIItoUTF16(mEncoding, aEncoding);
-  nsContentUtils::ASCIIToLower(aEncoding);
+  aEncoding.AssignLiteral("utf-8");
 }
 
 } // namespace dom

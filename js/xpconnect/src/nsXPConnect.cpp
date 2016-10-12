@@ -21,6 +21,7 @@
 #include "AccessCheck.h"
 
 #include "mozilla/dom/BindingUtils.h"
+#include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/Exceptions.h"
 #include "mozilla/dom/Promise.h"
 
@@ -31,6 +32,8 @@
 #include "nsIObjectOutputStream.h"
 #include "nsScriptSecurityManager.h"
 
+#include "jsfriendapi.h"
+
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace xpc;
@@ -40,7 +43,6 @@ NS_IMPL_ISUPPORTS(nsXPConnect, nsIXPConnect)
 
 nsXPConnect* nsXPConnect::gSelf = nullptr;
 bool         nsXPConnect::gOnceAliveNowDead = false;
-uint32_t     nsXPConnect::gReportAllJSExceptions = 0;
 
 // Global cache of the default script security manager (QI'd to
 // nsIScriptSecurityManager) and the system principal.
@@ -60,11 +62,10 @@ nsXPConnect::nsXPConnect()
     :   mRuntime(nullptr),
         mShuttingDown(false)
 {
-    mRuntime = XPCJSRuntime::newXPCJSRuntime(this);
-
-    char* reportableEnv = PR_GetEnv("MOZ_REPORT_ALL_JS_EXCEPTIONS");
-    if (reportableEnv && *reportableEnv)
-        gReportAllJSExceptions = 1;
+    mRuntime = XPCJSRuntime::newXPCJSRuntime();
+    if (!mRuntime) {
+        NS_RUNTIMEABORT("Couldn't create XPCJSRuntime.");
+    }
 }
 
 nsXPConnect::~nsXPConnect()
@@ -174,16 +175,7 @@ xpc::ErrorReport::Init(JSErrorReport* aReport, const char* aFallbackMessage,
                           : NS_LITERAL_CSTRING("content javascript");
     mWindowID = aWindowID;
 
-    const char16_t* m = static_cast<const char16_t*>(aReport->ucmessage);
-    if (m) {
-        JSFlatString* name = js::GetErrorTypeName(CycleCollectedJSRuntime::Get()->Runtime(), aReport->exnType);
-        if (name) {
-            AssignJSFlatString(mErrorMsg, name);
-            mErrorMsg.AppendLiteral(": ");
-        }
-        mErrorMsg.Append(m);
-    }
-
+    ErrorReportToMessageString(aReport, mErrorMsg);
     if (mErrorMsg.IsEmpty() && aFallbackMessage) {
         mErrorMsg.AssignWithConversion(aFallbackMessage);
     }
@@ -194,7 +186,14 @@ xpc::ErrorReport::Init(JSErrorReport* aReport, const char* aFallbackMessage,
         mFileName.AssignWithConversion(aReport->filename);
     }
 
-    mSourceLine = static_cast<const char16_t*>(aReport->uclinebuf);
+    mSourceLine.Assign(aReport->linebuf(), aReport->linebufLength());
+    const JSErrorFormatString* efs = js::GetErrorMessage(nullptr, aReport->errorNumber);
+
+    if (efs == nullptr) {
+        mErrorMsgName.AssignASCII("");
+    } else {
+        mErrorMsgName.AssignASCII(efs->name);
+    }
 
     mLineNumber = aReport->lineno;
     mColumn = aReport->column;
@@ -202,7 +201,27 @@ xpc::ErrorReport::Init(JSErrorReport* aReport, const char* aFallbackMessage,
     mIsMuted = aReport->isMuted;
 }
 
-static PRLogModuleInfo* gJSDiagnostics;
+void
+xpc::ErrorReport::Init(JSContext* aCx, mozilla::dom::Exception* aException,
+                       bool aIsChrome, uint64_t aWindowID)
+{
+    mCategory = aIsChrome ? NS_LITERAL_CSTRING("chrome javascript")
+                          : NS_LITERAL_CSTRING("content javascript");
+    mWindowID = aWindowID;
+
+    aException->GetErrorMessage(mErrorMsg);
+
+    aException->GetFilename(aCx, mFileName);
+    if (mFileName.IsEmpty()) {
+      mFileName.SetIsVoid(true);
+    }
+    aException->GetLineNumber(aCx, &mLineNumber);
+    aException->GetColumnNumber(&mColumn);
+
+    mFlags = JSREPORT_EXCEPTION;
+}
+
+static LazyLogModule gJSDiagnostics("JSDiagnostics");
 
 void
 xpc::ErrorReport::LogToConsole()
@@ -232,15 +251,10 @@ xpc::ErrorReport::LogToConsoleWithStack(JS::HandleObject aStack)
         fflush(stderr);
     }
 
-    // Log to the PR Log Module.
-    if (!gJSDiagnostics)
-        gJSDiagnostics = PR_NewLogModule("JSDiagnostics");
-    if (gJSDiagnostics) {
-        MOZ_LOG(gJSDiagnostics,
-                JSREPORT_IS_WARNING(mFlags) ? LogLevel::Warning : LogLevel::Error,
-                ("file %s, line %u\n%s", NS_LossyConvertUTF16toASCII(mFileName).get(),
-                 mLineNumber, NS_LossyConvertUTF16toASCII(mErrorMsg).get()));
-    }
+    MOZ_LOG(gJSDiagnostics,
+            JSREPORT_IS_WARNING(mFlags) ? LogLevel::Warning : LogLevel::Error,
+            ("file %s, line %u\n%s", NS_LossyConvertUTF16toASCII(mFileName).get(),
+             mLineNumber, NS_LossyConvertUTF16toASCII(mErrorMsg).get()));
 
     // Log to the console. We do this last so that we can simply return if
     // there's no console service without affecting the other reporting
@@ -258,6 +272,7 @@ xpc::ErrorReport::LogToConsoleWithStack(JS::HandleObject aStack)
     } else {
       errorObject = new nsScriptError();
     }
+    errorObject->SetErrorMessageName(mErrorMsgName);
     NS_ENSURE_TRUE_VOID(consoleService && errorObject);
 
     nsresult rv = errorObject->InitWithWindowID(mErrorMsg, mFileName, mSourceLine,
@@ -266,6 +281,23 @@ xpc::ErrorReport::LogToConsoleWithStack(JS::HandleObject aStack)
     NS_ENSURE_SUCCESS_VOID(rv);
     consoleService->LogMessage(errorObject);
 
+}
+
+/* static */
+void
+xpc::ErrorReport::ErrorReportToMessageString(JSErrorReport* aReport,
+                                             nsAString& aString)
+{
+    aString.Truncate();
+    const char16_t* m = aReport->ucmessage;
+    if (m) {
+        JSFlatString* name = js::GetErrorTypeName(CycleCollectedJSRuntime::Get()->Runtime(), aReport->exnType);
+        if (name) {
+            AssignJSFlatString(aString, name);
+            aString.AppendLiteral(": ");
+        }
+        aString.Append(m);
+    }
 }
 
 /***************************************************************************/
@@ -365,19 +397,22 @@ CreateGlobalObject(JSContext* cx, const JSClass* clasp, nsIPrincipal* principal,
     // of |global|.
     (void) new XPCWrappedNativeScope(cx, global);
 
+    if (clasp->flags & JSCLASS_DOM_GLOBAL) {
 #ifdef DEBUG
-    // Verify that the right trace hook is called. Note that this doesn't
-    // work right for wrapped globals, since the tracing situation there is
-    // more complicated. Manual inspection shows that they do the right thing.
-    if (!((const js::Class*)clasp)->ext.isWrappedNative)
-    {
-        VerifyTraceProtoAndIfaceCacheCalledTracer trc(JS_GetRuntime(cx));
-        TraceChildren(&trc, GCCellPtr(global.get()));
-        MOZ_ASSERT(trc.ok, "Trace hook on global needs to call TraceXPCGlobal for XPConnect compartments.");
-    }
+        // Verify that the right trace hook is called. Note that this doesn't
+        // work right for wrapped globals, since the tracing situation there is
+        // more complicated. Manual inspection shows that they do the right
+        // thing.  Also note that we only check this for JSCLASS_DOM_GLOBAL
+        // classes because xpc::TraceXPCGlobal won't call
+        // TraceProtoAndIfaceCache unless that flag is set.
+        if (!((const js::Class*)clasp)->isWrappedNative())
+        {
+            VerifyTraceProtoAndIfaceCacheCalledTracer trc(JS_GetRuntime(cx));
+            TraceChildren(&trc, GCCellPtr(global.get()));
+            MOZ_ASSERT(trc.ok, "Trace hook on global needs to call TraceXPCGlobal for XPConnect compartments.");
+        }
 #endif
 
-    if (clasp->flags & JSCLASS_DOM_GLOBAL) {
         const char* className = clasp->name;
         AllocateProtoAndIfaceCache(global,
                                    (strcmp(className, "Window") == 0 ||
@@ -389,12 +424,52 @@ CreateGlobalObject(JSContext* cx, const JSClass* clasp, nsIPrincipal* principal,
     return global;
 }
 
+void
+InitGlobalObjectOptions(JS::CompartmentOptions& aOptions,
+                        nsIPrincipal* aPrincipal)
+{
+    bool shouldDiscardSystemSource = ShouldDiscardSystemSource();
+    bool extraWarningsForSystemJS = ExtraWarningsForSystemJS();
+
+    bool isSystem = nsContentUtils::IsSystemPrincipal(aPrincipal);
+
+    if (isSystem) {
+        // Make sure [SecureContext] APIs are visible:
+        aOptions.creationOptions().setSecureContext(true);
+    }
+
+    short status = aPrincipal->GetAppStatus();
+
+    // Enable the ECMA-402 experimental formatToParts in certified apps.
+    if (status == nsIPrincipal::APP_STATUS_CERTIFIED) {
+        aOptions.creationOptions()
+                .setExperimentalDateTimeFormatFormatToPartsEnabled(true);
+    }
+
+    if (shouldDiscardSystemSource) {
+        bool discardSource = isSystem ||
+                             (status == nsIPrincipal::APP_STATUS_PRIVILEGED ||
+                              status == nsIPrincipal::APP_STATUS_CERTIFIED);
+
+        aOptions.behaviors().setDiscardSource(discardSource);
+    }
+
+    if (extraWarningsForSystemJS) {
+        if (isSystem)
+            aOptions.behaviors().extraWarningsOverride().set(true);
+    }
+}
+
 bool
 InitGlobalObject(JSContext* aJSContext, JS::Handle<JSObject*> aGlobal, uint32_t aFlags)
 {
-    // Immediately enter the global's compartment, so that everything else we
-    // create ends up there.
+    // Immediately enter the global's compartment so that everything we create
+    // ends up there.
     JSAutoCompartment ac(aJSContext, aGlobal);
+
+    // Stuff coming through this path always ends up as a DOM global.
+    MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL);
+
     if (!(aFlags & nsIXPConnect::OMIT_COMPONENTS_OBJECT)) {
         // XPCCallContext gives us an active request needed to save/restore.
         if (!CompartmentPrivate::Get(aGlobal)->scope->AttachComponentsObject(aJSContext) ||
@@ -402,27 +477,6 @@ InitGlobalObject(JSContext* aJSContext, JS::Handle<JSObject*> aGlobal, uint32_t 
             return UnexpectedFailure(false);
         }
     }
-
-    if (ShouldDiscardSystemSource()) {
-        nsIPrincipal* prin = GetObjectPrincipal(aGlobal);
-        bool isSystem = nsContentUtils::IsSystemPrincipal(prin);
-        if (!isSystem) {
-            short status = prin->GetAppStatus();
-            isSystem = status == nsIPrincipal::APP_STATUS_PRIVILEGED ||
-                       status == nsIPrincipal::APP_STATUS_CERTIFIED;
-        }
-        JS::CompartmentBehaviorsRef(aGlobal).setDiscardSource(isSystem);
-    }
-
-    if (ExtraWarningsForSystemJS()) {
-        nsIPrincipal* prin = GetObjectPrincipal(aGlobal);
-        bool isSystem = nsContentUtils::IsSystemPrincipal(prin);
-        if (isSystem)
-            JS::CompartmentBehaviorsRef(aGlobal).extraWarningsOverride().set(true);
-    }
-
-    // Stuff coming through this path always ends up as a DOM global.
-    MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL);
 
     if (!(aFlags & nsIXPConnect::DONT_FIRE_ONNEWGLOBALHOOK))
         JS_FireOnNewGlobalObject(aJSContext, aGlobal);
@@ -447,6 +501,8 @@ nsXPConnect::InitClassesWithNewWrappedGlobal(JSContext * aJSContext,
     // We pass null for the 'extra' pointer during global object creation, so
     // we need to have a principal.
     MOZ_ASSERT(aPrincipal);
+
+    InitGlobalObjectOptions(aOptions, aPrincipal);
 
     // Call into XPCWrappedNative to make a new global object, scope, and global
     // prototype.
@@ -922,16 +978,6 @@ nsXPConnect::JSToVariant(JSContext* ctx, HandleValue value, nsIVariant** _retval
     return NS_OK;
 }
 
-NS_IMETHODIMP
-nsXPConnect::SetReportAllJSExceptions(bool newval)
-{
-    // Ignore if the environment variable was set.
-    if (gReportAllJSExceptions != 1)
-        gReportAllJSExceptions = newval ? 2 : 0;
-
-    return NS_OK;
-}
-
 /* virtual */
 JSContext*
 nsXPConnect::GetCurrentJSContext()
@@ -948,10 +994,10 @@ nsXPConnect::GetSafeJSContext()
 
 namespace xpc {
 
-bool
+void
 PushNullJSContext()
 {
-    return XPCJSRuntime::Get()->GetJSContextStack()->Push(nullptr);
+    XPCJSRuntime::Get()->GetJSContextStack()->Push(nullptr);
 }
 
 void

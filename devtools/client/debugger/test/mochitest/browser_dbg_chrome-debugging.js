@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that chrome debugging works.
@@ -9,14 +11,13 @@ const TAB_URL = EXAMPLE_URL + "doc_inline-debugger-statement.html";
 
 var gClient, gThreadClient;
 var gAttached = promise.defer();
-var gNewGlobal = promise.defer()
-var gNewChromeSource = promise.defer()
+var gNewGlobal = promise.defer();
+var gNewChromeSource = promise.defer();
 
 var { DevToolsLoader } = Cu.import("resource://devtools/shared/Loader.jsm", {});
-var loader = new DevToolsLoader();
-loader.invisibleToDebugger = true;
-loader.main("devtools/server/main");
-var DebuggerServer = loader.DebuggerServer;
+var customLoader = new DevToolsLoader();
+customLoader.invisibleToDebugger = true;
+var { DebuggerServer } = customLoader.require("devtools/server/main");
 
 function test() {
   if (!DebuggerServer.initialized) {
@@ -27,7 +28,7 @@ function test() {
 
   let transport = DebuggerServer.connectPipe();
   gClient = new DebuggerClient(transport);
-  gClient.connect((aType, aTraits) => {
+  gClient.connect().then(([aType, aTraits]) => {
     is(aType, "browser",
       "Root actor should identify itself as a browser.");
 
@@ -89,13 +90,13 @@ function resumeAndCloseConnection() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gClient = null;
   gThreadClient = null;
   gAttached = null;
   gNewGlobal = null;
   gNewChromeSource = null;
 
-  loader = null;
+  customLoader = null;
   DebuggerServer = null;
 });

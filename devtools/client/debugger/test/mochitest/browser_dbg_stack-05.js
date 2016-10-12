@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test that switching between stack frames properly sets the current debugger
@@ -9,7 +11,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
@@ -41,7 +47,7 @@ function test() {
     }
 
     function testOldestFrame() {
-      const shown = waitForSourceAndCaret(gPanel, "-01.js", 1).then(() => {
+      const shown = waitForSourceAndCaret(gPanel, "-01.js", 5).then(() => {
         is(gFrames.selectedIndex, 0,
            "Second frame should be selected after click.");
         is(gClassicFrames.selectedIndex, 1,
@@ -82,8 +88,8 @@ function test() {
       return deferred.promise;
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceAndCaretAndScopes(gPanel, "-02.js", 1);
+    Task.spawn(function* () {
+      yield waitForSourceAndCaretAndScopes(gPanel, "-02.js", 6);
       yield initialChecks();
       yield testNewestFrame();
       yield testOldestFrame();

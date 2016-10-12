@@ -11,6 +11,7 @@
 #include "nsContentCreatorFunctions.h"
 #include "nsContentList.h"
 #include "nsContentUtils.h"
+#include "nsCSSPseudoElements.h"
 #include "nsCSSRendering.h"
 #include "nsFormControlFrame.h"
 #include "nsIContent.h"
@@ -23,7 +24,8 @@
 #include "nsNodeInfoManager.h"
 #include "nsRenderingContext.h"
 #include "mozilla/dom/Element.h"
-#include "nsStyleSet.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 #include "nsThemeConstants.h"
 
 #ifdef ACCESSIBILITY
@@ -82,11 +84,11 @@ nsRangeFrame::Init(nsIContent*       aContent,
   }
   aContent->AddEventListener(NS_LITERAL_STRING("touchstart"), mDummyTouchListener, false);
 
-  nsStyleSet *styleSet = PresContext()->StyleSet();
+  StyleSetHandle styleSet = PresContext()->StyleSet();
 
   mOuterFocusStyle =
     styleSet->ProbePseudoElementStyle(aContent->AsElement(),
-                                      nsCSSPseudoElements::ePseudo_mozFocusOuter,
+                                      CSSPseudoElementType::mozFocusOuter,
                                       StyleContext());
 
   return nsContainerFrame::Init(aContent, aParent, aPrevInFlow);
@@ -110,7 +112,7 @@ nsRangeFrame::DestroyFrom(nsIFrame* aDestructRoot)
 
 nsresult
 nsRangeFrame::MakeAnonymousDiv(Element** aResult,
-                               nsCSSPseudoElements::Type aPseudoType,
+                               CSSPseudoElementType aPseudoType,
                                nsTArray<ContentInfo>& aElements)
 {
   nsCOMPtr<nsIDocument> doc = mContent->GetComposedDoc();
@@ -138,19 +140,19 @@ nsRangeFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 
   // Create the ::-moz-range-track pseuto-element (a div):
   rv = MakeAnonymousDiv(getter_AddRefs(mTrackDiv),
-                        nsCSSPseudoElements::ePseudo_mozRangeTrack,
+                        CSSPseudoElementType::mozRangeTrack,
                         aElements);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Create the ::-moz-range-progress pseudo-element (a div):
   rv = MakeAnonymousDiv(getter_AddRefs(mProgressDiv),
-                        nsCSSPseudoElements::ePseudo_mozRangeProgress,
+                        CSSPseudoElementType::mozRangeProgress,
                         aElements);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Create the ::-moz-range-thumb pseudo-element (a div):
   rv = MakeAnonymousDiv(getter_AddRefs(mThumbDiv),
-                        nsCSSPseudoElements::ePseudo_mozRangeThumb,
+                        CSSPseudoElementType::mozRangeThumb,
                         aElements);
   return rv;
 }
@@ -191,7 +193,7 @@ public:
                                  nsRegion *aInvalidRegion) override;
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override;
   virtual void Paint(nsDisplayListBuilder* aBuilder, nsRenderingContext* aCtx) override;
-  NS_DISPLAY_DECL_NAME("RangeFocusRing", TYPE_OUTLINE)
+  NS_DISPLAY_DECL_NAME("RangeFocusRing", TYPE_RANGE_FOCUS_RING)
 };
 
 nsDisplayItemGeometry*
@@ -515,7 +517,7 @@ nsRangeFrame::GetValueAtEventPoint(WidgetGUIEvent* aEvent)
 {
   MOZ_ASSERT(aEvent->mClass == eMouseEventClass ||
              aEvent->mClass == eTouchEventClass,
-             "Unexpected event type - aEvent->refPoint may be meaningless");
+             "Unexpected event type - aEvent->mRefPoint may be meaningless");
 
   MOZ_ASSERT(mContent->IsHTMLElement(nsGkAtoms::input), "bad cast");
   dom::HTMLInputElement* input = static_cast<dom::HTMLInputElement*>(mContent);
@@ -533,11 +535,11 @@ nsRangeFrame::GetValueAtEventPoint(WidgetGUIEvent* aEvent)
 
   LayoutDeviceIntPoint absPoint;
   if (aEvent->mClass == eTouchEventClass) {
-    MOZ_ASSERT(aEvent->AsTouchEvent()->touches.Length() == 1,
-               "Unexpected number of touches");
-    absPoint = aEvent->AsTouchEvent()->touches[0]->mRefPoint;
+    MOZ_ASSERT(aEvent->AsTouchEvent()->mTouches.Length() == 1,
+               "Unexpected number of mTouches");
+    absPoint = aEvent->AsTouchEvent()->mTouches[0]->mRefPoint;
   } else {
-    absPoint = aEvent->refPoint;
+    absPoint = aEvent->mRefPoint;
   }
   nsPoint point =
     nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, absPoint, this);
@@ -894,17 +896,17 @@ nsRangeFrame::ShouldUseNativeStyle() const
 }
 
 Element*
-nsRangeFrame::GetPseudoElement(nsCSSPseudoElements::Type aType)
+nsRangeFrame::GetPseudoElement(CSSPseudoElementType aType)
 {
-  if (aType == nsCSSPseudoElements::ePseudo_mozRangeTrack) {
+  if (aType == CSSPseudoElementType::mozRangeTrack) {
     return mTrackDiv;
   }
 
-  if (aType == nsCSSPseudoElements::ePseudo_mozRangeThumb) {
+  if (aType == CSSPseudoElementType::mozRangeThumb) {
     return mThumbDiv;
   }
 
-  if (aType == nsCSSPseudoElements::ePseudo_mozRangeProgress) {
+  if (aType == CSSPseudoElementType::mozRangeProgress) {
     return mProgressDiv;
   }
 

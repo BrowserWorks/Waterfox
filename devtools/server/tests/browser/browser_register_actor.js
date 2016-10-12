@@ -2,7 +2,7 @@ var gClient;
 
 function test() {
   waitForExplicitFinish();
-  var {ActorRegistryFront} = require("devtools/server/actors/actor-registry");
+  var {ActorRegistryFront} = require("devtools/shared/fronts/actor-registry");
   var actorURL = "chrome://mochitests/content/chrome/devtools/server/tests/mochitest/hello-actor.js";
 
   if (!DebuggerServer.initialized) {
@@ -11,8 +11,9 @@ function test() {
   }
 
   gClient = new DebuggerClient(DebuggerServer.connectPipe());
-  gClient.connect(function onConnect() {
-    gClient.listTabs(function onListTabs(aResponse) {
+  gClient.connect()
+    .then(() => gClient.listTabs())
+    .then(aResponse => {
 
       var options = {
         prefix: "helloActor",
@@ -32,20 +33,19 @@ function test() {
             // Clean up
             actorFront.unregister().then(() => {
               gClient.close(() => {
-                 DebuggerServer.destroy();
-                 gClient = null;
-                 finish();
+                DebuggerServer.destroy();
+                gClient = null;
+                finish();
               });
             });
           });
         });
       });
     });
-  });
 }
 
 function checkActorState(helloActor, callback) {
-getCount(helloActor, response => {
+  getCount(helloActor, response => {
     ok(!response.error, "No error");
     is(response.count, 1, "The counter must be valid");
 

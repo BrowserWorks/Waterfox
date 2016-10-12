@@ -21,10 +21,6 @@ with Files('nsIApplicationReputation.idl'):
 
 XPCSHELL_TESTS_MANIFESTS += ['test/unit/xpcshell.ini']
 
-if not CONFIG['MOZ_JSDOWNLOADS']:
-    XPCSHELL_TESTS_MANIFESTS += ['test/schema_migration/xpcshell.ini']
-    BROWSER_CHROME_MANIFESTS += ['test/browser/browser.ini']
-
 XPIDL_SOURCES += [
     'nsIApplicationReputation.idl',
     'nsIDownload.idl',
@@ -76,3 +72,6 @@ DEFINES['GOOGLE_PROTOBUF_NO_RTTI'] = True
 DEFINES['GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER'] = True
 
 CXXFLAGS += CONFIG['TK_CFLAGS']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-shadow']

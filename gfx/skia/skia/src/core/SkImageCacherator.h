@@ -54,8 +54,11 @@ public:
     /**
      *  If the underlying src naturally is represented by an encoded blob (in SkData), this returns
      *  a ref to that data. If not, it returns null.
+     *
+     *  If a GrContext is specified, then the caller is only interested in gpu-specific encoded
+     *  formats, so others (e.g. PNG) can just return nullptr.
      */
-    SkData* refEncoded();
+    SkData* refEncoded(GrContext*);
 
     // Only return true if the generate has already been cached.
     bool lockAsBitmapOnlyIfAlreadyCached(SkBitmap*);
@@ -72,7 +75,7 @@ private:
     // Returns the texture. If the cacherator is generating the texture and wants to cache it,
     // it should use the passed in key (if the key is valid).
     GrTexture* lockTexture(GrContext*, const GrUniqueKey& key, const SkImage* client,
-                           SkImage::CachingHint);
+                           SkImage::CachingHint, bool willBeMipped);
 #endif
 
     class ScopedGenerator {
@@ -95,7 +98,7 @@ private:
     const SkIPoint      fOrigin;
     const uint32_t      fUniqueID;
 
-    friend class Cacherator_GrTextureMaker;
+    friend class GrImageTextureMaker;
 };
 
 #endif

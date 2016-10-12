@@ -1,12 +1,13 @@
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 function test() {
   gBrowser.selectedTab = gBrowser.addTab();
   let target = TargetFactory.forTab(gBrowser.selectedTab);
 
-  const onLoad = Task.async(function *(evt) {
+  const onLoad = Task.async(function* (evt) {
     gBrowser.selectedBrowser.removeEventListener("load", onLoad);
 
     const toolbox = yield gDevTools.showToolbox(target, "webconsole");

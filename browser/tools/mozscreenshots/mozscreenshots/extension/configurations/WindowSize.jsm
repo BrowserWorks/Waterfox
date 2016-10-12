@@ -11,6 +11,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
+Cu.import("resource://testing-common/BrowserTestUtils.jsm");
 
 this.WindowSize = {
 
@@ -22,7 +23,7 @@ this.WindowSize = {
     maximized: {
       applyConfig: Task.async(function*() {
         let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
-        browserWindow.fullScreen = false;
+        yield toggleFullScreen(browserWindow, false);
 
         // Wait for the Lion fullscreen transition to end as there doesn't seem to be an event
         // and trying to maximize while still leaving fullscreen doesn't work.
@@ -30,31 +31,38 @@ this.WindowSize = {
           setTimeout(function waitToLeaveFS() {
             browserWindow.maximize();
             resolve();
-          }, Services.appinfo.OS == "Darwin" ? 1500 : 0);
+          }, 5000);
         });
       }),
     },
 
     normal: {
-      applyConfig: Task.async(() => {
+      applyConfig: Task.async(function*() {
         let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
-        browserWindow.fullScreen = false;
+        yield toggleFullScreen(browserWindow, false);
         browserWindow.restore();
+        yield new Promise((resolve, reject) => {
+          setTimeout(resolve, 5000);
+        });
       }),
     },
 
     fullScreen: {
       applyConfig: Task.async(function*() {
         let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
-        browserWindow.fullScreen = true;
+        yield toggleFullScreen(browserWindow, true);
         // OS X Lion fullscreen transition takes a while
         yield new Promise((resolve, reject) => {
-          setTimeout(function waitAfterEnteringFS() {
-            resolve();
-          }, Services.appinfo.OS == "Darwin" ? 1500 : 0);
+          setTimeout(resolve, 5000);
         });
       }),
     },
-
   },
 };
+
+function toggleFullScreen(browserWindow, wantsFS) {
+  browserWindow.fullScreen = wantsFS;
+  return BrowserTestUtils.waitForCondition(() => {
+    return wantsFS == browserWindow.document.documentElement.hasAttribute("inFullscreen");
+  }, "waiting for @inFullscreen change");
+}

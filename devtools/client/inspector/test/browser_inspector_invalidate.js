@@ -10,8 +10,8 @@ const TEST_URI = "data:text/html;charset=utf-8," +
   "browser_inspector_invalidate.js\n" +
   "<div style=\"width: 100px; height: 100px; background:yellow;\"></div>";
 
-add_task(function*() {
-  let {toolbox, inspector, testActor} = yield openInspectorForURL(TEST_URI);
+add_task(function* () {
+  let {inspector, testActor} = yield openInspectorForURL(TEST_URI);
   let divFront = yield getNodeFront("div", inspector);
 
   info("Waiting for highlighter to activate");
@@ -20,7 +20,8 @@ add_task(function*() {
   let rect = yield testActor.getSimpleBorderRect();
   is(rect.width, 100, "The highlighter has the right width.");
 
-  info("Changing the test element's size and waiting for the highlighter to update");
+  info("Changing the test element's size and waiting for the highlighter " +
+       "to update");
   yield testActor.changeHighlightedNodeWaitForUpdate(
     "style",
     "width: 200px; height: 100px; background:yellow;"

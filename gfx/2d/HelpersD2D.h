@@ -25,9 +25,8 @@
 namespace mozilla {
 namespace gfx {
 
-ID2D1Factory* D2DFactory();
-
 ID2D1Factory1* D2DFactory1();
+static ID2D1Factory* D2DFactory() { return D2DFactory1(); }
 
 static inline D2D1_POINT_2F D2DPoint(const Point &aPoint)
 {
@@ -76,20 +75,20 @@ static inline D2D1_EXTEND_MODE D2DExtend(ExtendMode aExtendMode, Axis aAxis)
   return extend;
 }
 
-static inline D2D1_BITMAP_INTERPOLATION_MODE D2DFilter(const Filter &aFilter)
+static inline D2D1_BITMAP_INTERPOLATION_MODE D2DFilter(const SamplingFilter aSamplingFilter)
 {
-  switch (aFilter) {
-  case Filter::POINT:
+  switch (aSamplingFilter) {
+  case SamplingFilter::POINT:
     return D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
   default:
     return D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
   }
 }
 
-static inline D2D1_INTERPOLATION_MODE D2DInterpolationMode(const Filter &aFilter)
+static inline D2D1_INTERPOLATION_MODE D2DInterpolationMode(const SamplingFilter aSamplingFilter)
 {
-  switch (aFilter) {
-  case Filter::POINT:
+  switch (aSamplingFilter) {
+  case SamplingFilter::POINT:
     return D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
   default:
     return D2D1_INTERPOLATION_MODE_LINEAR;

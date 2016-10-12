@@ -202,7 +202,7 @@ nsAsyncShutdownClient.prototype = {
 function nsAsyncShutdownBarrier(moduleBarrier) {
   this._client = new nsAsyncShutdownClient(moduleBarrier.client);
   this._moduleBarrier = moduleBarrier;
-};
+}
 nsAsyncShutdownBarrier.prototype = {
   get state() {
     return PropertyBagConverter.fromValue(this._moduleBarrier.state);
@@ -237,7 +237,7 @@ function nsAsyncShutdownService() {
 
     // All processes
     "webWorkersShutdown",
-    "xpcomThreadsShutdown",
+    "xpcomWillShutdown",
     ]) {
     let k = _k;
     Object.defineProperty(this, k, {

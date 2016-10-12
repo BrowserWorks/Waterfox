@@ -88,16 +88,6 @@ interface DOMApplication : EventTarget {
   DOMRequest clearBrowserData();
   DOMRequest checkForUpdate();
 
-  /**
-   * Inter-App Communication APIs.
-   *
-   * https://wiki.mozilla.org/WebAPI/Inter_App_Communication_Alt_proposal
-   *
-   */
-  Promise<MozInterAppConnection> connect(DOMString keyword, optional any rules);
-
-  Promise<sequence<MozInterAppMessagePort>> getConnections();
-
   // Receipts handling functions.
   DOMRequest addReceipt(optional DOMString receipt);
   DOMRequest removeReceipt(optional DOMString receipt);
@@ -120,8 +110,6 @@ interface DOMApplication : EventTarget {
 interface DOMApplicationsManager : EventTarget {
   DOMRequest getAll();
 
-  [CheckAnyPermissions="webapps-manage"]
-  DOMRequest getNotInstalled();
   [CheckAnyPermissions="webapps-manage"]
   void applyDownload(DOMApplication app);
   DOMRequest uninstall(DOMApplication app);

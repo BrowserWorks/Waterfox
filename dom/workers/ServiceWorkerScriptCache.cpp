@@ -19,8 +19,10 @@
 #include "nsIThreadRetargetableRequest.h"
 
 #include "nsIPrincipal.h"
+#include "nsContentUtils.h"
 #include "nsNetUtil.h"
 #include "nsScriptLoader.h"
+#include "ServiceWorkerManager.h"
 #include "Workers.h"
 #include "nsStringStream.h"
 
@@ -535,7 +537,8 @@ private:
 
     ErrorResult result;
     nsCOMPtr<nsIInputStream> body;
-    result = NS_NewStringInputStream(getter_AddRefs(body), mCN->Buffer());
+    result = NS_NewCStringInputStream(getter_AddRefs(body),
+                                      NS_ConvertUTF16toUTF8(mCN->Buffer()));
     if (NS_WARN_IF(result.Failed())) {
       MOZ_ASSERT(!result.IsErrorWithMessage());
       Fail(result.StealNSResult());
@@ -544,7 +547,7 @@ private:
 
     RefPtr<InternalResponse> ir =
       new InternalResponse(200, NS_LITERAL_CSTRING("OK"));
-    ir->SetBody(body);
+    ir->SetBody(body, mCN->Buffer().Length());
 
     ir->InitChannelInfo(mChannelInfo);
     if (mPrincipalInfo) {
@@ -724,83 +727,54 @@ CompareNetwork::OnStreamComplete(nsIStreamLoader* aLoader, nsISupports* aContext
   }
 
   nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(request);
-  if (httpChannel) {
-    bool requestSucceeded;
-    rv = httpChannel->GetRequestSucceeded(&requestSucceeded);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      mManager->NetworkFinished(rv);
-      return NS_OK;
-    }
+  MOZ_ASSERT(httpChannel, "How come we don't have an HTTP channel?");
 
-    if (NS_WARN_IF(!requestSucceeded)) {
-      mManager->NetworkFinished(NS_ERROR_FAILURE);
-      return NS_OK;
-    }
-
-    nsAutoCString maxScope;
-    // Note: we explicitly don't check for the return value here, because the
-    // absence of the header is not an error condition.
-    Unused << httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Service-Worker-Allowed"),
-                                             maxScope);
-
-    mManager->SetMaxScope(maxScope);
-
-    bool isFromCache = false;
-    nsCOMPtr<nsICacheInfoChannel> cacheChannel(do_QueryInterface(httpChannel));
-    if (cacheChannel) {
-      cacheChannel->IsFromCache(&isFromCache);
-    }
-
-    // [9.2 Update]4.13, If response's cache state is not "local",
-    // set registration's last update check time to the current time
-    if (!isFromCache) {
-      RefPtr<ServiceWorkerRegistrationInfo> registration =
-        mManager->GetRegistration();
-      registration->RefreshLastUpdateCheckTime();
-    }
-
-    nsAutoCString mimeType;
-    rv = httpChannel->GetContentType(mimeType);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      mManager->NetworkFinished(NS_ERROR_DOM_SECURITY_ERR);
-      return rv;
-    }
-
-    if (!mimeType.LowerCaseEqualsLiteral("text/javascript") &&
-        !mimeType.LowerCaseEqualsLiteral("application/x-javascript") &&
-        !mimeType.LowerCaseEqualsLiteral("application/javascript")) {
-      mManager->NetworkFinished(NS_ERROR_DOM_SECURITY_ERR);
-      return rv;
-    }
+  bool requestSucceeded;
+  rv = httpChannel->GetRequestSucceeded(&requestSucceeded);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    mManager->NetworkFinished(rv);
+    return NS_OK;
   }
-  else {
-    // The only supported request schemes are http, https, and app.
-    // Above, we check to ensure that the request is http or https
-    // based on the channel qi.  Here we test the scheme to ensure
-    // that it is app.  Otherwise, bail.
-    nsCOMPtr<nsIChannel> channel = do_QueryInterface(request);
-    if (NS_WARN_IF(!channel)) {
-      mManager->NetworkFinished(NS_ERROR_FAILURE);
-      return NS_OK;
-    }
-    nsCOMPtr<nsIURI> uri;
-    rv = channel->GetURI(getter_AddRefs(uri));
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      mManager->NetworkFinished(rv);
-      return NS_OK;
-    }
 
-    nsAutoCString scheme;
-    rv = uri->GetScheme(scheme);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      mManager->NetworkFinished(rv);
-      return NS_OK;
-    }
+  if (NS_WARN_IF(!requestSucceeded)) {
+    mManager->NetworkFinished(NS_ERROR_FAILURE);
+    return NS_OK;
+  }
 
-    if (NS_WARN_IF(!scheme.LowerCaseEqualsLiteral("app"))) {
-      mManager->NetworkFinished(NS_ERROR_FAILURE);
-      return NS_OK;
-    }
+  nsAutoCString maxScope;
+  // Note: we explicitly don't check for the return value here, because the
+  // absence of the header is not an error condition.
+  Unused << httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Service-Worker-Allowed"),
+                                           maxScope);
+
+  mManager->SetMaxScope(maxScope);
+
+  bool isFromCache = false;
+  nsCOMPtr<nsICacheInfoChannel> cacheChannel(do_QueryInterface(httpChannel));
+  if (cacheChannel) {
+    cacheChannel->IsFromCache(&isFromCache);
+  }
+
+  // [9.2 Update]4.13, If response's cache state is not "local",
+  // set registration's last update check time to the current time
+  if (!isFromCache) {
+    RefPtr<ServiceWorkerRegistrationInfo> registration =
+      mManager->GetRegistration();
+    registration->RefreshLastUpdateCheckTime();
+  }
+
+  nsAutoCString mimeType;
+  rv = httpChannel->GetContentType(mimeType);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    mManager->NetworkFinished(NS_ERROR_DOM_SECURITY_ERR);
+    return rv;
+  }
+
+  if (!mimeType.LowerCaseEqualsLiteral("text/javascript") &&
+      !mimeType.LowerCaseEqualsLiteral("application/x-javascript") &&
+      !mimeType.LowerCaseEqualsLiteral("application/javascript")) {
+    mManager->NetworkFinished(NS_ERROR_DOM_SECURITY_ERR);
+    return rv;
   }
 
   char16_t* buffer = nullptr;

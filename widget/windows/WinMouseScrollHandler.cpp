@@ -300,7 +300,7 @@ MouseScrollHandler::SynthesizeNativeMouseScrollEvent(nsWindowBase* aWidget,
   BYTE kbdState[256];
   memset(kbdState, 0, sizeof(kbdState));
 
-  nsAutoTArray<KeyPair,10> keySequence;
+  AutoTArray<KeyPair,10> keySequence;
   WinUtils::SetupKeyModifiersSequence(&keySequence, aModifierFlags);
 
   for (uint32_t i = 0; i < keySequence.Length(); ++i) {
@@ -613,7 +613,7 @@ MouseScrollHandler::HandleMouseWheelMessage(nsWindowBase* aWidget,
 
   // If it's not allowed to cache system settings, we need to reset the cache
   // before handling the mouse wheel message.
-  mSystemSettings.TrustedScrollSettingsDriver(aMessage == MOZ_WM_MOUSEVWHEEL);
+  mSystemSettings.TrustedScrollSettingsDriver();
 
   EventInfo eventInfo(aWidget, WinUtils::GetNativeMessage(aMessage),
                       aWParam, aLParam);
@@ -676,10 +676,10 @@ MouseScrollHandler::HandleScrollMessageAsMouseWheelMessage(nsWindowBase* aWidget
 
   WidgetWheelEvent wheelEvent(true, eWheel, aWidget);
   double& delta =
-   (aMessage == MOZ_WM_VSCROLL) ? wheelEvent.deltaY : wheelEvent.deltaX;
+   (aMessage == MOZ_WM_VSCROLL) ? wheelEvent.mDeltaY : wheelEvent.mDeltaX;
   int32_t& lineOrPageDelta =
-   (aMessage == MOZ_WM_VSCROLL) ? wheelEvent.lineOrPageDeltaY :
-                                  wheelEvent.lineOrPageDeltaX;
+   (aMessage == MOZ_WM_VSCROLL) ? wheelEvent.mLineOrPageDeltaY :
+                                  wheelEvent.mLineOrPageDeltaX;
 
   delta = 1.0;
   lineOrPageDelta = 1;
@@ -689,14 +689,14 @@ MouseScrollHandler::HandleScrollMessageAsMouseWheelMessage(nsWindowBase* aWidget
       delta = -1.0;
       lineOrPageDelta = -1;
     case SB_PAGEDOWN:
-      wheelEvent.deltaMode = nsIDOMWheelEvent::DOM_DELTA_PAGE;
+      wheelEvent.mDeltaMode = nsIDOMWheelEvent::DOM_DELTA_PAGE;
       break;
 
     case SB_LINEUP:
       delta = -1.0;
       lineOrPageDelta = -1;
     case SB_LINEDOWN:
-      wheelEvent.deltaMode = nsIDOMWheelEvent::DOM_DELTA_LINE;
+      wheelEvent.mDeltaMode = nsIDOMWheelEvent::DOM_DELTA_LINE;
       break;
 
     default:
@@ -711,13 +711,13 @@ MouseScrollHandler::HandleScrollMessageAsMouseWheelMessage(nsWindowBase* aWidget
   MOZ_LOG(gMouseScrollLog, LogLevel::Info,
     ("MouseScroll::HandleScrollMessageAsMouseWheelMessage: aWidget=%p, "
      "aMessage=MOZ_WM_%sSCROLL, aWParam=0x%08X, aLParam=0x%08X, "
-     "wheelEvent { refPoint: { x: %d, y: %d }, deltaX: %f, deltaY: %f, "
-     "lineOrPageDeltaX: %d, lineOrPageDeltaY: %d, "
+     "wheelEvent { mRefPoint: { x: %d, y: %d }, mDeltaX: %f, mDeltaY: %f, "
+     "mLineOrPageDeltaX: %d, mLineOrPageDeltaY: %d, "
      "isShift: %s, isControl: %s, isAlt: %s, isMeta: %s }",
      aWidget, (aMessage == MOZ_WM_VSCROLL) ? "V" : "H", aWParam, aLParam,
-     wheelEvent.refPoint.x, wheelEvent.refPoint.y,
-     wheelEvent.deltaX, wheelEvent.deltaY,
-     wheelEvent.lineOrPageDeltaX, wheelEvent.lineOrPageDeltaY,
+     wheelEvent.mRefPoint.x, wheelEvent.mRefPoint.y,
+     wheelEvent.mDeltaX, wheelEvent.mDeltaY,
+     wheelEvent.mLineOrPageDeltaX, wheelEvent.mLineOrPageDeltaY,
      GetBoolName(wheelEvent.IsShift()),
      GetBoolName(wheelEvent.IsControl()),
      GetBoolName(wheelEvent.IsAlt()),
@@ -845,12 +845,12 @@ MouseScrollHandler::LastEventInfo::InitWheelEvent(
   // Use orienter for computing our delta value with native delta value.
   int32_t orienter = mIsVertical ? -1 : 1;
 
-  aWheelEvent.deltaMode = mIsPage ? nsIDOMWheelEvent::DOM_DELTA_PAGE :
-                                    nsIDOMWheelEvent::DOM_DELTA_LINE;
+  aWheelEvent.mDeltaMode = mIsPage ? nsIDOMWheelEvent::DOM_DELTA_PAGE :
+                                     nsIDOMWheelEvent::DOM_DELTA_LINE;
 
-  double& delta = mIsVertical ? aWheelEvent.deltaY : aWheelEvent.deltaX;
-  int32_t& lineOrPageDelta = mIsVertical ? aWheelEvent.lineOrPageDeltaY :
-                                           aWheelEvent.lineOrPageDeltaX;
+  double& delta = mIsVertical ? aWheelEvent.mDeltaY : aWheelEvent.mDeltaX;
+  int32_t& lineOrPageDelta = mIsVertical ? aWheelEvent.mLineOrPageDeltaY :
+                                           aWheelEvent.mLineOrPageDeltaX;
 
   double nativeDeltaPerUnit =
     mIsPage ? static_cast<double>(WHEEL_DELTA) :
@@ -863,19 +863,53 @@ MouseScrollHandler::LastEventInfo::InitWheelEvent(
   mAccumulatedDelta -=
     lineOrPageDelta * orienter * RoundDelta(nativeDeltaPerUnit);
 
+  if (aWheelEvent.mDeltaMode != nsIDOMWheelEvent::DOM_DELTA_LINE) {
+    // If the scroll delta mode isn't per line scroll, we shouldn't allow to
+    // override the system scroll speed setting.
+    aWheelEvent.mAllowToOverrideSystemScrollSpeed = false;
+  } else if (!MouseScrollHandler::sInstance->
+                mSystemSettings.IsOverridingSystemScrollSpeedAllowed()) {
+    // If the system settings are customized by either the user or
+    // the mouse utility, we shouldn't allow to override the system scroll
+    // speed setting.
+    aWheelEvent.mAllowToOverrideSystemScrollSpeed = false;
+  } else {
+    // For suppressing too fast scroll, we should ensure that the maximum
+    // overridden delta value should be less than overridden scroll speed
+    // with default scroll amount.
+    double defaultScrollAmount =
+      mIsVertical ? SystemSettings::DefaultScrollLines() :
+                    SystemSettings::DefaultScrollChars();
+    double maxDelta =
+      WidgetWheelEvent::ComputeOverriddenDelta(defaultScrollAmount,
+                                               mIsVertical);
+    if (maxDelta != defaultScrollAmount) {
+      double overriddenDelta =
+        WidgetWheelEvent::ComputeOverriddenDelta(Abs(delta), mIsVertical);
+      if (overriddenDelta > maxDelta) {
+        // Suppress to fast scroll since overriding system scroll speed with
+        // current delta value causes too big delta value.
+        aWheelEvent.mAllowToOverrideSystemScrollSpeed = false;
+      }
+    }
+  }
+
   MOZ_LOG(gMouseScrollLog, LogLevel::Info,
     ("MouseScroll::LastEventInfo::InitWheelEvent: aWidget=%p, "
-     "aWheelEvent { refPoint: { x: %d, y: %d }, deltaX: %f, deltaY: %f, "
-     "lineOrPageDeltaX: %d, lineOrPageDeltaY: %d, "
-     "isShift: %s, isControl: %s, isAlt: %s, isMeta: %s }, "
+     "aWheelEvent { mRefPoint: { x: %d, y: %d }, mDeltaX: %f, mDeltaY: %f, "
+     "mLineOrPageDeltaX: %d, mLineOrPageDeltaY: %d, "
+     "isShift: %s, isControl: %s, isAlt: %s, isMeta: %s, "
+     "mAllowToOverrideSystemScrollSpeed: %s }, "
      "mAccumulatedDelta: %d",
-     aWidget, aWheelEvent.refPoint.x, aWheelEvent.refPoint.y,
-     aWheelEvent.deltaX, aWheelEvent.deltaY,
-     aWheelEvent.lineOrPageDeltaX, aWheelEvent.lineOrPageDeltaY,
+     aWidget, aWheelEvent.mRefPoint.x, aWheelEvent.mRefPoint.y,
+     aWheelEvent.mDeltaX, aWheelEvent.mDeltaY,
+     aWheelEvent.mLineOrPageDeltaX, aWheelEvent.mLineOrPageDeltaY,
      GetBoolName(aWheelEvent.IsShift()),
      GetBoolName(aWheelEvent.IsControl()),
      GetBoolName(aWheelEvent.IsAlt()),
-     GetBoolName(aWheelEvent.IsMeta()), mAccumulatedDelta));
+     GetBoolName(aWheelEvent.IsMeta()),
+     GetBoolName(aWheelEvent.mAllowToOverrideSystemScrollSpeed),
+     mAccumulatedDelta));
 
   return (delta != 0);
 }
@@ -923,7 +957,7 @@ MouseScrollHandler::SystemSettings::InitScrollLines()
     MOZ_LOG(gMouseScrollLog, LogLevel::Info,
       ("MouseScroll::SystemSettings::InitScrollLines(): ::SystemParametersInfo("
        "SPI_GETWHEELSCROLLLINES) failed"));
-    mScrollLines = 3;
+    mScrollLines = DefaultScrollLines();
   }
 
   if (mScrollLines > WHEEL_DELTA) {
@@ -965,6 +999,7 @@ MouseScrollHandler::SystemSettings::InitScrollChars()
        IsVistaOrLater() ?
          "this is unexpected on Vista or later" :
          "but on XP or earlier, this is not a problem"));
+    // XXX Should we use DefaultScrollChars()?
     mScrollChars = 1;
   }
 
@@ -994,9 +1029,10 @@ MouseScrollHandler::SystemSettings::MarkDirty()
 }
 
 void
-MouseScrollHandler::SystemSettings::RefreshCache(bool aForVertical)
+MouseScrollHandler::SystemSettings::RefreshCache()
 {
-  bool isChanged = aForVertical ? InitScrollLines() : InitScrollChars();
+  bool isChanged = InitScrollLines();
+  isChanged = InitScrollChars() || isChanged;
   if (!isChanged) {
     return;
   }
@@ -1007,16 +1043,14 @@ MouseScrollHandler::SystemSettings::RefreshCache(bool aForVertical)
 }
 
 void
-MouseScrollHandler::SystemSettings::TrustedScrollSettingsDriver(
-                                      bool aIsVertical)
+MouseScrollHandler::SystemSettings::TrustedScrollSettingsDriver()
 {
   if (!mInitialized) {
     return;
   }
 
   // if the cache is initialized with prefs, we don't need to refresh it.
-  if ((aIsVertical && mIsReliableScrollLines) ||
-      (!aIsVertical && mIsReliableScrollChars)) {
+  if (mIsReliableScrollLines && mIsReliableScrollChars) {
     return;
   }
 
@@ -1025,7 +1059,7 @@ MouseScrollHandler::SystemSettings::TrustedScrollSettingsDriver(
 
   // If system settings cache is disabled, we should always refresh them.
   if (!userPrefs.IsSystemSettingCacheEnabled()) {
-    RefreshCache(aIsVertical);
+    RefreshCache();
     return;
   }
 
@@ -1039,11 +1073,18 @@ MouseScrollHandler::SystemSettings::TrustedScrollSettingsDriver(
   // ::SystemParametersInfo() and returns different value from system settings.
   if (Device::SynTP::IsDriverInstalled() ||
       Device::Apoint::IsDriverInstalled()) {
-    RefreshCache(aIsVertical);
+    RefreshCache();
     return;
   }
 
   // XXX We're not sure about other touchpad drivers...
+}
+
+bool
+MouseScrollHandler::SystemSettings::IsOverridingSystemScrollSpeedAllowed()
+{
+  return mScrollLines == DefaultScrollLines() &&
+         (!IsVistaOrLater() || mScrollChars == DefaultScrollChars());
 }
 
 /******************************************************************************

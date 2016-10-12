@@ -27,9 +27,9 @@ class Proxy
   public:
     /* Standard internal methods. */
     static bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                         MutableHandle<JSPropertyDescriptor> desc);
+                                         MutableHandle<PropertyDescriptor> desc);
     static bool defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
-                               Handle<JSPropertyDescriptor> desc, ObjectOpResult& result);
+                               Handle<PropertyDescriptor> desc, ObjectOpResult& result);
     static bool ownPropertyKeys(JSContext* cx, HandleObject proxy, AutoIdVector& props);
     static bool delete_(JSContext* cx, HandleObject proxy, HandleId id, ObjectOpResult& result);
     static bool enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp);
@@ -38,6 +38,8 @@ class Proxy
     static bool getPrototype(JSContext* cx, HandleObject proxy, MutableHandleObject protop);
     static bool setPrototype(JSContext* cx, HandleObject proxy, HandleObject proto,
                              ObjectOpResult& result);
+    static bool getPrototypeIfOrdinary(JSContext* cx, HandleObject proxy, bool* isOrdinary,
+                                       MutableHandleObject protop);
     static bool setImmutablePrototype(JSContext* cx, HandleObject proxy, bool* succeeded);
     static bool has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp);
     static bool get(JSContext* cx, HandleObject proxy, HandleValue receiver, HandleId id,
@@ -49,7 +51,7 @@ class Proxy
 
     /* SpiderMonkey extensions. */
     static bool getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                      MutableHandle<JSPropertyDescriptor> desc);
+                                      MutableHandle<PropertyDescriptor> desc);
     static bool hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp);
     static bool getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
                                              AutoIdVector& props);

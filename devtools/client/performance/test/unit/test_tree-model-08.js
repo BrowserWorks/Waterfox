@@ -12,7 +12,7 @@ function run_test() {
 add_task(function test() {
   let FrameUtils = require("devtools/client/performance/modules/logic/frame-utils");
   let { FrameNode } = require("devtools/client/performance/modules/logic/tree-model");
-  let { CATEGORY_OTHER } = require("devtools/client/performance/modules/global");
+  let { CATEGORY_MASK } = require("devtools/client/performance/modules/categories");
   let compute = frame => {
     FrameUtils.computeIsContentAndCategory(frame);
     return frame;
@@ -42,7 +42,7 @@ add_task(function test() {
     new FrameNode("Foo::Bar::Baz", compute({
       location: "Foo::Bar::Baz",
       line: 456,
-      category: CATEGORY_OTHER,
+      category: CATEGORY_MASK("other"),
     }), false),
     new FrameNode("EnterJIT", compute({
       location: "EnterJIT",
@@ -65,7 +65,7 @@ add_task(function test() {
     }), false),
   ];
 
-  let fields = ["nodeType", "functionName", "fileName", "host", "url", "line", "column", "categoryData.abbrev", "isContent", "port"]
+  let fields = ["nodeType", "functionName", "fileName", "host", "url", "line", "column", "categoryData.abbrev", "isContent", "port"];
   let expected = [
     // nodeType, functionName, fileName, host, url, line, column, categoryData.abbrev, isContent, port
     ["Frame", "hello/<.world", "bar.js", "foo", "http://foo/bar.js", 123, 987, void 0, true],

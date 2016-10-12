@@ -22,19 +22,13 @@ public:
 
   virtual void Unlock() override {}
 
-  virtual gfx::IntSize GetSize() const override { return mSize; }
-
-  virtual gfx::SurfaceFormat GetFormat() const override { return mFormat; }
-
-  virtual bool SupportsMoz2D() const override { return true; }
+  virtual void FillInfo(TextureData::Info& aInfo) const override;
 
   virtual already_AddRefed<gfx::DrawTarget> BorrowDrawTarget() override;
 
-  virtual bool HasInternalBuffer() const override { return true; }
-
   static
   DIBTextureData* Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
-                         ISurfaceAllocator* aAllocator);
+                         ClientIPCAllocator* aAllocator);
 
 protected:
   DIBTextureData(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
@@ -72,6 +66,8 @@ public:
 
   virtual void SetCompositor(Compositor* aCompositor) override;
 
+  virtual Compositor* GetCompositor() override { return mCompositor; }
+
   virtual gfx::SurfaceFormat GetFormat() const override { return mFormat; }
 
   virtual gfx::IntSize GetSize() const override { return mSize; }
@@ -80,7 +76,7 @@ public:
 
   virtual void Unlock() override;
 
-  virtual bool HasInternalBuffer() const { return true; }
+  virtual bool HasIntermediateBuffer() const { return true; }
 
   virtual bool BindTextureSource(CompositableTextureSourceRef& aTexture) override;
 
@@ -118,7 +114,8 @@ public:
 
   virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override
   {
-    MOZ_CRASH(); // Not implemented! It would be tricky to keep track of the
+    MOZ_CRASH("GFX: TextureHostFileMapping::GetAsSurface not implemented");
+                 // Not implemented! It would be tricky to keep track of the
                  // scope of the file mapping. We could do this through UserData
                  // on the DataSourceSurface but we don't need this right now.
   }

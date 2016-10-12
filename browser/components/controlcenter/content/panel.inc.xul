@@ -10,7 +10,6 @@
        orient="vertical">
 
   <broadcasterset>
-    <broadcaster id="identity-popup-content-host" class="identity-popup-headline" crop="start"/>
     <broadcaster id="identity-popup-mcb-learn-more" class="text-link plain" value="&identity.learnMore;"/>
     <broadcaster id="identity-popup-insecure-login-forms-learn-more" class="text-link plain" value="&identity.learnMore;"/>
   </broadcasterset>
@@ -22,10 +21,13 @@
       <!-- Security Section -->
       <hbox id="identity-popup-security" class="identity-popup-section">
         <vbox id="identity-popup-security-content" flex="1">
-          <label observes="identity-popup-content-host"/>
+          <label class="plain">
+            <label class="identity-popup-headline host"></label>
+            <label class="identity-popup-headline hostless" crop="end"/>
+          </label>
           <description class="identity-popup-connection-not-secure"
                        value="&identity.connectionNotSecure;"
-                       when-connection="not-secure"/>
+                       when-connection="not-secure secure-cert-user-overridden"/>
           <description class="identity-popup-connection-secure"
                        value="&identity.connectionSecure;"
                        when-connection="secure secure-ev"/>
@@ -47,14 +49,14 @@
         </vbox>
         <button id="identity-popup-security-expander"
                 class="identity-popup-expander"
-                when-connection="not-secure secure secure-ev"
+                when-connection="not-secure secure secure-ev secure-cert-user-overridden"
                 oncommand="gIdentityHandler.toggleSubView('security', this)"/>
       </hbox>
 
       <!-- Tracking Protection Section -->
       <hbox id="tracking-protection-container"
             class="identity-popup-section"
-            when-connection="not-secure secure secure-ev file">
+            when-connection="not-secure secure secure-ev secure-cert-user-overridden file">
         <vbox id="tracking-protection-content" flex="1">
           <description class="identity-popup-headline"
                        crop="end"
@@ -96,26 +98,35 @@
     <!-- Security SubView -->
     <panelview id="identity-popup-securityView" flex="1">
       <vbox id="identity-popup-securityView-header">
-        <label observes="identity-popup-content-host"/>
+        <label class="plain">
+          <label class="identity-popup-headline host"></label>
+          <label class="identity-popup-headline hostless" crop="end"/>
+        </label>
         <description class="identity-popup-connection-not-secure"
                      value="&identity.connectionNotSecure;"
-                     when-connection="not-secure"/>
+                     when-connection="not-secure secure-cert-user-overridden"/>
         <description class="identity-popup-connection-secure"
                      value="&identity.connectionSecure;"
                      when-connection="secure secure-ev"/>
       </vbox>
 
-      <vbox id="identity-popup-securityView-body">
+      <vbox id="identity-popup-securityView-body" flex="1">
         <!-- (EV) Certificate Information -->
         <description id="identity-popup-content-verified-by"
-                     when-connection="secure-ev">&identity.connectionVerified1;</description>
+                     when-connection="secure-ev">&identity.connectionVerified2;</description>
         <description id="identity-popup-content-owner"
                      when-connection="secure-ev"
                      class="header"/>
         <description id="identity-popup-content-supplemental"
                      when-connection="secure-ev"/>
         <description id="identity-popup-content-verifier"
-                     when-connection="secure secure-ev"/>
+                     when-connection="secure secure-ev secure-cert-user-overridden"/>
+
+        <!-- Remove Certificate Exception -->
+        <button when-connection="secure-cert-user-overridden"
+                label="&identity.removeCertException.label;"
+                accesskey="&identity.removeCertException.accesskey;"
+                oncommand="gIdentityHandler.removeCertException()"/>
 
         <!-- Connection is Not Secure -->
         <description when-connection="not-secure"
@@ -162,7 +173,9 @@
                 label="&identity.enableMixedContentBlocking.label;"
                 accesskey="&identity.enableMixedContentBlocking.accesskey;"
                 oncommand="gIdentityHandler.enableMixedContentProtection()"/>
+      </vbox>
 
+      <vbox id="identity-popup-securityView-footer">
         <!-- More Security Information -->
         <button label="&identity.moreInfoLinkText2;"
                 oncommand="gIdentityHandler.handleMoreInfoClick(event);"/>

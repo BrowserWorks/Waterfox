@@ -10,7 +10,7 @@
 #include <sys/types.h>                  // for int32_t
 #include "gfxTextRun.h"                 // for gfxFont, gfxFontGroup
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
-#include "nsAutoPtr.h"                  // for nsRefPtr
+#include "mozilla/RefPtr.h"             // for RefPtr
 #include "nsCOMPtr.h"                   // for nsCOMPtr
 #include "nsCoord.h"                    // for nscoord
 #include "nsError.h"                    // for nsresult
@@ -46,24 +46,22 @@ struct nsBoundingMetrics;
 class nsFontMetrics final
 {
 public:
+    typedef gfxTextRun::Range Range;
     typedef mozilla::gfx::DrawTarget DrawTarget;
 
-    nsFontMetrics();
+    struct Params
+    {
+      nsIAtom* language = nullptr;
+      bool explicitLanguage = false;
+      gfxFont::Orientation orientation = gfxFont::eHorizontal;
+      gfxUserFontSet* userFontSet = nullptr;
+      gfxTextPerfMetrics* textPerf = nullptr;
+    };
+
+    nsFontMetrics(const nsFont& aFont, const Params& aParams,
+                  nsDeviceContext *aContext);
 
     NS_INLINE_DECL_REFCOUNTING(nsFontMetrics)
-
-    /**
-     * Initialize the font metrics. Call this after creating the font metrics.
-     * Font metrics you get from the font cache do NOT need to be initialized
-     *
-     * @see nsDeviceContext#GetMetricsFor()
-     */
-    nsresult Init(const nsFont& aFont,
-                  nsIAtom* aLanguage, bool aExplicitLanguage,
-                  gfxFont::Orientation aOrientation,
-                  nsDeviceContext *aContext,
-                  gfxUserFontSet *aUserFontSet,
-                  gfxTextPerfMetrics *aTextPerf);
 
     /**
      * Destroy this font metrics. This breaks the association between
@@ -246,7 +244,7 @@ private:
     nsFont mFont;
     RefPtr<gfxFontGroup> mFontGroup;
     nsCOMPtr<nsIAtom> mLanguage;
-    nsDeviceContext *mDeviceContext;
+    nsDeviceContext* mDeviceContext;
     int32_t mP2A;
 
     // The font orientation (horizontal or vertical) for which these metrics

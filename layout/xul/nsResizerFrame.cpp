@@ -105,7 +105,7 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
 
           // ask the widget implementation to begin a resize drag if it can
           Direction direction = GetDirection();
-          nsresult rv = aEvent->widget->BeginResizeDrag(aEvent,
+          nsresult rv = aEvent->mWidget->BeginResizeDrag(aEvent,
                         direction.mHorizontal, direction.mVertical);
           // for native drags, don't set the fields below
           if (rv != NS_ERROR_NOT_IMPLEMENTED)
@@ -121,7 +121,7 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
         LayoutDeviceIntPoint refPoint;
         if (!GetEventPoint(aEvent, refPoint))
           return NS_OK;
-        mMouseDownPoint = refPoint + aEvent->widget->WidgetToScreenOffset();
+        mMouseDownPoint = refPoint + aEvent->mWidget->WidgetToScreenOffset();
 
         // we're tracking
         mTrackingMouseMove = true;
@@ -169,7 +169,8 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
       LayoutDeviceIntPoint refPoint;
       if (!GetEventPoint(aEvent, refPoint))
         return NS_OK;
-      LayoutDeviceIntPoint screenPoint = refPoint + aEvent->widget->WidgetToScreenOffset();
+      LayoutDeviceIntPoint screenPoint =
+        refPoint + aEvent->mWidget->WidgetToScreenOffset();
       LayoutDeviceIntPoint mouseMove(screenPoint - mMouseDownPoint);
 
       // Determine which direction to resize by checking the dir attribute.
@@ -284,7 +285,8 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
         }
       }
       else {
-        window->SetPositionAndSize(rect.x, rect.y, rect.width, rect.height, true); // do the repaint.
+        window->SetPositionAndSize(rect.x, rect.y, rect.width, rect.height,
+                                   nsIBaseWindow::eRepaint); // do the repaint.
       }
 
       doDefault = false;
@@ -360,8 +362,7 @@ nsResizerFrame::GetContentToResize(nsIPresShell* aPresShell, nsIBaseWindow** aWi
     }
 
     // get the document and the window - should this be cached?
-    nsPIDOMWindow *domWindow = aPresShell->GetDocument()->GetWindow();
-    if (domWindow) {
+    if (nsPIDOMWindowOuter* domWindow = aPresShell->GetDocument()->GetWindow()) {
       nsCOMPtr<nsIDocShell> docShell = domWindow->GetDocShell();
       if (docShell) {
         nsCOMPtr<nsIDocShellTreeOwner> treeOwner;
@@ -540,6 +541,5 @@ void
 nsResizerFrame::MouseClicked(WidgetMouseEvent* aEvent)
 {
   // Execute the oncommand event handler.
-  nsContentUtils::DispatchXULCommand(mContent,
-                                     aEvent && aEvent->mFlags.mIsTrusted);
+  nsContentUtils::DispatchXULCommand(mContent, aEvent && aEvent->IsTrusted());
 }

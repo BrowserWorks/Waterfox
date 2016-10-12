@@ -101,8 +101,7 @@ NuwaParent::CloneProtocol(Channel* aChannel,
     lock.Notify();
   });
   MOZ_ASSERT(runnable);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mWorkerThread->Dispatch(runnable,
-                                                       NS_DISPATCH_NORMAL)));
+  MOZ_ALWAYS_SUCCEEDS(mWorkerThread->Dispatch(runnable, NS_DISPATCH_NORMAL));
 
   while (!mClonedActor) {
     lock.Wait();
@@ -128,12 +127,11 @@ NuwaParent::CloneProtocol(Channel* aChannel,
       mozilla::Unused << actor->Send__delete__(actor);
     });
     MOZ_ASSERT(nested);
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      actor->mWorkerThread->Dispatch(nested, NS_DISPATCH_NORMAL)));
+    MOZ_ALWAYS_SUCCEEDS(actor->mWorkerThread->Dispatch(nested, NS_DISPATCH_NORMAL));
   });
 
   MOZ_ASSERT(runnable);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
 
   return actor;
 }
@@ -155,7 +153,7 @@ NuwaParent::ActorDestroy(ActorDestroyReason aWhy)
     self->mContentParent = nullptr;
   });
   MOZ_ASSERT(runnable);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
 }
 
 bool
@@ -171,10 +169,10 @@ NuwaParent::RecvNotifyReady()
   // mContentParent have to go the the main thread. The mContentParent will
   // be alive when the runnable runs.
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewNonOwningRunnableMethod(mContentParent.get(),
+    NewNonOwningRunnableMethod(mContentParent.get(),
                                   &ContentParent::OnNuwaReady);
   MOZ_ASSERT(runnable);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
 
   return true;
 #else
@@ -202,7 +200,7 @@ NuwaParent::RecvAddNewProcess(const uint32_t& aPid,
     mBlocked = false;
   } else {
     nsCOMPtr<nsIRunnable> runnable =
-      NS_NewNonOwningRunnableMethodWithArgs<
+      NewNonOwningRunnableMethod<
         uint32_t,
         UniquePtr<nsTArray<ProtocolFdMapping>>&& >(
           mContentParent.get(),
@@ -210,7 +208,7 @@ NuwaParent::RecvAddNewProcess(const uint32_t& aPid,
           mNewProcessPid,
           Move(mNewProcessFds));
     MOZ_ASSERT(runnable);
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
   }
   return true;
 #else
@@ -235,8 +233,7 @@ NuwaParent::ForkNewProcess(uint32_t& aPid,
     mozilla::Unused << self->SendFork();
   });
   MOZ_ASSERT(runnable);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mWorkerThread->Dispatch(runnable,
-                                                       NS_DISPATCH_NORMAL)));
+  MOZ_ALWAYS_SUCCEEDS(mWorkerThread->Dispatch(runnable, NS_DISPATCH_NORMAL));
   if (!aBlocking) {
     return false;
   }

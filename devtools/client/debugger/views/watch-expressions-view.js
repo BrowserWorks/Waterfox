@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -29,7 +31,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * Initialization function, called when the debugger is started.
    */
-  initialize: function() {
+  initialize: function () {
     dumpn("Initializing the WatchExpressionsView");
 
     this.widget = new SimpleListWidget(document.getElementById("expressions"));
@@ -43,7 +45,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * Destruction function, called when the debugger is closed.
    */
-  destroy: function() {
+  destroy: function () {
     dumpn("Destroying the WatchExpressionsView");
 
     this.widget.removeEventListener("click", this._onClick, false);
@@ -52,8 +54,8 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * Add commands that XUL can fire.
    */
-  _addCommands: function() {
-    XULUtils.addCommands(document.getElementById('debuggerCommands'), {
+  _addCommands: function () {
+    XULUtils.addCommands(document.getElementById("debuggerCommands"), {
       addWatchExpressionCommand: () => this._onCmdAddExpression(),
       removeAllWatchExpressionsCommand: () => this._onCmdRemoveAllExpressions()
     });
@@ -68,7 +70,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
    *        Pass true to avoid waiting for additional user input
    *        on the watch expression.
    */
-  addExpression: function(aExpression = "", aSkipUserInput = false) {
+  addExpression: function (aExpression = "", aSkipUserInput = false) {
     // Watch expressions are UI elements which benefit from visible panes.
     this.DebuggerView.showInstrumentsPane();
 
@@ -109,7 +111,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
    * @param string aExpression
    *        The new watch expression text.
    */
-  switchExpression: function(aVar, aExpression) {
+  switchExpression: function (aVar, aExpression) {
     let expressionItem =
       [...this].filter(i => i.attachment.currentExpression == aVar.name)[0];
 
@@ -135,7 +137,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
    * @param Variable aVar
    *        The variable representing the watch expression evaluation.
    */
-  deleteExpression: function(aVar) {
+  deleteExpression: function (aVar) {
     let expressionItem =
       [...this].filter(i => i.attachment.currentExpression == aVar.name)[0];
 
@@ -154,7 +156,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
    * @return string
    *         The watch expression code string.
    */
-  getString: function(aIndex) {
+  getString: function (aIndex) {
     return this.getItemAtIndex(aIndex).attachment.currentExpression;
   },
 
@@ -164,7 +166,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
    * @return array
    *         The watch expressions code strings.
    */
-  getAllStrings: function() {
+  getAllStrings: function () {
     return this.items.map(e => e.attachment.currentExpression);
   },
 
@@ -174,7 +176,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
    * @param string aExpression
    *        The watch expression string.
    */
-  _createItemView: function(aExpression) {
+  _createItemView: function (aExpression) {
     let container = document.createElement("hbox");
     container.className = "list-widget-item dbg-expression";
     container.setAttribute("align", "center");
@@ -209,7 +211,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * Called when the add watch expression key sequence was pressed.
    */
-  _onCmdAddExpression: function(aText) {
+  _onCmdAddExpression: function (aText) {
     // Only add a new expression if there's no pending input.
     if (this.getAllStrings().indexOf("") == -1) {
       this.addExpression(aText || this.DebuggerView.editor.getSelection());
@@ -219,7 +221,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * Called when the remove all watch expressions key sequence was pressed.
    */
-  _onCmdRemoveAllExpressions: function() {
+  _onCmdRemoveAllExpressions: function () {
     // Empty the view of all the watch expressions and clear the cache.
     this.empty();
 
@@ -230,7 +232,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * The click listener for this container.
    */
-  _onClick: function(e) {
+  _onClick: function (e) {
     if (e.button != 0) {
       // Only allow left-click to trigger this event.
       return;
@@ -245,7 +247,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * The click listener for a watch expression's close button.
    */
-  _onClose: function(e) {
+  _onClose: function (e) {
     // Remove the watch expression.
     this.remove(this.getItemForElement(e.target));
 
@@ -260,7 +262,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * The blur listener for a watch expression's textbox.
    */
-  _onBlur: function({ target: textbox }) {
+  _onBlur: function ({ target: textbox }) {
     let expressionItem = this.getItemForElement(textbox);
     let oldExpression = expressionItem.attachment.currentExpression;
     let newExpression = textbox.value.trim();
@@ -285,7 +287,7 @@ WatchExpressionsView.prototype = Heritage.extend(WidgetMethods, {
   /**
    * The keypress listener for a watch expression's textbox.
    */
-  _onKeyPress: function(e) {
+  _onKeyPress: function (e) {
     switch (e.keyCode) {
       case e.DOM_VK_RETURN:
       case e.DOM_VK_ESCAPE:

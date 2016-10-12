@@ -18,9 +18,11 @@ dictionary IDBIndexParameters {
     DOMString? locale = null;
 };
 
-[Exposed=(Window,Worker)]
+[Exposed=(Window,Worker,System)]
 interface IDBIndex {
-    readonly    attribute DOMString      name;
+    [SetterThrows]
+    attribute DOMString name;
+
     readonly    attribute IDBObjectStore objectStore;
 
     [Throws]
@@ -32,10 +34,10 @@ interface IDBIndex {
     // <null>:   Not locale-aware, uses normal JS sorting.
     // <string>: Sorted based on the rules of the specified locale.
     //           Note: never returns "auto", only the current locale.
-    [Func="mozilla::dom::indexedDB::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
+    [Func="mozilla::dom::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
     readonly attribute DOMString? locale;
 
-    [Func="mozilla::dom::indexedDB::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
+    [Func="mozilla::dom::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
     readonly attribute boolean isAutoLocale;
 
     [Throws]

@@ -14,6 +14,8 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                   "resource://gre/modules/PluralForm.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesDBUtils",
+                                  "resource://gre/modules/PlacesDBUtils.jsm");
 
 window.addEventListener("load", function onload(event) {
   try {
@@ -37,6 +39,7 @@ var snapshotFormatters = {
   application: function application(data) {
     $("application-box").textContent = data.name;
     $("useragent-box").textContent = data.userAgent;
+    $("os-box").textContent = data.osVersion;
     $("supportLink").href = data.supportURL;
     let version = AppConstants.MOZ_APP_VERSION_DISPLAY;
     if (data.vendor)
@@ -46,7 +49,7 @@ var snapshotFormatters = {
     if (data.updateChannel)
       $("updatechannel-box").textContent = data.updateChannel;
 
-    let statusStrName = ".unknown";
+    let statusText = stringBundle().GetStringFromName("multiProcessStatus.unknown");
 
     // Whitelist of known values with string descriptions:
     switch (data.autoStartStatus) {
@@ -54,13 +57,18 @@ var snapshotFormatters = {
       case 1:
       case 2:
       case 4:
-      case 5:
       case 6:
       case 7:
-        statusStrName = "." + data.autoStartStatus;
+      case 8:
+      case 9:
+        statusText = stringBundle().GetStringFromName("multiProcessStatus." + data.autoStartStatus);
+        break;
+
+      case 10:
+        statusText = (Services.appinfo.OS == "Darwin" ? "OS X 10.6 - 10.8" : "Windows XP");
+        break;
     }
 
-    let statusText = stringBundle().GetStringFromName("multiProcessStatus" + statusStrName);
     $("multiprocess-box").textContent = stringBundle().formatStringFromName("multiProcessWindows",
       [data.numRemoteWindows, data.numTotalWindows, statusText], 3);
 
@@ -235,7 +243,42 @@ var snapshotFormatters = {
       return out;
     };
 
-    // graphics-info-properties tbody
+    // Create a <tr> element with key and value columns.
+    //
+    // @key      Text in the key column. Localized automatically, unless starts with "#".
+    // @value    Text in the value column. Not localized.
+    function buildRow(key, value) {
+      let title;
+      if (key[0] == "#") {
+        title = key.substr(1);
+      } else {
+        try {
+          title = strings.GetStringFromName(key);
+        } catch (e) {
+          title = key;
+        }
+      }
+      return $.new("tr", [
+        $.new("th", title, "column"),
+        $.new("td", value),
+      ]);
+    }
+
+    // @where    The name in "graphics-<name>-tbody", of the element to append to.
+    // @trs      Array of row elements.
+    function addRows(where, trs) {
+      $.append($("graphics-" + where + "-tbody"), trs);
+    }
+
+    // Build and append a row.
+    //
+    // @where    The name in "graphics-<name>-tbody", of the element to append to.
+    function addRow(where, key, value) {
+      addRows(where, [buildRow(key, value)]);
+    }
+    if (data.clearTypeParameters !== undefined) {
+      addRow("diagnostics", "clearTypeParameters", data.clearTypeParameters);
+    }
     if ("info" in data) {
       apzInfo = formatApzInfo(data.info);
 
@@ -245,7 +288,8 @@ var snapshotFormatters = {
           $.new("td", String(val)),
         ]);
       });
-      $.append($("graphics-info-properties"), trs);
+      addRows("diagnostics", trs);
+
       delete data.info;
     }
 
@@ -276,76 +320,202 @@ var snapshotFormatters = {
                           return $.new("p", val);
                        }))])]);
       }
-
-      delete data.failures;
+    } else {
+      $("graphics-failures-tbody").style.display = "none";
     }
 
-    // graphics-tbody tbody
+    // Add a new row to the table, and take the key (or keys) out of data.
+    //
+    // @where        Table section to add to.
+    // @key          Data key to use.
+    // @colKey       The localization key to use, if different from key.
+    function addRowFromKey(where, key, colKey) {
+      if (!(key in data))
+        return;
+      colKey = colKey || key;
 
-    let out = Object.create(data);
+      let value;
+      let messageKey = key + "Message";
+      if (messageKey in data) {
+        value = localizedMsg(data[messageKey]);
+        delete data[messageKey];
+      } else {
+        value = data[key];
+      }
+      delete data[key];
 
-    if (apzInfo.length == 0)
-      out.asyncPanZoom = localizedMsg(["apzNone"]);
-    else
-      out.asyncPanZoom = apzInfo.join("; ");
+      if (value) {
+        addRow(where, colKey, value);
+      }
+    }
 
-    out.acceleratedWindows =
-      data.numAcceleratedWindows + "/" + data.numTotalWindows;
-    if (data.windowLayerManagerType)
-      out.acceleratedWindows += " " + data.windowLayerManagerType;
-    if (data.windowLayerManagerRemote)
-      out.acceleratedWindows += " (OMTC)";
-    if (data.numAcceleratedWindowsMessage)
-      out.acceleratedWindows +=
-        " " + localizedMsg(data.numAcceleratedWindowsMessage);
-    delete data.numAcceleratedWindows;
-    delete data.numTotalWindows;
+    // graphics-features-tbody
+
+    let compositor = data.windowLayerManagerRemote
+                     ? data.windowLayerManagerType
+                     : "BasicLayers (" + strings.GetStringFromName("mainThreadNoOMTC") + ")";
+    addRow("features", "compositing", compositor);
+    delete data.windowLayerManagerRemote;
     delete data.windowLayerManagerType;
+    delete data.numTotalWindows;
+    delete data.numAcceleratedWindows;
     delete data.numAcceleratedWindowsMessage;
 
-    if ("direct2DEnabledMessage" in data) {
-      out.direct2DEnabled = localizedMsg(data.direct2DEnabledMessage);
-      delete data.direct2DEnabledMessage;
-      delete data.direct2DEnabled;
-    }
+    addRow("features", "asyncPanZoom",
+           apzInfo.length
+           ? apzInfo.join("; ")
+           : localizedMsg(["apzNone"]));
+    addRowFromKey("features", "webglRenderer");
+    addRowFromKey("features", "supportsHardwareH264", "hardwareH264");
+    addRowFromKey("features", "direct2DEnabled", "#Direct2D");
 
     if ("directWriteEnabled" in data) {
-      out.directWriteEnabled = data.directWriteEnabled;
+      let message = data.directWriteEnabled;
       if ("directWriteVersion" in data)
-        out.directWriteEnabled += " (" + data.directWriteVersion + ")";
+        message += " (" + data.directWriteVersion + ")";
+      addRow("features", "#DirectWrite", message);
       delete data.directWriteEnabled;
       delete data.directWriteVersion;
     }
 
-    if ("webglRendererMessage" in data) {
-      out.webglRenderer = localizedMsg(data.webglRendererMessage);
-      delete data.webglRendererMessage;
-      delete data.webglRenderer;
+    // Adapter tbodies.
+    let adapterKeys = [
+      ["adapterDescription", "gpuDescription"],
+      ["adapterVendorID", "gpuVendorID"],
+      ["adapterDeviceID", "gpuDeviceID"],
+      ["driverVersion", "gpuDriverVersion"],
+      ["driverDate", "gpuDriverDate"],
+      ["adapterDrivers", "gpuDrivers"],
+      ["adapterSubsysID", "gpuSubsysID"],
+      ["adapterRAM", "gpuRAM"],
+    ];
+
+    function showGpu(id, suffix) {
+      function get(prop) {
+        return data[prop + suffix];
+      }
+
+      let trs = [];
+      for (let [prop, key] of adapterKeys) {
+        let value = get(prop);
+        if (value === undefined || value === "")
+          continue;
+        trs.push(buildRow(key, value));
+      }
+
+      if (trs.length == 0) {
+        $("graphics-" + id + "-tbody").style.display = "none";
+        return;
+      }
+
+      let active = "yes";
+      if ("isGPU2Active" in data && ((suffix == "2") != data.isGPU2Active)) {
+        active = "no";
+      }
+      addRow(id, "gpuActive", strings.GetStringFromName(active));
+      addRows(id, trs);
+    }
+    showGpu("gpu-1", "");
+    showGpu("gpu-2", "2");
+
+    // Remove adapter keys.
+    for (let [prop, key] of adapterKeys) {
+      delete data[prop];
+      delete data[prop + "2"];
+    }
+    delete data.isGPU2Active;
+
+    let featureLog = data.featureLog;
+    delete data.featureLog;
+
+    let features = [];
+    for (let feature of featureLog.features) {
+      // Only add interesting decisions - ones that were not automatic based on
+      // all.js/gfxPrefs defaults.
+      if (feature.log.length > 1 || feature.log[0].status != "available") {
+        features.push(feature);
+      }
     }
 
-    let localizedOut = {};
-    for (let prop in out) {
-      let val = out[prop];
-      if (typeof(val) == "string" && !val)
-        // Ignore properties that are empty strings.
-        continue;
-      try {
-        var localizedName = strings.GetStringFromName(prop);
+    if (features.length) {
+      for (let feature of features) {
+        let trs = [];
+        for (let entry of feature.log) {
+          if (entry.type == "default" && entry.status == "available")
+            continue;
+
+          let contents;
+          if (entry.message.length > 0 && entry.message[0] == "#") {
+            // This is a failure ID. See nsIGfxInfo.idl.
+            let m;
+            if (m = /#BLOCKLIST_FEATURE_FAILURE_BUG_(\d+)/.exec(entry.message)) {
+              let bugSpan = $.new("span");
+              bugSpan.textContent = strings.GetStringFromName("blocklistedBug") + "; ";
+
+              let bugHref = $.new("a");
+              bugHref.href = "https://bugzilla.mozilla.org/show_bug.cgi?id=" + m[1];
+              bugHref.textContent = strings.formatStringFromName("bugLink", [m[1]], 1);
+
+              contents = [bugSpan, bugHref];
+            } else {
+              contents = strings.formatStringFromName(
+                "unknownFailure", [entry.message.substr(1)], 1);
+            }
+          } else {
+            contents = entry.status + " by " + entry.type + ": " + entry.message;
+          }
+
+          trs.push($.new("tr", [
+            $.new("td", contents),
+          ]));
+        }
+        addRow("decisions", feature.name, [$.new("table", trs)]);
       }
-      catch (err) {
-        // This shouldn't happen, but if there's a reported graphics property
-        // that isn't in the string bundle, don't let it break the page.
-        localizedName = prop;
-      }
-      localizedOut[localizedName] = val;
+    } else {
+      $("graphics-decisions-tbody").style.display = "none";
     }
-    let trs = sortedArrayFromObject(localizedOut).map(function ([prop, val]) {
-      return $.new("tr", [
-        $.new("th", prop, "column"),
-        $.new("td", val),
-      ]);
-    });
-    $.append($("graphics-tbody"), trs);
+
+    if (featureLog.fallbacks.length) {
+      for (let fallback of featureLog.fallbacks) {
+        addRow("workarounds", fallback.name, fallback.message);
+      }
+    } else {
+      $("graphics-workarounds-tbody").style.display = "none";
+    }
+
+    let crashGuards = data.crashGuards;
+    delete data.crashGuards;
+
+    if (crashGuards.length) {
+      for (let guard of crashGuards) {
+        let resetButton = $.new("button");
+        let onClickReset = (function (guard) {
+          // Note - need this wrapper until bug 449811 fixes |guard| scoping.
+          return function () {
+            Services.prefs.setIntPref(guard.prefName, 0);
+            resetButton.removeEventListener("click", onClickReset);
+            resetButton.disabled = true;
+          };
+        })(guard);
+
+        resetButton.textContent = strings.GetStringFromName("resetOnNextRestart");
+        resetButton.addEventListener("click", onClickReset);
+
+        addRow("crashguards", guard.type + "CrashGuard", [resetButton]);
+      }
+    } else {
+      $("graphics-crashguards-tbody").style.display = "none";
+    }
+
+    // Now that we're done, grab any remaining keys in data and drop them into
+    // the diagnostics section.
+    for (let key in data) {
+      let value = data[key];
+      if (Array.isArray(value)) {
+        value = localizedMsg(value);
+      }
+      addRow("diagnostics", key, value);
+    }
   },
 
   javaScript: function javaScript(data) {
@@ -648,6 +818,10 @@ Serializer.prototype = {
     this._currentLine += text;
   },
 
+  _isHiddenSubHeading: function (th) {
+    return th.parentNode.parentNode.style.display == "none";
+  },
+
   _serializeTable: function (table) {
     // Collect the table's column headings if in fact there are any.  First
     // check thead.  If there's no thead, check the first tr.
@@ -660,9 +834,10 @@ Serializer.prototype = {
       // If there's a contiguous run of th's in the children starting from the
       // rightmost child, then consider them to be column headings.
       for (let i = tableHeadingCols.length - 1; i >= 0; i--) {
-        if (tableHeadingCols[i].localName != "th")
+        let col = tableHeadingCols[i];
+        if (col.localName != "th" || col.classList.contains("title-column"))
           break;
-        colHeadings[i] = this._nodeText(tableHeadingCols[i]).trim();
+        colHeadings[i] = this._nodeText(col).trim();
       }
     }
     let hasColHeadings = Object.keys(colHeadings).length > 0;
@@ -706,7 +881,22 @@ Serializer.prototype = {
         continue;
       let children = trs[i].querySelectorAll("th,td");
       let rowHeading = this._nodeText(children[0]).trim();
-      this._appendText(rowHeading + ": " + this._nodeText(children[1]).trim());
+      if (children[0].classList.contains("title-column")) {
+        if (!this._isHiddenSubHeading(children[0]))
+          this._appendText(rowHeading);
+      } else if (children.length == 1) {
+        // This is a single-cell row.
+        this._appendText(rowHeading);
+      } else {
+        let childTables = trs[i].querySelectorAll("table");
+        if (childTables.length) {
+          // If we have child tables, don't use nodeText - its trs are already
+          // queued up from querySelectorAll earlier.
+          this._appendText(rowHeading + ": ");
+        } else {
+          this._appendText(rowHeading + ": " + this._nodeText(children[1]).trim());
+        }
+      }
       this._startNewLine();
     }
     this._startNewLine();
@@ -783,5 +973,13 @@ function setupEventListeners(){
     else {
       safeModeRestart();
     }
+  });
+  $("verify-place-integrity-button").addEventListener("click", function (event){
+    PlacesDBUtils.checkAndFixDatabase(function(aLog) {
+      let msg = aLog.join("\n");
+      $("verify-place-result").style.display = "block";
+      $("verify-place-result").classList.remove("no-copy");
+      $("verify-place-result").textContent = msg;
+    });
   });
 }

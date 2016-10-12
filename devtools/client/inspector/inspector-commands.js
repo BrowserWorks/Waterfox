@@ -5,6 +5,8 @@
 "use strict";
 
 const l10n = require("gcli/l10n");
+loader.lazyRequireGetter(this, "gDevTools",
+                         "devtools/client/framework/devtools", true);
 
 exports.items = [{
   item: "command",
@@ -20,10 +22,8 @@ exports.items = [{
       manual: l10n.lookup("inspectNodeManual")
     }
   ],
-  exec: function(args, context) {
+  exec: function (args, context) {
     let target = context.environment.target;
-    let gDevTools = require("resource://devtools/client/framework/gDevTools.jsm").gDevTools;
-
     return gDevTools.showToolbox(target, "inspector").then(toolbox => {
       toolbox.getCurrentPanel().selection.setNode(args.selector, "gcli");
     });

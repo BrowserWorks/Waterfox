@@ -345,15 +345,16 @@ status_t AudioOffloadPlayer::DoSeek()
   MOZ_ASSERT(mSeekTarget.IsValid());
   CHECK(mAudioSink.get());
 
-  AUDIO_OFFLOAD_LOG(LogLevel::Debug, ("DoSeek ( %lld )", mSeekTarget.mTime));
+  AUDIO_OFFLOAD_LOG(LogLevel::Debug,
+                    ("DoSeek ( %lld )", mSeekTarget.GetTime().ToMicroseconds()));
 
   mReachedEOS = false;
   mPositionTimeMediaUs = -1;
-  mStartPosUs = mSeekTarget.mTime;
+  mStartPosUs = mSeekTarget.GetTime().ToMicroseconds();
 
   if (!mSeekPromise.IsEmpty()) {
     nsCOMPtr<nsIRunnable> nsEvent =
-      NS_NewRunnableMethodWithArg<MediaDecoderEventVisibility>(
+      NewRunnableMethod<MediaDecoderEventVisibility>(
         mObserver,
         &MediaDecoder::SeekingStarted,
         mSeekTarget.mEventVisibility);
@@ -387,7 +388,7 @@ int64_t AudioOffloadPlayer::GetMediaTimeUs()
 
   int64_t playPosition = 0;
   if (mSeekTarget.IsValid()) {
-    return mSeekTarget.mTime;
+    return mSeekTarget.GetTime().ToMicroseconds();
   }
   if (!mStarted) {
     return mPositionTimeMediaUs;
@@ -424,16 +425,14 @@ void AudioOffloadPlayer::NotifyAudioEOS()
     MediaDecoder::SeekResolveValue val(mReachedEOS, mSeekTarget.mEventVisibility);
     mSeekPromise.Resolve(val, __func__);
   }
-  nsCOMPtr<nsIRunnable> nsEvent = NS_NewRunnableMethod(mObserver,
-      &MediaDecoder::PlaybackEnded);
-  NS_DispatchToMainThread(nsEvent);
+  NS_DispatchToMainThread(NewRunnableMethod(mObserver,
+                                            &MediaDecoder::PlaybackEnded));
 }
 
 void AudioOffloadPlayer::NotifyPositionChanged()
 {
-  nsCOMPtr<nsIRunnable> nsEvent =
-    NS_NewRunnableMethod(mObserver, &MediaOmxCommonDecoder::NotifyOffloadPlayerPositionChanged);
-  NS_DispatchToMainThread(nsEvent);
+  NS_DispatchToMainThread(NewRunnableMethod(mObserver,
+                                            &MediaOmxCommonDecoder::NotifyOffloadPlayerPositionChanged));
 }
 
 void AudioOffloadPlayer::NotifyAudioTearDown()
@@ -447,9 +446,8 @@ void AudioOffloadPlayer::NotifyAudioTearDown()
     MediaDecoder::SeekResolveValue val(mReachedEOS, mSeekTarget.mEventVisibility);
     mSeekPromise.Resolve(val, __func__);
   }
-  nsCOMPtr<nsIRunnable> nsEvent = NS_NewRunnableMethod(mObserver,
-      &MediaOmxCommonDecoder::AudioOffloadTearDown);
-  NS_DispatchToMainThread(nsEvent);
+  NS_DispatchToMainThread(NewRunnableMethod(mObserver,
+                                            &MediaOmxCommonDecoder::AudioOffloadTearDown));
 }
 
 // static
@@ -505,7 +503,7 @@ size_t AudioOffloadPlayer::FillBuffer(void* aData, size_t aSize)
       android::Mutex::Autolock autoLock(mLock);
 
       if (mSeekTarget.IsValid()) {
-        seekTimeUs = mSeekTarget.mTime;
+        seekTimeUs = mSeekTarget.GetTime().ToMicroseconds();
         options.setSeekTo(seekTimeUs);
         refreshSeekTime = true;
 
@@ -557,7 +555,8 @@ size_t AudioOffloadPlayer::FillBuffer(void* aData, size_t aSize)
             kKeyTime, &mPositionTimeMediaUs));
       }
 
-      if (mSeekTarget.IsValid() && seekTimeUs == mSeekTarget.mTime) {
+      if (mSeekTarget.IsValid() &&
+          seekTimeUs == mSeekTarget.GetTime().ToMicroseconds()) {
         MOZ_ASSERT(mSeekTarget.IsValid());
         mSeekTarget.Reset();
         if (!mSeekPromise.IsEmpty()) {

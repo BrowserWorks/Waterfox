@@ -37,7 +37,7 @@ public:
 
     virtual already_AddRefed<gfxFont>
         FindFontForChar(uint32_t aCh, uint32_t aPrevCh, uint32_t aNextCh,
-                        int32_t aRunScript, gfxFont *aPrevMatchedFont,
+                        Script aRunScript, gfxFont *aPrevMatchedFont,
                         uint8_t *aMatchType);
 
     static void Shutdown();
@@ -73,7 +73,7 @@ private:
     };
     // There is only one of entry in this array unless characters from scripts
     // of other languages are measured.
-    nsAutoTArray<FontSetByLangEntry,1> mFontSets;
+    AutoTArray<FontSetByLangEntry,1> mFontSets;
 
     gfxFloat mSizeAdjustFactor;
     PangoLanguage *mPangoLanguage;

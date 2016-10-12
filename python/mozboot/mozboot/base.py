@@ -75,7 +75,7 @@ We recommend the following tools for installing Python:
 # Upgrade Mercurial older than this.
 # This should match OLDEST_NON_LEGACY_VERSION from
 # tools/mercurial/hgsetup/wizard.py.
-MODERN_MERCURIAL_VERSION = LooseVersion('3.5.2')
+MODERN_MERCURIAL_VERSION = LooseVersion('3.7.3')
 
 # Upgrade Python older than this.
 MODERN_PYTHON_VERSION = LooseVersion('2.7.3')
@@ -135,6 +135,28 @@ class BaseBootstrapper(object):
         '''
         raise NotImplementedError('%s does not yet implement suggest_mobile_android_mozconfig()' %
                                   __name__)
+
+    def install_mobile_android_artifact_mode_packages(self):
+        '''
+        Install packages required to build Firefox for Android (application
+        'mobile/android', also known as Fennec) in Artifact Mode.
+        '''
+        raise NotImplementedError(
+            'Cannot bootstrap Firefox for Android Artifact Mode: '
+            '%s does not yet implement install_mobile_android_artifact_mode_packages()'
+            % __name__)
+
+    def suggest_mobile_android_artifact_mode_mozconfig(self):
+        '''
+        Print a message to the console detailing what the user's mozconfig
+        should contain.
+
+        Firefox for Android Artifact Mode needs an application and an ABI set,
+        and it needs paths to the Android SDK.
+        '''
+        raise NotImplementedError(
+            '%s does not yet implement suggest_mobile_android_artifact_mode_mozconfig()'
+            % __name__)
 
     def which(self, name):
         """Python implementation of which.
@@ -277,7 +299,8 @@ class BaseBootstrapper(object):
         making it suitable for use in scripts.
         """
         env = os.environ.copy()
-        env['HGPLAIN'] = '1'
+        env[b'HGPLAIN'] = b'1'
+
         return env
 
     def is_mercurial_modern(self):
@@ -310,6 +333,9 @@ class BaseBootstrapper(object):
         if installed:
             print('Your version of Mercurial (%s) is not modern enough.' %
                   version)
+            print('(Older versions of Mercurial have known security vulnerabilities. '
+                  'Unless you are running a patched Mercurial version, you may be '
+                  'vulnerable.')
         else:
             print('You do not have Mercurial installed')
 

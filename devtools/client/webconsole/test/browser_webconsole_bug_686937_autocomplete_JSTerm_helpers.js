@@ -1,7 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Tests that the autocompletion results contain the names of JSTerm helpers.
 
@@ -26,7 +26,7 @@ add_task(function* () {
   input.setSelectionRange(1, 1);
   yield complete(jsterm.COMPLETE_HINT_ONLY);
 
-  let newItems = popup.getItems().map(function(e) {
+  let newItems = popup.getItems().map(function (e) {
     return e.label;
   });
   ok(newItems.indexOf("inspect") > -1,
@@ -37,7 +37,7 @@ add_task(function* () {
   input.setSelectionRange(7, 7);
   yield complete(jsterm.COMPLETE_HINT_ONLY);
 
-  newItems = popup.getItems().map(function(e) {
+  newItems = popup.getItems().map(function (e) {
     return e.label;
   });
   is(newItems.indexOf("inspect"), -1,
@@ -48,7 +48,7 @@ add_task(function* () {
   input.setSelectionRange(6, 6);
   yield complete(jsterm.COMPLETE_HINT_ONLY);
 
-  newItems = popup.getItems().map(function(e) {
+  newItems = popup.getItems().map(function (e) {
     return e.label;
   });
   ok(newItems.indexOf("inspect") > -1,
@@ -59,7 +59,7 @@ add_task(function* () {
   input.setSelectionRange(13, 13);
   yield complete(jsterm.COMPLETE_HINT_ONLY);
 
-  newItems = popup.getItems().map(function(e) {
+  newItems = popup.getItems().map(function (e) {
     return e.label;
   });
   ok(newItems.indexOf("inspect") > -1,

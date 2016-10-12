@@ -4,7 +4,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * http://dev.w3.org/2011/webrtc/editor/webrtc.html#idl-def-RTCPeerConnection
+ * http://w3c.github.io/webrtc-pc/#interface-definition
  */
 
 callback RTCSessionDescriptionCallback = void (RTCSessionDescription sdp);
@@ -62,7 +62,7 @@ dictionary RTCAnswerOptions : RTCOfferAnswerOptions {
 dictionary RTCOfferOptions : RTCOfferAnswerOptions {
   long    offerToReceiveVideo;
   long    offerToReceiveAudio;
-  // boolean iceRestart = false; // Not implemented (Bug 906986)
+  boolean iceRestart = false;
 
   // Mozilla proprietary options (at risk: Bug 1196974)
   boolean mozDontOfferDataChannel;
@@ -103,8 +103,8 @@ interface RTCPeerConnection : EventTarget  {
   readonly attribute RTCSessionDescription? localDescription;
   readonly attribute RTCSessionDescription? remoteDescription;
   readonly attribute RTCSignalingState signalingState;
-  void updateIce (optional RTCConfiguration configuration);
   Promise<void> addIceCandidate (RTCIceCandidate candidate);
+  readonly attribute boolean? canTrickleIceCandidates;
   readonly attribute RTCIceGatheringState iceGatheringState;
   readonly attribute RTCIceConnectionState iceConnectionState;
   [Pref="media.peerconnection.identity.enabled"]
@@ -116,9 +116,9 @@ interface RTCPeerConnection : EventTarget  {
   attribute DOMString id;
 
   RTCConfiguration      getConfiguration ();
-  [UnsafeInPrerendering]
+  [UnsafeInPrerendering, Deprecated="RTCPeerConnectionGetStreams"]
   sequence<MediaStream> getLocalStreams ();
-  [UnsafeInPrerendering]
+  [UnsafeInPrerendering, Deprecated="RTCPeerConnectionGetStreams"]
   sequence<MediaStream> getRemoteStreams ();
   [UnsafeInPrerendering]
   MediaStream? getStreamById (DOMString streamId);

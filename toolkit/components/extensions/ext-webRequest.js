@@ -1,6 +1,6 @@
 "use strict";
 
-var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -13,7 +13,6 @@ Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   SingletonEventManager,
   runSafeSync,
-  ignoreEvent,
 } = ExtensionUtils;
 
 // EventManager-like class specifically for WebRequest. Inherits from
@@ -33,13 +32,19 @@ function WebRequestEventManager(context, eventName) {
       }
 
       let data2 = {
+        requestId: data.requestId,
         url: data.url,
+        originUrl: data.originUrl,
         method: data.method,
         type: data.type,
         timeStamp: Date.now(),
         frameId: ExtensionManagement.getFrameId(data.windowId),
         parentFrameId: ExtensionManagement.getParentFrameId(data.parentWindowId, data.windowId),
       };
+
+      if ("ip" in data) {
+        data2.ip = data.ip;
+      }
 
       // Fills in tabId typically.
       let result = {};
@@ -48,7 +53,7 @@ function WebRequestEventManager(context, eventName) {
         return;
       }
 
-      let optional = ["requestHeaders", "responseHeaders", "statusCode", "redirectUrl"];
+      let optional = ["requestHeaders", "responseHeaders", "statusCode", "statusLine", "error", "redirectUrl"];
       for (let opt of optional) {
         if (opt in data) {
           data2[opt] = data[opt];
@@ -102,13 +107,11 @@ extensions.registerSchemaAPI("webRequest", "webRequest", (extension, context) =>
       onHeadersReceived: new WebRequestEventManager(context, "onHeadersReceived").api(),
       onBeforeRedirect: new WebRequestEventManager(context, "onBeforeRedirect").api(),
       onResponseStarted: new WebRequestEventManager(context, "onResponseStarted").api(),
+      onErrorOccurred: new WebRequestEventManager(context, "onErrorOccurred").api(),
       onCompleted: new WebRequestEventManager(context, "onCompleted").api(),
       handlerBehaviorChanged: function() {
         // TODO: Flush all caches.
       },
-
-      // TODO
-      onErrorOccurred: ignoreEvent(context, "webRequest.onErrorOccurred"),
     },
   };
 });

@@ -8,6 +8,7 @@
 #define gc_GCInternals_h
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/PodOperations.h"
 
 #include "jscntxt.h"
@@ -19,23 +20,7 @@
 namespace js {
 namespace gc {
 
-void
-MarkPersistentRootedChains(JSTracer* trc);
-
-class MOZ_RAII AutoCopyFreeListToArenas
-{
-    JSRuntime* runtime;
-    ZoneSelector selector;
-
-  public:
-    AutoCopyFreeListToArenas(JSRuntime* rt, ZoneSelector selector);
-    ~AutoCopyFreeListToArenas();
-};
-
-struct MOZ_RAII AutoFinishGC
-{
-    explicit AutoFinishGC(JSRuntime* rt);
-};
+void FinishGC(JSRuntime* rt);
 
 /*
  * This class should be used by any code that needs to exclusive access to the
@@ -47,8 +32,9 @@ class MOZ_RAII AutoTraceSession
     explicit AutoTraceSession(JSRuntime* rt, JS::HeapState state = JS::HeapState::Tracing);
     ~AutoTraceSession();
 
-  protected:
     AutoLockForExclusiveAccess lock;
+
+  protected:
     JSRuntime* runtime;
 
   private:
@@ -59,13 +45,13 @@ class MOZ_RAII AutoTraceSession
     AutoSPSEntry pseudoFrame;
 };
 
-struct MOZ_RAII AutoPrepareForTracing
+class MOZ_RAII AutoPrepareForTracing
 {
-    AutoFinishGC finish;
-    AutoTraceSession session;
-    AutoCopyFreeListToArenas copy;
+    mozilla::Maybe<AutoTraceSession> session_;
 
+  public:
     AutoPrepareForTracing(JSRuntime* rt, ZoneSelector selector);
+    AutoTraceSession& session() { return session_.ref(); }
 };
 
 class IncrementalSafety
@@ -102,7 +88,12 @@ class MOZ_RAII AutoStopVerifyingBarriers
     AutoStopVerifyingBarriers(JSRuntime* rt, bool isShutdown)
       : gc(&rt->gc)
     {
-        restartPreVerifier = gc->endVerifyPreBarriers() && !isShutdown;
+        if (gc->isVerifyPreBarriersEnabled()) {
+            gc->endVerifyPreBarriers();
+            restartPreVerifier = !isShutdown;
+        } else {
+            restartPreVerifier = false;
+        }
     }
 
     ~AutoStopVerifyingBarriers() {
@@ -132,8 +123,8 @@ struct MOZ_RAII AutoStopVerifyingBarriers
 #endif /* JS_GC_ZEAL */
 
 #ifdef JSGC_HASH_TABLE_CHECKS
-void
-CheckHashTablesAfterMovingGC(JSRuntime* rt);
+void CheckHashTablesAfterMovingGC(JSRuntime* rt);
+void CheckHeapAfterMovingGC(JSRuntime* rt);
 #endif
 
 struct MovingTracer : JS::CallbackTracer
@@ -141,6 +132,11 @@ struct MovingTracer : JS::CallbackTracer
     explicit MovingTracer(JSRuntime* rt) : CallbackTracer(rt, TraceWeakMapKeysValues) {}
 
     void onObjectEdge(JSObject** objp) override;
+    void onShapeEdge(Shape** shapep) override;
+    void onStringEdge(JSString** stringp) override;
+    void onScriptEdge(JSScript** scriptp) override;
+    void onLazyScriptEdge(LazyScript** lazyp) override;
+    void onBaseShapeEdge(BaseShape** basep) override;
     void onChild(const JS::GCCellPtr& thing) override {
         MOZ_ASSERT(!RelocationOverlay::isCellForwarded(thing.asCell()));
     }
@@ -148,26 +144,6 @@ struct MovingTracer : JS::CallbackTracer
 #ifdef DEBUG
     TracerKind getTracerKind() const override { return TracerKind::Moving; }
 #endif
-};
-
-class MOZ_RAII AutoMaybeStartBackgroundAllocation
-{
-  private:
-    JSRuntime* runtime;
-
-  public:
-    AutoMaybeStartBackgroundAllocation()
-      : runtime(nullptr)
-    {}
-
-    void tryToStartBackgroundAllocation(JSRuntime* rt) {
-        runtime = rt;
-    }
-
-    ~AutoMaybeStartBackgroundAllocation() {
-        if (runtime)
-            runtime->gc.startBackgroundAllocTaskIfIdle();
-    }
 };
 
 // In debug builds, set/unset the GC sweeping flag for the current thread.

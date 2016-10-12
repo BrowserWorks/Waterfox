@@ -6,8 +6,6 @@
 // Test that changes in the style editor are synchronized into the
 // style inspector.
 
-Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtools/client/inspector/shared/test/head.js", this);
-
 const TEST_URI = `
   <style type='text/css'>
     div { background-color: seagreen; }
@@ -17,7 +15,7 @@ const TEST_URI = `
 
 const TESTCASE_CSS_SOURCE = "#testid { color: chartreuse; }";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
 
   let {inspector, view} = yield openRuleView();
@@ -35,14 +33,14 @@ add_task(function*() {
   is(value, "chartreuse", "check that edits were synced to rule view");
 });
 
-function typeInEditor(aEditor, panelWindow) {
+function typeInEditor(editor, panelWindow) {
   let deferred = promise.defer();
 
-  waitForFocus(function() {
+  waitForFocus(function () {
     for (let c of TESTCASE_CSS_SOURCE) {
       EventUtils.synthesizeKey(c, {}, panelWindow);
     }
-    ok(aEditor.unsaved, "new editor has unsaved flag");
+    ok(editor.unsaved, "new editor has unsaved flag");
 
     deferred.resolve();
   }, panelWindow);

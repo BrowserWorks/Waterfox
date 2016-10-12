@@ -19,6 +19,7 @@
 #include "nsIStkCmdFactory.h"
 #include "nsIStkProactiveCmd.h"
 #include "nsServiceManagerUtils.h"
+#include "nsContentUtils.h"
 
 using mozilla::dom::icc::IccCallback;
 using mozilla::dom::icc::IccContact;
@@ -60,7 +61,7 @@ NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 NS_IMPL_ADDREF_INHERITED(Icc, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(Icc, DOMEventTargetHelper)
 
-Icc::Icc(nsPIDOMWindow* aWindow, nsIIcc* aHandler, nsIIccInfo* aIccInfo)
+Icc::Icc(nsPIDOMWindowInner* aWindow, nsIIcc* aHandler, nsIIccInfo* aIccInfo)
   : mLive(true)
   , mHandler(aHandler)
 {
@@ -93,11 +94,7 @@ Icc::NotifyEvent(const nsAString& aName)
 nsresult
 Icc::NotifyStkEvent(const nsAString& aName, nsIStkProactiveCmd* aStkProactiveCmd)
 {
-  AutoJSAPI jsapi;
-  if (NS_WARN_IF(!jsapi.InitWithLegacyErrorReporting(GetOwner()))) {
-    return NS_ERROR_UNEXPECTED;
-  }
-  JSContext* cx = jsapi.cx();
+  JSContext* cx = nsContentUtils::RootingCxForThread();
   JS::Rooted<JS::Value> value(cx);
 
   nsCOMPtr<nsIStkCmdFactory> cmdFactory =
@@ -107,7 +104,7 @@ Icc::NotifyStkEvent(const nsAString& aName, nsIStkProactiveCmd* aStkProactiveCmd
   cmdFactory->CreateCommandMessage(aStkProactiveCmd, &value);
   NS_ENSURE_TRUE(value.isObject(), NS_ERROR_UNEXPECTED);
 
-  MozStkCommandEventInit init;
+  RootedDictionary<MozStkCommandEventInit> init(cx);
   init.mBubbles = false;
   init.mCancelable = false;
   init.mCommand = value;

@@ -1728,6 +1728,31 @@ sdp_result_e sdp_parse_attr_fmtp (sdp_t *sdp_p, sdp_attr_t *attr_p,
             fmtp_p->fmtp_format = SDP_FMTP_CODEC_INFO;
             fmtp_p->max_fr = (uint32_t) strtoul_result;
             codec_info_found = TRUE;
+        } else if (cpr_strncasecmp(tmp,sdp_fmtp_codec_param[50].name,
+                                   sdp_fmtp_codec_param[50].strlen) == 0) {
+            fmtp_ptr = sdp_getnextstrtok(fmtp_ptr, tmp, sizeof(tmp), "; \t", &result1);
+            if (result1 != SDP_SUCCESS) {
+                    fmtp_ptr = sdp_getnextstrtok(fmtp_ptr, tmp, sizeof(tmp), " \t", &result1);
+                if (result1 != SDP_SUCCESS) {
+                    sdp_attr_fmtp_no_value(sdp_p, "maxplaybackrate");
+                    SDP_FREE(temp_ptr);
+                    return SDP_INVALID_PARAMETER;
+                }
+            }
+            tok = tmp;
+            tok++;
+            errno = 0;
+            strtoul_result = strtoul(tok, &strtoul_end, 10);
+
+            if (errno || tok == strtoul_end || strtoul_result == 0 || strtoul_result > UINT_MAX) {
+                sdp_attr_fmtp_invalid_value(sdp_p, "maxplaybackrate", tok);
+                SDP_FREE(temp_ptr);
+                return SDP_INVALID_PARAMETER;
+            }
+            fmtp_p->fmtp_format = SDP_FMTP_CODEC_INFO;
+            fmtp_p->maxplaybackrate = (uint32_t) strtoul_result;
+            codec_info_found = TRUE;
+
         } else if (fmtp_ptr != NULL && *fmtp_ptr == '\n') {
             temp=PL_strtok_r(tmp, ";", &strtok_state);
             if (temp) {
@@ -4874,13 +4899,11 @@ sdp_result_e sdp_parse_attr_simple_flag (sdp_t *sdp_p, sdp_attr_t *attr_p,
     return (SDP_SUCCESS);
 }
 
+static sdp_result_e sdp_parse_attr_line(sdp_t *sdp_p, sdp_attr_t *attr_p,
+                                        const char *ptr, char *buf, size_t buf_len) {
+    sdp_result_e result;
 
-sdp_result_e sdp_parse_attr_complete_line (sdp_t *sdp_p, sdp_attr_t *attr_p,
-                                           const char *ptr)
-{
-    sdp_result_e  result;
-
-    ptr = sdp_getnextstrtok(ptr, attr_p->attr.string_val, sizeof(attr_p->attr.string_val), "\r\n", &result);
+    (void)sdp_getnextstrtok(ptr, buf, buf_len, "\r\n", &result);
 
     if (result != SDP_SUCCESS) {
         sdp_parse_error(sdp_p,
@@ -4892,10 +4915,40 @@ sdp_result_e sdp_parse_attr_complete_line (sdp_t *sdp_p, sdp_attr_t *attr_p,
         if (sdp_p->debug_flag[SDP_DEBUG_TRACE]) {
             SDP_PRINT("%s Parsed a=%s, %s", sdp_p->debug_str,
                       sdp_get_attr_name(attr_p->type),
-                      attr_p->attr.string_val);
+                      buf);
         }
         return (SDP_SUCCESS);
     }
+}
+
+sdp_result_e sdp_parse_attr_complete_line (sdp_t *sdp_p, sdp_attr_t *attr_p,
+                                           const char *ptr)
+{
+    return sdp_parse_attr_line(sdp_p, attr_p, ptr,
+                               attr_p->attr.string_val,
+                               sizeof(attr_p->attr.string_val));
+}
+
+sdp_result_e sdp_parse_attr_long_line (sdp_t *sdp_p, sdp_attr_t *attr_p,
+                                       const char *ptr)
+{
+    sdp_result_e result;
+    char buffer[SDP_MAX_LONG_STRING_LEN];
+
+    result = sdp_parse_attr_line(sdp_p, attr_p, ptr,
+                                 buffer, sizeof(buffer));
+    if (result == SDP_SUCCESS) {
+        attr_p->attr.stringp = cpr_strdup(buffer);
+    }
+    return result;
+}
+
+sdp_result_e sdp_build_attr_long_line (sdp_t *sdp_p, sdp_attr_t *attr_p,
+                                       flex_string *fs)
+{
+    flex_string_sprintf(fs, "a=%s:%s\r\n", sdp_attr[attr_p->type].name,
+                        attr_p->attr.stringp);
+    return SDP_SUCCESS;
 }
 
 sdp_result_e sdp_build_attr_rtcp_fb(sdp_t *sdp_p,
@@ -4943,6 +4996,9 @@ sdp_result_e sdp_build_attr_rtcp_fb(sdp_t *sdp_p,
             break;
         case SDP_RTCP_FB_TRR_INT:
             flex_string_sprintf(fs, " %u", attr_p->attr.rtcp_fb.param.trr_int);
+            break;
+        case SDP_RTCP_FB_REMB:
+            /* No additional params after REMB */
             break;
 
         case SDP_RTCP_FB_UNKNOWN:
@@ -5085,6 +5141,10 @@ sdp_result_e sdp_parse_attr_rtcp_fb (sdp_t *sdp_p,
                 sdp_p->conf_p->num_invalid_param++;
                 return SDP_INVALID_PARAMETER;
             }
+            break;
+
+        case SDP_RTCP_FB_REMB:
+            /* No additional tokens to parse after goog-remb */
             break;
 
         case SDP_RTCP_FB_UNKNOWN:
@@ -5492,4 +5552,3 @@ sdp_result_e sdp_build_attr_ssrc(sdp_t *sdp_p,
                         attr_p->attr.ssrc.attribute);
     return SDP_SUCCESS;
 }
-

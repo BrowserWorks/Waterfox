@@ -1,6 +1,10 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+function fuzzyEquals(a, b) {
+  return (Math.abs(a - b) < 1e-6);
+}
+
 function promiseBrowserEvent(browser, eventType) {
   return new Promise((resolve) => {
     function handle(event) {
@@ -16,6 +20,19 @@ function promiseBrowserEvent(browser, eventType) {
 
     browser.addEventListener(eventType, handle, true);
     info("Now waiting for " + eventType + " event from browser");
+  });
+}
+
+function promiseTabEvent(container, eventType) {
+  return new Promise((resolve) => {
+    function handle(event) {
+      info("Received event " + eventType + " from container");
+      container.removeEventListener(eventType, handle, true);
+      resolve(event);
+    }
+
+    container.addEventListener(eventType, handle, true);
+    info("Now waiting for " + eventType + " event from container");
   });
 }
 

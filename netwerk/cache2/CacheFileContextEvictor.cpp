@@ -522,7 +522,7 @@ CacheFileContextEvictor::StartEvicting()
   }
 
   nsCOMPtr<nsIRunnable> ev;
-  ev = NS_NewRunnableMethod(this, &CacheFileContextEvictor::EvictEntries);
+  ev = NewRunnableMethod(this, &CacheFileContextEvictor::EvictEntries);
 
   RefPtr<CacheIOThread> ioThread = CacheFileIOManager::IOThread();
 
@@ -563,6 +563,10 @@ CacheFileContextEvictor::EvictEntries()
     if (mEntries.Length() == 0) {
       LOG(("CacheFileContextEvictor::EvictEntries() - Stopping evicting, there "
            "is no context to evict."));
+
+      // Allow index to notify AsyncGetDiskConsumption callbacks.  The size is
+      // actual again.
+      CacheIndex::OnAsyncEviction(false);
       return NS_OK;
     }
 

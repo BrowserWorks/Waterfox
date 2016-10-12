@@ -1,0 +1,13 @@
+#userContext-indicator {
+  height: 16px;
+  width: 16px;
+}
+
+#userContext-label {
+  margin-inline-end: 3px;
+  color: #909090;
+}
+
+#userContext-icons {
+  -moz-box-align: center;
+}

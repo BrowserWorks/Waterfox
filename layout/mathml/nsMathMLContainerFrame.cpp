@@ -49,10 +49,8 @@ nsMathMLContainerFrame::ReflowError(DrawTarget* aDrawTarget,
 
   ///////////////
   // Set font
-  RefPtr<nsFontMetrics> fm;
-  nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
-                                        nsLayoutUtils::
-                                        FontSizeInflationFor(this));
+  RefPtr<nsFontMetrics> fm =
+    nsLayoutUtils::GetInflatedFontMetricsForFrame(this);
 
   // bounding metrics
   nsAutoString errorMsg; errorMsg.AssignLiteral("invalid-markup");
@@ -94,8 +92,8 @@ void nsDisplayMathMLError::Paint(nsDisplayListBuilder* aBuilder,
                                  nsRenderingContext* aCtx)
 {
   // Set color and font ...
-  RefPtr<nsFontMetrics> fm;
-  nsLayoutUtils::GetFontMetricsForFrame(mFrame, getter_AddRefs(fm));
+  RefPtr<nsFontMetrics> fm =
+    nsLayoutUtils::GetFontMetricsForFrame(mFrame, 1.0f);
 
   nsPoint pt = ToReferenceFrame();
   int32_t appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
@@ -127,8 +125,8 @@ IsForeignChild(const nsIFrame* aFrame)
     aFrame->GetType() == nsGkAtoms::blockFrame;
 }
 
-NS_DECLARE_FRAME_PROPERTY(HTMLReflowMetricsProperty,
-                          DeleteValue<nsHTMLReflowMetrics>)
+NS_DECLARE_FRAME_PROPERTY_DELETABLE(HTMLReflowMetricsProperty,
+                                    nsHTMLReflowMetrics)
 
 /* static */ void
 nsMathMLContainerFrame::SaveReflowAndBoundingMetricsFor(nsIFrame*                  aFrame,
@@ -149,8 +147,8 @@ nsMathMLContainerFrame::GetReflowAndBoundingMetricsFor(nsIFrame*            aFra
 {
   NS_PRECONDITION(aFrame, "null arg");
 
-  nsHTMLReflowMetrics *metrics = static_cast<nsHTMLReflowMetrics*>
-    (aFrame->Properties().Get(HTMLReflowMetricsProperty()));
+  nsHTMLReflowMetrics *metrics =
+    aFrame->Properties().Get(HTMLReflowMetricsProperty());
 
   // IMPORTANT: This function is only meant to be called in Place() methods
   // where it is assumed that SaveReflowAndBoundingMetricsFor has recorded the
@@ -218,7 +216,7 @@ nsMathMLContainerFrame::GetPreferredStretchSize(DrawTarget*          aDrawTarget
     bool firstTime = true;
     nsBoundingMetrics bm, bmChild;
     nsIFrame* childFrame =
-      stretchAll ? GetFirstPrincipalChild() : mPresentationData.baseFrame;
+      stretchAll ? PrincipalChildList().FirstChild() : mPresentationData.baseFrame;
     while (childFrame) {
       // initializations in case this child happens not to be a MathML frame
       nsIMathMLFrame* mathMLFrame = do_QueryFrame(childFrame);
@@ -482,7 +480,7 @@ nsMathMLContainerFrame::FinalizeReflow(DrawTarget* aDrawTarget,
   // through Stretch() eventually.
   if (NS_MATHML_HAS_ERROR(mPresentationData.flags) || NS_FAILED(rv)) {
     GatherAndStoreOverflow(&aDesiredSize);
-    DidReflowChildren(GetFirstPrincipalChild());
+    DidReflowChildren(PrincipalChildList().FirstChild());
     return rv;
   }
 
@@ -531,8 +529,7 @@ nsMathMLContainerFrame::FinalizeReflow(DrawTarget* aDrawTarget,
       {
         // The Place() call above didn't request FinishReflowChild(),
         // so let's check that we eventually did through Stretch().
-        nsIFrame* childFrame = GetFirstPrincipalChild();
-        for ( ; childFrame; childFrame = childFrame->GetNextSibling()) {
+        for (nsIFrame* childFrame : PrincipalChildList()) {
           NS_ASSERTION(!(childFrame->GetStateBits() & NS_FRAME_IN_REFLOW),
                        "DidReflow() was never called");
         }
@@ -587,11 +584,9 @@ nsMathMLContainerFrame::PropagatePresentationDataFor(nsIFrame*       aFrame,
   }
   else {
     // propagate down the subtrees
-    nsIFrame* childFrame = aFrame->GetFirstPrincipalChild();
-    while (childFrame) {
+    for (nsIFrame* childFrame : aFrame->PrincipalChildList()) {
       PropagatePresentationDataFor(childFrame,
         aFlagsValues, aFlagsToUpdate);
-      childFrame = childFrame->GetNextSibling();
     }
   }
 }
@@ -606,8 +601,7 @@ nsMathMLContainerFrame::PropagatePresentationDataFromChildAt(nsIFrame*       aPa
   if (!aParentFrame || !aFlagsToUpdate)
     return;
   int32_t index = 0;
-  nsIFrame* childFrame = aParentFrame->GetFirstPrincipalChild();
-  while (childFrame) {
+  for (nsIFrame* childFrame : aParentFrame->PrincipalChildList()) {
     if ((index >= aFirstChildIndex) &&
         ((aLastChildIndex <= 0) || ((aLastChildIndex > 0) &&
          (index <= aLastChildIndex)))) {
@@ -615,7 +609,6 @@ nsMathMLContainerFrame::PropagatePresentationDataFromChildAt(nsIFrame*       aPa
         aFlagsValues, aFlagsToUpdate);
     }
     index++;
-    childFrame = childFrame->GetNextSibling();
   }
 }
 
@@ -666,14 +659,12 @@ nsMathMLContainerFrame::RebuildAutomaticDataForChildren(nsIFrame* aParentFrame)
   // the parent
   // 2. As we ascend the tree, transmit any specific change that we want
   // down the subtrees
-  nsIFrame* childFrame = aParentFrame->GetFirstPrincipalChild();
-  while (childFrame) {
+  for (nsIFrame* childFrame : aParentFrame->PrincipalChildList()) {
     nsIMathMLFrame* childMathMLFrame = do_QueryFrame(childFrame);
     if (childMathMLFrame) {
       childMathMLFrame->InheritAutomaticData(aParentFrame);
     }
     RebuildAutomaticDataForChildren(childFrame);
-    childFrame = childFrame->GetNextSibling();
   }
   nsIMathMLFrame* mathMLFrame = do_QueryFrame(aParentFrame);
   if (mathMLFrame) {
@@ -793,43 +784,37 @@ nsMathMLContainerFrame::AttributeChanged(int32_t         aNameSpaceID,
 void
 nsMathMLContainerFrame::GatherAndStoreOverflow(nsHTMLReflowMetrics* aMetrics)
 {
+  mBlockStartAscent = aMetrics->BlockStartAscent();
+
   // nsIFrame::FinishAndStoreOverflow likes the overflow area to include the
   // frame rectangle.
   aMetrics->SetOverflowAreasToDesiredBounds();
 
-  // All non-child-frame content such as nsMathMLChars (and most child-frame
-  // content) is included in mBoundingMetrics.
-  nsRect boundingBox(mBoundingMetrics.leftBearing,
-                     aMetrics->BlockStartAscent() - mBoundingMetrics.ascent,
-                     mBoundingMetrics.rightBearing - mBoundingMetrics.leftBearing,
-                     mBoundingMetrics.ascent + mBoundingMetrics.descent);
-
-  // REVIEW: Maybe this should contribute only to visual overflow
-  // and not scrollable?
-  aMetrics->mOverflowAreas.UnionAllWith(boundingBox);
+  ComputeCustomOverflow(aMetrics->mOverflowAreas);
 
   // mBoundingMetrics does not necessarily include content of <mpadded>
   // elements whose mBoundingMetrics may not be representative of the true
   // bounds, and doesn't include the CSS2 outline rectangles of children, so
   // make such to include child overflow areas.
-  nsIFrame* childFrame = mFrames.FirstChild();
-  while (childFrame) {
-    ConsiderChildOverflow(aMetrics->mOverflowAreas, childFrame);
-    childFrame = childFrame->GetNextSibling();
-  }
+  UnionChildOverflow(aMetrics->mOverflowAreas);
 
   FinishAndStoreOverflow(aMetrics);
 }
 
 bool
-nsMathMLContainerFrame::UpdateOverflow()
+nsMathMLContainerFrame::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas)
 {
-  // Our overflow areas may have changed, so reflow the frame.
-  PresContext()->PresShell()->FrameNeedsReflow(
-    this, nsIPresShell::eResize, NS_FRAME_IS_DIRTY);
+  // All non-child-frame content such as nsMathMLChars (and most child-frame
+  // content) is included in mBoundingMetrics.
+  nsRect boundingBox(mBoundingMetrics.leftBearing,
+                     mBlockStartAscent - mBoundingMetrics.ascent,
+                     mBoundingMetrics.rightBearing - mBoundingMetrics.leftBearing,
+                     mBoundingMetrics.ascent + mBoundingMetrics.descent);
 
-  // As we're reflowing, there's no need to propagate this change.
-  return false;
+  // REVIEW: Maybe this should contribute only to visual overflow
+  // and not scrollable?
+  aOverflowAreas.UnionAllWith(boundingBox);
+  return nsContainerFrame::ComputeCustomOverflow(aOverflowAreas);
 }
 
 void
@@ -1375,7 +1360,7 @@ GetInterFrameSpacingFor(int32_t         aScriptLevel,
                         nsIFrame*       aParentFrame,
                         nsIFrame*       aChildFrame)
 {
-  nsIFrame* childFrame = aParentFrame->GetFirstPrincipalChild();
+  nsIFrame* childFrame = aParentFrame->PrincipalChildList().FirstChild();
   if (!childFrame || aChildFrame == childFrame)
     return 0;
 
@@ -1463,7 +1448,7 @@ nsMathMLContainerFrame::DidReflowChildren(nsIFrame* aFirst, nsIFrame* aStop)
     NS_ASSERTION(frame, "aStop isn't a sibling");
     if (frame->GetStateBits() & NS_FRAME_IN_REFLOW) {
       // finish off principal descendants, too
-      nsIFrame* grandchild = frame->GetFirstPrincipalChild();
+      nsIFrame* grandchild = frame->PrincipalChildList().FirstChild();
       if (grandchild)
         DidReflowChildren(grandchild, nullptr);
 
@@ -1501,7 +1486,7 @@ nsMathMLContainerFrame::TransmitAutomaticDataForMrowLikeElement()
   bool embellishedOpFound = false;
   nsEmbellishData embellishData;
   
-  for (childFrame = GetFirstPrincipalChild();
+  for (childFrame = PrincipalChildList().FirstChild();
        childFrame;
        childFrame = childFrame->GetNextSibling()) {
     nsIMathMLFrame* mathMLFrame = do_QueryFrame(childFrame);
@@ -1555,10 +1540,8 @@ nsMathMLContainerFrame::PropagateFrameFlagFor(nsIFrame* aFrame,
     return;
 
   aFrame->AddStateBits(aFlags);
-  nsIFrame* childFrame = aFrame->GetFirstPrincipalChild();
-  while (childFrame) {
+  for (nsIFrame* childFrame : aFrame->PrincipalChildList()) {
     PropagateFrameFlagFor(childFrame, aFlags);
-    childFrame = childFrame->GetNextSibling();
   }
 }
 

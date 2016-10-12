@@ -19,6 +19,7 @@ class EditorInitializerEntryTracker;
 class nsTextEditorState;
 class nsIEditor;
 namespace mozilla {
+enum class CSSPseudoElementType : uint8_t;
 namespace dom {
 class Element;
 } // namespace dom
@@ -32,7 +33,7 @@ class nsTextControlFrame final : public nsContainerFrame,
 public:
   NS_DECL_FRAMEARENA_HELPERS
 
-  NS_DECLARE_FRAME_PROPERTY(ContentScrollPos, DeleteValue<nsPoint>)
+  NS_DECLARE_FRAME_PROPERTY_DELETABLE(ContentScrollPos, nsPoint)
 
   explicit nsTextControlFrame(nsStyleContext* aContext);
   virtual ~nsTextControlFrame();
@@ -40,7 +41,7 @@ public:
   virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
 
   virtual nsIScrollableFrame* GetScrollTargetFrame() override {
-    return do_QueryFrame(GetFirstPrincipalChild());
+    return do_QueryFrame(PrincipalChildList().FirstChild());
   }
 
   virtual nscoord GetMinISize(nsRenderingContext* aRenderingContext) override;
@@ -61,8 +62,8 @@ public:
                       const nsHTMLReflowState& aReflowState,
                       nsReflowStatus&          aStatus) override;
 
-  virtual nsSize GetMinSize(nsBoxLayoutState& aBoxLayoutState) override;
-  virtual bool IsCollapsed() override;
+  virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;
+  virtual bool IsXULCollapsed() override;
 
   virtual bool IsLeaf() const override;
   
@@ -98,10 +99,11 @@ public:
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
-  virtual mozilla::dom::Element* GetPseudoElement(nsCSSPseudoElements::Type aType) override;
+  virtual mozilla::dom::Element*
+  GetPseudoElement(mozilla::CSSPseudoElementType aType) override;
 
 //==== BEGIN NSIFORMCONTROLFRAME
-  virtual void SetFocus(bool aOn , bool aRepaint) override; 
+  virtual void SetFocus(bool aOn , bool aRepaint) override;
   virtual nsresult SetFormProperty(nsIAtom* aName, const nsAString& aValue) override;
 
 //==== END NSIFORMCONTROLFRAME
@@ -152,10 +154,6 @@ public:
 
   NS_DECL_QUERYFRAME
 
-  // Temp reference to scriptrunner
-  // We could make these auto-Revoking via the "delete" entry for safety
-  NS_DECLARE_FRAME_PROPERTY(TextControlInitializer, nullptr)
-
 protected:
   /**
    * Launch the reflow on the child frames - see nsTextControlFrame::Reflow()
@@ -202,7 +200,12 @@ protected:
   friend class EditorInitializer;
   friend class nsTextEditorState; // needs access to UpdateValueDisplay
 
-  class EditorInitializer : public nsRunnable {
+  // Temp reference to scriptrunner
+  // We could make these auto-Revoking via the "delete" entry for safety
+  NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(TextControlInitializer,
+                                         EditorInitializer)
+
+  class EditorInitializer : public mozilla::Runnable {
   public:
     explicit EditorInitializer(nsTextControlFrame* aFrame) :
       mFrame(aFrame) {}
@@ -221,7 +224,7 @@ protected:
   class ScrollOnFocusEvent;
   friend class ScrollOnFocusEvent;
 
-  class ScrollOnFocusEvent : public nsRunnable {
+  class ScrollOnFocusEvent : public mozilla::Runnable {
   public:
     explicit ScrollOnFocusEvent(nsTextControlFrame* aFrame) :
       mFrame(aFrame) {}

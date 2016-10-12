@@ -43,9 +43,6 @@ ec_points_mul(const ECParams *params, const mp_int *k1, const mp_int *k2,
 {
     mp_int Px, Py, Qx, Qy;
     mp_int Gx, Gy, order, irreducible, a, b;
-#if 0 /* currently don't support non-named curves */
-    unsigned int irr_arr[5];
-#endif
     ECGroup *group = NULL;
     SECStatus rv = SECFailure;
     mp_err err = MP_OKAY;
@@ -61,16 +58,16 @@ ec_points_mul(const ECParams *params, const mp_int *k1, const mp_int *k2,
     printf("\n");
 
 	if (k1 != NULL) {
-		mp_tohex(k1, mpstr);
+		mp_tohex((mp_int*)k1, mpstr);
 		printf("ec_points_mul: scalar k1: %s\n", mpstr);
-		mp_todecimal(k1, mpstr);
+		mp_todecimal((mp_int*)k1, mpstr);
 		printf("ec_points_mul: scalar k1: %s (dec)\n", mpstr);
 	}
 
 	if (k2 != NULL) {
-		mp_tohex(k2, mpstr);
+		mp_tohex((mp_int*)k2, mpstr);
 		printf("ec_points_mul: scalar k2: %s\n", mpstr);
-		mp_todecimal(k2, mpstr);
+		mp_todecimal((mp_int*)k2, mpstr);
 		printf("ec_points_mul: scalar k2: %s (dec)\n", mpstr);
 	}
 
@@ -124,30 +121,6 @@ ec_points_mul(const ECParams *params, const mp_int *k1, const mp_int *k2,
 		group = ECGroup_fromName(params->name);
 	}
 
-#if 0 /* currently don't support non-named curves */
-	if (group == NULL) {
-		/* Set up mp_ints containing the curve coefficients */
-		CHECK_MPI_OK( mp_read_unsigned_octets(&Gx, params->base.data + 1, 
-										  (mp_size) len) );
-		CHECK_MPI_OK( mp_read_unsigned_octets(&Gy, params->base.data + 1 + len, 
-										  (mp_size) len) );
-		SECITEM_TO_MPINT( params->order, &order );
-		SECITEM_TO_MPINT( params->curve.a, &a );
-		SECITEM_TO_MPINT( params->curve.b, &b );
-		if (params->fieldID.type == ec_field_GFp) {
-			SECITEM_TO_MPINT( params->fieldID.u.prime, &irreducible );
-			group = ECGroup_consGFp(&irreducible, &a, &b, &Gx, &Gy, &order, params->cofactor);
-		} else {
-			SECITEM_TO_MPINT( params->fieldID.u.poly, &irreducible );
-			irr_arr[0] = params->fieldID.size;
-			irr_arr[1] = params->fieldID.k1;
-			irr_arr[2] = params->fieldID.k2;
-			irr_arr[3] = params->fieldID.k3;
-			irr_arr[4] = 0;
-			group = ECGroup_consGF2m(&irreducible, irr_arr, &a, &b, &Gx, &Gy, &order, params->cofactor);
-		}
-	}
-#endif
 	if (group == NULL)
 		goto cleanup;
 
@@ -376,7 +349,7 @@ cleanup:
 	rv = SECFailure;
     }
     if (rv != SECSuccess && privKeyBytes) {
-	PORT_Free(privKeyBytes);
+	PORT_ZFree(privKeyBytes,2*len);
 	privKeyBytes = NULL;
     }
     return privKeyBytes;
@@ -1075,7 +1048,7 @@ cleanup:
     mp_clear(&v);
     mp_clear(&n);
 
-    if (pointC.data) SECITEM_FreeItem(&pointC, PR_FALSE);
+    if (pointC.data) SECITEM_ZfreeItem(&pointC, PR_FALSE);
     if (err) {
 	MP_TO_SEC_ERROR(err);
 	rv = SECFailure;

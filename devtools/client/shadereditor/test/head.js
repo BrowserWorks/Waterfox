@@ -4,33 +4,32 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
-var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
-
-var gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
-// To enable logging for try runs, just set the pref to true.
-Services.prefs.setBoolPref("devtools.debugger.log", false);
-
-var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-var { gDevTools } = Cu.import("resource://devtools/client/framework/gDevTools.jsm", {});
 var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
+var { Task } = require("devtools/shared/task");
 
+var Services = require("Services");
 var promise = require("promise");
+var { gDevTools } = require("devtools/client/framework/devtools");
 var { DebuggerClient } = require("devtools/shared/client/main");
 var { DebuggerServer } = require("devtools/server/main");
-var { WebGLFront } = require("devtools/server/actors/webgl");
+var { WebGLFront } = require("devtools/shared/fronts/webgl");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
-var TiltGL = require("devtools/client/tilt/tilt-gl");
-var {TargetFactory} = require("devtools/client/framework/target");
-var {Toolbox} = require("devtools/client/framework/toolbox");
+var { TargetFactory } = require("devtools/client/framework/target");
+var { Toolbox } = require("devtools/client/framework/toolbox");
+var { isWebGLSupported } = require("devtools/client/shared/webgl-utils");
 var mm = null;
 
-const FRAME_SCRIPT_UTILS_URL = "chrome://devtools/content/shared/frame-script-utils.js"
+const FRAME_SCRIPT_UTILS_URL = "chrome://devtools/content/shared/frame-script-utils.js";
 const EXAMPLE_URL = "http://example.com/browser/devtools/client/shadereditor/test/";
 const SIMPLE_CANVAS_URL = EXAMPLE_URL + "doc_simple-canvas.html";
 const SHADER_ORDER_URL = EXAMPLE_URL + "doc_shader-order.html";
 const MULTIPLE_CONTEXTS_URL = EXAMPLE_URL + "doc_multiple-contexts.html";
 const OVERLAPPING_GEOMETRY_CANVAS_URL = EXAMPLE_URL + "doc_overlapping-geometry.html";
 const BLENDED_GEOMETRY_CANVAS_URL = EXAMPLE_URL + "doc_blended-geometry.html";
+
+var gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
+// To enable logging for try runs, just set the pref to true.
+Services.prefs.setBoolPref("devtools.debugger.log", false);
 
 // All tests are asynchronous.
 waitForExplicitFinish();
@@ -58,7 +57,7 @@ registerCleanupFunction(() => {
  * to different pages, as bfcache and thus shader caching gets really strange if
  * frame script attached in the middle of the test.
  */
-function loadFrameScripts () {
+function loadFrameScripts() {
   if (Cu.isCrossProcessWrapper(content)) {
     mm = gBrowser.selectedBrowser.messageManager;
     mm.loadFrameScript(FRAME_SCRIPT_UTILS_URL, false);
@@ -119,22 +118,12 @@ function ifWebGLUnsupported() {
 }
 
 function test() {
-  let generator = isWebGLSupported() ? ifWebGLSupported : ifWebGLUnsupported;
+  let generator = isWebGLSupported(document) ? ifWebGLSupported : ifWebGLUnsupported;
   Task.spawn(generator).then(null, handleError);
 }
 
 function createCanvas() {
   return document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
-}
-
-function isWebGLSupported() {
-  let supported =
-    !TiltGL.isWebGLForceEnabled() &&
-     TiltGL.isWebGLSupported() &&
-     TiltGL.create3DContext(createCanvas());
-
-  info("Apparently, WebGL is" + (supported ? "" : " not") + " supported.");
-  return supported;
 }
 
 function once(aTarget, aEventName, aUseCapture = false) {
@@ -193,8 +182,8 @@ function isApproxColor(aFirst, aSecond, aMargin) {
     isApprox(aFirst.a, aSecond.a, aMargin);
 }
 
-function ensurePixelIs (aFront, aPosition, aColor, aWaitFlag = false, aSelector = "canvas") {
-  return Task.spawn(function*() {
+function ensurePixelIs(aFront, aPosition, aColor, aWaitFlag = false, aSelector = "canvas") {
+  return Task.spawn(function* () {
     let pixel = yield aFront.getPixel({ selector: aSelector, position: aPosition });
     if (isApproxColor(pixel, aColor)) {
       ok(true, "Expected pixel is shown at: " + aPosition.toSource());
@@ -242,7 +231,7 @@ function initBackend(aUrl) {
     DebuggerServer.addBrowserActors();
   }
 
-  return Task.spawn(function*() {
+  return Task.spawn(function* () {
     let tab = yield addTab(aUrl);
     let target = TargetFactory.forTab(tab);
 
@@ -256,7 +245,7 @@ function initBackend(aUrl) {
 function initShaderEditor(aUrl) {
   info("Initializing a shader editor pane.");
 
-  return Task.spawn(function*() {
+  return Task.spawn(function* () {
     let tab = yield addTab(aUrl);
     let target = TargetFactory.forTab(tab);
 
@@ -289,10 +278,10 @@ function teardown(aPanel) {
 function getPrograms(front, count, onAdd) {
   let actors = [];
   let deferred = promise.defer();
-  front.on("program-linked", function onLink (actor) {
+  front.on("program-linked", function onLink(actor) {
     if (actors.length !== count) {
       actors.push(actor);
-      if (typeof onAdd === 'function') onAdd(actors)
+      if (typeof onAdd === "function") onAdd(actors);
     }
     if (actors.length === count) {
       front.off("program-linked", onLink);

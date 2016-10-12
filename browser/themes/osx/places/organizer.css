@@ -9,31 +9,37 @@
 #placesList > treechildren::-moz-tree-row {
   background-color: transparent;
   border-color: transparent;
+  padding-bottom: 1px;
+  height: 24px;
+}
+
+#placesList > treechildren::-moz-tree-cell-text {
+  font-size: 12px;
+  margin-inline-end: 6px;
 }
 
 #placesList > treechildren::-moz-tree-row(selected) {  
   background: @sidebarItemBackground@;
   border-top: @sidebarItemBorderTop@;
+  border-bottom: @sidebarItemBorderBottom@;
 }
 
 #placesList > treechildren::-moz-tree-row(selected,focus) {  
   background: @sidebarItemFocusedBackground@;
   border-top: @sidebarItemFocusedBorderTop@;
+  border-bottom: @sidebarItemFocusedBorderBottom@;
 }
 
 #placesList:-moz-system-metric(mac-graphite-theme) > treechildren::-moz-tree-row(selected) {
   background: @sidebarItemGraphiteBackground@;
   border-top: @sidebarItemGraphiteBorderTop@;
+  border-bottom: @sidebarItemGraphiteBorderBottom@;
 }
 
 #placesList:-moz-system-metric(mac-graphite-theme) > treechildren::-moz-tree-row(selected,focus) {
   background: @sidebarItemGraphiteFocusedBackground@;
   border-top: @sidebarItemGraphiteFocusedBorderTop@;
-}
-
-#placesList > treechildren:-moz-window-inactive::-moz-tree-row(selected) {
-  background: @sidebarItemInactiveBackground@;
-  border-top: @sidebarItemInactiveBorderTop@;
+  border-bottom: @sidebarItemGraphiteFocusedBorderBottom@;
 }
 
 #placesList > treechildren::-moz-tree-row(History),
@@ -51,8 +57,77 @@
 }
 
 #placesList > treechildren::-moz-tree-cell-text(selected) {  
-  font-weight: bold !important;
-  color: #ffffff !important;
+  color: #fff;
+  font-weight: bold;
+}
+
+#placesList > treechildren::-moz-tree-twisty {
+  -moz-appearance: none;
+  padding: 0 2px;
+  list-style-image: url("chrome://global/skin/tree/arrow-disclosure.svg#arrow-disclosure-collapsed");
+}
+
+#placesList > treechildren::-moz-tree-twisty(selected) {
+  list-style-image: url("chrome://global/skin/tree/arrow-disclosure.svg#arrow-disclosure-collapsed-inverted");
+}
+
+#placesList > treechildren::-moz-tree-twisty(open) {
+  list-style-image: url("chrome://global/skin/tree/arrow-disclosure.svg#arrow-disclosure-expanded");
+}
+
+#placesList > treechildren::-moz-tree-twisty(open, selected) {
+  list-style-image: url("chrome://global/skin/tree/arrow-disclosure.svg#arrow-disclosure-expanded-inverted");
+}
+
+@media (-moz-mac-yosemite-theme) {
+  #placesList > treechildren::-moz-tree-row(selected) {
+    background: @sidebarItemBackgroundYosemite@;
+    border-top: none;
+    border-bottom: none;
+  }
+
+  #placesList > treechildren::-moz-tree-row(selected,focus) {
+    background: @sidebarItemFocusedBackgroundYosemite@;
+    border-top: none;
+    border-bottom: none;
+  }
+
+  #placesList > treechildren:-moz-system-metric(mac-graphite-theme)::-moz-tree-row(selected) {
+    background: @sidebarItemGraphiteBackgroundYosemite@;
+    border-top: none;
+    border-bottom: none;
+  }
+
+  #placesList > treechildren:-moz-system-metric(mac-graphite-theme)::-moz-tree-row(selected,focus) {
+    background: @sidebarItemGraphiteFocusedBackgroundYosemite@;
+    border-top: none;
+    border-bottom: none;
+  }
+
+  #placesList > treechildren::-moz-tree-cell-text(selected) {
+    color: -moz-dialogtext;
+    font-weight: 500;
+  }
+
+  #placesList > treechildren::-moz-tree-cell-text(selected, focus) {
+    color: #fff;
+  }
+
+  #placesList > treechildren::-moz-tree-twisty(selected) {
+    list-style-image: url("chrome://global/skin/tree/arrow-disclosure.svg#arrow-disclosure-collapsed");
+  }
+
+  #placesList > treechildren::-moz-tree-twisty(selected, focus) {
+    list-style-image: url("chrome://global/skin/tree/arrow-disclosure.svg#arrow-disclosure-collapsed-inverted");
+  }
+
+  #placesList > treechildren::-moz-tree-twisty(open, selected) {
+    list-style-image: url("chrome://global/skin/tree/arrow-disclosure.svg#arrow-disclosure-expanded");
+  }
+
+  #placesList > treechildren::-moz-tree-twisty(open, selected, focus) {
+    list-style-image: url("chrome://global/skin/tree/arrow-disclosure.svg#arrow-disclosure-expanded-inverted");
+  }
 }
 
 #placesToolbar {
@@ -64,11 +139,11 @@
 }
 
 #placesView > splitter {
-  -moz-border-start: none !important;
-  -moz-border-end: 1px solid #bdbdbd;
+  border-inline-start: none !important;
+  border-inline-end: 1px solid #b4b4b4;
   min-width: 1px;
   width: 3px;
-  -moz-margin-start: -3px;
+  margin-inline-start: -3px;
   position: relative;
   background-image: none !important;
 }
@@ -79,10 +154,6 @@
   padding: 0;
   height: 22px;
   -moz-appearance: toolbarbutton;
-}
-
-#placesToolbar > toolbarbutton[disabled="true"] > .toolbarbutton-icon {
-  opacity: 0.5;
 }
 
 #placesToolbar > toolbarbutton > .toolbarbutton-icon {
@@ -97,7 +168,7 @@
   list-style-image: url(chrome://browser/skin/toolbarbutton-dropmarker.png);
   padding: 0;
   margin-top: 1px;
-  -moz-margin-end: 2px;
+  margin-inline-end: 2px;
 }
 
 @media (min-resolution: 2dppx) {
@@ -110,18 +181,16 @@
   }
 }
 
-@media (-moz-mac-lion-theme) {
-  #placesToolbar > toolbarbutton[disabled="true"] > .toolbarbutton-icon,
-  #placesToolbar > toolbarbutton:not(:hover):-moz-window-inactive > .toolbarbutton-icon,
-  #placesToolbar > toolbarbutton[type="menu"][disabled="true"] > .toolbarbutton-menu-dropmarker,
-  #placesToolbar > toolbarbutton:not(:hover):-moz-window-inactive[type="menu"] > .toolbarbutton-menu-dropmarker {
-    opacity: .5;
-  }
+#placesToolbar > toolbarbutton[disabled="true"] > .toolbarbutton-icon,
+#placesToolbar > toolbarbutton:not(:hover):-moz-window-inactive > .toolbarbutton-icon,
+#placesToolbar > toolbarbutton[type="menu"][disabled="true"] > .toolbarbutton-menu-dropmarker,
+#placesToolbar > toolbarbutton:not(:hover):-moz-window-inactive[type="menu"] > .toolbarbutton-menu-dropmarker {
+  opacity: .5;
+}
 
-  #placesToolbar > toolbarbutton:-moz-window-inactive[disabled="true"] > .toolbarbutton-icon,
-  #placesToolbar > toolbarbutton:-moz-window-inactive[type="menu"][disabled="true"] > .toolbarbutton-menu-dropmarker {
-    opacity: .25;
-  }
+#placesToolbar > toolbarbutton:-moz-window-inactive[disabled="true"] > .toolbarbutton-icon,
+#placesToolbar > toolbarbutton:-moz-window-inactive[type="menu"][disabled="true"] > .toolbarbutton-menu-dropmarker {
+  opacity: .25;
 }
 
 #placesToolbar > toolbarbutton > menupopup {
@@ -142,13 +211,13 @@
 }
 
 #back-button > .toolbarbutton-icon {
-  -moz-margin-start: 3px !important;
-  -moz-margin-end: 2px !important;
+  margin-inline-start: 3px !important;
+  margin-inline-end: 2px !important;
 }
 
 #forward-button > .toolbarbutton-icon {
-  -moz-margin-start: 2px !important;
-  -moz-margin-end: 3px !important;
+  margin-inline-start: 2px !important;
+  margin-inline-end: 3px !important;
 }
 
 /* organize button */
@@ -174,13 +243,15 @@
 
 /* Place List, Place Content */
 #placesList {
-  -moz-appearance: -moz-mac-vibrancy-light;
-  background-color: #e2e7ed;
+  -moz-appearance: -moz-mac-source-list;
+  box-shadow: inset -2px 0 0 hsla(0,0%,100%,.2);
   width: 160px;
 }
 
-#placesList:-moz-window-inactive {
-  background-color: #e8e8e8;
+@media (-moz-mac-yosemite-theme) {
+  #placesList {
+    box-shadow: none;
+  }
 }
 
 /* Info box */

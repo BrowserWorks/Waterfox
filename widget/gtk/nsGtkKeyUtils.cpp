@@ -588,54 +588,54 @@ KeymapWrapper::InitInputEvent(WidgetInputEvent& aInputEvent,
 {
     KeymapWrapper* keymapWrapper = GetInstance();
 
-    aInputEvent.modifiers = 0;
+    aInputEvent.mModifiers = 0;
     // DOM Meta key should be TRUE only on Mac.  We need to discuss this
     // issue later.
     if (keymapWrapper->AreModifiersActive(SHIFT, aModifierState)) {
-        aInputEvent.modifiers |= MODIFIER_SHIFT;
+        aInputEvent.mModifiers |= MODIFIER_SHIFT;
     }
     if (keymapWrapper->AreModifiersActive(CTRL, aModifierState)) {
-        aInputEvent.modifiers |= MODIFIER_CONTROL;
+        aInputEvent.mModifiers |= MODIFIER_CONTROL;
     }
     if (keymapWrapper->AreModifiersActive(ALT, aModifierState)) {
-        aInputEvent.modifiers |= MODIFIER_ALT;
+        aInputEvent.mModifiers |= MODIFIER_ALT;
     }
     if (keymapWrapper->AreModifiersActive(META, aModifierState)) {
-        aInputEvent.modifiers |= MODIFIER_META;
+        aInputEvent.mModifiers |= MODIFIER_META;
     }
     if (keymapWrapper->AreModifiersActive(SUPER, aModifierState) ||
         keymapWrapper->AreModifiersActive(HYPER, aModifierState)) {
-        aInputEvent.modifiers |= MODIFIER_OS;
+        aInputEvent.mModifiers |= MODIFIER_OS;
     }
     if (keymapWrapper->AreModifiersActive(LEVEL3, aModifierState) ||
         keymapWrapper->AreModifiersActive(LEVEL5, aModifierState)) {
-        aInputEvent.modifiers |= MODIFIER_ALTGRAPH;
+        aInputEvent.mModifiers |= MODIFIER_ALTGRAPH;
     }
     if (keymapWrapper->AreModifiersActive(CAPS_LOCK, aModifierState)) {
-        aInputEvent.modifiers |= MODIFIER_CAPSLOCK;
+        aInputEvent.mModifiers |= MODIFIER_CAPSLOCK;
     }
     if (keymapWrapper->AreModifiersActive(NUM_LOCK, aModifierState)) {
-        aInputEvent.modifiers |= MODIFIER_NUMLOCK;
+        aInputEvent.mModifiers |= MODIFIER_NUMLOCK;
     }
     if (keymapWrapper->AreModifiersActive(SCROLL_LOCK, aModifierState)) {
-        aInputEvent.modifiers |= MODIFIER_SCROLLLOCK;
+        aInputEvent.mModifiers |= MODIFIER_SCROLLLOCK;
     }
 
     MOZ_LOG(gKeymapWrapperLog, LogLevel::Debug,
         ("KeymapWrapper(%p): InitInputEvent, aModifierState=0x%08X, "
-         "aInputEvent.modifiers=0x%04X (Shift: %s, Control: %s, Alt: %s, "
+         "aInputEvent.mModifiers=0x%04X (Shift: %s, Control: %s, Alt: %s, "
          "Meta: %s, OS: %s, AltGr: %s, "
          "CapsLock: %s, NumLock: %s, ScrollLock: %s)",
-         keymapWrapper, aModifierState, aInputEvent.modifiers,
-         GetBoolName(aInputEvent.modifiers & MODIFIER_SHIFT),
-         GetBoolName(aInputEvent.modifiers & MODIFIER_CONTROL),
-         GetBoolName(aInputEvent.modifiers & MODIFIER_ALT),
-         GetBoolName(aInputEvent.modifiers & MODIFIER_META),
-         GetBoolName(aInputEvent.modifiers & MODIFIER_OS),
-         GetBoolName(aInputEvent.modifiers & MODIFIER_ALTGRAPH),
-         GetBoolName(aInputEvent.modifiers & MODIFIER_CAPSLOCK),
-         GetBoolName(aInputEvent.modifiers & MODIFIER_NUMLOCK),
-         GetBoolName(aInputEvent.modifiers & MODIFIER_SCROLLLOCK)));
+         keymapWrapper, aModifierState, aInputEvent.mModifiers,
+         GetBoolName(aInputEvent.mModifiers & MODIFIER_SHIFT),
+         GetBoolName(aInputEvent.mModifiers & MODIFIER_CONTROL),
+         GetBoolName(aInputEvent.mModifiers & MODIFIER_ALT),
+         GetBoolName(aInputEvent.mModifiers & MODIFIER_META),
+         GetBoolName(aInputEvent.mModifiers & MODIFIER_OS),
+         GetBoolName(aInputEvent.mModifiers & MODIFIER_ALTGRAPH),
+         GetBoolName(aInputEvent.mModifiers & MODIFIER_CAPSLOCK),
+         GetBoolName(aInputEvent.mModifiers & MODIFIER_NUMLOCK),
+         GetBoolName(aInputEvent.mModifiers & MODIFIER_SCROLLLOCK)));
 
     switch(aInputEvent.mClass) {
         case eMouseEventClass:
@@ -878,7 +878,14 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
             AppendUCS4ToUTF16(charCode, aKeyEvent.mKeyValue);
         }
     }
-    aKeyEvent.keyCode = ComputeDOMKeyCode(aGdkKeyEvent);
+    aKeyEvent.mKeyCode = ComputeDOMKeyCode(aGdkKeyEvent);
+
+    if (aKeyEvent.mKeyNameIndex != KEY_NAME_INDEX_USE_STRING ||
+        aKeyEvent.mMessage != eKeyPress) {
+        aKeyEvent.mKeyCode = ComputeDOMKeyCode(aGdkKeyEvent);
+    } else {
+        aKeyEvent.mKeyCode = 0;
+    }
 
     // NOTE: The state of given key event indicates adjacent state of
     // modifier keys.  E.g., even if the event is Shift key press event,
@@ -915,7 +922,7 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
         case GDK_Super_L:
         case GDK_Hyper_L:
         case GDK_Meta_L:
-            aKeyEvent.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_LEFT;
+            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_LEFT;
             break;
 
         case GDK_Shift_R:
@@ -924,7 +931,7 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
         case GDK_Super_R:
         case GDK_Hyper_R:
         case GDK_Meta_R:
-            aKeyEvent.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_RIGHT;
+            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_RIGHT;
             break;
 
         case GDK_KP_0:
@@ -962,11 +969,11 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
         case GDK_KP_Subtract:
         case GDK_KP_Decimal:
         case GDK_KP_Divide:
-            aKeyEvent.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD;
+            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD;
             break;
 
         default:
-            aKeyEvent.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD;
+            aKeyEvent.mLocation = nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD;
             break;
     }
 
@@ -988,16 +995,12 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
          GetBoolName(aKeyEvent.IsShift()), GetBoolName(aKeyEvent.IsControl()),
          GetBoolName(aKeyEvent.IsAlt()), GetBoolName(aKeyEvent.IsMeta())));
 
-    if (aKeyEvent.mMessage == eKeyPress) {
-        keymapWrapper->InitKeypressEvent(aKeyEvent, aGdkKeyEvent);
-    }
-
     // The transformations above and in gdk for the keyval are not invertible
     // so link to the GdkEvent (which will vanish soon after return from the
     // event callback) to give plugins access to hardware_keycode and state.
     // (An XEvent would be nice but the GdkEvent is good enough.)
     aKeyEvent.mPluginEvent.Copy(*aGdkKeyEvent);
-    aKeyEvent.time = aGdkKeyEvent->time;
+    aKeyEvent.mTime = aGdkKeyEvent->time;
     aKeyEvent.mNativeKeyEvent = static_cast<void*>(aGdkKeyEvent);
     aKeyEvent.mIsRepeat = sRepeatState == REPEATING &&
         aGdkKeyEvent->hardware_keycode == sLastRepeatableHardwareKeyCode;
@@ -1319,41 +1322,37 @@ KeymapWrapper::GetDOMKeyCodeFromKeyPairs(guint aGdkKeyval)
 }
 
 void
-KeymapWrapper::InitKeypressEvent(WidgetKeyboardEvent& aKeyEvent,
-                                 GdkEventKey* aGdkKeyEvent)
+KeymapWrapper::WillDispatchKeyboardEvent(WidgetKeyboardEvent& aKeyEvent,
+                                         GdkEventKey* aGdkKeyEvent)
 {
-    NS_ENSURE_TRUE_VOID(aKeyEvent.mMessage == eKeyPress);
+    GetInstance()->WillDispatchKeyboardEventInternal(aKeyEvent, aGdkKeyEvent);
+}
 
-    aKeyEvent.charCode = GetCharCodeFor(aGdkKeyEvent);
-    if (!aKeyEvent.charCode) {
+void
+KeymapWrapper::WillDispatchKeyboardEventInternal(WidgetKeyboardEvent& aKeyEvent,
+                                                 GdkEventKey* aGdkKeyEvent)
+{
+    uint32_t charCode = GetCharCodeFor(aGdkKeyEvent);
+    if (!charCode) {
         MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
-            ("KeymapWrapper(%p): InitKeypressEvent, "
-             "keyCode=0x%02X, charCode=0x%08X",
-             this, aKeyEvent.keyCode, aKeyEvent.charCode));
+            ("KeymapWrapper(%p): WillDispatchKeyboardEventInternal, "
+             "mKeyCode=0x%02X, charCode=0x%08X",
+             this, aKeyEvent.mKeyCode, aKeyEvent.mCharCode));
         return;
     }
 
-    // If the event causes inputting a character, keyCode must be zero.
-    aKeyEvent.keyCode = 0;
-
-    // If Ctrl or Alt or Meta or OS is pressed, we need to append the key
-    // details for handling shortcut key.  Otherwise, we have no additional
-    // work.
-    if (!aKeyEvent.IsControl() && !aKeyEvent.IsAlt() &&
-        !aKeyEvent.IsMeta() && !aKeyEvent.IsOS()) {
-        MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
-            ("KeymapWrapper(%p): InitKeypressEvent, "
-             "keyCode=0x%02X, charCode=0x%08X",
-             this, aKeyEvent.keyCode, aKeyEvent.charCode));
-        return;
-    }
+    // The mCharCode was set from mKeyValue. However, for example, when Ctrl key
+    // is pressed, its value should indicate an ASCII character for backward
+    // compatibility rather than inputting character without the modifiers.
+    // Therefore, we need to modify mCharCode value here.
+    aKeyEvent.SetCharCode(charCode);
 
     gint level = GetKeyLevel(aGdkKeyEvent);
     if (level != 0 && level != 1) {
         MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
-            ("KeymapWrapper(%p): InitKeypressEvent, "
-             "keyCode=0x%02X, charCode=0x%08X, level=%d",
-             this, aKeyEvent.keyCode, aKeyEvent.charCode, level));
+            ("KeymapWrapper(%p): WillDispatchKeyboardEventInternal, "
+             "mKeyCode=0x%02X, mCharCode=0x%08X, level=%d",
+             this, aKeyEvent.mKeyCode, aKeyEvent.mCharCode, level));
         return;
     }
 
@@ -1363,7 +1362,7 @@ KeymapWrapper::InitKeypressEvent(WidgetKeyboardEvent& aKeyEvent,
           GetModifierMask(SUPER) | GetModifierMask(HYPER));
 
     // We shold send both shifted char and unshifted char, all keyboard layout
-    // users can use all keys.  Don't change event.charCode. On some keyboard
+    // users can use all keys.  Don't change event.mCharCode. On some keyboard
     // layouts, Ctrl/Alt/Meta keys are used for inputting some characters.
     AlternativeCharCode altCharCodes(0, 0);
     // unshifted charcode of current keyboard layout.
@@ -1377,7 +1376,7 @@ KeymapWrapper::InitKeypressEvent(WidgetKeyboardEvent& aKeyEvent,
                        aGdkKeyEvent->group);
     isLatin = isLatin && (altCharCodes.mShiftedCharCode <= 0xFF);
     if (altCharCodes.mUnshiftedCharCode || altCharCodes.mShiftedCharCode) {
-        aKeyEvent.alternativeCharCodes.AppendElement(altCharCodes);
+        aKeyEvent.mAlternativeCharCodes.AppendElement(altCharCodes);
     }
 
     bool needLatinKeyCodes = !isLatin;
@@ -1391,10 +1390,10 @@ KeymapWrapper::InitKeypressEvent(WidgetKeyboardEvent& aKeyEvent,
     // more information.
     if (!needLatinKeyCodes) {
         MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
-            ("KeymapWrapper(%p): InitKeypressEvent, keyCode=0x%02X, "
-             "charCode=0x%08X, level=%d, altCharCodes={ "
+            ("KeymapWrapper(%p): WillDispatchKeyboardEventInternal, "
+             "mKeyCode=0x%02X, mCharCode=0x%08X, level=%d, altCharCodes={ "
              "mUnshiftedCharCode=0x%08X, mShiftedCharCode=0x%08X }",
-             this, aKeyEvent.keyCode, aKeyEvent.charCode, level,
+             this, aKeyEvent.mKeyCode, aKeyEvent.mCharCode, level,
              altCharCodes.mUnshiftedCharCode, altCharCodes.mShiftedCharCode));
         return;
     }
@@ -1403,12 +1402,12 @@ KeymapWrapper::InitKeypressEvent(WidgetKeyboardEvent& aKeyEvent,
     gint minGroup = GetFirstLatinGroup();
     if (minGroup < 0) {
         MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
-            ("KeymapWrapper(%p): InitKeypressEvent, "
+            ("KeymapWrapper(%p): WillDispatchKeyboardEventInternal, "
              "Latin keyboard layout isn't found: "
-             "keyCode=0x%02X, charCode=0x%08X, level=%d, "
+             "mKeyCode=0x%02X, mCharCode=0x%08X, level=%d, "
              "altCharCodes={ mUnshiftedCharCode=0x%08X, "
              "mShiftedCharCode=0x%08X }",
-             this, aKeyEvent.keyCode, aKeyEvent.charCode, level,
+             this, aKeyEvent.mKeyCode, aKeyEvent.mCharCode, level,
              altCharCodes.mUnshiftedCharCode, altCharCodes.mShiftedCharCode));
         return;
     }
@@ -1430,49 +1429,30 @@ KeymapWrapper::InitKeypressEvent(WidgetKeyboardEvent& aKeyEvent,
         IsBasicLatinLetterOrNumeral(ch) ? ch : 0;
     if (altLatinCharCodes.mUnshiftedCharCode ||
         altLatinCharCodes.mShiftedCharCode) {
-        aKeyEvent.alternativeCharCodes.AppendElement(altLatinCharCodes);
+        aKeyEvent.mAlternativeCharCodes.AppendElement(altLatinCharCodes);
     }
-    // If the charCode is not Latin, and the level is 0 or 1, we should
-    // replace the charCode to Latin char if Alt and Meta keys are not
+    // If the mCharCode is not Latin, and the level is 0 or 1, we should
+    // replace the mCharCode to Latin char if Alt and Meta keys are not
     // pressed. (Alt should be sent the localized char for accesskey
     // like handling of Web Applications.)
     ch = aKeyEvent.IsShift() ? altLatinCharCodes.mShiftedCharCode :
                                altLatinCharCodes.mUnshiftedCharCode;
     if (ch && !(aKeyEvent.IsAlt() || aKeyEvent.IsMeta()) &&
-        aKeyEvent.charCode == unmodifiedCh) {
-        aKeyEvent.charCode = ch;
+        charCode == unmodifiedCh) {
+        aKeyEvent.SetCharCode(ch);
     }
 
     MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
-        ("KeymapWrapper(%p): InitKeypressEvent, "
-         "keyCode=0x%02X, charCode=0x%08X, level=%d, minGroup=%d, "
+        ("KeymapWrapper(%p): WillDispatchKeyboardEventInternal, "
+         "mKeyCode=0x%02X, mCharCode=0x%08X, level=%d, minGroup=%d, "
          "altCharCodes={ mUnshiftedCharCode=0x%08X, "
          "mShiftedCharCode=0x%08X } "
          "altLatinCharCodes={ mUnshiftedCharCode=0x%08X, "
          "mShiftedCharCode=0x%08X }",
-         this, aKeyEvent.keyCode, aKeyEvent.charCode, level, minGroup,
+         this, aKeyEvent.mKeyCode, aKeyEvent.mCharCode, level, minGroup,
          altCharCodes.mUnshiftedCharCode, altCharCodes.mShiftedCharCode,
          altLatinCharCodes.mUnshiftedCharCode,
          altLatinCharCodes.mShiftedCharCode));
-}
-
-/* static */ bool
-KeymapWrapper::IsKeyPressEventNecessary(GdkEventKey* aGdkKeyEvent)
-{
-    // If this is a modifier key event, we shouldn't send keypress event.
-    switch (ComputeDOMKeyCode(aGdkKeyEvent)) {
-        case NS_VK_SHIFT:
-        case NS_VK_CONTROL:
-        case NS_VK_ALT:
-        case NS_VK_ALTGR:
-        case NS_VK_WIN:
-        case NS_VK_CAPS_LOCK:
-        case NS_VK_NUM_LOCK:
-        case NS_VK_SCROLL_LOCK:
-            return false;
-        default:
-            return true;
-    }
 }
 
 } // namespace widget

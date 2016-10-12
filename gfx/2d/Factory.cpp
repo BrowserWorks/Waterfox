@@ -35,7 +35,6 @@
 #endif
 
 #ifdef WIN32
-#include "DrawTargetD2D.h"
 #include "DrawTargetD2D1.h"
 #include "ScaledFontDWrite.h"
 #include "NativeFontResourceDWrite.h"
@@ -88,9 +87,8 @@ HasCPUIDBit(unsigned int level, CPUIDRegister reg, unsigned int bit)
 #define HAVE_CPU_DETECTION
 #else
 
-#if defined(_MSC_VER) && _MSC_VER >= 1600 && (defined(_M_IX86) || defined(_M_AMD64))
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64))
 // MSVC 2005 or later supports __cpuid by intrin.h
-// But it does't work on MSVC 2005 with SDK 7.1 (Bug 753772)
 #include <intrin.h>
 
 #define HAVE_CPU_DETECTION
@@ -161,7 +159,6 @@ int32_t LoggingPrefs::sGfxLogLevel =
                                      LOG_DEFAULT);
 
 #ifdef WIN32
-ID3D10Device1 *Factory::mD3D10Device;
 ID3D11Device *Factory::mD3D11Device;
 ID2D1Device *Factory::mD2D1Device;
 #endif
@@ -315,15 +312,6 @@ Factory::CreateDrawTarget(BackendType aBackend, const IntSize &aSize, SurfaceFor
   RefPtr<DrawTarget> retVal;
   switch (aBackend) {
 #ifdef WIN32
-  case BackendType::DIRECT2D:
-    {
-      RefPtr<DrawTargetD2D> newTarget;
-      newTarget = new DrawTargetD2D();
-      if (newTarget->Init(aSize, aFormat)) {
-        retVal = newTarget;
-      }
-      break;
-    }
   case BackendType::DIRECT2D1_1:
     {
       RefPtr<DrawTargetD2D1> newTarget;
@@ -368,7 +356,6 @@ Factory::CreateDrawTarget(BackendType aBackend, const IntSize &aSize, SurfaceFor
     }
 #endif
   default:
-    gfxDebug() << "Invalid draw target type specified.";
     return nullptr;
   }
 
@@ -395,7 +382,8 @@ Factory::CreateDrawTargetForData(BackendType aBackend,
                                  unsigned char *aData,
                                  const IntSize &aSize,
                                  int32_t aStride,
-                                 SurfaceFormat aFormat)
+                                 SurfaceFormat aFormat,
+                                 bool aUninitialized)
 {
   MOZ_ASSERT(aData);
   if (!AllowedSurfaceSize(aSize)) {
@@ -411,7 +399,7 @@ Factory::CreateDrawTargetForData(BackendType aBackend,
     {
       RefPtr<DrawTargetSkia> newTarget;
       newTarget = new DrawTargetSkia();
-      newTarget->Init(aData, aSize, aStride, aFormat);
+      newTarget->Init(aData, aSize, aStride, aFormat, aUninitialized);
       retVal = newTarget;
       break;
     }
@@ -499,8 +487,6 @@ Factory::GetMaxSurfaceSize(BackendType aType)
     return DrawTargetSkia::GetMaxSurfaceSize();
 #endif
 #ifdef WIN32
-  case BackendType::DIRECT2D:
-    return DrawTargetD2D::GetMaxSurfaceSize();
   case BackendType::DIRECT2D1_1:
     return DrawTargetD2D1::GetMaxSurfaceSize();
 #endif
@@ -612,87 +598,6 @@ Factory::CreateDualDrawTarget(DrawTarget *targetA, DrawTarget *targetB)
 
 #ifdef WIN32
 already_AddRefed<DrawTarget>
-Factory::CreateDrawTargetForD3D10Texture(ID3D10Texture2D *aTexture, SurfaceFormat aFormat)
-{
-  MOZ_ASSERT(aTexture);
-
-  RefPtr<DrawTargetD2D> newTarget;
-
-  newTarget = new DrawTargetD2D();
-  if (newTarget->Init(aTexture, aFormat)) {
-    RefPtr<DrawTarget> retVal = newTarget;
-
-    if (mRecorder) {
-      retVal = new DrawTargetRecording(mRecorder, retVal, true);
-    }
-
-    return retVal.forget();
-  }
-
-  gfxWarning() << "Failed to create draw target for D3D10 texture.";
-
-  // Failed
-  return nullptr;
-}
-
-already_AddRefed<DrawTarget>
-Factory::CreateDualDrawTargetForD3D10Textures(ID3D10Texture2D *aTextureA,
-                                              ID3D10Texture2D *aTextureB,
-                                              SurfaceFormat aFormat)
-{
-  MOZ_ASSERT(aTextureA && aTextureB);
-  RefPtr<DrawTargetD2D> newTargetA;
-  RefPtr<DrawTargetD2D> newTargetB;
-
-  newTargetA = new DrawTargetD2D();
-  if (!newTargetA->Init(aTextureA, aFormat)) {
-    gfxWarning() << "Failed to create dual draw target for D3D10 texture.";
-    return nullptr;
-  }
-
-  newTargetB = new DrawTargetD2D();
-  if (!newTargetB->Init(aTextureB, aFormat)) {
-    gfxWarning() << "Failed to create new draw target for D3D10 texture.";
-    return nullptr;
-  }
-
-  RefPtr<DrawTarget> newTarget =
-    new DrawTargetDual(newTargetA, newTargetB);
-
-  RefPtr<DrawTarget> retVal = newTarget;
-
-  if (mRecorder) {
-    retVal = new DrawTargetRecording(mRecorder, retVal);
-  }
-
-  return retVal.forget();
-}
-
-void
-Factory::SetDirect3D10Device(ID3D10Device1 *aDevice)
-{
-  // do not throw on failure; return error codes and disconnect the device
-  // On Windows 8 error codes are the default, but on Windows 7 the
-  // default is to throw (or perhaps only with some drivers?)
-  if (aDevice) {
-    aDevice->SetExceptionMode(0);
-  }
-  mD3D10Device = aDevice;
-}
-
-ID3D10Device1*
-Factory::GetDirect3D10Device()
-{
-#ifdef DEBUG
-  if (mD3D10Device) {
-    UINT mode = mD3D10Device->GetExceptionMode();
-    MOZ_ASSERT(0 == mode);
-  }
-#endif
-  return mD3D10Device;
-}
-
-already_AddRefed<DrawTarget>
 Factory::CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceFormat aFormat)
 {
   MOZ_ASSERT(aTexture);
@@ -716,7 +621,7 @@ Factory::CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceForma
   return nullptr;
 }
 
-void
+bool
 Factory::SetDirect3D11Device(ID3D11Device *aDevice)
 {
   mD3D11Device = aDevice;
@@ -727,7 +632,7 @@ Factory::SetDirect3D11Device(ID3D11Device *aDevice)
   }
 
   if (!aDevice) {
-    return;
+    return true;
   }
 
   RefPtr<ID2D1Factory1> factory = D2DFactory1();
@@ -737,7 +642,12 @@ Factory::SetDirect3D11Device(ID3D11Device *aDevice)
   HRESULT hr = factory->CreateDevice(device, &mD2D1Device);
   if (FAILED(hr)) {
     gfxCriticalError() << "[D2D1] Failed to create gfx factory's D2D1 device, code: " << hexa(hr);
+
+    mD3D11Device = nullptr;
+    return false;
   }
+
+  return true;
 }
 
 ID3D11Device*
@@ -767,13 +677,13 @@ Factory::CreateDWriteGlyphRenderingOptions(IDWriteRenderingParams *aParams)
 uint64_t
 Factory::GetD2DVRAMUsageDrawTarget()
 {
-  return DrawTargetD2D::mVRAMUsageDT;
+  return DrawTargetD2D1::mVRAMUsageDT;
 }
 
 uint64_t
 Factory::GetD2DVRAMUsageSourceSurface()
 {
-  return DrawTargetD2D::mVRAMUsageSS;
+  return DrawTargetD2D1::mVRAMUsageSS;
 }
 
 void
@@ -784,7 +694,6 @@ Factory::D2DCleanup()
     mD2D1Device = nullptr;
   }
   DrawTargetD2D1::CleanupD2D();
-  DrawTargetD2D::CleanupD2D();
 }
 
 already_AddRefed<ScaledFont>
@@ -892,18 +801,25 @@ Factory::CreateCGGlyphRenderingOptions(const Color &aFontSmoothingBackgroundColo
 #endif
 
 already_AddRefed<DataSourceSurface>
-Factory::CreateWrappingDataSourceSurface(uint8_t *aData, int32_t aStride,
+Factory::CreateWrappingDataSourceSurface(uint8_t *aData,
+                                         int32_t aStride,
                                          const IntSize &aSize,
-                                         SurfaceFormat aFormat)
+                                         SurfaceFormat aFormat,
+                                         SourceSurfaceDeallocator aDeallocator /* = nullptr */,
+                                         void* aClosure /* = nullptr */)
 {
   if (aSize.width <= 0 || aSize.height <= 0) {
     return nullptr;
   }
+  if (!aDeallocator && aClosure) {
+    return nullptr;
+  }
+
   MOZ_ASSERT(aData);
 
   RefPtr<SourceSurfaceRawData> newSurf = new SourceSurfaceRawData();
+  newSurf->InitWrappingData(aData, aSize, aStride, aFormat, aDeallocator, aClosure);
 
-  newSurf->InitWrappingData(aData, aSize, aStride, aFormat, false);
   return newSurf.forget();
 }
 

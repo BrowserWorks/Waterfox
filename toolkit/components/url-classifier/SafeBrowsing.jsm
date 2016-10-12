@@ -24,7 +24,7 @@ function log(...stuff) {
 
   var d = new Date();
   let msg = "SafeBrowsing: " + d.toTimeString() + ": " + stuff.join(" ");
-  dump(msg + "\n");
+  dump(Services.urlFormatter.trimSensitiveURLs(msg) + "\n");
 }
 
 // Skip all the ones containining "test", because we never need to ask for
@@ -54,6 +54,7 @@ const downloadAllowLists = getLists("urlclassifier.downloadAllowTable");
 const trackingProtectionLists = getLists("urlclassifier.trackingTable");
 const trackingProtectionWhitelists = getLists("urlclassifier.trackingWhitelistTable");
 const forbiddenLists = getLists("urlclassifier.forbiddenTable");
+const blockedLists = getLists("urlclassifier.blockedTable");
 
 this.SafeBrowsing = {
 
@@ -81,6 +82,12 @@ this.SafeBrowsing = {
     let providerName = this.listToProvider[listname];
     let provider = this.providers[providerName];
 
+    if (!providerName || !provider) {
+      log("No provider info found for " + listname);
+      log("Check browser.safebrowsing.provider.[google/mozilla].lists");
+      return;
+    }
+
     listManager.registerTable(listname, providerName, provider.updateURL, provider.gethashURL);
   },
 
@@ -106,6 +113,9 @@ this.SafeBrowsing = {
     for (let i = 0; i < forbiddenLists.length; ++i) {
       this.registerTableWithURLs(forbiddenLists[i]);
     }
+    for (let i = 0; i < blockedLists.length; ++i) {
+      this.registerTableWithURLs(blockedLists[i]);
+    }
   },
 
 
@@ -114,6 +124,7 @@ this.SafeBrowsing = {
   malwareEnabled:   false,
   trackingEnabled:  false,
   forbiddenEnabled: false,
+  blockedEnabled:   false,
 
   updateURL:             null,
   gethashURL:            null,
@@ -160,6 +171,7 @@ this.SafeBrowsing = {
     this.malwareEnabled = Services.prefs.getBoolPref("browser.safebrowsing.malware.enabled");
     this.trackingEnabled = Services.prefs.getBoolPref("privacy.trackingprotection.enabled") || Services.prefs.getBoolPref("privacy.trackingprotection.pbmode.enabled");
     this.forbiddenEnabled = Services.prefs.getBoolPref("browser.safebrowsing.forbiddenURIs.enabled");
+    this.blockedEnabled = Services.prefs.getBoolPref("browser.safebrowsing.blockedURIs.enabled");
     this.updateProviderURLs();
     this.registerTables();
 
@@ -236,7 +248,8 @@ this.SafeBrowsing = {
   controlUpdateChecking: function() {
     log("phishingEnabled:", this.phishingEnabled, "malwareEnabled:",
         this.malwareEnabled, "trackingEnabled:", this.trackingEnabled,
-       "forbiddenEnabled:", this.forbiddenEnabled);
+       "forbiddenEnabled:", this.forbiddenEnabled, "blockedEnabled:",
+        this.blockedEnabled);
 
     let listManager = Cc["@mozilla.org/url-classifier/listmanager;1"].
                       getService(Ci.nsIUrlListManager);
@@ -285,6 +298,13 @@ this.SafeBrowsing = {
         listManager.disableUpdate(forbiddenLists[i]);
       }
     }
+    for (let i = 0; i < blockedLists.length; ++i) {
+      if (this.blockedEnabled) {
+        listManager.enableUpdate(blockedLists[i]);
+      } else {
+        listManager.disableUpdate(blockedLists[i]);
+      }
+    }
     listManager.maybeToggleUpdateChecking();
   },
 
@@ -299,8 +319,9 @@ this.SafeBrowsing = {
       "trackertest.org/",
       "itisatracker.org/",
     ];
-    const whitelistURL = "itisatrap.org/?resource=itisatracker.org";
+    const whitelistURL  = "itisatrap.org/?resource=itisatracker.org";
     const forbiddenURL  = "itisatrap.org/firefox/forbidden.html";
+    const blockedURL    = "itisatrap.org/firefox/blocked.html";
 
     let update = "n:1000\ni:test-malware-simple\nad:1\n" +
                  "a:1:32:" + malwareURL.length + "\n" +
@@ -323,6 +344,9 @@ this.SafeBrowsing = {
     update += "n:1000\ni:test-forbid-simple\nad:1\n" +
               "a:1:32:" + forbiddenURL.length + "\n" +
               forbiddenURL;
+    update += "n:1000\ni:test-block-simple\nad:1\n" +
+              "a:1:32:" + blockedURL.length + "\n" +
+              blockedURL;
     log("addMozEntries:", update);
 
     let db = Cc["@mozilla.org/url-classifier/dbservice;1"].
@@ -332,12 +356,18 @@ this.SafeBrowsing = {
     let dummyListener = {
       updateUrlRequested: function() { },
       streamFinished:     function() { },
-      updateError:        function() { },
-      updateSuccess:      function() { }
+      // We notify observers when we're done in order to be able to make perf
+      // test results more consistent
+      updateError:        function() {
+        Services.obs.notifyObservers(db, "mozentries-update-finished", "error");
+      },
+      updateSuccess:      function() {
+        Services.obs.notifyObservers(db, "mozentries-update-finished", "success");
+      }
     };
 
     try {
-      let tables = "test-malware-simple,test-phish-simple,test-unwanted-simple,test-track-simple,test-trackwhite-simple,test-forbid-simple";
+      let tables = "test-malware-simple,test-phish-simple,test-unwanted-simple,test-track-simple,test-trackwhite-simple,test-forbid-simple,test-block-simple";
       db.beginUpdate(dummyListener, tables, "");
       db.beginStream("", "");
       db.updateStream(update);
@@ -346,6 +376,18 @@ this.SafeBrowsing = {
     } catch(ex) {
       // beginUpdate will throw harmlessly if there's an existing update in progress, ignore failures.
       log("addMozEntries failed!", ex);
+      Services.obs.notifyObservers(db, "mozentries-update-finished", "exception");
     }
   },
+
+  addMozEntriesFinishedPromise: new Promise(resolve => {
+    let finished = (subject, topic, data) => {
+      Services.obs.removeObserver(finished, "mozentries-update-finished");
+      if (data == "error") {
+        Cu.reportError("addMozEntries failed to update the db!");
+      }
+      resolve();
+    };
+    Services.obs.addObserver(finished, "mozentries-update-finished", false);
+  }),
 };

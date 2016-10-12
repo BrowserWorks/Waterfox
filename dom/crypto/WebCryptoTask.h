@@ -57,7 +57,7 @@ if (NS_FAILED(rv)) { \
   return; \
 }
 
-class WebCryptoTask : public nsCancelableRunnable,
+class WebCryptoTask : public CancelableRunnable,
                       public nsNSSShutDownObject
 {
 public:
@@ -122,7 +122,8 @@ public:
                           const ObjectOrString& aAlgorithm,
                           const CryptoOperationData& aData);
 
-  static WebCryptoTask* CreateImportKeyTask(JSContext* aCx,
+  static WebCryptoTask* CreateImportKeyTask(nsIGlobalObject* aGlobal,
+                          JSContext* aCx,
                           const nsAString& aFormat,
                           JS::Handle<JSObject*> aKeyData,
                           const ObjectOrString& aAlgorithm,
@@ -130,12 +131,14 @@ public:
                           const Sequence<nsString>& aKeyUsages);
   static WebCryptoTask* CreateExportKeyTask(const nsAString& aFormat,
                           CryptoKey& aKey);
-  static WebCryptoTask* CreateGenerateKeyTask(JSContext* aCx,
+  static WebCryptoTask* CreateGenerateKeyTask(nsIGlobalObject* aGlobal,
+                          JSContext* aCx,
                           const ObjectOrString& aAlgorithm,
                           bool aExtractable,
                           const Sequence<nsString>& aKeyUsages);
 
-  static WebCryptoTask* CreateDeriveKeyTask(JSContext* aCx,
+  static WebCryptoTask* CreateDeriveKeyTask(nsIGlobalObject* aGlobal,
+                          JSContext* aCx,
                           const ObjectOrString& aAlgorithm,
                           CryptoKey& aBaseKey,
                           const ObjectOrString& aDerivedKeyType,
@@ -151,7 +154,8 @@ public:
                           CryptoKey& aKey,
                           CryptoKey& aWrappingKey,
                           const ObjectOrString& aWrapAlgorithm);
-  static WebCryptoTask* CreateUnwrapKeyTask(JSContext* aCx,
+  static WebCryptoTask* CreateUnwrapKeyTask(nsIGlobalObject* aGlobal,
+                          JSContext* aCx,
                           const nsAString& aFormat,
                           const ArrayBufferViewOrArrayBuffer& aWrappedKey,
                           CryptoKey& aUnwrappingKey,
@@ -165,23 +169,8 @@ protected:
   nsresult mEarlyRv;
   bool mEarlyComplete;
 
-  WebCryptoTask()
-    : mEarlyRv(NS_OK)
-    , mEarlyComplete(false)
-    , mOriginalThread(nullptr)
-    , mReleasedNSSResources(false)
-    , mRv(NS_ERROR_NOT_INITIALIZED)
-  {}
-
-  virtual ~WebCryptoTask()
-  {
-    MOZ_ASSERT(mReleasedNSSResources);
-
-    nsNSSShutDownPreventionLock lock;
-    if (!isAlreadyShutDown()) {
-      shutdown(calledFromObject);
-    }
-  }
+  WebCryptoTask();
+  virtual ~WebCryptoTask();
 
   bool IsOnOriginalThread() {
     return !mOriginalThread || NS_GetCurrentThread() == mOriginalThread;
@@ -207,6 +196,7 @@ protected:
 
 private:
   NS_IMETHOD Run() override final;
+  nsresult Cancel() override final;
 
   virtual void
   virtualDestroyNSSReference() override final
@@ -219,7 +209,10 @@ private:
     }
   }
 
+  class InternalWorkerHolder;
+
   nsCOMPtr<nsIThread> mOriginalThread;
+  RefPtr<InternalWorkerHolder> mWorkerHolder;
   bool mReleasedNSSResources;
   nsresult mRv;
 };
@@ -228,7 +221,7 @@ private:
 class GenerateAsymmetricKeyTask : public WebCryptoTask
 {
 public:
-  GenerateAsymmetricKeyTask(JSContext* aCx,
+  GenerateAsymmetricKeyTask(nsIGlobalObject* aGlobal, JSContext* aCx,
                             const ObjectOrString& aAlgorithm, bool aExtractable,
                             const Sequence<nsString>& aKeyUsages);
 protected:

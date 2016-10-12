@@ -20,6 +20,9 @@ BaseMediaMgrError::BaseMediaMgrError(const nsAString& aName,
   if (mMessage.IsEmpty()) {
     if (mName.EqualsLiteral("NotFoundError")) {
       mMessage.AssignLiteral("The object can not be found here.");
+    } else if (mName.EqualsLiteral("NotAllowedError")) {
+      mMessage.AssignLiteral("The request is not allowed by the user agent "
+                             "or the platform in the current context.");
     } else if (mName.EqualsLiteral("SecurityError")) {
       mMessage.AssignLiteral("The operation is insecure.");
     } else if (mName.EqualsLiteral("SourceUnavailableError")) {
@@ -41,7 +44,7 @@ NS_IMPL_ISUPPORTS0(MediaMgrError)
 namespace dom {
 
 MediaStreamError::MediaStreamError(
-    nsPIDOMWindow* aParent,
+    nsPIDOMWindowInner* aParent,
     const nsAString& aName,
     const nsAString& aMessage,
     const nsAString& aConstraint)

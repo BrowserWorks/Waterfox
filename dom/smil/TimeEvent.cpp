@@ -9,6 +9,7 @@
 #include "nsIDocShell.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsPresContext.h"
+#include "nsGlobalWindow.h"
 
 namespace mozilla {
 namespace dom {
@@ -18,7 +19,7 @@ TimeEvent::TimeEvent(EventTarget* aOwner,
                      InternalSMILTimeEvent* aEvent)
   : Event(aOwner, aPresContext,
           aEvent ? aEvent : new InternalSMILTimeEvent(false, eVoidEvent))
-  , mDetail(mEvent->AsSMILTimeEvent()->detail)
+  , mDetail(mEvent->AsSMILTimeEvent()->mDetail)
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -45,32 +46,19 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(TimeEvent)
 NS_INTERFACE_MAP_END_INHERITING(Event)
 
 NS_IMETHODIMP
-TimeEvent::GetView(nsIDOMWindow** aView)
-{
-  *aView = mView;
-  NS_IF_ADDREF(*aView);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 TimeEvent::GetDetail(int32_t* aDetail)
 {
   *aDetail = mDetail;
   return NS_OK;
 }
 
-NS_IMETHODIMP
-TimeEvent::InitTimeEvent(const nsAString& aTypeArg,
-                         nsIDOMWindow* aViewArg,
-                         int32_t aDetailArg)
+void
+TimeEvent::InitTimeEvent(const nsAString& aType, nsGlobalWindow* aView,
+                         int32_t aDetail)
 {
-  Event::InitEvent(aTypeArg, false /*doesn't bubble*/,
-                   false /*can't cancel*/);
-
-  mDetail = aDetailArg;
-  mView = aViewArg;
-
-  return NS_OK;
+  Event::InitEvent(aType, false /*doesn't bubble*/, false /*can't cancel*/);
+  mDetail = aDetail;
+  mView = aView ? aView->GetOuterWindow() : nullptr;
 }
 
 } // namespace dom

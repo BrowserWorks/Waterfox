@@ -9,7 +9,6 @@
 #include "mozilla/Attributes.h"
 
 // Interfaces
-#include "nsIDOMWindow.h"
 #include "nsDeviceContext.h"
 #include "nsIPrintProgressParams.h"
 #include "nsIPrintOptions.h"
@@ -52,6 +51,8 @@ public:
                           bool         aDoStartStop,
                           int32_t      aFlag);
 
+  void DoOnStatusChange(nsresult aStatus);
+
 
   ePrintDataType               mType;            // the type of data this is (Printing or Print Preview)
   RefPtr<nsDeviceContext>   mPrintDC;
@@ -63,7 +64,7 @@ public:
   nsCOMArray<nsIWebProgressListener> mPrintProgressListeners;
   nsCOMPtr<nsIPrintProgressParams> mPrintProgressParams;
 
-  nsCOMPtr<nsIDOMWindow> mCurrentFocusWin; // cache a pointer to the currently focused window
+  nsCOMPtr<nsPIDOMWindowOuter> mCurrentFocusWin; // cache a pointer to the currently focused window
 
   nsTArray<nsPrintObject*>    mPrintDocList;
   bool                        mIsIFrameSelected;

@@ -1,5 +1,5 @@
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ 
+   http://creativecommons.org/publicdomain/zero/1.0/
 */
 /* This testcase triggers two telemetry pings.
  *
@@ -32,7 +32,6 @@ const PREF_ENABLED = PREF_BRANCH + "enabled";
 const PREF_ARCHIVE_ENABLED = PREF_BRANCH + "archive.enabled";
 const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
 const PREF_UNIFIED = PREF_BRANCH + "unified";
-const PREF_OPTOUT_SAMPLE = PREF_BRANCH + "optoutSample";
 
 var gClientID = null;
 
@@ -56,9 +55,10 @@ function checkPingFormat(aPing, aType, aHasClientId, aHasEnvironment) {
   ];
 
   const APPLICATION_TEST_DATA = {
-    buildId: "2007010101",
+    buildId: gAppInfo.appBuildID,
     name: APP_NAME,
     version: APP_VERSION,
+    displayVersion: AppConstants.MOZ_APP_VERSION_DISPLAY,
     vendor: "Mozilla",
     platformVersion: PLATFORM_VERSION,
     xpcomAbi: "noarch-spidermonkey",
@@ -96,6 +96,8 @@ function run_test() {
   // Addon manager needs a profile directory
   do_get_profile();
   loadAddonManager("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
+  // Make sure we don't generate unexpected pings due to pref changes.
+  setEmptyPrefWatchlist();
 
   Services.prefs.setBoolPref(PREF_ENABLED, true);
   Services.prefs.setBoolPref(PREF_FHR_UPLOAD_ENABLED, true);
@@ -104,13 +106,13 @@ function run_test() {
 }
 
 add_task(function* asyncSetup() {
-  yield TelemetryController.setup();
+  yield TelemetryController.testSetup();
 
   gClientID = yield ClientID.getClientID();
 
   // We should have cached the client id now. Lets confirm that by
   // checking the client id before the async ping setup is finished.
-  let promisePingSetup = TelemetryController.reset();
+  let promisePingSetup = TelemetryController.testReset();
   do_check_eq(TelemetryController.clientID, gClientID);
   yield promisePingSetup;
 });
@@ -171,13 +173,13 @@ add_task(function* test_disableDataUpload() {
   // Disable FHR upload to send a deletion ping again.
   Preferences.set(PREF_FHR_UPLOAD_ENABLED, false);
 
-  // Wait on sending activity to settle, as |TelemetryController.reset()| doesn't do that.
+  // Wait on sending activity to settle, as |TelemetryController.testReset()| doesn't do that.
   yield TelemetrySend.testWaitOnOutgoingPings();
   // Wait for the pending pings to be deleted. Resetting TelemetryController doesn't
   // trigger the shutdown, so we need to call it ourselves.
   yield TelemetryStorage.shutdown();
   // Simulate a restart, and spin the send task.
-  yield TelemetryController.reset();
+  yield TelemetryController.testReset();
 
   // Disabling Telemetry upload must clear out all the pending pings.
   let pendingPings = yield TelemetryStorage.loadPendingPingList();
@@ -187,11 +189,11 @@ add_task(function* test_disableDataUpload() {
   // Enable the ping server again.
   PingServer.start();
   // We set the new server using the pref, otherwise it would get reset with
-  // |TelemetryController.reset|.
+  // |TelemetryController.testReset|.
   Preferences.set(PREF_TELEMETRY_SERVER, "http://localhost:" + PingServer.port);
 
   // Reset the controller to spin the ping sending task.
-  yield TelemetryController.reset();
+  yield TelemetryController.testReset();
   ping = yield PingServer.promiseNextPing();
   checkPingFormat(ping, DELETION_PING_TYPE, true, false);
 
@@ -301,7 +303,7 @@ add_task(function* test_midnightPingSendFuzzing() {
   });
 
   PingServer.clearRequests();
-  yield TelemetryController.reset();
+  yield TelemetryController.testReset();
 
   // A ping after midnight within the fuzzing delay should not get sent.
   now = new Date(2030, 5, 2, 0, 40, 0);
@@ -373,64 +375,6 @@ add_task(function* test_changePingAfterSubmission() {
                "The payload must not be changed after being submitted.");
 });
 
-add_task(function* test_optoutSampling() {
-  if (!Preferences.get(PREF_UNIFIED, false)) {
-    dump("Unified Telemetry is disabled, skipping.\n");
-    return;
-  }
-
-  const DATA = [
-    {uuid: null,                                   sampled: false}, // not to be sampled
-    {uuid: "3d38d821-14a4-3d45-ab0b-02a9fb5a7505", sampled: false}, // samples to 0
-    {uuid: "1331255e-7eb5-aa4f-b04e-494a0c6da282", sampled: false}, // samples to 41
-    {uuid: "35393e78-a363-ea4e-9fc9-9f9abbee2077", sampled: true }, // samples to 42
-    {uuid: "4dc81df6-db03-a34e-ba79-3e877afd22c4", sampled: true }, // samples to 43
-    {uuid: "79e15be6-4884-8d4f-98e5-f94790251e5f", sampled: true }, // samples to 44
-    {uuid: "c3841566-e39e-384d-826f-508ab6387b21", sampled: true }, // samples to 45
-    {uuid: "cc7498a4-2cde-da47-89b3-f3ce5dd7c6fc", sampled: true }, // samples to 46
-    {uuid: "0750d8ed-5969-3a4f-90ba-2e85f9074309", sampled: false}, // samples to 47
-    {uuid: "0dfcbce7-d82b-b144-8d77-eb15935c9a8e", sampled: false}, // samples to 99
-  ];
-
-  // Test that the opt-out pref enables us sampling on 5% of release.
-  Preferences.set(PREF_ENABLED, false);
-  Preferences.set(PREF_OPTOUT_SAMPLE, true);
-  fakeIsUnifiedOptin(true);
-
-  for (let d of DATA) {
-    dump("Testing sampling for uuid: " + d.uuid + "\n");
-    fakeCachedClientId(d.uuid);
-    yield TelemetryController.reset();
-    Assert.equal(TelemetryController.isInOptoutSample, d.sampled,
-                 "Opt-out sampling should behave as expected");
-    Assert.equal(Telemetry.canRecordBase, d.sampled,
-                 "Base recording setting should be correct");
-  }
-
-  // If we disable opt-out sampling Telemetry, have the opt-in setting on and extended Telemetry off,
-  // we should not enable anything.
-  Preferences.set(PREF_OPTOUT_SAMPLE, false);
-  fakeIsUnifiedOptin(true);
-  for (let d of DATA) {
-    dump("Testing sampling for uuid: " + d.uuid + "\n");
-    fakeCachedClientId(d.uuid);
-    yield TelemetryController.reset();
-    Assert.equal(Telemetry.canRecordBase, false,
-                 "Sampling should not override the default opt-out behavior");
-  }
-
-  // If we fully enable opt-out Telemetry on release, the sampling should not override that.
-  Preferences.set(PREF_OPTOUT_SAMPLE, true);
-  fakeIsUnifiedOptin(false);
-  for (let d of DATA) {
-    dump("Testing sampling for uuid: " + d.uuid + "\n");
-    fakeCachedClientId(d.uuid);
-    yield TelemetryController.reset();
-    Assert.equal(Telemetry.canRecordBase, true,
-                 "Sampling should not override the default opt-out behavior");
-  }
-});
-
 add_task(function* test_telemetryEnabledUnexpectedValue(){
   // Remove the default value for toolkit.telemetry.enabled from the default prefs.
   // Otherwise, we wouldn't be able to set the pref to a string.
@@ -440,7 +384,7 @@ add_task(function* test_telemetryEnabledUnexpectedValue(){
   // Set the preferences controlling the Telemetry status to a string.
   Preferences.set(PREF_ENABLED, "false");
   // Check that Telemetry is not enabled.
-  yield TelemetryController.reset();
+  yield TelemetryController.testReset();
   Assert.equal(Telemetry.canRecordExtended, false,
                "Invalid values must not enable Telemetry recording.");
 
@@ -449,13 +393,13 @@ add_task(function* test_telemetryEnabledUnexpectedValue(){
 
   // Make sure that flipping it to true works.
   Preferences.set(PREF_ENABLED, true);
-  yield TelemetryController.reset();
+  yield TelemetryController.testReset();
   Assert.equal(Telemetry.canRecordExtended, true,
                "True must enable Telemetry recording.");
 
   // Also check that the false works as well.
   Preferences.set(PREF_ENABLED, false);
-  yield TelemetryController.reset();
+  yield TelemetryController.testReset();
   Assert.equal(Telemetry.canRecordExtended, false,
                "False must disable Telemetry recording.");
 });

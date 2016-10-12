@@ -19,10 +19,13 @@
 #ifndef wasm_signal_handlers_h
 #define wasm_signal_handlers_h
 
-#if defined(XP_DARWIN) && defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+#include "mozilla/Attributes.h"
+
+#if defined(XP_DARWIN) && defined(ASMJS_MAY_USE_SIGNAL_HANDLERS)
 # include <mach/mach.h>
 # include "jslock.h"
 #endif
+#include "threading/Thread.h"
 
 struct JSRuntime;
 
@@ -38,10 +41,10 @@ namespace wasm {
 // runtime. Return whether runtime can:
 //  - rely on fault handler support for avoiding asm.js heap bounds checks
 //  - rely on InterruptRunningJitCode to halt running Ion/asm.js from any thread
-bool
+MOZ_MUST_USE bool
 EnsureSignalHandlersInstalled(JSRuntime* rt);
 
-#if defined(XP_DARWIN) && defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+#if defined(XP_DARWIN) && defined(ASMJS_MAY_USE_SIGNAL_HANDLERS)
 // On OSX we are forced to use the lower-level Mach exception mechanism instead
 // of Unix signals. Mach exceptions are not handled on the victim's stack but
 // rather require an extra thread. For simplicity, we create one such thread
@@ -51,7 +54,7 @@ EnsureSignalHandlersInstalled(JSRuntime* rt);
 class MachExceptionHandler
 {
     bool installed_;
-    PRThread* thread_;
+    js::Thread thread_;
     mach_port_t port_;
 
     void uninstall();
@@ -64,6 +67,10 @@ class MachExceptionHandler
     bool install(JSRuntime* rt);
 };
 #endif
+
+// Test whether the given PC is within the innermost wasm activation. Return
+// false if it is not, or it cannot be determined.
+bool IsPCInWasmCode(void *pc);
 
 } // namespace wasm
 } // namespace js

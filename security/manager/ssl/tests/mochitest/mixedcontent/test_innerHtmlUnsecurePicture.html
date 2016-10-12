@@ -11,11 +11,13 @@
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 
   <script class="testbody" type="text/javascript">
+  /* import-globals-from mixedContentTest.js */
+  "use strict";
 
   function runTest()
   {
     isSecurityState("secure");
-    
+
     document.getElementById("buddy").innerHTML =
       "<img id='image1' src='http://example.com/tests/security/manager/ssl/tests/mochitest/mixedcontent/moonsurface.jpg' />";
 
@@ -29,7 +31,7 @@
   {
     is(document.getElementById("buddy").innerHTML, "", "innerHTML back to previous");
     isSecurityState("secure");
-    finish();    
+    finish();
   }
 
   </script>

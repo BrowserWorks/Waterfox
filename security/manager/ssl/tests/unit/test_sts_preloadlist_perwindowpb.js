@@ -3,6 +3,7 @@
 // and login.persona.org because they are Mozilla properties and we are
 // invested in HSTS. Additionally, www.torproject.org was deemed likely to
 // continue to use HSTS.
+"use strict";
 
 var gSSService = Cc["@mozilla.org/ssservice;1"]
                    .getService(Ci.nsISiteSecurityService);
@@ -10,8 +11,9 @@ var gSSService = Cc["@mozilla.org/ssservice;1"]
 function Observer() {}
 Observer.prototype = {
   observe: function(subject, topic, data) {
-    if (topic == "last-pb-context-exited")
+    if (topic == "last-pb-context-exited") {
       run_next_test();
+    }
   }
 };
 
@@ -68,7 +70,7 @@ function test_part1() {
 
   // check that processing a header with max-age: 0 will remove a preloaded
   // site from the list
-  var uri = Services.io.newURI("http://bugzilla.mozilla.org", null, null);
+  let uri = Services.io.newURI("http://bugzilla.mozilla.org", null, null);
   gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
                            "max-age=0", sslStatus, 0);
   ok(!gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
@@ -88,7 +90,7 @@ function test_part1() {
 
   // check that processing a header with max-age: 0 from a subdomain of a site
   // will not remove that (ancestor) site from the list
-  var uri = Services.io.newURI("http://subdomain.www.torproject.org", null, null);
+  uri = Services.io.newURI("http://subdomain.www.torproject.org", null, null);
   gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
                            "max-age=0", sslStatus, 0);
   ok(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
@@ -96,7 +98,7 @@ function test_part1() {
   ok(!gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
                               "subdomain.www.torproject.org", 0));
 
-  var uri = Services.io.newURI("http://subdomain.bugzilla.mozilla.org", null, null);
+  uri = Services.io.newURI("http://subdomain.bugzilla.mozilla.org", null, null);
   gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
                            "max-age=0", sslStatus, 0);
   // we received a header with "max-age=0", so we have "no information"
@@ -139,7 +141,7 @@ function test_part1() {
   // (sanity check first - this should be in the preload list)
   ok(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
                              "login.persona.org", 0));
-  var uri = Services.io.newURI("http://login.persona.org", null, null);
+  uri = Services.io.newURI("http://login.persona.org", null, null);
   gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
                            "max-age=1", sslStatus, 0);
   do_timeout(1250, function() {
@@ -159,7 +161,7 @@ function test_private_browsing1() {
   ok(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
                              "a.b.c.subdomain.bugzilla.mozilla.org", IS_PRIVATE));
 
-  var uri = Services.io.newURI("http://bugzilla.mozilla.org", null, null);
+  let uri = Services.io.newURI("http://bugzilla.mozilla.org", null, null);
   gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
                            "max-age=0", sslStatus, IS_PRIVATE);
   ok(!gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
@@ -192,7 +194,7 @@ function test_private_browsing1() {
   // (sanity check first - this should be in the preload list)
   ok(gSSService.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS,
                              "login.persona.org", IS_PRIVATE));
-  var uri = Services.io.newURI("http://login.persona.org", null, null);
+  uri = Services.io.newURI("http://login.persona.org", null, null);
   gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
                            "max-age=1", sslStatus, IS_PRIVATE);
   do_timeout(1250, function() {

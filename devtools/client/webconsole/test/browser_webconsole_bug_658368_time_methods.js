@@ -1,8 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Tests that the Console API implements the time() and timeEnd() methods.
 
@@ -46,7 +45,7 @@ add_task(function* () {
 
   // The next test makes sure that timers with the same name but in separate
   // pages, do not contain the same value.
-  content.location = TEST_URI3;
+  BrowserTestUtils.loadURI(gBrowser.selectedBrowser, TEST_URI3);
 
   yield waitForMessages({
     webconsole: hud2,
@@ -60,7 +59,7 @@ add_task(function* () {
 
   // Now the following console.timeEnd() call shouldn't display anything,
   // if the timers in different pages are not related.
-  content.location = TEST_URI4;
+  BrowserTestUtils.loadURI(gBrowser.selectedBrowser, TEST_URI4);
   yield loadBrowser(browser);
 
   testLogEntry(hud2.outputNode, "bTimer: timer started",

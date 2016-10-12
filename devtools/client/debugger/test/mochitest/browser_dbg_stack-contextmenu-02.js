@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test that the copy contextmenu copys the stack frames to the clipboard.
@@ -10,20 +12,24 @@ const STACK_STRING = "simpleCall@" + EXAMPLE_URL + "doc_recursion-stack.html:14:
 
 function test() {
   let gTab, gPanel, gDebugger, gFrames;
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
-   gTab = aTab;
-   gPanel = aPanel;
-   gDebugger = gPanel.panelWin;
-   gFrames = gDebugger.DebuggerView.StackFrames;
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
+    gTab = aTab;
+    gPanel = aPanel;
+    gDebugger = gPanel.panelWin;
+    gFrames = gDebugger.DebuggerView.StackFrames;
 
-   waitForDebuggerEvents(gPanel, gDebugger.EVENTS.AFTER_FRAMES_REFILLED)
+    waitForDebuggerEvents(gPanel, gDebugger.EVENTS.AFTER_FRAMES_REFILLED)
      .then(openContextMenu)
      .then(testCopyStackMenuItem)
      .then(() => resumeDebuggerThenCloseAndFinish(gPanel))
      .then(null, aError => {
        ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
      });
-   callInTab(gTab, "simpleCall");
+    callInTab(gTab, "simpleCall");
   });
 
   function clickCopyStack() {
@@ -46,7 +52,7 @@ function test() {
   function openContextMenu() {
     let contextMenu = gDebugger.document.getElementById("stackFramesContextMenu");
     let contextMenuShown = once(contextMenu, "popupshown");
-    EventUtils.synthesizeMouseAtCenter(gFrames.getItemAtIndex(0).prebuiltNode, {type: 'contextmenu', button: 2}, gDebugger);
+    EventUtils.synthesizeMouseAtCenter(gFrames.getItemAtIndex(0).prebuiltNode, {type: "contextmenu", button: 2}, gDebugger);
     return contextMenuShown;
   }
 }

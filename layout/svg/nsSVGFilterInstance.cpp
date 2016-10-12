@@ -10,6 +10,7 @@
 #include "gfxPlatform.h"
 #include "gfxUtils.h"
 #include "nsISVGChildFrame.h"
+#include "mozilla/dom/HTMLCanvasElement.h"
 #include "mozilla/dom/SVGFilterElement.h"
 #include "nsReferencedElement.h"
 #include "nsSVGFilterFrame.h"
@@ -262,13 +263,13 @@ nsSVGFilterInstance::ComputeFilterPrimitiveSubregion(nsSVGFE* aFilterElement,
 void
 nsSVGFilterInstance::GetInputsAreTainted(const nsTArray<FilterPrimitiveDescription>& aPrimitiveDescrs,
                                          const nsTArray<int32_t>& aInputIndices,
+                                         bool aFilterInputIsTainted,
                                          nsTArray<bool>& aOutInputsAreTainted)
 {
   for (uint32_t i = 0; i < aInputIndices.Length(); i++) {
     int32_t inputIndex = aInputIndices[i];
     if (inputIndex < 0) {
-      // SourceGraphic, SourceAlpha, FillPaint and StrokePaint are tainted.
-      aOutInputsAreTainted.AppendElement(true);
+      aOutInputsAreTainted.AppendElement(aFilterInputIsTainted);
     } else {
       aOutInputsAreTainted.AppendElement(aPrimitiveDescrs[inputIndex].IsTainted());
     }
@@ -327,7 +328,7 @@ nsSVGFilterInstance::GetSourceIndices(nsSVGFE* aPrimitiveElement,
                                       const nsDataHashtable<nsStringHashKey, int32_t>& aImageTable,
                                       nsTArray<int32_t>& aSourceIndices)
 {
-  nsAutoTArray<nsSVGStringInfo,2> sources;
+  AutoTArray<nsSVGStringInfo,2> sources;
   aPrimitiveElement->GetSourceImageNames(sources);
 
   for (uint32_t j = 0; j < sources.Length(); j++) {
@@ -357,6 +358,20 @@ nsSVGFilterInstance::GetSourceIndices(nsSVGFE* aPrimitiveElement,
     aSourceIndices.AppendElement(sourceIndex);
   }
   return NS_OK;
+}
+
+static bool
+IsFilterInputTainted(nsIContent* aElement)
+{
+  // When the filter is applied during canvas drawing, we might be allowed to
+  // read from the canvas.
+  if (HTMLCanvasElement* canvas =
+        HTMLCanvasElement::FromContentOrNull(aElement)) {
+    return canvas->IsWriteOnly();
+  }
+
+  // Always treat normal filtered elements as tainted.
+  return true;
 }
 
 nsresult
@@ -389,12 +404,14 @@ nsSVGFilterInstance::BuildPrimitives(nsTArray<FilterPrimitiveDescription>& aPrim
   // The principal that we check principals of any loaded images against.
   nsCOMPtr<nsIPrincipal> principal = mTargetContent->NodePrincipal();
 
+  bool filterInputIsTainted = IsFilterInputTainted(mTargetContent);
+
   for (uint32_t primitiveElementIndex = 0;
        primitiveElementIndex < primitives.Length();
        ++primitiveElementIndex) {
     nsSVGFE* filter = primitives[primitiveElementIndex];
 
-    nsAutoTArray<int32_t,2> sourceIndices;
+    AutoTArray<int32_t,2> sourceIndices;
     nsresult rv = GetSourceIndices(filter, aPrimitiveDescrs, imageTable, sourceIndices);
     if (NS_FAILED(rv)) {
       return rv;
@@ -404,7 +421,7 @@ nsSVGFilterInstance::BuildPrimitives(nsTArray<FilterPrimitiveDescription>& aPrim
       ComputeFilterPrimitiveSubregion(filter, aPrimitiveDescrs, sourceIndices);
 
     nsTArray<bool> sourcesAreTainted;
-    GetInputsAreTainted(aPrimitiveDescrs, sourceIndices, sourcesAreTainted);
+    GetInputsAreTainted(aPrimitiveDescrs, sourceIndices, filterInputIsTainted, sourcesAreTainted);
 
     FilterPrimitiveDescription descr =
       filter->GetPrimitiveDescription(this, primitiveSubregion, sourcesAreTainted, aInputImages);

@@ -96,6 +96,21 @@ DesktopApplication::DesktopApplication() {
 }
 
 DesktopApplication::~DesktopApplication() {
+  if (processPathNameUTF8_) {
+    delete [] processPathNameUTF8_;
+  }
+
+  if (applicationNameUTF8_) {
+    delete [] applicationNameUTF8_;
+  }
+
+  if (processUniqueIdUTF8_) {
+    delete [] processUniqueIdUTF8_;
+  }
+
+  processPathNameUTF8_= NULL;
+  applicationNameUTF8_= NULL;
+  processUniqueIdUTF8_= NULL;
 }
 
 void DesktopApplication::setProcessId(const ProcessId processId) {
@@ -258,7 +273,7 @@ void DesktopDeviceInfoImpl::InitializeWindowList() {
       pWinDevice->setDeviceName(itr->title.c_str());
 
       char idStr[BUFSIZ];
-#if XP_WIN
+#if WEBRTC_WIN
       _snprintf_s(idStr, sizeof(idStr), sizeof(idStr) - 1, "%ld", pWinDevice->getScreenId());
 #else
       snprintf(idStr, sizeof(idStr), "%ld", pWinDevice->getScreenId());

@@ -3,11 +3,9 @@
 
 "use strict";
 
-var {Loader} = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js",
-                         {});
 var {OutputParser} = require("devtools/client/shared/output-parser");
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("about:blank");
   yield performTest();
   gBrowser.removeCurrentTab();
@@ -22,6 +20,7 @@ function* performTest() {
   testParseCssVar(doc, parser);
   testParseURL(doc, parser);
   testParseFilter(doc, parser);
+  testParseAngle(doc, parser);
 
   host.destroy();
 }
@@ -50,8 +49,8 @@ function makeColorTest(name, value, segments) {
       result.expected += segment;
     } else {
       result.expected += "<span data-color=\"" + segment.name + "\">" +
-        "<span style=\"background-color:" + segment.name +
-        "\" class=\"" + COLOR_TEST_CLASS + "\"></span><span>" +
+        "<span class=\"" + COLOR_TEST_CLASS + "\" style=\"background-color:" +
+        segment.name + "\"></span><span>" +
         segment.name + "</span></span>";
     }
   }
@@ -101,8 +100,8 @@ function testParseCssProperty(doc, parser) {
 
     // Test a very long property.
     makeColorTest("background-image",
-                  "linear-gradient(0deg, transparent 0, transparent 5%,#F00 0, #F00 10%,#FF0 0, #FF0 15%,#0F0 0, #0F0 20%,#0FF 0, #0FF 25%,#00F 0, #00F 30%,#800 0, #800 35%,#880 0, #880 40%,#080 0, #080 45%,#088 0, #088 50%,#008 0, #008 55%,#FFF 0, #FFF 60%,#EEE 0, #EEE 65%,#CCC 0, #CCC 70%,#999 0, #999 75%,#666 0, #666 80%,#333 0, #333 85%,#111 0, #111 90%,#000 0, #000 95%,transparent 0, transparent 100%)",
-                  ["linear-gradient(0deg, ", {name: "transparent"},
+                  "linear-gradient(to left, transparent 0, transparent 5%,#F00 0, #F00 10%,#FF0 0, #FF0 15%,#0F0 0, #0F0 20%,#0FF 0, #0FF 25%,#00F 0, #00F 30%,#800 0, #800 35%,#880 0, #880 40%,#080 0, #080 45%,#088 0, #088 50%,#008 0, #008 55%,#FFF 0, #FFF 60%,#EEE 0, #EEE 65%,#CCC 0, #CCC 70%,#999 0, #999 75%,#666 0, #666 80%,#333 0, #333 85%,#111 0, #111 90%,#000 0, #000 95%,transparent 0, transparent 100%)",
+                  ["linear-gradient(to left, ", {name: "transparent"},
                    " 0, ", {name: "transparent"},
                    " 5%,", {name: "#F00"},
                    " 0, ", {name: "#F00"},
@@ -215,6 +214,13 @@ function testParseURL(doc, parser) {
       expectedTrailer: ")"
     },
     {
+      desc: "bad url, missing paren, with baseURI",
+      baseURI: "data:text/html,<style></style>",
+      leader: "url(",
+      trailer: "",
+      expectedTrailer: ")"
+    },
+    {
       desc: "bad url, double quote, missing paren",
       leader: "url(\"",
       trailer: "\"",
@@ -231,7 +237,8 @@ function testParseURL(doc, parser) {
   for (let test of tests) {
     let url = test.leader + "something.jpg" + test.trailer;
     let frag = parser.parseCssProperty("background", url, {
-      urlClass: "test-urlclass"
+      urlClass: "test-urlclass",
+      baseURI: test.baseURI,
     });
 
     let target = doc.querySelector("div");
@@ -240,8 +247,8 @@ function testParseURL(doc, parser) {
     let expectedTrailer = test.expectedTrailer || test.trailer;
 
     let expected = test.leader +
-        "<a href=\"something.jpg\" class=\"test-urlclass\" " +
-        "target=\"_blank\">something.jpg</a>" +
+        "<a target=\"_blank\" class=\"test-urlclass\" " +
+        "href=\"something.jpg\">something.jpg</a>" +
         expectedTrailer;
 
     is(target.innerHTML, expected, test.desc);
@@ -257,5 +264,22 @@ function testParseFilter(doc, parser) {
 
   let swatchCount = frag.querySelectorAll(".test-filterswatch").length;
   is(swatchCount, 1, "filter swatch was created");
+}
+
+function testParseAngle(doc, parser) {
+  let frag = parser.parseCssProperty("image-orientation", "90deg", {
+    angleSwatchClass: "test-angleswatch"
+  });
+
+  let swatchCount = frag.querySelectorAll(".test-angleswatch").length;
+  is(swatchCount, 1, "angle swatch was created");
+
+  frag = parser.parseCssProperty("background-image",
+    "linear-gradient(90deg, red, blue", {
+      angleSwatchClass: "test-angleswatch"
+    });
+
+  swatchCount = frag.querySelectorAll(".test-angleswatch").length;
+  is(swatchCount, 1, "angle swatch was created");
 }
 

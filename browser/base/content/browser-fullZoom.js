@@ -111,12 +111,12 @@ var FullZoom = {
 
   // nsIContentPrefObserver
 
-  onContentPrefSet: function FullZoom_onContentPrefSet(aGroup, aName, aValue) {
-    this._onContentPrefChanged(aGroup, aValue);
+  onContentPrefSet: function FullZoom_onContentPrefSet(aGroup, aName, aValue, aIsPrivate) {
+    this._onContentPrefChanged(aGroup, aValue, aIsPrivate);
   },
 
-  onContentPrefRemoved: function FullZoom_onContentPrefRemoved(aGroup, aName) {
-    this._onContentPrefChanged(aGroup, undefined);
+  onContentPrefRemoved: function FullZoom_onContentPrefRemoved(aGroup, aName, aIsPrivate) {
+    this._onContentPrefChanged(aGroup, undefined, aIsPrivate);
   },
 
   /**
@@ -127,7 +127,7 @@ var FullZoom = {
    * @param aValue  The new value of the changed preference.  Pass undefined to
    *                indicate the preference's removal.
    */
-  _onContentPrefChanged: function FullZoom__onContentPrefChanged(aGroup, aValue) {
+  _onContentPrefChanged: function FullZoom__onContentPrefChanged(aGroup, aValue, aIsPrivate) {
     if (this._isNextContentPrefChangeInternal) {
       // Ignore changes that FullZoom itself makes.  This works because the
       // content pref service calls callbacks before notifying observers, and it
@@ -140,9 +140,10 @@ var FullZoom = {
     if (!browser.currentURI)
       return;
 
+    let ctxt = this._loadContextFromBrowser(browser);
     let domain = this._cps2.extractDomain(browser.currentURI.spec);
     if (aGroup) {
-      if (aGroup == domain)
+      if (aGroup == domain && ctxt.usePrivateBrowsing == aIsPrivate)
         this._applyPrefToZoom(aValue, browser);
       return;
     }
@@ -154,7 +155,6 @@ var FullZoom = {
     // zoom should be set to the new global preference now that the global
     // preference has changed.
     let hasPref = false;
-    let ctxt = this._loadContextFromBrowser(browser);
     let token = this._getBrowserToken(browser);
     this._cps2.getByDomainAndName(browser.currentURI.spec, this.name, ctxt, {
       handleResult: function () { hasPref = true; },
@@ -270,24 +270,32 @@ var FullZoom = {
   },
 
   /**
-   * Sets the zoom level of the page in the current browser to the global zoom
-   * level.
+   * Sets the zoom level for the given browser to the given floating
+   * point value, where 1 is the default zoom level.
    */
-  reset: function FullZoom_reset() {
-    let browser = gBrowser.selectedBrowser;
+  setZoom: function (value, browser = gBrowser.selectedBrowser) {
+    ZoomManager.setZoomForBrowser(browser, value);
+    this._ignorePendingZoomAccesses(browser);
+    this._applyZoomToPref(browser);
+  },
+
+  /**
+   * Sets the zoom level of the page in the given browser to the global zoom
+   * level.
+   *
+   * @return A promise which resolves when the zoom reset has been applied.
+   */
+  reset: function FullZoom_reset(browser = gBrowser.selectedBrowser) {
     let token = this._getBrowserToken(browser);
-    this._getGlobalValue(browser, function (value) {
+    let result = this._getGlobalValue(browser).then(value => {
       if (token.isCurrent) {
         ZoomManager.setZoomForBrowser(browser, value === undefined ? 1 : value);
         this._ignorePendingZoomAccesses(browser);
-        this._executeSoon(function () {
-          // _getGlobalValue may be either sync or async, so notify asyncly so
-          // observers are guaranteed consistent behavior.
-          Services.obs.notifyObservers(null, "browser-fullZoom:zoomReset", "");
-        });
+        Services.obs.notifyObservers(null, "browser-fullZoom:zoomReset", "");
       }
     });
     this._removePref(browser);
+    return result;
   },
 
   /**
@@ -335,7 +343,7 @@ var FullZoom = {
     }
 
     let token = this._getBrowserToken(aBrowser);
-    this._getGlobalValue(aBrowser, function (value) {
+    this._getGlobalValue(aBrowser).then(value => {
       if (token.isCurrent) {
         ZoomManager.setZoomForBrowser(aBrowser, value === undefined ? 1 : value);
         this._ignorePendingZoomAccesses(aBrowser);
@@ -469,32 +477,27 @@ var FullZoom = {
   /**
    * Gets the global browser.content.full-zoom content preference.
    *
-   * WARNING: callback may be called synchronously or asynchronously.  The
-   * reason is that it's usually desirable to avoid turns of the event loop
-   * where possible, since they can lead to visible, jarring jumps in zoom
-   * level.  It's not always possible to avoid them, though.  As a convenience,
-   * then, this method takes a callback and returns nothing.
-   *
    * @param browser   The browser pertaining to the zoom.
-   * @param callback  Synchronously or asynchronously called when done.  It's
-   *                  bound to this object (FullZoom) and called as:
-   *                    callback(prefValue)
+   * @returns Promise<prefValue>
+   *                  Resolves to the preference value when done.
    */
-  _getGlobalValue: function FullZoom__getGlobalValue(browser, callback) {
+  _getGlobalValue: function FullZoom__getGlobalValue(browser) {
     // * !("_globalValue" in this) => global value not yet cached.
     // * this._globalValue === undefined => global value known not to exist.
     // * Otherwise, this._globalValue is a number, the global value.
-    if ("_globalValue" in this) {
-      callback.call(this, this._globalValue, true);
-      return;
-    }
-    let value = undefined;
-    this._cps2.getGlobal(this.name, this._loadContextFromBrowser(browser), {
-      handleResult: function (pref) { value = pref.value; },
-      handleCompletion: function (reason) {
-        this._globalValue = this._ensureValid(value);
-        callback.call(this, this._globalValue);
-      }.bind(this)
+    return new Promise(resolve => {
+      if ("_globalValue" in this) {
+        resolve(this._globalValue);
+        return;
+      }
+      let value = undefined;
+      this._cps2.getGlobal(this.name, this._loadContextFromBrowser(browser), {
+        handleResult: function (pref) { value = pref.value; },
+        handleCompletion: (reason) => {
+          this._globalValue = this._ensureValid(value);
+          resolve(this._globalValue);
+        }
+      });
     });
   },
 

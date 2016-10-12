@@ -191,9 +191,9 @@ nsFilePicker::~nsFilePicker()
 
 NS_IMPL_ISUPPORTS(nsFilePicker, nsIFilePicker)
 
-NS_IMETHODIMP nsFilePicker::Init(nsIDOMWindow *aParent, const nsAString& aTitle, int16_t aMode)
+NS_IMETHODIMP nsFilePicker::Init(mozIDOMWindowProxy *aParent, const nsAString& aTitle, int16_t aMode)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aParent);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryInterface(aParent);
   nsIDocShell* docShell = window ? window->GetDocShell() : nullptr;  
   mLoadContext = do_QueryInterface(docShell);
   
@@ -1048,6 +1048,10 @@ nsFilePicker::ShowW(int16_t *aReturnVal)
   // Clear previous file selections
   mUnicodeFile.Truncate();
   mFiles.Clear();
+
+  // On Win10, the picker doesn't support per-monitor DPI, so we open it
+  // with our context set temporarily to system-dpi-aware
+  WinUtils::AutoSystemDpiAware dpiAwareness;
 
   // Launch the XP file/folder picker on XP and as a fallback on Vista+. 
   // The CoCreateInstance call to CLSID_FileOpenDialog fails with "(0x80040111)

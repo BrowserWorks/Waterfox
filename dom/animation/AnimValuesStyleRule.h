@@ -36,41 +36,27 @@ public:
   void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 
-  void AddValue(nsCSSProperty aProperty, StyleAnimationValue &aStartValue)
+  void AddValue(nsCSSProperty aProperty, const StyleAnimationValue &aStartValue)
   {
-    PropertyValuePair v = { aProperty, aStartValue };
-    mPropertyValuePairs.AppendElement(v);
+    PropertyStyleAnimationValuePair pair = { aProperty, aStartValue };
+    mPropertyValuePairs.AppendElement(pair);
     mStyleBits |=
       nsCachedStyleData::GetBitForSID(nsCSSProps::kSIDTable[aProperty]);
   }
 
-  // Caller must fill in returned value.
-  StyleAnimationValue* AddEmptyValue(nsCSSProperty aProperty)
+  void AddValue(nsCSSProperty aProperty, StyleAnimationValue&& aStartValue)
   {
-    PropertyValuePair *p = mPropertyValuePairs.AppendElement();
-    p->mProperty = aProperty;
+    PropertyStyleAnimationValuePair* pair = mPropertyValuePairs.AppendElement();
+    pair->mProperty = aProperty;
+    pair->mValue = Move(aStartValue);
     mStyleBits |=
       nsCachedStyleData::GetBitForSID(nsCSSProps::kSIDTable[aProperty]);
-    return &p->mValue;
-  }
-
-  struct PropertyValuePair {
-    nsCSSProperty mProperty;
-    StyleAnimationValue mValue;
-  };
-
-  void AddPropertiesToSet(nsCSSPropertySet& aSet) const
-  {
-    for (size_t i = 0, i_end = mPropertyValuePairs.Length(); i < i_end; ++i) {
-      const PropertyValuePair &cv = mPropertyValuePairs[i];
-      aSet.AddProperty(cv.mProperty);
-    }
   }
 
 private:
   ~AnimValuesStyleRule() {}
 
-  InfallibleTArray<PropertyValuePair> mPropertyValuePairs;
+  InfallibleTArray<PropertyStyleAnimationValuePair> mPropertyValuePairs;
   uint32_t mStyleBits;
 };
 

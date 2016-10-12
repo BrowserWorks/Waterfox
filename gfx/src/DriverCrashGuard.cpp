@@ -23,11 +23,24 @@ namespace mozilla {
 namespace gfx {
 
 static const size_t NUM_CRASH_GUARD_TYPES = size_t(CrashGuardType::NUM_TYPES);
-static const char* sCrashGuardNames[NUM_CRASH_GUARD_TYPES] = {
+static const char* sCrashGuardNames[] = {
   "d3d11layers",
   "d3d9video",
   "glcontext",
+  "d3d11video",
 };
+static_assert(MOZ_ARRAY_LENGTH(sCrashGuardNames) == NUM_CRASH_GUARD_TYPES,
+              "CrashGuardType updated without a name string");
+
+static inline void
+BuildCrashGuardPrefName(CrashGuardType aType, nsCString& aOutPrefName)
+{
+  MOZ_ASSERT(aType < CrashGuardType::NUM_TYPES);
+  MOZ_ASSERT(sCrashGuardNames[size_t(aType)]);
+
+  aOutPrefName.Assign("gfx.crash-guard.status.");
+  aOutPrefName.Append(sCrashGuardNames[size_t(aType)]);
+}
 
 DriverCrashGuard::DriverCrashGuard(CrashGuardType aType, dom::ContentParent* aContentParent)
  : mType(aType)
@@ -36,10 +49,7 @@ DriverCrashGuard::DriverCrashGuard(CrashGuardType aType, dom::ContentParent* aCo
  , mGuardActivated(false)
  , mCrashDetected(false)
 {
-  MOZ_ASSERT(mType < CrashGuardType::NUM_TYPES);
-
-  mStatusPref.Assign("gfx.crash-guard.status.");
-  mStatusPref.Append(sCrashGuardNames[size_t(mType)]);
+  BuildCrashGuardPrefName(aType, mStatusPref);
 }
 
 void
@@ -53,26 +63,36 @@ DriverCrashGuard::InitializeIfNeeded()
   Initialize();
 }
 
-void
-DriverCrashGuard::Initialize()
+static inline bool
+AreCrashGuardsEnabled()
 {
 #ifdef NIGHTLY_BUILD
   // We only use the crash guard on non-nightly channels, since the nightly
   // channel is for development and having graphics features perma-disabled
-  // is rather annoying.
-  return;
+  // is rather annoying.  Unless the user forces is with an environment
+  // variable, which comes in handy for testing.
+  return gfxEnv::ForceCrashGuardNightly();
+#else
+  // Check to see if all guards have been disabled through the environment.
+  if (gfxEnv::DisableCrashGuard()) {
+    return false;
+  }
+  return true;
 #endif
+}
+
+void
+DriverCrashGuard::Initialize()
+{
+  if (!AreCrashGuardsEnabled()) {
+    return;
+  }
 
   // Using DriverCrashGuard off the main thread currently does not work. Under
   // e10s it could conceivably work by dispatching the IPC calls via the main
   // thread. In the parent process this would be harder. For now, we simply
   // exit early instead.
   if (!NS_IsMainThread()) {
-    return;
-  }
-
-  // Check to see if all guards have been disabled through the environment.
-  if (gfxEnv::DisableCrashGuard()) {
     return;
   }
 
@@ -298,7 +318,8 @@ DriverCrashGuard::FeatureEnabled(int aFeature, bool aDefault)
     return aDefault;
   }
   int32_t status;
-  if (!NS_SUCCEEDED(mGfxInfo->GetFeatureStatus(aFeature, &status))) {
+  nsCString discardFailureId;
+  if (!NS_SUCCEEDED(mGfxInfo->GetFeatureStatus(aFeature, discardFailureId, &status))) {
     return false;
   }
   return status == nsIGfxInfo::FEATURE_STATUS_OK;
@@ -362,6 +383,31 @@ DriverCrashGuard::FlushPreferences()
 
   if (nsIPrefService* prefService = Preferences::GetService()) {
     prefService->SavePrefFile(nullptr);
+  }
+}
+
+void
+DriverCrashGuard::ForEachActiveCrashGuard(const CrashGuardCallback& aCallback)
+{
+  if (!AreCrashGuardsEnabled()) {
+    // Even if guards look active (via prefs), they can be ignored if globally
+    // disabled.
+    return;
+  }
+
+  for (size_t i = 0; i < NUM_CRASH_GUARD_TYPES; i++) {
+    CrashGuardType type = static_cast<CrashGuardType>(i);
+
+    nsCString prefName;
+    BuildCrashGuardPrefName(type, prefName);
+
+    auto status =
+      static_cast<DriverInitStatus>(Preferences::GetInt(prefName.get(), 0));
+    if (status != DriverInitStatus::Crashed) {
+      continue;
+    }
+
+    aCallback(sCrashGuardNames[i], prefName.get());
   }
 }
 
@@ -477,6 +523,30 @@ D3D9VideoCrashGuard::LogFeatureDisabled()
   gfxCriticalNote << "DXVA2D3D9 video decoding is disabled due to a previous crash.";
 }
 
+D3D11VideoCrashGuard::D3D11VideoCrashGuard(dom::ContentParent* aContentParent)
+ : DriverCrashGuard(CrashGuardType::D3D11Video, aContentParent)
+{
+}
+
+bool
+D3D11VideoCrashGuard::UpdateEnvironment()
+{
+  // We don't care about any extra preferences here.
+  return false;
+}
+
+void
+D3D11VideoCrashGuard::LogCrashRecovery()
+{
+  gfxCriticalNote << "DXVA2D3D11 just crashed; hardware video will be disabled.";
+}
+
+void
+D3D11VideoCrashGuard::LogFeatureDisabled()
+{
+  gfxCriticalNote << "DXVA2D3D11 video decoding is disabled due to a previous crash.";
+}
+
 GLContextCrashGuard::GLContextCrashGuard(dom::ContentParent* aContentParent)
  : DriverCrashGuard(CrashGuardType::GLContext, aContentParent)
 {
@@ -490,6 +560,13 @@ GLContextCrashGuard::Initialize()
     // to lose the entire browser and we don't want to hinder WebGL availability.
     return;
   }
+
+#if defined(MOZ_WIDGET_ANDROID)
+  // Disable the WebGL crash guard on Android - it doesn't use E10S, and
+  // its drivers will essentially never change, so the crash guard could
+  // permanently disable WebGL.
+  return;
+#endif
 
   DriverCrashGuard::Initialize();
 }
@@ -525,13 +602,13 @@ GLContextCrashGuard::UpdateEnvironment()
 void
 GLContextCrashGuard::LogCrashRecovery()
 {
-  gfxCriticalNote << "GLContext just crashed and is now disabled.";
+  gfxCriticalNote << "GLContext just crashed.";
 }
 
 void
 GLContextCrashGuard::LogFeatureDisabled()
 {
-  gfxCriticalNote << "GLContext is disabled due to a previous crash.";
+  gfxCriticalNote << "GLContext remains enabled despite a previous crash.";
 }
 
 } // namespace gfx

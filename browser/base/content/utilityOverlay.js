@@ -13,6 +13,9 @@ Components.utils.import("resource:///modules/RecentWindow.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ShellService",
                                   "resource:///modules/ShellService.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
+                                  "resource:///modules/ContextualIdentityService.jsm");
+
 XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
                                    "@mozilla.org/browser/aboutnewtab-service;1",
                                    "nsIAboutNewTabService");
@@ -23,7 +26,7 @@ this.__defineGetter__("BROWSER_NEW_TAB_URL", () => {
       !aboutNewTabService.overridden) {
     return "about:privatebrowsing";
   }
-  return "about:newtab";
+  return aboutNewTabService.newTabURL;
 });
 
 var TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
@@ -114,8 +117,8 @@ function openUILink(url, event, aIgnoreButton, aIgnoreAlt, aAllowThirdPartyFixup
  *
  * Middle-clicking is the same as Ctrl+clicking (it opens a new tab).
  *
- * Exceptions: 
- * - Alt is ignored for menu items selected using the keyboard so you don't accidentally save stuff.  
+ * Exceptions:
+ * - Alt is ignored for menu items selected using the keyboard so you don't accidentally save stuff.
  *    (Currently, the Alt isn't sent here at all for menu items, but that will change in bug 126189.)
  * - Alt is hard to use in context menus, because pressing Alt closes the menu.
  * - Alt can't be used on the bookmarks toolbar because Alt is used for "treat this as something draggable".
@@ -271,12 +274,17 @@ function openLinkIn(url, where, params) {
                                  createInstance(Ci.nsISupportsPRUint32);
     referrerPolicySupports.data = aReferrerPolicy;
 
+    var userContextIdSupports = Cc["@mozilla.org/supports-PRUint32;1"].
+                                 createInstance(Ci.nsISupportsPRUint32);
+    userContextIdSupports.data = aUserContextId;
+
     sa.AppendElement(wuri);
     sa.AppendElement(charset);
     sa.AppendElement(referrerURISupports);
     sa.AppendElement(aPostData);
     sa.AppendElement(allowThirdPartyFixupSupports);
     sa.AppendElement(referrerPolicySupports);
+    sa.AppendElement(userContextIdSupports);
 
     let features = "chrome,dialog=no,all";
     if (aIsPrivate) {
@@ -349,6 +357,7 @@ function openLinkIn(url, where, params) {
       referrerURI: aNoReferrer ? null : aReferrerURI,
       referrerPolicy: aReferrerPolicy,
       postData: aPostData,
+      userContextId: aUserContextId
     });
     break;
   case "tabshifted":
@@ -403,6 +412,58 @@ function checkForMiddleClick(node, event) {
   }
 }
 
+// Populate a menu with user-context menu items. This method should be called
+// by onpopupshowing passing the event as first argument. addCommandAttribute
+// param is used to set the 'command' attribute in the new menuitem elements.
+function createUserContextMenu(event, addCommandAttribute = true, excludeUserContextId = 0) {
+  while (event.target.hasChildNodes()) {
+    event.target.removeChild(event.target.firstChild);
+  }
+
+  let bundle = document.getElementById("bundle_browser");
+  let docfrag = document.createDocumentFragment();
+
+  // If we are exlucing a userContextId, we want to add a 'no-container' item.
+  if (excludeUserContextId) {
+    let menuitem = document.createElement("menuitem");
+    menuitem.setAttribute("usercontextid", "0");
+    menuitem.setAttribute("label", "No Container");
+    menuitem.setAttribute("accesskey", "N");
+
+    // We don't set oncommand/command attribute because if we have to exlclude
+    // a userContextId we are generating the contextMenu for the rightclick and
+    // addCommandAttribute will be false.
+
+    docfrag.appendChild(menuitem);
+
+    let menuseparator = document.createElement("menuseparator");
+    docfrag.appendChild(menuseparator);
+  }
+
+  ContextualIdentityService.getIdentities().forEach(identity => {
+    if (identity.userContextId == excludeUserContextId) {
+      return;
+    }
+
+    let menuitem = document.createElement("menuitem");
+    menuitem.setAttribute("usercontextid", identity.userContextId);
+    menuitem.setAttribute("label", bundle.getString(identity.label));
+    menuitem.setAttribute("accesskey", bundle.getString(identity.accessKey));
+    menuitem.classList.add("menuitem-iconic");
+
+    if (addCommandAttribute) {
+      menuitem.setAttribute("command", "Browser:NewUserContextTab");
+    }
+
+    menuitem.setAttribute("image", identity.icon);
+
+    docfrag.appendChild(menuitem);
+  });
+
+  event.target.appendChild(docfrag);
+  return true;
+}
+
 // Closes all popups that are ancestors of the node.
 function closeMenus(node)
 {
@@ -416,7 +477,7 @@ function closeMenus(node)
 }
 
 // Gather all descendent text under given document node.
-function gatherTextUnder ( root ) 
+function gatherTextUnder ( root )
 {
   var text = "";
   var node = root.firstChild;
@@ -673,7 +734,7 @@ function makeURLAbsolute(aBase, aUrl)
  *        This will be used as the referrer. There will be no security check.
  * @param [optional] aReferrerPolicy
  *        Referrer policy - Ci.nsIHttpChannel.REFERRER_POLICY_*.
- */ 
+ */
 function openNewTabWith(aURL, aDocument, aPostData, aEvent,
                         aAllowThirdPartyFixup, aReferrer, aReferrerPolicy) {
 
@@ -728,7 +789,7 @@ function openHelpLink(aHelpTopic, aCalledFromModal, aWhere) {
 }
 
 function openPrefsHelp() {
-  // non-instant apply prefwindows are usually modal, so we can't open in the topmost window, 
+  // non-instant apply prefwindows are usually modal, so we can't open in the topmost window,
   // since its probably behind the window.
   var instantApply = getBoolPref("browser.preferences.instantApply");
 
@@ -751,9 +812,9 @@ function trimURL(aURL) {
 
   let flags = Services.uriFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP |
               Services.uriFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS;
-  let fixedUpURL = Services.uriFixup.createFixupURI(urlWithoutProtocol, flags);
-  let expectedURLSpec;
+  let fixedUpURL, expectedURLSpec;
   try {
+    fixedUpURL = Services.uriFixup.createFixupURI(urlWithoutProtocol, flags);
     expectedURLSpec = makeURI(aURL).spec;
   } catch (ex) {
     return url;

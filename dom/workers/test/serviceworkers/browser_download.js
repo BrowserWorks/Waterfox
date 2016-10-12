@@ -45,10 +45,9 @@ function test() {
 
   SpecialPowers.pushPrefEnv({'set': [['dom.serviceWorkers.enabled', true],
                                      ['dom.serviceWorkers.exemptFromPerDomainMax', true],
-                                     ['dom.serviceWorkers.testing.enabled', true],
-                                     ['dom.serviceWorkers.interception.enabled', true]]},
+                                     ['dom.serviceWorkers.testing.enabled', true]]},
                             function() {
-    var url = gTestRoot + 'download_window.html';
+    var url = gTestRoot + 'download/window.html';
     var tab = gBrowser.addTab();
     gBrowser.selectedTab = tab;
 

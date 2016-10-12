@@ -18,6 +18,7 @@
 #include "nsFrameSelection.h"
 #include "nsISelectionListener.h"
 #include "nsContentCID.h"
+#include "nsDeviceContext.h"
 #include "nsIContent.h"
 #include "nsIDOMNode.h"
 #include "nsRange.h"
@@ -77,9 +78,14 @@ static NS_DEFINE_CID(kFrameTraversalCID, NS_FRAMETRAVERSAL_CID);
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/SelectionBinding.h"
 #include "mozilla/AsyncEventDispatcher.h"
+#include "nsHTMLEditor.h"
+#include "mozilla/Telemetry.h"
+#include "mozilla/layers/ScrollInputMethods.h"
+#include "nsViewManager.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using mozilla::layers::ScrollInputMethod;
 
 //#define DEBUG_TABLE 1
 
@@ -874,7 +880,7 @@ nsFrameSelection::MoveCaret(nsDirection       aDirection,
   if (!sel)
     return NS_ERROR_NULL_POINTER;
 
-  int32_t scrollFlags = 0;
+  int32_t scrollFlags = Selection::SCROLL_FOR_CARET_MOVE;
   nsINode* focusNode = sel->GetFocusNode();
   if (focusNode &&
       (focusNode->IsEditable() ||
@@ -1697,16 +1703,22 @@ nsFrameSelection::TakeFocus(nsIContent*        aNewFocus,
     // BUT only do this in an editor
 
     NS_ENSURE_STATE(mShell);
-    int16_t displaySelection = mShell->GetSelectionFlags();
-
-    // Editor has DISPLAY_ALL selection type
-    if (displaySelection == nsISelectionDisplay::DISPLAY_ALL)
-    {
-      mCellParent = GetCellParent(aNewFocus);
+    bool editableCell = false;
+    RefPtr<nsPresContext> context = mShell->GetPresContext();
+    if (context) {
+      nsCOMPtr<nsIHTMLEditor> editor = do_QueryInterface(nsContentUtils::GetHTMLEditor(context));
+      if (editor) {
+        nsINode* cellparent = GetCellParent(aNewFocus);
+        nsCOMPtr<nsINode> editorHostNode = editor->GetActiveEditingHost();
+        editableCell = cellparent && editorHostNode && 
+                   nsContentUtils::ContentIsDescendantOf(cellparent, editorHostNode);
+        if (editableCell) {
+          mCellParent = cellparent;
 #ifdef DEBUG_TABLE_SELECTION
-      if (mCellParent)
-        printf(" * TakeFocus - Collapsing into new cell\n");
+          printf(" * TakeFocus - Collapsing into new cell\n");
 #endif
+        }
+      }
     }
   }
   else {
@@ -1734,7 +1746,7 @@ printf(" * TakeFocus - moving into new cell\n");
 
         // XXXX We need to REALLY get the current key shift state
         //  (we'd need to add event listener -- let's not bother for now)
-        event.modifiers &= ~MODIFIER_SHIFT; //aContinueSelection;
+        event.mModifiers &= ~MODIFIER_SHIFT; //aContinueSelection;
         if (parent)
         {
           mCellParent = cellparent;
@@ -1837,6 +1849,9 @@ nsFrameSelection::ScrollSelectionIntoView(SelectionType   aType,
     verticalScroll = nsIPresShell::ScrollAxis(
       nsIPresShell::SCROLL_CENTER, nsIPresShell::SCROLL_IF_NOT_FULLY_VISIBLE);
   }
+  if (aFlags & nsISelectionController::SCROLL_FOR_CARET_MOVE) {
+    flags |= Selection::SCROLL_FOR_CARET_MOVE;
+  }
 
   // After ScrollSelectionIntoView(), the pending notifications might be
   // flushed and PresShell/PresContext/Frames may be dead. See bug 418470.
@@ -1870,115 +1885,133 @@ nsFrameSelection::GetFrameForNodeOffset(nsIContent*        aNode,
   if (aOffset < 0)
     return nullptr;
 
-  *aReturnOffset = aOffset;
+  if (!aNode->GetPrimaryFrame() &&
+      !mShell->FrameManager()->GetDisplayContentsStyleFor(aNode)) {
+    return nullptr;
+  }
 
-  nsCOMPtr<nsIContent> theNode = aNode;
+  nsIFrame* returnFrame = nullptr;
 
-  if (aNode->IsElement())
-  {
-    int32_t childIndex  = 0;
-    int32_t numChildren = theNode->GetChildCount();
+  while (true) {
+    *aReturnOffset = aOffset;
 
-    if (aHint == CARET_ASSOCIATE_BEFORE)
-    {
-      if (aOffset > 0)
-        childIndex = aOffset - 1;
-      else
-        childIndex = aOffset;
-    }
-    else
-    {
-      NS_ASSERTION(aHint == CARET_ASSOCIATE_AFTER, "unknown direction");
-      if (aOffset >= numChildren)
-      {
-        if (numChildren > 0)
-          childIndex = numChildren - 1;
-        else
-          childIndex = 0;
-      }
-      else
-        childIndex = aOffset;
-    }
-    
-    if (childIndex > 0 || numChildren > 0) {
-      nsCOMPtr<nsIContent> childNode = theNode->GetChildAt(childIndex);
+    nsCOMPtr<nsIContent> theNode = aNode;
 
-      if (!childNode)
-        return nullptr;
+    if (aNode->IsElement()) {
+      int32_t childIndex  = 0;
+      int32_t numChildren = theNode->GetChildCount();
 
-      theNode = childNode;
-    }
-
-    // Now that we have the child node, check if it too
-    // can contain children. If so, call this method again!
-    if (theNode->IsElement() &&
-        theNode->GetChildCount() &&
-        !theNode->HasIndependentSelection())
-    {
-      int32_t newOffset = 0;
-
-      if (aOffset > childIndex) {
-        numChildren = theNode->GetChildCount();
-        newOffset = numChildren;
-      }
-
-      return GetFrameForNodeOffset(theNode, newOffset, aHint, aReturnOffset);
-    } else {
-      // Check to see if theNode is a text node. If it is, translate
-      // aOffset into an offset into the text node.
-
-      nsCOMPtr<nsIDOMText> textNode = do_QueryInterface(theNode);
-
-      if (textNode)
-      {
-        if (theNode->GetPrimaryFrame())
-        {
-          if (aOffset > childIndex)
-          {
-            uint32_t textLength = 0;
-
-            nsresult rv = textNode->GetLength(&textLength);
-            if (NS_FAILED(rv))
-              return nullptr;
-
-            *aReturnOffset = (int32_t)textLength;
-          }
-          else
-            *aReturnOffset = 0;
+      if (aHint == CARET_ASSOCIATE_BEFORE) {
+        if (aOffset > 0) {
+          childIndex = aOffset - 1;
         } else {
-          int32_t numChildren = aNode->GetChildCount();
-          int32_t newChildIndex =
-            aHint == CARET_ASSOCIATE_BEFORE ? childIndex - 1 : childIndex + 1;
-
-          if (newChildIndex >= 0 && newChildIndex < numChildren) {
-            nsCOMPtr<nsIContent> newChildNode = aNode->GetChildAt(newChildIndex);
-            if (!newChildNode)
-              return nullptr;
-
-            theNode = newChildNode;
-            int32_t newOffset =
-              aHint == CARET_ASSOCIATE_BEFORE ? theNode->GetChildCount() : 0;
-            return GetFrameForNodeOffset(theNode, newOffset, aHint, aReturnOffset);
+          childIndex = aOffset;
+        }
+      } else {
+        NS_ASSERTION(aHint == CARET_ASSOCIATE_AFTER, "unknown direction");
+        if (aOffset >= numChildren) {
+          if (numChildren > 0) {
+            childIndex = numChildren - 1;
           } else {
-            // newChildIndex is illegal which means we're at first or last
-            // child. Just use original node to get the frame.
-            theNode = aNode;
+            childIndex = 0;
+          }
+        } else {
+          childIndex = aOffset;
+        }
+      }
+      
+      if (childIndex > 0 || numChildren > 0) {
+        nsCOMPtr<nsIContent> childNode = theNode->GetChildAt(childIndex);
+
+        if (!childNode) {
+          break;
+        }
+
+        theNode = childNode;
+      }
+
+      // Now that we have the child node, check if it too
+      // can contain children. If so, descend into child.
+      if (theNode->IsElement() &&
+          theNode->GetChildCount() &&
+          !theNode->HasIndependentSelection()) {
+        aNode = theNode;
+        aOffset = aOffset > childIndex ? theNode->GetChildCount() : 0;
+        continue;
+      } else {
+        // Check to see if theNode is a text node. If it is, translate
+        // aOffset into an offset into the text node.
+
+        nsCOMPtr<nsIDOMText> textNode = do_QueryInterface(theNode);
+        if (textNode) {
+          if (theNode->GetPrimaryFrame()) {
+            if (aOffset > childIndex) {
+              uint32_t textLength = 0;
+              nsresult rv = textNode->GetLength(&textLength);
+              if (NS_FAILED(rv)) {
+                break;
+              }
+
+              *aReturnOffset = (int32_t)textLength;
+            } else {
+              *aReturnOffset = 0;
+            }
+          } else {
+            int32_t numChildren = aNode->GetChildCount();
+            int32_t newChildIndex =
+              aHint == CARET_ASSOCIATE_BEFORE ? childIndex - 1 : childIndex + 1;
+
+            if (newChildIndex >= 0 && newChildIndex < numChildren) {
+              nsCOMPtr<nsIContent> newChildNode = aNode->GetChildAt(newChildIndex);
+              if (!newChildNode) {
+                return nullptr;
+              }
+
+              aNode = newChildNode;
+              aOffset = aHint == CARET_ASSOCIATE_BEFORE ? aNode->GetChildCount() : 0;
+              continue;
+            } else {
+              // newChildIndex is illegal which means we're at first or last
+              // child. Just use original node to get the frame.
+              theNode = aNode;
+            }
           }
         }
       }
     }
-  }
 
-  // If the node is a ShadowRoot, the frame needs to be adjusted,
-  // because a ShadowRoot does not get a frame. Its children are rendered
-  // as children of the host.
-  mozilla::dom::ShadowRoot* shadowRoot =
-    mozilla::dom::ShadowRoot::FromNode(theNode);
-  if (shadowRoot) {
-    theNode = shadowRoot->GetHost();
-  }
+    // If the node is a ShadowRoot, the frame needs to be adjusted,
+    // because a ShadowRoot does not get a frame. Its children are rendered
+    // as children of the host.
+    mozilla::dom::ShadowRoot* shadowRoot =
+      mozilla::dom::ShadowRoot::FromNode(theNode);
+    if (shadowRoot) {
+      theNode = shadowRoot->GetHost();
+    }
 
-  nsIFrame* returnFrame = theNode->GetPrimaryFrame();
+    returnFrame = theNode->GetPrimaryFrame();
+    if (!returnFrame) {
+      if (aHint == CARET_ASSOCIATE_BEFORE) {
+        if (aOffset > 0) {
+          --aOffset;
+          continue;
+        } else {
+          break;
+        }
+      } else {
+        int32_t end = theNode->GetChildCount();
+        if (aOffset < end) {
+          ++aOffset;
+          continue;
+        } else {
+          break;
+        }
+      }
+    }
+
+    break;
+  } // end while
+
   if (!returnFrame)
     return nullptr;
 
@@ -2035,6 +2068,8 @@ nsFrameSelection::CommonPageMove(bool aForward,
     return;
 
   // scroll one page
+  mozilla::Telemetry::Accumulate(mozilla::Telemetry::SCROLL_INPUT_METHODS,
+      (uint32_t) ScrollInputMethod::MainThreadScrollPage);
   aScrollableFrame->ScrollBy(nsIntPoint(0, aForward ? 1 : -1),
                              nsIScrollableFrame::PAGES,
                              nsIScrollableFrame::SMOOTH);
@@ -2111,7 +2146,17 @@ nsFrameSelection::PhysicalMove(int16_t aDirection, int16_t aAmount,
   if (NS_SUCCEEDED(sel->GetPrimaryFrameForFocusNode(&frame, &offsetused,
                                                     true))) {
     if (frame) {
-      wm = frame->GetWritingMode();
+      if (!frame->StyleContext()->IsTextCombined()) {
+        wm = frame->GetWritingMode();
+      } else {
+        // Using different direction for horizontal-in-vertical would
+        // make it hard to navigate via keyboard. Inherit the moving
+        // direction from its parent.
+        MOZ_ASSERT(frame->GetType() == nsGkAtoms::textFrame);
+        wm = frame->GetParent()->GetWritingMode();
+        MOZ_ASSERT(wm.IsVertical(), "Text combined "
+                   "can only appear in vertical text");
+      }
     }
   }
 
@@ -2129,13 +2174,12 @@ nsFrameSelection::PhysicalMove(int16_t aDirection, int16_t aAmount,
       rv = MoveCaret(mapping.direction, aExtend, mapping.amounts[aAmount + 1],
                      eVisual);
     }
-    // And if it was an intra-line move that failed, just move to line-edge
-    // in the given direction.
-    else if (mapping.amounts[aAmount] < eSelectLine) {
-      nsCOMPtr<nsISelectionController> controller = do_QueryInterface(mShell);
-      if (controller) {
-        rv = controller->CompleteMove(mapping.direction == eDirNext, aExtend);
-      }
+    // And if it was a next-word move that failed (which can happen when
+    // eat_space_to_next_word is true, see bug 1153237), then just move forward
+    // to the line-edge.
+    else if (mapping.amounts[aAmount] == eSelectWord &&
+             mapping.direction == eDirNext) {
+      rv = MoveCaret(eDirNext, aExtend, eSelectEndLine, eVisual);
     }
   }
 
@@ -3268,7 +3312,7 @@ nsFrameSelection::SetDelayedCaretData(WidgetMouseEvent* aMouseEvent)
   if (aMouseEvent) {
     mDelayedMouseEventValid = true;
     mDelayedMouseEventIsShift = aMouseEvent->IsShift();
-    mDelayedMouseEventClickCount = aMouseEvent->clickCount;
+    mDelayedMouseEventClickCount = aMouseEvent->mClickCount;
   } else {
     mDelayedMouseEventValid = false;
   }
@@ -3674,7 +3718,7 @@ Selection::AddItem(nsRange* aItem, int32_t* aOutIndex, bool aNoStartSelect)
   NS_ASSERTION(aOutIndex, "aOutIndex can't be null");
 
   if (mUserInitiated) {
-    nsAutoTArray<RefPtr<nsRange>, 4> rangesToAdd;
+    AutoTArray<RefPtr<nsRange>, 4> rangesToAdd;
     *aOutIndex = -1;
 
     if (!aNoStartSelect && mType == nsISelectionController::SELECTION_NORMAL &&
@@ -4635,9 +4679,9 @@ Selection::StartAutoScrollTimer(nsIFrame* aFrame, nsPoint& aPoint,
 nsresult
 Selection::StopAutoScrollTimer()
 {
-  if (mAutoScrollTimer)
+  if (mAutoScrollTimer) {
     return mAutoScrollTimer->Stop();
-
+  }
   return NS_OK; 
 }
 
@@ -4650,29 +4694,57 @@ Selection::DoAutoScroll(nsIFrame* aFrame, nsPoint& aPoint)
     (void)mAutoScrollTimer->Stop();
 
   nsPresContext* presContext = aFrame->PresContext();
+  nsCOMPtr<nsIPresShell> shell = presContext->PresShell();
   nsRootPresContext* rootPC = presContext->GetRootPresContext();
   if (!rootPC)
     return NS_OK;
   nsIFrame* rootmostFrame = rootPC->PresShell()->FrameManager()->GetRootFrame();
+  nsWeakFrame weakRootFrame(rootmostFrame);
+  nsWeakFrame weakFrame(aFrame);
   // Get the point relative to the root most frame because the scroll we are
   // about to do will change the coordinates of aFrame.
   nsPoint globalPoint = aPoint + aFrame->GetOffsetToCrossDoc(rootmostFrame);
 
-  bool didScroll = presContext->PresShell()->ScrollFrameRectIntoView(
-    aFrame, 
-    nsRect(aPoint, nsSize(0, 0)),
-    nsIPresShell::ScrollAxis(),
-    nsIPresShell::ScrollAxis(),
-    0);
+  bool done = false;
+  bool didScroll;
+  while (true) {
+    didScroll = shell->ScrollFrameRectIntoView(
+                  aFrame, nsRect(aPoint, nsSize(0, 0)),
+                  nsIPresShell::ScrollAxis(), nsIPresShell::ScrollAxis(),
+                  0);
+    if (!weakFrame || !weakRootFrame) {
+      return NS_OK;
+    }
+    if (!didScroll && !done) {
+      // If aPoint is at the screen edge then try to scroll anyway, once.
+      RefPtr<nsDeviceContext> dx = shell->GetViewManager()->GetDeviceContext();
+      nsRect screen;
+      dx->GetRect(screen);
+      nsPoint screenPoint = globalPoint +
+                            rootmostFrame->GetScreenRectInAppUnits().TopLeft();
+      nscoord onePx = nsPresContext::AppUnitsPerCSSPixel();
+      nscoord scrollAmount = 10 * onePx;
+      if (std::abs(screen.x - screenPoint.x) <= onePx) {
+        aPoint.x -= scrollAmount;
+      } else if (std::abs(screen.XMost() - screenPoint.x) <= onePx) {
+        aPoint.x += scrollAmount;
+      } else if (std::abs(screen.y - screenPoint.y) <= onePx) {
+        aPoint.y -= scrollAmount;
+      } else if (std::abs(screen.YMost() - screenPoint.y) <= onePx) {
+        aPoint.y += scrollAmount;
+      } else {
+        break;
+      }
+      done = true;
+      continue;
+    }
+    break;
+  }
 
-  //
   // Start the AutoScroll timer if necessary.
-  //
-
-  if (didScroll && mAutoScrollTimer)
-  {
+  if (didScroll && mAutoScrollTimer) {
     nsPoint presContextPoint = globalPoint -
-      presContext->PresShell()->FrameManager()->GetRootFrame()->GetOffsetToCrossDoc(rootmostFrame);
+      shell->FrameManager()->GetRootFrame()->GetOffsetToCrossDoc(rootmostFrame);
     mAutoScrollTimer->Start(presContext, presContextPoint);
   }
 
@@ -4921,6 +4993,23 @@ Selection::Collapse(nsINode& aParentNode, uint32_t aOffset, ErrorResult& aRv)
 
   // Turn off signal for table selection
   mFrameSelection->ClearTableCellSelection();
+
+  // Hack to display the caret on the right line (bug 1237236).
+  if (mFrameSelection->GetHint() != CARET_ASSOCIATE_AFTER &&
+      aParentNode.IsContent()) {
+    int32_t frameOffset;
+    nsTextFrame* f =
+      do_QueryFrame(nsCaret::GetFrameAndOffset(this, &aParentNode,
+                                               aOffset, &frameOffset));
+    if (f && f->IsAtEndOfLine() && f->HasSignificantTerminalNewline()) {
+      if ((aParentNode.AsContent() == f->GetContent() &&
+           f->GetContentEnd() == int32_t(aOffset)) ||
+          (&aParentNode == f->GetContent()->GetParentNode() &&
+           aParentNode.IndexOf(f->GetContent()) + 1 == int32_t(aOffset))) {
+        mFrameSelection->SetHint(CARET_ASSOCIATE_AFTER);
+      }
+    }
+  }
 
   RefPtr<nsRange> range = new nsRange(&aParentNode);
   result = range->SetEnd(&aParentNode, aOffset);
@@ -5875,6 +5964,11 @@ Selection::ScrollIntoView(SelectionRegion aRegion,
   }
   if (aFlags & Selection::SCROLL_OVERFLOW_HIDDEN) {
     flags |= nsIPresShell::SCROLL_OVERFLOW_HIDDEN;
+  }
+
+  if (aFlags & Selection::SCROLL_FOR_CARET_MOVE) {
+    mozilla::Telemetry::Accumulate(mozilla::Telemetry::SCROLL_INPUT_METHODS,
+        (uint32_t) ScrollInputMethod::MainThreadScrollCaretIntoView);
   }
 
   presShell->ScrollFrameRectIntoView(frame, rect, aVertical, aHorizontal,

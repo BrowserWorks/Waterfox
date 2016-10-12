@@ -83,7 +83,7 @@ nsJSPrincipals::Destroy(JSPrincipals *jsprin)
 #ifdef DEBUG
 
 // Defined here so one can do principals->dump() in the debugger
-JS_EXPORT_API(void)
+JS_PUBLIC_API(void)
 JSPrincipals::dump()
 {
     if (debugToken == nsJSPrincipals::DEBUG_TOKEN) {
@@ -114,12 +114,90 @@ nsJSPrincipals::ReadPrincipals(JSContext* aCx, JSStructuredCloneReader* aReader,
 
     if (!(tag == SCTAG_DOM_NULL_PRINCIPAL ||
           tag == SCTAG_DOM_SYSTEM_PRINCIPAL ||
-          tag == SCTAG_DOM_CONTENT_PRINCIPAL)) {
+          tag == SCTAG_DOM_CONTENT_PRINCIPAL ||
+          tag == SCTAG_DOM_EXPANDED_PRINCIPAL)) {
         xpc::Throw(aCx, NS_ERROR_DOM_DATA_CLONE_ERR);
         return false;
     }
 
     return ReadKnownPrincipalType(aCx, aReader, tag, aOutPrincipals);
+}
+
+static bool
+ReadSuffixAndSpec(JSStructuredCloneReader* aReader,
+                  PrincipalOriginAttributes& aAttrs,
+                  nsACString& aSpec)
+{
+    uint32_t suffixLength, specLength;
+    if (!JS_ReadUint32Pair(aReader, &suffixLength, &specLength)) {
+        return false;
+    }
+
+    nsAutoCString suffix;
+    suffix.SetLength(suffixLength);
+    if (!JS_ReadBytes(aReader, suffix.BeginWriting(), suffixLength)) {
+        return false;
+    }
+
+    aAttrs.PopulateFromSuffix(suffix);
+
+    aSpec.SetLength(specLength);
+    if (!JS_ReadBytes(aReader, aSpec.BeginWriting(), specLength)) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool
+ReadPrincipalInfo(JSStructuredCloneReader* aReader,
+                  uint32_t aTag,
+                  PrincipalInfo& aInfo)
+{
+    if (aTag == SCTAG_DOM_SYSTEM_PRINCIPAL) {
+        aInfo = SystemPrincipalInfo();
+    } else if (aTag == SCTAG_DOM_NULL_PRINCIPAL) {
+        PrincipalOriginAttributes attrs;
+        nsAutoCString dummy;
+        if (!ReadSuffixAndSpec(aReader, attrs, dummy)) {
+            return false;
+        }
+        aInfo = NullPrincipalInfo(attrs);
+    } else if (aTag == SCTAG_DOM_EXPANDED_PRINCIPAL) {
+        uint32_t length, unused;
+        if (!JS_ReadUint32Pair(aReader, &length, &unused)) {
+            return false;
+        }
+
+        ExpandedPrincipalInfo expanded;
+
+        for (uint32_t i = 0; i < length; i++) {
+            uint32_t tag;
+            if (!JS_ReadUint32Pair(aReader, &tag, &unused)) {
+                return false;
+            }
+
+            PrincipalInfo sub;
+            if (!ReadPrincipalInfo(aReader, tag, sub)) {
+                return false;
+            }
+            expanded.whitelist().AppendElement(sub);
+        }
+
+        aInfo = expanded;
+    } else if (aTag == SCTAG_DOM_CONTENT_PRINCIPAL) {
+        PrincipalOriginAttributes attrs;
+        nsAutoCString spec;
+        if (!ReadSuffixAndSpec(aReader, attrs, spec)) {
+            return false;
+        }
+
+        aInfo = ContentPrincipalInfo(attrs, spec);
+    } else {
+        MOZ_CRASH("unexpected principal structured clone tag");
+    }
+
+    return true;
 }
 
 /* static */ bool
@@ -130,7 +208,8 @@ nsJSPrincipals::ReadKnownPrincipalType(JSContext* aCx,
 {
     MOZ_ASSERT(aTag == SCTAG_DOM_NULL_PRINCIPAL ||
                aTag == SCTAG_DOM_SYSTEM_PRINCIPAL ||
-               aTag == SCTAG_DOM_CONTENT_PRINCIPAL);
+               aTag == SCTAG_DOM_CONTENT_PRINCIPAL ||
+               aTag == SCTAG_DOM_EXPANDED_PRINCIPAL);
 
     if (NS_WARN_IF(!NS_IsMainThread())) {
         xpc::Throw(aCx, NS_ERROR_UNCATCHABLE_EXCEPTION);
@@ -138,31 +217,8 @@ nsJSPrincipals::ReadKnownPrincipalType(JSContext* aCx,
     }
 
     PrincipalInfo info;
-    if (aTag == SCTAG_DOM_SYSTEM_PRINCIPAL) {
-        info = SystemPrincipalInfo();
-    } else if (aTag == SCTAG_DOM_NULL_PRINCIPAL) {
-        info = NullPrincipalInfo();
-    } else {
-        uint32_t suffixLength, specLength;
-        if (!JS_ReadUint32Pair(aReader, &suffixLength, &specLength)) {
-            return false;
-        }
-
-        nsAutoCString suffix;
-        suffix.SetLength(suffixLength);
-        if (!JS_ReadBytes(aReader, suffix.BeginWriting(), suffixLength)) {
-            return false;
-        }
-
-        nsAutoCString spec;
-        spec.SetLength(specLength);
-        if (!JS_ReadBytes(aReader, spec.BeginWriting(), specLength)) {
-            return false;
-        }
-
-        PrincipalOriginAttributes attrs;
-        attrs.PopulateFromSuffix(suffix);
-        info = ContentPrincipalInfo(attrs, spec);
+    if (!ReadPrincipalInfo(aReader, aTag, info)) {
+        return false;
     }
 
     nsresult rv;
@@ -176,6 +232,51 @@ nsJSPrincipals::ReadKnownPrincipalType(JSContext* aCx,
     return true;
 }
 
+static bool
+WriteSuffixAndSpec(JSStructuredCloneWriter* aWriter,
+                   const PrincipalOriginAttributes& aAttrs,
+                   const nsCString& aSpec)
+{
+  nsAutoCString suffix;
+  aAttrs.CreateSuffix(suffix);
+
+  return JS_WriteUint32Pair(aWriter, suffix.Length(), aSpec.Length()) &&
+         JS_WriteBytes(aWriter, suffix.get(), suffix.Length()) &&
+         JS_WriteBytes(aWriter, aSpec.get(), aSpec.Length());
+}
+
+static bool
+WritePrincipalInfo(JSStructuredCloneWriter* aWriter, const PrincipalInfo& aInfo)
+{
+    if (aInfo.type() == PrincipalInfo::TNullPrincipalInfo) {
+        const NullPrincipalInfo& nullInfo = aInfo;
+        return JS_WriteUint32Pair(aWriter, SCTAG_DOM_NULL_PRINCIPAL, 0) &&
+               WriteSuffixAndSpec(aWriter, nullInfo.attrs(), EmptyCString());
+    }
+    if (aInfo.type() == PrincipalInfo::TSystemPrincipalInfo) {
+        return JS_WriteUint32Pair(aWriter, SCTAG_DOM_SYSTEM_PRINCIPAL, 0);
+    }
+    if (aInfo.type() == PrincipalInfo::TExpandedPrincipalInfo) {
+        const ExpandedPrincipalInfo& expanded = aInfo;
+        if (!JS_WriteUint32Pair(aWriter, SCTAG_DOM_EXPANDED_PRINCIPAL, 0) ||
+            !JS_WriteUint32Pair(aWriter, expanded.whitelist().Length(), 0)) {
+            return false;
+        }
+
+        for (uint32_t i = 0; i < expanded.whitelist().Length(); i++) {
+            if (!WritePrincipalInfo(aWriter, expanded.whitelist()[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    MOZ_ASSERT(aInfo.type() == PrincipalInfo::TContentPrincipalInfo);
+    const ContentPrincipalInfo& cInfo = aInfo;
+    return JS_WriteUint32Pair(aWriter, SCTAG_DOM_CONTENT_PRINCIPAL, 0) &&
+           WriteSuffixAndSpec(aWriter, cInfo.attrs(), cInfo.spec());
+}
+
 bool
 nsJSPrincipals::write(JSContext* aCx, JSStructuredCloneWriter* aWriter)
 {
@@ -185,19 +286,5 @@ nsJSPrincipals::write(JSContext* aCx, JSStructuredCloneWriter* aWriter)
         return false;
     }
 
-    if (info.type() == PrincipalInfo::TNullPrincipalInfo) {
-        return JS_WriteUint32Pair(aWriter, SCTAG_DOM_NULL_PRINCIPAL, 0);
-    }
-    if (info.type() == PrincipalInfo::TSystemPrincipalInfo) {
-        return JS_WriteUint32Pair(aWriter, SCTAG_DOM_SYSTEM_PRINCIPAL, 0);
-    }
-
-    MOZ_ASSERT(info.type() == PrincipalInfo::TContentPrincipalInfo);
-    const ContentPrincipalInfo& cInfo = info;
-    nsAutoCString suffix;
-    cInfo.attrs().CreateSuffix(suffix);
-    return JS_WriteUint32Pair(aWriter, SCTAG_DOM_CONTENT_PRINCIPAL, 0) &&
-           JS_WriteUint32Pair(aWriter, suffix.Length(), cInfo.spec().Length()) &&
-           JS_WriteBytes(aWriter, suffix.get(), suffix.Length()) &&
-           JS_WriteBytes(aWriter, cInfo.spec().get(), cInfo.spec().Length());
+    return WritePrincipalInfo(aWriter, info);
 }

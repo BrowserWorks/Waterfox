@@ -21,7 +21,7 @@ namespace storage {
 /**
  * Used to finalize an asynchronous statement on the background thread.
  */
-class AsyncStatementFinalizer : public nsRunnable
+class AsyncStatementFinalizer : public Runnable
 {
 public:
   /**
@@ -45,10 +45,12 @@ public:
   NS_IMETHOD Run()
   {
     if (mStatement->mAsyncStatement) {
-      (void)::sqlite3_finalize(mStatement->mAsyncStatement);
+      sqlite3_finalize(mStatement->mAsyncStatement);
       mStatement->mAsyncStatement = nullptr;
     }
-    (void)::NS_ProxyRelease(mConnection->threadOpenedOn, mStatement);
+
+    nsCOMPtr<nsIThread> targetThread(mConnection->threadOpenedOn);
+    NS_ProxyRelease(targetThread, mStatement.forget());
     return NS_OK;
   }
 private:
@@ -60,7 +62,7 @@ private:
  * Finalize a sqlite3_stmt on the background thread for a statement whose
  * destructor was invoked and the statement was non-null.
  */
-class LastDitchSqliteStatementFinalizer : public nsRunnable
+class LastDitchSqliteStatementFinalizer : public Runnable
 {
 public:
   /**
@@ -91,13 +93,8 @@ public:
     (void)::sqlite3_finalize(mAsyncStatement);
     mAsyncStatement = nullptr;
 
-    // Because of our ambiguous nsISupports we cannot use the NS_ProxyRelease
-    // template helpers.
-    Connection *rawConnection = nullptr;
-    mConnection.swap(rawConnection);
-    (void)::NS_ProxyRelease(
-      rawConnection->threadOpenedOn,
-      NS_ISUPPORTS_CAST(mozIStorageConnection *, rawConnection));
+    nsCOMPtr<nsIThread> target(mConnection->threadOpenedOn);
+    (void)::NS_ProxyRelease(target, mConnection.forget());
     return NS_OK;
   }
 private:

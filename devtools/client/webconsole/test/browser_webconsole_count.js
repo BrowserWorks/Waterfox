@@ -1,4 +1,5 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -26,7 +27,7 @@ function test() {
       "console.count() testcounter: 3",
       "console.count() testcounter: 4",
       "end"
-    ].forEach(function(msg) {
+    ].forEach(function (msg) {
       messages.push({
         text: msg,
         category: CATEGORY_WEBDEV,
@@ -54,7 +55,7 @@ function test() {
       "console.count() testcounter: 5",
       "console.count() testcounter: 6",
       "end"
-    ].forEach(function(msg) {
+    ].forEach(function (msg) {
       messages.push({
         text: msg,
         category: CATEGORY_WEBDEV,

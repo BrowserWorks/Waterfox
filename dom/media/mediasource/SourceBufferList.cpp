@@ -131,16 +131,6 @@ SourceBufferList::RangeRemoval(double aStart, double aEnd)
 }
 
 void
-SourceBufferList::Evict(double aStart, double aEnd)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("Evict(aStart=%f, aEnd=%f)", aStart, aEnd);
-  for (uint32_t i = 0; i < mSourceBuffers.Length(); ++i) {
-    mSourceBuffers[i]->Evict(aStart, aEnd);
-  }
-}
-
-void
 SourceBufferList::Ended()
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -175,16 +165,6 @@ SourceBufferList::QueueAsyncSimpleEvent(const char* aName)
   nsCOMPtr<nsIRunnable> event = new AsyncEventRunner<SourceBufferList>(this, aName);
   NS_DispatchToMainThread(event);
 }
-
-#if defined(DEBUG)
-void
-SourceBufferList::Dump(const char* aPath)
-{
-  for (uint32_t i = 0; i < mSourceBuffers.Length(); ++i) {
-    mSourceBuffers[i]->Dump(aPath);
-  }
-}
-#endif
 
 SourceBufferList::SourceBufferList(MediaSource* aMediaSource)
   : DOMEventTargetHelper(aMediaSource->GetParentObject())

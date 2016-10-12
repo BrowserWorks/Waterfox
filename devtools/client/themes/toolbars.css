@@ -5,18 +5,92 @@
 
 /* CSS Variables specific to the devtools toolbar that aren't defined by the themes */
 .theme-light {
+  --toolbar-tab-hover: rgba(170, 170, 170, .2);
+  --toolbar-tab-hover-active: rgba(170, 170, 170, .4);
   --searchbox-background-color: #ffee99;
   --searchbox-border-color: #ffbf00;
   --searcbox-no-match-background-color: #ffe5e5;
   --searcbox-no-match-border-color: #e52e2e;
+  --magnifying-glass-image: url(images/magnifying-glass-light.png);
+  --magnifying-glass-image-2x: url(images/magnifying-glass-light@2x.png);
+  --tool-options-image: url(images/tool-options.svg);
+  --close-button-image: url(chrome://devtools/skin/images/close.svg);
+  --icon-filter: invert(1);
+  --dock-bottom-image: url(chrome://devtools/skin/images/dock-bottom.svg);
+  --dock-side-image: url(chrome://devtools/skin/images/dock-side.svg);
+  --dock-undock-image: url(chrome://devtools/skin/images/dock-undock.svg);
+  --toolbar-button-border-color: rgba(170, 170, 170, .5);
+
+  /* Toolbox buttons */
+  --command-paintflashing-image: url(images/command-paintflashing.svg);
+  --command-screenshot-image: url(images/command-screenshot.svg);
+  --command-responsive-image: url(images/command-responsivemode.svg);
+  --command-scratchpad-image: url(images/command-scratchpad.svg);
+  --command-pick-image: url(images/command-pick.svg);
+  --command-frames-image: url(images/command-frames.svg);
+  --command-splitconsole-image: url(images/command-console.svg);
+  --command-noautohide-image: url(images/command-noautohide.svg);
+  --command-eyedropper-image: url(images/command-eyedropper.svg);
+  --command-rulers-image: url(images/command-rulers.svg);
+  --command-measure-image: url(images/command-measure.svg);
 }
 
 .theme-dark {
+  --toolbar-tab-hover: hsla(206, 37%, 4%, .2);
+  --toolbar-tab-hover-active: hsla(206, 37%, 4%, .4);
   --searchbox-background-color: #4d4222;
   --searchbox-border-color: #d99f2b;
   --searcbox-no-match-background-color: #402325;
   --searcbox-no-match-border-color: #cc3d3d;
+  --magnifying-glass-image: url(images/magnifying-glass.png);
+  --magnifying-glass-image-2x: url(images/magnifying-glass@2x.png);
+  --tool-options-image: url(images/tool-options.svg);
+  --close-button-image: url(chrome://devtools/skin/images/close.svg);
+  --icon-filter: none;
+  --dock-bottom-image: url(chrome://devtools/skin/images/dock-bottom.svg);
+  --dock-side-image: url(chrome://devtools/skin/images/dock-side.svg);
+  --dock-undock-image: url(chrome://devtools/skin/images/dock-undock.svg);
+  --toolbar-button-border-color: rgba(0, 0, 0, .4);
+
+  /* Toolbox buttons */
+  --command-paintflashing-image: url(images/command-paintflashing.svg);
+  --command-screenshot-image: url(images/command-screenshot.svg);
+  --command-responsive-image: url(images/command-responsivemode.svg);
+  --command-scratchpad-image: url(images/command-scratchpad.svg);
+  --command-pick-image: url(images/command-pick.svg);
+  --command-frames-image: url(images/command-frames.svg);
+  --command-splitconsole-image: url(images/command-console.svg);
+  --command-noautohide-image: url(images/command-noautohide.svg);
+  --command-eyedropper-image: url(images/command-eyedropper.svg);
+  --command-rulers-image: url(images/command-rulers.svg);
+  --command-measure-image: url(images/command-measure.svg);
 }
+
+.theme-firebug {
+  --magnifying-glass-image: url(images/firebug/filter.svg);
+  --magnifying-glass-image-2x: url(images/firebug/filter.svg);
+  --tool-options-image: url(images/firebug/tool-options.svg);
+  --close-button-image: url(chrome://devtools/skin/images/firebug/close.svg);
+  --icon-filter: invert(1);
+  --dock-bottom-image: url(chrome://devtools/skin/images/firebug/dock-bottom.svg);
+  --dock-side-image: url(chrome://devtools/skin/images/firebug/dock-side.svg);
+  --dock-undock-image: url(chrome://devtools/skin/images/firebug/dock-undock.svg);
+  --toolbar-button-border-color: rgba(170, 170, 170, .5);
+
+  /* Toolbox buttons */
+  --command-paintflashing-image: url(images/firebug/command-paintflashing.svg);
+  --command-screenshot-image: url(images/firebug/command-screenshot.svg);
+  --command-responsive-image: url(images/firebug/command-responsivemode.svg);
+  --command-scratchpad-image: url(images/firebug/command-scratchpad.svg);
+  --command-pick-image: url(images/firebug/command-pick.svg);
+  --command-frames-image: url(images/firebug/command-frames.svg);
+  --command-splitconsole-image: url(images/firebug/command-console.svg);
+  --command-noautohide-image: url(images/firebug/command-noautohide.svg);
+  --command-eyedropper-image: url(images/firebug/command-eyedropper.svg);
+  --command-rulers-image: url(images/firebug/command-rulers.svg);
+  --command-measure-image: url(images/firebug/command-measure.svg);
+}
+
 
 /* Toolbars */
 .devtools-toolbar,
@@ -73,13 +147,7 @@
   -moz-box-align: center;
   min-width: 78px;
   padding: 1px;
-  margin: 2px 3px;
-}
-
-.devtools-menulist:-moz-focusring,
-.devtools-toolbarbutton:-moz-focusring {
-  outline: 1px dotted hsla(210,30%,85%,0.7);
-  outline-offset: -4px;
+  margin: 2px 1px;
 }
 
 .devtools-toolbarbutton:not([label]) > .toolbarbutton-icon,
@@ -91,8 +159,8 @@
 
 /* HTML buttons */
 .devtools-button {
-  margin: 0;
-  padding: 0;
+  margin: 2px 1px;
+  padding: 1px;
   min-width: 32px;
   /* The icon is absolutely positioned in the button using ::before */
   position: relative;
@@ -110,6 +178,10 @@
   transition: opacity 0.05s ease-in-out;
 }
 
+.devtools-button:-moz-focusring {
+  outline: none;
+}
+
 /* Standalone buttons */
 .devtools-button[standalone],
 .devtools-button[data-standalone],
@@ -122,23 +194,17 @@
 }
 
 .devtools-toolbarbutton[standalone], .devtools-toolbarbutton[data-standalone] {
-  -moz-margin-end: 5px;
+  margin-inline-end: 5px;
 }
 
 .devtools-toolbarbutton[label][standalone] {
   min-height: 2em;
 }
 
-.theme-dark .devtools-menulist,
-.theme-dark .devtools-toolbarbutton,
-.theme-dark .devtools-button {
-  border-color: rgba(0, 0, 0, .4); /* Splitters */
-}
-
-.theme-light .devtools-menulist,
-.theme-light .devtools-toolbarbutton,
-.theme-light .devtools-button {
-  border-color: rgba(170, 170, 170, .5); /* Splitters */
+.devtools-menulist,
+.devtools-toolbarbutton,
+.devtools-button {
+  border-color: var(--toolbar-button-border-color);
 }
 
 /* Icon button styles */
@@ -147,14 +213,19 @@
   min-width: 32px;
 }
 
-#toolbox-buttons .devtools-toolbarbutton[text-as-image] {
-  -moz-padding-start: 5px;
-  -moz-padding-end: 5px;
-  min-width: inherit;
+/* Set flex attribute to Toolbox buttons and Picker container so,
+   they don't overlapp with the tab bar */
+#toolbox-buttons {
+  display: flex;
 }
 
-#toolbox-buttons .devtools-toolbarbutton[type=menu] > .toolbarbutton-menu-dropmarker {
-  padding: 0 2px;
+#toolbox-picker-container {
+  display: flex;
+}
+
+/* Invert toolbox button icons in Firebug theme. */
+.theme-firebug #toolbox-buttons toolbarbutton image {
+  filter: invert(1);
 }
 
 .devtools-toolbarbutton:not([label]) > .toolbarbutton-text {
@@ -180,7 +251,7 @@
 }
 
 .devtools-toolbarbutton > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
-  -moz-margin-end: 4px;
+  margin-inline-end: 4px;
 }
 
 .devtools-menulist > .menulist-dropmarker {
@@ -227,77 +298,79 @@
   filter: url(images/filters.svg#checked-icon-state);
 }
 
+/* Icon-and-text buttons */
+.devtools-toolbarbutton.icon-and-text .toolbarbutton-text {
+  margin-inline-start: .5em !important;
+  font-weight: 600;
+}
+
 /* Text-only buttons */
 .theme-light .devtools-toolbarbutton[label]:not([text-as-image]):not([type=menu-button]),
-.theme-light .devtools-toolbarbutton[data-text-only],
-.theme-light #toolbox-buttons .devtools-toolbarbutton[text-as-image] {
-  background-color: rgba(170, 170, 170, .2); /* Splitter */
+.theme-light .devtools-toolbarbutton[data-text-only] {
+  background-color: var(--toolbar-tab-hover);
 }
 .theme-dark .devtools-toolbarbutton[label]:not([text-as-image]):not([type=menu-button]),
-.theme-dark .devtools-toolbarbutton[data-text-only],
-.theme-dark #toolbox-buttons .devtools-toolbarbutton[text-as-image] {
+.theme-dark .devtools-toolbarbutton[data-text-only] {
   background-color: rgba(0, 0, 0, .2); /* Splitter */
 }
 
 /* Text-only button states */
 .theme-dark .devtools-button:not(:empty):not([disabled]):hover,
-.theme-dark #toolbox-buttons .devtools-toolbarbutton:not([disabled])[text-as-image]:hover,
 .theme-dark .devtools-toolbarbutton:not(:-moz-any([checked=true],[disabled],[text-as-image]))[label]:hover {
   background: rgba(0, 0, 0, .3); /* Splitters */
 }
 .theme-light .devtools-button:not(:empty):not([disabled]):hover,
-.theme-light #toolbox-buttons .devtools-toolbarbutton:not([disabled])[text-as-image]:hover,
 .theme-light .devtools-toolbarbutton:not(:-moz-any([checked=true],[disabled],[text-as-image]))[label]:hover {
   background: rgba(170, 170, 170, .3); /* Splitters */
 }
 
 .theme-dark .devtools-button:not(:empty):not([disabled]):hover:active,
-.theme-dark #toolbox-buttons .devtools-toolbarbutton:not([disabled])[text-as-image]:hover:active,
 .theme-dark .devtools-toolbarbutton:not(:-moz-any([checked=true],[disabled],[text-as-image]))[label]:hover:active {
   background: rgba(0, 0, 0, .4); /* Splitters */
 }
 .theme-light .devtools-button:not(:empty):not([disabled]):hover:active,
-.theme-light #toolbox-buttons .devtools-toolbarbutton:not([disabled])[text-as-image]:hover:active,
 .theme-light .devtools-toolbarbutton:not(:-moz-any([checked=true],[disabled],[text-as-image]))[label]:hover:active {
-  background: rgba(170, 170, 170, .4); /* Splitters */
+  background: var(--toolbar-tab-hover-active);
 }
 
 .theme-dark .devtools-toolbarbutton:not([disabled])[label][checked=true],
 .theme-dark .devtools-toolbarbutton:not([disabled])[label][open],
-.theme-dark .devtools-button:not(:empty)[checked=true],
-.theme-dark #toolbox-buttons .devtools-toolbarbutton[text-as-image][checked=true] {
-  background: rgba(29, 79, 115, .7); /* Select highlight blue */
+.theme-dark .devtools-button:not(:empty)[checked=true] {
+  background: var(--theme-selection-background-semitransparent);
   color: var(--theme-selection-color);
 }
 .theme-light .devtools-toolbarbutton:not([disabled])[label][checked=true],
 .theme-light .devtools-toolbarbutton:not([disabled])[label][open],
-.theme-light .devtools-button:not(:empty)[checked=true],
-.theme-light #toolbox-buttons .devtools-toolbarbutton[text-as-image][checked=true] {
+.theme-light .devtools-button:not(:empty)[checked=true] {
   background: rgba(76, 158, 217, .3); /* Select highlight blue */
 }
 
-.devtools-option-toolbarbutton {
-  list-style-image: url("chrome://devtools/skin/images/tool-options.svg");
+:root {
+  --clear-icon-url: url("chrome://devtools/skin/images/clear.svg");
 }
 
-/* Toolbar button groups */
-.devtools-toolbarbutton-group > .devtools-toolbarbutton {
-  margin-left: 1px;
-  margin-right: 1px;
-  outline-offset: -3px;
-  box-shadow: none;
+.devtools-button.devtools-clear-icon::before {
+  background-image: var(--clear-icon-url);
+}
+
+.devtools-toolbarbutton.devtools-clear-icon {
+  list-style-image: var(--clear-icon-url);
+}
+
+.devtools-option-toolbarbutton {
+  list-style-image: var(--tool-options-image);
 }
 
 .devtools-toolbarbutton-group > .devtools-toolbarbutton:last-child {
-  -moz-margin-end: 0;
+  margin-inline-end: 0;
 }
 
 .devtools-toolbarbutton-group + .devtools-toolbarbutton {
-  -moz-margin-start: 3px;
+  margin-inline-start: 3px;
 }
 
 .devtools-separator + .devtools-toolbarbutton {
-  -moz-margin-start: 1px;
+  margin-inline-start: 1px;
 }
 
 /* Text input */
@@ -319,24 +392,17 @@
 
 .devtools-searchinput {
   padding: 0;
-  -moz-padding-start: 22px;
-  -moz-padding-end: 4px;
+  padding-inline-start: 22px;
+  padding-inline-end: 4px;
+  background-image: var(--magnifying-glass-image);
   background-position: 8px center;
   background-size: 11px 11px;
   background-repeat: no-repeat;
   font-size: inherit;
 }
 
-.theme-dark .devtools-searchinput {
-  background-image: url(images/magnifying-glass.png);
-}
-
-.theme-light .devtools-searchinput {
-  background-image: url(images/magnifying-glass-light.png);
-}
-
 .devtools-searchinput:-moz-locale-dir(rtl),
-.devtools-searchinput:-moz-dir(rtl) {
+.devtools-searchinput:dir(rtl) {
   background-position: calc(100% - 8px) center;
 }
 
@@ -359,21 +425,29 @@
   margin-right: 0;
 }
 
+.devtools-searchbox > .devtools-textinput:-moz-focusring,
+.devtools-searchbox > .devtools-searchinput:-moz-focusring {
+  border-color: var(--theme-focus-border-color-textbox);
+  box-shadow: var(--theme-focus-box-shadow-textbox);
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
 /* Don't add 'double spacing' for inputs that are at beginning / end
    of a toolbar (since the toolbar has it's own spacing). */
 .devtools-toolbar > .devtools-textinput:first-child,
 .devtools-toolbar > .devtools-searchinput:first-child {
-  -moz-margin-start: 0;
+  margin-inline-start: 0;
 }
 .devtools-toolbar > .devtools-textinput:last-child,
 .devtools-toolbar > .devtools-searchinput:last-child {
-  -moz-margin-end: 0;
+  margin-inline-end: 0;
 }
 .devtools-toolbar > .devtools-searchbox:first-child {
-  -moz-padding-start: 0;
+  padding-inline-start: 0;
 }
 .devtools-toolbar > .devtools-searchbox:last-child {
-  -moz-padding-end: 0;
+  padding-inline-end: 0;
 }
 
 .devtools-rule-searchbox {
@@ -385,7 +459,7 @@
 .devtools-rule-searchbox[filled] {
   background-color: var(--searchbox-background-color);
   border-color: var(--searchbox-border-color);
-  -moz-padding-end: 23px;
+  padding-inline-end: 23px;
 }
 
 .devtools-style-searchbox-no-match {
@@ -410,7 +484,7 @@
   background-color: transparent;
 }
 
-.devtools-searchinput-clear:-moz-dir(rtl) {
+.devtools-searchinput-clear:dir(rtl) {
   right: unset;
   left: 7px;
 }
@@ -450,48 +524,15 @@
 }
 
 @media (min-resolution: 1.1dppx) {
-  .theme-dark .devtools-searchinput {
-    background-image: url(images/magnifying-glass@2x.png);
-  }
-
-  .theme-light .devtools-searchinput {
-    background-image: url(images/magnifying-glass-light@2x.png);
+  .devtools-searchinput {
+    background-image: var(--magnifying-glass-image-2x);
   }
 }
 
 /* Close button */
 
-.devtools-closebutton {
-  -moz-appearance: none;
-  border: none;
-  margin: 0 4px;
-  min-width: 16px;
-  width: 16px;
-  opacity: 0.8;
-}
-
-.devtools-closebutton > image {
-  width: 16px;
-  height: 16px;
-  -moz-appearance: none;
-  background-size: 16px 16px;
-  background-image: url("chrome://devtools/skin/images/close@2x.png");
-  background-position: center center;
-  background-repeat: no-repeat;
-}
-
-.devtools-closebutton > .toolbarbutton-icon {
-  /* XXX Buttons have padding in widget/ that we don't want here but can't override with good CSS, so we must
-     use evil CSS to give the impression of smaller content */
-  margin: -4px;
-}
-
-.devtools-closebutton > .toolbarbutton-text {
-  display: none;
-}
-
-.devtools-closebutton:hover {
-  opacity: 1;
+#toolbox-close::before {
+  background-image: var(--close-button-image);
 }
 
 /* In-tools sidebar */
@@ -526,7 +567,7 @@
   padding: 0 4px;
   margin: 0;
   border-width: 0 0 1px 0;
-  -moz-border-start-width: 1px;
+  border-inline-start-width: 1px;
   border-style: solid;
 }
 
@@ -553,7 +594,7 @@
   color: inherit;
   -moz-box-flex: 1;
   border-width: 0;
-  -moz-border-start-width: 1px;
+  border-inline-start-width: 1px;
   border-style: solid;
   border-radius: 0;
   position: static;
@@ -591,40 +632,33 @@
  * Rules that apply to the global toolbox like command buttons,
  * devtools tabs, docking buttons, etc. */
 
-#toolbox-controls > toolbarbutton,
-#toolbox-dock-buttons > toolbarbutton {
+#toolbox-controls > button,
+#toolbox-dock-buttons > button {
   -moz-appearance: none;
+  -moz-user-focus: normal;
   border: none;
   margin: 0 4px;
   min-width: 16px;
   width: 16px;
 }
 
-#toolbox-controls > toolbarbutton > .toolbarbutton-text,
-#toolbox-dock-buttons > toolbarbutton > .toolbarbutton-text,
-.command-button > .toolbarbutton-text {
-  display: none;
+/* Save space in Firebug theme */
+.theme-firebug #toolbox-controls button {
+  margin-inline-start: 0 !important;
+  min-width: 12px;
+  margin: 0 1px;
 }
 
-#toolbox-dock-buttons > toolbarbutton > image {
-  -moz-appearance: none;
-  width: 16px;
-  height: 16px;
-  background-size: 16px 16px;
-  background-position: 0 center;
-  background-repeat: no-repeat;
+#toolbox-dock-bottom::before {
+  background-image: var(--dock-bottom-image);
 }
 
-#toolbox-dock-bottom > image {
-  background-image: url("chrome://devtools/skin/images/dock-bottom@2x.png");
+#toolbox-dock-side::before {
+  background-image: var(--dock-side-image);
 }
 
-#toolbox-dock-side  > image {
-  background-image: url("chrome://devtools/skin/images/dock-side@2x.png");
-}
-
-#toolbox-dock-window > image {
-  background-image: url("chrome://devtools/skin/images/undock@2x.png");
+#toolbox-dock-window::before {
+  background-image: var(--dock-undock-image);
 }
 
 #toolbox-dock-bottom-minimize {
@@ -633,11 +667,11 @@
   display: none;
 }
 
-#toolbox-dock-bottom-minimize > image {
+#toolbox-dock-bottom-minimize::before {
   background-image: url("chrome://devtools/skin/images/dock-bottom-minimize@2x.png");
 }
 
-#toolbox-dock-bottom-minimize.minimized > image {
+#toolbox-dock-bottom-minimize.minimized::before {
   background-image: url("chrome://devtools/skin/images/dock-bottom-maximize@2x.png");
 }
 
@@ -656,9 +690,7 @@
 .devtools-separator {
   margin: 0 2px;
   width: 2px;
-  background-image: linear-gradient(transparent, hsla(204,45%,98%,.1), transparent),
-                    linear-gradient(transparent, hsla(206,37%,4%,.6), transparent),
-                    linear-gradient(transparent, hsla(204,45%,98%,.1), transparent);
+  background-image: linear-gradient(transparent 15%, var(--theme-splitter-color) 15%, var(--theme-splitter-color) 85%, transparent 85%);
   background-size: 1px 100%;
   background-repeat: no-repeat;
   background-position: 0, 1px, 2px;
@@ -676,130 +708,91 @@
 /* Command buttons */
 
 .command-button {
-  -moz-appearance: none;
-  border: none;
-  padding: 0 8px;
+  padding: 0;
   margin: 0;
-  width: 32px;
   position: relative;
+  -moz-user-focus: normal;
+}
+
+.command-button::before {
+  opacity: 0.7;
 }
 
 .command-button:hover {
-  background-color: hsla(206,37%,4%,.2);
-}
-.command-button:hover:active, .command-button[checked=true]:not(:hover) {
-  background-color: hsla(206,37%,4%,.4);
+  background-color: var(--toolbar-tab-hover);
 }
 
-.command-button > image {
-  -moz-appearance: none;
-  width: 16px;
-  height: 16px;
-  background-size: cover;
-  background-position: 0 center;
-  background-repeat: no-repeat;
-  opacity: 0.7;
+.command-button:hover:active,
+.command-button[checked=true]:not(:hover) {
+  background-color: var(--toolbar-tab-hover-active)
 }
-.command-button:hover > image {
+
+.command-button:hover::before {
   opacity: 0.85;
 }
-.command-button:hover:active > image,
-.command-button[checked=true] > image,
-.command-button[open=true] > image {
+
+.command-button:hover:active::before,
+.command-button[checked=true]::before,
+.command-button[open=true]::before {
   opacity: 1;
 }
-.command-button[checked=true] > image {
-  filter: url(images/filters.svg#checked-icon-state) !important;
+
+/* Toolbox command buttons */
+
+#command-button-paintflashing::before {
+  background-image: var(--command-paintflashing-image);
 }
 
-#command-button-paintflashing > image {
-  background-image: url("chrome://devtools/skin/images/command-paintflashing.png");
+#command-button-screenshot::before {
+  background-image: var(--command-screenshot-image);
 }
 
-#command-button-screenshot > image {
-  background-image: url("chrome://devtools/skin/images/command-screenshot.png");
+#command-button-responsive::before {
+  background-image: var(--command-responsive-image);
 }
 
-#command-button-responsive > image {
-  background-image: url("chrome://devtools/skin/images/command-responsivemode.png");
+#command-button-scratchpad::before {
+  background-image: var(--command-scratchpad-image);
 }
 
-#command-button-tilt > image {
-  background-image: url("chrome://devtools/skin/images/command-tilt.png");
+#command-button-pick::before {
+  background-image: var(--command-pick-image);
 }
 
-#command-button-scratchpad > image {
-  background-image: url("chrome://devtools/skin/images/command-scratchpad.png");
+#command-button-splitconsole::before {
+  background-image: var(--command-splitconsole-image);
 }
 
-#command-button-pick > image {
-  background-image: url("chrome://devtools/skin/images/command-pick.png");
+#command-button-noautohide::before {
+  background-image: var(--command-noautohide-image);
 }
 
-#command-button-frames > image {
-  background-image: url("chrome://devtools/skin/images/command-frames.png");
+#command-button-eyedropper::before {
+  background-image: var(--command-eyedropper-image);
 }
 
-#command-button-splitconsole > image {
-  background-image: url("chrome://devtools/skin/images/command-console.png");
+#command-button-rulers::before {
+  background-image: var(--command-rulers-image);
 }
 
-#command-button-eyedropper > image {
-  background-image: url("chrome://devtools/skin/images/command-eyedropper.png");
+#command-button-measure::before {
+  background-image: var(--command-measure-image);
 }
 
-#command-button-rulers > image {
-  background-image: url("chrome://devtools/skin/images/command-rulers.png");
+#command-button-frames::before {
+  background-image: var(--command-frames-image);
 }
 
-#command-button-measure > image {
-  background-image: url("chrome://devtools/skin/images/command-measure.png");
+#command-button-frames {
+  background: url("chrome://devtools/skin/images/dropmarker.svg") no-repeat right;
+
+  /* Override background-size from the command-button.
+    The drop down arrow is smaller */
+  background-size: 8px 4px !important;
 }
 
-@media (min-resolution: 1.1dppx) {
-  #command-button-paintflashing > image {
-    background-image: url("chrome://devtools/skin/images/command-paintflashing@2x.png");
-  }
-
-  #command-button-screenshot > image {
-    background-image: url("chrome://devtools/skin/images/command-screenshot@2x.png");
-  }
-
-  #command-button-responsive > image {
-    background-image: url("chrome://devtools/skin/images/command-responsivemode@2x.png");
-  }
-
-  #command-button-tilt > image {
-    background-image: url("chrome://devtools/skin/images/command-tilt@2x.png");
-  }
-
-  #command-button-scratchpad > image {
-    background-image: url("chrome://devtools/skin/images/command-scratchpad@2x.png");
-  }
-
-  #command-button-pick > image {
-    background-image: url("chrome://devtools/skin/images/command-pick@2x.png");
-  }
-
-  #command-button-frames > image {
-    background-image: url("chrome://devtools/skin/images/command-frames@2x.png");
-  }
-
-  #command-button-splitconsole > image {
-    background-image: url("chrome://devtools/skin/images/command-console@2x.png");
-  }
-
-  #command-button-eyedropper > image {
-    background-image: url("chrome://devtools/skin/images/command-eyedropper@2x.png");
-  }
-
-  #command-button-rulers > image {
-    background-image: url("chrome://devtools/skin/images/command-rulers@2x.png");
-  }
-
-  #command-button-measure > image {
-    background-image: url("chrome://devtools/skin/images/command-measure@2x.png");
-  }
+#command-button-frames:-moz-dir(rtl) {
+  background-position: left;
 }
 
 /* Tabs */
@@ -814,16 +807,18 @@
   border-bottom-color: var(--theme-splitter-color);
 }
 
-.theme-light .devtools-tabbar {
-  box-shadow: 0 -2px 0 rgba(170,170,170,.1) inset;
-}
-
-.theme-dark .devtools-tabbar {
-  box-shadow: 0 -2px 0 rgba(0,0,0,.1) inset;
-}
-
 #toolbox-tabs {
   margin: 0;
+}
+
+.toolbox-panel {
+  display: -moz-box;
+  -moz-box-flex: 1;
+  visibility: collapse;
+}
+
+.toolbox-panel[selected] {
+  visibility: visible;
 }
 
 .devtools-tab {
@@ -832,13 +827,20 @@
   -moz-box-align: center;
   min-width: 32px;
   min-height: 24px;
-  max-width: 110px;
+  max-width: 100px;
   margin: 0;
   padding: 0;
   border-style: solid;
   border-width: 0;
-  -moz-border-start-width: 1px;
+  border-inline-start-width: 1px;
   -moz-box-align: center;
+  -moz-user-focus: normal;
+  -moz-box-flex: 1;
+}
+
+/* Save space on the tab-strip in Firebug theme */
+.theme-firebug .devtools-tab {
+  -moz-box-flex: initial;
 }
 
 .theme-dark .devtools-tab {
@@ -852,39 +854,43 @@
 }
 
 .theme-dark .devtools-tab:hover {
-  background-color: hsla(206,37%,4%,.2);
   color: #ced3d9;
 }
 
-.theme-light .devtools-tab:hover {
-  background-color: rgba(170,170,170,.2);
+.devtools-tab:hover {
+  background-color: var(--toolbar-tab-hover);
 }
 
 .theme-dark .devtools-tab:hover:active {
-  background-color: hsla(206,37%,4%,.4);
   color: var(--theme-selection-color);
 }
 
-.theme-light .devtools-tab:hover:active {
-  background-color: rgba(170,170,170,.4);
-}
-
-.devtools-tab:not([selected])[highlighted] {
-  box-shadow: 0 2px 0 var(--theme-highlight-green) inset;
+.devtools-tab:hover:active {
+  background-color: var(--toolbar-tab-hover-active);
 }
 
 .theme-dark .devtools-tab:not([selected])[highlighted] {
-  background-color: hsla(99,100%,14%,.2);
+  background-color: hsla(99, 100%, 14%, .3);
 }
 
 .theme-light .devtools-tab:not([selected])[highlighted] {
   background-color: rgba(44, 187, 15, .2);
 }
 
+/* Display execution pointer in the Debugger tab to indicate
+   that the debugger is paused. */
+.theme-firebug #toolbox-tab-jsdebugger.devtools-tab:not([selected])[highlighted] {
+  background-color: rgba(89, 178, 234, .2);
+  background-image: url(chrome://devtools/skin/images/firebug/tool-debugger-paused.svg);
+  background-repeat: no-repeat;
+  padding-left: 13px !important;
+  background-position: 3px 6px;
+}
+
 .devtools-tab > image {
   border: none;
-  -moz-margin-end: 0;
-  -moz-margin-start: 4px;
+  margin: 0;
+  margin-inline-start: 4px;
   opacity: 0.6;
   max-height: 16px;
   width: 16px; /* Prevents collapse during theme switching */
@@ -892,6 +898,7 @@
 
 .devtools-tab > label {
   white-space: nowrap;
+  margin: 0 4px;
 }
 
 .devtools-tab:hover > image {
@@ -909,41 +916,29 @@
   background-color: var(--theme-selection-background);
 }
 
-.theme-dark .devtools-tabbar .devtools-tab[selected] {
-  box-shadow: 0 2px 0 #d7f1ff inset,
-              0 8px 3px -5px #2b82bf inset,
-              0 -2px 0 rgba(0,0,0,.2) inset;
-}
-
-.theme-light .devtools-tabbar .devtools-tab[selected] {
-  box-shadow: 0 2px 0 #d7f1ff inset,
-              0 8px 3px -5px #2b82bf inset,
-              0 -2px 0 rgba(0,0,0,.06) inset;
-}
-
 #toolbox-tabs .devtools-tab[selected],
 #toolbox-tabs .devtools-tab[highlighted] {
   border-width: 0;
-  -moz-padding-start: 1px;
+  padding-inline-start: 1px;
 }
 
 #toolbox-tabs .devtools-tab[selected]:last-child,
 #toolbox-tabs .devtools-tab[highlighted]:last-child {
-  -moz-padding-end: 1px;
+  padding-inline-end: 1px;
 }
 
 #toolbox-tabs .devtools-tab[selected] + .devtools-tab,
 #toolbox-tabs .devtools-tab[highlighted] + .devtools-tab {
-  -moz-border-start-width: 0;
-  -moz-padding-start: 1px;
+  border-inline-start-width: 0;
+  padding-inline-start: 1px;
 }
 
 #toolbox-tabs .devtools-tab:first-child[selected] {
-  -moz-border-start-width: 0;
+  border-inline-start-width: 0;
 }
 
 #toolbox-tabs .devtools-tab:last-child {
-  -moz-border-end-width: 1px;
+  border-inline-end-width: 1px;
 }
 
 .devtools-tab:not([highlighted]) > .highlighted-icon,
@@ -960,7 +955,7 @@
 #toolbox-option-container .devtools-tab {
   border-color: transparent;
   border-width: 0;
-  -moz-padding-start: 1px;
+  padding-inline-start: 1px;
 }
 #toolbox-tab-options > image {
   margin: 0 8px;
@@ -970,9 +965,6 @@
  * inside of the light theme.
  */
 .theme-light .devtools-tab[icon-invertable] > image,
-.theme-light #toolbox-dock-buttons > toolbarbutton > image,
-.theme-light .command-button-invertable > image,
-.theme-light .devtools-closebutton > image,
 .theme-light .devtools-toolbarbutton > image,
 .theme-light .devtools-button::before,
 .theme-light #breadcrumb-separator-normal,
@@ -983,7 +975,12 @@
 .theme-light #requests-menu-network-summary-button .button-icon,
 .theme-light #toggle-breakpoints[checked] > image,
 .theme-light .event-tooltip-debugger-icon {
-  filter: invert(1);
+  filter: var(--icon-filter);
+}
+
+/* Reset the filter defined above */
+.theme-light .command-button:not(.command-button-invertable) {
+  filter: none !important;
 }
 
 /* Since selected backgrounds are blue, we want to use the normal
@@ -1009,23 +1006,21 @@
 
 .devtools-invisible-splitter {
   border-color: transparent;
+  background-color: transparent;
 }
 
-.devtools-horizontal-splitter {
-  border-bottom: 1px solid var(--theme-splitter-color);
-}
-
+.devtools-horizontal-splitter,
 .devtools-side-splitter {
-  -moz-border-end: 1px solid var(--theme-splitter-color);
-  border-color: var(--theme-splitter-color); /* Needed for responsive container at low width. */
+  background-color: var(--theme-splitter-color);
 }
+
 
 /* Throbbers */
 .devtools-throbber::before {
   content: "";
   display: inline-block;
   vertical-align: bottom;
-  -moz-margin-end: 0.5em;
+  margin-inline-end: 0.5em;
   width: 1em;
   height: 1em;
   border: 2px solid currentColor;

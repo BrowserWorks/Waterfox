@@ -9,6 +9,7 @@ import java.util.Random;
 
 import org.mozilla.gecko.background.db.CursorDumper;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.db.BrowserContract.UrlAnnotations.SyncStatus;
 
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
@@ -187,6 +188,17 @@ public class testBrowserProvider extends ContentProviderTest {
         return thumbnailEntry;
     }
 
+    private ContentValues createUrlAnnotationEntry(final String url, final String key, final String value,
+                final long dateCreated) {
+        final ContentValues values = new ContentValues();
+        values.put(BrowserContract.UrlAnnotations.URL, url);
+        values.put(BrowserContract.UrlAnnotations.KEY, key);
+        values.put(BrowserContract.UrlAnnotations.VALUE, value);
+        values.put(BrowserContract.UrlAnnotations.DATE_CREATED, dateCreated);
+        values.put(BrowserContract.UrlAnnotations.DATE_MODIFIED, dateCreated);
+        return values;
+    }
+
     private ContentValues createOneHistoryEntry() throws Exception {
         return createHistoryEntry("Example", "http://example.com", 10, System.currentTimeMillis());
     }
@@ -224,6 +236,13 @@ public class testBrowserProvider extends ContentProviderTest {
                                null);
     }
 
+    private Cursor getUrlAnnotationByUrl(final String url) throws Exception {
+        return mProvider.query(BrowserContract.UrlAnnotations.CONTENT_URI, null,
+                BrowserContract.UrlAnnotations.URL + " = ?",
+                new String[] { url },
+                null);
+    }
+
     @Override
     public void setUp() throws Exception {
         super.setUp(sBrowserProviderCallable, BrowserContract.AUTHORITY, "browser.db");
@@ -249,12 +268,13 @@ public class testBrowserProvider extends ContentProviderTest {
         mTests.add(new TestUpdateHistoryThumbnails());
         mTests.add(new TestDeleteHistoryThumbnails());
 
+        mTests.add(new TestInsertUrlAnnotations());
+
         mTests.add(new TestBatchOperations());
 
         mTests.add(new TestCombinedView());
         mTests.add(new TestCombinedViewDisplay());
         mTests.add(new TestCombinedViewWithDeletedBookmark());
-        mTests.add(new TestExpireHistory());
 
         mTests.add(new TestBrowserProviderNotifications());
     }
@@ -1303,7 +1323,10 @@ public class testBrowserProvider extends ContentProviderTest {
             mAsserter.is(c.getString(c.getColumnIndex(BrowserContract.History.TITLE)), TEST_TITLE,
                          "Inserted history entry has correct specified title");
 
-            // Update the history entry, specifying additional visit count
+            // Update the history entry, specifying additional visit count.
+            // The expectation is that the value is ignored, and count is bumped by 1 only.
+            // At the same time, a visit is inserted into the visits table.
+            // See junit4 tests in BrowserProviderHistoryVisitsTest.
             values = new ContentValues();
             values.put(BrowserContract.History.VISITS, 10);
 
@@ -1320,7 +1343,7 @@ public class testBrowserProvider extends ContentProviderTest {
                          "Updated history entry has correct unchanged title");
             mAsserter.is(c.getString(c.getColumnIndex(BrowserContract.History.URL)), TEST_URL_2,
                          "Updated history entry has correct unchanged URL");
-            mAsserter.is(c.getLong(c.getColumnIndex(BrowserContract.History.VISITS)), 20L,
+            mAsserter.is(c.getLong(c.getColumnIndex(BrowserContract.History.VISITS)), 11L,
                          "Updated history entry has correct number of visits");
             mAsserter.is(c.getLong(c.getColumnIndex(BrowserContract.History.DATE_CREATED)), dateCreated,
                          "Updated history entry has same creation date");
@@ -1407,6 +1430,65 @@ public class testBrowserProvider extends ContentProviderTest {
             c = getThumbnailByUrl(pageUrl);
             mAsserter.is(c.moveToFirst(), false, "Thumbnail is deleted with last reference to it");
             c.close();
+        }
+    }
+
+    private class TestInsertUrlAnnotations extends TestCase {
+        @Override
+        public void test() throws Exception {
+            testInsertionViaContentProvider();
+            testInsertionViaUrlAnnotations();
+        }
+
+        private void testInsertionViaContentProvider() throws Exception {
+            final String url = "http://mozilla.org";
+            final String key = "todo";
+            final String value = "v";
+            final long dateCreated = System.currentTimeMillis();
+
+            mProvider.insert(BrowserContract.UrlAnnotations.CONTENT_URI, createUrlAnnotationEntry(url, key, value, dateCreated));
+
+            final Cursor c = getUrlAnnotationByUrl(url);
+            try {
+                mAsserter.is(c.moveToFirst(), true, "Inserted url annotation found");
+                assertKeyValueSync(c, key, value);
+                mAsserter.is(c.getLong(c.getColumnIndex(BrowserContract.UrlAnnotations.DATE_CREATED)), dateCreated,
+                        "Inserted url annotation has correct date created");
+                mAsserter.is(c.getLong(c.getColumnIndex(BrowserContract.UrlAnnotations.DATE_MODIFIED)), dateCreated,
+                        "Inserted url annotation has correct date modified");
+            } finally {
+                c.close();
+            }
+        }
+
+        private void testInsertionViaUrlAnnotations() throws Exception {
+            final String url = "http://hello.org";
+            final String key = "toTheUniverse";
+            final String value = "42a";
+            final long timeBeforeCreation = System.currentTimeMillis();
+
+            getTestProfile().getDB().getUrlAnnotations().insertAnnotation(mResolver, url, key, value);
+
+            final Cursor c = getUrlAnnotationByUrl(url);
+            try {
+                mAsserter.is(c.moveToFirst(), true, "Inserted url annotation found");
+                assertKeyValueSync(c, key, value);
+                mAsserter.is(true, c.getLong(c.getColumnIndex(BrowserContract.UrlAnnotations.DATE_CREATED)) >= timeBeforeCreation,
+                        "Inserted url annotation has date created greater than or equal to time saved before insertion");
+                mAsserter.is(true, c.getLong(c.getColumnIndex(BrowserContract.UrlAnnotations.DATE_MODIFIED)) >= timeBeforeCreation,
+                        "Inserted url annotation has correct date modified greater than or equal to time saved before insertion");
+            } finally {
+                c.close();
+            }
+        }
+
+        private void assertKeyValueSync(final Cursor c, final String key, final String value) {
+            mAsserter.is(c.getString(c.getColumnIndex(BrowserContract.UrlAnnotations.KEY)), key,
+                    "Inserted url annotation has correct key");
+            mAsserter.is(c.getString(c.getColumnIndex(BrowserContract.UrlAnnotations.VALUE)), value,
+                    "Inserted url annotation has correct value");
+            mAsserter.is(c.getInt(c.getColumnIndex(BrowserContract.UrlAnnotations.SYNC_STATUS)), SyncStatus.NEW.getDBValue(),
+                    "Inserted url annotation has default sync status");
         }
     }
 
@@ -1601,121 +1683,6 @@ public class testBrowserProvider extends ContentProviderTest {
             mAsserter.is(c.getLong(c.getColumnIndex(BrowserContract.Combined.BOOKMARK_ID)), 0L,
                          "Bookmark id should not be set to removed bookmark id");
             c.close();
-        }
-    }
-
-    private class TestExpireHistory extends TestCase {
-        private void createFakeHistory(long timeShift, int count) {
-            // Insert a bunch of very new entries
-            ContentValues[] allVals = new ContentValues[count];
-            long time = System.currentTimeMillis() - timeShift;
-            for (int i = 0; i < count; i++) {
-                allVals[i] = new ContentValues();
-                allVals[i].put(BrowserContract.History.TITLE, "Test " + i);
-                allVals[i].put(BrowserContract.History.URL, "http://www.test.org/" + i);
-                allVals[i].put(BrowserContract.History.VISITS, i);
-                allVals[i].put(BrowserContract.History.DATE_LAST_VISITED, time);
-            }
-
-            int inserts = mProvider.bulkInsert(BrowserContract.History.CONTENT_URI, allVals);
-            mAsserter.is(inserts, count, "Expected number of inserts matches");
-
-            // inserting a new entry sets the date created and modified automatically
-            // reset all of them
-            for (int i = 0; i < count; i++) {
-                ContentValues cv = new ContentValues();
-                cv.put(BrowserContract.History.DATE_CREATED, time);
-                cv.put(BrowserContract.History.DATE_MODIFIED, time);
-                mProvider.update(BrowserContract.History.CONTENT_URI, cv, BrowserContract.History.URL + " = ?",
-                                 new String[] { "http://www.test.org/" + i });
-            }
-
-            Cursor c = mProvider.query(BrowserContract.History.CONTENT_URI, null, "", null, null);
-
-            assertCountIsAndClose(c, count, count + " history entries found");
-
-            // add thumbnails for each entry
-            allVals = new ContentValues[count];
-            for (int i = 0; i < count; i++) {
-                allVals[i] = new ContentValues();
-                allVals[i].put(BrowserContract.Thumbnails.DATA, i);
-                allVals[i].put(BrowserContract.Thumbnails.URL, "http://www.test.org/" + i);
-            }
-
-            inserts = mProvider.bulkInsert(BrowserContract.Thumbnails.CONTENT_URI, allVals);
-            mAsserter.is(inserts, count, "Expected number of inserts matches");
-
-            c = mProvider.query(BrowserContract.Thumbnails.CONTENT_URI, null, null, null, null);
-            assertCountIsAndClose(c, count, count + " thumbnails entries found");
-        }
-
-        @Override
-        public void test() throws Exception {
-            final int count = 3000;
-            final int thumbCount = 15;
-
-            // insert a bunch of new entries
-            createFakeHistory(0, count);
-
-            // expiring with a normal priority should not delete new entries
-            Uri url = appendUriParam(BrowserContract.History.CONTENT_OLD_URI, BrowserContract.PARAM_EXPIRE_PRIORITY, "NORMAL");
-            mProvider.delete(url, null, null);
-            Cursor c = mProvider.query(BrowserContract.History.CONTENT_URI, null, "", null, null);
-            assertCountIsAndClose(c, count, count + " history entries found");
-
-            // expiring with a normal priority should delete all but 10 thumbnails
-            c = mProvider.query(BrowserContract.Thumbnails.CONTENT_URI, null, null, null, null);
-            assertCountIsAndClose(c, thumbCount, thumbCount + " thumbnails found");
-
-            ensureEmptyDatabase();
-
-            // Insert a bunch of new entries.
-            createFakeHistory(0, count);
-
-            // Expiring with a aggressive priority should leave 500 entries.
-            url = appendUriParam(BrowserContract.History.CONTENT_OLD_URI, BrowserContract.PARAM_EXPIRE_PRIORITY, "AGGRESSIVE");
-            mProvider.delete(url, null, null);
-
-            c = mProvider.query(BrowserContract.History.CONTENT_URI, null, "", null, null);
-            assertCountIsAndClose(c, 500, "500 history entries found");
-
-            // Expiring with a aggressive priority should delete all but 10 thumbnails.
-            c = mProvider.query(BrowserContract.Thumbnails.CONTENT_URI, null, null, null, null);
-            assertCountIsAndClose(c, thumbCount, thumbCount + " thumbnails found");
-
-            ensureEmptyDatabase();
-
-            // Insert a bunch of entries with an old time created/modified.
-            long time = 1000L * 60L * 60L * 24L * 30L * 3L;
-            createFakeHistory(time, count);
-
-            // Expiring with an normal priority should remove at most 1000 entries,
-            // entries leaving at least 2000.
-            url = appendUriParam(BrowserContract.History.CONTENT_OLD_URI, BrowserContract.PARAM_EXPIRE_PRIORITY, "NORMAL");
-            mProvider.delete(url, null, null);
-
-            c = mProvider.query(BrowserContract.History.CONTENT_URI, null, "", null, null);
-            assertCountIsAndClose(c, 2000, "2000 history entries found");
-
-            // Expiring with a normal priority should delete all but 10 thumbnails.
-            c = mProvider.query(BrowserContract.Thumbnails.CONTENT_URI, null, null, null, null);
-            assertCountIsAndClose(c, thumbCount, thumbCount + " thumbnails found");
-
-            ensureEmptyDatabase();
-            // insert a bunch of entries with an old time created/modified
-            time = 1000L * 60L * 60L * 24L * 30L * 3L;
-            createFakeHistory(time, count);
-
-            // Expiring with an aggressive priority should remove old
-            // entries, leaving at least 500.
-            url = appendUriParam(BrowserContract.History.CONTENT_OLD_URI, BrowserContract.PARAM_EXPIRE_PRIORITY, "AGGRESSIVE");
-            mProvider.delete(url, null, null);
-            c = mProvider.query(BrowserContract.History.CONTENT_URI, null, "", null, null);
-            assertCountIsAndClose(c, 500, "500 history entries found");
-
-            // expiring with an aggressive priority should delete all but 10 thumbnails
-            c = mProvider.query(BrowserContract.Thumbnails.CONTENT_URI, null, null, null, null);
-            assertCountIsAndClose(c, thumbCount, thumbCount + " thumbnails found");
         }
     }
 

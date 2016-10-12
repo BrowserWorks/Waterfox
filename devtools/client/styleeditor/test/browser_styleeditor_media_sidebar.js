@@ -10,13 +10,14 @@ const MEDIA_PREF = "devtools.styleeditor.showMediaSidebar";
 
 const RESIZE = 300;
 const LABELS = ["not all", "all", "(max-width: 400px)",
-                "(min-height: 200px) and (max-height: 250px)", "(max-width: 600px)"];
+                "(min-height: 200px) and (max-height: 250px)",
+                "(max-width: 600px)"];
 const LINE_NOS = [1, 7, 19, 25, 30];
 const NEW_RULE = "\n@media (max-width: 600px) { div { color: blue; } }";
 
 waitForExplicitFinish();
 
-add_task(function*() {
+add_task(function* () {
   let { ui } = yield openStyleEditorForURL(TESTCASE_URI);
 
   is(ui.editors.length, 2, "correct number of editors");

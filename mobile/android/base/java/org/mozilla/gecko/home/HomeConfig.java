@@ -19,7 +19,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -27,9 +26,12 @@ import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
-import android.util.Log;
+import android.util.Pair;
 
 public final class HomeConfig {
+    public static final String PREF_KEY_BOOKMARKS_PANEL_ENABLED = "bookmarksPanelEnabled";
+    public static final String PREF_KEY_HISTORY_PANEL_ENABLED = "combinedHistoryPanelEnabled";
+
     /**
      * Used to determine what type of HomeFragment subclass to use when creating
      * a given panel. With the exception of DYNAMIC, all of these types correspond
@@ -40,11 +42,14 @@ public final class HomeConfig {
     public static enum PanelType implements Parcelable {
         TOP_SITES("top_sites", TopSitesPanel.class),
         BOOKMARKS("bookmarks", BookmarksPanel.class),
-        HISTORY("history", HistoryPanel.class),
-        REMOTE_TABS("remote_tabs", RemoteTabsPanel.class),
-        READING_LIST("reading_list", ReadingListPanel.class),
+        COMBINED_HISTORY("combined_history", CombinedHistoryPanel.class),
         RECENT_TABS("recent_tabs", RecentTabsPanel.class),
-        DYNAMIC("dynamic", DynamicPanel.class);
+        DYNAMIC("dynamic", DynamicPanel.class),
+        // Deprecated panels that should no longer exist but are kept around for
+        // migration code. Class references have been replaced with new version of the panel.
+        DEPRECATED_REMOTE_TABS("remote_tabs", CombinedHistoryPanel.class),
+        DEPRECATED_HISTORY("history", CombinedHistoryPanel.class),
+        DEPRECATED_READING_LIST("reading_list", BookmarksPanel.class);
 
         private final String mId;
         private final Class<?> mPanelClass;
@@ -288,6 +293,10 @@ public final class HomeConfig {
 
         public ViewConfig getViewAt(int index) {
             return (mViews != null ? mViews.get(index) : null);
+        }
+
+        public EnumSet<Flags> getFlags() {
+            return mFlags.clone();
         }
 
         public boolean isDynamic() {
@@ -1140,9 +1149,11 @@ public final class HomeConfig {
         private final HomeConfig mHomeConfig;
         private final Map<String, PanelConfig> mConfigMap;
         private final List<String> mConfigOrder;
-        private final List<GeckoEvent> mEventQueue;
         private final Thread mOriginalThread;
 
+        // Each Pair represents parameters to a GeckoAppShell.notifyObservers call;
+        // the first String is the observer topic and the second string is the notification data.
+        private List<Pair<String, String>> mNotificationQueue;
         private PanelConfig mDefaultPanel;
         private int mEnabledCount;
 
@@ -1154,7 +1165,7 @@ public final class HomeConfig {
             mOriginalThread = Thread.currentThread();
             mConfigMap = new HashMap<String, PanelConfig>();
             mConfigOrder = new LinkedList<String>();
-            mEventQueue = new LinkedList<GeckoEvent>();
+            mNotificationQueue = new ArrayList<>();
 
             mIsFromDefault = configState.isDefault();
 
@@ -1366,7 +1377,8 @@ public final class HomeConfig {
                 installed = true;
 
                 // Add an event to the queue if a new panel is successfully installed.
-                mEventQueue.add(GeckoEvent.createBroadcastEvent("HomePanels:Installed", panelConfig.getId()));
+                mNotificationQueue.add(new Pair<String, String>(
+                        "HomePanels:Installed", panelConfig.getId()));
             }
 
             mHasChanged = true;
@@ -1402,7 +1414,7 @@ public final class HomeConfig {
             }
 
             // Add an event to the queue if a panel is successfully uninstalled.
-            mEventQueue.add(GeckoEvent.createBroadcastEvent("HomePanels:Uninstalled", panelId));
+            mNotificationQueue.add(new Pair<String, String>("HomePanels:Uninstalled", panelId));
 
             mHasChanged = true;
             return true;
@@ -1474,10 +1486,10 @@ public final class HomeConfig {
             final State newConfigState =
                     new State(mHomeConfig, makeOrderedCopy(true), isDefault());
 
-            // Copy the event queue to a new list, so that we only modify mEventQueue on
+            // Copy the event queue to a new list, so that we only modify mNotificationQueue on
             // the original thread where it was created.
-            final LinkedList<GeckoEvent> eventQueueCopy = new LinkedList<GeckoEvent>(mEventQueue);
-            mEventQueue.clear();
+            final List<Pair<String, String>> copiedQueue = mNotificationQueue;
+            mNotificationQueue = new ArrayList<>();
 
             ThreadUtils.getBackgroundHandler().post(new Runnable() {
                 @Override
@@ -1485,7 +1497,7 @@ public final class HomeConfig {
                     mHomeConfig.save(newConfigState);
 
                     // Send pending events after the new config is saved.
-                    sendEventsToGecko(eventQueueCopy);
+                    sendNotificationsToGecko(copiedQueue);
                 }
             });
 
@@ -1509,8 +1521,8 @@ public final class HomeConfig {
             mHomeConfig.save(newConfigState);
 
             // Send pending events after the new config is saved.
-            sendEventsToGecko(mEventQueue);
-            mEventQueue.clear();
+            sendNotificationsToGecko(mNotificationQueue);
+            mNotificationQueue.clear();
 
             return newConfigState;
         }
@@ -1529,9 +1541,9 @@ public final class HomeConfig {
             return mConfigMap.isEmpty();
         }
 
-        private void sendEventsToGecko(List<GeckoEvent> events) {
-            for (GeckoEvent e : events) {
-                GeckoAppShell.sendEventToGecko(e);
+        private void sendNotificationsToGecko(List<Pair<String, String>> notifications) {
+            for (Pair<String, String> p : notifications) {
+                GeckoAppShell.notifyObservers(p.first, p.second);
             }
         }
 
@@ -1586,10 +1598,11 @@ public final class HomeConfig {
     // panels).
     private static final String TOP_SITES_PANEL_ID = "4becc86b-41eb-429a-a042-88fe8b5a094e";
     private static final String BOOKMARKS_PANEL_ID = "7f6d419a-cd6c-4e34-b26f-f68b1b551907";
-    private static final String READING_LIST_PANEL_ID = "20f4549a-64ad-4c32-93e4-1dcef792733b";
     private static final String HISTORY_PANEL_ID = "f134bf20-11f7-4867-ab8b-e8e705d7fbe8";
+    private static final String COMBINED_HISTORY_PANEL_ID = "4d716ce2-e063-486d-9e7c-b190d7b04dc6";
     private static final String RECENT_TABS_PANEL_ID = "5c2601a5-eedc-4477-b297-ce4cef52adf8";
     private static final String REMOTE_TABS_PANEL_ID = "72429afd-8d8b-43d8-9189-14b779c563d0";
+    private static final String DEPRECATED_READING_LIST_PANEL_ID = "20f4549a-64ad-4c32-93e4-1dcef792733b";
 
     private final HomeConfigBackend mBackend;
 
@@ -1621,21 +1634,18 @@ public final class HomeConfig {
     }
 
     public static int getTitleResourceIdForBuiltinPanelType(PanelType panelType) {
-        switch(panelType) {
+        switch (panelType) {
         case TOP_SITES:
             return R.string.home_top_sites_title;
 
         case BOOKMARKS:
+        case DEPRECATED_READING_LIST:
             return R.string.bookmarks_title;
 
-        case HISTORY:
+        case DEPRECATED_HISTORY:
+        case DEPRECATED_REMOTE_TABS:
+        case COMBINED_HISTORY:
             return R.string.home_history_title;
-
-        case REMOTE_TABS:
-            return R.string.home_remote_tabs_title;
-
-        case READING_LIST:
-            return R.string.reading_list_title;
 
         case RECENT_TABS:
             return R.string.recent_tabs_title;
@@ -1646,21 +1656,24 @@ public final class HomeConfig {
     }
 
     public static String getIdForBuiltinPanelType(PanelType panelType) {
-        switch(panelType) {
+        switch (panelType) {
         case TOP_SITES:
             return TOP_SITES_PANEL_ID;
 
         case BOOKMARKS:
             return BOOKMARKS_PANEL_ID;
 
-        case HISTORY:
+        case DEPRECATED_HISTORY:
             return HISTORY_PANEL_ID;
 
-        case REMOTE_TABS:
+        case COMBINED_HISTORY:
+            return COMBINED_HISTORY_PANEL_ID;
+
+        case DEPRECATED_REMOTE_TABS:
             return REMOTE_TABS_PANEL_ID;
 
-        case READING_LIST:
-            return READING_LIST_PANEL_ID;
+        case DEPRECATED_READING_LIST:
+            return DEPRECATED_READING_LIST_PANEL_ID;
 
         case RECENT_TABS:
             return RECENT_TABS_PANEL_ID;

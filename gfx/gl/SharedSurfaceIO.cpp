@@ -165,11 +165,10 @@ SharedSurface_IOSurface::SharedSurface_IOSurface(const RefPtr<MacIOSurface>& ioS
 
 SharedSurface_IOSurface::~SharedSurface_IOSurface()
 {
-    if (mProdTex) {
-        DebugOnly<bool> success = mGL->MakeCurrent();
-        MOZ_ASSERT(success);
-        mGL->fDeleteTextures(1, &mProdTex);
-    }
+    if (!mGL->MakeCurrent())
+        return;
+
+    mGL->fDeleteTextures(1, &mProdTex);
 }
 
 bool
@@ -212,7 +211,7 @@ SharedSurface_IOSurface::ReadbackBySharedHandle(gfx::DataSourceSurface* out_surf
 
 /*static*/ UniquePtr<SurfaceFactory_IOSurface>
 SurfaceFactory_IOSurface::Create(GLContext* gl, const SurfaceCaps& caps,
-                                 const RefPtr<layers::ISurfaceAllocator>& allocator,
+                                 const RefPtr<layers::ClientIPCAllocator>& allocator,
                                  const layers::TextureFlags& flags)
 {
     gfx::IntSize maxDims(MacIOSurface::GetMaxWidth(),

@@ -6,6 +6,7 @@
 
 #include "jit/BaselineJIT.h"
 
+#include "mozilla/BinarySearch.h"
 #include "mozilla/MemoryReporting.h"
 
 #include "asmjs/WasmModule.h"
@@ -26,6 +27,8 @@
 #include "jit/MacroAssembler-inl.h"
 #include "vm/Stack-inl.h"
 
+using mozilla::BinarySearchIf;
+
 using namespace js;
 using namespace js::jit;
 
@@ -40,6 +43,12 @@ PCMappingSlotInfo::ToSlotLocation(const StackValue* stackVal)
     }
     MOZ_ASSERT(stackVal->kind() != StackValue::Stack);
     return SlotIgnore;
+}
+
+void
+ICStubSpace::freeAllAfterMinorGC(JSRuntime* rt)
+{
+    rt->gc.freeAllLifoBlocksAfterMinorGC(&allocator_);
 }
 
 BaselineScript::BaselineScript(uint32_t prologueOffset, uint32_t epilogueOffset,
@@ -178,8 +187,8 @@ jit::EnterBaselineMethod(JSContext* cx, RunState& state)
     EnterJitData data(cx);
     data.jitcode = baseline->method()->raw();
 
-    AutoValueVector vals(cx);
-    if (!SetEnterJitData(cx, data, state, vals))
+    Rooted<GCVector<Value>> vals(cx, GCVector<Value>(cx));
+    if (!SetEnterJitData(cx, data, state, &vals))
         return JitExec_Error;
 
     JitExecStatus status = EnterBaseline(cx, data);
@@ -291,7 +300,7 @@ jit::BaselineCompile(JSContext* cx, JSScript* script, bool forceDebugInstrumenta
     MOZ_ASSERT_IF(status != Method_Compiled, !script->hasBaselineScript());
 
     if (status == Method_CantCompile)
-        script->setBaselineScript(cx, BASELINE_DISABLED_SCRIPT);
+        script->setBaselineScript(cx->runtime(), BASELINE_DISABLED_SCRIPT);
 
     return status;
 }
@@ -453,8 +462,7 @@ void
 BaselineScript::trace(JSTracer* trc)
 {
     TraceEdge(trc, &method_, "baseline-method");
-    if (templateScope_)
-        TraceEdge(trc, &templateScope_, "baseline-template-scope");
+    TraceNullableEdge(trc, &templateScope_, "baseline-template-scope");
 
     // Mark all IC stub codes hanging off the IC stub entries.
     for (size_t i = 0; i < numICEntries(); i++) {
@@ -480,20 +488,28 @@ BaselineScript::Trace(JSTracer* trc, BaselineScript* script)
 void
 BaselineScript::Destroy(FreeOp* fop, BaselineScript* script)
 {
-    /*
-     * When the script contains pointers to nursery things, the store buffer
-     * will contain entries refering to the referenced things. Since we can
-     * destroy scripts outside the context of a GC, this situation can result
-     * in invalid store buffer entries. Assert that if we do destroy scripts
-     * outside of a GC that we at least emptied the nursery first.
-     */
-    MOZ_ASSERT(fop->runtime()->gc.nursery.isEmpty());
 
     MOZ_ASSERT(!script->hasPendingIonBuilder());
 
     script->unlinkDependentWasmModules(fop);
 
+    /*
+     * When the script contains pointers to nursery things, the store buffer can
+     * contain entries that point into the fallback stub space. Since we can
+     * destroy scripts outside the context of a GC, this situation could result
+     * in us trying to mark invalid store buffer entries.
+     *
+     * Defer freeing any allocated blocks until after the next minor GC.
+     */
+    script->fallbackStubSpace_.freeAllAfterMinorGC(fop->runtime());
+
     fop->delete_(script);
+}
+
+void
+JS::DeletePolicy<js::jit::BaselineScript>::operator()(const js::jit::BaselineScript* script)
+{
+    BaselineScript::Destroy(rt_->defaultFreeOp(), const_cast<BaselineScript*>(script));
 }
 
 void
@@ -574,50 +590,63 @@ BaselineScript::pcMappingReader(size_t indexEntry)
     return CompactBufferReader(dataStart, dataEnd);
 }
 
+struct ICEntries
+{
+    BaselineScript* const baseline_;
+
+    explicit ICEntries(BaselineScript* baseline) : baseline_(baseline) {}
+
+    ICEntry& operator[](size_t index) const {
+        return baseline_->icEntry(index);
+    }
+};
+
 ICEntry&
 BaselineScript::icEntryFromReturnOffset(CodeOffset returnOffset)
 {
-    size_t bottom = 0;
-    size_t top = numICEntries();
-    size_t mid = bottom + (top - bottom) / 2;
-    while (mid < top) {
-        ICEntry& midEntry = icEntry(mid);
-        if (midEntry.returnOffset().offset() < returnOffset.offset())
-            bottom = mid + 1;
-        else
-            top = mid;
-        mid = bottom + (top - bottom) / 2;
-    }
+    size_t loc;
+#ifdef DEBUG
+    bool found =
+#endif
+        BinarySearchIf(ICEntries(this), 0, numICEntries(),
+                       [&returnOffset](ICEntry& entry) {
+                           size_t roffset = returnOffset.offset();
+                           size_t entryRoffset = entry.returnOffset().offset();
+                           if (roffset < entryRoffset)
+                               return -1;
+                           if (entryRoffset < roffset)
+                               return 1;
+                           return 0;
+                       },
+                       &loc);
 
-    MOZ_ASSERT(mid < numICEntries());
-    MOZ_ASSERT(icEntry(mid).returnOffset().offset() == returnOffset.offset());
+    MOZ_ASSERT(found);
+    MOZ_ASSERT(loc < numICEntries());
+    MOZ_ASSERT(icEntry(loc).returnOffset().offset() == returnOffset.offset());
+    return icEntry(loc);
+}
 
-    return icEntry(mid);
+static inline size_t
+ComputeBinarySearchMid(BaselineScript* baseline, uint32_t pcOffset)
+{
+    size_t loc;
+    BinarySearchIf(ICEntries(baseline), 0, baseline->numICEntries(),
+                   [pcOffset](ICEntry& entry) {
+                       uint32_t entryOffset = entry.pcOffset();
+                       if (pcOffset < entryOffset)
+                           return -1;
+                       if (entryOffset < pcOffset)
+                           return 1;
+                       return 0;
+                   },
+                   &loc);
+    return loc;
 }
 
 uint8_t*
 BaselineScript::returnAddressForIC(const ICEntry& ent)
 {
     return method()->raw() + ent.returnOffset().offset();
-}
-
-static inline size_t
-ComputeBinarySearchMid(BaselineScript* baseline, uint32_t pcOffset)
-{
-    size_t bottom = 0;
-    size_t top = baseline->numICEntries();
-    size_t mid = bottom + (top - bottom) / 2;
-    while (mid < top) {
-        ICEntry& midEntry = baseline->icEntry(mid);
-        if (midEntry.pcOffset() < pcOffset)
-            bottom = mid + 1;
-        else if (midEntry.pcOffset() > pcOffset)
-            top = mid;
-        else
-            break;
-        mid = bottom + (top - bottom) / 2;
-    }
-    return mid;
 }
 
 ICEntry&
@@ -1143,8 +1172,7 @@ jit::ToggleBaselineProfiling(JSRuntime* runtime, bool enable)
         return;
 
     for (ZonesIter zone(runtime, SkipAtoms); !zone.done(); zone.next()) {
-        for (gc::ZoneCellIter i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next()) {
-            JSScript* script = i.get<JSScript>();
+        for (auto script = zone->cellIter<JSScript>(); !script.done(); script.next()) {
             if (!script->hasBaselineScript())
                 continue;
             AutoWritableJitCode awjc(script->baselineScript()->method());
@@ -1158,8 +1186,7 @@ void
 jit::ToggleBaselineTraceLoggerScripts(JSRuntime* runtime, bool enable)
 {
     for (ZonesIter zone(runtime, SkipAtoms); !zone.done(); zone.next()) {
-        for (gc::ZoneCellIter i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next()) {
-            JSScript* script = i.get<JSScript>();
+        for (auto script = zone->cellIter<JSScript>(); !script.done(); script.next()) {
             if (!script->hasBaselineScript())
                 continue;
             script->baselineScript()->toggleTraceLoggerScripts(runtime, script, enable);
@@ -1171,8 +1198,7 @@ void
 jit::ToggleBaselineTraceLoggerEngine(JSRuntime* runtime, bool enable)
 {
     for (ZonesIter zone(runtime, SkipAtoms); !zone.done(); zone.next()) {
-        for (gc::ZoneCellIter i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next()) {
-            JSScript* script = i.get<JSScript>();
+        for (auto script = zone->cellIter<JSScript>(); !script.done(); script.next()) {
             if (!script->hasBaselineScript())
                 continue;
             script->baselineScript()->toggleTraceLoggerEngine(enable);
@@ -1189,11 +1215,12 @@ MarkActiveBaselineScripts(JSRuntime* rt, const JitActivationIterator& activation
           case JitFrame_BaselineJS:
             iter.script()->baselineScript()->setActive();
             break;
-          case JitFrame_LazyLink: {
-            LazyLinkExitFrameLayout* ll = iter.exitFrame()->as<LazyLinkExitFrameLayout>();
-            ScriptFromCalleeToken(ll->jsFrame()->calleeToken())->baselineScript()->setActive();
+          case JitFrame_Exit:
+            if (iter.exitFrame()->is<LazyLinkExitFrameLayout>()) {
+                LazyLinkExitFrameLayout* ll = iter.exitFrame()->as<LazyLinkExitFrameLayout>();
+                ScriptFromCalleeToken(ll->jsFrame()->calleeToken())->baselineScript()->setActive();
+            }
             break;
-          }
           case JitFrame_Bailout:
           case JitFrame_IonJS: {
             // Keep the baseline script around, since bailouts from the ion

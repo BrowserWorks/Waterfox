@@ -11,36 +11,6 @@ flags:
     - upload-symbols
 
 builds:
-  emulator-x86-l:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_emulator_x86_l_opt.yml
-  dolphin:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_dolphin_opt.yml
-  dolphin-eng:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_dolphin_eng.yml
-  dolphin-512:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_dolphin_512_opt.yml
-  dolphin-512-eng:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_dolphin_512_eng.yml
   android-api-15:
     platforms:
       - Android
@@ -58,81 +28,57 @@ builds:
       - Linux
     types:
       opt:
-        task: tasks/builds/opt_linux32_clobber.yml
+        task: tasks/builds/opt_linux32.yml
       debug:
-        task: tasks/builds/dbg_linux32_clobber.yml
+        task: tasks/builds/dbg_linux32.yml
   linux64:
     platforms:
       - Linux64
     types:
       opt:
-        task: tasks/builds/opt_linux64_clobber.yml
+        task: tasks/builds/opt_linux64.yml
       debug:
-        task: tasks/builds/dbg_linux64_clobber.yml
+        task: tasks/builds/dbg_linux64.yml
   linux64-st-an:
     platforms:
       - Linux64 Static Analysis
     types:
       opt:
-        task: tasks/builds/opt_linux64_st-an_clobber.yml
+        task: tasks/builds/opt_linux64_st-an.yml
+  linux64-pgo:
+    platforms:
+      - Linux64 PGO
+    types:
+      opt:
+        task: tasks/builds/opt_linux64_pgo.yml
+  linux64-mulet-haz:
+    platforms:
+      - Mulet Linux
+    types:
+      debug:
+        task: tasks/builds/mulet_haz_linux.yml
   macosx64:
     platforms:
       - MacOSX64
     types:
+      opt:
+        task: tasks/builds/opt_macosx64.yml
       debug:
-        task: tasks/builds/dbg_macosx64_clobber.yml
+        task: tasks/builds/dbg_macosx64.yml
+  linux64-asan:
+    platforms:
+      - Linux64 ASan
+    types:
+      opt:
+        task: tasks/builds/opt_linux64-asan.yml
+      debug:
+        task: tasks/builds/dbg_linux64-asan.yml
   macosx64-st-an:
     platforms:
       - MacOSX64 Static Analysis
     types:
       opt:
-        task: tasks/builds/opt_macosx64_st-an_clobber.yml
-  sm-plain:
-    platforms:
-      - Linux64
-    types:
-      opt:
-        task: tasks/builds/sm_plain.yml
-      debug:
-       task: tasks/builds/sm_plaindebug.yml
-  sm-arm-sim:
-    platforms:
-      - Linux64
-    types:
-      opt:
-        task: tasks/builds/sm_arm_sim.yml
-  sm-arm-sim-osx:
-    platforms:
-      - Linux64
-    types:
-      opt:
-        task: tasks/builds/sm_arm_sim_osx.yml
-  sm-compacting:
-    platforms:
-      - Linux64
-    types:
-      opt:
-        task: tasks/builds/sm_compacting.yml
-  sm-generational:
-    platforms:
-      - Linux64
-    types:
-      opt:
-        task: tasks/builds/sm_generational.yml
-  sm-rootanalysis:
-    platforms:
-      - Linux64
-    types:
-      opt:
-        task: tasks/builds/sm_rootanalysis.yml
-  sm-warnaserr:
-    platforms:
-      - Linux64
-    types:
-      opt:
-        task: tasks/builds/sm_warnaserr.yml
-      debug:
-        task: tasks/builds/sm_warnaserrdebug.yml
+        task: tasks/builds/opt_macosx64_st-an.yml
 
 post-build:
   upload-symbols:
@@ -142,83 +88,3 @@ post-build:
       - tasks/builds/dbg_linux64.yml
       - tasks/builds/android_api_15.yml
     task: tasks/post-builds/upload_symbols.yml
-
-tests:
-  cppunit:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_cppunit.yml
-  crashtest:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_crashtest.yml
-  gtest:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_gtest.yml
-  jittests:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_jittests.yml
-  jsreftest:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_jsreftest.yml
-  marionette:
-    allowed_build_tasks:
-      tasks/builds/b2g_emulator_x86_kk_opt.yml:
-        task: tasks/tests/b2g_emulator_marionette.yml
-  mochitest:
-    allowed_build_tasks:
-      tasks/builds/b2g_emulator_x86_l_opt.yml:
-        task: tasks/tests/b2g_emulator_mochitest.yml
-      tasks/builds/b2g_emulator_x86_kk_opt.yml:
-        task: tasks/tests/b2g_emulator_mochitest.yml
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_mochitest_plain.yml
-  mochitest-e10s:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_mochitest_plain_e10s.yml
-  mochitest-a11y:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_mochitest_a11y.yml
-  mochitest-browser-chrome:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_mochitest_bc.yml
-  mochitest-browser-chrome-e10s:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_mochitest_bc_e10s.yml
-  mochitest-chrome:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_mochitest_chrome.yml
-  mochitest-push:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_mochitest_push.yml
-  mochitest-webgl:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_mochitest_gl.yml
-  reftest:
-    allowed_build_tasks:
-      tasks/builds/b2g_emulator_x86_l_opt.yml:
-        task: tasks/tests/b2g_emulator_reftest.yml
-      tasks/builds/b2g_emulator_x86_kk_opt.yml:
-        task: tasks/tests/b2g_emulator_reftest.yml
-  web-platform-tests:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_web_platform_tests.yml
-  web-platform-tests-e10s:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_web_platform_tests_e10s.yml
-  web-platform-tests-reftests:
-    allowed_build_tasks:
-      tasks/builds/dbg_linux64_clobber.yml:
-        task: tasks/tests/fx_linux64_web_platform_tests_reftests.yml

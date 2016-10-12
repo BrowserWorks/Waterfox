@@ -11,12 +11,9 @@ EXPORTS += [
 
 SOURCES += [
     'ANPAudio.cpp',
-    'ANPBitmap.cpp',
     'ANPEvent.cpp',
     'ANPLog.cpp',
-    'ANPMatrix.cpp',
     'ANPNativeWindow.cpp',
-    'ANPOpenGL.cpp',
     'ANPSurface.cpp',
     'ANPSystem.cpp',
     'ANPVideo.cpp',
@@ -36,6 +33,3 @@ LOCAL_INCLUDES += [
 DEFINES['MOZ_APP_NAME'] = '"%s"' % CONFIG['MOZ_APP_NAME']
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

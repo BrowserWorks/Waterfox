@@ -44,28 +44,6 @@ HexEncode(const SECItem * it, nsACString & result)
   }
 }
 
-nsresult
-Base64UrlEncodeImpl(const nsACString & utf8Input, nsACString & result)
-{
-  nsresult rv = Base64Encode(utf8Input, result);
-
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsACString::char_type * out = result.BeginWriting();
-  nsACString::size_type length = result.Length();
-  // base64url encoding is defined in RFC 4648. It replaces the last two
-  // alphabet characters of base64 encoding with '-' and '_' respectively.
-  for (unsigned int i = 0; i < length; ++i) {
-    if (out[i] == '+') {
-      out[i] = '-';
-    } else if (out[i] == '/') {
-      out[i] = '_';
-    }
-  }
-
-  return NS_OK;
-}
-
 #define DSA_KEY_TYPE_STRING (NS_LITERAL_CSTRING("DS160"))
 #define RSA_KEY_TYPE_STRING (NS_LITERAL_CSTRING("RS256"))
 
@@ -110,7 +88,7 @@ private:
 
 NS_IMPL_ISUPPORTS(KeyPair, nsIIdentityKeyPair)
 
-class KeyGenRunnable : public nsRunnable, public nsNSSShutDownObject
+class KeyGenRunnable : public Runnable, public nsNSSShutDownObject
 {
 public:
   NS_DECL_NSIRUNNABLE
@@ -146,7 +124,7 @@ private:
   void operator=(const KeyGenRunnable &) = delete;
 };
 
-class SignRunnable : public nsRunnable, public nsNSSShutDownObject
+class SignRunnable : public Runnable, public nsNSSShutDownObject
 {
 public:
   NS_DECL_NSIRUNNABLE
@@ -237,7 +215,9 @@ NS_IMETHODIMP
 IdentityCryptoService::Base64UrlEncode(const nsACString & utf8Input,
                                        nsACString & result)
 {
-  return Base64UrlEncodeImpl(utf8Input, result);
+  return Base64URLEncode(utf8Input.Length(),
+    reinterpret_cast<const uint8_t*>(utf8Input.BeginReading()),
+    Base64URLEncodePaddingPolicy::Include, result);
 }
 
 KeyPair::KeyPair(SECKEYPrivateKey * privateKey, SECKEYPublicKey * publicKey)
@@ -341,7 +321,7 @@ KeyGenRunnable::KeyGenRunnable(KeyType keyType,
 {
 }
 
-MOZ_WARN_UNUSED_RESULT nsresult
+MOZ_MUST_USE nsresult
 GenerateKeyPair(PK11SlotInfo * slot,
                 SECKEYPrivateKey ** privateKey,
                 SECKEYPublicKey ** publicKey,
@@ -367,7 +347,7 @@ GenerateKeyPair(PK11SlotInfo * slot,
 }
 
 
-MOZ_WARN_UNUSED_RESULT nsresult
+MOZ_MUST_USE nsresult
 GenerateRSAKeyPair(PK11SlotInfo * slot,
                    SECKEYPrivateKey ** privateKey,
                    SECKEYPublicKey ** publicKey)
@@ -381,7 +361,7 @@ GenerateRSAKeyPair(PK11SlotInfo * slot,
                          &rsaParams);
 }
 
-MOZ_WARN_UNUSED_RESULT nsresult
+MOZ_MUST_USE nsresult
 GenerateDSAKeyPair(PK11SlotInfo * slot,
                    SECKEYPrivateKey ** privateKey,
                    SECKEYPublicKey ** publicKey)
@@ -531,9 +511,9 @@ SignRunnable::Run()
           mRv = MapSECStatus(PK11_Sign(mPrivateKey, &sig, &hashItem));
         }
         if (NS_SUCCEEDED(mRv)) {
-          nsDependentCSubstring sigString(
-            reinterpret_cast<const char*>(sig.data), sig.len);
-          mRv = Base64UrlEncodeImpl(sigString, mSignature);
+          mRv = Base64URLEncode(sig.len, sig.data,
+                                Base64URLEncodePaddingPolicy::Include,
+                                mSignature);
         }
         SECITEM_FreeItem(&sig, false);
       }

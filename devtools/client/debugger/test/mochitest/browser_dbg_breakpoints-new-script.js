@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Bug 771452: Make sure that setting a breakpoint in an inline source doesn't
@@ -9,7 +11,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_inline-script.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
@@ -68,7 +74,10 @@ function test() {
     }
 
     Task.spawn(function(){
-      yield waitForSourceAndCaretAndScopes(gPanel, ".html", 16);
+      let onCaretUpdated = waitForCaretAndScopes(gPanel, 16);
+      callInTab(gTab, "runDebuggerStatement");
+      yield onCaretUpdated;
+
       is(gDebugger.gThreadClient.state, "paused",
          "The debugger statement was reached.");
       ok(isCaretPos(gPanel, 16),
@@ -79,7 +88,5 @@ function test() {
       yield testBreakpointHit();
       resumeDebuggerThenCloseAndFinish(gPanel);
     });
-
-    callInTab(gTab, "runDebuggerStatement");
   });
 }

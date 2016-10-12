@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/dom/TextTrack.h"
 #include "mozilla/dom/TextTrackBinding.h"
 #include "mozilla/dom/TextTrackList.h"
@@ -28,7 +29,7 @@ NS_IMPL_RELEASE_INHERITED(TextTrack, DOMEventTargetHelper)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(TextTrack)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
-TextTrack::TextTrack(nsPIDOMWindow* aOwnerWindow,
+TextTrack::TextTrack(nsPIDOMWindowInner* aOwnerWindow,
                      TextTrackKind aKind,
                      const nsAString& aLabel,
                      const nsAString& aLanguage,
@@ -46,7 +47,7 @@ TextTrack::TextTrack(nsPIDOMWindow* aOwnerWindow,
   SetDefaultSettings();
 }
 
-TextTrack::TextTrack(nsPIDOMWindow* aOwnerWindow,
+TextTrack::TextTrack(nsPIDOMWindowInner* aOwnerWindow,
                      TextTrackList* aTextTrackList,
                      TextTrackKind aKind,
                      const nsAString& aLabel,
@@ -73,7 +74,7 @@ TextTrack::~TextTrack()
 void
 TextTrack::SetDefaultSettings()
 {
-  nsPIDOMWindow* ownerWindow = GetOwner();
+  nsPIDOMWindowInner* ownerWindow = GetOwner();
   mCueList = new TextTrackCueList(ownerWindow);
   mActiveCueList = new TextTrackCueList(ownerWindow);
   mCuePos = 0;
@@ -91,6 +92,10 @@ TextTrack::SetMode(TextTrackMode aValue)
 {
   if (mMode != aValue) {
     mMode = aValue;
+    if (aValue == TextTrackMode::Disabled) {
+      SetCuesInactive();
+      //TODO: Apply the rules for text track cue rendering Bug 865407
+    }
     if (mTextTrackList) {
       mTextTrackList->CreateAndDispatchChangeEvent();
     }
@@ -124,7 +129,15 @@ TextTrack::AddCue(TextTrackCue& aCue)
 void
 TextTrack::RemoveCue(TextTrackCue& aCue, ErrorResult& aRv)
 {
+  aCue.SetActive(false);
+
   mCueList->RemoveCue(aCue, aRv);
+  if (mTextTrackList) {
+    HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
+    if (mediaElement) {
+      mediaElement->NotifyCueRemoved(aCue);
+    }
+  }
   SetDirty();
 }
 
@@ -245,6 +258,12 @@ TextTrack::GetTrackElement() {
 void
 TextTrack::SetTrackElement(HTMLTrackElement* aTrackElement) {
   mTrackElement = aTrackElement;
+}
+
+void
+TextTrack::SetCuesInactive()
+{
+  mCueList->SetCuesInactive();
 }
 
 } // namespace dom

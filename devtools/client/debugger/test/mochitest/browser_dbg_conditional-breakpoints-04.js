@@ -1,21 +1,27 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure that conditional breakpoints with blank expressions
- * are stored as plain breakpoints when re-enabling them.
+ * maintain their conditions after enabling them.
  */
 
 const TAB_URL = EXAMPLE_URL + "doc_conditional-breakpoints.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
-    const constants = gDebugger.require('./content/constants');
+    const queries = gDebugger.require("./content/queries");
+    const constants = gDebugger.require("./content/constants");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
 
@@ -24,8 +30,11 @@ function test() {
     var client = gPanel.target.client;
     client.mainRoot.traits.conditionalBreakpoints = false;
 
-    Task.spawn(function*() {
-      yield waitForSourceAndCaretAndScopes(gPanel, ".html", 17);
+    Task.spawn(function* () {
+      let onCaretUpdated = waitForCaretAndScopes(gPanel, 17);
+      callInTab(gTab, "ermahgerd");
+      yield onCaretUpdated;
+
       const location = { actor: gSources.selectedValue, line: 18 };
 
       yield actions.addBreakpoint(location, "");
@@ -33,13 +42,11 @@ function test() {
       yield actions.addBreakpoint(location);
 
       const bp = queries.getBreakpoint(getState(), location);
-      is(bp.condition, undefined, "The conditional expression is correct.");
+      is(bp.condition, "", "The conditional expression is correct.");
 
       // Reset traits back to default value
       client.mainRoot.traits.conditionalBreakpoints = true;
       resumeDebuggerThenCloseAndFinish(gPanel);
     });
-
-    callInTab(gTab, "ermahgerd");
   });
 }

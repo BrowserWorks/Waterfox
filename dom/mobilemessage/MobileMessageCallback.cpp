@@ -133,7 +133,7 @@ MobileMessageCallback::NotifySuccess(JS::Handle<JS::Value> aResult, bool aAsync)
 nsresult
 MobileMessageCallback::NotifySuccess(nsISupports *aMessage, bool aAsync)
 {
-  nsCOMPtr<nsPIDOMWindow> window = mDOMRequest->GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> window = mDOMRequest->GetOwner();
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
   nsCOMPtr<nsISupports> result;
@@ -205,7 +205,7 @@ MobileMessageCallback::NotifyMessageSent(nsISupports *aMessage)
 NS_IMETHODIMP
 MobileMessageCallback::NotifySendMessageFailed(int32_t aError, nsISupports *aMessage)
 {
-  nsCOMPtr<nsPIDOMWindow> window = mDOMRequest->GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> window = mDOMRequest->GetOwner();
   if (NS_WARN_IF(!window)) {
     return NS_ERROR_FAILURE;
   }
@@ -261,8 +261,14 @@ MobileMessageCallback::NotifyMessageDeleted(bool *aDeleted, uint32_t aSize)
   JSContext* cx = jsapi.cx();
 
   JS::Rooted<JSObject*> deleteArrayObj(cx, JS_NewArrayObject(cx, aSize));
+  if (!deleteArrayObj) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
   for (uint32_t i = 0; i < aSize; i++) {
-    JS_DefineElement(cx, deleteArrayObj, i, aDeleted[i], JSPROP_ENUMERATE);
+    if (!JS_DefineElement(cx, deleteArrayObj, i, aDeleted[i],
+                          JSPROP_ENUMERATE)) {
+      return NS_ERROR_UNEXPECTED;
+    }
   }
 
   JS::Rooted<JS::Value> deleteArrayVal(cx, JS::ObjectValue(*deleteArrayObj));
@@ -307,7 +313,7 @@ MobileMessageCallback::NotifySegmentInfoForTextGot(int32_t aSegments,
   JSContext* cx = jsapi.cx();
   JS::Rooted<JS::Value> val(cx);
   if (!ToJSValue(cx, info, &val)) {
-    JS_ClearPendingException(cx);
+    jsapi.ClearException();
     return NotifyError(nsIMobileMessageCallback::INTERNAL_ERROR);
   }
 

@@ -44,7 +44,7 @@ add_task(function test_updateClockOffset() {
   do_check_true(Math.abs(client.localtimeOffsetMsec + HOUR_MS) <= SECOND_MS);
 });
 
-add_task(function test_authenticated_get_request() {
+add_task(function* test_authenticated_get_request() {
   let message = "{\"msg\": \"Great Success!\"}";
   let method = "GET";
 
@@ -66,7 +66,7 @@ add_task(function test_authenticated_get_request() {
   yield deferredStop(server);
 });
 
-function check_authenticated_request(method) {
+function* check_authenticated_request(method) {
   let server = httpd_setup({"/foo": (request, response) => {
       do_check_true(request.hasHeader("Authorization"));
 
@@ -98,7 +98,30 @@ add_task(function test_authenticated_patch_request() {
   check_authenticated_request("PATCH");
 });
 
-add_task(function test_credentials_optional() {
+add_task(function* test_extra_headers() {
+  let server = httpd_setup({"/foo": (request, response) => {
+      do_check_true(request.hasHeader("Authorization"));
+      do_check_true(request.hasHeader("myHeader"));
+      do_check_eq(request.getHeader("myHeader"), "fake");
+
+      response.setStatusLine(request.httpVersion, 200, "OK");
+      response.setHeader("Content-Type", "application/json");
+      response.bodyOutputStream.writeFrom(request.bodyInputStream, request.bodyInputStream.available());
+    }
+  });
+
+  let client = new HawkClient(server.baseURI);
+
+  let response = yield client.request("/foo", "POST", TEST_CREDS, {foo: "bar"},
+                                      {"myHeader": "fake"});
+  let result = JSON.parse(response.body);
+
+  do_check_eq("bar", result.foo);
+
+  yield deferredStop(server);
+});
+
+add_task(function* test_credentials_optional() {
   let method = "GET";
   let server = httpd_setup({
     "/foo": (request, response) => {
@@ -118,7 +141,7 @@ add_task(function test_credentials_optional() {
   yield deferredStop(server);
 });
 
-add_task(function test_server_error() {
+add_task(function* test_server_error() {
   let message = "Ohai!";
   let method = "GET";
 
@@ -141,7 +164,7 @@ add_task(function test_server_error() {
   yield deferredStop(server);
 });
 
-add_task(function test_server_error_json() {
+add_task(function* test_server_error_json() {
   let message = JSON.stringify({error: "Cannot get ye flask."});
   let method = "GET";
 
@@ -163,7 +186,7 @@ add_task(function test_server_error_json() {
   yield deferredStop(server);
 });
 
-add_task(function test_offset_after_request() {
+add_task(function* test_offset_after_request() {
   let message = "Ohai!";
   let method = "GET";
 
@@ -186,7 +209,7 @@ add_task(function test_offset_after_request() {
   yield deferredStop(server);
 });
 
-add_task(function test_offset_in_hawk_header() {
+add_task(function* test_offset_in_hawk_header() {
   let message = "Ohai!";
   let method = "GET";
 
@@ -233,7 +256,7 @@ add_task(function test_offset_in_hawk_header() {
   yield deferredStop(server);
 });
 
-add_task(function test_2xx_success() {
+add_task(function* test_2xx_success() {
   // Just to ensure that we're not biased toward 200 OK for success
   let credentials = {
     id: "eyJleHBpcmVzIjogMTM2NTAxMDg5OC4x",
@@ -257,7 +280,7 @@ add_task(function test_2xx_success() {
   yield deferredStop(server);
 });
 
-add_task(function test_retry_request_on_fail() {
+add_task(function* test_retry_request_on_fail() {
   let attempts = 0;
   let credentials = {
     id: "eyJleHBpcmVzIjogMTM2NTAxMDg5OC4x",
@@ -312,7 +335,7 @@ add_task(function test_retry_request_on_fail() {
   yield deferredStop(server);
 });
 
-add_task(function test_multiple_401_retry_once() {
+add_task(function* test_multiple_401_retry_once() {
   // Like test_retry_request_on_fail, but always return a 401
   // and ensure that the client only retries once.
   let attempts = 0;
@@ -361,7 +384,7 @@ add_task(function test_multiple_401_retry_once() {
   yield deferredStop(server);
 });
 
-add_task(function test_500_no_retry() {
+add_task(function* test_500_no_retry() {
   // If we get a 500 error, the client should not retry (as it would with a
   // 401)
   let credentials = {
@@ -401,7 +424,7 @@ add_task(function test_500_no_retry() {
   yield deferredStop(server);
 });
 
-add_task(function test_401_then_500() {
+add_task(function* test_401_then_500() {
   // Like test_multiple_401_retry_once, but return a 500 to the
   // second request, ensuring that the promise is properly rejected
   // in client.request.
@@ -465,7 +488,7 @@ add_task(function test_401_then_500() {
   yield deferredStop(server);
 });
 
-add_task(function throw_if_not_json_body() {
+add_task(function* throw_if_not_json_body() {
   let client = new HawkClient("https://example.com");
   try {
     yield client.request("/bogus", "GET", {}, "I am not json");

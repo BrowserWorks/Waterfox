@@ -12,11 +12,13 @@
 
 #include "nsStyleLinkElement.h"
 
-#include "mozilla/CSSStyleSheet.h"
+#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheetHandleInlines.h"
 #include "mozilla/css/Loader.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/FragmentOrElement.h"
 #include "mozilla/dom/ShadowRoot.h"
+#include "mozilla/dom/SRILogHelper.h"
 #include "mozilla/Preferences.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
@@ -33,13 +35,6 @@
 
 using namespace mozilla;
 using namespace mozilla::dom;
-
-static LogModule*
-GetSriLog()
-{
-  static LazyLogModule gSriPRLog("SRI");
-  return gSriPRLog;
-}
 
 nsStyleLinkElement::nsStyleLinkElement()
   : mDontLoadStyle(false)
@@ -67,7 +62,7 @@ nsStyleLinkElement::Traverse(nsCycleCollectionTraversalCallback &cb)
 }
 
 NS_IMETHODIMP 
-nsStyleLinkElement::SetStyleSheet(CSSStyleSheet* aStyleSheet)
+nsStyleLinkElement::SetStyleSheet(StyleSheetHandle aStyleSheet)
 {
   if (mStyleSheet) {
     mStyleSheet->SetOwningNode(nullptr);
@@ -84,7 +79,7 @@ nsStyleLinkElement::SetStyleSheet(CSSStyleSheet* aStyleSheet)
   return NS_OK;
 }
 
-NS_IMETHODIMP_(CSSStyleSheet*)
+NS_IMETHODIMP_(StyleSheetHandle)
 nsStyleLinkElement::GetStyleSheet()
 {
   return mStyleSheet;
@@ -149,7 +144,8 @@ nsStyleLinkElement::IsImportEnabled()
 }
 
 static uint32_t ToLinkMask(const nsAString& aLink, nsIPrincipal* aPrincipal)
-{ 
+{
+  // Keep this in sync with sRelValues in HTMLLinkElement.cpp
   if (aLink.EqualsLiteral("prefetch"))
     return nsStyleLinkElement::ePREFETCH;
   else if (aLink.EqualsLiteral("dns-prefetch"))
@@ -218,7 +214,7 @@ nsStyleLinkElement::UpdateStyleSheet(nsICSSLoaderObserver* aObserver,
     nsCOMPtr<nsIDocument> doc = thisContent->IsInShadowTree() ?
       thisContent->OwnerDoc() : thisContent->GetUncomposedDoc();
     if (doc && doc->CSSLoader()->GetEnabled() &&
-        mStyleSheet && mStyleSheet->GetOriginalURI()) {
+        mStyleSheet && !mStyleSheet->IsInline()) {
       doc->CSSLoader()->ObsoleteSheet(mStyleSheet->GetOriginalURI());
     }
   }
@@ -316,8 +312,15 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
     return NS_OK;
   }
 
-  Element* oldScopeElement =
-    mStyleSheet ? mStyleSheet->GetScopeElement() : nullptr;
+  // XXXheycam ServoStyleSheets do not support <style scoped>.
+  Element* oldScopeElement = nullptr;
+  if (mStyleSheet) {
+    if (mStyleSheet->IsServo()) {
+      NS_ERROR("stylo: ServoStyleSheets don't support <style scoped>");
+    } else {
+      oldScopeElement = mStyleSheet->AsGecko()->GetScopeElement();
+    }
+  }
 
   if (mStyleSheet && (aOldDocument || aOldShadowRoot)) {
     MOZ_ASSERT(!(aOldDocument && aOldShadowRoot),
@@ -427,7 +430,7 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
     nsAutoString integrity;
     thisContent->GetAttr(kNameSpaceID_None, nsGkAtoms::integrity, integrity);
     if (!integrity.IsEmpty()) {
-      MOZ_LOG(GetSriLog(), mozilla::LogLevel::Debug,
+      MOZ_LOG(SRILogHelper::GetSriLog(), mozilla::LogLevel::Debug,
               ("nsStyleLinkElement::DoUpdateStyleSheet, integrity=%s",
                NS_ConvertUTF16toUTF8(integrity).get()));
     }
@@ -465,10 +468,18 @@ nsStyleLinkElement::UpdateStyleSheetScopedness(bool aIsNowScoped)
     return;
   }
 
+  if (mStyleSheet->IsServo()) {
+    // XXXheycam ServoStyleSheets don't support <style scoped>.
+    NS_ERROR("stylo: ServoStyleSheets don't support <style scoped>");
+    return;
+  }
+
+  CSSStyleSheet* sheet = mStyleSheet->AsGecko();
+
   nsCOMPtr<nsIContent> thisContent;
   CallQueryInterface(this, getter_AddRefs(thisContent));
 
-  Element* oldScopeElement = mStyleSheet->GetScopeElement();
+  Element* oldScopeElement = sheet->GetScopeElement();
   Element* newScopeElement = aIsNowScoped ?
                                thisContent->GetParentElement() :
                                nullptr;
@@ -483,14 +494,14 @@ nsStyleLinkElement::UpdateStyleSheetScopedness(bool aIsNowScoped)
     ShadowRoot* containingShadow = thisContent->GetContainingShadow();
     containingShadow->RemoveSheet(mStyleSheet);
 
-    mStyleSheet->SetScopeElement(newScopeElement);
+    sheet->SetScopeElement(newScopeElement);
 
     containingShadow->InsertSheet(mStyleSheet, thisContent);
   } else {
     document->BeginUpdate(UPDATE_STYLE);
     document->RemoveStyleSheet(mStyleSheet);
 
-    mStyleSheet->SetScopeElement(newScopeElement);
+    sheet->SetScopeElement(newScopeElement);
 
     document->AddStyleSheet(mStyleSheet);
     document->EndUpdate(UPDATE_STYLE);

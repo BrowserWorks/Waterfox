@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2011 Google Inc.
  *
@@ -9,6 +8,7 @@
 #include "SkDumpCanvas.h"
 
 #ifdef SK_DEVELOPER
+#include "SkData.h"
 #include "SkPatchUtils.h"
 #include "SkPicture.h"
 #include "SkPixelRef.h"
@@ -199,14 +199,14 @@ void SkDumpCanvas::willSave() {
     this->INHERITED::willSave();
 }
 
-SkCanvas::SaveLayerStrategy SkDumpCanvas::willSaveLayer(const SkRect* bounds, const SkPaint* paint,
-                                                        SaveFlags flags) {
+SkCanvas::SaveLayerStrategy SkDumpCanvas::getSaveLayerStrategy(const SaveLayerRec& rec) {
     SkString str;
-    str.printf("saveLayer(0x%X)", flags);
-    if (bounds) {
+    str.printf("saveLayer(0x%X)", rec.fSaveLayerFlags);
+    if (rec.fBounds) {
         str.append(" bounds");
-        toString(*bounds, &str);
+        toString(*rec.fBounds, &str);
     }
+    const SkPaint* paint = rec.fPaint;
     if (paint) {
         if (paint->getAlpha() != 0xFF) {
             str.appendf(" alpha:0x%02X", paint->getAlpha());
@@ -216,7 +216,7 @@ SkCanvas::SaveLayerStrategy SkDumpCanvas::willSaveLayer(const SkRect* bounds, co
         }
     }
     this->dump(kSave_Verb, paint, str.c_str());
-    return this->INHERITED::willSaveLayer(bounds, paint, flags);
+    return this->INHERITED::getSaveLayerStrategy(rec);
 }
 
 void SkDumpCanvas::willRestore() {
@@ -392,16 +392,9 @@ void SkDumpCanvas::onDrawImageRect(const SkImage* image, const SkRect* src, cons
         toString(*src, &ss);
         rs.prependf("%s ", ss.c_str());
     }
-    
+
     this->dump(kDrawBitmap_Verb, paint, "drawImageRectToRect(%s %s)",
                bs.c_str(), rs.c_str());
-}
-
-void SkDumpCanvas::onDrawSprite(const SkBitmap& bitmap, int x, int y, const SkPaint* paint) {
-    SkString str;
-    bitmap.toString(&str);
-    this->dump(kDrawBitmap_Verb, paint, "drawSprite(%s %d %d)", str.c_str(),
-               x, y);
 }
 
 void SkDumpCanvas::onDrawText(const void* text, size_t byteLength, SkScalar x, SkScalar y,
@@ -487,6 +480,13 @@ void SkDumpCanvas::onDrawPatch(const SkPoint cubics[12], const SkColor colors[4]
               colors[0], colors[1], colors[2], colors[3],
               texCoords[0].x(), texCoords[0].y(), texCoords[1].x(), texCoords[1].y(),
               texCoords[2].x(), texCoords[2].y(), texCoords[3].x(), texCoords[3].y());
+}
+
+void SkDumpCanvas::onDrawAnnotation(const SkRect& rect, const char key[], SkData* value) {
+    SkString str;
+    toString(rect, &str);
+    this->dump(kDrawAnnotation_Verb, nullptr, "drawAnnotation(%s \"%s\" (%zu))",
+               str.c_str(), key, value ? value->size() : 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

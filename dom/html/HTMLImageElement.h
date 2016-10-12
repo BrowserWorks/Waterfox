@@ -22,6 +22,8 @@ namespace mozilla {
 class EventChainPreVisitor;
 namespace dom {
 
+class ImageLoadTask;
+
 class ResponsiveImageSelector;
 class HTMLImageElement final : public nsGenericHTMLElement,
                                public nsImageLoadingContent,
@@ -111,7 +113,7 @@ public:
   }
   void SetWidth(uint32_t aWidth, ErrorResult& aError)
   {
-    SetUnsignedIntAttr(nsGkAtoms::width, aWidth, aError);
+    SetUnsignedIntAttr(nsGkAtoms::width, aWidth, 0, aError);
   }
   uint32_t Height()
   {
@@ -119,7 +121,7 @@ public:
   }
   void SetHeight(uint32_t aHeight, ErrorResult& aError)
   {
-    SetUnsignedIntAttr(nsGkAtoms::height, aHeight, aError);
+    SetUnsignedIntAttr(nsGkAtoms::height, aHeight, 0, aError);
   }
   uint32_t NaturalWidth();
   uint32_t NaturalHeight();
@@ -130,7 +132,7 @@ public:
   }
   void SetHspace(uint32_t aHspace, ErrorResult& aError)
   {
-    SetUnsignedIntAttr(nsGkAtoms::hspace, aHspace, aError);
+    SetUnsignedIntAttr(nsGkAtoms::hspace, aHspace, 0, aError);
   }
   uint32_t Vspace()
   {
@@ -138,7 +140,7 @@ public:
   }
   void SetVspace(uint32_t aVspace, ErrorResult& aError)
   {
-    SetUnsignedIntAttr(nsGkAtoms::vspace, aVspace, aError);
+    SetUnsignedIntAttr(nsGkAtoms::vspace, aVspace, 0, aError);
   }
 
   // The XPCOM versions of the following getters work for Web IDL bindings as well
@@ -195,7 +197,7 @@ public:
   }
   void GetReferrerPolicy(nsAString& aReferrer)
   {
-    GetHTMLAttr(nsGkAtoms::referrerpolicy, aReferrer);
+    GetEnumAttr(nsGkAtoms::referrerpolicy, EmptyCString().get(), aReferrer);
   }
 
   net::ReferrerPolicy
@@ -336,8 +338,6 @@ protected:
                                    const nsAString *aSizes = nullptr);
 
   CSSIntPoint GetXY();
-  virtual void GetItemValueText(DOMString& text) override;
-  virtual void SetItemValueText(const nsAString& text) override;
   virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
   void UpdateFormOwner();
 
@@ -362,7 +362,7 @@ private:
                                     nsRuleData* aData);
 
   bool mInDocResponsiveContent;
-  nsCOMPtr<nsIRunnable> mPendingImageLoadTask;
+  RefPtr<ImageLoadTask> mPendingImageLoadTask;
 };
 
 } // namespace dom

@@ -7,10 +7,10 @@ var Cu = Components.utils;
 var Cr = Components.results;
 var CC = Components.Constructor;
 
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+const Services = require("Services");
 const {DebuggerClient} = require("devtools/shared/client/main");
 const {DebuggerServer} = require("devtools/server/main");
 const {AppActorFront} = require("devtools/shared/apps/app-actor-front");
@@ -26,13 +26,13 @@ function connect(onDone) {
 
   // Setup client and actor used in all tests
   gClient = new DebuggerClient(DebuggerServer.connectPipe());
-  gClient.connect(function onConnect() {
-    gClient.listTabs(function onListTabs(aResponse) {
+  gClient.connect()
+    .then(() => gClient.listTabs())
+    .then(aResponse => {
       gActor = aResponse.webappsActor;
       gActorFront = new AppActorFront(gClient, aResponse);
       onDone();
     });
-  });
 }
 
 function webappActorRequest(request, onResponse) {
@@ -65,7 +65,7 @@ function installTestApp(zipName, appId, onDone) {
 
     onDone();
   });
-};
+}
 
 function setup() {
   // We have to setup a profile, otherwise indexed db used by webapps
@@ -80,16 +80,7 @@ function setup() {
   Components.utils.import("resource://testing-common/AppInfo.jsm");
   updateAppInfo();
 
-  // We have to toggle this flag in order to have apps being listed in getAll
-  // as only launchable apps are returned
-  Components.utils.import('resource://gre/modules/Webapps.jsm');
-  DOMApplicationRegistry.allAppsLaunchable = true;
-
-  // Mock WebappOSUtils
-  Cu.import("resource://gre/modules/WebappOSUtils.jsm");
-  WebappOSUtils.getPackagePath = function(aApp) {
-    return aApp.basePath + "/" + aApp.id;
-  }
+  Components.utils.import("resource://gre/modules/Webapps.jsm");
 
   // Enable launch/close method of the webapps actor
   let {WebappsActor} = require("devtools/server/actors/webapps");
@@ -110,7 +101,7 @@ function do_get_webappsdir() {
   // Register our own provider for the profile directory.
   // It will return our special docshell profile directory.
   var provider = {
-    getFile: function(prop, persistent) {
+    getFile: function (prop, persistent) {
       persistent.value = true;
       if (prop == "webappsDir") {
         return webappsDir.clone();
@@ -120,7 +111,7 @@ function do_get_webappsdir() {
       }
       throw Cr.NS_ERROR_FAILURE;
     },
-    QueryInterface: function(iid) {
+    QueryInterface: function (iid) {
       if (iid.equals(Ci.nsIDirectoryServiceProvider) ||
           iid.equals(Ci.nsISupports)) {
         return this;

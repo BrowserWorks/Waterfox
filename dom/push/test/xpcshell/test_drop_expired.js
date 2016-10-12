@@ -12,13 +12,11 @@ var quotaURI;
 var permURI;
 
 function visitURI(uri, timestamp) {
-  return addVisit({
+  return PlacesTestUtils.addVisits({
     uri: uri,
     title: uri.spec,
-    visits: [{
-      visitDate: timestamp * 1000,
-      transitionType: Ci.nsINavHistoryService.TRANSITION_LINK,
-    }],
+    visitDate: timestamp * 1000,
+    transition: Ci.nsINavHistoryService.TRANSITION_LINK
   });
 }
 
@@ -101,13 +99,12 @@ add_task(function* setUp() {
   });
 
   let subChangePromise = promiseObserverNotification(
-    'push-subscription-change',
+    PushServiceComponent.subscriptionChangeTopic,
     (subject, data) => data == 'https://example.com/expired-quota-restored'
   );
 
   PushService.init({
     serverURI: 'wss://push.example.org/',
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -122,32 +119,29 @@ add_task(function* setUp() {
     },
   });
 
-  yield waitForPromise(subChangePromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for subscription change event on startup');
+  yield subChangePromise;
 });
 
 add_task(function* test_site_visited() {
   let subChangePromise = promiseObserverNotification(
-    'push-subscription-change',
+    PushServiceComponent.subscriptionChangeTopic,
     (subject, data) => data == 'https://example.xyz/expired-quota-exceeded'
   );
 
   yield visitURI(quotaURI, Date.now());
   PushService.observe(null, 'idle-daily', '');
 
-  yield waitForPromise(subChangePromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for subscription change event after visit');
+  yield subChangePromise;
 });
 
 add_task(function* test_perm_restored() {
   let subChangePromise = promiseObserverNotification(
-    'push-subscription-change',
+    PushServiceComponent.subscriptionChangeTopic,
     (subject, data) => data == 'https://example.info/expired-perm-revoked'
   );
 
   Services.perms.add(permURI, 'desktop-notification',
     Ci.nsIPermissionManager.ALLOW_ACTION);
 
-  yield waitForPromise(subChangePromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for subscription change event after permission');
+  yield subChangePromise;
 });

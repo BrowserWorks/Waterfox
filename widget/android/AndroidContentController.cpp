@@ -9,6 +9,7 @@
 #include "base/message_loop.h"
 #include "mozilla/layers/APZCCallbackHelper.h"
 #include "mozilla/layers/APZCTreeManager.h"
+#include "nsIObserverService.h"
 #include "nsLayoutUtils.h"
 #include "nsWindow.h"
 
@@ -16,6 +17,13 @@ using mozilla::layers::APZCTreeManager;
 
 namespace mozilla {
 namespace widget {
+
+void
+AndroidContentController::Destroy()
+{
+    mAndroidWindow = nullptr;
+    ChromeProcessController::Destroy();
+}
 
 void
 AndroidContentController::NotifyDefaultPrevented(APZCTreeManager* aManager,
@@ -26,7 +34,7 @@ AndroidContentController::NotifyDefaultPrevented(APZCTreeManager* aManager,
         // The notification must reach the APZ on the Java UI thread (aka the
         // APZ "controller" thread) but we get it from the Gecko thread, so we
         // have to throw it onto the other thread.
-        AndroidBridge::Bridge()->PostTaskToUiThread(NewRunnableMethod(
+        AndroidBridge::Bridge()->PostTaskToUiThread(NewRunnableMethod<uint64_t, bool>(
             aManager, &APZCTreeManager::ContentReceivedInputBlock,
             aInputBlockId, aDefaultPrevented), 0);
         return;
@@ -62,18 +70,72 @@ AndroidContentController::HandleSingleTap(const CSSPoint& aPoint,
         }
 
         CSSIntPoint rounded = RoundedToInt(point);
-        nsCString data = nsPrintfCString("{ \"x\": %d, \"y\": %d }", rounded.x, rounded.y);
-        nsAppShell::PostEvent(AndroidGeckoEvent::MakeBroadcastEvent(
-                NS_LITERAL_CSTRING("Gesture:SingleTap"), data));
+        nsAppShell::PostEvent([rounded] {
+            nsCOMPtr<nsIObserverService> obsServ =
+                mozilla::services::GetObserverService();
+            if (!obsServ) {
+                return;
+            }
+
+            nsPrintfCString data("{\"x\":%d,\"y\":%d}", rounded.x, rounded.y);
+            obsServ->NotifyObservers(nullptr, "Gesture:SingleTap",
+                                     NS_ConvertASCIItoUTF16(data).get());
+        });
     }
 
     ChromeProcessController::HandleSingleTap(aPoint, aModifiers, aGuid);
 }
 
 void
-AndroidContentController::PostDelayedTask(Task* aTask, int aDelayMs)
+AndroidContentController::PostDelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs)
 {
-    AndroidBridge::Bridge()->PostTaskToUiThread(aTask, aDelayMs);
+    AndroidBridge::Bridge()->PostTaskToUiThread(Move(aTask), aDelayMs);
+}
+void
+AndroidContentController::UpdateOverscrollVelocity(const float aX, const float aY)
+{
+  if (mAndroidWindow) {
+    mAndroidWindow->UpdateOverscrollVelocity(aX, aY);
+  }
+}
+
+void
+AndroidContentController::UpdateOverscrollOffset(const float aX, const float aY)
+{
+  if (mAndroidWindow) {
+    mAndroidWindow->UpdateOverscrollOffset(aX, aY);
+  }
+}
+
+void
+AndroidContentController::SetScrollingRootContent(const bool isRootContent)
+{
+  if (mAndroidWindow) {
+    mAndroidWindow->SetScrollingRootContent(isRootContent);
+  }
+}
+
+void
+AndroidContentController::NotifyAPZStateChange(const ScrollableLayerGuid& aGuid,
+                                               APZStateChange aChange,
+                                               int aArg)
+{
+  // This function may get invoked twice, if the first invocation is not on
+  // the main thread then the ChromeProcessController version of this function
+  // will redispatch to the main thread. We want to make sure that our handling
+  // only happens on the main thread.
+  ChromeProcessController::NotifyAPZStateChange(aGuid, aChange, aArg);
+  if (NS_IsMainThread()) {
+    nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
+    if (aChange == layers::GeckoContentController::APZStateChange::TransformEnd) {
+      // This is used by tests to determine when the APZ is done doing whatever
+      // it's doing. XXX generify this as needed when writing additional tests.
+      observerService->NotifyObservers(nullptr, "APZ:TransformEnd", nullptr);
+      observerService->NotifyObservers(nullptr, "PanZoom:StateChange", MOZ_UTF16("NOTHING"));
+    } else if (aChange == layers::GeckoContentController::APZStateChange::TransformBegin) {
+      observerService->NotifyObservers(nullptr, "PanZoom:StateChange", MOZ_UTF16("PANNING"));
+    }
+  }
 }
 
 } // namespace widget

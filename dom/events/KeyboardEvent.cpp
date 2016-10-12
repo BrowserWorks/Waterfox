@@ -25,7 +25,7 @@ KeyboardEvent::KeyboardEvent(EventTarget* aOwner,
   }
   else {
     mEventIsInternal = true;
-    mEvent->time = PR_Now();
+    mEvent->mTime = PR_Now();
     mEvent->AsKeyboardEvent()->mKeyNameIndex = KEY_NAME_INDEX_USE_STRING;
   }
 }
@@ -136,6 +136,41 @@ KeyboardEvent::GetCode(nsAString& aCodeName)
   mEvent->AsKeyboardEvent()->GetDOMCodeName(aCodeName);
 }
 
+void KeyboardEvent::GetInitDict(KeyboardEventInit& aParam)
+{
+  GetKey(aParam.mKey);
+  GetCode(aParam.mCode);
+  aParam.mLocation = Location();
+  aParam.mRepeat = Repeat();
+  aParam.mIsComposing = IsComposing();
+
+  // legacy attributes
+  aParam.mKeyCode = KeyCode();
+  aParam.mCharCode = CharCode();
+  aParam.mWhich = Which();
+
+  // modifiers from EventModifierInit
+  aParam.mCtrlKey = CtrlKey();
+  aParam.mShiftKey = ShiftKey();
+  aParam.mAltKey = AltKey();
+  aParam.mMetaKey = MetaKey();
+
+  WidgetKeyboardEvent* internalEvent = mEvent->AsKeyboardEvent();
+  aParam.mModifierAltGraph = internalEvent->IsAltGraph();
+  aParam.mModifierCapsLock = internalEvent->IsCapsLocked();
+  aParam.mModifierFn = internalEvent->IsFn();
+  aParam.mModifierFnLock = internalEvent->IsFnLocked();
+  aParam.mModifierNumLock = internalEvent->IsNumLocked();
+  aParam.mModifierOS = internalEvent->IsOS();
+  aParam.mModifierScrollLock = internalEvent->IsScrollLocked();
+  aParam.mModifierSymbol = internalEvent->IsSymbol();
+  aParam.mModifierSymbolLock = internalEvent->IsSymbolLocked();
+
+  // EventInit
+  aParam.mBubbles =  internalEvent->mFlags.mBubbles;
+  aParam.mCancelable = internalEvent->mFlags.mCancelable;
+}
+
 NS_IMETHODIMP
 KeyboardEvent::GetCharCode(uint32_t* aCharCode)
 {
@@ -149,19 +184,22 @@ KeyboardEvent::CharCode()
 {
   // If this event is initialized with ctor, we shouldn't check event type.
   if (mInitializedByCtor) {
-    return mEvent->AsKeyboardEvent()->charCode;
+    return mEvent->AsKeyboardEvent()->mCharCode;
   }
 
   switch (mEvent->mMessage) {
   case eBeforeKeyDown:
   case eKeyDown:
+  case eKeyDownOnPlugin:
   case eAfterKeyDown:
   case eBeforeKeyUp:
   case eKeyUp:
+  case eKeyUpOnPlugin:
   case eAfterKeyUp:
     return 0;
   case eKeyPress:
-    return mEvent->AsKeyboardEvent()->charCode;
+  case eAccessKeyNotFound:
+    return mEvent->AsKeyboardEvent()->mCharCode;
   default:
     break;
   }
@@ -181,11 +219,11 @@ KeyboardEvent::KeyCode()
 {
   // If this event is initialized with ctor, we shouldn't check event type.
   if (mInitializedByCtor) {
-    return mEvent->AsKeyboardEvent()->keyCode;
+    return mEvent->AsKeyboardEvent()->mKeyCode;
   }
 
   if (mEvent->HasKeyEventMessage()) {
-    return mEvent->AsKeyboardEvent()->keyCode;
+    return mEvent->AsKeyboardEvent()->mKeyCode;
   }
   return 0;
 }
@@ -201,16 +239,18 @@ KeyboardEvent::Which()
   switch (mEvent->mMessage) {
     case eBeforeKeyDown:
     case eKeyDown:
+    case eKeyDownOnPlugin:
     case eAfterKeyDown:
     case eBeforeKeyUp:
     case eKeyUp:
+    case eKeyUpOnPlugin:
     case eAfterKeyUp:
       return KeyCode();
     case eKeyPress:
       //Special case for 4xp bug 62878.  Try to make value of which
       //more closely mirror the values that 4.x gave for RETURN and BACKSPACE
       {
-        uint32_t keyCode = mEvent->AsKeyboardEvent()->keyCode;
+        uint32_t keyCode = mEvent->AsKeyboardEvent()->mKeyCode;
         if (keyCode == NS_VK_RETURN || keyCode == NS_VK_BACK) {
           return keyCode;
         }
@@ -235,7 +275,7 @@ KeyboardEvent::GetLocation(uint32_t* aLocation)
 uint32_t
 KeyboardEvent::Location()
 {
-  return mEvent->AsKeyboardEvent()->location;
+  return mEvent->AsKeyboardEvent()->mLocation;
 }
 
 // static
@@ -260,9 +300,9 @@ KeyboardEvent::InitWithKeyboardEventInit(EventTarget* aOwner,
                                          ErrorResult& aRv)
 {
   bool trusted = Init(aOwner);
-  aRv = InitKeyEvent(aType, aParam.mBubbles, aParam.mCancelable,
-                     aParam.mView, false, false, false, false,
-                     aParam.mKeyCode, aParam.mCharCode);
+  InitKeyEvent(aType, aParam.mBubbles, aParam.mCancelable,
+               aParam.mView, false, false, false, false,
+               aParam.mKeyCode, aParam.mCharCode);
   InitModifiers(aParam);
   SetTrusted(trusted);
   mDetail = aParam.mDetail;
@@ -270,7 +310,7 @@ KeyboardEvent::InitWithKeyboardEventInit(EventTarget* aOwner,
   mInitializedWhichValue = aParam.mWhich;
 
   WidgetKeyboardEvent* internalEvent = mEvent->AsKeyboardEvent();
-  internalEvent->location = aParam.mLocation;
+  internalEvent->mLocation = aParam.mLocation;
   internalEvent->mIsRepeat = aParam.mRepeat;
   internalEvent->mIsComposing = aParam.mIsComposing;
   internalEvent->mKeyNameIndex =
@@ -289,7 +329,7 @@ NS_IMETHODIMP
 KeyboardEvent::InitKeyEvent(const nsAString& aType,
                             bool aCanBubble,
                             bool aCancelable,
-                            nsIDOMWindow* aView,
+                            mozIDOMWindow* aView,
                             bool aCtrlKey,
                             bool aAltKey,
                             bool aShiftKey,
@@ -297,13 +337,12 @@ KeyboardEvent::InitKeyEvent(const nsAString& aType,
                             uint32_t aKeyCode,
                             uint32_t aCharCode)
 {
-  nsresult rv = UIEvent::InitUIEvent(aType, aCanBubble, aCancelable, aView, 0);
-  NS_ENSURE_SUCCESS(rv, rv);
+  UIEvent::InitUIEvent(aType, aCanBubble, aCancelable, aView, 0);
 
   WidgetKeyboardEvent* keyEvent = mEvent->AsKeyboardEvent();
   keyEvent->InitBasicModifiers(aCtrlKey, aAltKey, aShiftKey, aMetaKey);
-  keyEvent->keyCode = aKeyCode;
-  keyEvent->charCode = aCharCode;
+  keyEvent->mKeyCode = aKeyCode;
+  keyEvent->mCharCode = aCharCode;
 
   return NS_OK;
 }

@@ -27,7 +27,9 @@ CacheIOThread::CacheIOThread()
 , mHasXPCOMEvents(false)
 , mRerunCurrentEvent(false)
 , mShutdown(false)
+#ifdef DEBUG
 , mInsideLoop(true)
+#endif
 {
   sSelf = this;
 }
@@ -155,8 +157,9 @@ already_AddRefed<nsIEventTarget> CacheIOThread::Target()
   if (!target && mThread)
   {
     MonitorAutoLock lock(mMonitor);
-    if (!mXPCOMThread)
+    while (!mXPCOMThread) {
       lock.Wait();
+    }
 
     target = mXPCOMThread;
   }
@@ -242,8 +245,10 @@ loopStart:
 
     MOZ_ASSERT(!EventsPending());
 
+#ifdef DEBUG
     // This is for correct assertion on XPCOM events dispatch.
     mInsideLoop = false;
+#endif
   } // lock
 
   if (threadInternal)

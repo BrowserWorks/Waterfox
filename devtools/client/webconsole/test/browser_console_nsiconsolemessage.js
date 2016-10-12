@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Check that nsIConsoleMessages are displayed in the Browser Console.
 // See bug 859756.
@@ -19,7 +19,7 @@ function test() {
     Services.prefs.clearUserPref(FILTER_PREF);
   });
 
-  Task.spawn(function*() {
+  Task.spawn(function* () {
     const {tab} = yield loadTab(TEST_URI);
 
     // Test for cached nsIConsoleMessages.
@@ -30,7 +30,10 @@ function test() {
 
     ok(hud, "web console opened");
     Services.console.logStringMessage("do-not-show-me");
-    content.console.log("foobarz");
+
+    ContentTask.spawn(gBrowser.selectedBrowser, null, function* () {
+      content.console.log("foobarz");
+    });
 
     yield waitForMessages({
       webconsole: hud,

@@ -26,16 +26,14 @@ class SVGSVGElement;
 
 struct nsSVGMark;
 
-typedef nsSVGContainerFrame nsSVGMarkerFrameBase;
-
-class nsSVGMarkerFrame : public nsSVGMarkerFrameBase
+class nsSVGMarkerFrame : public nsSVGContainerFrame
 {
   friend class nsSVGMarkerAnonChildFrame;
   friend nsContainerFrame*
   NS_NewSVGMarkerFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 protected:
   explicit nsSVGMarkerFrame(nsStyleContext* aContext)
-    : nsSVGMarkerFrameBase(aContext)
+    : nsSVGContainerFrame(aContext)
     , mMarkedFrame(nullptr)
     , mInUse(false)
     , mInUse2(false)
@@ -76,11 +74,11 @@ public:
 
   virtual nsContainerFrame* GetContentInsertionFrame() override {
     // Any children must be added to our single anonymous inner frame kid.
-    MOZ_ASSERT(GetFirstPrincipalChild() &&
-               GetFirstPrincipalChild()->GetType() ==
+    MOZ_ASSERT(PrincipalChildList().FirstChild() &&
+               PrincipalChildList().FirstChild()->GetType() ==
                  nsGkAtoms::svgMarkerAnonChildFrame,
                "Where is our anonymous child?");
-    return GetFirstPrincipalChild()->GetContentInsertionFrame();
+    return PrincipalChildList().FirstChild()->GetContentInsertionFrame();
   }
 
   // nsSVGMarkerFrame methods:
@@ -135,19 +133,14 @@ private:
 ////////////////////////////////////////////////////////////////////////
 // nsMarkerAnonChildFrame class
 
-typedef nsSVGDisplayContainerFrame nsSVGMarkerAnonChildFrameBase;
-
-/**
- */
-class nsSVGMarkerAnonChildFrame
-  : public nsSVGMarkerAnonChildFrameBase
+class nsSVGMarkerAnonChildFrame : public nsSVGDisplayContainerFrame
 {
   friend nsContainerFrame*
   NS_NewSVGMarkerAnonChildFrame(nsIPresShell* aPresShell,
                                 nsStyleContext* aContext);
 
   explicit nsSVGMarkerAnonChildFrame(nsStyleContext* aContext)
-    : nsSVGMarkerAnonChildFrameBase(aContext)
+    : nsSVGDisplayContainerFrame(aContext)
   {}
 
 public:

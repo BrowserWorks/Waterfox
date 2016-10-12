@@ -183,10 +183,6 @@ public:
   void Clear();
 
 private:
-  static PLDHashOperator
-    RemoveExpiredEntries(const nsACString& aKey, nsAutoPtr<CacheEntry>& aValue,
-                         void* aUserData);
-
   static bool GetCacheKey(nsIURI* aURI, nsIPrincipal* aPrincipal,
                             bool aWithCredentials, nsACString& _retval);
 
@@ -273,16 +269,16 @@ nsPreflightCache::GetEntry(nsIURI* aURI,
     return nullptr;
   }
 
-  CacheEntry* entry;
+  CacheEntry* existingEntry = nullptr;
 
-  if (mTable.Get(key, &entry)) {
+  if (mTable.Get(key, &existingEntry)) {
     // Entry already existed so just return it. Also update the LRU list.
 
     // Move to the head of the list.
-    entry->removeFrom(mList);
-    mList.insertFront(entry);
+    existingEntry->removeFrom(mList);
+    mList.insertFront(existingEntry);
 
-    return entry;
+    return existingEntry;
   }
 
   if (!aCreate) {
@@ -291,8 +287,8 @@ nsPreflightCache::GetEntry(nsIURI* aURI,
 
   // This is a new entry, allocate and insert into the table now so that any
   // failures don't cause items to be removed from a full cache.
-  entry = new CacheEntry(key);
-  if (!entry) {
+  CacheEntry* newEntry = new CacheEntry(key);
+  if (!newEntry) {
     NS_WARNING("Failed to allocate new cache entry!");
     return nullptr;
   }
@@ -304,7 +300,17 @@ nsPreflightCache::GetEntry(nsIURI* aURI,
   if (mTable.Count() == PREFLIGHT_CACHE_SIZE) {
     // Try to kick out all the expired entries.
     TimeStamp now = TimeStamp::NowLoRes();
-    mTable.Enumerate(RemoveExpiredEntries, &now);
+    for (auto iter = mTable.Iter(); !iter.Done(); iter.Next()) {
+      nsAutoPtr<CacheEntry>& entry = iter.Data();
+      entry->PurgeExpired(now);
+
+      if (entry->mHeaders.IsEmpty() &&
+          entry->mMethods.IsEmpty()) {
+        // Expired, remove from the list as well as the hash table.
+        entry->removeFrom(sPreflightCache->mList);
+        iter.Remove();
+      }
+    }
 
     // If that didn't remove anything then kick out the least recently used
     // entry.
@@ -319,11 +325,11 @@ nsPreflightCache::GetEntry(nsIURI* aURI,
                    "Somehow tried to remove an entry that was never added!");
     }
   }
-  
-  mTable.Put(key, entry);
-  mList.insertFront(entry);
 
-  return entry;
+  mTable.Put(key, newEntry);
+  mList.insertFront(newEntry);
+
+  return newEntry;
 }
 
 void
@@ -349,25 +355,6 @@ nsPreflightCache::Clear()
 {
   mList.clear();
   mTable.Clear();
-}
-
-/* static */ PLDHashOperator
-nsPreflightCache::RemoveExpiredEntries(const nsACString& aKey,
-                                           nsAutoPtr<CacheEntry>& aValue,
-                                           void* aUserData)
-{
-  TimeStamp* now = static_cast<TimeStamp*>(aUserData);
-  
-  aValue->PurgeExpired(*now);
-  
-  if (aValue->mHeaders.IsEmpty() &&
-      aValue->mMethods.IsEmpty()) {
-    // Expired, remove from the list as well as the hash table.
-    aValue->removeFrom(sPreflightCache->mList);
-    return PL_DHASH_REMOVE;
-  }
-  
-  return PL_DHASH_NEXT;
 }
 
 /* static */ bool
@@ -456,7 +443,7 @@ nsCORSListenerProxy::Init(nsIChannel* aChannel, DataURIHandling aAllowDataURI)
   aChannel->GetNotificationCallbacks(getter_AddRefs(mOuterNotificationCallbacks));
   aChannel->SetNotificationCallbacks(this);
 
-  nsresult rv = UpdateChannel(aChannel, aAllowDataURI);
+  nsresult rv = UpdateChannel(aChannel, aAllowDataURI, UpdateType::Default);
   if (NS_FAILED(rv)) {
     mOuterListener = nullptr;
     mRequestingPrincipal = nullptr;
@@ -649,8 +636,22 @@ nsCORSListenerProxy::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
                                             nsIAsyncVerifyRedirectCallback *aCb)
 {
   nsresult rv;
-  if (!NS_IsInternalSameURIRedirect(aOldChannel, aNewChannel, aFlags) &&
-      !NS_IsHSTSUpgradeRedirect(aOldChannel, aNewChannel, aFlags)) {
+  if (NS_IsInternalSameURIRedirect(aOldChannel, aNewChannel, aFlags) ||
+      NS_IsHSTSUpgradeRedirect(aOldChannel, aNewChannel, aFlags)) {
+    // Internal redirects still need to be updated in order to maintain
+    // the correct headers.  We use DataURIHandling::Allow, since unallowed
+    // data URIs should have been blocked before we got to the internal
+    // redirect.
+    rv = UpdateChannel(aNewChannel, DataURIHandling::Allow,
+                       UpdateType::InternalOrHSTSRedirect);
+    if (NS_FAILED(rv)) {
+        NS_WARNING("nsCORSListenerProxy::AsyncOnChannelRedirect: "
+                   "internal redirect UpdateChannel() returned failure");
+      aOldChannel->Cancel(rv);
+      return rv;
+    }
+  } else {
+    // A real, external redirect.  Perform CORS checking on new URL.
     rv = CheckRequestApproved(aOldChannel);
     if (NS_FAILED(rv)) {
       nsCOMPtr<nsIURI> oldURI;
@@ -694,14 +695,10 @@ nsCORSListenerProxy::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
       if (NS_SUCCEEDED(rv)) {
         bool equal;
         rv = oldChannelPrincipal->Equals(newChannelPrincipal, &equal);
-        if (NS_SUCCEEDED(rv)) {
-          if (!equal) {
-            // Spec says to set our source origin to a unique origin.
-            mOriginHeaderPrincipal = nsNullPrincipal::Create();
-            if (!mOriginHeaderPrincipal) {
-              rv = NS_ERROR_OUT_OF_MEMORY;
-            }
-          }
+        if (NS_SUCCEEDED(rv) && !equal) {
+          // Spec says to set our source origin to a unique origin.
+          mOriginHeaderPrincipal =
+            nsNullPrincipal::CreateWithInheritedAttributes(oldChannelPrincipal);
         }
       }
 
@@ -711,7 +708,8 @@ nsCORSListenerProxy::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
       }
     }
 
-    rv = UpdateChannel(aNewChannel, DataURIHandling::Disallow);
+    rv = UpdateChannel(aNewChannel, DataURIHandling::Disallow,
+                       UpdateType::Default);
     if (NS_FAILED(rv)) {
         NS_WARNING("nsCORSListenerProxy::AsyncOnChannelRedirect: "
                    "UpdateChannel() returned failure");
@@ -813,7 +811,8 @@ CheckUpgradeInsecureRequestsPreventsCORS(nsIPrincipal* aRequestingPrincipal,
 
 nsresult
 nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
-                                   DataURIHandling aAllowDataURI)
+                                   DataURIHandling aAllowDataURI,
+                                   UpdateType aUpdateType)
 {
   nsCOMPtr<nsIURI> uri, originalURI;
   nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
@@ -883,7 +882,7 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
 
   // Check if we need to do a preflight, and if so set one up. This must be
   // called once we know that the request is going, or has gone, cross-origin.
-  rv = CheckPreflightNeeded(aChannel);
+  rv = CheckPreflightNeeded(aChannel, aUpdateType);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // It's a cross site load
@@ -922,7 +921,7 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
 }
 
 nsresult
-nsCORSListenerProxy::CheckPreflightNeeded(nsIChannel* aChannel)
+nsCORSListenerProxy::CheckPreflightNeeded(nsIChannel* aChannel, UpdateType aUpdateType)
 {
   // If this caller isn't using AsyncOpen2, or if this *is* a preflight channel,
   // then we shouldn't initiate preflight for this channel.
@@ -975,7 +974,9 @@ nsCORSListenerProxy::CheckPreflightNeeded(nsIChannel* aChannel)
   // A preflight is needed. But if we've already been cross-site, then
   // we already did a preflight when that happened, and so we're not allowed
   // to do another preflight again.
-  NS_ENSURE_FALSE(mHasBeenCrossSite, NS_ERROR_DOM_BAD_URI);
+  if (aUpdateType != UpdateType::InternalOrHSTSRedirect) {
+    NS_ENSURE_FALSE(mHasBeenCrossSite, NS_ERROR_DOM_BAD_URI);
+  }
 
   nsCOMPtr<nsIHttpChannelInternal> internal = do_QueryInterface(http);
   NS_ENSURE_TRUE(internal, NS_ERROR_DOM_BAD_URI);
@@ -998,6 +999,7 @@ class nsCORSPreflightListener final : public nsIStreamListener,
 public:
   nsCORSPreflightListener(nsIPrincipal* aReferrerPrincipal,
                           nsICorsPreflightCallback* aCallback,
+                          nsILoadContext* aLoadContext,
                           bool aWithCredentials,
                           const nsCString& aPreflightMethod,
                           const nsTArray<nsCString>& aPreflightHeaders)
@@ -1005,6 +1007,7 @@ public:
      mPreflightHeaders(aPreflightHeaders),
      mReferrerPrincipal(aReferrerPrincipal),
      mCallback(aCallback),
+     mLoadContext(aLoadContext),
      mWithCredentials(aWithCredentials)
   {
   }
@@ -1026,6 +1029,7 @@ private:
   nsTArray<nsCString> mPreflightHeaders;
   nsCOMPtr<nsIPrincipal> mReferrerPrincipal;
   nsCOMPtr<nsICorsPreflightCallback> mCallback;
+  nsCOMPtr<nsILoadContext> mLoadContext;
   bool mWithCredentials;
 };
 
@@ -1294,6 +1298,12 @@ nsCORSPreflightListener::CheckPreflightRequestApproved(nsIRequest* aRequest)
 NS_IMETHODIMP
 nsCORSPreflightListener::GetInterface(const nsIID & aIID, void **aResult)
 {
+  if (aIID.Equals(NS_GET_IID(nsILoadContext)) && mLoadContext) {
+    nsCOMPtr<nsILoadContext> copy = mLoadContext;
+    copy.forget(aResult);
+    return NS_OK;
+  }
+
   return QueryInterface(aIID, aResult);
 }
 
@@ -1340,6 +1350,10 @@ nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
              "how did we end up here?");
 
   nsCOMPtr<nsIPrincipal> principal = originalLoadInfo->LoadingPrincipal();
+  MOZ_ASSERT(principal &&
+             originalLoadInfo->GetExternalContentPolicyType() !=
+               nsIContentPolicy::TYPE_DOCUMENT,
+             "Should not do CORS loads for top-level loads, so a loadingPrincipal should always exist.");
   bool withCredentials = originalLoadInfo->GetCookiePolicy() ==
     nsILoadInfo::SEC_COOKIES_INCLUDE;
 
@@ -1363,6 +1377,15 @@ nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
   nsCOMPtr<nsILoadGroup> loadGroup;
   rv = aRequestChannel->GetLoadGroup(getter_AddRefs(loadGroup));
   NS_ENSURE_SUCCESS(rv, rv);
+
+  // We want to give the preflight channel's notification callbacks the same
+  // load context as the original channel's notification callbacks had.  We
+  // don't worry about a load context provided via the loadgroup here, since
+  // they have the same loadgroup.
+  nsCOMPtr<nsIInterfaceRequestor> callbacks;
+  rv = aRequestChannel->GetNotificationCallbacks(getter_AddRefs(callbacks));
+  NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsILoadContext> loadContext = do_GetInterface(callbacks);
 
   nsLoadFlags loadFlags;
   rv = aRequestChannel->GetLoadFlags(&loadFlags);
@@ -1421,8 +1444,8 @@ nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
 
   // Set up listener which will start the original channel
   RefPtr<nsCORSPreflightListener> preflightListener =
-    new nsCORSPreflightListener(principal, aCallback, withCredentials,
-                                method, preflightHeaders);
+    new nsCORSPreflightListener(principal, aCallback, loadContext,
+                                withCredentials, method, preflightHeaders);
 
   rv = preflightChannel->SetNotificationCallbacks(preflightListener);
   NS_ENSURE_SUCCESS(rv, rv);

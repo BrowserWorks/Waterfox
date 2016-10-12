@@ -8,6 +8,8 @@
 
 #include "AsyncEventRunner.h"
 #include "DecoderTraits.h"
+#include "Benchmark.h"
+#include "DecoderDoctorDiagnostics.h"
 #include "MediaSourceUtils.h"
 #include "SourceBuffer.h"
 #include "SourceBufferList.h"
@@ -28,6 +30,7 @@
 #include "mozilla/Logging.h"
 #include "nsServiceManagerUtils.h"
 #include "gfxPlatform.h"
+#include "mozilla/Snprintf.h"
 
 #ifdef MOZ_WIDGET_ANDROID
 #include "AndroidBridge.h"
@@ -71,17 +74,19 @@ static const char* const gMediaSourceTypes[6] = {
 //   * N/KN editions (Europe and Korea) of Windows 7/8/8.1/10 without the
 //     optional "Windows Media Feature Pack"
 // 2. If H264 hardware acceleration is not available.
+// 3. The CPU is considered to be fast enough
 static bool
-IsWebMForced()
+IsWebMForced(DecoderDoctorDiagnostics* aDiagnostics)
 {
   bool mp4supported =
-    DecoderTraits::IsMP4TypeAndEnabled(NS_LITERAL_CSTRING("video/mp4"));
+    DecoderTraits::IsMP4TypeAndEnabled(NS_LITERAL_CSTRING("video/mp4"),
+                                       aDiagnostics);
   bool hwsupported = gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding();
-  return !mp4supported || !hwsupported;
+  return !mp4supported || !hwsupported || VP9Benchmark::IsVP9DecodeFast();
 }
 
 static nsresult
-IsTypeSupported(const nsAString& aType)
+IsTypeSupported(const nsAString& aType, DecoderDoctorDiagnostics* aDiagnostics)
 {
   if (aType.IsEmpty()) {
     return NS_ERROR_DOM_INVALID_ACCESS_ERR;
@@ -99,13 +104,14 @@ IsTypeSupported(const nsAString& aType)
 
   for (uint32_t i = 0; gMediaSourceTypes[i]; ++i) {
     if (mimeType.EqualsASCII(gMediaSourceTypes[i])) {
-      if (DecoderTraits::IsMP4TypeAndEnabled(mimeTypeUTF8)) {
+      if (DecoderTraits::IsMP4TypeAndEnabled(mimeTypeUTF8, aDiagnostics)) {
         if (!Preferences::GetBool("media.mediasource.mp4.enabled", false)) {
           return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
         }
         if (hasCodecs &&
             DecoderTraits::CanHandleCodecsType(mimeTypeUTF8.get(),
-                                               codecs) == CANPLAY_NO) {
+                                               codecs,
+                                               aDiagnostics) == CANPLAY_NO) {
           return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
         }
         return NS_OK;
@@ -113,12 +119,13 @@ IsTypeSupported(const nsAString& aType)
         if (!(Preferences::GetBool("media.mediasource.webm.enabled", false) ||
               (Preferences::GetBool("media.mediasource.webm.audio.enabled", true) &&
                DecoderTraits::IsWebMAudioType(mimeTypeUTF8)) ||
-              IsWebMForced())) {
+              IsWebMForced(aDiagnostics))) {
           return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
         }
         if (hasCodecs &&
             DecoderTraits::CanHandleCodecsType(mimeTypeUTF8.get(),
-                                               codecs) == CANPLAY_NO) {
+                                               codecs,
+                                               aDiagnostics) == CANPLAY_NO) {
           return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
         }
         return NS_OK;
@@ -135,7 +142,7 @@ namespace dom {
 MediaSource::Constructor(const GlobalObject& aGlobal,
                          ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aGlobal.GetAsSupports());
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aGlobal.GetAsSupports());
   if (!window) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return nullptr;
@@ -217,7 +224,12 @@ already_AddRefed<SourceBuffer>
 MediaSource::AddSourceBuffer(const nsAString& aType, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  nsresult rv = mozilla::IsTypeSupported(aType);
+  DecoderDoctorDiagnostics diagnostics;
+  nsresult rv = mozilla::IsTypeSupported(aType, &diagnostics);
+  diagnostics.StoreFormatDiagnostics(GetOwner()
+                                     ? GetOwner()->GetExtantDoc()
+                                     : nullptr,
+                                     aType, NS_SUCCEEDED(rv), __func__);
   MSE_API("AddSourceBuffer(aType=%s)%s",
           NS_ConvertUTF16toUTF8(aType).get(),
           rv == NS_OK ? "" : " [not supported]");
@@ -333,10 +345,14 @@ MediaSource::EndOfStream(const Optional<MediaSourceEndOfStreamError>& aError, Er
 }
 
 /* static */ bool
-MediaSource::IsTypeSupported(const GlobalObject&, const nsAString& aType)
+MediaSource::IsTypeSupported(const GlobalObject& aOwner, const nsAString& aType)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  nsresult rv = mozilla::IsTypeSupported(aType);
+  DecoderDoctorDiagnostics diagnostics;
+  nsresult rv = mozilla::IsTypeSupported(aType, &diagnostics);
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aOwner.GetAsSupports());
+  diagnostics.StoreFormatDiagnostics(window ? window->GetExtantDoc() : nullptr,
+                                     aType, NS_SUCCEEDED(rv), __func__);
 #define this nullptr
   MSE_API("IsTypeSupported(aType=%s)%s ",
           NS_ConvertUTF16toUTF8(aType).get(), rv == NS_OK ? "OK" : "[not supported]");
@@ -392,7 +408,7 @@ MediaSource::Detach()
   mDecoder = nullptr;
 }
 
-MediaSource::MediaSource(nsPIDOMWindow* aWindow)
+MediaSource::MediaSource(nsPIDOMWindowInner* aWindow)
   : DOMEventTargetHelper(aWindow)
   , mDecoder(nullptr)
   , mPrincipal(nullptr)
@@ -478,36 +494,12 @@ MediaSource::DurationChange(double aOldDuration, double aNewDuration)
 }
 
 void
-MediaSource::NotifyEvicted(double aStart, double aEnd)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("NotifyEvicted(aStart=%f, aEnd=%f)", aStart, aEnd);
-  // Cycle through all SourceBuffers and tell them to evict data in
-  // the given range.
-  mSourceBuffers->Evict(aStart, aEnd);
-}
-
-#if defined(DEBUG)
-void
-MediaSource::Dump(const char* aPath)
-{
-  char buf[255];
-  PR_snprintf(buf, sizeof(buf), "%s/mediasource-%p", aPath, this);
-  PR_MkDir(buf, 0700);
-
-  if (mSourceBuffers) {
-    mSourceBuffers->Dump(buf);
-  }
-}
-#endif
-
-void
 MediaSource::GetMozDebugReaderData(nsAString& aString)
 {
   mDecoder->GetMozDebugReaderData(aString);
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 MediaSource::GetParentObject() const
 {
   return GetOwner();

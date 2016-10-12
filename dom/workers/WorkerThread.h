@@ -54,8 +54,10 @@ class WorkerThread final
   // Protected by nsThread::mLock and waited on with mWorkerPrivateCondVar.
   uint32_t mOtherThreadsDispatchingViaEventTarget;
 
+#ifdef DEBUG
   // Protected by nsThread::mLock.
-  DebugOnly<bool> mAcceptingNonWorkerRunnables;
+  bool mAcceptingNonWorkerRunnables;
+#endif
 
 public:
   static already_AddRefed<WorkerThread>
@@ -66,11 +68,11 @@ public:
 
   nsresult
   DispatchPrimaryRunnable(const WorkerThreadFriendKey& aKey,
-                          already_AddRefed<nsIRunnable>&& aRunnable);
+                          already_AddRefed<nsIRunnable> aRunnable);
 
   nsresult
   DispatchAnyThread(const WorkerThreadFriendKey& aKey,
-           already_AddRefed<WorkerRunnable>&& aWorkerRunnable);
+           already_AddRefed<WorkerRunnable> aWorkerRunnable);
 
   uint32_t
   RecursionDepth(const WorkerThreadFriendKey& aKey) const;
@@ -84,10 +86,13 @@ private:
   // This should only be called by consumers that have an
   // nsIEventTarget/nsIThread pointer.
   NS_IMETHOD
-  Dispatch(already_AddRefed<nsIRunnable>&& aRunnable, uint32_t aFlags) override;
+  Dispatch(already_AddRefed<nsIRunnable> aRunnable, uint32_t aFlags) override;
 
   NS_IMETHOD
   DispatchFromScript(nsIRunnable* aRunnable, uint32_t aFlags) override;
+
+  NS_IMETHOD
+  DelayedDispatch(already_AddRefed<nsIRunnable>, uint32_t) override;
 };
 
 } // namespace workers

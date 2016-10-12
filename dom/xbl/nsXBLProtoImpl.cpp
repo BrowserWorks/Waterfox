@@ -102,7 +102,7 @@ nsXBLProtoImpl::InstallImplementation(nsXBLPrototypeBinding* aPrototypeBinding,
   // weird property holder duplication.
   const char16_t* className = aPrototypeBinding->ClassName().get();
   JS::Rooted<JSObject*> propertyHolder(cx);
-  JS::Rooted<JSPropertyDescriptor> existingHolder(cx);
+  JS::Rooted<JS::PropertyDescriptor> existingHolder(cx);
   if (scopeObject != globalObject &&
       !JS_GetOwnUCPropertyDescriptor(cx, scopeObject, className, &existingHolder)) {
     return NS_ERROR_FAILURE;
@@ -245,7 +245,6 @@ nsXBLProtoImpl::CompilePrototypeMembers(nsXBLPrototypeBinding* aBinding)
   AutoJSAPI jsapi;
   if (NS_WARN_IF(!jsapi.Init(xpc::CompilationScope())))
     return NS_ERROR_FAILURE;
-  jsapi.TakeOwnershipOfErrorReporting();
   JSContext* cx = jsapi.cx();
 
   mPrecompiledMemberHolder = JS_NewObjectWithGivenProto(cx, nullptr, nullptr);
@@ -271,7 +270,7 @@ nsXBLProtoImpl::CompilePrototypeMembers(nsXBLPrototypeBinding* aBinding)
 bool
 nsXBLProtoImpl::LookupMember(JSContext* aCx, nsString& aName,
                              JS::Handle<jsid> aNameAsId,
-                             JS::MutableHandle<JSPropertyDescriptor> aDesc,
+                             JS::MutableHandle<JS::PropertyDescriptor> aDesc,
                              JS::Handle<JSObject*> aClassObject)
 {
   for (nsXBLProtoImplMember* m = mMembers; m; m = m->GetNext()) {

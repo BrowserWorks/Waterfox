@@ -6,8 +6,6 @@
 package org.mozilla.gecko.tests;
 
 import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 
@@ -59,7 +57,7 @@ public class testAccessibleCarets extends JavascriptTest {
      */
     private class TabsListener implements Tabs.OnTabsChangedListener {
         @Override
-        public void onTabChanged(Tab tab, Tabs.TabEvents msg, Object data) {
+        public void onTabChanged(Tab tab, Tabs.TabEvents msg, String data) {
             switch (msg) {
                 case STOP:
                     final JSONObject args = new JSONObject();
@@ -70,9 +68,7 @@ public class testAccessibleCarets extends JavascriptTest {
                         Log.e(LOGTAG, "Error building JSON arguments for " + TAB_CHANGE_EVENT, e);
                         return;
                     }
-                    final GeckoEvent event =
-                        GeckoEvent.createBroadcastEvent(TAB_CHANGE_EVENT, args.toString());
-                    GeckoAppShell.sendEventToGecko(event);
+                    mActions.sendGeckoEvent(TAB_CHANGE_EVENT, args.toString());
                     break;
             }
         }

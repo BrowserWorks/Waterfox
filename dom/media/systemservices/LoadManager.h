@@ -102,7 +102,7 @@ public:
     }
 
 private:
-    LoadManagerSingleton* mManager;
+    RefPtr<LoadManagerSingleton> mManager;
 };
 
 } //namespace

@@ -50,14 +50,13 @@ add_task(function* test_notification_error() {
   }
 
   let scopes = [];
-  let notifyPromise = promiseObserverNotification('push-message', (subject, data) =>
+  let notifyPromise = promiseObserverNotification(PushServiceComponent.pushTopic, (subject, data) =>
     scopes.push(data) == 2);
 
   let ackDone;
   let ackPromise = new Promise(resolve => ackDone = after(records.length, resolve));
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db: makeStub(db, {
       getByKeyID(prev, channelID) {
         if (channelID == '3c3930ba-44de-40dc-a7ca-8a133ec1a866') {
@@ -87,18 +86,13 @@ add_task(function* test_notification_error() {
     }
   });
 
-  yield waitForPromise(
-    notifyPromise,
-    DEFAULT_TIMEOUT,
-    'Timed out waiting for notifications'
-  );
+  yield notifyPromise;
   ok(scopes.includes('https://example.com/a'),
     'Missing scope for notification A');
   ok(scopes.includes('https://example.com/c'),
     'Missing scope for notification C');
 
-  yield waitForPromise(ackPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for acknowledgements');
+  yield ackPromise;
 
   let aRecord = yield db.getByIdentifiers({scope: 'https://example.com/a',
                                            originAttributes: originAttributes });

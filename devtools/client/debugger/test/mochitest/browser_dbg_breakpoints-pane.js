@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Bug 723071: Test adding a pane to display the list of breakpoints across
@@ -9,13 +11,17 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gEditor = gDebugger.DebuggerView.editor;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
+    const queries = gDebugger.require("./content/queries");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
     const { getBreakpoint } = queries;
@@ -25,7 +31,7 @@ function test() {
     let breakpointsRemoved = 0;
     let breakpointsList;
 
-    const addBreakpoints = Task.async(function*(aIncrementFlag) {
+    const addBreakpoints = Task.async(function* (aIncrementFlag) {
       const loc1 = { actor: gSources.selectedValue, line: 6 };
       yield actions.addBreakpoint(loc1);
       onBreakpointAdd(getBreakpoint(getState(), loc1), {
@@ -42,7 +48,7 @@ function test() {
         text: "function foo() {}"
       });
 
-      const loc3 = {actor: gSources.selectedValue, line: 9 }
+      const loc3 = {actor: gSources.selectedValue, line: 9 };
       yield actions.addBreakpoint(loc3);
       onBreakpointAdd(getBreakpoint(getState(), loc3), {
         increment: aIncrementFlag,
@@ -129,7 +135,7 @@ function test() {
          "The breakpoint enable checkbox is checked as expected.");
     }
 
-    Task.spawn(function*() {
+    Task.spawn(function* () {
       yield waitForSourceAndCaretAndScopes(gPanel, "-02.js", 1);
 
       is(gDebugger.gThreadClient.state, "paused",

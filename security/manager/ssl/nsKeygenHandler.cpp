@@ -299,7 +299,7 @@ GetSlotWithMechanism(uint32_t aMechanism, nsIInterfaceRequestor* m_ctx,
 {
     PK11SlotList * slotList = nullptr;
     char16_t** tokenNameList = nullptr;
-    nsITokenDialogs * dialogs;
+    nsCOMPtr<nsITokenDialogs> dialogs;
     char16_t *unicodeTokenChosen;
     PK11SlotListElement *slotElement, *tmpSlot;
     uint32_t numSlots = 0, i = 0;
@@ -350,12 +350,13 @@ GetSlotWithMechanism(uint32_t aMechanism, nsIInterfaceRequestor* m_ctx,
             }
         }
 
-		/* Throw up the token list dialog and get back the token */
-		rv = getNSSDialogs((void**)&dialogs,
-			               NS_GET_IID(nsITokenDialogs),
-                     NS_TOKENDIALOGS_CONTRACTID);
+        // Throw up the token list dialog and get back the token.
+        rv = getNSSDialogs(getter_AddRefs(dialogs), NS_GET_IID(nsITokenDialogs),
+                           NS_TOKENDIALOGS_CONTRACTID);
 
-		if (NS_FAILED(rv)) goto loser;
+        if (NS_FAILED(rv)) {
+            goto loser;
+        }
 
     if (!tokenNameList || !*tokenNameList) {
         rv = NS_ERROR_OUT_OF_MEMORY;
@@ -363,7 +364,6 @@ GetSlotWithMechanism(uint32_t aMechanism, nsIInterfaceRequestor* m_ctx,
         rv = dialogs->ChooseToken(m_ctx, (const char16_t**)tokenNameList,
                                   numSlots, &unicodeTokenChosen, &canceled);
     }
-		NS_RELEASE(dialogs);
 		if (NS_FAILED(rv)) goto loser;
 
 		if (canceled) { rv = NS_ERROR_NOT_AVAILABLE; goto loser; }
@@ -470,19 +470,23 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
     SECKEYPrivateKey *privateKey = nullptr;
     SECKEYPublicKey *publicKey = nullptr;
     CERTSubjectPublicKeyInfo *spkInfo = nullptr;
-    PLArenaPool *arena = nullptr;
-    SECStatus sec_rv = SECFailure;
+    SECStatus srv = SECFailure;
     SECItem spkiItem;
     SECItem pkacItem;
     SECItem signedItem;
     CERTPublicKeyAndChallenge pkac;
     pkac.challenge.data = nullptr;
-    nsIGeneratingKeypairInfoDialogs * dialogs;
+    nsCOMPtr<nsIGeneratingKeypairInfoDialogs> dialogs;
     nsKeygenThread *KeygenRunnable = 0;
     nsCOMPtr<nsIKeygenThread> runnable;
 
     // permanent and sensitive flags for keygen
     PK11AttrFlags attrFlags = PK11_ATTR_TOKEN | PK11_ATTR_SENSITIVE | PK11_ATTR_PRIVATE;
+
+    UniquePLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
+    if (!arena) {
+        goto loser;
+    }
 
     // Get the key size //
     for (size_t i = 0; i < number_of_key_size_choices; ++i) {
@@ -492,11 +496,6 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
         }
     }
     if (!keysize) {
-        goto loser;
-    }
-
-    arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-    if (!arena) {
         goto loser;
     }
 
@@ -579,12 +578,12 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
     if (NS_FAILED(rv))
         goto loser;
 
-    sec_rv = PK11_Authenticate(slot, true, m_ctx);
-    if (sec_rv != SECSuccess) {
+    srv = PK11_Authenticate(slot, true, m_ctx);
+    if (srv != SECSuccess) {
         goto loser;
     }
 
-    rv = getNSSDialogs((void**)&dialogs,
+    rv = getNSSDialogs(getter_AddRefs(dialogs),
                        NS_GET_IID(nsIGeneratingKeypairInfoDialogs),
                        NS_GENERATINGKEYPAIRINFODIALOGS_CONTRACTID);
 
@@ -602,14 +601,12 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
                                    keyGenMechanism, params, m_ctx );
 
         runnable = do_QueryInterface(KeygenRunnable);
-        
         if (runnable) {
             rv = dialogs->DisplayGeneratingKeypairInfo(m_ctx, runnable);
             // We call join on the thread so we can be sure that no
             // simultaneous access to the passed parameters will happen.
             KeygenRunnable->Join();
 
-            NS_RELEASE(dialogs);
             if (NS_SUCCEEDED(rv)) {
                 PK11SlotInfo *used_slot = nullptr;
                 rv = KeygenRunnable->ConsumeResult(&used_slot, &privateKey, &publicKey);
@@ -633,12 +630,13 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
     if ( !spkInfo ) {
         goto loser;
     }
-    
+
     /*
      * Now DER encode the whole subjectPublicKeyInfo.
      */
-    sec_rv=DER_Encode(arena, &spkiItem, CERTSubjectPublicKeyInfoTemplate, spkInfo);
-    if (sec_rv != SECSuccess) {
+    srv = DER_Encode(arena.get(), &spkiItem, CERTSubjectPublicKeyInfoTemplate,
+                     spkInfo);
+    if (srv != SECSuccess) {
         goto loser;
     }
 
@@ -652,21 +650,22 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
         rv = NS_ERROR_OUT_OF_MEMORY;
         goto loser;
     }
-    
-    sec_rv = DER_Encode(arena, &pkacItem, CERTPublicKeyAndChallengeTemplate, &pkac);
-    if ( sec_rv != SECSuccess ) {
+
+    srv = DER_Encode(arena.get(), &pkacItem, CERTPublicKeyAndChallengeTemplate,
+                     &pkac);
+    if (srv != SECSuccess) {
         goto loser;
     }
 
     /*
      * now sign the DER encoded PublicKeyAndChallenge
      */
-    sec_rv = SEC_DerSignData(arena, &signedItem, pkacItem.data, pkacItem.len,
-			 privateKey, algTag);
-    if ( sec_rv != SECSuccess ) {
+    srv = SEC_DerSignData(arena.get(), &signedItem, pkacItem.data, pkacItem.len,
+                          privateKey, algTag);
+    if (srv != SECSuccess) {
         goto loser;
     }
-    
+
     /*
      * Convert the signed public key and challenge into base64/ascii.
      */
@@ -683,7 +682,7 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
 
     GatherKeygenTelemetry(keyGenMechanism, keysize, keyparamsString);
 loser:
-    if ( sec_rv != SECSuccess ) {
+    if (srv != SECSuccess) {
         if ( privateKey ) {
             PK11_DestroyTokenObject(privateKey->pkcs11Slot,privateKey->pkcs11ID);
         }
@@ -699,9 +698,6 @@ loser:
     }
     if ( privateKey ) {
         SECKEY_DestroyPrivateKey(privateKey);
-    }
-    if ( arena ) {
-        PORT_FreeArena(arena, true);
     }
     if (slot) {
         PK11_FreeSlot(slot);

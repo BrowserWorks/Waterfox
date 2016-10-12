@@ -2,8 +2,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-.errors,
-.breakpoints {
+:root {
+  --breakpoint-background: url("chrome://devtools/skin/images/breakpoint.svg#light");
+  --breakpoint-hover-background: url("chrome://devtools/skin/images/breakpoint.svg#light-hover");
+  --breakpoint-active-color: rgba(44,187,15,.2);
+  --breakpoint-conditional-background: url("chrome://devtools/skin/images/breakpoint.svg#light-conditional");
+}
+
+.theme-dark:root {
+  --breakpoint-background: url("chrome://devtools/skin/images/breakpoint.svg#dark");
+  --breakpoint-hover-background: url("chrome://devtools/skin/images/breakpoint.svg#dark-hover");
+  --breakpoint-active-color: rgba(112,191,83,.4);
+  --breakpoint-conditional-background: url("chrome://devtools/skin/images/breakpoint.svg#dark-conditional");
+}
+
+.errors {
   width: 16px;
 }
 
@@ -11,7 +24,7 @@
   width: 6px;
 }
 
-.error, .breakpoint, .debugLocation, .breakpoint-debugLocation {
+.error {
   display: inline-block;
   margin-left: 5px;
   width: 12px;
@@ -37,43 +50,49 @@
   opacity: 0.75;
 }
 
-.breakpoint {
-  background-image: url("chrome://devtools/skin/images/editor-breakpoint.png");
-  position: relative;
+.CodeMirror-linenumber:before {
+  content: " ";
+  display: block;
+  width: calc(100% - 3px);
+  position: absolute;
+  top: 1px;
+  left: 0;
+  height: 12px;
+  z-index: -1;
+  background-size: calc(100% - 2px) 12px;
+  background-repeat: no-repeat;
+  background-position: right center;
+  padding-inline-end: 9px;
 }
 
-@media (min-resolution: 1.1dppx) {
-  .breakpoint {
-    background-image: url("chrome://devtools/skin/images/editor-breakpoint@2x.png");
-  }
+.breakpoint .CodeMirror-linenumber {
+  color: var(--theme-body-background);
 }
 
-.breakpoint[adding] {
-  transition: transform .25s;
+.breakpoint .CodeMirror-linenumber:before {
+  background-image: var(--breakpoint-background) !important;
 }
 
-.debugLocation {
-  background-image: url("chrome://devtools/skin/images/editor-debug-location.png");
+.conditional .CodeMirror-linenumber:before {
+  background-image: var(--breakpoint-conditional-background) !important;
 }
 
-@media (min-resolution: 1.1dppx) {
-  .debugLocation {
-    background-image: url("chrome://devtools/skin/images/editor-debug-location@2x.png");
-  }
+.debug-line .CodeMirror-linenumber {
+  background-color: var(--breakpoint-active-color);
 }
 
-.breakpoint.debugLocation {
-  background-image:
-    url("chrome://devtools/skin/images/editor-debug-location.png"),
-    url("chrome://devtools/skin/images/editor-breakpoint.png");
+.theme-dark .debug-line .CodeMirror-linenumber {
+  color: #c0c0c0;
 }
 
-@media (min-resolution: 1.1dppx) {
-  .breakpoint.debugLocation {
-    background-image:
-      url("chrome://devtools/skin/images/editor-debug-location@2x.png"),
-      url("chrome://devtools/skin/images/editor-breakpoint@2x.png");
-  }
+.debug-line .CodeMirror-line {
+  background-color: var(--breakpoint-active-color) !important;
+}
+
+/* Don't display the highlight color since the debug line
+   is already highlighted */
+.debug-line .CodeMirror-activeline-background {
+  display: none;
 }
 
 .CodeMirror {
@@ -172,7 +191,7 @@ selector in floating-scrollbar-light.css across all platforms. */
 }
 
 .CodeMirror-Tern-completion {
-  -moz-padding-start: 22px;
+  padding-inline-start: 22px;
   position: relative;
   line-height: 18px;
 }

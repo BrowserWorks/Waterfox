@@ -17,10 +17,9 @@
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "mozilla/layers/APZUtils.h"    // for HitTestResult
 #include "mozilla/layers/TouchCounter.h"// for TouchCounter
-#include "mozilla/Monitor.h"            // for Monitor
+#include "mozilla/Mutex.h"              // for Mutex
+#include "mozilla/RefPtr.h"             // for RefPtr
 #include "mozilla/TimeStamp.h"          // for mozilla::TimeStamp
-#include "mozilla/Vector.h"             // for mozilla::Vector
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsTArrayForwardDeclare.h"     // for nsTArray, nsTArray_Impl, etc
@@ -44,13 +43,14 @@ enum AllowedTouchBehavior {
 enum ZoomToRectBehavior : uint32_t {
   DEFAULT_BEHAVIOR =   0,
   DISABLE_ZOOM_OUT =   1 << 0,
-  PAN_INTO_VIEW_ONLY = 1 << 1
+  PAN_INTO_VIEW_ONLY = 1 << 1,
+  ONLY_ZOOM_TO_DEFAULT_SCALE  = 1 << 2
 };
 
 class Layer;
 class AsyncDragMetrics;
 class AsyncPanZoomController;
-class CompositorParent;
+class CompositorBridgeParent;
 class OverscrollHandoffChain;
 struct OverscrollHandoffState;
 struct FlingHandoffState;
@@ -77,7 +77,7 @@ class HitTestingTreeNode;
 
 /**
  * This class manages the tree of AsyncPanZoomController instances. There is one
- * instance of this class owned by each CompositorParent, and it contains as
+ * instance of this class owned by each CompositorBridgeParent, and it contains as
  * many AsyncPanZoomController instances as there are scrollable container layers.
  * This class generally lives on the compositor thread, although some functions
  * may be called from other threads as noted; thread safety is ensured internally.
@@ -136,7 +136,7 @@ public:
    *                             process' layer subtree has its own sequence
    *                             numbers.
    */
-  void UpdateHitTestingTree(CompositorParent* aCompositor,
+  void UpdateHitTestingTree(CompositorBridgeParent* aCompositor,
                             Layer* aRoot,
                             bool aIsFirstPaint,
                             uint64_t aOriginatingLayersId,
@@ -260,6 +260,14 @@ public:
    * animation's responsibility to check this before advancing.
    */
   void CancelAnimation(const ScrollableLayerGuid &aGuid);
+
+  /**
+   * Adjusts the root APZC to compensate for a shift in the surface. See the
+   * documentation on AsyncPanZoomController::AdjustScrollForSurfaceShift for
+   * some more details. This is only currently needed due to surface shifts
+   * caused by the dynamic toolbar on Android.
+   */
+  void AdjustScrollForSurfaceShift(const ScreenPoint& aShift);
 
   /**
    * Calls Destroy() on all APZC instances attached to the tree, and resets the
@@ -429,9 +437,18 @@ public:
   */
   RefPtr<HitTestingTreeNode> GetRootNode() const;
   already_AddRefed<AsyncPanZoomController> GetTargetAPZC(const ScreenPoint& aPoint,
-                                                         HitTestResult* aOutHitResult);
+                                                         HitTestResult* aOutHitResult,
+                                                         bool* aOutHitScrollbar = nullptr);
   ScreenToParentLayerMatrix4x4 GetScreenToApzcTransform(const AsyncPanZoomController *aApzc) const;
   ParentLayerToScreenMatrix4x4 GetApzcToGeckoTransform(const AsyncPanZoomController *aApzc) const;
+
+  /**
+   * Process touch velocity.
+   * Sometimes the touch move event will have a velocity even though no scrolling
+   * is occurring such as when the toolbar is being hidden/shown in Fennec.
+   * This function can be called to have the y axis' velocity queue updated.
+   */
+  void ProcessTouchVelocity(uint32_t aTimestampMs, float aSpeedY);
 private:
   typedef bool (*GuidComparator)(const ScrollableLayerGuid&, const ScrollableLayerGuid&);
 
@@ -445,14 +462,18 @@ private:
   HitTestingTreeNode* FindTargetNode(HitTestingTreeNode* aNode,
                                      const ScrollableLayerGuid& aGuid,
                                      GuidComparator aComparator);
+  AsyncPanZoomController* GetTargetApzcForNode(HitTestingTreeNode* aNode);
   AsyncPanZoomController* GetAPZCAtPoint(HitTestingTreeNode* aNode,
                                          const ParentLayerPoint& aHitTestPoint,
-                                         HitTestResult* aOutHitResult);
+                                         HitTestResult* aOutHitResult,
+                                         bool* aOutHitScrollbar);
   AsyncPanZoomController* FindRootApzcForLayersId(uint64_t aLayersId) const;
   AsyncPanZoomController* FindRootContentApzcForLayersId(uint64_t aLayersId) const;
+  AsyncPanZoomController* FindRootContentOrRootApzc() const;
   already_AddRefed<AsyncPanZoomController> GetMultitouchTarget(AsyncPanZoomController* aApzc1, AsyncPanZoomController* aApzc2) const;
   already_AddRefed<AsyncPanZoomController> CommonAncestor(AsyncPanZoomController* aApzc1, AsyncPanZoomController* aApzc2) const;
   already_AddRefed<AsyncPanZoomController> GetTouchInputBlockAPZC(const MultiTouchInput& aEvent,
+                                                                  nsTArray<TouchBehaviorFlags>* aOutTouchBehaviors,
                                                                   HitTestResult* aOutHitResult);
   nsEventStatus ProcessTouchInput(MultiTouchInput& aInput,
                                   ScrollableLayerGuid* aOutTargetGuid,
@@ -525,7 +546,7 @@ private:
    * is considered part of the APZC tree management state.
    * Finally, the lock needs to be held when accessing mZoomConstraints.
    * IMPORTANT: See the note about lock ordering at the top of this file. */
-  mutable mozilla::Monitor mTreeLock;
+  mutable mozilla::Mutex mTreeLock;
   RefPtr<HitTestingTreeNode> mRootNode;
   /* Holds the zoom constraints for scrollable layers, as determined by the
    * the main-thread gecko code. */

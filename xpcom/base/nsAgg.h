@@ -78,9 +78,11 @@ class NS_CYCLE_COLLECTION_INNERCLASS                                        \
  : public nsXPCOMCycleCollectionParticipant                                 \
 {                                                                           \
 public:                                                                     \
-  NS_IMETHOD_(void) Unlink(void *p);                                        \
-  NS_IMETHOD Traverse(void *p, nsCycleCollectionTraversalCallback &cb);     \
-  NS_IMETHOD_(void) DeleteCycleCollectable(void* p)                         \
+  NS_IMETHOD_(void) Unlink(void *p) override;                               \
+  NS_IMETHOD Traverse(void *p, nsCycleCollectionTraversalCallback &cb)      \
+    override;                                                               \
+  NS_DECL_CYCLE_COLLECTION_CLASS_NAME_METHOD(_class)                        \
+  NS_IMETHOD_(void) DeleteCycleCollectable(void* p) override                \
   {                                                                         \
     NS_CYCLE_COLLECTION_CLASSNAME(_class)::                                 \
       Downcast(static_cast<nsISupports*>(p))->DeleteCycleCollectable();     \
@@ -295,16 +297,13 @@ _InstanceClass##Constructor(nsISupports *aOuter, REFNSIID aIID,             \
     if (NS_WARN_IF(aOuter && !aIID.Equals(NS_GET_IID(nsISupports))))        \
         return NS_ERROR_INVALID_ARG;                                        \
                                                                             \
-    _InstanceClass* inst = new _InstanceClass(aOuter);                      \
+    RefPtr<_InstanceClass> inst = new _InstanceClass(aOuter);               \
     if (!inst) {                                                            \
         return NS_ERROR_OUT_OF_MEMORY;                                      \
     }                                                                       \
                                                                             \
     nsISupports* inner = inst->InnerObject();                               \
     nsresult rv = inner->QueryInterface(aIID, aResult);                     \
-    if (NS_FAILED(rv)) {                                                    \
-        delete inst;                                                        \
-    }                                                                       \
                                                                             \
     return rv;                                                              \
 }                                                                           \
@@ -318,7 +317,7 @@ _InstanceClass##Constructor(nsISupports *aOuter, REFNSIID aIID,             \
     if (NS_WARN_IF(aOuter && !aIID.Equals(NS_GET_IID(nsISupports))))        \
         return NS_ERROR_INVALID_ARG;                                        \
                                                                             \
-    _InstanceClass* inst = new _InstanceClass(aOuter);                      \
+    RefPtr<_InstanceClass> inst = new _InstanceClass(aOuter);               \
     if (!inst) {                                                            \
         return NS_ERROR_OUT_OF_MEMORY;                                      \
     }                                                                       \

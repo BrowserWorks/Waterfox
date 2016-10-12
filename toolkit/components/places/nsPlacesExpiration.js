@@ -122,17 +122,17 @@ const ANALYZE_PAGES_THRESHOLD = 100;
 // expiration will be more aggressive, to bring back history to a saner size.
 const OVERLIMIT_PAGES_THRESHOLD = 1000;
 
-const USECS_PER_DAY = 86400000000;
+const MSECS_PER_DAY = 86400000;
 const ANNOS_EXPIRE_POLICIES = [
   { bind: "expire_days",
     type: Ci.nsIAnnotationService.EXPIRE_DAYS,
-    time: 7 * USECS_PER_DAY },
+    time: 7 * 1000 * MSECS_PER_DAY },
   { bind: "expire_weeks",
     type: Ci.nsIAnnotationService.EXPIRE_WEEKS,
-    time: 30 * USECS_PER_DAY },
+    time: 30 * 1000 * MSECS_PER_DAY },
   { bind: "expire_months",
     type: Ci.nsIAnnotationService.EXPIRE_MONTHS,
-    time: 180 * USECS_PER_DAY },
+    time: 180 * 1000 * MSECS_PER_DAY },
 ];
 
 // When we expire we can use these limits:
@@ -169,6 +169,25 @@ const ACTION = {
 // The queries we use to expire.
 const EXPIRATION_QUERIES = {
 
+  // Some visits can be expired more often than others, cause they are less
+  // useful to the user and can pollute awesomebar results:
+  // 1. urls over 255 chars
+  // 2. redirect sources and downloads
+  // Note: due to the REPLACE option, this should be executed before
+  // QUERY_FIND_VISITS_TO_EXPIRE, that has a more complete result.
+  QUERY_FIND_EXOTIC_VISITS_TO_EXPIRE: {
+    sql: `INSERT INTO expiration_notify (v_id, url, guid, visit_date, reason)
+          SELECT v.id, h.url, h.guid, v.visit_date, "exotic"
+          FROM moz_historyvisits v
+          JOIN moz_places h ON h.id = v.place_id
+          WHERE visit_date < strftime('%s','now','localtime','start of day','-60 days','utc') * 1000000
+          AND ( LENGTH(h.url) > 255 OR v.visit_type = 7 )
+          ORDER BY v.visit_date ASC
+          LIMIT :limit_visits`,
+    actions: ACTION.TIMED_OVERLIMIT | ACTION.IDLE_DIRTY | ACTION.IDLE_DAILY |
+             ACTION.DEBUG
+  },
+
   // Finds visits to be expired when history is over the unique pages limit,
   // otherwise will return nothing.
   // This explicitly excludes any visits added in the last 7 days, to protect
@@ -204,9 +223,8 @@ const EXPIRATION_QUERIES = {
   // before it actually gets the new visit or bookmark.
   // Thus, since new pages get frecency -1, we filter on that.
   QUERY_FIND_URIS_TO_EXPIRE: {
-    sql: `INSERT INTO expiration_notify
-            (p_id, url, guid, visit_date, expected_results)
-          SELECT h.id, h.url, h.guid, h.last_visit_date, :limit_uris
+    sql: `INSERT INTO expiration_notify (p_id, url, guid, visit_date)
+          SELECT h.id, h.url, h.guid, h.last_visit_date
           FROM moz_places h
           LEFT JOIN moz_historyvisits v ON h.id = v.place_id
           WHERE h.last_visit_date IS NULL
@@ -239,6 +257,15 @@ const EXPIRATION_QUERIES = {
             LIMIT :limit_uris
           )`,
     actions: ACTION.CLEAR_HISTORY
+  },
+
+  // Hosts accumulated during the places delete are updated through a trigger
+  // (see nsPlacesTriggers.h).
+  QUERY_UPDATE_HOSTS: {
+    sql: `DELETE FROM moz_updatehosts_temp`,
+    actions: ACTION.CLEAR_HISTORY | ACTION.TIMED | ACTION.TIMED_OVERLIMIT |
+             ACTION.SHUTDOWN_DIRTY | ACTION.IDLE_DIRTY | ACTION.IDLE_DAILY |
+             ACTION.DEBUG
   },
 
   // Expire orphan icons from the database.
@@ -362,8 +389,11 @@ const EXPIRATION_QUERIES = {
   QUERY_SELECT_NOTIFICATIONS: {
     sql: `SELECT url, guid, MAX(visit_date) AS visit_date,
                  MAX(IFNULL(MIN(p_id, 1), MIN(v_id, 0))) AS whole_entry,
-                 expected_results
-          FROM expiration_notify
+                 MAX(expected_results) AS expected_results,
+                 (SELECT MAX(visit_date) FROM expiration_notify
+                  WHERE reason = "expired" AND url = n.url AND p_id ISNULL
+                 ) AS most_recent_expired_visit
+          FROM expiration_notify n
           GROUP BY url`,
     actions: ACTION.TIMED | ACTION.TIMED_OVERLIMIT | ACTION.SHUTDOWN_DIRTY |
              ACTION.IDLE_DIRTY | ACTION.IDLE_DAILY | ACTION.DEBUG
@@ -443,7 +473,8 @@ function nsPlacesExpiration()
        , url TEXT NOT NULL
        , guid TEXT NOT NULL
        , visit_date INTEGER
-       , expected_results INTEGER NOT NULL
+       , expected_results INTEGER NOT NULL DEFAULT 0
+       , reason TEXT NOT NULL DEFAULT "expired"
        )`);
     stmt.executeAsync();
     stmt.finalize();
@@ -635,17 +666,38 @@ nsPlacesExpiration.prototype = {
 
     let row;
     while ((row = aResultSet.getNextRow())) {
-      if (!("_expectedResultsCount" in this))
-        this._expectedResultsCount = row.getResultByName("expected_results");
-      if (this._expectedResultsCount > 0)
-        this._expectedResultsCount--;
+      // expected_results is set to the number of expected visits by
+      // QUERY_FIND_VISITS_TO_EXPIRE.  We decrease that counter for each found
+      // visit and if it reaches zero we mark the database as dirty, since all
+      // the expected visits were expired, so it's likely the next run will
+      // find more.
+      let expectedResults = row.getResultByName("expected_results");
+      if (expectedResults > 0) {
+        if (!("_expectedResultsCount" in this)) {
+          this._expectedResultsCount = expectedResults;
+        }
+        if (this._expectedResultsCount > 0) {
+          this._expectedResultsCount--;
+        }
+      }
 
       let uri = Services.io.newURI(row.getResultByName("url"), null, null);
       let guid = row.getResultByName("guid");
       let visitDate = row.getResultByName("visit_date");
       let wholeEntry = row.getResultByName("whole_entry");
+      let mostRecentExpiredVisit = row.getResultByName("most_recent_expired_visit");
       let reason = Ci.nsINavHistoryObserver.REASON_EXPIRED;
       let observers = PlacesUtils.history.getObservers();
+
+      if (mostRecentExpiredVisit) {
+        let days = parseInt((Date.now() - (mostRecentExpiredVisit / 1000)) / MSECS_PER_DAY);
+        if (!this._mostRecentExpiredVisitDays) {
+          this._mostRecentExpiredVisitDays = days;
+        }
+        else if (days < this._mostRecentExpiredVisitDays) {
+          this._mostRecentExpiredVisitDays = days;
+        }
+      }
 
       // Dispatch expiration notifications to history.
       if (wholeEntry) {
@@ -667,6 +719,19 @@ nsPlacesExpiration.prototype = {
   handleCompletion: function PEX_handleCompletion(aReason)
   {
     if (aReason == Ci.mozIStorageStatementCallback.REASON_FINISHED) {
+
+      if (this._mostRecentExpiredVisitDays) {
+        try {
+          Services.telemetry
+                  .getHistogramById("PLACES_MOST_RECENT_EXPIRED_VISIT_DAYS")
+                  .add(this._mostRecentExpiredVisitDays);
+        } catch (ex) {
+          Components.utils.reportError("Unable to report telemetry.");
+        } finally {
+          delete this._mostRecentExpiredVisitDays;
+        }
+      }
+
       if ("_expectedResultsCount" in this) {
         // Adapt the aggressivity of steps based on the status of history.
         // A dirty history will return all the entries we are expecting bringing
@@ -932,6 +997,12 @@ nsPlacesExpiration.prototype = {
     // Bind the appropriate parameters.
     let params = stmt.params;
     switch (aQueryType) {
+      case "QUERY_FIND_EXOTIC_VISITS_TO_EXPIRE":
+        // Avoid expiring all visits in case of an unlimited debug expiration,
+        // just remove orphans instead.
+        params.limit_visits =
+          aLimit == LIMIT.DEBUG && baseLimit == -1 ? 0 : baseLimit;
+        break;
       case "QUERY_FIND_VISITS_TO_EXPIRE":
         params.max_uris = this._urisLimit;
         // Avoid expiring all visits in case of an unlimited debug expiration,
@@ -991,7 +1062,7 @@ nsPlacesExpiration.prototype = {
     if (this._timer)
       this._timer.cancel();
     if (this._shuttingDown)
-      return;
+      return undefined;
     let interval = this.status != STATUS.DIRTY ?
       this._interval * EXPIRE_AGGRESSIVITY_MULTIPLIER : this._interval;
 

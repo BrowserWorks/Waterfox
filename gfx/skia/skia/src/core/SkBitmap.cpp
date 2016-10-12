@@ -17,6 +17,7 @@
 #include "SkReadBuffer.h"
 #include "SkRect.h"
 #include "SkScalar.h"
+#include "SkTemplates.h"
 #include "SkUnPreMultiply.h"
 #include "SkWriteBuffer.h"
 
@@ -37,6 +38,8 @@ SkBitmap::SkBitmap(const SkBitmap& src) {
     *this = src;
     SkDEBUGCODE(this->validate();)
 }
+
+SkBitmap::SkBitmap(SkBitmap&& other) : SkBitmap() { this->swap(other); }
 
 SkBitmap::~SkBitmap() {
     SkDEBUGCODE(this->validate();)
@@ -68,6 +71,14 @@ SkBitmap& SkBitmap::operator=(const SkBitmap& src) {
     }
 
     SkDEBUGCODE(this->validate();)
+    return *this;
+}
+
+SkBitmap& SkBitmap::operator=(SkBitmap&& other) {
+    if (this != &other) {
+        this->swap(other);
+        other.reset();
+    }
     return *this;
 }
 
@@ -372,6 +383,12 @@ bool SkBitmap::installPixels(const SkImageInfo& requestedInfo, void* pixels, siz
     return true;
 }
 
+bool SkBitmap::installPixels(const SkPixmap& pixmap) {
+    return this->installPixels(pixmap.info(), pixmap.writable_addr(),
+                               pixmap.rowBytes(), pixmap.ctable(),
+                               nullptr, nullptr);
+}
+
 bool SkBitmap::installMaskPixels(const SkMask& mask) {
     if (SkMask::kA8_Format != mask.fFormat) {
         this->reset();
@@ -546,6 +563,8 @@ void* SkBitmap::getAddr(int x, int y) const {
     return base;
 }
 
+#include "SkHalf.h"
+
 SkColor SkBitmap::getColor(int x, int y) const {
     SkASSERT((unsigned)x < (unsigned)this->width());
     SkASSERT((unsigned)y < (unsigned)this->height());
@@ -572,10 +591,27 @@ SkColor SkBitmap::getColor(int x, int y) const {
             SkPMColor c = SkPixel4444ToPixel32(addr[0]);
             return SkUnPreMultiply::PMColorToColor(c);
         }
-        case kBGRA_8888_SkColorType:
+        case kBGRA_8888_SkColorType: {
+            uint32_t* addr = this->getAddr32(x, y);
+            SkPMColor c = SkSwizzle_BGRA_to_PMColor(addr[0]);
+            return SkUnPreMultiply::PMColorToColor(c);
+        }
         case kRGBA_8888_SkColorType: {
             uint32_t* addr = this->getAddr32(x, y);
-            return SkUnPreMultiply::PMColorToColor(addr[0]);
+            SkPMColor c = SkSwizzle_RGBA_to_PMColor(addr[0]);
+            return SkUnPreMultiply::PMColorToColor(c);
+        }
+        case kRGBA_F16_SkColorType: {
+            const uint64_t* addr = (const uint64_t*)fPixels + y * (fRowBytes >> 3) + x;
+            Sk4f p4 = SkHalfToFloat_01(addr[0]);
+            if (p4[3]) {
+                float inva = 1 / p4[3];
+                p4 = p4 * Sk4f(inva, inva, inva, 1);
+            }
+            SkColor c;
+            SkNx_cast<uint8_t>(p4 * Sk4f(255) + Sk4f(0.5f)).store(&c);
+            // p4 is RGBA, but we want BGRA, so we need to swap next
+            return SkSwizzle_RB(c);
         }
         default:
             SkASSERT(false);
@@ -806,7 +842,7 @@ bool SkBitmap::copyTo(SkBitmap* dst, SkColorType dstColorType, Allocator* alloc)
         SkIRect subset;
         subset.setXYWH(fPixelRefOrigin.fX, fPixelRefOrigin.fY,
                        fInfo.width(), fInfo.height());
-        if (fPixelRef->readPixels(&tmpSrc, &subset)) {
+        if (fPixelRef->readPixels(&tmpSrc, dstColorType, &subset)) {
             if (fPixelRef->info().alphaType() == kUnpremul_SkAlphaType) {
                 // FIXME: The only meaningful implementation of readPixels
                 // (GrPixelRef) assumes premultiplied pixels.
@@ -1011,7 +1047,6 @@ bool SkBitmap::extractAlpha(SkBitmap* dst, const SkPaint* paint,
     // compute our (larger?) dst bounds if we have a filter
     if (filter) {
         identity.reset();
-        srcM.fImage = nullptr;
         if (!filter->filterMask(&dstM, srcM, identity, nullptr)) {
             goto NO_FILTER_CASE;
         }
@@ -1071,8 +1106,8 @@ static void write_raw_pixels(SkWriteBuffer* buffer, const SkPixmap& pmap) {
     info.flatten(*buffer);
 
     const size_t size = snugRB * info.height();
-    SkAutoMalloc storage(size);
-    char* dst = (char*)storage.get();
+    SkAutoTMalloc<char> storage(size);
+    char* dst = storage.get();
     for (int y = 0; y < info.height(); ++y) {
         memcpy(dst, src, snugRB);
         dst += snugRB;
@@ -1128,7 +1163,7 @@ bool SkBitmap::ReadRawPixels(SkReadBuffer* buffer, SkBitmap* bitmap) {
         return false;
     }
 
-    SkAutoDataUnref data(SkData::NewUninitialized(SkToSizeT(ramSize)));
+    sk_sp<SkData> data(SkData::MakeUninitialized(SkToSizeT(ramSize)));
     unsigned char* dst = (unsigned char*)data->writable_data();
     buffer->readByteArray(dst, SkToSizeT(snugSize));
 

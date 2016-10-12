@@ -139,7 +139,6 @@ thai_pua_shape (hb_codepoint_t u, thai_action_t action, hb_font_t *font)
   };
 
   switch (action) {
-    default: assert (false); HB_FALLTHROUGH;
     case NOP: return u;
     case SD:  pua_mappings = SD_mappings; break;
     case SDL: pua_mappings = SDL_mappings; break;
@@ -377,6 +376,6 @@ const hb_ot_complex_shaper_t _hb_ot_complex_shaper_thai =
   NULL, /* decompose */
   NULL, /* compose */
   NULL, /* setup_masks */
-  HB_OT_SHAPE_ZERO_WIDTH_MARKS_BY_UNICODE_LATE,
+  HB_OT_SHAPE_ZERO_WIDTH_MARKS_BY_GDEF_LATE,
   false,/* fallback_position */
 };

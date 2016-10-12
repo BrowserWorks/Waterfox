@@ -5,6 +5,7 @@
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/ExtensionTestUtils.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
   <script type="text/javascript" src="head.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
@@ -12,6 +13,8 @@
 
 <script type="text/javascript">
 "use strict";
+
+/* globals sendMouseEvent */
 
 function backgroundScript() {
   const BASE = "http://mochi.test:8888/tests/toolkit/components/extensions/test/mochitest";
@@ -24,6 +27,7 @@ function backgroundScript() {
     "onCompleted",
     "onErrorOccurred",
     "onReferenceFragmentUpdated",
+    "onHistoryStateUpdated",
   ];
 
   let expectedTabId = -1;
@@ -61,13 +65,23 @@ function backgroundScript() {
     browser.webNavigation[event].addListener(listeners[event]);
   }
 
-  browser.test.sendMessage("ready", browser.webRequest.ResourceType);
+  browser.test.sendMessage("ready");
 }
 
 const BASE = "http://mochi.test:8888/tests/toolkit/components/extensions/test/mochitest";
 const URL = BASE + "/file_WebNavigation_page1.html";
 const FRAME = BASE + "/file_WebNavigation_page2.html";
 const FRAME2 = BASE + "/file_WebNavigation_page3.html";
+const FRAME_PUSHSTATE = BASE + "/file_WebNavigation_page3_pushState.html";
+const REDIRECT = BASE + "/redirection.sjs";
+const REDIRECTED = BASE + "/dummy_page.html";
+const CLIENT_REDIRECT = BASE + "/file_webNavigation_clientRedirect.html";
+const CLIENT_REDIRECT_HTTPHEADER = BASE + "/file_webNavigation_clientRedirect_httpHeaders.html";
+const FRAME_CLIENT_REDIRECT = BASE + "/file_webNavigation_frameClientRedirect.html";
+const FRAME_REDIRECT = BASE + "/file_webNavigation_frameRedirect.html";
+const FRAME_MANUAL = BASE + "/file_webNavigation_manualSubframe.html";
+const FRAME_MANUAL_PAGE1 = BASE + "/file_webNavigation_manualSubframe_page1.html";
+const FRAME_MANUAL_PAGE2 = BASE + "/file_webNavigation_manualSubframe_page2.html";
 
 const REQUIRED = [
   "onBeforeNavigate",
@@ -88,6 +102,244 @@ function loadAndWait(win, event, url, script) {
   script();
   return new Promise(resolve => { completedResolve = resolve; });
 }
+
+add_task(function* webnav_transitions_props() {
+  function backgroundScriptTransitions() {
+    const EVENTS = [
+      "onCommitted",
+      "onCompleted",
+    ];
+
+    function gotEvent(event, details) {
+      browser.test.log(`Got ${event} ${details.url} ${details.transitionType} ${details.transitionQualifiers && JSON.stringify(details.transitionQualifiers)}`);
+
+      browser.test.sendMessage("received", {url: details.url, details, event});
+    }
+
+    let listeners = {};
+    for (let event of EVENTS) {
+      listeners[event] = gotEvent.bind(null, event);
+      browser.webNavigation[event].addListener(listeners[event]);
+    }
+
+    browser.test.sendMessage("ready");
+  }
+
+  let extensionData = {
+    manifest: {
+      permissions: [
+        "webNavigation",
+      ],
+    },
+    background: `(${backgroundScriptTransitions})()`,
+  };
+
+  let extension = ExtensionTestUtils.loadExtension(extensionData);
+
+  extension.onMessage("received", ({url, event, details}) => {
+    received.push({url, event, details});
+
+    if (event == waitingEvent && url == waitingURL) {
+      completedResolve();
+    }
+  });
+
+  yield Promise.all([extension.startup(), extension.awaitMessage("ready")]);
+  info("webnavigation extension loaded");
+
+  let win = window.open();
+
+  yield loadAndWait(win, "onCompleted", URL, () => { win.location = URL; });
+
+  // transitionType: reload
+  received = [];
+  yield loadAndWait(win, "onCompleted", URL, () => { win.location.reload(); });
+
+  let found = received.find((data) => (data.event == "onCommitted" && data.url == URL));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "reload",
+       "Got the expected 'reload' transitionType in the OnCommitted event");
+    ok(Array.isArray(found.details.transitionQualifiers),
+       "transitionQualifiers found in the OnCommitted events");
+  }
+
+  // transitionType: auto_subframe
+  found = received.find((data) => (data.event == "onCommitted" && data.url == FRAME));
+
+  ok(found, "Got the sub-frame onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "auto_subframe",
+       "Got the expected 'auto_subframe' transitionType in the OnCommitted event");
+    ok(Array.isArray(found.details.transitionQualifiers),
+       "transitionQualifiers found in the OnCommitted events");
+  }
+
+  // transitionType: form_submit
+  received = [];
+  yield loadAndWait(win, "onCompleted", URL, () => {
+    win.document.querySelector("form").submit();
+  });
+
+  found = received.find((data) => (data.event == "onCommitted" && data.url == URL));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "form_submit",
+       "Got the expected 'form_submit' transitionType in the OnCommitted event");
+    ok(Array.isArray(found.details.transitionQualifiers),
+       "transitionQualifiers found in the OnCommitted events");
+  }
+
+  // transitionQualifier: server_redirect
+  received = [];
+  yield loadAndWait(win, "onCompleted", REDIRECTED, () => { win.location = REDIRECT; });
+
+  found = received.find((data) => (data.event == "onCommitted" && data.url == REDIRECTED));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "link",
+       "Got the expected 'link' transitionType in the OnCommitted event");
+    ok(Array.isArray(found.details.transitionQualifiers) &&
+       found.details.transitionQualifiers.find((q) => q == "server_redirect"),
+       "Got the expected 'server_redirect' transitionQualifiers in the OnCommitted events");
+  }
+
+  // transitionQualifier: forward_back
+  received = [];
+  yield loadAndWait(win, "onCompleted", URL, () => { win.history.back(); });
+
+  found = received.find((data) => (data.event == "onCommitted" && data.url == URL));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "link",
+       "Got the expected 'link' transitionType in the OnCommitted event");
+    ok(Array.isArray(found.details.transitionQualifiers) &&
+       found.details.transitionQualifiers.find((q) => q == "forward_back"),
+       "Got the expected 'forward_back' transitionQualifiers in the OnCommitted events");
+  }
+
+  // transitionQualifier: client_redirect
+  // (from meta http-equiv tag)
+  received = [];
+  yield loadAndWait(win, "onCompleted", REDIRECTED, () => {
+    win.location = CLIENT_REDIRECT;
+  });
+
+  found = received.find((data) => (data.event == "onCommitted" && data.url == REDIRECTED));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "link",
+       "Got the expected 'link' transitionType in the OnCommitted event");
+    ok(Array.isArray(found.details.transitionQualifiers) &&
+       found.details.transitionQualifiers.find((q) => q == "client_redirect"),
+       "Got the expected 'client_redirect' transitionQualifiers in the OnCommitted events");
+  }
+
+  // transitionQualifier: client_redirect
+  // (from http headers)
+  received = [];
+  yield loadAndWait(win, "onCompleted", REDIRECTED, () => {
+    win.location = CLIENT_REDIRECT_HTTPHEADER;
+  });
+
+  found = received.find((data) => (data.event == "onCommitted" &&
+                                   data.url == CLIENT_REDIRECT_HTTPHEADER));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "link",
+       "Got the expected 'link' transitionType in the OnCommitted event");
+    ok(Array.isArray(found.details.transitionQualifiers) &&
+       found.details.transitionQualifiers.find((q) => q == "client_redirect"),
+       "Got the expected 'client_redirect' transitionQualifiers in the OnCommitted events");
+  }
+
+  // transitionQualifier: client_redirect (sub-frame)
+  // (from meta http-equiv tag)
+  received = [];
+  yield loadAndWait(win, "onCompleted", REDIRECTED, () => {
+    win.location = FRAME_CLIENT_REDIRECT;
+  });
+
+  found = received.find((data) => (data.event == "onCommitted" && data.url == REDIRECTED));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "auto_subframe",
+       "Got the expected 'auto_subframe' transitionType in the OnCommitted event");
+    ok(Array.isArray(found.details.transitionQualifiers) &&
+       found.details.transitionQualifiers.find((q) => q == "client_redirect"),
+       "Got the expected 'client_redirect' transitionQualifiers in the OnCommitted events");
+  }
+
+  // transitionQualifier: server_redirect (sub-frame)
+  received = [];
+  yield loadAndWait(win, "onCompleted", REDIRECTED, () => { win.location = FRAME_REDIRECT; });
+
+  found = received.find((data) => (data.event == "onCommitted" && data.url == REDIRECT));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "auto_subframe",
+       "Got the expected 'auto_subframe' transitionType in the OnCommitted event");
+    // BUG 1264936: currently the server_redirect is not detected in sub-frames
+    // once we fix it we can test it here:
+    //
+    // ok(Array.isArray(found.details.transitionQualifiers) &&
+    //    found.details.transitionQualifiers.find((q) => q == "server_redirect"),
+    //    "Got the expected 'server_redirect' transitionQualifiers in the OnCommitted events");
+  }
+
+  // transitionType: manual_subframe
+  received = [];
+  yield loadAndWait(win, "onCompleted", FRAME_MANUAL, () => { win.location = FRAME_MANUAL; });
+  found = received.find((data) => (data.event == "onCommitted" &&
+                                   data.url == FRAME_MANUAL_PAGE1));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "auto_subframe",
+       "Got the expected 'auto_subframe' transitionType in the OnCommitted event");
+  }
+
+  received = [];
+  yield loadAndWait(win, "onCompleted", FRAME_MANUAL_PAGE2, () => {
+    let el = win.document.querySelector("iframe")
+                .contentDocument.querySelector("a");
+    sendMouseEvent({type: "click"}, el, win);
+  });
+
+  found = received.find((data) => (data.event == "onCommitted" &&
+                                   data.url == FRAME_MANUAL_PAGE2));
+
+  ok(found, "Got the onCommitted event");
+
+  if (found) {
+    is(found.details.transitionType, "manual_subframe",
+       "Got the expected 'manual_subframe' transitionType in the OnCommitted event");
+  }
+
+  // cleanup phase
+  win.close();
+
+  yield extension.unload();
+  info("webnavigation extension unloaded");
+});
 
 add_task(function* webnav_ordering() {
   let extensionData = {
@@ -148,17 +400,95 @@ add_task(function* webnav_ordering() {
     ok(index1 < index2, `Action ${JSON.stringify(action1)} happened before ${JSON.stringify(action2)}`);
   }
 
+  // As required in the webNavigation API documentation:
+  // If a navigating frame contains subframes, its onCommitted is fired before any
+  // of its children's onBeforeNavigate; while onCompleted is fired after
+  // all of its children's onCompleted.
   checkBefore({url: URL, event: "onCommitted"}, {url: FRAME, event: "onBeforeNavigate"});
   checkBefore({url: FRAME, event: "onCompleted"}, {url: URL, event: "onCompleted"});
+
+  // As required in the webNAvigation API documentation, check the event sequence:
+  // onBeforeNavigate -> onCommitted -> onDOMContentLoaded -> onCompleted
+  let expectedEventSequence = [
+    "onBeforeNavigate", "onCommitted", "onDOMContentLoaded", "onCompleted",
+  ];
+
+  for (let i = 1; i < expectedEventSequence.length; i++) {
+    let after = expectedEventSequence[i];
+    let before = expectedEventSequence[i - 1];
+    checkBefore({url: URL, event: before}, {url: URL, event: after});
+    checkBefore({url: FRAME, event: before}, {url: FRAME, event: after});
+  }
 
   yield loadAndWait(win, "onCompleted", FRAME2, () => { win.frames[0].location = FRAME2; });
 
   checkRequired(FRAME2);
 
-  yield loadAndWait(win, "onReferenceFragmentUpdated", FRAME2 + "#ref",
-                    () => { win.frames[0].document.getElementById("elt").click(); });
+  let navigationSequence = [
+    {
+      action: () => { win.frames[0].document.getElementById("elt").click(); },
+      waitURL: `${FRAME2}#ref`,
+      expectedEvent: "onReferenceFragmentUpdated",
+      description: "clicked an anchor link",
+    },
+    {
+      action: () => { win.frames[0].history.pushState({}, "History PushState", `${FRAME2}#ref2`); },
+      waitURL: `${FRAME2}#ref2`,
+      expectedEvent: "onReferenceFragmentUpdated",
+      description: "history.pushState, same pathname, different hash",
+    },
+    {
+      action: () => { win.frames[0].history.pushState({}, "History PushState", `${FRAME2}#ref2`); },
+      waitURL: `${FRAME2}#ref2`,
+      expectedEvent: "onHistoryStateUpdated",
+      description: "history.pushState, same pathname, same hash",
+    },
+    {
+      action: () => {
+        win.frames[0].history.pushState({}, "History PushState", `${FRAME2}?query_param1=value#ref2`);
+      },
+      waitURL: `${FRAME2}?query_param1=value#ref2`,
+      expectedEvent: "onHistoryStateUpdated",
+      description: "history.pushState, same pathname, same hash, different query params",
+    },
+    {
+      action: () => {
+        win.frames[0].history.pushState({}, "History PushState", `${FRAME2}?query_param2=value#ref3`);
+      },
+      waitURL: `${FRAME2}?query_param2=value#ref3`,
+      expectedEvent: "onHistoryStateUpdated",
+      description: "history.pushState, same pathname, different hash, different query params",
+    },
+    {
+      action: () => { win.frames[0].history.pushState(null, "History PushState", FRAME_PUSHSTATE); },
+      waitURL: FRAME_PUSHSTATE,
+      expectedEvent: "onHistoryStateUpdated",
+      description: "history.pushState, different pathname",
+    },
+  ];
 
-  info("Received onReferenceFragmentUpdated from FRAME2");
+  for (let navigation of navigationSequence) {
+    let {expectedEvent, waitURL, action, description} = navigation;
+    info(`Waiting ${expectedEvent} from ${waitURL} - ${description}`);
+    yield loadAndWait(win, expectedEvent, waitURL, action);
+    info(`Received ${expectedEvent} from ${waitURL} - ${description}`);
+  }
+
+  for (let i = navigationSequence.length - 1; i > 0; i--) {
+    let {waitURL: fromURL, expectedEvent} = navigationSequence[i];
+    let {waitURL} = navigationSequence[i - 1];
+    info(`Waiting ${expectedEvent} from ${waitURL} - history.back() from ${fromURL} to ${waitURL}`);
+    yield loadAndWait(win, expectedEvent, waitURL, () => { win.frames[0].history.back(); });
+    info(`Received ${expectedEvent} from ${waitURL} - history.back() from ${fromURL} to ${waitURL}`);
+  }
+
+  for (let i = 0; i < navigationSequence.length - 1; i++) {
+    let {waitURL: fromURL} = navigationSequence[i];
+    let {waitURL, expectedEvent} = navigationSequence[i + 1];
+    info(`Waiting ${expectedEvent} from ${waitURL} - history.forward() from ${fromURL} to ${waitURL}`);
+    yield loadAndWait(win, expectedEvent, waitURL, () => { win.frames[0].history.forward(); });
+    info(`Received ${expectedEvent} from ${waitURL} - history.forward() from ${fromURL} to ${waitURL}`);
+  }
 
   win.close();
 

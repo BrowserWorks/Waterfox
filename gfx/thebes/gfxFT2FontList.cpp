@@ -457,7 +457,7 @@ FT2FontEntry::ReadCMAP(FontInfoData *aFontInfoData)
 
     RefPtr<gfxCharacterMap> charmap = new gfxCharacterMap();
 
-    AutoFallibleTArray<uint8_t,16384> buffer;
+    AutoTArray<uint8_t, 16384> buffer;
     nsresult rv = CopyFontTable(TTAG_cmap, buffer);
     
     if (NS_SUCCEEDED(rv)) {
@@ -511,8 +511,7 @@ FT2FontEntry::ReadCMAP(FontInfoData *aFontInfoData)
 }
 
 nsresult
-FT2FontEntry::CopyFontTable(uint32_t aTableTag,
-                            FallibleTArray<uint8_t>& aBuffer)
+FT2FontEntry::CopyFontTable(uint32_t aTableTag, nsTArray<uint8_t>& aBuffer)
 {
     AutoFTFace face(this);
     if (!face) {
@@ -668,14 +667,14 @@ public:
             return;
         }
         uint32_t size;
-        char* buf;
+        UniquePtr<char[]> buf;
         if (NS_FAILED(mCache->GetBuffer(CACHE_KEY, &buf, &size))) {
             return;
         }
 
-        LOG(("got: %s from the cache", nsDependentCString(buf, size).get()));
+        LOG(("got: %s from the cache", nsDependentCString(buf.get(), size).get()));
 
-        const char* beginning = buf;
+        const char* beginning = buf.get();
         const char* end = strchr(beginning, ';');
         while (end) {
             nsCString filename(beginning, end - beginning);
@@ -710,9 +709,6 @@ public:
             beginning = end + 1;
             end = strchr(beginning, ';');
         }
-
-        // Should we use free() or delete[] here? See bug 684700.
-        free(buf);
     }
 
     virtual void
@@ -763,13 +759,12 @@ private:
         bool      mFileExists;
     } FNCMapEntry;
 
-    static PLDHashNumber StringHash(PLDHashTable *table, const void *key)
+    static PLDHashNumber StringHash(const void *key)
     {
         return HashString(reinterpret_cast<const char*>(key));
     }
 
-    static bool HashMatchEntry(PLDHashTable *table,
-                                 const PLDHashEntryHdr *aHdr, const void *key)
+    static bool HashMatchEntry(const PLDHashEntryHdr *aHdr, const void *key)
     {
         const FNCMapEntry* entry =
             static_cast<const FNCMapEntry*>(aHdr);
@@ -812,15 +807,13 @@ gfxFT2FontList::AppendFacesFromCachedFaceList(
     const char *beginning = aFaceList.get();
     const char *end = strchr(beginning, ',');
     while (end) {
-        nsString familyName =
-            NS_ConvertUTF8toUTF16(beginning, end - beginning);
+        NS_ConvertUTF8toUTF16 familyName(beginning, end - beginning);
         ToLowerCase(familyName);
         beginning = end + 1;
         if (!(end = strchr(beginning, ','))) {
             break;
         }
-        nsString faceName =
-            NS_ConvertUTF8toUTF16(beginning, end - beginning);
+        NS_ConvertUTF8toUTF16 faceName(beginning, end - beginning);
         beginning = end + 1;
         if (!(end = strchr(beginning, ','))) {
             break;
@@ -954,7 +947,7 @@ gfxFT2FontList::FindFontsInOmnijar(FontNameCache *aCache)
 
     mozilla::scache::StartupCache* cache =
         mozilla::scache::StartupCache::GetSingleton();
-    char *cachedModifiedTimeBuf;
+    UniquePtr<char[]> cachedModifiedTimeBuf;
     uint32_t longSize;
     int64_t jarModifiedTime;
     if (cache &&
@@ -965,7 +958,7 @@ gfxFT2FontList::FindFontsInOmnijar(FontNameCache *aCache)
     {
         nsCOMPtr<nsIFile> jarFile = Omnijar::GetPath(Omnijar::Type::GRE);
         jarFile->GetLastModifiedTime(&jarModifiedTime);
-        if (jarModifiedTime > *(int64_t*)cachedModifiedTimeBuf) {
+        if (jarModifiedTime > *(int64_t*)cachedModifiedTimeBuf.get()) {
             jarChanged = true;
         }
     }
@@ -1353,7 +1346,7 @@ gfxFT2FontList::GetSystemFontList(InfallibleTArray<FontListEntry>* retValue)
 static void
 LoadSkipSpaceLookupCheck(nsTHashtable<nsStringHashKey>& aSkipSpaceLookupCheck)
 {
-    nsAutoTArray<nsString, 5> skiplist;
+    AutoTArray<nsString, 5> skiplist;
     gfxFontUtils::GetPrefsFontList(
         "font.whitelist.skip_default_features_space_check",
         skiplist);
@@ -1410,7 +1403,7 @@ PreloadAsUserFontFaces(nsStringHashKey::KeyType aKey,
              crc);
 #endif
 
-        fe->mUserFontData = new gfxUserFontData;
+        fe->mUserFontData = MakeUnique<gfxUserFontData>();
         fe->mUserFontData->mRealName = fe->Name();
         fe->mUserFontData->mCRC32 = crc;
         fe->mUserFontData->mLength = buf.st_size;

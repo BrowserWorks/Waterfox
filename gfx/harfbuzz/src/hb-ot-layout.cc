@@ -60,6 +60,35 @@ _hb_ot_layout_create (hb_face_t *face)
   layout->gpos_blob = OT::Sanitizer<OT::GPOS>::sanitize (face->reference_table (HB_OT_TAG_GPOS));
   layout->gpos = OT::Sanitizer<OT::GPOS>::lock_instance (layout->gpos_blob);
 
+  {
+    /*
+     * The ugly business of blacklisting individual fonts' tables happen here!
+     * See this thread for why we finally had to bend in and do this:
+     * https://lists.freedesktop.org/archives/harfbuzz/2016-February/005489.html
+     */
+    unsigned int gdef_len = hb_blob_get_length (layout->gdef_blob);
+    unsigned int gsub_len = hb_blob_get_length (layout->gsub_blob);
+    unsigned int gpos_len = hb_blob_get_length (layout->gpos_blob);
+    if (0
+      || (442 == gdef_len && 42038 == gpos_len && 2874 == gsub_len) /* Windows 7 timesi.ttf */
+      || (430 == gdef_len && 40662 == gpos_len && 2874 == gsub_len) /* Windows 7 timesbi.ttf */
+      || (442 == gdef_len && 39116 == gpos_len && 2874 == gsub_len) /* Windows ??? timesi.ttf */
+      || (430 == gdef_len && 39374 == gpos_len && 2874 == gsub_len) /* Windows ??? timesbi.ttf */
+      || (490 == gdef_len && 41638 == gpos_len && 3046 == gsub_len) /* OS X 10.11.3 Times New Roman Italic.ttf */
+      || (478 == gdef_len && 41902 == gpos_len && 3046 == gsub_len) /* OS X 10.11.3 Times New Roman Bold Italic.ttf */
+    )
+    {
+      /* In certain versions of Times New Roman Italic and Bold Italic,
+       * ASCII double quotation mark U+0022, mapped to glyph 5, has wrong
+       * glyph class 3 (mark) in GDEF.  Nuke the GDEF to avoid zero-width
+       * double-quote.  See:
+       * https://lists.freedesktop.org/archives/harfbuzz/2016-February/005489.html
+       */
+     if (3 == layout->gdef->get_glyph_class (5))
+       layout->gdef = &OT::Null(OT::GDEF);
+    }
+  }
+
   layout->gsub_lookup_count = layout->gsub->get_lookup_count ();
   layout->gpos_lookup_count = layout->gpos->get_lookup_count ();
 
@@ -771,12 +800,6 @@ hb_ot_layout_substitute_start (hb_font_t *font, hb_buffer_t *buffer)
   OT::GSUB::substitute_start (font, buffer);
 }
 
-void
-hb_ot_layout_substitute_finish (hb_font_t *font, hb_buffer_t *buffer)
-{
-  OT::GSUB::substitute_finish (font, buffer);
-}
-
 /**
  * hb_ot_layout_lookup_substitute_closure:
  *
@@ -811,9 +834,15 @@ hb_ot_layout_position_start (hb_font_t *font, hb_buffer_t *buffer)
 }
 
 void
-hb_ot_layout_position_finish (hb_font_t *font, hb_buffer_t *buffer)
+hb_ot_layout_position_finish_advances (hb_font_t *font, hb_buffer_t *buffer)
 {
-  OT::GPOS::position_finish (font, buffer);
+  OT::GPOS::position_finish_advances (font, buffer);
+}
+
+void
+hb_ot_layout_position_finish_offsets (hb_font_t *font, hb_buffer_t *buffer)
+{
+  OT::GPOS::position_finish_offsets (font, buffer);
 }
 
 /**
@@ -902,20 +931,79 @@ struct GPOSProxy
 };
 
 
-template <typename Obj>
+struct hb_get_subtables_context_t :
+       OT::hb_dispatch_context_t<hb_get_subtables_context_t, hb_void_t, HB_DEBUG_APPLY>
+{
+  template <typename Type>
+  static inline bool apply_to (const void *obj, OT::hb_apply_context_t *c)
+  {
+    const Type *typed_obj = (const Type *) obj;
+    return typed_obj->apply (c);
+  }
+
+  typedef bool (*hb_apply_func_t) (const void *obj, OT::hb_apply_context_t *c);
+
+  struct hb_applicable_t
+  {
+    inline void init (const void *obj_, hb_apply_func_t apply_func_)
+    {
+      obj = obj_;
+      apply_func = apply_func_;
+    }
+
+    inline bool apply (OT::hb_apply_context_t *c) const { return apply_func (obj, c); }
+
+    private:
+    const void *obj;
+    hb_apply_func_t apply_func;
+  };
+
+  typedef hb_auto_array_t<hb_applicable_t> array_t;
+
+  /* Dispatch interface. */
+  inline const char *get_name (void) { return "GET_SUBTABLES"; }
+  template <typename T>
+  inline return_t dispatch (const T &obj)
+  {
+    hb_applicable_t *entry = array.push();
+    if (likely (entry))
+      entry->init (&obj, apply_to<T>);
+    return HB_VOID;
+  }
+  static return_t default_return_value (void) { return HB_VOID; }
+  bool stop_sublookup_iteration (return_t r HB_UNUSED) const { return false; }
+
+  hb_get_subtables_context_t (array_t &array_) :
+			      array (array_),
+			      debug_depth (0) {}
+
+  array_t &array;
+  unsigned int debug_depth;
+};
+
 static inline bool
 apply_forward (OT::hb_apply_context_t *c,
-	       const Obj &obj,
-	       const hb_ot_layout_lookup_accelerator_t &accel)
+	       const hb_ot_layout_lookup_accelerator_t &accel,
+	       const hb_get_subtables_context_t::array_t &subtables)
 {
   bool ret = false;
   hb_buffer_t *buffer = c->buffer;
   while (buffer->idx < buffer->len && !buffer->in_error)
   {
+    bool applied = false;
     if (accel.may_have (buffer->cur().codepoint) &&
 	(buffer->cur().mask & c->lookup_mask) &&
-	c->check_glyph_property (&buffer->cur(), c->lookup_props) &&
-	obj.apply (c))
+	c->check_glyph_property (&buffer->cur(), c->lookup_props))
+     {
+       for (unsigned int i = 0; i < subtables.len; i++)
+         if (subtables[i].apply (c))
+	 {
+	   applied = true;
+	   break;
+	 }
+     }
+
+    if (applied)
       ret = true;
     else
       buffer->next_glyph ();
@@ -923,11 +1011,10 @@ apply_forward (OT::hb_apply_context_t *c,
   return ret;
 }
 
-template <typename Obj>
 static inline bool
 apply_backward (OT::hb_apply_context_t *c,
-		const Obj &obj,
-		const hb_ot_layout_lookup_accelerator_t &accel)
+	       const hb_ot_layout_lookup_accelerator_t &accel,
+	       const hb_get_subtables_context_t::array_t &subtables)
 {
   bool ret = false;
   hb_buffer_t *buffer = c->buffer;
@@ -935,9 +1022,15 @@ apply_backward (OT::hb_apply_context_t *c,
   {
     if (accel.may_have (buffer->cur().codepoint) &&
 	(buffer->cur().mask & c->lookup_mask) &&
-	c->check_glyph_property (&buffer->cur(), c->lookup_props) &&
-	obj.apply (c))
-      ret = true;
+	c->check_glyph_property (&buffer->cur(), c->lookup_props))
+    {
+     for (unsigned int i = 0; i < subtables.len; i++)
+       if (subtables[i].apply (c))
+       {
+	 ret = true;
+	 break;
+       }
+    }
     /* The reverse lookup doesn't "advance" cursor (for good reason). */
     buffer->idx--;
 
@@ -945,26 +1038,6 @@ apply_backward (OT::hb_apply_context_t *c,
   while ((int) buffer->idx >= 0);
   return ret;
 }
-
-struct hb_apply_forward_context_t :
-       OT::hb_dispatch_context_t<hb_apply_forward_context_t, bool, HB_DEBUG_APPLY>
-{
-  inline const char *get_name (void) { return "APPLY_FWD"; }
-  template <typename T>
-  inline return_t dispatch (const T &obj) { return apply_forward (c, obj, accel); }
-  static return_t default_return_value (void) { return false; }
-  bool stop_sublookup_iteration (return_t r HB_UNUSED) const { return true; }
-
-  hb_apply_forward_context_t (OT::hb_apply_context_t *c_,
-			      const hb_ot_layout_lookup_accelerator_t &accel_) :
-				c (c_),
-				accel (accel_),
-				debug_depth (0) {}
-
-  OT::hb_apply_context_t *c;
-  const hb_ot_layout_lookup_accelerator_t &accel;
-  unsigned int debug_depth;
-};
 
 template <typename Proxy>
 static inline void
@@ -979,6 +1052,10 @@ apply_string (OT::hb_apply_context_t *c,
 
   c->set_lookup_props (lookup.get_props ());
 
+  hb_get_subtables_context_t::array_t subtables;
+  hb_get_subtables_context_t c_get_subtables (subtables);
+  lookup.dispatch (&c_get_subtables);
+
   if (likely (!lookup.is_reverse ()))
   {
     /* in/out forward substitution/positioning */
@@ -987,13 +1064,7 @@ apply_string (OT::hb_apply_context_t *c,
     buffer->idx = 0;
 
     bool ret;
-    if (lookup.get_subtable_count () == 1)
-    {
-      hb_apply_forward_context_t c_forward (c, accel);
-      ret = lookup.dispatch (&c_forward);
-    }
-    else
-      ret = apply_forward (c, lookup, accel);
+    ret = apply_forward (c, accel, subtables);
     if (ret)
     {
       if (!Proxy::inplace)
@@ -1009,7 +1080,7 @@ apply_string (OT::hb_apply_context_t *c,
       buffer->remove_output ();
     buffer->idx = buffer->len - 1;
 
-    apply_backward (c, lookup, accel);
+    apply_backward (c, accel, subtables);
   }
 }
 

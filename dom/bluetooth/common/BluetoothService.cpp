@@ -24,6 +24,7 @@
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
 #include "mozilla/dom/ipc/BlobChild.h"
 #include "mozilla/dom/ipc/BlobParent.h"
+#include "nsAutoPtr.h"
 #include "nsContentUtils.h"
 #include "nsIObserverService.h"
 #include "nsISettingsService.h"
@@ -94,7 +95,7 @@ GetAllBluetoothActors(InfallibleTArray<BluetoothParent*>& aActors)
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aActors.IsEmpty());
 
-  nsAutoTArray<ContentParent*, 20> contentActors;
+  AutoTArray<ContentParent*, 20> contentActors;
   ContentParent::GetAll(contentActors);
 
   for (uint32_t contentIndex = 0;
@@ -102,7 +103,7 @@ GetAllBluetoothActors(InfallibleTArray<BluetoothParent*>& aActors)
        contentIndex++) {
     MOZ_ASSERT(contentActors[contentIndex]);
 
-    AutoInfallibleTArray<PBluetoothParent*, 5> bluetoothActors;
+    AutoTArray<PBluetoothParent*, 5> bluetoothActors;
     contentActors[contentIndex]->ManagedPBluetoothParent(bluetoothActors);
 
     for (uint32_t bluetoothIndex = 0;
@@ -294,28 +295,30 @@ BluetoothService::UnregisterBluetoothSignalHandler(
   }
 }
 
-PLDHashOperator
-RemoveAllSignalHandlers(const nsAString& aKey,
-                        nsAutoPtr<BluetoothSignalObserverList>& aData,
-                        void* aUserArg)
-{
-  BluetoothSignalObserver* handler =
-    static_cast<BluetoothSignalObserver*>(aUserArg);
-  aData->RemoveObserver(handler);
-  // We shouldn't have duplicate instances in the ObserverList, but there's
-  // no appropriate way to do duplication check while registering, so
-  // assertions are added here.
-  MOZ_ASSERT(!aData->RemoveObserver(handler));
-  return aData->Length() ? PL_DHASH_NEXT : PL_DHASH_REMOVE;
-}
-
 void
 BluetoothService::UnregisterAllSignalHandlers(BluetoothSignalObserver* aHandler)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aHandler);
 
-  mBluetoothSignalObserverTable.Enumerate(RemoveAllSignalHandlers, aHandler);
+  for (auto iter = mBluetoothSignalObserverTable.Iter();
+       !iter.Done();
+       iter.Next()) {
+
+    // FIXME: Remove #include <nsAutoPtr.h> near the top
+    // of this file when the hash table has been converted
+    // to |UniquePtr<>|
+    nsAutoPtr<BluetoothSignalObserverList>& ol = iter.Data();
+
+    ol->RemoveObserver(aHandler);
+    // We shouldn't have duplicate instances in the ObserverList, but there's
+    // no appropriate way to do duplication check while registering, so
+    // assertions are added here.
+    MOZ_ASSERT(!ol->RemoveObserver(aHandler));
+    if (ol->Length() == 0) {
+      iter.Remove();
+    }
+  }
 }
 
 void
@@ -431,7 +434,7 @@ BluetoothService::StartBluetooth(bool aIsStartup,
     }
   } else {
     BT_WARNING("Bluetooth has already been enabled before.");
-    RefPtr<nsRunnable> runnable = new BluetoothService::ToggleBtAck(true);
+    RefPtr<Runnable> runnable = new BluetoothService::ToggleBtAck(true);
     if (NS_FAILED(NS_DispatchToMainThread(runnable))) {
       BT_WARNING("Failed to dispatch to main thread!");
     }
@@ -462,7 +465,7 @@ BluetoothService::StopBluetooth(bool aIsStartup,
     }
   } else {
     BT_WARNING("Bluetooth has already been enabled/disabled before.");
-    RefPtr<nsRunnable> runnable = new BluetoothService::ToggleBtAck(false);
+    RefPtr<Runnable> runnable = new BluetoothService::ToggleBtAck(false);
     if (NS_FAILED(NS_DispatchToMainThread(runnable))) {
       BT_WARNING("Failed to dispatch to main thread!");
     }
@@ -490,7 +493,7 @@ BluetoothService::SetEnabled(bool aEnabled)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  AutoInfallibleTArray<BluetoothParent*, 10> childActors;
+  AutoTArray<BluetoothParent*, 10> childActors;
   GetAllBluetoothActors(childActors);
 
   for (uint32_t index = 0; index < childActors.Length(); index++) {
@@ -574,7 +577,7 @@ BluetoothService::HandleShutdown()
 
   Cleanup();
 
-  AutoInfallibleTArray<BluetoothParent*, 10> childActors;
+  AutoTArray<BluetoothParent*, 10> childActors;
   GetAllBluetoothActors(childActors);
 
   if (!childActors.IsEmpty()) {

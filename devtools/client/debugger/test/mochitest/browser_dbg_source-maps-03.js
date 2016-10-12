@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test that we can debug minified javascript with source maps.
@@ -12,7 +14,11 @@ var gTab, gPanel, gDebugger;
 var gEditor, gSources, gFrames;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: JS_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -20,9 +26,8 @@ function test() {
     gSources = gDebugger.DebuggerView.Sources;
     gFrames = gDebugger.DebuggerView.StackFrames;
 
-    waitForSourceShown(gPanel, JS_URL)
-      .then(checkInitialSource)
-      .then(testSetBreakpoint)
+    checkInitialSource()
+    testSetBreakpoint()
       .then(() => resumeDebuggerThenCloseAndFinish(gPanel))
       .then(null, aError => {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
@@ -73,7 +78,7 @@ function testSetBreakpoint() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

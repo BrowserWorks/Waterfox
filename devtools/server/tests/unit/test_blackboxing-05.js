@@ -14,8 +14,8 @@ function run_test()
   initTestDebuggerServer();
   gDebuggee = addTestGlobal("test-black-box");
   gClient = new DebuggerClient(DebuggerServer.connectPipe());
-  gClient.connect(function() {
-    attachTestTabAndResume(gClient, "test-black-box", function(aResponse, aTabClient, aThreadClient) {
+  gClient.connect().then(function () {
+    attachTestTabAndResume(gClient, "test-black-box", function (aResponse, aTabClient, aThreadClient) {
       gThreadClient = aThreadClient;
       // XXX: We have to do an executeSoon so that the error isn't caught and
       // reported by DebuggerClient.requester (because we are using the local
@@ -73,8 +73,8 @@ function test_black_box_exception() {
       gThreadClient.pauseOnExceptions(true);
 
       gClient.addOneTimeListener("paused", function (aEvent, aPacket) {
-        do_check_neq(aPacket.frame.where.url, BLACK_BOXED_URL,
-                     "We shouldn't pause while in the black boxed source.");
+        do_check_eq(aPacket.frame.where.source.url, SOURCE_URL,
+                    "We shouldn't pause while in the black boxed source.");
         finishClient(gClient);
       });
 

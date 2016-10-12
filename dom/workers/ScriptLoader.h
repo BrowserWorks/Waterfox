@@ -39,6 +39,7 @@ ChannelFromScriptURLMainThread(nsIPrincipal* aPrincipal,
                                nsILoadGroup* aLoadGroup,
                                const nsAString& aScriptURL,
                                nsContentPolicyType aContentPolicyType,
+                               bool aDefaultURIEncoding,
                                nsIChannel** aChannel);
 
 nsresult
@@ -47,14 +48,15 @@ ChannelFromScriptURLWorkerThread(JSContext* aCx,
                                  const nsAString& aScriptURL,
                                  nsIChannel** aChannel);
 
-void ReportLoadError(JSContext* aCx, nsresult aLoadResult);
+void ReportLoadError(ErrorResult& aRv, nsresult aLoadResult,
+                     const nsAString& aScriptURL);
 
-void LoadMainScript(JSContext* aCx, const nsAString& aScriptURL,
+void LoadMainScript(WorkerPrivate* aWorkerPrivate,
+                    const nsAString& aScriptURL,
                     WorkerScriptType aWorkerScriptType,
                     ErrorResult& aRv);
 
-void Load(JSContext* aCx,
-          WorkerPrivate* aWorkerPrivate,
+void Load(WorkerPrivate* aWorkerPrivate,
           const nsTArray<nsString>& aScriptURLs,
           WorkerScriptType aWorkerScriptType,
           mozilla::ErrorResult& aRv);

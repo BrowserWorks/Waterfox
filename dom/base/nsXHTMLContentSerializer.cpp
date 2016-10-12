@@ -194,9 +194,9 @@ nsXHTMLContentSerializer::EscapeURI(nsIContent* aContent, const nsAString& aURI,
     if (textToSubURI && !IsASCII(part)) {
       rv = textToSubURI->ConvertAndEscape(mCharset.get(), part.get(), getter_Copies(escapedURI));
       NS_ENSURE_SUCCESS(rv, rv);
-    }
-    else {
-      escapedURI.Adopt(nsEscape(NS_ConvertUTF16toUTF8(part).get(), url_Path));
+    } else if (NS_WARN_IF(!NS_Escape(NS_ConvertUTF16toUTF8(part), escapedURI,
+                                     url_Path))) {
+      return NS_ERROR_OUT_OF_MEMORY;
     }
     AppendASCIItoUTF16(escapedURI, aEscapedURI);
 
@@ -212,9 +212,9 @@ nsXHTMLContentSerializer::EscapeURI(nsIContent* aContent, const nsAString& aURI,
     if (textToSubURI) {
       rv = textToSubURI->ConvertAndEscape(mCharset.get(), part.get(), getter_Copies(escapedURI));
       NS_ENSURE_SUCCESS(rv, rv);
-    }
-    else {
-      escapedURI.Adopt(nsEscape(NS_ConvertUTF16toUTF8(part).get(), url_Path));
+    } else if (NS_WARN_IF(!NS_Escape(NS_ConvertUTF16toUTF8(part), escapedURI,
+                                     url_Path))) {
+      return NS_ERROR_OUT_OF_MEMORY;
     }
     AppendASCIItoUTF16(escapedURI, aEscapedURI);
   }
@@ -511,7 +511,7 @@ nsXHTMLContentSerializer::CheckElementStart(nsIContent * aContent,
 }
 
 bool
-nsXHTMLContentSerializer::CheckElementEnd(Element* aElement,
+nsXHTMLContentSerializer::CheckElementEnd(mozilla::dom::Element* aElement,
                                           bool& aForceFormat,
                                           nsAString& aStr)
 {

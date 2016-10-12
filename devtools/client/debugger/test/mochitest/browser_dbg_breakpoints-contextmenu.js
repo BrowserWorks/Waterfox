@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test if the context menu associated with each breakpoint does what it should.
@@ -11,15 +13,19 @@ function test() {
   // Debug test slaves are a bit slow at this test.
   requestLongerTimeout(2);
 
-  Task.spawn(function*() {
-    const [gTab,, gPanel ] = yield initDebugger(TAB_URL);
+  Task.spawn(function* () {
+    const options = {
+      source: EXAMPLE_URL + "code_script-switching-01.js",
+      line: 1
+    };
+    const [gTab,, gPanel ] = yield initDebugger(TAB_URL, options);
     const gDebugger = gPanel.panelWin;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
+    const queries = gDebugger.require("./content/queries");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
 
-    const addBreakpoints = Task.async(function*() {
+    const addBreakpoints = Task.async(function* () {
       yield actions.addBreakpoint({ actor: gSources.values[0], line: 5 });
       yield actions.addBreakpoint({ actor: gSources.values[1], line: 6 });
       yield actions.addBreakpoint({ actor: gSources.values[1], line: 7 });
@@ -29,7 +35,7 @@ function test() {
       gSources.highlightBreakpoint({ actor: gSources.values[1], line: 9 });
     });
 
-    const pauseAndCheck = Task.async(function*() {
+    const pauseAndCheck = Task.async(function* () {
       let source = queries.getSelectedSource(getState());
       is(source.url, EXAMPLE_URL + "code_script-switching-02.js",
          "The currently selected source is incorrect (1).");
@@ -51,7 +57,7 @@ function test() {
       });
     });
 
-    let initialChecks = Task.async(function*() {
+    let initialChecks = Task.async(function* () {
       for (let bp of queries.getBreakpoints(getState())) {
         ok(bp.actor, "All breakpoint items should have an actor");
         ok(!bp.disabled, "All breakpoints should initially be enabled.");
@@ -66,9 +72,9 @@ function test() {
         let breakpointItem = gSources._getBreakpoint(bp);
         let menu = gDebugger.document.getElementById("bp-mPop-" + identifier);
         let contextMenuShown = once(gDebugger.document, "popupshown");
-        EventUtils.synthesizeMouseAtCenter(breakpointItem.prebuiltNode, {type: 'contextmenu', button: 2}, gDebugger);
+        EventUtils.synthesizeMouseAtCenter(breakpointItem.prebuiltNode, {type: "contextmenu", button: 2}, gDebugger);
         let event = yield contextMenuShown;
-        is (event.originalTarget.id, menu.id, "The correct context menu was shown");
+        is(event.originalTarget.id, menu.id, "The correct context menu was shown");
         let contextMenuHidden = once(gDebugger.document, "popuphidden");
         menu.hidePopup();
         yield contextMenuHidden;
@@ -83,7 +89,7 @@ function test() {
       }
     });
 
-    const checkBreakpointToggleSelf = Task.async(function*(index) {
+    const checkBreakpointToggleSelf = Task.async(function* (index) {
       EventUtils.sendMouseEvent({ type: "click" },
                                 gDebugger.document.querySelectorAll(".dbg-breakpoint")[index],
                                 gDebugger);
@@ -136,7 +142,7 @@ function test() {
          "The breakpoint should now be checked.");
     });
 
-    const checkBreakpointToggleOthers = Task.async(function*(index) {
+    const checkBreakpointToggleOthers = Task.async(function* (index) {
       EventUtils.sendMouseEvent(
         { type: "click" },
         gDebugger.document.querySelectorAll(".dbg-breakpoint")[index],
@@ -183,7 +189,7 @@ function test() {
       }
     });
 
-    const testDeleteAll = Task.async(function*() {
+    const testDeleteAll = Task.async(function* () {
       // Test deleting all breakpoints.
       deleteAll();
       yield waitForDispatch(gPanel, gDebugger.constants.REMOVE_BREAKPOINT, 5);
@@ -212,8 +218,6 @@ function test() {
       gSources._onDeleteAll();
     }
 
-    yield waitForSourceShown(gPanel, "-01.js");
-
     yield addBreakpoints();
     yield initialChecks();
     yield checkBreakpointToggleSelf(0);
@@ -228,7 +232,7 @@ function test() {
     yield checkBreakpointToggleOthers(4);
     yield testDeleteAll();
 
-    yield addBreakpoints()
+    yield addBreakpoints();
     yield initialChecks();
     yield pauseAndCheck();
     yield checkBreakpointToggleSelf(0);

@@ -6,7 +6,11 @@
 
 package org.mozilla.gecko;
 
+import android.content.Context;
 import android.os.Build;
+//#ifdef MOZ_BUILD_MOBILE_ANDROID_WITH_GRADLE
+import android.support.multidex.MultiDex;
+//#endif
 
 /**
  * A collection of constants that pertain to the build and runtime state of the
@@ -24,8 +28,7 @@ public class AppConstants {
     public static final String ANDROID_PACKAGE_NAME = "@ANDROID_PACKAGE_NAME@";
     public static final String MANGLED_ANDROID_PACKAGE_NAME = "@MANGLED_ANDROID_PACKAGE_NAME@";
 
-    public static final String MOZ_ANDROID_SHARED_ACCOUNT_TYPE = "@MOZ_ANDROID_SHARED_ACCOUNT_TYPE@";
-    public static final String MOZ_ANDROID_SHARED_FXACCOUNT_TYPE = "@MOZ_ANDROID_SHARED_FXACCOUNT_TYPE@";
+    public static final String MOZ_ANDROID_SHARED_FXACCOUNT_TYPE = "@ANDROID_PACKAGE_NAME@_fxaccount";
 
     /**
      * Encapsulates access to compile-time version definitions, allowing
@@ -64,16 +67,11 @@ public class AppConstants {
          * If our MAX_SDK_VERSION is lower than ICS, we must not be an ICS device.
          * Otherwise, we need a range check.
          */
-	public static final boolean preM = MAX_SDK_VERSION < 23 ||
-                (MIN_SDK_VERSION < 23 && Build.VERSION.SDK_INT < 23 && !Build.VERSION.RELEASE.equals("M"));
+        public static final boolean preMarshmallow = MAX_SDK_VERSION < 23 || (MIN_SDK_VERSION < 23 && Build.VERSION.SDK_INT < 23);
         public static final boolean preLollipop = MAX_SDK_VERSION < 21 || (MIN_SDK_VERSION < 21 && Build.VERSION.SDK_INT < 21);
         public static final boolean preJBMR2 = MAX_SDK_VERSION < 18 || (MIN_SDK_VERSION < 18 && Build.VERSION.SDK_INT < 18);
         public static final boolean preJBMR1 = MAX_SDK_VERSION < 17 || (MIN_SDK_VERSION < 17 && Build.VERSION.SDK_INT < 17);
         public static final boolean preJB = MAX_SDK_VERSION < 16 || (MIN_SDK_VERSION < 16 && Build.VERSION.SDK_INT < 16);
-        public static final boolean preICS = MAX_SDK_VERSION < 14 || (MIN_SDK_VERSION < 14 && Build.VERSION.SDK_INT < 14);
-        public static final boolean preHCMR2 = MAX_SDK_VERSION < 13 || (MIN_SDK_VERSION < 13 && Build.VERSION.SDK_INT < 13);
-        public static final boolean preHCMR1 = MAX_SDK_VERSION < 12 || (MIN_SDK_VERSION < 12 && Build.VERSION.SDK_INT < 12);
-        public static final boolean preHC = MAX_SDK_VERSION < 11 || (MIN_SDK_VERSION < 11 && Build.VERSION.SDK_INT < 11);
     }
 
     /**
@@ -97,7 +95,7 @@ public class AppConstants {
     // For the benefit of future archaeologists:
     // GRE_BUILDID is exactly the same as MOZ_APP_BUILDID unless you're running
     // on XULRunner, which is never the case on Android.
-    public static final String MOZ_APP_BUILDID = "@MOZ_APP_BUILDID@";
+    public static final String MOZ_APP_BUILDID = "@MOZ_BUILDID@";
     public static final String MOZ_APP_ID = "@MOZ_APP_ID@";
     public static final String MOZ_APP_NAME = "@MOZ_APP_NAME@";
     public static final String MOZ_APP_VENDOR = "@MOZ_APP_VENDOR@";
@@ -171,17 +169,6 @@ public class AppConstants {
 
     public static final boolean MOZ_EXCLUDE_HYPHENATION_DICTIONARIES =
 //#ifdef MOZ_EXCLUDE_HYPHENATION_DICTIONARIES
-    true;
-//#else
-    false;
-//#endif
-
-    /**
-     * Whether this APK was built with constrained resources --
-     * no xhdpi+ images, for example.
-     */
-    public static final boolean MOZ_ANDROID_RESOURCE_CONSTRAINED =
-//#ifdef MOZ_ANDROID_RESOURCE_CONSTRAINED
     true;
 //#else
     false;
@@ -350,4 +337,24 @@ public class AppConstants {
 //#else
     false;
 //#endif
+
+    // (bug 1266820) Temporarily disabled since no one is working on it.
+    public static final boolean SCREENSHOTS_IN_BOOKMARKS_ENABLED = false;
+
+    /**
+     * Enables multidex depending on build flags. For more information,
+     * see `multiDexEnabled true` in mobile/android/app/build.gradle.
+     *
+     * As a method, this shouldn't be in AppConstants, but it's
+     * the only semi-relevant Java file that we pre-process.
+     */
+    public static void maybeInstallMultiDex(final Context context) {
+//#ifdef MOZ_BUILD_MOBILE_ANDROID_WITH_GRADLE
+        if (BuildConfig.FLAVOR.equals("automation")) {
+            MultiDex.install(context);
+        }
+//#else
+        // Do nothing.
+//#endif
+    }
 }

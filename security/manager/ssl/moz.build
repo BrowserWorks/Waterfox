@@ -12,16 +12,18 @@ XPIDL_SOURCES += [
     'nsIASN1Sequence.idl',
     'nsIAssociatedContentSecurity.idl',
     'nsIBadCertListener2.idl',
-    'nsIBufEntropyCollector.idl',
     'nsICertBlocklist.idl',
     'nsICertificateDialogs.idl',
     'nsICertOverrideService.idl',
     'nsICertPickDialogs.idl',
     'nsIClientAuthDialogs.idl',
+    'nsIContentSignatureVerifier.idl',
     'nsIDataSignatureVerifier.idl',
     'nsIGenKeypairInfoDlg.idl',
     'nsIKeygenThread.idl',
     'nsIKeyModule.idl',
+    'nsILocalCertService.idl',
+    'nsINSSU2FToken.idl',
     'nsINSSVersion.idl',
     'nsIPK11Token.idl',
     'nsIPK11TokenDB.idl',
@@ -36,6 +38,7 @@ XPIDL_SOURCES += [
     'nsISSLStatusProvider.idl',
     'nsITokenDialogs.idl',
     'nsITokenPasswordDialogs.idl',
+    'nsIU2FToken.idl',
     'nsIUserCertPicker.idl',
     'nsIWeakCryptoOverride.idl',
     'nsIX509Cert.idl',
@@ -60,7 +63,9 @@ EXPORTS += [
     'nsNSSComponent.h',
     'nsNSSHelper.h',
     'nsNSSShutDown.h',
+    'nsNSSU2FToken.h',
     'nsRandomGenerator.h',
+    'nsSecurityHeaderParser.h',
     'NSSErrorsService.h',
     'ScopedNSSTypes.h',
     'SharedCertVerifier.h',
@@ -81,8 +86,11 @@ EXPORTS.ipc += [
 
 UNIFIED_SOURCES += [
     'CertBlocklist.cpp',
+    'ContentSignatureVerifier.cpp',
     'CryptoTask.cpp',
+    'CSTrustDomain.cpp',
     'DataStorage.cpp',
+    'LocalCertService.cpp',
     'nsCertOverrideService.cpp',
     'nsCertPicker.cpp',
     'nsCertVerificationThread.cpp',
@@ -90,7 +98,6 @@ UNIFIED_SOURCES += [
     'nsCrypto.cpp',
     'nsCryptoHash.cpp',
     'nsDataSignatureVerifier.cpp',
-    'nsEntropyCollector.cpp',
     'nsKeygenHandler.cpp',
     'nsKeygenHandlerContent.cpp',
     'nsKeygenThread.cpp',
@@ -99,6 +106,7 @@ UNIFIED_SOURCES += [
     'nsNSSCallbacks.cpp',
     'nsNSSCertHelper.cpp',
     'nsNSSCertificate.cpp',
+    'nsNSSCertificateDB.cpp',
     'nsNSSCertificateFakeTransport.cpp',
     'nsNSSCertTrust.cpp',
     'nsNSSCertValidity.cpp',
@@ -107,6 +115,7 @@ UNIFIED_SOURCES += [
     'nsNSSIOLayer.cpp',
     'nsNSSModule.cpp',
     'nsNSSShutDown.cpp',
+    'nsNSSU2FToken.cpp',
     'nsNSSVersion.cpp',
     'nsNTLMAuthModule.cpp',
     'nsPK11TokenDB.cpp',
@@ -134,11 +143,6 @@ UNIFIED_SOURCES += [
     'WeakCryptoOverride.cpp',
 ]
 
-# nsNSSCertificateDB.cpp needs to include nscert.h before everything else.
-SOURCES += [
-    'nsNSSCertificateDB.cpp',
-]
-
 IPDL_SOURCES += [
     'PPSMContentDownloader.ipdl',
 ]
@@ -161,6 +165,7 @@ FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '/dom/base',
+    '/dom/crypto',
     '/security/certverifier',
     '/security/pkix/include',
 ]
@@ -177,8 +182,13 @@ DEFINES['NSS_ENABLE_ECC'] = 'True'
 for var in ('DLL_PREFIX', 'DLL_SUFFIX'):
     DEFINES[var] = '"%s"' % CONFIG[var]
 
+DEFINES['CERT_AddTempCertToPerm'] = '__CERT_AddTempCertToPerm'
+
 USE_LIBS += [
     'crmf',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

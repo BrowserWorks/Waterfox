@@ -141,6 +141,14 @@ var SessionHistoryInternal = {
       entry.referrerPolicy = shEntry.referrerPolicy;
     }
 
+    if (shEntry.originalURI) {
+      entry.originalURI = shEntry.originalURI.spec;
+    }
+
+    if (shEntry.loadReplace) {
+      entry.loadReplace = shEntry.loadReplace;
+    }
+
     if (shEntry.srcdocData)
       entry.srcdocData = shEntry.srcdocData;
 
@@ -254,11 +262,6 @@ var SessionHistoryInternal = {
   restore: function (docShell, tabData) {
     let webNavigation = docShell.QueryInterface(Ci.nsIWebNavigation);
     let history = webNavigation.sessionHistory;
-
-    if ("userContextId" in tabData) {
-      docShell.setUserContextId(tabData.userContextId);
-    }
-
     if (history.count > 0) {
       history.PurgeHistory(history.count);
     }
@@ -308,6 +311,12 @@ var SessionHistoryInternal = {
     if (entry.referrer) {
       shEntry.referrerURI = Utils.makeURI(entry.referrer);
       shEntry.referrerPolicy = entry.referrerPolicy;
+    }
+    if (entry.originalURI) {
+      shEntry.originalURI = Utils.makeURI(entry.originalURI);
+    }
+    if (entry.loadReplace) {
+      shEntry.loadReplace = entry.loadReplace;
     }
     if (entry.isSrcdocEntry)
       shEntry.srcdocData = entry.srcdocData;

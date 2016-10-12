@@ -76,7 +76,7 @@ public:
   +---------------------------------------------------------------+
 */
 
-  enum frameType {
+  enum FrameType {
     FRAME_TYPE_DATA          = 0x0,
     FRAME_TYPE_HEADERS       = 0x1,
     FRAME_TYPE_PRIORITY      = 0x2,
@@ -232,6 +232,10 @@ public:
   bool MaybeReTunnel(nsAHttpTransaction *) override;
   bool UseH2Deps() { return mUseH2Deps; }
 
+  // overload of nsAHttpTransaction
+  nsresult ReadSegmentsAgain(nsAHttpSegmentReader *, uint32_t, uint32_t *, bool *) override final;
+  nsresult WriteSegmentsAgain(nsAHttpSegmentWriter *, uint32_t , uint32_t *, bool *) override final;
+
 private:
 
   // These internal states do not correspond to the states of the HTTP/2 specification
@@ -295,21 +299,7 @@ private:
   // to track network I/O for timeout purposes
   nsresult   NetworkRead(nsAHttpSegmentWriter *, char *, uint32_t, uint32_t *);
 
-  static PLDHashOperator ShutdownEnumerator(nsAHttpTransaction *,
-                                            nsAutoPtr<Http2Stream> &,
-                                            void *);
-
-  static PLDHashOperator GoAwayEnumerator(nsAHttpTransaction *,
-                                          nsAutoPtr<Http2Stream> &,
-                                          void *);
-
-  static PLDHashOperator UpdateServerRwinEnumerator(nsAHttpTransaction *,
-                                                    nsAutoPtr<Http2Stream> &,
-                                                    void *);
-
-  static PLDHashOperator RestartBlockedOnRwinEnumerator(nsAHttpTransaction *,
-                                                        nsAutoPtr<Http2Stream> &,
-                                                        void *);
+  void Shutdown();
 
   // This is intended to be nsHttpConnectionMgr:nsConnectionHandle taken
   // from the first transaction on this session. That object contains the

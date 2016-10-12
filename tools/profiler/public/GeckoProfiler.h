@@ -77,7 +77,7 @@ enum TracingMetadata {
   TRACING_TIMESTAMP
 };
 
-#if !defined(MOZ_ENABLE_PROFILER_SPS) || defined(MOZILLA_XPCOMRT_API)
+#if !defined(MOZ_ENABLE_PROFILER_SPS)
 
 #include <stdint.h>
 #include <stdarg.h>
@@ -102,7 +102,7 @@ enum TracingMetadata {
 // only recorded if a sample is collected while it is active, marker will always
 // be collected.
 #define PROFILER_MARKER(info) do {} while (0)
-#define PROFILER_MARKER_PAYLOAD(info, payload) do { nsAutoPtr<ProfilerMarkerPayload> payloadDeletor(payload); } while (0)
+#define PROFILER_MARKER_PAYLOAD(info, payload) do { mozilla::UniquePtr<ProfilerMarkerPayload> payloadDeletor(payload); } while (0)
 
 // Main thread specilization to avoid TLS lookup for performance critical use.
 #define PROFILER_MAIN_THREAD_LABEL(name_space, info, category) do {} while (0)

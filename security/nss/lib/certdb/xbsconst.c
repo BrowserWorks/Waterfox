@@ -93,7 +93,7 @@ CERT_DecodeBasicConstraintValue(CERTBasicConstraints *value,
                                 const SECItem *encodedValue)
 {
     EncodedContext decodeContext;
-    PLArenaPool *our_pool;
+    PORTCheapArenaPool tmpArena;
     SECStatus rv = SECSuccess;
 
     do {
@@ -104,13 +104,9 @@ CERT_DecodeBasicConstraintValue(CERTBasicConstraints *value,
         decodeContext.isCA.data = &hexFalse;
         decodeContext.isCA.len = 1;
 
-        our_pool = PORT_NewArena(SEC_ASN1_DEFAULT_ARENA_SIZE);
-        if (our_pool == NULL) {
-            PORT_SetError(SEC_ERROR_NO_MEMORY);
-            GEN_BREAK(SECFailure);
-        }
+        PORT_InitCheapArena(&tmpArena, SEC_ASN1_DEFAULT_ARENA_SIZE);
 
-        rv = SEC_QuickDERDecodeItem(our_pool, &decodeContext,
+        rv = SEC_QuickDERDecodeItem(&tmpArena.arena, &decodeContext,
                                     CERTBasicConstraintsTemplate, encodedValue);
         if (rv == SECFailure)
             break;
@@ -126,24 +122,22 @@ CERT_DecodeBasicConstraintValue(CERTBasicConstraints *value,
              */
             if (value->isCA)
                 value->pathLenConstraint = CERT_UNLIMITED_PATH_CONSTRAINT;
-        }
-        else if (value->isCA) {
+        } else if (value->isCA) {
             long len = DER_GetInteger(&decodeContext.pathLenConstraint);
             if (len < 0 || len == LONG_MAX) {
                 PORT_SetError(SEC_ERROR_BAD_DER);
                 GEN_BREAK(SECFailure);
             }
             value->pathLenConstraint = len;
-        }
-        else {
+        } else {
             /* here we get an error where the subject is not a CA, but
                the pathLenConstraint is set */
             PORT_SetError(SEC_ERROR_BAD_DER);
             GEN_BREAK(SECFailure);
             break;
         }
-
     } while (0);
-    PORT_FreeArena(our_pool, PR_FALSE);
+
+    PORT_DestroyCheapArena(&tmpArena);
     return (rv);
 }

@@ -47,6 +47,8 @@ public:
 
   ID2D1GeometrySink *GetSink() { return mSink; }
 
+  bool IsFigureActive() const { return mFigureActive; }
+
 private:
   friend class PathD2D;
 
@@ -77,9 +79,9 @@ public:
   
   virtual BackendType GetBackendType() const { return mBackendType; }
 
-  virtual already_AddRefed<PathBuilder> CopyToBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const;
+  virtual already_AddRefed<PathBuilder> CopyToBuilder(FillRule aFillRule) const;
   virtual already_AddRefed<PathBuilder> TransformedCopyToBuilder(const Matrix &aTransform,
-                                                             FillRule aFillRule = FillRule::FILL_WINDING) const;
+                                                             FillRule aFillRule) const;
 
   virtual bool ContainsPoint(const Point &aPoint, const Matrix &aTransform) const;
 

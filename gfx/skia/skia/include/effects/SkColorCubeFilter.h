@@ -11,6 +11,7 @@
 #include "SkColorFilter.h"
 #include "SkData.h"
 #include "../private/SkMutex.h"
+#include "../private/SkTemplates.h"
 
 class SK_API SkColorCubeFilter : public SkColorFilter {
 public:
@@ -19,7 +20,11 @@ public:
      *  This cube contains a transform where (x,y,z) maps to the (r,g,b).
      *  The alpha components of the colors must be 0xFF.
      */
+    static sk_sp<SkColorFilter> Make(sk_sp<SkData> cubeData, int cubeDimension);
+
+#ifdef SK_SUPPORT_LEGACY_COLORFILTER_PTR
     static SkColorFilter* Create(SkData* cubeData, int cubeDimension);
+#endif
 
     void filterSpan(const SkPMColor src[], int count, SkPMColor[]) const override;
     uint32_t getFlags() const override;
@@ -32,7 +37,7 @@ public:
     SK_DECLARE_PUBLIC_FLATTENABLE_DESERIALIZATION_PROCS(SkColorCubeFilter)
 
 protected:
-    SkColorCubeFilter(SkData* cubeData, int cubeDimension);
+    SkColorCubeFilter(sk_sp<SkData> cubeData, int cubeDimension);
     void flatten(SkWriteBuffer&) const override;
 
 private:
@@ -55,7 +60,7 @@ private:
         SkScalar* fColorToFactors[2];
         SkScalar* fColorToScalar;
 
-        SkAutoMalloc fLutStorage;
+        SkAutoTMalloc<uint8_t> fLutStorage;
 
         const int fCubeDimension;
 
@@ -66,7 +71,7 @@ private:
         static void initProcessingLuts(ColorCubeProcesingCache* cache);
     };
 
-    SkAutoDataUnref fCubeData;
+    sk_sp<SkData> fCubeData;
     int32_t fUniqueID;
 
     mutable ColorCubeProcesingCache fCache;

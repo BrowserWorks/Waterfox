@@ -33,24 +33,57 @@ namespace {
 #ifdef OVR_CAPI_LIMITED_MOZILLA
 static pfn_ovr_Initialize ovr_Initialize = nullptr;
 static pfn_ovr_Shutdown ovr_Shutdown = nullptr;
-static pfn_ovr_GetTimeInSeconds ovr_GetTimeInSeconds = nullptr;
+static pfn_ovr_GetLastErrorInfo ovr_GetLastErrorInfo = nullptr;
+static pfn_ovr_GetVersionString ovr_GetVersionString = nullptr;
+static pfn_ovr_TraceMessage ovr_TraceMessage = nullptr;
 static pfn_ovr_GetHmdDesc ovr_GetHmdDesc = nullptr;
-
+static pfn_ovr_GetTrackerCount ovr_GetTrackerCount = nullptr;
+static pfn_ovr_GetTrackerDesc ovr_GetTrackerDesc = nullptr;
 static pfn_ovr_Create ovr_Create = nullptr;
 static pfn_ovr_Destroy ovr_Destroy = nullptr;
-
-static pfn_ovr_RecenterPose ovr_RecenterPose = nullptr;
+static pfn_ovr_GetSessionStatus ovr_GetSessionStatus = nullptr;
+static pfn_ovr_SetTrackingOriginType ovr_SetTrackingOriginType = nullptr;
+static pfn_ovr_GetTrackingOriginType ovr_GetTrackingOriginType = nullptr;
+static pfn_ovr_RecenterTrackingOrigin ovr_RecenterTrackingOrigin = nullptr;
+static pfn_ovr_ClearShouldRecenterFlag ovr_ClearShouldRecenterFlag = nullptr;
 static pfn_ovr_GetTrackingState ovr_GetTrackingState = nullptr;
+static pfn_ovr_GetTrackerPose ovr_GetTrackerPose = nullptr;
+static pfn_ovr_GetInputState ovr_GetInputState = nullptr;
+static pfn_ovr_GetConnectedControllerTypes ovr_GetConnectedControllerTypes = nullptr;
+static pfn_ovr_SetControllerVibration ovr_SetControllerVibration = nullptr;
+static pfn_ovr_GetTextureSwapChainLength ovr_GetTextureSwapChainLength = nullptr;
+static pfn_ovr_GetTextureSwapChainCurrentIndex ovr_GetTextureSwapChainCurrentIndex = nullptr;
+static pfn_ovr_GetTextureSwapChainDesc ovr_GetTextureSwapChainDesc = nullptr;
+static pfn_ovr_CommitTextureSwapChain ovr_CommitTextureSwapChain = nullptr;
+static pfn_ovr_DestroyTextureSwapChain ovr_DestroyTextureSwapChain = nullptr;
+static pfn_ovr_DestroyMirrorTexture ovr_DestroyMirrorTexture = nullptr;
 static pfn_ovr_GetFovTextureSize ovr_GetFovTextureSize = nullptr;
 static pfn_ovr_GetRenderDesc ovr_GetRenderDesc = nullptr;
-
-static pfn_ovr_DestroySwapTextureSet ovr_DestroySwapTextureSet = nullptr;
 static pfn_ovr_SubmitFrame ovr_SubmitFrame = nullptr;
+static pfn_ovr_GetPredictedDisplayTime ovr_GetPredictedDisplayTime = nullptr;
+static pfn_ovr_GetTimeInSeconds ovr_GetTimeInSeconds = nullptr;
+static pfn_ovr_GetBool ovr_GetBool = nullptr;
+static pfn_ovr_SetBool ovr_SetBool = nullptr;
+static pfn_ovr_GetInt ovr_GetInt = nullptr;
+static pfn_ovr_SetInt ovr_SetInt = nullptr;
+static pfn_ovr_GetFloat ovr_GetFloat = nullptr;
+static pfn_ovr_SetFloat ovr_SetFloat = nullptr;
+static pfn_ovr_GetFloatArray ovr_GetFloatArray = nullptr;
+static pfn_ovr_SetFloatArray ovr_SetFloatArray = nullptr;
+static pfn_ovr_GetString ovr_GetString = nullptr;
+static pfn_ovr_SetString ovr_SetString = nullptr;
 
 #ifdef XP_WIN
-static pfn_ovr_CreateSwapTextureSetD3D11 ovr_CreateSwapTextureSetD3D11 = nullptr;
+static pfn_ovr_CreateTextureSwapChainDX ovr_CreateTextureSwapChainDX = nullptr;
+static pfn_ovr_GetTextureSwapChainBufferDX ovr_GetTextureSwapChainBufferDX = nullptr;
+static pfn_ovr_CreateMirrorTextureDX ovr_CreateMirrorTextureDX = nullptr;
+static pfn_ovr_GetMirrorTextureBufferDX ovr_GetMirrorTextureBufferDX = nullptr;
 #endif
-static pfn_ovr_CreateSwapTextureSetGL ovr_CreateSwapTextureSetGL = nullptr;
+
+static pfn_ovr_CreateTextureSwapChainGL ovr_CreateTextureSwapChainGL = nullptr;
+static pfn_ovr_GetTextureSwapChainBufferGL ovr_GetTextureSwapChainBufferGL = nullptr;
+static pfn_ovr_CreateMirrorTextureGL ovr_CreateMirrorTextureGL = nullptr;
+static pfn_ovr_GetMirrorTextureBufferGL ovr_GetMirrorTextureBufferGL = nullptr;
 
 #ifdef HAVE_64BIT_BUILD
 #define BUILD_BITS 64
@@ -58,9 +91,9 @@ static pfn_ovr_CreateSwapTextureSetGL ovr_CreateSwapTextureSetGL = nullptr;
 #define BUILD_BITS 32
 #endif
 
-#define OVR_PRODUCT_VERSION 0
-#define OVR_MAJOR_VERSION   8
-#define OVR_MINOR_VERSION   0
+#define OVR_PRODUCT_VERSION 1
+#define OVR_MAJOR_VERSION   3
+#define OVR_MINOR_VERSION   1
 
 static bool
 InitializeOculusCAPI()
@@ -86,7 +119,7 @@ InitializeOculusCAPI()
       searchPath.SetLength(realLen);
       libSearchPaths.AppendElement(searchPath);
     }
-    libName.AppendPrintf("LibOVRRT%d_%d_%d.dll", BUILD_BITS, OVR_PRODUCT_VERSION, OVR_MAJOR_VERSION);
+    libName.AppendPrintf("LibOVRRT%d_%d.dll", BUILD_BITS, OVR_PRODUCT_VERSION);
 #elif defined(__APPLE__)
     searchPath.Truncate();
     searchPath.AppendPrintf("/Library/Frameworks/LibOVRRT_%d.framework/Versions/%d", OVR_PRODUCT_VERSION, OVR_MAJOR_VERSION);
@@ -162,23 +195,59 @@ InitializeOculusCAPI()
 
   REQUIRE_FUNCTION(ovr_Initialize);
   REQUIRE_FUNCTION(ovr_Shutdown);
-  REQUIRE_FUNCTION(ovr_GetTimeInSeconds);
+  REQUIRE_FUNCTION(ovr_GetLastErrorInfo);
+  REQUIRE_FUNCTION(ovr_GetVersionString);
+  REQUIRE_FUNCTION(ovr_TraceMessage);
   REQUIRE_FUNCTION(ovr_GetHmdDesc);
-  
+  REQUIRE_FUNCTION(ovr_GetTrackerCount);
+  REQUIRE_FUNCTION(ovr_GetTrackerDesc);
   REQUIRE_FUNCTION(ovr_Create);
   REQUIRE_FUNCTION(ovr_Destroy);
-  
-  REQUIRE_FUNCTION(ovr_RecenterPose);
+  REQUIRE_FUNCTION(ovr_GetSessionStatus);
+  REQUIRE_FUNCTION(ovr_SetTrackingOriginType);
+  REQUIRE_FUNCTION(ovr_GetTrackingOriginType);
+  REQUIRE_FUNCTION(ovr_RecenterTrackingOrigin);
+  REQUIRE_FUNCTION(ovr_ClearShouldRecenterFlag);
   REQUIRE_FUNCTION(ovr_GetTrackingState);
+  REQUIRE_FUNCTION(ovr_GetTrackerPose);
+  REQUIRE_FUNCTION(ovr_GetInputState);
+  REQUIRE_FUNCTION(ovr_GetConnectedControllerTypes);
+  REQUIRE_FUNCTION(ovr_SetControllerVibration);
+  REQUIRE_FUNCTION(ovr_GetTextureSwapChainLength);
+  REQUIRE_FUNCTION(ovr_GetTextureSwapChainCurrentIndex);
+  REQUIRE_FUNCTION(ovr_GetTextureSwapChainDesc);
+  REQUIRE_FUNCTION(ovr_CommitTextureSwapChain);
+  REQUIRE_FUNCTION(ovr_DestroyTextureSwapChain);
+  REQUIRE_FUNCTION(ovr_DestroyMirrorTexture);
   REQUIRE_FUNCTION(ovr_GetFovTextureSize);
   REQUIRE_FUNCTION(ovr_GetRenderDesc);
-
-  REQUIRE_FUNCTION(ovr_DestroySwapTextureSet);
   REQUIRE_FUNCTION(ovr_SubmitFrame);
+  REQUIRE_FUNCTION(ovr_GetPredictedDisplayTime);
+  REQUIRE_FUNCTION(ovr_GetTimeInSeconds);
+  REQUIRE_FUNCTION(ovr_GetBool);
+  REQUIRE_FUNCTION(ovr_SetBool);
+  REQUIRE_FUNCTION(ovr_GetInt);
+  REQUIRE_FUNCTION(ovr_SetInt);
+  REQUIRE_FUNCTION(ovr_GetFloat);
+  REQUIRE_FUNCTION(ovr_SetFloat);
+  REQUIRE_FUNCTION(ovr_GetFloatArray);
+  REQUIRE_FUNCTION(ovr_SetFloatArray);
+  REQUIRE_FUNCTION(ovr_GetString);
+  REQUIRE_FUNCTION(ovr_SetString);
+
 #ifdef XP_WIN
-  REQUIRE_FUNCTION(ovr_CreateSwapTextureSetD3D11);
+
+  REQUIRE_FUNCTION(ovr_CreateTextureSwapChainDX);
+  REQUIRE_FUNCTION(ovr_GetTextureSwapChainBufferDX);
+  REQUIRE_FUNCTION(ovr_CreateMirrorTextureDX);
+  REQUIRE_FUNCTION(ovr_GetMirrorTextureBufferDX);
+
 #endif
-  REQUIRE_FUNCTION(ovr_CreateSwapTextureSetGL);
+
+  REQUIRE_FUNCTION(ovr_CreateTextureSwapChainGL);
+  REQUIRE_FUNCTION(ovr_GetTextureSwapChainBufferGL);
+  REQUIRE_FUNCTION(ovr_CreateMirrorTextureGL);
+  REQUIRE_FUNCTION(ovr_GetMirrorTextureBufferGL);
 
 #undef REQUIRE_FUNCTION
 
@@ -198,26 +267,6 @@ static bool InitializeOculusCAPI()
 }
 
 #endif
-
-static void
-do_CalcEyePoses(ovrPosef headPose,
-                const ovrVector3f hmdToEyeViewOffset[2],
-                ovrPosef outEyePoses[2])
-{
-  if (!hmdToEyeViewOffset || !outEyePoses)
-    return;
-
-  for (uint32_t i = 0; i < 2; ++i) {
-    gfx::Quaternion o(headPose.Orientation.x, headPose.Orientation.y, headPose.Orientation.z, headPose.Orientation.w);
-    Point3D vo(hmdToEyeViewOffset[i].x, hmdToEyeViewOffset[i].y, hmdToEyeViewOffset[i].z);
-    Point3D p = o.RotatePoint(vo);
-
-    outEyePoses[i].Orientation = headPose.Orientation;
-    outEyePoses[i].Position.x = p.x + headPose.Position.x;
-    outEyePoses[i].Position.y = p.y + headPose.Position.y;
-    outEyePoses[i].Position.z = p.z + headPose.Position.z;
-  }
-}
 
 ovrFovPort
 ToFovPort(const gfx::VRFieldOfView& aFOV)
@@ -246,6 +295,7 @@ FromFovPort(const ovrFovPort& aFOV)
 HMDInfoOculus::HMDInfoOculus(ovrSession aSession)
   : VRHMDInfo(VRHMDType::Oculus, false)
   , mSession(aSession)
+  , mInputFrameID(0)
 {
   MOZ_ASSERT(sizeof(HMDInfoOculus::DistortionVertex) == sizeof(VRDistortionVertex),
              "HMDInfoOculus::DistortionVertex must match the size of VRDistortionVertex");
@@ -279,6 +329,10 @@ HMDInfoOculus::HMDInfoOculus(ovrSession aSession)
   mDeviceInfo.mIsFakeScreen = true;
 
   SetFOV(mDeviceInfo.mRecommendedEyeFOV[VRDeviceInfo::Eye_Left], mDeviceInfo.mRecommendedEyeFOV[VRDeviceInfo::Eye_Right], 0.01, 10000.0);
+
+  for (int i = 0; i < kMaxLatencyFrames; i++) {
+    mLastSensorState[i].Clear();
+  }
 }
 
 void
@@ -304,8 +358,8 @@ HMDInfoOculus::SetFOV(const gfx::VRFieldOfView& aFOVLeft, const gfx::VRFieldOfVi
 
     ovrEyeRenderDesc renderDesc = ovr_GetRenderDesc(mSession, (ovrEyeType)eye, mFOVPort[eye]);
 
-    // As of Oculus 0.6.0, the HmdToEyeViewOffset values are correct and don't need to be negated.
-    mDeviceInfo.mEyeTranslation[eye] = Point3D(renderDesc.HmdToEyeViewOffset.x, renderDesc.HmdToEyeViewOffset.y, renderDesc.HmdToEyeViewOffset.z);
+    // As of Oculus 0.6.0, the HmdToEyeOffset values are correct and don't need to be negated.
+    mDeviceInfo.mEyeTranslation[eye] = Point3D(renderDesc.HmdToEyeOffset.x, renderDesc.HmdToEyeOffset.y, renderDesc.HmdToEyeOffset.z);
 
     // note that we are using a right-handed coordinate system here, to match CSS
     mDeviceInfo.mEyeProjectionMatrix[eye] = mDeviceInfo.mEyeFOV[eye].ConstructProjectionMatrix(zNear, zFar, true);
@@ -345,13 +399,33 @@ HMDInfoOculus::KeepSensorTracking()
 void
 HMDInfoOculus::NotifyVsync(const mozilla::TimeStamp& aVsyncTimestamp)
 {
-
+  ++mInputFrameID;
 }
 
 void
 HMDInfoOculus::ZeroSensor()
 {
-  ovr_RecenterPose(mSession);
+  ovr_RecenterTrackingOrigin(mSession);
+}
+
+VRHMDSensorState
+HMDInfoOculus::GetSensorState()
+{
+  VRHMDSensorState result;
+  double frameTiming = 0.0f;
+  if (gfxPrefs::VRPosePredictionEnabled()) {
+    frameTiming = ovr_GetPredictedDisplayTime(mSession, mInputFrameID);
+  }
+  result = GetSensorState(frameTiming);
+  result.inputFrameID = mInputFrameID;
+  mLastSensorState[mInputFrameID % kMaxLatencyFrames] = result;
+  return result;
+}
+
+VRHMDSensorState
+HMDInfoOculus::GetImmediateSensorState()
+{
+  return GetSensorState(0.0);
 }
 
 VRHMDSensorState
@@ -360,9 +434,7 @@ HMDInfoOculus::GetSensorState(double timeOffset)
   VRHMDSensorState result;
   result.Clear();
 
-  // XXX this is the wrong time base for timeOffset; we need to figure out how to synchronize
-  // the Oculus time base and the browser one.
-  ovrTrackingState state = ovr_GetTrackingState(mSession, ovr_GetTimeInSeconds() + timeOffset, true);
+  ovrTrackingState state = ovr_GetTrackingState(mSession, timeOffset, true);
   ovrPoseStatef& pose(state.HeadPose);
 
   result.timestamp = pose.TimeInSeconds;
@@ -399,40 +471,35 @@ HMDInfoOculus::GetSensorState(double timeOffset)
     result.linearAcceleration[1] = pose.LinearAcceleration.y;
     result.linearAcceleration[2] = pose.LinearAcceleration.z;
   }
-
-  mLastTrackingState = state;
   
   return result;
 }
 
 struct RenderTargetSetOculus : public VRHMDRenderingSupport::RenderTargetSet
 {
-  RenderTargetSetOculus(const IntSize& aSize,
+  RenderTargetSetOculus(ovrSession aSession,
+                        const IntSize& aSize,
                         HMDInfoOculus *aHMD,
-                        ovrSwapTextureSet *aTS)
+                        ovrTextureSwapChain aTS)
     : hmd(aHMD)
+    , textureSet(aTS)
+    , session(aSession)
   {
-    textureSet = aTS;
     size = aSize;
   }
   
   already_AddRefed<layers::CompositingRenderTarget> GetNextRenderTarget() override {
-    currentRenderTarget = (currentRenderTarget + 1) % renderTargets.Length();
-    textureSet->CurrentIndex = currentRenderTarget;
+    int currentRenderTarget = 0;
+    DebugOnly<ovrResult> orv = ovr_GetTextureSwapChainCurrentIndex(session, textureSet, &currentRenderTarget);
+    MOZ_ASSERT(orv == ovrSuccess, "ovr_GetTextureSwapChainCurrentIndex failed.");
+
     renderTargets[currentRenderTarget]->ClearOnBind();
     RefPtr<layers::CompositingRenderTarget> rt = renderTargets[currentRenderTarget];
     return rt.forget();
   }
 
   void Destroy() {
-    if (!hmd)
-      return;
-    
-    if (hmd->GetOculusSession()) {
-      // If the ovrSession was already destroyed, so were all associated
-      // texture sets
-      ovr_DestroySwapTextureSet(hmd->GetOculusSession(), textureSet);
-    }
+    ovr_DestroyTextureSwapChain(session, textureSet);
     hmd = nullptr;
     textureSet = nullptr;
   }
@@ -442,7 +509,8 @@ struct RenderTargetSetOculus : public VRHMDRenderingSupport::RenderTargetSet
   }
 
   RefPtr<HMDInfoOculus> hmd;
-  ovrSwapTextureSet *textureSet;
+  ovrTextureSwapChain textureSet;
+  ovrSession session;
 };
 
 #ifdef XP_WIN
@@ -457,26 +525,32 @@ public:
 
 struct RenderTargetSetD3D11 : public RenderTargetSetOculus
 {
-  RenderTargetSetD3D11(layers::CompositorD3D11 *aCompositor,
+  RenderTargetSetD3D11(ovrSession aSession,
+                       layers::CompositorD3D11 *aCompositor,
                        const IntSize& aSize,
                        HMDInfoOculus *aHMD,
-                       ovrSwapTextureSet *aTS)
-    : RenderTargetSetOculus(aSize, aHMD, aTS)
+                       ovrTextureSwapChain aTS)
+    : RenderTargetSetOculus(aSession, aSize, aHMD, aTS)
   {
     compositor = aCompositor;
     
-    renderTargets.SetLength(aTS->TextureCount);
-    
-    currentRenderTarget = aTS->CurrentIndex;
+    int textureCount = 0;
+    DebugOnly<ovrResult> orv = ovr_GetTextureSwapChainLength(session, aTS, &textureCount);
+    MOZ_ASSERT(orv == ovrSuccess, "ovr_GetTextureSwapChainLength failed.");
 
-    for (int i = 0; i < aTS->TextureCount; ++i) {
-      ovrD3D11Texture *tex11;
-      RefPtr<layers::CompositingRenderTargetD3D11> rt;
+    renderTargets.SetLength(textureCount);
+    
+    for (int i = 0; i < textureCount; ++i) {
       
-      tex11 = (ovrD3D11Texture*)&aTS->Textures[i];
-      rt = new layers::CompositingRenderTargetD3D11(tex11->D3D11.pTexture, IntPoint(0, 0), DXGI_FORMAT_B8G8R8A8_UNORM);
+      RefPtr<layers::CompositingRenderTargetD3D11> rt;
+
+      ID3D11Texture2D* texture = nullptr;
+      orv = ovr_GetTextureSwapChainBufferDX(session, aTS, i, IID_PPV_ARGS(&texture));
+      MOZ_ASSERT(orv == ovrSuccess, "ovr_GetTextureSwapChainBufferDX failed.");
+      rt = new layers::CompositingRenderTargetD3D11(texture, IntPoint(0, 0), DXGI_FORMAT_B8G8R8A8_UNORM);
       rt->SetSize(size);
       renderTargets[i] = rt;
+      texture->Release();
     }
   }
 };
@@ -490,16 +564,27 @@ HMDInfoOculus::CreateRenderTargetSet(layers::Compositor *aCompositor, const IntS
   {
     layers::CompositorD3D11 *comp11 = static_cast<layers::CompositorD3D11*>(aCompositor);
 
-    CD3D11_TEXTURE2D_DESC desc(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, aSize.width, aSize.height, 1, 1,
-                               D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET);
-    ovrSwapTextureSet *ts = nullptr;
+    ovrTextureSwapChainDesc desc;
+    memset(&desc, 0, sizeof(desc));
+    desc.Type = ovrTexture_2D;
+    desc.ArraySize = 1;
+    desc.Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB;
+    desc.Width = aSize.width;
+    desc.Height = aSize.height;
+    desc.MipLevels = 1;
+    desc.SampleCount = 1;
+    desc.StaticImage = false;
+    desc.MiscFlags = ovrTextureMisc_DX_Typeless;
+    desc.BindFlags = ovrTextureBind_DX_RenderTarget;
+
+    ovrTextureSwapChain ts = nullptr;
     
-    ovrResult orv = ovr_CreateSwapTextureSetD3D11(mSession, comp11->GetDevice(), &desc, ovrSwapTextureSetD3D11_Typeless, &ts);
+    ovrResult orv = ovr_CreateTextureSwapChainDX(mSession, comp11->GetDevice(), &desc, &ts);
     if (orv != ovrSuccess) {
       return nullptr;
     }
 
-    RefPtr<RenderTargetSetD3D11> rts = new RenderTargetSetD3D11(comp11, aSize, this, ts);
+    RefPtr<RenderTargetSetD3D11> rts = new RenderTargetSetD3D11(mSession, comp11, aSize, this, ts);
     return rts.forget();
   }
 #endif
@@ -518,13 +603,31 @@ HMDInfoOculus::DestroyRenderTargetSet(RenderTargetSet *aRTSet)
 }
 
 void
-HMDInfoOculus::SubmitFrame(RenderTargetSet *aRTSet)
+HMDInfoOculus::SubmitFrame(RenderTargetSet *aRTSet, int32_t aInputFrameID)
 {
   RenderTargetSetOculus *rts = static_cast<RenderTargetSetOculus*>(aRTSet);
   MOZ_ASSERT(rts->hmd != nullptr);
   MOZ_ASSERT(rts->textureSet != nullptr);
+  MOZ_ASSERT(aInputFrameID >= 0);
+  if (aInputFrameID < 0) {
+    // Sanity check to prevent invalid memory access on builds with assertions
+    // disabled.
+    aInputFrameID = 0;
+  }
+  ovrResult orv = ovr_CommitTextureSwapChain(mSession, rts->textureSet);
+  if (orv != ovrSuccess) {
+    printf_stderr("ovr_CommitTextureSwapChain failed.\n");
+  }
 
+  VRHMDSensorState sensorState = mLastSensorState[aInputFrameID % kMaxLatencyFrames];
+  // It is possible to get a cache miss on mLastSensorState if latency is
+  // longer than kMaxLatencyFrames.  An optimization would be to find a frame
+  // that is closer than the one selected with the modulus.
+  // If we hit this; however, latency is already so high that the site is
+  // un-viewable and a more accurate pose prediction is not likely to
+  // compensate.
   ovrLayerEyeFov layer;
+  memset(&layer, 0, sizeof(layer));
   layer.Header.Type = ovrLayerType_EyeFov;
   layer.Header.Flags = 0;
   layer.ColorTexture[0] = rts->textureSet;
@@ -544,13 +647,29 @@ HMDInfoOculus::SubmitFrame(RenderTargetSet *aRTSet)
   const Point3D& r = rts->hmd->mDeviceInfo.mEyeTranslation[1];
   const ovrVector3f hmdToEyeViewOffset[2] = { { l.x, l.y, l.z },
                                               { r.x, r.y, r.z } };
-  do_CalcEyePoses(rts->hmd->mLastTrackingState.HeadPose.ThePose, hmdToEyeViewOffset, layer.RenderPose);
+
+  for (uint32_t i = 0; i < 2; ++i) {
+    gfx::Quaternion o(sensorState.orientation[0],
+                      sensorState.orientation[1],
+                      sensorState.orientation[2],
+                      sensorState.orientation[3]);
+    Point3D vo(hmdToEyeViewOffset[i].x, hmdToEyeViewOffset[i].y, hmdToEyeViewOffset[i].z);
+    Point3D p = o.RotatePoint(vo);
+
+    layer.RenderPose[i].Orientation.x = o.x;
+    layer.RenderPose[i].Orientation.y = o.y;
+    layer.RenderPose[i].Orientation.z = o.z;
+    layer.RenderPose[i].Orientation.w = o.w;
+    layer.RenderPose[i].Position.x = p.x + sensorState.position[0];
+    layer.RenderPose[i].Position.y = p.y + sensorState.position[1];
+    layer.RenderPose[i].Position.z = p.z + sensorState.position[2];
+  }
 
   ovrLayerHeader *layers = &layer.Header;
-  ovrResult orv = ovr_SubmitFrame(mSession, 0, nullptr, &layers, 1);
+  orv = ovr_SubmitFrame(mSession, aInputFrameID, nullptr, &layers, 1);
   //printf_stderr("Submitted frame %d, result: %d\n", rts->textureSet->CurrentIndex, orv);
   if (orv != ovrSuccess) {
-    // not visible? failed?
+    printf_stderr("ovr_SubmitFrame failed.\n");
   }
 }
 
@@ -581,6 +700,7 @@ VRHMDManagerOculus::Init()
     mOculusThread = already_AddRefed<nsIThread>(thread);
 
     ovrInitParams params;
+    memset(&params, 0, sizeof(params));
     params.Flags = ovrInit_RequestVersion;
     params.RequestedMinorVersion = OVR_MINOR_VERSION;
     params.LogCallback = nullptr;

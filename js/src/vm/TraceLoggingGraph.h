@@ -7,11 +7,10 @@
 #ifndef TraceLoggingGraph_h
 #define TraceLoggingGraph_h
 
-#include "mozilla/DebugOnly.h"
-
 #include "jslock.h"
 
 #include "js/TypeDecls.h"
+#include "threading/Mutex.h"
 #include "vm/TraceLoggingTypes.h"
 
 /*
@@ -69,6 +68,7 @@ void DestroyTraceLoggerGraphState();
 class TraceLoggerGraphState
 {
     uint32_t numLoggers;
+    uint32_t pid_;
 
     // File pointer to the "tl-data.json" file. (Explained above).
     FILE* out;
@@ -78,22 +78,23 @@ class TraceLoggerGraphState
 #endif
 
   public:
-    PRLock* lock;
+    js::Mutex lock;
 
   public:
     TraceLoggerGraphState()
       : numLoggers(0),
-        out(nullptr),
+        pid_(0),
+        out(nullptr)
 #ifdef DEBUG
-        initialized(false),
+      , initialized(false)
 #endif
-        lock(nullptr)
     {}
 
     bool init();
     ~TraceLoggerGraphState();
 
     uint32_t nextLoggerId();
+    uint32_t pid() { return pid_; }
 };
 
 class TraceLoggerGraph
@@ -201,10 +202,12 @@ class TraceLoggerGraph
 
   public:
     TraceLoggerGraph()
-      : failed(false),
-        enabled(false),
-        nextTextId(0),
-        treeOffset(0)
+      : failed(false)
+      , enabled(false)
+#ifdef DEBUG
+      , nextTextId(0)
+#endif
+      , treeOffset(0)
     { }
     ~TraceLoggerGraph();
 
@@ -224,7 +227,9 @@ class TraceLoggerGraph
   private:
     bool failed;
     bool enabled;
-    mozilla::DebugOnly<uint32_t> nextTextId;
+#ifdef DEBUG
+    uint32_t nextTextId;
+#endif
 
     FILE* dictFile;
     FILE* treeFile;

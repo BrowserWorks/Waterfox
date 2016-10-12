@@ -16,14 +16,14 @@
 
 namespace mozilla {
 
-  using namespace layers;
+using namespace layers;
 
 class VPXDecoder : public MediaDataDecoder
 {
 public:
   VPXDecoder(const VideoInfo& aConfig,
              ImageContainer* aImageContainer,
-             FlushableTaskQueue* aTaskQueue,
+             TaskQueue* aTaskQueue,
              MediaDataDecoderCallback* aCallback);
 
   ~VPXDecoder();
@@ -38,30 +38,30 @@ public:
     return "libvpx video decoder";
   }
 
-  // Return true if mimetype is a VPX codec
-  static bool IsVPX(const nsACString& aMimeType);
-
-  enum Codec {
-    VP8,
-    VP9
+  enum Codec: uint8_t {
+    VP8 = 1 << 0,
+    VP9 = 1 << 1
   };
 
-private:
-  void DecodeFrame (MediaRawData* aSample);
-  int DoDecodeFrame (MediaRawData* aSample);
-  void DoDrain ();
-  void OutputDelayedFrames ();
+  // Return true if mimetype is a VPX codec of given types.
+  static bool IsVPX(const nsACString& aMimeType, uint8_t aCodecMask=VP8|VP9);
 
-  RefPtr<ImageContainer> mImageContainer;
-  RefPtr<FlushableTaskQueue> mTaskQueue;
+private:
+  void ProcessDecode(MediaRawData* aSample);
+  int DoDecode(MediaRawData* aSample);
+  void ProcessDrain();
+
+  const RefPtr<ImageContainer> mImageContainer;
+  const RefPtr<TaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
+  Atomic<bool> mIsFlushing;
 
   // VPx decoder state
   vpx_codec_ctx_t mVPX;
 
   const VideoInfo& mInfo;
 
-  int mCodec;
+  const int mCodec;
 };
 
 } // namespace mozilla

@@ -134,6 +134,13 @@ class OptimizationInfo
     // Default compiler warmup threshold, unless it is overridden.
     static const uint32_t CompilerWarmupThreshold = 1000;
 
+    // How many invocations or loop iterations are needed before small functions
+    // are compiled.
+    uint32_t compilerSmallFunctionWarmUpThreshold_;
+
+    // Default small function compiler warmup threshold, unless it is overridden.
+    static const uint32_t CompilerSmallFunctionWarmupThreshold = 100;
+
     // How many invocations or loop iterations are needed before calls
     // are inlined, as a fraction of compilerWarmUpThreshold.
     double inliningWarmUpThresholdFactor_;
@@ -213,6 +220,10 @@ class OptimizationInfo
 
     bool eliminateRedundantChecksEnabled() const {
         return eliminateRedundantChecks_;
+    }
+
+    bool flowAliasAnalysisEnabled() const {
+        return !JitOptions.disableFlowAA;
     }
 
     IonRegisterAllocator registerAllocator() const {

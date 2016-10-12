@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -21,20 +23,20 @@ const prefs = {
     "jslog",
   ],
   "logging": [
-     "error",
-     "warn",
-     "info",
-     "log",
-     "serviceworkers",
-     "sharedworkers",
-     "windowlessworkers"
+    "error",
+    "warn",
+    "info",
+    "log",
+    "serviceworkers",
+    "sharedworkers",
+    "windowlessworkers"
   ]
 };
 
 add_task(function* () {
   // Set all prefs to true
   for (let category in prefs) {
-    prefs[category].forEach(function(pref) {
+    prefs[category].forEach(function (pref) {
       Services.prefs.setBoolPref("devtools.webconsole.filter." + pref, true);
     });
   }
@@ -49,7 +51,7 @@ add_task(function* () {
 
   // Clear prefs
   for (let category in prefs) {
-    prefs[category].forEach(function(pref) {
+    prefs[category].forEach(function (pref) {
       Services.prefs.clearUserPref("devtools.webconsole.filter." + pref);
     });
   }
@@ -67,7 +69,7 @@ function onConsoleOpen(hud) {
     ok(isChecked(button), "main button for " + category +
        " category is checked");
 
-    prefs[category].forEach(function(pref) {
+    prefs[category].forEach(function (pref) {
       let menuitem = hudBox.querySelector("menuitem[prefKey=" + pref + "]");
       ok(isChecked(menuitem), "menuitem for " + pref + " is checked");
     });
@@ -75,7 +77,7 @@ function onConsoleOpen(hud) {
 
   // Set all prefs to false
   for (let category in prefs) {
-    prefs[category].forEach(function(pref) {
+    prefs[category].forEach(function (pref) {
       hud.setFilterState(pref, false);
     });
   }
@@ -101,7 +103,7 @@ function onConsoleReopen1(hud) {
     ok(isUnchecked(button), "main button for " + category +
        " category is not checked");
 
-    prefs[category].forEach(function(pref) {
+    prefs[category].forEach(function (pref) {
       let menuitem = hudBox.querySelector("menuitem[prefKey=" + pref + "]");
       ok(isUnchecked(menuitem), "menuitem for " + pref + " is not checked");
     });

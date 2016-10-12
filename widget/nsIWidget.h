@@ -6,13 +6,13 @@
 #ifndef nsIWidget_h__
 #define nsIWidget_h__
 
+#include "mozilla/UniquePtr.h"
 #include "nsISupports.h"
 #include "nsColor.h"
 #include "nsRect.h"
 #include "nsStringGlue.h"
 
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsWidgetInitData.h"
 #include "nsTArray.h"
 #include "nsITheme.h"
@@ -39,9 +39,9 @@ class   nsIContent;
 class   ViewWrapper;
 class   nsIScreen;
 class   nsIRunnable;
+class   nsIKeyEventInPluginCallback;
 
 namespace mozilla {
-class CompositorVsyncDispatcher;
 namespace dom {
 class TabChild;
 } // namespace dom
@@ -52,7 +52,7 @@ namespace layers {
 class AsyncDragMetrics;
 class Composer2D;
 class Compositor;
-class CompositorChild;
+class CompositorBridgeChild;
 class LayerManager;
 class LayerManagerComposite;
 class PLayerTransactionChild;
@@ -64,6 +64,7 @@ class SourceSurface;
 } // namespace gfx
 namespace widget {
 class TextEventDispatcher;
+class TextEventDispatcherListener;
 } // namespace widget
 } // namespace mozilla
 
@@ -133,8 +134,8 @@ typedef void* nsNativeWidget;
 #endif
 
 #define NS_IWIDGET_IID \
-{ 0x6dc8ce1f, 0xbb55, 0x47c1, \
-  { 0xa1, 0x6f, 0x4e, 0x12, 0x37, 0xa1, 0xc2, 0xf4 } }
+{ 0x06396bf6, 0x2dd8, 0x45e5, \
+  { 0xac, 0x45, 0x75, 0x26, 0x53, 0xb1, 0xc9, 0x80 } }
 
 /*
  * Window shadow styles
@@ -320,13 +321,14 @@ private:
  * The base class for all the widgets. It provides the interface for
  * all basic and necessary functionality.
  */
-class nsIWidget : public nsISupports {
+class nsIWidget : public nsISupports
+{
   protected:
     typedef mozilla::dom::TabChild TabChild;
 
   public:
     typedef mozilla::layers::Composer2D Composer2D;
-    typedef mozilla::layers::CompositorChild CompositorChild;
+    typedef mozilla::layers::CompositorBridgeChild CompositorBridgeChild;
     typedef mozilla::layers::AsyncDragMetrics AsyncDragMetrics;
     typedef mozilla::layers::FrameMetrics FrameMetrics;
     typedef mozilla::layers::LayerManager LayerManager;
@@ -342,7 +344,8 @@ class nsIWidget : public nsISupports {
     typedef mozilla::widget::NativeIMEContext NativeIMEContext;
     typedef mozilla::widget::SizeConstraints SizeConstraints;
     typedef mozilla::widget::TextEventDispatcher TextEventDispatcher;
-    typedef mozilla::CompositorVsyncDispatcher CompositorVsyncDispatcher;
+    typedef mozilla::widget::TextEventDispatcherListener
+      TextEventDispatcherListener;
     typedef mozilla::LayoutDeviceIntMargin LayoutDeviceIntMargin;
     typedef mozilla::LayoutDeviceIntPoint LayoutDeviceIntPoint;
     typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
@@ -551,11 +554,6 @@ class nsIWidget : public nsISupports {
      * potentially multi-screen, mixed-resolution desktop.
      */
     virtual mozilla::DesktopToLayoutDeviceScale GetDesktopToDeviceScale() = 0;
-
-    /**
-     * Returns the CompositorVsyncDispatcher associated with this widget
-     */
-    virtual CompositorVsyncDispatcher* GetCompositorVsyncDispatcher() = 0;
 
     /**
      * Return the default scale factor for the window. This is the
@@ -1241,89 +1239,6 @@ class nsIWidget : public nsISupports {
     virtual void PrepareWindowEffects() = 0;
 
     /**
-     * Called when shutting down the LayerManager to clean-up any cached resources.
-     *
-     * Always called from the compositing thread, which may be the main-thread if
-     * OMTC is not enabled.
-     */
-    virtual void CleanupWindowEffects() = 0;
-
-    /**
-     * Called before rendering using OMTC. Returns false when the widget is
-     * not ready to be rendered (for example while the window is closed).
-     *
-     * Always called from the compositing thread, which may be the main-thread if
-     * OMTC is not enabled.
-     */
-    virtual bool PreRender(LayerManagerComposite* aManager) = 0;
-
-    /**
-     * Called after rendering using OMTC. Not called when rendering was
-     * cancelled by a negative return value from PreRender.
-     *
-     * Always called from the compositing thread, which may be the main-thread if
-     * OMTC is not enabled.
-     */
-    virtual void PostRender(LayerManagerComposite* aManager) = 0;
-
-    /**
-     * Called before the LayerManager draws the layer tree.
-     *
-     * Always called from the compositing thread.
-     */
-    virtual void DrawWindowUnderlay(LayerManagerComposite* aManager,
-                                    LayoutDeviceIntRect aRect) = 0;
-
-    /**
-     * Called after the LayerManager draws the layer tree
-     *
-     * Always called from the compositing thread.
-     */
-    virtual void DrawWindowOverlay(LayerManagerComposite* aManager,
-                                   LayoutDeviceIntRect aRect) = 0;
-
-    /**
-     * Return a DrawTarget for the window which can be composited into.
-     *
-     * Called by BasicCompositor on the compositor thread for OMTC drawing
-     * before each composition.
-     */
-    virtual already_AddRefed<mozilla::gfx::DrawTarget> StartRemoteDrawing() = 0;
-    virtual already_AddRefed<mozilla::gfx::DrawTarget> StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion) {
-      return StartRemoteDrawing();
-    }
-
-    /**
-     * Ensure that what was painted into the DrawTarget returned from
-     * StartRemoteDrawing reaches the screen.
-     *
-     * Called by BasicCompositor on the compositor thread for OMTC drawing
-     * after each composition.
-     */
-    virtual void EndRemoteDrawing() = 0;
-    virtual void EndRemoteDrawingInRegion(mozilla::gfx::DrawTarget* aDrawTarget, LayoutDeviceIntRegion& aInvalidRegion) {
-      EndRemoteDrawing();
-    }
-
-    /**
-     * A hook for the widget to prepare a Compositor, during the latter's initialization.
-     *
-     * If this method returns true, it means that the widget will be able to
-     * present frames from the compoositor.
-     * Returning false will cause the compositor's initialization to fail, and
-     * a different compositor backend will be used (if any).
-     */
-    virtual bool InitCompositor(mozilla::layers::Compositor*) { return true; }
-
-    /**
-     * Clean up any resources used by Start/EndRemoteDrawing.
-     *
-     * Called by BasicCompositor on the compositor thread for OMTC drawing
-     * when the compositor is destroyed.
-     */
-    virtual void CleanupRemoteDrawing() = 0;
-
-    /**
      * Called when Gecko knows which themed widgets exist in this window.
      * The passed array contains an entry for every themed widget of the right
      * type (currently only NS_THEME_TOOLBAR) within the window, except for
@@ -1411,16 +1326,15 @@ class nsIWidget : public nsISupports {
                              nsEventStatus & aStatus) = 0;
 
     /**
+     * Dispatches an event to APZ only.
+     * No-op in the child process.
+     */
+    virtual void DispatchEventToAPZOnly(mozilla::WidgetInputEvent* aEvent) = 0;
+
+    /**
      * Dispatches an event that must be handled by APZ first, when APZ is
      * enabled. If invoked in the child process, it is forwarded to the
      * parent process synchronously.
-     */
-    virtual nsEventStatus DispatchAPZAwareEvent(mozilla::WidgetInputEvent* aEvent) = 0;
-
-    /**
-     * Dispatches an event that must be transformed by APZ first, but is not
-     * actually handled by APZ. If invoked in the child process, it is
-     * forwarded to the parent process synchronously.
      */
     virtual nsEventStatus DispatchInputEvent(mozilla::WidgetInputEvent* aEvent) = 0;
 
@@ -1679,7 +1593,7 @@ class nsIWidget : public nsISupports {
      *
      * @param aPointerId The touch point id to create or update.
      * @param aPointerState one or more of the touch states listed above
-     * @param aScreenX, aScreenY screen coords of this event
+     * @param aPoint coords of this event
      * @param aPressure 0.0 -> 1.0 float val indicating pressure
      * @param aOrientation 0 -> 359 degree value indicating the
      * orientation of the pointer. Use 90 for normal taps.
@@ -1688,7 +1602,7 @@ class nsIWidget : public nsISupports {
      */
     virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                                 TouchPointerState aPointerState,
-                                                ScreenIntPoint aPointerScreenPoint,
+                                                LayoutDeviceIntPoint aPoint,
                                                 double aPointerPressure,
                                                 uint32_t aPointerOrientation,
                                                 nsIObserver* aObserver) = 0;
@@ -1701,7 +1615,7 @@ class nsIWidget : public nsISupports {
      * @param aObserver The observer that will get notified once the events
      * have been dispatched.
      */
-    virtual nsresult SynthesizeNativeTouchTap(ScreenIntPoint aPointerScreenPoint,
+    virtual nsresult SynthesizeNativeTouchTap(LayoutDeviceIntPoint aPoint,
                                               bool aLongTap,
                                               nsIObserver* aObserver);
 
@@ -1714,30 +1628,13 @@ class nsIWidget : public nsISupports {
      */
     virtual nsresult ClearNativeTouchSequence(nsIObserver* aObserver);
 
-    /*
-     * Snapshot the contents of the widget by reading pixels back from the
-     * Operating System. Unlike RenderDocument(), this does not read from our
-     * own backbuffers, so that we can test if there is a difference in how
-     * our buffers are being presented.
-     *
-     * This is only supported for widgets using OMTC.
-     */
-    already_AddRefed<mozilla::gfx::SourceSurface> SnapshotWidgetOnScreen();
-
-    /*
-     * Implementation of SnapshotWidgetOnScreen. This is invoked by the
-     * compositor for SnapshotWidgetOnScreen(), and should not be called
-     * otherwise.
-     */
-    virtual bool CaptureWidgetOnScreen(RefPtr<mozilla::gfx::DrawTarget> aDT) = 0;
-
     virtual void StartAsyncScrollbarDrag(const AsyncDragMetrics& aDragMetrics) = 0;
 
 private:
   class LongTapInfo
   {
   public:
-    LongTapInfo(int32_t aPointerId, ScreenIntPoint& aPoint,
+    LongTapInfo(int32_t aPointerId, LayoutDeviceIntPoint& aPoint,
                 mozilla::TimeDuration aDuration,
                 nsIObserver* aObserver) :
       mPointerId(aPointerId),
@@ -1749,7 +1646,7 @@ private:
     }
 
     int32_t mPointerId;
-    ScreenIntPoint mPosition;
+    LayoutDeviceIntPoint mPosition;
     mozilla::TimeDuration mDuration;
     nsCOMPtr<nsIObserver> mObserver;
     mozilla::TimeStamp mStamp;
@@ -1757,7 +1654,7 @@ private:
 
   static void OnLongTapTimerCallback(nsITimer* aTimer, void* aClosure);
 
-  nsAutoPtr<LongTapInfo> mLongTapTouchPoint;
+  mozilla::UniquePtr<LongTapInfo> mLongTapTouchPoint;
   nsCOMPtr<nsITimer> mLongTapTimer;
   static int32_t sPointerIdCounter;
 
@@ -1835,7 +1732,8 @@ public:
     /**
      * Set IME candidate window position by windowless plugin.
      */
-    virtual void SetCandidateWindowForPlugin(int32_t aX, int32_t aY) = 0;
+    virtual void SetCandidateWindowForPlugin(
+      const mozilla::widget::CandidateWindowPosition& aPosition) = 0;
 
     /**
      * Handle default action when PluginEvent isn't handled
@@ -1897,32 +1795,6 @@ public:
     NS_IMETHOD OnDefaultButtonLoaded(const LayoutDeviceIntRect& aButtonRect) = 0;
 
     /**
-     * Compute the overridden system mouse scroll speed on the root content of
-     * web pages.  The widget may set the same value as aOriginalDelta.  E.g.,
-     * when the system scrolling settings were customized, widget can respect
-     * the will of the user.
-     *
-     * This is called only when the mouse wheel event scrolls the root content
-     * of the web pages by line.  In other words, this isn't called when the
-     * mouse wheel event is used for zoom, page scroll and other special
-     * actions.  And also this isn't called when the user doesn't use the
-     * system wheel speed settings.
-     *
-     * @param aOriginalDeltaX   The X delta value of the current mouse wheel
-     *                          scrolling event.
-     * @param aOriginalDeltaX   The Y delta value of the current mouse wheel
-     *                          scrolling event.
-     * @param aOverriddenDeltaX The overridden mouse scrolling speed along X
-     *                          axis. This value may be same as aOriginalDeltaX.
-     * @param aOverriddenDeltaY The overridden mouse scrolling speed along Y
-     *                          axis. This value may be same as aOriginalDeltaY.
-     */
-    NS_IMETHOD OverrideSystemMouseScrollSpeed(double aOriginalDeltaX,
-                                              double aOriginalDeltaY,
-                                              double& aOverriddenDeltaX,
-                                              double& aOverriddenDeltaY) = 0;
-
-    /**
      * Return true if this process shouldn't use platform widgets, and
      * so should use PuppetWidgets instead.  If this returns true, the
      * result of creating and using a platform widget is undefined,
@@ -1963,12 +1835,6 @@ public:
      *                   parent widget
      */
     NS_IMETHOD ReparentNativeWidget(nsIWidget* aNewParent) = 0;
-
-    /**
-     * Return the internal format of the default framebuffer for this
-     * widget.
-     */
-    virtual uint32_t GetGLFrameBufferFormat() { return 0; /*GL_NONE*/ }
 
     /**
      * Return true if widget has it's own GL context
@@ -2040,17 +1906,7 @@ public:
      * If this isn't directly compositing to its window surface,
      * return the compositor which is doing that on our behalf.
      */
-    virtual CompositorChild* GetRemoteRenderer()
-    { return nullptr; }
-
-    /**
-     * If this widget has a more efficient composer available for its
-     * native framebuffer, return it.
-     *
-     * This can be called from a non-main thread, but that thread must
-     * hold a strong reference to this.
-     */
-    virtual Composer2D* GetComposer2D()
+    virtual CompositorBridgeChild* GetRemoteRenderer()
     { return nullptr; }
 
     /**
@@ -2070,10 +1926,56 @@ public:
      */
     NS_IMETHOD_(TextEventDispatcher*) GetTextEventDispatcher() = 0;
 
+    /**
+     * GetNativeTextEventDispatcherListener() returns a
+     * TextEventDispatcherListener instance which is used when the widget
+     * instance handles native IME and/or keyboard events.
+     */
+    NS_IMETHOD_(TextEventDispatcherListener*)
+      GetNativeTextEventDispatcherListener() = 0;
+
     virtual void ZoomToRect(const uint32_t& aPresShellId,
                             const FrameMetrics::ViewID& aViewId,
                             const CSSRect& aRect,
                             const uint32_t& aFlags) = 0;
+
+    /**
+     * OnWindowedPluginKeyEvent() is called when native key event is
+     * received in the focused plugin process directly in PluginInstanceChild.
+     *
+     * @param aKeyEventData     The native key event data.  The actual type
+     *                          copied into NativeEventData depends on the
+     *                          caller.  Please check PluginInstanceChild.
+     * @param aCallback         Callback interface.  When this returns
+     *                          NS_SUCCESS_EVENT_HANDLED_ASYNCHRONOUSLY,
+     *                          the event handler has to call this callback.
+     *                          Otherwise, the caller should do that instead.
+     * @return                  NS_ERROR_* if this fails to handle the event.
+     *                          NS_SUCCESS_EVENT_CONSUMED if the key event is
+     *                          consumed.
+     *                          NS_OK if the key event isn't consumed.
+     *                          NS_SUCCESS_EVENT_HANDLED_ASYNCHRONOUSLY if the
+     *                          key event will be handled asynchronously.
+     */
+    virtual nsresult OnWindowedPluginKeyEvent(
+                       const mozilla::NativeEventData& aKeyEventData,
+                       nsIKeyEventInPluginCallback* aCallback);
+
+
+    /**
+     * LookUpDictionary shows the dictionary for the word around current point.
+     *
+     * @param aText            the word to look up dictiorary.
+     * @param aFontRangeArray  text decoration of aText
+     * @param aIsVertical      true if the word is vertical layout
+     * @param aPoint           top-left point of aText
+     */
+    virtual void LookUpDictionary(
+                   const nsAString& aText,
+                   const nsTArray<mozilla::FontRange>& aFontRangeArray,
+                   const bool aIsVertical,
+                   const LayoutDeviceIntPoint& aPoint)
+    { }
 
 protected:
     /**

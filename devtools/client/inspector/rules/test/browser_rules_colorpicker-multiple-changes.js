@@ -25,7 +25,7 @@ const TEST_URI = `
   <p>Testing the color picker tooltip!</p>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
 
@@ -55,7 +55,7 @@ function* testSimpleMultipleColorChanges(inspector, ruleView) {
   ];
   for (let {rgba, computed} of colors) {
     yield simulateColorPickerChange(ruleView, picker, rgba, {
-      element: content.document.querySelector("p"),
+      selector: "p",
       name: "color",
       value: computed
     });
@@ -83,8 +83,8 @@ function* testComplexMultipleColorChanges(inspector, ruleView) {
   ];
   for (let {rgba, computed} of colors) {
     yield simulateColorPickerChange(ruleView, picker, rgba, {
-      element: content.document.body,
-      name: "backgroundColor",
+      selector: "body",
+      name: "background-color",
       value: computed
     });
   }
@@ -114,11 +114,11 @@ function* testOverriddenMultipleColorChanges(inspector, ruleView) {
   ];
   for (let {rgba, computed} of colors) {
     yield simulateColorPickerChange(ruleView, picker, rgba, {
-      element: content.document.body,
+      selector: "body",
       name: "color",
       value: computed
     });
-    is(content.getComputedStyle(content.document.querySelector("p")).color,
+    is((yield getComputedStyleProperty("p", null, "color")),
       "rgb(200, 200, 200)", "The color of the P tag is still correct");
   }
 }

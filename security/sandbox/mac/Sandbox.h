@@ -17,9 +17,10 @@ enum MacSandboxType {
 
 enum MacSandboxPluginType {
   MacSandboxPluginType_Default = 0,
-  MacSandboxPluginType_GMPlugin_Default,  // Any Gecko Media Plugin
-  MacSandboxPluginType_GMPlugin_OpenH264, // Gecko Media Plugin, OpenH264
-  MacSandboxPluginType_GMPlugin_EME,      // Gecko Media Plugin, EME
+  MacSandboxPluginType_GMPlugin_Default,      // Any Gecko Media Plugin
+  MacSandboxPluginType_GMPlugin_OpenH264,     // Gecko Media Plugin, OpenH264
+  MacSandboxPluginType_GMPlugin_EME,          // Gecko Media Plugin, EME
+  MacSandboxPluginType_GMPlugin_EME_Widevine, // Gecko Media Plugin, Widevine
   MacSandboxPluginType_Invalid
 };
 
@@ -40,13 +41,14 @@ typedef struct _MacSandboxInfo {
   _MacSandboxInfo(const struct _MacSandboxInfo& other)
     : type(other.type), level(other.level), pluginInfo(other.pluginInfo),
       appPath(other.appPath), appBinaryPath(other.appBinaryPath),
-      appDir(other.appDir) {}
+      appDir(other.appDir), appTempDir(other.appTempDir) {}
   MacSandboxType type;
   int32_t level;
   MacSandboxPluginInfo pluginInfo;
   std::string appPath;
   std::string appBinaryPath;
   std::string appDir;
+  std::string appTempDir;
 } MacSandboxInfo;
 
 namespace mozilla {

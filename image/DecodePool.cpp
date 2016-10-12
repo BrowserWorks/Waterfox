@@ -36,7 +36,7 @@ namespace image {
 // Helper runnables.
 ///////////////////////////////////////////////////////////////////////////////
 
-class NotifyProgressWorker : public nsRunnable
+class NotifyProgressWorker : public Runnable
 {
 public:
   /**
@@ -79,7 +79,7 @@ private:
   const SurfaceFlags mSurfaceFlags;
 };
 
-class NotifyDecodeCompleteWorker : public nsRunnable
+class NotifyDecodeCompleteWorker : public Runnable
 {
 public:
   /**
@@ -111,7 +111,7 @@ private:
 
 #ifdef MOZ_NUWA_PROCESS
 
-class RegisterDecodeIOThreadWithNuwaRunnable : public nsRunnable
+class RegisterDecodeIOThreadWithNuwaRunnable : public Runnable
 {
 public:
   NS_IMETHOD Run()
@@ -173,9 +173,7 @@ public:
   {
     // Threads have to be shut down from another thread, so we'll ask the
     // main thread to do it for us.
-    nsCOMPtr<nsIRunnable> runnable =
-      NS_NewRunnableMethod(aThisThread, &nsIThread::Shutdown);
-    NS_DispatchToMainThread(runnable);
+    NS_DispatchToMainThread(NewRunnableMethod(aThisThread, &nsIThread::Shutdown));
   }
 
   /**
@@ -260,7 +258,7 @@ private:
   bool mShuttingDown;
 };
 
-class DecodePoolWorker : public nsRunnable
+class DecodePoolWorker : public Runnable
 {
 public:
   explicit DecodePoolWorker(DecodePoolImpl* aImpl) : mImpl(aImpl) { }
@@ -388,19 +386,18 @@ DecodePool::Observe(nsISupports*, const char* aTopic, const char16_t*)
 {
   MOZ_ASSERT(strcmp(aTopic, "xpcom-shutdown-threads") == 0, "Unexpected topic");
 
-  nsCOMArray<nsIThread> threads;
+  nsTArray<nsCOMPtr<nsIThread>> threads;
   nsCOMPtr<nsIThread> ioThread;
 
   {
     MutexAutoLock lock(mMutex);
-    threads.AppendElements(mThreads);
-    mThreads.Clear();
+    threads.SwapElements(mThreads);
     ioThread.swap(mIOThread);
   }
 
   mImpl->RequestShutdown();
 
-  for (int32_t i = 0 ; i < threads.Count() ; ++i) {
+  for (uint32_t i = 0 ; i < threads.Length() ; ++i) {
     threads[i]->Shutdown();
   }
 
@@ -472,6 +469,7 @@ void
 DecodePool::NotifyProgress(Decoder* aDecoder)
 {
   MOZ_ASSERT(aDecoder);
+  MOZ_ASSERT(aDecoder->HasProgress() && !aDecoder->IsMetadataDecode());
 
   if (!NS_IsMainThread() ||
       (aDecoder->GetDecoderFlags() & DecoderFlags::ASYNC_NOTIFY)) {

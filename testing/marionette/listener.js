@@ -2,37 +2,35 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 var uuidGen = Cc["@mozilla.org/uuid-generator;1"]
-                .getService(Ci.nsIUUIDGenerator);
+    .getService(Ci.nsIUUIDGenerator);
 
 var loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
-               .getService(Ci.mozIJSSubScriptLoader);
+    .getService(Ci.mozIJSSubScriptLoader);
 
-loader.loadSubScript("chrome://marionette/content/simpletest.js");
-loader.loadSubScript("chrome://marionette/content/common.js");
-loader.loadSubScript("chrome://marionette/content/actions.js");
+Cu.import("chrome://marionette/content/accessibility.js");
+Cu.import("chrome://marionette/content/action.js");
+Cu.import("chrome://marionette/content/atom.js");
 Cu.import("chrome://marionette/content/capture.js");
 Cu.import("chrome://marionette/content/cookies.js");
-Cu.import("chrome://marionette/content/elements.js");
+Cu.import("chrome://marionette/content/element.js");
 Cu.import("chrome://marionette/content/error.js");
+Cu.import("chrome://marionette/content/evaluate.js");
+Cu.import("chrome://marionette/content/event.js");
+Cu.import("chrome://marionette/content/interaction.js");
+Cu.import("chrome://marionette/content/logging.js");
 Cu.import("chrome://marionette/content/proxy.js");
-Cu.import("chrome://marionette/content/interactions.js");
+Cu.import("chrome://marionette/content/simpletest.js");
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
-Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-var utils = {};
-utils.window = content;
-// Load Event/ChromeUtils for use with JS scripts:
-loader.loadSubScript("chrome://marionette/content/EventUtils.js", utils);
-loader.loadSubScript("chrome://marionette/content/ChromeUtils.js", utils);
-loader.loadSubScript("chrome://marionette/content/atoms.js", utils);
-loader.loadSubScript("chrome://marionette/content/sendkeys.js", utils);
 
-var marionetteLogObj = new MarionetteLogObj();
+var contentLog = new logging.ContentLogger();
 
 var isB2G = false;
 
@@ -43,23 +41,26 @@ var listenerId = null; // unique ID of this listener
 var curContainer = { frame: content, shadowRoot: null };
 var isRemoteBrowser = () => curContainer.frame.contentWindow !== null;
 var previousContainer = null;
-var elementManager = new ElementManager([]);
 
-// Holds session capabilities.
+var seenEls = new element.Store();
+var SUPPORTED_STRATEGIES = new Set([
+  element.Strategy.ClassName,
+  element.Strategy.Selector,
+  element.Strategy.ID,
+  element.Strategy.Name,
+  element.Strategy.LinkText,
+  element.Strategy.PartialLinkText,
+  element.Strategy.TagName,
+  element.Strategy.XPath,
+]);
+
 var capabilities = {};
-var interactions = new Interactions(utils, () => capabilities);
 
-var actions = new ActionChain(utils, checkForInterrupted);
-var importedScripts = null;
+var actions = new action.Chain(checkForInterrupted);
 
 // Contains the last file input element that was the target of
 // sendKeysToElement.
 var fileInputElement;
-
-// A dict of sandboxes used this session
-var sandboxes = {};
-// The name of the current sandbox
-var sandboxName = 'default';
 
 // the unload handler
 var onunload;
@@ -70,7 +71,6 @@ var asyncTestCommandId;
 var asyncTestTimeoutId;
 
 var inactivityTimeoutId = null;
-var heartbeatCallback = function () {}; // Called by the simpletest methods.
 
 var originalOnError;
 //timer for doc changes
@@ -84,22 +84,32 @@ var onDOMContentLoaded;
 var EVENT_INTERVAL = 30; // milliseconds
 // last touch for each fingerId
 var multiLast = {};
-
-var chrome = proxy.toChrome(sendSyncMessage.bind(this));
-var cookies = new Cookies(() => curContainer.frame.document, chrome);
+var asyncChrome = proxy.toChromeAsync({
+  addMessageListener: addMessageListenerId.bind(this),
+  removeMessageListener: removeMessageListenerId.bind(this),
+  sendAsyncMessage: sendAsyncMessage.bind(this),
+});
+var syncChrome = proxy.toChrome(sendSyncMessage.bind(this));
+var cookies = new Cookies(() => curContainer.frame.document, syncChrome);
+var importedScripts = new evaluate.ScriptStorageServiceClient(syncChrome);
 
 Cu.import("resource://gre/modules/Log.jsm");
 var logger = Log.repository.getLogger("Marionette");
 logger.debug("loaded listener.js");
+
 var modalHandler = function() {
   // This gets called on the system app only since it receives the mozbrowserprompt event
-  sendSyncMessage("Marionette:switchedToFrame", { frameValue: null, storePrevious: true });
+  sendSyncMessage("Marionette:switchedToFrame", {frameValue: null, storePrevious: true});
   let isLocal = sendSyncMessage("MarionetteFrame:handleModal", {})[0].value;
   if (isLocal) {
     previousContainer = curContainer;
   }
-  curContainer = { frame: content, shadowRoot: null };
+  curContainer = {frame: content, shadowRoot: null};
 };
+
+// sandbox storage and name of the current sandbox
+var sandboxes = new Sandboxes(() => curContainer.frame);
+var sandboxName = "default";
 
 /**
  * Called when listener is first started up.
@@ -114,15 +124,13 @@ function registerSelf() {
   if (register[0]) {
     let {id, remotenessChange} = register[0][0];
     capabilities = register[0][2];
-    isB2G = capabilities.B2G;
+    isB2G = capabilities.platformName == "b2g";
     listenerId = id;
     if (typeof id != "undefined") {
       // check if we're the main process
       if (register[0][1] == true) {
         addMessageListener("MarionetteMainListener:emitTouchEvent", emitTouchEventForIFrame);
       }
-      importedScripts = FileUtils.getDir('TmpD', [], false);
-      importedScripts.append('marionetteContentScripts');
       startListeners();
       let rv = {};
       if (remotenessChange) {
@@ -168,6 +176,10 @@ function emitTouchEventForIFrame(message) {
 // Perhaps one could even conceive having a separate instance of
 // CommandProcessor for the listener, because the code is mostly the same.
 function dispatch(fn) {
+  if (typeof fn != "function") {
+    throw new TypeError("Provided dispatch handler is not a function");
+  }
+
   return function(msg) {
     let id = msg.json.command_id;
 
@@ -183,7 +195,7 @@ function dispatch(fn) {
       if (typeof rv == "undefined") {
         sendOk(id);
       } else {
-        sendResponse({value: rv}, id);
+        sendResponse(rv, id);
       }
     };
 
@@ -212,6 +224,7 @@ var getActiveElementFn = dispatch(getActiveElement);
 var clickElementFn = dispatch(clickElement);
 var goBackFn = dispatch(goBack);
 var getElementAttributeFn = dispatch(getElementAttribute);
+var getElementPropertyFn = dispatch(getElementProperty);
 var getElementTextFn = dispatch(getElementText);
 var getElementTagNameFn = dispatch(getElementTagName);
 var getElementRectFn = dispatch(getElementRect);
@@ -227,11 +240,15 @@ var switchToShadowRootFn = dispatch(switchToShadowRoot);
 var getCookiesFn = dispatch(getCookies);
 var singleTapFn = dispatch(singleTap);
 var takeScreenshotFn = dispatch(takeScreenshot);
+var getScreenshotHashFn = dispatch(getScreenshotHash);
 var actionChainFn = dispatch(actionChain);
 var multiActionFn = dispatch(multiAction);
 var addCookieFn = dispatch(addCookie);
 var deleteCookieFn = dispatch(deleteCookie);
 var deleteAllCookiesFn = dispatch(deleteAllCookies);
+var executeFn = dispatch(execute);
+var executeInSandboxFn = dispatch(executeInSandbox);
+var executeSimpleTestFn = dispatch(executeSimpleTest);
 
 /**
  * Start all message listeners
@@ -239,9 +256,9 @@ var deleteAllCookiesFn = dispatch(deleteAllCookies);
 function startListeners() {
   addMessageListenerId("Marionette:receiveFiles", receiveFiles);
   addMessageListenerId("Marionette:newSession", newSession);
-  addMessageListenerId("Marionette:executeScript", executeScript);
-  addMessageListenerId("Marionette:executeAsyncScript", executeAsyncScript);
-  addMessageListenerId("Marionette:executeJSScript", executeJSScript);
+  addMessageListenerId("Marionette:execute", executeFn);
+  addMessageListenerId("Marionette:executeInSandbox", executeInSandboxFn);
+  addMessageListenerId("Marionette:executeSimpleTest", executeSimpleTestFn);
   addMessageListenerId("Marionette:singleTap", singleTapFn);
   addMessageListenerId("Marionette:actionChain", actionChainFn);
   addMessageListenerId("Marionette:multiAction", multiActionFn);
@@ -259,6 +276,7 @@ function startListeners() {
   addMessageListenerId("Marionette:getActiveElement", getActiveElementFn);
   addMessageListenerId("Marionette:clickElement", clickElementFn);
   addMessageListenerId("Marionette:getElementAttribute", getElementAttributeFn);
+  addMessageListenerId("Marionette:getElementProperty", getElementPropertyFn);
   addMessageListenerId("Marionette:getElementText", getElementTextFn);
   addMessageListenerId("Marionette:getElementTagName", getElementTagNameFn);
   addMessageListenerId("Marionette:isElementDisplayed", isElementDisplayedFn);
@@ -273,11 +291,10 @@ function startListeners() {
   addMessageListenerId("Marionette:switchToShadowRoot", switchToShadowRootFn);
   addMessageListenerId("Marionette:deleteSession", deleteSession);
   addMessageListenerId("Marionette:sleepSession", sleepSession);
-  addMessageListenerId("Marionette:emulatorCmdResult", emulatorCmdResult);
-  addMessageListenerId("Marionette:importScript", importScript);
   addMessageListenerId("Marionette:getAppCacheStatus", getAppCacheStatus);
   addMessageListenerId("Marionette:setTestName", setTestName);
   addMessageListenerId("Marionette:takeScreenshot", takeScreenshotFn);
+  addMessageListenerId("Marionette:getScreenshotHash", getScreenshotHashFn);
   addMessageListenerId("Marionette:addCookie", addCookieFn);
   addMessageListenerId("Marionette:getCookies", getCookiesFn);
   addMessageListenerId("Marionette:deleteAllCookies", deleteAllCookiesFn);
@@ -304,7 +321,7 @@ function waitForReady() {
  */
 function newSession(msg) {
   capabilities = msg.json;
-  isB2G = capabilities.B2G;
+  isB2G = capabilities.platformName == "B2G";
   resetValues();
   if (isB2G) {
     readyStateTimer.initWithCallback(waitForReady, 100, Ci.nsITimer.TYPE_ONE_SHOT);
@@ -344,9 +361,9 @@ function restart(msg) {
 function deleteSession(msg) {
   removeMessageListenerId("Marionette:receiveFiles", receiveFiles);
   removeMessageListenerId("Marionette:newSession", newSession);
-  removeMessageListenerId("Marionette:executeScript", executeScript);
-  removeMessageListenerId("Marionette:executeAsyncScript", executeAsyncScript);
-  removeMessageListenerId("Marionette:executeJSScript", executeJSScript);
+  removeMessageListenerId("Marionette:execute", executeFn);
+  removeMessageListenerId("Marionette:executeInSandbox", executeInSandboxFn);
+  removeMessageListenerId("Marionette:executeSimpleTest", executeSimpleTestFn);
   removeMessageListenerId("Marionette:singleTap", singleTapFn);
   removeMessageListenerId("Marionette:actionChain", actionChainFn);
   removeMessageListenerId("Marionette:multiAction", multiActionFn);
@@ -364,6 +381,7 @@ function deleteSession(msg) {
   removeMessageListenerId("Marionette:getActiveElement", getActiveElementFn);
   removeMessageListenerId("Marionette:clickElement", clickElementFn);
   removeMessageListenerId("Marionette:getElementAttribute", getElementAttributeFn);
+  removeMessageListenerId("Marionette:getElementProperty", getElementPropertyFn);
   removeMessageListenerId("Marionette:getElementText", getElementTextFn);
   removeMessageListenerId("Marionette:getElementTagName", getElementTagNameFn);
   removeMessageListenerId("Marionette:isElementDisplayed", isElementDisplayedFn);
@@ -378,11 +396,10 @@ function deleteSession(msg) {
   removeMessageListenerId("Marionette:switchToShadowRoot", switchToShadowRootFn);
   removeMessageListenerId("Marionette:deleteSession", deleteSession);
   removeMessageListenerId("Marionette:sleepSession", sleepSession);
-  removeMessageListenerId("Marionette:emulatorCmdResult", emulatorCmdResult);
-  removeMessageListenerId("Marionette:importScript", importScript);
   removeMessageListenerId("Marionette:getAppCacheStatus", getAppCacheStatus);
   removeMessageListenerId("Marionette:setTestName", setTestName);
   removeMessageListenerId("Marionette:takeScreenshot", takeScreenshotFn);
+  removeMessageListenerId("Marionette:getScreenshotHash", getScreenshotHashFn);
   removeMessageListenerId("Marionette:addCookie", addCookieFn);
   removeMessageListenerId("Marionette:getCookies", getCookiesFn);
   removeMessageListenerId("Marionette:deleteAllCookies", deleteAllCookiesFn);
@@ -390,42 +407,63 @@ function deleteSession(msg) {
   if (isB2G) {
     content.removeEventListener("mozbrowsershowmodalprompt", modalHandler, false);
   }
-  elementManager.reset();
+  seenEls.clear();
   // reset container frame to the top-most frame
   curContainer = { frame: content, shadowRoot: null };
   curContainer.frame.focus();
   actions.touchIds = {};
 }
 
-/*
- * Helper methods
- */
-
 /**
- * Generic method to send a message to the server
+ * Send asynchronous reply to chrome.
+ *
+ * @param {UUID} uuid
+ *     Unique identifier of the request.
+ * @param {AsyncContentSender.ResponseType} type
+ *     Type of response.
+ * @param {?=} data
+ *     JSON serialisable object to accompany the message.  Defaults to
+ *     an empty dictionary.
  */
-function sendToServer(name, data, objs, id) {
-  if (!data) {
-    data = {}
-  }
-  if (id) {
-    data.command_id = id;
-  }
-  sendAsyncMessage(name, data, objs);
+function sendToServer(uuid, data = undefined) {
+  let channel = new proxy.AsyncMessageChannel(
+      () => this,
+      sendAsyncMessage.bind(this));
+  channel.reply(uuid, data);
 }
 
 /**
- * Send response back to server
+ * Send asynchronous reply with value to chrome.
+ *
+ * @param {?} obj
+ *     JSON serialisable object of arbitrary type and complexity.
+ * @param {UUID} uuid
+ *     Unique identifier of the request.
  */
-function sendResponse(value, command_id) {
-  sendToServer("Marionette:done", value, null, command_id);
+function sendResponse(obj, id) {
+  sendToServer(id, obj);
 }
 
 /**
- * Send ack back to server
+ * Send asynchronous reply to chrome.
+ *
+ * @param {UUID} uuid
+ *     Unique identifier of the request.
  */
-function sendOk(command_id) {
-  sendToServer("Marionette:ok", null, null, command_id);
+function sendOk(uuid) {
+  sendToServer(uuid);
+}
+
+/**
+ * Send asynchronous error reply to chrome.
+ *
+ * @param {Error} err
+ *     Error to notify chrome of.
+ * @param {UUID} uuid
+ *     Unique identifier of the request.
+ */
+function sendError(err, uuid) {
+  sendToServer(uuid, err);
 }
 
 /**
@@ -436,18 +474,11 @@ function sendLog(msg) {
 }
 
 /**
- * Send error message to server
- */
-function sendError(err, cmdId) {
-  sendToServer("Marionette:error", null, {error: err}, cmdId);
-}
-
-/**
  * Clear test values after completion of test
  */
 function resetValues() {
-  sandboxes = {};
-  curContainer = { frame: content, shadowRoot: null };
+  sandboxes.clear();
+  curContainer = {frame: content, shadowRoot: null};
   actions.mouseEventsOnly = false;
 }
 
@@ -489,184 +520,63 @@ function checkForInterrupted() {
     }
 }
 
-/*
- * Marionette Methods
- */
+function* execute(script, args, timeout, opts) {
+  opts.timeout = timeout;
+  script = importedScripts.for("content").concat(script);
 
-/**
- * Returns a content sandbox that can be used by the execute_foo functions.
- */
-function createExecuteContentSandbox(win, timeout) {
-  let mn = new Marionette(
-      win,
-      "content",
-      marionetteLogObj,
-      timeout,
-      heartbeatCallback,
-      marionetteTestName);
+  let sb = sandbox.createMutable(curContainer.frame);
+  let wargs = element.fromJson(
+      args, seenEls, curContainer.frame, curContainer.shadowRoot);
+  let res = yield evaluate.sandbox(sb, script, wargs, opts);
 
-  let principal = win;
-  if (sandboxName == "system") {
-    principal = Cc["@mozilla.org/systemprincipal;1"].createInstance(Ci.nsIPrincipal);
-  }
-  let sandbox = new Cu.Sandbox(principal, {sandboxPrototype: win});
-  sandbox.global = sandbox;
-  sandbox.window = win;
-  sandbox.document = sandbox.window.document;
-  sandbox.navigator = sandbox.window.navigator;
-  sandbox.testUtils = utils;
-  sandbox.asyncTestCommandId = asyncTestCommandId;
-  sandbox.marionette = mn;
-
-  mn.exports.forEach(fn => {
-    if (typeof mn[fn] == "function") {
-      sandbox[fn] = mn[fn].bind(mn);
-    } else {
-      sandbox[fn] = mn[fn];
-    }
-  });
-  sandbox.runEmulatorCmd = (cmd, cb) => this.runEmulatorCmd(cmd, cb);
-  sandbox.runEmulatorShell = (args, cb) => this.runEmulatorShell(args, cb);
-
-  sandbox.asyncComplete = (obj, id) => {
-    if (id == asyncTestCommandId) {
-      curContainer.frame.removeEventListener("unload", onunload, false);
-      curContainer.frame.clearTimeout(asyncTestTimeoutId);
-
-      if (inactivityTimeoutId != null) {
-        curContainer.frame.clearTimeout(inactivityTimeoutId);
-      }
-
-      sendSyncMessage("Marionette:shareData",
-          {log: elementManager.wrapValue(marionetteLogObj.getLogs())});
-      marionetteLogObj.clearLogs();
-
-      if (error.isError(obj)) {
-        sendError(obj, id);
-      } else {
-        if (Object.keys(_emu_cbs).length) {
-          _emu_cbs = {};
-          sendError(new WebDriverError("Emulator callback still pending when finish() called"), id);
-        } else {
-          sendResponse({value: elementManager.wrapValue(obj)}, id);
-        }
-      }
-
-      asyncTestRunning = false;
-      asyncTestTimeoutId = undefined;
-      asyncTestCommandId = undefined;
-      inactivityTimeoutId = null;
-    }
-  };
-
-  sandbox.finish = function() {
-    if (asyncTestRunning) {
-      sandbox.asyncComplete(mn.generate_results(), sandbox.asyncTestCommandId);
-    } else {
-      return mn.generate_results();
-    }
-  };
-  sandbox.marionetteScriptFinished = val =>
-      sandbox.asyncComplete(val, sandbox.asyncTestCommandId);
-
-  sandboxes[sandboxName] = sandbox;
+  return element.toJson(res, seenEls);
 }
 
-/**
- * Execute the given script either as a function body (executeScript)
- * or directly (for mochitest like JS Marionette tests).
- */
-function executeScript(msg, directInject) {
-  // Set up inactivity timeout.
-  if (msg.json.inactivityTimeout) {
-    let setTimer = function() {
-      inactivityTimeoutId = curContainer.frame.setTimeout(function() {
-        sendError(new ScriptTimeoutError("timed out due to inactivity"), asyncTestCommandId);
-      }, msg.json.inactivityTimeout);
-   };
+function* executeInSandbox(script, args, timeout, opts) {
+  opts.timeout = timeout;
+  script = importedScripts.for("content").concat(script);
 
-    setTimer();
-    heartbeatCallback = function() {
-      curContainer.frame.clearTimeout(inactivityTimeoutId);
-      setTimer();
-    };
+  let sb = sandboxes.get(opts.sandboxName, opts.newSandbox);
+  if (opts.sandboxName) {
+    sb = sandbox.augment(sb, {global: sb});
+    sb = sandbox.augment(sb, new logging.Adapter(contentLog));
   }
 
-  asyncTestCommandId = msg.json.command_id;
-  let script = msg.json.script;
-  let filename = msg.json.filename;
-  sandboxName = msg.json.sandboxName;
+  let wargs = element.fromJson(
+      args, seenEls, curContainer.frame, curContainer.shadowRoot);
+  let evaluatePromise = evaluate.sandbox(sb, script, wargs, opts);
 
-  if (msg.json.newSandbox ||
-      !(sandboxName in sandboxes) ||
-      (sandboxes[sandboxName].window != curContainer.frame)) {
-    createExecuteContentSandbox(curContainer.frame, msg.json.timeout);
-    if (!sandboxes[sandboxName]) {
-      sendError(new WebDriverError("Could not create sandbox!"), asyncTestCommandId);
-      return;
-    }
-  } else {
-    sandboxes[sandboxName].asyncTestCommandId = asyncTestCommandId;
-  }
+  let res = yield evaluatePromise;
+  sendSyncMessage(
+      "Marionette:shareData",
+      {log: element.toJson(contentLog.get(), seenEls)});
+  return element.toJson(res, seenEls);
+}
 
-  let sandbox = sandboxes[sandboxName];
+function* executeSimpleTest(script, args, timeout, opts) {
+  opts.timeout = timeout;
+  let win = curContainer.frame;
+  script = importedScripts.for("content").concat(script);
 
-  try {
-    if (directInject) {
-      if (importedScripts.exists()) {
-        let stream = Components.classes["@mozilla.org/network/file-input-stream;1"].
-                      createInstance(Components.interfaces.nsIFileInputStream);
-        stream.init(importedScripts, -1, 0, 0);
-        let data = NetUtil.readInputStreamToString(stream, stream.available());
-        stream.close();
-        script = data + script;
-      }
-      let res = Cu.evalInSandbox(script, sandbox, "1.8", filename ? filename : "dummy file" ,0);
-      sendSyncMessage("Marionette:shareData",
-                      {log: elementManager.wrapValue(marionetteLogObj.getLogs())});
-      marionetteLogObj.clearLogs();
+  let harness = new simpletest.Harness(
+      win,
+      "content",
+      contentLog,
+      timeout,
+      marionetteTestName);
+  let sb = sandbox.createSimpleTest(curContainer.frame, harness);
+  // TODO(ato): Not sure this is needed:
+  sb = sandbox.augment(sb, new logging.Adapter(contentLog));
 
-      if (res == undefined || res.passed == undefined) {
-        sendError(new JavaScriptError("Marionette.finish() not called"), asyncTestCommandId);
-      }
-      else {
-        sendResponse({value: elementManager.wrapValue(res)}, asyncTestCommandId);
-      }
-    }
-    else {
-      try {
-        sandbox.__marionetteParams = Cu.cloneInto(elementManager.convertWrappedArguments(
-          msg.json.args, curContainer), sandbox, { wrapReflectors: true });
-      } catch (e) {
-        sendError(e, asyncTestCommandId);
-        return;
-      }
+  let wargs = element.fromJson(
+      args, seenEls, curContainer.frame, curContainer.shadowRoot);
+  let evaluatePromise = evaluate.sandbox(sb, script, wargs, opts);
 
-      script = "var __marionetteFunc = function(){" + script + "};" +
-                   "__marionetteFunc.apply(null, __marionetteParams);";
-      if (importedScripts.exists()) {
-        let stream = Components.classes["@mozilla.org/network/file-input-stream;1"].
-                      createInstance(Components.interfaces.nsIFileInputStream);
-        stream.init(importedScripts, -1, 0, 0);
-        let data = NetUtil.readInputStreamToString(stream, stream.available());
-        stream.close();
-        script = data + script;
-      }
-      let res = Cu.evalInSandbox(script, sandbox, "1.8", filename ? filename : "dummy file", 0);
-      sendSyncMessage("Marionette:shareData",
-                      {log: elementManager.wrapValue(marionetteLogObj.getLogs())});
-      marionetteLogObj.clearLogs();
-      sendResponse({value: elementManager.wrapValue(res)}, asyncTestCommandId);
-    }
-  } catch (e) {
-    let err = new JavaScriptError(
-        e,
-        "execute_script",
-        msg.json.filename,
-        msg.json.line,
-        script);
-    sendError(err, asyncTestCommandId);
-  }
+  let res = yield evaluatePromise;
+  sendSyncMessage(
+      "Marionette:shareData",
+      {log: element.toJson(contentLog.get(), seenEls)});
+  return element.toJson(res, seenEls);
 }
 
 /**
@@ -678,146 +588,26 @@ function setTestName(msg) {
 }
 
 /**
- * Execute async script
- */
-function executeAsyncScript(msg) {
-  executeWithCallback(msg);
-}
-
-/**
  * Receive file objects from chrome in order to complete a
  * sendKeysToElement action on a file input element.
  */
 function receiveFiles(msg) {
-  if ('error' in msg.json) {
+  if ("error" in msg.json) {
     let err = new InvalidArgumentError(msg.json.error);
     sendError(err, msg.json.command_id);
     return;
   }
+
   if (!fileInputElement) {
     let err = new InvalidElementStateError("receiveFiles called with no valid fileInputElement");
     sendError(err, msg.json.command_id);
     return;
   }
-  let fs = Array.prototype.slice.call(fileInputElement.files);
-  fs.push(msg.json.file);
-  fileInputElement.mozSetFileArray(fs);
+
+  interaction.uploadFile(fileInputElement, msg.json.file);
   fileInputElement = null;
+
   sendOk(msg.json.command_id);
-}
-
-/**
- * Execute pure JS test. Handles both async and sync cases.
- */
-function executeJSScript(msg) {
-  if (msg.json.async) {
-    executeWithCallback(msg, msg.json.async);
-  }
-  else {
-    executeScript(msg, true);
-  }
-}
-
-/**
- * This function is used by executeAsync and executeJSScript to execute a script
- * in a sandbox.
- *
- * For executeJSScript, it will return a message only when the finish() method is called.
- * For executeAsync, it will return a response when marionetteScriptFinished/arguments[arguments.length-1]
- * method is called, or if it times out.
- */
-function executeWithCallback(msg, useFinish) {
-  // Set up inactivity timeout.
-  if (msg.json.inactivityTimeout) {
-    let setTimer = function() {
-      inactivityTimeoutId = curContainer.frame.setTimeout(function() {
-        sandbox.asyncComplete(new ScriptTimeoutError("timed out due to inactivity"), asyncTestCommandId);
-      }, msg.json.inactivityTimeout);
-    };
-
-    setTimer();
-    heartbeatCallback = function() {
-      curContainer.frame.clearTimeout(inactivityTimeoutId);
-      setTimer();
-    };
-  }
-
-  let script = msg.json.script;
-  let filename = msg.json.filename;
-  asyncTestCommandId = msg.json.command_id;
-  sandboxName = msg.json.sandboxName;
-
-  onunload = function() {
-    sendError(new JavaScriptError("unload was called"), asyncTestCommandId);
-  };
-  curContainer.frame.addEventListener("unload", onunload, false);
-
-  if (msg.json.newSandbox ||
-      !(sandboxName in sandboxes) ||
-      (sandboxes[sandboxName].window != curContainer.frame)) {
-    createExecuteContentSandbox(curContainer.frame, msg.json.timeout);
-    if (!sandboxes[sandboxName]) {
-      sendError(new JavaScriptError("Could not create sandbox!"), asyncTestCommandId);
-      return;
-    }
-  }
-  else {
-    sandboxes[sandboxName].asyncTestCommandId = asyncTestCommandId;
-  }
-  let sandbox = sandboxes[sandboxName];
-  sandbox.tag = script;
-
-  asyncTestTimeoutId = curContainer.frame.setTimeout(function() {
-    sandbox.asyncComplete(new ScriptTimeoutError("timed out"), asyncTestCommandId);
-  }, msg.json.timeout);
-
-  originalOnError = curContainer.frame.onerror;
-  curContainer.frame.onerror = function errHandler(msg, url, line) {
-    sandbox.asyncComplete(new JavaScriptError(msg + "@" + url + ", line " + line), asyncTestCommandId);
-    curContainer.frame.onerror = originalOnError;
-  };
-
-  let scriptSrc;
-  if (useFinish) {
-    if (msg.json.timeout == null || msg.json.timeout == 0) {
-      sendError(new TimeoutError("Please set a timeout"), asyncTestCommandId);
-    }
-    scriptSrc = script;
-  }
-  else {
-    try {
-      sandbox.__marionetteParams = Cu.cloneInto(elementManager.convertWrappedArguments(
-        msg.json.args, curContainer), sandbox, { wrapReflectors: true });
-    } catch (e) {
-      sendError(e, asyncTestCommandId);
-      return;
-    }
-
-    scriptSrc = "__marionetteParams.push(marionetteScriptFinished);" +
-                "var __marionetteFunc = function() { " + script + "};" +
-                "__marionetteFunc.apply(null, __marionetteParams); ";
-  }
-
-  try {
-    asyncTestRunning = true;
-    if (importedScripts.exists()) {
-      let stream = Cc["@mozilla.org/network/file-input-stream;1"].
-                      createInstance(Ci.nsIFileInputStream);
-      stream.init(importedScripts, -1, 0, 0);
-      let data = NetUtil.readInputStreamToString(stream, stream.available());
-      stream.close();
-      scriptSrc = data + scriptSrc;
-    }
-    Cu.evalInSandbox(scriptSrc, sandbox, "1.8", filename ? filename : "dummy file", 0);
-  } catch (e) {
-    let err = new JavaScriptError(
-        e,
-        "execute_async_script",
-        msg.json.filename,
-        msg.json.line,
-        scriptSrc);
-    sandbox.asyncComplete(err, asyncTestCommandId);
-  }
 }
 
 /**
@@ -848,10 +638,11 @@ function emitTouchEvent(type, touch) {
     // we get here if we're not in asyncPacZoomEnabled land, or if we're the main process
     /*
     Disabled per bug 888303
-    marionetteLogObj.log(loggingInfo, "TRACE");
-    sendSyncMessage("Marionette:shareData",
-                    {log: elementManager.wrapValue(marionetteLogObj.getLogs())});
-    marionetteLogObj.clearLogs();
+    contentLog.log(loggingInfo, "TRACE");
+    sendSyncMessage(
+        "Marionette:shareData",
+        {log: element.toJson(contentLog.get(), seenEls)});
+    contentLog.clear();
     */
     let domWindowUtils = curContainer.frame.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIDOMWindowUtils);
     domWindowUtils.sendTouchEvent(type, [touch.identifier], [touch.clientX], [touch.clientY], [touch.radiusX], [touch.radiusY], [touch.rotationAngle], [touch.force], 1, 0);
@@ -859,96 +650,24 @@ function emitTouchEvent(type, touch) {
 }
 
 /**
- * This function generates a pair of coordinates relative to the viewport given a
- * target element and coordinates relative to that element's top-left corner.
- * @param 'x', and 'y' are the relative to the target.
- *        If they are not specified, then the center of the target is used.
- */
-function coordinates(target, x, y) {
-  let box = target.getBoundingClientRect();
-  if (x == null) {
-    x = box.width / 2;
-  }
-  if (y == null) {
-    y = box.height / 2;
-  }
-  let coords = {};
-  coords.x = box.left + x;
-  coords.y = box.top + y;
-  return coords;
-}
-
-
-/**
- * This function returns true if the given coordinates are in the viewport.
- * @param 'x', and 'y' are the coordinates relative to the target.
- *        If they are not specified, then the center of the target is used.
- */
-function elementInViewport(el, x, y) {
-  let c = coordinates(el, x, y);
-  let curFrame = curContainer.frame;
-  let viewPort = {top: curFrame.pageYOffset,
-                  left: curFrame.pageXOffset,
-                  bottom: (curFrame.pageYOffset + curFrame.innerHeight),
-                  right:(curFrame.pageXOffset + curFrame.innerWidth)};
-  return (viewPort.left <= c.x + curFrame.pageXOffset &&
-          c.x + curFrame.pageXOffset <= viewPort.right &&
-          viewPort.top <= c.y + curFrame.pageYOffset &&
-          c.y + curFrame.pageYOffset <= viewPort.bottom);
-}
-
-/**
- * This function throws the visibility of the element error if the element is
- * not displayed or the given coordinates are not within the viewport.
- * @param 'x', and 'y' are the coordinates relative to the target.
- *        If they are not specified, then the center of the target is used.
- */
-function checkVisible(el, x, y) {
-  // Bug 1094246 - Webdriver's isShown doesn't work with content xul
-  if (utils.getElementAttribute(el, "namespaceURI").indexOf("there.is.only.xul") == -1) {
-    //check if the element is visible
-    let visible = utils.isElementDisplayed(el);
-    if (!visible) {
-      return false;
-    }
-  }
-
-  if (el.tagName.toLowerCase() === 'body') {
-    return true;
-  }
-  if (!elementInViewport(el, x, y)) {
-    //check if scroll function exist. If so, call it.
-    if (el.scrollIntoView) {
-      el.scrollIntoView(false);
-      if (!elementInViewport(el)) {
-        return false;
-      }
-    }
-    else {
-      return false;
-    }
-  }
-  return true;
-}
-
-
-/**
  * Function that perform a single tap
  */
 function singleTap(id, corx, cory) {
-  let el = elementManager.getKnownElement(id, curContainer);
+  let el = seenEls.get(id, curContainer);
   // after this block, the element will be scrolled into view
-  let visible = checkVisible(el, corx, cory);
+  let visible = element.isVisible(el, corx, cory);
   if (!visible) {
     throw new ElementNotVisibleError("Element is not currently visible and may not be manipulated");
   }
-  return interactions.accessibility.getAccessibleObject(el, true).then(acc => {
-    interactions.accessibility.checkVisible(acc, el, visible);
-    interactions.accessibility.checkActionable(acc, el);
+
+  let a11y = accessibility.get(capabilities.raisesAccessibilityExceptions);
+  return a11y.getAccessible(el, true).then(acc => {
+    a11y.assertVisible(acc, el, visible);
+    a11y.assertActionable(acc, el);
     if (!curContainer.frame.document.createTouch) {
       actions.mouseEventsOnly = true;
     }
-    let c = coordinates(el, corx, cory);
+    let c = element.coordinates(el, corx, cory);
     if (!actions.mouseEventsOnly) {
       let touchId = actions.nextTouchId++;
       let touch = createATouch(el, c.x, c.y, touchId);
@@ -980,15 +699,12 @@ function actionChain(chain, touchId) {
   touchProvider.createATouch = createATouch;
   touchProvider.emitTouchEvent = emitTouchEvent;
 
-  return new Promise((resolve, reject) => {
-    actions.dispatchActions(
-        chain,
-        touchId,
-        curContainer,
-        elementManager,
-        {onSuccess: resolve, onError: reject},
-        touchProvider);
-  });
+  return actions.dispatchActions(
+      chain,
+      touchId,
+      curContainer,
+      seenEls,
+      touchProvider);
 }
 
 /**
@@ -1062,8 +778,8 @@ function setDispatch(batches, touches, batchIndex=0) {
 
     switch (command) {
       case "press":
-        el = elementManager.getKnownElement(pack[2], curContainer);
-        c = coordinates(el, pack[3], pack[4]);
+        el = seenEls.get(pack[2], curContainer);
+        c = element.coordinates(el, pack[3], pack[4]);
         touch = createATouch(el, c.x, c.y, touchId);
         multiLast[touchId] = touch;
         touches.push(touch);
@@ -1079,8 +795,8 @@ function setDispatch(batches, touches, batchIndex=0) {
         break;
 
       case "move":
-        el = elementManager.getKnownElement(pack[2], curContainer);
-        c = coordinates(el);
+        el = seenEls.get(pack[2], curContainer);
+        c = element.coordinates(el);
         touch = createATouch(multiLast[touchId].target, c.x, c.y, touchId);
         touchIndex = touches.indexOf(lastTouch);
         touches[touchIndex] = touch;
@@ -1135,7 +851,8 @@ function setDispatch(batches, touches, batchIndex=0) {
  */
 function multiAction(args, maxLen) {
   // unwrap the original nested array
-  let commandArray = elementManager.convertWrappedArguments(args, curContainer);
+  let commandArray = element.fromJson(
+      args, seenEls, curContainer.frame, curContainer.shadowRoot);
   let concurrentEvent = [];
   let temp;
   for (let i = 0; i < maxLen; i++) {
@@ -1220,7 +937,6 @@ function get(msg) {
         event.originalTarget.defaultView.frameElement == curContainer.frame.frameElement) {
       pollForReadyState(msg, start, () => {
         removeEventListener("DOMContentLoaded", onDOMContentLoaded, false);
-        onDOMContentLoaded = null;
       });
     }
   };
@@ -1239,7 +955,6 @@ function get(msg) {
     // We need to move to the top frame before navigating
     sendSyncMessage("Marionette:switchedToFrame", { frameValue: null });
     curContainer.frame = content;
-
     curContainer.frame.location = msg.json.url;
   }
 }
@@ -1306,7 +1021,7 @@ function refresh(msg) {
   let command_id = msg.json.command_id;
   curContainer.frame.location.reload(true);
   let listen = function() {
-    removeEventListener("DOMContentLoaded", arguments.callee, false);
+    removeEventListener("DOMContentLoaded", listen, false);
     sendOk(command_id);
   };
   addEventListener("DOMContentLoaded", listen, false);
@@ -1316,43 +1031,46 @@ function refresh(msg) {
  * Find an element in the current browsing context's document using the
  * given search strategy.
  */
-function findElementContent(opts) {
-  return new Promise((resolve, reject) => {
-    elementManager.find(
-        curContainer,
-        opts,
-        opts.searchTimeout,
-        false /* all */,
-        resolve,
-        reject);
-  });
+function* findElementContent(strategy, selector, opts = {}) {
+  if (!SUPPORTED_STRATEGIES.has(strategy)) {
+    throw new InvalidSelectorError("Strategy not supported: " + strategy);
+  }
+
+  opts.all = false;
+  if (opts.startNode) {
+    opts.startNode = seenEls.get(opts.startNode, curContainer);
+  }
+
+  let el = yield element.find(curContainer, strategy, selector, opts);
+  let elRef = seenEls.add(el);
+  let webEl = element.makeWebElement(elRef);
+  return webEl;
 }
 
 /**
  * Find elements in the current browsing context's document using the
  * given search strategy.
  */
-function findElementsContent(opts) {
-  return new Promise((resolve, reject) => {
-    elementManager.find(
-        curContainer,
-        opts,
-        opts.searchTimeout,
-        true /* all */,
-        resolve,
-        reject);
-  });
+function* findElementsContent(strategy, selector, opts = {}) {
+  if (!SUPPORTED_STRATEGIES.has(strategy)) {
+    throw new InvalidSelectorError("Strategy not supported: " + strategy);
+  }
+
+  opts.all = true;
+  if (opts.startNode) {
+    opts.startNode = seenEls.get(opts.startNode, curContainer);
+  }
+
+  let els = yield element.find(curContainer, strategy, selector, opts);
+  let elRefs = seenEls.addAll(els);
+  let webEls = elRefs.map(element.makeWebElement);
+  return webEls;
 }
 
-/**
- * Find and return the active element on the page.
- *
- * @return {WebElement}
- *     Reference to web element.
- */
+/** Find and return the active element on the page. */
 function getActiveElement() {
   let el = curContainer.frame.document.activeElement;
-  return elementManager.addToKnownElements(el);
+  return element.toJson(el, seenEls);
 }
 
 /**
@@ -1362,23 +1080,29 @@ function getActiveElement() {
  *     Reference to the web element to click.
  */
 function clickElement(id) {
-  return interactions.clickElement(curContainer, elementManager, id);
+  let el = seenEls.get(id, curContainer);
+  return interaction.clickElement(
+      el,
+      !!capabilities.raisesAccessibilityExceptions,
+      capabilities.specificationLevel >= 1);
 }
 
-/**
- * Get a given attribute of an element.
- *
- * @param {WebElement} id
- *     Reference to the web element to get the attribute of.
- * @param {string} name
- *     Name of the attribute.
- *
- * @return {string}
- *     The value of the attribute.
- */
 function getElementAttribute(id, name) {
-  let el = elementManager.getKnownElement(id, curContainer);
-  return utils.getElementAttribute(el, name);
+  let el = seenEls.get(id, curContainer);
+  if (element.isBooleanAttribute(el, name)) {
+    if (el.hasAttribute(name)) {
+      return "true";
+    } else {
+      return null;
+    }
+  } else {
+    return el.getAttribute(name);
+  }
+}
+
+function getElementProperty(id, name) {
+  let el = seenEls.get(id, curContainer);
+  return typeof el[name] != "undefined" ? el[name] : null;
 }
 
 /**
@@ -1391,8 +1115,8 @@ function getElementAttribute(id, name) {
  *     Text of element.
  */
 function getElementText(id) {
-  let el = elementManager.getKnownElement(id, curContainer);
-  return utils.getElementText(el);
+  let el = seenEls.get(id, curContainer);
+  return atom.getElementText(el, curContainer.frame);
 }
 
 /**
@@ -1405,7 +1129,7 @@ function getElementText(id) {
  *     Tag name of element.
  */
 function getElementTagName(id) {
-  let el = elementManager.getKnownElement(id, curContainer);
+  let el = seenEls.get(id, curContainer);
   return el.tagName.toLowerCase();
 }
 
@@ -1416,7 +1140,9 @@ function getElementTagName(id) {
  * capability.
  */
 function isElementDisplayed(id) {
-  return interactions.isElementDisplayed(curContainer, elementManager, id);
+  let el = seenEls.get(id, curContainer);
+  return interaction.isElementDisplayed(
+      el, capabilities.raisesAccessibilityExceptions);
 }
 
 /**
@@ -1432,7 +1158,7 @@ function isElementDisplayed(id) {
  *     Effective value of the requested CSS property.
  */
 function getElementValueOfCssProperty(id, prop) {
-  let el = elementManager.getKnownElement(id, curContainer);
+  let el = seenEls.get(id, curContainer);
   let st = curContainer.frame.document.defaultView.getComputedStyle(el, null);
   return st.getPropertyValue(prop);
 }
@@ -1447,7 +1173,7 @@ function getElementValueOfCssProperty(id, prop) {
  *     The x, y, width, and height properties of the element.
  */
 function getElementRect(id) {
-  let el = elementManager.getKnownElement(id, curContainer);
+  let el = seenEls.get(id, curContainer);
   let clientRect = el.getBoundingClientRect();
   return {
     x: clientRect.x + curContainer.frame.pageXOffset,
@@ -1467,7 +1193,9 @@ function getElementRect(id) {
  *     True if enabled, false otherwise.
  */
 function isElementEnabled(id) {
-  return interactions.isElementEnabled(curContainer, elementManager, id);
+  let el = seenEls.get(id, curContainer);
+  return interaction.isElementEnabled(
+      el, capabilities.raisesAccessibilityExceptions);
 }
 
 /**
@@ -1477,7 +1205,9 @@ function isElementEnabled(id) {
  * and Radio Button states, or option elements.
  */
 function isElementSelected(id) {
-  return interactions.isElementSelected(curContainer, elementManager, id);
+  let el = seenEls.get(id, curContainer);
+  return interaction.isElementSelected(
+      el, capabilities.raisesAccessibilityExceptions);
 }
 
 /**
@@ -1487,7 +1217,7 @@ function sendKeysToElement(msg) {
   let command_id = msg.json.command_id;
   let val = msg.json.value;
   let id = msg.json.id;
-  let el = elementManager.getKnownElement(id, curContainer);
+  let el = seenEls.get(id, curContainer);
 
   if (el.type == "file") {
     let p = val.join("");
@@ -1496,9 +1226,10 @@ function sendKeysToElement(msg) {
         // so pass the filename to driver.js, which in turn passes them back
         // to this frame script in receiveFiles.
         sendSyncMessage("Marionette:getFiles",
-                        {value: p, command_id: command_id});
+            {value: p, command_id: command_id});
   } else {
-    interactions.sendKeysToElement(curContainer, elementManager, id, val)
+    let promise = interaction.sendKeysToElement(
+        el, val, false, capabilities.raisesAccessibilityExceptions)
       .then(() => sendOk(command_id))
       .catch(e => sendError(e, command_id));
   }
@@ -1509,11 +1240,11 @@ function sendKeysToElement(msg) {
  */
 function clearElement(id) {
   try {
-    let el = elementManager.getKnownElement(id, curContainer);
+    let el = seenEls.get(id, curContainer);
     if (el.type == "file") {
       el.value = null;
     } else {
-      utils.clearElement(el);
+      atom.clearElement(el, curContainer.frame);
     }
   } catch (e) {
     // Bug 964738: Newer atoms contain status codes which makes wrapping
@@ -1554,7 +1285,7 @@ function switchToShadowRoot(id) {
   }
 
   let foundShadowRoot;
-  let hostEl = elementManager.getKnownElement(id, curContainer);
+  let hostEl = seenEls.get(id, curContainer);
   foundShadowRoot = hostEl.shadowRoot;
   if (!foundShadowRoot) {
     throw new NoSuchElementError('Unable to locate shadow root: ' + id);
@@ -1569,9 +1300,10 @@ function switchToShadowRoot(id) {
  function switchToParentFrame(msg) {
    let command_id = msg.json.command_id;
    curContainer.frame = curContainer.frame.parent;
-   let parentElement = elementManager.addToKnownElements(curContainer.frame);
+   let parentElement = seenEls.add(curContainer.frame);
 
-   sendSyncMessage("Marionette:switchedToFrame", { frameValue: parentElement });
+   sendSyncMessage(
+       "Marionette:switchedToFrame", {frameValue: parentElement});
 
    sendOk(msg.json.command_id);
  }
@@ -1624,45 +1356,47 @@ function switchToFrame(msg) {
     checkTimer.initWithCallback(checkLoad, 100, Ci.nsITimer.TYPE_ONE_SHOT);
     return;
   }
-  if (msg.json.element != undefined) {
-    if (elementManager.seenItems[msg.json.element] != undefined) {
-      let wantedFrame;
-      try {
-        wantedFrame = elementManager.getKnownElement(msg.json.element, curContainer); //Frame Element
-      } catch (e) {
-        sendError(e, command_id);
-      }
 
-      if (frames.length > 0) {
-        for (let i = 0; i < frames.length; i++) {
-          // use XPCNativeWrapper to compare elements; see bug 834266
-          if (XPCNativeWrapper(frames[i].frameElement) == XPCNativeWrapper(wantedFrame)) {
-            curContainer.frame = frames[i].frameElement;
-            foundFrame = i;
-          }
+  let id = msg.json.element;
+  if (seenEls.has(id)) {
+    let wantedFrame;
+    try {
+      wantedFrame = seenEls.get(id, curContainer);
+    } catch (e) {
+      sendError(e, command_id);
+    }
+
+    if (frames.length > 0) {
+      for (let i = 0; i < frames.length; i++) {
+        // use XPCNativeWrapper to compare elements; see bug 834266
+        if (XPCNativeWrapper(frames[i].frameElement) == XPCNativeWrapper(wantedFrame)) {
+          curContainer.frame = frames[i].frameElement;
+          foundFrame = i;
         }
       }
-      if (foundFrame === null) {
-        // Either the frame has been removed or we have a OOP frame
-        // so lets just get all the iframes and do a quick loop before
-        // throwing in the towel
-        let iframes = curContainer.frame.document.getElementsByTagName("iframe");
-        for (var i = 0; i < iframes.length; i++) {
-          if (XPCNativeWrapper(iframes[i]) == XPCNativeWrapper(wantedFrame)) {
-            curContainer.frame = iframes[i];
-            foundFrame = i;
-          }
+    }
+
+    if (foundFrame === null) {
+      // Either the frame has been removed or we have a OOP frame
+      // so lets just get all the iframes and do a quick loop before
+      // throwing in the towel
+      let iframes = curContainer.frame.document.getElementsByTagName("iframe");
+      for (var i = 0; i < iframes.length; i++) {
+        if (XPCNativeWrapper(iframes[i]) == XPCNativeWrapper(wantedFrame)) {
+          curContainer.frame = iframes[i];
+          foundFrame = i;
         }
       }
     }
   }
+
   if (foundFrame === null) {
     if (typeof(msg.json.id) === 'number') {
       try {
         foundFrame = frames[msg.json.id].frameElement;
         if (foundFrame !== null) {
           curContainer.frame = foundFrame;
-          foundFrame = elementManager.addToKnownElements(curContainer.frame);
+          foundFrame = seenEls.add(curContainer.frame);
         }
         else {
           // If foundFrame is null at this point then we have the top level browsing
@@ -1696,8 +1430,9 @@ function switchToFrame(msg) {
 
   // send a synchronous message to let the server update the currently active
   // frame element (for getActiveFrame)
-  let frameValue = elementManager.wrapValue(curContainer.frame.wrappedJSObject)['ELEMENT'];
-  sendSyncMessage("Marionette:switchedToFrame", { frameValue: frameValue });
+  let frameValue = element.toJson(
+      curContainer.frame.wrappedJSObject, seenEls)[element.Key];
+  sendSyncMessage("Marionette:switchedToFrame", {frameValue: frameValue});
 
   let rv = null;
   if (curContainer.frame.contentWindow === null) {
@@ -1707,12 +1442,13 @@ function switchToFrame(msg) {
     rv = {win: parWindow, frame: foundFrame};
   } else {
     curContainer.frame = curContainer.frame.contentWindow;
-    if (msg.json.focus)
+    if (msg.json.focus) {
       curContainer.frame.focus();
+    }
     checkTimer.initWithCallback(checkLoad, 100, Ci.nsITimer.TYPE_ONE_SHOT);
   }
 
-  sendResponse({value: rv}, command_id);
+  sendResponse(rv, command_id);
 }
 
 function addCookie(cookie) {
@@ -1765,76 +1501,8 @@ function deleteAllCookies() {
 }
 
 function getAppCacheStatus(msg) {
-  sendResponse({ value: curContainer.frame.applicationCache.status },
-               msg.json.command_id);
-}
-
-// emulator callbacks
-var _emu_cb_id = 0;
-var _emu_cbs = {};
-
-function runEmulatorCmd(cmd, callback) {
-  if (callback) {
-    _emu_cbs[_emu_cb_id] = callback;
-  }
-  sendAsyncMessage("Marionette:runEmulatorCmd",
-      {command: cmd, id: _emu_cb_id});
-  _emu_cb_id += 1;
-}
-
-function runEmulatorShell(args, callback) {
-  if (callback) {
-    _emu_cbs[_emu_cb_id] = callback;
-  }
-  sendAsyncMessage("Marionette:runEmulatorShell",
-      {arguments: args, id: _emu_cb_id});
-  _emu_cb_id += 1;
-}
-
-function emulatorCmdResult(msg) {
-  let {error, result, id} = msg.json;
-
-  if (error) {
-    let err = new JavaScriptError(error);
-    sendError(err, id);
-    return;
-  }
-
-  if (!sandboxes[sandboxName]) {
-    return;
-  }
-  let cb = _emu_cbs[id];
-  delete _emu_cbs[id];
-  if (!cb) {
-    return;
-  }
-
-  try {
-    cb(result);
-  } catch (e) {
-    let err = new JavaScriptError(e);
-    sendError(err, id);
-  }
-}
-
-function importScript(msg) {
-  let command_id = msg.json.command_id;
-  let file;
-  if (importedScripts.exists()) {
-    file = FileUtils.openFileOutputStream(importedScripts,
-        FileUtils.MODE_APPEND | FileUtils.MODE_WRONLY);
-  }
-  else {
-    //Note: The permission bits here don't actually get set (bug 804563)
-    importedScripts.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE,
-                                 parseInt("0666", 8));
-    file = FileUtils.openFileOutputStream(importedScripts,
-                                          FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE);
-    importedScripts.permissions = parseInt("0666", 8); //actually set permissions
-  }
-  file.write(msg.json.script, msg.json.script.length);
-  file.close();
-  sendOk(command_id);
+  sendResponse(
+      curContainer.frame.applicationCache.status, msg.json.command_id);
 }
 
 /**
@@ -1854,11 +1522,54 @@ function importScript(msg) {
  *     Base64 encoded string of an image/png type.
  */
 function takeScreenshot(id, full=true, highlights=[]) {
+  let canvas = screenshot(id, full, highlights);
+  return capture.toBase64(canvas);
+}
+
+/**
+* Perform a screen capture in content context.
+*
+* @param {UUID=} id
+*     Optional web element reference of an element to take a screenshot
+*     of.
+* @param {boolean=} full
+*     True to take a screenshot of the entire document element.  Is not
+*     considered if {@code id} is not defined.  Defaults to true.
+* @param {Array.<UUID>=} highlights
+*     Draw a border around the elements found by their web element
+*     references.
+*
+* @return {string}
+*     Hex Digest of a SHA-256 hash of the base64 encoded string of an
+*     image/png type.
+*/
+function getScreenshotHash(id, full=true, highlights=[]) {
+  let canvas = screenshot(id, full, highlights);
+  return capture.toHash(canvas);
+}
+
+/**
+* Perform a screen capture in content context.
+*
+* @param {UUID=} id
+*     Optional web element reference of an element to take a screenshot
+*     of.
+* @param {boolean=} full
+*     True to take a screenshot of the entire document element.  Is not
+*     considered if {@code id} is not defined.  Defaults to true.
+* @param {Array.<UUID>=} highlights
+*     Draw a border around the elements found by their web element
+*     references.
+*
+* @return {HTMLCanvasElement}
+*     The canvas element to be encoded or hashed.
+*/
+function screenshot(id, full=true, highlights=[]) {
   let canvas;
 
   let highlightEls = [];
   for (let h of highlights) {
-    let el = elementManager.getKnownElement(h, curContainer);
+    let el = seenEls.get(h, curContainer);
     highlightEls.push(el);
   }
 
@@ -1870,7 +1581,7 @@ function takeScreenshot(id, full=true, highlights=[]) {
   } else {
     let node;
     if (id) {
-      node = elementManager.getKnownElement(id, curContainer);
+      node = seenEls.get(id, curContainer);
     } else {
       node = curContainer.frame.document.documentElement;
     }
@@ -1878,7 +1589,7 @@ function takeScreenshot(id, full=true, highlights=[]) {
     canvas = capture.element(node, highlightEls);
   }
 
-  return capture.toBase64(canvas);
+  return canvas;
 }
 
 // Call register self when we get loaded

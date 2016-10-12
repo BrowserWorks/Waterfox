@@ -42,7 +42,7 @@ public:
 
     virtual void
     GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
-                           int32_t aRunScript,
+                           Script aRunScript,
                            nsTArray<const char*>& aFontList) override;
 
     virtual gfxPlatformFontList* CreatePlatformFontList() override;
@@ -100,10 +100,6 @@ public:
 
     bool UseXRender() {
 #if defined(MOZ_X11)
-        if (GetDefaultContentBackend() != mozilla::gfx::BackendType::NONE &&
-            GetDefaultContentBackend() != mozilla::gfx::BackendType::CAIRO)
-            return false;
-
         return sUseXRender;
 #else
         return false;

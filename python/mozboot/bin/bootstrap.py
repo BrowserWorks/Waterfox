@@ -12,38 +12,36 @@
 
 # If we add unicode_literals, optparse breaks on Python 2.6.1 (which is needed
 # to support OS X 10.6).
+
 from __future__ import print_function
+
+WRONG_PYTHON_VERSION_MESSAGE = '''
+Bootstrap currently only runs on Python 2.7 or Python 2.6. Please try re-running with python2.7 or python2.6.
+
+If these aren't available on your system, you may need to install them. Look for a "python2" or "python27" package in your package manager.
+'''
+
+import sys
+if sys.version_info[:2] not in [(2, 6), (2, 7)]:
+    print(WRONG_PYTHON_VERSION_MESSAGE)
+    sys.exit(1)
 
 import os
 import shutil
-import sys
+from StringIO import StringIO
 import tempfile
 try:
     from urllib2 import urlopen
 except ImportError:
     from urllib.request import urlopen
+import zipfile
 
 from optparse import OptionParser
 
 # The next two variables define where in the repository the Python files
 # reside. This is used to remotely download file content when it isn't
 # available locally.
-REPOSITORY_PATH_PREFIX = 'python/mozboot'
-
-REPOSITORY_PATHS = [
-    'mozboot/__init__.py',
-    'mozboot/android.py',
-    'mozboot/archlinux.py',
-    'mozboot/base.py',
-    'mozboot/bootstrap.py',
-    'mozboot/centos.py',
-    'mozboot/debian.py',
-    'mozboot/fedora.py',
-    'mozboot/freebsd.py',
-    'mozboot/gentoo.py',
-    'mozboot/openbsd.py',
-    'mozboot/osx.py',
-]
+REPOSITORY_PATH_PREFIX = 'python/mozboot/'
 
 TEMPDIR = None
 
@@ -65,11 +63,22 @@ def fetch_files(repo_url, repo_type):
     files = {}
 
     if repo_type == 'hgweb':
-        for path in REPOSITORY_PATHS:
-            url = repo_url + '/raw-file/default/python/mozboot/' + path
+        url = repo_url + '/archive/default.zip/python/mozboot'
+        req = urlopen(url=url, timeout=30)
+        data = StringIO(req.read())
+        data.seek(0)
+        zip = zipfile.ZipFile(data, 'r')
+        for f in zip.infolist():
+            # The paths are prefixed with the repo and revision name before the
+            # directory name.
+            offset = f.filename.find(REPOSITORY_PATH_PREFIX) + len(REPOSITORY_PATH_PREFIX)
+            name = f.filename[offset:]
 
-            req = urlopen(url=url, timeout=30)
-            files[path] = req.read()
+            # We only care about the Python modules.
+            if not name.startswith('mozboot/'):
+                continue
+
+            files[name] = zip.read(f)
     else:
         raise NotImplementedError('Not sure how to handle repo type.', repo_type)
 

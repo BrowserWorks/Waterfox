@@ -29,10 +29,12 @@ class TlsHandshakeSkipFilter : public TlsRecordFilter {
  protected:
   // Takes a record; if it is a handshake record, it removes the first handshake
   // message that is of handshake_type_ type.
-  virtual bool FilterRecord(uint8_t content_type, uint16_t version,
-                            const DataBuffer& input, DataBuffer* output) {
-    if (content_type != kTlsHandshakeType) {
-      return false;
+  virtual PacketFilter::Action FilterRecord(
+      const RecordHeader& record_header,
+      const DataBuffer& input, DataBuffer* output) {
+
+    if (record_header.content_type() != kTlsHandshakeType) {
+      return KEEP;
     }
 
     size_t output_offset = 0U;
@@ -41,25 +43,18 @@ class TlsHandshakeSkipFilter : public TlsRecordFilter {
     TlsParser parser(input);
     while (parser.remaining()) {
       size_t start = parser.consumed();
-      uint8_t handshake_type;
-      if (!parser.Read(&handshake_type)) {
-        return false;
-      }
-      uint32_t length;
-      if (!TlsHandshakeFilter::ReadLength(&parser, version, &length)) {
-        return false;
+      TlsHandshakeFilter::HandshakeHeader header;
+      DataBuffer ignored;
+      if (!header.Parse(&parser, record_header, &ignored)) {
+        return KEEP;
       }
 
-      if (!parser.Skip(length)) {
-        return false;
-      }
-
-      if (skipped_ || handshake_type != handshake_type_) {
+      if (skipped_ || header.handshake_type() != handshake_type_) {
         size_t entire_length = parser.consumed() - start;
         output->Write(output_offset, input.data() + start,
                       entire_length);
         // DTLS sequence numbers need to be rewritten
-        if (skipped_ && IsDtls(version)) {
+        if (skipped_ && header.is_dtls()) {
           output->data()[start + 5] -= 1;
         }
         output_offset += entire_length;
@@ -74,7 +69,7 @@ class TlsHandshakeSkipFilter : public TlsRecordFilter {
       }
     }
     output->Truncate(output_offset);
-    return skipped_;
+    return skipped_ ? CHANGE : KEEP;
   }
 
  private:
@@ -109,7 +104,7 @@ class TlsSkipTest
 };
 
 TEST_P(TlsSkipTest, SkipCertificateRsa) {
-  DisableDheAndEcdheCiphers();
+  EnableOnlyStaticRsaCiphers();
   ServerSkipTest(new TlsHandshakeSkipFilter(kTlsHandshakeCertificate));
   client_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_HELLO_DONE);
 }
@@ -125,7 +120,7 @@ TEST_P(TlsSkipTest, SkipCertificateEcdhe) {
 }
 
 TEST_P(TlsSkipTest, SkipCertificateEcdsa) {
-  ResetEcdsa();
+  Reset(TlsAgent::kServerEcdsa);
   ServerSkipTest(new TlsHandshakeSkipFilter(kTlsHandshakeCertificate));
   client_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_SERVER_KEY_EXCH);
 }
@@ -136,7 +131,7 @@ TEST_P(TlsSkipTest, SkipServerKeyExchange) {
 }
 
 TEST_P(TlsSkipTest, SkipServerKeyExchangeEcdsa) {
-  ResetEcdsa();
+  Reset(TlsAgent::kServerEcdsa);
   ServerSkipTest(new TlsHandshakeSkipFilter(kTlsHandshakeServerKeyExchange));
   client_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_HELLO_DONE);
 }
@@ -150,7 +145,7 @@ TEST_P(TlsSkipTest, SkipCertAndKeyExch) {
 }
 
 TEST_P(TlsSkipTest, SkipCertAndKeyExchEcdsa) {
-  ResetEcdsa();
+  Reset(TlsAgent::kServerEcdsa);
   auto chain = new ChainedPacketFilter();
   chain->Add(new TlsHandshakeSkipFilter(kTlsHandshakeCertificate));
   chain->Add(new TlsHandshakeSkipFilter(kTlsHandshakeServerKeyExchange));

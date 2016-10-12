@@ -7,7 +7,6 @@
 #ifndef nsDeviceStorage_h
 #define nsDeviceStorage_h
 
-class nsPIDOMWindow;
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Logging.h"
@@ -101,7 +100,7 @@ public:
   ~DeviceStorageUsedSpaceCache();
 
 
-  class InvalidateRunnable final : public nsRunnable
+  class InvalidateRunnable final : public mozilla::Runnable
   {
     public:
       InvalidateRunnable(DeviceStorageUsedSpaceCache* aCache, 
@@ -305,7 +304,7 @@ private:
 };
 
 class DeviceStorageRequest
-  : public nsRunnable
+  : public mozilla::Runnable
 {
 protected:
   DeviceStorageRequest();

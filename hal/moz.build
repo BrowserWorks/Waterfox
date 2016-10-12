@@ -51,6 +51,10 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'gonk/GonkDiskSpaceWatcher.cpp',
         'gonk/GonkFMRadio.cpp',
         'gonk/GonkSensor.cpp',
+        'gonk/GonkSensorsHelpers.cpp',
+        'gonk/GonkSensorsInterface.cpp',
+        'gonk/GonkSensorsPollInterface.cpp',
+        'gonk/GonkSensorsRegistryInterface.cpp',
         'gonk/GonkSwitch.cpp',
         'gonk/SystemService.cpp',
         'gonk/UeventPoller.cpp',
@@ -182,6 +186,3 @@ CFLAGS += CONFIG['GLIB_CFLAGS']
 CFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
 CXXFLAGS += CONFIG['GLIB_CFLAGS']
 CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

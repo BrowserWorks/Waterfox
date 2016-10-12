@@ -5,6 +5,7 @@
 
 import concurrent.futures
 import mock
+import mozunit
 import os
 import platform
 import shutil
@@ -58,17 +59,27 @@ class HelperMixin(object):
         symbolstore.srcdirRepoInfo = {}
         symbolstore.vcsFileInfoCache = {}
 
+        # Remove environment variables that can influence tests.
+        for e in ('MOZ_SOURCE_CHANGESET', 'MOZ_SOURCE_REPO'):
+            try:
+                del os.environ[e]
+            except KeyError:
+                pass
+
     def tearDown(self):
         shutil.rmtree(self.test_dir)
         symbolstore.srcdirRepoInfo = {}
         symbolstore.vcsFileInfoCache = {}
 
+    def make_dirs(self, f):
+        d = os.path.dirname(f)
+        if d and not os.path.exists(d):
+            os.makedirs(d)
+
     def add_test_files(self, files):
         for f in files:
             f = os.path.join(self.test_dir, f)
-            d = os.path.dirname(f)
-            if d and not os.path.exists(d):
-                os.makedirs(d)
+            self.make_dirs(f)
             writer(f)
 
 class TestSizeOrder(HelperMixin, unittest.TestCase):
@@ -260,6 +271,16 @@ class TestGetVCSFilename(HelperMixin, unittest.TestCase):
         self.assertEqual("hg:example.com/other:bar.c:0987ffff",
                          symbolstore.GetVCSFilename(filename2, [srcdir1, srcdir2])[0])
 
+    def testVCSFilenameEnv(self):
+        # repo URL and changeset read from environment variables if defined.
+        os.environ['MOZ_SOURCE_REPO'] = 'https://somewhere.com/repo'
+        os.environ['MOZ_SOURCE_CHANGESET'] = 'abcdef0123456'
+        os.mkdir(os.path.join(self.test_dir, '.hg'))
+        filename = os.path.join(self.test_dir, 'foo.c')
+        self.assertEqual('hg:somewhere.com/repo:foo.c:abcdef0123456',
+                         symbolstore.GetVCSFilename(filename, [self.test_dir])[0])
+
+
 class TestRepoManifest(HelperMixin, unittest.TestCase):
     def testRepoManifest(self):
         manifest = os.path.join(self.test_dir, "sources.xml")
@@ -287,6 +308,31 @@ class TestRepoManifest(HelperMixin, unittest.TestCase):
                          symbolstore.GetVCSFilename(file3, d.srcdirs)[0])
 
 if platform.system() in ("Windows", "Microsoft"):
+    class TestFixFilenameCase(HelperMixin, unittest.TestCase):
+        def test_fix_filename_case(self):
+            # self.test_dir is going to be 8.3 paths...
+            junk = os.path.join(self.test_dir, 'x')
+            with open(junk, 'wb') as o:
+                o.write('x')
+            d = symbolstore.Dumper_Win32(dump_syms='dump_syms',
+                                         symbol_path=self.test_dir)
+            fixed_dir = os.path.dirname(d.FixFilenameCase(junk))
+            files = [
+                'one\\two.c',
+                'three\\Four.d',
+                'Five\\Six.e',
+                'seven\\Eight\\nine.F',
+            ]
+            for rel_path in files:
+                full_path = os.path.normpath(os.path.join(self.test_dir,
+                                                          rel_path))
+                self.make_dirs(full_path)
+                with open(full_path, 'wb') as o:
+                    o.write('x')
+                fixed_path = d.FixFilenameCase(full_path.lower())
+                fixed_path = os.path.relpath(fixed_path, fixed_dir)
+                self.assertEqual(rel_path, fixed_path)
+
     class TestSourceServer(HelperMixin, unittest.TestCase):
         @patch("subprocess.call")
         @patch("subprocess.Popen")
@@ -478,12 +524,17 @@ class TestFunctional(HelperMixin, unittest.TestCase):
                                         'crashreporter', 'tools',
                                         'symbolstore.py')
         if platform.system() in ("Windows", "Microsoft"):
-            self.dump_syms = os.path.join(self.topsrcdir,
-                                          'toolkit',
-                                          'crashreporter',
-                                          'tools',
-                                          'win32',
-                                          'dump_syms_vc{_MSC_VER}.exe'.format(**buildconfig.substs))
+            if buildconfig.substs['MSVC_HAS_DIA_SDK']:
+                self.dump_syms = os.path.join(buildconfig.topobjdir,
+                                              'dist', 'host', 'bin',
+                                              'dump_syms.exe')
+            else:
+                self.dump_syms = os.path.join(self.topsrcdir,
+                                              'toolkit',
+                                              'crashreporter',
+                                              'tools',
+                                              'win32',
+                                              'dump_syms_vc{_MSC_VER}.exe'.format(**buildconfig.substs))
             self.target_bin = os.path.join(buildconfig.topobjdir,
                                            'browser',
                                            'app',
@@ -528,5 +579,5 @@ if __name__ == '__main__':
     # that our mocking/module-patching works.
     symbolstore.Dumper.GlobalInit(concurrent.futures.ThreadPoolExecutor)
 
-    unittest.main()
+    mozunit.main()
 

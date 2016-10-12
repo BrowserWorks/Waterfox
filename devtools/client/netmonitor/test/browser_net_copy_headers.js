@@ -5,7 +5,7 @@
  * Tests if copying a request's request/response headers works.
  */
 
-add_task(function*() {
+add_task(function* () {
 
   let [ aTab, aDebuggee, aMonitor ] = yield initNetMonitor(SIMPLE_URL);
   info("Starting test... ");
@@ -31,6 +31,7 @@ add_task(function*() {
     "Accept-Language: " + navigator.languages.join(",") + ";q=0.5",
     "Accept-Encoding: gzip, deflate",
     "Connection: keep-alive",
+    "Upgrade-Insecure-Requests: 1",
     "Pragma: no-cache",
     "Cache-Control: no-cache"
   ].join("\n");

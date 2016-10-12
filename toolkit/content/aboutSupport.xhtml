@@ -130,6 +130,15 @@
             </td>
           </tr>
 
+          <tr>
+            <th class="column">
+              &aboutSupport.appBasicsOS;
+            </th>
+
+            <td id="os-box">
+            </td>
+          </tr>
+
           <tr id="profile-row" class="no-copy">
             <th class="column">
 #ifdef XP_WIN
@@ -185,6 +194,16 @@
 
             <td>
               <a href="about:memory">about:memory</a>
+            </td>
+          </tr>
+
+          <tr class="no-copy">
+            <th class="column">
+              &aboutSupport.appBasicsPerformance;
+            </th>
+
+            <td>
+              <a href="about:performance">about:performance</a>
             </td>
           </tr>
 
@@ -290,13 +309,71 @@
       </h2>
 
       <table>
+        <tbody id="graphics-features-tbody">
+          <tr>
+            <th colspan="2" class="title-column">
+              &aboutSupport.graphicsFeaturesTitle;
+            </th>
+          </tr>
+        </tbody>
+
         <tbody id="graphics-tbody">
         </tbody>
 
-        <tbody id="graphics-info-properties">
+        <tbody id="graphics-gpu-1-tbody">
+          <tr>
+            <th colspan="2" class="title-column">
+              &aboutSupport.graphicsGPU1Title;
+            </th>
+          </tr>
+        </tbody>
+
+        <tbody id="graphics-gpu-2-tbody">
+          <tr>
+            <th colspan="2" class="title-column">
+              &aboutSupport.graphicsGPU2Title;
+            </th>
+          </tr>
+        </tbody>
+
+        <tbody id="graphics-diagnostics-tbody">
+          <tr>
+            <th colspan="2" class="title-column">
+              &aboutSupport.graphicsDiagnosticsTitle;
+            </th>
+          </tr>
+        </tbody>
+
+        <tbody id="graphics-decisions-tbody">
+          <tr>
+            <th colspan="2" class="title-column">
+              &aboutSupport.graphicsDecisionLogTitle;
+            </th>
+          </tr>
+        </tbody>
+
+        <tbody id="graphics-crashguards-tbody">
+          <tr>
+            <th colspan="2" class="title-column">
+              &aboutSupport.graphicsCrashGuardsTitle;
+            </th>
+          </tr>
+        </tbody>
+
+        <tbody id="graphics-workarounds-tbody">
+          <tr>
+            <th colspan="2" class="title-column">
+              &aboutSupport.graphicsWorkaroundsTitle;
+            </th>
+          </tr>
         </tbody>
 
         <tbody id="graphics-failures-tbody">
+          <tr>
+            <th colspan="2" class="title-column">
+              &aboutSupport.graphicsFailureLogTitle;
+            </th>
+          </tr>
         </tbody>
       </table>
 
@@ -345,6 +422,27 @@
 
         <tbody id="locked-prefs-tbody">
         </tbody>
+      </table>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - -->
+
+      <h2 class="major-section">
+        &aboutSupport.placeDatabaseTitle;
+      </h2>
+
+      <table>
+        <tr class="no-copy">
+          <th class="column">
+            &aboutSupport.placeDatabaseIntegrity;
+          </th>
+
+          <td>
+            <button id="verify-place-integrity-button">
+              &aboutSupport.placeDatabaseVerifyIntegrity;
+            </button>
+            <pre id="verify-place-result" class="hidden no-copy"></pre>
+          </td>
+        </tr>
       </table>
 
       <!-- - - - - - - - - - - - - - - - - - - - - -->

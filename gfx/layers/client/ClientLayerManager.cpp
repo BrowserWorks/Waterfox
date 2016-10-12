@@ -12,7 +12,7 @@
 #include "mozilla/dom/TabChild.h"       // for TabChild
 #include "mozilla/hal_sandbox/PHal.h"   // for ScreenConfiguration
 #include "mozilla/layers/CompositableClient.h"
-#include "mozilla/layers/CompositorChild.h" // for CompositorChild
+#include "mozilla/layers/CompositorBridgeChild.h" // for CompositorBridgeChild
 #include "mozilla/layers/ContentClient.h"
 #include "mozilla/layers/FrameUniformityData.h"
 #include "mozilla/layers/ISurfaceAllocator.h"
@@ -26,7 +26,7 @@
 #include "ClientReadbackLayer.h"        // for ClientReadbackLayer
 #include "nsAString.h"
 #include "nsIWidgetListener.h"
-#include "nsTArray.h"                   // for AutoInfallibleTArray
+#include "nsTArray.h"                   // for AutoTArray
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType, etc
 #include "TiledLayerBuffer.h"
 #include "mozilla/dom/WindowBinding.h"  // for Overfill Callback
@@ -102,10 +102,12 @@ ClientLayerManager::ClientLayerManager(nsIWidget* aWidget)
   , mNeedsComposite(false)
   , mPaintSequenceNumber(0)
   , mForwarder(new ShadowLayerForwarder)
+  , mDeviceCounter(gfxPlatform::GetPlatform()->GetDeviceCounter())
 {
   MOZ_COUNT_CTOR(ClientLayerManager);
   mMemoryPressureObserver = new MemoryPressureObserver(this);
 }
+
 
 ClientLayerManager::~ClientLayerManager()
 {
@@ -119,12 +121,24 @@ ClientLayerManager::~ClientLayerManager()
   // After the call, the message is directly handled by LayerTransactionChild. 
   // Basically this function should be called in ShadowLayerForwarder's
   // destructor. But when the destructor is triggered by 
-  // CompositorChild::Destroy(), the destructor can not handle it correctly.
+  // CompositorBridgeChild::Destroy(), the destructor can not handle it correctly.
   // See Bug 1000525.
   mForwarder->StopReceiveAsyncParentMessge();
   mRoot = nullptr;
 
   MOZ_COUNT_DTOR(ClientLayerManager);
+}
+
+void
+ClientLayerManager::Destroy()
+{
+  // It's important to call ClearCachedResource before Destroy because the
+  // former will early-return if the later has already run.
+  ClearCachedResources();
+  for (size_t i = 0; i < mTexturePools.Length(); i++) {
+    mTexturePools[i]->Destroy();
+  }
+  LayerManager::Destroy();
 }
 
 int32_t
@@ -188,6 +202,11 @@ ClientLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
 
   NS_ASSERTION(!InTransaction(), "Nested transactions not allowed");
   mPhase = PHASE_CONSTRUCTION;
+
+  if (DependsOnStaleDevice()) {
+    FrameLayerBuilder::InvalidateAllLayers(this);
+    mDeviceCounter = gfxPlatform::GetPlatform()->GetDeviceCounter();
+  }
 
   MOZ_ASSERT(mKeepAlive.IsEmpty(), "uncommitted txn?");
 
@@ -334,10 +353,6 @@ ClientLayerManager::EndTransaction(DrawPaintedLayerCallback aCallback,
     MakeSnapshotIfRequired();
   }
 
-  for (size_t i = 0; i < mTexturePools.Length(); i++) {
-    mTexturePools[i]->ReturnDeferredClients();
-  }
-
   mInTransaction = false;
   mTransactionStart = TimeStamp();
 }
@@ -364,7 +379,7 @@ ClientLayerManager::EndEmptyTransaction(EndTransactionFlags aFlags)
   return true;
 }
 
-CompositorChild *
+CompositorBridgeChild *
 ClientLayerManager::GetRemoteRenderer()
 {
   if (!mWidget) {
@@ -374,11 +389,11 @@ ClientLayerManager::GetRemoteRenderer()
   return mWidget->GetRemoteRenderer();
 }
 
-CompositorChild*
-ClientLayerManager::GetCompositorChild()
+CompositorBridgeChild*
+ClientLayerManager::GetCompositorBridgeChild()
 {
   if (!XRE_IsParentProcess()) {
-    return CompositorChild::Get();
+    return CompositorBridgeChild::Get();
   }
   return GetRemoteRenderer();
 }
@@ -401,11 +416,11 @@ ClientLayerManager::DidComposite(uint64_t aTransactionId,
   if (aTransactionId) {
     nsIWidgetListener *listener = mWidget->GetWidgetListener();
     if (listener) {
-      listener->DidCompositeWindow(aCompositeStart, aCompositeEnd);
+      listener->DidCompositeWindow(aTransactionId, aCompositeStart, aCompositeEnd);
     }
     listener = mWidget->GetAttachedWidgetListener();
     if (listener) {
-      listener->DidCompositeWindow(aCompositeStart, aCompositeEnd);
+      listener->DidCompositeWindow(aTransactionId, aCompositeStart, aCompositeEnd);
     }
     mTransactionIdAllocator->NotifyTransactionCompleted(aTransactionId);
   }
@@ -413,6 +428,10 @@ ClientLayerManager::DidComposite(uint64_t aTransactionId,
   // These observers fire whether or not we were in a transaction.
   for (size_t i = 0; i < mDidCompositeObservers.Length(); i++) {
     mDidCompositeObservers[i]->DidComposite();
+  }
+
+  for (size_t i = 0; i < mTexturePools.Length(); i++) {
+    mTexturePools[i]->ReturnDeferredClients();
   }
 }
 
@@ -453,7 +472,7 @@ ClientLayerManager::GetFrameUniformity(FrameUniformityData* aOutData)
   MOZ_ASSERT(XRE_IsParentProcess(), "Frame Uniformity only supported in parent process");
 
   if (HasShadowManager()) {
-    CompositorChild* child = GetRemoteRenderer();
+    CompositorBridgeChild* child = GetRemoteRenderer();
     child->SendGetFrameUniformity(aOutData);
     return;
   }
@@ -468,8 +487,8 @@ ClientLayerManager::RequestOverfill(mozilla::dom::OverfillCallback* aCallback)
   MOZ_ASSERT(HasShadowManager(), "Request Overfill only supported on b2g for now");
 
   if (HasShadowManager()) {
-    CompositorChild* child = GetRemoteRenderer();
-    NS_ASSERTION(child, "Could not get CompositorChild");
+    CompositorBridgeChild* child = GetRemoteRenderer();
+    NS_ASSERTION(child, "Could not get CompositorBridgeChild");
 
     child->AddOverfillObserver(this);
     child->SendRequestOverfill();
@@ -497,7 +516,7 @@ ClientLayerManager::MakeSnapshotIfRequired()
     return;
   }
   if (mWidget) {
-    if (CompositorChild* remoteRenderer = GetRemoteRenderer()) {
+    if (CompositorBridgeChild* remoteRenderer = GetRemoteRenderer()) {
       // The compositor doesn't draw to a different sized surface
       // when there's a rotation. Instead we rotate the result
       // when drawing into dt
@@ -533,7 +552,7 @@ ClientLayerManager::MakeSnapshotIfRequired()
                           DrawOptions(1.0f, CompositionOp::OP_OVER));
           dt->SetTransform(oldMatrix);
         }
-        mForwarder->DestroySharedSurface(&inSnapshot);
+        mForwarder->DestroySurfaceDescriptor(&inSnapshot);
       }
     }
   }
@@ -544,17 +563,23 @@ void
 ClientLayerManager::FlushRendering()
 {
   if (mWidget) {
-    if (CompositorChild* remoteRenderer = mWidget->GetRemoteRenderer()) {
+    if (CompositorBridgeChild* remoteRenderer = mWidget->GetRemoteRenderer()) {
       remoteRenderer->SendFlushRendering();
     }
   }
 }
 
 void
+ClientLayerManager::UpdateTextureFactoryIdentifier(const TextureFactoryIdentifier& aNewIdentifier)
+{
+  mForwarder->IdentifyTextureHost(aNewIdentifier);
+}
+
+void
 ClientLayerManager::SendInvalidRegion(const nsIntRegion& aRegion)
 {
   if (mWidget) {
-    if (CompositorChild* remoteRenderer = mWidget->GetRemoteRenderer()) {
+    if (CompositorBridgeChild* remoteRenderer = mWidget->GetRemoteRenderer()) {
       remoteRenderer->SendNotifyRegionInvalidated(aRegion);
     }
   }
@@ -563,7 +588,7 @@ ClientLayerManager::SendInvalidRegion(const nsIntRegion& aRegion)
 uint32_t
 ClientLayerManager::StartFrameTimeRecording(int32_t aBufferSize)
 {
-  CompositorChild* renderer = GetRemoteRenderer();
+  CompositorBridgeChild* renderer = GetRemoteRenderer();
   if (renderer) {
     uint32_t startIndex;
     renderer->SendStartFrameTimeRecording(aBufferSize, &startIndex);
@@ -576,7 +601,7 @@ void
 ClientLayerManager::StopFrameTimeRecording(uint32_t         aStartIndex,
                                            nsTArray<float>& aFrameIntervals)
 {
-  CompositorChild* renderer = GetRemoteRenderer();
+  CompositorBridgeChild* renderer = GetRemoteRenderer();
   if (renderer) {
     renderer->SendStopFrameTimeRecording(aStartIndex, &aFrameIntervals);
   }
@@ -603,7 +628,7 @@ ClientLayerManager::ForwardTransaction(bool aScheduleComposite)
 
   // forward this transaction's changeset to our LayerManagerComposite
   bool sent;
-  AutoInfallibleTArray<EditReply, 10> replies;
+  AutoTArray<EditReply, 10> replies;
   if (mForwarder->EndTransaction(&replies, mRegionToClear,
         mLatestTransactionId, aScheduleComposite, mPaintSequenceNumber,
         mIsRepeatTransaction, transactionStart, &sent)) {
@@ -696,6 +721,8 @@ ClientLayerManager::SetIsFirstPaint()
 TextureClientPool*
 ClientLayerManager::GetTexturePool(SurfaceFormat aFormat, TextureFlags aFlags)
 {
+  MOZ_DIAGNOSTIC_ASSERT(!mDestroyed);
+
   for (size_t i = 0; i < mTexturePools.Length(); i++) {
     if (mTexturePools[i]->GetFormat() == aFormat &&
         mTexturePools[i]->GetFlags() == aFlags) {
@@ -736,6 +763,10 @@ ClientLayerManager::ClearCachedResources(Layer* aSubtree)
 void
 ClientLayerManager::HandleMemoryPressure()
 {
+  if (mRoot) {
+    HandleMemoryPressureLayer(mRoot);
+  }
+
   for (size_t i = 0; i < mTexturePools.Length(); i++) {
     mTexturePools[i]->ShrinkToMinimumSize();
   }
@@ -748,6 +779,16 @@ ClientLayerManager::ClearLayer(Layer* aLayer)
   for (Layer* child = aLayer->GetFirstChild(); child;
        child = child->GetNextSibling()) {
     ClearLayer(child);
+  }
+}
+
+void
+ClientLayerManager::HandleMemoryPressureLayer(Layer* aLayer)
+{
+  ClientLayer::ToClientLayer(aLayer)->HandleMemoryPressure();
+  for (Layer* child = aLayer->GetFirstChild(); child;
+       child = child->GetNextSibling()) {
+    HandleMemoryPressureLayer(child);
   }
 }
 
@@ -781,7 +822,7 @@ ClientLayerManager::ProgressiveUpdateCallback(bool aHasPendingNewThebesContent,
 #ifdef MOZ_WIDGET_ANDROID
   MOZ_ASSERT(aMetrics.IsScrollable());
   // This is derived from the code in
-  // gfx/layers/ipc/CompositorParent.cpp::TransformShadowTree.
+  // gfx/layers/ipc/CompositorBridgeParent.cpp::TransformShadowTree.
   CSSToLayerScale paintScale = aMetrics.LayersPixelsPerCSSPixel().ToScaleFactor();
   const CSSRect& metricsDisplayPort =
     (aDrawingCritical && !aMetrics.GetCriticalDisplayPort().IsEmpty()) ?
@@ -825,6 +866,12 @@ void
 ClientLayerManager::RemoveDidCompositeObserver(DidCompositeObserver* aObserver)
 {
   mDidCompositeObservers.RemoveElement(aObserver);
+}
+
+bool
+ClientLayerManager::DependsOnStaleDevice() const
+{
+  return gfxPlatform::GetPlatform()->GetDeviceCounter() != mDeviceCounter;
 }
 
 ClientLayer::~ClientLayer()

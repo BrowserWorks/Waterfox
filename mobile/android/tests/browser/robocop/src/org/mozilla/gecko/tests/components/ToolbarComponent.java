@@ -21,8 +21,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.jayway.android.robotium.solo.Condition;
-import com.jayway.android.robotium.solo.Solo;
+import com.robotium.solo.Condition;
+import com.robotium.solo.Solo;
 
 /**
  * A class representing any interactions that take place on the Toolbar.
@@ -63,7 +63,9 @@ public class ToolbarComponent extends BaseComponent {
             expected = absoluteURL;
         }
 
-        fAssertEquals("The Toolbar title is " + expected, expected, getTitle());
+        // Since we only display a shortened "base domain" (See bug 1236431) we use the content
+        // description to obtain the full URL.
+        fAssertEquals("The Toolbar title is " + expected, expected, getUrlFromContentDescription());
         return this;
     }
 
@@ -148,8 +150,15 @@ public class ToolbarComponent extends BaseComponent {
         return getToolbarView().findViewById(R.id.edit_cancel);
     }
 
-    private String getTitle() {
-        return getTitleHelper(true);
+    private String getUrlFromContentDescription() {
+        assertIsNotEditing();
+
+        final CharSequence contentDescription = getUrlDisplayLayout().getContentDescription();
+        if (contentDescription == null) {
+            return "";
+        } else {
+            return contentDescription.toString();
+        }
     }
 
     /**

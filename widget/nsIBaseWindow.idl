@@ -91,6 +91,12 @@ interface nsIBaseWindow : nsISupports
 	*/
 	void setPosition(in long x, in long y);
 
+  /*
+  Ditto, with arguments in global desktop pixels rather than (potentially
+  ambiguous) device pixels
+  */
+	void setPositionDesktopPix(in long x, in long y);
+
 	/*
 	Gets the current x and y coordinates of the control.  This is relatie to the
 	parent window.
@@ -107,12 +113,18 @@ interface nsIBaseWindow : nsISupports
 	*/
 	void getSize(out long cx, out long cy);
 
+	/**
+	 * The 'flags' argument to setPositionAndSize is a set of these bits.
+	 */
+	const unsigned long eRepaint = 1;
+	const unsigned long eDelayResize = 2;
+
 	/*
 	Convenience function combining the SetPosition and SetSize into one call.
 	Also is more efficient than calling both.
 	*/
 	void setPositionAndSize(in long x, in long y, in long cx, in long cy, 
-		in boolean fRepaint);
+		in unsigned long flags);
 		
 	/*
 	Convenience function combining the GetPosition and GetSize into one call.

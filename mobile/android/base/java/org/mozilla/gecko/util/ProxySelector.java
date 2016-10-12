@@ -18,13 +18,30 @@
 
 package org.mozilla.gecko.util;
 
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.URI;
+import java.net.URLConnection;
+import java.util.List;
 
 public class ProxySelector {
+    public static URLConnection openConnectionWithProxy(URI uri) throws IOException {
+        java.net.ProxySelector ps = java.net.ProxySelector.getDefault();
+        Proxy proxy = Proxy.NO_PROXY;
+        if (ps != null) {
+            List<Proxy> proxies = ps.select(uri);
+            if (proxies != null && !proxies.isEmpty()) {
+                proxy = proxies.get(0);
+            }
+        }
+
+        return uri.toURL().openConnection(proxy);
+    }
+
     public ProxySelector() {
     }
 
@@ -79,13 +96,19 @@ public class ProxySelector {
      * Returns the proxy identified by the {@code hostKey} system property, or
      * null.
      */
+    @Nullable
     private Proxy lookupProxy(String hostKey, String portKey, Proxy.Type type, int defaultPort) {
-        String host = System.getProperty(hostKey);
+        final String host = System.getProperty(hostKey);
         if (TextUtils.isEmpty(host)) {
             return null;
         }
 
-        int port = getSystemPropertyInt(portKey, defaultPort);
+        final int port = getSystemPropertyInt(portKey, defaultPort);
+        if (port == -1) {
+            // Port can be -1. See bug 1270529.
+            return null;
+        }
+
         return new Proxy(type, InetSocketAddress.createUnresolved(host, port));
     }
 

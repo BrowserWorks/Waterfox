@@ -66,6 +66,11 @@ interface nsIAppsService : nsISupports
    */
   DOMString getWebAppsBasePath();
 
+  /**
+   * Returns true if at least one app is in the registry.
+   */
+  boolean areAnyAppsInstalled();
+
   jsval getAppInfo(in DOMString appId);
 
   /**
@@ -90,9 +95,4 @@ interface nsIAppsService : nsISupports
    * Available only in the parent process.
    */
   bool isExtensionResource(in nsIURI uri);
-
-  /**
-   * Reads the manifest file for this app and update the DataStore map
-   */
-  void updateDataStoreEntriesFromLocalId(in unsigned long localId);
 };

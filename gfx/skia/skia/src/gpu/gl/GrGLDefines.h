@@ -108,12 +108,23 @@
 /* Buffer Objects */
 #define GR_GL_ARRAY_BUFFER                   0x8892
 #define GR_GL_ELEMENT_ARRAY_BUFFER           0x8893
+#define GR_GL_DRAW_INDIRECT_BUFFER           0x8F3F
+#define GR_GL_TEXTURE_BUFFER                 0x8C2A
 #define GR_GL_ARRAY_BUFFER_BINDING           0x8894
 #define GR_GL_ELEMENT_ARRAY_BUFFER_BINDING   0x8895
+#define GR_GL_DRAW_INDIRECT_BUFFER_BINDING   0x8F43
+#define GR_GL_PIXEL_PACK_BUFFER              0x88EB
+#define GR_GL_PIXEL_UNPACK_BUFFER            0x88EC
+
+#define GR_GL_PIXEL_UNPACK_TRANSFER_BUFFER_CHROMIUM 0x78EC
+#define GR_GL_PIXEL_PACK_TRANSFER_BUFFER_CHROMIUM   0x78ED
 
 #define GR_GL_STREAM_DRAW                    0x88E0
+#define GR_GL_STREAM_READ                    0x88E1
 #define GR_GL_STATIC_DRAW                    0x88E4
+#define GR_GL_STATIC_READ                    0x88E5
 #define GR_GL_DYNAMIC_DRAW                   0x88E8
+#define GR_GL_DYNAMIC_READ                   0x88E9
 
 #define GR_GL_BUFFER_SIZE                    0x8764
 #define GR_GL_BUFFER_USAGE                   0x8765
@@ -155,6 +166,8 @@
 #define GR_GL_VERTEX_PROGRAM_POINT_SIZE      0x8642
 #define GR_GL_LINE_STIPPLE                   0x0B24
 #define GR_GL_FRAMEBUFFER_SRGB               0x8DB9
+#define GR_GL_SHADER_PIXEL_LOCAL_STORAGE     0x8F64
+#define GR_GL_SAMPLE_SHADING                 0x8C36
 
 /* ErrorCode */
 #define GR_GL_NO_ERROR                       0
@@ -203,6 +216,10 @@
 #define GR_GL_PACK_ALIGNMENT                 0x0D05
 #define GR_GL_PACK_REVERSE_ROW_ORDER         0x93A4
 #define GR_GL_MAX_TEXTURE_SIZE               0x0D33
+#define GR_GL_TEXTURE_MIN_LOD                0x813A
+#define GR_GL_TEXTURE_MAX_LOD                0x813B
+#define GR_GL_TEXTURE_BASE_LEVEL             0x813C
+#define GR_GL_TEXTURE_MAX_LEVEL              0x813D
 #define GR_GL_MAX_VIEWPORT_DIMS              0x0D3A
 #define GR_GL_SUBPIXEL_BITS                  0x0D50
 #define GR_GL_RED_BITS                       0x0D52
@@ -223,6 +240,7 @@
 #define GR_GL_RENDERBUFFER_COLOR_SAMPLES     0x8E10
 #define GR_GL_MAX_MULTISAMPLE_COVERAGE_MODES 0x8E11
 #define GR_GL_MULTISAMPLE_COVERAGE_MODES     0x8E12
+#define GR_GL_MAX_TEXTURE_BUFFER_SIZE        0x8C2B
 
 /* GetTextureParameter */
 /*      GL_TEXTURE_MAG_FILTER */
@@ -279,35 +297,35 @@
 #define GR_GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT         0x8E8E
 #define GR_GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT       0x8E8F
 
-#define GR_GL_COMPRESSED_RGBA_ASTC_4x4_KHR             0x93B0
-#define GR_GL_COMPRESSED_RGBA_ASTC_5x4_KHR             0x93B1
-#define GR_GL_COMPRESSED_RGBA_ASTC_5x5_KHR             0x93B2
-#define GR_GL_COMPRESSED_RGBA_ASTC_6x5_KHR             0x93B3
-#define GR_GL_COMPRESSED_RGBA_ASTC_6x6_KHR             0x93B4
-#define GR_GL_COMPRESSED_RGBA_ASTC_8x5_KHR             0x93B5
-#define GR_GL_COMPRESSED_RGBA_ASTC_8x6_KHR             0x93B6
-#define GR_GL_COMPRESSED_RGBA_ASTC_8x8_KHR             0x93B7
-#define GR_GL_COMPRESSED_RGBA_ASTC_10x5_KHR            0x93B8
-#define GR_GL_COMPRESSED_RGBA_ASTC_10x6_KHR            0x93B9
-#define GR_GL_COMPRESSED_RGBA_ASTC_10x8_KHR            0x93BA
-#define GR_GL_COMPRESSED_RGBA_ASTC_10x10_KHR           0x93BB
-#define GR_GL_COMPRESSED_RGBA_ASTC_12x10_KHR           0x93BC
-#define GR_GL_COMPRESSED_RGBA_ASTC_12x12_KHR           0x93BD
+#define GR_GL_COMPRESSED_RGBA_ASTC_4x4                 0x93B0
+#define GR_GL_COMPRESSED_RGBA_ASTC_5x4                 0x93B1
+#define GR_GL_COMPRESSED_RGBA_ASTC_5x5                 0x93B2
+#define GR_GL_COMPRESSED_RGBA_ASTC_6x5                 0x93B3
+#define GR_GL_COMPRESSED_RGBA_ASTC_6x6                 0x93B4
+#define GR_GL_COMPRESSED_RGBA_ASTC_8x5                 0x93B5
+#define GR_GL_COMPRESSED_RGBA_ASTC_8x6                 0x93B6
+#define GR_GL_COMPRESSED_RGBA_ASTC_8x8                 0x93B7
+#define GR_GL_COMPRESSED_RGBA_ASTC_10x5                0x93B8
+#define GR_GL_COMPRESSED_RGBA_ASTC_10x6                0x93B9
+#define GR_GL_COMPRESSED_RGBA_ASTC_10x8                0x93BA
+#define GR_GL_COMPRESSED_RGBA_ASTC_10x10               0x93BB
+#define GR_GL_COMPRESSED_RGBA_ASTC_12x10               0x93BC
+#define GR_GL_COMPRESSED_RGBA_ASTC_12x12               0x93BD
 
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR     0x93D0
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR     0x93D1
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR     0x93D2
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR     0x93D3
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR     0x93D4
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR     0x93D5
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR     0x93D6
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR     0x93D7
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR    0x93D8
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR    0x93D9
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR    0x93DA
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR   0x93DB
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR   0x93DC
-#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR   0x93DD
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4         0x93D0
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4         0x93D1
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5         0x93D2
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5         0x93D3
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6         0x93D4
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5         0x93D5
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6         0x93D6
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8         0x93D7
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5        0x93D8
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6        0x93D9
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8        0x93DA
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10       0x93DB
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10       0x93DC
+#define GR_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12       0x93DD
 
 /* HintMode */
 #define GR_GL_DONT_CARE                      0x1100
@@ -373,6 +391,7 @@
 
 /* multisample */
 #define GR_GL_MULTISAMPLE                    0x809D
+#define GR_GL_SAMPLE_POSITION                0x8E50
 
 /* Points */
 #define GR_GL_POINT_SMOOTH                   0x0B10
@@ -415,29 +434,31 @@
 #define GR_GL_UNSIGNED_SHORT_5_6_5           0x8363
 
 /* Shaders */
-#define GR_GL_FRAGMENT_SHADER                  0x8B30
-#define GR_GL_VERTEX_SHADER                    0x8B31
-#define GR_GL_GEOMETRY_SHADER                  0x8DD9
-#define GR_GL_MAX_VERTEX_ATTRIBS               0x8869
-#define GR_GL_MAX_VERTEX_UNIFORM_VECTORS       0x8DFB
-#define GR_GL_MAX_VARYING_VECTORS              0x8DFC
-#define GR_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS 0x8B4D
-#define GR_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS   0x8B4C
-#define GR_GL_MAX_TEXTURE_IMAGE_UNITS          0x8872
-#define GR_GL_MAX_FRAGMENT_UNIFORM_VECTORS     0x8DFD
-#define GR_GL_SHADER_TYPE                      0x8B4F
-#define GR_GL_DELETE_STATUS                    0x8B80
-#define GR_GL_LINK_STATUS                      0x8B82
-#define GR_GL_VALIDATE_STATUS                  0x8B83
-#define GR_GL_ATTACHED_SHADERS                 0x8B85
-#define GR_GL_ACTIVE_UNIFORMS                  0x8B86
-#define GR_GL_ACTIVE_UNIFORM_MAX_LENGTH        0x8B87
-#define GR_GL_ACTIVE_ATTRIBUTES                0x8B89
-#define GR_GL_ACTIVE_ATTRIBUTE_MAX_LENGTH      0x8B8A
-#define GR_GL_SHADING_LANGUAGE_VERSION         0x8B8C
-#define GR_GL_CURRENT_PROGRAM                  0x8B8D
-#define GR_GL_MAX_FRAGMENT_UNIFORM_COMPONENTS  0x8B49
-#define GR_GL_MAX_VERTEX_UNIFORM_COMPONENTS    0x8B4A
+#define GR_GL_FRAGMENT_SHADER                          0x8B30
+#define GR_GL_VERTEX_SHADER                            0x8B31
+#define GR_GL_GEOMETRY_SHADER                          0x8DD9
+#define GR_GL_MAX_VERTEX_ATTRIBS                       0x8869
+#define GR_GL_MAX_VERTEX_UNIFORM_VECTORS               0x8DFB
+#define GR_GL_MAX_VARYING_VECTORS                      0x8DFC
+#define GR_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS         0x8B4D
+#define GR_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS           0x8B4C
+#define GR_GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS         0x8C29
+#define GR_GL_MAX_TEXTURE_IMAGE_UNITS                  0x8872
+#define GR_GL_MAX_FRAGMENT_UNIFORM_VECTORS             0x8DFD
+#define GR_GL_SHADER_TYPE                              0x8B4F
+#define GR_GL_DELETE_STATUS                            0x8B80
+#define GR_GL_LINK_STATUS                              0x8B82
+#define GR_GL_VALIDATE_STATUS                          0x8B83
+#define GR_GL_ATTACHED_SHADERS                         0x8B85
+#define GR_GL_ACTIVE_UNIFORMS                          0x8B86
+#define GR_GL_ACTIVE_UNIFORM_MAX_LENGTH                0x8B87
+#define GR_GL_ACTIVE_ATTRIBUTES                        0x8B89
+#define GR_GL_ACTIVE_ATTRIBUTE_MAX_LENGTH              0x8B8A
+#define GR_GL_SHADING_LANGUAGE_VERSION                 0x8B8C
+#define GR_GL_CURRENT_PROGRAM                          0x8B8D
+#define GR_GL_MAX_FRAGMENT_UNIFORM_COMPONENTS          0x8B49
+#define GR_GL_MAX_VERTEX_UNIFORM_COMPONENTS            0x8B4A
+#define GR_GL_MAX_SHADER_PIXEL_LOCAL_STORAGE_FAST_SIZE 0x8F63
 
 /* StencilFunction */
 #define GR_GL_NEVER                          0x0200
@@ -488,12 +509,17 @@
 /* TextureUsage */
 #define GR_GL_FRAMEBUFFER_ATTACHMENT         0x93A3
 
+/* TextureSRGBDecode */
+#define GR_GL_DECODE_EXT                     0x8A49
+#define GR_GL_SKIP_DECODE_EXT                0x8A4A
+
 /* TextureParameterName */
 #define GR_GL_TEXTURE_MAG_FILTER             0x2800
 #define GR_GL_TEXTURE_MIN_FILTER             0x2801
 #define GR_GL_TEXTURE_WRAP_S                 0x2802
 #define GR_GL_TEXTURE_WRAP_T                 0x2803
 #define GR_GL_TEXTURE_USAGE                  0x93A2
+#define GR_GL_TEXTURE_SRGB_DECODE_EXT        0x8A48
 
 /* TextureTarget */
 /*      GL_TEXTURE_2D */
@@ -702,7 +728,8 @@
 #define GR_GL_T2F_C4F_N3F_V3F                    0x2A2C
 #define GR_GL_T4F_C4F_N3F_V4F                    0x2A2D
 
-/* Vertex Buffer Object */
+/* Buffer Object */
+#define GR_GL_READ_ONLY                          0x88B8
 #define GR_GL_WRITE_ONLY                         0x88B9
 #define GR_GL_BUFFER_MAPPED                      0x88BC
 
@@ -813,6 +840,7 @@
 #define GR_GL_STENCIL                        0x1802
 
 #define GR_GL_NONE                           0
+#define GR_GL_FRAMEBUFFER_DEFAULT            0x8218
 
 #define GR_GL_FRAMEBUFFER_COMPLETE                      0x8CD5
 #define GR_GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT         0x8CD6
@@ -930,6 +958,9 @@
 
 /* GL_OES_EGL_image_external */
 #define GR_GL_TEXTURE_EXTERNAL                              0x8D65
+
+/* GL_ARB_texture_rectangle */
+#define GR_GL_TEXTURE_RECTANGLE                             0x84F5
 
 /* EGL Defines */
 #define GR_EGL_NO_DISPLAY                                   ((GrEGLDisplay)0)

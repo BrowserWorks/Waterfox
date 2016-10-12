@@ -66,10 +66,7 @@ public:
     friend class ::mozilla::StaticRefPtr;
 
     template<class U>
-    friend class ::RefPtr;
-
-    template<class U>
-    friend struct ::RunnableMethodTraits;
+    friend struct mozilla::RefPtrTraits;
 
     template<typename U>
     friend class ::mozilla::gl::RefSet;
@@ -151,7 +148,6 @@ private:
             delete derived;
           } else {
             mMessageLoopToPostDestructionTo->PostTask(
-              FROM_HERE,
               NewRunnableFunction(&DestroyToBeCalledOnMainThread, derived));
           }
         }

@@ -17,7 +17,7 @@ function run_test()
     run_test_with_server(WorkerDebuggerServer, do_test_finished);
   });
   do_test_pending();
-};
+}
 
 function run_test_with_server(aServer, aCallback)
 {
@@ -25,7 +25,7 @@ function run_test_with_server(aServer, aCallback)
   initTestDebuggerServer(aServer);
   gDebuggee = addTestGlobal("test-stack", aServer);
   gClient = new DebuggerClient(aServer.connectPipe());
-  gClient.connect(function () {
+  gClient.connect().then(function () {
     attachTestTabAndResume(gClient, "test-stack", function (aResponse, aTabClient, aThreadClient) {
       gThreadClient = aThreadClient;
       test_second_child_skip_breakpoint();
@@ -81,5 +81,5 @@ function test_second_child_skip_breakpoint()
     "debugger;\n" +        // line0 + 9
     "foo();\n",           // line0 + 10
     gDebuggee
-  )
+  );
 }

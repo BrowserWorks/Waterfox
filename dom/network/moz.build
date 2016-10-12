@@ -51,6 +51,8 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     EXTRA_COMPONENTS += [
+        'EthernetManager.js',
+        'EthernetManager.manifest',
         'NetworkStatsManager.js',
         'NetworkStatsManager.manifest',
         'NetworkStatsServiceProxy.js',
@@ -72,3 +74,6 @@ IPDL_SOURCES += [
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

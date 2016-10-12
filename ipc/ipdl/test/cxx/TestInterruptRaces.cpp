@@ -4,23 +4,15 @@
 
 using mozilla::ipc::MessageChannel;
 
-template<>
-struct RunnableMethodTraits<mozilla::_ipdltest::TestInterruptRacesParent>
-{
-    static void RetainCallee(mozilla::_ipdltest::TestInterruptRacesParent* obj) { }
-    static void ReleaseCallee(mozilla::_ipdltest::TestInterruptRacesParent* obj) { }
-};
-
-
 namespace mozilla {
 namespace _ipdltest {
 
 ipc::RacyInterruptPolicy
-MediateRace(const MessageChannel::Message& parent,
-            const MessageChannel::Message& child)
+MediateRace(const MessageChannel::MessageInfo& parent,
+            const MessageChannel::MessageInfo& child)
 {
     return (PTestInterruptRaces::Msg_Child__ID == parent.type()) ?
-        ipc::RIPParentWins : ipc::RIPChildWins;
+                ipc::RIPParentWins : ipc::RIPChildWins;
 }
 
 //-----------------------------------------------------------------------------
@@ -36,8 +28,7 @@ bool
 TestInterruptRacesParent::RecvStartRace()
 {
     MessageLoop::current()->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &TestInterruptRacesParent::OnRaceTime));
+        NewNonOwningRunnableMethod(this, &TestInterruptRacesParent::OnRaceTime));
     return true;
 }
 
@@ -53,8 +44,7 @@ TestInterruptRacesParent::OnRaceTime()
     mHasReply = true;
 
     MessageLoop::current()->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &TestInterruptRacesParent::Test2));
+        NewNonOwningRunnableMethod(this, &TestInterruptRacesParent::Test2));
 }
 
 bool
@@ -81,8 +71,7 @@ TestInterruptRacesParent::Test2()
     puts("  passed");
 
     MessageLoop::current()->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &TestInterruptRacesParent::Test3));
+        NewNonOwningRunnableMethod(this, &TestInterruptRacesParent::Test3));
 }
 
 bool

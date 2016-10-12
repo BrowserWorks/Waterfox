@@ -40,7 +40,7 @@ void SkRecordDraw(const SkRecord& record,
             // This visit call uses the SkRecords::Draw::operator() to call
             // methods on the |canvas|, wrapped by methods defined with the
             // DRAW() macro.
-            record.visit<void>(ops[i], draw);
+            record.visit(ops[i], draw);
         }
     } else {
         // Draw all ops.
@@ -52,7 +52,7 @@ void SkRecordDraw(const SkRecord& record,
             // This visit call uses the SkRecords::Draw::operator() to call
             // methods on the |canvas|, wrapped by methods defined with the
             // DRAW() macro.
-            record.visit<void>(i, draw);
+            record.visit(i, draw);
         }
     }
 }
@@ -66,7 +66,7 @@ void SkRecordPartialDraw(const SkRecord& record, SkCanvas* canvas,
     stop = SkTMin(stop, record.count());
     SkRecords::Draw draw(canvas, drawablePicts, nullptr, drawableCount, &initialCTM);
     for (int i = start; i < stop; i++) {
-        record.visit<void>(i, draw);
+        record.visit(i, draw);
     }
 }
 
@@ -78,7 +78,7 @@ template <> void Draw::draw(const NoOp&) {}
 #define DRAW(T, call) template <> void Draw::draw(const T& r) { fCanvas->call; }
 DRAW(Restore, restore());
 DRAW(Save, save());
-DRAW(SaveLayer, saveLayer(r.bounds, r.paint, r.flags));
+DRAW(SaveLayer, saveLayer(SkCanvas::SaveLayerRec(r.bounds, r.paint, r.backdrop, r.saveLayerFlags)));
 DRAW(SetMatrix, setMatrix(SkMatrix::Concat(fInitialCTM, r.matrix)));
 DRAW(Concat, concat(r.matrix));
 
@@ -111,13 +111,13 @@ DRAW(DrawPosText, drawPosText(r.text, r.byteLength, r.pos, r.paint));
 DRAW(DrawPosTextH, drawPosTextH(r.text, r.byteLength, r.xpos, r.y, r.paint));
 DRAW(DrawRRect, drawRRect(r.rrect, r.paint));
 DRAW(DrawRect, drawRect(r.rect, r.paint));
-DRAW(DrawSprite, drawSprite(r.bitmap.shallowCopy(), r.left, r.top, r.paint));
 DRAW(DrawText, drawText(r.text, r.byteLength, r.x, r.y, r.paint));
 DRAW(DrawTextBlob, drawTextBlob(r.blob, r.x, r.y, r.paint));
 DRAW(DrawTextOnPath, drawTextOnPath(r.text, r.byteLength, r.path, &r.matrix, r.paint));
 DRAW(DrawAtlas, drawAtlas(r.atlas, r.xforms, r.texs, r.colors, r.count, r.mode, r.cull, r.paint));
 DRAW(DrawVertices, drawVertices(r.vmode, r.vertexCount, r.vertices, r.texs, r.colors,
                                 r.xmode, r.indices, r.indexCount, r.paint));
+DRAW(DrawAnnotation, drawAnnotation(r.rect, r.key.c_str(), r.value));
 #undef DRAW
 
 template <> void Draw::draw(const DrawDrawable& r) {
@@ -221,6 +221,7 @@ private:
         int controlOps;        // Number of control ops in this Save block, including the Save.
         Bounds bounds;         // Bounds of everything in the block.
         const SkPaint* paint;  // Unowned.  If set, adjusts the bounds of all ops in this block.
+        SkMatrix ctm;
     };
 
     // Only Restore, SetMatrix, and Concat change the CTM.
@@ -301,6 +302,7 @@ private:
         sb.bounds =
             PaintMayAffectTransparentBlack(paint) ? fCurrentClipBounds : Bounds::MakeEmpty();
         sb.paint = paint;
+        sb.ctm = this->fCTM;
 
         fSaveStack.push(sb);
         this->pushControl();
@@ -386,14 +388,6 @@ private:
 
     Bounds bounds(const DrawPaint&) const { return fCurrentClipBounds; }
     Bounds bounds(const NoOp&)  const { return Bounds::MakeEmpty(); }    // NoOps don't draw.
-
-    Bounds bounds(const DrawSprite& op) const {  // Ignores the matrix, but respects the clip.
-        SkRect rect = Bounds::MakeXYWH(op.left, op.top, op.bitmap.width(), op.bitmap.height());
-        if (!rect.intersect(fCurrentClipBounds)) {
-            return Bounds::MakeEmpty();
-        }
-        return rect;
-    }
 
     Bounds bounds(const DrawRect& op) const { return this->adjustAndMap(op.rect, &op.paint); }
     Bounds bounds(const DrawOval& op) const { return this->adjustAndMap(op.oval, &op.paint); }
@@ -524,6 +518,10 @@ private:
         return this->adjustAndMap(op.worstCaseBounds, nullptr);
     }
 
+    Bounds bounds(const DrawAnnotation& op) const {
+        return this->adjustAndMap(op.rect, nullptr);
+    }
+
     static void AdjustTextForFontMetrics(SkRect* rect, const SkPaint& paint) {
 #ifdef SK_DEBUG
         SkRect correct = *rect;
@@ -563,9 +561,15 @@ private:
 
     bool adjustForSaveLayerPaints(SkRect* rect, int savesToIgnore = 0) const {
         for (int i = fSaveStack.count() - 1 - savesToIgnore; i >= 0; i--) {
+            SkMatrix inverse;
+            if (!fSaveStack[i].ctm.invert(&inverse)) {
+                return false;
+            }
+            inverse.mapRect(rect);
             if (!AdjustForPaint(fSaveStack[i].paint, rect)) {
                 return false;
             }
+            fSaveStack[i].ctm.mapRect(rect);
         }
         return true;
     }
@@ -693,7 +697,8 @@ private:
             // Store 'saveLayer ops from enclosing picture' + drawPict op + 'ops from sub-picture'
             dst.fKeySize = fSaveLayerOpStack.count() + src.fKeySize + 1;
             dst.fKey = new int[dst.fKeySize];
-            memcpy(dst.fKey, fSaveLayerOpStack.begin(), fSaveLayerOpStack.count() * sizeof(int));
+            sk_careful_memcpy(dst.fKey, fSaveLayerOpStack.begin(),
+                              fSaveLayerOpStack.count() * sizeof(int));
             dst.fKey[fSaveLayerOpStack.count()] = fFillBounds.currentOp();
             memcpy(&dst.fKey[fSaveLayerOpStack.count()+1], src.fKey, src.fKeySize * sizeof(int));
         }
@@ -792,7 +797,7 @@ void SkRecordFillBounds(const SkRect& cullRect, const SkRecord& record, SkRect b
     SkRecords::FillBounds visitor(cullRect, record, bounds);
     for (int curOp = 0; curOp < record.count(); curOp++) {
         visitor.setCurrentOp(curOp);
-        record.visit<void>(curOp, visitor);
+        record.visit(curOp, visitor);
     }
     visitor.cleanUp();
 }
@@ -802,8 +807,7 @@ void SkRecordComputeLayers(const SkRect& cullRect, const SkRecord& record, SkRec
     SkRecords::CollectLayers visitor(cullRect, record, bounds, pictList, data);
     for (int curOp = 0; curOp < record.count(); curOp++) {
         visitor.setCurrentOp(curOp);
-        record.visit<void>(curOp, visitor);
+        record.visit(curOp, visitor);
     }
     visitor.cleanUp();
 }
-

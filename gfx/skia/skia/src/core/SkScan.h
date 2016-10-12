@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2011 The Android Open Source Project
  *
@@ -10,6 +9,7 @@
 #ifndef SkScan_DEFINED
 #define SkScan_DEFINED
 
+#include "SkFixed.h"
 #include "SkRect.h"
 
 class SkRasterClip;
@@ -56,6 +56,10 @@ public:
     static void AntiHairRect(const SkRect&, const SkRasterClip&, SkBlitter*);
     static void HairPath(const SkPath&, const SkRasterClip&, SkBlitter*);
     static void AntiHairPath(const SkPath&, const SkRasterClip&, SkBlitter*);
+    static void HairSquarePath(const SkPath&, const SkRasterClip&, SkBlitter*);
+    static void AntiHairSquarePath(const SkPath&, const SkRasterClip&, SkBlitter*);
+    static void HairRoundPath(const SkPath&, const SkRasterClip&, SkBlitter*);
+    static void AntiHairRoundPath(const SkPath&, const SkRasterClip&, SkBlitter*);
 
 private:
     friend class SkAAClip;

@@ -33,7 +33,7 @@ function test()
   writeFile(gFile, "text", testUnsaved.call(this));
 
   Services.prompt = {
-    confirmEx: function() {
+    confirmEx: function () {
       return promptButton;
     }
   };
@@ -47,9 +47,9 @@ function test()
 
 function testNew()
 {
-  openScratchpad(function(win) {
-    win.Scratchpad.close(function() {
-      ok(win.closed, "new scratchpad window should close without prompting")
+  openScratchpad(function (win) {
+    win.Scratchpad.close(function () {
+      ok(win.closed, "new scratchpad window should close without prompting");
       done();
     });
   }, {noFocus: true});
@@ -57,11 +57,11 @@ function testNew()
 
 function testSavedFile()
 {
-  openScratchpad(function(win) {
+  openScratchpad(function (win) {
     win.Scratchpad.filename = "test.js";
     win.Scratchpad.editor.dirty = false;
-    win.Scratchpad.close(function() {
-      ok(win.closed, "scratchpad from file with no changes should close")
+    win.Scratchpad.close(function () {
+      ok(win.closed, "scratchpad from file with no changes should close");
       done();
     });
   }, {noFocus: true});
@@ -101,15 +101,15 @@ function testUnsaved()
   testUnsavedFileDontSave();
 }
 
-function testUnsavedFileCancel(aCallback=function () {})
+function testUnsavedFileCancel(aCallback = function () {})
 {
-  openScratchpad(function(win) {
+  openScratchpad(function (win) {
     aCallback(win.Scratchpad, "test.js");
     win.Scratchpad.editor.dirty = true;
 
     promptButton = win.BUTTON_POSITION_CANCEL;
 
-    win.Scratchpad.close(function() {
+    win.Scratchpad.close(function () {
       ok(!win.closed, "cancelling dialog shouldn't close scratchpad");
       win.close();
       done();
@@ -121,7 +121,7 @@ function testUnsavedFileCancel(aCallback=function () {})
 // after openFile calls. See bug 801982.
 function testCancelAfterLoad()
 {
-  openScratchpad(function(win) {
+  openScratchpad(function (win) {
     win.Scratchpad.setRecentFile(gFile);
     win.Scratchpad.openFile(0);
     win.Scratchpad.editor.dirty = true;
@@ -129,12 +129,12 @@ function testCancelAfterLoad()
 
     let EventStub = {
       called: false,
-      preventDefault: function() {
+      preventDefault: function () {
         EventStub.called = true;
       }
     };
 
-    win.Scratchpad.onClose(EventStub, function() {
+    win.Scratchpad.onClose(EventStub, function () {
       ok(!win.closed, "cancelling dialog shouldn't close scratchpad");
       ok(EventStub.called, "aEvent.preventDefault was called");
 
@@ -145,10 +145,10 @@ function testCancelAfterLoad()
   }, {noFocus: true});
 }
 
-function testUnsavedFileSave(aCallback=function () {})
+function testUnsavedFileSave(aCallback = function () {})
 {
-  openScratchpad(function(win) {
-    win.Scratchpad.importFromFile(gFile, true, function(status, content) {
+  openScratchpad(function (win) {
+    win.Scratchpad.importFromFile(gFile, true, function (status, content) {
       aCallback(win.Scratchpad, gFile.path);
 
       let text = "new text";
@@ -156,9 +156,9 @@ function testUnsavedFileSave(aCallback=function () {})
 
       promptButton = win.BUTTON_POSITION_SAVE;
 
-      win.Scratchpad.close(function() {
+      win.Scratchpad.close(function () {
         ok(win.closed, 'pressing "Save" in dialog should close scratchpad');
-        readFile(gFile, function(savedContent) {
+        readFile(gFile, function (savedContent) {
           is(savedContent, text, 'prompted "Save" worked when closing scratchpad');
           done();
         });
@@ -167,15 +167,15 @@ function testUnsavedFileSave(aCallback=function () {})
   }, {noFocus: true});
 }
 
-function testUnsavedFileDontSave(aCallback=function () {})
+function testUnsavedFileDontSave(aCallback = function () {})
 {
-  openScratchpad(function(win) {
+  openScratchpad(function (win) {
     aCallback(win.Scratchpad, gFile.path);
     win.Scratchpad.editor.dirty = true;
 
     promptButton = win.BUTTON_POSITION_DONT_SAVE;
 
-    win.Scratchpad.close(function() {
+    win.Scratchpad.close(function () {
       ok(win.closed, 'pressing "Don\'t Save" in dialog should close scratchpad');
       done();
     });
@@ -192,8 +192,8 @@ function cleanup()
 function createTempFile(name)
 {
   let file = FileUtils.getFile("TmpD", [name]);
-  file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
-  file.QueryInterface(Ci.nsILocalFile)
+  file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0o666);
+  file.QueryInterface(Ci.nsILocalFile);
   return file;
 }
 
@@ -202,7 +202,7 @@ function writeFile(file, content, callback)
   let fout = Cc["@mozilla.org/network/file-output-stream;1"].
              createInstance(Ci.nsIFileOutputStream);
   fout.init(file.QueryInterface(Ci.nsILocalFile), 0x02 | 0x08 | 0x20,
-            0644, fout.DEFER_OPEN);
+            0o644, fout.DEFER_OPEN);
 
   let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
                   createInstance(Ci.nsIScriptableUnicodeConverter);
@@ -219,7 +219,7 @@ function readFile(file, callback)
     loadUsingSystemPrincipal: true});
   channel.contentType = "application/javascript";
 
-  NetUtil.asyncFetch(channel, function(inputStream, status) {
+  NetUtil.asyncFetch(channel, function (inputStream, status) {
     ok(Components.isSuccessCode(status),
        "file was read successfully");
 

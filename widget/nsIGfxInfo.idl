@@ -7,8 +7,7 @@
 #include "nsISupports.idl"
 
 /* NOTE: this interface is completely undesigned, not stable and likely to change */
-
-[scriptable, uuid(4b5ea59e-af89-44f7-8c1c-2dea47a170d1)]
+[scriptable, uuid(1accd618-4c80-4703-9d29-ecf257d397c8)]
 interface nsIGfxInfo : nsISupports
 {
   /*
@@ -106,6 +105,12 @@ interface nsIGfxInfo : nsISupports
   const long FEATURE_WEBRTC_HW_ACCELERATION_ENCODE = 14;
   /* Whether Webrtc Hardware acceleration is supported, starting in 42. */
   const long FEATURE_WEBRTC_HW_ACCELERATION_DECODE = 15;
+  /* Whether Canvas acceleration is supported, starting in 45 */
+  const long FEATURE_CANVAS2D_ACCELERATION = 16;
+  /* Whether hardware VP8 decoding is supported. */
+  const long FEATURE_VP8_HW_DECODE = 17;
+  /* Whether hardware VP9 decoding is supported. */
+  const long FEATURE_VP9_HW_DECODE = 18;
 
   /*
    * A set of return values from GetFeatureStatus
@@ -129,9 +134,11 @@ interface nsIGfxInfo : nsISupports
   const long FEATURE_BLOCKED_MISMATCHED_VERSION = 7;
 
   /**
-   * Ask about a feature, and return the status of that feature
+   * Ask about a feature, and return the status of that feature.
+   * If the feature is not ok then aFailureId will give a unique failure Id
+   * otherwise it will be empty.
    */
-  long getFeatureStatus(in long aFeature);
+  long getFeatureStatus(in long aFeature, [optional] out ACString aFailureId);
 
   /*
    * Ask about a feature, return the minimum driver version required for it if its status is
@@ -151,6 +158,45 @@ interface nsIGfxInfo : nsISupports
 
   [implicit_jscontext]
   jsval getInfo();
+
+  // Return an object describing all features that have been configured:
+  //
+  //   "features": [
+  //     // For each feature:
+  //     {
+  //       "name": <string>,
+  //       "description": <string>,
+  //       "status": <string>,
+  //       "log": [
+  //          // One or more log entries, the first denotes the default value.
+  //          {
+  //            "type": <string>,    // "base", "user", "env", or "runtime"
+  //            "status": <string>,
+  //            "message": <string>  // Set unless type is "base" and status is "available".
+  //          }
+  //       ]
+  //     }
+  //   ]
+  //   "fallbacks": [
+  //     // For each workaround:
+  //     {
+  //       "name:" <string>,
+  //       "description": <string>,
+  //       "message": <string>
+  //     ]
+  //   }
+  //
+  // When a message is prefixed with a '#', it is a special status code. Status
+  // codes are unique identifiers that can be searched in the codebase to find
+  // which line of code caused the message. Some codes are standardized to
+  // improve about:support messaging:
+  //
+  //   "[CONTEXT_]FEATURE_FAILURE_BUG_<number>"
+  //     CONTEXT is optional and can currently only be "BLOCKLIST".
+  //     <number> refers to a bug number in Bugzilla.
+  //
+  [implicit_jscontext]
+  jsval getFeatureLog();
 
   // Returns an object containing information about graphics features. It is
   // intended to be directly included into the Telemetry environment.
@@ -177,5 +223,20 @@ interface nsIGfxInfo : nsISupports
   //   }
   [implicit_jscontext]
   jsval getFeatures();
+
+  // Returns an array listing any active crash guards.
+  //
+  //   [
+  //     {
+  //       // Type is one of "d3d11layers", "d3d9video", "glcontext",
+  //       // or "d3d11video".
+  //       "type":        "<identifier>",
+  //
+  //       // Preference that must be deleted/reset to retrigger the guard.
+  //       "prefName":    "<preference>",
+  //     }
+  //   ]
+  [implicit_jscontext]
+  jsval getActiveCrashGuards();
 };
 

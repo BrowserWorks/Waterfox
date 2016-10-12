@@ -45,7 +45,8 @@ function SpecialPowers(window) {
                             "SPLoadExtension",
                             "SPStartupExtension",
                             "SPUnloadExtension",
-                            "SPExtensionMessage"];
+                            "SPExtensionMessage",
+                            "SPClearAppPrivateData"];
   addMessageListener("SPPingService", this._messageListener);
   addMessageListener("SpecialPowers.FilesCreated", this._messageListener);
   addMessageListener("SpecialPowers.FilesError", this._messageListener);
@@ -221,6 +222,12 @@ SpecialPowers.prototype.nestedFrameSetup = function() {
       mm.loadFrameScript("data:," + frameScript, false);
     }
   }, "remote-browser-shown", false);
+};
+
+SpecialPowers.prototype.isServiceWorkerRegistered = function() {
+  var swm = Components.classes["@mozilla.org/serviceworkers/manager;1"]
+                      .getService(Components.interfaces.nsIServiceWorkerManager);
+  return swm.getAllRegistrations().length != 0;
 };
 
 // Attach our API to the window.

@@ -22,6 +22,8 @@ class X11DataTextureSourceBasic : public DataTextureSource
 public:
   X11DataTextureSourceBasic() {};
 
+  virtual const char* Name() const override { return "X11DataTextureSourceBasic"; }
+
   virtual bool Update(gfx::DataSourceSurface* aSurface,
                       nsIntRegion* aDestRegion = nullptr,
                       gfx::IntPoint* aSrcOffset = nullptr) override;
@@ -44,11 +46,15 @@ private:
 class X11BasicCompositor : public BasicCompositor
 {
 public:
-
-  explicit X11BasicCompositor(nsIWidget *aWidget) : BasicCompositor(aWidget) {}
+  explicit X11BasicCompositor(CompositorBridgeParent* aParent, widget::CompositorWidgetProxy* aWidget)
+    : BasicCompositor(aParent, aWidget)
+  {}
 
   virtual already_AddRefed<DataTextureSource>
   CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
+
+  virtual already_AddRefed<DataTextureSource>
+  CreateDataTextureSourceAround(gfx::DataSourceSurface* aSurface) override { return nullptr; }
 
   virtual void EndFrame() override;
 };

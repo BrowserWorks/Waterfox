@@ -30,9 +30,9 @@
 struct jsid
 {
     size_t asBits;
-    bool operator==(jsid rhs) const { return asBits == rhs.asBits; }
-    bool operator!=(jsid rhs) const { return asBits != rhs.asBits; }
-};
+    bool operator==(const jsid& rhs) const { return asBits == rhs.asBits; }
+    bool operator!=(const jsid& rhs) const { return asBits != rhs.asBits; }
+} JS_HAZ_GC_POINTER;
 #define JSID_BITS(id) (id.asBits)
 
 #define JSID_TYPE_STRING                 0x0
@@ -166,12 +166,36 @@ extern JS_PUBLIC_DATA(const jsid) JSID_EMPTY;
 extern JS_PUBLIC_DATA(const JS::HandleId) JSID_VOIDHANDLE;
 extern JS_PUBLIC_DATA(const JS::HandleId) JSID_EMPTYHANDLE;
 
+namespace JS {
+
+template <>
+struct GCPolicy<jsid>
+{
+    static jsid initial() { return JSID_VOID; }
+    static void trace(JSTracer* trc, jsid* idp, const char* name) {
+        js::UnsafeTraceManuallyBarrieredEdge(trc, idp, name);
+    }
+};
+
+} // namespace JS
+
 namespace js {
 
 template <>
-struct GCMethods<jsid>
+struct DefaultHasher<jsid>
 {
-    static jsid initial() { return JSID_VOID; }
+    typedef jsid Lookup;
+    static HashNumber hash(jsid id) {
+        return JSID_BITS(id);
+    }
+    static bool match(jsid id1, jsid id2) {
+        return id1 == id2;
+    }
+};
+
+template <>
+struct BarrierMethods<jsid>
+{
     static void postBarrier(jsid* idp, jsid prev, jsid next) {}
 };
 

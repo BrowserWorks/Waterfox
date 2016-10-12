@@ -26,7 +26,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 # import the guts
 from mozharness.base.config import parse_config_file
-from mozharness.base.log import WARNING, ERROR, FATAL
+from mozharness.base.log import WARNING, FATAL
 from mozharness.mozilla.l10n.locales import GaiaLocalesMixin, LocalesMixin
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.signing import SigningMixin
@@ -130,7 +130,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
                  default_actions=default_actions):
         # Default configuration
         default_config = {
-            'default_vcs': 'hgtool',
+            'default_vcs': 'hg',
             'ccache': True,
             'locales_dir': 'gecko/b2g/locales',
             'l10n_dir': 'gecko-l10n',
@@ -141,7 +141,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             'merge_locales': True,
             'compare_locales_repo': 'https://hg.mozilla.org/build/compare-locales',
             'compare_locales_rev': 'RELEASE_AUTOMATION',
-            'compare_locales_vcs': 'hgtool',
+            'compare_locales_vcs': 'hg',
             'repo_remote_mappings': {},
             'influx_credentials_file': 'oauth.txt',
             'balrog_credentials_file': 'oauth.txt',
@@ -391,7 +391,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             config_dir = os.path.join(dirs['gecko_src'], 'b2g', 'config',
                                       self.config.get('b2g_config_dir', self.config['target']))
             manifest = os.path.abspath(os.path.join(config_dir, gecko_config['tooltool_manifest']))
-            self.tooltool_fetch(manifest=manifest, output_dir=dirs['work_dir'])
+            self.tooltool_fetch(manifest=manifest, output_dir=dirs['gecko_src'])
 
     def unpack_blobs(self):
         dirs = self.query_abs_dirs()
@@ -402,7 +402,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             extra_tarballs.extend(gecko_config['additional_source_tarballs'])
 
         for tarball in extra_tarballs:
-            self.run_command(tar + ["xf", tarball], cwd=dirs['work_dir'],
+            self.run_command(tar + ["xf", tarball], cwd=dirs['gecko_src'],
                              halt_on_failure=True, fatal_exit_code=3)
 
     def checkout_gaia_l10n(self):
@@ -963,11 +963,12 @@ class B2GBuild(LocalesMixin, PurgeMixin,
                     symbols_url = "%s/%s" % (download_url, os.path.basename(matches[0]))
                     downloadables.append(symbols_url)
                     self.set_buildbot_property('symbolsUrl', symbols_url, write_to_file=True)
-                matches = glob.glob(os.path.join(dirs['abs_upload_dir'], 'b2g*tests.zip'))
+                matches = glob.glob(os.path.join(dirs['abs_upload_dir'], 'b2g*test_packages.json'))
                 if matches:
-                    tests_url = "%s/%s" % (download_url, os.path.basename(matches[0]))
-                    downloadables.append(tests_url)
-                    self.set_buildbot_property('testsUrl', tests_url, write_to_file=True)
+                    test_packages_url = "%s/%s" % (download_url, os.path.basename(matches[0]))
+                    downloadables.append(test_packages_url)
+                    self.set_buildbot_property('testPackagesUrl', test_packages_url,
+                                               write_to_file=True)
                     self.invoke_sendchange(downloadables=downloadables)
 
         if self.query_is_nightly() and os.path.exists(dirs['abs_public_upload_dir']) and self.config['upload'].get('public'):

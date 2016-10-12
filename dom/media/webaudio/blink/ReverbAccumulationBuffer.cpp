@@ -97,8 +97,6 @@ int ReverbAccumulationBuffer::accumulate(const float* source, size_t numberOfFra
         return 0;
 
     AudioBufferAddWithScale(source, 1.0f, destination + writeIndex, numberOfFrames1);
-
-    // Handle wrap-around if necessary
     if (numberOfFrames2 > 0) {
         AudioBufferAddWithScale(source + numberOfFrames1, 1.0f, destination, numberOfFrames2);
     }

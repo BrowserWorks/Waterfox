@@ -17,22 +17,18 @@ namespace dom {
 class BlobImpl;
 class Promise;
 
-class RemoveTask final
-  : public FileSystemTaskBase
+class RemoveTaskChild final : public FileSystemTaskChildBase
 {
 public:
-  RemoveTask(FileSystemBase* aFileSystem,
-             const nsAString& aDirPath,
-             BlobImpl* aTargetBlob,
-             const nsAString& aTargetPath,
-             bool aRecursive,
-             ErrorResult& aRv);
-  RemoveTask(FileSystemBase* aFileSystem,
-             const FileSystemRemoveParams& aParam,
-             FileSystemRequestParent* aParent);
+  static already_AddRefed<RemoveTaskChild>
+  Create(FileSystemBase* aFileSystem,
+         nsIFile* aDirPath,
+         nsIFile* aTargetPath,
+         bool aRecursive,
+         ErrorResult& aRv);
 
   virtual
-  ~RemoveTask();
+  ~RemoveTaskChild();
 
   already_AddRefed<Promise>
   GetPromise();
@@ -42,27 +38,64 @@ public:
 
 protected:
   virtual FileSystemParams
-  GetRequestParams(const nsString& aFileSystem) const override;
-
-  virtual FileSystemResponseValue
-  GetSuccessRequestResult() const override;
+  GetRequestParams(const nsString& aSerializedDOMPath,
+                   ErrorResult& aRv) const override;
 
   virtual void
-  SetSuccessRequestResult(const FileSystemResponseValue& aValue) override;
-
-  virtual nsresult
-  Work() override;
+  SetSuccessRequestResult(const FileSystemResponseValue& aValue,
+                          ErrorResult& aRv) override;
 
   virtual void
   HandlerCallback() override;
 
 private:
+  RemoveTaskChild(FileSystemBase* aFileSystem,
+                  nsIFile* aDirPath,
+                  nsIFile* aTargetPath,
+                  bool aRecursive);
+
   RefPtr<Promise> mPromise;
-  nsString mDirRealPath;
-  // This cannot be a File because this object will be used on a different
-  // thread and File is not thread-safe. Let's use the BlobImpl instead.
-  RefPtr<BlobImpl> mTargetBlobImpl;
-  nsString mTargetRealPath;
+
+  // This path is the Directory::mFile.
+  nsCOMPtr<nsIFile> mDirPath;
+
+  // This is what we want to remove. mTargetPath is discendant path of mDirPath.
+  nsCOMPtr<nsIFile> mTargetPath;
+
+  bool mRecursive;
+  bool mReturnValue;
+};
+
+class RemoveTaskParent final : public FileSystemTaskParentBase
+{
+public:
+  static already_AddRefed<RemoveTaskParent>
+  Create(FileSystemBase* aFileSystem,
+         const FileSystemRemoveParams& aParam,
+         FileSystemRequestParent* aParent,
+         ErrorResult& aRv);
+
+  virtual void
+  GetPermissionAccessType(nsCString& aAccess) const override;
+
+protected:
+  virtual FileSystemResponseValue
+  GetSuccessRequestResult(ErrorResult& aRv) const override;
+
+  virtual nsresult
+  IOWork() override;
+
+private:
+  RemoveTaskParent(FileSystemBase* aFileSystem,
+                   const FileSystemRemoveParams& aParam,
+                   FileSystemRequestParent* aParent);
+
+  // This path is the Directory::mFile.
+  nsCOMPtr<nsIFile> mDirPath;
+
+  // This is what we want to remove. mTargetPath is discendant path of mDirPath.
+  nsCOMPtr<nsIFile> mTargetPath;
+
   bool mRecursive;
   bool mReturnValue;
 };

@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2009 The Android Open Source Project
  *
@@ -27,6 +26,7 @@ public:
 
     bool clipCubic(const SkPoint src[4], SkPoint dst[4]);
 
+    static bool ChopMonoAtY(const SkPoint pts[4], SkScalar y, SkScalar* t);
 private:
     SkRect      fClip;
 };

@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GeckoMenu extends ListView 
+public class GeckoMenu extends ListView
                        implements Menu,
                                   AdapterView.OnItemClickListener,
                                   GeckoMenuItem.OnShowAsActionChangedListener {
@@ -76,7 +76,7 @@ public class GeckoMenu extends ListView
     /*
      * An interface for a presenter of action-items.
      * Either an Activity or a View can be a presenter, that can watch for events
-     * and add/remove action-items. If not ActionItemBarPresenter, the menu uses a 
+     * and add/remove action-items. If not ActionItemBarPresenter, the menu uses a
      * DefaultActionItemBar, that shows the action-items as a header over list-view.
      */
     public static interface ActionItemBarPresenter {
@@ -462,6 +462,17 @@ public class GeckoMenu extends ListView
     }
 
     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Close the menu if it is open and the hardware menu key is pressed.
+        if (keyCode == KeyEvent.KEYCODE_MENU && isShown()) {
+            close();
+            return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
     public boolean isShortcutKey(int keyCode, KeyEvent event) {
         return true;
     }
@@ -509,7 +520,7 @@ public class GeckoMenu extends ListView
             mPrimaryActionItems.remove(item);
             mItems.remove(item);
 
-            if (mPrimaryActionItems.size() == 0 && 
+            if (mPrimaryActionItems.size() == 0 &&
                 mPrimaryActionItemBar instanceof DefaultActionItemBar) {
                 removePrimaryActionBarView();
             }
@@ -840,7 +851,7 @@ public class GeckoMenu extends ListView
             // Initialize the view.
             view.setShowIcon(mShowIcons);
             view.initialize(item);
-            return (View) view; 
+            return (View) view;
         }
 
         @Override

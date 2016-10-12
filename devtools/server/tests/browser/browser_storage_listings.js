@@ -4,8 +4,8 @@
 
 "use strict";
 
-const {StorageFront} = require("devtools/server/actors/storage");
-var gWindow = null;
+const {StorageFront} = require("devtools/shared/fronts/storage");
+Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtools/server/tests/browser/storage-helpers.js", this);
 
 const storeMap = {
   cookies: {
@@ -316,56 +316,24 @@ const IDBValues = {
       ]
     }
   }
-}
+};
 
 function finishTests(client) {
-  // Cleanup so that indexed db created from this test do not interfere next ones
-
-  /**
-   * This method iterates over iframes in a window and clears the indexed db
-   * created by this test.
-   */
-  let clearIDB = (w, i, c) => {
-    if (w[i] && w[i].clear) {
-      w[i].clearIterator = w[i].clear(() => clearIDB(w, i + 1, c));
-      w[i].clearIterator.next();
-    }
-    else if (w[i] && w[i + 1]) {
-      clearIDB(w, i + 1, c);
-    }
-    else {
-      c();
-    }
-  };
 
   let closeConnection = () => {
-    // Forcing GC/CC to get rid of docshells and windows created by this test.
-    forceCollections();
-    client.close(() => {
-      forceCollections();
-      DebuggerServer.destroy();
-      forceCollections();
-      gWindow = null;
-      finish();
-    });
-  }
-  gWindow.clearIterator = gWindow.clear(() => {
-    clearIDB(gWindow, 0, closeConnection);
-  });
-  gWindow.clearIterator.next();
+
+  };
 }
 
-function testStores(data) {
-  return Task.spawn(function*() {
-    ok(data.cookies, "Cookies storage actor is present");
-    ok(data.localStorage, "Local Storage storage actor is present");
-    ok(data.sessionStorage, "Session Storage storage actor is present");
-    ok(data.indexedDB, "Indexed DB storage actor is present");
-    yield testCookies(data.cookies);
-    yield testLocalStorage(data.localStorage);
-    yield testSessionStorage(data.sessionStorage);
-    yield testIndexedDB(data.indexedDB);
-  });
+function* testStores(data) {
+  ok(data.cookies, "Cookies storage actor is present");
+  ok(data.localStorage, "Local Storage storage actor is present");
+  ok(data.sessionStorage, "Session Storage storage actor is present");
+  ok(data.indexedDB, "Indexed DB storage actor is present");
+  yield testCookies(data.cookies);
+  yield testLocalStorage(data.localStorage);
+  yield testSessionStorage(data.sessionStorage);
+  yield testIndexedDB(data.indexedDB);
 }
 
 function testCookies(cookiesActor) {
@@ -373,7 +341,7 @@ function testCookies(cookiesActor) {
   return testCookiesObjects(0, cookiesActor.hosts, cookiesActor);
 }
 
-var testCookiesObjects = Task.async(function*(index, hosts, cookiesActor) {
+var testCookiesObjects = Task.async(function* (index, hosts, cookiesActor) {
   let host = Object.keys(hosts)[index];
   let matchItems = data => {
     is(data.total, storeMap.cookies[host].length,
@@ -393,9 +361,7 @@ var testCookiesObjects = Task.async(function*(index, hosts, cookiesActor) {
           break;
         }
       }
-      if (!found) {
-        ok(false, "cookie " + item.name + " should not exist in response;");
-      }
+      ok(found, "cookie " + item.name + " should exist in response");
     }
   };
 
@@ -413,7 +379,7 @@ function testLocalStorage(localStorageActor) {
   return testLocalStorageObjects(0, localStorageActor.hosts, localStorageActor);
 }
 
-var testLocalStorageObjects = Task.async(function*(index, hosts, localStorageActor) {
+var testLocalStorageObjects = Task.async(function* (index, hosts, localStorageActor) {
   let host = Object.keys(hosts)[index];
   let matchItems = data => {
     is(data.total, storeMap.localStorage[host].length,
@@ -428,10 +394,7 @@ var testLocalStorageObjects = Task.async(function*(index, hosts, localStorageAct
           break;
         }
       }
-      if (!found) {
-        ok(false, "local storage item " + item.name +
-                  " should not exist in response;");
-      }
+      ok(found, "local storage item " + item.name + " should exist in response");
     }
   };
 
@@ -450,7 +413,7 @@ function testSessionStorage(sessionStorageActor) {
                                    sessionStorageActor);
 }
 
-var testSessionStorageObjects = Task.async(function*(index, hosts, sessionStorageActor) {
+var testSessionStorageObjects = Task.async(function* (index, hosts, sessionStorageActor) {
   let host = Object.keys(hosts)[index];
   let matchItems = data => {
     is(data.total, storeMap.sessionStorage[host].length,
@@ -465,10 +428,7 @@ var testSessionStorageObjects = Task.async(function*(index, hosts, sessionStorag
           break;
         }
       }
-      if (!found) {
-        ok(false, "session storage item " + item.name +
-                  " should not exist in response;");
-      }
+      ok(found, "session storage item " + item.name + " should exist in response");
     }
   };
 
@@ -480,7 +440,7 @@ var testSessionStorageObjects = Task.async(function*(index, hosts, sessionStorag
   yield testSessionStorageObjects(++index, hosts, sessionStorageActor);
 });
 
-var testIndexedDB = Task.async(function*(indexedDBActor) {
+var testIndexedDB = Task.async(function* (indexedDBActor) {
   is(Object.keys(indexedDBActor.hosts).length, 3,
      "Correct number of host entries for indexed db");
 
@@ -494,21 +454,16 @@ var testIndexedDB = Task.async(function*(indexedDBActor) {
           break;
         }
       }
-      if (!found) {
-        ok (false, item + " should not be present in list stores response");
-      }
-      else {
-        ok (true, item + " found from indexedDB list stores response");
-      }
+      ok(found, item + " should exist in list stores response");
     }
   }
 
   yield testIndexedDBs(0, indexedDBActor.hosts, indexedDBActor);
-  yield  testObjectStores(0, indexedDBActor.hosts, indexedDBActor);
-  yield  testIDBEntries(0, indexedDBActor.hosts, indexedDBActor);
+  yield testObjectStores(0, indexedDBActor.hosts, indexedDBActor);
+  yield testIDBEntries(0, indexedDBActor.hosts, indexedDBActor);
 });
 
-var testIndexedDBs = Task.async(function*(index, hosts, indexedDBActor) {
+var testIndexedDBs = Task.async(function* (index, hosts, indexedDBActor) {
   let host = Object.keys(hosts)[index];
   let matchItems = data => {
     is(data.total, IDBValues.dbDetails[host].length,
@@ -526,9 +481,7 @@ var testIndexedDBs = Task.async(function*(index, hosts, indexedDBActor) {
           break;
         }
       }
-      if (!found) {
-        ok(false, "indexed db " + item.name + " should not exist in response");
-      }
+      ok(found, "indexed db " + item.name + " should exist in response");
     }
   };
 
@@ -540,7 +493,7 @@ var testIndexedDBs = Task.async(function*(index, hosts, indexedDBActor) {
   yield testIndexedDBs(++index, hosts, indexedDBActor);
 });
 
-var testObjectStores = Task.async(function*(index, hosts, indexedDBActor) {
+var testObjectStores = Task.async(function* (index, hosts, indexedDBActor) {
   let host = Object.keys(hosts)[index];
   let matchItems = (data, db) => {
     is(data.total, IDBValues.objectStoreDetails[host][db].length,
@@ -569,16 +522,12 @@ var testObjectStores = Task.async(function*(index, hosts, indexedDBActor) {
                 break;
               }
             }
-            if (!indexFound) {
-              ok(false, "Index " + index + " should not be present in response");
-            }
+            ok(indexFound, "Index " + index + " should exist in response");
           }
           break;
         }
       }
-      if (!found) {
-        ok(false, "indexed db " + item.name + " should not exist in response");
-      }
+      ok(found, "indexed db " + item.name + " should exist in response");
     }
   };
 
@@ -595,7 +544,7 @@ var testObjectStores = Task.async(function*(index, hosts, indexedDBActor) {
   yield testObjectStores(++index, hosts, indexedDBActor);
 });
 
-var testIDBEntries = Task.async(function*(index, hosts, indexedDBActor) {
+var testIDBEntries = Task.async(function* (index, hosts, indexedDBActor) {
   let host = Object.keys(hosts)[index];
   let matchItems = (data, obj) => {
     is(data.total, IDBValues.entries[host][obj].length,
@@ -616,9 +565,7 @@ var testIDBEntries = Task.async(function*(index, hosts, indexedDBActor) {
           break;
         }
       }
-      if (!found) {
-        ok(false, "indexed db item " + item.name + " should not exist in response");
-      }
+      ok(found, "indexed db item " + item.name + " should exist in response");
     }
   };
 
@@ -635,40 +582,22 @@ var testIDBEntries = Task.async(function*(index, hosts, indexedDBActor) {
   yield testObjectStores(++index, hosts, indexedDBActor);
 });
 
-function test() {
-  addTab(MAIN_DOMAIN + "storage-listings.html").then(function(doc) {
-    initDebuggerServer();
+add_task(function* () {
+  yield openTabAndSetupStorage(MAIN_DOMAIN + "storage-listings.html");
 
-    let createConnection = () => {
-      let client = new DebuggerClient(DebuggerServer.connectPipe());
-      connectDebuggerClient(client).then(form => {
-        let front = StorageFront(client, form);
-        front.listStores().then(data => testStores(data))
-                          .then(() => finishTests(client));
-      });
-    };
+  initDebuggerServer();
+  let client = new DebuggerClient(DebuggerServer.connectPipe());
+  let form = yield connectDebuggerClient(client);
+  let front = StorageFront(client, form);
+  let data = yield front.listStores();
+  yield testStores(data);
 
-    /**
-     * This method iterates over iframes in a window and setups the indexed db
-     * required for this test.
-     */
-    let setupIDBInFrames = (w, i, c) => {
-      if (w[i] && w[i].idbGenerator) {
-        w[i].setupIDB = w[i].idbGenerator(() => setupIDBInFrames(w, i + 1, c));
-        w[i].setupIDB.next();
-      }
-      else if (w[i] && w[i + 1]) {
-        setupIDBInFrames(w, i + 1, c);
-      }
-      else {
-        c();
-      }
-    };
-    // Setup the indexed db in main window.
-    gWindow = doc.defaultView.wrappedJSObject;
-    gWindow.setupIDB = gWindow.idbGenerator(() => {
-      setupIDBInFrames(gWindow, 0, createConnection);
-    });
-    gWindow.setupIDB.next();
-  });
-}
+  yield clearStorage();
+
+  // Forcing GC/CC to get rid of docshells and windows created by this test.
+  forceCollections();
+  yield client.close();
+  forceCollections();
+  DebuggerServer.destroy();
+  forceCollections();
+});

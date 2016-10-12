@@ -1,0 +1,175 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+@imports('sys')
+def die(*args):
+    'Print an error and terminate configure.'
+    log.error(*args)
+    sys.exit(1)
+
+
+@imports(_from='mozbuild.configure', _import='ConfigureError')
+def configure_error(message):
+    '''Raise a programming error and terminate configure.
+    Primarily for use in moz.configure templates to sanity check
+    their inputs from moz.configure usage.'''
+    raise ConfigureError(message)
+
+# A wrapper to obtain a process' output that returns the output generated
+# by running the given command if it exits normally, and streams that
+# output to log.debug and calls die or the given error callback if it
+# does not.
+@imports('subprocess')
+@imports('sys')
+@imports(_from='mozbuild.configure.util', _import='LineIO')
+@imports(_from='mozbuild.shellutil', _import='quote')
+def check_cmd_output(*args, **kwargs):
+    onerror = kwargs.pop('onerror', None)
+
+    with log.queue_debug():
+        log.debug('Executing: `%s`', quote(*args))
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        stdout, stderr = proc.communicate()
+        retcode = proc.wait()
+        if retcode == 0:
+            return stdout
+
+        log.debug('The command returned non-zero exit status %d.',
+                  retcode)
+        for out, desc in ((stdout, 'output'), (stderr, 'error output')):
+            if out:
+                log.debug('Its %s was:', desc)
+                with LineIO(lambda l: log.debug('| %s', l)) as o:
+                    o.write(out)
+        if onerror:
+            return onerror()
+        die('Command `%s` failed with exit status %d.' %
+            (quote(*args), retcode))
+
+@imports('os')
+def is_absolute_or_relative(path):
+    if os.altsep and os.altsep in path:
+        return True
+    return os.sep in path
+
+
+@imports(_import='mozpack.path', _as='mozpath')
+def normsep(path):
+    return mozpath.normsep(path)
+
+# Locates the given program using which, or returns the given path if it
+# exists.
+# The `paths` parameter may be passed to search the given paths instead of
+# $PATH.
+@imports(_from='which', _import='which')
+@imports(_from='which', _import='WhichError')
+@imports('itertools')
+@imports(_from='os', _import='pathsep')
+def find_program(file, paths=None):
+    if is_absolute_or_relative(file):
+        return os.path.abspath(file) if os.path.isfile(file) else None
+    try:
+        if paths:
+            if not isinstance(paths, (list, tuple)):
+                die("Paths provided to find_program must be a list of strings, "
+                    "not %r", paths)
+            paths = list(itertools.chain(
+                *(p.split(pathsep) for p in paths if p)))
+        return normsep(which(file, path=paths))
+    except WhichError:
+        return None
+
+
+def unique_list(l):
+    result = []
+    for i in l:
+        if l not in result:
+            result.append(i)
+    return result
+
+@imports(_from='mozbuild.configure.util', _import='Version', _as='_Version')
+def Version(v):
+    'A version number that can be compared usefully.'
+    return _Version(v)
+
+# Denotes a deprecated option. Combines option() and @depends:
+# @deprecated_option('--option')
+# def option(value):
+#     ...
+# @deprecated_option() takes the same arguments as option(), except `help`.
+# The function may handle the option like a typical @depends function would,
+# but it is recommended it emits a deprecation error message suggesting an
+# alternative option to use if there is one.
+@template
+def deprecated_option(*args, **kwargs):
+    assert 'help' not in kwargs
+    kwargs['help'] = 'Deprecated'
+    opt = option(*args, **kwargs)
+
+    def decorator(func):
+        @depends(opt.option)
+        def deprecated(value):
+            if value.origin != 'default':
+                return func(value)
+        return deprecated
+
+    return decorator
+
+
+# from mozbuild.util import ReadOnlyNamespace as namespace
+@imports(_from='mozbuild.util', _import='ReadOnlyNamespace')
+def namespace(**kwargs):
+    return ReadOnlyNamespace(**kwargs)
+
+
+# Some @depends function return namespaces, and one could want to use one
+# specific attribute from such a namespace as a "value" given to functions
+# such as `set_config`. But those functions do not take immediate values.
+# The `delayed_getattr` function allows access to attributes from the result
+# of a @depends function in a non-immediate manner.
+#   @depends('--option')
+#   def option(value)
+#       return namespace(foo=value)
+#   set_config('FOO', delayed_getattr(option, 'foo')
+@template
+def delayed_getattr(func, key):
+    @depends(func)
+    def result(value):
+        # The @depends function we're being passed may have returned
+        # None, or an object that simply doesn't have the wanted key.
+        # In that case, just return None.
+        return getattr(value, key, None)
+    return result
+
+
+# Like @depends, but the decorated function is only called if one of the
+# arguments it would be called with has a positive value (bool(value) is True)
+@template
+def depends_if(*args):
+    def decorator(func):
+        @depends(*args)
+        def wrapper(*args):
+            if any(arg for arg in args):
+                return func(*args)
+        return wrapper
+    return decorator
+
+# Like @depends_if, but a distinguished value passed as a keyword argument
+# "when" is truth tested instead of every argument. This value is not passed
+# to the function if it is called.
+@template
+def depends_when(*args, **kwargs):
+    if not len(kwargs) == 1 and kwargs.get('when'):
+        die('depends_when requires a single keyword argument, "when"')
+    when = kwargs['when']
+    def decorator(fn):
+        @depends(when, *args)
+        def wrapper(val, *args):
+            if val:
+                return fn(*args)
+        return wrapper
+    return decorator

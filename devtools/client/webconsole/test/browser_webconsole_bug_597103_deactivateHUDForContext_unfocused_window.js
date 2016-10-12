@@ -1,12 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* ***** BEGIN LICENSE BLOCK *****
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- *
- * Contributor(s):
- *  Mihai Șucan <mihai.sucan@gmail.com>
- *
- * ***** END LICENSE BLOCK ***** */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -59,7 +54,7 @@ function tab2Loaded(aEvent) {
   function closeConsoles() {
     try {
       let target1 = TargetFactory.forTab(tab1);
-      gDevTools.closeToolbox(target1).then(function() {
+      gDevTools.closeToolbox(target1).then(function () {
         try {
           let target2 = TargetFactory.forTab(tab2);
           gDevTools.closeToolbox(target2).then(testEnd);
@@ -79,18 +74,18 @@ function tab2Loaded(aEvent) {
 
     win1.gBrowser.removeTab(tab1);
 
-    Array.forEach(win2.gBrowser.tabs, function(aTab) {
+    Array.forEach(win2.gBrowser.tabs, function (aTab) {
       win2.gBrowser.removeTab(aTab);
     });
 
-    executeSoon(function() {
+    executeSoon(function () {
       win2.close();
       tab1 = tab2 = win1 = win2 = null;
       finishTest();
     });
   }
 
-  waitForFocus(openConsoles, tab2.linkedBrowser.contentWindow);
+  openConsoles();
 }
 
 function test() {

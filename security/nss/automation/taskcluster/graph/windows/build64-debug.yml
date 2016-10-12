@@ -1,0 +1,35 @@
+---
+- task:
+    metadata:
+      name: "Windows 2012 64 (debug)"
+      description: "Windows 2012 64 (debug)"
+
+    payload:
+      env:
+        NSS_ENABLE_TLS_1_3: 1
+        USE_64: 1
+
+    extra:
+      treeherder:
+        build:
+          platform: windows2012-64
+        machine:
+          platform: windows2012-64
+        collection:
+          debug: true
+
+  tests:
+    - cipher
+    - crmf
+    - db
+    - ec
+    - fips
+    - gtests
+    - lowhash
+    - merge
+    - ocsp
+    - pkits
+    - pkix
+    - sdr
+    - smime
+    - tools

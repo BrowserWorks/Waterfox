@@ -11,6 +11,7 @@
 #include "mozilla/ThreadLocal.h"
 
 #include "jscompartment.h"
+#include "jsgc.h"
 #include "jsprf.h"
 
 #include "gc/Marking.h"
@@ -24,6 +25,7 @@
 #include "jit/EagerSimdUnbox.h"
 #include "jit/EdgeCaseAnalysis.h"
 #include "jit/EffectiveAddressAnalysis.h"
+#include "jit/FlowAliasAnalysis.h"
 #include "jit/InstructionReordering.h"
 #include "jit/IonAnalysis.h"
 #include "jit/IonBuilder.h"
@@ -54,6 +56,7 @@
 #include "jit/shared/Lowering-shared-inl.h"
 #include "vm/Debugger-inl.h"
 #include "vm/ScopeObject-inl.h"
+#include "vm/Stack-inl.h"
 
 using namespace js;
 using namespace js::jit;
@@ -196,11 +199,9 @@ JitRuntime::~JitRuntime()
 }
 
 bool
-JitRuntime::initialize(JSContext* cx)
+JitRuntime::initialize(JSContext* cx, AutoLockForExclusiveAccess& lock)
 {
-    MOZ_ASSERT(cx->runtime()->currentThreadHasExclusiveAccess());
-
-    AutoCompartment ac(cx, cx->atomsCompartment());
+    AutoCompartment ac(cx, cx->atomsCompartment(lock));
 
     JitContext jctx(cx, nullptr);
 
@@ -274,27 +275,27 @@ JitRuntime::initialize(JSContext* cx)
         return false;
 
     JitSpew(JitSpew_Codegen, "# Emitting Pre Barrier for Value");
-    valuePreBarrier_ = generatePreBarrier(cx, MIRType_Value);
+    valuePreBarrier_ = generatePreBarrier(cx, MIRType::Value);
     if (!valuePreBarrier_)
         return false;
 
     JitSpew(JitSpew_Codegen, "# Emitting Pre Barrier for String");
-    stringPreBarrier_ = generatePreBarrier(cx, MIRType_String);
+    stringPreBarrier_ = generatePreBarrier(cx, MIRType::String);
     if (!stringPreBarrier_)
         return false;
 
     JitSpew(JitSpew_Codegen, "# Emitting Pre Barrier for Object");
-    objectPreBarrier_ = generatePreBarrier(cx, MIRType_Object);
+    objectPreBarrier_ = generatePreBarrier(cx, MIRType::Object);
     if (!objectPreBarrier_)
         return false;
 
     JitSpew(JitSpew_Codegen, "# Emitting Pre Barrier for Shape");
-    shapePreBarrier_ = generatePreBarrier(cx, MIRType_Shape);
+    shapePreBarrier_ = generatePreBarrier(cx, MIRType::Shape);
     if (!shapePreBarrier_)
         return false;
 
     JitSpew(JitSpew_Codegen, "# Emitting Pre Barrier for ObjectGroup");
-    objectGroupPreBarrier_ = generatePreBarrier(cx, MIRType_ObjectGroup);
+    objectGroupPreBarrier_ = generatePreBarrier(cx, MIRType::ObjectGroup);
     if (!objectGroupPreBarrier_)
         return false;
 
@@ -334,7 +335,7 @@ JitRuntime::debugTrapHandler(JSContext* cx)
         // JitRuntime code stubs are shared across compartments and have to
         // be allocated in the atoms compartment.
         AutoLockForExclusiveAccess lock(cx);
-        AutoCompartment ac(cx, cx->runtime()->atomsCompartment());
+        AutoCompartment ac(cx, cx->runtime()->atomsCompartment(lock));
         debugTrapHandler_ = generateDebugTrapHandler(cx);
     }
     return debugTrapHandler_;
@@ -396,10 +397,12 @@ JitRuntime::patchIonBackedges(JSRuntime* rt, BackedgeTarget target)
 
 JitCompartment::JitCompartment()
   : stubCodes_(nullptr),
+    cacheIRStubCodes_(nullptr),
     baselineGetPropReturnAddr_(nullptr),
     baselineSetPropReturnAddr_(nullptr),
     stringConcatStub_(nullptr),
     regExpMatcherStub_(nullptr),
+    regExpSearcherStub_(nullptr),
     regExpTesterStub_(nullptr)
 {
     baselineCallReturnAddrs_[0] = baselineCallReturnAddrs_[1] = nullptr;
@@ -408,6 +411,7 @@ JitCompartment::JitCompartment()
 JitCompartment::~JitCompartment()
 {
     js_delete(stubCodes_);
+    js_delete(cacheIRStubCodes_);
 }
 
 bool
@@ -418,6 +422,15 @@ JitCompartment::initialize(JSContext* cx)
         return false;
 
     if (!stubCodes_->init()) {
+        ReportOutOfMemory(cx);
+        return false;
+    }
+
+    cacheIRStubCodes_ = cx->new_<CacheIRStubCodeMap>(cx->runtime());
+    if (!cacheIRStubCodes_)
+        return false;
+
+    if (!cacheIRStubCodes_->init()) {
         ReportOutOfMemory(cx);
         return false;
     }
@@ -437,72 +450,8 @@ JitCompartment::ensureIonStubsExist(JSContext* cx)
     return true;
 }
 
-struct OnIonCompilationInfo {
-    size_t numBlocks;
-    size_t scriptIndex;
-    LifoAlloc alloc;
-    LSprinter graph;
-
-    OnIonCompilationInfo()
-      : numBlocks(0),
-        scriptIndex(0),
-        alloc(4096),
-        graph(&alloc)
-    { }
-
-    bool filled() const {
-        return numBlocks != 0;
-    }
-};
-
-typedef Vector<OnIonCompilationInfo> OnIonCompilationVector;
-
-// This function initializes the values which are given to the Debugger
-// onIonCompilation hook, if the compilation was successful, and if Ion
-// compilations of this compartment are watched by any debugger.
-//
-// This function must be called in the same AutoEnterAnalysis section as the
-// CodeGenerator::link. Failing to do so might leave room to interleave other
-// allocations which can invalidate any JSObject / JSFunction referenced by the
-// MIRGraph.
-//
-// This function ignores any allocation failure and returns whether the
-// Debugger::onIonCompilation should be called.
-static inline void
-PrepareForDebuggerOnIonCompilationHook(JSContext* cx, jit::MIRGraph& graph,
-                                       MutableHandle<ScriptVector> scripts,
-                                       OnIonCompilationInfo* info)
-{
-    info->numBlocks = 0;
-    if (!Debugger::observesIonCompilation(cx))
-        return;
-
-    // fireOnIonCompilation failures are ignored, do the same here.
-    info->scriptIndex = scripts.length();
-    if (!scripts.reserve(graph.numBlocks() + scripts.length())) {
-        cx->clearPendingException();
-        return;
-    }
-
-    // Collect the list of scripts which are inlined in the MIRGraph.
-    info->numBlocks = graph.numBlocks();
-    for (jit::MBasicBlockIterator block(graph.begin()); block != graph.end(); block++)
-        scripts.infallibleAppend(block->info().script());
-
-    // Spew the JSON graph made for the Debugger at the end of the LifoAlloc
-    // used by the compiler. This would not prevent unexpected GC from the
-    // compartment of the Debuggee, but do them as part of the compartment of
-    // the Debugger when the content is copied over to a JSString.
-    jit::JSONSpewer spewer(info->graph);
-    spewer.spewDebuggerGraph(&graph);
-    if (info->graph.hadOutOfMemory()) {
-        scripts.resize(info->scriptIndex);
-        info->numBlocks = 0;
-    }
-}
-
 void
-jit::FinishOffThreadBuilder(JSContext* cx, IonBuilder* builder)
+jit::FinishOffThreadBuilder(JSRuntime* runtime, IonBuilder* builder)
 {
     MOZ_ASSERT(HelperThreadState().isLocked());
 
@@ -514,8 +463,10 @@ jit::FinishOffThreadBuilder(JSContext* cx, IonBuilder* builder)
     }
 
     // If the builder is still in one of the helper thread list, then remove it.
-    if (builder->isInList())
-        builder->removeFrom(HelperThreadState().ionLazyLinkList());
+    if (builder->isInList()) {
+        MOZ_ASSERT(runtime);
+        runtime->ionLazyLinkListRemove(builder);
+    }
 
     // Clear the recompiling flag of the old ionScript, since we continue to
     // use the old ionScript if recompiling fails.
@@ -524,9 +475,9 @@ jit::FinishOffThreadBuilder(JSContext* cx, IonBuilder* builder)
 
     // Clean up if compilation did not succeed.
     if (builder->script()->isIonCompilingOffThread()) {
-        builder->script()->setIonScript(cx, builder->abortReason() == AbortReason_Disable
-                                            ? ION_DISABLED_SCRIPT
-                                            : nullptr);
+        IonScript* ion =
+            builder->abortReason() == AbortReason_Disable ? ION_DISABLED_SCRIPT : nullptr;
+        builder->script()->setIonScript(runtime, ion);
     }
 
     // The builder is allocated into its LifoAlloc, so destroying that will
@@ -552,30 +503,8 @@ FinishAllOffThreadCompilations(JSCompartment* comp)
     }
 }
 
-class MOZ_RAII AutoLazyLinkExitFrame
-{
-    JitActivation* jitActivation_;
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-
-  public:
-    explicit AutoLazyLinkExitFrame(JitActivation* jitActivation
-                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : jitActivation_(jitActivation)
-    {
-        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-        MOZ_ASSERT(!jitActivation_->isLazyLinkExitFrame(),
-                   "Cannot stack multiple lazy-link frames.");
-        jitActivation_->setLazyLinkExitFrame(true);
-    }
-
-    ~AutoLazyLinkExitFrame() {
-        jitActivation_->setLazyLinkExitFrame(false);
-    }
-};
-
 static bool
-LinkCodeGen(JSContext* cx, IonBuilder* builder, CodeGenerator *codegen,
-            MutableHandle<ScriptVector> scripts, OnIonCompilationInfo* info)
+LinkCodeGen(JSContext* cx, IonBuilder* builder, CodeGenerator *codegen)
 {
     RootedScript script(cx, builder->script());
     TraceLoggerThread* logger = TraceLoggerForMainThread(cx->runtime());
@@ -586,13 +515,11 @@ LinkCodeGen(JSContext* cx, IonBuilder* builder, CodeGenerator *codegen,
     if (!codegen->link(cx, builder->constraints()))
         return false;
 
-    PrepareForDebuggerOnIonCompilationHook(cx, builder->graph(), scripts, info);
     return true;
 }
 
 static bool
-LinkBackgroundCodeGen(JSContext* cx, IonBuilder* builder,
-                      MutableHandle<ScriptVector> scripts, OnIonCompilationInfo* info)
+LinkBackgroundCodeGen(JSContext* cx, IonBuilder* builder)
 {
     CodeGenerator* codegen = builder->backgroundCodegen();
     if (!codegen)
@@ -605,7 +532,7 @@ LinkBackgroundCodeGen(JSContext* cx, IonBuilder* builder,
     // though any GC activity would discard the builder.
     MacroAssembler::AutoRooter masm(cx, &codegen->masm);
 
-    return LinkCodeGen(cx, builder, codegen, scripts, info);
+    return LinkCodeGen(cx, builder, codegen);
 }
 
 void
@@ -622,16 +549,12 @@ jit::LazyLink(JSContext* cx, HandleScript calleeScript)
         calleeScript->baselineScript()->removePendingIonBuilder(calleeScript);
 
         // Remove from pending.
-        builder->removeFrom(HelperThreadState().ionLazyLinkList());
+        cx->runtime()->ionLazyLinkListRemove(builder);
     }
-
-    // See PrepareForDebuggerOnIonCompilationHook
-    Rooted<ScriptVector> debugScripts(cx, ScriptVector(cx));
-    OnIonCompilationInfo info;
 
     {
         AutoEnterAnalysis enterTypes(cx);
-        if (!LinkBackgroundCodeGen(cx, builder, &debugScripts, &info)) {
+        if (!LinkBackgroundCodeGen(cx, builder)) {
             // Silently ignore OOM during code generation. The assembly code
             // doesn't has code to handle it after linking happened. So it's
             // not OK to throw a catchable exception from there.
@@ -644,21 +567,15 @@ jit::LazyLink(JSContext* cx, HandleScript calleeScript)
 
     {
         AutoLockHelperThreadState lock;
-        FinishOffThreadBuilder(cx, builder);
+        FinishOffThreadBuilder(cx->runtime(), builder);
     }
-
-    if (info.filled())
-        Debugger::onIonCompilation(cx, debugScripts, info.graph);
 }
 
 uint8_t*
 jit::LazyLinkTopActivation(JSContext* cx)
 {
-    JitActivationIterator iter(cx->runtime());
-    AutoLazyLinkExitFrame lazyLinkExitFrame(iter->asJit());
-
     // First frame should be an exit frame.
-    JitFrameIterator it(iter);
+    JitFrameIterator it(cx);
     LazyLinkExitFrameLayout* ll = it.exitFrame()->as<LazyLinkExitFrameLayout>();
     RootedScript calleeScript(cx, ScriptFromCalleeToken(ll->jsFrame()->calleeToken()));
 
@@ -671,12 +588,12 @@ jit::LazyLinkTopActivation(JSContext* cx)
 }
 
 /* static */ void
-JitRuntime::Mark(JSTracer* trc)
+JitRuntime::Mark(JSTracer* trc, AutoLockForExclusiveAccess& lock)
 {
     MOZ_ASSERT(!trc->runtime()->isHeapMinorCollecting());
-    Zone* zone = trc->runtime()->atomsCompartment()->zone();
-    for (gc::ZoneCellIterUnderGC i(zone, gc::AllocKind::JITCODE); !i.done(); i.next()) {
-        JitCode* code = i.get<JitCode>();
+    Zone* zone = trc->runtime()->atomsCompartment(lock)->zone();
+    for (auto i = zone->cellIter<JitCode>(); !i.done(); i.next()) {
+        JitCode* code = i;
         TraceRoot(trc, &code, "wrapper");
     }
 }
@@ -729,6 +646,7 @@ JitCompartment::sweep(FreeOp* fop, JSCompartment* compartment)
     FinishAllOffThreadCompilations(compartment);
 
     stubCodes_->sweep();
+    cacheIRStubCodes_->sweep();
 
     // If the sweep removed the ICCall_Fallback stub, nullptr the baselineCallReturnAddr_ field.
     if (!stubCodes_->lookup(ICCall_Fallback::Compiler::BASELINE_CALL_KEY))
@@ -748,6 +666,9 @@ JitCompartment::sweep(FreeOp* fop, JSCompartment* compartment)
     if (regExpMatcherStub_ && !IsMarkedUnbarriered(&regExpMatcherStub_))
         regExpMatcherStub_ = nullptr;
 
+    if (regExpSearcherStub_ && !IsMarkedUnbarriered(&regExpSearcherStub_))
+        regExpSearcherStub_ = nullptr;
+
     if (regExpTesterStub_ && !IsMarkedUnbarriered(&regExpTesterStub_))
         regExpTesterStub_ = nullptr;
 
@@ -763,6 +684,8 @@ JitCompartment::toggleBarriers(bool enabled)
     // Toggle barriers in compartment wide stubs that have patchable pre barriers.
     if (regExpMatcherStub_)
         regExpMatcherStub_->togglePreBarriers(enabled, Reprotect);
+    if (regExpSearcherStub_)
+        regExpSearcherStub_->togglePreBarriers(enabled, Reprotect);
     if (regExpTesterStub_)
         regExpTesterStub_->togglePreBarriers(enabled, Reprotect);
 
@@ -771,6 +694,21 @@ JitCompartment::toggleBarriers(bool enabled)
         JitCode* code = *e.front().value().unsafeGet();
         code->togglePreBarriers(enabled, Reprotect);
     }
+    for (CacheIRStubCodeMap::Enum e(*cacheIRStubCodes_); !e.empty(); e.popFront()) {
+        JitCode* code = *e.front().value().unsafeGet();
+        code->togglePreBarriers(enabled, Reprotect);
+    }
+}
+
+size_t
+JitCompartment::sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const
+{
+    size_t n = mallocSizeOf(this);
+    if (stubCodes_)
+        n += stubCodes_->sizeOfIncludingThis(mallocSizeOf);
+    if (cacheIRStubCodes_)
+        n += cacheIRStubCodes_->sizeOfIncludingThis(mallocSizeOf);
+    return n;
 }
 
 JitCode*
@@ -868,9 +806,8 @@ JitCode::finalize(FreeOp* fop)
 #ifdef DEBUG
     JSRuntime* rt = fop->runtime();
     if (hasBytecodeMap_) {
-        JitcodeGlobalEntry result;
         MOZ_ASSERT(rt->jitRuntime()->hasJitcodeGlobalTable());
-        MOZ_ASSERT(!rt->jitRuntime()->getJitcodeGlobalTable()->lookup(raw(), &result, rt));
+        MOZ_ASSERT(!rt->jitRuntime()->getJitcodeGlobalTable()->lookup(raw()));
     }
 #endif
 
@@ -879,8 +816,11 @@ JitCode::finalize(FreeOp* fop)
     // With W^X JIT code, reprotecting memory for each JitCode instance is
     // slow, so we record the ranges and poison them later all at once. It's
     // safe to ignore OOM here, it just means we won't poison the code.
-    if (fop->appendJitPoisonRange(JitPoisonRange(pool_, code_, bufferSize_)))
+    if (fop->appendJitPoisonRange(JitPoisonRange(pool_, code_ - headerSize_,
+                                                 headerSize_ + bufferSize_)))
+    {
         pool_->addRef();
+    }
     code_ = nullptr;
 
     // Code buffers are stored inside ExecutablePools. Pools are refcounted.
@@ -1084,6 +1024,10 @@ IonScript::trace(JSTracer* trc)
         ICEntry& ent = sharedStubList()[i];
         ent.trace(trc);
     }
+
+    // Trace caches so that the JSScript pointer can be updated if moved.
+    for (size_t i = 0; i < numCaches(); i++)
+        getCacheFromIndex(i).trace(trc);
 }
 
 /* static */ void
@@ -1279,9 +1223,24 @@ void
 IonScript::Destroy(FreeOp* fop, IonScript* script)
 {
     script->unlinkFromRuntime(fop);
-    // Frees the potential event we have set.
-    script->traceLoggerScriptEvent_ = TraceLoggerEvent();
-    fop->free_(script);
+
+    /*
+     * When the script contains pointers to nursery things, the store buffer can
+     * contain entries that point into the fallback stub space. Since we can
+     * destroy scripts outside the context of a GC, this situation could result
+     * in us trying to mark invalid store buffer entries.
+     *
+     * Defer freeing any allocated blocks until after the next minor GC.
+     */
+    script->fallbackStubSpace_.freeAllAfterMinorGC(fop->runtime());
+
+    fop->delete_(script);
+}
+
+void
+JS::DeletePolicy<js::jit::IonScript>::operator()(const js::jit::IonScript* script)
+{
+    IonScript::Destroy(rt_->defaultFreeOp(), const_cast<IonScript*>(script));
 }
 
 void
@@ -1318,15 +1277,19 @@ IonScript::purgeOptimizedStubs(Zone* zone)
                 stub = stub->next();
             }
 
+            lastStub->toFallbackStub()->setInvalid();
+
             if (lastStub->isMonitoredFallback()) {
                 // Monitor stubs can't make calls, so are always in the
                 // optimized stub space.
                 ICTypeMonitor_Fallback* lastMonStub =
                     lastStub->toMonitoredFallbackStub()->fallbackMonitorStub();
                 lastMonStub->resetMonitorStubChain(zone);
+                lastMonStub->setInvalid();
             }
         } else if (lastStub->isTypeMonitor_Fallback()) {
             lastStub->toTypeMonitor_Fallback()->resetMonitorStubChain(zone);
+            lastStub->toTypeMonitor_Fallback()->setInvalid();
         } else {
             MOZ_ASSERT(lastStub->isTableSwitch());
         }
@@ -1391,8 +1354,7 @@ jit::ToggleBarriers(JS::Zone* zone, bool needs)
     if (!rt->hasJitRuntime())
         return;
 
-    for (gc::ZoneCellIterUnderGC i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next()) {
-        JSScript* script = i.get<JSScript>();
+    for (auto script = zone->cellIter<JSScript>(); !script.done(); script.next()) {
         if (script->hasIonScript())
             script->ionScript()->toggleBarriers(needs);
         if (script->hasBaselineScript())
@@ -1434,7 +1396,7 @@ OptimizeSinCos(MIRGenerator *mir, MIRGraph &graph)
                 continue;
 
             // Check if sin/cos is already optimized.
-            if (insFunc->getOperand(0)->type() == MIRType_SinCosDouble)
+            if (insFunc->getOperand(0)->type() == MIRType::SinCosDouble)
                 continue;
 
             // insFunc is either a |sin(x)| or |cos(x)| instruction. The
@@ -1570,8 +1532,7 @@ OptimizeMIR(MIRGenerator* mir)
 
     {
         AutoTraceLog log(logger, TraceLogger_RenumberBlocks);
-        if (!RenumberBlocks(graph))
-            return false;
+        RenumberBlocks(graph);
         gs.spewPass("Renumber Blocks");
         AssertGraphCoherency(graph);
 
@@ -1615,7 +1576,7 @@ OptimizeMIR(MIRGenerator* mir)
             return false;
     }
 
-    if (mir->optimizationInfo().scalarReplacementEnabled()) {
+    if (!JitOptions.disableRecoverIns && mir->optimizationInfo().scalarReplacementEnabled()) {
         AutoTraceLog log(logger, TraceLogger_ScalarReplacement);
         if (!ScalarReplacement(mir, graph))
             return false;
@@ -1637,7 +1598,7 @@ OptimizeMIR(MIRGenerator* mir)
             return false;
     }
 
-    if (mir->optimizationInfo().eagerSimdUnboxEnabled()) {
+    if (!JitOptions.disableRecoverIns && mir->optimizationInfo().eagerSimdUnboxEnabled()) {
         AutoTraceLog log(logger, TraceLogger_EagerSimdUnbox);
         if (!EagerSimdUnbox(mir, graph))
             return false;
@@ -1669,15 +1630,24 @@ OptimizeMIR(MIRGenerator* mir)
     if (mir->optimizationInfo().licmEnabled() ||
         mir->optimizationInfo().gvnEnabled())
     {
-        AutoTraceLog log(logger, TraceLogger_AliasAnalysis);
-        AliasAnalysis analysis(mir, graph);
-        if (!analysis.analyze())
-            return false;
-        gs.spewPass("Alias analysis");
-        AssertExtendedGraphCoherency(graph);
+        {
+            AutoTraceLog log(logger, TraceLogger_AliasAnalysis);
+            if (JitOptions.disableFlowAA) {
+                AliasAnalysis analysis(mir, graph);
+                if (!analysis.analyze())
+                    return false;
+            } else {
+                FlowAliasAnalysis analysis(mir, graph);
+                if (!analysis.analyze())
+                    return false;
+            }
 
-        if (mir->shouldCancel("Alias analysis"))
-            return false;
+            gs.spewPass("Alias analysis");
+            AssertExtendedGraphCoherency(graph);
+
+            if (mir->shouldCancel("Alias analysis"))
+                return false;
+        }
 
         if (!mir->compilingAsmJS()) {
             // Eliminating dead resume point operands requires basic block
@@ -1719,9 +1689,9 @@ OptimizeMIR(MIRGenerator* mir)
         }
     }
 
+    RangeAnalysis r(mir, graph);
     if (mir->optimizationInfo().rangeAnalysisEnabled()) {
         AutoTraceLog log(logger, TraceLogger_RangeAnalysis);
-        RangeAnalysis r(mir, graph);
         if (!r.addBetaNodes())
             return false;
         gs.spewPass("Beta");
@@ -1788,6 +1758,28 @@ OptimizeMIR(MIRGenerator* mir)
         }
     }
 
+    if (!JitOptions.disableRecoverIns) {
+        AutoTraceLog log(logger, TraceLogger_Sink);
+        if (!Sink(mir, graph))
+            return false;
+        gs.spewPass("Sink");
+        AssertExtendedGraphCoherency(graph);
+
+        if (mir->shouldCancel("Sink"))
+            return false;
+    }
+
+    if (!JitOptions.disableRecoverIns && mir->optimizationInfo().rangeAnalysisEnabled()) {
+        AutoTraceLog log(logger, TraceLogger_RemoveUnnecessaryBitops);
+        if (!r.removeUnnecessaryBitops())
+            return false;
+        gs.spewPass("Remove Unnecessary Bitops");
+        AssertExtendedGraphCoherency(graph);
+
+        if (mir->shouldCancel("Remove Unnecessary Bitops"))
+            return false;
+    }
+
     if (mir->optimizationInfo().eaaEnabled()) {
         AutoTraceLog log(logger, TraceLogger_EffectiveAddressAnalysis);
         EffectiveAddressAnalysis eaa(mir, graph);
@@ -1818,17 +1810,6 @@ OptimizeMIR(MIRGenerator* mir)
         AssertExtendedGraphCoherency(graph);
 
         if (mir->shouldCancel("DCE"))
-            return false;
-    }
-
-    {
-        AutoTraceLog log(logger, TraceLogger_EliminateDeadCode);
-        if (!Sink(mir, graph))
-            return false;
-        gs.spewPass("Sink");
-        AssertExtendedGraphCoherency(graph);
-
-        if (mir->shouldCancel("Sink"))
             return false;
     }
 
@@ -1886,7 +1867,8 @@ OptimizeMIR(MIRGenerator* mir)
 
     if (!mir->compilingAsmJS()) {
         AutoTraceLog log(logger, TraceLogger_AddKeepAliveInstructions);
-        AddKeepAliveInstructions(graph);
+        if (!AddKeepAliveInstructions(graph))
+            return false;
         gs.spewPass("Add KeepAlive Instructions");
         AssertGraphCoherency(graph);
     }
@@ -2053,8 +2035,16 @@ AttachFinishedCompilations(JSContext* cx)
 
             JSScript* script = builder->script();
             MOZ_ASSERT(script->hasBaselineScript());
-            script->baselineScript()->setPendingIonBuilder(cx, script, builder);
-            HelperThreadState().ionLazyLinkList().insertFront(builder);
+            script->baselineScript()->setPendingIonBuilder(cx->runtime(), script, builder);
+            cx->runtime()->ionLazyLinkListAdd(builder);
+
+            // Don't keep more than 100 lazy link builders.
+            // Throw away the oldest items.
+            while (cx->runtime()->ionLazyLinkListSize() > 100) {
+                jit::IonBuilder* builder = cx->runtime()->ionLazyLinkList().getLast();
+                jit::FinishOffThreadBuilder(cx->runtime(), builder);
+            }
+
             continue;
         }
     }
@@ -2105,8 +2095,8 @@ TrackIonAbort(JSContext* cx, JSScript* script, jsbytecode* pc, const char* messa
         return;
 
     JitcodeGlobalTable* table = cx->runtime()->jitRuntime()->getJitcodeGlobalTable();
-    JitcodeGlobalEntry entry;
-    table->lookupInfallible(script->baselineScript()->method()->raw(), &entry, cx->runtime());
+    void* ptr = script->baselineScript()->method()->raw();
+    JitcodeGlobalEntry& entry = table->lookupInfallible(ptr);
     entry.baselineEntry().trackIonAbort(pc, message);
 }
 
@@ -2260,7 +2250,7 @@ IonCompile(JSContext* cx, JSScript* script,
         }
 
         if (!recompile)
-            builderScript->setIonScript(cx, ION_COMPILING_SCRIPT);
+            builderScript->setIonScript(cx->runtime(), ION_COMPILING_SCRIPT);
 
         // The allocator and associated data will be destroyed after being
         // processed in the finishedOffThreadCompilations list.
@@ -2268,10 +2258,6 @@ IonCompile(JSContext* cx, JSScript* script,
 
         return AbortReason_NoAbort;
     }
-
-    // See PrepareForDebuggerOnIonCompilationHook
-    Rooted<ScriptVector> debugScripts(cx, ScriptVector(cx));
-    OnIonCompilationInfo debugInfo;
 
     {
         ScopedJSDeletePtr<CodeGenerator> codegen;
@@ -2284,11 +2270,8 @@ IonCompile(JSContext* cx, JSScript* script,
             return AbortReason_Disable;
         }
 
-        succeeded = LinkCodeGen(cx, builder, codegen, &debugScripts, &debugInfo);
+        succeeded = LinkCodeGen(cx, builder, codegen);
     }
-
-    if (debugInfo.filled())
-        Debugger::onIonCompilation(cx, debugScripts, debugInfo.graph);
 
     if (succeeded)
         return AbortReason_NoAbort;
@@ -2826,7 +2809,8 @@ EnterIon(JSContext* cx, EnterJitData& data)
 }
 
 bool
-jit::SetEnterJitData(JSContext* cx, EnterJitData& data, RunState& state, AutoValueVector& vals)
+jit::SetEnterJitData(JSContext* cx, EnterJitData& data, RunState& state,
+                     MutableHandle<GCVector<Value>> vals)
 {
     data.osrFrame = nullptr;
 
@@ -2875,13 +2859,14 @@ jit::SetEnterJitData(JSContext* cx, EnterJitData& data, RunState& state, AutoVal
             if (!vals.reserve(1))
                 return false;
 
-            ScriptFrameIter iter(cx);
             data.maxArgc = 1;
             data.maxArgv = vals.begin();
-            if (state.asExecute()->newTarget().isNull())
+            if (state.asExecute()->newTarget().isNull()) {
+                ScriptFrameIter iter(cx);
                 vals.infallibleAppend(iter.newTarget());
-            else
+            } else {
                 vals.infallibleAppend(state.asExecute()->newTarget());
+            }
         }
     }
 
@@ -2896,8 +2881,8 @@ jit::IonCannon(JSContext* cx, RunState& state)
     EnterJitData data(cx);
     data.jitcode = ion->method()->raw();
 
-    AutoValueVector vals(cx);
-    if (!SetEnterJitData(cx, data, state, vals))
+    Rooted<GCVector<Value>> vals(cx, GCVector<Value>(cx));
+    if (!SetEnterJitData(cx, data, state, &vals))
         return JitExec_Error;
 
     JitExecStatus status = EnterIon(cx, data);
@@ -2913,13 +2898,17 @@ jit::FastInvoke(JSContext* cx, HandleFunction fun, CallArgs& args)
 {
     JS_CHECK_RECURSION(cx, return JitExec_Error);
 
+    RootedScript script(cx, fun->nonLazyScript());
+
+    if (!Debugger::checkNoExecute(cx, script))
+        return JitExec_Error;
+
 #ifdef DEBUG
     // See comment in EnterBaseline.
     mozilla::Maybe<JS::AutoAssertOnGC> nogc;
     nogc.emplace(cx->runtime());
 #endif
 
-    RootedScript script(cx, fun->nonLazyScript());
     IonScript* ion = script->ionScript();
     JitCode* code = ion->method();
     void* jitcode = code->raw();
@@ -2968,7 +2957,6 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
 #ifdef JS_JITSPEW
         switch (it.type()) {
           case JitFrame_Exit:
-          case JitFrame_LazyLink:
             JitSpew(JitSpew_IonInvalidate, "#%d exit frame @ %p", frameno, it.fp());
             break;
           case JitFrame_BaselineJS:
@@ -2998,15 +2986,6 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
             break;
           case JitFrame_Rectifier:
             JitSpew(JitSpew_IonInvalidate, "#%d rectifier frame @ %p", frameno, it.fp());
-            break;
-          case JitFrame_Unwound_IonJS:
-          case JitFrame_Unwound_IonStub:
-          case JitFrame_Unwound_BaselineJS:
-          case JitFrame_Unwound_BaselineStub:
-          case JitFrame_Unwound_IonAccessorIC:
-            MOZ_CRASH("invalid");
-          case JitFrame_Unwound_Rectifier:
-            JitSpew(JitSpew_IonInvalidate, "#%d unwound rectifier frame @ %p", frameno, it.fp());
             break;
           case JitFrame_IonAccessorIC:
             JitSpew(JitSpew_IonInvalidate, "#%d ion IC getter/setter frame @ %p", frameno, it.fp());
@@ -3237,7 +3216,7 @@ jit::IonScript::invalidate(JSContext* cx, bool resetUses, const char* reason)
     Invalidate(cx, list, resetUses, true);
 }
 
-bool
+void
 jit::Invalidate(JSContext* cx, JSScript* script, bool resetUses, bool cancelOffThread)
 {
     MOZ_ASSERT(script->hasIonScript());
@@ -3252,15 +3231,14 @@ jit::Invalidate(JSContext* cx, JSScript* script, bool resetUses, bool cancelOffT
         if (filename == nullptr)
             filename = "<unknown>";
 
-        size_t len = strlen(filename) + 20;
-        char* buf = js_pod_malloc<char>(len);
-        if (!buf)
-            return false;
-
         // Construct the descriptive string.
-        JS_snprintf(buf, len, "Invalidate %s:%" PRIuSIZE, filename, script->lineno());
-        cx->runtime()->spsProfiler.markEvent(buf);
-        js_free(buf);
+        char* buf = JS_smprintf("Invalidate %s:%" PRIuSIZE, filename, script->lineno());
+
+        // Ignore the event on allocation failure.
+        if (buf) {
+            cx->runtime()->spsProfiler.markEvent(buf);
+            JS_smprintf_free(buf);
+        }
     }
 
     // RecompileInfoVector has inline space for at least one element.
@@ -3270,7 +3248,6 @@ jit::Invalidate(JSContext* cx, JSScript* script, bool resetUses, bool cancelOffT
     scripts.infallibleAppend(script->ionScript()->recompileInfo());
 
     Invalidate(cx, scripts, resetUses, cancelOffThread);
-    return true;
 }
 
 static void
@@ -3308,17 +3285,10 @@ jit::ForbidCompilation(JSContext* cx, JSScript* script)
 
     CancelOffThreadIonCompile(cx->compartment(), script);
 
-    if (script->hasIonScript()) {
-        // It is only safe to modify script->ion if the script is not currently
-        // running, because JitFrameIterator needs to tell what ionScript to
-        // use (either the one on the JSScript, or the one hidden in the
-        // breadcrumbs Invalidation() leaves). Therefore, if invalidation
-        // fails, we cannot disable the script.
-        if (!Invalidate(cx, script, false))
-            return;
-    }
+    if (script->hasIonScript())
+        Invalidate(cx, script, false);
 
-    script->setIonScript(cx, ION_DISABLED_SCRIPT);
+    script->setIonScript(cx->runtime(), ION_DISABLED_SCRIPT);
 }
 
 AutoFlushICache*

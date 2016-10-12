@@ -8,6 +8,7 @@
 #include "mozilla/dom/MediaKeySystemAccess.h"
 #include "mozilla/dom/MediaKeySystemAccessBinding.h"
 #include "mozilla/Preferences.h"
+#include "MediaPrefs.h"
 #include "nsContentTypeParser.h"
 #ifdef MOZ_FMP4
 #include "MP4Decoder.h"
@@ -33,13 +34,7 @@
 #include "nsXULAppAPI.h"
 #include "gmp-audio-decode.h"
 #include "gmp-video-decode.h"
-#ifdef XP_WIN
-#include "WMFDecoderModule.h"
-#endif
-
-#if defined(XP_WIN) || defined(XP_MACOSX)
-#define PRIMETIME_EME_SUPPORTED 1
-#endif
+#include "DecoderDoctorDiagnostics.h"
 
 namespace mozilla {
 namespace dom {
@@ -53,7 +48,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(MediaKeySystemAccess)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-MediaKeySystemAccess::MediaKeySystemAccess(nsPIDOMWindow* aParent,
+MediaKeySystemAccess::MediaKeySystemAccess(nsPIDOMWindowInner* aParent,
                                            const nsAString& aKeySystem,
                                            const nsAString& aCDMVersion,
                                            const MediaKeySystemConfiguration& aConfig)
@@ -74,7 +69,7 @@ MediaKeySystemAccess::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenPro
   return MediaKeySystemAccessBinding::Wrap(aCx, this, aGivenProto);
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 MediaKeySystemAccess::GetParentObject() const
 {
   return mParent;
@@ -267,7 +262,7 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
                                          nsACString& aOutMessage,
                                          nsACString& aOutCdmVersion)
 {
-  MOZ_ASSERT(Preferences::GetBool("media.eme.enabled", false));
+  MOZ_ASSERT(MediaPrefs::EMEEnabled());
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
   if (NS_WARN_IF(!mps)) {
@@ -283,35 +278,59 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
     return EnsureMinCDMVersion(mps, aKeySystem, aMinCdmVersion, aOutMessage, aOutCdmVersion);
   }
 
-#ifdef PRIMETIME_EME_SUPPORTED
-  if (aKeySystem.EqualsLiteral("com.adobe.primetime")) {
-    if (!Preferences::GetBool("media.gmp-eme-adobe.enabled", false)) {
-      aOutMessage = NS_LITERAL_CSTRING("Adobe EME disabled");
-      return MediaKeySystemStatus::Cdm_disabled;
-    }
+  if (Preferences::GetBool("media.gmp-eme-adobe.visible", false)) {
+    if (aKeySystem.EqualsLiteral("com.adobe.primetime")) {
+      if (!Preferences::GetBool("media.gmp-eme-adobe.enabled", false)) {
+        aOutMessage = NS_LITERAL_CSTRING("Adobe EME disabled");
+        return MediaKeySystemStatus::Cdm_disabled;
+      }
 #ifdef XP_WIN
-    // Win Vista and later only.
-    if (!IsVistaOrLater()) {
-      aOutMessage = NS_LITERAL_CSTRING("Minimum Windows version not met for Adobe EME");
-      return MediaKeySystemStatus::Cdm_not_supported;
-    }
+      // Win Vista and later only.
+      if (!IsVistaOrLater()) {
+        aOutMessage = NS_LITERAL_CSTRING("Minimum Windows version (Vista) not met for Adobe EME");
+        return MediaKeySystemStatus::Cdm_not_supported;
+      }
 #endif
 #ifdef XP_MACOSX
-    if (!nsCocoaFeatures::OnLionOrLater()) {
-      aOutMessage = NS_LITERAL_CSTRING("Minimum MacOSX version not met for Adobe EME");
-      return MediaKeySystemStatus::Cdm_not_supported;
+      if (!nsCocoaFeatures::OnLionOrLater()) {
+        aOutMessage = NS_LITERAL_CSTRING("Minimum MacOSX version (10.7) not met for Adobe EME");
+        return MediaKeySystemStatus::Cdm_not_supported;
+      }
+#endif
+      return EnsureMinCDMVersion(mps, aKeySystem, aMinCdmVersion, aOutMessage, aOutCdmVersion);
     }
-#endif
-    return EnsureMinCDMVersion(mps, aKeySystem, aMinCdmVersion, aOutMessage, aOutCdmVersion);
   }
+
+  if (Preferences::GetBool("media.gmp-widevinecdm.visible", false)) {
+    if (aKeySystem.EqualsLiteral("com.widevine.alpha")) {
+#ifdef XP_WIN
+      // Win Vista and later only.
+      if (!IsVistaOrLater()) {
+        aOutMessage = NS_LITERAL_CSTRING("Minimum Windows version (Vista) not met for Widevine EME");
+        return MediaKeySystemStatus::Cdm_not_supported;
+      }
 #endif
+#ifdef XP_MACOSX
+      if (!nsCocoaFeatures::OnLionOrLater()) {
+        aOutMessage = NS_LITERAL_CSTRING("Minimum MacOSX version (10.7) not met for Widevine EME");
+        return MediaKeySystemStatus::Cdm_not_supported;
+      }
+#endif
+      if (!Preferences::GetBool("media.gmp-widevinecdm.enabled", false)) {
+        aOutMessage = NS_LITERAL_CSTRING("Widevine EME disabled");
+        return MediaKeySystemStatus::Cdm_disabled;
+      }
+      return EnsureMinCDMVersion(mps, aKeySystem, aMinCdmVersion, aOutMessage, aOutCdmVersion);
+    }
+  }
 
   return MediaKeySystemStatus::Cdm_not_supported;
 }
 
 static bool
 GMPDecryptsAndDecodesAAC(mozIGeckoMediaPluginService* aGMPS,
-                         const nsAString& aKeySystem)
+                         const nsAString& aKeySystem,
+                         DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(HaveGMPFor(aGMPS,
                         NS_ConvertUTF16toUTF8(aKeySystem),
@@ -319,21 +338,13 @@ GMPDecryptsAndDecodesAAC(mozIGeckoMediaPluginService* aGMPS,
   return HaveGMPFor(aGMPS,
                     NS_ConvertUTF16toUTF8(aKeySystem),
                     NS_LITERAL_CSTRING(GMP_API_AUDIO_DECODER),
-                    NS_LITERAL_CSTRING("aac"))
-#ifdef XP_WIN
-    // Clearkey on Windows advertises that it can decode in its GMP info
-    // file, but uses Windows Media Foundation to decode. That's not present
-    // on Windows XP, and on some Vista, Windows N, and KN variants without
-    // certain services packs. So for ClearKey we must check that WMF will
-    // work.
-    && (!aKeySystem.EqualsLiteral("org.w3.clearkey") || WMFDecoderModule::HasAAC())
-#endif
-  ;
+                    NS_LITERAL_CSTRING("aac"));
 }
 
 static bool
 GMPDecryptsAndDecodesH264(mozIGeckoMediaPluginService* aGMPS,
-                          const nsAString& aKeySystem)
+                          const nsAString& aKeySystem,
+                          DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(HaveGMPFor(aGMPS,
                         NS_ConvertUTF16toUTF8(aKeySystem),
@@ -341,97 +352,92 @@ GMPDecryptsAndDecodesH264(mozIGeckoMediaPluginService* aGMPS,
   return HaveGMPFor(aGMPS,
                     NS_ConvertUTF16toUTF8(aKeySystem),
                     NS_LITERAL_CSTRING(GMP_API_VIDEO_DECODER),
-                    NS_LITERAL_CSTRING("h264"))
-#ifdef XP_WIN
-    // Clearkey on Windows advertises that it can decode in its GMP info
-    // file, but uses Windows Media Foundation to decode. That's not present
-    // on Windows XP, and on some Vista, Windows N, and KN variants without
-    // certain services packs. So for ClearKey we must check that WMF will
-    // work.
-    && (!aKeySystem.EqualsLiteral("org.w3.clearkey") || WMFDecoderModule::HasH264())
-#endif
-  ;
+                    NS_LITERAL_CSTRING("h264"));
 }
 
 // If this keysystem's CDM explicitly says it doesn't support decoding,
 // that means it's OK with passing the decrypted samples back to Gecko
-// for decoding. Note we special case Clearkey on Windows, where we need
-// to check for whether WMF is usable because the CDM uses that
-// to decode.
+// for decoding.
 static bool
 GMPDecryptsAndGeckoDecodesH264(mozIGeckoMediaPluginService* aGMPService,
                                const nsAString& aKeySystem,
-                               const nsAString& aContentType)
+                               const nsAString& aContentType,
+                               DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(HaveGMPFor(aGMPService,
                         NS_ConvertUTF16toUTF8(aKeySystem),
                         NS_LITERAL_CSTRING(GMP_API_DECRYPTOR)));
   MOZ_ASSERT(IsH264ContentType(aContentType));
-  return
-    (!HaveGMPFor(aGMPService,
-                 NS_ConvertUTF16toUTF8(aKeySystem),
-                 NS_LITERAL_CSTRING(GMP_API_VIDEO_DECODER),
-                 NS_LITERAL_CSTRING("h264"))
-#ifdef XP_WIN
-    // Clearkey on Windows advertises that it can decode in its GMP info
-    // file, but uses Windows Media Foundation to decode. That's not present
-    // on Windows XP, and on some Vista, Windows N, and KN variants without
-    // certain services packs. So don't try to use gmp-clearkey for decoding
-    // if we don't have a decoder here.
-    || (aKeySystem.EqualsLiteral("org.w3.clearkey") && !WMFDecoderModule::HasH264())
-#endif
-    ) && MP4Decoder::CanHandleMediaType(aContentType);
+  return !HaveGMPFor(aGMPService,
+                     NS_ConvertUTF16toUTF8(aKeySystem),
+                     NS_LITERAL_CSTRING(GMP_API_VIDEO_DECODER),
+                     NS_LITERAL_CSTRING("h264")) &&
+         MP4Decoder::CanHandleMediaType(aContentType, aDiagnostics);
 }
 
 static bool
 GMPDecryptsAndGeckoDecodesAAC(mozIGeckoMediaPluginService* aGMPService,
                               const nsAString& aKeySystem,
-                              const nsAString& aContentType)
+                              const nsAString& aContentType,
+                              DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(HaveGMPFor(aGMPService,
                         NS_ConvertUTF16toUTF8(aKeySystem),
                         NS_LITERAL_CSTRING(GMP_API_DECRYPTOR)));
   MOZ_ASSERT(IsAACContentType(aContentType));
-  return
-    (!HaveGMPFor(aGMPService,
-                 NS_ConvertUTF16toUTF8(aKeySystem),
-                 NS_LITERAL_CSTRING(GMP_API_AUDIO_DECODER),
-                 NS_LITERAL_CSTRING("aac"))
-#ifdef XP_WIN
-    // Clearkey on Windows advertises that it can decode in its GMP info
-    // file, but uses Windows Media Foundation to decode. That's not present
-    // on Windows XP, and on some Vista, Windows N, and KN variants without
-    // certain services packs. So don't try to use gmp-clearkey for decoding
-    // if we don't have a decoder here.
-    || (aKeySystem.EqualsLiteral("org.w3.clearkey") && !WMFDecoderModule::HasAAC())
+
+  if (HaveGMPFor(aGMPService,
+    NS_ConvertUTF16toUTF8(aKeySystem),
+    NS_LITERAL_CSTRING(GMP_API_AUDIO_DECODER),
+    NS_LITERAL_CSTRING("aac"))) {
+    // We do have a GMP for AAC -> Gecko itself does *not* decode AAC.
+    return false;
+  }
+#if defined(MOZ_WIDEVINE_EME) && defined(XP_WIN)
+  // Widevine CDM doesn't include an AAC decoder. So if WMF can't
+  // decode AAC, and a codec wasn't specified, be conservative
+  // and reject the MediaKeys request, since our policy is to prevent
+  //  the Adobe GMP's unencrypted AAC decoding path being used to
+  // decode content decrypted by the Widevine CDM.
+  if (aKeySystem.EqualsLiteral("com.widevine.alpha") &&
+      !WMFDecoderModule::HasAAC()) {
+    if (aDiagnostics) {
+      aDiagnostics->SetKeySystemIssue(
+        DecoderDoctorDiagnostics::eWidevineWithNoWMF);
+    }
+    return false;
+  }
 #endif
-    ) && MP4Decoder::CanHandleMediaType(aContentType);
+  return MP4Decoder::CanHandleMediaType(aContentType, aDiagnostics);
 }
 
 static bool
 IsSupportedAudio(mozIGeckoMediaPluginService* aGMPService,
                  const nsAString& aKeySystem,
-                 const nsAString& aAudioType)
+                 const nsAString& aAudioType,
+                 DecoderDoctorDiagnostics* aDiagnostics)
 {
   return IsAACContentType(aAudioType) &&
-         (GMPDecryptsAndDecodesAAC(aGMPService, aKeySystem) ||
-          GMPDecryptsAndGeckoDecodesAAC(aGMPService, aKeySystem, aAudioType));
+         (GMPDecryptsAndDecodesAAC(aGMPService, aKeySystem, aDiagnostics) ||
+          GMPDecryptsAndGeckoDecodesAAC(aGMPService, aKeySystem, aAudioType, aDiagnostics));
 }
 
 static bool
 IsSupportedVideo(mozIGeckoMediaPluginService* aGMPService,
                  const nsAString& aKeySystem,
-                 const nsAString& aVideoType)
+                 const nsAString& aVideoType,
+                 DecoderDoctorDiagnostics* aDiagnostics)
 {
   return IsH264ContentType(aVideoType) &&
-         (GMPDecryptsAndDecodesH264(aGMPService, aKeySystem) ||
-          GMPDecryptsAndGeckoDecodesH264(aGMPService, aKeySystem, aVideoType));
+         (GMPDecryptsAndDecodesH264(aGMPService, aKeySystem, aDiagnostics) ||
+          GMPDecryptsAndGeckoDecodesH264(aGMPService, aKeySystem, aVideoType, aDiagnostics));
 }
 
 static bool
 IsSupported(mozIGeckoMediaPluginService* aGMPService,
             const nsAString& aKeySystem,
-            const MediaKeySystemConfiguration& aConfig)
+            const MediaKeySystemConfiguration& aConfig,
+            DecoderDoctorDiagnostics* aDiagnostics)
 {
   if (aConfig.mInitDataType.IsEmpty() &&
       aConfig.mAudioType.IsEmpty() &&
@@ -446,11 +452,11 @@ IsSupported(mozIGeckoMediaPluginService* aGMPService,
     return false;
   }
   if (!aConfig.mAudioType.IsEmpty() &&
-      !IsSupportedAudio(aGMPService, aKeySystem, aConfig.mAudioType)) {
+      !IsSupportedAudio(aGMPService, aKeySystem, aConfig.mAudioType, aDiagnostics)) {
     return false;
   }
   if (!aConfig.mVideoType.IsEmpty() &&
-      !IsSupportedVideo(aGMPService, aKeySystem, aConfig.mVideoType)) {
+      !IsSupportedVideo(aGMPService, aKeySystem, aConfig.mVideoType, aDiagnostics)) {
     return false;
   }
 
@@ -458,23 +464,32 @@ IsSupported(mozIGeckoMediaPluginService* aGMPService,
 }
 
 static bool
+IsSupportedInitDataType(const nsString& aCandidate, const nsAString& aKeySystem)
+{
+  // All supported keySystems can handle "cenc" initDataType.
+  // ClearKey also supports "keyids" and "webm" initDataTypes.
+  return aCandidate.EqualsLiteral("cenc") ||
+    ((aKeySystem.EqualsLiteral("org.w3.clearkey")
+#ifdef MOZ_WIDEVINE_EME
+    || aKeySystem.EqualsLiteral("com.widevine.alpha")
+#endif
+    ) &&
+    (aCandidate.EqualsLiteral("keyids") || aCandidate.EqualsLiteral("webm)")));
+}
+
+static bool
 GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
                    const nsAString& aKeySystem,
                    const MediaKeySystemConfiguration& aCandidate,
-                   MediaKeySystemConfiguration& aOutConfig)
+                   MediaKeySystemConfiguration& aOutConfig,
+                   DecoderDoctorDiagnostics* aDiagnostics)
 {
   MediaKeySystemConfiguration config;
   config.mLabel = aCandidate.mLabel;
   if (aCandidate.mInitDataTypes.WasPassed()) {
     nsTArray<nsString> initDataTypes;
     for (const nsString& candidate : aCandidate.mInitDataTypes.Value()) {
-      // All supported keySystems can handle "cenc" initDataType.
-      // ClearKey also supports "keyids" and "webm" initDataTypes.
-      if (candidate.EqualsLiteral("cenc")) {
-        initDataTypes.AppendElement(candidate);
-      } else if ((candidate.EqualsLiteral("keyids") ||
-                  candidate.EqualsLiteral("webm)")) &&
-                 aKeySystem.EqualsLiteral("org.w3.clearkey")) {
+      if (IsSupportedInitDataType(candidate, aKeySystem)) {
         initDataTypes.AppendElement(candidate);
       }
     }
@@ -487,7 +502,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
   if (aCandidate.mAudioCapabilities.WasPassed()) {
     nsTArray<MediaKeySystemMediaCapability> caps;
     for (const MediaKeySystemMediaCapability& cap : aCandidate.mAudioCapabilities.Value()) {
-      if (IsSupportedAudio(aGMPService, aKeySystem, cap.mContentType)) {
+      if (IsSupportedAudio(aGMPService, aKeySystem, cap.mContentType, aDiagnostics)) {
         caps.AppendElement(cap);
       }
     }
@@ -500,7 +515,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
   if (aCandidate.mVideoCapabilities.WasPassed()) {
     nsTArray<MediaKeySystemMediaCapability> caps;
     for (const MediaKeySystemMediaCapability& cap : aCandidate.mVideoCapabilities.Value()) {
-      if (IsSupportedVideo(aGMPService, aKeySystem, cap.mContentType)) {
+      if (IsSupportedVideo(aGMPService, aKeySystem, cap.mContentType, aDiagnostics)) {
         caps.AppendElement(cap);
       }
     }
@@ -510,6 +525,21 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
     config.mVideoCapabilities.Construct();
     config.mVideoCapabilities.Value().Assign(caps);
   }
+
+#if defined(MOZ_WIDEVINE_EME) && defined(XP_WIN)
+  // Widevine CDM doesn't include an AAC decoder. So if WMF can't decode AAC,
+  // and a codec wasn't specified, be conservative and reject the MediaKeys request.
+  if (aKeySystem.EqualsLiteral("com.widevine.alpha") &&
+      (!aCandidate.mAudioCapabilities.WasPassed() ||
+       !aCandidate.mVideoCapabilities.WasPassed()) &&
+     !WMFDecoderModule::HasAAC()) {
+    if (aDiagnostics) {
+      aDiagnostics->SetKeySystemIssue(
+        DecoderDoctorDiagnostics::eWidevineWithNoWMF);
+    }
+    return false;
+  }
+#endif
 
   aOutConfig = config;
 
@@ -521,7 +551,8 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
 /* static */
 bool
 MediaKeySystemAccess::IsSupported(const nsAString& aKeySystem,
-                                  const Sequence<MediaKeySystemConfiguration>& aConfigs)
+                                  const Sequence<MediaKeySystemConfiguration>& aConfigs,
+                                  DecoderDoctorDiagnostics* aDiagnostics)
 {
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
@@ -536,7 +567,7 @@ MediaKeySystemAccess::IsSupported(const nsAString& aKeySystem,
   }
 
   for (const MediaKeySystemConfiguration& config : aConfigs) {
-    if (mozilla::dom::IsSupported(mps, aKeySystem, config)) {
+    if (mozilla::dom::IsSupported(mps, aKeySystem, config, aDiagnostics)) {
       return true;
     }
   }
@@ -547,7 +578,8 @@ MediaKeySystemAccess::IsSupported(const nsAString& aKeySystem,
 bool
 MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
                                          const Sequence<MediaKeySystemConfiguration>& aConfigs,
-                                         MediaKeySystemConfiguration& aOutConfig)
+                                         MediaKeySystemConfiguration& aOutConfig,
+                                         DecoderDoctorDiagnostics* aDiagnostics)
 {
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
@@ -562,7 +594,8 @@ MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
   }
 
   for (const MediaKeySystemConfiguration& config : aConfigs) {
-    if (mozilla::dom::GetSupportedConfig(mps, aKeySystem, config, aOutConfig)) {
+    if (mozilla::dom::GetSupportedConfig(
+          mps, aKeySystem, config, aOutConfig, aDiagnostics)) {
       return true;
     }
   }
@@ -573,7 +606,7 @@ MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
 
 /* static */
 void
-MediaKeySystemAccess::NotifyObservers(nsIDOMWindow* aWindow,
+MediaKeySystemAccess::NotifyObservers(nsPIDOMWindowInner* aWindow,
                                       const nsAString& aKeySystem,
                                       MediaKeySystemStatus aStatus)
 {

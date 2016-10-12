@@ -135,7 +135,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     // We could also test DataView and Iterator here for completeness, but it's
     // more trouble than it's worth.
 
-
     SimpleTest.finish();
   }
 
@@ -148,6 +147,11 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   var isNightlyBuild = version.endsWith("a1");
   var isReleaseBuild = !version.includes("a");
   var gPrototypeProperties = {};
+  var gConstructorProperties = {};
+  function constructorProps(arr) {
+    // Some props live on all constructors
+    return arr.concat(["prototype", "length", "name"]);
+  }
   gPrototypeProperties['Date'] =
     ["getTime", "getTimezoneOffset", "getYear", "getFullYear", "getUTCFullYear",
     "getMonth", "getUTCMonth", "getDate", "getUTCDate", "getDay", "getUTCDay",
@@ -160,30 +164,49 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     "toLocaleDateString", "toLocaleTimeString", "toDateString", "toTimeString",
     "toISOString", "toJSON", "toSource", "toString", "valueOf", "constructor",
     "toGMTString", Symbol.toPrimitive];
+  gConstructorProperties['Date'] = constructorProps(["UTC", "parse", "now"]);
   gPrototypeProperties['Object'] =
     ["constructor", "toSource", "toString", "toLocaleString", "valueOf", "watch",
      "unwatch", "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable",
      "__defineGetter__", "__defineSetter__", "__lookupGetter__", "__lookupSetter__",
      "__proto__"];
+  gConstructorProperties['Object'] =
+    constructorProps(["setPrototypeOf", "getOwnPropertyDescriptor", "keys",
+                      "is", "defineProperty", "defineProperties", "create",
+                      "getOwnPropertyNames", "getOwnPropertySymbols",
+                      "preventExtensions", "freeze", "isFrozen", "seal",
+                      "isSealed", "assign", "getPrototypeOf", "values",
+                      "entries", "isExtensible"])
   gPrototypeProperties['Array'] =
     ["length", "toSource", "toString", "toLocaleString", "join", "reverse", "sort", "push",
       "pop", "shift", "unshift", "splice", "concat", "slice", "lastIndexOf", "indexOf",
       "includes", "forEach", "map", "reduce", "reduceRight", "filter", "some", "every", "find",
-      "findIndex", "copyWithin", "fill", Symbol.iterator, "entries", "keys", "constructor"];
+      "findIndex", "copyWithin", "fill", Symbol.iterator, Symbol.unscopables, "entries", "keys",
+      "values", "constructor"];
+  gConstructorProperties['Array'] =
+    constructorProps(["join", "reverse", "sort", "push", "pop", "shift",
+                      "unshift", "splice", "concat", "slice", "isArray",
+                      "lastIndexOf", "indexOf", "forEach", "map", "filter",
+                      "every", "some", "reduce", "reduceRight", "from", "of",
+                      Symbol.species]);
   for (var c of typedArrayClasses) {
     gPrototypeProperties[c] = ["constructor", "BYTES_PER_ELEMENT"];
+    gConstructorProperties[c] = constructorProps(["BYTES_PER_ELEMENT"]);
   }
   gPrototypeProperties['TypedArray'] =
     ["length", "buffer", "byteLength", "byteOffset", Symbol.iterator, "subarray",
      "set", "copyWithin", "find", "findIndex", "forEach","indexOf", "lastIndexOf", "includes",
      "reverse", "join", "every", "some", "reduce", "reduceRight", "entries", "keys", "values",
      "slice", "map", "filter"];
+  // There is no TypedArray constructor, looks like.
+  is(window.TypedArray, undefined, "If this ever changes, add to this test!");
   for (var c of errorObjectClasses) {
       gPrototypeProperties[c] = ["constructor", "name",
                                  // We don't actually resolve these empty data properties
                                  // onto the Xray prototypes, but we list them here to make
                                  // the test happy.
                                  "lineNumber", "columnNumber", "fileName", "message", "stack"];
+      gConstructorProperties[c] = constructorProps([]);
   }
   // toString and toSource only live on the parent proto (Error.prototype).
   gPrototypeProperties['Error'].push('toString');
@@ -192,14 +215,18 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   gPrototypeProperties['Function'] =
     ["constructor", "toSource", "toString", "apply", "call", "bind",
      "isGenerator", "length", "name", "arguments", "caller"];
-  gPrototypeProperties['Function'] =
-    ["constructor", "toSource", "toString", "apply", "call", "bind",
-     "isGenerator", "length", "name", "arguments", "caller"];
+  gConstructorProperties['Function'] = constructorProps([])
 
   gPrototypeProperties['RegExp'] =
     ["constructor", "toSource", "toString", "compile", "exec", "test",
+     Symbol.match, Symbol.replace, Symbol.search, Symbol.split,
      "flags", "global", "ignoreCase", "multiline", "source", "sticky", "unicode",
      "lastIndex"];
+  gConstructorProperties['RegExp'] =
+    constructorProps(["input", "lastMatch", "lastParen",
+                      "leftContext", "rightContext", "$1", "$2", "$3", "$4",
+                      "$5", "$6", "$7", "$8", "$9", "$_", "$&", "$+",
+                      "$`", "$'", Symbol.species])
 
   // Sort an array that may contain symbols as well as strings.
   function sortProperties(arr) {
@@ -213,6 +240,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   // again to sort them).
   for (var c of Object.keys(gPrototypeProperties))
     sortProperties(gPrototypeProperties[c]);
+  for (var c of Object.keys(gConstructorProperties))
+    sortProperties(gConstructorProperties[c]);
 
   function filterOut(array, props) {
     return array.filter(p => props.indexOf(p) == -1);
@@ -265,7 +294,57 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     }
   }
 
-  function testXray(classname, xray, xray2, propsToSkip) {
+  function testCtorCallables(ctorCallables, xrayCtor, localCtor) {
+    for (let name of ctorCallables) {
+      // Don't try to test Function.prototype, since that is in fact a callable
+      // but doesn't really do the things we expect callables to do here
+      // (e.g. it's in the wrong global, since it gets Xrayed itself).
+      if (name == "prototype" && localCtor.name == "Function") {
+        continue;
+      }
+      info(`Running tests for property: ${localCtor.name}.${name}`);
+      // Test both methods and getter properties.
+      function lookupCallable(obj) {
+        let desc = null;
+        do {
+          desc = Object.getOwnPropertyDescriptor(obj, name);
+          obj = Object.getPrototypeOf(obj);
+        } while (!desc);
+        return desc.get || desc.value;
+      };
+
+      ok(xrayCtor.hasOwnProperty(name), "ctor should have the property as own");
+      let method = lookupCallable(xrayCtor);
+      is(typeof method, 'function', "Methods from ctor Xrays are functions");
+      is(global(method), window, "Methods from ctor Xrays are local");
+      ok(method instanceof Function,
+         "instanceof works on methods from ctor Xrays");
+      is(lookupCallable(xrayCtor), method,
+         "Holder caching works properly on ctors");
+      let local = lookupCallable(localCtor);
+      is(method.length, local.length,
+         "Function.length identical for method from ctor");
+      // Don't try to do the return-value check on Date.now(), since there is
+      // absolutely no reason it should return the same value each time.
+      //
+      // Also don't try to do the return-value check on Regexp.lastMatch and
+      // Regexp["$&"] (which are aliases), because they get state off the global
+      // they live in, as far as I can tell, so testing them over Xrays will be
+      // wrong: on the Xray they will actaully get the lastMatch of _our_
+      // global, not the Xrayed one.
+      if (method.length == 0 &&
+          !(localCtor.name == "Date" && name == "now") &&
+          !(localCtor.name == "RegExp" && (name == "lastMatch" || name == "$&"))) {
+        is(method.call(xrayCtor) + "", local.call(xrayCtor) + "",
+           "Xray and local method results stringify identically on constructors");
+        is(method.call(xrayCtor) + "",
+           lookupCallable(xrayCtor.wrappedJSObject).call(xrayCtor.wrappedJSObject) + "",
+           "Xray and waived method results stringify identically");
+      }
+    }
+  }
+
+  function testXray(classname, xray, xray2, propsToSkip, ctorPropsToSkip = []) {
     propsToSkip = propsToSkip || [];
     let xrayProto = Object.getPrototypeOf(xray);
     let localProto = window[classname].prototype;
@@ -293,15 +372,113 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     is(Object.getOwnPropertyNames(xrayProto).sort().toSource(),
        protoProps.toSource(), "getOwnPropertyNames works");
     is(Object.getOwnPropertySymbols(xrayProto).map(uneval).sort().toSource(),
-       gPrototypeProperties[classname].filter(id => typeof id !== "string").map(uneval).sort().toSource(),
-       protoProps.toSource(), "getOwnPropertySymbols works");
+       gPrototypeProperties[classname].filter(id => typeof id !== "string" && !propsToSkip.includes(id))
+         .map(uneval).sort().toSource(),
+       "getOwnPropertySymbols works");
 
     is(xrayProto.constructor, iwin[classname], "constructor property works");
 
     xrayProto.expando = 42;
     is(xray.expando, 42, "Xrayed instances see proto expandos");
     is(xray2.expando, 42, "Xrayed instances see proto expandos");
+
+    // Now test constructors
+    localCtor = window[classname];
+    xrayCtor = xrayProto.constructor;
+    // We already checked that this is the same as iwin[classname]
+
+    let desiredCtorProps =
+        Object.getOwnPropertyNames(localCtor).sort();
+    is(desiredCtorProps.toSource(),
+       gConstructorProperties[classname].filter(id => typeof id === "string").toSource(),
+       "A property on the " + classname +
+       " constructor has changed! You need a security audit from an XPConnect peer");
+    let desiredCtorSymbols =
+        Object.getOwnPropertySymbols(localCtor).map(uneval).sort()
+    is(desiredCtorSymbols.toSource(),
+       gConstructorProperties[classname].filter(id => typeof id !== "string").map(uneval).sort().toSource(),
+       "A symbol-keyed property on the " + classname +
+       " constructor has been changed! You need a security audit from an XPConnect peer");
+
+    let ctorProps = filterOut(desiredCtorProps, ctorPropsToSkip);
+    let ctorSymbols = filterOut(desiredCtorSymbols, ctorPropsToSkip.map(uneval));
+    let ctorCallables = ctorProps.filter(name => propertyIsGetter(localCtor, name, classname) ||
+                                         typeof localCtor[name] == 'function');
+    testCtorCallables(ctorCallables, xrayCtor, localCtor);
+    is(Object.getOwnPropertyNames(xrayCtor).sort().toSource(),
+       ctorProps.toSource(), "getOwnPropertyNames works on Xrayed ctors");
+    is(Object.getOwnPropertySymbols(xrayCtor).map(uneval).sort().toSource(),
+       ctorSymbols.toSource(), "getOwnPropertySymbols works on Xrayed ctors");
   }
+
+  // We will need arraysEqual and testArrayIterators both in this global scope
+  // and in sandboxes, so define them as strings up front.
+  var arraysEqualSource = `function arraysEqual(arr1, arr2, reason) {
+    is(arr1.length, arr2.length, \`\${reason}; lengths should be equal\`)
+    for (var i = 0; i < arr1.length; ++i) {
+      if (Array.isArray(arr2[i])) {
+        arraysEqual(arr1[i], arr2[i], \`\${reason}; item at index \${i}\`);
+      } else {
+        is(arr1[i], arr2[i], \`\${reason}; item at index \${i} should be equal\`);
+      }
+    }
+  }`;
+  eval(arraysEqualSource);
+
+  var testArrayIteratorsSource = `
+    function testArrayIterators(arrayLike, equivalentArray, reason) {
+    arraysEqual([...arrayLike], equivalentArray, \`\${reason}; spread operator\`);
+    arraysEqual([...arrayLike.entries()], [...equivalentArray.entries()],
+                \`\${reason}; entries\`);
+    arraysEqual([...arrayLike.keys()], [...equivalentArray.keys()],
+                \`\${reason}; keys\`);
+    if (arrayLike.values) {
+      arraysEqual([...arrayLike.values()], equivalentArray,
+                  \`\${reason}; values\`);
+    }
+
+    var forEachCopy = [];
+    arrayLike.forEach(function(arg) { forEachCopy.push(arg); });
+    arraysEqual(forEachCopy, equivalentArray, \`\${reason}; forEach copy\`);
+
+    var everyCopy = [];
+    arrayLike.every(function(arg) { everyCopy.push(arg); return true; });
+    arraysEqual(everyCopy, equivalentArray, \`\${reason}; every() copy\`);
+
+    var filterCopy = [];
+    var filterResult = arrayLike.filter(function(arg) {
+      filterCopy.push(arg);
+      return true;
+    });
+    arraysEqual(filterCopy, equivalentArray, \`\${reason}; filter copy\`);
+    arraysEqual([...filterResult], equivalentArray, \`\${reason}; filter result\`);
+
+    var findCopy = [];
+    arrayLike.find(function(arg) { findCopy.push(arg); return false; });
+    arraysEqual(findCopy, equivalentArray, \`\${reason}; find() copy\`);
+
+    var findIndexCopy = [];
+    arrayLike.findIndex(function(arg) { findIndexCopy.push(arg); return false; });
+    arraysEqual(findIndexCopy, equivalentArray, \`\${reason}; findIndex() copy\`);
+
+    var mapCopy = [];
+    var mapResult = arrayLike.map(function(arg) { mapCopy.push(arg); return arg});
+    arraysEqual(mapCopy, equivalentArray, \`\${reason}; map() copy\`);
+    arraysEqual([...mapResult], equivalentArray, \`\${reason}; map() result\`);
+
+    var reduceCopy = [];
+    arrayLike.reduce(function(_, arg) { reduceCopy.push(arg); }, 0);
+    arraysEqual(reduceCopy, equivalentArray, \`\${reason}; reduce() copy\`);
+
+    var reduceRightCopy = [];
+    arrayLike.reduceRight(function(_, arg) { reduceRightCopy.unshift(arg); }, 0);
+    arraysEqual(reduceRightCopy, equivalentArray, \`\${reason}; reduceRight() copy\`);
+
+    var someCopy = [];
+    arrayLike.some(function(arg) { someCopy.push(arg); return false; });
+    arraysEqual(someCopy, equivalentArray, \`\${reason}; some() copy\`);
+  }`;
+  eval(testArrayIteratorsSource);
 
   function testDate() {
     // toGMTString is handled oddly in the engine. We don't bother to support
@@ -356,7 +533,12 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     // show that over Xrays, and generally want .length to just appear as an
     // |own| data property. So we add it to the ignore list here, and check it
     // separately.
-    let propsToSkip = ['length'];
+    //
+    // |Symbol.unscopables| should in principle be exposed, but it is
+    // inconvenient (as it's a data property, unsupported by ClassSpec) and
+    // low value.
+    let propsToSkip = ['length', Symbol.unscopables];
+
     testXray('Array', new iwin.Array(20), new iwin.Array(), propsToSkip);
 
     let symbolProps = '';
@@ -399,6 +581,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     is(trickyArray[1], undefined, "Frozen length forbids new properties");
 
     testTrickyObject(trickyArray);
+
+    testArrayIterators(new iwin.Array(1, 1, 2, 3, 5), [1, 1, 2, 3, 5]);
   }
 
   // Parts of this function are kind of specific to testing Object, but we factor
@@ -550,6 +734,19 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
       var xray = new iwin[c](0);
       var xrayTypedArrayProto = Object.getPrototypeOf(Object.getPrototypeOf(xray));
       testProtoCallables(inheritedCallables, new iwin[c](0), xrayTypedArrayProto, typedArrayProto);
+
+      // When testing iterators, make sure to do so from inside our web
+      // extension sandbox, since from chrome we can't poke their indices.  Note
+      // that we have to actually recreate our functions that touch typed array
+      // indices inside the sandbox, not just export them, because otherwise
+      // they'll just run with our principal anyway.
+      //
+      // But we do want to export is(), since we want ours called.
+      wesb.eval(arraysEqualSource);
+      wesb.eval(testArrayIteratorsSource);
+      Cu.exportFunction(is, wesb,
+                        { defineAs: "is" });
+      wesb.eval('testArrayIterators(t, [0, 0, 3, 0, 0, 0, 0, 0, 0, 0])');
     }
   }
 
@@ -593,7 +790,19 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   }
 
   function testRegExp() {
-    testXray('RegExp', new iwin.RegExp('foo'), new iwin.RegExp());
+    // RegExp statics are very weird, and in particular RegExp has static
+    // properties that have to do with the last regexp execution in the global.
+    // Xraying those makes no sense, so we just skip constructor properties for
+    // RegExp xrays.
+    // RegExp[@@species] is affected by above skip, but we don't fix it until
+    // compelling use-case appears, as supporting RegExp[@@species] while
+    // skipping other static properties makes things complicated.
+    let ctorPropsToSkip = ["input", "lastMatch", "lastParen",
+                           "leftContext", "rightContext", "$1", "$2", "$3",
+                           "$4", "$5", "$6", "$7", "$8", "$9", "$_", "$&",
+                           "$+", "$`", "$'", Symbol.species];
+    testXray('RegExp', new iwin.RegExp('foo'), new iwin.RegExp(), [],
+             ctorPropsToSkip);
 
     // Test the self-hosted |flags| property, toString, and toSource.
     for (var flags of ["", "g", "i", "m", "y", "gimy"]) {

@@ -9,10 +9,16 @@ import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.NativeJSObject;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
+import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
@@ -26,6 +32,7 @@ public class SnackbarHelper {
      * interface or class.
      */
     public static abstract class SnackbarCallback extends Snackbar.Callback implements View.OnClickListener {}
+    public static final String LOGTAG = "GeckoSnackbarHelper";
 
     /**
      * SnackbarCallback implementation for delegating snackbar events to an EventCallback.
@@ -79,13 +86,28 @@ public class SnackbarHelper {
         final String message = object.getString("message");
         final int duration = object.getInt("duration");
 
+        Integer backgroundColor = null;
+
+        if (object.has("backgroundColor")) {
+            final String providedColor = object.getString("backgroundColor");
+            try {
+                backgroundColor = Color.parseColor(providedColor);
+            } catch (IllegalArgumentException e) {
+                Log.w(LOGTAG, "Failed to parse color string: " + providedColor);
+            }
+        }
+
         NativeJSObject action = object.optObject("action", null);
 
-        showSnackbarWithAction(activity,
+        showSnackbarWithActionAndColors(activity,
                 message,
                 duration,
                 action != null ? action.optString("label", null) : null,
-                new SnackbarHelper.SnackbarEventCallback(callback));
+                new SnackbarHelper.SnackbarEventCallback(callback),
+                null,
+                backgroundColor,
+                null
+        );
     }
 
     /**
@@ -98,13 +120,44 @@ public class SnackbarHelper {
      * @param callback Callback to be invoked when the action is clicked or the snackbar is dismissed.
      */
     public static void showSnackbarWithAction(Activity activity, String message, int duration, String action, SnackbarCallback callback) {
+        showSnackbarWithActionAndColors(activity, message, duration, action, callback, null, null, null);
+    }
+
+
+    public static void showSnackbarWithActionAndColors(Activity activity,
+                                                       String message,
+                                                       int duration,
+                                                       String action,
+                                                       SnackbarCallback callback,
+                                                       Drawable icon,
+                                                       Integer backgroundColor,
+                                                       Integer actionColor) {
         final View parentView = findBestParentView(activity);
         final Snackbar snackbar = Snackbar.make(parentView, message, duration);
 
         if (callback != null && !TextUtils.isEmpty(action)) {
             snackbar.setAction(action, callback);
-            snackbar.setActionTextColor(ContextCompat.getColor(activity, R.color.fennec_ui_orange));
+            if (actionColor == null) {
+                ContextCompat.getColor(activity, R.color.fennec_ui_orange);
+            } else {
+                snackbar.setActionTextColor(actionColor);
+            }
             snackbar.setCallback(callback);
+        }
+
+        if (icon != null) {
+            int leftPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, activity.getResources().getDisplayMetrics());
+
+            final InsetDrawable paddedIcon = new InsetDrawable(icon, 0, 0, leftPadding, 0);
+
+            paddedIcon.setBounds(0, 0, leftPadding + icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+
+            TextView textView = (TextView) snackbar.getView().findViewById(android.support.design.R.id.snackbar_text);
+            textView.setCompoundDrawables(paddedIcon, null, null, null);
+        }
+
+        if (backgroundColor != null) {
+            snackbar.getView().setBackgroundColor(backgroundColor);
         }
 
         snackbar.show();

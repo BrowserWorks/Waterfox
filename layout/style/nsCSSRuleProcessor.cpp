@@ -175,7 +175,7 @@ struct RuleHashTableEntry : public PLDHashEntryHdr {
   // If you add members that have heap allocated memory be sure to change the
   // logic in SizeOfRuleHashTable().
   // Auto length 1, because we always have at least one entry in mRules.
-  nsAutoTArray<RuleValue, 1> mRules;
+  AutoTArray<RuleValue, 1> mRules;
 };
 
 struct RuleHashTagTableEntry : public RuleHashTableEntry {
@@ -185,7 +185,7 @@ struct RuleHashTagTableEntry : public RuleHashTableEntry {
 };
 
 static PLDHashNumber
-RuleHash_CIHashKey(PLDHashTable *table, const void *key)
+RuleHash_CIHashKey(const void *key)
 {
   nsIAtom *atom = const_cast<nsIAtom*>(static_cast<const nsIAtom*>(key));
 
@@ -195,56 +195,64 @@ RuleHash_CIHashKey(PLDHashTable *table, const void *key)
   return HashString(str);
 }
 
-typedef nsIAtom*
-(* RuleHashGetKey) (PLDHashTable *table, const PLDHashEntryHdr *entry);
-
-struct RuleHashTableOps {
-  const PLDHashTableOps ops;
-  // Extra callback to avoid duplicating the matchEntry callback for
-  // each table.  (There used to be a getKey callback in
-  // PLDHashTableOps.)
-  RuleHashGetKey getKey;
-};
-
-inline const RuleHashTableOps*
-ToLocalOps(const PLDHashTableOps *aOps)
+static inline nsCSSSelector*
+SubjectSelectorForRuleHash(const PLDHashEntryHdr *hdr)
 {
-  return (const RuleHashTableOps*)
-           (((const char*) aOps) - offsetof(RuleHashTableOps, ops));
+  auto entry = static_cast<const RuleHashTableEntry*>(hdr);
+  nsCSSSelector* selector = entry->mRules[0].mSelector;
+  if (selector->IsPseudoElement()) {
+    selector = selector->mNext;
+  }
+  return selector;
 }
 
-static bool
-RuleHash_CIMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                      const void *key)
+static inline bool
+CIMatchAtoms(const void* key, nsIAtom *entry_atom)
 {
-  nsIAtom *match_atom = const_cast<nsIAtom*>(static_cast<const nsIAtom*>
-                                              (key));
-  // Use our extra |getKey| callback to avoid code duplication.
-  nsIAtom *entry_atom = ToLocalOps(table->Ops())->getKey(table, hdr);
+  auto match_atom = const_cast<nsIAtom*>(static_cast<const nsIAtom*>(key));
 
   // Check for case-sensitive match first.
-  if (match_atom == entry_atom)
+  if (match_atom == entry_atom) {
     return true;
+  }
 
   // Use EqualsIgnoreASCIICase instead of full on unicode case conversion
   // in order to save on performance. This is only used in quirks mode
   // anyway.
-
   return
     nsContentUtils::EqualsIgnoreASCIICase(nsDependentAtomString(entry_atom),
                                           nsDependentAtomString(match_atom));
 }
 
-static bool
-RuleHash_CSMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                      const void *key)
+static inline bool
+CSMatchAtoms(const void* key, nsIAtom *entry_atom)
 {
-  nsIAtom *match_atom = const_cast<nsIAtom*>(static_cast<const nsIAtom*>
-                                              (key));
-  // Use our extra |getKey| callback to avoid code duplication.
-  nsIAtom *entry_atom = ToLocalOps(table->Ops())->getKey(table, hdr);
-
+  auto match_atom = const_cast<nsIAtom*>(static_cast<const nsIAtom*>(key));
   return match_atom == entry_atom;
+}
+
+static bool
+RuleHash_ClassCIMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
+{
+  return CIMatchAtoms(key, SubjectSelectorForRuleHash(hdr)->mClassList->mAtom);
+}
+
+static bool
+RuleHash_IdCIMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
+{
+  return CIMatchAtoms(key, SubjectSelectorForRuleHash(hdr)->mIDList->mAtom);
+}
+
+static bool
+RuleHash_ClassCSMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
+{
+  return CSMatchAtoms(key, SubjectSelectorForRuleHash(hdr)->mClassList->mAtom);
+}
+
+static bool
+RuleHash_IdCSMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
+{
+  return CSMatchAtoms(key, SubjectSelectorForRuleHash(hdr)->mIDList->mAtom);
 }
 
 static void
@@ -275,11 +283,9 @@ RuleHash_MoveEntry(PLDHashTable *table, const PLDHashEntryHdr *from,
 }
 
 static bool
-RuleHash_TagTable_MatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                      const void *key)
+RuleHash_TagTable_MatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
-  nsIAtom *match_atom = const_cast<nsIAtom*>(static_cast<const nsIAtom*>
-                                              (key));
+  nsIAtom *match_atom = const_cast<nsIAtom*>(static_cast<const nsIAtom*>(key));
   nsIAtom *entry_atom = static_cast<const RuleHashTagTableEntry*>(hdr)->mTag;
 
   return match_atom == entry_atom;
@@ -314,40 +320,14 @@ RuleHash_TagTable_MoveEntry(PLDHashTable *table, const PLDHashEntryHdr *from,
   oldEntry->~RuleHashTagTableEntry();
 }
 
-static nsIAtom*
-RuleHash_ClassTable_GetKey(PLDHashTable *table, const PLDHashEntryHdr *hdr)
-{
-  const RuleHashTableEntry *entry =
-    static_cast<const RuleHashTableEntry*>(hdr);
-  nsCSSSelector* selector = entry->mRules[0].mSelector;
-  if (selector->IsPseudoElement()) {
-    selector = selector->mNext;
-  }
-  return selector->mClassList->mAtom;
-}
-
-static nsIAtom*
-RuleHash_IdTable_GetKey(PLDHashTable *table, const PLDHashEntryHdr *hdr)
-{
-  const RuleHashTableEntry *entry =
-    static_cast<const RuleHashTableEntry*>(hdr);
-  nsCSSSelector* selector = entry->mRules[0].mSelector;
-  if (selector->IsPseudoElement()) {
-    selector = selector->mNext;
-  }
-  return selector->mIDList->mAtom;
-}
-
 static PLDHashNumber
-RuleHash_NameSpaceTable_HashKey(PLDHashTable *table, const void *key)
+RuleHash_NameSpaceTable_HashKey(const void *key)
 {
   return NS_PTR_TO_INT32(key);
 }
 
 static bool
-RuleHash_NameSpaceTable_MatchEntry(PLDHashTable *table,
-                                   const PLDHashEntryHdr *hdr,
-                                   const void *key)
+RuleHash_NameSpaceTable_MatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   const RuleHashTableEntry *entry =
     static_cast<const RuleHashTableEntry*>(hdr);
@@ -368,51 +348,39 @@ static const PLDHashTableOps RuleHash_TagTable_Ops = {
 };
 
 // Case-sensitive ops.
-static const RuleHashTableOps RuleHash_ClassTable_CSOps = {
-  {
+static const PLDHashTableOps RuleHash_ClassTable_CSOps = {
   PLDHashTable::HashVoidPtrKeyStub,
-  RuleHash_CSMatchEntry,
+  RuleHash_ClassCSMatchEntry,
   RuleHash_MoveEntry,
   RuleHash_ClearEntry,
   RuleHash_InitEntry
-  },
-  RuleHash_ClassTable_GetKey
 };
 
 // Case-insensitive ops.
-static const RuleHashTableOps RuleHash_ClassTable_CIOps = {
-  {
+static const PLDHashTableOps RuleHash_ClassTable_CIOps = {
   RuleHash_CIHashKey,
-  RuleHash_CIMatchEntry,
+  RuleHash_ClassCIMatchEntry,
   RuleHash_MoveEntry,
   RuleHash_ClearEntry,
   RuleHash_InitEntry
-  },
-  RuleHash_ClassTable_GetKey
 };
 
 // Case-sensitive ops.
-static const RuleHashTableOps RuleHash_IdTable_CSOps = {
-  {
+static const PLDHashTableOps RuleHash_IdTable_CSOps = {
   PLDHashTable::HashVoidPtrKeyStub,
-  RuleHash_CSMatchEntry,
+  RuleHash_IdCSMatchEntry,
   RuleHash_MoveEntry,
   RuleHash_ClearEntry,
   RuleHash_InitEntry
-  },
-  RuleHash_IdTable_GetKey
 };
 
 // Case-insensitive ops.
-static const RuleHashTableOps RuleHash_IdTable_CIOps = {
-  {
+static const PLDHashTableOps RuleHash_IdTable_CIOps = {
   RuleHash_CIHashKey,
-  RuleHash_CIMatchEntry,
+  RuleHash_IdCIMatchEntry,
   RuleHash_MoveEntry,
   RuleHash_ClearEntry,
   RuleHash_InitEntry
-  },
-  RuleHash_IdTable_GetKey
 };
 
 static const PLDHashTableOps RuleHash_NameSpaceTable_Ops = {
@@ -492,11 +460,11 @@ protected:
 
 RuleHash::RuleHash(bool aQuirksMode)
   : mRuleCount(0),
-    mIdTable(aQuirksMode ? &RuleHash_IdTable_CIOps.ops
-                         : &RuleHash_IdTable_CSOps.ops,
+    mIdTable(aQuirksMode ? &RuleHash_IdTable_CIOps
+                         : &RuleHash_IdTable_CSOps,
              sizeof(RuleHashTableEntry)),
-    mClassTable(aQuirksMode ? &RuleHash_ClassTable_CIOps.ops
-                            : &RuleHash_ClassTable_CSOps.ops,
+    mClassTable(aQuirksMode ? &RuleHash_ClassTable_CIOps
+                            : &RuleHash_ClassTable_CSOps,
                 sizeof(RuleHashTableEntry)),
     mTagTable(&RuleHash_TagTable_Ops, sizeof(RuleHashTagTableEntry)),
     mNameSpaceTable(&RuleHash_NameSpaceTable_Ops, sizeof(RuleHashTableEntry)),
@@ -812,7 +780,7 @@ struct AtomSelectorEntry : public PLDHashEntryHdr {
   nsIAtom *mAtom;
   // Auto length 2, because a decent fraction of these arrays ends up
   // with 2 elements, and each entry is cheap.
-  nsAutoTArray<SelectorPair, 2> mSelectors;
+  AutoTArray<SelectorPair, 2> mSelectors;
 };
 
 static void
@@ -842,11 +810,11 @@ AtomSelector_MoveEntry(PLDHashTable *table, const PLDHashEntryHdr *from,
   oldEntry->~AtomSelectorEntry();
 }
 
-static nsIAtom*
-AtomSelector_GetKey(PLDHashTable *table, const PLDHashEntryHdr *hdr)
+static bool
+AtomSelector_CIMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   const AtomSelectorEntry *entry = static_cast<const AtomSelectorEntry*>(hdr);
-  return entry->mAtom;
+  return CIMatchAtoms(key, entry->mAtom);
 }
 
 // Case-sensitive ops.
@@ -859,15 +827,12 @@ static const PLDHashTableOps AtomSelector_CSOps = {
 };
 
 // Case-insensitive ops.
-static const RuleHashTableOps AtomSelector_CIOps = {
-  {
+static const PLDHashTableOps AtomSelector_CIOps = {
   RuleHash_CIHashKey,
-  RuleHash_CIMatchEntry,
+  AtomSelector_CIMatchEntry,
   AtomSelector_MoveEntry,
   AtomSelector_ClearEntry,
   AtomSelector_InitEntry
-  },
-  AtomSelector_GetKey
 };
 
 //--------------------------------
@@ -877,10 +842,10 @@ struct RuleCascadeData {
     : mRuleHash(aQuirksMode),
       mStateSelectors(),
       mSelectorDocumentStates(0),
-      mClassSelectors(aQuirksMode ? &AtomSelector_CIOps.ops
+      mClassSelectors(aQuirksMode ? &AtomSelector_CIOps
                                   : &AtomSelector_CSOps,
                       sizeof(AtomSelectorEntry)),
-      mIdSelectors(aQuirksMode ? &AtomSelector_CIOps.ops
+      mIdSelectors(aQuirksMode ? &AtomSelector_CIOps
                                : &AtomSelector_CSOps,
                    sizeof(AtomSelectorEntry)),
       // mAttributeSelectors is matching on the attribute _name_, not the
@@ -910,8 +875,8 @@ struct RuleCascadeData {
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
 
   RuleHash                 mRuleHash;
-  RuleHash*
-    mPseudoElementRuleHashes[nsCSSPseudoElements::ePseudo_PseudoElementCount];
+  RuleHash*                mPseudoElementRuleHashes[
+    static_cast<CSSPseudoElementTypeBase>(CSSPseudoElementType::Count)];
   nsTArray<nsCSSRuleProcessor::StateSelector>  mStateSelectors;
   EventStates              mSelectorDocumentStates;
   PLDHashTable             mClassSelectors;
@@ -1014,6 +979,17 @@ RuleCascadeData::AttributeListFor(nsIAtom* aAttribute)
 //
 
 nsCSSRuleProcessor::nsCSSRuleProcessor(const sheet_array_type& aSheets,
+                                       SheetType aSheetType,
+                                       Element* aScopeElement,
+                                       nsCSSRuleProcessor*
+                                         aPreviousCSSRuleProcessor,
+                                       bool aIsShared)
+  : nsCSSRuleProcessor(sheet_array_type(aSheets), aSheetType, aScopeElement,
+                       aPreviousCSSRuleProcessor, aIsShared)
+{
+}
+
+nsCSSRuleProcessor::nsCSSRuleProcessor(sheet_array_type&& aSheets,
                                        SheetType aSheetType,
                                        Element* aScopeElement,
                                        nsCSSRuleProcessor*
@@ -1199,17 +1175,11 @@ InitSystemMetrics()
     sSystemMetrics->AppendElement(nsGkAtoms::swipe_animation_enabled);
   }
 
-// On b2gdroid, make it so that we always have a physical home button from
-// gecko's point of view, event if it's just the Android home button remapped.
-#ifdef MOZ_B2GDROID
-  sSystemMetrics->AppendElement(nsGkAtoms::physical_home_button);
-#else
   rv = LookAndFeel::GetInt(LookAndFeel::eIntID_PhysicalHomeButton,
                            &metricResult);
   if (NS_SUCCEEDED(rv) && metricResult) {
     sSystemMetrics->AppendElement(nsGkAtoms::physical_home_button);
   }
-#endif
 
 #ifdef XP_WIN
   if (NS_SUCCEEDED(
@@ -1454,8 +1424,8 @@ static inline bool ActiveHoverQuirkMatches(nsCSSSelector* aSelector,
   // No pseudo-class other than :active and :hover.
   for (nsPseudoClassList* pseudoClass = aSelector->mPseudoClassList;
        pseudoClass; pseudoClass = pseudoClass->mNext) {
-    if (pseudoClass->mType != nsCSSPseudoClasses::ePseudoClass_hover &&
-        pseudoClass->mType != nsCSSPseudoClasses::ePseudoClass_active) {
+    if (pseudoClass->mType != CSSPseudoClassType::hover &&
+        pseudoClass->mType != CSSPseudoClassType::active) {
       return false;
     }
   }
@@ -1493,7 +1463,7 @@ static bool AttrMatchesValue(const nsAttrSelector* aAttrSelector,
   const nsDefaultStringComparator defaultComparator;
   const nsASCIICaseInsensitiveStringComparator ciComparator;
   const nsStringComparator& comparator =
-      (aAttrSelector->mCaseSensitive || !isHTML)
+    aAttrSelector->IsValueCaseSensitive(isHTML)
                 ? static_cast<const nsStringComparator&>(defaultComparator)
                 : static_cast<const nsStringComparator&>(ciComparator);
 
@@ -1651,8 +1621,8 @@ static const EventStates sPseudoClassStates[] = {
   EventStates()
 };
 static_assert(MOZ_ARRAY_LENGTH(sPseudoClassStates) ==
-              nsCSSPseudoClasses::ePseudoClass_NotPseudoClass + 1,
-              "ePseudoClass_NotPseudoClass is no longer at the end of"
+              static_cast<size_t>(CSSPseudoClassType::MAX),
+              "CSSPseudoClassType::MAX is no longer equal to the length of "
               "sPseudoClassStates");
 
 static bool
@@ -1713,7 +1683,8 @@ StateSelectorMatches(Element* aElement,
 {
   for (nsPseudoClassList* pseudoClass = aSelector->mPseudoClassList;
        pseudoClass; pseudoClass = pseudoClass->mNext) {
-    EventStates statesToCheck = sPseudoClassStates[pseudoClass->mType];
+    auto idx = static_cast<CSSPseudoClassTypeBase>(pseudoClass->mType);
+    EventStates statesToCheck = sPseudoClassStates[idx];
     if (!statesToCheck.IsEmpty() &&
         !StateSelectorMatches(aElement, aSelector, aNodeMatchContext,
                               aTreeMatchContext, aSelectorFlags, nullptr,
@@ -1830,24 +1801,25 @@ static bool SelectorMatches(Element* aElement,
   // test for pseudo class match
   for (nsPseudoClassList* pseudoClass = aSelector->mPseudoClassList;
        pseudoClass; pseudoClass = pseudoClass->mNext) {
-    EventStates statesToCheck = sPseudoClassStates[pseudoClass->mType];
+    auto idx = static_cast<CSSPseudoClassTypeBase>(pseudoClass->mType);
+    EventStates statesToCheck = sPseudoClassStates[idx];
     if (statesToCheck.IsEmpty()) {
       // keep the cases here in the same order as the list in
       // nsCSSPseudoClassList.h
       switch (pseudoClass->mType) {
-      case nsCSSPseudoClasses::ePseudoClass_empty:
+      case CSSPseudoClassType::empty:
         if (!checkGenericEmptyMatches(aElement, aTreeMatchContext, true)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozOnlyWhitespace:
+      case CSSPseudoClassType::mozOnlyWhitespace:
         if (!checkGenericEmptyMatches(aElement, aTreeMatchContext, false)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozEmptyExceptChildrenWithLocalname:
+      case CSSPseudoClassType::mozEmptyExceptChildrenWithLocalname:
         {
           NS_ASSERTION(pseudoClass->u.mString, "Must have string!");
           nsIContent *child = nullptr;
@@ -1872,7 +1844,7 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_lang:
+      case CSSPseudoClassType::lang:
         {
           NS_ASSERTION(nullptr != pseudoClass->u.mString, "null lang parameter");
           if (!pseudoClass->u.mString || !*pseudoClass->u.mString) {
@@ -1927,19 +1899,19 @@ static bool SelectorMatches(Element* aElement,
         }
         return false;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozBoundElement:
+      case CSSPseudoClassType::mozBoundElement:
         if (aTreeMatchContext.mScopedRoot != aElement) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_root:
+      case CSSPseudoClassType::root:
         if (aElement != aElement->OwnerDoc()->GetRootElement()) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_any:
+      case CSSPseudoClassType::any:
         {
           nsCSSSelectorList *l;
           for (l = pseudoClass->u.mSelectors; l; l = l->mNext) {
@@ -1958,13 +1930,13 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_firstChild:
+      case CSSPseudoClassType::firstChild:
         if (!edgeChildMatches(aElement, aTreeMatchContext, true, false)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_firstNode:
+      case CSSPseudoClassType::firstNode:
         {
           nsIContent *firstNode = nullptr;
           nsIContent *parent = aElement->GetParent();
@@ -1985,13 +1957,13 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_lastChild:
+      case CSSPseudoClassType::lastChild:
         if (!edgeChildMatches(aElement, aTreeMatchContext, false, true)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_lastNode:
+      case CSSPseudoClassType::lastNode:
         {
           nsIContent *lastNode = nullptr;
           nsIContent *parent = aElement->GetParent();
@@ -2012,80 +1984,80 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_onlyChild:
+      case CSSPseudoClassType::onlyChild:
         if (!edgeChildMatches(aElement, aTreeMatchContext, true, true)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_firstOfType:
+      case CSSPseudoClassType::firstOfType:
         if (!edgeOfTypeMatches(aElement, aTreeMatchContext, true, false)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_lastOfType:
+      case CSSPseudoClassType::lastOfType:
         if (!edgeOfTypeMatches(aElement, aTreeMatchContext, false, true)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_onlyOfType:
+      case CSSPseudoClassType::onlyOfType:
         if (!edgeOfTypeMatches(aElement, aTreeMatchContext, true, true)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_nthChild:
+      case CSSPseudoClassType::nthChild:
         if (!nthChildGenericMatches(aElement, aTreeMatchContext, pseudoClass,
                                     false, false)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_nthLastChild:
+      case CSSPseudoClassType::nthLastChild:
         if (!nthChildGenericMatches(aElement, aTreeMatchContext, pseudoClass,
                                     false, true)) {
           return false;
         }
       break;
 
-      case nsCSSPseudoClasses::ePseudoClass_nthOfType:
+      case CSSPseudoClassType::nthOfType:
         if (!nthChildGenericMatches(aElement, aTreeMatchContext, pseudoClass,
                                     true, false)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_nthLastOfType:
+      case CSSPseudoClassType::nthLastOfType:
         if (!nthChildGenericMatches(aElement, aTreeMatchContext, pseudoClass,
                                     true, true)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozIsHTML:
+      case CSSPseudoClassType::mozIsHTML:
         if (!aTreeMatchContext.mIsHTMLDocument || !aElement->IsHTMLElement()) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozNativeAnonymous:
+      case CSSPseudoClassType::mozNativeAnonymous:
         if (!aElement->IsInNativeAnonymousSubtree()) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozSystemMetric:
+      case CSSPseudoClassType::mozSystemMetric:
         {
-          nsCOMPtr<nsIAtom> metric = do_GetAtom(pseudoClass->u.mString);
+          nsCOMPtr<nsIAtom> metric = NS_Atomize(pseudoClass->u.mString);
           if (!nsCSSRuleProcessor::HasSystemMetric(metric)) {
             return false;
           }
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozLocaleDir:
+      case CSSPseudoClassType::mozLocaleDir:
         {
           bool docIsRTL =
             aTreeMatchContext.mDocument->GetDocumentState().
@@ -2108,7 +2080,7 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozLWTheme:
+      case CSSPseudoClassType::mozLWTheme:
         {
           if (aTreeMatchContext.mDocument->GetDocumentLWTheme() <=
                 nsIDocument::Doc_Theme_None) {
@@ -2117,7 +2089,7 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozLWThemeBrightText:
+      case CSSPseudoClassType::mozLWThemeBrightText:
         {
           if (aTreeMatchContext.mDocument->GetDocumentLWTheme() !=
                 nsIDocument::Doc_Theme_Bright) {
@@ -2126,7 +2098,7 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozLWThemeDarkText:
+      case CSSPseudoClassType::mozLWThemeDarkText:
         {
           if (aTreeMatchContext.mDocument->GetDocumentLWTheme() !=
                 nsIDocument::Doc_Theme_Dark) {
@@ -2135,14 +2107,14 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozWindowInactive:
+      case CSSPseudoClassType::mozWindowInactive:
         if (!aTreeMatchContext.mDocument->GetDocumentState().
                HasState(NS_DOCUMENT_STATE_WINDOW_INACTIVE)) {
           return false;
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozTableBorderNonzero:
+      case CSSPseudoClassType::mozTableBorderNonzero:
         {
           if (!aElement->IsHTMLElement(nsGkAtoms::table)) {
             return false;
@@ -2156,7 +2128,7 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_mozBrowserFrame:
+      case CSSPseudoClassType::mozBrowserFrame:
         {
           nsCOMPtr<nsIMozBrowserFrame>
             browserFrame = do_QueryInterface(aElement);
@@ -2167,11 +2139,12 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_dir:
+      case CSSPseudoClassType::mozDir:
+      case CSSPseudoClassType::dir:
         {
           if (aDependence) {
-            EventStates states
-              = sPseudoClassStateDependences[pseudoClass->mType];
+            EventStates states = sPseudoClassStateDependences[
+              static_cast<CSSPseudoClassTypeBase>(pseudoClass->mType)];
             if (aNodeMatchContext.mStateMask.HasAtLeastOneOfStates(states)) {
               *aDependence = true;
               return false;
@@ -2182,8 +2155,8 @@ static bool SelectorMatches(Element* aElement,
           // exclusively LTR or RTL.
           //
           // However, in markup languages where there is no direction attribute
-          // we have to consider the possibility that neither -moz-dir(rtl) nor
-          // -moz-dir(ltr) matches.
+          // we have to consider the possibility that neither dir(rtl) nor
+          // dir(ltr) matches.
           EventStates state = aElement->StyleState();
           nsDependentString dirString(pseudoClass->u.mString);
 
@@ -2202,7 +2175,7 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
-      case nsCSSPseudoClasses::ePseudoClass_scope:
+      case CSSPseudoClassType::scope:
         if (aTreeMatchContext.mForScopedStyle) {
           if (aTreeMatchContext.mCurrentStyleScope) {
             // If mCurrentStyleScope is null, aElement must be the style
@@ -2293,8 +2266,8 @@ static bool SelectorMatches(Element* aElement,
           result =
             aElement->
               AttrValueIs(attr->mNameSpace, matchAttribute, attr->mValue,
-                          (!isHTML || attr->mCaseSensitive) ? eCaseMatters
-                                                            : eIgnoreCase);
+                          attr->IsValueCaseSensitive(isHTML) ? eCaseMatters
+                                                             : eIgnoreCase);
         }
         else if (!aElement->HasAttr(attr->mNameSpace, matchAttribute)) {
           result = false;
@@ -2644,7 +2617,8 @@ nsCSSRuleProcessor::RulesMatching(PseudoElementRuleProcessorData* aData)
   RuleCascadeData* cascade = GetRuleCascade(aData->mPresContext);
 
   if (cascade) {
-    RuleHash* ruleHash = cascade->mPseudoElementRuleHashes[aData->mPseudoType];
+    RuleHash* ruleHash = cascade->mPseudoElementRuleHashes[
+      static_cast<CSSPseudoElementTypeBase>(aData->mPseudoType)];
     if (ruleHash) {
       NodeMatchContext nodeContext(EventStates(),
                                    nsCSSRuleProcessor::IsLink(aData->mElement));
@@ -2714,7 +2688,7 @@ static inline nsRestyleHint RestyleHintForOp(char16_t oper)
 nsRestyleHint
 nsCSSRuleProcessor::HasStateDependentStyle(ElementDependentRuleProcessorData* aData,
                                            Element* aStatefulElement,
-                                           nsCSSPseudoElements::Type aPseudoType,
+                                           CSSPseudoElementType aPseudoType,
                                            EventStates aStateMask)
 {
   MOZ_ASSERT(!aData->mTreeMatchContext.mForScopedStyle,
@@ -2722,7 +2696,7 @@ nsCSSRuleProcessor::HasStateDependentStyle(ElementDependentRuleProcessorData* aD
              "SelectorMatchesTree call");
 
   bool isPseudoElement =
-    aPseudoType != nsCSSPseudoElements::ePseudo_NotPseudoElement;
+    aPseudoType != CSSPseudoElementType::NotPseudo;
 
   RuleCascadeData* cascade = GetRuleCascade(aData->mPresContext);
 
@@ -2782,7 +2756,7 @@ nsCSSRuleProcessor::HasStateDependentStyle(ElementDependentRuleProcessorData* aD
            (selector->mPseudoClassList &&
             (selector->mPseudoClassList->mNext ||
              selector->mPseudoClassList->mType !=
-               nsCSSPseudoClasses::ePseudoClass_hover)) ||
+               CSSPseudoClassType::hover)) ||
            selector->mAttrList || selector->mNegations) &&
           (!isPseudoElement ||
            StateSelectorMatches(aStatefulElement, selectorForPseudo,
@@ -2806,7 +2780,7 @@ nsCSSRuleProcessor::HasStateDependentStyle(StateRuleProcessorData* aData)
 {
   return HasStateDependentStyle(aData,
                                 aData->mElement,
-                                nsCSSPseudoElements::ePseudo_NotPseudoElement,
+                                CSSPseudoElementType::NotPseudo,
                                 aData->mStateMask);
 }
 
@@ -2888,7 +2862,7 @@ RestyleHintForSelectorWithAttributeChange(nsRestyleHint aCurrentHint,
          sel != aSelector;
          sel = sel->mNext) {
       MOZ_ASSERT(sel, "aSelector must be reachable from aRightmostSelector");
-      if (sel->PseudoType() != nsCSSPseudoElements::ePseudo_NotPseudoElement) {
+      if (sel->PseudoType() != CSSPseudoElementType::NotPseudo) {
         return eRestyle_Subtree;
       }
     }
@@ -3248,7 +3222,7 @@ nsCSSRuleProcessor::ClearRuleCascades()
 
   // We rely on our caller (perhaps indirectly) to do something that
   // will rebuild style data and the user font set (either
-  // nsIPresShell::ReconstructStyleData or
+  // nsIPresShell::RestyleForCSSRuleChanges or
   // nsPresContext::RebuildAllStyleData).
   RuleCascadeData *data = mRuleCascades;
   mRuleCascades = nullptr;
@@ -3272,10 +3246,12 @@ EventStates ComputeSelectorStateDependence(nsCSSSelector& aSelector)
        pseudoClass; pseudoClass = pseudoClass->mNext) {
     // Tree pseudo-elements overload mPseudoClassList for things that
     // aren't pseudo-classes.
-    if (pseudoClass->mType >= nsCSSPseudoClasses::ePseudoClass_Count) {
+    if (pseudoClass->mType >= CSSPseudoClassType::Count) {
       continue;
     }
-    states |= sPseudoClassStateDependences[pseudoClass->mType];
+
+    auto idx = static_cast<CSSPseudoClassTypeBase>(pseudoClass->mType);
+    states |= sPseudoClassStateDependences[idx];
   }
   return states;
 }
@@ -3303,15 +3279,15 @@ AddSelector(RuleCascadeData* aCascade,
     for (nsPseudoClassList* pseudoClass = negation->mPseudoClassList;
          pseudoClass; pseudoClass = pseudoClass->mNext) {
       switch (pseudoClass->mType) {
-        case nsCSSPseudoClasses::ePseudoClass_mozLocaleDir: {
+        case CSSPseudoClassType::mozLocaleDir: {
           aCascade->mSelectorDocumentStates |= NS_DOCUMENT_STATE_RTL_LOCALE;
           break;
         }
-        case nsCSSPseudoClasses::ePseudoClass_mozWindowInactive: {
+        case CSSPseudoClassType::mozWindowInactive: {
           aCascade->mSelectorDocumentStates |= NS_DOCUMENT_STATE_WINDOW_INACTIVE;
           break;
         }
-        case nsCSSPseudoClasses::ePseudoClass_mozTableBorderNonzero: {
+        case CSSPseudoClassType::mozTableBorderNonzero: {
           nsTArray<SelectorPair> *array =
             aCascade->AttributeListFor(nsGkAtoms::border);
           if (!array) {
@@ -3388,7 +3364,7 @@ AddSelector(RuleCascadeData* aCascade,
     // Recur through any :-moz-any selectors
     for (nsPseudoClassList* pseudoClass = negation->mPseudoClassList;
          pseudoClass; pseudoClass = pseudoClass->mNext) {
-      if (pseudoClass->mType == nsCSSPseudoClasses::ePseudoClass_any) {
+      if (pseudoClass->mType == CSSPseudoClassType::any) {
         for (nsCSSSelectorList *l = pseudoClass->u.mSelectors; l; l = l->mNext) {
           nsCSSSelector *s = l->mSelectors;
           if (!AddSelector(aCascade, aSelectorInTopLevel, s,
@@ -3409,11 +3385,12 @@ AddRule(RuleSelectorPair* aRuleInfo, RuleCascadeData* aCascade)
   RuleCascadeData * const cascade = aCascade;
 
   // Build the rule hash.
-  nsCSSPseudoElements::Type pseudoType = aRuleInfo->mSelector->PseudoType();
-  if (MOZ_LIKELY(pseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement)) {
+  CSSPseudoElementType pseudoType = aRuleInfo->mSelector->PseudoType();
+  if (MOZ_LIKELY(pseudoType == CSSPseudoElementType::NotPseudo)) {
     cascade->mRuleHash.AppendRule(*aRuleInfo);
-  } else if (pseudoType < nsCSSPseudoElements::ePseudo_PseudoElementCount) {
-    RuleHash*& ruleHash = cascade->mPseudoElementRuleHashes[pseudoType];
+  } else if (pseudoType < CSSPseudoElementType::Count) {
+    RuleHash*& ruleHash = cascade->mPseudoElementRuleHashes[
+      static_cast<CSSPseudoElementTypeBase>(pseudoType)];
     if (!ruleHash) {
       ruleHash = new RuleHash(cascade->mQuirksMode);
       if (!ruleHash) {
@@ -3426,7 +3403,7 @@ AddRule(RuleSelectorPair* aRuleInfo, RuleCascadeData* aCascade)
     NS_ASSERTION(aRuleInfo->mSelector->mNext->mOperator == ':',
                  "Unexpected mNext combinator");
     ruleHash->AppendRule(*aRuleInfo);
-  } else if (pseudoType == nsCSSPseudoElements::ePseudo_AnonBox) {
+  } else if (pseudoType == CSSPseudoElementType::AnonBox) {
     NS_ASSERTION(!aRuleInfo->mSelector->mCasedTag &&
                  !aRuleInfo->mSelector->mIDList &&
                  !aRuleInfo->mSelector->mClassList &&
@@ -3444,7 +3421,7 @@ AddRule(RuleSelectorPair* aRuleInfo, RuleCascadeData* aCascade)
                          RuleValue(*aRuleInfo, 0, aCascade->mQuirksMode));
   } else {
 #ifdef MOZ_XUL
-    NS_ASSERTION(pseudoType == nsCSSPseudoElements::ePseudo_XULTree,
+    NS_ASSERTION(pseudoType == CSSPseudoElementType::XULTree,
                  "Unexpected pseudo type");
     // Index doesn't matter here, since we'll just be walking these
     // rules in order; just pass 0.
@@ -3459,8 +3436,8 @@ AddRule(RuleSelectorPair* aRuleInfo, RuleCascadeData* aCascade)
   for (nsCSSSelector* selector = aRuleInfo->mSelector;
            selector; selector = selector->mNext) {
     if (selector->IsPseudoElement()) {
-      nsCSSPseudoElements::Type pseudo = selector->PseudoType();
-      if (pseudo >= nsCSSPseudoElements::ePseudo_PseudoElementCount ||
+      CSSPseudoElementType pseudo = selector->PseudoType();
+      if (pseudo >= CSSPseudoElementType::Count ||
           !nsCSSPseudoElements::PseudoElementSupportsUserActionState(pseudo)) {
         NS_ASSERTION(!selector->mNegations, "Shouldn't have negations");
         // We do store selectors ending with pseudo-elements that allow :hover
@@ -3515,14 +3492,13 @@ struct RuleByWeightEntry : public PLDHashEntryHdr {
 };
 
 static PLDHashNumber
-HashIntKey(PLDHashTable *table, const void *key)
+HashIntKey(const void *key)
 {
   return PLDHashNumber(NS_PTR_TO_INT32(key));
 }
 
 static bool
-MatchWeightEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                 const void *key)
+MatchWeightEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   const RuleByWeightEntry *entry = (const RuleByWeightEntry *)hdr;
   return entry->data.mWeight == NS_PTR_TO_INT32(key);
@@ -4020,13 +3996,13 @@ TreeMatchContext::InitAncestors(Element *aElement)
   mAncestorFilter.mFilter = new AncestorFilter::Filter();
 
   if (MOZ_LIKELY(aElement)) {
-    MOZ_ASSERT(aElement->GetCurrentDoc() ||
+    MOZ_ASSERT(aElement->GetUncomposedDoc() ||
                aElement->HasFlag(NODE_IS_IN_SHADOW_TREE),
                "aElement must be in the document or in shadow tree "
                "for the assumption that GetParentNode() is non-null "
                "on all element ancestors of aElement to be true");
     // Collect up the ancestors
-    nsAutoTArray<Element*, 50> ancestors;
+    AutoTArray<Element*, 50> ancestors;
     Element* cur = aElement;
     do {
       ancestors.AppendElement(cur);
@@ -4048,7 +4024,7 @@ TreeMatchContext::InitStyleScopes(Element* aElement)
 
   if (MOZ_LIKELY(aElement)) {
     // Collect up the ancestors
-    nsAutoTArray<Element*, 50> ancestors;
+    AutoTArray<Element*, 50> ancestors;
     Element* cur = aElement;
     do {
       ancestors.AppendElement(cur);

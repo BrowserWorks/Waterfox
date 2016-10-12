@@ -75,6 +75,10 @@ void ProxyCaretMoveEvent(ProxyAccessible* aTarget, int32_t aOffset);
 void ProxyTextChangeEvent(ProxyAccessible* aTarget, const nsString& aStr,
                           int32_t aStart, uint32_t aLen, bool aIsInsert,
                           bool aFromUser);
+void ProxyShowHideEvent(ProxyAccessible* aTarget, ProxyAccessible* aParent,
+                        bool aInsert, bool aFromUser);
+void ProxySelectionEvent(ProxyAccessible* aTarget, ProxyAccessible* aWidget,
+                         uint32_t aType);
 } // namespace a11y
 } // namespace mozilla
 

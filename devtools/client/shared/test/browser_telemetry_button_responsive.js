@@ -8,7 +8,9 @@ const TEST_URI = "data:text/html;charset=utf-8," +
 // opened we make use of setTimeout() to create tool active times.
 const TOOL_DELAY = 200;
 
-add_task(function*() {
+const { ResponsiveUIManager } = Cu.import("resource://devtools/client/responsivedesign/responsivedesign.jsm", {});
+
+add_task(function* () {
   yield addTab(TEST_URI);
   let Telemetry = loadTelemetryAndRecordLogs();
 
@@ -35,27 +37,28 @@ function* testButton(toolbox, Telemetry) {
   checkResults("_RESPONSIVE_", Telemetry);
 }
 
-function delayedClicks(node, clicks) {
+function waitForToggle() {
   return new Promise(resolve => {
-    let clicked = 0;
-
-    // See TOOL_DELAY for why we need setTimeout here
-    setTimeout(function delayedClick() {
-      info("Clicking button " + node.id);
-      if (clicked >= clicks) {
-        node.addEventListener("click", function listener() {
-          node.removeEventListener("click", listener);
-          resolve();
-        });
-      } else {
-        setTimeout(delayedClick, TOOL_DELAY);
-      }
-
-      node.click();
-      clicked++;
-    }, TOOL_DELAY);
+    let handler = () => {
+      ResponsiveUIManager.off("on", handler);
+      ResponsiveUIManager.off("off", handler);
+      resolve();
+    };
+    ResponsiveUIManager.on("on", handler);
+    ResponsiveUIManager.on("off", handler);
   });
 }
+
+var delayedClicks = Task.async(function* (node, clicks) {
+  for (let i = 0; i < clicks; i++) {
+    info("Clicking button " + node.id);
+    let toggled = waitForToggle();
+    node.click();
+    yield toggled;
+    // See TOOL_DELAY for why we need setTimeout here
+    yield DevToolsUtils.waitForTime(TOOL_DELAY);
+  }
+});
 
 function checkResults(histIdFocus, Telemetry) {
   let result = Telemetry.prototype.telemetryInfo;
@@ -72,10 +75,10 @@ function checkResults(histIdFocus, Telemetry) {
     if (histId.endsWith("OPENED_PER_USER_FLAG")) {
       ok(value.length === 1 && value[0] === true,
          "Per user value " + histId + " has a single value of true");
-    } else if (histId.endsWith("OPENED_BOOLEAN")) {
+    } else if (histId.endsWith("OPENED_COUNT")) {
       ok(value.length > 1, histId + " has more than one entry");
 
-      let okay = value.every(function(element) {
+      let okay = value.every(function (element) {
         return element === true;
       });
 
@@ -83,7 +86,7 @@ function checkResults(histIdFocus, Telemetry) {
     } else if (histId.endsWith("TIME_ACTIVE_SECONDS")) {
       ok(value.length > 1, histId + " has more than one entry");
 
-      let okay = value.every(function(element) {
+      let okay = value.every(function (element) {
         return element > 0;
       });
 

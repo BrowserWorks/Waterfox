@@ -10,7 +10,7 @@
 #include "mozilla/net/PUDPSocketParent.h"
 #include "nsCOMPtr.h"
 #include "nsIUDPSocket.h"
-#include "nsIUDPSocketFilter.h"
+#include "nsISocketFilter.h"
 #include "mozilla/net/OfflineObserver.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 
@@ -35,7 +35,9 @@ public:
   bool Init(const IPC::Principal& aPrincipal, const nsACString& aFilter);
 
   virtual bool RecvBind(const UDPAddressInfo& aAddressInfo,
-                        const bool& aAddressReuse, const bool& aLoopback) override;
+                        const bool& aAddressReuse, const bool& aLoopback,
+                        const uint32_t& recvBufferSize,
+                        const uint32_t& sendBufferSize) override;
   virtual bool RecvConnect(const UDPAddressInfo& aAddressInfo) override;
   void DoSendConnectResponse(const UDPAddressInfo& aAddressInfo);
   void SendConnectResponse(nsIEventTarget *aThread,
@@ -62,7 +64,9 @@ private:
   void Send(const InfallibleTArray<uint8_t>& aData, const UDPSocketAddr& aAddr);
   void Send(const InputStreamParams& aStream, const UDPSocketAddr& aAddr);
   nsresult BindInternal(const nsCString& aHost, const uint16_t& aPort,
-                        const bool& aAddressReuse, const bool& aLoopback);
+                        const bool& aAddressReuse, const bool& aLoopback,
+                        const uint32_t& recvBufferSize,
+                        const uint32_t& sendBufferSize);
   nsresult ConnectInternal(const nsCString& aHost, const uint16_t& aPort);
   void FireInternalError(uint32_t aLineNo);
   void SendInternalError(nsIEventTarget *aThread,
@@ -74,7 +78,7 @@ private:
 
   bool mIPCOpen;
   nsCOMPtr<nsIUDPSocket> mSocket;
-  nsCOMPtr<nsIUDPSocketFilter> mFilter;
+  nsCOMPtr<nsISocketFilter> mFilter;
   RefPtr<mozilla::net::OfflineObserver> mObserver;
   nsCOMPtr<nsIPrincipal> mPrincipal;
 };

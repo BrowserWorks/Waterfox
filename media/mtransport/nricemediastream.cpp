@@ -46,7 +46,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "logging.h"
 #include "nsError.h"
-#include "mozilla/Scoped.h"
 
 // nICEr includes
 extern "C" {
@@ -169,13 +168,13 @@ static bool ToNrIceCandidate(const nr_ice_candidate& candc,
 // Make an NrIceCandidate from the candidate |cand|.
 // This is not a member fxn because we want to hide the
 // defn of nr_ice_candidate but we pass by reference.
-static NrIceCandidate* MakeNrIceCandidate(const nr_ice_candidate& candc) {
-  ScopedDeletePtr<NrIceCandidate> out(new NrIceCandidate());
+static UniquePtr<NrIceCandidate> MakeNrIceCandidate(const nr_ice_candidate& candc) {
+  UniquePtr<NrIceCandidate> out(new NrIceCandidate());
 
-  if (!ToNrIceCandidate(candc, out)) {
+  if (!ToNrIceCandidate(candc, out.get())) {
     return nullptr;
   }
-  return out.forget();
+  return out;
 }
 
 // NrIceMediaStream
@@ -185,6 +184,7 @@ NrIceMediaStream::Create(NrIceCtx *ctx,
                          int components) {
   RefPtr<NrIceMediaStream> stream =
     new NrIceMediaStream(ctx, name, components);
+  MOZ_ASSERT(stream->ctx_ == ctx->ctx());
 
   int r = nr_ice_add_media_stream(ctx->ctx(),
                                   const_cast<char *>(name.c_str()),
@@ -196,6 +196,20 @@ NrIceMediaStream::Create(NrIceCtx *ctx,
   }
 
   return stream;
+}
+
+NrIceMediaStream::NrIceMediaStream(NrIceCtx *ctx,
+                                   const std::string& name,
+                                   size_t components) :
+      state_(ICE_CONNECTING),
+      ctx_(ctx->ctx()),
+      ctx_peer_(ctx->peer()),
+      name_(name),
+      components_(components),
+      stream_(nullptr),
+      level_(0),
+      has_parsed_attrs_(false)
+{
 }
 
 NrIceMediaStream::~NrIceMediaStream() {
@@ -215,7 +229,7 @@ nsresult NrIceMediaStream::ParseAttributes(std::vector<std::string>&
   }
 
   // Still need to call nr_ice_ctx_parse_stream_attributes.
-  int r = nr_ice_peer_ctx_parse_stream_attributes(ctx_->peer(),
+  int r = nr_ice_peer_ctx_parse_stream_attributes(ctx_peer_,
                                                   stream_,
                                                   attributes_in.size() ?
                                                   &attributes_in[0] : nullptr,
@@ -234,10 +248,10 @@ nsresult NrIceMediaStream::ParseAttributes(std::vector<std::string>&
 nsresult NrIceMediaStream::ParseTrickleCandidate(const std::string& candidate) {
   int r;
 
-  MOZ_MTLOG(ML_DEBUG, "NrIceCtx(" << ctx_->name() << ")/STREAM(" <<
+  MOZ_MTLOG(ML_DEBUG, "NrIceCtx(" << ctx_->label << ")/STREAM(" <<
             name() << ") : parsing trickle candidate " << candidate);
 
-  r = nr_ice_peer_ctx_parse_trickle_candidate(ctx_->peer(),
+  r = nr_ice_peer_ctx_parse_trickle_candidate(ctx_peer_,
                                               stream_,
                                               const_cast<char *>(
                                                 candidate.c_str())
@@ -259,8 +273,8 @@ nsresult NrIceMediaStream::ParseTrickleCandidate(const std::string& candidate) {
 
 // Returns NS_ERROR_NOT_AVAILABLE if component is unpaired or disabled.
 nsresult NrIceMediaStream::GetActivePair(int component,
-                                         NrIceCandidate **localp,
-                                         NrIceCandidate **remotep) {
+                                         UniquePtr<NrIceCandidate>* localp,
+                                         UniquePtr<NrIceCandidate>* remotep) {
   int r;
   nr_ice_candidate *local_int;
   nr_ice_candidate *remote_int;
@@ -269,7 +283,7 @@ nsresult NrIceMediaStream::GetActivePair(int component,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  r = nr_ice_media_stream_get_active(ctx_->peer(),
+  r = nr_ice_media_stream_get_active(ctx_peer_,
                                      stream_,
                                      component,
                                      &local_int, &remote_int);
@@ -280,20 +294,20 @@ nsresult NrIceMediaStream::GetActivePair(int component,
   if (r)
     return NS_ERROR_FAILURE;
 
-  ScopedDeletePtr<NrIceCandidate> local(
+  UniquePtr<NrIceCandidate> local(
       MakeNrIceCandidate(*local_int));
   if (!local)
     return NS_ERROR_FAILURE;
 
-  ScopedDeletePtr<NrIceCandidate> remote(
+  UniquePtr<NrIceCandidate> remote(
       MakeNrIceCandidate(*remote_int));
   if (!remote)
     return NS_ERROR_FAILURE;
 
   if (localp)
-    *localp = local.forget();
+    *localp = Move(local);
   if (remotep)
-    *remotep = remote.forget();
+    *remotep = Move(remote);
 
   return NS_OK;
 }
@@ -307,14 +321,14 @@ nsresult NrIceMediaStream::GetCandidatePairs(std::vector<NrIceCandidatePair>*
   }
 
   // If we haven't at least started checking then there is nothing to report
-  if (ctx_->connection_state() == NrIceCtx::ICE_CTX_INIT) {
+  if (ctx_peer_->state != NR_ICE_PEER_STATE_PAIRED) {
     return NS_OK;
   }
 
   // Get the check_list on the peer stream (this is where the check_list
   // actually lives, not in stream_)
   nr_ice_media_stream* peer_stream;
-  int r = nr_ice_peer_ctx_find_pstream(ctx_->peer(), stream_, &peer_stream);
+  int r = nr_ice_peer_ctx_find_pstream(ctx_peer_, stream_, &peer_stream);
   if (r != 0) {
     return NS_ERROR_FAILURE;
   }
@@ -344,7 +358,9 @@ nsresult NrIceMediaStream::GetCandidatePairs(std::vector<NrIceCandidatePair>*
              !(p1->peer_nominated || p1->nominated)) ||
             (p2->priority > p1->priority) ||
             ((p2->state == NR_ICE_PAIR_STATE_SUCCEEDED) &&
-             (p1->state != NR_ICE_PAIR_STATE_SUCCEEDED))
+             (p1->state != NR_ICE_PAIR_STATE_SUCCEEDED)) ||
+            ((p2->state != NR_ICE_PAIR_STATE_CANCELLED) &&
+             (p1->state == NR_ICE_PAIR_STATE_CANCELLED))
             ) {
           /* p2 is a better pair. */
           break;
@@ -489,12 +505,12 @@ nsresult NrIceMediaStream::GetRemoteCandidates(
   }
 
   // If we haven't at least started checking then there is nothing to report
-  if (ctx_->connection_state() == NrIceCtx::ICE_CTX_INIT) {
+  if (ctx_peer_->state != NR_ICE_PEER_STATE_PAIRED) {
     return NS_OK;
   }
 
   nr_ice_media_stream* peer_stream;
-  int r = nr_ice_peer_ctx_find_pstream(ctx_->peer(), stream_, &peer_stream);
+  int r = nr_ice_peer_ctx_find_pstream(ctx_peer_, stream_, &peer_stream);
   if (r != 0) {
     return NS_ERROR_FAILURE;
   }
@@ -518,13 +534,38 @@ nsresult NrIceMediaStream::DisableComponent(int component_id) {
   return NS_OK;
 }
 
+nsresult NrIceMediaStream::GetConsentStatus(int component_id, bool *can_send, struct timeval *ts) {
+  if (!stream_)
+    return NS_ERROR_FAILURE;
+
+  nr_ice_media_stream* peer_stream;
+  int r = nr_ice_peer_ctx_find_pstream(ctx_peer_, stream_, &peer_stream);
+  if (r) {
+    MOZ_MTLOG(ML_ERROR, "Failed to find peer stream for '" << name_ << "':" <<
+              component_id);
+    return NS_ERROR_FAILURE;
+  }
+
+  int send = 0;
+  r = nr_ice_media_stream_get_consent_status(peer_stream, component_id,
+                                             &send, ts);
+  if (r) {
+    MOZ_MTLOG(ML_ERROR, "Failed to get consent status for '" << name_ << "':" <<
+              component_id);
+    return NS_ERROR_FAILURE;
+  }
+  *can_send = !!send;
+
+  return NS_OK;
+}
+
 nsresult NrIceMediaStream::SendPacket(int component_id,
                                       const unsigned char *data,
                                       size_t len) {
   if (!stream_)
     return NS_ERROR_FAILURE;
 
-  int r = nr_ice_media_stream_send(ctx_->peer(), stream_,
+  int r = nr_ice_media_stream_send(ctx_peer_, stream_,
                                    component_id,
                                    const_cast<unsigned char *>(data), len);
   if (r) {
@@ -557,10 +598,13 @@ void NrIceMediaStream::Close() {
   MOZ_MTLOG(ML_DEBUG, "Marking stream closed '" << name_ << "'");
   state_ = ICE_CLOSED;
 
-  int r = nr_ice_remove_media_stream(ctx_->ctx(), &stream_);
-  if (r) {
-    MOZ_ASSERT(false, "Failed to remove stream");
-    MOZ_MTLOG(ML_ERROR, "Failed to remove stream, error=" << r);
+  if (stream_) {
+    int r = nr_ice_remove_media_stream(ctx_, &stream_);
+    if (r) {
+      MOZ_ASSERT(false, "Failed to remove stream");
+      MOZ_MTLOG(ML_ERROR, "Failed to remove stream, error=" << r);
+    }
   }
 }
+
 }  // close namespace

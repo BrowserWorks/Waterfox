@@ -55,8 +55,12 @@
   color: var(--identity-box-chrome-color);
 }
 
-#identity-icon-labels {
-  padding-inline-start: 2px;
+#identity-icon-labels:-moz-locale-dir(ltr) {
+  padding-left: 2px;
+}
+
+#identity-icon-labels:-moz-locale-dir(rtl) {
+  padding-right: 2px;
 }
 
 #notification-popup-box:not([hidden]) + #identity-box {
@@ -174,5 +178,10 @@
 
 #urlbar[pageproxystate="valid"] > #identity-box.mixedActiveBlocked > #connection-icon {
   list-style-image: url(chrome://browser/skin/identity-mixed-active-blocked.svg);
+  visibility: visible;
+}
+
+#urlbar[pageproxystate="valid"] > #identity-box.certUserOverridden > #connection-icon {
+  list-style-image: url(chrome://browser/skin/identity-mixed-passive-loaded.svg);
   visibility: visible;
 }

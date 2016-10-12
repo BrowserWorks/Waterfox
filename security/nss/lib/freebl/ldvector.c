@@ -12,7 +12,7 @@ extern int FREEBL_InitStubs(void);
 #include "loader.h"
 #include "alghmac.h"
 #include "hmacct.h"
-
+#include "blapii.h"
 
 static const struct FREEBLVectorStr vector = 
 {
@@ -286,20 +286,67 @@ static const struct FREEBLVectorStr vector =
 
     EC_FillParams,
     EC_DecodeParams,
-    EC_CopyParams
+    EC_CopyParams,
 
     /* End of Version 3.017 */
+
+    ChaCha20Poly1305_InitContext,
+    ChaCha20Poly1305_CreateContext,
+    ChaCha20Poly1305_DestroyContext,
+    ChaCha20Poly1305_Seal,
+    ChaCha20Poly1305_Open
+
+    /* End of Version 3.018 */
 };
+
+
 
 const FREEBLVector *
 FREEBL_GetVector(void)
 {
+#ifdef FREEBL_NO_DEPEND
+    SECStatus rv;
+#endif
+
 #define NSS_VERSION_VARIABLE __nss_freebl_version
 #include "verref.h"
 
 #ifdef FREEBL_NO_DEPEND
-    FREEBL_InitStubs();
+    /* this entry point is only valid if nspr and nss-util has been loaded */
+    rv = FREEBL_InitStubs();
+    if (rv != SECSuccess) {
+	return NULL;
+    }
 #endif
+    /* make sure the Full self tests have been run before continuing */
+    BL_POSTRan(PR_FALSE);
+
     return &vector;
 }
+
+#ifdef FREEBL_LOWHASH
+static const struct NSSLOWVectorStr nssvector = 
+{
+    sizeof nssvector,
+    NSSLOW_VERSION,
+    FREEBL_GetVector,
+    NSSLOW_Init,
+    NSSLOW_Shutdown,
+    NSSLOW_Reset,
+    NSSLOWHASH_NewContext,
+    NSSLOWHASH_Begin,
+    NSSLOWHASH_Update,
+    NSSLOWHASH_End,
+    NSSLOWHASH_Destroy,
+    NSSLOWHASH_Length
+};
+
+const NSSLOWVector *
+NSSLOW_GetVector(void)
+{
+    /* POST check and  stub init happens in FREEBL_GetVector() and 
+     * NSSLOW_Init() respectively */
+    return &nssvector;
+}
+#endif
 

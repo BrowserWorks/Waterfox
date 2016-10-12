@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ImageLogging.h"
+#include "imgFrame.h"
 #include "nsJPEGDecoder.h"
 #include "Orientation.h"
 #include "EXIF.h"
@@ -18,7 +19,7 @@
 #include "jerror.h"
 
 #include "gfxPlatform.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/Telemetry.h"
 
 extern "C" {
@@ -397,6 +398,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
             mInfo.output_width, mInfo.output_height));
 
     mState = JPEG_START_DECOMPRESS;
+    MOZ_FALLTHROUGH; // to start decompressing.
   }
 
   case JPEG_START_DECOMPRESS: {
@@ -423,6 +425,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
     // If this is a progressive JPEG ...
     mState = mInfo.buffered_image ?
              JPEG_DECOMPRESS_PROGRESSIVE : JPEG_DECOMPRESS_SEQUENTIAL;
+    MOZ_FALLTHROUGH; // to decompress sequential JPEG.
   }
 
   case JPEG_DECOMPRESS_SEQUENTIAL: {
@@ -444,6 +447,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
                    "We didn't process all of the data!");
       mState = JPEG_DONE;
     }
+    MOZ_FALLTHROUGH; // to decompress progressive JPEG.
   }
 
   case JPEG_DECOMPRESS_PROGRESSIVE: {
@@ -516,6 +520,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 
       mState = JPEG_DONE;
     }
+    MOZ_FALLTHROUGH; // to finish decompressing.
   }
 
   case JPEG_DONE: {
@@ -579,7 +584,7 @@ nsJPEGDecoder::ReadOrientationFromEXIF()
 void
 nsJPEGDecoder::NotifyDone()
 {
-  PostFrameStop(Opacity::OPAQUE);
+  PostFrameStop(Opacity::FULLY_OPAQUE);
   PostDecodeDone();
 }
 

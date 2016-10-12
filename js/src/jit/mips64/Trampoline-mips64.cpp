@@ -13,8 +13,8 @@
 #include "jit/JitFrames.h"
 #include "jit/JitSpewer.h"
 #include "jit/Linker.h"
+#include "jit/mips-shared/SharedICHelpers-mips-shared.h"
 #include "jit/mips64/Bailouts-mips64.h"
-#include "jit/mips64/SharedICHelpers-mips64.h"
 #ifdef JS_ION_PERF
 # include "jit/PerfSpewer.h"
 #endif
@@ -63,26 +63,41 @@ GenerateReturn(MacroAssembler& masm, int returnCode)
 {
     MOZ_ASSERT(masm.framePushed() == sizeof(EnterJITRegs));
 
-    // Restore non-volatile registers
-    masm.as_ld(s0, StackPointer, offsetof(EnterJITRegs, s0));
-    masm.as_ld(s1, StackPointer, offsetof(EnterJITRegs, s1));
-    masm.as_ld(s2, StackPointer, offsetof(EnterJITRegs, s2));
-    masm.as_ld(s3, StackPointer, offsetof(EnterJITRegs, s3));
-    masm.as_ld(s4, StackPointer, offsetof(EnterJITRegs, s4));
-    masm.as_ld(s5, StackPointer, offsetof(EnterJITRegs, s5));
-    masm.as_ld(s6, StackPointer, offsetof(EnterJITRegs, s6));
-    masm.as_ld(s7, StackPointer, offsetof(EnterJITRegs, s7));
-    masm.as_ld(ra, StackPointer, offsetof(EnterJITRegs, ra));
+    if (isLoongson()) {
+        // Restore non-volatile registers
+        masm.as_ld(s0, StackPointer, offsetof(EnterJITRegs, s0));
+        masm.as_gslq(s1, s2, StackPointer, offsetof(EnterJITRegs, s2));
+        masm.as_gslq(s3, s4, StackPointer, offsetof(EnterJITRegs, s4));
+        masm.as_gslq(s5, s6, StackPointer, offsetof(EnterJITRegs, s6));
+        masm.as_gslq(s7, ra, StackPointer, offsetof(EnterJITRegs, ra));
 
-    // Restore non-volatile floating point registers
-    masm.as_ld(f24, StackPointer, offsetof(EnterJITRegs, f24));
-    masm.as_ld(f25, StackPointer, offsetof(EnterJITRegs, f25));
-    masm.as_ld(f26, StackPointer, offsetof(EnterJITRegs, f26));
-    masm.as_ld(f27, StackPointer, offsetof(EnterJITRegs, f27));
-    masm.as_ld(f28, StackPointer, offsetof(EnterJITRegs, f28));
-    masm.as_ld(f29, StackPointer, offsetof(EnterJITRegs, f29));
-    masm.as_ld(f30, StackPointer, offsetof(EnterJITRegs, f30));
-    masm.as_ld(f31, StackPointer, offsetof(EnterJITRegs, f31));
+        // Restore non-volatile floating point registers
+        masm.as_gslq(f24, f25, StackPointer, offsetof(EnterJITRegs, f25));
+        masm.as_gslq(f26, f27, StackPointer, offsetof(EnterJITRegs, f27));
+        masm.as_gslq(f28, f29, StackPointer, offsetof(EnterJITRegs, f29));
+        masm.as_gslq(f30, f31, StackPointer, offsetof(EnterJITRegs, f31));
+    } else {
+        // Restore non-volatile registers
+        masm.as_ld(s0, StackPointer, offsetof(EnterJITRegs, s0));
+        masm.as_ld(s1, StackPointer, offsetof(EnterJITRegs, s1));
+        masm.as_ld(s2, StackPointer, offsetof(EnterJITRegs, s2));
+        masm.as_ld(s3, StackPointer, offsetof(EnterJITRegs, s3));
+        masm.as_ld(s4, StackPointer, offsetof(EnterJITRegs, s4));
+        masm.as_ld(s5, StackPointer, offsetof(EnterJITRegs, s5));
+        masm.as_ld(s6, StackPointer, offsetof(EnterJITRegs, s6));
+        masm.as_ld(s7, StackPointer, offsetof(EnterJITRegs, s7));
+        masm.as_ld(ra, StackPointer, offsetof(EnterJITRegs, ra));
+
+        // Restore non-volatile floating point registers
+        masm.as_ld(f24, StackPointer, offsetof(EnterJITRegs, f24));
+        masm.as_ld(f25, StackPointer, offsetof(EnterJITRegs, f25));
+        masm.as_ld(f26, StackPointer, offsetof(EnterJITRegs, f26));
+        masm.as_ld(f27, StackPointer, offsetof(EnterJITRegs, f27));
+        masm.as_ld(f28, StackPointer, offsetof(EnterJITRegs, f28));
+        masm.as_ld(f29, StackPointer, offsetof(EnterJITRegs, f29));
+        masm.as_ld(f30, StackPointer, offsetof(EnterJITRegs, f30));
+        masm.as_ld(f31, StackPointer, offsetof(EnterJITRegs, f31));
+    }
 
     masm.freeStack(sizeof(EnterJITRegs));
 
@@ -93,6 +108,20 @@ static void
 GeneratePrologue(MacroAssembler& masm)
 {
     masm.reserveStack(sizeof(EnterJITRegs));
+
+    if (isLoongson()) {
+        masm.as_gssq(a7, s0, StackPointer, offsetof(EnterJITRegs, s0));
+        masm.as_gssq(s1, s2, StackPointer, offsetof(EnterJITRegs, s2));
+        masm.as_gssq(s3, s4, StackPointer, offsetof(EnterJITRegs, s4));
+        masm.as_gssq(s5, s6, StackPointer, offsetof(EnterJITRegs, s6));
+        masm.as_gssq(s7, ra, StackPointer, offsetof(EnterJITRegs, ra));
+
+        masm.as_gssq(f24, f25, StackPointer, offsetof(EnterJITRegs, f25));
+        masm.as_gssq(f26, f27, StackPointer, offsetof(EnterJITRegs, f27));
+        masm.as_gssq(f28, f29, StackPointer, offsetof(EnterJITRegs, f29));
+        masm.as_gssq(f30, f31, StackPointer, offsetof(EnterJITRegs, f31));
+        return;
+    }
 
     masm.as_sd(s0, StackPointer, offsetof(EnterJITRegs, s0));
     masm.as_sd(s1, StackPointer, offsetof(EnterJITRegs, s1));
@@ -193,7 +222,7 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
     masm.storePtr(reg_token, Address(StackPointer, 0)); // callee token
 
     masm.subPtr(StackPointer, s4);
-    masm.makeFrameDescriptor(s4, JitFrame_Entry);
+    masm.makeFrameDescriptor(s4, JitFrame_Entry, JitFrameLayout::Size());
     masm.push(s4); // descriptor
 
     CodeLabel returnLabel;
@@ -234,7 +263,7 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
 
         // Enter exit frame.
         masm.addPtr(Imm32(BaselineFrame::Size() + BaselineFrame::FramePointerOffset), scratch);
-        masm.makeFrameDescriptor(scratch, JitFrame_BaselineJS);
+        masm.makeFrameDescriptor(scratch, JitFrame_BaselineJS, ExitFrameLayout::Size());
 
         // Push frame descriptor and fake return address.
         masm.reserveStack(2 * sizeof(uintptr_t));
@@ -393,6 +422,7 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
     // Do not erase the frame pointer in this function.
 
     MacroAssembler masm(cx);
+    masm.pushReturnAddress();
     // Caller:
     // [arg2] [arg1] [this] [[argc] [callee] [descr] [raddr]] <- sp
     // '--- s3 ---'
@@ -523,7 +553,7 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
 
     // Construct sizeDescriptor.
     masm.subPtr(StackPointer, t2);
-    masm.makeFrameDescriptor(t2, JitFrame_Rectifier);
+    masm.makeFrameDescriptor(t2, JitFrame_Rectifier, JitFrameLayout::Size());
 
     // Construct JitFrameLayout.
     masm.subPtr(Imm32(3 * sizeof(uintptr_t)), StackPointer);
@@ -670,6 +700,10 @@ JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
     // The context is the first argument; a0 is the first argument register.
     Register cxreg = a0;
     regs.take(cxreg);
+
+    // If it isn't a tail call, then the return address needs to be saved
+    if (f.expectTailCall == NonTailCall)
+        masm.pushReturnAddress();
 
     // We're aligned to an exit frame, so link it up.
     masm.enterExitFrame(&f);
@@ -846,6 +880,7 @@ JitRuntime::generatePreBarrier(JSContext* cx, MIRType type)
         save.set() = RegisterSet(GeneralRegisterSet(Registers::VolatileMask),
                            FloatRegisterSet());
     }
+    save.add(ra);
     masm.PushRegsInMask(save);
 
     MOZ_ASSERT(PreBarrierReg == a1);
@@ -856,6 +891,7 @@ JitRuntime::generatePreBarrier(JSContext* cx, MIRType type)
     masm.passABIArg(a1);
     masm.callWithABI(IonMarkFunction(type));
 
+    save.take(AnyRegister(ra));
     masm.PopRegsInMask(save);
     masm.ret();
 

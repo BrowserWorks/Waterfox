@@ -12,16 +12,17 @@
 #include "mozilla/ReentrantMonitor.h"
 #include "mozilla/Vector.h"
 #include "nsIThread.h"
+#include "AudioConverter.h"
 
 namespace mozilla {
 
-class FlushableTaskQueue;
+class TaskQueue;
 class MediaDataDecoderCallback;
 
 class AppleATDecoder : public MediaDataDecoder {
 public:
   AppleATDecoder(const AudioInfo& aConfig,
-                 FlushableTaskQueue* aVideoTaskQueue,
+                 TaskQueue* aTaskQueue,
                  MediaDataDecoderCallback* aCallback);
   virtual ~AppleATDecoder();
 
@@ -46,14 +47,18 @@ public:
   bool mFileStreamError;
 
 private:
-  RefPtr<FlushableTaskQueue> mTaskQueue;
+  const RefPtr<TaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
   AudioConverterRef mConverter;
   AudioStreamBasicDescription mOutputFormat;
   UInt32 mFormatID;
   AudioFileStreamID mStream;
   nsTArray<RefPtr<MediaRawData>> mQueuedSamples;
+  UniquePtr<AudioConfig::ChannelLayout> mChannelLayout;
+  UniquePtr<AudioConverter> mAudioConverter;
+  Atomic<bool> mIsFlushing;
 
+  void ProcessFlush();
   void SubmitSample(MediaRawData* aSample);
   nsresult DecodeSample(MediaRawData* aSample);
   nsresult GetInputAudioDescription(AudioStreamBasicDescription& aDesc,
@@ -62,6 +67,7 @@ private:
   // Will return NS_ERROR_NOT_INITIALIZED if more data is required.
   nsresult SetupDecoder(MediaRawData* aSample);
   nsresult GetImplicitAACMagicCookie(const MediaRawData* aSample);
+  nsresult SetupChannelLayout();
 };
 
 } // namespace mozilla

@@ -13,6 +13,7 @@
 #include "nsIStreamTransportService.h"
 
 #include "mozilla/Base64.h"
+#include "mozilla/CheckedInt.h"
 #include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/File.h"
@@ -315,11 +316,17 @@ FileReader::DoReadData(uint64_t aCount)
     NS_ASSERTION(bytesRead == aCount, "failed to read data");
   }
   else {
+    CheckedInt<uint64_t> size = mDataLen;
+    size += aCount;
+
     //Update memory buffer to reflect the contents of the file
-    if (mDataLen + aCount > UINT32_MAX) {
-      // PR_Realloc doesn't support over 4GB memory size even if 64-bit OS
+    if (!size.isValid() ||
+        // PR_Realloc doesn't support over 4GB memory size even if 64-bit OS
+        size.value() > UINT32_MAX ||
+        size.value() > mTotal) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
+
     if (mDataFormat != FILE_AS_ARRAYBUFFER) {
       mFileData = (char *) realloc(mFileData, mDataLen + aCount);
       NS_ENSURE_TRUE(mFileData, NS_ERROR_OUT_OF_MEMORY);
@@ -694,7 +701,7 @@ nsresult
 FileReader::IncreaseBusyCounter()
 {
   if (mWorkerPrivate && mBusyCount++ == 0 &&
-      !mWorkerPrivate->AddFeature(mWorkerPrivate->GetJSContext(), this)) {
+      !mWorkerPrivate->AddFeature(this)) {
     return NS_ERROR_FAILURE;
   }
 
@@ -706,12 +713,12 @@ FileReader::DecreaseBusyCounter()
 {
   MOZ_ASSERT_IF(mWorkerPrivate, mBusyCount);
   if (mWorkerPrivate && --mBusyCount == 0) {
-    mWorkerPrivate->RemoveFeature(mWorkerPrivate->GetJSContext(), this);
+    mWorkerPrivate->RemoveFeature(this);
   }
 }
 
 bool
-FileReader::Notify(JSContext* aCx, Status aStatus)
+FileReader::Notify(Status aStatus)
 {
   MOZ_ASSERT(mWorkerPrivate);
   mWorkerPrivate->AssertIsOnWorkerThread();
@@ -735,7 +742,7 @@ FileReader::Shutdown()
   }
 
   if (mWorkerPrivate && mBusyCount != 0) {
-    mWorkerPrivate->RemoveFeature(mWorkerPrivate->GetJSContext(), this);
+    mWorkerPrivate->RemoveFeature(this);
     mWorkerPrivate = nullptr;
     mBusyCount = 0;
   }

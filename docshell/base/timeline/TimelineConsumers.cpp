@@ -294,4 +294,18 @@ TimelineConsumers::AddMarkerForAllObservedDocShells(UniquePtr<AbstractTimelineMa
   }
 }
 
+void
+TimelineConsumers::PopMarkers(nsDocShell* aDocShell,
+                              JSContext* aCx,
+                              nsTArray<dom::ProfileTimelineMarker>& aStore)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (!aDocShell || !aDocShell->mObserved) {
+    return;
+  }
+
+  aDocShell->mObserved->PopMarkers(aCx, aStore);
+}
+
 } // namespace mozilla

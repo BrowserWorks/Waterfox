@@ -39,7 +39,7 @@ class MercurialUpdater(object):
             hg,
             'https://bitbucket.org/facebook/hgwatchman',
             self.hgwatchman_dir,
-            'default',
+            '5ca0f920df7ec8a93d322f06d554f778184cdcd1',
             'Ensuring hgwatchman is up to date...')
         if repo_existed:
             print(FINISHED)
@@ -53,6 +53,7 @@ class MercurialUpdater(object):
             'bzpost',
             'firefoxtree',
             'hgwatchman',
+            'mozext',
             'mqext',
             'qimportbz',
             'push-to-try',

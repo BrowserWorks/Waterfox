@@ -206,10 +206,12 @@ public:
 
     GLsizei Samples() const {
         if (!mDraw)
-            return 1;
+            return 0;
 
         return mDraw->mSamples;
     }
+
+    uint32_t DepthBits() const;
 
     void DeletingFB(GLuint fb);
 
@@ -231,6 +233,10 @@ public:
 
     void SetReadBuffer(GLenum userMode);
     void SetDrawBuffer(GLenum userMode);
+
+    GLenum GetReadBufferMode() const {
+        return mUserReadBufferMode;
+    }
 
     /**
      * Attempts to read pixels from the current bound framebuffer, if

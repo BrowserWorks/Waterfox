@@ -10,6 +10,8 @@
 #include "mozilla/HashFunctions.h"
 #include "mozilla/PodOperations.h"
 
+#include <stdio.h>
+
 #include "jsutil.h"
 #include "NamespaceImports.h"
 
@@ -111,6 +113,9 @@ js_strncpy(char16_t* dst, const char16_t* src, size_t nelem)
     return mozilla::PodCopy(dst, src, nelem);
 }
 
+extern int32_t
+js_fputs(const char16_t* s, FILE* f);
+
 namespace js {
 
 /* Initialize the String class, returning its prototype object. */
@@ -136,8 +141,14 @@ DuplicateString(ExclusiveContext* cx, const char16_t* s);
 extern UniqueChars
 DuplicateString(const char* s);
 
+extern UniqueChars
+DuplicateString(const char* s, size_t n);
+
 extern UniqueTwoByteChars
 DuplicateString(const char16_t* s);
+
+extern UniqueTwoByteChars
+DuplicateString(const char16_t* s, size_t n);
 
 /*
  * Convert a non-string value to a string, returning null after reporting an
@@ -233,13 +244,6 @@ StringFindPattern(JSLinearString* text, JSLinearString* pat, size_t start);
 extern bool
 HasSubstringAt(JSLinearString* text, JSLinearString* pat, size_t start);
 
-template <typename CharT>
-extern bool
-HasRegExpMetaChars(const CharT* chars, size_t length);
-
-extern bool
-StringHasRegExpMetaChars(JSLinearString* str);
-
 template <typename Char1, typename Char2>
 inline bool
 EqualChars(const Char1* s1, const Char2* s2, size_t len);
@@ -308,13 +312,6 @@ extern bool
 DeflateStringToBuffer(JSContext* maybecx, const CharT* chars,
                       size_t charsLength, char* bytes, size_t* length);
 
-/*
- * The String.prototype.replace fast-native entry point is exported for joined
- * function optimization in js{interp,tracer}.cpp.
- */
-extern bool
-str_replace(JSContext* cx, unsigned argc, js::Value* vp);
-
 extern bool
 str_fromCharCode(JSContext* cx, unsigned argc, Value* vp);
 
@@ -322,6 +319,9 @@ extern bool
 str_fromCharCode_one_arg(JSContext* cx, HandleValue code, MutableHandleValue rval);
 
 /* String methods exposed so they can be installed in the self-hosting global. */
+
+extern bool
+str_includes(JSContext* cx, unsigned argc, Value* vp);
 
 extern bool
 str_indexOf(JSContext* cx, unsigned argc, Value* vp);
@@ -349,6 +349,39 @@ str_charCodeAt_impl(JSContext* cx, HandleString string, HandleValue index, Mutab
 
 extern bool
 str_charCodeAt(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+str_contains(JSContext *cx, unsigned argc, Value *vp);
+
+extern bool
+str_endsWith(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+str_trim(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+str_trimLeft(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+str_trimRight(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+str_toLocaleLowerCase(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+str_toLocaleUpperCase(JSContext* cx, unsigned argc, Value* vp);
+
+#if !EXPOSE_INTL_API
+extern bool
+str_localeCompare(JSContext* cx, unsigned argc, Value* vp);
+#else
+extern bool
+str_normalize(JSContext* cx, unsigned argc, Value* vp);
+#endif
+
+extern bool
+str_concat(JSContext* cx, unsigned argc, Value* vp);
+
 /*
  * Convert one UCS-4 char and write it into a UTF-8 buffer, which must be at
  * least 4 bytes long.  Return the number of UTF-8 bytes of data written.
@@ -430,17 +463,9 @@ FileEscapedString(FILE* fp, const char* chars, size_t length, uint32_t quote)
     return res;
 }
 
-bool
-str_match(JSContext* cx, unsigned argc, Value* vp);
-
-bool
-str_search(JSContext* cx, unsigned argc, Value* vp);
-
-bool
-str_split(JSContext* cx, unsigned argc, Value* vp);
-
 JSObject*
-str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, HandleString sep);
+str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, HandleString sep,
+                 uint32_t limit);
 
 JSString *
 str_flat_replace_string(JSContext *cx, HandleString string, HandleString pattern,
@@ -452,6 +477,12 @@ str_replace_string_raw(JSContext* cx, HandleString string, HandleString pattern,
 
 extern bool
 StringConstructor(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+FlatStringMatch(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+FlatStringSearch(JSContext* cx, unsigned argc, Value* vp);
 
 } /* namespace js */
 

@@ -36,11 +36,15 @@
 #include "nsIFileStreams.h"
 #include "nsContentUtils.h"
 
+#include "mozilla/dom/Directory.h"
 #include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/File.h"
 
 using namespace mozilla;
+using mozilla::dom::Blob;
+using mozilla::dom::Directory;
 using mozilla::dom::EncodingUtils;
+using mozilla::dom::File;
 
 static void
 SendJSWarning(nsIDocument* aDocument,
@@ -57,7 +61,9 @@ SendJSWarning(nsIDocument* aDocument,
 static void
 RetrieveFileName(Blob* aBlob, nsAString& aFilename)
 {
-  MOZ_ASSERT(aBlob);
+  if (!aBlob) {
+    return;
+  }
 
   RefPtr<File> file = aBlob->ToFile();
   if (file) {
@@ -88,8 +94,8 @@ public:
 
   virtual nsresult AddNameValuePair(const nsAString& aName,
                                     const nsAString& aValue) override;
-  virtual nsresult AddNameBlobPair(const nsAString& aName,
-                                   Blob* aBlob) override;
+  virtual nsresult AddNameBlobOrNullPair(const nsAString& aName,
+                                         Blob* aBlob) override;
   virtual nsresult GetEncodedSubmission(nsIURI* aURI,
                                         nsIInputStream** aPostDataStream)
                                                                        override;
@@ -111,7 +117,7 @@ protected:
    * @param aEncoded the encoded string [OUT]
    * @throws NS_ERROR_OUT_OF_MEMORY if we run out of memory
    */
-  nsresult URLEncode(const nsAString& aStr, nsCString& aEncoded);
+  nsresult URLEncode(const nsAString& aStr, nsACString& aEncoded);
 
 private:
   /**
@@ -175,11 +181,9 @@ nsFSURLEncoded::AddIsindex(const nsAString& aValue)
 }
 
 nsresult
-nsFSURLEncoded::AddNameBlobPair(const nsAString& aName,
-                                Blob* aBlob)
+nsFSURLEncoded::AddNameBlobOrNullPair(const nsAString& aName,
+                                      Blob* aBlob)
 {
-  MOZ_ASSERT(aBlob);
-
   if (!mWarnedFileControl) {
     SendJSWarning(mDocument, "ForgotFileEnctypeWarning", nullptr, 0);
     mWarnedFileControl = true;
@@ -277,8 +281,10 @@ nsFSURLEncoded::GetEncodedSubmission(nsIURI* aURI,
       HandleMailtoSubject(path);
 
       // Append the body to and force-plain-text args to the mailto line
-      nsCString escapedBody;
-      escapedBody.Adopt(nsEscape(mQueryString.get(), url_XAlphas));
+      nsAutoCString escapedBody;
+      if (NS_WARN_IF(!NS_Escape(mQueryString, escapedBody, url_XAlphas))) {
+        return NS_ERROR_OUT_OF_MEMORY;
+      }
 
       path += NS_LITERAL_CSTRING("&force-plain-text=Y&body=") + escapedBody;
 
@@ -359,23 +365,28 @@ nsFSURLEncoded::GetEncodedSubmission(nsIURI* aURI,
 
 // i18n helper routines
 nsresult
-nsFSURLEncoded::URLEncode(const nsAString& aStr, nsCString& aEncoded)
+nsFSURLEncoded::URLEncode(const nsAString& aStr, nsACString& aEncoded)
 {
   // convert to CRLF breaks
+  int32_t convertedBufLength = 0;
   char16_t* convertedBuf =
-    nsLinebreakConverter::ConvertUnicharLineBreaks(PromiseFlatString(aStr).get(),
+    nsLinebreakConverter::ConvertUnicharLineBreaks(aStr.BeginReading(),
                                                    nsLinebreakConverter::eLinebreakAny,
-                                                   nsLinebreakConverter::eLinebreakNet);
+                                                   nsLinebreakConverter::eLinebreakNet,
+                                                   aStr.Length(),
+                                                   &convertedBufLength);
   NS_ENSURE_TRUE(convertedBuf, NS_ERROR_OUT_OF_MEMORY);
 
+  nsAutoString convertedString;
+  convertedString.Adopt(convertedBuf, convertedBufLength);
+
   nsAutoCString encodedBuf;
-  nsresult rv = EncodeVal(nsDependentString(convertedBuf), encodedBuf, false);
-  free(convertedBuf);
+  nsresult rv = EncodeVal(convertedString, encodedBuf, false);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  char* escapedBuf = nsEscape(encodedBuf.get(), url_XPAlphas);
-  NS_ENSURE_TRUE(escapedBuf, NS_ERROR_OUT_OF_MEMORY);
-  aEncoded.Adopt(escapedBuf);
+  if (NS_WARN_IF(!NS_Escape(encodedBuf, aEncoded, url_XPAlphas))) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   return NS_OK;
 }
@@ -436,7 +447,7 @@ nsFSMultipartFormData::AddNameValuePair(const nsAString& aName,
   // Make MIME block for name/value pair
 
   // XXX: name parameter should be encoded per RFC 2231
-  // RFC 2388 specifies that RFC 2047 be used, but I think it's not 
+  // RFC 2388 specifies that RFC 2047 be used, but I think it's not
   // consistent with MIME standard.
   mPostDataChunk += NS_LITERAL_CSTRING("--") + mBoundary
                  + NS_LITERAL_CSTRING(CRLF)
@@ -448,66 +459,68 @@ nsFSMultipartFormData::AddNameValuePair(const nsAString& aName,
 }
 
 nsresult
-nsFSMultipartFormData::AddNameBlobPair(const nsAString& aName,
-                                       Blob* aBlob)
+nsFSMultipartFormData::AddNameBlobOrNullPair(const nsAString& aName,
+                                             Blob* aBlob)
 {
-  MOZ_ASSERT(aBlob);
-
   // Encode the control name
   nsAutoCString nameStr;
   nsresult rv = EncodeVal(aName, nameStr, true);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsAutoString filename16;
-  RetrieveFileName(aBlob, filename16);
+  nsAutoCString filename;
+  nsAutoCString contentType;
+  nsCOMPtr<nsIInputStream> fileStream;
 
-  ErrorResult error;
-  nsAutoString filepath16;
-  RefPtr<File> file = aBlob->ToFile();
-  if (file) {
-    file->GetPath(filepath16, error);
+  if (aBlob) {
+    nsAutoString filename16;
+
+    RefPtr<File> file = aBlob->ToFile();
+    if (file) {
+      nsAutoString path;
+      file->GetPath(path);
+      if (Directory::WebkitBlinkDirectoryPickerEnabled(nullptr, nullptr) &&
+          !path.IsEmpty()) {
+        filename16 = path;
+      }
+
+      if (filename16.IsEmpty()) {
+        RetrieveFileName(aBlob, filename16);
+      }
+    }
+
+    rv = EncodeVal(filename16, filename, true);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    // Get content type
+    nsAutoString contentType16;
+    aBlob->GetType(contentType16);
+    if (contentType16.IsEmpty()) {
+      contentType16.AssignLiteral("application/octet-stream");
+    }
+
+    contentType.Adopt(nsLinebreakConverter::
+                      ConvertLineBreaks(NS_ConvertUTF16toUTF8(contentType16).get(),
+                                        nsLinebreakConverter::eLinebreakAny,
+                                        nsLinebreakConverter::eLinebreakSpace));
+
+    // Get input stream
+    ErrorResult error;
+    aBlob->GetInternalStream(getter_AddRefs(fileStream), error);
     if (NS_WARN_IF(error.Failed())) {
       return error.StealNSResult();
     }
-  }
 
-  if (!filepath16.IsEmpty()) {
-    // File.path includes trailing "/"
-    filename16 = filepath16 + filename16;
-  }
+    if (fileStream) {
+      // Create buffered stream (for efficiency)
+      nsCOMPtr<nsIInputStream> bufferedStream;
+      rv = NS_NewBufferedInputStream(getter_AddRefs(bufferedStream),
+                                     fileStream, 8192);
+      NS_ENSURE_SUCCESS(rv, rv);
 
-  nsAutoCString filename;
-  rv = EncodeVal(filename16, filename, true);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Get content type
-  nsAutoString contentType16;
-  aBlob->GetType(contentType16);
-  if (contentType16.IsEmpty()) {
-    contentType16.AssignLiteral("application/octet-stream");
-  }
-
-  nsAutoCString contentType;
-  contentType.Adopt(nsLinebreakConverter::
-                    ConvertLineBreaks(NS_ConvertUTF16toUTF8(contentType16).get(),
-                                      nsLinebreakConverter::eLinebreakAny,
-                                      nsLinebreakConverter::eLinebreakSpace));
-
-  // Get input stream
-  nsCOMPtr<nsIInputStream> fileStream;
-  aBlob->GetInternalStream(getter_AddRefs(fileStream), error);
-  if (NS_WARN_IF(error.Failed())) {
-    return error.StealNSResult();
-  }
-
-  if (fileStream) {
-    // Create buffered stream (for efficiency)
-    nsCOMPtr<nsIInputStream> bufferedStream;
-    rv = NS_NewBufferedInputStream(getter_AddRefs(bufferedStream),
-                                   fileStream, 8192);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    fileStream = bufferedStream;
+      fileStream = bufferedStream;
+    }
+  } else {
+    contentType.AssignLiteral("application/octet-stream");
   }
 
   //
@@ -517,7 +530,7 @@ nsFSMultipartFormData::AddNameBlobPair(const nsAString& aName,
   mPostDataChunk += NS_LITERAL_CSTRING("--") + mBoundary
                  + NS_LITERAL_CSTRING(CRLF);
   // XXX: name/filename parameter should be encoded per RFC 2231
-  // RFC 2388 specifies that RFC 2047 be used, but I think it's not 
+  // RFC 2388 specifies that RFC 2047 be used, but I think it's not
   // consistent with the MIME standard.
   mPostDataChunk +=
          NS_LITERAL_CSTRING("Content-Disposition: form-data; name=\"")
@@ -576,7 +589,7 @@ nsresult
 nsFSMultipartFormData::AddPostDataStream()
 {
   nsresult rv = NS_OK;
-  
+
   nsCOMPtr<nsIInputStream> postDataChunkStream;
   rv = NS_NewCStringInputStream(getter_AddRefs(postDataChunkStream),
                                 mPostDataChunk);
@@ -603,8 +616,8 @@ public:
 
   virtual nsresult AddNameValuePair(const nsAString& aName,
                                     const nsAString& aValue) override;
-  virtual nsresult AddNameBlobPair(const nsAString& aName,
-                                   Blob* aBlob) override;
+  virtual nsresult AddNameBlobOrNullPair(const nsAString& aName,
+                                         Blob* aBlob) override;
   virtual nsresult GetEncodedSubmission(nsIURI* aURI,
                                         nsIInputStream** aPostDataStream)
                                                                        override;
@@ -627,11 +640,9 @@ nsFSTextPlain::AddNameValuePair(const nsAString& aName,
 }
 
 nsresult
-nsFSTextPlain::AddNameBlobPair(const nsAString& aName,
-                               Blob* aBlob)
+nsFSTextPlain::AddNameBlobOrNullPair(const nsAString& aName,
+                                     Blob* aBlob)
 {
-  MOZ_ASSERT(aBlob);
-
   nsAutoString filename;
   RetrieveFileName(aBlob, filename);
   AddNameValuePair(aName, filename);
@@ -657,11 +668,11 @@ nsFSTextPlain::GetEncodedSubmission(nsIURI* aURI,
     HandleMailtoSubject(path);
 
     // Append the body to and force-plain-text args to the mailto line
-    char* escapedBuf = nsEscape(NS_ConvertUTF16toUTF8(mBody).get(),
-                                url_XAlphas);
-    NS_ENSURE_TRUE(escapedBuf, NS_ERROR_OUT_OF_MEMORY);
-    nsCString escapedBody;
-    escapedBody.Adopt(escapedBuf);
+    nsAutoCString escapedBody;
+    if (NS_WARN_IF(!NS_Escape(NS_ConvertUTF16toUTF8(mBody), escapedBody,
+                              url_XAlphas))) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
 
     path += NS_LITERAL_CSTRING("&force-plain-text=Y&body=") + escapedBody;
 

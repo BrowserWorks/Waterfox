@@ -48,14 +48,16 @@ nsStyleText::NewlineIsSignificant(const nsTextFrame* aContextFrame) const
 {
   NS_ASSERTION(aContextFrame->StyleText() == this, "unexpected aContextFrame");
   return NewlineIsSignificantStyle() &&
-    !aContextFrame->ShouldSuppressLineBreak();
+         !aContextFrame->ShouldSuppressLineBreak() &&
+         !aContextFrame->StyleContext()->IsTextCombined();
 }
 
 bool
 nsStyleText::WhiteSpaceCanWrap(const nsIFrame* aContextFrame) const
 {
   NS_ASSERTION(aContextFrame->StyleText() == this, "unexpected aContextFrame");
-  return WhiteSpaceCanWrapStyle() && !aContextFrame->IsSVGText();
+  return WhiteSpaceCanWrapStyle() && !aContextFrame->IsSVGText() &&
+         !aContextFrame->StyleContext()->IsTextCombined();
 }
 
 bool
@@ -145,7 +147,7 @@ nsStyleDisplay::IsFixedPosContainingBlock(const nsIFrame* aContextFrame) const
   return (IsContainPaint() || HasTransform(aContextFrame) ||
           HasPerspectiveStyle() ||
           (mWillChangeBitField & NS_STYLE_WILL_CHANGE_FIXPOS_CB) ||
-          aContextFrame->StyleSVGReset()->HasFilters()) &&
+          aContextFrame->StyleEffects()->HasFilters()) &&
       !aContextFrame->IsSVGText();
 }
 
@@ -176,7 +178,7 @@ nsStyleDisplay::IsAbsolutelyPositioned(const nsIFrame* aContextFrame) const
 }
 
 uint8_t
-nsStyleVisibility::GetEffectivePointerEvents(nsIFrame* aFrame) const
+nsStyleUserInterface::GetEffectivePointerEvents(nsIFrame* aFrame) const
 {
   if (aFrame->GetContent() && !aFrame->GetContent()->GetParent()) {
     // The root element has a cluster of frames associated with it
@@ -185,10 +187,23 @@ nsStyleVisibility::GetEffectivePointerEvents(nsIFrame* aFrame) const
     // frame.
     nsIFrame* f = aFrame->GetContent()->GetPrimaryFrame();
     if (f) {
-      return f->StyleVisibility()->mPointerEvents;
+      return f->StyleUserInterface()->mPointerEvents;
     }
   }
   return mPointerEvents;
+}
+
+bool
+nsStyleBackground::HasLocalBackground() const
+{
+  NS_FOR_VISIBLE_IMAGE_LAYERS_BACK_TO_FRONT(i, mImage) {
+    const nsStyleImageLayers::Layer& layer = mImage.mLayers[i];
+    if (!layer.mImage.IsEmpty() &&
+        layer.mAttachment == NS_STYLE_IMAGELAYER_ATTACHMENT_LOCAL) {
+      return true;
+    }
+  }
+  return false;
 }
 
 #endif /* !defined(nsStyleStructInlines_h_) */

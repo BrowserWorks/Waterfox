@@ -55,4 +55,8 @@ DevToolsModules(
     'HeapAnalysesClient.js',
     'HeapAnalysesWorker.js',
     'HeapSnapshotFileUtils.js',
+    'shortest-paths.js',
 )
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

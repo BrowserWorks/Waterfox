@@ -28,7 +28,7 @@ function test_histogram(histogram_type, name, min, max, bucket_count) {
   var h = Telemetry.newHistogram(name, "never", histogram_type, min, max, bucket_count);
   var r = h.snapshot().ranges;
   var sum = 0;
-  for(var i=0;i<r.length;i++) {
+  for(let i=0;i<r.length;i++) {
     var v = r[i];
     sum += v;
     h.add(v);
@@ -36,21 +36,13 @@ function test_histogram(histogram_type, name, min, max, bucket_count) {
   var s = h.snapshot();
   // verify properties
   do_check_eq(sum, s.sum);
-  if (histogram_type == Telemetry.HISTOGRAM_EXPONENTIAL) {
-    do_check_false("sum_squares_lo" in s);
-    do_check_false("sum_squares_hi" in s);
-  } else {
-    // Doing the math to verify sum_squares was reflected correctly is
-    // tedious in JavaScript.  Just make sure we have something.
-    do_check_neq(s.sum_squares_lo + s.sum_squares_hi, 0);
-  }
 
   // there should be exactly one element per bucket
-  for (var i of s.counts) {
+  for (let i of s.counts) {
     do_check_eq(i, 1);
   }
   var hgrams = Telemetry.histogramSnapshots
-  gh = hgrams[name]
+  let gh = hgrams[name]
   do_check_eq(gh.histogram_type, histogram_type);
 
   do_check_eq(gh.min, min)
@@ -59,21 +51,17 @@ function test_histogram(histogram_type, name, min, max, bucket_count) {
   // Check that booleans work with nonboolean histograms
   h.add(false);
   h.add(true);
-  var s = h.snapshot().counts;
+  s = h.snapshot().counts;
   do_check_eq(s[0], 2)
   do_check_eq(s[1], 2)
 
   // Check that clearing works.
   h.clear();
-  var s = h.snapshot();
+  s = h.snapshot();
   for (var i of s.counts) {
     do_check_eq(i, 0);
   }
   do_check_eq(s.sum, 0);
-  if (histogram_type != Telemetry.HISTOGRAM_EXPONENTIAL) {
-    do_check_eq(s.sum_squares_lo, 0);
-    do_check_eq(s.sum_squares_hi, 0);
-  }
 
   h.add(0);
   h.add(1);
@@ -174,7 +162,7 @@ function test_getHistogramById() {
     Telemetry.getHistogramById("nonexistent");
     do_throw("This can't happen");
   } catch (e) {
-    
+
   }
   var h = Telemetry.getHistogramById("CYCLE_COLLECTOR");
   var s = h.snapshot();
@@ -191,10 +179,6 @@ function compareHistograms(h1, h2) {
   do_check_eq(s1.min, s2.min);
   do_check_eq(s1.max, s2.max);
   do_check_eq(s1.sum, s2.sum);
-  if (s1.histogram_type != Telemetry.HISTOGRAM_EXPONENTIAL) {
-    do_check_eq(s1.sum_squares_lo, s2.sum_squares_lo);
-    do_check_eq(s1.sum_squares_hi, s2.sum_squares_hi);
-  }
 
   do_check_eq(s1.counts.length, s2.counts.length);
   for (let i = 0; i < s1.counts.length; i++)
@@ -420,8 +404,6 @@ function test_keyed_boolean_histogram()
     "max": 2,
     "histogram_type": 2,
     "sum": 1,
-    "sum_squares_lo": 1,
-    "sum_squares_hi": 0,
     "ranges": [0, 1, 2],
     "counts": [0, 1, 0]
   };
@@ -449,7 +431,6 @@ function test_keyed_boolean_histogram()
   testKeys.push(key);
   testSnapShot[key] = testHistograms[2];
   testSnapShot[key].sum = 0;
-  testSnapShot[key].sum_squares_lo = 0;
   testSnapShot[key].counts = [1, 0, 0];
   Assert.deepEqual(h.keys().sort(), testKeys);
   Assert.deepEqual(h.snapshot(), testSnapShot);
@@ -471,8 +452,6 @@ function test_keyed_count_histogram()
     "max": 2,
     "histogram_type": 4,
     "sum": 0,
-    "sum_squares_lo": 0,
-    "sum_squares_hi": 0,
     "ranges": [0, 1, 2],
     "counts": [1, 0, 0]
   };
@@ -490,7 +469,6 @@ function test_keyed_count_histogram()
     }
     testHistograms[i].counts[0] = value;
     testHistograms[i].sum = value;
-    testHistograms[i].sum_squares_lo = value;
     testSnapShot[key] = testHistograms[i];
     testKeys.push(key);
 
@@ -508,7 +486,6 @@ function test_keyed_count_histogram()
   testKeys.push(key);
   testHistograms[4].counts[0] = 1;
   testHistograms[4].sum = 1;
-  testHistograms[4].sum_squares_lo = 1;
   testSnapShot[key] = testHistograms[4];
 
   Assert.deepEqual(h.keys().sort(), testKeys);
@@ -536,8 +513,6 @@ function test_keyed_flag_histogram()
     "max": 2,
     "histogram_type": 3,
     "sum": 1,
-    "sum_squares_lo": 1,
-    "sum_squares_hi": 0,
     "ranges": [0, 1, 2],
     "counts": [0, 1, 0]
   };
@@ -627,6 +602,11 @@ function test_histogram_recording_enabled() {
   Assert.equal(orig.sum + 2, h.snapshot().sum,
                "When recording is re-enabled add should record.");
 
+  // Check that we're correctly accumulating values other than 1.
+  h.clear();
+  h.add(3);
+  Assert.equal(3, h.snapshot().sum, "Recording counts greater than 1 should work.");
+
   // Check that a histogram with recording disabled by default behaves correctly
   h = Telemetry.getHistogramById("TELEMETRY_TEST_COUNT_INIT_NO_RECORD");
   orig = h.snapshot();
@@ -654,7 +634,7 @@ function test_keyed_histogram_recording_enabled() {
 
   // Check RecordingEnabled for keyed histograms which are recording by default
   const TEST_KEY = "record_foo";
-  h = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_RELEASE_OPTOUT");
+  let h = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_RELEASE_OPTOUT");
 
   h.clear();
   h.add(TEST_KEY, 1);

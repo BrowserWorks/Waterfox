@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Test that optimized out variables aren't present in the variables view.
 
@@ -8,11 +10,14 @@ function test() {
     const TAB_URL = EXAMPLE_URL + "doc_closure-optimized-out.html";
     let gDebugger, sources;
 
-    let [tab,, panel] = yield initDebugger(TAB_URL);
+    let options = {
+      source: TAB_URL,
+      line: 1
+    };
+    let [tab,, panel] = yield initDebugger(TAB_URL, options);
     gDebugger = panel.panelWin;
     sources = gDebugger.DebuggerView.Sources;
 
-    yield waitForSourceShown(panel, ".html");
     yield panel.addBreakpoint({ actor: sources.values[0],
                                 line: 18 });
     yield ensureThreadClientState(panel, "resumed");
@@ -29,7 +34,7 @@ function test() {
     let upvarVar = outerScope.get("upvar");
     ok(upvarVar, "The variable `upvar` is shown.");
     is(upvarVar.target.querySelector(".value").getAttribute("value"),
-       gDebugger.L10N.getStr('variablesViewOptimizedOut'),
+       gDebugger.L10N.getStr("variablesViewOptimizedOut"),
        "Should show the optimized out message for upvar.");
 
     let argVar = outerScope.get("arg");

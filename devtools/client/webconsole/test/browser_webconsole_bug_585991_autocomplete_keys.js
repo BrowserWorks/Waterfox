@@ -1,15 +1,19 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
 const TEST_URI = "data:text/html;charset=utf-8,<p>bug 585991 - autocomplete " +
                  "popup keyboard usage test";
+
+// We should turn off auto-multiline editing during these tests
+const PREF_AUTO_MULTILINE = "devtools.webconsole.autoMultiline";
 var HUD, popup, jsterm, inputNode, completeNode;
 
-add_task(function*() {
+add_task(function* () {
+  Services.prefs.setBoolPref(PREF_AUTO_MULTILINE, false);
   yield loadTab(TEST_URI);
   let hud = yield openConsole();
 
@@ -23,9 +27,10 @@ add_task(function*() {
   yield popupHideAfterCompletionInText();
 
   HUD = popup = jsterm = inputNode = completeNode = null;
+  Services.prefs.setBoolPref(PREF_AUTO_MULTILINE, true);
 });
 
-var consoleOpened = Task.async(function*(aHud) {
+var consoleOpened = Task.async(function* (aHud) {
   let deferred = promise.defer();
   HUD = aHud;
   info("web console opened");
@@ -57,10 +62,10 @@ var consoleOpened = Task.async(function*(aHud) {
     // toLocaleString toString toSource unwatch valueOf watch constructor.
     is(popup.itemCount, 19, "popup.itemCount is correct");
 
-    let sameItems = popup.getItems().reverse().map(function(e) {
+    let sameItems = popup.getItems().reverse().map(function (e) {
       return e.label;
     });
-    ok(sameItems.every(function(prop, index) {
+    ok(sameItems.every(function (prop, index) {
       return [
         "__defineGetter__",
         "__defineSetter__",
@@ -185,13 +190,13 @@ function popupHideAfterTab() {
     }, false);
 
     info("press Escape to close the popup");
-    executeSoon(function() {
+    executeSoon(function () {
       EventUtils.synthesizeKey("VK_ESCAPE", {});
     });
   }, false);
 
   info("wait for completion: window.foobarBug585991.");
-  executeSoon(function() {
+  executeSoon(function () {
     jsterm.setInputValue("window.foobarBug585991");
     EventUtils.synthesizeKey(".", {});
   });
@@ -246,7 +251,7 @@ function testReturnKey() {
 
   info("wait for completion suggestions: window.foobarBug585991.");
 
-  executeSoon(function() {
+  executeSoon(function () {
     jsterm.setInputValue("window.foobarBug58599");
     EventUtils.synthesizeKey("1", {});
     EventUtils.synthesizeKey(".", {});
@@ -255,11 +260,13 @@ function testReturnKey() {
   return deferred.promise;
 }
 
-function dontShowArrayNumbers() {
+function* dontShowArrayNumbers() {
   let deferred = promise.defer();
 
   info("dontShowArrayNumbers");
-  content.wrappedJSObject.foobarBug585991 = ["Sherlock Holmes"];
+  yield ContentTask.spawn(gBrowser.selectedBrowser, {}, function* () {
+    content.wrappedJSObject.foobarBug585991 = ["Sherlock Holmes"];
+  });
 
   jsterm = HUD.jsterm;
   popup = jsterm.autocompletePopup;
@@ -267,10 +274,10 @@ function dontShowArrayNumbers() {
   popup._panel.addEventListener("popupshown", function onShown() {
     popup._panel.removeEventListener("popupshown", onShown, false);
 
-    let sameItems = popup.getItems().map(function(e) {
+    let sameItems = popup.getItems().map(function (e) {
       return e.label;
     });
-    ok(!sameItems.some(function(prop) {
+    ok(!sameItems.some(function (prop) {
       prop === "0";
     }), "Completing on an array doesn't show numbers.");
 

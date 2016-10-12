@@ -13,6 +13,7 @@
 #include "nsHttpChannel.h"
 #include "HttpChannelChild.h"
 #include "nsHttpResponseHead.h"
+#include "nsNetUtil.h"
 #include "mozilla/ConsoleReportCollector.h"
 #include "mozilla/dom/ChannelInfo.h"
 #include "nsIChannelEventSink.h"
@@ -137,7 +138,7 @@ InterceptedChannelBase::SecureUpgradeChannelURI(nsIChannel* aChannel)
   NS_ENSURE_SUCCESS(rv, nullptr);
 
   nsCOMPtr<nsIURI> upgradedURI;
-  rv = HttpBaseChannel::GetSecureUpgradedURI(uri, getter_AddRefs(upgradedURI));
+  rv = NS_GetSecureUpgradedURI(uri, getter_AddRefs(upgradedURI));
   NS_ENSURE_SUCCESS(rv, nullptr);
 
   return upgradedURI.forget();
@@ -197,6 +198,9 @@ InterceptedChannelChrome::ResetInterception()
   nsresult rv = mChannel->StartRedirectChannelToURI(uri, nsIChannelEventSink::REDIRECT_INTERNAL);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  mResponseBody->Close();
+  mResponseBody = nullptr;
+
   mReleaseHandle = nullptr;
   mChannel = nullptr;
   return NS_OK;
@@ -228,6 +232,11 @@ InterceptedChannelChrome::FinishSynthesizedResponse(const nsACString& aFinalURLS
   if (!mChannel) {
     return NS_ERROR_NOT_AVAILABLE;
   }
+
+  // Make sure the cache entry's output stream is always closed.  If the
+  // channel was intercepted with a null-body response then its possible
+  // the synthesis completed without a stream copy operation.
+  mResponseBody->Close();
 
   mReportCollector->FlushConsoleReports(mChannel);
 
@@ -264,7 +273,7 @@ InterceptedChannelChrome::FinishSynthesizedResponse(const nsACString& aFinalURLS
 
   nsCOMPtr<nsIURI> responseURI;
   if (!aFinalURLSpec.IsEmpty()) {
-    nsresult rv = NS_NewURI(getter_AddRefs(responseURI), aFinalURLSpec);
+    rv = NS_NewURI(getter_AddRefs(responseURI), aFinalURLSpec);
     NS_ENSURE_SUCCESS(rv, rv);
   } else {
     responseURI = originalURI;
@@ -273,7 +282,7 @@ InterceptedChannelChrome::FinishSynthesizedResponse(const nsACString& aFinalURLS
   bool equal = false;
   originalURI->Equals(responseURI, &equal);
   if (!equal) {
-    nsresult rv =
+    rv =
         mChannel->StartRedirectChannelToURI(responseURI, nsIChannelEventSink::REDIRECT_INTERNAL);
     NS_ENSURE_SUCCESS(rv, rv);
   } else {
@@ -381,6 +390,7 @@ InterceptedChannelContent::ResetInterception()
 
   mReportCollector->FlushConsoleReports(mChannel);
 
+  mResponseBody->Close();
   mResponseBody = nullptr;
   mSynthesizedInput = nullptr;
 
@@ -417,6 +427,11 @@ InterceptedChannelContent::FinishSynthesizedResponse(const nsACString& aFinalURL
     return NS_ERROR_NOT_AVAILABLE;
   }
 
+  // Make sure the body output stream is always closed.  If the channel was
+  // intercepted with a null-body response then its possible the synthesis
+  // completed without a stream copy operation.
+  mResponseBody->Close();
+
   mReportCollector->FlushConsoleReports(mChannel);
 
   EnsureSynthesizedResponse();
@@ -429,8 +444,8 @@ InterceptedChannelContent::FinishSynthesizedResponse(const nsACString& aFinalURL
     nsresult rv = NS_NewURI(getter_AddRefs(responseURI), aFinalURLSpec);
     NS_ENSURE_SUCCESS(rv, rv);
   } else if (mSecureUpgrade) {
-    nsresult rv = HttpBaseChannel::GetSecureUpgradedURI(originalURI,
-                                                        getter_AddRefs(responseURI));
+    nsresult rv = NS_GetSecureUpgradedURI(originalURI,
+                                          getter_AddRefs(responseURI));
     NS_ENSURE_SUCCESS(rv, rv);
   } else {
     responseURI = originalURI;

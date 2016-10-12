@@ -3,6 +3,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* global requirejs */
+
+"use strict";
 
 /**
  * RequireJS configuration for JSON Viewer.
@@ -23,12 +26,11 @@
 require.config({
   baseUrl: ".",
   paths: {
+    "devtools/client/shared": "resource://devtools/client/shared",
     "devtools/client/shared/vendor/react": [
       "resource://devtools/client/shared/vendor/react-dev",
       "resource://devtools/client/shared/vendor/react"
     ],
-    "devtools/client/shared/vendor/react-dom":
-      "resource://devtools/client/shared/vendor/react-dom"
   }
 });
 

@@ -665,7 +665,10 @@ JsepSessionImpl::CreateOffer(const JsepOfferOptions& options,
   SetupBundle(sdp.get());
 
   if (mCurrentLocalDescription) {
-    rv = CopyPreviousTransportParams(*GetAnswer(), *sdp, sdp.get());
+    rv = CopyPreviousTransportParams(*GetAnswer(),
+                                     *mCurrentLocalDescription,
+                                     *sdp,
+                                     sdp.get());
     NS_ENSURE_SUCCESS(rv,rv);
   }
 
@@ -803,12 +806,17 @@ JsepSessionImpl::CreateAnswer(const JsepAnswerOptions& options,
   }
 
   if (mCurrentLocalDescription) {
-    rv = CopyPreviousTransportParams(*GetAnswer(), *sdp, sdp.get());
+    // per discussion with bwc, 3rd parm here should be offer, not *sdp. (mjf)
+    rv = CopyPreviousTransportParams(*GetAnswer(),
+                                     *mCurrentRemoteDescription,
+                                     offer,
+                                     sdp.get());
     NS_ENSURE_SUCCESS(rv,rv);
   }
 
   *answer = sdp->ToString();
   mGeneratedLocalDescription = Move(sdp);
+  ++mSessionVersion;
 
   return NS_OK;
 }
@@ -1208,6 +1216,28 @@ JsepSessionImpl::SetRemoteDescription(JsepSdpType type, const std::string& sdp)
   bool iceLite =
       parsed->GetAttributeList().HasAttribute(SdpAttribute::kIceLiteAttribute);
 
+  // check for mismatch ufrag/pwd indicating ice restart
+  // can't just check the first one because it might be disabled
+  bool iceRestarting = false;
+  if (mCurrentRemoteDescription.get()) {
+    for (size_t i = 0;
+         !iceRestarting &&
+           i < mCurrentRemoteDescription->GetMediaSectionCount();
+         ++i) {
+
+      const SdpMediaSection& newMsection = parsed->GetMediaSection(i);
+      const SdpMediaSection& oldMsection =
+        mCurrentRemoteDescription->GetMediaSection(i);
+
+      if (mSdpHelper.MsectionIsDisabled(newMsection) ||
+          mSdpHelper.MsectionIsDisabled(oldMsection)) {
+        continue;
+      }
+
+      iceRestarting = mSdpHelper.IceCredentialsDiffer(newMsection, oldMsection);
+    }
+  }
+
   std::vector<std::string> iceOptions;
   if (parsed->GetAttributeList().HasAttribute(
           SdpAttribute::kIceOptionsAttribute)) {
@@ -1229,6 +1259,7 @@ JsepSessionImpl::SetRemoteDescription(JsepSdpType type, const std::string& sdp)
   if (NS_SUCCEEDED(rv)) {
     mRemoteIsIceLite = iceLite;
     mIceOptions = iceOptions;
+    mRemoteIceIsRestarting = iceRestarting;
   }
 
   return rv;
@@ -1302,13 +1333,6 @@ JsepSessionImpl::HandleNegotiatedSession(const UniquePtr<Sdp>& local,
         transport);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    if (!answer.GetMediaSection(i).IsSending() &&
-        !answer.GetMediaSection(i).IsReceiving()) {
-      MOZ_MTLOG(ML_DEBUG, "Inactive m-section, skipping creation of negotiated "
-                          "track pair.");
-      continue;
-    }
-
     JsepTrackPair trackPair;
     rv = MakeNegotiatedTrackPair(remote->GetMediaSection(i),
                                  local->GetMediaSection(i),
@@ -1371,41 +1395,38 @@ JsepSessionImpl::MakeNegotiatedTrackPair(const SdpMediaSection& remote,
     trackPairOut->mBundleLevel = Some(transportLevel);
   }
 
-  if (sending) {
-    auto sendTrack = FindTrackByLevel(mLocalTracks, local.GetLevel());
-    if (sendTrack == mLocalTracks.end()) {
-      JSEP_SET_ERROR("Failed to find local track for level " <<
-                     local.GetLevel()
-                     << " in local SDP. This should never happen.");
-      NS_ASSERTION(false, "Failed to find local track for level");
-      return NS_ERROR_FAILURE;
-    }
-
+  auto sendTrack = FindTrackByLevel(mLocalTracks, local.GetLevel());
+  if (sendTrack != mLocalTracks.end()) {
     sendTrack->mTrack->Negotiate(answer, remote);
-
+    sendTrack->mTrack->SetActive(sending);
     trackPairOut->mSending = sendTrack->mTrack;
+  } else if (sending) {
+    JSEP_SET_ERROR("Failed to find local track for level " <<
+                   local.GetLevel()
+                   << " in local SDP. This should never happen.");
+    NS_ASSERTION(false, "Failed to find local track for level");
+    return NS_ERROR_FAILURE;
   }
 
-  if (receiving) {
-    auto recvTrack = FindTrackByLevel(mRemoteTracks, local.GetLevel());
-    if (recvTrack == mRemoteTracks.end()) {
-      JSEP_SET_ERROR("Failed to find remote track for level "
-                     << local.GetLevel()
-                     << " in remote SDP. This should never happen.");
-      NS_ASSERTION(false, "Failed to find remote track for level");
-      return NS_ERROR_FAILURE;
-    }
-
+  auto recvTrack = FindTrackByLevel(mRemoteTracks, local.GetLevel());
+  if (recvTrack != mRemoteTracks.end()) {
     recvTrack->mTrack->Negotiate(answer, remote);
+    recvTrack->mTrack->SetActive(receiving);
+    trackPairOut->mReceiving = recvTrack->mTrack;
 
-    if (trackPairOut->mBundleLevel.isSome() &&
+    if (receiving &&
+        trackPairOut->mBundleLevel.isSome() &&
         recvTrack->mTrack->GetSsrcs().empty() &&
         recvTrack->mTrack->GetMediaType() != SdpMediaSection::kApplication) {
       MOZ_MTLOG(ML_ERROR, "Bundled m-section has no ssrc attributes. "
                           "This may cause media packets to be dropped.");
     }
-
-    trackPairOut->mReceiving = recvTrack->mTrack;
+  } else if (receiving) {
+    JSEP_SET_ERROR("Failed to find remote track for level "
+                   << local.GetLevel()
+                   << " in remote SDP. This should never happen.");
+    NS_ASSERTION(false, "Failed to find remote track for level");
+    return NS_ERROR_FAILURE;
   }
 
   trackPairOut->mRtpTransport = transport;
@@ -1520,12 +1541,18 @@ JsepSessionImpl::AddTransportAttributes(SdpMediaSection* msection,
 
 nsresult
 JsepSessionImpl::CopyPreviousTransportParams(const Sdp& oldAnswer,
+                                             const Sdp& offerersPreviousSdp,
                                              const Sdp& newOffer,
                                              Sdp* newLocal)
 {
   for (size_t i = 0; i < oldAnswer.GetMediaSectionCount(); ++i) {
     if (!mSdpHelper.MsectionIsDisabled(newLocal->GetMediaSection(i)) &&
-        mSdpHelper.AreOldTransportParamsValid(oldAnswer, newOffer, i)) {
+        mSdpHelper.AreOldTransportParamsValid(oldAnswer,
+                                              offerersPreviousSdp,
+                                              newOffer,
+                                              i) &&
+        !mRemoteIceIsRestarting
+       ) {
       // If newLocal is an offer, this will be the number of components we used
       // last time, and if it is an answer, this will be the number of
       // components we've decided we're using now.
@@ -1841,28 +1868,37 @@ JsepSessionImpl::ValidateRemoteDescription(const Sdp& description)
   rv = mSdpHelper.GetBundledMids(description, &newBundledMids);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // check for partial ice restart, which is not supported
+  Maybe<bool> iceCredsDiffer;
   for (size_t i = 0;
        i < mCurrentRemoteDescription->GetMediaSectionCount();
        ++i) {
-    if (mSdpHelper.MsectionIsDisabled(description.GetMediaSection(i)) ||
-        mSdpHelper.MsectionIsDisabled(mCurrentRemoteDescription->GetMediaSection(i))) {
+
+    const SdpMediaSection& newMsection = description.GetMediaSection(i);
+    const SdpMediaSection& oldMsection =
+      mCurrentRemoteDescription->GetMediaSection(i);
+
+    if (mSdpHelper.MsectionIsDisabled(newMsection) ||
+        mSdpHelper.MsectionIsDisabled(oldMsection)) {
       continue;
     }
 
-    const SdpAttributeList& newAttrs(
-        description.GetMediaSection(i).GetAttributeList());
-    const SdpAttributeList& oldAttrs(
-        mCurrentRemoteDescription->GetMediaSection(i).GetAttributeList());
+    if (oldMsection.GetMediaType() != newMsection.GetMediaType()) {
+      JSEP_SET_ERROR("Remote description changes the media type of m-line "
+                     << i);
+      return NS_ERROR_INVALID_ARG;
+    }
 
-    if ((newAttrs.GetIceUfrag() != oldAttrs.GetIceUfrag()) ||
-        (newAttrs.GetIcePwd() != oldAttrs.GetIcePwd())) {
-      JSEP_SET_ERROR("ICE restart is unsupported at this time "
+    bool differ = mSdpHelper.IceCredentialsDiffer(newMsection, oldMsection);
+    // Detect whether all the creds are the same or all are different
+    if (!iceCredsDiffer.isSome()) {
+      // for the first msection capture whether creds are different or same
+      iceCredsDiffer = mozilla::Some(differ);
+    } else if (iceCredsDiffer.isSome() && *iceCredsDiffer != differ) {
+      // subsequent msections must match the first sections
+      JSEP_SET_ERROR("Partial ICE restart is unsupported at this time "
                      "(new remote description changes either the ice-ufrag "
-                     "or ice-pwd)" <<
-                     "ice-ufrag (old): " << oldAttrs.GetIceUfrag() <<
-                     "ice-ufrag (new): " << newAttrs.GetIceUfrag() <<
-                     "ice-pwd (old): " << oldAttrs.GetIcePwd() <<
-                     "ice-pwd (new): " << newAttrs.GetIcePwd());
+                     "or ice-pwd on fewer than all msections)");
       return NS_ERROR_INVALID_ARG;
     }
   }

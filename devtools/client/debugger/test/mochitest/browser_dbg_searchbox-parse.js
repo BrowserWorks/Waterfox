@@ -1,12 +1,14 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that text entered in the debugger's searchbox is properly parsed.
  */
 
 function test() {
-  initDebugger("about:blank").then(([aTab,, aPanel]) => {
+  initDebugger().then(([aTab,, aPanel]) => {
     let filterView = aPanel.panelWin.DebuggerView.Filtering;
     let searchbox = aPanel.panelWin.DebuggerView.Filtering._searchbox;
 

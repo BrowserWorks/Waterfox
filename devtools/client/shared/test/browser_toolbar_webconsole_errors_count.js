@@ -6,11 +6,8 @@
 function test() {
   const TEST_URI = TEST_URI_ROOT + "browser_toolbar_webconsole_errors_count.html";
 
-  let gDevTools = Cu.import("resource://devtools/client/framework/gDevTools.jsm",
-                             {}).gDevTools;
 
-  let webconsole = document.getElementById("developer-toolbar-toolbox-button");
-  let tab1, tab2;
+  let tab1, tab2, webconsole;
 
   Services.prefs.setBoolPref("javascript.options.strict", true);
 
@@ -37,6 +34,7 @@ function test() {
 
   function onOpenToolbar() {
     ok(DeveloperToolbar.visible, "DeveloperToolbar is visible");
+    webconsole = document.getElementById("developer-toolbar-toolbox-button");
 
     waitForButtonUpdate({
       name: "web console button shows page errors",
@@ -49,9 +47,9 @@ function test() {
   function addErrors() {
     expectUncaughtException();
 
-    waitForFocus(function() {
+    waitForFocus(function () {
       let button = content.document.querySelector("button");
-      executeSoon(function() {
+      executeSoon(function () {
         EventUtils.synthesizeMouse(button, 3, 2, {}, content);
       });
     }, content);
@@ -95,7 +93,7 @@ function test() {
     dump("lolz!!\n");
     waitForValue({
       name: "web console shows the page errors",
-      validator: function() {
+      validator: function () {
         return hud.outputNode.querySelectorAll(".message[category=exception][severity=error]").length;
       },
       value: 4,
@@ -110,7 +108,7 @@ function test() {
     let msgs = ["foobarBug762996a", "foobarBug762996b", "foobarBug762996load",
                 "foobarBug762996click", "foobarBug762996consoleLog",
                 "foobarBug762996css", "fooBug788445"];
-    msgs.forEach(function(msg) {
+    msgs.forEach(function (msg) {
       isnot(hud.outputNode.textContent.indexOf(msg), -1,
             msg + " found in the Web Console output");
     });
@@ -133,7 +131,7 @@ function test() {
 
     let waitForNewError = {
       name: "the Web Console displays the new error",
-      validator: function() {
+      validator: function () {
         return hud.outputNode.textContent.indexOf("foobarBug762996click") > -1;
       },
       success: doClearConsoleButton.bind(null, hud),
@@ -176,11 +174,11 @@ function test() {
 
     let waitForConsoleOutputAfterReload = {
       name: "the Web Console displays the correct number of errors after reload",
-      validator: function() {
+      validator: function () {
         return hud.outputNode.querySelectorAll(".message[category=exception][severity=error]").length;
       },
       value: 3,
-      success: function() {
+      success: function () {
         isnot(hud.outputNode.textContent.indexOf("foobarBug762996load"), -1,
               "foobarBug762996load found in console output after page reload");
         testEnd();

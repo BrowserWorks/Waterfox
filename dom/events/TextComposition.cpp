@@ -5,6 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ContentEventHandler.h"
+#include "IMEContentObserver.h"
+#include "IMEStateManager.h"
 #include "nsContentUtils.h"
 #include "nsIContent.h"
 #include "nsIEditor.h"
@@ -95,7 +97,7 @@ TextComposition::MaybeDispatchCompositionUpdate(
 {
   MOZ_RELEASE_ASSERT(!mTabParent);
 
-  if (!IsValidStateForComposition(aCompositionEvent->widget)) {
+  if (!IsValidStateForComposition(aCompositionEvent->mWidget)) {
     return false;
   }
 
@@ -103,7 +105,7 @@ TextComposition::MaybeDispatchCompositionUpdate(
     return true;
   }
   CloneAndDispatchAs(aCompositionEvent, eCompositionUpdate);
-  return IsValidStateForComposition(aCompositionEvent->widget);
+  return IsValidStateForComposition(aCompositionEvent->mWidget);
 }
 
 BaseEventFlags
@@ -115,13 +117,13 @@ TextComposition::CloneAndDispatchAs(
 {
   MOZ_RELEASE_ASSERT(!mTabParent);
 
-  MOZ_ASSERT(IsValidStateForComposition(aCompositionEvent->widget),
+  MOZ_ASSERT(IsValidStateForComposition(aCompositionEvent->mWidget),
              "Should be called only when it's safe to dispatch an event");
 
-  WidgetCompositionEvent compositionEvent(aCompositionEvent->mFlags.mIsTrusted,
-                                          aMessage, aCompositionEvent->widget);
-  compositionEvent.time = aCompositionEvent->time;
-  compositionEvent.timeStamp = aCompositionEvent->timeStamp;
+  WidgetCompositionEvent compositionEvent(aCompositionEvent->IsTrusted(),
+                                          aMessage, aCompositionEvent->mWidget);
+  compositionEvent.mTime = aCompositionEvent->mTime;
+  compositionEvent.mTimeStamp = aCompositionEvent->mTimeStamp;
   compositionEvent.mData = aCompositionEvent->mData;
   compositionEvent.mNativeIMEContext = aCompositionEvent->mNativeIMEContext;
   compositionEvent.mOriginalMessage = aCompositionEvent->mMessage;
@@ -159,7 +161,7 @@ TextComposition::OnCompositionEventDiscarded(
   // Note that this method is never called for synthesized events for emulating
   // commit or cancel composition.
 
-  MOZ_ASSERT(aCompositionEvent->mFlags.mIsTrusted,
+  MOZ_ASSERT(aCompositionEvent->IsTrusted(),
              "Shouldn't be called with untrusted event");
 
   if (mTabParent) {
@@ -243,7 +245,7 @@ TextComposition::DispatchCompositionEvent(
   // remote process.
   if (mTabParent) {
     Unused << mTabParent->SendCompositionEvent(*aCompositionEvent);
-    aCompositionEvent->mFlags.mPropagationStopped = true;
+    aCompositionEvent->StopPropagation();
     if (aCompositionEvent->CausesDOMTextEvent()) {
       mLastData = aCompositionEvent->mData;
       mLastRanges = aCompositionEvent->mRanges;
@@ -279,7 +281,7 @@ TextComposition::DispatchCompositionEvent(
     aCompositionEvent->mRanges = nullptr;
   }
 
-  if (!IsValidStateForComposition(aCompositionEvent->widget)) {
+  if (!IsValidStateForComposition(aCompositionEvent->mWidget)) {
     *aStatus = nsEventStatus_eConsumeNoDefault;
     return;
   }
@@ -377,7 +379,7 @@ TextComposition::DispatchCompositionEvent(
     *aStatus = nsEventStatus_eConsumeNoDefault;
   }
 
-  if (!IsValidStateForComposition(aCompositionEvent->widget)) {
+  if (!IsValidStateForComposition(aCompositionEvent->mWidget)) {
     return;
   }
 
@@ -397,8 +399,7 @@ TextComposition::DispatchCompositionEvent(
     MOZ_ASSERT(!HasEditor(), "Why does the editor still keep to hold this?");
   }
 
-  // Notify composition update to widget if possible
-  NotityUpdateComposition(aCompositionEvent);
+  OnCompositionEventHandled(aCompositionEvent);
 }
 
 // static
@@ -411,7 +412,7 @@ TextComposition::HandleSelectionEvent(nsPresContext* aPresContext,
   // remote process.
   if (aTabParent) {
     Unused << aTabParent->SendSelectionEvent(*aSelectionEvent);
-    aSelectionEvent->mFlags.mPropagationStopped = true;
+    aSelectionEvent->StopPropagation();
     return;
   }
 
@@ -426,7 +427,7 @@ TextComposition::HandleSelectionEvent(nsPresContext* aPresContext,
 }
 
 void
-TextComposition::NotityUpdateComposition(
+TextComposition::OnCompositionEventHandled(
                    const WidgetCompositionEvent* aCompositionEvent)
 {
   MOZ_RELEASE_ASSERT(!mTabParent);
@@ -456,7 +457,23 @@ TextComposition::NotityUpdateComposition(
     return;
   }
 
-  NotifyIME(NOTIFY_IME_OF_COMPOSITION_UPDATE);
+  RefPtr<IMEContentObserver> contentObserver =
+    IMEStateManager::GetActiveContentObserver();
+  // When IMEContentObserver is managing the editor which has this composition,
+  // composition event handled notification should be sent after the observer
+  // notifies all pending notifications.  Therefore, we should use it.
+  // XXX If IMEContentObserver suddenly loses focus after here and notifying
+  //     widget of pending notifications, we won't notify widget of composition
+  //     event handled.  Although, this is a bug but it should be okay since
+  //     destroying IMEContentObserver notifies IME of blur.  So, native IME
+  //     handler can treat it as this notification too.
+  if (contentObserver && contentObserver->IsManaging(this)) {
+    contentObserver->MaybeNotifyCompositionEventHandled();
+    return;
+  }
+  // Otherwise, e.g., this composition is in non-active window, we should
+  // notify widget directly.
+  NotifyIME(NOTIFY_IME_OF_COMPOSITION_EVENT_HANDLED);
 }
 
 void

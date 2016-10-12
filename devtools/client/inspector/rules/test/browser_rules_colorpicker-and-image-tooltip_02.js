@@ -20,11 +20,7 @@ const TEST_URI = `
   Testing the color picker tooltip!
 `;
 
-const PAGE_CONTENT = [
-
-].join("\n");
-
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {view} = yield openRuleView();
   yield testColorChangeIsntRevertedWhenOtherTooltipIsShown(view);
@@ -41,13 +37,14 @@ function* testColorChangeIsntRevertedWhenOtherTooltipIsShown(ruleView) {
   yield onShown;
 
   yield simulateColorPickerChange(ruleView, picker, [0, 0, 0, 1], {
-    element: content.document.body,
-    name: "backgroundColor",
+    selector: "body",
+    name: "background-color",
     value: "rgb(0, 0, 0)"
   });
 
   let spectrum = yield picker.spectrum;
-  let onModifications = ruleView.once("ruleview-changed");
+
+  let onModifications = waitForNEvents(ruleView, "ruleview-changed", 2);
   let onHidden = picker.tooltip.once("hidden");
   EventUtils.sendKey("RETURN", spectrum.element.ownerDocument.defaultView);
   yield onHidden;
@@ -57,8 +54,7 @@ function* testColorChangeIsntRevertedWhenOtherTooltipIsShown(ruleView) {
   let value = getRuleViewProperty(ruleView, "body", "background").valueSpan;
   let url = value.querySelector(".theme-link");
   onShown = ruleView.tooltips.previewTooltip.once("shown");
-  let anchor = yield isHoverTooltipTarget(ruleView.tooltips.previewTooltip,
-                                          url);
+  let anchor = yield isHoverTooltipTarget(ruleView.tooltips.previewTooltip, url);
   ruleView.tooltips.previewTooltip.show(anchor);
   yield onShown;
 

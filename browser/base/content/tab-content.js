@@ -68,15 +68,10 @@ addMessageListener("Browser:Reload", function(message) {
   }
 
   let reloadFlags = message.data.flags;
-  let handlingUserInput;
   try {
-    handlingUserInput = content.QueryInterface(Ci.nsIInterfaceRequestor)
-                               .getInterface(Ci.nsIDOMWindowUtils)
-                               .setHandlingUserInput(message.data.handlingUserInput);
-    webNav.reload(reloadFlags);
+    E10SUtils.wrapHandlingUserInput(content, message.data.handlingUserInput,
+                                    () => webNav.reload(reloadFlags));
   } catch (e) {
-  } finally {
-    handlingUserInput.destruct();
   }
 });
 
@@ -149,16 +144,11 @@ var AboutHomeListener = {
   },
 
   onPageLoad: function() {
-    let doc = content.document;
-    if (doc.documentElement.hasAttribute("hasBrowserHandlers")) {
-      return;
-    }
-
-    doc.documentElement.setAttribute("hasBrowserHandlers", "true");
     addMessageListener("AboutHome:Update", this);
     addEventListener("click", this, true);
     addEventListener("pagehide", this, true);
 
+    sendAsyncMessage("AboutHome:MaybeShowAutoMigrationUndoNotification");
     sendAsyncMessage("AboutHome:RequestUpdate");
   },
 
@@ -216,9 +206,6 @@ var AboutHomeListener = {
     removeMessageListener("AboutHome:Update", this);
     removeEventListener("click", this, true);
     removeEventListener("pagehide", this, true);
-    if (aEvent.target.documentElement) {
-      aEvent.target.documentElement.removeAttribute("hasBrowserHandlers");
-    }
   },
 };
 AboutHomeListener.init(this);
@@ -260,20 +247,28 @@ var AboutReaderListener = {
 
   _articlePromise: null,
 
+  _isLeavingReaderMode: false,
+
   init: function() {
     addEventListener("AboutReaderContentLoaded", this, false, true);
     addEventListener("DOMContentLoaded", this, false);
     addEventListener("pageshow", this, false);
     addEventListener("pagehide", this, false);
-    addMessageListener("Reader:ParseDocument", this);
+    addMessageListener("Reader:ToggleReaderMode", this);
     addMessageListener("Reader:PushState", this);
   },
 
   receiveMessage: function(message) {
     switch (message.name) {
-      case "Reader:ParseDocument":
-        this._articlePromise = ReaderMode.parseDocument(content.document).catch(Cu.reportError);
-        content.document.location = "about:reader?url=" + encodeURIComponent(message.data.url);
+      case "Reader:ToggleReaderMode":
+        let url = content.document.location.href;
+        if (!this.isAboutReader) {
+          this._articlePromise = ReaderMode.parseDocument(content.document).catch(Cu.reportError);
+          ReaderMode.enterReaderMode(docShell, content);
+        } else {
+          this._isLeavingReaderMode = true;
+          ReaderMode.leaveReaderMode(docShell, content);
+        }
         break;
 
       case "Reader:PushState":
@@ -310,7 +305,13 @@ var AboutReaderListener = {
 
       case "pagehide":
         this.cancelPotentialPendingReadabilityCheck();
-        sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: false });
+        // this._isLeavingReaderMode is used here to keep the Reader Mode icon
+        // visible in the location bar when transitioning from reader-mode page
+        // back to the source page.
+        sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: this._isLeavingReaderMode });
+        if (this._isLeavingReaderMode) {
+          this._isLeavingReaderMode = false;
+        }
         break;
 
       case "pageshow":
@@ -516,24 +517,27 @@ var PageStyleHandler = {
 
       let URI;
       try {
-        URI = Services.io.newURI(currentStyleSheet.href, null, null);
+        if (!currentStyleSheet.ownerNode ||
+            // special-case style nodes, which have no href
+            currentStyleSheet.ownerNode.nodeName.toLowerCase() != "style") {
+          URI = Services.io.newURI(currentStyleSheet.href, null, null);
+        }
       } catch(e) {
         if (e.result != Cr.NS_ERROR_MALFORMED_URI) {
           throw e;
         }
+        continue;
       }
 
-      if (URI) {
-        // We won't send data URIs all of the way up to the parent, as these
-        // can be arbitrarily large.
-        let sentURI = URI.scheme == "data" ? null : URI.spec;
+      // We won't send data URIs all of the way up to the parent, as these
+      // can be arbitrarily large.
+      let sentURI = (!URI || URI.scheme == "data") ? null : URI.spec;
 
-        result.push({
-          title: currentStyleSheet.title,
-          disabled: currentStyleSheet.disabled,
-          href: sentURI,
-        });
-      }
+      result.push({
+        title: currentStyleSheet.title,
+        disabled: currentStyleSheet.disabled,
+        href: sentURI,
+      });
     }
 
     return result;
@@ -629,10 +633,12 @@ var DOMFullscreenHandler = {
   },
 
   receiveMessage: function(aMessage) {
+    let windowUtils = this._windowUtils;
     switch(aMessage.name) {
       case "DOMFullscreen:Entered": {
-        if (!this._windowUtils.handleFullscreenRequests() &&
-            !content.document.mozFullScreen) {
+        this._lastTransactionId = windowUtils.lastTransactionId;
+        if (!windowUtils.handleFullscreenRequests() &&
+            !content.document.fullscreenElement) {
           // If we don't actually have any pending fullscreen request
           // to handle, neither we have been in fullscreen, tell the
           // parent to just exit.
@@ -641,8 +647,13 @@ var DOMFullscreenHandler = {
         break;
       }
       case "DOMFullscreen:CleanUp": {
-        if (this._windowUtils) {
-          this._windowUtils.exitFullscreen();
+        // If we've exited fullscreen at this point, no need to record
+        // transaction id or call exit fullscreen. This is especially
+        // important for non-e10s, since in that case, it is possible
+        // that no more paint would be triggered after this point.
+        if (content.document.fullscreenElement && windowUtils) {
+          this._lastTransactionId = windowUtils.lastTransactionId;
+          windowUtils.exitFullscreen();
         }
         this._fullscreenDoc = null;
         break;
@@ -670,7 +681,7 @@ var DOMFullscreenHandler = {
       case "MozDOMFullscreen:Entered":
       case "MozDOMFullscreen:Exited": {
         addEventListener("MozAfterPaint", this);
-        if (!content || !content.document.mozFullScreen) {
+        if (!content || !content.document.fullscreenElement) {
           // If we receive any fullscreen change event, and find we are
           // actually not in fullscreen, also ask the parent to exit to
           // ensure that the parent always exits fullscreen when we do.
@@ -679,8 +690,15 @@ var DOMFullscreenHandler = {
         break;
       }
       case "MozAfterPaint": {
-        removeEventListener("MozAfterPaint", this);
-        sendAsyncMessage("DOMFullscreen:Painted");
+        // Only send Painted signal after we actually finish painting
+        // the transition for the fullscreen change.
+        // Note that this._lastTransactionId is not set when in non-e10s
+        // mode, so we need to check that explicitly.
+        if (!this._lastTransactionId ||
+            aEvent.transactionId > this._lastTransactionId) {
+          removeEventListener("MozAfterPaint", this);
+          sendAsyncMessage("DOMFullscreen:Painted");
+        }
         break;
       }
     }
@@ -688,7 +706,214 @@ var DOMFullscreenHandler = {
 };
 DOMFullscreenHandler.init();
 
+var RefreshBlocker = {
+  PREF: "accessibility.blockautorefresh",
+
+  // Bug 1247100 - When a refresh is caused by an HTTP header,
+  // onRefreshAttempted will be fired before onLocationChange.
+  // When a refresh is caused by a <meta> tag in the document,
+  // onRefreshAttempted will be fired after onLocationChange.
+  //
+  // We only ever want to send a message to the parent after
+  // onLocationChange has fired, since the parent uses the
+  // onLocationChange update to clear transient notifications.
+  // Sending the message before onLocationChange will result in
+  // us creating the notification, and then clearing it very
+  // soon after.
+  //
+  // To account for both cases (onRefreshAttempted before
+  // onLocationChange, and onRefreshAttempted after onLocationChange),
+  // we'll hold a mapping of DOM Windows that we see get
+  // sent through both onLocationChange and onRefreshAttempted.
+  // When either run, they'll check the WeakMap for the existence
+  // of the DOM Window. If it doesn't exist, it'll add it. If
+  // it finds it, it'll know that it's safe to send the message
+  // to the parent, since we know that both have fired.
+  //
+  // The DOM Window is removed from blockedWindows when we notice
+  // the nsIWebProgress change state to STATE_STOP for the
+  // STATE_IS_WINDOW case.
+  //
+  // DOM Windows are mapped to a JS object that contains the data
+  // to be sent to the parent to show the notification. Since that
+  // data is only known when onRefreshAttempted is fired, it's only
+  // ever stashed in the map if onRefreshAttempted fires first -
+  // otherwise, null is set as the value of the mapping.
+  blockedWindows: new WeakMap(),
+
+  init() {
+    if (Services.prefs.getBoolPref(this.PREF)) {
+      this.enable();
+    }
+
+    Services.prefs.addObserver(this.PREF, this, false);
+  },
+
+  uninit() {
+    if (Services.prefs.getBoolPref(this.PREF)) {
+      this.disable();
+    }
+
+    Services.prefs.removeObserver(this.PREF, this);
+  },
+
+  observe(subject, topic, data) {
+    if (topic == "nsPref:changed" && data == this.PREF) {
+      if (Services.prefs.getBoolPref(this.PREF)) {
+        this.enable();
+      } else {
+        this.disable();
+      }
+    }
+  },
+
+  enable() {
+    this._filter = Cc["@mozilla.org/appshell/component/browser-status-filter;1"]
+                     .createInstance(Ci.nsIWebProgress);
+    this._filter.addProgressListener(this, Ci.nsIWebProgress.NOTIFY_ALL);
+
+    let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
+                              .getInterface(Ci.nsIWebProgress);
+    webProgress.addProgressListener(this._filter, Ci.nsIWebProgress.NOTIFY_ALL);
+
+    addMessageListener("RefreshBlocker:Refresh", this);
+  },
+
+  disable() {
+    let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
+                              .getInterface(Ci.nsIWebProgress);
+    webProgress.removeProgressListener(this._filter);
+
+    this._filter.removeProgressListener(this);
+    this._filter = null;
+
+    removeMessageListener("RefreshBlocker:Refresh", this);
+  },
+
+  send(data) {
+    sendAsyncMessage("RefreshBlocker:Blocked", data);
+  },
+
+  /**
+   * Notices when the nsIWebProgress transitions to STATE_STOP for
+   * the STATE_IS_WINDOW case, which will clear any mappings from
+   * blockedWindows.
+   */
+  onStateChange(aWebProgress, aRequest, aStateFlags, aStatus) {
+    if (aStateFlags & Ci.nsIWebProgressListener.STATE_IS_WINDOW &&
+        aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) {
+      this.blockedWindows.delete(aWebProgress.DOMWindow);
+    }
+  },
+
+  /**
+   * Notices when the location has changed. If, when running,
+   * onRefreshAttempted has already fired for this DOM Window, will
+   * send the appropriate refresh blocked data to the parent.
+   */
+  onLocationChange(aWebProgress, aRequest, aLocation, aFlags) {
+    let win = aWebProgress.DOMWindow;
+    if (this.blockedWindows.has(win)) {
+      let data = this.blockedWindows.get(win);
+      if (data) {
+        // We saw onRefreshAttempted before onLocationChange, so
+        // send the message to the parent to show the notification.
+        this.send(data);
+      }
+    } else {
+      this.blockedWindows.set(win, null);
+    }
+  },
+
+  /**
+   * Notices when a refresh / reload was attempted. If, when running,
+   * onLocationChange has not yet run, will stash the appropriate data
+   * into the blockedWindows map to be sent when onLocationChange fires.
+   */
+  onRefreshAttempted(aWebProgress, aURI, aDelay, aSameURI) {
+    let win = aWebProgress.DOMWindow;
+    let outerWindowID = win.QueryInterface(Ci.nsIInterfaceRequestor)
+                           .getInterface(Ci.nsIDOMWindowUtils)
+                           .outerWindowID;
+
+    let data = {
+      URI: aURI.spec,
+      originCharset: aURI.originCharset,
+      delay: aDelay,
+      sameURI: aSameURI,
+      outerWindowID,
+    };
+
+    if (this.blockedWindows.has(win)) {
+      // onLocationChange must have fired before, so we can tell the
+      // parent to show the notification.
+      this.send(data);
+    } else {
+      // onLocationChange hasn't fired yet, so stash the data in the
+      // map so that onLocationChange can send it when it fires.
+      this.blockedWindows.set(win, data);
+    }
+
+    return false;
+  },
+
+  receiveMessage(message) {
+    let data = message.data;
+
+    if (message.name == "RefreshBlocker:Refresh") {
+      let win = Services.wm.getOuterWindowWithId(data.outerWindowID);
+      let refreshURI = win.QueryInterface(Ci.nsIInterfaceRequestor)
+                          .getInterface(Ci.nsIDocShell)
+                          .QueryInterface(Ci.nsIRefreshURI);
+
+      let URI = BrowserUtils.makeURI(data.URI, data.originCharset, null);
+
+      refreshURI.forceRefreshURI(URI, data.delay, true);
+    }
+  },
+
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener2,
+                                         Ci.nsIWebProgressListener,
+                                         Ci.nsISupportsWeakReference,
+                                         Ci.nsISupports]),
+};
+
+RefreshBlocker.init();
+
+var UserContextIdNotifier = {
+  init() {
+    addEventListener("DOMWindowCreated", this);
+  },
+
+  uninit() {
+    removeEventListener("DOMWindowCreated", this);
+  },
+
+  handleEvent(aEvent) {
+    // When the window is created, we want to inform the tabbrowser about
+    // the userContextId in use in order to update the UI correctly.
+    // Just because we cannot change the userContextId from an active docShell,
+    // we don't need to check DOMContentLoaded again.
+    this.uninit();
+
+    // We use the docShell because content.document can have been loaded before
+    // setting the originAttributes.
+    let loadContext = docShell.QueryInterface(Ci.nsILoadContext);
+    let userContextId = loadContext.originAttributes.userContextId;
+
+    sendAsyncMessage("Browser:WindowCreated", { userContextId });
+  }
+};
+
+UserContextIdNotifier.init();
+
 ExtensionContent.init(this);
 addEventListener("unload", () => {
   ExtensionContent.uninit(this);
+  RefreshBlocker.uninit();
+});
+
+addEventListener("MozAfterPaint", function onFirstPaint() {
+  removeEventListener("MozAfterPaint", onFirstPaint);
+  sendAsyncMessage("Browser:FirstPaint");
 });

@@ -24,6 +24,28 @@
 
 #include <string.h>
 
+/**
+ *  sk_careful_memcpy() is just like memcpy(), but guards against undefined behavior.
+ *
+ * It is undefined behavior to call memcpy() with null dst or src, even if len is 0.
+ * If an optimizer is "smart" enough, it can exploit this to do unexpected things.
+ *     memcpy(dst, src, 0);
+ *     if (src) {
+ *         printf("%x\n", *src);
+ *     }
+ * In this code the compiler can assume src is not null and omit the if (src) {...} check,
+ * unconditionally running the printf, crashing the program if src really is null.
+ * Of the compilers we pay attention to only GCC performs this optimization in practice.
+ */
+static inline void* sk_careful_memcpy(void* dst, const void* src, size_t len) {
+    // When we pass >0 len we had better already be passing valid pointers.
+    // So we just need to skip calling memcpy when len == 0.
+    if (len) {
+        memcpy(dst,src,len);
+    }
+    return dst;
+}
+
 /** \file SkTypes.h
 */
 
@@ -45,7 +67,7 @@ SK_API extern void sk_out_of_memory(void);
     The platform implementation must not return, but should either throw
     an exception or otherwise exit.
 */
-SK_API extern void sk_throw(void);
+SK_API extern void sk_abort_no_print(void);
 
 enum {
     SK_MALLOC_TEMP  = 0x01, //!< hint to sk_malloc that the requested memory will be freed in the scope of the stack frame
@@ -78,7 +100,10 @@ SK_API extern void* sk_calloc_throw(size_t size);
 
 // bzero is safer than memset, but we can't rely on it, so... sk_bzero()
 static inline void sk_bzero(void* buffer, size_t size) {
-    memset(buffer, 0, size);
+    // Please c.f. sk_careful_memcpy.  It's undefined behavior to call memset(null, 0, 0).
+    if (size) {
+        memset(buffer, 0, size);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -103,8 +128,10 @@ inline void operator delete(void* p) {
     SK_API void SkDebugf(const char format[], ...);
 #endif
 
+#define SkASSERT_RELEASE(cond)          if(!(cond)) { SK_ABORT(#cond); }
+
 #ifdef SK_DEBUG
-    #define SkASSERT(cond)              SK_ALWAYSBREAK(cond)
+    #define SkASSERT(cond)              SkASSERT_RELEASE(cond)
     #define SkDEBUGFAIL(message)        SkASSERT(false && message)
     #define SkDEBUGFAILF(fmt, ...)      SkASSERTF(false, fmt, ##__VA_ARGS__)
     #define SkDEBUGCODE(code)           code
@@ -125,7 +152,9 @@ inline void operator delete(void* p) {
     #define SkAssertResult(cond)        cond
 #endif
 
-#define SkFAIL(message)                 SK_ALWAYSBREAK(false && message)
+// Legacy macro names for SK_ABORT
+#define SkFAIL(message)                 SK_ABORT(message)
+#define sk_throw()                      SK_ABORT("sk_throw")
 
 // We want to evaluate cond only once, and inside the SkASSERT somewhere so we see its string form.
 // So we use the comma operator to make an SkDebugf that always returns false: we'll evaluate cond,
@@ -223,41 +252,28 @@ typedef int S16CPU;
 typedef unsigned U16CPU;
 
 /**
- *  Meant to be faster than bool (doesn't promise to be 0 or 1,
- *  just 0 or non-zero
- */
-typedef int SkBool;
-
-/**
  *  Meant to be a small version of bool, for storage purposes. Will be 0 or 1
  */
 typedef uint8_t SkBool8;
 
-#ifdef SK_DEBUG
-    SK_API int8_t      SkToS8(intmax_t);
-    SK_API uint8_t     SkToU8(uintmax_t);
-    SK_API int16_t     SkToS16(intmax_t);
-    SK_API uint16_t    SkToU16(uintmax_t);
-    SK_API int32_t     SkToS32(intmax_t);
-    SK_API uint32_t    SkToU32(uintmax_t);
-    SK_API int         SkToInt(intmax_t);
-    SK_API unsigned    SkToUInt(uintmax_t);
-    SK_API size_t      SkToSizeT(uintmax_t);
-#else
-    #define SkToS8(x)   ((int8_t)(x))
-    #define SkToU8(x)   ((uint8_t)(x))
-    #define SkToS16(x)  ((int16_t)(x))
-    #define SkToU16(x)  ((uint16_t)(x))
-    #define SkToS32(x)  ((int32_t)(x))
-    #define SkToU32(x)  ((uint32_t)(x))
-    #define SkToInt(x)  ((int)(x))
-    #define SkToUInt(x) ((unsigned)(x))
-    #define SkToSizeT(x) ((size_t)(x))
-#endif
+#include "../private/SkTFitsIn.h"
+template <typename D, typename S> D SkTo(S s) {
+    SkASSERT(SkTFitsIn<D>(s));
+    return static_cast<D>(s);
+}
+#define SkToS8(x)    SkTo<int8_t>(x)
+#define SkToU8(x)    SkTo<uint8_t>(x)
+#define SkToS16(x)   SkTo<int16_t>(x)
+#define SkToU16(x)   SkTo<uint16_t>(x)
+#define SkToS32(x)   SkTo<int32_t>(x)
+#define SkToU32(x)   SkTo<uint32_t>(x)
+#define SkToInt(x)   SkTo<int>(x)
+#define SkToUInt(x)  SkTo<unsigned>(x)
+#define SkToSizeT(x) SkTo<size_t>(x)
 
 /** Returns 0 or 1 based on the condition
 */
-#define SkToBool(cond)  ((cond) != 0)
+#define SkToBool(cond)  (!!(cond))
 
 #define SK_MaxS16   32767
 #define SK_MinS16   -32767
@@ -267,7 +283,7 @@ typedef uint8_t SkBool8;
 #define SK_MinS32   -SK_MaxS32
 #define SK_MaxU32   0xFFFFFFFF
 #define SK_MinU32   0
-#define SK_NaN32    (1 << 31)
+#define SK_NaN32    ((int) (1U << 31))
 
 /** Returns true if the value can be represented with signed 16bits
  */
@@ -279,6 +295,14 @@ static inline bool SkIsS16(long x) {
  */
 static inline bool SkIsU16(long x) {
     return (uint16_t)x == x;
+}
+
+static inline int32_t SkLeftShift(int32_t value, int32_t shift) {
+    return (int32_t) ((uint32_t) value << shift);
+}
+
+static inline int64_t SkLeftShift(int64_t value, int32_t shift) {
+    return (int64_t) ((uint64_t) value << shift);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -306,6 +330,9 @@ template <typename T, size_t N> char (&SkArrayCountHelper(T (&array)[N]))[N];
 #define SkAlign8(x)     (((x) + 7) >> 3 << 3)
 #define SkIsAlign8(x)   (0 == ((x) & 7))
 
+#define SkAlign16(x)     (((x) + 15) >> 4 << 4)
+#define SkIsAlign16(x)   (0 == ((x) & 15))
+
 #define SkAlignPtr(x)   (sizeof(void*) == 8 ?   SkAlign8(x) :   SkAlign4(x))
 #define SkIsAlignPtr(x) (sizeof(void*) == 8 ? SkIsAlign8(x) : SkIsAlign4(x))
 
@@ -315,13 +342,15 @@ typedef uint32_t SkFourByteTag;
 /** 32 bit integer to hold a unicode value
 */
 typedef int32_t SkUnichar;
-/** 32 bit value to hold a millisecond count
-*/
+
+/** 32 bit value to hold a millisecond duration
+ *  Note that SK_MSecMax is about 25 days.
+ */
 typedef uint32_t SkMSec;
 /** 1 second measured in milliseconds
 */
 #define SK_MSec1 1000
-/** maximum representable milliseconds
+/** maximum representable milliseconds; 24d 20h 31m 23.647s.
 */
 #define SK_MSecMax 0x7FFFFFFF
 /** Returns a < b for milliseconds, correctly handling wrap-around from 0xFFFFFFFF to 0
@@ -408,16 +437,16 @@ template <typename T> static inline const T& SkTPin(const T& value, const T& min
     return SkTMax(SkTMin(value, max), min);
 }
 
-static inline uint32_t SkSetClearShift(uint32_t bits, bool cond,
-                                       unsigned shift) {
-    SkASSERT((int)cond == 0 || (int)cond == 1);
-    return (bits & ~(1 << shift)) | ((int)cond << shift);
-}
 
-static inline uint32_t SkSetClearMask(uint32_t bits, bool cond,
-                                      uint32_t mask) {
-    return cond ? bits | mask : bits & ~mask;
-}
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ *  Indicates whether an allocation should count against a cache budget.
+ */
+enum class SkBudgeted : bool {
+    kNo  = false,
+    kYes = true
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -480,12 +509,12 @@ public:
         internal reference to null. Note the caller is reponsible for calling
         sk_free on the returned address.
     */
-    void* detach() { return this->set(NULL); }
+    void* release() { return this->set(NULL); }
 
     /** Free the current buffer, and set the internal reference to NULL. Same
-        as calling sk_free(detach())
+        as calling sk_free(release())
     */
-    void free() {
+    void reset() {
         sk_free(fPtr);
         fPtr = NULL;
     }
@@ -501,7 +530,7 @@ private:
 /**
  *  Manage an allocated block of heap memory. This object is the sole manager of
  *  the lifetime of the block, so the caller must not call sk_free() or delete
- *  on the block, unless detach() was called.
+ *  on the block, unless release() was called.
  */
 class SkAutoMalloc : SkNoncopyable {
 public:
@@ -537,7 +566,7 @@ public:
     /**
      *  Reallocates the block to a new size. The ptr may or may not change.
      */
-    void* reset(size_t size, OnShrink shrink = kAlloc_OnShrink,  bool* didChangeAlloc = NULL) {
+    void* reset(size_t size = 0, OnShrink shrink = kAlloc_OnShrink,  bool* didChangeAlloc = NULL) {
         if (size == fSize || (kReuse_OnShrink == shrink && size < fSize)) {
             if (didChangeAlloc) {
                 *didChangeAlloc = false;
@@ -556,13 +585,6 @@ public:
     }
 
     /**
-     *  Releases the block back to the heap
-     */
-    void free() {
-        this->reset(0);
-    }
-
-    /**
      *  Return the allocated block.
      */
     void* get() { return fPtr; }
@@ -572,7 +594,7 @@ public:
        internal reference to null. Note the caller is reponsible for calling
        sk_free on the returned address.
     */
-    void* detach() {
+    void* release() {
         void* ptr = fPtr;
         fPtr = NULL;
         fSize = 0;
@@ -586,17 +608,16 @@ private:
 #define SkAutoMalloc(...) SK_REQUIRE_LOCAL_VAR(SkAutoMalloc)
 
 /**
- *  Manage an allocated block of memory. If the requested size is <= kSize, then
- *  the allocation will come from the stack rather than the heap. This object
- *  is the sole manager of the lifetime of the block, so the caller must not
- *  call sk_free() or delete on the block.
+ *  Manage an allocated block of memory. If the requested size is <= kSizeRequested (or slightly
+ *  more), then the allocation will come from the stack rather than the heap. This object is the
+ *  sole manager of the lifetime of the block, so the caller must not call sk_free() or delete on
+ *  the block.
  */
-template <size_t kSize> class SkAutoSMalloc : SkNoncopyable {
+template <size_t kSizeRequested> class SkAutoSMalloc : SkNoncopyable {
 public:
     /**
-     *  Creates initially empty storage. get() returns a ptr, but it is to
-     *  a zero-byte allocation. Must call reset(size) to return an allocated
-     *  block.
+     *  Creates initially empty storage. get() returns a ptr, but it is to a zero-byte allocation.
+     *  Must call reset(size) to return an allocated block.
      */
     SkAutoSMalloc() {
         fPtr = fStorage;
@@ -604,9 +625,8 @@ public:
     }
 
     /**
-     *  Allocate a block of the specified size. If size <= kSize, then the
-     *  allocation will come from the stack, otherwise it will be dynamically
-     *  allocated.
+     *  Allocate a block of the specified size. If size <= kSizeRequested (or slightly more), then
+     *  the allocation will come from the stack, otherwise it will be dynamically allocated.
      */
     explicit SkAutoSMalloc(size_t size) {
         fPtr = fStorage;
@@ -615,8 +635,8 @@ public:
     }
 
     /**
-     *  Free the allocated block (if any). If the block was small enought to
-     *  have been allocated on the stack (size <= kSize) then this does nothing.
+     *  Free the allocated block (if any). If the block was small enough to have been allocated on
+     *  the stack, then this does nothing.
      */
     ~SkAutoSMalloc() {
         if (fPtr != (void*)fStorage) {
@@ -625,18 +645,16 @@ public:
     }
 
     /**
-     *  Return the allocated block. May return non-null even if the block is
-     *  of zero size. Since this may be on the stack or dynamically allocated,
-     *  the caller must not call sk_free() on it, but must rely on SkAutoSMalloc
-     *  to manage it.
+     *  Return the allocated block. May return non-null even if the block is of zero size. Since
+     *  this may be on the stack or dynamically allocated, the caller must not call sk_free() on it,
+     *  but must rely on SkAutoSMalloc to manage it.
      */
     void* get() const { return fPtr; }
 
     /**
-     *  Return a new block of the requested size, freeing (as necessary) any
-     *  previously allocated block. As with the constructor, if size <= kSize
-     *  then the return block may be allocated locally, rather than from the
-     *  heap.
+     *  Return a new block of the requested size, freeing (as necessary) any previously allocated
+     *  block. As with the constructor, if size <= kSizeRequested (or slightly more) then the return
+     *  block may be allocated locally, rather than from the heap.
      */
     void* reset(size_t size,
                 SkAutoMalloc::OnShrink shrink = SkAutoMalloc::kAlloc_OnShrink,
@@ -666,9 +684,20 @@ public:
     }
 
 private:
+    // Align up to 32 bits.
+    static const size_t kSizeAlign4 = SkAlign4(kSizeRequested);
+#if defined(GOOGLE3)
+    // Stack frame size is limited for GOOGLE3. 4k is less than the actual max, but some functions
+    // have multiple large stack allocations.
+    static const size_t kMaxBytes = 4 * 1024;
+    static const size_t kSize = kSizeRequested > kMaxBytes ? kMaxBytes : kSizeAlign4;
+#else
+    static const size_t kSize = kSizeAlign4;
+#endif
+
     void*       fPtr;
     size_t      fSize;  // can be larger than the requested size (see kReuse)
-    uint32_t    fStorage[(kSize + 3) >> 2];
+    uint32_t    fStorage[kSize >> 2];
 };
 // Can't guard the constructor because it's a template class.
 

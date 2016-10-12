@@ -9,17 +9,24 @@ import android.content.Context;
 import android.support.annotation.IntDef;
 import android.util.Log;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.background.nativecode.NativeCrypto;
 import org.mozilla.gecko.dlc.catalog.DownloadContent;
 import org.mozilla.gecko.dlc.catalog.DownloadContentCatalog;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.IOUtils;
+import org.mozilla.gecko.util.ProxySelector;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public abstract class BaseAction {
     private static final String LOGTAG = "GeckoDLCBaseAction";
@@ -135,6 +142,25 @@ public abstract class BaseAction {
             throw new RecoverableDownloadContentException(RecoverableDownloadContentException.DISK_IO, e);
         } finally {
             IOUtils.safeStreamClose(inputStream);
+        }
+    }
+
+    protected HttpURLConnection buildHttpURLConnection(String url)
+            throws UnrecoverableDownloadContentException, IOException {
+        try {
+            System.setProperty("http.keepAlive", "true");
+
+            HttpURLConnection connection = (HttpURLConnection) ProxySelector.openConnectionWithProxy(new URI(url));
+            connection.setRequestProperty("User-Agent", HardwareUtils.isTablet() ?
+                    AppConstants.USER_AGENT_FENNEC_TABLET :
+                    AppConstants.USER_AGENT_FENNEC_MOBILE);
+            connection.setRequestMethod("GET");
+            connection.setInstanceFollowRedirects(true);
+            return connection;
+        } catch (MalformedURLException e) {
+            throw new UnrecoverableDownloadContentException(e);
+        } catch (URISyntaxException e) {
+            throw new UnrecoverableDownloadContentException(e);
         }
     }
 }

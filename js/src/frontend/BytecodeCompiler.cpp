@@ -346,11 +346,15 @@ BytecodeCompiler::prepareAndEmitTree(ParseNode** ppn)
 {
     if (!FoldConstants(cx, ppn, parser.ptr()) ||
         !NameFunctions(cx, *ppn) ||
-        !emitter->updateLocalsToFrameSlots() ||
-        !emitter->emitTree(*ppn))
+        !emitter->updateLocalsToFrameSlots())
     {
         return false;
     }
+
+    emitter->setFunctionBodyEndPos((*ppn)->pn_pos);
+
+    if (!emitter->emitTree(*ppn))
+        return false;
 
     return true;
 }
@@ -576,7 +580,7 @@ ModuleObject* BytecodeCompiler::compileModule()
 
     module->init(script);
 
-    ModuleBuilder builder(cx->asJSContext(), module);
+    ModuleBuilder builder(cx, module);
     ParseNode* pn = parser->standaloneModule(module, builder);
     if (!pn)
         return nullptr;
@@ -759,20 +763,48 @@ frontend::CompileScript(ExclusiveContext* cx, LifoAlloc* alloc, HandleObject sco
 }
 
 ModuleObject*
-frontend::CompileModule(JSContext* cx, HandleObject obj,
-                        const ReadOnlyCompileOptions& optionsInput,
-                        SourceBufferHolder& srcBuf)
+frontend::CompileModule(ExclusiveContext* cx, const ReadOnlyCompileOptions& optionsInput,
+                        SourceBufferHolder& srcBuf, LifoAlloc* alloc,
+                        ScriptSourceObject** sourceObjectOut /* = nullptr */)
 {
     MOZ_ASSERT(srcBuf.get());
+    MOZ_ASSERT(alloc);
+    MOZ_ASSERT_IF(sourceObjectOut, *sourceObjectOut == nullptr);
 
     CompileOptions options(cx, optionsInput);
     options.maybeMakeStrictMode(true); // ES6 10.2.1 Module code is always strict mode code.
     options.setIsRunOnce(true);
 
     Rooted<StaticScope*> staticScope(cx, &cx->global()->lexicalScope().staticBlock());
-    BytecodeCompiler compiler(cx, &cx->tempLifoAlloc(), options, srcBuf, staticScope,
+    BytecodeCompiler compiler(cx, alloc, options, srcBuf, staticScope,
                               TraceLogger_ParserCompileModule);
-    return compiler.compileModule();
+    ModuleObject* module = compiler.compileModule();
+
+    // See the comment about sourceObjectOut above.
+    if (sourceObjectOut)
+        *sourceObjectOut = compiler.sourceObjectPtr();
+
+    return module;
+}
+
+ModuleObject*
+frontend::CompileModule(JSContext* cx, const ReadOnlyCompileOptions& options,
+                        SourceBufferHolder& srcBuf)
+{
+    if (!GlobalObject::ensureModulePrototypesCreated(cx, cx->global()))
+        return nullptr;
+
+    LifoAlloc* alloc = &cx->asJSContext()->tempLifoAlloc();
+    RootedModuleObject module(cx, CompileModule(cx, options, srcBuf, alloc));
+    if (!module)
+        return nullptr;
+
+    // This happens in GlobalHelperThreadState::finishModuleParseTask() when a
+    // module is compiled off main thread.
+    if (!ModuleObject::FreezeArrayProperties(cx->asJSContext(), module))
+        return nullptr;
+
+    return module;
 }
 
 bool
@@ -814,8 +846,8 @@ frontend::CompileLazyFunction(JSContext* cx, Handle<LazyScript*> lazy, const cha
 
     script->bindings = pn->pn_funbox->bindings;
 
-    if (lazy->usesArgumentsApplyAndThis())
-        script->setUsesArgumentsApplyAndThis();
+    if (lazy->isLikelyConstructorWrapper())
+        script->setLikelyConstructorWrapper();
     if (lazy->hasBeenCloned())
         script->setHasBeenCloned();
 
@@ -828,7 +860,7 @@ frontend::CompileLazyFunction(JSContext* cx, Handle<LazyScript*> lazy, const cha
     MOZ_ASSERT(!options.forEval);
     BytecodeEmitter bce(/* parent = */ nullptr, &parser, pn->pn_funbox, script, lazy,
                         /* insideEval = */ false, /* evalCaller = */ nullptr,
-                        /* insideNonGlobalEval = */ false, options.lineno,
+                        /* insideNonGlobalEval = */ false, pn->pn_pos,
                         BytecodeEmitter::LazyFunction);
     if (!bce.init())
         return false;

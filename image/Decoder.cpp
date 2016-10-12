@@ -55,16 +55,7 @@ Decoder::~Decoder()
   if (mImage && !NS_IsMainThread()) {
     // Dispatch mImage to main thread to prevent it from being destructed by the
     // decode thread.
-    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-    NS_WARN_IF_FALSE(mainThread, "Couldn't get the main thread!");
-    if (mainThread) {
-      // Handle ambiguous nsISupports inheritance.
-      RasterImage* rawImg = nullptr;
-      mImage.swap(rawImg);
-      DebugOnly<nsresult> rv =
-        NS_ProxyRelease(mainThread, NS_ISUPPORTS_CAST(ImageResource*, rawImg));
-      MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to proxy release to main thread");
-    }
+    NS_ReleaseOnMainThread(mImage.forget());
   }
 }
 
@@ -190,6 +181,7 @@ void
 Decoder::CompleteDecode()
 {
   // Implementation-specific finalization
+  BeforeFinishInternal();
   if (!HasError()) {
     FinishInternal();
   } else {
@@ -393,6 +385,7 @@ Decoder::AllocateFrameInternal(uint32_t aFrameNum,
  */
 
 void Decoder::InitInternal() { }
+void Decoder::BeforeFinishInternal() { }
 void Decoder::FinishInternal() { }
 void Decoder::FinishWithErrorInternal() { }
 
@@ -452,9 +445,15 @@ Decoder::PostFrameStop(Opacity aFrameOpacity
 
   // If we're not sending partial invalidations, then we send an invalidation
   // here when the first frame is complete.
-  if (!ShouldSendPartialInvalidations() && !HasAnimation()) {
+  if (!ShouldSendPartialInvalidations() && mFrameCount == 1) {
     mInvalidRect.UnionRect(mInvalidRect,
                            gfx::IntRect(gfx::IntPoint(0, 0), GetSize()));
+  }
+
+  // If we are going to keep decoding we should notify now about the first frame being done.
+  if (mImage && mFrameCount == 1 && HasAnimation()) {
+    MOZ_ASSERT(HasProgress());
+    DecodePool::Singleton()->NotifyProgress(this);
   }
 }
 
@@ -469,7 +468,7 @@ Decoder::PostInvalidation(const nsIntRect& aRect,
 
   // Record this invalidation, unless we're not sending partial invalidations
   // or we're past the first frame.
-  if (ShouldSendPartialInvalidations() && !HasAnimation()) {
+  if (ShouldSendPartialInvalidations() && mFrameCount == 1) {
     mInvalidRect.UnionRect(mInvalidRect, aRect);
     mCurrentFrame->ImageUpdated(aRectAtTargetSize.valueOr(aRect));
   }

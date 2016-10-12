@@ -16,15 +16,15 @@ namespace js {
 // instantiated.
 class ProxyObject : public JSObject
 {
-    HeapPtrShape shape;
+    GCPtrShape shape;
 
     // GetProxyDataLayout computes the address of this field.
-    ProxyDataLayout data;
+    detail::ProxyDataLayout data;
 
     void static_asserts() {
         static_assert(sizeof(ProxyObject) == sizeof(JSObject_Slots0),
                       "proxy object size must match GC thing size");
-        static_assert(offsetof(ProxyObject, data) == ProxyDataOffset,
+        static_assert(offsetof(ProxyObject, data) == detail::ProxyDataOffset,
                       "proxy object layout must match shadow interface");
     }
 
@@ -39,8 +39,8 @@ class ProxyObject : public JSObject
     void setCrossCompartmentPrivate(const Value& priv);
     void setSameCompartmentPrivate(const Value& priv);
 
-    HeapValue* slotOfPrivate() {
-        return reinterpret_cast<HeapValue*>(&GetProxyDataLayout(this)->values->privateSlot);
+    GCPtrValue* slotOfPrivate() {
+        return reinterpret_cast<GCPtrValue*>(&detail::GetProxyDataLayout(this)->values->privateSlot);
     }
 
     JSObject* target() const {
@@ -62,8 +62,8 @@ class ProxyObject : public JSObject
         return offsetof(ProxyObject, data.handler);
     }
     static size_t offsetOfExtraSlotInValues(size_t slot) {
-        MOZ_ASSERT(slot < PROXY_EXTRA_SLOTS);
-        return offsetof(ProxyValueArray, extraSlots) + slot * sizeof(Value);
+        MOZ_ASSERT(slot < detail::PROXY_EXTRA_SLOTS);
+        return offsetof(detail::ProxyValueArray, extraSlots) + slot * sizeof(Value);
     }
 
     const Value& extra(size_t n) const {
@@ -75,9 +75,9 @@ class ProxyObject : public JSObject
     }
 
   private:
-    HeapValue* slotOfExtra(size_t n) {
-        MOZ_ASSERT(n < PROXY_EXTRA_SLOTS);
-        return reinterpret_cast<HeapValue*>(&GetProxyDataLayout(this)->values->extraSlots[n]);
+    GCPtrValue* slotOfExtra(size_t n) {
+        MOZ_ASSERT(n < detail::PROXY_EXTRA_SLOTS);
+        return reinterpret_cast<GCPtrValue*>(&detail::GetProxyDataLayout(this)->values->extraSlots[n]);
     }
 
     static bool isValidProxyClass(const Class* clasp) {
@@ -91,8 +91,8 @@ class ProxyObject : public JSObject
         // Proxy classes are not allowed to have call or construct hooks directly. Their
         // callability is instead decided by handler()->isCallable().
         return clasp->isProxy() &&
-               clasp->trace == proxy_Trace &&
-               !clasp->call && !clasp->construct;
+               clasp->isTrace(proxy_Trace) &&
+               !clasp->getCall() && !clasp->getConstruct();
     }
 
   public:
@@ -109,6 +109,12 @@ class ProxyObject : public JSObject
     // take account of the handler type.
     static const Class proxyClass;
 };
+
+inline bool
+IsProxyClass(const Class* clasp)
+{
+    return clasp->isProxy();
+}
 
 bool IsDerivedProxyObject(const JSObject* obj, const js::BaseProxyHandler* handler);
 

@@ -11,13 +11,13 @@ import android.util.AttributeSet;
 
 import android.view.View;
 import android.widget.LinearLayout;
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.AnimatorListenerAdapter;
-import com.nineoldandroids.animation.ObjectAnimator;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
-import org.mozilla.gecko.animation.TransitionsTracker;
+import org.mozilla.gecko.util.Experiments;
 
 /**
  * A container for the pager and the entire first run experience.
@@ -64,8 +64,8 @@ public class FirstrunAnimationContainer extends LinearLayout {
         animateHide();
 
         // Stop all versions of firstrun A/B sessions.
-        Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, FirstrunPagerConfig.ONBOARDING_A);
-        Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, FirstrunPagerConfig.ONBOARDING_B);
+        Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, Experiments.ONBOARDING3_B);
+        Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, Experiments.ONBOARDING3_C);
     }
 
     private void animateHide() {
@@ -77,8 +77,6 @@ public class FirstrunAnimationContainer extends LinearLayout {
                 FirstrunAnimationContainer.this.setVisibility(View.GONE);
             }
         });
-
-        TransitionsTracker.track(alphaAnimator);
 
         alphaAnimator.start();
     }

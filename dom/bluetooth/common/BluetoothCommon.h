@@ -9,10 +9,9 @@
 
 #include <algorithm>
 #include "mozilla/Compiler.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/Observer.h"
 #include "mozilla/UniquePtr.h"
-#include "nsAutoPtr.h"
 #include "nsPrintfCString.h"
 #include "nsString.h"
 #include "nsTArray.h"
@@ -207,6 +206,7 @@ extern bool gBluetoothDebugFlag;
  */
 #define A2DP_STATUS_CHANGED_ID               "a2dpstatuschanged"
 #define HFP_STATUS_CHANGED_ID                "hfpstatuschanged"
+#define HID_STATUS_CHANGED_ID                "hidstatuschanged"
 #define SCO_STATUS_CHANGED_ID                "scostatuschanged"
 
 /**
@@ -306,6 +306,13 @@ extern bool gBluetoothDebugFlag;
  * Currently use 600 here to conform to bluedroid's BTGATT_MAX_ATTR_LEN.
  */
 #define BLUETOOTH_GATT_MAX_ATTR_LEN 600
+
+/**
+ * The maximum descriptor length defined in BlueZ ipc spec.
+ * Please refer to http://git.kernel.org/cgit/bluetooth/bluez.git/tree/\
+ * android/hal-ipc-api.txt#n532
+ */
+#define BLUETOOTH_HID_MAX_DESC_LEN 884
 
 BEGIN_BLUETOOTH_NAMESPACE
 
@@ -408,20 +415,19 @@ struct BluetoothActivityEnergyInfo {
 
 /**
  * |BluetoothAddress| stores the 6-byte MAC address of a Bluetooth
- * device. The constants ANY, ALL and LOCAL represent addresses with
- * special meaning.
+ * device. The constants returned from ANY(), ALL() and LOCAL()
+ * represent addresses with special meaning.
  */
 struct BluetoothAddress {
-
-  static const BluetoothAddress ANY;
-  static const BluetoothAddress ALL;
-  static const BluetoothAddress LOCAL;
+  static const BluetoothAddress& ANY();
+  static const BluetoothAddress& ALL();
+  static const BluetoothAddress& LOCAL();
 
   uint8_t mAddr[6];
 
   BluetoothAddress()
   {
-    Clear(); // assign ANY
+    Clear(); // assign ANY()
   }
 
   MOZ_IMPLICIT BluetoothAddress(const BluetoothAddress&) = default;
@@ -451,20 +457,20 @@ struct BluetoothAddress {
   }
 
   /**
-   * |Clear| assigns an invalid value (i.e., ANY) to the address.
+   * |Clear| assigns an invalid value (i.e., ANY()) to the address.
    */
   void Clear()
   {
-    operator=(ANY);
+    operator=(ANY());
   }
 
   /**
-   * |IsCleared| returns true if the address doesn not contain a
-   * specific value (i.e., it contains ANY).
+   * |IsCleared| returns true if the address does not contain a
+   * specific value (i.e., it contains ANY()).
    */
   bool IsCleared() const
   {
-    return operator==(ANY);
+    return operator==(ANY());
   }
 
   /*
@@ -550,11 +556,13 @@ enum BluetoothServiceClass {
 };
 
 struct BluetoothUuid {
+  static const BluetoothUuid& ZERO();
+  static const BluetoothUuid& BASE();
 
-  uint8_t mUuid[16];
+  uint8_t mUuid[16];  // store 128-bit UUID value in big-endian order
 
   BluetoothUuid()
-    : BluetoothUuid(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    : BluetoothUuid(ZERO())
   { }
 
   MOZ_IMPLICIT BluetoothUuid(const BluetoothUuid&) = default;
@@ -608,7 +616,7 @@ struct BluetoothUuid {
    */
   void Clear()
   {
-    operator=(BluetoothUuid());
+    operator=(ZERO());
   }
 
   /**
@@ -617,7 +625,7 @@ struct BluetoothUuid {
    */
   bool IsCleared() const
   {
-    return operator==(BluetoothUuid());
+    return operator==(ZERO());
   }
 
   bool operator==(const BluetoothUuid& aRhs) const
@@ -631,30 +639,25 @@ struct BluetoothUuid {
     return !operator==(aRhs);
   }
 
+  /* This less-than operator is used for sorted insertion of nsTArray */
+  bool operator<(const BluetoothUuid& aUuid) const
+  {
+    return memcmp(mUuid, aUuid.mUuid, sizeof(aUuid.mUuid)) < 0;
+  };
+
   /*
    * Getter-setter methods for short UUIDS. The first 4 bytes in the
    * UUID are represented by the short notation UUID32, and bytes 3
    * and 4 (indices 2 and 3) are represented by UUID16. The rest of
-   * the UUID is filled with the SDP base UUID.
+   * the UUID is filled with the Bluetooth Base UUID.
    *
    * Below are helpers for accessing these values.
    */
 
   void SetUuid32(uint32_t aUuid32)
   {
+    operator=(BASE());
     BigEndian::writeUint32(&mUuid[0], aUuid32);
-    mUuid[4] = 0x00;
-    mUuid[5] = 0x00;
-    mUuid[6] = 0x10;
-    mUuid[7] = 0x00;
-    mUuid[8] = 0x80;
-    mUuid[9] = 0x00;
-    mUuid[10] = 0x00;
-    mUuid[11] = 0x80;
-    mUuid[12] = 0x5f;
-    mUuid[13] = 0x9b;
-    mUuid[14] = 0x34;
-    mUuid[15] = 0xfb;
   }
 
   uint32_t GetUuid32() const
@@ -664,7 +667,8 @@ struct BluetoothUuid {
 
   void SetUuid16(uint16_t aUuid16)
   {
-    SetUuid32(aUuid16); // MSB is 0x0000
+    operator=(BASE());
+    BigEndian::writeUint16(&mUuid[2], aUuid16);
   }
 
   uint16_t GetUuid16() const
@@ -877,6 +881,64 @@ enum BluetoothSocketType {
   SCO    = 2,
   L2CAP  = 3,
   EL2CAP = 4
+};
+
+struct BluetoothHidInfoParam {
+  uint16_t mAttributeMask;
+  uint8_t mSubclass;
+  uint8_t mApplicationId;
+  uint16_t mVendorId;
+  uint16_t mProductId;
+  uint16_t mVersion;
+  uint8_t mCountryCode;
+  uint16_t mDescriptorLength;
+  uint8_t mDescriptorValue[BLUETOOTH_HID_MAX_DESC_LEN];
+};
+
+struct BluetoothHidReport {
+  nsTArray<uint8_t> mReportData;
+};
+
+enum BluetoothHidProtocolMode {
+  HID_PROTOCOL_MODE_REPORT = 0x00,
+  HID_PROTOCOL_MODE_BOOT = 0x01,
+  HID_PROTOCOL_MODE_UNSUPPORTED = 0xff
+};
+
+enum BluetoothHidReportType {
+  HID_REPORT_TYPE_INPUT = 0x01,
+  HID_REPORT_TYPE_OUTPUT = 0x02,
+  HID_REPORT_TYPE_FEATURE = 0x03
+};
+
+enum BluetoothHidConnectionState {
+  HID_CONNECTION_STATE_CONNECTED,
+  HID_CONNECTION_STATE_CONNECTING,
+  HID_CONNECTION_STATE_DISCONNECTED,
+  HID_CONNECTION_STATE_DISCONNECTING,
+  HID_CONNECTION_STATE_FAILED_MOUSE_FROM_HOST,
+  HID_CONNECTION_STATE_FAILED_KEYBOARD_FROM_HOST,
+  HID_CONNECTION_STATE_FAILED_TOO_MANY_DEVICES,
+  HID_CONNECTION_STATE_FAILED_NO_HID_DRIVER,
+  HID_CONNECTION_STATE_FAILED_GENERIC,
+  HID_CONNECTION_STATE_UNKNOWN
+};
+
+enum BluetoothHidStatus {
+  HID_STATUS_OK,
+  HID_STATUS_HANDSHAKE_DEVICE_NOT_READY,
+  HID_STATUS_HANDSHAKE_INVALID_REPORT_ID,
+  HID_STATUS_HANDSHAKE_TRANSACTION_NOT_SPT,
+  HID_STATUS_HANDSHAKE_INVALID_PARAMETER,
+  HID_STATUS_HANDSHAKE_GENERIC_ERROR,
+  HID_STATUS_GENERAL_ERROR,
+  HID_STATUS_SDP_ERROR,
+  HID_STATUS_SET_PROTOCOL_ERROR,
+  HID_STATUS_DEVICE_DATABASE_FULL,
+  HID_STATUS_DEVICE_TYPE_NOT_SUPPORTED,
+  HID_STATUS_NO_RESOURCES,
+  HID_STATUS_AUTHENTICATION_FAILED,
+  HID_STATUS_HDL
 };
 
 enum BluetoothHandsfreeAtResponse {
@@ -1126,7 +1188,10 @@ enum BluetoothGattStatus {
   GATT_STATUS_INSUFFICIENT_ENCRYPTION,
   GATT_STATUS_UNSUPPORTED_GROUP_TYPE,
   GATT_STATUS_INSUFFICIENT_RESOURCES,
-  GATT_STATUS_UNKNOWN_ERROR
+  GATT_STATUS_UNKNOWN_ERROR,
+  GATT_STATUS_BEGIN_OF_APPLICATION_ERROR = 0x80,
+  GATT_STATUS_END_OF_APPLICATION_ERROR = 0x9f,
+  GATT_STATUS_END_OF_ERROR = 0x100
 };
 
 enum BluetoothGattAuthReq {

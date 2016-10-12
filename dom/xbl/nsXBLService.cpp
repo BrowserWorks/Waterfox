@@ -113,7 +113,7 @@ public:
   {
     // We only need the document here to cause frame construction, so
     // we need the current doc, not the owner doc.
-    nsIDocument* doc = mBoundElement->GetCurrentDoc();
+    nsIDocument* doc = mBoundElement->GetUncomposedDoc();
     if (!doc)
       return;
 
@@ -188,7 +188,7 @@ private:
   ~nsXBLStreamListener();
 
   nsCOMPtr<nsIStreamListener> mInner;
-  nsAutoTArray<nsXBLBindingRequest*, 8> mBindingRequests;
+  AutoTArray<nsXBLBindingRequest*, 8> mBindingRequests;
 
   nsCOMPtr<nsIWeakReference> mBoundDocument;
   nsCOMPtr<nsIXMLContentSink> mSink; // Only set until OnStartRequest
@@ -318,7 +318,7 @@ nsXBLStreamListener::HandleEvent(nsIDOMEvent* aEvent)
     // ready.
     if (count > 0) {
       nsXBLBindingRequest* req = mBindingRequests.ElementAt(0);
-      nsIDocument* document = req->mBoundElement->GetCurrentDoc();
+      nsIDocument* document = req->mBoundElement->GetUncomposedDoc();
       if (document)
         document->FlushPendingNotifications(Flush_ContentAndNotify);
     }
@@ -536,7 +536,7 @@ nsXBLService::AttachGlobalKeyHandler(EventTarget* aTarget)
   nsCOMPtr<nsIContent> contentNode(do_QueryInterface(aTarget));
   if (contentNode) {
     // Only attach if we're really in a document
-    nsCOMPtr<nsIDocument> doc = contentNode->GetCurrentDoc();
+    nsCOMPtr<nsIDocument> doc = contentNode->GetUncomposedDoc();
     if (doc)
       piTarget = doc; // We're a XUL keyset. Attach to our document.
   }
@@ -556,22 +556,7 @@ nsXBLService::AttachGlobalKeyHandler(EventTarget* aTarget)
   RefPtr<nsXBLWindowKeyHandler> handler =
     NS_NewXBLWindowKeyHandler(elt, piTarget);
 
-  // listen to these events
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keydown"),
-                                  TrustedEventsAtSystemGroupBubble());
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keyup"),
-                                  TrustedEventsAtSystemGroupBubble());
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keypress"),
-                                  TrustedEventsAtSystemGroupBubble());
-
-  // The capturing listener is only used for XUL keysets to properly handle
-  // shortcut keys in a multi-process environment.
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keydown"),
-                                  TrustedEventsAtSystemGroupCapture());
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keyup"),
-                                  TrustedEventsAtSystemGroupCapture());
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keypress"),
-                                  TrustedEventsAtSystemGroupCapture());
+  handler->InstallKeyboardEventListenersTo(manager);
 
   if (contentNode)
     return contentNode->SetProperty(nsGkAtoms::listener,
@@ -597,7 +582,7 @@ nsXBLService::DetachGlobalKeyHandler(EventTarget* aTarget)
     return NS_ERROR_FAILURE;
 
   // Only attach if we're really in a document
-  nsCOMPtr<nsIDocument> doc = contentNode->GetCurrentDoc();
+  nsCOMPtr<nsIDocument> doc = contentNode->GetUncomposedDoc();
   if (doc)
     piTarget = do_QueryInterface(doc);
 
@@ -611,19 +596,8 @@ nsXBLService::DetachGlobalKeyHandler(EventTarget* aTarget)
   if (!handler)
     return NS_ERROR_FAILURE;
 
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keydown"),
-                                     TrustedEventsAtSystemGroupBubble());
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keyup"),
-                                     TrustedEventsAtSystemGroupBubble());
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keypress"),
-                                     TrustedEventsAtSystemGroupBubble());
-
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keydown"),
-                                     TrustedEventsAtSystemGroupCapture());
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keyup"),
-                                     TrustedEventsAtSystemGroupCapture());
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keypress"),
-                                     TrustedEventsAtSystemGroupCapture());
+  static_cast<nsXBLWindowKeyHandler*>(handler)->
+    RemoveKeyboardEventListenersFrom(manager);
 
   contentNode->DeleteProperty(nsGkAtoms::listener);
 
@@ -647,7 +621,7 @@ nsXBLService::GetBinding(nsIContent* aBoundElement, nsIURI* aURI,
                          bool* aIsReady, nsXBLBinding** aResult)
 {
   // More than 6 binding URIs are rare, see bug 55070 comment 18.
-  nsAutoTArray<nsCOMPtr<nsIURI>, 6> uris;
+  AutoTArray<nsCOMPtr<nsIURI>, 6> uris;
   return GetBinding(aBoundElement, aURI, aPeekOnly, aOriginPrincipal, aIsReady,
                     aResult, uris);
 }
@@ -884,117 +858,118 @@ nsXBLService::LoadBindingDocumentInfo(nsIContent* aBoundElement,
   nsresult rv = aBindingURI->CloneIgnoringRef(getter_AddRefs(documentURI));
   NS_ENSURE_SUCCESS(rv, rv);
 
+  nsBindingManager *bindingManager = nullptr;
+
+  // The first thing to check is the binding manager, which (if it exists)
+  // should have a reference to the nsXBLDocumentInfo if this document
+  // has ever loaded this binding before.
+  if (aBoundDocument) {
+    bindingManager = aBoundDocument->BindingManager();
+    info = bindingManager->GetXBLDocumentInfo(documentURI);
+    if (aBoundDocument->IsStaticDocument() &&
+        IsChromeOrResourceURI(aBindingURI)) {
+      aForceSyncLoad = true;
+    }
+  }
+
+  // It's possible the document is already being loaded. If so, there's no
+  // document yet, but we need to glom on our request so that it will be
+  // processed whenever the doc does finish loading.
+  NodeInfo *ni = nullptr;
+  if (aBoundElement)
+    ni = aBoundElement->NodeInfo();
+
+  if (!info && bindingManager &&
+      (!ni || !(ni->Equals(nsGkAtoms::scrollbar, kNameSpaceID_XUL) ||
+                ni->Equals(nsGkAtoms::thumb, kNameSpaceID_XUL) ||
+                ((ni->Equals(nsGkAtoms::input) ||
+                  ni->Equals(nsGkAtoms::select)) &&
+                 aBoundElement->IsHTMLElement()))) && !aForceSyncLoad) {
+    nsCOMPtr<nsIStreamListener> listener;
+    if (bindingManager)
+      listener = bindingManager->GetLoadingDocListener(documentURI);
+    if (listener) {
+      nsXBLStreamListener* xblListener =
+        static_cast<nsXBLStreamListener*>(listener.get());
+      // Create a new load observer.
+      if (!xblListener->HasRequest(aBindingURI, aBoundElement)) {
+        nsXBLBindingRequest* req = new nsXBLBindingRequest(aBindingURI, aBoundElement);
+        xblListener->AddRequest(req);
+      }
+      return NS_OK;
+    }
+  }
+
 #ifdef MOZ_XUL
-  // We've got a file.  Check our XBL document cache.
+  // The second line of defense is the global nsXULPrototypeCache,
+  // if it's being used.
   nsXULPrototypeCache* cache = nsXULPrototypeCache::GetInstance();
   bool useXULCache = cache && cache->IsEnabled();
 
-  if (useXULCache) {
-    // The first line of defense is the chrome cache.
+  if (!info && useXULCache) {
     // This cache crosses the entire product, so that any XBL bindings that are
     // part of chrome will be reused across all XUL documents.
     info = cache->GetXBLDocumentInfo(documentURI);
   }
-#endif
+
+  bool useStartupCache = useXULCache && IsChromeOrResourceURI(documentURI);
 
   if (!info) {
-    // The second line of defense is the binding manager's document table.
-    nsBindingManager *bindingManager = nullptr;
-
-    if (aBoundDocument) {
-      bindingManager = aBoundDocument->BindingManager();
-      info = bindingManager->GetXBLDocumentInfo(documentURI);
-      if (aBoundDocument->IsStaticDocument() &&
-          IsChromeOrResourceURI(aBindingURI)) {
-        aForceSyncLoad = true;
-      }
-    }
-
-    NodeInfo *ni = nullptr;
-    if (aBoundElement)
-      ni = aBoundElement->NodeInfo();
-
-    if (!info && bindingManager &&
-        (!ni || !(ni->Equals(nsGkAtoms::scrollbar, kNameSpaceID_XUL) ||
-                  ni->Equals(nsGkAtoms::thumb, kNameSpaceID_XUL) ||
-                  ((ni->Equals(nsGkAtoms::input) ||
-                    ni->Equals(nsGkAtoms::select)) &&
-                   aBoundElement->IsHTMLElement()))) && !aForceSyncLoad) {
-      // The third line of defense is to investigate whether or not the
-      // document is currently being loaded asynchronously.  If so, there's no
-      // document yet, but we need to glom on our request so that it will be
-      // processed whenever the doc does finish loading.
-      nsCOMPtr<nsIStreamListener> listener;
-      if (bindingManager)
-        listener = bindingManager->GetLoadingDocListener(documentURI);
-      if (listener) {
-        nsXBLStreamListener* xblListener =
-          static_cast<nsXBLStreamListener*>(listener.get());
-        // Create a new load observer.
-        if (!xblListener->HasRequest(aBindingURI, aBoundElement)) {
-          nsXBLBindingRequest* req = new nsXBLBindingRequest(aBindingURI, aBoundElement);
-          xblListener->AddRequest(req);
-        }
-        return NS_OK;
-      }
-    }
-
-#ifdef MOZ_XUL
     // Next, look in the startup cache
-    bool useStartupCache = useXULCache && IsChromeOrResourceURI(documentURI);
     if (!info && useStartupCache) {
       rv = nsXBLDocumentInfo::ReadPrototypeBindings(documentURI, getter_AddRefs(info));
       if (NS_SUCCEEDED(rv)) {
         cache->PutXBLDocumentInfo(info);
-
-        if (bindingManager) {
-          // Cache it in our binding manager's document table.
-          bindingManager->PutXBLDocumentInfo(info);
-        }
       }
     }
+  }
 #endif
 
-    if (!info) {
-      // Finally, if all lines of defense fail, we go and fetch the binding
-      // document.
+  if (!info) {
+    // Finally, if all lines of defense fail, we go and fetch the binding
+    // document.
 
-      // Always load chrome synchronously
-      bool chrome;
-      if (NS_SUCCEEDED(documentURI->SchemeIs("chrome", &chrome)) && chrome)
-        aForceSyncLoad = true;
+    // Always load chrome synchronously
+    bool chrome;
+    if (NS_SUCCEEDED(documentURI->SchemeIs("chrome", &chrome)) && chrome)
+      aForceSyncLoad = true;
 
-      nsCOMPtr<nsIDocument> document;
-      rv = FetchBindingDocument(aBoundElement, aBoundDocument, documentURI,
-                                aBindingURI, aOriginPrincipal, aForceSyncLoad,
-                                getter_AddRefs(document));
-      NS_ENSURE_SUCCESS(rv, rv);
+    nsCOMPtr<nsIDocument> document;
+    rv = FetchBindingDocument(aBoundElement, aBoundDocument, documentURI,
+                              aBindingURI, aOriginPrincipal, aForceSyncLoad,
+                              getter_AddRefs(document));
+    NS_ENSURE_SUCCESS(rv, rv);
 
-      if (document) {
-        nsBindingManager *xblDocBindingManager = document->BindingManager();
-        info = xblDocBindingManager->GetXBLDocumentInfo(documentURI);
-        if (!info) {
-          NS_ERROR("An XBL file is malformed.  Did you forget the XBL namespace on the bindings tag?");
-          return NS_ERROR_FAILURE;
-        }
-        xblDocBindingManager->RemoveXBLDocumentInfo(info); // Break the self-imposed cycle.
+    if (document) {
+      nsBindingManager *xblDocBindingManager = document->BindingManager();
+      info = xblDocBindingManager->GetXBLDocumentInfo(documentURI);
+      if (!info) {
+        NS_ERROR("An XBL file is malformed.  Did you forget the XBL namespace on the bindings tag?");
+        return NS_ERROR_FAILURE;
+      }
+      xblDocBindingManager->RemoveXBLDocumentInfo(info); // Break the self-imposed cycle.
 
-        // If the doc is a chrome URI, then we put it into the XUL cache.
+      // If the doc is a chrome URI, then we put it into the XUL cache.
 #ifdef MOZ_XUL
-        if (useStartupCache) {
-          cache->PutXBLDocumentInfo(info);
+      if (useStartupCache) {
+        cache->PutXBLDocumentInfo(info);
 
-          // now write the bindings into the startup cache
-          info->WritePrototypeBindings();
-        }
-#endif
-
-        if (bindingManager) {
-          // Also put it in our binding manager's document table.
-          bindingManager->PutXBLDocumentInfo(info);
-        }
+        // now write the bindings into the startup cache
+        info->WritePrototypeBindings();
       }
+#endif
     }
+  }
+
+  if (info && bindingManager) {
+    // Cache it in our binding manager's document table. This way,
+    // we can ensure that if the document has loaded this binding
+    // before, it can continue to use it even if the XUL prototype
+    // cache gets flushed. That way, if a flush does occur, we
+    // don't get into a weird state where we're using different
+    // XBLDocumentInfos for the same XBL document in a single
+    // document that has loaded some bindings.
+    bindingManager->PutXBLDocumentInfo(info);
   }
 
   info.forget(aResult);

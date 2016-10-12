@@ -29,8 +29,8 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
 
+using namespace mozilla::dom::indexedDB;
 using namespace mozilla::dom::workers;
 using namespace mozilla::ipc;
 
@@ -62,12 +62,12 @@ public:
 
     MOZ_COUNT_DTOR(IDBTransaction::WorkerFeature);
 
-    mWorkerPrivate->RemoveFeature(mWorkerPrivate->GetJSContext(), this);
+    mWorkerPrivate->RemoveFeature(this);
   }
 
 private:
   virtual bool
-  Notify(JSContext* aCx, Status aStatus) override;
+  Notify(Status aStatus) override;
 };
 
 IDBTransaction::IDBTransaction(IDBDatabase* aDatabase,
@@ -207,7 +207,7 @@ IDBTransaction::CreateVersionChange(
 
 // static
 already_AddRefed<IDBTransaction>
-IDBTransaction::Create(IDBDatabase* aDatabase,
+IDBTransaction::Create(JSContext* aCx, IDBDatabase* aDatabase,
                        const nsTArray<nsString>& aObjectStoreNames,
                        Mode aMode)
 {
@@ -216,11 +216,12 @@ IDBTransaction::Create(IDBDatabase* aDatabase,
   MOZ_ASSERT(!aObjectStoreNames.IsEmpty());
   MOZ_ASSERT(aMode == READ_ONLY ||
              aMode == READ_WRITE ||
-             aMode == READ_WRITE_FLUSH);
+             aMode == READ_WRITE_FLUSH ||
+             aMode == CLEANUP);
 
   RefPtr<IDBTransaction> transaction =
     new IDBTransaction(aDatabase, aObjectStoreNames, aMode);
-  IDBRequest::CaptureCaller(transaction->mFilename, &transaction->mLineNo,
+  IDBRequest::CaptureCaller(aCx, transaction->mFilename, &transaction->mLineNo,
                             &transaction->mColumn);
 
   transaction->SetScriptOwner(aDatabase->GetScriptOwner());
@@ -239,11 +240,8 @@ IDBTransaction::Create(IDBDatabase* aDatabase,
 
     workerPrivate->AssertIsOnWorkerThread();
 
-    JSContext* cx = workerPrivate->GetJSContext();
-    MOZ_ASSERT(cx);
-
     transaction->mWorkerFeature = new WorkerFeature(workerPrivate, transaction);
-    MOZ_ALWAYS_TRUE(workerPrivate->AddFeature(cx, transaction->mWorkerFeature));
+    MOZ_ALWAYS_TRUE(workerPrivate->AddFeature(transaction->mWorkerFeature));
   }
 
   return transaction.forget();
@@ -279,7 +277,7 @@ IDBTransaction::AssertIsOnOwningThread() const
 #endif // DEBUG
 
 void
-IDBTransaction::SetBackgroundActor(BackgroundTransactionChild* aBackgroundActor)
+IDBTransaction::SetBackgroundActor(indexedDB::BackgroundTransactionChild* aBackgroundActor)
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(aBackgroundActor);
@@ -569,8 +567,22 @@ IDBTransaction::DeleteObjectStore(int64_t aObjectStoreId)
 }
 
 void
+IDBTransaction::RenameObjectStore(int64_t aObjectStoreId,
+                                  const nsAString& aName)
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(aObjectStoreId);
+  MOZ_ASSERT(VERSION_CHANGE == mMode);
+  MOZ_ASSERT(mBackgroundActor.mVersionChangeBackgroundActor);
+  MOZ_ASSERT(IsOpen());
+
+  MOZ_ALWAYS_TRUE(mBackgroundActor.mVersionChangeBackgroundActor->
+                    SendRenameObjectStore(aObjectStoreId, nsString(aName)));
+}
+
+void
 IDBTransaction::CreateIndex(IDBObjectStore* aObjectStore,
-                            const IndexMetadata& aMetadata)
+                            const indexedDB::IndexMetadata& aMetadata)
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(aObjectStore);
@@ -596,6 +608,24 @@ IDBTransaction::DeleteIndex(IDBObjectStore* aObjectStore,
 
   MOZ_ALWAYS_TRUE(mBackgroundActor.mVersionChangeBackgroundActor->
                     SendDeleteIndex(aObjectStore->Id(), aIndexId));
+}
+
+void
+IDBTransaction::RenameIndex(IDBObjectStore* aObjectStore,
+                            int64_t aIndexId,
+                            const nsAString& aName)
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(aObjectStore);
+  MOZ_ASSERT(aIndexId);
+  MOZ_ASSERT(VERSION_CHANGE == mMode);
+  MOZ_ASSERT(mBackgroundActor.mVersionChangeBackgroundActor);
+  MOZ_ASSERT(IsOpen());
+
+  MOZ_ALWAYS_TRUE(mBackgroundActor.mVersionChangeBackgroundActor->
+                    SendRenameIndex(aObjectStore->Id(),
+                                    aIndexId,
+                                    nsString(aName)));
 }
 
 void
@@ -766,6 +796,10 @@ IDBTransaction::FireCompleteOrAbortEvents(nsresult aResult)
                                eNotCancelable);
     MOZ_ASSERT(event);
   } else {
+    if (aResult == NS_ERROR_DOM_INDEXEDDB_QUOTA_ERR) {
+      mDatabase->SetQuotaExceeded();
+    }
+
     if (!mError && !mAbortedByScript) {
       mError = new DOMError(GetOwner(), aResult);
     }
@@ -818,7 +852,7 @@ IDBTransaction::NextIndexId()
   return mNextIndexId++;
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 IDBTransaction::GetParentObject() const
 {
   AssertIsOnOwningThread();
@@ -840,6 +874,9 @@ IDBTransaction::GetMode(ErrorResult& aRv) const
 
     case READ_WRITE_FLUSH:
       return IDBTransactionMode::Readwriteflush;
+
+    case CLEANUP:
+      return IDBTransactionMode::Cleanup;
 
     case VERSION_CHANGE:
       return IDBTransactionMode::Versionchange;
@@ -992,7 +1029,7 @@ IDBTransaction::Run()
 
 bool
 IDBTransaction::
-WorkerFeature::Notify(JSContext* aCx, Status aStatus)
+WorkerFeature::Notify(Status aStatus)
 {
   MOZ_ASSERT(mWorkerPrivate);
   mWorkerPrivate->AssertIsOnWorkerThread();
@@ -1012,6 +1049,5 @@ WorkerFeature::Notify(JSContext* aCx, Status aStatus)
   return true;
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

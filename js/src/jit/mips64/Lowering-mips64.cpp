@@ -15,14 +15,13 @@
 using namespace js;
 using namespace js::jit;
 
-void
-LIRGeneratorMIPS64::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1,
-                                Register reg2, bool useAtStart)
+LBoxAllocation
+LIRGeneratorMIPS64::useBoxFixed(MDefinition* mir, Register reg1, Register reg2, bool useAtStart)
 {
-    MOZ_ASSERT(mir->type() == MIRType_Value);
+    MOZ_ASSERT(mir->type() == MIRType::Value);
 
     ensureDefined(mir);
-    lir->setOperand(n, LUse(reg1, mir->virtualRegister(), useAtStart));
+    return LBoxAllocation(LUse(reg1, mir->virtualRegister(), useAtStart));
 }
 
 void
@@ -37,7 +36,7 @@ LIRGeneratorMIPS64::visitBox(MBox* box)
     }
 
     if (opd->isConstant()) {
-        define(new(alloc()) LValue(opd->toConstant()->value()), box, LDefinition(LDefinition::BOX));
+        define(new(alloc()) LValue(opd->toConstant()->toJSValue()), box, LDefinition(LDefinition::BOX));
     } else {
         LBox* ins = new(alloc()) LBox(useRegister(opd), opd->type());
         define(ins, box, LDefinition(LDefinition::BOX));
@@ -49,7 +48,7 @@ LIRGeneratorMIPS64::visitUnbox(MUnbox* unbox)
 {
     MDefinition* box = unbox->getOperand(0);
 
-    if (box->type() == MIRType_ObjectOrNull) {
+    if (box->type() == MIRType::ObjectOrNull) {
         LUnboxObjectOrNull* lir = new(alloc()) LUnboxObjectOrNull(useRegisterAtStart(box));
         if (unbox->fallible())
             assignSnapshot(lir, unbox->bailoutKind());
@@ -57,7 +56,7 @@ LIRGeneratorMIPS64::visitUnbox(MUnbox* unbox)
         return;
     }
 
-    MOZ_ASSERT(box->type() == MIRType_Value);
+    MOZ_ASSERT(box->type() == MIRType::Value);
 
     LUnbox* lir;
     if (IsFloatingPointType(unbox->type())) {
@@ -80,7 +79,7 @@ void
 LIRGeneratorMIPS64::visitReturn(MReturn* ret)
 {
     MDefinition* opd = ret->getOperand(0);
-    MOZ_ASSERT(opd->type() == MIRType_Value);
+    MOZ_ASSERT(opd->type() == MIRType::Value);
 
     LReturn* ins = new(alloc()) LReturn;
     ins->setOperand(0, useFixed(opd, JSReturnReg));
@@ -104,7 +103,7 @@ void
 LIRGeneratorMIPS64::lowerTruncateDToInt32(MTruncateToInt32* ins)
 {
     MDefinition* opd = ins->input();
-    MOZ_ASSERT(opd->type() == MIRType_Double);
+    MOZ_ASSERT(opd->type() == MIRType::Double);
 
     define(new(alloc())
            LTruncateDToInt32(useRegister(opd), tempDouble()), ins);
@@ -114,7 +113,7 @@ void
 LIRGeneratorMIPS64::lowerTruncateFToInt32(MTruncateToInt32* ins)
 {
     MDefinition* opd = ins->input();
-    MOZ_ASSERT(opd->type() == MIRType_Float32);
+    MOZ_ASSERT(opd->type() == MIRType::Float32);
 
     define(new(alloc())
            LTruncateFToInt32(useRegister(opd), tempFloat32()), ins);

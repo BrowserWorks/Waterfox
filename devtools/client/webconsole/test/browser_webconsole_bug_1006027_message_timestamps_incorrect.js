@@ -1,6 +1,7 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -28,7 +29,7 @@ function test() {
     info("hud.outputNode.textContent:\n" + hud.outputNode.textContent);
     let timestampNodes = hud.outputNode.querySelectorAll("span.timestamp");
     let aTimestampMilliseconds = Array.prototype.map.call(timestampNodes,
-      function(value) {
+      function (value) {
         // We are parsing timestamps as local time, relative to the begin of
         // the epoch.
         // This is not the correct value of the timestamp, but good enough for
@@ -38,7 +39,7 @@ function test() {
 
     let minTimestamp = Math.min.apply(null, aTimestampMilliseconds);
     let maxTimestamp = Math.max.apply(null, aTimestampMilliseconds);
-    ok(Math.abs(maxTimestamp - minTimestamp) < 1000,
-       "console.log message timestamp spread < 1000ms confirmed");
+    ok(Math.abs(maxTimestamp - minTimestamp) < 2000,
+       "console.log message timestamp spread < 2000ms confirmed");
   }
 }

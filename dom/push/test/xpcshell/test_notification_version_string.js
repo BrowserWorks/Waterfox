@@ -28,13 +28,12 @@ add_task(function* test_notification_version_string() {
     systemRecord: true,
   });
 
-  let notifyPromise = promiseObserverNotification('push-message');
+  let notifyPromise = promiseObserverNotification(PushServiceComponent.pushTopic);
 
   let ackDone;
   let ackPromise = new Promise(resolve => ackDone = resolve);
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -57,15 +56,11 @@ add_task(function* test_notification_version_string() {
     }
   });
 
-  let {subject: notification, data: scope} = yield waitForPromise(
-    notifyPromise,
-    DEFAULT_TIMEOUT,
-    'Timed out waiting for string notification'
-  );
-  equal(notification, null, 'Unexpected data for Simple Push message');
+  let {subject: message, data: scope} = yield notifyPromise;
+  equal(message.QueryInterface(Ci.nsIPushMessage).data, null,
+    'Unexpected data for Simple Push message');
 
-  yield waitForPromise(ackPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for string acknowledgement');
+  yield ackPromise;
 
   let storeRecord = yield db.getByKeyID(
     '6ff97d56-d0c0-43bc-8f5b-61b855e1d93b');

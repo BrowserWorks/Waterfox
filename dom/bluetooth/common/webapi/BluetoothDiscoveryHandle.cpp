@@ -21,16 +21,16 @@ NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 NS_IMPL_ADDREF_INHERITED(BluetoothDiscoveryHandle, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(BluetoothDiscoveryHandle, DOMEventTargetHelper)
 
-BluetoothDiscoveryHandle::BluetoothDiscoveryHandle(nsPIDOMWindow* aWindow)
+BluetoothDiscoveryHandle::BluetoothDiscoveryHandle(nsPIDOMWindowInner* aWindow)
   : DOMEventTargetHelper(aWindow)
 {
   MOZ_ASSERT(aWindow);
 }
 
 BluetoothDiscoveryHandle::BluetoothDiscoveryHandle(
-  nsPIDOMWindow* aWindow,
-  const nsTArray<nsString>& aServiceUuids,
-  const nsAString& aLeScanUuid)
+  nsPIDOMWindowInner* aWindow,
+  const nsTArray<BluetoothUuid>& aServiceUuids,
+  const BluetoothUuid& aLeScanUuid)
   : DOMEventTargetHelper(aWindow)
   , mLeScanUuid(aLeScanUuid)
   , mServiceUuids(aServiceUuids)
@@ -44,7 +44,7 @@ BluetoothDiscoveryHandle::~BluetoothDiscoveryHandle()
 
 // static
 already_AddRefed<BluetoothDiscoveryHandle>
-BluetoothDiscoveryHandle::Create(nsPIDOMWindow* aWindow)
+BluetoothDiscoveryHandle::Create(nsPIDOMWindowInner* aWindow)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aWindow);
@@ -56,9 +56,9 @@ BluetoothDiscoveryHandle::Create(nsPIDOMWindow* aWindow)
 
 already_AddRefed<BluetoothDiscoveryHandle>
 BluetoothDiscoveryHandle::Create(
-  nsPIDOMWindow* aWindow,
-  const nsTArray<nsString>& aServiceUuids,
-  const nsAString& aLeScanUuid)
+  nsPIDOMWindowInner* aWindow,
+  const nsTArray<BluetoothUuid>& aServiceUuids,
+  const BluetoothUuid& aLeScanUuid)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aWindow);
@@ -89,7 +89,7 @@ BluetoothDiscoveryHandle::DispatchLeDeviceEvent(BluetoothDevice* aLeDevice,
 {
   MOZ_ASSERT(aLeDevice);
 
-  nsTArray<nsString> remoteUuids;
+  nsTArray<BluetoothUuid> remoteUuids;
   aLeDevice->GetUuids(remoteUuids);
 
   bool hasUuidsFilter = !mServiceUuids.IsEmpty();

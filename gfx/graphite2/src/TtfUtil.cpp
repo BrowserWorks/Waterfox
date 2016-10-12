@@ -889,21 +889,24 @@ const void * FindCmapSubtable(const void * pCmap, int nPlatformId, /* =3 */ int 
 /*----------------------------------------------------------------------------------------------
     Check the Microsoft Unicode subtable for expected values
 ----------------------------------------------------------------------------------------------*/
-bool CheckCmapSubtable4(const void * pCmapSubtable4, size_t table_len /*, unsigned int maxgid*/)
+bool CheckCmapSubtable4(const void * pCmapSubtable4, const void * pCmapEnd /*, unsigned int maxgid*/)
 {
+    size_t table_len = (const byte *)pCmapEnd - (const byte *)pCmapSubtable4;
     if (!pCmapSubtable4) return false;
     const Sfnt::CmapSubTable * pTable = reinterpret_cast<const Sfnt::CmapSubTable *>(pCmapSubtable4);
     // Bob H say some freeware TT fonts have version 1 (eg, CALIGULA.TTF) 
     // so don't check subtable version. 21 Mar 2002 spec changes version to language.
-    if (be::swap(pTable->format) != 4) return false;
+    if (table_len < sizeof(*pTable) || be::swap(pTable->format) != 4) return false;
     const Sfnt::CmapSubTableFormat4 * pTable4 = reinterpret_cast<const Sfnt::CmapSubTableFormat4 *>(pCmapSubtable4);
+    if (table_len < sizeof(*pTable4))
+        return false;
     uint16 length = be::swap(pTable4->length);
     if (length > table_len)
         return false;
     if (length < sizeof(Sfnt::CmapSubTableFormat4))
         return false;
     uint16 nRanges = be::swap(pTable4->seg_count_x2) >> 1;
-    if (length < sizeof(Sfnt::CmapSubTableFormat4) + 4 * nRanges * sizeof(uint16))
+    if (!nRanges || length < sizeof(Sfnt::CmapSubTableFormat4) + 4 * nRanges * sizeof(uint16))
         return false;
     // check last range is properly terminated
     uint16 chEnd = be::peek<uint16>(pTable4->end_code + nRanges - 1);
@@ -1003,7 +1006,7 @@ gid16 CmapSubtable4Lookup(const void * pCmapSubtabel4, unsigned int nUnicodeId, 
         // Look up value in glyphIdArray
         const ptrdiff_t offset = (nUnicodeId - chStart) + (idRangeOffset >> 1) +
                 (pMid - reinterpret_cast<const uint16 *>(pTable));
-        if (offset * 2 >= be::swap<uint16>(pTable->length))
+        if (offset * 2 + 1 >= be::swap<uint16>(pTable->length))
             return 0;
         gid16 nGlyphId = be::peek<uint16>(reinterpret_cast<const uint16 *>(pTable)+offset);
         // If this value is 0, return 0. Else add the idDelta
@@ -1049,7 +1052,7 @@ unsigned int CmapSubtable4NextCodepoint(const void *pCmap31, unsigned int nUnico
     // Just in case we have a bad key:
     while (iRange > 0 && be::peek<uint16>(pStartCode + iRange) > nUnicodePrev)
         iRange--;
-    while (be::peek<uint16>(pTable->end_code + iRange) < nUnicodePrev)
+    while (iRange < nRange - 1 && be::peek<uint16>(pTable->end_code + iRange) < nUnicodePrev)
         iRange++;
 
     // Now iRange is the range containing nUnicodePrev.
@@ -1074,26 +1077,29 @@ unsigned int CmapSubtable4NextCodepoint(const void *pCmap31, unsigned int nUnico
     // ends with 0xFFFF.
     if (pRangeKey)
         *pRangeKey = iRange + 1;
-    return be::peek<uint16>(pStartCode + iRange + 1);
+    return (iRange + 1 >= nRange) ? 0xFFFF : be::peek<uint16>(pStartCode + iRange + 1);
 }
 
 /*----------------------------------------------------------------------------------------------
     Check the Microsoft UCS-4 subtable for expected values.
 ----------------------------------------------------------------------------------------------*/
-bool CheckCmapSubtable12(const void *pCmapSubtable12, size_t table_len /*, unsigned int maxgid*/)
+bool CheckCmapSubtable12(const void *pCmapSubtable12, const void *pCmapEnd /*, unsigned int maxgid*/)
 {
+    size_t table_len = (const byte *)pCmapEnd - (const byte *)pCmapSubtable12;
     if (!pCmapSubtable12)  return false;
     const Sfnt::CmapSubTable * pTable = reinterpret_cast<const Sfnt::CmapSubTable *>(pCmapSubtable12);
-    if (be::swap(pTable->format) != 12)
+    if (table_len < sizeof(*pTable) || be::swap(pTable->format) != 12)
         return false;
     const Sfnt::CmapSubTableFormat12 * pTable12 = reinterpret_cast<const Sfnt::CmapSubTableFormat12 *>(pCmapSubtable12);
+    if (table_len < sizeof(*pTable12))
+        return false;
     uint32 length = be::swap(pTable12->length);
     if (length > table_len)
         return false;
     if (length < sizeof(Sfnt::CmapSubTableFormat12))
         return false;
     uint32 num_groups = be::swap(pTable12->num_groups);
-    if (length != (sizeof(Sfnt::CmapSubTableFormat12) + (num_groups - 1) * sizeof(uint32) * 3))
+    if (num_groups > 0x10000000 || length != (sizeof(Sfnt::CmapSubTableFormat12) + (num_groups - 1) * sizeof(uint32) * 3))
         return false;
 #if 0
     for (unsigned int i = 0; i < num_groups; ++i)
@@ -1166,7 +1172,7 @@ unsigned int CmapSubtable12NextCodepoint(const void *pCmap310, unsigned int nUni
     // Just in case we have a bad key:
     while (iRange > 0 && be::swap(pTable->group[iRange].start_char_code) > nUnicodePrev)
         iRange--;
-    while (be::swap(pTable->group[iRange].end_char_code) < nUnicodePrev)
+    while (iRange < nRange - 1 && be::swap(pTable->group[iRange].end_char_code) < nUnicodePrev)
         iRange++;
 
     // Now iRange is the range containing nUnicodePrev.

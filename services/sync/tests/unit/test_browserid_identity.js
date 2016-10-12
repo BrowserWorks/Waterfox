@@ -16,6 +16,7 @@ Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/status.js");
 Cu.import("resource://services-sync/constants.js");
+Cu.import("resource://services-common/tokenserverclient.js");
 
 const SECOND_MS = 1000;
 const MINUTE_MS = SECOND_MS * 60;
@@ -76,7 +77,7 @@ add_test(function test_initial_state() {
   }
 );
 
-add_task(function test_initialializeWithCurrentIdentity() {
+add_task(function* test_initialializeWithCurrentIdentity() {
     _("Verify start after initializeWithCurrentIdentity");
     browseridManager.initializeWithCurrentIdentity();
     yield browseridManager.whenReadyToAuthenticate.promise;
@@ -86,12 +87,21 @@ add_task(function test_initialializeWithCurrentIdentity() {
   }
 );
 
-add_task(function test_initialializeWithAuthErrorAndDeletedAccount() {
+add_task(function* test_initialializeWithAuthErrorAndDeletedAccount() {
     _("Verify sync unpair after initializeWithCurrentIdentity with auth error + account deleted");
 
+    var identityConfig = makeIdentityConfig();
+    var browseridManager = new BrowserIDManager();
+
+    // Use the real `_getAssertion` method that calls
+    // `mockFxAClient.signCertificate`.
+    let fxaInternal = makeFxAccountsInternalMock(identityConfig);
+    delete fxaInternal._getAssertion;
+
+    configureFxAccountIdentity(browseridManager, identityConfig, fxaInternal);
     browseridManager._fxaService.internal.initialize();
 
-    let fetchTokenForUserCalled = false;
+    let signCertificateCalled = false;
     let accountStatusCalled = false;
 
     let MockFxAccountsClient = function() {
@@ -99,6 +109,13 @@ add_task(function test_initialializeWithAuthErrorAndDeletedAccount() {
     };
     MockFxAccountsClient.prototype = {
       __proto__: FxAccountsClient.prototype,
+      signCertificate() {
+        signCertificateCalled = true;
+        return Promise.reject({
+          code: 401,
+          errno: ERRNO_INVALID_AUTH_TOKEN,
+        });
+      },
       accountStatus() {
         accountStatusCalled = true;
         return Promise.resolve(false);
@@ -108,26 +125,19 @@ add_task(function test_initialializeWithAuthErrorAndDeletedAccount() {
     let mockFxAClient = new MockFxAccountsClient();
     browseridManager._fxaService.internal._fxAccountsClient = mockFxAClient;
 
-    let oldFetchTokenForUser = browseridManager._fetchTokenForUser;
-    browseridManager._fetchTokenForUser = function() {
-      fetchTokenForUserCalled = true;
-      return Promise.reject(false);
-    }
-
     yield browseridManager.initializeWithCurrentIdentity();
     yield Assert.rejects(browseridManager.whenReadyToAuthenticate.promise,
                      "should reject due to an auth error");
 
-    do_check_true(fetchTokenForUserCalled);
+    do_check_true(signCertificateCalled);
     do_check_true(accountStatusCalled);
     do_check_false(browseridManager.account);
     do_check_false(browseridManager._token);
     do_check_false(browseridManager.hasValidToken());
     do_check_false(browseridManager.account);
-    browseridManager._fetchTokenForUser = oldFetchTokenForUser;
 });
 
-add_task(function test_initialializeWithNoKeys() {
+add_task(function* test_initialializeWithNoKeys() {
     _("Verify start after initializeWithCurrentIdentity without kA, kB or keyFetchToken");
     let identityConfig = makeIdentityConfig();
     delete identityConfig.fxaccount.user.kA;
@@ -296,7 +306,7 @@ add_test(function test_RESTResourceAuthenticatorSkew() {
   run_next_test();
 });
 
-add_task(function test_ensureLoggedIn() {
+add_task(function* test_ensureLoggedIn() {
   configureFxAccountIdentity(browseridManager);
   yield browseridManager.initializeWithCurrentIdentity();
   yield browseridManager.whenReadyToAuthenticate.promise;
@@ -394,7 +404,7 @@ add_test(function test_computeXClientStateHeader() {
   run_next_test();
 });
 
-add_task(function test_getTokenErrors() {
+add_task(function* test_getTokenErrors() {
   _("BrowserIDManager correctly handles various failures to get a token.");
 
   _("Arrange for a 401 - Sync should reflect an auth error.");
@@ -409,9 +419,6 @@ add_task(function test_getTokenErrors() {
   yield Assert.rejects(browseridManager.whenReadyToAuthenticate.promise,
                        "should reject due to 401");
   Assert.equal(Status.login, LOGIN_FAILED_LOGIN_REJECTED, "login was rejected");
-
-  let keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 1, "Should record key fetch error for rejected logins");
 
   // XXX - other interesting responses to return?
 
@@ -428,12 +435,77 @@ add_task(function test_getTokenErrors() {
   yield Assert.rejects(browseridManager.whenReadyToAuthenticate.promise,
                        "should reject due to non-JSON response");
   Assert.equal(Status.login, LOGIN_FAILED_NETWORK_ERROR, "login state is LOGIN_FAILED_NETWORK_ERROR");
-
-  keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 0, "Should not record key fetch errors for invalid responses");
 });
 
-add_task(function test_getTokenErrorWithRetry() {
+add_task(function* test_refreshCertificateOn401() {
+  _("BrowserIDManager refreshes the FXA certificate after a 401.");
+  var identityConfig = makeIdentityConfig();
+  var browseridManager = new BrowserIDManager();
+  // Use the real `_getAssertion` method that calls
+  // `mockFxAClient.signCertificate`.
+  let fxaInternal = makeFxAccountsInternalMock(identityConfig);
+  delete fxaInternal._getAssertion;
+  configureFxAccountIdentity(browseridManager, identityConfig, fxaInternal);
+  browseridManager._fxaService.internal.initialize();
+
+  let getCertCount = 0;
+
+  let MockFxAccountsClient = function() {
+    FxAccountsClient.apply(this);
+  };
+  MockFxAccountsClient.prototype = {
+    __proto__: FxAccountsClient.prototype,
+    signCertificate() {
+      ++getCertCount;
+    }
+  };
+
+  let mockFxAClient = new MockFxAccountsClient();
+  browseridManager._fxaService.internal._fxAccountsClient = mockFxAClient;
+
+  let didReturn401 = false;
+  let didReturn200 = false;
+  let mockTSC = mockTokenServer(() => {
+    if (getCertCount <= 1) {
+      didReturn401 = true;
+      return {
+        status: 401,
+        headers: {"content-type": "application/json"},
+        body: JSON.stringify({}),
+      };
+    } else {
+      didReturn200 = true;
+      return {
+        status: 200,
+        headers: {"content-type": "application/json"},
+        body: JSON.stringify({
+          id:           "id",
+          key:          "key",
+          api_endpoint: "http://example.com/",
+          uid:          "uid",
+          duration:     300,
+        })
+      };
+    }
+  });
+
+  browseridManager._tokenServerClient = mockTSC;
+
+  yield browseridManager.initializeWithCurrentIdentity();
+  yield browseridManager.whenReadyToAuthenticate.promise;
+
+  do_check_eq(getCertCount, 2);
+  do_check_true(didReturn401);
+  do_check_true(didReturn200);
+  do_check_true(browseridManager.account);
+  do_check_true(browseridManager._token);
+  do_check_true(browseridManager.hasValidToken());
+  do_check_true(browseridManager.account);
+});
+
+
+
+add_task(function* test_getTokenErrorWithRetry() {
   _("tokenserver sends an observer notification on various backoff headers.");
 
   // Set Sync's backoffInterval to zero - after we simulated the backoff header
@@ -457,9 +529,6 @@ add_task(function test_getTokenErrorWithRetry() {
   // Sync will have the value in ms with some slop - so check it is at least that.
   Assert.ok(Status.backoffInterval >= 100000);
 
-  let keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 0, "Should not record key fetch errors for 503 from FxA");
-
   _("Arrange for a 200 with an X-Backoff header.");
   Status.backoffInterval = 0;
   initializeIdentityWithTokenServerResponse({
@@ -476,12 +545,9 @@ add_task(function test_getTokenErrorWithRetry() {
 
   // The observer should have fired - check it got the value in the response.
   Assert.ok(Status.backoffInterval >= 200000);
-
-  keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 0, "Should not record key fetch errors for 503/backoff response from FxA");
 });
 
-add_task(function test_getKeysErrorWithBackoff() {
+add_task(function* test_getKeysErrorWithBackoff() {
   _("Auth server (via hawk) sends an observer notification on backoff headers.");
 
   // Set Sync's backoffInterval to zero - after we simulated the backoff header
@@ -513,12 +579,9 @@ add_task(function test_getKeysErrorWithBackoff() {
   Assert.equal(Status.login, LOGIN_FAILED_NETWORK_ERROR, "login was rejected");
   // Sync will have the value in ms with some slop - so check it is at least that.
   Assert.ok(Status.backoffInterval >= 100000);
-
-  let keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 0, "Should not record key fetch errors for 503 from FxA");
 });
 
-add_task(function test_getKeysErrorWithRetry() {
+add_task(function* test_getKeysErrorWithRetry() {
   _("Auth server (via hawk) sends an observer notification on retry headers.");
 
   // Set Sync's backoffInterval to zero - after we simulated the backoff header
@@ -550,12 +613,9 @@ add_task(function test_getKeysErrorWithRetry() {
   Assert.equal(Status.login, LOGIN_FAILED_NETWORK_ERROR, "login was rejected");
   // Sync will have the value in ms with some slop - so check it is at least that.
   Assert.ok(Status.backoffInterval >= 100000);
-
-  let keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 0, "Should not record key fetch errors for 503 from FxA");
 });
 
-add_task(function test_getHAWKErrors() {
+add_task(function* test_getHAWKErrors() {
   _("BrowserIDManager correctly handles various HAWK failures.");
 
   _("Arrange for a 401 - Sync should reflect an auth error.");
@@ -570,9 +630,6 @@ add_task(function test_getHAWKErrors() {
     }
   });
   Assert.equal(Status.login, LOGIN_FAILED_LOGIN_REJECTED, "login was rejected");
-
-  let keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 1, "Should record key fetch errors for 401 from FxA");
 
   // XXX - other interesting responses to return?
 
@@ -589,12 +646,9 @@ add_task(function test_getHAWKErrors() {
     }
   });
   Assert.equal(Status.login, LOGIN_FAILED_NETWORK_ERROR, "login state is LOGIN_FAILED_NETWORK_ERROR");
-
-  keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 0, "Should not record key fetch errors for invalid response from FxA");
 });
 
-add_task(function test_getGetKeysFailing401() {
+add_task(function* test_getGetKeysFailing401() {
   _("BrowserIDManager correctly handles 401 responses fetching keys.");
 
   _("Arrange for a 401 - Sync should reflect an auth error.");
@@ -613,12 +667,9 @@ add_task(function test_getGetKeysFailing401() {
     }
   });
   Assert.equal(Status.login, LOGIN_FAILED_LOGIN_REJECTED, "login was rejected");
-
-  let keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 1, "Should record key fetch errors for 401 from FxA");
 });
 
-add_task(function test_getGetKeysFailing503() {
+add_task(function* test_getGetKeysFailing503() {
   _("BrowserIDManager correctly handles 5XX responses fetching keys.");
 
   _("Arrange for a 503 - Sync should reflect a network error.");
@@ -637,12 +688,9 @@ add_task(function test_getGetKeysFailing503() {
     }
   });
   Assert.equal(Status.login, LOGIN_FAILED_NETWORK_ERROR, "state reflects network error");
-
-  let keyFetchErrorCount = sumHistogram("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS");
-  Assert.equal(keyFetchErrorCount, 0, "Should not record key fetch errors for 503 from FxA");
 });
 
-add_task(function test_getKeysMissing() {
+add_task(function* test_getKeysMissing() {
   _("BrowserIDManager correctly handles getKeys succeeding but not returning keys.");
 
   let browseridManager = new BrowserIDManager();
@@ -729,8 +777,6 @@ add_task(function* test_signedInUserMissing() {
 
   let status = yield browseridManager.unlockAndVerifyAuthState();
   Assert.equal(status, LOGIN_FAILED_LOGIN_REJECTED);
-
-  Assert.equal(sumHistogram("WEAVE_HAS_NO_KEYS_WHEN_UNLOCKED"), 1);
 });
 
 // End of tests
@@ -816,3 +862,29 @@ function getTimestampDelta(hawkAuthHeader, now=Date.now()) {
   return Math.abs(getTimestamp(hawkAuthHeader) - now);
 }
 
+function mockTokenServer(func) {
+  let requestLog = Log.repository.getLogger("testing.mock-rest");
+  if (!requestLog.appenders.length) { // might as well see what it says :)
+    requestLog.addAppender(new Log.DumpAppender());
+    requestLog.level = Log.Level.Trace;
+  }
+  function MockRESTRequest(url) {};
+  MockRESTRequest.prototype = {
+    _log: requestLog,
+    setHeader: function() {},
+    get: function(callback) {
+      this.response = func();
+      callback.call(this);
+    }
+  }
+  // The mocked TokenServer client which will get the response.
+  function MockTSC() { }
+  MockTSC.prototype = new TokenServerClient();
+  MockTSC.prototype.constructor = MockTSC;
+  MockTSC.prototype.newRESTRequest = function(url) {
+    return new MockRESTRequest(url);
+  }
+  // Arrange for the same observerPrefix as browserid_identity uses.
+  MockTSC.prototype.observerPrefix = "weave:service";
+  return new MockTSC();
+}

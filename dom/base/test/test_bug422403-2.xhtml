@@ -35,14 +35,14 @@ function loadFileContent(aFile, aCharset) {
                                 null,      // aLoadingNode
                                 SpecialPowers.Services.scriptSecurityManager.getSystemPrincipal(),
                                 null,      // aTriggeringPrincipal
-                                SpecialPowers.Ci.nsILoadInfo.SEC_NORMAL,
+                                SpecialPowers.Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                                 SpecialPowers.Ci.nsIContentPolicy.TYPE_OTHER);
 
     var cis = SpecialPowers.Ci.nsIConverterInputStream;
 
     var inputStream = SpecialPowers.Cc["@mozilla.org/intl/converter-input-stream;1"]
                        .createInstance(cis);
-    inputStream.init(chann.open(), aCharset, 1024, cis.DEFAULT_REPLACEMENT_CHARACTER);
+    inputStream.init(chann.open2(), aCharset, 1024, cis.DEFAULT_REPLACEMENT_CHARACTER);
     var str = {}, content = '';
     while (inputStream.readString(4096, str) != 0) {
         content += str.value;
@@ -224,7 +224,7 @@ function testHtmlSerializer_1 () {
   encoder.init(document, "application/xhtml+xml",de.OutputSelectionOnly | de.OutputRaw);
   encoder.setNode(node);
   out = encoder.encodeToString();
-  expected = '<hr xmlns="http://www.w3.org/1999/xhtml" noshade="noshade" id="shortattr6" />';
+  expected = '<hr xmlns="http://www.w3.org/1999/xhtml" id="shortattr6" noshade="noshade" />';
   is(out, expected, "test short attr #6");
 
   node = document.getElementById('shortattr7');
@@ -239,7 +239,7 @@ function testHtmlSerializer_1 () {
   encoder.init(document, "text/html", de.OutputLFLineBreak | de.OutputSelectionOnly | de.OutputRaw);
   encoder.setNode(node);
   out = encoder.encodeToString();
-  expected = '<div __moz_b="b" id="mozattr"> lorem ipsum</div>';
+  expected = '<div id="mozattr" __moz_b="b"> lorem ipsum</div>';
   is(out, expected, "test -moz/_moz attr");
 
   node.setAttribute('_moz_c','barc');
@@ -249,7 +249,7 @@ function testHtmlSerializer_1 () {
   encoder.init(document, "text/html", de.OutputLFLineBreak | de.OutputSelectionOnly | de.OutputRaw);
   encoder.setNode(node);
   out = encoder.encodeToString();
-  expected = '<div __moz_e="bare" _-moz_d="bard" __moz_b="b" id="mozattr"> lorem ipsum</div>';
+  expected = '<div id="mozattr" __moz_b="b" _-moz_d="bard" __moz_e="bare"> lorem ipsum</div>';
   is(out, expected, "test -moz/_moz attr #2");
 
   SimpleTest.finish();
@@ -284,7 +284,7 @@ addLoadEvent(testHtmlSerializer_1);
    <object id="shortattr3" declare="" />
    <script id="shortattr4" defer="" />
    <select id="shortattr5" multiple=""><option selected="">aaa</option></select>
-   <hr noshade="" id="shortattr6"/>
+   <hr id="shortattr6" noshade=""/>
    <div id="shortattr7"><foo:bar checked="" value="" disabled="" ismap="" readonly="" /></div>
    <div id="mozattr" _moz_a="a" __moz_b="b"> lorem ipsum</div>
 </div>

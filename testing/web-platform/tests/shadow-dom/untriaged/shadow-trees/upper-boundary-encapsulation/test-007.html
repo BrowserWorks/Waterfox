@@ -16,8 +16,7 @@ policies and contribution forms [3].
 <meta name="assert" content="Upper-boundary encapsulation:The nodes with a unique id and named elements are addressable from any attributes of elements in the same shadow DOM subtree">
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
-<script src="../../testcommon.js"></script>
-<link rel="stylesheet" href="/resources/testharness.css">
+<script src="../../../../html/resources/common.js"></script>
 </head>
 <body>
 <div id="log"></div>
@@ -27,7 +26,7 @@ test(function () {
     var d = newHTMLDocument();
     var div = d.createElement('div');
     d.body.appendChild(div);
-    var s = div.createShadowRoot();
+    var s = div.attachShadow({mode: 'open'});
 
     var input = d.createElement('input');
     input.setAttribute('type', 'text');
@@ -62,7 +61,7 @@ test(function () {
         div = d.createElement('div');
         d.body.appendChild(div);
 
-        var s = div.createShadowRoot();
+        var s = div.attachShadow({mode: 'open'});
         s.appendChild(form);
         s.appendChild(el);
 

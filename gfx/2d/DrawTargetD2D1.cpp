@@ -5,24 +5,32 @@
 
 #include <initguid.h>
 #include "DrawTargetD2D1.h"
-#include "DrawTargetD2D.h"
 #include "FilterNodeSoftware.h"
 #include "GradientStopsD2D.h"
 #include "SourceSurfaceD2D1.h"
-#include "SourceSurfaceD2D.h"
 #include "RadialGradientEffectD2D1.h"
 
 #include "HelpersD2D.h"
 #include "FilterNodeD2D1.h"
+#include "ExtendInputEffectD2D1.h"
 #include "Tools.h"
 
 using namespace std;
+
+// decltype is not usable for overloaded functions.
+typedef HRESULT (WINAPI*D2D1CreateFactoryFunc)(
+    D2D1_FACTORY_TYPE factoryType,
+    REFIID iid,
+    CONST D2D1_FACTORY_OPTIONS *pFactoryOptions,
+    void **factory
+);
 
 namespace mozilla {
 namespace gfx {
 
 uint64_t DrawTargetD2D1::mVRAMUsageDT;
 uint64_t DrawTargetD2D1::mVRAMUsageSS;
+IDWriteFactory *DrawTargetD2D1::mDWriteFactory;
 ID2D1Factory1* DrawTargetD2D1::mFactory = nullptr;
 
 ID2D1Factory1 *D2DFactory1()
@@ -32,7 +40,7 @@ ID2D1Factory1 *D2DFactory1()
 
 DrawTargetD2D1::DrawTargetD2D1()
   : mPushedLayers(1)
-  , mPushedLayersSincePurge(0)
+  , mUsedCommandListsSincePurge(0)
 {
 }
 
@@ -80,7 +88,7 @@ DrawTargetD2D1::Snapshot()
   }
   PopAllClips();
 
-  mDC->Flush();
+  Flush();
 
   mSnapshot = new SourceSurfaceD2D1(mBitmap, mDC, mFormat, mSize, this);
 
@@ -97,14 +105,14 @@ static const uint32_t kPushedLayersBeforePurge = 25;
 void
 DrawTargetD2D1::Flush()
 {
-  if ((mPushedLayersSincePurge >= kPushedLayersBeforePurge) &&
+  if ((mUsedCommandListsSincePurge >= kPushedLayersBeforePurge) &&
       mPushedLayers.size() == 1) {
     // It's important to pop all clips as otherwise layers can forget about
     // their clip when doing an EndDraw. When we have layers pushed we cannot
     // easily pop all underlying clips to delay the purge until we have no
     // layers pushed.
     PopAllClips();
-    mPushedLayersSincePurge = 0;
+    mUsedCommandListsSincePurge = 0;
     mDC->EndDraw();
     mDC->BeginDraw();
   } else {
@@ -162,7 +170,8 @@ DrawTargetD2D1::DrawSurface(SourceSurface *aSurface,
   }
 
   if (bitmap && aSurfOptions.mSamplingBounds == SamplingBounds::UNBOUNDED) {
-    mDC->DrawBitmap(bitmap, D2DRect(aDest), aOptions.mAlpha, D2DFilter(aSurfOptions.mFilter), D2DRect(aSource));
+    mDC->DrawBitmap(bitmap, D2DRect(aDest), aOptions.mAlpha,
+                    D2DFilter(aSurfOptions.mSamplingFilter), D2DRect(aSource));
   } else {
     // This has issues ignoring the alpha channel on windows 7 with images marked opaque.
     MOZ_ASSERT(aSurface->GetFormat() != SurfaceFormat::B8G8R8X8);
@@ -170,7 +179,7 @@ DrawTargetD2D1::DrawSurface(SourceSurface *aSurface,
                           D2D1::ImageBrushProperties(samplingBounds,
                                                      D2D1_EXTEND_MODE_CLAMP,
                                                      D2D1_EXTEND_MODE_CLAMP,
-                                                     D2DInterpolationMode(aSurfOptions.mFilter)),
+                                                     D2DInterpolationMode(aSurfOptions.mSamplingFilter)),
                           D2D1::BrushProperties(aOptions.mAlpha, D2DMatrix(transform)),
                           getter_AddRefs(brush));
     mDC->FillRectangle(D2DRect(aDest), brush);
@@ -274,6 +283,7 @@ DrawTargetD2D1::ClearRect(const Rect &aRect)
   }
 
   RefPtr<ID2D1CommandList> list;
+  mUsedCommandListsSincePurge++;
   mDC->CreateCommandList(getter_AddRefs(list));
   mDC->SetTarget(list);
 
@@ -354,7 +364,7 @@ DrawTargetD2D1::CopySurface(SourceSurface *aSurface,
   mDC->SetTransform(D2D1::IdentityMatrix());
   mTransformDirty = true;
 
-  Matrix mat;
+  Matrix mat = Matrix::Translation(aDestination.x - aSourceRect.x, aDestination.y - aSourceRect.y);
   RefPtr<ID2D1Image> image = GetImageForSurface(aSurface, mat, ExtendMode::CLAMP);
 
   if (!image) {
@@ -362,10 +372,16 @@ DrawTargetD2D1::CopySurface(SourceSurface *aSurface,
     return;
   }
 
-  if (!mat.IsIdentity()) {
-    gfxDebug() << *this << ": At this point complex partial uploads are not supported for CopySurface.";
+  if (mat.HasNonIntegerTranslation()) {
+    gfxDebug() << *this << ": At this point scaled partial uploads are not supported for CopySurface.";
     return;
   }
+
+  IntRect sourceRect = aSourceRect;
+  sourceRect.x += (aDestination.x - aSourceRect.x) - mat._31;
+  sourceRect.width -= (aDestination.x - aSourceRect.x) - mat._31;
+  sourceRect.y += (aDestination.y - aSourceRect.y) - mat._32;
+  sourceRect.height -= (aDestination.y - aSourceRect.y) - mat._32;
 
   RefPtr<ID2D1Bitmap> bitmap;
   image->QueryInterface((ID2D1Bitmap**)getter_AddRefs(bitmap));
@@ -382,7 +398,7 @@ DrawTargetD2D1::CopySurface(SourceSurface *aSurface,
     return;
   }
 
-  Rect srcRect(Float(aSourceRect.x), Float(aSourceRect.y),
+  Rect srcRect(Float(sourceRect.x), Float(sourceRect.y),
                Float(aSourceRect.width), Float(aSourceRect.height));
 
   Rect dstRect(Float(aDestination.x), Float(aDestination.y),
@@ -603,7 +619,7 @@ DrawTargetD2D1::FillGlyphs(ScaledFont *aFont,
                                     DWRITE_MEASURING_MODE_NATURAL, &userRect);
 
         RefPtr<ID2D1PathGeometry> path;
-        D2DFactory()->CreatePathGeometry(getter_AddRefs(path));
+        factory()->CreatePathGeometry(getter_AddRefs(path));
         RefPtr<ID2D1GeometrySink> sink;
         path->Open(getter_AddRefs(sink));
         AddRectToSink(sink, userRect);
@@ -803,7 +819,7 @@ DrawTargetD2D1::PushLayer(bool aOpaque, Float aOpacity, SourceSurface* aMask,
 
   mDC->SetTarget(CurrentTarget());
 
-  mPushedLayersSincePurge++;
+  mUsedCommandListsSincePurge++;
 }
 
 void
@@ -1059,20 +1075,71 @@ DrawTargetD2D1::factory()
     return mFactory;
   }
 
-  ID2D1Factory* d2dFactory = D2DFactory();
-  if (!d2dFactory) {
+  RefPtr<ID2D1Factory> factory;
+  D2D1CreateFactoryFunc createD2DFactory;
+  HMODULE d2dModule = LoadLibraryW(L"d2d1.dll");
+  createD2DFactory = (D2D1CreateFactoryFunc)
+      GetProcAddress(d2dModule, "D2D1CreateFactory");
+
+  if (!createD2DFactory) {
+    gfxWarning() << "Failed to locate D2D1CreateFactory function.";
     return nullptr;
   }
 
-  HRESULT hr = d2dFactory->QueryInterface((ID2D1Factory1**)&mFactory);
+  D2D1_FACTORY_OPTIONS options;
+#ifdef _DEBUG
+  options.debugLevel = D2D1_DEBUG_LEVEL_WARNING;
+#else
+  options.debugLevel = D2D1_DEBUG_LEVEL_NONE;
+#endif
+  //options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 
-  if (FAILED(hr)) {
+  HRESULT hr = createD2DFactory(D2D1_FACTORY_TYPE_MULTI_THREADED,
+                                __uuidof(ID2D1Factory),
+                                &options,
+                                getter_AddRefs(factory));
+
+  if (FAILED(hr) || !factory) {
+    gfxCriticalNote << "Failed to create a D2D1 content device: " << hexa(hr);
     return nullptr;
   }
 
+  hr = factory->QueryInterface((ID2D1Factory1**)&mFactory);
+  if (FAILED(hr) || !mFactory) {
+    return nullptr;
+  }
+
+  ExtendInputEffectD2D1::Register(mFactory);
   RadialGradientEffectD2D1::Register(mFactory);
 
   return mFactory;
+}
+
+IDWriteFactory*
+DrawTargetD2D1::GetDWriteFactory()
+{
+  if (mDWriteFactory) {
+    return mDWriteFactory;
+  }
+
+  decltype(DWriteCreateFactory)* createDWriteFactory;
+  HMODULE dwriteModule = LoadLibraryW(L"dwrite.dll");
+  createDWriteFactory = (decltype(DWriteCreateFactory)*)
+    GetProcAddress(dwriteModule, "DWriteCreateFactory");
+
+  if (!createDWriteFactory) {
+    gfxWarning() << "Failed to locate DWriteCreateFactory function.";
+    return nullptr;
+  }
+
+  HRESULT hr = createDWriteFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
+                                   reinterpret_cast<IUnknown**>(&mDWriteFactory));
+
+  if (FAILED(hr)) {
+    gfxWarning() << "Failed to create DWrite Factory.";
+  }
+
+  return mDWriteFactory;
 }
 
 void
@@ -1080,6 +1147,7 @@ DrawTargetD2D1::CleanupD2D()
 {
   if (mFactory) {
     RadialGradientEffectD2D1::Unregister(mFactory);
+    ExtendInputEffectD2D1::Unregister(mFactory);
     mFactory->Release();
     mFactory = nullptr;
   }
@@ -1110,12 +1178,24 @@ DrawTargetD2D1::MarkChanged()
   }
 }
 
+bool
+DrawTargetD2D1::ShouldClipTemporarySurfaceDrawing(CompositionOp aOp,
+                                                  const Pattern& aPattern,
+                                                  bool aClipIsComplex)
+{
+  bool patternSupported = IsPatternSupportedByD2D(aPattern);
+  return patternSupported && !CurrentLayer().mIsOpaque && D2DSupportsCompositeMode(aOp) &&
+         IsOperatorBoundByMask(aOp) && aClipIsComplex;
+}
+
 void
 DrawTargetD2D1::PrepareForDrawing(CompositionOp aOp, const Pattern &aPattern)
 {
   MarkChanged();
 
-  if (D2DSupportsPrimitiveBlendMode(aOp) && IsPatternSupportedByD2D(aPattern)) {
+  bool patternSupported = IsPatternSupportedByD2D(aPattern);
+
+  if (D2DSupportsPrimitiveBlendMode(aOp) && patternSupported) {
     // It's important to do this before FlushTransformToDC! As this will cause
     // the transform to become dirty.
     PushAllClips();
@@ -1128,12 +1208,24 @@ DrawTargetD2D1::PrepareForDrawing(CompositionOp aOp, const Pattern &aPattern)
     return;
   }
 
-  PopAllClips();
-
-  mDC->CreateCommandList(getter_AddRefs(mCommandList));
+  HRESULT result = mDC->CreateCommandList(getter_AddRefs(mCommandList));
   mDC->SetTarget(mCommandList);
+  mUsedCommandListsSincePurge++;
 
-  PushAllClips();
+  // This is where we should have a valid command list.  If we don't, something is
+  // wrong, and it's likely an OOM.
+  if (!mCommandList) {
+    gfxDevCrash(LogReason::InvalidCommandList) << "Invalid D2D1.1 command list on creation " << mUsedCommandListsSincePurge << ", " << gfx::hexa(result);
+  }
+
+  D2D1_RECT_F rect;
+  bool isAligned;
+  bool clipIsComplex = CurrentLayer().mPushedClips.size() && !GetDeviceSpaceClipRect(rect, isAligned);
+
+  if (ShouldClipTemporarySurfaceDrawing(aOp, aPattern, clipIsComplex)) {
+    PushClipsToDC(mDC);
+  }
+
   FlushTransformToDC();
 }
 
@@ -1148,9 +1240,19 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
     return;
   }
 
-  PopAllClips();
+  D2D1_RECT_F rect;
+  bool isAligned;
+  bool clipIsComplex = CurrentLayer().mPushedClips.size() && !GetDeviceSpaceClipRect(rect, isAligned);
+
+  if (ShouldClipTemporarySurfaceDrawing(aOp, aPattern, clipIsComplex)) {
+    PopClipsFromDC(mDC);
+  }
 
   mDC->SetTarget(CurrentTarget());
+  if (!mCommandList) {
+    gfxDevCrash(LogReason::InvalidCommandList) << "Invalid D21.1 command list on finalize";
+    return;
+  }
   mCommandList->Close();
 
   RefPtr<ID2D1CommandList> source = mCommandList;
@@ -1161,17 +1263,12 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
 
   if (patternSupported) {
     if (D2DSupportsCompositeMode(aOp)) {
-      D2D1_RECT_F rect;
-      bool isAligned;
       RefPtr<ID2D1Image> tmpImage;
-      bool clipIsComplex = CurrentLayer().mPushedClips.size() && !GetDeviceSpaceClipRect(rect, isAligned);
-
       if (clipIsComplex) {
+        PopAllClips();
         if (!IsOperatorBoundByMask(aOp)) {
           tmpImage = GetImageForLayerContent();
         }
-      } else {
-        PushAllClips();
       }
       mDC->DrawImage(source, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2DCompositionMode(aOp));
 
@@ -1202,8 +1299,6 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
     blendEffect->SetInput(1, source);
     blendEffect->SetValue(D2D1_BLEND_PROP_MODE, D2DBlendMode(aOp));
 
-    PushAllClips();
-
     mDC->DrawImage(blendEffect, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_BOUNDED_SOURCE_COPY);
     return;
   }
@@ -1213,8 +1308,6 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
     // Draw nothing!
     return;
   }
-
-  PushAllClips();
 
   RefPtr<ID2D1Effect> radialGradientEffect;
 
@@ -1298,6 +1391,8 @@ DrawTargetD2D1::GetImageForLayerContent()
     tmpBitmap->CopyFromBitmap(nullptr, mBitmap, nullptr);
     return tmpBitmap.forget();
   } else {
+    PopAllClips();
+
     RefPtr<ID2D1CommandList> list = CurrentLayer().mCurrentList;
     mDC->CreateCommandList(getter_AddRefs(CurrentLayer().mCurrentList));
     mDC->SetTarget(CurrentTarget());
@@ -1305,6 +1400,8 @@ DrawTargetD2D1::GetImageForLayerContent()
 
     DCCommandSink sink(mDC);
     list->Stream(&sink);
+
+    PushAllClips();
 
     return list.forget();
   }
@@ -1568,6 +1665,29 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
 
     RefPtr<ID2D1Image> image = GetImageForSurface(pat->mSurface, mat, pat->mExtendMode, !pat->mSamplingRect.IsEmpty() ? &pat->mSamplingRect : nullptr);
 
+    if (pat->mSurface->GetFormat() == SurfaceFormat::A8) {
+      // See bug 1251431, at least FillOpacityMask does not appear to allow a source bitmapbrush
+      // with source format A8. This creates a BGRA surface with the same alpha values that
+      // the A8 surface has.
+      RefPtr<ID2D1Bitmap> bitmap;
+      image->QueryInterface((ID2D1Bitmap**)getter_AddRefs(bitmap));
+      if (bitmap) {
+        RefPtr<ID2D1Image> oldTarget;
+        RefPtr<ID2D1Bitmap1> tmpBitmap;
+        mDC->CreateBitmap(D2D1::SizeU(pat->mSurface->GetSize().width, pat->mSurface->GetSize().height), nullptr, 0,
+                          D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET, D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+                          getter_AddRefs(tmpBitmap));
+        mDC->GetTarget(getter_AddRefs(oldTarget));
+        mDC->SetTarget(tmpBitmap);
+
+        RefPtr<ID2D1SolidColorBrush> brush;
+        mDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), getter_AddRefs(brush));
+        mDC->FillOpacityMask(bitmap, brush);
+        mDC->SetTarget(oldTarget);
+        image = tmpBitmap;
+      }
+    }
+
     if (!image) {
       return CreateTransparentBlackBrush();
     }
@@ -1585,7 +1705,7 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
 
         mDC->CreateBitmapBrush(bitmap,
                                D2D1::BitmapBrushProperties(xRepeat, yRepeat,
-                                                           D2DFilter(pat->mFilter)),
+                                                           D2DFilter(pat->mSamplingFilter)),
                                D2D1::BrushProperties(aAlpha, D2DMatrix(mat)),
                                getter_AddRefs(bitmapBrush));
         if (!bitmapBrush) {
@@ -1616,7 +1736,7 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
                           D2D1::ImageBrushProperties(samplingBounds,
                                                      xRepeat,
                                                      yRepeat,
-                                                     D2DInterpolationMode(pat->mFilter)),
+                                                     D2DInterpolationMode(pat->mSamplingFilter)),
                           D2D1::BrushProperties(aAlpha, D2DMatrix(mat)),
                           getter_AddRefs(imageBrush));
 
@@ -1701,7 +1821,7 @@ DrawTargetD2D1::PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, 
 {
   D2D1_LAYER_OPTIONS1 options = D2D1_LAYER_OPTIONS1_NONE;
 
-  if (aDC->GetPixelFormat().alphaMode == D2D1_ALPHA_MODE_IGNORE || aForceIgnoreAlpha) {
+  if (CurrentLayer().mIsOpaque || aForceIgnoreAlpha) {
     options = D2D1_LAYER_OPTIONS1_IGNORE_ALPHA | D2D1_LAYER_OPTIONS1_INITIALIZE_FROM_BACKGROUND;
   }
 

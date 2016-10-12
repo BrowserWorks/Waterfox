@@ -20,57 +20,23 @@ public:
      */
     enum SrcConfig {
         kUnknown,  // Invalid type.
-        kBit,      // A single bit to distinguish between white and black
+        kBit,      // A single bit to distinguish between white and black.
         kGray,
+        kGrayAlpha,
         kIndex1,
         kIndex2,
         kIndex4,
         kIndex,
         kRGB,
         kBGR,
-        kRGBX,
-        kBGRX,
+        kBGRX,     // The alpha channel can be anything, but the image is opaque.
         kRGBA,
         kBGRA,
-        kRGB_565,
         kCMYK,
+        kNoOp8,    // kNoOp modes are used exclusively for sampling, subsetting, and
+        kNoOp16,   // copying.  The pixels themselves do not need to be modified.
+        kNoOp32,
     };
-
-    /*
-     *
-     * Result code for the alpha components of a row.
-     *
-     */
-    typedef uint16_t ResultAlpha;
-    static const ResultAlpha kOpaque_ResultAlpha = 0xFFFF;
-    static const ResultAlpha kTransparent_ResultAlpha = 0x0000;
-
-    /*
-     *
-     * Checks if the result of decoding a row indicates that the row was
-     * transparent.
-     *
-     */
-    static bool IsTransparent(ResultAlpha r) {
-        return kTransparent_ResultAlpha == r;
-    }
-
-    /*
-     *
-     * Checks if the result of decoding a row indicates that the row was
-     * opaque.
-     *
-     */
-    static bool IsOpaque(ResultAlpha r) {
-        return kOpaque_ResultAlpha == r;
-    }
-
-    /*
-     *
-     * Constructs the proper result code based on accumulated alpha masks
-     *
-     */
-    static ResultAlpha GetResult(uint8_t zeroAlpha, uint8_t maxAlpha);
 
     /*
      *
@@ -88,17 +54,19 @@ public:
                 return 4;
             case kGray:
             case kIndex:
+            case kNoOp8:
                 return 8;
-            case kRGB_565:
+            case kGrayAlpha:
+            case kNoOp16:
                 return 16;
             case kRGB:
             case kBGR:
                 return 24;
-            case kRGBX:
             case kRGBA:
             case kBGRX:
             case kBGRA:
             case kCMYK:
+            case kNoOp32:
                 return 32;
             default:
                 SkASSERT(false);
@@ -149,10 +117,8 @@ public:
      *  subset decodes.
      *  @param dst Where we write the output.
      *  @param src The next row of the source data.
-     *  @return A result code describing if the row was fully opaque, fully
-     *          transparent, or neither
      */
-    ResultAlpha swizzle(void* dst, const uint8_t* SK_RESTRICT src);
+    void swizzle(void* dst, const uint8_t* SK_RESTRICT src);
 
     /**
      * Implement fill using a custom width.
@@ -162,6 +128,16 @@ public:
         const SkImageInfo fillInfo = info.makeWH(fAllocatedWidth, info.height());
         SkSampler::Fill(fillInfo, dst, rowBytes, colorOrIndex, zeroInit);
     }
+
+    /**
+     *  If fSampleX > 1, the swizzler is sampling every fSampleX'th pixel and
+     *  discarding the rest.
+     *
+     *  This getter is currently used by SkBmpStandardCodec for Bmp-in-Ico decodes.
+     *  Ideally, the subclasses of SkCodec would have no knowledge of sampling, but
+     *  this allows us to apply a transparency mask to pixels after swizzling.
+     */
+    int sampleX() const { return fSampleX; }
 
 private:
 
@@ -177,12 +153,29 @@ private:
      *  @param offset The offset before the first pixel to sample.
                         Is in bytes or bits based on what deltaSrc is in.
      */
-    typedef ResultAlpha (*RowProc)(void* SK_RESTRICT dstRow,
-                                   const uint8_t* SK_RESTRICT src,
-                                   int dstWidth, int bpp, int deltaSrc, int offset,
-                                   const SkPMColor ctable[]);
+    typedef void (*RowProc)(void* SK_RESTRICT dstRow,
+                            const uint8_t* SK_RESTRICT src,
+                            int dstWidth, int bpp, int deltaSrc, int offset,
+                            const SkPMColor ctable[]);
 
-    const RowProc       fRowProc;
+    template <RowProc Proc>
+    static void SkipLeading8888ZerosThen(void* SK_RESTRICT dstRow,
+                                         const uint8_t* SK_RESTRICT src,
+                                         int dstWidth, int bpp, int deltaSrc, int offset,
+                                         const SkPMColor ctable[]);
+
+    template <RowProc Proc>
+    static void SkipLeadingGrayAlphaZerosThen(void* dst, const uint8_t* src, int width, int bpp,
+                                              int deltaSrc, int offset, const SkPMColor ctable[]);
+
+    // May be NULL.  We have not implemented optimized functions for all supported transforms.
+    const RowProc       fFastProc;
+    // Always non-NULL.  Supports sampling.
+    const RowProc       fSlowProc;
+    // The actual RowProc we are using.  This depends on if fFastProc is non-NULL and
+    // whether or not we are sampling.
+    RowProc             fActualProc;
+
     const SkPMColor*    fColorTable;      // Unowned pointer
 
     // Subset Swizzles
@@ -269,8 +262,8 @@ private:
                                           //     fBPP is bitsPerPixel
     const int           fDstBPP;          // Bytes per pixel for the destination color type
 
-    SkSwizzler(RowProc proc, const SkPMColor* ctable, int srcOffset, int srcWidth, int dstOffset,
-            int dstWidth, int srcBPP, int dstBPP);
+    SkSwizzler(RowProc fastProc, RowProc proc, const SkPMColor* ctable, int srcOffset,
+            int srcWidth, int dstOffset, int dstWidth, int srcBPP, int dstBPP);
 
     int onSetSampleX(int) override;
 

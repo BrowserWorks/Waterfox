@@ -154,6 +154,7 @@ TEST_P(PointSpritesTest, PointCoordAndPointSizeCompliance)
 // https://www.khronos.org/registry/webgl/sdk/tests/conformance/rendering/point-no-attributes.html
 TEST_P(PointSpritesTest, PointWithoutAttributesCompliance)
 {
+    // clang-format off
     const std::string fs = SHADER_SOURCE
     (
         precision mediump float;
@@ -167,10 +168,11 @@ TEST_P(PointSpritesTest, PointWithoutAttributesCompliance)
     (
         void main()
         {
-            gl_PointSize = 1.0;
+            gl_PointSize = 2.0;
             gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
         }
     );
+    // clang-format on
 
     GLuint program = CompileProgram(vs, fs);
     ASSERT_NE(program, 0u);
@@ -432,10 +434,93 @@ TEST_P(PointSpritesTest, PointSizeDeclaredButUnused)
     glDeleteProgram(program);
 }
 
+// Test to cover a bug where the D3D11 rasterizer state would not be update when switching between
+// draw types.  This causes the cull face to potentially be incorrect when drawing emulated point
+// spites.
+TEST_P(PointSpritesTest, PointSpriteAlternatingDrawTypes)
+{
+    // clang-format off
+    const std::string pointFS = SHADER_SOURCE
+    (
+        precision mediump float;
+        void main()
+        {
+            gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+        }
+    );
+
+    const std::string pointVS = SHADER_SOURCE
+    (
+        void main()
+        {
+            gl_PointSize = 16.0;
+            gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+        }
+    );
+
+    const std::string quadFS = SHADER_SOURCE
+    (
+        precision mediump float;
+        void main()
+        {
+            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        }
+    );
+
+    const std::string quadVS = SHADER_SOURCE
+    (
+        precision mediump float;
+        attribute vec4 pos;
+        void main()
+        {
+            gl_Position = pos;
+        }
+    );
+    // clang-format on
+
+    GLuint pointProgram = CompileProgram(pointVS, pointFS);
+    ASSERT_NE(pointProgram, 0u);
+    ASSERT_GL_NO_ERROR();
+
+    GLuint quadProgram = CompileProgram(quadVS, quadFS);
+    ASSERT_NE(pointProgram, 0u);
+    ASSERT_GL_NO_ERROR();
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    const GLfloat quadVertices[] = {
+        -1.0f, 1.0f, 0.5f, 1.0f, -1.0f, 0.5f, -1.0f, -1.0f, 0.5f,
+
+        -1.0f, 1.0f, 0.5f, 1.0f, 1.0f,  0.5f, 1.0f,  -1.0f, 0.5f,
+    };
+
+    glUseProgram(quadProgram);
+    GLint positionLocation = glGetAttribLocation(quadProgram, "pos");
+    glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, quadVertices);
+    glEnableVertexAttribArray(positionLocation);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glUseProgram(pointProgram);
+    glDrawArrays(GL_POINTS, 0, 1);
+    ASSERT_GL_NO_ERROR();
+
+    // expect the center pixel to be green
+    EXPECT_PIXEL_EQ(getWindowWidth() / 2, getWindowHeight() / 2, 0, 255, 0, 255);
+
+    glDeleteProgram(pointProgram);
+    glDeleteProgram(quadProgram);
+}
+
 // Use this to select which configurations (e.g. which renderer, which GLES
 // major version) these tests should be run against.
 //
 // We test on D3D11 9_3 because the existing D3D11 PointSprite implementation
 // uses Geometry Shaders which are not supported for 9_3.
 // D3D9 and D3D11 are also tested to ensure no regressions.
-ANGLE_INSTANTIATE_TEST(PointSpritesTest, ES2_D3D9(), ES2_D3D11(), ES2_D3D11_FL9_3());
+ANGLE_INSTANTIATE_TEST(PointSpritesTest,
+                       ES2_D3D9(),
+                       ES2_D3D11(),
+                       ES2_D3D11_FL9_3(),
+                       ES2_OPENGL(),
+                       ES2_OPENGLES());

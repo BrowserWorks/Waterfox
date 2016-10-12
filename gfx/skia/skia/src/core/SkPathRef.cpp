@@ -9,6 +9,7 @@
 #include "SkOncePtr.h"
 #include "SkPath.h"
 #include "SkPathRef.h"
+#include <limits>
 
 //////////////////////////////////////////////////////////////////////////////
 SkPathRef::Editor::Editor(SkAutoTUnref<SkPathRef>* pathRef,
@@ -72,7 +73,8 @@ void SkPathRef::CreateTransformedCopy(SkAutoTUnref<SkPathRef>* dst,
 
     if (*dst != &src) {
         (*dst)->resetToSize(src.fVerbCnt, src.fPointCnt, src.fConicWeights.count());
-        memcpy((*dst)->verbsMemWritable(), src.verbsMemBegin(), src.fVerbCnt * sizeof(uint8_t));
+        sk_careful_memcpy((*dst)->verbsMemWritable(), src.verbsMemBegin(),
+                           src.fVerbCnt * sizeof(uint8_t));
         (*dst)->fConicWeights = src.fConicWeights;
     }
 
@@ -141,10 +143,18 @@ SkPathRef* SkPathRef::CreateFromBuffer(SkRBuffer* buffer) {
     bool isRRect  = (packed >> kIsRRect_SerializationShift) & 1;
 
     int32_t verbCount, pointCount, conicCount;
+    ptrdiff_t maxPtrDiff = std::numeric_limits<ptrdiff_t>::max();
     if (!buffer->readU32(&(ref->fGenerationID)) ||
         !buffer->readS32(&verbCount) ||
+        verbCount < 0 ||
+        static_cast<uint32_t>(verbCount) > maxPtrDiff/sizeof(uint8_t) ||
         !buffer->readS32(&pointCount) ||
-        !buffer->readS32(&conicCount)) {
+        pointCount < 0 ||
+        static_cast<uint32_t>(pointCount) > maxPtrDiff/sizeof(SkPoint) ||
+        sizeof(uint8_t) * verbCount + sizeof(SkPoint) * pointCount >
+            static_cast<size_t>(maxPtrDiff) ||
+        !buffer->readS32(&conicCount) ||
+        conicCount < 0) {
         delete ref;
         return nullptr;
     }
@@ -281,8 +291,8 @@ void SkPathRef::copy(const SkPathRef& ref,
     SkDEBUGCODE(this->validate();)
     this->resetToSize(ref.fVerbCnt, ref.fPointCnt, ref.fConicWeights.count(),
                         additionalReserveVerbs, additionalReservePoints);
-    memcpy(this->verbsMemWritable(), ref.verbsMemBegin(), ref.fVerbCnt * sizeof(uint8_t));
-    memcpy(this->fPoints, ref.fPoints, ref.fPointCnt * sizeof(SkPoint));
+    sk_careful_memcpy(this->verbsMemWritable(), ref.verbsMemBegin(), ref.fVerbCnt*sizeof(uint8_t));
+    sk_careful_memcpy(this->fPoints, ref.fPoints, ref.fPointCnt * sizeof(SkPoint));
     fConicWeights = ref.fConicWeights;
     fBoundsIsDirty = ref.fBoundsIsDirty;
     if (!fBoundsIsDirty) {
@@ -293,6 +303,19 @@ void SkPathRef::copy(const SkPathRef& ref,
     fIsOval = ref.fIsOval;
     fIsRRect = ref.fIsRRect;
     SkDEBUGCODE(this->validate();)
+}
+
+
+void SkPathRef::interpolate(const SkPathRef& ending, SkScalar weight, SkPathRef* out) const {
+    const SkScalar* inValues = &ending.getPoints()->fX;
+    SkScalar* outValues = &out->getPoints()->fX;
+    int count = out->countPoints() * 2;
+    for (int index = 0; index < count; ++index) {
+        outValues[index] = outValues[index] * weight + inValues[index] * (1 - weight);
+    }
+    out->fBoundsIsDirty = true;
+    out->fIsOval = false;
+    out->fIsRRect = false;
 }
 
 SkPoint* SkPathRef::growForRepeatedVerb(int /*SkPath::Verb*/ verb,
@@ -577,6 +600,11 @@ uint8_t SkPathRef::Iter::next(SkPoint pts[4]) {
     }
     fPts = srcPts;
     return (uint8_t) verb;
+}
+
+uint8_t SkPathRef::Iter::peek() const {
+    const uint8_t* next = fVerbs - 1;
+    return next <= fVerbStop ? (uint8_t) SkPath::kDone_Verb : *next;
 }
 
 #ifdef SK_DEBUG

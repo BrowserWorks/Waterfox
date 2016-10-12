@@ -19,8 +19,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
   "resource://gre/modules/DeferredTask.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyGetter(this, "gWidgetsBundle", function() {
   const kUrl = "chrome://browser/locale/customizableui/customizableWidgets.properties";
   return Services.strings.createBundle(kUrl);
@@ -29,6 +27,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "ShortcutUtils",
   "resource://gre/modules/ShortcutUtils.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "gELS",
   "@mozilla.org/eventlistenerservice;1", "nsIEventListenerService");
+XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
+                                  "resource://gre/modules/LightweightThemeManager.jsm");
 
 const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -64,7 +64,6 @@ var kVersion = 6;
  * version the button is removed in as the value.  e.g. "pocket-button": 5
  */
 var ObsoleteBuiltinButtons = {
-  "loop-button": 5,
   "pocket-button": 6
 };
 
@@ -153,7 +152,7 @@ var gListeners = new Set();
 var gUIStateBeforeReset = {
   uiCustomizationState: null,
   drawInTitlebar: null,
-  gUIStateBeforeReset: null,
+  currentTheme: null,
 };
 
 XPCOMUtils.defineLazyGetter(this, "log", () => {
@@ -180,6 +179,15 @@ var CustomizableUIInternal = {
     this._introduceNewBuiltinWidgets();
     this._markObsoleteBuiltinButtonsSeen();
 
+    /**
+     * Please be advised that adding items to the panel by default could
+     * cause CART talos test regressions. This might happen when the
+     * number of items in the panel causes the area to become "scrollable"
+     * during the last phases of the transition. See bug 1230671 for an
+     * example of this. Be sure that what you're adding really needs to go
+     * into the panel by default, and if it does, consider swapping
+     * something out for it.
+     */
     let panelPlacements = [
       "edit-controls",
       "zoom-controls",
@@ -229,7 +237,6 @@ var CustomizableUIInternal = {
       "bookmarks-menu-button",
       "downloads-button",
       "home-button",
-      "loop-button",
     ];
 
     if (AppConstants.MOZ_DEV_EDITION) {
@@ -238,6 +245,13 @@ var CustomizableUIInternal = {
 
     if (Services.prefs.getBoolPref(kPrefWebIDEInNavbar)) {
       navbarPlacements.push("webide-button");
+    }
+
+    // Place this last, when createWidget is called for pocket, it will
+    // append to the toolbar.
+    if (Services.prefs.getPrefType("extensions.pocket.enabled") != Services.prefs.PREF_INVALID &&
+        Services.prefs.getBoolPref("extensions.pocket.enabled")) {
+        navbarPlacements.push("pocket-button");
     }
 
     this.registerArea(CustomizableUI.AREA_NAVBAR, {
@@ -2118,7 +2132,8 @@ var CustomizableUIInternal = {
 
   dispatchToolboxEvent: function(aEventType, aDetails={}, aWindow=null) {
     if (aWindow) {
-      return this._dispatchToolboxEventToWindow(aEventType, aDetails, aWindow);
+      this._dispatchToolboxEventToWindow(aEventType, aDetails, aWindow);
+      return;
     }
     for (let [win, ] of gBuildWindows) {
       this._dispatchToolboxEventToWindow(aEventType, aDetails, win);
@@ -2402,6 +2417,7 @@ var CustomizableUIInternal = {
                                                         aArgs);
       } catch (e) {
         Cu.reportError(e);
+        return undefined;
       }
     };
   },
@@ -2512,12 +2528,14 @@ var CustomizableUIInternal = {
     try {
       gUIStateBeforeReset.drawInTitlebar = Services.prefs.getBoolPref(kPrefDrawInTitlebar);
       gUIStateBeforeReset.uiCustomizationState = Services.prefs.getCharPref(kPrefCustomizationState);
+      gUIStateBeforeReset.currentTheme = LightweightThemeManager.currentTheme;
     } catch(e) { }
 
     this._resetExtraToolbars();
 
     Services.prefs.clearUserPref(kPrefCustomizationState);
     Services.prefs.clearUserPref(kPrefDrawInTitlebar);
+    LightweightThemeManager.currentTheme = null;
     log.debug("State reset");
 
     // Reset placements to make restoring default placements possible.
@@ -2586,6 +2604,7 @@ var CustomizableUIInternal = {
 
     let uiCustomizationState = gUIStateBeforeReset.uiCustomizationState;
     let drawInTitlebar = gUIStateBeforeReset.drawInTitlebar;
+    let currentTheme = gUIStateBeforeReset.currentTheme;
 
     // Need to clear the previous state before setting the prefs
     // because pref observers may check if there is a previous UI state.
@@ -2593,6 +2612,7 @@ var CustomizableUIInternal = {
 
     Services.prefs.setCharPref(kPrefCustomizationState, uiCustomizationState);
     Services.prefs.setBoolPref(kPrefDrawInTitlebar, drawInTitlebar);
+    LightweightThemeManager.currentTheme = currentTheme;
     this.loadSavedState();
     // If the user just customizes toolbar/titlebar visibility, gSavedState will be null
     // and we don't need to do anything else here:
@@ -2768,6 +2788,11 @@ var CustomizableUIInternal = {
 
     if (Services.prefs.prefHasUserValue(kPrefDrawInTitlebar)) {
       log.debug(kPrefDrawInTitlebar + " pref is non-default");
+      return false;
+    }
+
+    if(LightweightThemeManager.currentTheme) {
+      log.debug(LightweightThemeManager.currentTheme + " theme is non-default");
       return false;
     }
 
@@ -3475,7 +3500,8 @@ this.CustomizableUI = {
    */
   get canUndoReset() {
     return gUIStateBeforeReset.uiCustomizationState != null ||
-           gUIStateBeforeReset.drawInTitlebar != null;
+           gUIStateBeforeReset.drawInTitlebar != null ||
+           gUIStateBeforeReset.currentTheme != null;
   },
 
   /**
@@ -3896,7 +3922,7 @@ function XULWidgetGroupWrapper(aWidgetId) {
   });
 
   this.__defineGetter__("instances", function() {
-    return Array.from(gBuildWindows, ([win,]) => this.forWindow(win));
+    return Array.from(gBuildWindows, (wins) => this.forWindow(wins[0]));
   });
 
   Object.freeze(this);
@@ -4093,28 +4119,26 @@ OverflowableToolbar.prototype = {
   },
 
   show: function() {
-    let deferred = Promise.defer();
     if (this._panel.state == "open") {
-      deferred.resolve();
-      return deferred.promise;
+      return Promise.resolve();
     }
-    let doc = this._panel.ownerDocument;
-    this._panel.hidden = false;
-    let contextMenu = doc.getElementById(this._panel.getAttribute("context"));
-    gELS.addSystemEventListener(contextMenu, 'command', this, true);
-    let anchor = doc.getAnonymousElementByAttribute(this._chevron, "class", "toolbarbutton-icon");
-    this._panel.openPopup(anchor || this._chevron);
-    this._chevron.open = true;
+    return new Promise(resolve => {
+      let doc = this._panel.ownerDocument;
+      this._panel.hidden = false;
+      let contextMenu = doc.getElementById(this._panel.getAttribute("context"));
+      gELS.addSystemEventListener(contextMenu, 'command', this, true);
+      let anchor = doc.getAnonymousElementByAttribute(this._chevron, "class", "toolbarbutton-icon");
+      this._panel.openPopup(anchor || this._chevron);
+      this._chevron.open = true;
 
-    let overflowableToolbarInstance = this;
-    this._panel.addEventListener("popupshown", function onPopupShown(aEvent) {
-      this.removeEventListener("popupshown", onPopupShown);
-      this.addEventListener("dragover", overflowableToolbarInstance);
-      this.addEventListener("dragend", overflowableToolbarInstance);
-      deferred.resolve();
+      let overflowableToolbarInstance = this;
+      this._panel.addEventListener("popupshown", function onPopupShown(aEvent) {
+        this.removeEventListener("popupshown", onPopupShown);
+        this.addEventListener("dragover", overflowableToolbarInstance);
+        this.addEventListener("dragend", overflowableToolbarInstance);
+        resolve();
+      });
     });
-
-    return deferred.promise;
   },
 
   _onClickChevron: function(aEvent) {
@@ -4162,7 +4186,7 @@ OverflowableToolbar.prototype = {
         this._toolbar.setAttribute("overflowing", "true");
       }
       child = prevChild;
-    };
+    }
 
     let win = this._target.ownerDocument.defaultView;
     win.UpdateUrlbarSearchSplitterState();

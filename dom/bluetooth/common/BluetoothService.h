@@ -10,7 +10,6 @@
 #include "BluetoothCommon.h"
 #include "BluetoothInterface.h"
 #include "BluetoothProfileManagerBase.h"
-#include "nsAutoPtr.h"
 #include "nsClassHashtable.h"
 #include "nsIObserver.h"
 #include "nsTObserverArray.h"
@@ -42,7 +41,7 @@ class BluetoothService : public nsIObserver
   friend class StartupTask;
 
 public:
-  class ToggleBtAck : public nsRunnable
+  class ToggleBtAck : public Runnable
   {
   public:
     ToggleBtAck(bool aEnabled);

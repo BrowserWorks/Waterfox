@@ -577,7 +577,7 @@ HTMLSelectElement::Add(nsGenericHTMLElement& aElement,
 
   // Just in case we're not the parent, get the parent of the reference
   // element
-  nsINode* parent = aBefore->Element::GetParentNode();
+  nsCOMPtr<nsINode> parent = aBefore->Element::GetParentNode();
   if (!parent || !nsContentUtils::ContentIsDescendantOf(parent, this)) {
     // NOT_FOUND_ERR: Raised if before is not a descendant of the SELECT
     // element.
@@ -694,7 +694,7 @@ HTMLSelectElement::SetLength(uint32_t aLength, ErrorResult& aRv)
 
   if (curlen > aLength) { // Remove extra options
     for (uint32_t i = curlen; i > aLength; --i) {
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(Remove(i - 1)));
+      MOZ_ALWAYS_SUCCEEDS(Remove(i - 1));
     }
   } else if (aLength > curlen) {
     if (aLength > MAX_DYNAMIC_SELECT_LENGTH) {
@@ -1413,7 +1413,7 @@ HTMLSelectElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
       nsGenericHTMLFormElementWithState::GetAttributeChangeHint(aAttribute, aModType);
   if (aAttribute == nsGkAtoms::multiple ||
       aAttribute == nsGkAtoms::size) {
-    NS_UpdateHint(retval, NS_STYLE_HINT_FRAMECHANGE);
+    retval |= NS_STYLE_HINT_FRAMECHANGE;
   }
   return retval;
 }
@@ -1697,7 +1697,7 @@ HTMLSelectElement::SubmitNamesValues(nsFormSubmission* aFormSubmission)
     }
 
     nsString value;
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(option->GetValue(value)));
+    MOZ_ALWAYS_SUCCEEDS(option->GetValue(value));
 
     if (keyGenProcessor) {
       nsString tmp(value);
@@ -1783,7 +1783,7 @@ HTMLSelectElement::IsValueMissing()
     }
 
     nsAutoString value;
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(option->GetValue(value)));
+    MOZ_ALWAYS_SUCCEEDS(option->GetValue(value));
     if (!value.IsEmpty()) {
       return false;
     }
@@ -1882,6 +1882,28 @@ HTMLSelectElement::UpdateSelectedOptions()
 {
   if (mSelectedOptions) {
     mSelectedOptions->SetDirty();
+  }
+}
+
+bool
+HTMLSelectElement::OpenInParentProcess()
+{
+  nsIFormControlFrame* formControlFrame = GetFormControlFrame(false);
+  nsIComboboxControlFrame* comboFrame = do_QueryFrame(formControlFrame);
+  if (comboFrame) {
+    return comboFrame->IsOpenInParentProcess();
+  }
+
+  return false;
+}
+
+void
+HTMLSelectElement::SetOpenInParentProcess(bool aVal)
+{
+  nsIFormControlFrame* formControlFrame = GetFormControlFrame(false);
+  nsIComboboxControlFrame* comboFrame = do_QueryFrame(formControlFrame);
+  if (comboFrame) {
+    comboFrame->SetOpenInParentProcess(aVal);
   }
 }
 

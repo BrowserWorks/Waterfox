@@ -121,7 +121,7 @@ var Change = {
   _updateStatus: function Change__updateStatus(str, state) {
      this._updateStatusWithString(this._str(str), state);
   },
-  
+
   _updateStatusWithString: function Change__updateStatusWithString(string, state) {
     this._statusRow.hidden = false;
     this._status.value = string;
@@ -147,6 +147,7 @@ var Change = {
         return this.doChangePassword();
         break;
     }
+    return undefined;
   },
 
   doGeneratePassphrase: function () {

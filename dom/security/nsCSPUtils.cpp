@@ -375,6 +375,12 @@ nsCSPSchemeSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirect
   return permitsScheme(mScheme, aUri, aReportOnly, aUpgradeInsecure);
 }
 
+bool
+nsCSPSchemeSrc::visit(nsCSPSrcVisitor* aVisitor) const
+{
+  return aVisitor->visitSchemeSrc(*this);
+}
+
 void
 nsCSPSchemeSrc::toString(nsAString& outStr) const
 {
@@ -534,6 +540,12 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected
   return true;
 }
 
+bool
+nsCSPHostSrc::visit(nsCSPSrcVisitor* aVisitor) const
+{
+  return aVisitor->visitHostSrc(*this);
+}
+
 void
 nsCSPHostSrc::toString(nsAString& outStr) const
 {
@@ -611,6 +623,12 @@ nsCSPKeywordSrc::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce)
   return mKeyword == aKeyword;
 }
 
+bool
+nsCSPKeywordSrc::visit(nsCSPSrcVisitor* aVisitor) const
+{
+  return aVisitor->visitKeywordSrc(*this);
+}
+
 void
 nsCSPKeywordSrc::toString(nsAString& outStr) const
 {
@@ -665,6 +683,12 @@ nsCSPNonceSrc::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce) c
     return false;
   }
   return mNonce.Equals(aHashOrNonce);
+}
+
+bool
+nsCSPNonceSrc::visit(nsCSPSrcVisitor* aVisitor) const
+{
+  return aVisitor->visitNonceSrc(*this);
 }
 
 void
@@ -724,6 +748,12 @@ nsCSPHashSrc::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce) co
   return NS_ConvertUTF16toUTF8(mHash).Equals(hash);
 }
 
+bool
+nsCSPHashSrc::visit(nsCSPSrcVisitor* aVisitor) const
+{
+  return aVisitor->visitHashSrc(*this);
+}
+
 void
 nsCSPHashSrc::toString(nsAString& outStr) const
 {
@@ -743,6 +773,12 @@ nsCSPReportURI::nsCSPReportURI(nsIURI *aURI)
 
 nsCSPReportURI::~nsCSPReportURI()
 {
+}
+
+bool
+nsCSPReportURI::visit(nsCSPSrcVisitor* aVisitor) const
+{
+  return false;
 }
 
 void
@@ -902,6 +938,11 @@ nsCSPDirective::toDomCSPStruct(mozilla::dom::CSP& outCSP) const
       outCSP.mForm_action.Value() = mozilla::Move(srcs);
       return;
 
+    case nsIContentSecurityPolicy::BLOCK_ALL_MIXED_CONTENT:
+      outCSP.mBlock_all_mixed_content.Construct();
+      // does not have any srcs
+      return;
+
     case nsIContentSecurityPolicy::UPGRADE_IF_INSECURE_DIRECTIVE:
       outCSP.mUpgrade_insecure_requests.Construct();
       // does not have any srcs
@@ -912,7 +953,7 @@ nsCSPDirective::toDomCSPStruct(mozilla::dom::CSP& outCSP) const
       outCSP.mChild_src.Value() = mozilla::Move(srcs);
       return;
 
-    // REFERRER_DIRECTIVE is handled in nsCSPPolicy::toDomCSPStruct()
+    // REFERRER_DIRECTIVE and REQUIRE_SRI_FOR are handled in nsCSPPolicy::toDomCSPStruct()
 
     default:
       NS_ASSERTION(false, "cannot find directive to convert CSP to JSON");
@@ -942,6 +983,17 @@ nsCSPDirective::getReportURIs(nsTArray<nsString> &outReportURIs) const
     mSrcs[i]->toString(tmpReportURI);
     outReportURIs.AppendElement(tmpReportURI);
   }
+}
+
+bool
+nsCSPDirective::visitSrcs(nsCSPSrcVisitor* aVisitor) const
+{
+  for (uint32_t i = 0; i < mSrcs.Length(); i++) {
+    if (!mSrcs[i]->visit(aVisitor)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool nsCSPDirective::equals(CSPDirective aDirective) const
@@ -987,6 +1039,24 @@ bool nsCSPChildSrcDirective::equals(CSPDirective aDirective) const
   return (aDirective == nsIContentSecurityPolicy::CHILD_SRC_DIRECTIVE);
 }
 
+/* =============== nsBlockAllMixedContentDirective ============= */
+
+nsBlockAllMixedContentDirective::nsBlockAllMixedContentDirective(CSPDirective aDirective)
+: nsCSPDirective(aDirective)
+{
+}
+
+nsBlockAllMixedContentDirective::~nsBlockAllMixedContentDirective()
+{
+}
+
+void
+nsBlockAllMixedContentDirective::toString(nsAString& outStr) const
+{
+  outStr.AppendASCII(CSP_CSPDirectiveToString(
+    nsIContentSecurityPolicy::BLOCK_ALL_MIXED_CONTENT));
+}
+
 /* =============== nsUpgradeInsecureDirective ============= */
 
 nsUpgradeInsecureDirective::nsUpgradeInsecureDirective(CSPDirective aDirective)
@@ -1003,6 +1073,56 @@ nsUpgradeInsecureDirective::toString(nsAString& outStr) const
 {
   outStr.AppendASCII(CSP_CSPDirectiveToString(
     nsIContentSecurityPolicy::UPGRADE_IF_INSECURE_DIRECTIVE));
+}
+
+/* ===== nsRequireSRIForDirective ========================= */
+
+nsRequireSRIForDirective::nsRequireSRIForDirective(CSPDirective aDirective)
+: nsCSPDirective(aDirective)
+{
+}
+
+nsRequireSRIForDirective::~nsRequireSRIForDirective()
+{
+}
+
+void
+nsRequireSRIForDirective::toString(nsAString &outStr) const
+{
+  outStr.AppendASCII(CSP_CSPDirectiveToString(
+    nsIContentSecurityPolicy::REQUIRE_SRI_FOR));
+  for (uint32_t i = 0; i < mTypes.Length(); i++) {
+    if (mTypes[i] == nsIContentPolicy::TYPE_SCRIPT) {
+      outStr.AppendASCII(" script");
+    }
+    else if (mTypes[i] == nsIContentPolicy::TYPE_STYLESHEET) {
+      outStr.AppendASCII(" style");
+    }
+  }
+}
+
+bool
+nsRequireSRIForDirective::hasType(nsContentPolicyType aType) const
+{
+  for (uint32_t i = 0; i < mTypes.Length(); i++) {
+    if (mTypes[i] == aType) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool
+nsRequireSRIForDirective::restrictsContentType(const nsContentPolicyType aType) const
+{
+  return this->hasType(aType);
+}
+
+bool
+nsRequireSRIForDirective::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce) const
+{
+  // can only disallow CSP_REQUIRE_SRI_FOR.
+  return (aKeyword != CSP_REQUIRE_SRI_FOR);
 }
 
 /* ===== nsCSPPolicy ========================= */
@@ -1048,6 +1168,7 @@ nsCSPPolicy::permits(CSPDirective aDir,
   }
 
   NS_ASSERTION(aUri, "permits needs an uri to perform the check!");
+  outViolatedDirective.Truncate();
 
   nsCSPDirective* defaultDir = nullptr;
 
@@ -1232,4 +1353,26 @@ nsCSPPolicy::getReportURIs(nsTArray<nsString>& outReportURIs) const
       return;
     }
   }
+}
+
+bool
+nsCSPPolicy::visitDirectiveSrcs(CSPDirective aDir, nsCSPSrcVisitor* aVisitor) const
+{
+  for (uint32_t i = 0; i < mDirectives.Length(); i++) {
+    if (mDirectives[i]->equals(aDir)) {
+      return mDirectives[i]->visitSrcs(aVisitor);
+    }
+  }
+  return false;
+}
+
+bool
+nsCSPPolicy::requireSRIForType(nsContentPolicyType aContentType)
+{
+  for (uint32_t i = 0; i < mDirectives.Length(); i++) {
+    if (mDirectives[i]->equals(nsIContentSecurityPolicy::REQUIRE_SRI_FOR)) {
+      return static_cast<nsRequireSRIForDirective*>(mDirectives[i])->hasType(aContentType);
+    }
+  }
+  return false;
 }

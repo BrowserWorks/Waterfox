@@ -10,6 +10,7 @@
 #include <dlfcn.h>
 #include "mozilla/RefPtr.h"
 #include "mozilla/Assertions.h"
+#include "GLConsts.h"
 
 using namespace mozilla;
 // IOSurface signatures
@@ -439,11 +440,17 @@ void MacIOSurface::Unlock() {
   MacIOSurfaceLib::IOSurfaceUnlock(mIOSurfacePtr, READ_ONLY, nullptr);
 }
 
-#include "SourceSurfaceRawData.h"
 using mozilla::gfx::SourceSurface;
-using mozilla::gfx::SourceSurfaceRawData;
 using mozilla::gfx::IntSize;
 using mozilla::gfx::SurfaceFormat;
+
+void
+MacIOSurfaceBufferDeallocator(void* aClosure)
+{
+  MOZ_ASSERT(aClosure);
+
+  delete [] static_cast<unsigned char*>(aClosure);
+}
 
 already_AddRefed<SourceSurface>
 MacIOSurface::GetAsSurface() {
@@ -453,7 +460,8 @@ MacIOSurface::GetAsSurface() {
   size_t ioHeight = GetDevicePixelHeight();
 
   unsigned char* ioData = (unsigned char*)GetBaseAddress();
-  unsigned char* dataCpy = (unsigned char*)malloc(bytesPerRow*ioHeight);
+  unsigned char* dataCpy =
+      new unsigned char[bytesPerRow * ioHeight / sizeof(unsigned char)];
   for (size_t i = 0; i < ioHeight; i++) {
     memcpy(dataCpy + i * bytesPerRow,
            ioData + i * bytesPerRow, ioWidth * 4);
@@ -464,8 +472,13 @@ MacIOSurface::GetAsSurface() {
   SurfaceFormat format = HasAlpha() ? mozilla::gfx::SurfaceFormat::B8G8R8A8 :
                                       mozilla::gfx::SurfaceFormat::B8G8R8X8;
 
-  RefPtr<SourceSurfaceRawData> surf = new SourceSurfaceRawData();
-  surf->InitWrappingData(dataCpy, IntSize(ioWidth, ioHeight), bytesPerRow, format, true);
+  RefPtr<mozilla::gfx::DataSourceSurface> surf =
+      mozilla::gfx::Factory::CreateWrappingDataSourceSurface(dataCpy,
+                                                             bytesPerRow,
+                                                             IntSize(ioWidth, ioHeight),
+                                                             format,
+                                                             &MacIOSurfaceBufferDeallocator,
+                                                             static_cast<void*>(dataCpy));
 
   return surf.forget();
 }
@@ -476,6 +489,21 @@ MacIOSurface::GetFormat()
   OSType pixelFormat = GetPixelFormat();
   if (pixelFormat == '420v') {
     return SurfaceFormat::NV12;
+  } else if (pixelFormat == '2vuy') {
+    return SurfaceFormat::YUV422;
+  } else  {
+    return HasAlpha() ? SurfaceFormat::R8G8B8A8 : SurfaceFormat::R8G8B8X8;
+  }
+}
+
+SurfaceFormat
+MacIOSurface::GetReadFormat()
+{
+  OSType pixelFormat = GetPixelFormat();
+  if (pixelFormat == '420v') {
+    return SurfaceFormat::NV12;
+  } else if (pixelFormat == '2vuy') {
+    return SurfaceFormat::R8G8B8X8;
   } else  {
     return HasAlpha() ? SurfaceFormat::R8G8B8A8 : SurfaceFormat::R8G8B8X8;
   }
@@ -500,6 +528,12 @@ MacIOSurface::CGLTexImageIOSurface2D(CGLContextObj ctx, size_t plane)
       internalFormat = format = GL_LUMINANCE_ALPHA;
     }
     type = GL_UNSIGNED_BYTE;
+  } else if (pixelFormat == '2vuy') {
+    MOZ_ASSERT(plane == 0);
+
+    internalFormat = GL_RGB;
+    format = LOCAL_GL_YCBCR_422_APPLE;
+    type = GL_UNSIGNED_SHORT_8_8_APPLE;
   } else  {
     MOZ_ASSERT(plane == 0);
 

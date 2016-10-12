@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -15,9 +17,9 @@ function test() {
     let target = TargetFactory.forTab(gBrowser.selectedTab);
     gDevTools.showToolbox(target, TOOL_ID_1, Toolbox.HostType.BOTTOM)
              .then(aToolbox => {
-                toolbox = aToolbox;
+               toolbox = aToolbox;
                 // select tool 2
-                toolbox.selectTool(TOOL_ID_2)
+               toolbox.selectTool(TOOL_ID_2)
                        // and highlight the first one
                        .then(highlightTab.bind(null, TOOL_ID_1))
                        // to see if it has the proper class.
@@ -37,14 +39,14 @@ function test() {
                        .then(checkNoHighlight.bind(null, TOOL_ID_1))
                        // Now close the toolbox and exit.
                        .then(() => executeSoon(() => {
-                          toolbox.destroy()
+                         toolbox.destroy()
                                  .then(() => {
                                    toolbox = null;
                                    gBrowser.removeCurrentTab();
                                    finish();
                                  });
-                        }));
-              });
+                       }));
+             });
   });
 }
 

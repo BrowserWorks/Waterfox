@@ -25,20 +25,14 @@ typedef std::vector<mozilla::layers::EditReply> EditReplyVector;
 // the Manager() method usually generated when there's one manager protocol,
 // so both manager protocols implement this and we keep a reference to them
 // through this interface.
-class CompositableParentManager : public ISurfaceAllocator
+class CompositableParentManager : public HostIPCAllocator
 {
 public:
-  virtual void SendFenceHandleIfPresent(PTextureParent* aTexture,
-                                        CompositableHost* aCompositableHost) = 0;
+  virtual void SendFenceHandleIfPresent(PTextureParent* aTexture) = 0;
 
   virtual void SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage) = 0;
 
   void SendPendingAsyncMessages();
-
-  /**
-   * Get child side's process Id.
-   */
-  virtual base::ProcessId GetChildProcessId() = 0;
 
   void DestroyActor(const OpDestroy& aOp);
 
@@ -48,14 +42,6 @@ protected:
    */
   bool ReceiveCompositableUpdate(const CompositableOperation& aEdit,
                                  EditReplyVector& replyv);
-
-  bool IsOnCompositorSide() const override { return true; }
-
-  /**
-   * Return true if this protocol is asynchronous with respect to the content
-   * thread (ImageBridge for instance).
-   */
-  virtual bool IsAsync() const { return false; }
 
   virtual void ReplyRemoveTexture(const OpReplyRemoveTexture& aReply) {}
 

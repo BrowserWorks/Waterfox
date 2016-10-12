@@ -9,6 +9,7 @@ tags
 ID
 .DS_Store*
 *.pdb
+*.egg-info
 
 # Vim swap files.
 .*.sw[a-z]
@@ -20,10 +21,12 @@ ID
 /.mozconfig*
 /mozconfig
 /configure
+/old-configure
 /config.cache
 /config.log
 /.clang_complete
-/mach.ini
+/machrc
+/.machrc
 
 # Empty marker file that's generated when we check out NSS
 security/manager/.nss.checkout
@@ -37,6 +40,7 @@ _OPT.OBJ/
 
 # SpiderMonkey configury
 js/src/configure
+js/src/old-configure
 js/src/autom4te.cache
 # SpiderMonkey test result logs
 js/src/tests/results-*.html
@@ -50,6 +54,16 @@ parser/html/java/javaparser/
 .project
 .cproject
 .settings/
+
+# Ignore the files and directory that JetBrains IDEs create.
+/.idea/
+*.iml
+
+# Gradle cache.
+/.gradle/
+
+# Local Gradle configuration properties.
+/local.properties
 
 # Python virtualenv artifacts.
 python/psutil/**/*.so
@@ -72,8 +86,19 @@ testing/web-platform/sync/
 # Android Gradle artifacts.
 mobile/android/gradle/.gradle
 
-# Ignore node_modules from eslint-plugin-mozilla
-testing/eslint-plugin-mozilla/node_modules/
+# XCode project cruft
+embedding/ios/GeckoEmbed/GeckoEmbed.xcodeproj/project.xcworkspace/xcuserdata
+embedding/ios/GeckoEmbed/GeckoEmbed.xcodeproj/xcuserdata
+
+# Ignore mozharness execution files
+testing/mozharness/.tox/
+testing/mozharness/build/
+testing/mozharness/logs/
+testing/mozharness/.coverage
+testing/mozharness/nosetests.xml
+
+# Ignore node_modules
+testing/eslint/node_modules/
 
 # Ignore talos virtualenv and tp5n files.
 # The tp5n set is supposed to be decompressed at
@@ -85,4 +110,9 @@ testing/talos/.Python
 testing/talos/bin/
 testing/talos/include/
 testing/talos/lib/
-testing/talos/talos/page_load_test/tp5n/
+testing/talos/talos/tests/tp5n.zip
+testing/talos/talos/tests/tp5n
+testing/talos/talos/tests/devtools/damp.manifest.develop
+
+# Ignore files created when running a reftest.
+lextab.py

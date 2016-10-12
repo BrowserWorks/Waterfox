@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*** Download items ***/
+/*** Downloads Panel ***/
 
 richlistitem[type="download"] {
   -moz-binding: url('chrome://browser/content/downloads/download.xml#download');
@@ -10,6 +10,45 @@ richlistitem[type="download"] {
 
 richlistitem[type="download"]:not([selected]) button {
   /* Only focus buttons in the selected item. */
+  -moz-user-focus: none;
+}
+
+richlistitem[type="download"].download-state[state="1"]:not([exists]) .downloadShow {
+  display: none;
+}
+
+#downloadsSummary:not([inprogress]) > vbox > #downloadsSummaryProgress,
+#downloadsSummary:not([inprogress]) > vbox > #downloadsSummaryDetails,
+#downloadsFooter[showingsummary] > #downloadsHistory,
+#downloadsFooter:not([showingsummary]) > #downloadsSummary {
+  display: none;
+}
+
+/*** Downloads View ***/
+
+/**
+ * The downloads richlistbox may list thousands of items, and it turns out
+ * XBL binding attachment, and even more so detachment, is a performance hog.
+ * This hack makes sure we don't apply any binding to inactive items (inactive
+ * items are history downloads that haven't been in the visible area).
+ * We can do this because the richlistbox implementation does not interact
+ * much with the richlistitem binding.  However, this may turn out to have
+ * some side effects (see bug 828111 for the details).
+ *
+ * We might be able to do away with this workaround once bug 653881 is fixed.
+ */
+richlistitem.download {
+  -moz-binding: none;
+}
+
+richlistitem.download[active] {
+  -moz-binding: url("chrome://browser/content/downloads/download.xml#download");
+}
+
+richlistitem.download button {
+  /* These buttons should never get focus, as that would "disable"
+     the downloads view controller (it's only used when the richlistbox
+     is focused). */
   -moz-user-focus: none;
 }
 
@@ -79,11 +118,31 @@ richlistitem[type="download"]:not([selected]) button {
                                            .downloadCancel,
 
 /* Blocked (dirty) downloads that have not been confirmed and
-   have temporary data. */
+   have temporary data, for the Malware case. */
 .download-state:not(          [state="8"]  /* Blocked (dirty)    */)
                                            .downloadConfirmBlock,
 .download-state[state="8"]:not(.temporary-block)
                                            .downloadConfirmBlock,
+.download-state[state="8"].temporary-block:not([verdict="Malware"])
+                                           .downloadConfirmBlock,
+
+/* Blocked (dirty) downloads that have not been confirmed and
+   have temporary data, for the Potentially Unwanted case. */
+.download-state:not(          [state="8"]  /* Blocked (dirty)    */)
+                                           .downloadChooseUnblock,
+.download-state[state="8"]:not(.temporary-block)
+                                           .downloadChooseUnblock,
+.download-state[state="8"].temporary-block:not([verdict="PotentiallyUnwanted"])
+                                           .downloadChooseUnblock,
+
+/* Blocked (dirty) downloads that have not been confirmed and
+   have temporary data, for the Uncommon case. */
+.download-state:not(          [state="8"]  /* Blocked (dirty)    */)
+                                           .downloadChooseOpen,
+.download-state[state="8"]:not(.temporary-block)
+                                           .downloadChooseOpen,
+.download-state[state="8"].temporary-block:not([verdict="Uncommon"])
+                                           .downloadChooseOpen,
 
 .download-state:not(:-moz-any([state="2"], /* Failed             */
                               [state="3"]) /* Canceled           */)
@@ -94,17 +153,4 @@ richlistitem[type="download"]:not([selected]) button {
 
 {
   visibility: hidden;
-}
-
-.download-state[state="1"]:not([exists]) .downloadShow
-{
-  display: none;
-}
-
-#downloadsSummary:not([inprogress]) > vbox > #downloadsSummaryProgress,
-#downloadsSummary:not([inprogress]) > vbox > #downloadsSummaryDetails,
-#downloadsFooter[showingsummary] > #downloadsHistory,
-#downloadsFooter:not([showingsummary]) > #downloadsSummary
-{
-  display: none;
 }

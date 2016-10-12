@@ -145,8 +145,9 @@ protected:
     };
     root = CreateLayerTree(layerTreeSyntax, layerVisibleRegions, layerTransforms, lm, layers);
 
-    SetScrollableFrameMetrics(layers[2], FrameMetrics::START_SCROLL_ID + 1, CSSRect(0, 0, 10, 10));
-    SetScrollableFrameMetrics(layers[3], FrameMetrics::START_SCROLL_ID + 2, CSSRect(0, 0, 100, 100));
+    SetScrollableFrameMetrics(layers[2], FrameMetrics::START_SCROLL_ID, CSSRect(0, 0, 10, 10));
+    SetScrollableFrameMetrics(layers[3], FrameMetrics::START_SCROLL_ID + 1, CSSRect(0, 0, 100, 100));
+    SetScrollHandoff(layers[3], layers[2]);
 
     EventRegions regions(nsIntRegion(IntRect(0, 0, 10, 10)));
     layers[2]->SetEventRegions(regions);
@@ -186,18 +187,18 @@ TEST_F(APZEventRegionsTester, HitRegionImmediateResponse) {
 
   // Tap in the exposed hit regions of each of the layers once and ensure
   // the clicks are dispatched right away
-  Tap(manager, ScreenIntPoint(10, 10), mcc, tapDuration);
+  Tap(manager, ScreenIntPoint(10, 10), tapDuration);
   mcc->RunThroughDelayedTasks();    // this runs the tap event
   check.Call("Tapped on left");
-  Tap(manager, ScreenIntPoint(110, 110), mcc, tapDuration);
+  Tap(manager, ScreenIntPoint(110, 110), tapDuration);
   mcc->RunThroughDelayedTasks();    // this runs the tap event
   check.Call("Tapped on bottom");
-  Tap(manager, ScreenIntPoint(110, 10), mcc, tapDuration);
+  Tap(manager, ScreenIntPoint(110, 10), tapDuration);
   mcc->RunThroughDelayedTasks();    // this runs the tap event
   check.Call("Tapped on root");
 
   // Now tap on the dispatch-to-content region where the layers overlap
-  Tap(manager, ScreenIntPoint(10, 110), mcc, tapDuration);
+  Tap(manager, ScreenIntPoint(10, 110), tapDuration);
   mcc->RunThroughDelayedTasks();    // this runs the main-thread timeout
   check.Call("Tap pending on d-t-c region");
   mcc->RunThroughDelayedTasks();    // this runs the tap event
@@ -205,7 +206,7 @@ TEST_F(APZEventRegionsTester, HitRegionImmediateResponse) {
 
   // Now let's do that again, but simulate a main-thread response
   uint64_t inputBlockId = 0;
-  Tap(manager, ScreenIntPoint(10, 110), mcc, tapDuration, nullptr, &inputBlockId);
+  Tap(manager, ScreenIntPoint(10, 110), tapDuration, nullptr, &inputBlockId);
   nsTArray<ScrollableLayerGuid> targets;
   targets.AppendElement(left->GetGuid());
   manager->SetTargetAPZC(inputBlockId, targets);
@@ -221,7 +222,7 @@ TEST_F(APZEventRegionsTester, HitRegionAccumulatesChildren) {
   // content controller, which indicates the input events got routed correctly
   // to the APZC.
   EXPECT_CALL(*mcc, HandleSingleTap(_, _, rootApzc->GetGuid())).Times(1);
-  Tap(manager, ScreenIntPoint(10, 160), mcc, TimeDuration::FromMilliseconds(100));
+  Tap(manager, ScreenIntPoint(10, 160), TimeDuration::FromMilliseconds(100));
 }
 
 TEST_F(APZEventRegionsTester, Obscuration) {
@@ -233,7 +234,7 @@ TEST_F(APZEventRegionsTester, Obscuration) {
   TestAsyncPanZoomController* parent = ApzcOf(layers[1]);
   TestAsyncPanZoomController* child = ApzcOf(layers[2]);
 
-  ApzcPanNoFling(parent, mcc, 75, 25);
+  ApzcPanNoFling(parent, 75, 25);
 
   HitTestResult result;
   RefPtr<AsyncPanZoomController> hit = manager->GetTargetAPZC(ScreenPoint(50, 75), &result);
@@ -260,7 +261,7 @@ TEST_F(APZEventRegionsTester, Bug1117712) {
   // These touch events should hit the dispatch-to-content region of layers[3]
   // and so get queued with that APZC as the tentative target.
   uint64_t inputBlockId = 0;
-  Tap(manager, ScreenIntPoint(55, 5), mcc, TimeDuration::FromMilliseconds(100), nullptr, &inputBlockId);
+  Tap(manager, ScreenIntPoint(55, 5), TimeDuration::FromMilliseconds(100), nullptr, &inputBlockId);
   // But now we tell the APZ that really it hit layers[2], and expect the tap
   // to be delivered at the correct coordinates.
   EXPECT_CALL(*mcc, HandleSingleTap(CSSPoint(55, 5), 0, apzc2->GetGuid())).Times(1);

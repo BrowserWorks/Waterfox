@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -11,9 +13,10 @@
 #include <string>
 
 #include "base/message_loop.h"
-#include "mozilla/UniquePtr.h"
+#include "base/task.h"
+#include "nsISupportsImpl.h"
 
-class NonThreadSafe;
+#include "mozilla/Maybe.h"
 
 namespace IPC {
 
@@ -23,7 +26,7 @@ class Channel::ChannelImpl : public MessageLoopForIO::IOHandler {
   ChannelImpl(const std::wstring& channel_id, Mode mode, Listener* listener);
   ChannelImpl(const std::wstring& channel_id, HANDLE server_pipe,
               Mode mode, Listener* listener);
-  ~ChannelImpl() { 
+  ~ChannelImpl() {
     if (pipe_ != INVALID_HANDLE_VALUE) {
       Close();
     }
@@ -81,12 +84,18 @@ class Channel::ChannelImpl : public MessageLoopForIO::IOHandler {
   // Messages to be sent are queued here.
   std::queue<Message*> output_queue_;
 
+  // If sending a message blocks then we use this iterator to keep track of
+  // where in the message we are. It gets reset when the message is finished
+  // sending.
+  mozilla::Maybe<Pickle::BufferList::IterImpl> partial_write_iter_;
+
   // We read from the pipe into this buffer
   char input_buf_[Channel::kReadBufferSize];
+  size_t input_buf_offset_;
 
-  // Large messages that span multiple pipe buffers, get built-up using
-  // this buffer.
-  std::string input_overflow_buf_;
+  // Large incoming messages that span multiple pipe buffers get built-up in the
+  // buffers of this message.
+  mozilla::Maybe<Message> incoming_message_;
 
   // In server-mode, we have to wait for the client to connect before we
   // can begin reading.  We make use of the input_state_ when performing
@@ -119,7 +128,9 @@ class Channel::ChannelImpl : public MessageLoopForIO::IOHandler {
   // send us back our shared secret, if we are using one.
   bool waiting_for_shared_secret_;
 
-  mozilla::UniquePtr<NonThreadSafe> thread_check_;
+#ifdef DEBUG
+  mozilla::UniquePtr<nsAutoOwningThread> _mOwningThread;
+#endif
 
   DISALLOW_COPY_AND_ASSIGN(ChannelImpl);
 };

@@ -11,10 +11,11 @@
 
 #include "GrCaps.h"
 #include "GrGLSL.h"
+#include "GrSwizzle.h"
 
 class GrGLSLCaps : public GrShaderCaps {
 public:
-    
+
 
     /**
     * Indicates how GLSL must interact with advanced blend equations. The KHR extension requires
@@ -53,6 +54,20 @@ public:
 
     bool dropsTileOnZeroDivide() const { return fDropsTileOnZeroDivide; }
 
+    bool flatInterpolationSupport() const { return fFlatInterpolationSupport; }
+
+    bool noperspectiveInterpolationSupport() const { return fNoPerspectiveInterpolationSupport; }
+
+    bool multisampleInterpolationSupport() const { return fMultisampleInterpolationSupport; }
+
+    bool sampleVariablesSupport() const { return fSampleVariablesSupport; }
+
+    bool sampleMaskOverrideCoverageSupport() const { return fSampleMaskOverrideCoverageSupport; }
+
+    bool externalTextureSupport() const { return fExternalTextureSupport; }
+
+    bool bufferTextureSupport() const { return fBufferTextureSupport; }
+
     AdvBlendEqInteraction advBlendEqInteraction() const { return fAdvBlendEqInteraction; }
 
     bool mustEnableAdvBlendEqs() const {
@@ -62,7 +77,7 @@ public:
     bool mustEnableSpecificAdvBlendEqs() const {
         return fAdvBlendEqInteraction == kSpecificEnables_AdvBlendEqInteraction;
     }
-    
+
     bool mustDeclareFragmentShaderOutput() const {
         return fGLSLGeneration > k110_GrGLSLGeneration;
     }
@@ -71,8 +86,6 @@ public:
 
     // Returns whether we can use the glsl funciton any() in our shader code.
     bool canUseAnyFunctionInShader() const { return fCanUseAnyFunctionInShader; }
-
-    bool forceHighPrecisionNDSTransform() const { return fForceHighPrecisionNDSTransform; }
 
     bool canUseMinAndAbsTogether() const { return fCanUseMinAndAbsTogether; }
 
@@ -85,7 +98,7 @@ public:
         SkASSERT(this->shaderDerivativeSupport());
         return fShaderDerivativeExtensionString;
     }
-    
+
     // Returns the string of an extension that will do all necessary coord transfomations needed
     // when reading the fragment position. If such an extension does not exisits, this function
     // returns a nullptr, and all transforms of the frag position must be done manually in the
@@ -103,17 +116,51 @@ public:
     }
 
     const char* externalTextureExtensionString() const {
+        SkASSERT(this->externalTextureSupport());
         return fExternalTextureExtensionString;
     }
 
-    bool mustSwizzleInShader() const { return fMustSwizzleInShader; }
+    const char* bufferTextureExtensionString() const {
+        SkASSERT(this->bufferTextureSupport());
+        return fBufferTextureExtensionString;
+    }
+
+    const char* noperspectiveInterpolationExtensionString() const {
+        SkASSERT(this->noperspectiveInterpolationSupport());
+        return fNoPerspectiveInterpolationExtensionString;
+    }
+
+    const char* multisampleInterpolationExtensionString() const {
+        SkASSERT(this->multisampleInterpolationSupport());
+        return fMultisampleInterpolationExtensionString;
+    }
+
+    const char* sampleVariablesExtensionString() const {
+        SkASSERT(this->sampleVariablesSupport());
+        return fSampleVariablesExtensionString;
+    }
+
+    int maxVertexSamplers() const { return fMaxVertexSamplers; }
+
+    int maxGeometrySamplers() const { return fMaxGeometrySamplers; }
+
+    int maxFragmentSamplers() const { return fMaxFragmentSamplers; }
+
+    int maxCombinedSamplers() const { return fMaxCombinedSamplers; }
 
     /**
-     * Returns a string which represents how to map from an internal GLFormat to a given
-     * GrPixelConfig. The function mustSwizzleInShader determines whether this swizzle is applied
-     * in the generated shader code or using sample state in the 3D API.
+     * Given a texture's config, this determines what swizzle must be appended to accesses to the
+     * texture in generated shader code. Swizzling may be implemented in texture parameters or a
+     * sampler rather than in the shader. In this case the returned swizzle will always be "rgba".
      */
-    const char* getSwizzleMap(GrPixelConfig config) const { return fConfigSwizzle[config]; }
+    const GrSwizzle& configTextureSwizzle(GrPixelConfig config) const {
+        return fConfigTextureSwizzle[config];
+    }
+
+    /** Swizzle that should occur on the fragment shader outputs for a given config. */
+    const GrSwizzle& configOutputSwizzle(GrPixelConfig config) const {
+        return fConfigOutputSwizzle[config];
+    }
 
     GrGLSLGeneration generation() const { return fGLSLGeneration; }
 
@@ -126,14 +173,20 @@ private:
     void onApplyOptionsOverrides(const GrContextOptions& options) override;
 
     GrGLSLGeneration fGLSLGeneration;
-    
+
     bool fDropsTileOnZeroDivide : 1;
     bool fFBFetchSupport : 1;
     bool fFBFetchNeedsCustomOutput : 1;
     bool fBindlessTextureSupport : 1;
     bool fUsesPrecisionModifiers : 1;
     bool fCanUseAnyFunctionInShader : 1;
-    bool fForceHighPrecisionNDSTransform : 1;
+    bool fFlatInterpolationSupport : 1;
+    bool fNoPerspectiveInterpolationSupport : 1;
+    bool fMultisampleInterpolationSupport : 1;
+    bool fSampleVariablesSupport : 1;
+    bool fSampleMaskOverrideCoverageSupport : 1;
+    bool fExternalTextureSupport : 1;
+    bool fBufferTextureSupport : 1;
 
     // Used for specific driver bug work arounds
     bool fCanUseMinAndAbsTogether : 1;
@@ -145,19 +198,28 @@ private:
     const char* fFragCoordConventionsExtensionString;
     const char* fSecondaryOutputExtensionString;
     const char* fExternalTextureExtensionString;
+    const char* fBufferTextureExtensionString;
+    const char* fNoPerspectiveInterpolationExtensionString;
+    const char* fMultisampleInterpolationExtensionString;
+    const char* fSampleVariablesExtensionString;
 
     const char* fFBFetchColorName;
     const char* fFBFetchExtensionString;
 
+    uint8_t fMaxVertexSamplers;
+    uint8_t fMaxGeometrySamplers;
+    uint8_t fMaxFragmentSamplers;
+    uint8_t fMaxCombinedSamplers;
+
     AdvBlendEqInteraction fAdvBlendEqInteraction;
 
-    bool        fMustSwizzleInShader;
-    const char* fConfigSwizzle[kGrPixelConfigCnt];
+    GrSwizzle fConfigTextureSwizzle[kGrPixelConfigCnt];
+    GrSwizzle fConfigOutputSwizzle[kGrPixelConfigCnt];
 
     friend class GrGLCaps;  // For initialization.
+    friend class GrVkCaps;
 
     typedef GrShaderCaps INHERITED;
 };
-
 
 #endif

@@ -53,7 +53,7 @@ Debug_SetValueRangeToCrashOnTouch(Value* vec, size_t len)
 }
 
 static MOZ_ALWAYS_INLINE void
-Debug_SetValueRangeToCrashOnTouch(HeapValue* vec, size_t len)
+Debug_SetValueRangeToCrashOnTouch(GCPtrValue* vec, size_t len)
 {
 #ifdef DEBUG
     Debug_SetValueRangeToCrashOnTouch((Value*) vec, len);
@@ -160,7 +160,7 @@ ArraySetLength(JSContext* cx, Handle<ArrayObject*> obj, HandleId id,
 class ObjectElements
 {
   public:
-    enum Flags {
+    enum Flags: uint32_t {
         // Integers written to these elements must be converted to doubles.
         CONVERT_DOUBLE_ELEMENTS     = 0x1,
 
@@ -180,7 +180,15 @@ class ObjectElements
         // For TypedArrays only: this TypedArray's storage is mapping shared
         // memory.  This is a static property of the TypedArray, set when it
         // is created and never changed.
-        SHARED_MEMORY               = 0x8
+        SHARED_MEMORY               = 0x8,
+
+        // Set if the object has already been added to the whole-cell store
+        // buffer, and therefore adding individual elements into the slots store
+        // buffer would be pointless. This is never set for the empty or shared
+        // elements headers, nor if the elements are copy on write; in such
+        // situations it isn't clear *which* object that references this
+        // elements header has already been put in the whole-cell store buffer.
+        IN_WHOLE_CELL_BUFFER        = 0x10,
     };
 
   private:
@@ -237,6 +245,19 @@ class ObjectElements
         MOZ_ASSERT(isCopyOnWrite());
         flags &= ~COPY_ON_WRITE;
     }
+    bool isInWholeCellBuffer() const {
+        return flags & IN_WHOLE_CELL_BUFFER;
+    }
+    void setInWholeCellBuffer() {
+        MOZ_ASSERT(!isSharedMemory());
+        MOZ_ASSERT(!isCopyOnWrite());
+        flags |= IN_WHOLE_CELL_BUFFER;
+    }
+    void clearInWholeCellBuffer() {
+        MOZ_ASSERT(!isSharedMemory());
+        MOZ_ASSERT(!isCopyOnWrite());
+        flags &= ~IN_WHOLE_CELL_BUFFER;
+    }
 
   public:
     MOZ_CONSTEXPR ObjectElements(uint32_t capacity, uint32_t length)
@@ -265,9 +286,9 @@ class ObjectElements
         return flags & SHARED_MEMORY;
     }
 
-    HeapPtrNativeObject& ownerObject() const {
+    GCPtrNativeObject& ownerObject() const {
         MOZ_ASSERT(isCopyOnWrite());
-        return *(HeapPtrNativeObject*)(&elements()[initializedLength]);
+        return *(GCPtrNativeObject*)(&elements()[initializedLength]);
     }
 
     static int offsetOfFlags() {
@@ -358,7 +379,7 @@ class NativeObject : public JSObject
 {
   protected:
     // Property layout description and other state.
-    HeapPtrShape shape_;
+    GCPtrShape shape_;
 
     /* Slots for object properties. */
     js::HeapSlot* slots_;
@@ -457,6 +478,18 @@ class NativeObject : public JSObject
     void setIsSharedMemory() {
         MOZ_ASSERT(elements_ == emptyObjectElements);
         elements_ = emptyObjectElementsShared;
+    }
+
+    bool isInWholeCellBuffer() const {
+        return getElementsHeader()->isInWholeCellBuffer();
+    }
+    void setInWholeCellBuffer() {
+        if (!hasEmptyElements() && !isSharedMemory() && !getElementsHeader()->isCopyOnWrite())
+            getElementsHeader()->setInWholeCellBuffer();
+    }
+    void clearInWholeCellBuffer() {
+        if (!hasEmptyElements() && !isSharedMemory() && !getElementsHeader()->isCopyOnWrite())
+            getElementsHeader()->clearInWholeCellBuffer();
     }
 
   protected:
@@ -1253,6 +1286,8 @@ class NativeObject : public JSObject
     copy(ExclusiveContext* cx, gc::AllocKind kind, gc::InitialHeap heap,
          HandleNativeObject templateObject);
 
+    void updateShapeAfterMovingGC();
+
     /* JIT Accessors */
     static size_t offsetOfElements() { return offsetof(NativeObject, elements_); }
     static size_t offsetOfFixedElements() {
@@ -1278,10 +1313,8 @@ inline void
 NativeObject::privateWriteBarrierPre(void** oldval)
 {
     JS::shadow::Zone* shadowZone = this->shadowZoneFromAnyThread();
-    if (shadowZone->needsIncrementalBarrier()) {
-        if (*oldval && getClass()->trace)
-            getClass()->trace(shadowZone->barrierTracer(), this);
-    }
+    if (shadowZone->needsIncrementalBarrier() && *oldval && getClass()->hasTrace())
+        getClass()->doTrace(shadowZone->barrierTracer(), this);
 }
 
 #ifdef DEBUG
@@ -1338,6 +1371,10 @@ NativeDefineProperty(ExclusiveContext* cx, HandleNativeObject obj, PropertyName*
 
 extern bool
 NativeHasProperty(JSContext* cx, HandleNativeObject obj, HandleId id, bool* foundp);
+
+extern bool
+NativeGetOwnPropertyDescriptor(JSContext* cx, HandleNativeObject obj, HandleId id,
+                               MutableHandle<PropertyDescriptor> desc);
 
 extern bool
 NativeGetProperty(JSContext* cx, HandleNativeObject obj, HandleValue receiver, HandleId id,
@@ -1457,7 +1494,7 @@ MaybeNativeObject(JSObject* obj)
 inline bool
 js::HasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp)
 {
-    if (HasPropertyOp op = obj->getOps()->hasProperty)
+    if (HasPropertyOp op = obj->getOpsHasProperty())
         return op(cx, obj, id, foundp);
     return NativeHasProperty(cx, obj.as<NativeObject>(), id, foundp);
 }
@@ -1466,7 +1503,7 @@ inline bool
 js::GetProperty(JSContext* cx, HandleObject obj, HandleValue receiver, HandleId id,
                 MutableHandleValue vp)
 {
-    if (GetPropertyOp op = obj->getOps()->getProperty)
+    if (GetPropertyOp op = obj->getOpsGetProperty())
         return op(cx, obj, receiver, id, vp);
     return NativeGetProperty(cx, obj.as<NativeObject>(), receiver, id, vp);
 }
@@ -1474,7 +1511,7 @@ js::GetProperty(JSContext* cx, HandleObject obj, HandleValue receiver, HandleId 
 inline bool
 js::GetPropertyNoGC(JSContext* cx, JSObject* obj, const Value& receiver, jsid id, Value* vp)
 {
-    if (obj->getOps()->getProperty)
+    if (obj->getOpsGetProperty())
         return false;
     return NativeGetPropertyNoGC(cx, &obj->as<NativeObject>(), receiver, id, vp);
 }
@@ -1483,7 +1520,7 @@ inline bool
 js::SetProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
                 HandleValue receiver, ObjectOpResult& result)
 {
-    if (obj->getOps()->setProperty)
+    if (obj->getOpsSetProperty())
         return JSObject::nonNativeSetProperty(cx, obj, id, v, receiver, result);
     return NativeSetProperty(cx, obj.as<NativeObject>(), id, v, receiver, Qualified, result);
 }
@@ -1492,7 +1529,7 @@ inline bool
 js::SetElement(JSContext* cx, HandleObject obj, uint32_t index, HandleValue v,
                HandleValue receiver, ObjectOpResult& result)
 {
-    if (obj->getOps()->setProperty)
+    if (obj->getOpsSetProperty())
         return JSObject::nonNativeSetElement(cx, obj, index, v, receiver, result);
     return NativeSetElement(cx, obj.as<NativeObject>(), index, v, receiver, result);
 }

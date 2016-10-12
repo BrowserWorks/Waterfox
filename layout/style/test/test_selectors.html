@@ -640,6 +640,30 @@ function run() {
     test_balanced_unparseable(":nth-child(- /**/n-2)");
     test_balanced_unparseable(":nth-child(+/**/ n-2)");
     test_balanced_unparseable(":nth-child(+ /**/n-2)");
+    test_parseable(":nth-child(+/**/N-2)");
+    test_parseable(":nth-child(+N/**/-2)");
+    test_parseable(":nth-child(+N/**/-2)");
+    test_parseable(":nth-child(+N-/**/2)");
+    test_parseable(":nth-child(+N-2/**/)");
+    test_parseable(":nth-child(+1/**/N-2)");
+    test_parseable(":nth-child(+1N/**/-2)");
+    test_parseable(":nth-child(+1N/**/-2)");
+    test_parseable(":nth-child(+1N-/**/2)");
+    test_parseable(":nth-child(+1N-2/**/)");
+    test_parseable(":nth-child(-/**/N-2)");
+    test_parseable(":nth-child(-N/**/-2)");
+    test_parseable(":nth-child(-N/**/-2)");
+    test_parseable(":nth-child(-N-/**/2)");
+    test_parseable(":nth-child(-N-2/**/)");
+    test_parseable(":nth-child(-1/**/N-2)");
+    test_parseable(":nth-child(-1N/**/-2)");
+    test_parseable(":nth-child(-1N/**/-2)");
+    test_parseable(":nth-child(-1N-/**/2)");
+    test_parseable(":nth-child(-1N-2/**/)");
+    test_balanced_unparseable(":nth-child(-/**/ N-2)");
+    test_balanced_unparseable(":nth-child(- /**/N-2)");
+    test_balanced_unparseable(":nth-child(+/**/ N-2)");
+    test_balanced_unparseable(":nth-child(+ /**/N-2)");
     test_parseable(":nth-child( +n + 1 )");
     test_parseable(":nth-child( +/**/n + 1 )");
     test_parseable(":nth-child( -/**/2/**/n/**/+/**/4 )");
@@ -970,42 +994,42 @@ function run() {
     test_balanced_unparseable(":-moz-locale-dir(ltr other)");
     test_balanced_unparseable(":-moz-locale-dir");
 
-    // Test :-moz-dir()
-    test_parseable(":-moz-dir(ltr)");
-    test_parseable(":-moz-dir(rtl)");
-    test_parseable(":-moz-dir(rTl)");
-    test_parseable(":-moz-dir(LTR)");
-    test_parseable(":-moz-dir(other)");
-    if (document.body.matches(":-moz-dir(ltr)")) {
-        test_selector_in_html("a:-moz-dir(LTr)", single_a,
+    // Test :dir()
+    test_parseable(":dir(ltr)");
+    test_parseable(":dir(rtl)");
+    test_parseable(":dir(rTl)");
+    test_parseable(":dir(LTR)");
+    test_parseable(":dir(other)");
+    if (document.body.matches(":dir(ltr)")) {
+        test_selector_in_html("a:dir(LTr)", single_a,
                               set_single, empty_set);
-        test_selector_in_html("a:-moz-dir(ltR)", single_a,
+        test_selector_in_html("a:dir(ltR)", single_a,
                               set_single, empty_set);
-        test_selector_in_html("a:-moz-dir(LTR)", single_a,
+        test_selector_in_html("a:dir(LTR)", single_a,
                               set_single, empty_set);
-        test_selector_in_html("a:-moz-dir(RTl)", single_a,
+        test_selector_in_html("a:dir(RTl)", single_a,
                               empty_set, set_single);
     } else {
-        test_selector_in_html("a:-moz-dir(RTl)", single_a,
+        test_selector_in_html("a:dir(RTl)", single_a,
                               set_single, empty_set);
-        test_selector_in_html("a:-moz-dir(rtL)", single_a,
+        test_selector_in_html("a:dir(rtL)", single_a,
                               set_single, empty_set);
-        test_selector_in_html("a:-moz-dir(RTL)", single_a,
+        test_selector_in_html("a:dir(RTL)", single_a,
                               set_single, empty_set);
-        test_selector_in_html("a:-moz-dir(LTr)", single_a,
+        test_selector_in_html("a:dir(LTr)", single_a,
                               empty_set, set_single);
     }
-    test_selector_in_html("a:-moz-dir(other)", single_a,
+    test_selector_in_html("a:dir(other)", single_a,
                           empty_set, set_single);
 
-    test_balanced_unparseable(":-moz-dir()");
-    test_balanced_unparseable(":-moz-dir(())");
-    test_balanced_unparseable(":-moz-dir(3())");
-    test_balanced_unparseable(":-moz-dir(f{})");
-    test_balanced_unparseable(":-moz-dir('ltr')");
-    test_balanced_unparseable(":-moz-dir(ltr, other)");
-    test_balanced_unparseable(":-moz-dir(ltr other)");
-    test_balanced_unparseable(":-moz-dir");
+    test_balanced_unparseable(":dir()");
+    test_balanced_unparseable(":dir(())");
+    test_balanced_unparseable(":dir(3())");
+    test_balanced_unparseable(":dir(f{})");
+    test_balanced_unparseable(":dir('ltr')");
+    test_balanced_unparseable(":dir(ltr, other)");
+    test_balanced_unparseable(":dir(ltr other)");
+    test_balanced_unparseable(":dir");
 
     // Test -moz-lwtheme and -moz-lwtheme-[darktext|brighttext]
     test_parseable(":-moz-lwtheme");
@@ -1029,11 +1053,21 @@ function run() {
     test_parseable(":-moz-window-inactive");
     test_parseable("div p:-moz-window-inactive:hover span");
 
-    // Plugin pseudoclasses
-    test_parseable(":-moz-type-unsupported");
-    test_parseable(":-moz-handler-disabled");
-    test_parseable(":-moz-handler-blocked");
-    test_parseable(":-moz-handler-crashed");
+    // Chrome-only
+    test_unbalanced_unparseable(":-moz-browser-frame");
+
+    // Plugin pseudoclasses are chrome-only:
+    test_unbalanced_unparseable(":-moz-type-unsupported");
+    test_unbalanced_unparseable(":-moz-user-disabled");
+    test_unbalanced_unparseable(":-moz-suppressed");
+    test_unbalanced_unparseable(":-moz-type-unsupported");
+    test_unbalanced_unparseable(":-moz-type-unsupported-platform");
+    test_unbalanced_unparseable(":-moz-handler-clicktoplay");
+    test_unbalanced_unparseable(":-moz-handler-vulnerable-updatable");
+    test_unbalanced_unparseable(":-moz-handler-vulnerable-no-update");
+    test_unbalanced_unparseable(":-moz-handler-disabled");
+    test_unbalanced_unparseable(":-moz-handler-blocked");
+    test_unbalanced_unparseable(":-moz-handler-crashed");
 
     // We're not in a UA sheet, so this should be invalid.
     test_balanced_unparseable(":-moz-native-anonymous");
@@ -1209,6 +1243,19 @@ function run() {
 
     // Test that :-moz-placeholder is parsable.
     test_parseable(":-moz-placeholder");
+
+    // Test that things other than user-action pseudo-classes are
+    // rejected after pseudo-elements.  Some of these tests rely on
+    // using a pseudo-element that supports a user-action pseudo-class
+    // after it, so we need to use the prefixed ::-moz-color-swatch,
+    // which is one of the ones with
+    // CSS_PSEUDO_ELEMENT_SUPPORTS_USER_ACTION_STATE (none of which are
+    // unprefixed).
+    test_parseable("::-moz-color-swatch:hover");
+    test_balanced_unparseable("::-moz-color-swatch:not(.foo)");
+    test_balanced_unparseable("::-moz-color-swatch:first-child");
+    test_balanced_unparseable("::-moz-color-swatch:hover#foo");
+    test_balanced_unparseable(".foo::after:not(.bar) ~ h3");
 
     run_deferred_tests();
 }

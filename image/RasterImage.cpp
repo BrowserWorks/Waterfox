@@ -9,7 +9,6 @@
 
 #include "RasterImage.h"
 
-#include "base/histogram.h"
 #include "gfxPlatform.h"
 #include "nsComponentManagerUtils.h"
 #include "nsError.h"
@@ -78,6 +77,8 @@ RasterImage::RasterImage(ImageURL* aURI /* = nullptr */) :
   mLockCount(0),
   mDecodeCount(0),
   mRequestedSampleSize(0),
+  mImageProducerID(ImageContainer::AllocateProducerID()),
+  mLastFrameID(0),
   mLastImageContainerDrawResult(DrawResult::NOT_READY),
 #ifdef DEBUG
   mFramesNotified(0),
@@ -94,7 +95,6 @@ RasterImage::RasterImage(ImageURL* aURI /* = nullptr */) :
   mAnimationFinished(false),
   mWantFullDecode(false)
 {
-  Telemetry::GetHistogramById(Telemetry::IMAGE_DECODE_COUNT)->Add(0);
 }
 
 //******************************************************************************
@@ -108,6 +108,16 @@ RasterImage::~RasterImage()
 
   // Release all frames from the surface cache.
   SurfaceCache::RemoveImage(ImageKey(this));
+
+  // Record Telemetry.
+  Telemetry::Accumulate(Telemetry::IMAGE_DECODE_COUNT, mDecodeCount);
+
+  if (mDecodeCount > sMaxDecodeCount) {
+    sMaxDecodeCount = mDecodeCount;
+    // Clear out any previously collected data first.
+    Telemetry::ClearHistogram(Telemetry::IMAGE_MAX_DECODE_COUNT);
+    Telemetry::Accumulate(Telemetry::IMAGE_MAX_DECODE_COUNT, sMaxDecodeCount);
+  }
 }
 
 nsresult
@@ -288,9 +298,10 @@ RasterImage::LookupFrameInternal(uint32_t aFrameNum,
 
   SurfaceFlags surfaceFlags = ToSurfaceFlags(aFlags);
 
-  // We don't want any substitution for sync decodes, so we use
+  // We don't want any substitution for sync decodes, and substitution would be
+  // illegal when high quality downscaling is disabled, so we use
   // SurfaceCache::Lookup in this case.
-  if (aFlags & FLAG_SYNC_DECODE) {
+  if ((aFlags & FLAG_SYNC_DECODE) || !(aFlags & FLAG_HIGH_QUALITY_SCALING)) {
     return SurfaceCache::Lookup(ImageKey(this),
                                 RasterSurfaceKey(aSize,
                                                  surfaceFlags,
@@ -362,7 +373,16 @@ RasterImage::LookupFrame(uint32_t aFrameNum,
   // async decoder that's currently running, the contents of the frame may not
   // be available yet. Make sure we get everything.
   if (mHasSourceData && (aFlags & FLAG_SYNC_DECODE)) {
-    result.DrawableRef()->WaitUntilComplete();
+    result.DrawableRef()->WaitUntilFinished();
+  }
+
+  // If we could have done some decoding in this function we need to check if
+  // that decoding encountered an error and hence aborted the surface. We want
+  // to avoid calling IsAborted if we weren't passed any sync decode flag because
+  // IsAborted acquires the monitor for the imgFrame.
+  if (aFlags & (FLAG_SYNC_DECODE | FLAG_SYNC_DECODE_IF_FAST) &&
+    result.DrawableRef()->IsAborted()) {
+    return DrawableFrameRef();
   }
 
   return Move(result.DrawableRef());
@@ -418,9 +438,7 @@ RasterImage::OnSurfaceDiscarded()
 {
   MOZ_ASSERT(mProgressTracker);
 
-  nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethod(mProgressTracker, &ProgressTracker::OnDiscard);
-  NS_DispatchToMainThread(runnable);
+  NS_DispatchToMainThread(NewRunnableMethod(mProgressTracker, &ProgressTracker::OnDiscard));
 }
 
 //******************************************************************************
@@ -492,12 +510,16 @@ RasterImage::CopyFrame(uint32_t aWhichFrame, uint32_t aFlags)
     return nullptr;
   }
 
-  // Create a 32-bit image surface of our size, but draw using the frame's
-  // rect, implicitly padding the frame out to the image's size.
-
-  IntSize size(mSize.width, mSize.height);
+  // Create a 32-bit surface at the decoded size of the image. If
+  // FLAG_SYNC_DECODE was not passed, we may have substituted a downscaled
+  // version of the image we already had available, so this is not necessarily
+  // the intrinsic size of the image. We'll take the frame rect of the image
+  // into account when we draw, implicitly adding padding so that the caller
+  // doesn't need to worry about frame rects.
+  // XXX(seth): In bug 1247520 we'll remove support for frame rects, rendering
+  // this additional padding unnecessary.
   RefPtr<DataSourceSurface> surf =
-    Factory::CreateDataSourceSurface(size,
+    Factory::CreateDataSourceSurface(frameRef->GetImageSize(),
                                      SurfaceFormat::B8G8R8A8,
                                      /* aZero = */ true);
   if (NS_WARN_IF(!surf)) {
@@ -513,7 +535,7 @@ RasterImage::CopyFrame(uint32_t aWhichFrame, uint32_t aFlags)
   RefPtr<DrawTarget> target =
     Factory::CreateDrawTargetForData(BackendType::CAIRO,
                                      mapping.mData,
-                                     size,
+                                     frameRef->GetImageSize(),
                                      mapping.mStride,
                                      SurfaceFormat::B8G8R8A8);
   if (!target) {
@@ -593,7 +615,7 @@ RasterImage::GetFrameInternal(const IntSize& aSize,
   // surface.
   RefPtr<SourceSurface> frameSurf;
   if (!frameRef->NeedsPadding() &&
-      frameRef->GetSize() == aSize) {
+      frameRef->GetSize() == frameRef->GetImageSize()) {
     frameSurf = frameRef->GetSurface();
   }
 
@@ -605,7 +627,7 @@ RasterImage::GetFrameInternal(const IntSize& aSize,
     frameSurf = CopyFrame(aWhichFrame, aFlags);
   }
 
-  if (!frameRef->IsImageComplete()) {
+  if (!frameRef->IsFinished()) {
     return MakePair(DrawResult::INCOMPLETE, Move(frameSurf));
   }
 
@@ -628,11 +650,7 @@ RasterImage::GetCurrentImage(ImageContainer* aContainer, uint32_t aFlags)
     return MakePair(drawResult, RefPtr<layers::Image>());
   }
 
-  IntSize size;
-  GetWidth(&size.width);
-  GetHeight(&size.height);
-
-  RefPtr<layers::Image> image = new layers::SourceSurfaceImage(size, surface);
+  RefPtr<layers::Image> image = new layers::SourceSurfaceImage(surface);
   return MakePair(drawResult, Move(image));
 }
 
@@ -695,7 +713,11 @@ RasterImage::GetImageContainer(LayerManager* aManager, uint32_t aFlags)
   // |image| holds a reference to a SourceSurface which in turn holds a lock on
   // the current frame's VolatileBuffer, ensuring that it doesn't get freed as
   // long as the layer system keeps this ImageContainer alive.
-  container->SetCurrentImageInTransaction(image);
+  AutoTArray<ImageContainer::NonOwningImage, 1> imageList;
+  imageList.AppendElement(ImageContainer::NonOwningImage(image, TimeStamp(),
+                                                         mLastFrameID++,
+                                                         mImageProducerID));
+  container->SetCurrentImagesInTransaction(imageList);
 
   mLastImageContainerDrawResult = drawResult;
   mImageContainer = container;
@@ -721,8 +743,10 @@ RasterImage::UpdateImageContainer()
   }
 
   mLastImageContainerDrawResult = drawResult;
-  nsAutoTArray<ImageContainer::NonOwningImage, 1> imageList;
-  imageList.AppendElement(ImageContainer::NonOwningImage(image));
+  AutoTArray<ImageContainer::NonOwningImage, 1> imageList;
+  imageList.AppendElement(ImageContainer::NonOwningImage(image, TimeStamp(),
+                                                         mLastFrameID++,
+                                                         mImageProducerID));
   container->SetCurrentImages(imageList);
 }
 
@@ -742,7 +766,7 @@ RasterImage::CollectSizeOfSurfaces(nsTArray<SurfaceMemoryCounter>& aCounters,
   }
 }
 
-class OnAddedFrameRunnable : public nsRunnable
+class OnAddedFrameRunnable : public Runnable
 {
 public:
   OnAddedFrameRunnable(RasterImage* aImage,
@@ -1309,24 +1333,7 @@ RasterImage::Decode(const IntSize& aSize, uint32_t aFlags)
     return NS_ERROR_FAILURE;
   }
 
-  // Report telemetry.
-  Telemetry::GetHistogramById(Telemetry::IMAGE_DECODE_COUNT)
-    ->Subtract(mDecodeCount);
   mDecodeCount++;
-  Telemetry::GetHistogramById(Telemetry::IMAGE_DECODE_COUNT)
-    ->Add(mDecodeCount);
-
-  if (mDecodeCount > sMaxDecodeCount) {
-    // Don't subtract out 0 from the histogram, because that causes its count
-    // to go negative, which is not kosher.
-    if (sMaxDecodeCount > 0) {
-      Telemetry::GetHistogramById(Telemetry::IMAGE_MAX_DECODE_COUNT)
-        ->Subtract(sMaxDecodeCount);
-    }
-    sMaxDecodeCount = mDecodeCount;
-    Telemetry::GetHistogramById(Telemetry::IMAGE_MAX_DECODE_COUNT)
-      ->Add(sMaxDecodeCount);
-  }
 
   // We're ready to decode; start the decoder.
   LaunchDecoder(decoder, this, aFlags, mHasSourceData);
@@ -1436,12 +1443,12 @@ RasterImage::DrawInternal(DrawableFrameRef&& aFrameRef,
                           gfxContext* aContext,
                           const IntSize& aSize,
                           const ImageRegion& aRegion,
-                          Filter aFilter,
+                          SamplingFilter aSamplingFilter,
                           uint32_t aFlags)
 {
   gfxContextMatrixAutoSaveRestore saveMatrix(aContext);
   ImageRegion region(aRegion);
-  bool frameIsComplete = aFrameRef->IsImageComplete();
+  bool frameIsFinished = aFrameRef->IsFinished();
 
   // By now we may have a frame with the requested size. If not, we need to
   // adjust the drawing parameters accordingly.
@@ -1456,11 +1463,11 @@ RasterImage::DrawInternal(DrawableFrameRef&& aFrameRef,
     couldRedecodeForBetterFrame = CanDownscaleDuringDecode(aSize, aFlags);
   }
 
-  if (!aFrameRef->Draw(aContext, region, aFilter, aFlags)) {
+  if (!aFrameRef->Draw(aContext, region, aSamplingFilter, aFlags)) {
     RecoverFromInvalidFrames(aSize, aFlags);
     return DrawResult::TEMPORARY_ERROR;
   }
-  if (!frameIsComplete) {
+  if (!frameIsFinished) {
     return DrawResult::INCOMPLETE;
   }
   if (couldRedecodeForBetterFrame) {
@@ -1475,7 +1482,7 @@ RasterImage::Draw(gfxContext* aContext,
                   const IntSize& aSize,
                   const ImageRegion& aRegion,
                   uint32_t aWhichFrame,
-                  Filter aFilter,
+                  SamplingFilter aSamplingFilter,
                   const Maybe<SVGImageContext>& /*aSVGContext - ignored*/,
                   uint32_t aFlags)
 {
@@ -1502,9 +1509,9 @@ RasterImage::Draw(gfxContext* aContext,
     mProgressTracker->OnUnlockedDraw();
   }
 
-  // If we're not using Filter::GOOD, we shouldn't high-quality scale or
+  // If we're not using SamplingFilter::GOOD, we shouldn't high-quality scale or
   // downscale during decode.
-  uint32_t flags = aFilter == Filter::GOOD
+  uint32_t flags = aSamplingFilter == SamplingFilter::GOOD
                  ? aFlags
                  : aFlags & ~FLAG_HIGH_QUALITY_SCALING;
 
@@ -1519,10 +1526,10 @@ RasterImage::Draw(gfxContext* aContext,
   }
 
   bool shouldRecordTelemetry = !mDrawStartTime.IsNull() &&
-                               ref->IsImageComplete();
+                               ref->IsFinished();
 
   auto result = DrawInternal(Move(ref), aContext, aSize,
-                             aRegion, aFilter, flags);
+                             aRegion, aSamplingFilter, flags);
 
   if (shouldRecordTelemetry) {
       TimeDuration drawLatency = TimeStamp::Now() - mDrawStartTime;
@@ -1622,7 +1629,7 @@ RasterImage::DoError()
   if (mAnimating) {
     StopAnimation();
   }
-  mAnim.release();
+  mAnim = nullptr;
 
   // Release all locks.
   mLockCount = 0;
@@ -1832,7 +1839,7 @@ RasterImage::PropagateUseCounters(nsIDocument*)
 
 IntSize
 RasterImage::OptimalImageSizeForDest(const gfxSize& aDest, uint32_t aWhichFrame,
-                                     Filter aFilter, uint32_t aFlags)
+                                     SamplingFilter aSamplingFilter, uint32_t aFlags)
 {
   MOZ_ASSERT(aDest.width >= 0 || ceil(aDest.width) <= INT32_MAX ||
              aDest.height >= 0 || ceil(aDest.height) <= INT32_MAX,
@@ -1844,7 +1851,8 @@ RasterImage::OptimalImageSizeForDest(const gfxSize& aDest, uint32_t aWhichFrame,
 
   IntSize destSize(ceil(aDest.width), ceil(aDest.height));
 
-  if (aFilter == Filter::GOOD && CanDownscaleDuringDecode(destSize, aFlags)) {
+  if (aSamplingFilter == SamplingFilter::GOOD &&
+      CanDownscaleDuringDecode(destSize, aFlags)) {
     return destSize;
   }
 

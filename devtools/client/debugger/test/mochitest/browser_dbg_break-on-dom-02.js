@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that event listeners are fetched when the events tab is selected
@@ -9,16 +11,19 @@
 const TAB_URL = EXAMPLE_URL + "doc_event-listeners-02.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     let gPanel = aPanel;
     let gDebugger = aPanel.panelWin;
     let gView = gDebugger.DebuggerView;
     let gEvents = gView.EventListeners;
     let gController = gDebugger.DebuggerController;
-    let constants = gDebugger.require('./content/constants');
+    let constants = gDebugger.require("./content/constants");
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(aPanel, ".html");
+    Task.spawn(function* () {
       yield testFetchOnFocus();
       yield testFetchOnReloadWhenFocused();
       yield testFetchOnReloadWhenNotFocused();
@@ -26,7 +31,7 @@ function test() {
     });
 
     function testFetchOnFocus() {
-      return Task.spawn(function*() {
+      return Task.spawn(function* () {
         let fetched = waitForDispatch(aPanel, constants.FETCH_EVENT_LISTENERS);
 
         gView.toggleInstrumentsPane({ visible: true, animated: false }, 1);
@@ -45,7 +50,7 @@ function test() {
     }
 
     function testFetchOnReloadWhenFocused() {
-      return Task.spawn(function*() {
+      return Task.spawn(function* () {
         let fetched = waitForDispatch(aPanel, constants.FETCH_EVENT_LISTENERS);
 
         let reloading = once(gDebugger.gTarget, "will-navigate");
@@ -76,7 +81,7 @@ function test() {
     }
 
     function testFetchOnReloadWhenNotFocused() {
-      return Task.spawn(function*() {
+      return Task.spawn(function* () {
         gController.dispatch({
           type: gDebugger.services.WAIT_UNTIL,
           predicate: action => {
@@ -84,10 +89,10 @@ function test() {
                     action.type === constants.UPDATE_EVENT_BREAKPOINTS);
           },
           run: (dispatch, getState, action) => {
-            if(action.type === constants.FETCH_EVENT_LISTENERS) {
+            if (action.type === constants.FETCH_EVENT_LISTENERS) {
               ok(false, "Shouldn't have fetched any event listeners.");
             }
-            else if(action.type === constants.UPDATE_EVENT_BREAKPOINTS) {
+            else if (action.type === constants.UPDATE_EVENT_BREAKPOINTS) {
               ok(false, "Shouldn't have updated any event breakpoints.");
             }
           }

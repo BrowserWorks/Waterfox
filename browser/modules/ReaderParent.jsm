@@ -23,16 +23,9 @@ var ReaderParent = {
   _readerModeInfoPanelOpen: false,
 
   MESSAGES: [
-    "Reader:AddToList",
     "Reader:ArticleGet",
     "Reader:FaviconRequest",
-    "Reader:ListStatusRequest",
-    "Reader:RemoveFromList",
-    "Reader:Share",
-    "Reader:SystemUIVisibility",
     "Reader:UpdateReaderButton",
-    "Reader:SetIntPref",
-    "Reader:SetCharPref",
   ],
 
   init: function() {
@@ -72,13 +65,6 @@ var ReaderParent = {
         }
         break;
       }
-      case "Reader:Share":
-        // XXX: To implement.
-        break;
-
-      case "Reader:SystemUIVisibility":
-        // XXX: To implement.
-        break;
 
       case "Reader:UpdateReaderButton": {
         let browser = message.target;
@@ -86,18 +72,6 @@ var ReaderParent = {
           browser.isArticle = message.data.isArticle;
         }
         this.updateReaderButton(browser);
-        break;
-      }
-      case "Reader:SetIntPref": {
-        if (message.data && message.data.name !== undefined) {
-          Services.prefs.setIntPref(message.data.name, message.data.value);
-        }
-        break;
-      }
-      case "Reader:SetCharPref": {
-        if (message.data && message.data.name !== undefined) {
-          Services.prefs.setCharPref(message.data.name, message.data.value);
-        }
         break;
       }
     }
@@ -159,18 +133,7 @@ var ReaderParent = {
   toggleReaderMode: function(event) {
     let win = event.target.ownerDocument.defaultView;
     let browser = win.gBrowser.selectedBrowser;
-    let url = browser.currentURI.spec;
-
-    if (url.startsWith("about:reader")) {
-      let originalURL = ReaderMode.getOriginalUrl(url);
-      if (!originalURL) {
-        Cu.reportError("Error finding original URL for about:reader URL: " + url);
-      } else {
-        win.openUILinkIn(originalURL, "current", {"allowPinnedTabHostChange": true});
-      }
-    } else {
-      browser.messageManager.sendAsyncMessage("Reader:ParseDocument", { url: url });
-    }
+    browser.messageManager.sendAsyncMessage("Reader:ToggleReaderMode");
   },
 
   /**

@@ -146,9 +146,14 @@ static const char pluginSandboxRules[] =
   "    (literal \"/usr/share/icu/icudt51l.dat\")\n"
   "    (regex #\"^/System/Library/Displays/Overrides/*\")\n"
   "    (regex #\"^/System/Library/CoreServices/CoreTypes.bundle/*\")\n"
+  "    (regex #\"^/System/Library/PrivateFrameworks/*\")\n"
+  "    (regex #\"^/usr/lib/libstdc\\+\\+\\..*dylib$\")\n"
   "    (literal \"%s\")\n"
   "    (literal \"%s\")\n"
   "    (literal \"%s\"))\n";
+
+static const char widevinePluginSandboxRulesAddend[] =
+  "(allow mach-lookup (global-name \"com.apple.windowserver.active\"))\n";
 
 static const char contentSandboxRules[] =
   "(version 1)\n"
@@ -158,9 +163,61 @@ static const char contentSandboxRules[] =
   "(define appPath \"%s\")\n"
   "(define appBinaryPath \"%s\")\n"
   "(define appDir \"%s\")\n"
+  "(define appTempDir \"%s\")\n"
   "(define home-path \"%s\")\n"
   "\n"
-  "(import \"/System/Library/Sandbox/Profiles/system.sb\")\n"
+  "; Allow read access to standard system paths.\n"
+  "(allow file-read*\n"
+  "  (require-all (file-mode #o0004)\n"
+  "    (require-any (subpath \"/Library/Filesystems/NetFSPlugins\")\n"
+  "      (subpath \"/System\")\n"
+  "      (subpath \"/private/var/db/dyld\")\n"
+  "      (subpath \"/usr/lib\")\n"
+  "      (subpath \"/usr/share\"))))\n"
+  "\n"
+  "(allow file-read-metadata\n"
+  "  (literal \"/etc\")\n"
+  "  (literal \"/tmp\")\n"
+  "  (literal \"/var\")\n"
+  "  (literal \"/private/etc/localtime\"))\n"
+  "\n"
+  "; Allow read access to standard special files.\n"
+  "(allow file-read*\n"
+  "  (literal \"/dev/autofs_nowait\")\n"
+  "  (literal \"/dev/random\")\n"
+  "  (literal \"/dev/urandom\"))\n"
+  "\n"
+  "(allow file-read*\n"
+  "  file-write-data\n"
+  "  (literal \"/dev/null\")\n"
+  "  (literal \"/dev/zero\"))\n"
+  "\n"
+  "(allow file-read*\n"
+  "  file-write-data\n"
+  "  file-ioctl\n"
+  "  (literal \"/dev/dtracehelper\"))\n"
+  "\n"
+  "(allow mach-lookup\n"
+  "  (global-name \"com.apple.appsleep\")\n"
+  "  (global-name \"com.apple.bsd.dirhelper\")\n"
+  "  (global-name \"com.apple.cfprefsd.agent\")\n"
+  "  (global-name \"com.apple.cfprefsd.daemon\")\n"
+  "  (global-name \"com.apple.diagnosticd\")\n"
+  "  (global-name \"com.apple.espd\")\n"
+  "  (global-name \"com.apple.secinitd\")\n"
+  "  (global-name \"com.apple.system.DirectoryService.libinfo_v1\")\n"
+  "  (global-name \"com.apple.system.logger\")\n"
+  "  (global-name \"com.apple.system.notification_center\")\n"
+  "  (global-name \"com.apple.system.opendirectoryd.libinfo\")\n"
+  "  (global-name \"com.apple.system.opendirectoryd.membership\")\n"
+  "  (global-name \"com.apple.trustd\")\n"
+  "  (global-name \"com.apple.trustd.agent\")\n"
+  "  (global-name \"com.apple.xpc.activity.unmanaged\")\n"
+  "  (global-name \"com.apple.xpcd\")\n"
+  "  (local-name \"com.apple.cfprefsd.agent\"))\n"
+  "\n"
+  "; Used to read hw.ncpu, hw.physicalcpu_max, kern.ostype, and others\n"
+  "(allow sysctl-read)\n"
   "\n"
   "(if \n"
   "  (or\n"
@@ -421,6 +478,12 @@ static const char contentSandboxRules[] =
   "; bug 1201935\n"
   "    (allow file-read*\n"
   "        (home-subpath \"/Library/Caches/TemporaryItems\"))\n"
+  "\n"
+  "; bug 1237847\n"
+  "    (allow file-read*\n"
+  "        (subpath appTempDir))\n"
+  "    (allow file-write*\n"
+  "        (subpath appTempDir))\n"
   "  )\n"
   ")\n";
 
@@ -441,6 +504,15 @@ bool StartMacSandbox(MacSandboxInfo aInfo, std::string &aErrorMessage)
                aInfo.appPath.c_str(),
                aInfo.appBinaryPath.c_str());
     }
+
+    if (profile &&
+      aInfo.pluginInfo.type == MacSandboxPluginType_GMPlugin_EME_Widevine) {
+      char *widevineProfile = NULL;
+      asprintf(&widevineProfile, "%s%s", profile,
+        widevinePluginSandboxRulesAddend);
+      free(profile);
+      profile = widevineProfile;
+    }
   }
   else if (aInfo.type == MacSandboxType_Content) {
     asprintf(&profile, contentSandboxRules, aInfo.level,
@@ -448,6 +520,7 @@ bool StartMacSandbox(MacSandboxInfo aInfo, std::string &aErrorMessage)
              aInfo.appPath.c_str(),
              aInfo.appBinaryPath.c_str(),
              aInfo.appDir.c_str(),
+             aInfo.appTempDir.c_str(),
              getenv("HOME"));
   }
   else {

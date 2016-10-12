@@ -27,6 +27,10 @@ var searchText;
 var gInitialized = false;
 var gObserver = new MutationObserver(function (mutations) {
   for (let mutation of mutations) {
+    // The addition of the restore session button changes our width:
+    if (mutation.attributeName == "session") {
+      fitToWidth();
+    }
     if (mutation.attributeName == "snippetsVersion") {
       if (!gInitialized) {
         ensureSnippetsMapThen(loadSnippets);
@@ -41,6 +45,7 @@ window.addEventListener("pageshow", function () {
   // Delay search engine setup, cause browser.js::BrowserOnAboutPageLoad runs
   // later and may use asynchronous getters.
   window.gObserver.observe(document.documentElement, { attributes: true });
+  window.gObserver.observe(document.getElementById("launcher"), { attributes: true });
   fitToWidth();
   setupSearch();
   window.addEventListener("resize", fitToWidth);
@@ -152,8 +157,16 @@ function ensureSnippetsMapThen(aCallback)
     }
 
     let cache = new Map();
-    let cursorRequest = db.transaction(SNIPPETS_OBJECTSTORE_NAME)
-                          .objectStore(SNIPPETS_OBJECTSTORE_NAME).openCursor();
+    let cursorRequest;
+    try {
+      cursorRequest = db.transaction(SNIPPETS_OBJECTSTORE_NAME)
+                        .objectStore(SNIPPETS_OBJECTSTORE_NAME).openCursor();
+    } catch(ex) {
+      console.error(ex);
+      invokeCallbacks();
+      return;
+    }
+
     cursorRequest.onerror = function (event) {
       invokeCallbacks();
     }
@@ -369,7 +382,7 @@ function showDefaultSnippets()
 }
 
 function fitToWidth() {
-  if (window.scrollMaxX != window.scrollMinX) {
+  if (document.documentElement.scrollWidth > window.innerWidth) {
     document.body.setAttribute("narrow", "true");
   } else if (document.body.hasAttribute("narrow")) {
     document.body.removeAttribute("narrow");

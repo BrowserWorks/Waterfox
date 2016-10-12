@@ -4,7 +4,6 @@
 
 package org.mozilla.gecko.tests;
 
-import org.mozilla.gecko.home.HomeConfig;
 import org.mozilla.gecko.home.HomeConfig.PanelType;
 import org.mozilla.gecko.tests.helpers.DeviceHelper;
 import org.mozilla.gecko.tests.helpers.GeckoHelper;
@@ -27,9 +26,6 @@ public class testAboutHomePageNavigation extends UITest {
         mAboutHome.swipeToPanelOnRight();
         mAboutHome.assertCurrentPanel(PanelType.BOOKMARKS);
 
-        mAboutHome.swipeToPanelOnRight();
-        mAboutHome.assertCurrentPanel(PanelType.READING_LIST);
-
         // Ideally these helpers would just be their own tests. However, by keeping this within
         // one method, we're saving test setUp and tearDown resources.
         if (DeviceHelper.isTablet()) {
@@ -41,14 +37,11 @@ public class testAboutHomePageNavigation extends UITest {
 
     private void helperTestTablet() {
         mAboutHome.swipeToPanelOnRight();
-        mAboutHome.assertCurrentPanel(PanelType.HISTORY);
+        mAboutHome.assertCurrentPanel(PanelType.COMBINED_HISTORY);
 
         // Edge case.
         mAboutHome.swipeToPanelOnRight();
-        mAboutHome.assertCurrentPanel(PanelType.HISTORY);
-
-        mAboutHome.swipeToPanelOnLeft();
-        mAboutHome.assertCurrentPanel(PanelType.READING_LIST);
+        mAboutHome.assertCurrentPanel(PanelType.COMBINED_HISTORY);
 
         mAboutHome.swipeToPanelOnLeft();
         mAboutHome.assertCurrentPanel(PanelType.BOOKMARKS);
@@ -63,9 +56,6 @@ public class testAboutHomePageNavigation extends UITest {
 
     private void helperTestPhone() {
         // Edge case.
-        mAboutHome.swipeToPanelOnRight();
-        mAboutHome.assertCurrentPanel(PanelType.READING_LIST);
-
         mAboutHome.swipeToPanelOnLeft();
         mAboutHome.assertCurrentPanel(PanelType.BOOKMARKS);
 
@@ -73,11 +63,11 @@ public class testAboutHomePageNavigation extends UITest {
         mAboutHome.assertCurrentPanel(PanelType.TOP_SITES);
 
         mAboutHome.swipeToPanelOnLeft();
-        mAboutHome.assertCurrentPanel(PanelType.HISTORY);
+        mAboutHome.assertCurrentPanel(PanelType.COMBINED_HISTORY);
 
         // Edge case.
         mAboutHome.swipeToPanelOnLeft();
-        mAboutHome.assertCurrentPanel(PanelType.HISTORY);
+        mAboutHome.assertCurrentPanel(PanelType.COMBINED_HISTORY);
 
         mAboutHome.swipeToPanelOnRight();
         mAboutHome.assertCurrentPanel(PanelType.TOP_SITES);

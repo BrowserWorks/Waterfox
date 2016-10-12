@@ -36,6 +36,7 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/WeakPtr.h"
 #include "mozilla/UniquePtr.h"
+#include "ImageContainer.h"
 #ifdef DEBUG
   #include "imgIContainerDebug.h"
 #endif
@@ -253,7 +254,7 @@ private:
                           gfxContext* aContext,
                           const nsIntSize& aSize,
                           const ImageRegion& aRegion,
-                          gfx::Filter aFilter,
+                          gfx::SamplingFilter aSamplingFilter,
                           uint32_t aFlags);
 
   already_AddRefed<gfx::SourceSurface> CopyFrame(uint32_t aWhichFrame,
@@ -367,6 +368,9 @@ private: // data
   // the layer system needs it.
   WeakPtr<layers::ImageContainer> mImageContainer;
 
+  layers::ImageContainer::ProducerID mImageProducerID;
+  layers::ImageContainer::FrameID mLastFrameID;
+
   // If mImageContainer is non-null, this contains the DrawResult we obtained
   // the last time we updated it.
   DrawResult mLastImageContainerDrawResult;
@@ -417,7 +421,7 @@ private: // data
   // Error handling.
   void DoError();
 
-  class HandleErrorWorker : public nsRunnable
+  class HandleErrorWorker : public Runnable
   {
   public:
     /**

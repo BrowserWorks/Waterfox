@@ -25,9 +25,9 @@
 
 #include "webrtc/common.h"
 #include "webrtc/modules/audio_processing/include/audio_processing.h"
+#include "webrtc/modules/rtp_rtcp/interface/rtp_rtcp.h"
 #include "webrtc/voice_engine/include/voe_errors.h"
 #include "webrtc/system_wrappers/interface/clock.h"
-#include "browser_logging/WebRtcLog.h"
 
 #ifdef MOZ_WIDGET_ANDROID
 #include "AndroidJNIWrapper.h"
@@ -205,16 +205,20 @@ bool WebrtcAudioConduit::GetRTCPReceiverReport(DOMHighResTimeStamp* timestamp,
 bool WebrtcAudioConduit::GetRTCPSenderReport(DOMHighResTimeStamp* timestamp,
                                              unsigned int* packetsSent,
                                              uint64_t* bytesSent) {
-  struct webrtc::SenderInfo senderInfo;
-  bool result = !mPtrRTP->GetRemoteRTCPSenderInfo(mChannel, &senderInfo);
-  if (result) {
-    *timestamp = NTPtoDOMHighResTimeStamp(senderInfo.NTP_timestamp_high,
-                                          senderInfo.NTP_timestamp_low);
-    *packetsSent = senderInfo.sender_packet_count;
-    *bytesSent = senderInfo.sender_octet_count;
-  }
-  return result;
-}
+  webrtc::RTCPSenderInfo senderInfo;
+  webrtc::RtpRtcp * rtpRtcpModule;
+  webrtc::RtpReceiver * rtp_receiver;
+  bool result =
+    !mPtrVoEVideoSync->GetRtpRtcp(mChannel,&rtpRtcpModule,&rtp_receiver) &&
+    !rtpRtcpModule->RemoteRTCPStat(&senderInfo);
+  if (result){
+    *timestamp = NTPtoDOMHighResTimeStamp(senderInfo.NTPseconds,
+                                          senderInfo.NTPfraction);
+    *packetsSent = senderInfo.sendPacketCount;
+    *bytesSent = senderInfo.sendOctetCount;
+   }
+   return result;
+ }
 
 /*
  * WebRTCAudioConduit Implementation
@@ -233,31 +237,13 @@ MediaConduitErrorCode WebrtcAudioConduit::Init()
       return kMediaConduitSessionNotInited;
     }
 #endif
-  webrtc::Config config;
-  bool aec_extended_filter = true; // Always default to the extended filter length
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
-  bool aec_delay_agnostic = false;
-  nsresult rv;
-  nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
-  if (NS_SUCCEEDED(rv)) {
-    prefs->GetBoolPref("media.getusermedia.aec_extended_filter", &aec_extended_filter);
-    rv = prefs->GetBoolPref("media.getusermedia.aec_delay_agnostic", &aec_delay_agnostic);
-    if (NS_SUCCEEDED(rv)) {
-      // Only override platform setting if pref is defined.
-      config.Set<webrtc::DelayAgnostic>(new webrtc::DelayAgnostic(aec_delay_agnostic));
-    }
-  }
-#endif
-  config.Set<webrtc::ExtendedFilter>(new webrtc::ExtendedFilter(aec_extended_filter));
 
   // Per WebRTC APIs below function calls return nullptr on failure
-  if(!(mVoiceEngine = webrtc::VoiceEngine::Create(config)))
+  if(!(mVoiceEngine = webrtc::VoiceEngine::Create()))
   {
     CSFLogError(logTag, "%s Unable to create voice engine", __FUNCTION__);
     return kMediaConduitSessionNotInited;
   }
-
-  EnableWebRtcLog();
 
   if(!(mPtrVoEBase = VoEBase::GetInterface(mVoiceEngine)))
   {
@@ -410,6 +396,23 @@ WebrtcAudioConduit::ConfigureSendMediaCodec(const AudioCodecConfig* codecConfig)
     return kMediaConduitUnknownError;
   }
 
+  // This must be called after SetSendCodec
+  if (mPtrVoECodec->SetFECStatus(mChannel, codecConfig->mFECEnabled) == -1) {
+    CSFLogError(logTag, "%s SetFECStatus Failed %d ", __FUNCTION__,
+                mPtrVoEBase->LastError());
+    return kMediaConduitFECStatusError;
+  }
+
+  if (codecConfig->mName == "opus" && codecConfig->mMaxPlaybackRate) {
+    if (mPtrVoECodec->SetOpusMaxPlaybackRate(
+          mChannel,
+          codecConfig->mMaxPlaybackRate) == -1) {
+      CSFLogError(logTag, "%s SetOpusMaxPlaybackRate Failed %d ", __FUNCTION__,
+                  mPtrVoEBase->LastError());
+      return kMediaConduitUnknownError;
+    }
+  }
+
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // TEMPORARY - see bug 694814 comment 2
   nsresult rv;
@@ -437,7 +440,8 @@ WebrtcAudioConduit::ConfigureSendMediaCodec(const AudioCodecConfig* codecConfig)
                                                codecConfig->mFreq,
                                                codecConfig->mPacSize,
                                                codecConfig->mChannels,
-                                               codecConfig->mRate);
+                                               codecConfig->mRate,
+                                               codecConfig->mFECEnabled);
   }
   return kMediaConduitNoError;
 }
@@ -980,7 +984,8 @@ WebrtcAudioConduit::CopyCodecToDB(const AudioCodecConfig* codecInfo)
                                                      codecInfo->mFreq,
                                                      codecInfo->mPacSize,
                                                      codecInfo->mChannels,
-                                                     codecInfo->mRate);
+                                                     codecInfo->mRate,
+                                                     codecInfo->mFECEnabled);
   mRecvCodecList.push_back(cdcConfig);
   return true;
 }

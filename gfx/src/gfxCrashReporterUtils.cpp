@@ -16,7 +16,7 @@
 #include "mozilla/Services.h"           // for GetObserverService
 #include "mozilla/StaticMutex.h"
 #include "mozilla/mozalloc.h"           // for operator new, etc
-#include "nsAutoPtr.h"                  // for nsRefPtr
+#include "mozilla/RefPtr.h"             // for RefPtr
 #include "nsCOMPtr.h"                   // for nsCOMPtr
 #include "nsError.h"                    // for NS_OK, NS_FAILED, nsresult
 #include "nsExceptionHandler.h"         // for AppendAppNotesToCrashReport
@@ -65,7 +65,7 @@ ObserverToDestroyFeaturesAlreadyReported::Observe(nsISupports* aSubject,
   return NS_OK;
 }
 
-class RegisterObserverRunnable : public nsRunnable {
+class RegisterObserverRunnable : public Runnable {
 public:
   NS_IMETHOD Run() override {
     // LeakLog made me do this. Basically, I just wanted gFeaturesAlreadyReported to be a static nsTArray<nsCString>,
@@ -83,7 +83,7 @@ public:
   }
 };
 
-class AppendAppNotesRunnable : public nsCancelableRunnable {
+class AppendAppNotesRunnable : public CancelableRunnable {
 public:
   explicit AppendAppNotesRunnable(const nsACString& aFeatureStr)
     : mFeatureString(aFeatureStr)

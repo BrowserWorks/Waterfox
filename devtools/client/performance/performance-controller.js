@@ -6,9 +6,13 @@
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 var BrowserLoaderModule = {};
 Cu.import("resource://devtools/client/shared/browser-loader.js", BrowserLoaderModule);
-var { loader, require } = BrowserLoaderModule.BrowserLoader("resource://devtools/client/performance/", this);
-var { Task } = require("resource://gre/modules/Task.jsm");
-var { Heritage, ViewHelpers, WidgetMethods } = require("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
+var { loader, require } = BrowserLoaderModule.BrowserLoader({
+  baseURI: "resource://devtools/client/performance/",
+  window: this
+});
+var { Task } = require("devtools/shared/task");
+var { Heritage, ViewHelpers, WidgetMethods, setNamedTimeout, clearNamedTimeout } = require("devtools/client/shared/widgets/view-helpers");
+var { gDevTools } = require("devtools/client/framework/devtools");
 
 // Events emitted by various objects in the panel.
 var EVENTS = require("devtools/client/performance/events");
@@ -18,6 +22,9 @@ Object.defineProperty(this, "EVENTS", {
   writable: false
 });
 
+var React = require("devtools/client/shared/vendor/react");
+var ReactDOM = require("devtools/client/shared/vendor/react-dom");
+var JITOptimizationsView = React.createFactory(require("devtools/client/performance/components/jit-optimizations"));
 var Services = require("Services");
 var promise = require("promise");
 var EventEmitter = require("devtools/shared/event-emitter");
@@ -34,13 +41,12 @@ var { OptimizationsGraph, GraphsController } = require("devtools/client/performa
 var { WaterfallHeader } = require("devtools/client/performance/modules/widgets/waterfall-ticks");
 var { MarkerView } = require("devtools/client/performance/modules/widgets/marker-view");
 var { MarkerDetails } = require("devtools/client/performance/modules/widgets/marker-details");
-var MarkerUtils = require("devtools/client/performance/modules/logic/marker-utils");
+var { MarkerBlueprintUtils } = require("devtools/client/performance/modules/marker-blueprint-utils");
 var WaterfallUtils = require("devtools/client/performance/modules/logic/waterfall-utils");
 var FrameUtils = require("devtools/client/performance/modules/logic/frame-utils");
 var { CallView } = require("devtools/client/performance/modules/widgets/tree-view");
 var { ThreadNode } = require("devtools/client/performance/modules/logic/tree-model");
 var { FrameNode } = require("devtools/client/performance/modules/logic/tree-model");
-var { JITOptimizations } = require("devtools/client/performance/modules/logic/jit");
 
 // Widgets modules
 
@@ -49,8 +55,6 @@ var { FlameGraph, FlameGraphUtils } = require("devtools/client/shared/widgets/Fl
 var { TreeWidget } = require("devtools/client/shared/widgets/TreeWidget");
 
 var { SideMenuWidget } = require("resource://devtools/client/shared/widgets/SideMenuWidget.jsm");
-var { setNamedTimeout, clearNamedTimeout } = require("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
-var { PluralForm } = require("resource://gre/modules/PluralForm.jsm");
 
 var BRANCH_NAME = "devtools.performance.ui.";
 
@@ -62,7 +66,7 @@ var gToolbox, gTarget, gFront;
 /**
  * Initializes the profiler controller and views.
  */
-var startupPerformance = Task.async(function*() {
+var startupPerformance = Task.async(function* () {
   yield PerformanceController.initialize();
   yield PerformanceView.initialize();
   PerformanceController.enableFrontEventListeners();
@@ -71,7 +75,7 @@ var startupPerformance = Task.async(function*() {
 /**
  * Destroys the profiler controller and views.
  */
-var shutdownPerformance = Task.async(function*() {
+var shutdownPerformance = Task.async(function* () {
   yield PerformanceController.destroy();
   yield PerformanceView.destroy();
   PerformanceController.disableFrontEventListeners();
@@ -110,14 +114,14 @@ var PerformanceController = {
     this._prefs.registerObserver();
     this._prefs.on("pref-changed", this._onPrefChanged);
 
-    ToolbarView.on(EVENTS.PREF_CHANGED, this._onPrefChanged);
+    ToolbarView.on(EVENTS.UI_PREF_CHANGED, this._onPrefChanged);
     PerformanceView.on(EVENTS.UI_START_RECORDING, this.startRecording);
     PerformanceView.on(EVENTS.UI_STOP_RECORDING, this.stopRecording);
     PerformanceView.on(EVENTS.UI_IMPORT_RECORDING, this.importRecording);
     PerformanceView.on(EVENTS.UI_CLEAR_RECORDINGS, this.clearRecordings);
     RecordingsView.on(EVENTS.UI_EXPORT_RECORDING, this.exportRecording);
-    RecordingsView.on(EVENTS.RECORDING_SELECTED, this._onRecordingSelectFromView);
-    DetailsView.on(EVENTS.DETAILS_VIEW_SELECTED, this._pipe);
+    RecordingsView.on(EVENTS.UI_RECORDING_SELECTED, this._onRecordingSelectFromView);
+    DetailsView.on(EVENTS.UI_DETAILS_VIEW_SELECTED, this._pipe);
 
     gDevTools.on("pref-changed", this._onThemeChanged);
   }),
@@ -125,19 +129,19 @@ var PerformanceController = {
   /**
    * Remove events handled by the PerformanceController
    */
-  destroy: function() {
+  destroy: function () {
     this._telemetry.destroy();
     this._prefs.off("pref-changed", this._onPrefChanged);
     this._prefs.unregisterObserver();
 
-    ToolbarView.off(EVENTS.PREF_CHANGED, this._onPrefChanged);
+    ToolbarView.off(EVENTS.UI_PREF_CHANGED, this._onPrefChanged);
     PerformanceView.off(EVENTS.UI_START_RECORDING, this.startRecording);
     PerformanceView.off(EVENTS.UI_STOP_RECORDING, this.stopRecording);
     PerformanceView.off(EVENTS.UI_IMPORT_RECORDING, this.importRecording);
     PerformanceView.off(EVENTS.UI_CLEAR_RECORDINGS, this.clearRecordings);
     RecordingsView.off(EVENTS.UI_EXPORT_RECORDING, this.exportRecording);
-    RecordingsView.off(EVENTS.RECORDING_SELECTED, this._onRecordingSelectFromView);
-    DetailsView.off(EVENTS.DETAILS_VIEW_SELECTED, this._pipe);
+    RecordingsView.off(EVENTS.UI_RECORDING_SELECTED, this._onRecordingSelectFromView);
+    DetailsView.off(EVENTS.UI_DETAILS_VIEW_SELECTED, this._pipe);
 
     gDevTools.off("pref-changed", this._onThemeChanged);
   },
@@ -152,14 +156,14 @@ var PerformanceController = {
    * start handling backend events before the view finishes if the event
    * listeners are added too soon.
    */
-  enableFrontEventListeners: function() {
+  enableFrontEventListeners: function () {
     gFront.on("*", this._onFrontEvent);
   },
 
   /**
    * Disables front event listeners.
    */
-  disableFrontEventListeners: function() {
+  disableFrontEventListeners: function () {
     gFront.off("*", this._onFrontEvent);
   },
 
@@ -208,7 +212,7 @@ var PerformanceController = {
    * Checks whether or not a new recording is supported by the PerformanceFront.
    * @return Promise:boolean
    */
-  canCurrentlyRecord: Task.async(function*() {
+  canCurrentlyRecord: Task.async(function* () {
     // If we're testing the legacy front, the performance actor will exist,
     // with `canCurrentlyRecord` method; this ensures we test the legacy path.
     if (gFront.LEGACY_FRONT) {
@@ -228,14 +232,13 @@ var PerformanceController = {
   /**
    * Starts recording with the PerformanceFront.
    */
-  startRecording: Task.async(function *() {
+  startRecording: Task.async(function* () {
     let options = {
       withMarkers: true,
       withTicks: this.getOption("enable-framerate"),
       withMemory: this.getOption("enable-memory"),
       withFrames: true,
       withGCEvents: true,
-      withJITOptimizations: this.getOption("enable-jit-optimizations"),
       withAllocations: this.getOption("enable-allocations"),
       allocationsSampleProbability: this.getPref("memory-sample-probability"),
       allocationsMaxLogLength: this.getPref("memory-max-log-length"),
@@ -243,28 +246,26 @@ var PerformanceController = {
       sampleFrequency: this.getPref("profiler-sample-frequency")
     };
 
+    let recordingStarted = yield gFront.startRecording(options);
+
     // In some cases, like when the target has a private browsing tab,
     // recording is not currently supported because of the profiler module.
     // Present a notification in this case alerting the user of this issue.
-    if (!(yield gFront.startRecording(options))) {
-      this.emit(EVENTS.NEW_RECORDING_FAILED);
+    if (!recordingStarted) {
+      this.emit(EVENTS.BACKEND_FAILED_AFTER_RECORDING_START);
       PerformanceView.setState("unavailable");
+    } else {
+      this.emit(EVENTS.BACKEND_READY_AFTER_RECORDING_START);
     }
   }),
 
   /**
    * Stops recording with the PerformanceFront.
    */
-  stopRecording: Task.async(function *() {
+  stopRecording: Task.async(function* () {
     let recording = this.getLatestManualRecording();
     yield gFront.stopRecording(recording);
-
-    // Emit another stop event here, as a lot of tests use
-    // the RECORDING_STOPPED event, but in the case of a UI click on a button,
-    // the RECORDING_STOPPED event happens from the server, where this request may
-    // not have yet finished, so listen to this in tests that fail because the `stopRecording`
-    // request is not yet completed. Should only be used in that scenario.
-    this.emit(EVENTS.CONTROLLER_STOPPED_RECORDING);
+    this.emit(EVENTS.BACKEND_READY_AFTER_RECORDING_STOP);
   }),
 
   /**
@@ -276,7 +277,7 @@ var PerformanceController = {
    * @param nsILocalFile file
    *        The file to stream the data into.
    */
-  exportRecording: Task.async(function*(_, recording, file) {
+  exportRecording: Task.async(function* (_, recording, file) {
     yield recording.exportRecording(file);
     this.emit(EVENTS.RECORDING_EXPORTED, recording, file);
   }),
@@ -320,9 +321,9 @@ var PerformanceController = {
    * @param nsILocalFile file
    *        The file to import the data from.
    */
-  importRecording: Task.async(function*(_, file) {
+  importRecording: Task.async(function* (_, file) {
     let recording = yield gFront.importRecording(file);
-    this._addNewRecording(recording);
+    this._addRecordingIfUnknown(recording);
 
     this.emit(EVENTS.RECORDING_IMPORTED, recording);
   }),
@@ -395,21 +396,19 @@ var PerformanceController = {
    * Fired from the front on any event. Propagates to other handlers from here.
    */
   _onFrontEvent: function (eventName, ...data) {
-    if (eventName === "profiler-status") {
-      this._onProfilerStatusUpdated(...data);
-      return;
+    switch (eventName) {
+      case "profiler-status":
+        let [profilerStatus] = data;
+        this.emit(EVENTS.RECORDING_PROFILER_STATUS_UPDATE, profilerStatus);
+        break;
+      case "recording-started":
+      case "recording-stopping":
+      case "recording-stopped":
+        let [recordingModel] = data;
+        this._addRecordingIfUnknown(recordingModel);
+        this.emit(EVENTS.RECORDING_STATE_CHANGE, eventName, recordingModel);
+        break;
     }
-
-    if (["recording-started", "recording-stopped", "recording-stopping"].indexOf(eventName) !== -1) {
-      this._onRecordingStateChange(eventName, ...data);
-    }
-  },
-
-  /**
-   * Emitted when the front updates PerformanceRecording's buffer status.
-   */
-  _onProfilerStatusUpdated: function (data) {
-    this.emit(EVENTS.PROFILER_STATUS_UPDATED, data);
   },
 
   /**
@@ -417,40 +416,10 @@ var PerformanceController = {
    *
    * @param {PerformanceRecordingFront} recording
    */
-  _addNewRecording: function (recording) {
+  _addRecordingIfUnknown: function (recording) {
     if (this._recordings.indexOf(recording) === -1) {
       this._recordings.push(recording);
-      this.emit(EVENTS.NEW_RECORDING, recording);
-    }
-  },
-
-  /**
-   * Fired when a recording model changes state.
-   *
-   * @param {string} state
-   *        Can be "recording-started", "recording-stopped" or "recording-stopping".
-   * @param {PerformanceRecording} model
-   */
-  _onRecordingStateChange: function (state, model) {
-    this._addNewRecording(model);
-
-    this.emit(EVENTS.RECORDING_STATE_CHANGE, state, model);
-
-    // Emit the state specific events for tests that I'm too
-    // lazy and frusterated to change right now. These events
-    // should only be used in tests and specific rare cases (telemetry),
-    // as the rest of the UI should react to general RECORDING_STATE_CHANGE
-    // events and NEW_RECORDING events to handle lazy recordings.
-    switch (state) {
-      case "recording-started":
-        this.emit(EVENTS.RECORDING_STARTED, model);
-        break;
-      case "recording-stopping":
-        this.emit(EVENTS.RECORDING_WILL_STOP, model);
-        break;
-      case "recording-stopped":
-        this.emit(EVENTS.RECORDING_STOPPED, model);
-        break;
+      this.emit(EVENTS.RECORDING_ADDED, recording);
     }
   },
 
@@ -516,9 +485,9 @@ var PerformanceController = {
    *
    * @param {Array<PerformanceRecordingFront>} recordings
    */
-  populateWithRecordings: function (recordings=[]) {
+  populateWithRecordings: function (recordings = []) {
     for (let recording of recordings) {
-      PerformanceController._addNewRecording(recording);
+      PerformanceController._addRecordingIfUnknown(recording);
     }
     this.emit(EVENTS.RECORDINGS_SEEDED);
   },
@@ -553,9 +522,9 @@ var PerformanceController = {
    * @param {string} expectedState
    * @return {Promise}
    */
-  waitForStateChangeOnRecording: Task.async(function *(recording, expectedState) {
+  waitForStateChangeOnRecording: Task.async(function* (recording, expectedState) {
     let deferred = promise.defer();
-    this.on(EVENTS.RECORDING_STATE_CHANGE, function handler (state, model) {
+    this.on(EVENTS.RECORDING_STATE_CHANGE, function handler(state, model) {
       if (state === expectedState && model === recording) {
         this.off(EVENTS.RECORDING_STATE_CHANGE, handler);
         deferred.resolve();

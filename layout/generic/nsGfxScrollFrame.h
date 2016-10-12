@@ -39,9 +39,6 @@ class Layer;
 namespace layout {
 class ScrollbarActivity;
 } // namespace layout
-} // namespace mozilla
-
-namespace mozilla {
 
 class ScrollFrameHelper : public nsIReflowCallback {
 public:
@@ -49,6 +46,7 @@ public:
   typedef mozilla::CSSIntPoint CSSIntPoint;
   typedef mozilla::layout::ScrollbarActivity ScrollbarActivity;
   typedef mozilla::layers::FrameMetrics FrameMetrics;
+  typedef mozilla::layers::ScrollSnapInfo ScrollSnapInfo;
   typedef mozilla::layers::Layer Layer;
 
   class AsyncScroll;
@@ -101,6 +99,29 @@ public:
 
   bool IsSmoothScrollingEnabled();
 
+  /**
+   * This class handles the dispatching of scroll events to content.
+   *
+   * nsRefreshDriver maintains three lists of refresh observers, one for each
+   * flush type: Flush_Style, Flush_Layout, and Flush_Display.
+   *
+   * During a tick, it runs through each list of observers, in order, and runs
+   * them. To iterate over each list, it uses an EndLimitedIterator, which is
+   * designed to iterate only over elements present when the iterator was
+   * created, not elements added afterwards. This means that, for a given flush
+   * type, a refresh observer added during the execution of another refresh
+   * observer of that flush type, will not run until the next tick.
+   *
+   * During main-thread animation-driven scrolling, ScrollEvents are *posted*
+   * by AsyncScroll::WillRefresh(). AsyncScroll registers itself as a Flush_Style
+   * refresh observer.
+   *
+   * Posting a scroll event, as of bug 1250550, registers a Flush_Layout
+   * refresh observer, which *fires* the event when run. This allows the event
+   * to be fired to content in the same refresh driver tick as it is posted.
+   * This is an important invariant to maintain to reduce scroll event latency
+   * for main-thread scrolling.
+   */
   class ScrollEvent : public nsARefreshObserver {
   public:
     NS_INLINE_DECL_REFCOUNTING(ScrollEvent, override)
@@ -113,7 +134,7 @@ public:
     RefPtr<nsRefreshDriver> mDriver;
   };
 
-  class AsyncScrollPortEvent : public nsRunnable {
+  class AsyncScrollPortEvent : public Runnable {
   public:
     NS_DECL_NSIRUNNABLE
     explicit AsyncScrollPortEvent(ScrollFrameHelper *helper) : mHelper(helper) {}
@@ -122,7 +143,7 @@ public:
     ScrollFrameHelper *mHelper;
   };
 
-  class ScrolledAreaEvent : public nsRunnable {
+  class ScrolledAreaEvent : public Runnable {
   public:
     NS_DECL_NSIRUNNABLE
     explicit ScrolledAreaEvent(ScrollFrameHelper *helper) : mHelper(helper) {}
@@ -179,7 +200,6 @@ public:
   // Get the scroll range assuming the scrollport has size (aWidth, aHeight).
   nsRect GetScrollRange(nscoord aWidth, nscoord aHeight) const;
   nsSize GetScrollPositionClampingScrollPortSize() const;
-  void FlingSnap(const mozilla::CSSPoint& aDestination);
   void ScrollSnap(nsIScrollableFrame::ScrollMode aMode = nsIScrollableFrame::SMOOTH_MSD);
   void ScrollSnap(const nsPoint &aDestination,
                   nsIScrollableFrame::ScrollMode aMode = nsIScrollableFrame::SMOOTH_MSD);
@@ -236,6 +256,9 @@ public:
    * @note This method might destroy the frame, pres shell and other objects.
    */
   void ScrollToRestoredPosition();
+
+  bool PageIsStillLoading();
+
   /**
    * GetSnapPointForDestination determines which point to snap to after
    * scrolling. aStartPos gives the position before scrolling and aDestination
@@ -318,7 +341,7 @@ public:
     mScrollPosForLayerPixelAlignment = GetScrollPosition();
   }
 
-  bool UpdateOverflow();
+  bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas);
 
   void UpdateSticky();
 
@@ -356,19 +379,28 @@ public:
       // because we have special behaviour for it when APZ scrolling is active.
       mOuter->SchedulePaint();
     }
+    NotifyPluginFrames(aTransforming ? BEGIN_APZ : END_APZ);
   }
   bool IsTransformingByAPZ() const {
     return mTransformingByAPZ;
   }
+  void SetScrollableByAPZ(bool aScrollable);
   void SetZoomableByAPZ(bool aZoomable);
+  void SetScrollsClipOnUnscrolledOutOfFlow();
 
   bool UsesContainerScrolling() const;
+
+  ScrollSnapInfo GetScrollSnapInfo() const;
 
   bool DecideScrollableLayer(nsDisplayListBuilder* aBuilder,
                              nsRect* aDirtyRect,
                              bool aAllowCreateDisplayPort);
-  void NotifyImageVisibilityUpdate();
-  bool GetDisplayPortAtLastImageVisibilityUpdate(nsRect* aDisplayPort);
+  void NotifyApproximateFrameVisibilityUpdate();
+  bool GetDisplayPortAtLastApproximateFrameVisibilityUpdate(nsRect* aDisplayPort);
+
+  bool AllowDisplayPortExpiration();
+  void TriggerDisplayPortExpiration();
+  void ResetDisplayPortExpiryTimer();
 
   void ScheduleSyntheticMouseMove();
   static void ScrollActivityCallback(nsITimer *aTimer, void* anInstance);
@@ -386,7 +418,7 @@ public:
     }
   }
   bool WantAsyncScroll() const;
-  Maybe<mozilla::layers::FrameMetrics> ComputeFrameMetrics(
+  Maybe<mozilla::layers::ScrollMetadata> ComputeScrollMetadata(
     Layer* aLayer, nsIFrame* aContainerReferenceFrame,
     const ContainerLayerParameters& aParameters,
     const mozilla::DisplayItemClip* aClip) const;
@@ -412,6 +444,9 @@ public:
                     nsIScrollableFrame::ScrollUnit aUnit,
                     nsIScrollbarMediator::ScrollSnapMode aSnap
                       = nsIScrollbarMediator::DISABLE_SNAP);
+  bool ShouldSuppressScrollbarRepaints() const {
+    return mSuppressScrollbarRepaints;
+  }
 
   // owning references to the nsIAnonymousContentCreator-built content
   nsCOMPtr<nsIContent> mHScrollbarContent;
@@ -459,14 +494,17 @@ public:
   nsCOMPtr<nsITimer> mScrollActivityTimer;
   nsPoint mScrollPosForLayerPixelAlignment;
 
-  // The scroll position where we last updated image visibility.
-  nsPoint mLastUpdateImagesPos;
-  bool mHadDisplayPortAtLastImageUpdate;
-  nsRect mDisplayPortAtLastImageUpdate;
+  // The scroll position where we last updated frame visibility.
+  nsPoint mLastUpdateFramesPos;
+  bool mHadDisplayPortAtLastFrameUpdate;
+  nsRect mDisplayPortAtLastFrameUpdate;
 
   nsRect mPrevScrolledRect;
 
   FrameMetrics::ViewID mScrollParentID;
+
+  // Timer to remove the displayport some time after scrolling has stopped
+  nsCOMPtr<nsITimer> mDisplayPortExpiryTimer;
 
   bool mNeverHasVerticalScrollbar:1;
   bool mNeverHasHorizontalScrollbar:1;
@@ -509,6 +547,11 @@ public:
   // a scrollable layer. Used for asynchronous scrolling.
   bool mWillBuildScrollableLayer:1;
 
+  // If true, the scroll frame is an ancestor of other scrolling frames, so
+  // we shouldn't expire the displayport on this scrollframe unless those
+  // descendant scrollframes also have their displayports removed.
+  bool mIsScrollParent:1;
+
   // Whether we are the root scroll frame that is used for containerful
   // scrolling with a display port. If true, the scrollable frame
   // shouldn't attach frame metrics to its layers because the container
@@ -529,12 +572,42 @@ public:
   // (as best as we can tell on the main thread, anyway).
   bool mTransformingByAPZ:1;
 
+  // True if APZ can scroll this frame asynchronously (i.e. it has an APZC
+  // set up for this frame and it's not a scrollinfo layer).
+  bool mScrollableByAPZ:1;
+
   // True if the APZ is allowed to zoom this scrollframe.
   bool mZoomableByAPZ:1;
+
+  // True if we don't want the scrollbar to repaint itself right now.
+  bool mSuppressScrollbarRepaints:1;
+
+  bool mScrollsClipOnUnscrolledOutOfFlow:1;
 
   mozilla::layout::ScrollVelocityQueue mVelocityQueue;
 
 protected:
+  class AutoScrollbarRepaintSuppression;
+  friend class AutoScrollbarRepaintSuppression;
+  class AutoScrollbarRepaintSuppression {
+  public:
+    AutoScrollbarRepaintSuppression(ScrollFrameHelper* aHelper, bool aSuppress)
+      : mHelper(aHelper)
+      , mOldSuppressValue(aHelper->mSuppressScrollbarRepaints)
+    {
+      mHelper->mSuppressScrollbarRepaints = aSuppress;
+    }
+
+    ~AutoScrollbarRepaintSuppression()
+    {
+      mHelper->mSuppressScrollbarRepaints = mOldSuppressValue;
+    }
+
+  private:
+    ScrollFrameHelper* mHelper;
+    bool mOldSuppressValue;
+  };
+
   /**
    * @note This method might destroy the frame, pres shell and other objects.
    */
@@ -551,17 +624,20 @@ protected:
    * Helper that notifies plugins about async smooth scroll operations managed
    * by nsGfxScrollFrame.
    */
-  enum AsyncScrollEventType { BEGIN_DOM, END_DOM };
+  enum AsyncScrollEventType { BEGIN_DOM, BEGIN_APZ, END_DOM, END_APZ };
   void NotifyPluginFrames(AsyncScrollEventType aEvent);
   AsyncScrollEventType mAsyncScrollEvent;
+  bool HasPluginFrames();
+  bool HasPerspective() const;
+  bool HasBgAttachmentLocal() const;
 
-  static void EnsureImageVisPrefsCached();
-  static bool sImageVisPrefsCached;
-  // The number of scrollports wide/high to expand when looking for images.
+  static void EnsureFrameVisPrefsCached();
+  static bool sFrameVisPrefsCached;
+  // The number of scrollports wide/high to expand when tracking frame visibility.
   static uint32_t sHorzExpandScrollPort;
   static uint32_t sVertExpandScrollPort;
   // The fraction of the scrollport we allow to scroll by before we schedule
-  // an update of image visibility.
+  // an update of frame visibility.
   static int32_t sHorzScrollFraction;
   static int32_t sVertScrollFraction;
 };
@@ -628,16 +704,16 @@ public:
 
   virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
   virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
-  virtual nsresult GetPadding(nsMargin& aPadding) override;
-  virtual bool IsCollapsed() override;
+  virtual nsresult GetXULPadding(nsMargin& aPadding) override;
+  virtual bool IsXULCollapsed() override;
   
   virtual void Reflow(nsPresContext*           aPresContext,
                       nsHTMLReflowMetrics&     aDesiredSize,
                       const nsHTMLReflowState& aReflowState,
                       nsReflowStatus&          aStatus) override;
 
-  virtual bool UpdateOverflow() override {
-    return mHelper.UpdateOverflow();
+  virtual bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) override {
+    return mHelper.ComputeCustomOverflow(aOverflowAreas);
   }
 
   // Called to set the child frames. We typically have three: the scroll area,
@@ -765,9 +841,6 @@ public:
                         override {
     mHelper.ScrollBy(aDelta, aUnit, aMode, aOverflow, aOrigin, aMomentum, aSnap);
   }
-  virtual void FlingSnap(const mozilla::CSSPoint& aDestination) override {
-    mHelper.FlingSnap(aDestination);
-  }
   virtual void ScrollSnap() override {
     mHelper.ScrollSnap();
   }
@@ -832,12 +905,12 @@ public:
   virtual bool WantAsyncScroll() const override {
     return mHelper.WantAsyncScroll();
   }
-  virtual mozilla::Maybe<mozilla::layers::FrameMetrics> ComputeFrameMetrics(
+  virtual mozilla::Maybe<mozilla::layers::ScrollMetadata> ComputeScrollMetadata(
     Layer* aLayer, nsIFrame* aContainerReferenceFrame,
     const ContainerLayerParameters& aParameters,
     const mozilla::DisplayItemClip* aClip) const override
   {
-    return mHelper.ComputeFrameMetrics(aLayer, aContainerReferenceFrame, aParameters, aClip);
+    return mHelper.ComputeScrollMetadata(aLayer, aContainerReferenceFrame, aParameters, aClip);
   }
   virtual bool IsIgnoringViewportClipping() const override {
     return mHelper.IsIgnoringViewportClipping();
@@ -853,11 +926,14 @@ public:
                                      bool aAllowCreateDisplayPort) override {
     return mHelper.DecideScrollableLayer(aBuilder, aDirtyRect, aAllowCreateDisplayPort);
   }
-  virtual void NotifyImageVisibilityUpdate() override {
-    mHelper.NotifyImageVisibilityUpdate();
+  virtual void NotifyApproximateFrameVisibilityUpdate() override {
+    mHelper.NotifyApproximateFrameVisibilityUpdate();
   }
-  virtual bool GetDisplayPortAtLastImageVisibilityUpdate(nsRect* aDisplayPort) override {
-    return mHelper.GetDisplayPortAtLastImageVisibilityUpdate(aDisplayPort);
+  virtual bool GetDisplayPortAtLastApproximateFrameVisibilityUpdate(nsRect* aDisplayPort) override {
+    return mHelper.GetDisplayPortAtLastApproximateFrameVisibilityUpdate(aDisplayPort);
+  }
+  void TriggerDisplayPortExpiration() override {
+    mHelper.TriggerDisplayPortExpiration();
   }
 
   // nsIStatefulFrame
@@ -917,16 +993,30 @@ public:
     return mHelper.IsScrollbarOnRight();
   }
 
+  virtual bool ShouldSuppressScrollbarRepaints() const override {
+    return mHelper.ShouldSuppressScrollbarRepaints();
+  }
+
   virtual void SetTransformingByAPZ(bool aTransforming) override {
     mHelper.SetTransformingByAPZ(aTransforming);
   }
   bool IsTransformingByAPZ() const override {
     return mHelper.IsTransformingByAPZ();
   }
+  void SetScrollableByAPZ(bool aScrollable) override {
+    mHelper.SetScrollableByAPZ(aScrollable);
+  }
   void SetZoomableByAPZ(bool aZoomable) override {
     mHelper.SetZoomableByAPZ(aZoomable);
   }
+  void SetScrollsClipOnUnscrolledOutOfFlow() override {
+    mHelper.SetScrollsClipOnUnscrolledOutOfFlow();
+  }
   
+  ScrollSnapInfo GetScrollSnapInfo() const override {
+    return mHelper.GetScrollSnapInfo();
+  }
+
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
@@ -1000,8 +1090,8 @@ public:
   virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
 #endif
 
-  virtual bool UpdateOverflow() override {
-    return mHelper.UpdateOverflow();
+  virtual bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) override {
+    return mHelper.ComputeCustomOverflow(aOverflowAreas);
   }
 
   // Called to set the child frames. We typically have three: the scroll area,
@@ -1042,20 +1132,20 @@ public:
   virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) override;
 
-  virtual nsSize GetMinSize(nsBoxLayoutState& aBoxLayoutState) override;
-  virtual nsSize GetPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
-  virtual nsSize GetMaxSize(nsBoxLayoutState& aBoxLayoutState) override;
-  virtual nscoord GetBoxAscent(nsBoxLayoutState& aBoxLayoutState) override;
+  virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;
+  virtual nsSize GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
+  virtual nsSize GetXULMaxSize(nsBoxLayoutState& aBoxLayoutState) override;
+  virtual nscoord GetXULBoxAscent(nsBoxLayoutState& aBoxLayoutState) override;
 
-  NS_IMETHOD DoLayout(nsBoxLayoutState& aBoxLayoutState) override;
-  virtual nsresult GetPadding(nsMargin& aPadding) override;
+  NS_IMETHOD DoXULLayout(nsBoxLayoutState& aBoxLayoutState) override;
+  virtual nsresult GetXULPadding(nsMargin& aPadding) override;
 
   virtual bool GetBorderRadii(const nsSize& aFrameSize, const nsSize& aBorderArea,
                               Sides aSkipSides, nscoord aRadii[8]) const override {
     return mHelper.GetBorderRadii(aFrameSize, aBorderArea, aSkipSides, aRadii);
   }
 
-  nsresult Layout(nsBoxLayoutState& aState);
+  nsresult XULLayout(nsBoxLayoutState& aState);
   void LayoutScrollArea(nsBoxLayoutState& aState, const nsPoint& aScrollPosition);
 
   static bool AddRemoveScrollbar(bool& aHasScrollbar, 
@@ -1163,9 +1253,6 @@ public:
                         override {
     mHelper.ScrollBy(aDelta, aUnit, aMode, aOverflow, aOrigin, aMomentum, aSnap);
   }
-  virtual void FlingSnap(const mozilla::CSSPoint& aDestination) override {
-    mHelper.FlingSnap(aDestination);
-  }
   virtual void ScrollSnap() override {
     mHelper.ScrollSnap();
   }
@@ -1230,12 +1317,12 @@ public:
   virtual bool WantAsyncScroll() const override {
     return mHelper.WantAsyncScroll();
   }
-  virtual mozilla::Maybe<mozilla::layers::FrameMetrics> ComputeFrameMetrics(
+  virtual mozilla::Maybe<mozilla::layers::ScrollMetadata> ComputeScrollMetadata(
     Layer* aLayer, nsIFrame* aContainerReferenceFrame,
     const ContainerLayerParameters& aParameters,
     const mozilla::DisplayItemClip* aClip) const override
   {
-    return mHelper.ComputeFrameMetrics(aLayer, aContainerReferenceFrame, aParameters, aClip);
+    return mHelper.ComputeScrollMetadata(aLayer, aContainerReferenceFrame, aParameters, aClip);
   }
   virtual bool IsIgnoringViewportClipping() const override {
     return mHelper.IsIgnoringViewportClipping();
@@ -1309,6 +1396,10 @@ public:
     return mHelper.IsScrollbarOnRight();
   }
 
+  virtual bool ShouldSuppressScrollbarRepaints() const override {
+    return mHelper.ShouldSuppressScrollbarRepaints();
+  }
+
   virtual void SetTransformingByAPZ(bool aTransforming) override {
     mHelper.SetTransformingByAPZ(aTransforming);
   }
@@ -1318,19 +1409,32 @@ public:
   bool IsTransformingByAPZ() const override {
     return mHelper.IsTransformingByAPZ();
   }
+  void SetScrollableByAPZ(bool aScrollable) override {
+    mHelper.SetScrollableByAPZ(aScrollable);
+  }
   void SetZoomableByAPZ(bool aZoomable) override {
     mHelper.SetZoomableByAPZ(aZoomable);
+  }
+  void SetScrollsClipOnUnscrolledOutOfFlow() override {
+    mHelper.SetScrollsClipOnUnscrolledOutOfFlow();
   }
   virtual bool DecideScrollableLayer(nsDisplayListBuilder* aBuilder,
                                      nsRect* aDirtyRect,
                                      bool aAllowCreateDisplayPort) override {
     return mHelper.DecideScrollableLayer(aBuilder, aDirtyRect, aAllowCreateDisplayPort);
   }
-  virtual void NotifyImageVisibilityUpdate() override {
-    mHelper.NotifyImageVisibilityUpdate();
+  virtual void NotifyApproximateFrameVisibilityUpdate() override {
+    mHelper.NotifyApproximateFrameVisibilityUpdate();
   }
-  virtual bool GetDisplayPortAtLastImageVisibilityUpdate(nsRect* aDisplayPort) override {
-    return mHelper.GetDisplayPortAtLastImageVisibilityUpdate(aDisplayPort);
+  virtual bool GetDisplayPortAtLastApproximateFrameVisibilityUpdate(nsRect* aDisplayPort) override {
+    return mHelper.GetDisplayPortAtLastApproximateFrameVisibilityUpdate(aDisplayPort);
+  }
+  void TriggerDisplayPortExpiration() override {
+    mHelper.TriggerDisplayPortExpiration();
+  }
+
+  ScrollSnapInfo GetScrollSnapInfo() const override {
+    return mHelper.GetScrollSnapInfo();
   }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -1352,7 +1456,7 @@ protected:
     if (!mHelper.IsLTR()) {
       aRect.x = mHelper.mScrollPort.XMost() - aScrollPosition.x - aRect.width;
     }
-    mHelper.mScrolledFrame->SetBounds(aState, aRect, aRemoveOverflowAreas);
+    mHelper.mScrolledFrame->SetXULBounds(aState, aRect, aRemoveOverflowAreas);
   }
 
 private:

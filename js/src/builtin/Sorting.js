@@ -6,12 +6,158 @@
 // consolidated here to avoid confusion and re-implementation of existing
 // algorithms.
 
+// For sorting values with limited range; uint8 and int8.
+function CountingSort(array, len, signed) {
+    var buffer = new List();
+    var min = 0;
+
+    // Map int8 values onto the uint8 range when storing in buffer.
+    if (signed)  {
+        min = -128;
+    }
+
+    for (var i = 0; i  < 256; i++) {
+        buffer[i] = 0;
+    }
+
+    // Populate the buffer
+    for (var i = 0; i < len; i++) {
+        var val = array[i];
+        buffer[val - min]++
+    }
+
+    // Traverse the buffer in order and write back elements to array
+    var val = 0;
+    for (var i = 0; i < len; i++) {
+        // Invariant: sum(buffer[val:]) == len-i
+        while (true) {
+            if (buffer[val] > 0) {
+                array[i] = val + min;
+                buffer[val]--;
+                break;
+            } else {
+                val++;
+            }
+        }
+    }
+    return array;
+}
+
+// Helper for RadixSort
+function ByteAtCol(x, pos) {
+    return  (x >> (pos * 8)) & 0xFF;
+}
+
+function SortByColumn(array, len, aux, col) {
+    const R = 256;
+    let counts = new List();
+
+    // |counts| is used to compute the starting index position for each key.
+    // Letting counts[0] always be 0, simplifies the transform step below.
+    // Example:
+    //
+    // Computing frequency counts for the input [1 2 1] gives:
+    //      0 1 2 3 ... (keys)
+    //      0 0 2 1     (frequencies)
+    //
+    // Transforming frequencies to indexes gives:
+    //      0 1 2 3 ... (keys)
+    //      0 0 2 3     (indexes)
+    for (let r = 0; r < R + 1; r++) {
+        counts[r] = 0;
+    }
+    // Compute frequency counts
+    for (let i = 0; i < len; i++) {
+        let val = array[i];
+        let b = ByteAtCol(val, col);
+        counts[b + 1]++;
+    }
+
+    // Transform counts to indices.
+    for (let r = 0; r < R; r++) {
+        counts[r+1] += counts[r];
+    }
+
+    // Distribute
+    for (let i = 0; i < len; i++) {
+        let val = array[i];
+        let b  = ByteAtCol(val, col);
+        aux[counts[b]++] = val;
+    }
+
+    // Copy back
+    for (let i = 0; i < len; i++) {
+        array[i] = aux[i];
+    }
+}
+
+// Sorts integers and float32. |signed| is true for int16 and int32, |floating|
+// is true for float32.
+function RadixSort(array, len, nbytes, signed, floating, comparefn) {
+
+    // Determined by performance testing.
+    if (len < 128) {
+        QuickSort(array, len, comparefn);
+        return array;
+    }
+
+    let aux = new List();
+    for (let i = 0; i < len; i++) {
+        aux[i] = 0;
+    }
+
+    let view = array;
+    let signMask = 1 << nbytes * 8 - 1;
+
+    // Preprocess
+    if (floating) {
+        view = new Int32Array(array.buffer);
+
+        // Flip sign bit for positive numbers; flip all bits for negative
+        // numbers
+        for (let i = 0; i < len; i++) {
+            if (view[i] & signMask) {
+                view[i] ^= 0xFFFFFFFF;
+            } else {
+                view[i] ^= signMask
+            }
+        }
+    } else if (signed) {
+        // Flip sign bit
+        for (let i = 0; i < len; i++) {
+            view[i] ^= signMask
+        }
+    }
+
+    // Sort
+    for (let col = 0; col < nbytes; col++) {
+        SortByColumn(view, len, aux, col);
+    }
+
+    // Restore original bit representation
+    if (floating) {
+        for (let i = 0; i < len; i++) {
+            if (view[i] & signMask) {
+                view[i] ^= signMask;
+            } else {
+                view[i] ^= 0xFFFFFFFF;
+            }
+        }
+    } else if (signed) {
+        for (let i = 0; i < len; i++) {
+            view[i] ^= signMask
+        }
+    }
+    return array;
+}
+
+
 // For sorting small arrays.
 function InsertionSort(array, from, to, comparefn) {
-    var item, swap;
-    for (var i = from + 1; i <= to; i++) {
+    let item, swap, i, j;
+    for (i = from + 1; i <= to; i++) {
         item = array[i];
-        for (var j = i - 1; j >= from; j--) {
+        for (j = i - 1; j >= from; j--) {
             swap = array[j];
             if (comparefn(swap, item) <= 0)
                 break;
@@ -28,28 +174,29 @@ function SwapArrayElements(array, i, j) {
 }
 
 // A helper function for MergeSort.
-function Merge(array, start, mid, end, lBuffer, rBuffer, comparefn) {
+function Merge(list, start, mid, end, lBuffer, rBuffer, comparefn) {
     var i, j, k;
 
     var sizeLeft = mid - start + 1;
     var sizeRight =  end - mid;
 
-    // Copy our virtual arrays into separate buffers.
+    // Copy our virtual lists into separate buffers.
     for (i = 0; i < sizeLeft; i++)
-        lBuffer[i] = array[start + i];
+        lBuffer[i] = list[start + i];
 
     for (j = 0; j < sizeRight; j++)
-        rBuffer[j] = array[mid + 1 + j];
+        rBuffer[j] = list[mid + 1 + j];
+
 
     i = 0;
     j = 0;
     k = start;
     while (i < sizeLeft && j < sizeRight) {
         if (comparefn(lBuffer[i], rBuffer[j]) <= 0) {
-            array[k] = lBuffer[i];
+            list[k] = lBuffer[i];
             i++;
         } else {
-            array[k] = rBuffer[j];
+            list[k] = rBuffer[j];
             j++;
         }
         k++;
@@ -57,46 +204,78 @@ function Merge(array, start, mid, end, lBuffer, rBuffer, comparefn) {
 
     // Empty out any remaining elements in the buffer.
     while (i < sizeLeft) {
-        array[k] = lBuffer[i];
+        list[k] =lBuffer[i];
         i++;
         k++;
     }
 
     while (j < sizeRight) {
-        array[k] = rBuffer[j];
+        list[k] =rBuffer[j];
         j++;
         k++;
     }
 }
 
+// Helper function for overwriting a sparse array with a
+// dense array, filling remaining slots with holes.
+function MoveHoles(sparse, sparseLen, dense, denseLen) {
+    for (var i = 0; i < denseLen; i++)
+        sparse[i] = dense[i];
+    for (var j = denseLen; j < sparseLen; j++)
+        delete sparse[j];
+}
+
 // Iterative, bottom up, mergesort.
 function MergeSort(array, len, comparefn) {
+    // To save effort we will do all of our work on a dense list,
+    // then create holes at the end.
+    var denseList = new List();
+    var denseLen = 0;
+
+    // Until recently typed arrays had no sort method. To work around that
+    // many users passed them to Array.prototype.sort. Now that we have a
+    // typed array specific sorting method it makes sense to divert to it
+    // when possible.
+    if (IsPossiblyWrappedTypedArray(array)) {
+        return TypedArraySort.call(array, comparefn);
+    }
+
+    for (var i = 0; i < len; i++) {
+        if (i in array)
+            denseList[denseLen++] = array[i];
+    }
+
+    if (denseLen < 1)
+        return array;
+
     // Insertion sort for small arrays, where "small" is defined by performance
     // testing.
     if (len < 24) {
-       InsertionSort(array, 0, len - 1, comparefn);
-       return array;
+        InsertionSort(denseList, 0, denseLen - 1, comparefn);
+        MoveHoles(array, len, denseList, denseLen);
+        return array;
     }
 
     // We do all of our allocating up front
     var lBuffer = new List();
     var rBuffer = new List();
-    var mid, end, endOne, endTwo;
 
-    for (var windowSize = 1; windowSize < len; windowSize = 2*windowSize) {
-        for (var start = 0; start < len - 1; start += 2*windowSize) {
-            assert(windowSize < len, "The window size is larger than the array length!");
+    var mid, end, endOne, endTwo;
+    for (var windowSize = 1; windowSize < denseLen; windowSize = 2 * windowSize) {
+        for (var start = 0; start < denseLen - 1; start += 2 * windowSize) {
+            assert(windowSize < denseLen, "The window size is larger than the array denseLength!");
             // The midpoint between the two subarrays.
             mid = start + windowSize - 1;
             // To keep from going over the edge.
             end = start + 2 * windowSize - 1;
-            end = end < len - 1 ? end : len - 1;
+            end = end < denseLen - 1 ? end : denseLen - 1;
             // Skip lopsided runs to avoid doing useless work
             if (mid > end)
                 continue;
-            Merge(array, start, mid, end, lBuffer, rBuffer, comparefn);
+            Merge(denseList, start, mid, end, lBuffer, rBuffer, comparefn);
         }
     }
+    MoveHoles(array, len, denseList, denseLen);
     return array;
 }
 

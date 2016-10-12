@@ -17,9 +17,12 @@
 #include "PLDHashTable.h"
 #include "mozilla/TimeStamp.h"
 
-class nsISchedulingContext;
-class nsISchedulingContextService;
+class nsIRequestContext;
+class nsIRequestContextService;
 class nsITimedChannel;
+
+namespace mozilla {
+namespace net {
 
 class nsLoadGroup : public nsILoadGroup,
                     public nsILoadGroupChild,
@@ -29,7 +32,7 @@ class nsLoadGroup : public nsILoadGroup,
 {
 public:
     NS_DECL_AGGREGATED
-    
+
     ////////////////////////////////////////////////////////////////////////////
     // nsIRequest methods:
     NS_DECL_NSIREQUEST
@@ -71,15 +74,15 @@ protected:
 
     nsCOMPtr<nsILoadGroup>          mLoadGroup; // load groups can contain load groups
     nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
-    nsCOMPtr<nsISchedulingContext>  mSchedulingContext;
-    nsCOMPtr<nsISchedulingContextService> mSchedulingContextService;
+    nsCOMPtr<nsIRequestContext>  mRequestContext;
+    nsCOMPtr<nsIRequestContextService> mRequestContextService;
 
     nsCOMPtr<nsIRequest>            mDefaultLoadRequest;
     PLDHashTable                    mRequests;
 
     nsWeakPtr                       mObserver;
     nsWeakPtr                       mParentLoadGroup;
-    
+
     nsresult                        mStatus;
     int32_t                         mPriority;
     bool                            mIsCanceling;
@@ -92,6 +95,11 @@ protected:
 
     /* For nsPILoadGroupInternal */
     uint32_t                        mTimedNonCachedRequestsUntilOnEndPageLoad;
+
+    nsCString                       mUserAgentOverrideCache;
 };
+
+} // namespace net
+} // namespace mozilla
 
 #endif // nsLoadGroup_h__

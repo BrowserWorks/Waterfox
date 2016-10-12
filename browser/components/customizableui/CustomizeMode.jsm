@@ -11,7 +11,6 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 const kPrefCustomizationDebug = "browser.uiCustomization.debug";
 const kPrefCustomizationAnimation = "browser.uiCustomization.disableAnimation";
 const kPaletteId = "customization-palette";
-const kAboutURI = "about:customizing";
 const kDragDataTypePrefix = "text/toolbarwrapper-id/";
 const kPlaceholderClass = "panel-customization-placeholder";
 const kSkipSourceNodePref = "browser.uiCustomization.skipSourceNodeCheck";
@@ -36,6 +35,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "BrowserUITelemetry",
                                   "resource:///modules/BrowserUITelemetry.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
                                   "resource://gre/modules/LightweightThemeManager.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "SessionStore",
+                                  "resource:///modules/sessionstore/SessionStore.jsm");
 
 let gDebug;
 XPCOMUtils.defineLazyGetter(this, "log", () => {
@@ -55,6 +56,24 @@ XPCOMUtils.defineLazyGetter(this, "log", () => {
 var gDisableAnimation = null;
 
 var gDraggingInToolbars;
+
+var gTab;
+
+function closeGlobalTab() {
+  let win = gTab.ownerGlobal;
+  if (win.gBrowser.browsers.length == 1) {
+    win.BrowserOpenTab();
+  }
+  win.gBrowser.removeTab(gTab);
+  gTab = null;
+}
+
+function unregisterGlobalTab() {
+  gTab.removeEventListener("TabClose", unregisterGlobalTab);
+  gTab.ownerGlobal.removeEventListener("unload", unregisterGlobalTab);
+  gTab.removeAttribute("customizemode");
+  gTab = null;
+}
 
 function CustomizeMode(aWindow) {
   if (gDisableAnimation === null) {
@@ -82,7 +101,7 @@ function CustomizeMode(aWindow) {
     Services.prefs.addObserver(kDrawInTitlebarPref, this, false);
   }
   this.window.addEventListener("unload", this);
-};
+}
 
 CustomizeMode.prototype = {
   _changed: false,
@@ -140,6 +159,36 @@ CustomizeMode.prototype = {
     lwthemeIcon.style.backgroundImage = "url(" + imageURL + ")";
   },
 
+  setTab: function(aTab) {
+    if (gTab == aTab) {
+      return;
+    }
+
+    if (gTab) {
+      closeGlobalTab();
+    }
+
+    gTab = aTab;
+
+    gTab.setAttribute("customizemode", "true");
+    SessionStore.persistTabAttribute("customizemode");
+
+    gTab.linkedBrowser.stop();
+
+    let win = gTab.ownerGlobal;
+
+    win.gBrowser.setTabTitle(gTab);
+    win.gBrowser.setIcon(gTab,
+                         "chrome://browser/skin/customizableui/customizeFavicon.ico");
+
+    gTab.addEventListener("TabClose", unregisterGlobalTab);
+    win.addEventListener("unload", unregisterGlobalTab);
+
+    if (gTab.selected) {
+      win.gCustomizeMode.enter();
+    }
+  },
+
   enter: function() {
     this._wantToBeInCustomizeMode = true;
 
@@ -154,13 +203,21 @@ CustomizeMode.prototype = {
       return;
     }
 
-
-    // We don't need to switch to kAboutURI, or open a new tab at
-    // kAboutURI if we're already on it.
-    if (this.browser.selectedBrowser.currentURI.spec != kAboutURI) {
-      this.window.switchToTabHavingURI(kAboutURI, true, {
-        skipTabAnimation: true,
-      });
+    if (!gTab) {
+      this.setTab(this.browser.loadOneTab("about:blank",
+                                          { inBackground: false,
+                                            forceNotRemote: true,
+                                            skipAnimation: true }));
+      return;
+    }
+    if (!gTab.selected) {
+      // This will force another .enter() to be called via the
+      // onlocationchange handler of the tabbrowser, so we return early.
+      gTab.ownerGlobal.gBrowser.selectedTab = gTab;
+      return;
+    }
+    gTab.ownerGlobal.focus();
+    if (gTab.ownerDocument != this.document) {
       return;
     }
 
@@ -177,15 +234,16 @@ CustomizeMode.prototype = {
     Task.spawn(function*() {
       // We shouldn't start customize mode until after browser-delayed-startup has finished:
       if (!this.window.gBrowserInit.delayedStartupFinished) {
-        let delayedStartupDeferred = Promise.defer();
-        let delayedStartupObserver = function(aSubject) {
-          if (aSubject == this.window) {
-            Services.obs.removeObserver(delayedStartupObserver, "browser-delayed-startup-finished");
-            delayedStartupDeferred.resolve();
-          }
-        }.bind(this);
-        Services.obs.addObserver(delayedStartupObserver, "browser-delayed-startup-finished", false);
-        yield delayedStartupDeferred.promise;
+        yield new Promise(resolve => {
+          let delayedStartupObserver = aSubject => {
+            if (aSubject == this.window) {
+              Services.obs.removeObserver(delayedStartupObserver, "browser-delayed-startup-finished");
+              resolve();
+            }
+          };
+
+          Services.obs.addObserver(delayedStartupObserver, "browser-delayed-startup-finished", false);
+        });
       }
 
       let toolbarVisibilityBtn = document.getElementById(kToolbarVisibilityBtn);
@@ -313,10 +371,6 @@ CustomizeMode.prototype = {
         delete this._enableOutlinesTimeout;
       }, 0);
 
-      // It's possible that we didn't enter customize mode via the menu panel,
-      // meaning we didn't kick off about:customizing preloading. If that's
-      // the case, let's kick it off for the next time we load this mode.
-      window.gCustomizationTabPreloader.ensurePreloading();
       if (!this._wantToBeInCustomizeMode) {
         this.exit();
       }
@@ -402,31 +456,14 @@ CustomizeMode.prototype = {
 
       Services.obs.removeObserver(this, "lightweight-theme-window-updated", false);
 
-      let browser = document.getElementById("browser");
-      if (this.browser.selectedBrowser.currentURI.spec == kAboutURI) {
-        let custBrowser = this.browser.selectedBrowser;
-        if (custBrowser.canGoBack) {
-          // If there's history to this tab, just go back.
-          // Note that this throws an exception if the previous document has a
-          // problematic URL (e.g. about:idontexist)
-          try {
-            custBrowser.goBack();
-          } catch (ex) {
-            log.error(ex);
-          }
+      if (this.browser.selectedTab == gTab) {
+        if (gTab.linkedBrowser.currentURI.spec == "about:blank") {
+          closeGlobalTab();
         } else {
-          // If we can't go back, we're removing the about:customization tab.
-          // We only do this if we're the top window for this window (so not
-          // a dialog window, for example).
-          if (window.getTopWin(true) == window) {
-            let customizationTab = this.browser.selectedTab;
-            if (this.browser.browsers.length == 1) {
-              window.BrowserOpenTab();
-            }
-            this.browser.removeTab(customizationTab);
-          }
+          unregisterGlobalTab();
         }
       }
+      let browser = document.getElementById("browser");
       browser.parentNode.selectedPanel = browser;
       let customizer = document.getElementById("customization-container");
       customizer.hidden = true;
@@ -526,33 +563,35 @@ CustomizeMode.prototype = {
    * excluding certain styles while in any phase of customize mode.
    */
   _doTransition: function(aEntering) {
-    let deferred = Promise.defer();
     let deck = this.document.getElementById("content-deck");
-
-    let customizeTransitionEnd = (aEvent) => {
-      if (aEvent != "timedout" &&
-          (aEvent.originalTarget != deck || aEvent.propertyName != "margin-left")) {
-        return;
-      }
-      this.window.clearTimeout(catchAllTimeout);
-      // We request an animation frame to do the final stage of the transition
-      // to improve perceived performance. (bug 962677)
-      this.window.requestAnimationFrame(() => {
-        deck.removeEventListener("transitionend", customizeTransitionEnd);
-
-        if (!aEntering) {
-          this.document.documentElement.removeAttribute("customize-exiting");
-          this.document.documentElement.removeAttribute("customizing");
-        } else {
-          this.document.documentElement.setAttribute("customize-entered", true);
-          this.document.documentElement.removeAttribute("customize-entering");
+    let customizeTransitionEndPromise = new Promise(resolve => {
+      let customizeTransitionEnd = (aEvent) => {
+        if (aEvent != "timedout" &&
+            (aEvent.originalTarget != deck || aEvent.propertyName != "margin-left")) {
+          return;
         }
-        CustomizableUI.dispatchToolboxEvent("customization-transitionend", aEntering, this.window);
+        this.window.clearTimeout(catchAllTimeout);
+        // We request an animation frame to do the final stage of the transition
+        // to improve perceived performance. (bug 962677)
+        this.window.requestAnimationFrame(() => {
+          deck.removeEventListener("transitionend", customizeTransitionEnd);
 
-        deferred.resolve();
-      });
-    };
-    deck.addEventListener("transitionend", customizeTransitionEnd);
+          if (!aEntering) {
+            this.document.documentElement.removeAttribute("customize-exiting");
+            this.document.documentElement.removeAttribute("customizing");
+          } else {
+            this.document.documentElement.setAttribute("customize-entered", true);
+            this.document.documentElement.removeAttribute("customize-entering");
+          }
+          CustomizableUI.dispatchToolboxEvent("customization-transitionend", aEntering, this.window);
+
+          resolve();
+        });
+      };
+      deck.addEventListener("transitionend", customizeTransitionEnd);
+      let catchAll = () => customizeTransitionEnd("timedout");
+      let catchAllTimeout = this.window.setTimeout(catchAll, kMaxTransitionDurationMs);
+    });
 
     if (gDisableAnimation) {
       this.document.getElementById("tab-view-deck").setAttribute("fastcustomizeanimation", true);
@@ -566,9 +605,7 @@ CustomizeMode.prototype = {
       this.document.documentElement.removeAttribute("customize-entered");
     }
 
-    let catchAll = () => customizeTransitionEnd("timedout");
-    let catchAllTimeout = this.window.setTimeout(catchAll, kMaxTransitionDurationMs);
-    return deferred.promise;
+    return customizeTransitionEndPromise;
   },
 
   updateLWTStyling: function(aData) {
@@ -832,14 +869,12 @@ CustomizeMode.prototype = {
   },
 
   deferredWrapToolbarItem: function(aNode, aPlace) {
-    let deferred = Promise.defer();
-
-    dispatchFunction(function() {
-      let wrapper = this.wrapToolbarItem(aNode, aPlace);
-      deferred.resolve(wrapper);
-    }.bind(this));
-
-    return deferred.promise;
+    return new Promise(resolve => {
+      dispatchFunction(() => {
+        let wrapper = this.wrapToolbarItem(aNode, aPlace);
+        resolve(wrapper);
+      });
+    });
   },
 
   wrapToolbarItem: function(aNode, aPlace) {
@@ -897,8 +932,10 @@ CustomizeMode.prototype = {
 
     if (aNode.hasAttribute("label")) {
       wrapper.setAttribute("title", aNode.getAttribute("label"));
+      wrapper.setAttribute("tooltiptext", aNode.getAttribute("label"));
     } else if (aNode.hasAttribute("title")) {
       wrapper.setAttribute("title", aNode.getAttribute("title"));
+      wrapper.setAttribute("tooltiptext", aNode.getAttribute("title"));
     }
 
     if (aNode.hasAttribute("flex")) {
@@ -916,8 +953,12 @@ CustomizeMode.prototype = {
     let removable = aPlace == "palette" || CustomizableUI.isWidgetRemovable(aNode);
     wrapper.setAttribute("removable", removable);
 
-    let contextMenuAttrName = aNode.getAttribute("context") ? "context" :
-                                aNode.getAttribute("contextmenu") ? "contextmenu" : "";
+    let contextMenuAttrName = "";
+    if (aNode.getAttribute("context")) {
+      contextMenuAttrName = "context";
+    } else if (aNode.getAttribute("contextmenu")) {
+      contextMenuAttrName = "contextmenu";
+    }
     let currentContextMenu = aNode.getAttribute(contextMenuAttrName);
     let contextMenuForPlace = aPlace == "panel" ?
                                 kPanelItemContextMenu :
@@ -945,17 +986,17 @@ CustomizeMode.prototype = {
   },
 
   deferredUnwrapToolbarItem: function(aWrapper) {
-    let deferred = Promise.defer();
-    dispatchFunction(function() {
-      let item = null;
-      try {
-        item = this.unwrapToolbarItem(aWrapper);
-      } catch (ex) {
-        Cu.reportError(ex);
-      }
-      deferred.resolve(item);
-    }.bind(this));
-    return deferred.promise;
+    return new Promise(resolve => {
+      dispatchFunction(() => {
+        let item = null;
+        try {
+          item = this.unwrapToolbarItem(aWrapper);
+        } catch (ex) {
+          Cu.reportError(ex);
+        }
+        resolve(item);
+      });
+    });
   },
 
   unwrapToolbarItem: function(aWrapper) {
@@ -1136,6 +1177,8 @@ CustomizeMode.prototype = {
 
       CustomizableUI.reset();
 
+      this.swatchForTheme(this.document);
+
       yield this._wrapToolbarItems();
       this.populatePalette();
 
@@ -1161,6 +1204,8 @@ CustomizeMode.prototype = {
       yield this._unwrapToolbarItems();
 
       CustomizableUI.undoReset();
+
+      this.swatchForTheme(this.document);
 
       yield this._wrapToolbarItems();
       this.populatePalette();
@@ -1302,6 +1347,8 @@ CustomizeMode.prototype = {
     const DEFAULT_THEME_ID = "{972ce4c6-7e08-4474-a285-3208198ce6fd}";
     const RECENT_LWT_COUNT = 5;
 
+    this.resetLWThemesMenu(aEvent.target);
+
     function previewTheme(aEvent) {
       LightweightThemeManager.previewTheme(aEvent.target.theme.id != DEFAULT_THEME_ID ?
                                            aEvent.target.theme : null);
@@ -1393,22 +1440,11 @@ CustomizeMode.prototype = {
       }
       let hideRecommendedLabel = (footer.previousSibling == recommendedLabel);
       recommendedLabel.hidden = hideRecommendedLabel;
-
-      let hideMyThemesSection = themesInMyThemesSection < 2 && hideRecommendedLabel;
-      let headerLabel = doc.getElementById("customization-lwtheme-menu-header");
-      if (hideMyThemesSection) {
-        let element = recommendedLabel.previousSibling;
-        while (element && element != headerLabel) {
-          element.hidden = true;
-          element = element.previousSibling;
-        }
-      }
-      headerLabel.hidden = hideMyThemesSection;
     }.bind(this));
   },
 
-  onLWThemesMenuHidden: function(aEvent) {
-    let doc = aEvent.target.ownerDocument;
+  resetLWThemesMenu: function(target) {
+    let doc = target.ownerDocument;
     let footer = doc.getElementById("customization-lwtheme-menu-footer");
     let recommendedLabel = doc.getElementById("customization-lwtheme-menu-recommended");
     this.swatchForTheme(doc);
@@ -1418,7 +1454,11 @@ CustomizeMode.prototype = {
         element.previousSibling.remove();
       }
     }
-    aEvent.target.removeAttribute("height");
+    target.removeAttribute("height");
+
+    if (LightweightThemeManager.currentTheme) {
+      this._onUIChange();
+    }
   },
 
   _onUIChange: function() {

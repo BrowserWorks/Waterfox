@@ -218,6 +218,14 @@ EVENT(ended,
       eEnded,
       EventNameType_HTML,
       eBasicEventClass)
+EVENT(fullscreenchange,
+      eFullscreenChange,
+      EventNameType_HTML,
+      eBasicEventClass)
+EVENT(fullscreenerror,
+      eFullscreenError,
+      EventNameType_HTML,
+      eBasicEventClass)
 EVENT(input,
       eEditorInput,
       EventNameType_HTMLXUL,
@@ -238,6 +246,14 @@ EVENT(keyup,
       eKeyUp,
       EventNameType_HTMLXUL,
       eKeyboardEventClass)
+EVENT(mozkeydownonplugin,
+      eKeyDownOnPlugin,
+      EventNameType_None,
+      eKeyboardEventClass)
+EVENT(mozkeyuponplugin,
+      eKeyUpOnPlugin,
+      EventNameType_None,
+      eKeyboardEventClass)
 NON_IDL_EVENT(mozbrowserbeforekeydown,
               eBeforeKeyDown,
               EventNameType_None,
@@ -254,6 +270,10 @@ NON_IDL_EVENT(mozbrowserafterkeyup,
               eAfterKeyUp,
               EventNameType_None,
               eBeforeAfterKeyboardEventClass)
+NON_IDL_EVENT(mozaccesskeynotfound,
+              eAccessKeyNotFound,
+              EventNameType_None,
+              eKeyboardEventClass)
 EVENT(loadeddata,
       eLoadedData,
       EventNameType_HTML,
@@ -295,11 +315,11 @@ EVENT(mouseup,
       EventNameType_All,
       eMouseEventClass)
 EVENT(mozfullscreenchange,
-      eFullscreenChange,
+      eMozFullscreenChange,
       EventNameType_HTML,
       eBasicEventClass)
 EVENT(mozfullscreenerror,
-      eFullscreenError,
+      eMozFullscreenError,
       EventNameType_HTML,
       eBasicEventClass)
 EVENT(mozpointerlockchange,
@@ -411,6 +431,10 @@ EVENT(suspend,
       eBasicEventClass)
 EVENT(timeupdate,
       eTimeUpdate,
+      EventNameType_HTML,
+      eBasicEventClass)
+EVENT(toggle,
+      eToggle,
       EventNameType_HTML,
       eBasicEventClass)
 EVENT(volumechange,
@@ -563,6 +587,13 @@ WINDOW_ONLY_EVENT(devicelight,
                   eDeviceLight,
                   EventNameType_None,
                   eBasicEventClass)
+
+// Install events as per W3C Manifest spec
+WINDOW_ONLY_EVENT(install,
+                  eInstall,
+                  EventNameType_None,
+                  eBasicEventClass)
+
 
 #ifdef MOZ_B2G
 WINDOW_ONLY_EVENT(moztimechange,
@@ -924,6 +955,7 @@ NON_IDL_EVENT(MozEdgeUICompleted,
               EventNameType_None,
               eSimpleGestureEventClass)
 
+// CSS Transition & Animation events:
 NON_IDL_EVENT(transitionend,
               eTransitionEnd,
               EventNameType_None,
@@ -938,6 +970,24 @@ NON_IDL_EVENT(animationend,
               eAnimationEventClass)
 NON_IDL_EVENT(animationiteration,
               eAnimationIteration,
+              EventNameType_None,
+              eAnimationEventClass)
+
+// Webkit-prefixed versions of Transition & Animation events, for web compat:
+NON_IDL_EVENT(webkitTransitionEnd,
+              eWebkitTransitionEnd,
+              EventNameType_None,
+              eTransitionEventClass)
+NON_IDL_EVENT(webkitAnimationEnd,
+              eWebkitAnimationEnd,
+              EventNameType_None,
+              eAnimationEventClass)
+NON_IDL_EVENT(webkitAnimationIteration,
+              eWebkitAnimationIteration,
+              EventNameType_None,
+              eAnimationEventClass)
+NON_IDL_EVENT(webkitAnimationStart,
+              eWebkitAnimationStart,
               EventNameType_None,
               eAnimationEventClass)
 

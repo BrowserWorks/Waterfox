@@ -42,6 +42,7 @@ function run_test() {
 
   let cacheTemplateFile = do_get_file("data/search.json");
   cacheTemplate = readJSONFile(cacheTemplateFile);
+  cacheTemplate.buildID = getAppInfo().platformBuildID;
 
   let engineFile = gProfD.clone();
   engineFile.append("searchplugins");
@@ -53,18 +54,14 @@ function run_test() {
   engineTemplateFile.copyTo(engineFile.parent, "test-search-engine.xml");
 
   // The list of visibleDefaultEngines needs to match or the cache will be ignored.
-  let chan = NetUtil.ioService.newChannel2("resource://search-plugins/list.txt",
-                                           null, // aOriginCharset
-                                           null, // aBaseURI
-                                           null, // aLoadingNode
-                                           Services.scriptSecurityManager.getSystemPrincipal(),
-                                           null, // aTriggeringPrincipal
-                                           Ci.nsILoadInfo.SEC_NORMAL,
-                                           Ci.nsIContentPolicy.TYPE_OTHER);
+  let chan = NetUtil.newChannel({
+    uri: "resource://search-plugins/list.txt",
+    loadUsingSystemPrincipal: true
+  });
   let visibleDefaultEngines = [];
   let sis = Cc["@mozilla.org/scriptableinputstream;1"].
               createInstance(Ci.nsIScriptableInputStream);
-  sis.init(chan.open());
+  sis.init(chan.open2());
   let list = sis.read(sis.available());
   let names = list.split("\n").filter(n => !!n);
   for (let name of names) {
@@ -216,11 +213,6 @@ var EXPECTED_ENGINE = {
               "name": "q",
               "value": "{searchTerms}",
               "purpose": undefined,
-            },
-            {
-              "name": "channel",
-              "value": "none",
-              "purpose": "",
             },
             {
               "name": "channel",

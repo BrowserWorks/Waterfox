@@ -5,7 +5,7 @@
 "use strict";
 
 const CSSCompleter = require("devtools/client/sourceeditor/css-autocompleter");
-const {InspectorFront} = require("devtools/server/actors/inspector");
+const {InspectorFront} = require("devtools/shared/fronts/inspector");
 const {TargetFactory} = require("devtools/client/framework/target");
 const { Cc, Ci } = require("chrome");
 
@@ -112,8 +112,8 @@ function checkStateAndMoveOn() {
   progressDiv.style.width = 100 * index / tests.length + "%";
   completer.complete(limit(source, test[0]),
                      {line: test[0][0], ch: test[0][1]}).then(suggestions => {
-    checkState(test[1], suggestions);
-  }).then(checkStateAndMoveOn);
+                       checkState(test[1], suggestions);
+                     }).then(checkStateAndMoveOn);
 }
 
 function checkState(expected, actual) {

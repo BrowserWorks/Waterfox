@@ -16,6 +16,7 @@
 #include "mozilla/Assertions.h"
 #include <vector>
 #include "RefPtrSkia.h"
+#include "nsDebug.h"
 
 namespace mozilla {
 namespace gfx {
@@ -40,12 +41,13 @@ GfxFormatToSkiaColorType(SurfaceFormat format)
 }
 
 static inline SurfaceFormat
-SkiaColorTypeToGfxFormat(SkColorType type)
+SkiaColorTypeToGfxFormat(SkColorType aColorType, SkAlphaType aAlphaType = kPremul_SkAlphaType)
 {
-  switch (type)
+  switch (aColorType)
   {
     case kBGRA_8888_SkColorType:
-      return SurfaceFormat::B8G8R8A8;
+      return aAlphaType == kOpaque_SkAlphaType ?
+               SurfaceFormat::B8G8R8X8 : SurfaceFormat::B8G8R8A8;
     case kRGB_565_SkColorType:
       return SurfaceFormat::R5G6B5_UINT16;
     case kAlpha_8_SkColorType:
@@ -105,6 +107,14 @@ GfxMatrixToSkiaMatrix(const Matrix& mat, SkMatrix& retval)
                   0, 0, SK_Scalar1);
 }
 
+static inline void
+GfxMatrixToSkiaMatrix(const Matrix4x4& aMatrix, SkMatrix& aResult)
+{
+  aResult.setAll(SkFloatToScalar(aMatrix._11), SkFloatToScalar(aMatrix._21), SkFloatToScalar(aMatrix._41),
+                 SkFloatToScalar(aMatrix._12), SkFloatToScalar(aMatrix._22), SkFloatToScalar(aMatrix._42),
+                 SkFloatToScalar(aMatrix._14), SkFloatToScalar(aMatrix._24), SkFloatToScalar(aMatrix._44));
+}
+
 static inline SkPaint::Cap
 CapStyleToSkiaCap(CapStyle aCap)
 {
@@ -141,7 +151,8 @@ StrokeOptionsToPaint(SkPaint& aPaint, const StrokeOptions &aOptions)
 {
   // Skia renders 0 width strokes with a width of 1 (and in black),
   // so we should just skip the draw call entirely.
-  if (!aOptions.mLineWidth) {
+  // Skia does not handle non-finite line widths.
+  if (!aOptions.mLineWidth || !IsFinite(aOptions.mLineWidth)) {
     return false;
   }
   aPaint.setStrokeWidth(SkFloatToScalar(aOptions.mLineWidth));
@@ -166,10 +177,10 @@ StrokeOptionsToPaint(SkPaint& aPaint, const StrokeOptions &aOptions)
       pattern[i] = SkFloatToScalar(aOptions.mDashPattern[i % aOptions.mDashLength]);
     }
 
-    SkDashPathEffect* dash = SkDashPathEffect::Create(&pattern.front(),
+    sk_sp<SkPathEffect> dash = SkDashPathEffect::Make(&pattern.front(),
                                                       dashCount,
                                                       SkFloatToScalar(aOptions.mDashOffset));
-    SkSafeUnref(aPaint.setPathEffect(dash));
+    aPaint.setPathEffect(dash);
   }
 
   aPaint.setStyle(SkPaint::kStroke_Style);
@@ -341,6 +352,24 @@ GfxHintingToSkiaHinting(FontHinting aHinting)
       return SkPaint::kFull_Hinting;
   }
   return SkPaint::kNormal_Hinting;
+}
+
+static inline FillRule GetFillRule(SkPath::FillType aFillType)
+{
+  switch (aFillType)
+  {
+  case SkPath::kWinding_FillType:
+    return FillRule::FILL_WINDING;
+  case SkPath::kEvenOdd_FillType:
+    return FillRule::FILL_EVEN_ODD;
+  case SkPath::kInverseWinding_FillType:
+  case SkPath::kInverseEvenOdd_FillType:
+  default:
+    NS_WARNING("Unsupported fill type\n");
+    break;
+  }
+
+  return FillRule::FILL_EVEN_ODD;
 }
 
 } // namespace gfx

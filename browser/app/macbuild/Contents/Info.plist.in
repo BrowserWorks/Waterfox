@@ -206,18 +206,16 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.6</string>
-	<key>LSMinimumSystemVersionByArchitecture</key>
-	<dict>
-		<key>i386</key>
-		<string>10.6.0</string>
-		<key>x86_64</key>
-		<string>10.6.0</string>
-	</dict>
+	<string>10.9.0</string>
   <key>NSSupportsAutomaticGraphicsSwitching</key>
   <true/>
   <key>NSPrincipalClass</key>
   <string>GeckoNSApplication</string>
+	<key>SMPrivilegedExecutables</key>
+	<dict>
+		<key>org.mozilla.updater</key>
+		<string>identifier "org.mozilla.updater" and ((anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] and certificate leaf[field.1.2.840.113635.100.6.1.13] and certificate leaf[subject.OU] = "43AQ936H96"))</string>
+	</dict>
   <key>NSDisablePersistence</key>
   <true/>
 </dict>

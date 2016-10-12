@@ -20,6 +20,7 @@
 #include "mozilla/dom/HTMLFormElement.h" // for HasEverTriedInvalidSubmit()
 #include "mozilla/dom/HTMLInputElementBinding.h"
 #include "mozilla/dom/Promise.h"
+#include "mozilla/dom/UnionTypes.h"
 #include "nsIFilePicker.h"
 #include "nsIContentPrefService2.h"
 #include "mozilla/Decimal.h"
@@ -36,9 +37,12 @@ class EventChainPreVisitor;
 
 namespace dom {
 
+class AfterSetFilesOrDirectoriesRunnable;
 class Date;
+class DispatchChangeEventCallback;
 class File;
 class FileList;
+class GetFilesHelper;
 
 /**
  * A class we use to create a singleton object that is used to keep track of
@@ -105,9 +109,13 @@ class HTMLInputElement final : public nsGenericHTMLFormElementWithState,
                                public nsIDOMNSEditableElement,
                                public nsIConstraintValidation
 {
+  friend class AfterSetFilesOrDirectoriesCallback;
+  friend class DispatchChangeEventCallback;
+
 public:
   using nsIConstraintValidation::GetValidationMessage;
   using nsIConstraintValidation::CheckValidity;
+  using nsIConstraintValidation::ReportValidity;
   using nsIConstraintValidation::WillValidate;
   using nsIConstraintValidation::Validity;
   using nsGenericHTMLFormElementWithState::GetForm;
@@ -220,12 +228,13 @@ public:
 
   void GetDisplayFileName(nsAString& aFileName) const;
 
-  const nsTArray<RefPtr<File>>& GetFilesInternal() const
+  const nsTArray<OwningFileOrDirectory>& GetFilesOrDirectoriesInternal() const
   {
-    return mFiles;
+    return mFilesOrDirectories;
   }
 
-  void SetFiles(const nsTArray<RefPtr<File>>& aFiles, bool aSetValueChanged);
+  void SetFilesOrDirectories(const nsTArray<OwningFileOrDirectory>& aFilesOrDirectories,
+                             bool aSetValueChanged);
   void SetFiles(nsIDOMFileList* aFiles, bool aSetValueChanged);
 
   // Called when a nsIFilePicker or a nsIColorPicker terminate.
@@ -482,7 +491,7 @@ public:
 
   void SetHeight(uint32_t aValue, ErrorResult& aRv)
   {
-    SetUnsignedIntAttr(nsGkAtoms::height, aValue, aRv);
+    SetUnsignedIntAttr(nsGkAtoms::height, aValue, 0, aRv);
   }
 
   bool Indeterminate() const
@@ -586,7 +595,7 @@ public:
       return;
     }
 
-    SetUnsignedIntAttr(nsGkAtoms::size, aValue, aRv);
+    SetUnsignedIntAttr(nsGkAtoms::size, aValue, DEFAULT_COLS, aRv);
   }
 
   // XPCOM GetSrc() is OK
@@ -639,7 +648,7 @@ public:
 
   void SetWidth(uint32_t aValue, ErrorResult& aRv)
   {
-    SetUnsignedIntAttr(nsGkAtoms::width, aValue, aRv);
+    SetUnsignedIntAttr(nsGkAtoms::width, aValue, 0, aRv);
   }
 
   void StepUp(int32_t aN, ErrorResult& aRv)
@@ -696,9 +705,21 @@ public:
     SetHTMLBoolAttr(nsGkAtoms::directory, aValue, aRv);
   }
 
+  bool WebkitDirectoryAttr() const
+  {
+    return HasAttr(kNameSpaceID_None, nsGkAtoms::webkitdirectory);
+  }
+
+  void SetWebkitDirectoryAttr(bool aValue, ErrorResult& aRv)
+  {
+    SetHTMLBoolAttr(nsGkAtoms::webkitdirectory, aValue, aRv);
+  }
+
   bool IsFilesAndDirectoriesSupported() const;
 
   already_AddRefed<Promise> GetFilesAndDirectories(ErrorResult& aRv);
+
+  already_AddRefed<Promise> GetFiles(bool aRecursiveFlag, ErrorResult& aRv);
 
   void ChooseDirectory(ErrorResult& aRv);
 
@@ -722,11 +743,17 @@ public:
 
   void MozSetFileNameArray(const Sequence< nsString >& aFileNames, ErrorResult& aRv);
   void MozSetFileArray(const Sequence<OwningNonNull<File>>& aFiles);
+  void MozSetDirectory(const nsAString& aDirectoryPath, ErrorResult& aRv);
 
   HTMLInputElement* GetOwnerNumberControl();
 
   void StartNumberControlSpinnerSpin();
-  void StopNumberControlSpinnerSpin();
+  enum SpinnerStopState {
+    eAllowDispatchingEvents,
+    eDisallowDispatchingEvents
+  };
+  void StopNumberControlSpinnerSpin(SpinnerStopState aState =
+                                      eAllowDispatchingEvents);
   void StepNumberControlForUserEvent(int32_t aDirection);
 
   /**
@@ -922,12 +949,20 @@ protected:
   /**
    * Update mFileList with the currently selected file.
    */
-  nsresult UpdateFileList();
+  void UpdateFileList();
 
   /**
-   * Called after calling one of the SetFiles() functions.
+   * Called after calling one of the SetFilesOrDirectories() functions.
+   * This method can explore the directory recursively if needed.
    */
-  void AfterSetFiles(bool aSetValueChanged);
+  void AfterSetFilesOrDirectories(bool aSetValueChanged);
+  void AfterSetFilesOrDirectoriesInternal(bool aSetValueChanged);
+
+  /**
+   * Recursively explore the directory and populate mFileOrDirectories correctly
+   * for webkitdirectory.
+   */
+  void ExploreDirectoryRecursively(bool aSetValuechanged);
 
   /**
    * Determine whether the editor needs to be initialized explicitly for
@@ -1244,6 +1279,11 @@ protected:
    */
   bool IsPopupBlocked() const;
 
+  GetFilesHelper* GetOrCreateGetFilesHelper(bool aRecursiveFlag,
+                                            ErrorResult& aRv);
+
+  void ClearGetFilesHelpers();
+
   nsCOMPtr<nsIControllers> mControllers;
 
   /*
@@ -1266,16 +1306,19 @@ protected:
   } mInputData;
 
   /**
-   * The value of the input if it is a file input. This is the list of filenames
-   * used when uploading a file. It is vital that this is kept separate from
-   * mValue so that it won't be possible to 'leak' the value from a text-input
-   * to a file-input. Additionally, the logic for this value is kept as simple
-   * as possible to avoid accidental errors where the wrong filename is used.
-   * Therefor the list of filenames is always owned by this member, never by
-   * the frame. Whenever the frame wants to change the filename it has to call
-   * SetFileNames to update this member.
+   * The value of the input if it is a file input. This is the list of files or
+   * directories DOM objects used when uploading a file. It is vital that this
+   * is kept separate from mValue so that it won't be possible to 'leak' the
+   * value from a text-input to a file-input. Additionally, the logic for this
+   * value is kept as simple as possible to avoid accidental errors where the
+   * wrong filename is used.  Therefor the list of filenames is always owned by
+   * this member, never by the frame. Whenever the frame wants to change the
+   * filename it has to call SetFilesOrDirectories to update this member.
    */
-  nsTArray<RefPtr<File>> mFiles;
+  nsTArray<OwningFileOrDirectory> mFilesOrDirectories;
+
+  RefPtr<GetFilesHelper> mGetFilesRecursiveHelper;
+  RefPtr<GetFilesHelper> mGetFilesNonRecursiveHelper;
 
 #ifndef MOZ_CHILD_PERMISSIONS
   /**
@@ -1285,18 +1328,17 @@ protected:
 #endif
 
   RefPtr<FileList>  mFileList;
-  RefPtr<Promise> mFilesAndDirectoriesPromise;
 
   nsString mStaticDocFileList;
-  
-  /** 
+
+  /**
    * The value of the input element when first initialized and it is updated
-   * when the element is either changed through a script, focused or dispatches   
+   * when the element is either changed through a script, focused or dispatches
    * a change event. This is to ensure correct future change event firing.
    * NB: This is ONLY applicable where the element is a text control. ie,
    * where type= "text", "email", "search", "tel", "url" or "password".
    */
-  nsString mFocusedValue;  
+  nsString mFocusedValue;
 
   /**
    * If mIsDraggingRange is true, this is the value that the input had before
@@ -1404,7 +1446,7 @@ private:
         return false;
       }
     }
-    
+
     // Filter mask, using values defined in nsIFilePicker
     int32_t mFilterMask;
     // If mFilterMask is defined, mTitle and mFilter are useless and should be

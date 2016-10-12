@@ -18,11 +18,11 @@ function is(a, b, msg) {
 }
 
 function ok(cond, msg) {
-  do_check_true(!!cond, Components.stack.caller); 
+  do_check_true(!!cond, Components.stack.caller);
 }
 
 function isnot(a, b, msg) {
-  do_check_neq(a, b, Components.stack.caller); 
+  do_check_neq(a, b, Components.stack.caller);
 }
 
 function executeSoon(fun) {
@@ -69,6 +69,8 @@ function finishTest()
                                                  "free");
   }
 
+  SpecialPowers.removeFiles();
+
   do_execute_soon(function(){
     testGenerator.close();
     do_test_finished();
@@ -114,6 +116,11 @@ function expectedErrorHandler(name)
   };
 }
 
+function expectUncaughtException(expecting)
+{
+  // This is dummy for xpcshell test.
+}
+
 function ExpectError(name)
 {
   this._name = name;
@@ -150,12 +157,12 @@ function compareKeys(k1, k2) {
     if (!(k2 instanceof Array) ||
         k1.length != k2.length)
       return false;
-    
+
     for (let i = 0; i < k1.length; ++i) {
       if (!compareKeys(k1[i], k2[i]))
         return false;
     }
-    
+
     return true;
   }
 
@@ -329,6 +336,23 @@ function installPackagedProfile(packageName)
   zipReader.close();
 }
 
+function getView(size)
+{
+  let buffer = new ArrayBuffer(size);
+  let view = new Uint8Array(buffer);
+  is(buffer.byteLength, size, "Correct byte length");
+  return view;
+}
+
+function getRandomView(size)
+{
+  let view = getView(size);
+  for (let i = 0; i < size; i++) {
+    view[i] = parseInt(Math.random() * 255)
+  }
+  return view;
+}
+
 function getBlob(str)
 {
   return new Blob([str], {type: "type/text"});
@@ -416,6 +440,28 @@ function verifyMutableFile(mutableFile1, file2)
   });
 }
 
+function setTemporaryStorageLimit(limit)
+{
+  const pref = "dom.quotaManager.temporaryStorage.fixedLimit";
+  if (limit) {
+    info("Setting temporary storage limit to " + limit);
+    SpecialPowers.setIntPref(pref, limit);
+  } else {
+    info("Removing temporary storage limit");
+    SpecialPowers.clearUserPref(pref);
+  }
+}
+
+function getPrincipal(url)
+{
+  let uri = Cc["@mozilla.org/network/io-service;1"]
+              .getService(Ci.nsIIOService)
+              .newURI(url, null, null);
+  let ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
+              .getService(Ci.nsIScriptSecurityManager);
+  return ssm.createCodebasePrincipal(uri, {});
+}
+
 var SpecialPowers = {
   isMainProcess: function() {
     return Components.classes["@mozilla.org/xre/app-info;1"]
@@ -484,7 +530,46 @@ var SpecialPowers = {
     return Cu;
   },
 
-  createDOMFile: function(file, options) {
-    return new File(file, options);
+  // Based on SpecialPowersObserver.prototype.receiveMessage
+  createFiles: function(requests, callback) {
+    let dirSvc = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties);
+    let filePaths = new Array;
+    if (!this._createdFiles) {
+      this._createdFiles = new Array;
+    }
+    let createdFiles = this._createdFiles;
+    requests.forEach(function(request) {
+      const filePerms = 0o666;
+      let testFile = dirSvc.get("ProfD", Ci.nsIFile);
+      if (request.name) {
+        testFile.append(request.name);
+      } else {
+        testFile.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, filePerms);
+      }
+        let outStream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(Ci.nsIFileOutputStream);
+        outStream.init(testFile, 0x02 | 0x08 | 0x20, // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
+                       filePerms, 0);
+        if (request.data) {
+          outStream.write(request.data, request.data.length);
+          outStream.close();
+        }
+        filePaths.push(new File(testFile.path, request.options));
+        createdFiles.push(testFile);
+    });
+
+    setTimeout(function () {
+      callback(filePaths);
+    }, 0);
+  },
+
+  removeFiles: function() {
+    if (this._createdFiles) {
+      this._createdFiles.forEach(function (testFile) {
+        try {
+          testFile.remove(false);
+        } catch (e) {}
+      });
+      this._createdFiles = null;
+    }
   },
 };

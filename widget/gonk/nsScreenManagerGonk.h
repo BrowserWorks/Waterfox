@@ -31,7 +31,6 @@
 
 #include <android/native_window.h>
 
-class nsRunnable;
 class nsWindow;
 
 namespace android {
@@ -40,12 +39,13 @@ namespace android {
 };
 
 namespace mozilla {
+    class Runnable;
 namespace gl {
     class GLContext;
 }
 namespace layers {
 class CompositorVsyncScheduler;
-class CompositorParent;
+class CompositorBridgeParent;
 }
 }
 
@@ -59,7 +59,7 @@ class nsScreenGonk : public nsBaseScreen
     typedef mozilla::hal::ScreenConfiguration ScreenConfiguration;
     typedef mozilla::GonkDisplay GonkDisplay;
     typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
-    typedef mozilla::layers::CompositorParent CompositorParent;
+    typedef mozilla::layers::CompositorBridgeParent CompositorBridgeParent;
     typedef mozilla::gfx::DrawTarget DrawTarget;
 
 public:
@@ -93,7 +93,7 @@ public:
     void EndRemoteDrawing();
 
     nsresult MakeSnapshot(ANativeWindowBuffer* aBuffer);
-    void SetCompositorParent(CompositorParent* aCompositorParent);
+    void SetCompositorBridgeParent(CompositorBridgeParent* aCompositorBridgeParent);
 
 #if ANDROID_VERSION >= 17
     android::DisplaySurface* GetDisplaySurface();
@@ -151,7 +151,7 @@ protected:
 #endif
     bool mIsMirroring; // Non-primary screen only
     RefPtr<nsScreenGonk> mMirroringScreen; // Primary screen only
-    mozilla::Atomic<CompositorParent*> mCompositorParent;
+    mozilla::Atomic<CompositorBridgeParent*> mCompositorBridgeParent;
 
     // Accessed and updated only on compositor thread
     GonkDisplay::DisplayType mDisplayType;
@@ -216,10 +216,11 @@ protected:
 
     bool mInitialized;
     nsTArray<RefPtr<nsScreenGonk>> mScreens;
-    RefPtr<nsRunnable> mScreenOnEvent;
-    RefPtr<nsRunnable> mScreenOffEvent;
+    RefPtr<mozilla::Runnable> mScreenOnEvent;
+    RefPtr<mozilla::Runnable> mScreenOffEvent;
 
 #if ANDROID_VERSION >= 19
+    bool mDisplayEnabled;
     RefPtr<mozilla::layers::CompositorVsyncScheduler> mCompositorVsyncScheduler;
 #endif
 };

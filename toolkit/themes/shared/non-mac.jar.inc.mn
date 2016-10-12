@@ -18,7 +18,6 @@
   skin/classic/global/filefield.css                        (../../windows/global/filefield.css)
   skin/classic/global/globalBindings.xml                   (../../windows/global/globalBindings.xml)
   skin/classic/global/linkTree.css                         (../../windows/global/linkTree.css)
-  skin/classic/global/passwordmgr.css                      (../../windows/global/passwordmgr.css)
   skin/classic/global/progressmeter.css                    (../../windows/global/progressmeter.css)
   skin/classic/global/resizer.css                          (../../windows/global/resizer.css)
   skin/classic/global/richlistbox.css                      (../../windows/global/richlistbox.css)
@@ -71,7 +70,6 @@
   skin/classic/global/icons/error-16.png                   (../../windows/global/icons/error-16.png)
   skin/classic/global/icons/error-64.png                   (../../windows/global/icons/error-64.png)
   skin/classic/global/icons/expand.png                     (../../windows/global/icons/expand.png)
-  skin/classic/global/icons/find-arrows.png                (../../windows/global/icons/find-arrows.png)
   skin/classic/global/icons/folder-item.png                (../../windows/global/icons/folder-item.png)
   skin/classic/global/icons/information-16.png             (../../windows/global/icons/information-16.png)
   skin/classic/global/icons/information-24.png             (../../windows/global/icons/information-24.png)
@@ -150,9 +148,6 @@
   skin/classic/mozapps/extensions/cancel.png                 (../../windows/mozapps/extensions/cancel.png)
   skin/classic/mozapps/extensions/eula.css                   (../../windows/mozapps/extensions/eula.css)
   skin/classic/mozapps/handling/handling.css                 (../../windows/mozapps/handling/handling.css)
-#ifdef MOZ_PLACES
-  skin/classic/mozapps/places/defaultFavicon@2x.png          (../../windows/mozapps/places/defaultFavicon@2x.png)
-#endif
   skin/classic/mozapps/plugins/pluginBlocked-64.png          (../../windows/mozapps/plugins/pluginBlocked-64.png)
   skin/classic/mozapps/plugins/pluginHelp-16.png             (../../windows/mozapps/plugins/pluginHelp-16.png)
   skin/classic/mozapps/profile/profileSelection.css          (../../windows/mozapps/profile/profileSelection.css)

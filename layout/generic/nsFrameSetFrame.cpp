@@ -30,7 +30,8 @@
 #include "nsNameSpaceManager.h"
 #include "nsCSSAnonBoxes.h"
 #include "nsAutoPtr.h"
-#include "nsStyleSet.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 #include "mozilla/dom/Element.h"
 #include "nsDisplayList.h"
 #include "nsNodeUtils.h"
@@ -804,7 +805,7 @@ nsHTMLFramesetFrame::Reflow(nsPresContext*           aPresContext,
   DO_GLOBAL_REFLOW_COUNT("nsHTMLFramesetFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
   nsIPresShell *shell = aPresContext->PresShell();
-  nsStyleSet *styleSet = shell->StyleSet();
+  StyleSetHandle styleSet = shell->StyleSet();
 
   GetParent()->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_BSIZE);
 
@@ -1221,7 +1222,7 @@ nsHTMLFramesetFrame::StartMouseDrag(nsPresContext*             aPresContext,
 
   mDragger = aBorder;
 
-  mFirstDragPoint = aEvent->refPoint;
+  mFirstDragPoint = aEvent->mRefPoint;
 
   // Store the original frame sizes
   if (mDragger->mVertical) {
@@ -1250,7 +1251,8 @@ nsHTMLFramesetFrame::MouseDrag(nsPresContext* aPresContext,
   int32_t change; // measured positive from left-to-right or top-to-bottom
   nsWeakFrame weakFrame(this);
   if (mDragger->mVertical) {
-    change = aPresContext->DevPixelsToAppUnits(aEvent->refPoint.x - mFirstDragPoint.x);
+    change = aPresContext->DevPixelsToAppUnits(
+                             aEvent->mRefPoint.x - mFirstDragPoint.x);
     if (change > mNextNeighborOrigSize - mMinDrag) {
       change = mNextNeighborOrigSize - mMinDrag;
     } else if (change <= mMinDrag - mPrevNeighborOrigSize) {
@@ -1273,7 +1275,8 @@ nsHTMLFramesetFrame::MouseDrag(nsPresContext* aPresContext,
       mContent->SetAttr(kNameSpaceID_None, nsGkAtoms::cols, newColAttr, true);
     }
   } else {
-    change = aPresContext->DevPixelsToAppUnits(aEvent->refPoint.y - mFirstDragPoint.y);
+    change = aPresContext->DevPixelsToAppUnits(
+                             aEvent->mRefPoint.y - mFirstDragPoint.y);
     if (change > mNextNeighborOrigSize - mMinDrag) {
       change = mNextNeighborOrigSize - mMinDrag;
     } else if (change <= mMinDrag - mPrevNeighborOrigSize) {

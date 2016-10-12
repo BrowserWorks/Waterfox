@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -15,9 +17,12 @@
 #include <list>
 
 #include "base/message_loop.h"
+#include "base/task.h"
 #include "chrome/common/file_descriptor_set_posix.h"
 
 #include "nsAutoPtr.h"
+
+#include "mozilla/Maybe.h"
 
 namespace IPC {
 
@@ -59,8 +64,6 @@ class Channel::ChannelImpl : public MessageLoopForIO::Watcher {
   bool ProcessIncomingMessages();
   bool ProcessOutgoingMessages();
 
-  void ClearAndShrinkInputOverflowBuf();
-
   // MessageLoopForIO::Watcher implementation.
   virtual void OnFileCanReadWithoutBlocking(int fd);
   virtual void OnFileCanWriteWithoutBlocking(int fd);
@@ -83,13 +86,10 @@ class Channel::ChannelImpl : public MessageLoopForIO::Watcher {
   // Indicates whether we're currently blocked waiting for a write to complete.
   bool is_blocked_on_write_;
 
-  // If sending a message blocks then we use this variable
-  // to keep track of where we are.
-  size_t message_send_bytes_written_;
-
-  // If the kTestingChannelID flag is specified, we use a FIFO instead of
-  // a socketpair().
-  bool uses_fifo_;
+  // If sending a message blocks then we use this iterator to keep track of
+  // where in the message we are. It gets reset when the message is finished
+  // sending.
+  mozilla::Maybe<Pickle::BufferList::IterImpl> partial_write_iter_;
 
   int server_listen_pipe_;
   int pipe_;
@@ -106,6 +106,7 @@ class Channel::ChannelImpl : public MessageLoopForIO::Watcher {
 
   // We read from the pipe into this buffer
   char input_buf_[Channel::kReadBufferSize];
+  size_t input_buf_offset_;
 
   // We want input_cmsg_buf_ to be big enough to hold
   // CMSG_SPACE(Channel::kReadBufferSize) bytes (see the comment below for an
@@ -129,9 +130,9 @@ class Channel::ChannelImpl : public MessageLoopForIO::Watcher {
   // for the control header.
   char input_cmsg_buf_[Channel::kReadBufferSize + kControlBufferSlopBytes];
 
-  // Large messages that span multiple pipe buffers, get built-up using
-  // this buffer.
-  std::string input_overflow_buf_;
+  // Large incoming messages that span multiple pipe buffers get built-up in the
+  // buffers of this message.
+  mozilla::Maybe<Message> incoming_message_;
   std::vector<int> input_overflow_fds_;
 
   // In server-mode, we have to wait for the client to connect before we

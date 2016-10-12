@@ -43,15 +43,15 @@ public:
         return fImageRefs;
     }
 
-    SkData* opData(bool deepCopy) const {
+    sk_sp<SkData> opData(bool deepCopy) const {
         this->validate(fWriter.bytesWritten(), 0);
 
         if (fWriter.bytesWritten() == 0) {
-            return SkData::NewEmpty();
+            return SkData::MakeEmpty();
         }
 
         if (deepCopy) {
-            return SkData::NewWithCopy(fWriter.contiguousArray(), fWriter.bytesWritten());
+            return SkData::MakeWithCopy(fWriter.contiguousArray(), fWriter.bytesWritten());
         }
 
         return fWriter.snapshotAsData();
@@ -149,11 +149,11 @@ protected:
         SkASSERT(fWriter.bytesWritten() == initialOffset + size);
     }
 
-    SkSurface* onNewSurface(const SkImageInfo&, const SkSurfaceProps&) override;
+    sk_sp<SkSurface> onNewSurface(const SkImageInfo&, const SkSurfaceProps&) override;
     bool onPeekPixels(SkPixmap*) override { return false; }
 
     void willSave() override;
-    SaveLayerStrategy willSaveLayer(const SkRect*, const SkPaint*, SaveFlags) override;
+    SaveLayerStrategy getSaveLayerStrategy(const SaveLayerRec&) override;
     void willRestore() override;
 
     void didConcat(const SkMatrix&) override;
@@ -192,7 +192,6 @@ protected:
                          const SkPaint*) override;
     void onDrawBitmapNine(const SkBitmap&, const SkIRect& center, const SkRect& dst,
                           const SkPaint*) override;
-    void onDrawSprite(const SkBitmap&, int left, int top, const SkPaint*) override;
     void onDrawVertices(VertexMode vmode, int vertexCount,
                         const SkPoint vertices[], const SkPoint texs[],
                         const SkColor colors[], SkXfermode* xmode,
@@ -205,6 +204,7 @@ protected:
     void onClipRegion(const SkRegion&, SkRegion::Op) override;
 
     void onDrawPicture(const SkPicture*, const SkMatrix*, const SkPaint*) override;
+    void onDrawAnnotation(const SkRect&, const char[], SkData*) override;
 
     int addPathToHeap(const SkPath& path);  // does not write to ops stream
 
@@ -219,7 +219,7 @@ protected:
     size_t recordClipPath(int pathID, SkRegion::Op op, bool doAA);
     size_t recordClipRegion(const SkRegion& region, SkRegion::Op op);
     void recordSave();
-    void recordSaveLayer(const SkRect* bounds, const SkPaint* paint, SaveFlags flags);
+    void recordSaveLayer(const SaveLayerRec&);
     void recordRestore(bool fillInSkips = true);
 
 private:

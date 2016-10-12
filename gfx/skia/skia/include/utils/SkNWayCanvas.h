@@ -9,8 +9,8 @@
 #ifndef SkNWayCanvas_DEFINED
 #define SkNWayCanvas_DEFINED
 
+#include "../private/SkTDArray.h"
 #include "SkCanvas.h"
-#include "SkTDArray.h"
 
 class SK_API SkNWayCanvas : public SkCanvas {
 public:
@@ -24,13 +24,15 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     // These are forwarded to the N canvases we're referencing
 
+#ifdef SK_SUPPORT_LEGACY_DRAWFILTER
     SkDrawFilter* setDrawFilter(SkDrawFilter*) override;
+#endif
 
 protected:
     SkTDArray<SkCanvas*> fList;
 
     void willSave() override;
-    SaveLayerStrategy willSaveLayer(const SkRect*, const SkPaint*, SaveFlags) override;
+    SaveLayerStrategy getSaveLayerStrategy(const SaveLayerRec&) override;
     void willRestore() override;
 
     void didConcat(const SkMatrix&) override;
@@ -65,7 +67,6 @@ protected:
                          const SkPaint*, SrcRectConstraint) override;
     void onDrawBitmapNine(const SkBitmap&, const SkIRect& center, const SkRect& dst,
                           const SkPaint*) override;
-    void onDrawSprite(const SkBitmap&, int left, int top, const SkPaint*) override;
     void onDrawVertices(VertexMode vmode, int vertexCount,
                               const SkPoint vertices[], const SkPoint texs[],
                               const SkColor colors[], SkXfermode* xmode,
@@ -78,6 +79,7 @@ protected:
     void onClipRegion(const SkRegion&, SkRegion::Op) override;
 
     void onDrawPicture(const SkPicture*, const SkMatrix*, const SkPaint*) override;
+    void onDrawAnnotation(const SkRect&, const char[], SkData*) override;
 
     class Iter;
 

@@ -8,11 +8,10 @@
 
 const TEST_URL = URL_ROOT + "doc_inspector_highlighter_dom.html";
 
-add_task(function*() {
+add_task(function* () {
   let {inspector, toolbox, testActor} = yield openInspectorForURL(TEST_URL);
 
-  info("Starting element picker");
-  yield toolbox.highlighterUtils.startPicker();
+  yield startPicker(toolbox);
 
   info("Selecting the #another DIV");
   yield moveMouseOver("#another");
@@ -20,18 +19,19 @@ add_task(function*() {
   // Testing pick-node shortcut
   info("Testing enter/return key as pick-node command");
   yield doKeyPick({key: "VK_RETURN", options: {}});
-  is(inspector.selection.nodeFront.id, "another", "The #another node was selected. Passed.");
+  is(inspector.selection.nodeFront.id, "another",
+     "The #another node was selected. Passed.");
 
   // Testing cancel-picker command
-  info("Starting element picker again");
-  yield toolbox.highlighterUtils.startPicker();
+  yield startPicker(toolbox);
 
   info("Selecting the ahoy DIV");
   yield moveMouseOver("#ahoy");
 
   info("Testing escape key as cancel-picker command");
   yield doKeyStop({key: "VK_ESCAPE", options: {}});
-  is(inspector.selection.nodeFront.id, "another", "The #another DIV is still selected. Passed.");
+  is(inspector.selection.nodeFront.id, "another",
+     "The #another DIV is still selected. Passed.");
 
   function doKeyPick(args) {
     info("Key pressed. Waiting for element to be picked");
@@ -59,5 +59,4 @@ add_task(function*() {
     });
     return promise.all([onHighlighterReady, onPickerNodeHovered]);
   }
-
 });

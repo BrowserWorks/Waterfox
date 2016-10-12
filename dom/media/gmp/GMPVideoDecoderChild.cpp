@@ -225,9 +225,10 @@ GMPVideoDecoderChild::Alloc(size_t aSize,
   ++mNeedShmemIntrCount;
   rv = CallNeedShmem(aSize, aMem);
   --mNeedShmemIntrCount;
-  if (mPendingDecodeComplete) {
-    auto t = NewRunnableMethod(this, &GMPVideoDecoderChild::RecvDecodingComplete);
-    mPlugin->GMPMessageLoop()->PostTask(FROM_HERE, t);
+  if (mPendingDecodeComplete && mNeedShmemIntrCount == 0) {
+    mPendingDecodeComplete = false;
+    mPlugin->GMPMessageLoop()->PostTask(
+      NewRunnableMethod(this, &GMPVideoDecoderChild::RecvDecodingComplete));
   }
 #else
 #ifdef GMP_SAFE_SHMEM

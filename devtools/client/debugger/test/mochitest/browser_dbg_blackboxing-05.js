@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test that a "this source is blackboxed" message is shown when necessary
@@ -12,15 +14,18 @@ var gTab, gPanel, gDebugger;
 var gDeck;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_binary_search.coffee",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gDeck = gDebugger.document.getElementById("editor-deck");
 
-    waitForSourceShown(gPanel, ".coffee")
-      .then(testSourceEditorShown)
-      .then(toggleBlackBoxing.bind(null, gPanel))
+    testSourceEditorShown();
+    toggleBlackBoxing(gPanel)
       .then(testBlackBoxMessageShown)
       .then(clickStopBlackBoxingButton)
       .then(testSourceEditorShownAgain)
@@ -61,7 +66,7 @@ function getEditorBlackboxMessageButton() {
   return gDebugger.document.getElementById("black-boxed-message-button");
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

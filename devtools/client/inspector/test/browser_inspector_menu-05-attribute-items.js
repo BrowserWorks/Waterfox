@@ -8,7 +8,7 @@ http://creativecommons.org/publicdomain/zero/1.0/ */
 const TEST_URL = URL_ROOT + "doc_inspector_menu.html";
 
 add_task(function* () {
-  let { inspector, toolbox, testActor } = yield openInspectorForURL(TEST_URL);
+  let { inspector, testActor } = yield openInspectorForURL(TEST_URL);
   yield selectNode("#attributes", inspector);
 
   yield testAddAttribute();
@@ -23,7 +23,7 @@ add_task(function* () {
     dispatchCommandEvent(addAttribute);
     EventUtils.synthesizeKey('class="u-hidden"', {});
     let onMutation = inspector.once("markupmutation");
-    EventUtils.synthesizeKey('VK_RETURN', {});
+    EventUtils.synthesizeKey("VK_RETURN", {});
     yield onMutation;
 
     let hasAttribute = testActor.hasNode("#attributes.u-hidden");
@@ -42,7 +42,7 @@ add_task(function* () {
     dispatchCommandEvent(editAttribute);
     EventUtils.synthesizeKey("data-edit='edited'", {});
     let onMutation = inspector.once("markupmutation");
-    EventUtils.synthesizeKey('VK_RETURN', {});
+    EventUtils.synthesizeKey("VK_RETURN", {});
     yield onMutation;
 
     let isAttributeChanged =
@@ -63,7 +63,7 @@ add_task(function* () {
     dispatchCommandEvent(removeAttribute);
     yield onMutation;
 
-    let hasAttribute = yield testActor.hasNode("#attributes[data-remove]")
+    let hasAttribute = yield testActor.hasNode("#attributes[data-remove]");
     ok(!hasAttribute, "attribute was successfully removed");
   }
 

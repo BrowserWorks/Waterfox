@@ -135,7 +135,7 @@ protected:
 
     // One pattern is the common case and some subclasses rely on successful
     // addition of the first element to the array.
-    AutoFallibleTArray<nsCountedRef<FcPattern>,1> mPatterns;
+    AutoTArray<nsCountedRef<FcPattern>,1> mPatterns;
 
     static cairo_user_data_key_t sFontEntryKey;
 };
@@ -189,7 +189,7 @@ public:
         cairo_font_face_reference(mFontFace);
         cairo_font_face_set_user_data(mFontFace, &sFontEntryKey, this, nullptr);
 
-        // mPatterns is an nsAutoTArray with 1 space always available, so the
+        // mPatterns is an AutoTArray with 1 space always available, so the
         // AppendElement always succeeds.
         // FIXME: Make this infallible after bug 968520 is done.
         MOZ_ALWAYS_TRUE(mPatterns.AppendElement(fallible));
@@ -216,7 +216,7 @@ public:
 
 protected:
     virtual nsresult
-    CopyFontTable(uint32_t aTableTag, FallibleTArray<uint8_t>& aBuffer) override;
+    CopyFontTable(uint32_t aTableTag, nsTArray<uint8_t>& aBuffer) override;
 
     void MaybeReleaseFTFace();
 
@@ -228,7 +228,7 @@ private:
 
 nsresult
 gfxSystemFcFontEntry::CopyFontTable(uint32_t aTableTag,
-                                    FallibleTArray<uint8_t>& aBuffer)
+                                    nsTArray<uint8_t>& aBuffer)
 {
     if (!mFTFaceInitialized) {
         mFTFaceInitialized = true;
@@ -913,7 +913,7 @@ gfxFcFontSet::SortPreferredFonts(bool &aWaitForUserFont)
     // but FcConfigSubstitute may add more values (e.g. prepending "en" to
     // "ja" will use western fonts to render Latin/Arabic numerals in Japanese
     // text.)
-    nsAutoTArray<LangSupportEntry,10> requiredLangs;
+    AutoTArray<LangSupportEntry,10> requiredLangs;
     for (int v = 0; ; ++v) {
         FcChar8 *lang;
         FcResult result = FcPatternGetString(mSortPattern, FC_LANG, v, &lang);
@@ -1266,7 +1266,7 @@ gfxPangoFontGroup::gfxPangoFontGroup(const FontFamilyList& aFontFamilyList,
     // This language is passed to the font for shaping.
     // Shaping doesn't know about lang groups so make it a real language.
     if (mPangoLanguage) {
-        mStyle.language = do_GetAtom(pango_language_to_string(mPangoLanguage));
+        mStyle.language = NS_Atomize(pango_language_to_string(mPangoLanguage));
     }
 
     // dummy entry, will be replaced when actually needed
@@ -1289,7 +1289,7 @@ gfxPangoFontGroup::FindGenericFontsPFG(FontFamilyType aGenericType,
                                        nsIAtom *aLanguage,
                                        void *aClosure)
 {
-    nsAutoTArray<nsString, 5> resolvedGenerics;
+    AutoTArray<nsString, 5> resolvedGenerics;
     ResolveGenericFontNamesPFG(aGenericType, aLanguage, resolvedGenerics);
     uint32_t g = 0, numGenerics = resolvedGenerics.Length();
     for (g = 0; g < numGenerics; g++) {
@@ -1491,10 +1491,10 @@ gfxPangoFontGroup::MakeFontSet(PangoLanguage *aLang, gfxFloat aSizeAdjustFactor,
     RefPtr<nsIAtom> langGroup;
     if (aLang != mPangoLanguage) {
         // Set up langGroup for Mozilla's font prefs.
-        langGroup = do_GetAtom(lang);
+        langGroup = NS_Atomize(lang);
     }
 
-    nsAutoTArray<nsString, 20> fcFamilyList;
+    AutoTArray<nsString, 20> fcFamilyList;
     EnumerateFontListPFG(langGroup ? langGroup.get() : mStyle.language.get(),
                          &fcFamilyList);
 
@@ -1546,7 +1546,7 @@ gfxPangoFontGroup::GetFontSet(PangoLanguage *aLang)
 
 already_AddRefed<gfxFont>
 gfxPangoFontGroup::FindFontForChar(uint32_t aCh, uint32_t aPrevCh,
-                                   uint32_t aNextCh, int32_t aRunScript,
+                                   uint32_t aNextCh, Script aRunScript,
                                    gfxFont *aPrevMatchedFont,
                                    uint8_t *aMatchType)
 {
@@ -2262,7 +2262,7 @@ ApplyGdkScreenFontOptions(FcPattern *aPattern)
     cairo_ft_font_options_substitute(options, aPattern);
 }
 
-#endif // MOZ_WIDGET_GTK2
+#endif // MOZ_WIDGET_GTK
 
 #ifdef USE_SKIA
 already_AddRefed<mozilla::gfx::GlyphRenderingOptions>

@@ -32,7 +32,7 @@ class VideoTrack;
 class MediaTrackList : public DOMEventTargetHelper
 {
 public:
-  MediaTrackList(nsPIDOMWindow* aOwnerWindow, HTMLMediaElement* aMediaElement);
+  MediaTrackList(nsPIDOMWindowInner* aOwnerWindow, HTMLMediaElement* aMediaElement);
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(MediaTrackList, DOMEventTargetHelper)
@@ -45,7 +45,9 @@ public:
 
   void AddTrack(MediaTrack* aTrack);
 
-  void RemoveTrack(const RefPtr<MediaTrack>& aTrack);
+  // In remove track case, the VideoTrackList::mSelectedIndex should be updated
+  // due to mTracks changed. No need to take care this in add track case.
+  virtual void RemoveTrack(const RefPtr<MediaTrack>& aTrack);
 
   void RemoveTracks();
 

@@ -17,13 +17,13 @@ function test() {
   let previouslySelectedEngine = Services.search.currentEngine;
   Services.search.currentEngine = engine;
   engine.alias = "b";
-  
+
   let base = "https://www.bing.com/search?q=foo&pc=MOZI";
   let url;
 
   // Test search URLs (including purposes).
   url = engine.getSubmission("foo").uri.spec;
-  is(url, base, "Check search URL for 'foo'");
+  is(url, base + "&form=MOZSBR", "Check search URL for 'foo'");
 
   waitForExplicitFinish();
 

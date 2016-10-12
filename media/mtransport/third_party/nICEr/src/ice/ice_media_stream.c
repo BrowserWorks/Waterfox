@@ -319,19 +319,10 @@ static void nr_ice_media_stream_check_timer_cb(NR_SOCKET s, int h, void *cb_arg)
     int r,_status;
     nr_ice_media_stream *stream=cb_arg;
     nr_ice_cand_pair *pair = 0;
-    int timer_val;
-    int timer_multiplier;
+    int timer_multiplier=stream->pctx->active_streams ? stream->pctx->active_streams : 1;
+    int timer_val=stream->pctx->ctx->Ta*timer_multiplier;
 
-    timer_multiplier=stream->pctx->active_streams;
-    /* Once the checks are completed we don't have an active streams any more,
-     * but we still need to process triggered checks. */
-    if (stream->ice_state == NR_ICE_MEDIA_STREAM_CHECKS_COMPLETED) {
-      assert(timer_multiplier==0);
-      timer_multiplier=1;
-    }
-
-    assert(timer_multiplier!=0);
-    timer_val=stream->pctx->ctx->Ta*timer_multiplier;
+    assert(timer_val>0);
 
     r_log(LOG_ICE,LOG_DEBUG,"ICE-PEER(%s): check timer expired for media stream %s",stream->pctx->label,stream->label);
     stream->timer=0;
@@ -747,11 +738,14 @@ int nr_ice_media_stream_send(nr_ice_peer_ctx *pctx, nr_ice_media_stream *str, in
     if(!comp->active)
       ABORT(R_NOT_FOUND);
 
+    /* Does fresh ICE consent exist? */
+    if(!comp->can_send)
+      ABORT(R_FAILED);
+
     /* OK, write to that pair, which means:
        1. Use the socket on our local side.
        2. Use the address on the remote side
     */
-    comp->keepalive_needed=0; /* Suppress keepalives */
     if(r=nr_socket_sendto(comp->active->local->osock,data,len,0,
                           &comp->active->remote->addr))
       ABORT(r);
@@ -855,6 +849,23 @@ int nr_ice_media_stream_pair_new_trickle_candidate(nr_ice_peer_ctx *pctx, nr_ice
     return(_status);
   }
 
+int nr_ice_media_stream_get_consent_status(nr_ice_media_stream *stream, int
+component_id, int *can_send, struct timeval *ts)
+  {
+    int r,_status;
+    nr_ice_component *comp;
+
+    if ((r=nr_ice_media_stream_find_component(stream, component_id, &comp)))
+      ABORT(r);
+
+    *can_send = comp->can_send;
+    ts->tv_sec = comp->consent_last_seen.tv_sec;
+    ts->tv_usec = comp->consent_last_seen.tv_usec;
+    _status=0;
+  abort:
+    return(_status);
+  }
+
 int nr_ice_media_stream_disable_component(nr_ice_media_stream *stream, int component_id)
   {
     int r,_status;
@@ -880,13 +891,25 @@ int nr_ice_media_stream_disable_component(nr_ice_media_stream *stream, int compo
 
 void nr_ice_media_stream_role_change(nr_ice_media_stream *stream)
   {
-    nr_ice_cand_pair *pair;
+    nr_ice_cand_pair *pair,*temp_pair;
+    /* Changing role causes candidate pair priority to change, which requires
+     * re-sorting the check list. */
+    nr_ice_cand_pair_head old_checklist;
+
     assert(stream->ice_state != NR_ICE_MEDIA_STREAM_UNPAIRED);
 
-    pair=TAILQ_FIRST(&stream->check_list);
-    while(pair){
+    /* Move check_list to old_checklist (not POD, have to do the hard way) */
+    TAILQ_INIT(&old_checklist);
+    TAILQ_FOREACH_SAFE(pair,&stream->check_list,check_queue_entry,temp_pair) {
+      TAILQ_REMOVE(&stream->check_list,pair,check_queue_entry);
+      TAILQ_INSERT_TAIL(&old_checklist,pair,check_queue_entry);
+    }
+
+    /* Re-insert into the check list */
+    TAILQ_FOREACH_SAFE(pair,&old_checklist,check_queue_entry,temp_pair) {
+      TAILQ_REMOVE(&old_checklist,pair,check_queue_entry);
       nr_ice_candidate_pair_role_change(pair);
-      pair=TAILQ_NEXT(pair,check_queue_entry);
+      nr_ice_candidate_pair_insert(&stream->check_list,pair);
     }
   }
 

@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure that the variables view correctly populates itself
@@ -10,7 +12,7 @@ var gTab, gPanel, gDebugger;
 var gVariablesView, gScope, gVariable;
 
 function test() {
-  initDebugger("about:blank").then(([aTab,, aPanel]) => {
+  initDebugger().then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -40,7 +42,7 @@ function performTest() {
     p5: [3, 4, 5],
     p6: { prop1: 7, prop2: 6 },
     get p7() { return arr; },
-    set p8(value) { arr[0] = value }
+    set p8(value) { arr[0] = value; }
   };
 
   let test = {
@@ -52,13 +54,13 @@ function performTest() {
     someProp5: arr,
     someProp6: obj,
     get someProp7() { return arr; },
-    set someProp7(value) { arr[0] = value }
+    set someProp7(value) { arr[0] = value; }
   };
 
-  gVariablesView.eval = function() {};
-  gVariablesView.switch = function() {};
-  gVariablesView.delete = function() {};
-  gVariablesView.new = function() {};
+  gVariablesView.eval = function () {};
+  gVariablesView.switch = function () {};
+  gVariablesView.delete = function () {};
+  gVariablesView.new = function () {};
   gVariablesView.rawObject = test;
 
   testHierarchy();
@@ -385,7 +387,7 @@ function testSecondLevelContents() {
 }
 
 function testThirdLevelContents() {
-  (function() {
+  (function () {
     let someProp5 = gVariable.get("someProp5");
     let arrayItem5 = someProp5.get("5");
     let arrayItem6 = someProp5.get("6");
@@ -418,7 +420,7 @@ function testThirdLevelContents() {
     ok(object__proto__, "The object should have a __proto__ property.");
   })();
 
-  (function() {
+  (function () {
     let someProp6 = gVariable.get("someProp6");
     let objectItem5 = someProp6.get("p5");
     let objectItem6 = someProp6.get("p6");
@@ -599,7 +601,7 @@ function testClearHierarchy() {
     "The current hierarchy should have been cleared.");
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

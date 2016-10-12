@@ -1,6 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+"use strict";
+
 const nsPK11TokenDB = "@mozilla.org/security/pk11tokendb;1";
 const nsIPK11TokenDB = Components.interfaces.nsIPK11TokenDB;
 const nsIDialogParamBlock = Components.interfaces.nsIDialogParamBlock;
@@ -10,7 +12,7 @@ const nsIPKCS11Slot = Components.interfaces.nsIPKCS11Slot;
 const nsIPK11Token = Components.interfaces.nsIPK11Token;
 
 var params;
-var tokenName="";
+var tokenName = "";
 var pw1;
 
 function doPrompt(msg)
@@ -28,47 +30,42 @@ function onLoad()
   try {
      params = window.arguments[0].QueryInterface(nsIDialogParamBlock);
      tokenName = params.GetString(1);
-  } catch(exception) {
+  } catch (e) {
       // this should not happen.
       // previously we had self.name, but self.name was a bad idea
       // as window name must be a subset of ascii, and the code was
       // previously trying to assign unicode to the window's name.
       // I checked all the places where we get a password prompt and
       // all of them pass an argument as part of this patch.
-      tokenName="";
+      tokenName = "";
   }
-      
 
-  if(tokenName=="") {
-     var sectokdb = Components.classes[nsPK11TokenDB].getService(nsIPK11TokenDB);
-     var tokenList = sectokdb.listTokens();
-     var enumElement;
-     var i=0;
-     var menu = document.getElementById("tokenMenu");
-     try {
-        for ( ; !tokenList.isDone(); tokenList.next()) {
-           enumElement = tokenList.currentItem();
-           var token = enumElement.QueryInterface(nsIPK11Token);
-           if(token.needsLogin() || !(token.needsUserInit)) {
-              var menuItemNode = document.createElement("menuitem");
-              menuItemNode.setAttribute("value", token.tokenName);
-              menuItemNode.setAttribute("label", token.tokenName);
-              menu.firstChild.appendChild(menuItemNode);
-              if (i == 0) {
-                 menu.selectedItem = menuItemNode;
-                 tokenName = token.tokenName;
-              }
-              i++;
-           }
+  if (tokenName == "") {
+    let tokenDB = Components.classes[nsPK11TokenDB].getService(nsIPK11TokenDB);
+    let tokenList = tokenDB.listTokens();
+    let i = 0;
+    let menu = document.getElementById("tokenMenu");
+    while (tokenList.hasMoreElements()) {
+      let token = tokenList.getNext().QueryInterface(nsIPK11Token);
+      if (token.needsLogin() || !(token.needsUserInit)) {
+        let menuItemNode = document.createElement("menuitem");
+        menuItemNode.setAttribute("value", token.tokenName);
+        menuItemNode.setAttribute("label", token.tokenName);
+        menu.firstChild.appendChild(menuItemNode);
+        if (i == 0) {
+          menu.selectedItem = menuItemNode;
+          tokenName = token.tokenName;
         }
-     }catch(exception){}
+        i++;
+      }
+    }
   } else {
     var sel = document.getElementById("tokenMenu");
     sel.setAttribute("hidden", "true");
     var tag = document.getElementById("tokenName");
-    tag.setAttribute("value",tokenName);
+    tag.setAttribute("value", tokenName);
   }
-	 	 
+
   process();
 }
 
@@ -97,7 +94,7 @@ function process()
      var status = slot.status;
      if (status == nsIPKCS11Slot.SLOT_UNINITIALIZED
          || status == nsIPKCS11Slot.SLOT_READY) {
-      
+
        oldpwbox.setAttribute("hidden", "true");
        msgBox.setAttribute("value", bundle.getString("password_not_set"));
        msgBox.setAttribute("hidden", "false");
@@ -107,10 +104,9 @@ function process()
        } else {
          oldpwbox.setAttribute("inited", "true");
        }
-      
+
        // Select first password field
        document.getElementById('pw1').focus();
-    
      } else {
        // Select old password field
        oldpwbox.setAttribute("hidden", "false");
@@ -124,7 +120,7 @@ function process()
     // Return value 0 means "canceled"
     params.SetInt(1, 0);
   }
-  
+
   checkPasswords();
 }
 
@@ -147,23 +143,22 @@ function setPassword()
   var bundle = document.getElementById("pippki_bundle");
 
   var success = false;
-  
+
   if (initpw == "false" || initpw == "empty") {
     try {
       var oldpw = "";
       var passok = 0;
-      
+
       if (initpw == "empty") {
         passok = 1;
       } else {
         oldpw = oldpwbox.value;
         passok = token.checkPassword(oldpw);
       }
-      
+
       if (passok) {
         if (initpw == "empty" && pw1.value == "") {
-          // This makes no sense that we arrive here, 
-          // we reached a case that should have been prevented by checkPasswords.
+          // checkPasswords() should have prevented this path from being reached.
         } else {
           if (pw1.value == "") {
             var secmoddb = Components.classes[nsPKCS11ModuleDB].getService(nsIPKCS11ModuleDB);
@@ -196,16 +191,16 @@ function setPassword()
   } else {
     token.initPassword(pw1.value);
     if (pw1.value == "") {
-      doPrompt(bundle.getString("pw_not_wanted")
-            + " " 
-            + bundle.getString("pw_empty_warning"));
+      doPrompt(bundle.getString("pw_not_wanted") + " " +
+               bundle.getString("pw_empty_warning"));
     }
     success = true;
   }
 
-  if (success && params)
+  if (success && params) {
     // Return value 1 means "successfully executed ok"
     params.SetInt(1, 1);
+  }
 
   // Terminate dialog
   return success;
@@ -223,61 +218,58 @@ function setP12Password()
 
 function setPasswordStrength()
 {
-// Here is how we weigh the quality of the password
-// number of characters
-// numbers
-// non-alpha-numeric chars
-// upper and lower case characters
+  // We weigh the quality of the password by checking the number of:
+  //  - Characters
+  //  - Numbers
+  //  - Non-alphanumeric chars
+  //  - Upper and lower case characters
 
-  var pw=document.getElementById('pw1').value;
-//  doPrompt("password='" + pw +"'");
+  let pw = document.getElementById("pw1").value;
 
-//length of the password
-  var pwlength=(pw.length);
-  if (pwlength>5)
-    pwlength=5;
+  let pwlength = pw.length;
+  if (pwlength > 5) {
+    pwlength = 5;
+  }
 
+  let numnumeric = pw.replace(/[0-9]/g, "");
+  let numeric = pw.length - numnumeric.length;
+  if (numeric > 3) {
+    numeric = 3;
+  }
 
-//use of numbers in the password
-  var numnumeric = pw.replace (/[0-9]/g, "");
-  var numeric=(pw.length - numnumeric.length);
-  if (numeric>3)
-    numeric=3;
+  let symbols = pw.replace(/\W/g, "");
+  let numsymbols = pw.length - symbols.length;
+  if (numsymbols > 3) {
+    numsymbols = 3;
+  }
 
-//use of symbols in the password
-  var symbols = pw.replace (/\W/g, "");
-  var numsymbols=(pw.length - symbols.length);
-  if (numsymbols>3)
-    numsymbols=3;
+  let numupper = pw.replace(/[A-Z]/g, "");
+  let upper = pw.length - numupper.length;
+  if (upper > 3) {
+    upper = 3;
+  }
 
-//use of uppercase in the password
-  var numupper = pw.replace (/[A-Z]/g, "");
-  var upper=(pw.length - numupper.length);
-  if (upper>3)
-    upper=3;
+  let pwstrength = (pwlength * 10) - 20 + (numeric * 10) + (numsymbols * 15) +
+                   (upper * 10);
 
-
-  var pwstrength=((pwlength*10)-20) + (numeric*10) + (numsymbols*15) + (upper*10);
-
-  // make sure we're give a value between 0 and 100
-  if ( pwstrength < 0 ) {
+  // Clamp strength to [0, 100].
+  if (pwstrength < 0) {
     pwstrength = 0;
   }
-  
-  if ( pwstrength > 100 ) {
+  if (pwstrength > 100) {
     pwstrength = 100;
   }
 
-  var mymeter=document.getElementById('pwmeter');
-  mymeter.setAttribute("value",pwstrength);
+  let meter = document.getElementById("pwmeter");
+  meter.setAttribute("value", pwstrength);
 
   return;
 }
 
 function checkPasswords()
 {
-  var pw1=document.getElementById('pw1').value;
-  var pw2=document.getElementById('pw2').value;
+  let pw1 = document.getElementById("pw1").value;
+  let pw2 = document.getElementById("pw2").value;
 
   var oldpwbox = document.getElementById("oldpw");
   if (oldpwbox) {

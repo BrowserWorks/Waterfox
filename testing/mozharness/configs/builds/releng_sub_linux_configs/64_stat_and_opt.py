@@ -1,6 +1,7 @@
 import os
 
 config = {
+    # note: overridden by MOZHARNESS_ACTIONS in TaskCluster tasks
     'default_actions': [
         'clobber',
         'clone-tools',
@@ -16,8 +17,6 @@ config = {
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
     'enable_signing': False,
-    'purge_skip': ['info', 'rel-*:10d', 'tb-rel-*:10d'],
-    'purge_basedirs':  ["/mock/users/cltbld/home/cltbld/build"],
     'enable_ccache': True,
     'vcs_share_base': '/builds/hg-shared',
     'objdir': 'obj-firefox',
@@ -35,7 +34,6 @@ config = {
     'platform': 'linux64',
     'stage_platform': 'linux64-st-an',
     'publish_nightly_en_US_routes': False,
-    'use_platform_in_symbols_extra_buildid': True,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',
@@ -57,7 +55,6 @@ config = {
         'LD_LIBRARY_PATH': "/tools/gcc-4.3.3/installed/lib64",
         ##
     },
-    'purge_minsize': 14,
     'mock_packages': [
         'autoconf213', 'python', 'mozilla-python27', 'zip', 'mozilla-python27-mercurial',
         'git', 'ccache', 'perl-Test-Simple', 'perl-Config-General',

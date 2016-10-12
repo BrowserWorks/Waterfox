@@ -19,7 +19,7 @@
 var Cu = require('chrome').Cu;
 
 var XPCOMUtils = Cu.import('resource://gre/modules/XPCOMUtils.jsm', {}).XPCOMUtils;
-var Services = Cu.import('resource://gre/modules/Services.jsm', {}).Services;
+var Services = require("Services");
 
 var imports = {};
 XPCOMUtils.defineLazyGetter(imports, 'stringBundle', function () {
@@ -71,7 +71,7 @@ exports.lookup = function(key) {
 };
 
 /** @see propertyLookup in lib/gcli/util/l10n.js */
-exports.propertyLookup = Proxy.create({
+exports.propertyLookup = new Proxy({}, {
   get: function(rcvr, name) {
     return exports.lookup(name);
   }

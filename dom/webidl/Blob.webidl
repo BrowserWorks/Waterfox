@@ -10,8 +10,10 @@
  * liability, trademark and document use rules apply.
  */
 
-[Constructor,
- Constructor(sequence<(ArrayBuffer or ArrayBufferView or Blob or DOMString)> blobParts, optional BlobPropertyBag options),
+typedef (ArrayBuffer or ArrayBufferView or Blob or USVString) BlobPart;
+
+[Constructor(optional sequence<BlobPart> blobParts,
+             optional BlobPropertyBag options),
  Exposed=(Window,Worker)]
 interface Blob {
 
@@ -32,11 +34,9 @@ interface Blob {
   // void close(); TODO bug 1048325
 };
 
-enum EndingTypes{"transparent", "native"};
+enum EndingTypes { "transparent", "native" };
 
 dictionary BlobPropertyBag {
-
   DOMString type = "";
   EndingTypes endings = "transparent";
-
 };

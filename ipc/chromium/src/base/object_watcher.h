@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2006-2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -83,8 +85,8 @@ class ObjectWatcher : public MessageLoop::DestructionObserver {
   virtual void WillDestroyCurrentMessageLoop();
 
   // Internal state.
-  struct Watch;
-  Watch* watch_;
+  class Watch;
+  RefPtr<Watch> watch_;
 
   DISALLOW_COPY_AND_ASSIGN(ObjectWatcher);
 };

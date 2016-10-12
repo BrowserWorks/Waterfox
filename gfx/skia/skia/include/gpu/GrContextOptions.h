@@ -17,10 +17,13 @@ struct GrContextOptions {
         , fMaxTextureSizeOverride(SK_MaxS32)
         , fMaxTileSizeOverride(0)
         , fSuppressDualSourceBlending(false)
-        , fGeometryBufferMapThreshold(-1)
+        , fBufferMapThreshold(-1)
         , fUseDrawInsteadOfPartialRenderTargetWrite(false)
         , fImmediateMode(false)
         , fClipBatchToBounds(false)
+        , fDrawBatchBounds(false)
+        , fMaxBatchLookback(-1)
+        , fMaxBatchLookahead(-1)
         , fUseShaderSwizzling(false) {}
 
     // EXPERIMENTAL
@@ -44,7 +47,7 @@ struct GrContextOptions {
     /** the threshold in bytes above which we will use a buffer mapping API to map vertex and index
         buffers to CPU memory in order to update them.  A value of -1 means the GrContext should
         deduce the optimal value for this platform. */
-    int  fGeometryBufferMapThreshold;
+    int  fBufferMapThreshold;
 
     /** some gpus have problems with partial writes of the rendertarget */
     bool fUseDrawInsteadOfPartialRenderTargetWrite;
@@ -56,6 +59,16 @@ struct GrContextOptions {
     /** For debugging purposes turn each GrBatch's bounds into a clip rect. This is used to
         verify that the clip bounds are conservative. */
     bool fClipBatchToBounds;
+
+    /** For debugging purposes draw a wireframe device bounds rect for each GrBatch. The wire
+        frame rect is draw before the GrBatch in order to visualize batches that draw outside
+        of their dev bounds. */
+    bool fDrawBatchBounds;
+
+    /** For debugging, override the default maximum look-back or look-ahead window for GrBatch
+        combining. */
+    int fMaxBatchLookback;
+    int fMaxBatchLookahead;
 
     /** Force us to do all swizzling manually in the shader and don't rely on extensions to do
         swizzling. */

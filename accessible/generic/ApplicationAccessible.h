@@ -52,24 +52,32 @@ public:
                                    EWhichChildAtPoint aWhichChild) override;
   virtual Accessible* FocusedChild() override;
 
-  virtual void InvalidateChildren() override;
-
   // ActionAccessible
   virtual KeyBinding AccessKey() const override;
 
   // ApplicationAccessible
+  void Init();
+
   void AppName(nsAString& aName) const
   {
-    nsAutoCString cname;
-    mAppInfo->GetName(cname);
-    AppendUTF8toUTF16(cname, aName);
+    MOZ_ASSERT(mAppInfo, "no application info");
+
+    if (mAppInfo) {
+      nsAutoCString cname;
+      mAppInfo->GetName(cname);
+      AppendUTF8toUTF16(cname, aName);
+    }
   }
 
   void AppVersion(nsAString& aVersion) const
   {
-    nsAutoCString cversion;
-    mAppInfo->GetVersion(cversion);
-    AppendUTF8toUTF16(cversion, aVersion);
+    MOZ_ASSERT(mAppInfo, "no application info");
+
+    if (mAppInfo) {
+      nsAutoCString cversion;
+      mAppInfo->GetVersion(cversion);
+      AppendUTF8toUTF16(cversion, aVersion);
+    }
   }
 
   void PlatformName(nsAString& aName) const
@@ -79,16 +87,19 @@ public:
 
   void PlatformVersion(nsAString& aVersion) const
   {
-    nsAutoCString cversion;
-    mAppInfo->GetPlatformVersion(cversion);
-    AppendUTF8toUTF16(cversion, aVersion);
+    MOZ_ASSERT(mAppInfo, "no application info");
+
+    if (mAppInfo) {
+      nsAutoCString cversion;
+      mAppInfo->GetPlatformVersion(cversion);
+      AppendUTF8toUTF16(cversion, aVersion);
+    }
   }
 
 protected:
   virtual ~ApplicationAccessible() {}
 
   // Accessible
-  virtual void CacheChildren() override;
   virtual Accessible* GetSiblingAtOffset(int32_t aOffset,
                                          nsresult *aError = nullptr) const override;
 

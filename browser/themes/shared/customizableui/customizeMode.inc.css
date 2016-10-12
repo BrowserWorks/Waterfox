@@ -161,7 +161,7 @@
 #customization-lwtheme-button > .box-inherit > .box-inherit > .button-text,
 #customization-titlebar-visibility-button > .button-box > .button-text {
   /* Sadly, button.css thinks its margins are perfect for everyone. */
-  -moz-margin-start: 6px !important;
+  margin-inline-start: 6px !important;
 }
 
 #customization-lwtheme-button > .box-inherit > .box-inherit > .button-icon {
@@ -261,6 +261,14 @@ toolbarpaletteitem[place="toolbar"] {
   margin-bottom: 25px;
 }
 
+toolbarpaletteitem[place="palette"]:-moz-focusring,
+toolbarpaletteitem[place="panel"]:-moz-focusring,
+toolbarpaletteitem[place="toolbar"]:-moz-focusring {
+  outline: 1px dotted rgba(0,0,0,.5);
+  outline-offset: -5px;
+  -moz-outline-radius: 2.5px;
+}
+
 #wrapper-edit-controls[place="palette"] > #edit-controls > toolbarbutton,
 #wrapper-edit-controls[place="palette"] > #edit-controls > separator,
 #wrapper-zoom-controls[place="palette"] > #zoom-controls > toolbarbutton,
@@ -299,7 +307,7 @@ toolbarpaletteitem[place="toolbar"] {
 }
 
 #personal-bookmarks[cui-areatype="toolbar"]:not([overflowedItem=true]) > #bookmarks-toolbar-placeholder > .toolbarbutton-icon {
-  -moz-margin-end: 5px;
+  margin-inline-end: 5px;
 }
 
 #customization-palette > toolbarpaletteitem > label {
@@ -325,9 +333,9 @@ toolbarpaletteitem[place="toolbar"] {
   border: 1px solid transparent;
   margin: 0 -5px 5px;
   padding-top: 0;
-  -moz-padding-end: 5px;
+  padding-inline-end: 5px;
   padding-bottom: 0;
-  -moz-padding-start: 0;
+  padding-inline-start: 0;
 }
 
 .customization-lwtheme-menu-theme[defaulttheme] {
@@ -399,7 +407,7 @@ toolbarpaletteitem[place="toolbar"] {
 }
 
 .customization-lwtheme-menu-footeritem:first-child {
-  -moz-border-end: 1px solid hsla(210,4%,10%,.15);
+  border-inline-end: 1px solid hsla(210,4%,10%,.15);
 }
 
 %include customizeTip.inc.css

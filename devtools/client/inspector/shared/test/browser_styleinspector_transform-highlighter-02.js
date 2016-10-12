@@ -19,7 +19,7 @@ const TEST_URI = `
 
 var TYPE = "CssTransformHighlighter";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   let hs = view.highlighters;
@@ -38,7 +38,7 @@ add_task(function*() {
   yield onHighlighterShown;
 
   let onComputedViewReady = inspector.once("computed-view-refreshed");
-  let {view: cView} = yield openComputedView();
+  let cView = selectComputedView(inspector);
   yield onComputedViewReady;
   hs = cView.highlighters;
 

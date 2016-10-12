@@ -54,7 +54,8 @@ class nsCSPTokenizer {
 
     inline void skipWhiteSpace()
     {
-      while (mCurChar < mEndChar && *mCurChar == ' ') {
+      while (mCurChar < mEndChar &&
+             nsContentUtils::IsHTMLWhitespace(*mCurChar)) {
         mCurToken.Append(*mCurChar++);
       }
       mCurToken.Truncate();
@@ -62,7 +63,8 @@ class nsCSPTokenizer {
 
     inline void skipWhiteSpaceAndSemicolon()
     {
-      while (mCurChar < mEndChar && (*mCurChar == ' ' || *mCurChar == ';')) {
+      while (mCurChar < mEndChar && (*mCurChar == ';' ||
+             nsContentUtils::IsHTMLWhitespace(*mCurChar))){
         mCurToken.Append(*mCurChar++);
       }
       mCurToken.Truncate();
@@ -109,28 +111,31 @@ class nsCSPParser {
                 nsCSPContext* aCSPContext,
                 bool aDeliveredViaMetaTag);
 
+    static bool sCSPExperimentalEnabled;
+
     ~nsCSPParser();
 
 
     // Parsing the CSP using the source-list from http://www.w3.org/TR/CSP11/#source-list
-    nsCSPPolicy*    policy();
-    void            directive();
-    nsCSPDirective* directiveName();
-    void            directiveValue(nsTArray<nsCSPBaseSrc*>& outSrcs);
-    void            referrerDirectiveValue();
-    void            sourceList(nsTArray<nsCSPBaseSrc*>& outSrcs);
-    nsCSPBaseSrc*   sourceExpression();
-    nsCSPSchemeSrc* schemeSource();
-    nsCSPHostSrc*   hostSource();
-    nsCSPBaseSrc*   keywordSource();
-    nsCSPNonceSrc*  nonceSource();
-    nsCSPHashSrc*   hashSource();
-    nsCSPHostSrc*   appHost(); // helper function to support app specific hosts
-    nsCSPHostSrc*   host();
-    bool            hostChar();
-    bool            schemeChar();
-    bool            port();
-    bool            path(nsCSPHostSrc* aCspHost);
+    nsCSPPolicy*        policy();
+    void                directive();
+    nsCSPDirective*     directiveName();
+    void                directiveValue(nsTArray<nsCSPBaseSrc*>& outSrcs);
+    void                requireSRIForDirectiveValue(nsRequireSRIForDirective* aDir);
+    void                referrerDirectiveValue(nsCSPDirective* aDir);
+    void                sourceList(nsTArray<nsCSPBaseSrc*>& outSrcs);
+    nsCSPBaseSrc*       sourceExpression();
+    nsCSPSchemeSrc*     schemeSource();
+    nsCSPHostSrc*       hostSource();
+    nsCSPBaseSrc*       keywordSource();
+    nsCSPNonceSrc*      nonceSource();
+    nsCSPHashSrc*       hashSource();
+    nsCSPHostSrc*       appHost(); // helper function to support app specific hosts
+    nsCSPHostSrc*       host();
+    bool                hostChar();
+    bool                schemeChar();
+    bool                port();
+    bool                path(nsCSPHostSrc* aCspHost);
 
     bool subHost();                                       // helper function to parse subDomains
     bool atValidUnreservedChar();                         // helper function to parse unreserved

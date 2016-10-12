@@ -4,12 +4,17 @@
 
 "use strict";
 
+const { LocalizationHelper } = require("devtools/client/shared/l10n");
+const STRINGS_URI = "chrome://global/locale/layout_errors.properties";
+const L10N = new LocalizationHelper(STRINGS_URI);
+
 // Test that when an animation is selected, its list of animated properties is
 // displayed below it.
 
 const EXPECTED_PROPERTIES = [
   "background-color",
-  "background-position",
+  "background-position-x",
+  "background-position-y",
   "background-size",
   "border-bottom-left-radius",
   "border-bottom-right-radius",
@@ -21,8 +26,8 @@ const EXPECTED_PROPERTIES = [
   "width"
 ].sort();
 
-add_task(function*() {
-  yield addTab(TEST_URL_ROOT + "doc_keyframes.html");
+add_task(function* () {
+  yield addTab(URL_ROOT + "doc_keyframes.html");
   let {panel} = yield openAnimationInspector();
   let timeline = panel.animationsTimelineComponent;
   let propertiesList = timeline.rootWrapperEl
@@ -39,7 +44,10 @@ add_task(function*() {
   ok(propertiesList.querySelectorAll(".property").length,
      "The list of properties panel actually contains properties");
   ok(hasExpectedProperties(propertiesList),
-     "The list of proeprties panel contains the right properties");
+     "The list of properties panel contains the right properties");
+
+  ok(hasExpectedWarnings(propertiesList),
+     "The list of properties panel contains the right warnings");
 
   info("Click to unselect the animation");
   yield clickOnAnimation(panel, 0, true);
@@ -64,4 +72,16 @@ function hasExpectedProperties(containerEl) {
   }
 
   return true;
+}
+
+function hasExpectedWarnings(containerEl) {
+  let warnings = [...containerEl.querySelectorAll(".warning")];
+  for (let warning of warnings) {
+    let warningID =
+      "CompositorAnimationWarningTransformWithGeometricProperties";
+    if (warning.getAttribute("title") == L10N.getStr(warningID)) {
+      return true;
+    }
+  }
+  return false;
 }

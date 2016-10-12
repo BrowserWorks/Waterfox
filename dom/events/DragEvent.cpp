@@ -24,8 +24,8 @@ DragEvent::DragEvent(EventTarget* aOwner,
   }
   else {
     mEventIsInternal = true;
-    mEvent->time = PR_Now();
-    mEvent->refPoint.x = mEvent->refPoint.y = 0;
+    mEvent->mTime = PR_Now();
+    mEvent->mRefPoint = LayoutDeviceIntPoint(0, 0);
     mEvent->AsMouseEvent()->inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
   }
 }
@@ -41,7 +41,7 @@ void
 DragEvent::InitDragEvent(const nsAString& aType,
                          bool aCanBubble,
                          bool aCancelable,
-                         nsIDOMWindow* aView,
+                         nsGlobalWindow* aView,
                          int32_t aDetail,
                          int32_t aScreenX,
                          int32_t aScreenY,
@@ -53,55 +53,15 @@ DragEvent::InitDragEvent(const nsAString& aType,
                          bool aMetaKey,
                          uint16_t aButton,
                          EventTarget* aRelatedTarget,
-                         DataTransfer* aDataTransfer,
-                         ErrorResult& aError)
+                         DataTransfer* aDataTransfer)
 {
-  aError =
-    MouseEvent::InitMouseEvent(aType, aCanBubble, aCancelable,
-                               aView, aDetail, aScreenX, aScreenY,
-                               aClientX, aClientY, aCtrlKey, aAltKey,
-                               aShiftKey, aMetaKey, aButton, aRelatedTarget);
-  if (aError.Failed()) {
-    return;
-  }
-
+  MouseEvent::InitMouseEvent(aType, aCanBubble, aCancelable,
+                             aView, aDetail, aScreenX, aScreenY,
+                             aClientX, aClientY, aCtrlKey, aAltKey,
+                             aShiftKey, aMetaKey, aButton, aRelatedTarget);
   if (mEventIsInternal && mEvent) {
-    mEvent->AsDragEvent()->dataTransfer = aDataTransfer;
+    mEvent->AsDragEvent()->mDataTransfer = aDataTransfer;
   }
-}
-
-NS_IMETHODIMP
-DragEvent::InitDragEvent(const nsAString& aType,
-                         bool aCanBubble,
-                         bool aCancelable,
-                         nsIDOMWindow* aView,
-                         int32_t aDetail,
-                         int32_t aScreenX,
-                         int32_t aScreenY,
-                         int32_t aClientX,
-                         int32_t aClientY,
-                         bool aCtrlKey,
-                         bool aAltKey,
-                         bool aShiftKey,
-                         bool aMetaKey,
-                         uint16_t aButton,
-                         nsIDOMEventTarget* aRelatedTarget,
-                         nsIDOMDataTransfer* aDataTransfer)
-{
-  nsCOMPtr<DataTransfer> dataTransfer = do_QueryInterface(aDataTransfer);
-
-  nsresult rv =
-    MouseEvent::InitMouseEvent(aType, aCanBubble, aCancelable, aView, aDetail,
-                               aScreenX, aScreenY, aClientX, aClientY,
-                               aCtrlKey, aAltKey, aShiftKey, aMetaKey, aButton,
-                               aRelatedTarget);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (mEventIsInternal && mEvent) {
-    mEvent->AsDragEvent()->dataTransfer = dataTransfer;
-  }
-
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -130,7 +90,7 @@ DragEvent::GetDataTransfer()
     NS_ENSURE_SUCCESS(rv, nullptr);
   }
 
-  return dragEvent->dataTransfer;
+  return dragEvent->mDataTransfer;
 }
 
 // static
@@ -143,12 +103,12 @@ DragEvent::Constructor(const GlobalObject& aGlobal,
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
   RefPtr<DragEvent> e = new DragEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);
-  aRv = e->InitDragEvent(aType, aParam.mBubbles, aParam.mCancelable,
-                         aParam.mView, aParam.mDetail, aParam.mScreenX,
-                         aParam.mScreenY, aParam.mClientX, aParam.mClientY,
-                         aParam.mCtrlKey, aParam.mAltKey, aParam.mShiftKey,
-                         aParam.mMetaKey, aParam.mButton, aParam.mRelatedTarget,
-                         aParam.mDataTransfer);
+  e->InitDragEvent(aType, aParam.mBubbles, aParam.mCancelable,
+                   aParam.mView, aParam.mDetail, aParam.mScreenX,
+                   aParam.mScreenY, aParam.mClientX, aParam.mClientY,
+                   aParam.mCtrlKey, aParam.mAltKey, aParam.mShiftKey,
+                   aParam.mMetaKey, aParam.mButton, aParam.mRelatedTarget,
+                   aParam.mDataTransfer);
   e->InitializeExtraMouseEventDictionaryMembers(aParam);
   e->SetTrusted(trusted);
   return e.forget();

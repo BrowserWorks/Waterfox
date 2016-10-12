@@ -49,7 +49,6 @@ private:
         , mAttachmentPoint(0)
     { }
 
-
 public:
     WebGLFBAttachPoint(WebGLFramebuffer* fb, GLenum attachmentPoint);
     ~WebGLFBAttachPoint();
@@ -60,6 +59,7 @@ public:
     bool IsDeleteRequested() const;
 
     const webgl::FormatUsageInfo* Format() const;
+    uint32_t Samples() const;
 
     bool HasAlpha() const;
     bool IsReadableFloat() const;
@@ -98,7 +98,6 @@ public:
     void SetImageDataStatus(WebGLImageDataStatus x);
 
     void Size(uint32_t* const out_width, uint32_t* const out_height) const;
-    //const WebGLRectangleObject& RectangleObject() const;
 
     bool HasImage() const;
     bool IsComplete(WebGLContext* webgl, nsCString* const out_info) const;
@@ -153,7 +152,7 @@ public:
     template<typename A, typename B>
     void AppendNew(A a, B b) {
         if (mSize == mCapacity)
-            MOZ_CRASH("Bad EmplaceAppend.");
+            MOZ_CRASH("GFX: Bad EmplaceAppend.");
 
         // Placement `new`:
         new (&(mArray[mSize])) T(a, b);
@@ -229,6 +228,7 @@ public:
     bool HasDefinedAttachments() const;
     bool HasIncompleteAttachments(nsCString* const out_info) const;
     bool AllImageRectsMatch() const;
+    bool AllImageSamplesMatch() const;
     FBStatus PrecheckFramebufferStatus(nsCString* const out_info) const;
     FBStatus CheckFramebufferStatus(nsCString* const out_info) const;
 
@@ -252,6 +252,12 @@ public:
     const WebGLFBAttachPoint& DepthStencilAttachment() const {
         return mDepthStencilAttachment;
     }
+
+    void SetReadBufferMode(GLenum readBufferMode) {
+        mReadBufferMode = readBufferMode;
+    }
+
+    GLenum ReadBufferMode() const { return mReadBufferMode; }
 
 protected:
     WebGLFBAttachPoint* GetAttachPoint(GLenum attachment); // Fallible
@@ -280,7 +286,8 @@ public:
 
     bool ValidateForRead(const char* info,
                          const webgl::FormatUsageInfo** const out_format,
-                         uint32_t* const out_width, uint32_t* const out_height);
+                         uint32_t* const out_width, uint32_t* const out_height,
+                         GLenum* const out_mode);
 
     JS::Value GetAttachmentParameter(const char* funcName, JSContext* cx, GLenum target,
                                      GLenum attachment, GLenum pname,

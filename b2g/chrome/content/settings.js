@@ -123,15 +123,7 @@ SettingsListener.observe('language.current', 'en-US', function(value) {
   Services.prefs.setCharPref(prefName, value);
 
   if (shell.hasStarted() == false) {
-    // On b2gdroid at first run we need to synchronize our wallpaper with
-    // Android one's before bootstrapping.
-    if (AppConstants.MOZ_B2GDROID) {
-      Cc["@mozilla.org/b2g/b2gdroid-setup;1"]
-        .getService().wrappedJSObject.setWallpaper()
-        .then(() => { shell.bootstrap(); });
-    } else {
-      shell.bootstrap();
-    }
+    shell.bootstrap();
   }
 });
 
@@ -359,8 +351,7 @@ setUpdateTrackingId();
     });
   }
 
-  syncPrefDefault(AppConstants.MOZ_B2GDROID ? 'app.update.url.android'
-                                            : 'app.update.url');
+  syncPrefDefault('app.update.url');
   syncPrefDefault('app.update.channel');
 })();
 
@@ -620,6 +611,8 @@ var settingsToObserve = {
   },
   'app.update.interval': 86400,
   'apz.overscroll.enabled': true,
+  'browser.safebrowsing.enabled': true,
+  'browser.safebrowsing.malware.enabled': true,
   'debug.fps.enabled': {
     prefName: 'layers.acceleration.draw-fps',
     defaultValue: false
@@ -650,7 +643,6 @@ var settingsToObserve = {
   'dom.mozApps.signed_apps_installable_from': 'https://marketplace.firefox.com',
   'dom.presentation.discovery.enabled': false,
   'dom.presentation.discoverable': false,
-  'dom.serviceWorkers.interception.enabled': true,
   'dom.serviceWorkers.testing.enabled': false,
   'gfx.layerscope.enabled': false,
   'layers.draw-borders': false,

@@ -26,6 +26,7 @@
 #include "nsPIDOMWindow.h"
 #include "nsReadableUtils.h"
 #include "nsStyleConsts.h"
+#include "nsStyleLinkElement.h"
 #include "nsUnicharUtils.h"
 
 #define LINK_ELEMENT_FLAG_BIT(n_) \
@@ -131,18 +132,6 @@ NS_IMPL_STRING_ATTR(HTMLLinkElement, Target, target)
 NS_IMPL_STRING_ATTR(HTMLLinkElement, Type, type)
 
 void
-HTMLLinkElement::GetItemValueText(DOMString& aValue)
-{
-  GetHref(aValue);
-}
-
-void
-HTMLLinkElement::SetItemValueText(const nsAString& aValue)
-{
-  SetHref(aValue);
-}
-
-void
 HTMLLinkElement::OnDNSPrefetchRequested()
 {
   UnsetFlags(HTML_LINK_DNS_PREFETCH_DEFERRED);
@@ -180,17 +169,14 @@ HTMLLinkElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   }
 
   if (IsInComposedDoc()) {
-    UpdatePreconnect();
-    if (HasDNSPrefetchRel()) {
-      TryDNSPrefetch();
-    }
+    TryDNSPrefetchPreconnectOrPrefetch();
   }
 
   void (HTMLLinkElement::*update)() = &HTMLLinkElement::UpdateStyleSheetInternal;
-  nsContentUtils::AddScriptRunner(NS_NewRunnableMethod(this, update));
+  nsContentUtils::AddScriptRunner(NewRunnableMethod(this, update));
 
   void (HTMLLinkElement::*updateImport)() = &HTMLLinkElement::UpdateImport;
-  nsContentUtils::AddScriptRunner(NS_NewRunnableMethod(this, updateImport));
+  nsContentUtils::AddScriptRunner(NewRunnableMethod(this, updateImport));
 
   CreateAndDispatchEvent(aDocument, NS_LITERAL_STRING("DOMLinkAdded"));
 
@@ -217,6 +203,7 @@ HTMLLinkElement::UnbindFromTree(bool aDeep, bool aNullParent)
   // mCachedURI based on data that is invalid - due to a call to GetHostname.
   CancelDNSPrefetch(HTML_LINK_DNS_PREFETCH_DEFERRED,
                     HTML_LINK_DNS_PREFETCH_REQUESTED);
+  CancelPrefetch();
 
   // If this link is ever reinserted into a document, it might
   // be under a different xml:base, so forget the cached state now.
@@ -344,41 +331,6 @@ HTMLLinkElement::UpdateImport()
   }
 }
 
-void
-HTMLLinkElement::UpdatePreconnect()
-{
-  // rel type should be preconnect
-  nsAutoString rel;
-  if (!GetAttr(kNameSpaceID_None, nsGkAtoms::rel, rel)) {
-    return;
-  }
-
-  uint32_t linkTypes = nsStyleLinkElement::ParseLinkTypes(rel, NodePrincipal());
-  if (!(linkTypes & ePRECONNECT)) {
-    return;
-  }
-
-  nsIDocument *owner = OwnerDoc();
-  if (owner) {
-    nsCOMPtr<nsIURI> uri = GetHrefURI();
-    if (uri) {
-        owner->MaybePreconnect(uri, GetCORSMode());
-    }
-  }
-}
-
-bool
-HTMLLinkElement::HasDNSPrefetchRel()
-{
-  nsAutoString rel;
-  if (GetAttr(kNameSpaceID_None, nsGkAtoms::rel, rel)) {
-    return !!(ParseLinkTypes(rel, NodePrincipal()) &
-              nsStyleLinkElement::eDNS_PREFETCH);
-  }
-
-  return false;
-}
-
 nsresult
 HTMLLinkElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                nsAttrValueOrString* aValue, bool aNotify)
@@ -387,6 +339,7 @@ HTMLLinkElement::BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
       (aName == nsGkAtoms::href || aName == nsGkAtoms::rel)) {
     CancelDNSPrefetch(HTML_LINK_DNS_PREFETCH_DEFERRED,
                       HTML_LINK_DNS_PREFETCH_REQUESTED);
+    CancelPrefetch();
   }
 
   return nsGenericHTMLElement::BeforeSetAttr(aNameSpaceID, aName,
@@ -427,21 +380,16 @@ HTMLLinkElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
           dropSheet = !(linkTypes & nsStyleLinkElement::eSTYLESHEET);
         } else if (linkTypes & eHTMLIMPORT) {
           UpdateImport();
-        } else if ((linkTypes & ePRECONNECT) && IsInComposedDoc()) {
-          UpdatePreconnect();
         }
       }
 
       if (aName == nsGkAtoms::href) {
         UpdateImport();
-        if (IsInComposedDoc()) {
-          UpdatePreconnect();
-        }
       }
 
       if ((aName == nsGkAtoms::rel || aName == nsGkAtoms::href) &&
-          HasDNSPrefetchRel() && IsInComposedDoc()) {
-        TryDNSPrefetch();
+          IsInComposedDoc()) {
+        TryDNSPrefetchPreconnectOrPrefetch();
       }
 
       UpdateStyleSheetInternal(nullptr, nullptr,
@@ -499,11 +447,30 @@ HTMLLinkElement::GetLinkTarget(nsAString& aTarget)
   }
 }
 
+static const DOMTokenListSupportedToken sSupportedRelValues[] = {
+  // Keep this in sync with ToLinkMask in nsStyleLinkElement.cpp.
+  // "import" must come first because it's conditional.
+  "import"
+  "prefetch",
+  "dns-prefetch",
+  "stylesheet",
+  "next",
+  "alternate",
+  "preconnect",
+  "icon",
+  "search",
+  nullptr
+};
+
 nsDOMTokenList* 
 HTMLLinkElement::RelList()
 {
   if (!mRelList) {
-    mRelList = new nsDOMTokenList(this, nsGkAtoms::rel);
+    const DOMTokenListSupportedTokenArray relValues =
+      nsStyleLinkElement::IsImportEnabled() ?
+        sSupportedRelValues : &sSupportedRelValues[1];
+
+    mRelList = new nsDOMTokenList(this, nsGkAtoms::rel, relValues);
   }
   return mRelList;
 }

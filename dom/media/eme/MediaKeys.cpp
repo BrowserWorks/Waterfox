@@ -17,7 +17,6 @@
 #include "mozilla/EMEUtils.h"
 #include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
-#include "mozilla/Preferences.h"
 #include "nsContentTypeParser.h"
 #ifdef MOZ_FMP4
 #include "MP4Decoder.h"
@@ -47,7 +46,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(MediaKeys)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-MediaKeys::MediaKeys(nsPIDOMWindow* aParent,
+MediaKeys::MediaKeys(nsPIDOMWindowInner* aParent,
                      const nsAString& aKeySystem,
                      const nsAString& aCDMVersion)
   : mParent(aParent)
@@ -110,7 +109,7 @@ MediaKeys::Shutdown()
   mPromises.Clear();
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 MediaKeys::GetParentObject() const
 {
   return mParent;
@@ -307,14 +306,13 @@ MediaKeys::Init(ErrorResult& aRv)
 
   // Determine principal of the "top-level" window; the principal of the
   // page that will display in the URL bar.
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(GetParentObject());
+  nsCOMPtr<nsPIDOMWindowInner> window = GetParentObject();
   if (!window) {
     promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR,
                          NS_LITERAL_CSTRING("Couldn't get top-level window in MediaKeys::Init"));
     return promise.forget();
   }
-  window = window->GetOuterWindow();
-  nsCOMPtr<nsPIDOMWindow> top = window->GetTop();
+  nsCOMPtr<nsPIDOMWindowOuter> top = window->GetOuterWindow()->GetTop();
   if (!top || !top->GetExtantDoc()) {
     promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR,
                          NS_LITERAL_CSTRING("Couldn't get document in MediaKeys::Init"));

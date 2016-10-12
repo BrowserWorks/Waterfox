@@ -10,7 +10,8 @@ Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import('resource://gre/modules/Geometry.jsm');
 
 const ACCESSIBLECARET_PREF = "layout.accessiblecaret.enabled";
-const TEST_URL = "http://mochi.test:8888/tests/robocop/testAccessibleCarets.html";
+const BASE_TEST_URL = "http://mochi.test:8888/tests/robocop/testAccessibleCarets.html";
+const DESIGNMODE_TEST_URL = "http://mochi.test:8888/tests/robocop/testAccessibleCarets2.html";
 
 // Ensures Tabs are completely loaded, viewport and zoom constraints updated, etc.
 const TAB_CHANGE_EVENT = "testAccessibleCarets:TabChange";
@@ -60,18 +61,18 @@ function elementSelection(element) {
 }
 
 /**
- * Select the first character of a target element, w/o affecting focus.
+ * Select the requested character of a target element, w/o affecting focus.
  */
-function selectElementFirstChar(doc, element) {
+function selectElementChar(doc, element, char) {
   if (isInputOrTextarea(element)) {
-    element.setSelectionRange(0, 1);
+    element.setSelectionRange(char, char + 1);
     return;
   }
 
   // Simple test cases designed firstChild == #text node.
   let range = doc.createRange();
-  range.setStart(element.firstChild, 0);
-  range.setEnd(element.firstChild, 1);
+  range.setStart(element.firstChild, char);
+  range.setEnd(element.firstChild, char + 1);
 
   let selection = elementSelection(element);
   selection.removeAllRanges();
@@ -79,14 +80,14 @@ function selectElementFirstChar(doc, element) {
 }
 
 /**
- * Get longpress point. Determine the midpoint in the first character of
+ * Get longpress point. Determine the midpoint in the requested character of
  * the content in the element. X will be midpoint from left to right.
  * Y will be 1/3 of the height up from the bottom to account for both
  * LTR and smaller RTL characters. ie: |X| vs. |א|
  */
-function getFirstCharPressPoint(doc, element, expected) {
+function getCharPressPoint(doc, element, char, expected) {
   // Select the first char in the element.
-  selectElementFirstChar(doc, element);
+  selectElementChar(doc, element, char);
 
   // Reality check selected char to expected.
   let selection = elementSelection(element);
@@ -104,9 +105,7 @@ function getFirstCharPressPoint(doc, element, expected) {
  * position, and return the result.
  *
  * @param midPoint, The screen coord for the longpress.
- * @return {Promise}
- * @resolves The ActionBar status, including its target focused element, and
- *           the selected text that it sees.
+ * @return Selection state helper-result object.
  */
 function getLongPressResult(browser, midPoint) {
   let domWinUtils = browser.contentWindow.
@@ -128,6 +127,28 @@ function getLongPressResult(browser, midPoint) {
 }
 
 /**
+ * Checks the Selection UI (ActionBar or FloatingToolbar)
+ * for the availability of an expected action.
+ *
+ * @param expectedActionID, The Selection UI action we expect to be available.
+ * @return Result boolean.
+ */
+function UIhasActionByID(expectedActionID) {
+  let actions = gChromeWin.ActionBarHandler._actionBarActions;
+  return actions.some(action => {
+    return action.id === expectedActionID;
+  });
+}
+
+/**
+ * Messages the ActionBarHandler to close the Selection UI.
+ */
+function closeSelectionUI() {
+  Services.obs.notifyObservers(null, "TextSelection:End",
+    JSON.stringify({selectionID: gChromeWin.ActionBarHandler._selectionID}));
+}
+
+/**
  * Main test method.
  */
 add_task(function* testAccessibleCarets() {
@@ -141,7 +162,7 @@ add_task(function* testAccessibleCarets() {
   Services.prefs.setBoolPref(ACCESSIBLECARET_PREF, true);
 
   // Load test page, wait for load completion, register cleanup.
-  let browser = BrowserApp.addTab(TEST_URL).browser;
+  let browser = BrowserApp.addTab(BASE_TEST_URL).browser;
   let tab = BrowserApp.getTabForBrowser(browser);
   yield do_promiseTabChangeEvent(tab.id, TAB_STOP_EVENT);
 
@@ -162,17 +183,24 @@ add_task(function* testAccessibleCarets() {
   let i_RTL_elem = doc.getElementById("RTLinput");
   let ta_RTL_elem = doc.getElementById("RTLtextarea");
 
+  let ip_LTR_elem = doc.getElementById("LTRphone");
+  let ip_RTL_elem = doc.getElementById("RTLphone");
+  let bug1265750_elem = doc.getElementById("bug1265750");
+
   // Locate longpress midpoints for test elements, ensure expactations.
-  let ce_LTR_midPoint = getFirstCharPressPoint(doc, ce_LTR_elem, "F");
-  let tc_LTR_midPoint = getFirstCharPressPoint(doc, tc_LTR_elem, "O");
-  let i_LTR_midPoint = getFirstCharPressPoint(doc, i_LTR_elem, "T");
-  let ta_LTR_midPoint = getFirstCharPressPoint(doc, ta_LTR_elem, "W");
+  let ce_LTR_midPoint = getCharPressPoint(doc, ce_LTR_elem, 0, "F");
+  let tc_LTR_midPoint = getCharPressPoint(doc, tc_LTR_elem, 0, "O");
+  let i_LTR_midPoint = getCharPressPoint(doc, i_LTR_elem, 0, "T");
+  let ta_LTR_midPoint = getCharPressPoint(doc, ta_LTR_elem, 0, "W");
 
-  let ce_RTL_midPoint = getFirstCharPressPoint(doc, ce_RTL_elem, "א");
-  let tc_RTL_midPoint = getFirstCharPressPoint(doc, tc_RTL_elem, "ת");
-  let i_RTL_midPoint = getFirstCharPressPoint(doc, i_RTL_elem, "ל");
-  let ta_RTL_midPoint = getFirstCharPressPoint(doc, ta_RTL_elem, "ה");
+  let ce_RTL_midPoint = getCharPressPoint(doc, ce_RTL_elem, 0, "א");
+  let tc_RTL_midPoint = getCharPressPoint(doc, tc_RTL_elem, 0, "ת");
+  let i_RTL_midPoint = getCharPressPoint(doc, i_RTL_elem, 0, "ל");
+  let ta_RTL_midPoint = getCharPressPoint(doc, ta_RTL_elem, 0, "ה");
 
+  let ip_LTR_midPoint = getCharPressPoint(doc, ip_LTR_elem, 8, "2");
+  let ip_RTL_midPoint = getCharPressPoint(doc, ip_RTL_elem, 9, "2");
+  let bug1265750_midPoint = getCharPressPoint(doc, bug1265750_elem, 2, "7");
 
   // Longpress various LTR content elements. Test focused element against
   // expected, and selected text against expected.
@@ -192,6 +220,18 @@ add_task(function* testAccessibleCarets() {
   is(result.focusedElement, ta_LTR_elem, "Focused element should match expected.");
   is(result.text, "Words", "Selected text should match expected text.");
 
+  result = getLongPressResult(browser, ip_LTR_midPoint);
+  is(result.focusedElement, ip_LTR_elem, "Focused element should match expected.");
+  is(result.text, "09876543210 .-.)(wp#*103410341",
+    "Selected phone number should match expected text.");
+  is(result.text.length, 30,
+    "Selected phone number length should match expected maximum.");
+
+  result = getLongPressResult(browser, bug1265750_midPoint);
+  is(result.focusedElement, null, "Focused element should match expected.");
+  is(result.text, "3 45 678 90",
+    "Selected phone number should match expected text.");
+
   // Longpress various RTL content elements. Test focused element against
   // expected, and selected text against expected.
   result = getLongPressResult(browser, ce_RTL_midPoint);
@@ -210,7 +250,73 @@ add_task(function* testAccessibleCarets() {
   is(result.focusedElement, ta_RTL_elem, "Focused element should match expected.");
   is(result.text, "הספר", "Selected text should match expected text.");
 
-  ok(true, "Finished all tests.");
+  result = getLongPressResult(browser, ip_RTL_midPoint);
+  is(result.focusedElement, ip_RTL_elem, "Focused element should match expected.");
+  is(result.text, "+972 3 7347514 ",
+    "Selected phone number should match expected text.");
+
+  // Close Selection UI (ActionBar or FloatingToolbar) and complete test.
+  closeSelectionUI();
+  ok(true, "Finished testAccessibleCarets tests.");
 });
 
+/**
+ * DesignMode test method.
+ */
+add_task(function* testAccessibleCarets_designMode() {
+  let BrowserApp = gChromeWin.BrowserApp;
+
+  // Load test page, wait for load completion.
+  let browser = BrowserApp.addTab(DESIGNMODE_TEST_URL).browser;
+  let tab = BrowserApp.getTabForBrowser(browser, { selected: true });
+  yield do_promiseTabChangeEvent(tab.id, TAB_STOP_EVENT);
+
+  // References to test document elements, ActionBarHandler.
+  let doc = browser.contentDocument;
+  let tc_LTR_elem = doc.getElementById("LTRtextContent");
+  let tc_RTL_elem = doc.getElementById("RTLtextContent");
+
+  // Locate longpress midpoints for test elements, ensure expactations.
+  let tc_LTR_midPoint = getCharPressPoint(doc, tc_LTR_elem, 5, "x");
+  let tc_RTL_midPoint = getCharPressPoint(doc, tc_RTL_elem, 9, "ת");
+
+  // Pre-populate the clipboard to ensure PASTE action available.
+  Cc["@mozilla.org/widget/clipboardhelper;1"].
+    getService(Ci.nsIClipboardHelper).copyString("somethingMagical");
+  let flavors = ["text/unicode"];
+  let clipboardHasText = Services.clipboard.hasDataMatchingFlavors(
+    flavors, flavors.length, Ci.nsIClipboard.kGlobalClipboard);
+  is(clipboardHasText, true, "There should now be paste-able text in the clipboard.");
+
+  // Toggle designMode on/off/on, check UI expectations.
+  ["on", "off"].forEach(designMode => {
+    doc.designMode = designMode;
+
+    // Text content in a document, whether in designMode or not, never receives focus.
+    // Available ActionBar/FloatingToolbar UI actions should vary depending on mode.
+
+    let result = getLongPressResult(browser, tc_LTR_midPoint);
+    is(result.focusedElement, null, "No focused element is expected.");
+    is(result.text, "existence", "Selected text should match expected text.");
+    is(UIhasActionByID("cut_action"), (designMode === "on"),
+      "CUT action UI Visibility should match designMode state.");
+    is(UIhasActionByID("paste_action"), (designMode === "on"),
+      "PASTE action UI Visibility should match designMode state.");
+
+    result = getLongPressResult(browser, tc_RTL_midPoint);
+    is(result.focusedElement, null, "No focused element is expected.");
+    is(result.text, "אותו", "Selected text should match expected text.");
+    is(UIhasActionByID("cut_action"), (designMode === "on"),
+      "CUT action UI Visibility should match designMode state.");
+    is(UIhasActionByID("paste_action"), (designMode === "on"),
+      "PASTE action UI Visibility should match designMode state.");
+  });
+
+  // Close Selection UI (ActionBar or FloatingToolbar) and complete test.
+  closeSelectionUI();
+  ok(true, "Finished testAccessibleCarets_designMode tests.");
+});
+
+
+// Start all the test tasks.
 run_next_test();

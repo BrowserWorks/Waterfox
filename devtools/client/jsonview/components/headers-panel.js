@@ -4,66 +4,76 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-define(function(require, exports, module) {
+"use strict";
 
-const React = require("devtools/client/shared/vendor/react");
-const { createFactories } = require("./reps/rep-utils");
-const { Headers } = createFactories(require("./headers"));
-const { Toolbar, ToolbarButton } = createFactories(require("./reps/toolbar"));
+define(function (require, exports, module) {
+  const { DOM: dom, createFactory, createClass, PropTypes } = require("devtools/client/shared/vendor/react");
+  const { createFactories } = require("devtools/client/shared/components/reps/rep-utils");
+  const { Headers } = createFactories(require("./headers"));
+  const { Toolbar, ToolbarButton } = createFactories(require("./reps/toolbar"));
 
-const DOM = React.DOM;
+  const { div } = dom;
 
-/**
- * This template represents the 'Headers' panel
- * s responsible for rendering its content.
- */
-var HeadersPanel = React.createClass({
-  displayName: "HeadersPanel",
+  /**
+   * This template represents the 'Headers' panel
+   * s responsible for rendering its content.
+   */
+  let HeadersPanel = createClass({
+    displayName: "HeadersPanel",
 
-  getInitialState: function() {
-    return {
-      data: {}
-    };
-  },
+    propTypes: {
+      actions: PropTypes.object,
+      data: PropTypes.object,
+    },
 
-  render: function() {
-    var data = this.props.data;
+    getInitialState: function () {
+      return {
+        data: {}
+      };
+    },
 
-    return (
-      DOM.div({className: "headersPanelBox"},
-        HeadersToolbar({actions: this.props.actions}),
-        DOM.div({className: "panelContent"},
-          Headers({data: data})
+    render: function () {
+      let data = this.props.data;
+
+      return (
+        div({className: "headersPanelBox"},
+          HeadersToolbar({actions: this.props.actions}),
+          div({className: "panelContent"},
+            Headers({data: data})
+          )
         )
-      )
-    );
-  }
-});
+      );
+    }
+  });
 
-/**
- * This template is responsible for rendering a toolbar
- * within the 'Headers' panel.
- */
-var HeadersToolbar = React.createFactory(React.createClass({
-  displayName: "HeadersToolbar",
+  /**
+   * This template is responsible for rendering a toolbar
+   * within the 'Headers' panel.
+   */
+  let HeadersToolbar = createFactory(createClass({
+    displayName: "HeadersToolbar",
 
-  render: function() {
-    return (
-      Toolbar({},
-        ToolbarButton({className: "btn copy", onClick: this.onCopy},
-          Locale.$STR("jsonViewer.Copy")
+    propTypes: {
+      actions: PropTypes.object,
+    },
+
+    // Commands
+
+    onCopy: function (event) {
+      this.props.actions.onCopyHeaders();
+    },
+
+    render: function () {
+      return (
+        Toolbar({},
+          ToolbarButton({className: "btn copy", onClick: this.onCopy},
+            Locale.$STR("jsonViewer.Copy")
+          )
         )
-      )
-    )
-  },
+      );
+    },
+  }));
 
-  // Commands
-
-  onCopy: function(event) {
-    this.props.actions.onCopyHeaders();
-  },
-}));
-
-// Exports from this module
-exports.HeadersPanel = HeadersPanel;
+  // Exports from this module
+  exports.HeadersPanel = HeadersPanel;
 });

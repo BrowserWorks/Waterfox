@@ -10,6 +10,8 @@
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 
   <script class="testbody" type="text/javascript">
+  "use strict";
+
   SimpleTest.waitForExplicitFinish();
 
   const STSPATH = "/tests/security/manager/ssl/tests/mochitest/stricttransportsecurity";
@@ -34,7 +36,7 @@
   };
 
   function startRound(round) {
-    var frame = document.createElement("iframe");
+    let frame = document.createElement("iframe");
     frame.setAttribute('id', 'ifr_bootstrap');
     frame.setAttribute('src', "https://example.com" + STSPATH + "/" + round + "_bootstrap.html");
     document.body.appendChild(frame);
@@ -43,16 +45,17 @@
   function endRound(round) {
     // remove all the iframes in the document
     document.body.removeChild(document.getElementById('ifr_bootstrap'));
-    for (var test in testframes)
+    for (let test in testframes) {
       document.body.removeChild(document.getElementById('ifr_' + test));
+    }
 
     // clean up the STS state
     SpecialPowers.cleanUpSTSData("http://example.com");
   }
 
   function loadVerifyFrames(round) {
-    for (var test in testframes) {
-      var frame = document.createElement("iframe");
+    for (let test in testframes) {
+      let frame = document.createElement("iframe");
       frame.setAttribute('id', 'ifr_' + test);
       frame.setAttribute('src', testframes[test].url + '?id=' + test);
       document.body.appendChild(frame);
@@ -65,16 +68,14 @@
    *          or: "INSECURE otherdom"
    */
   function onMessageReceived(event) {
-
-    // otherwise, it's a test result
-    var result = event.data.split(/\s+/);
+    let result = event.data.split(/\s+/);
     if (result.length != 2) {
       SimpleTest.ok(false, event.data);
       return;
     }
 
     // figure out which round of tests we're in
-    var round = (roundsLeft == 2) ? 'plain' : 'subdom';
+    let round = (roundsLeft == 2) ? "plain" : "subdom";
 
     if (result[0] === "BOOTSTRAP") {
       loadVerifyFrames(round);
@@ -82,7 +83,7 @@
     }
 
     // check if the result (SECURE/INSECURE) is expected for this round/test combo
-    SimpleTest.is(result[0], testframes[result[1]].expected[round], 
+    SimpleTest.is(result[0], testframes[result[1]].expected[round],
                   "in ROUND " + round + ", test " + result[1]);
     testsleft[round]--;
 
@@ -93,10 +94,11 @@
       roundsLeft--;
 
       // defer this so it doesn't muck with the stack too much.
-      if (roundsLeft == 1)
+      if (roundsLeft == 1) {
         setTimeout(function () {
-            startRound('subdom'); 
-          }, 0);
+          startRound("subdom");
+        }, 0);
+      }
     }
 
     if (roundsLeft < 1) {
@@ -107,7 +109,7 @@
   // listen for calls back from the sts-setting iframe and then
   // the verification frames.
   window.addEventListener("message", onMessageReceived, false);
-  window.addEventListener('load', function() {startRound('plain');}, false);
+  window.addEventListener("load", () => { startRound("plain"); }, false);
   </script>
 </head>
 

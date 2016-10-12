@@ -11,6 +11,7 @@
 #include "mozilla/dom/MozMobileConnectionBinding.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/TelephonyBinding.h"
+#include "mozilla/unused.h"
 
 #include "nsCharSeparatedTokenizer.h"
 #include "nsContentUtils.h"
@@ -61,7 +62,7 @@ public:
   }
 };
 
-Telephony::Telephony(nsPIDOMWindow* aOwner)
+Telephony::Telephony(nsPIDOMWindowInner* aOwner)
   : DOMEventTargetHelper(aOwner),
     mIsAudioStartPlaying(false),
     mHaveDispatchedInterruptBeginEvent(false),
@@ -106,7 +107,7 @@ Telephony::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 
 // static
 already_AddRefed<Telephony>
-Telephony::Create(nsPIDOMWindow* aOwner, ErrorResult& aRv)
+Telephony::Create(nsPIDOMWindowInner* aOwner, ErrorResult& aRv)
 {
   NS_ASSERTION(aOwner, "Null owner!");
 
@@ -560,9 +561,9 @@ Telephony::HandleAudioAgentState()
     }
   } else if (!activeCall.IsNull() && !mIsAudioStartPlaying) {
     mIsAudioStartPlaying = true;
-    float volume;
-    bool muted;
-    rv = mAudioAgent->NotifyStartedPlaying(&volume, &muted);
+    AudioPlaybackConfig config;
+    rv = mAudioAgent->NotifyStartedPlaying(&config,
+                                           AudioChannelService::AudibleState::eAudible);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -576,9 +577,12 @@ Telephony::HandleAudioAgentState()
     // because the modem have not changed the call state yet. It causes that
     // the telephony can't be resumed. Therefore, we don't mute the telephony
     // at the beginning.
-    volume = 1.0;
-    muted = false;
-    rv = WindowVolumeChanged(volume, muted);
+    rv = WindowVolumeChanged(1.0, false);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    rv = WindowSuspendChanged(config.mSuspend);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -681,11 +685,18 @@ Telephony::WindowVolumeChanged(float aVolume, bool aMuted)
   }
 
   bool isSingleCall = mCalls.Length();
-  nsCOMPtr<nsITelephonyCallback> callback = new TelephonyCallback(promise);
-  if (isSingleCall) {
-    rv = aMuted ? mCalls[0]->Hold(callback) : mCalls[0]->Resume(callback);
+  if (isSingleCall && mCalls[0]->Switchable()) {
+    if (aMuted && (mCalls[0]->State() == TelephonyCallState::Connected)) {
+      Unused << mCalls[0]->Hold(rv);
+    } else if (!aMuted && (mCalls[0]->State() == TelephonyCallState::Held)) {
+      Unused << mCalls[0]->Resume(rv);
+    }
   } else {
-    rv = aMuted ? mGroup->Hold(callback) : mGroup->Resume(callback);
+    if (aMuted && (mGroup->State() == TelephonyCallGroupState::Connected)) {
+      Unused << mGroup->Hold(rv);
+    } else if (!aMuted && (mGroup->State() == TelephonyCallGroupState::Held)) {
+      Unused << mGroup->Resume(rv);
+    }
   }
   if (NS_WARN_IF(rv.Failed())) {
     return rv.StealNSResult();
@@ -707,6 +718,13 @@ Telephony::WindowVolumeChanged(float aVolume, bool aMuted)
     }
   }
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+Telephony::WindowSuspendChanged(nsSuspendedTypes aSuspend)
+{
+  // Not support yet.
   return NS_OK;
 }
 

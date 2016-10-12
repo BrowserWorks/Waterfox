@@ -8,30 +8,34 @@
 #include "OpusDecoder.h"
 #include "VorbisDecoder.h"
 #include "VPXDecoder.h"
+#include "WAVDecoder.h"
 
 namespace mozilla {
 
 bool
-AgnosticDecoderModule::SupportsMimeType(const nsACString& aMimeType) const
+AgnosticDecoderModule::SupportsMimeType(const nsACString& aMimeType,
+                                        DecoderDoctorDiagnostics* aDiagnostics) const
 {
   return VPXDecoder::IsVPX(aMimeType) ||
     OpusDataDecoder::IsOpus(aMimeType) ||
-    VorbisDataDecoder::IsVorbis(aMimeType);
+    VorbisDataDecoder::IsVorbis(aMimeType) ||
+    WaveDataDecoder::IsWave(aMimeType);
 }
 
 already_AddRefed<MediaDataDecoder>
 AgnosticDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
                                           layers::LayersBackend aLayersBackend,
                                           layers::ImageContainer* aImageContainer,
-                                          FlushableTaskQueue* aVideoTaskQueue,
-                                          MediaDataDecoderCallback* aCallback)
+                                          TaskQueue* aTaskQueue,
+                                          MediaDataDecoderCallback* aCallback,
+                                          DecoderDoctorDiagnostics* aDiagnostics)
 {
   RefPtr<MediaDataDecoder> m;
 
   if (VPXDecoder::IsVPX(aConfig.mMimeType)) {
     m = new VPXDecoder(*aConfig.GetAsVideoInfo(),
                        aImageContainer,
-                       aVideoTaskQueue,
+                       aTaskQueue,
                        aCallback);
   }
 
@@ -40,19 +44,22 @@ AgnosticDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
 
 already_AddRefed<MediaDataDecoder>
 AgnosticDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
-                                          FlushableTaskQueue* aAudioTaskQueue,
-                                          MediaDataDecoderCallback* aCallback)
+                                          TaskQueue* aTaskQueue,
+                                          MediaDataDecoderCallback* aCallback,
+                                          DecoderDoctorDiagnostics* aDiagnostics)
 {
   RefPtr<MediaDataDecoder> m;
 
   if (VorbisDataDecoder::IsVorbis(aConfig.mMimeType)) {
     m = new VorbisDataDecoder(*aConfig.GetAsAudioInfo(),
-                              aAudioTaskQueue,
+                              aTaskQueue,
                               aCallback);
   } else if (OpusDataDecoder::IsOpus(aConfig.mMimeType)) {
     m = new OpusDataDecoder(*aConfig.GetAsAudioInfo(),
-                            aAudioTaskQueue,
+                            aTaskQueue,
                             aCallback);
+  } else if (WaveDataDecoder::IsWave(aConfig.mMimeType)) {
+    m = new WaveDataDecoder(*aConfig.GetAsAudioInfo(), aCallback);
   }
 
   return m.forget();

@@ -5,10 +5,10 @@
 
 "use strict";
 
-const { waitForTime } = require("devtools/shared/DevToolsUtils");
 const {
   snapshotState,
-  diffingState
+  diffingState,
+  treeMapState
 } = require("devtools/client/memory/constants");
 
 const TEST_URL = "http://example.com/browser/devtools/client/memory/test/browser/doc_steady_allocation.html";
@@ -38,8 +38,11 @@ this.test = makeMemoryTest(TEST_URL, function* ({ tab, panel }) {
   ok(true, "Clicking the diffing button put us into the diffing state.");
   is(getDisplayedSnapshotStatus(doc), "Select the baseline snapshot");
 
-  yield waitUntilSnapshotState(store, [snapshotState.SAVED_CENSUS,
-                                       snapshotState.SAVED_CENSUS]);
+  yield waitUntilState(store, state =>
+    state.snapshots.length === 2 &&
+    state.snapshots[0].treeMap && state.snapshots[1].treeMap &&
+    state.snapshots[0].treeMap.state === treeMapState.SAVED &&
+    state.snapshots[1].treeMap.state === treeMapState.SAVED);
 
   const listItems = [...doc.querySelectorAll(".snapshot-list-item")];
   is(listItems.length, 2, "Should have two snapshot list items");

@@ -14,7 +14,7 @@ add_task(function* test() {
   yield BrowserTestUtils.withNewTab({ gBrowser, url: "about:blank" },
                                     function* (browser) {
     yield ContentTask.spawn(browser, URL, function* (URL) {
-      let history = docShell.sessionHistory;
+      let history = docShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
       let count = 0;
 
       let testDone = {};
@@ -26,7 +26,7 @@ add_task(function* test() {
             addEventListener("load", function onLoad() {
               removeEventListener("load", onLoad, true);
 
-              ok(history.index < history.count, "history.index is valid");
+              Assert.ok(history.index < history.count, "history.index is valid");
               testDone.resolve();
             }, true);
 

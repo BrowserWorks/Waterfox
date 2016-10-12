@@ -49,7 +49,7 @@ function fakeOpenPopup(aPopup) {
   popupEvent.initMouseEvent("popupshowing", true, true, window, 0,
                             0, 0, 0, 0, false, false, false, false,
                             0, null);
-  aPopup.dispatchEvent(popupEvent);  
+  aPopup.dispatchEvent(popupEvent);
 }
 
 /**
@@ -322,7 +322,7 @@ function getNodeForToolbarItem(aItemId, aValidator) {
       var child = children[i];
 
       // Is this a Places node?
-      if (!child._placesNode) {
+      if (!child._placesNode || child.hasAttribute("simulated-places-node")) {
         staticNodes++;
         continue;
       }
@@ -365,7 +365,7 @@ function getNodeForMenuItem(aItemId, aValidator) {
       var child = children[i];
 
       // Is this a Places node?
-      if (!child._placesNode) {
+      if (!child._placesNode || child.hasAttribute("simulated-places-node")) {
         staticNodes++;
         continue;
       }
@@ -474,7 +474,7 @@ function getViewsForFolder(aFolderId) {
       break;
     case PlacesUtils.unfiledBookmarksFolderId:
       return ["sidebar"]
-      break;    
+      break;
   }
   return new Array();
 }

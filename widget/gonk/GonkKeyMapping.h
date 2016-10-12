@@ -28,7 +28,7 @@ static const unsigned long kKeyMapping[] = {
     0, // SOFT_LEFT
     0, // SOFT_RIGHT
     NS_VK_HOME, // HOME
-    0, // BACK
+    NS_VK_ESCAPE, // BACK
     0, // CALL
     NS_VK_SLEEP, // ENDCALL
     NS_VK_0,
@@ -47,7 +47,7 @@ static const unsigned long kKeyMapping[] = {
     NS_VK_DOWN,
     NS_VK_LEFT,
     NS_VK_RIGHT,
-    NS_VK_SELECT,
+    NS_VK_RETURN,
     NS_VK_VOLUME_UP,
     NS_VK_VOLUME_DOWN,
     NS_VK_SLEEP,     // POWER

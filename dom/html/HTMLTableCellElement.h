@@ -47,7 +47,7 @@ public:
   {
     SetHTMLIntAttr(nsGkAtoms::rowspan, aRowSpan, aError);
   }
-  //already_AddRefed<nsDOMSettableTokenList> Headers() const;
+  //already_AddRefed<nsDOMTokenList> Headers() const;
   void GetHeaders(DOMString& aHeaders)
   {
     GetHTMLAttr(nsGkAtoms::headers, aHeaders);
@@ -66,10 +66,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::abbr, aAbbr, aError);
   }
-  void GetScope(DOMString& aScope)
-  {
-    GetHTMLAttr(nsGkAtoms::scope, aScope);
-  }
+  void GetScope(DOMString& aScope);
   void SetScope(const nsAString& aScope, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::scope, aScope, aError);

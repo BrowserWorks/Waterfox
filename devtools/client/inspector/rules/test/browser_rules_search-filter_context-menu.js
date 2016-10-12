@@ -9,7 +9,7 @@
 const TEST_INPUT = "h1";
 const TEST_URI = "<h1>test filter context menu</h1>";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {toolbox, inspector, view} = yield openRuleView();
   yield selectNode("h1", inspector);
@@ -36,8 +36,8 @@ add_task(function*() {
   is(cmdUndo.getAttribute("disabled"), "true", "cmdUndo is disabled");
   is(cmdDelete.getAttribute("disabled"), "true", "cmdDelete is disabled");
   is(cmdSelectAll.getAttribute("disabled"), "", "cmdSelectAll is enabled");
-  is(cmdCut.getAttribute("disabled"), "", "cmdCut is enabled");
-  is(cmdCopy.getAttribute("disabled"), "", "cmdCopy is enabled");
+  is(cmdCut.getAttribute("disabled"), "true", "cmdCut is disabled");
+  is(cmdCopy.getAttribute("disabled"), "true", "cmdCopy is disabled");
   is(cmdPaste.getAttribute("disabled"), "true", "cmdPaste is disabled");
 
   info("Closing context menu");

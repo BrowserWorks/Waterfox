@@ -33,8 +33,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "TelemetryUtils",
                                   "resource://gre/modules/TelemetryUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils",
                                   "resource://services-common/utils.js");
-XPCOMUtils.defineLazyModuleGetter(this, "Metrics",
-                                  "resource://gre/modules/Metrics.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "gCrashReporter",
                                    "@mozilla.org/xre/app-info;1",
@@ -323,11 +321,10 @@ Experiments.Experiments = function (policy=new Experiments.Policy()) {
   // crashes. For forensics purposes, keep the last few log
   // messages in memory and upload them in case of crash.
   this._forensicsLogs = [];
-  this._forensicsLogs.length = 20;
+  this._forensicsLogs.length = 30;
   this._log = Object.create(log);
   this._log.log = (level, string, params) => {
-    this._forensicsLogs.shift();
-    this._forensicsLogs.push(level + ": " + string);
+    this._addToForensicsLog("Experiments", string);
     log.log(level, string, params);
   };
 
@@ -452,18 +449,19 @@ Experiments.Experiments.prototype = {
     this._shutdown = true;
     if (this._mainTask) {
       if (this._networkRequest) {
-	try {
-	  this._log.trace("Aborting pending network request: " + this._networkRequest);
-	  this._networkRequest.abort();
-	} catch (e) {
-	  // pass
-	}
+        try {
+          this._log.trace("Aborting pending network request: " + this._networkRequest);
+          this._networkRequest.abort();
+        } catch (e) {
+          // pass
+        }
       }
       try {
         this._log.trace("uninit: waiting on _mainTask");
         yield this._mainTask;
       } catch (e) {
         // We error out of tasks after shutdown via this exception.
+        this._log.trace(`uninit: caught error - ${e}`);
         if (!(e instanceof AlreadyShutdownError)) {
           this._latestError = e;
           throw e;
@@ -476,6 +474,7 @@ Experiments.Experiments.prototype = {
 
   // Return state information, for debugging purposes.
   _getState: function() {
+    let activeExperiment = this._getActiveExperiment();
     let state = {
       isShutdown: this._shutdown,
       isEnabled: gExperimentsEnabled,
@@ -487,8 +486,9 @@ Experiments.Experiments.prototype = {
       hasTimer: !!this._hasTimer,
       hasAddonProvider: !!gAddonProvider,
       latestLogs: this._forensicsLogs,
-      experiments: this._experiments ? this._experiments.keys() : null,
+      experiments: this._experiments ? [...this._experiments.keys()] : null,
       terminateReason: this._terminateReason,
+      activeExperiment: !!activeExperiment ? activeExperiment.id : null,
     };
     if (this._latestError) {
       if (typeof this._latestError == "object") {
@@ -501,6 +501,12 @@ Experiments.Experiments.prototype = {
       }
     }
     return state;
+  },
+
+  _addToForensicsLog: function (what, string) {
+    this._forensicsLogs.shift();
+    let timeInSec = Math.floor(Services.telemetry.msSinceProcessStart() / 1000);
+    this._forensicsLogs.push(`${timeInSec}: ${what} - ${string}`);
   },
 
   _registerWithAddonManager: function (previousExperimentsProvider) {
@@ -634,7 +640,7 @@ Experiments.Experiments.prototype = {
           active: experiment.enabled,
           endDate: experiment.endDate.getTime(),
           detailURL: experiment._homepageURL,
-	  branch: experiment.branch,
+          branch: experiment.branch,
         });
       }
 
@@ -709,7 +715,7 @@ Experiments.Experiments.prototype = {
     } else {
       e = this._getActiveExperiment();
       if (e === null) {
-	throw new Error("No active experiment");
+        throw new Error("No active experiment");
       }
     }
     return e.branch;
@@ -958,7 +964,7 @@ Experiments.Experiments.prototype = {
       if (xhr.status !== 200 && xhr.state !== 0) {
         log.error("httpGetRequest::onLoad() - Request to " + url + " returned status " + xhr.status);
         deferred.reject(new Error("Experiments - XHR status for " + url + " is " + xhr.status));
-	this._networkRequest = null;
+        this._networkRequest = null;
         return;
       }
 
@@ -1043,6 +1049,14 @@ Experiments.Experiments.prototype = {
       if (!entry.initFromCacheData(item)) {
         continue;
       }
+
+      // Discard old experiments if they ended more than 180 days ago.
+      if (entry.shouldDiscard()) {
+        // We discarded an experiment, the cache needs to be updated.
+        this._dirty = true;
+        continue;
+      }
+
       experiments.set(entry.id, entry);
     }
 
@@ -1356,9 +1370,16 @@ Experiments.Experiments.prototype = {
 
 Experiments.ExperimentEntry = function (policy) {
   this._policy = policy || new Experiments.Policy();
-  this._log = Log.repository.getLoggerWithMessagePrefix(
+  let log = Log.repository.getLoggerWithMessagePrefix(
     "Browser.Experiments.Experiments",
     "ExperimentEntry #" + gExperimentEntryCounter++ + "::");
+  this._log = Object.create(log);
+  this._log.log = (level, string, params) => {
+    if (gExperiments) {
+      gExperiments._addToForensicsLog("ExperimentEntry", string);
+    }
+    log.log(level, string, params);
+  };
 
   // Is the experiment supposed to be running.
   this._enabled = false;
@@ -1520,7 +1541,7 @@ Experiments.ExperimentEntry.prototype = {
         this._log.error("initFromCacheData() - missing required key " + key);
         return false;
       }
-    };
+    }
 
     if (!this._isManifestDataValid(data._manifestData)) {
       return false;
@@ -1543,7 +1564,9 @@ Experiments.ExperimentEntry.prototype = {
       }
     });
 
-    this._lastChangedDate = this._policy.now();
+    // In order for the experiment's data expiration mechanism to work, use the experiment's
+    // |_endData| as the |_lastChangedDate| (if available).
+    this._lastChangedDate = !!this._endDate ? this._endDate : this._policy.now();
 
     return true;
   },
@@ -1625,8 +1648,7 @@ Experiments.ExperimentEntry.prototype = {
     let startSec = (this.startDate || 0) / 1000;
 
     this._log.trace("isApplicable() - now=" + now
-                    + ", randomValue=" + this._randomValue
-                    + ", data=" + JSON.stringify(this._manifestData));
+                    + ", randomValue=" + this._randomValue);
 
     // Not applicable if it already ran.
 
@@ -1698,13 +1720,14 @@ Experiments.ExperimentEntry.prototype = {
   _runFilterFunction: Task.async(function* (jsfilter) {
     this._log.trace("runFilterFunction() - filter: " + jsfilter);
 
-    const nullprincipal = Cc["@mozilla.org/nullprincipal;1"].createInstance(Ci.nsIPrincipal);
+    let ssm = Services.scriptSecurityManager;
+    const nullPrincipal = ssm.createNullPrincipal({});
     let options = {
       sandboxName: "telemetry experiments jsfilter sandbox",
       wantComponents: false,
     };
 
-    let sandbox = Cu.Sandbox(nullprincipal, options);
+    let sandbox = Cu.Sandbox(nullPrincipal, options);
     try {
       Cu.evalInSandbox(jsfilter, sandbox);
     } catch (e) {
@@ -1798,6 +1821,7 @@ Experiments.ExperimentEntry.prototype = {
           this._log.error("_installAddon() - onInstallStarted, wrong addon type");
           return false;
         }
+        return undefined;
       },
 
       onInstallEnded: install => {

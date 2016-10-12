@@ -118,8 +118,16 @@ add_task(function* testInvalidUUID() {
   }, expectInvalidContextException);
 
   Assert.throws(() => {
-    let listener = { QueryInterface: XPCOMUtils.generateQI([Ci.nsIStreamListener]) };
+    let listener = {QueryInterface: XPCOMUtils.generateQI([Ci.nsIStreamListener])};
 
     convService.asyncConvertData(FROM_TYPE, TO_TYPE, listener, uri);
   }, expectInvalidContextException);
+});
+
+
+// Test that an empty stream does not throw an NS_ERROR_ILLEGAL_VALUE.
+add_task(function* testEmptyStream() {
+  let stream = StringStream("");
+  let resultStream = convService.convert(stream, FROM_TYPE, TO_TYPE, URI);
+  equal(resultStream.data, "");
 });

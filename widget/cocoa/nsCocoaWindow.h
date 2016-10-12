@@ -10,9 +10,9 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include "mozilla/RefPtr.h"
 #include "nsBaseWidget.h"
 #include "nsPIWidgetCocoa.h"
-#include "nsAutoPtr.h"
 #include "nsCocoaUtils.h"
 
 class nsCocoaWindow;
@@ -241,6 +241,8 @@ typedef struct _nsCocoaWindowList {
 - (void)placeFullScreenButton:(NSRect)aRect;
 - (NSPoint)windowButtonsPositionWithDefaultPosition:(NSPoint)aDefaultPosition;
 - (NSPoint)fullScreenButtonPositionWithDefaultPosition:(NSPoint)aDefaultPosition;
+- (void)setTemporaryBackgroundColor;
+- (void)restoreBackgroundColor;
 @end
 
 class nsCocoaWindow : public nsBaseWidget, public nsPIWidgetCocoa
@@ -385,6 +387,11 @@ public:
     void SetPopupWindowLevel();
 
     NS_IMETHOD         ReparentNativeWidget(nsIWidget* aNewParent) override;
+
+    CompositorWidgetProxy* NewCompositorWidgetProxy() override {
+      return nullptr;
+    }
+
 protected:
   virtual ~nsCocoaWindow();
 
@@ -411,9 +418,6 @@ protected:
     nsCOMPtr<nsIWidget> widget = do_CreateInstance(kCPopUpCID);
     return widget.forget();
   }
-
-  virtual nsresult NotifyIMEInternal(
-                     const IMENotification& aIMENotification) override;
 
   nsIWidget*           mParent;         // if we're a popup, this is our parent [WEAK]
   nsIWidget*           mAncestorLink;   // link to traverse ancestors [WEAK]

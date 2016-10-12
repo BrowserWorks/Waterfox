@@ -40,6 +40,10 @@ InterfacesFor(Accessible* aAcc)
   if (aAcc->IsImage())
     interfaces |= Interfaces::IMAGE;
 
+  if (aAcc->IsTable()) {
+    interfaces |= Interfaces::TABLE;
+  }
+
   if (aAcc->IsTableCell())
     interfaces |= Interfaces::TABLECELL;
 
@@ -143,11 +147,11 @@ DocAccessibleChild::ShowEvent(AccShowEvent* aShowEvent)
 {
   Accessible* parent = aShowEvent->Parent();
   uint64_t parentID = parent->IsDoc() ? 0 : reinterpret_cast<uint64_t>(parent->UniqueID());
-  uint32_t idxInParent = aShowEvent->GetAccessible()->IndexInParent();
+  uint32_t idxInParent = aShowEvent->InsertionIndex();
   nsTArray<AccessibleData> shownTree;
   ShowEventData data(parentID, idxInParent, shownTree);
   SerializeTree(aShowEvent->GetAccessible(), data.NewTree());
-  SendShowEvent(data);
+  SendShowEvent(data, aShowEvent->IsFromUserInput());
 }
 
 bool
@@ -353,7 +357,7 @@ DocAccessibleChild::RecvARIARoleAtom(const uint64_t& aID, nsString* aRole)
     return true;
   }
 
-  if (nsRoleMapEntry* roleMap = acc->ARIARoleMap()) {
+  if (const nsRoleMapEntry* roleMap = acc->ARIARoleMap()) {
     if (nsIAtom* roleAtom = *(roleMap->roleAtom)) {
       roleAtom->ToString(*aRole);
     }
@@ -1048,7 +1052,7 @@ DocAccessibleChild::RecvColHeaderCells(const uint64_t& aID,
 {
   TableCellAccessible* acc = IdToTableCellAccessible(aID);
   if (acc) {
-    nsAutoTArray<Accessible*, 10> headerCells;
+    AutoTArray<Accessible*, 10> headerCells;
     acc->ColHeaderCells(&headerCells);
     aCells->SetCapacity(headerCells.Length());
     for (uint32_t i = 0; i < headerCells.Length(); ++i) {
@@ -1066,7 +1070,7 @@ DocAccessibleChild::RecvRowHeaderCells(const uint64_t& aID,
 {
   TableCellAccessible* acc = IdToTableCellAccessible(aID);
   if (acc) {
-    nsAutoTArray<Accessible*, 10> headerCells;
+    AutoTArray<Accessible*, 10> headerCells;
     acc->RowHeaderCells(&headerCells);
     aCells->SetCapacity(headerCells.Length());
     for (uint32_t i = 0; i < headerCells.Length(); ++i) {
@@ -1368,7 +1372,7 @@ DocAccessibleChild::RecvTableSelectedCells(const uint64_t& aID,
 {
   TableAccessible* acc = IdToTableAccessible(aID);
   if (acc) {
-    nsAutoTArray<Accessible*, 30> cells;
+    AutoTArray<Accessible*, 30> cells;
     acc->SelectedCells(&cells);
     aCellIDs->SetCapacity(cells.Length());
     for (uint32_t i = 0; i < cells.Length(); ++i) {
@@ -1529,7 +1533,7 @@ DocAccessibleChild::RecvSelectedItems(const uint64_t& aID,
 {
   Accessible* acc = IdToAccessibleSelect(aID);
   if (acc) {
-    nsAutoTArray<Accessible*, 10> selectedItems;
+    AutoTArray<Accessible*, 10> selectedItems;
     acc->SelectedItems(&selectedItems);
     aSelectedItemIDs->SetCapacity(selectedItems.Length());
     for (size_t i = 0; i < selectedItems.Length(); ++i) {
@@ -1842,53 +1846,6 @@ DocAccessibleChild::RecvTakeFocus(const uint64_t& aID)
 }
 
 bool
-DocAccessibleChild::RecvEmbeddedChildCount(const uint64_t& aID,
-                                           uint32_t* aCount)
-{
-  *aCount = 0;
-
-  Accessible* acc = IdToAccessible(aID);
-  if (!acc) {
-    return true;
-  }
-
-  *aCount = acc->EmbeddedChildCount();
-
-  return true;
-}
-
-bool
-DocAccessibleChild::RecvIndexOfEmbeddedChild(const uint64_t& aID,
-                                             const uint64_t& aChildID,
-                                             uint32_t* aChildIdx)
-{
-  *aChildIdx = 0;
-
-  Accessible* parent = IdToAccessible(aID);
-  Accessible* child = IdToAccessible(aChildID);
-  if (!parent || !child)
-    return true;
-
-  *aChildIdx = parent->GetIndexOfEmbeddedChild(child);
-  return true;
-}
-
-bool
-DocAccessibleChild::RecvEmbeddedChildAt(const uint64_t& aID,
-                                        const uint32_t& aIdx,
-                                        uint64_t* aChildID)
-{
-  *aChildID = 0;
-
-  Accessible* acc = IdToAccessible(aID);
-  if (!acc)
-    return true;
-
-  *aChildID = reinterpret_cast<uintptr_t>(acc->GetEmbeddedChildAt(aIdx));
-  return true;
-}
-
-bool
 DocAccessibleChild::RecvFocusedChild(const uint64_t& aID,
                                        uint64_t* aChild,
                                        bool* aOk)
@@ -2047,6 +2004,27 @@ DocAccessibleChild::RecvExtents(const uint64_t& aID,
       *aHeight = screenRect.height;
     }
   }
+  return true;
+}
+
+bool
+DocAccessibleChild::RecvDOMNodeID(const uint64_t& aID, nsString* aDOMNodeID)
+{
+  Accessible* acc = IdToAccessible(aID);
+  if (!acc) {
+    return true;
+  }
+
+  nsIContent* content = acc->GetContent();
+  if (!content) {
+    return true;
+  }
+
+  nsIAtom* id = content->GetID();
+  if (id) {
+    id->ToString(*aDOMNodeID);
+  }
+
   return true;
 }
 

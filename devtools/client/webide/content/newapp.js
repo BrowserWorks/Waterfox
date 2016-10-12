@@ -6,13 +6,13 @@ var Cc = Components.classes;
 var Cu = Components.utils;
 var Ci = Components.interfaces;
 
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ZipUtils", "resource://gre/modules/ZipUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads", "resource://gre/modules/Downloads.jsm");
 
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+const Services = require("Services");
 const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm", {});
 const {AppProjects} = require("devtools/client/webide/modules/app-projects");
 const {AppManager} = require("devtools/client/webide/modules/app-manager");
@@ -128,13 +128,13 @@ function doOK() {
   }
 
   // Create subfolder with fs-friendly name of project
-  let subfolder = projectName.replace(/[\\/:*?"<>|]/g, '').toLowerCase();
+  let subfolder = projectName.replace(/[\\/:*?"<>|]/g, "").toLowerCase();
   let win = Services.wm.getMostRecentWindow("devtools:webide");
   folder.append(subfolder);
 
   try {
     folder.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
-  } catch(e) {
+  } catch (e) {
     win.UI.reportError("error_folderCreationFailed");
     window.close();
     return false;
@@ -161,13 +161,13 @@ function doOK() {
           project.manifest.name = projectName;
           AppManager.writeManifest(project).then(() => {
             AppManager.validateAndUpdateProject(project).then(
-              () => {window.close()}, bail)
-          }, bail)
+              () => {window.close();}, bail);
+          }, bail);
         } else {
           bail("Manifest not found");
         }
-      }, bail)
-    }, bail)
+      }, bail);
+    }, bail);
   }, bail);
 
   return false;

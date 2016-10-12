@@ -20,69 +20,99 @@
       <property name="scrollAmount" exposeToUntrustedContent="true">
         <getter>
           <![CDATA[
-          var val = parseInt(this.getAttribute("scrollamount"));
-
-          if (val <= 0 || isNaN(val))
-            return this._scrollAmount;
-
-          return val;
+          this._mutationActor(this._mutationObserver.takeRecords());
+          return this._scrollAmount;
           ]]>
         </getter>
         <setter>
+          <![CDATA[
+          var val = parseInt(val);
+          if (val < 0) {
+            return;
+          }
+          if (isNaN(val)) {
+            val = 0;
+          }
           this.setAttribute("scrollamount", val);
+          ]]>
         </setter>
       </property>
 
       <property name="scrollDelay" exposeToUntrustedContent="true">
         <getter>
           <![CDATA[
+          this._mutationActor(this._mutationObserver.takeRecords());
           var val = parseInt(this.getAttribute("scrolldelay"));
 
-          if (val <= 0 || isNaN(val))
+          if (val <= 0 || isNaN(val)) {
             return this._scrollDelay;
+          }
 
           return val;
           ]]>
         </getter>
         <setter>
-          this.setAttribute("scrolldelay", val);
+          var val = parseInt(val);
+          if (val > 0 ) {
+            this.setAttribute("scrolldelay", val);
+          }
         </setter>
       </property>
 
       <property name="trueSpeed" exposeToUntrustedContent="true">
         <getter>
           <![CDATA[
-          if (!this.hasAttribute("truespeed"))
+          if (!this.hasAttribute("truespeed")) {
             return false;
+          }
 
           return true;
           ]]>
         </getter>
         <setter>
           <![CDATA[
-          if (val)
-            this.setAttribute("truespeed", "truespeed");
-          else
+          if (val) {
+            this.setAttribute("truespeed", "");
+          } else {
             this.removeAttribute('truespeed');
+          }
           ]]>
         </setter>
       </property>
 
       <property name="direction" exposeToUntrustedContent="true">
         <getter>
-          return this.getAttribute("direction");
+          this._mutationActor(this._mutationObserver.takeRecords());
+          return this._direction;
         </getter>
         <setter>
+          <![CDATA[
+          if (typeof val == 'string') {
+            val = val.toLowerCase();
+          } else {
+            return;
+          }
+          if (val != 'left' && val != 'right' && val != 'up' && val != 'down') {
+            val = 'left';
+          }
+
           this.setAttribute("direction", val);
+          ]]>
         </setter>
       </property>
 
       <property name="behavior" exposeToUntrustedContent="true">
         <getter>
+          this._mutationActor(this._mutationObserver.takeRecords());
           return this._behavior;
         </getter>
         <setter>
-          this.setAttribute("behavior", val);
+          if (typeof val == 'string') {
+            val = val.toLowerCase();
+          }
+          if (val == "alternate" || val == "slide" || val == 'scroll') {
+            this.setAttribute("behavior", val);
+          }
         </setter>
       </property>
 
@@ -90,16 +120,17 @@
       <property name="loop" exposeToUntrustedContent="true">
         <getter>
           <![CDATA[
-          var val = parseInt(this.getAttribute('loop'));
-    
-          if (val < -1 || isNaN(val))
-            return this._loop;
-
-          return val;
+          this._mutationActor(this._mutationObserver.takeRecords());
+          return this._loop;
           ]]>
         </getter>
         <setter>
-          this.setAttribute("loop", val);
+          <![CDATA[
+          var val = parseInt(val);
+          if (val == -1 || val > 0) {
+            this.setAttribute("loop", val);
+          }
+          ]]>
         </setter>
       </property>
 
@@ -156,19 +187,20 @@
         <parameter name="aValue"/>
         <body>
         <![CDATA[
-          if (aValue <= 0 || isNaN(aValue) || aValue == null)
-            return false;
-
-          if (aValue < 60) {
-            if (this.trueSpeed == true)
+          aValue = parseInt(aValue);
+          if (aValue <= 0) {
+            return;
+          } else if (isNaN(aValue)) {
+            this._scrollDelay = 85;
+          } else if (aValue < 60) {
+            if (this.trueSpeed == true) {
               this._scrollDelay = aValue;
-            else
+            } else {
               this._scrollDelay = 60;
-          }
-          else {
+            }
+          } else {
             this._scrollDelay = aValue;
           }
-          return true;
         ]]>
         </body>
       </method>
@@ -177,11 +209,14 @@
         <parameter name="aValue"/>
         <body>
         <![CDATA[
-          if (aValue < 0 || isNaN(aValue) || aValue == null)
-            return false;
-
-          this._scrollAmount = aValue;
-          return true;
+          aValue = parseInt(aValue);
+          if (isNaN(aValue)) {
+            this._scrollAmount = 6;
+          } else if (aValue < 0) {
+            return;
+          } else {
+            this._scrollAmount = aValue;
+          }
         ]]>
         </body>
       </method>
@@ -190,13 +225,14 @@
         <parameter name="aValue"/>
         <body>
         <![CDATA[
-          if (typeof aValue == 'string')
+          if (typeof aValue == 'string') {
             aValue = aValue.toLowerCase();
-          if (aValue != 'alternate' && aValue != 'slide' && aValue != 'scroll')
-            return false;
-
-          this._behavior = aValue;
-          return true;
+          }
+          if (aValue != 'alternate' && aValue != 'slide' && aValue != 'scroll') {
+            this._behavior = 'scroll';
+          } else {
+            this._behavior = aValue;
+          }
         ]]>
         </body>
       </method>
@@ -205,15 +241,17 @@
         <parameter name="aValue"/>
         <body>
         <![CDATA[
-          if (typeof aValue == 'string')
+          if (typeof aValue == 'string') {
             aValue = aValue.toLowerCase();
-          if (aValue != 'left' && aValue != 'right' && aValue != 'up' && aValue != 'down')
-            return false;
+          }
+          if (aValue != 'left' && aValue != 'right' && aValue != 'up' && aValue != 'down') {
+            aValue = 'left';
+          }
 
-          if (aValue != this._direction)
+          if (aValue != this._direction) {
             this.startNewDirection = true;
+          }
           this._direction = aValue;
-          return true;
         ]]>
         </body>
       </method>
@@ -222,14 +260,14 @@
         <parameter name="aValue"/>
         <body>
           <![CDATA[
-          if (!aValue || isNaN(aValue))
-            return false;
-
-          if (aValue < -1)
+          var aValue = parseInt(aValue);
+          if (aValue == 0) {
+            return;
+          }
+          if (isNaN(aValue) || aValue <= -1) {
             aValue = -1;
-
+          }
           this._loop = aValue;
-          return true;
           ]]>
         </body>
       </method>
@@ -240,14 +278,24 @@
         <parameter name="aIgnoreNextCall"/>
         <body>
           <![CDATA[
-          if (this._ignoreNextCall)
+          // _setEventListener is only used for setting the attribute event
+          // handlers, which we want to ignore if our document is sandboxed
+          // without the allow-scripts keyword.
+          if (document.hasScriptsBlockedBySandbox) {
+            return true;
+          }
+
+          if (this._ignoreNextCall) {
             return this._ignoreNextCall = false;
+          }
 
-          if (aIgnoreNextCall)
+          if (aIgnoreNextCall) {
             this._ignoreNextCall = true;
+          }
 
-          if (typeof this["_on" + aName] == 'function')
+          if (typeof this["_on" + aName] == 'function') {
             this.removeEventListener(aName, this["_on" + aName], false);
+          }
 
           switch (typeof aValue)
           {
@@ -341,8 +389,9 @@
               case "up":
                 var height = document.defaultView.getComputedStyle(this, "").height;
                 this.outerDiv.style.height = height;
-                if (this.originalHeight > this.outerDiv.offsetHeight)
+                if (this.originalHeight > this.outerDiv.offsetHeight) {
                     corrvalue = this.originalHeight - this.outerDiv.offsetHeight;
+                }
                 this.innerDiv.style.padding = height + " 0";
                 this.dirsign = 1;
                 this.startAt = (this._behavior == 'alternate') ? (this.originalHeight - corrvalue) : 0;
@@ -353,8 +402,9 @@
               case "down":
                 var height = document.defaultView.getComputedStyle(this, "").height;
                 this.outerDiv.style.height = height;
-                if (this.originalHeight > this.outerDiv.offsetHeight)
+                if (this.originalHeight > this.outerDiv.offsetHeight) {
                     corrvalue = this.originalHeight - this.outerDiv.offsetHeight;
+                }
                 this.innerDiv.style.padding = height + " 0";
                 this.dirsign = -1;
                 this.startAt  = (this._behavior == 'alternate') ?
@@ -364,8 +414,9 @@
               break;
 
               case "right":
-                if (this.innerDiv.offsetWidth > this.outerDiv.offsetWidth)
+                if (this.innerDiv.offsetWidth > this.outerDiv.offsetWidth) {
                     corrvalue = this.innerDiv.offsetWidth - this.outerDiv.offsetWidth;
+                }
                 this.dirsign = -1;
                 this.stopAt  = (this._behavior == 'alternate' || this._behavior == 'slide') ? 
                                (this.innerDiv.offsetWidth - corrvalue) : 0;
@@ -375,8 +426,9 @@
 
               case "left":
               default:
-                if (this.innerDiv.offsetWidth > this.outerDiv.offsetWidth)
+                if (this.innerDiv.offsetWidth > this.outerDiv.offsetWidth) {
                     corrvalue = this.innerDiv.offsetWidth - this.outerDiv.offsetWidth;
+                }
                 this.dirsign = 1;
                 this.startAt = (this._behavior == 'alternate') ? (this.innerDiv.offsetWidth - corrvalue) : 0;
                 this.stopAt  = this.outerDiv.offsetWidth + 
@@ -406,49 +458,55 @@
                 this._direction = swap[this._direction];
                 this.newPosition = this.stopAt;
 
-                if ((this._direction == "up") || (this._direction == "down"))
+                if ((this._direction == "up") || (this._direction == "down")) {
                   this.outerDiv.scrollTop = this.newPosition;
-                else
+                } else {
                   this.outerDiv.scrollLeft = this.newPosition;
+                }
 
-                if (this._loop != 1)
+                if (this._loop != 1) {
                   this._fireEvent("bounce", false, true);
+                }
               break;
 
               case 'slide':
-                if (this._loop > 1)
+                if (this._loop > 1) {
                   this.newPosition = this.startAt;
+                }
               break;
 
               default:
                 this.newPosition = this.startAt;
 
-                if ((this._direction == "up") || (this._direction == "down"))
+                if ((this._direction == "up") || (this._direction == "down")) {
                   this.outerDiv.scrollTop = this.newPosition;
-                else
+                } else {
                   this.outerDiv.scrollLeft = this.newPosition;
+                }
 
                 //dispatch start event, even when this._loop == 1, comp. with IE6
                 this._fireEvent("start", false, false);
             }
 
-            if (this._loop > 1)
+            if (this._loop > 1) {
               this._loop--;
-            else if (this._loop == 1) {
-              if ((this._direction == "up") || (this._direction == "down"))
+            } else if (this._loop == 1) {
+              if ((this._direction == "up") || (this._direction == "down")) {
                 this.outerDiv.scrollTop = this.stopAt;
-              else
+              } else {
                 this.outerDiv.scrollLeft = this.stopAt;
+              }
               this.stop();
               this._fireEvent("finish", false, true);
               return;
             }
           }
           else {
-            if ((this._direction == "up") || (this._direction == "down"))
+            if ((this._direction == "up") || (this._direction == "down")) {
               this.outerDiv.scrollTop = this.newPosition;
-            else
+            } else {
               this.outerDiv.scrollLeft = this.newPosition;
+            }
           }
 
           var myThis = this;
@@ -488,6 +546,74 @@
         </body>
       </method>
 
+      <method name="_mutationActor">
+        <parameter name="aMutations"/>
+        <body>
+        <![CDATA[
+          while (aMutations.length > 0) {
+            var mutation = aMutations.shift();
+            var attrName = mutation.attributeName.toLowerCase();
+            var oldValue = mutation.oldValue;
+            var target = mutation.target;
+            var newValue = target.getAttribute(attrName);
+
+            if (oldValue != newValue) {
+              switch (attrName) {
+                case "loop":
+                  target._set_loop(newValue);
+                  if (target.rundId == 0) {
+                    target.start();
+                  }
+                  break;
+                case "scrollamount":
+                  target._set_scrollAmount(newValue);
+                  break;
+                case "scrolldelay":
+                  target._set_scrollDelay(newValue);
+                  target.stop();
+                  target.start();
+                  break;
+                case "truespeed":
+                  //needed to update target._scrollDelay
+                  var myThis = target;
+                  var lambda = function() {myThis._set_scrollDelay(myThis.getAttribute('scrolldelay'));}
+                  window.setTimeout(lambda, 0);
+                  break;
+                case "behavior":
+                  target._set_behavior(newValue);
+                  target.startNewDirection = true;
+                  if ((oldValue == "slide" && target.newPosition == target.stopAt) ||
+                      newValue == "alternate" || newValue == "slide") {
+                    target.stop();
+                    target._doMove(true);
+                  }
+                  break;
+                case "direction":
+                  if (!newValue) {
+                    newValue = "left";
+                  }
+                  target._set_direction(newValue);
+                  break;
+                case "width":
+                case "height":
+                  target.startNewDirection = true;
+                  break;
+                case "onstart":
+                  target._setEventListener("start", newValue);
+                  break;
+                case "onfinish":
+                  target._setEventListener("finish", newValue);
+                  break;
+                case "onbounce":
+                  target._setEventListener("bounce", newValue);
+                  break;
+              }
+            }
+          }
+        ]]>
+        </body>
+      </method>
+
       <constructor>
         <![CDATA[
           // Set up state.
@@ -518,108 +644,22 @@
           this._setEventListener("bounce", this.getAttribute("onbounce"));
           this.startNewDirection = true;
 
+          this._mutationObserver = new MutationObserver(this._mutationActor);
+          this._mutationObserver.observe(this, { attributes: true,
+            attributeOldValue: true,
+            attributeFilter: ['loop', 'scrollamount', 'scrolldelay', '', 'truespeed', 'behavior',
+              'direction', 'width', 'height', 'onstart', 'onfinish', 'onbounce'] });
+
           // init needs to be run after the page has loaded in order to calculate
           // the correct height/width
-          if (document.readyState == "complete")
+          if (document.readyState == "complete") {
             lambda();
-          else
+          } else {
             window.addEventListener("load", lambda, false);
+          }
         ]]>
       </constructor>
     </implementation>
-
-    <handlers>
-      <handler event="DOMAttrModified" phase="target">
-        <![CDATA[
-          var attrName = event.attrName.toLowerCase();
-          var oldValue = event.prevValue.toLowerCase();
-          var newValue = event.newValue.toLowerCase();
-          var attributeRemoval = false;
-          if (event.attrChange == event.REMOVAL) {
-            newValue = null;
-            attributeRemoval = true;
-          };
-
-          if (oldValue != newValue) {
-            switch (attrName) {
-              case "loop":
-                if (!this._set_loop(newValue)) {
-                  if (attributeRemoval) {
-                    this._loop = -1;
-                    if (this.runId == 0)
-                      this.start();
-                  }
-                  else
-                    throw new Error("Invalid argument for Marquee::loop");
-                }
-                if (this.rundId == 0)
-                  this.start();
-                break;
-              case "scrollamount":
-                if (!this._set_scrollAmount(newValue)) {
-                  if (attributeRemoval)
-                    this._scrollAmount = 6;
-                  else
-                    throw new Error("Invalid argument for Marquee::scrollAmount");
-                }
-                break;
-              case "scrolldelay":
-                if (!this._set_scrollDelay(newValue)) {
-                  if (attributeRemoval)
-                    this._scrollDelay = 85;
-                  else
-                    throw new Error("Invalid argument for Marquee::scrollDelay");
-                }
-                this.stop();
-                this.start();
-                break;
-              case "truespeed":
-                //needed to update this._scrollDelay
-                var myThis = this;
-                var lambda = function() {myThis._set_scrollDelay(myThis.getAttribute('scrolldelay'));}
-                window.setTimeout(lambda, 0);
-                break;
-              case "behavior":
-                if (!this._set_behavior(newValue)) {
-                  if (attributeRemoval)
-                    this._behavior = "scroll";
-                  else
-                    throw new Error("Invalid argument for Marquee::behavior");
-                }
-
-                this.startNewDirection = true;
-                if ((oldValue == "slide" && this.newPosition == this.stopAt) ||
-                    newValue == "alternate" || newValue == "slide") {
-                  this.stop();
-                  this._doMove(true);
-                }
-                break;
-              case "direction":
-                if (!this._set_direction(newValue)) {
-                  if (attributeRemoval)
-                    this._direction = "left";
-                  else
-                    throw new Error("Invalid argument for Marquee::direction");
-                }
-                break;
-              case "width":
-              case "height":
-                this.startNewDirection = true;
-                break;
-              case "onstart":
-                this._setEventListener("start", newValue);
-                break;
-              case "onfinish":
-                this._setEventListener("finish", newValue);
-                break;
-              case "onbounce":
-                this._setEventListener("bounce", newValue);
-                break;
-            }
-          }
-        ]]>
-      </handler>
-    </handlers>
 
   </binding>
 

@@ -9,6 +9,8 @@
 #define nsCSSPseudoElements_h___
 
 #include "nsIAtom.h"
+#include "mozilla/CSSEnabledState.h"
+#include "mozilla/Compiler.h"
 
 // Is this pseudo-element a CSS2 pseudo-element that can be specified
 // with the single colon syntax (in addition to the double-colon syntax,
@@ -35,13 +37,39 @@
 // Is content prevented from parsing selectors containing this pseudo-element?
 #define CSS_PSEUDO_ELEMENT_UA_SHEET_ONLY               (1<<4)
 
+namespace mozilla {
+
+// The total count of CSSPseudoElement is less than 256,
+// so use uint8_t as its underlying type.
+typedef uint8_t CSSPseudoElementTypeBase;
+enum class CSSPseudoElementType : CSSPseudoElementTypeBase {
+  // If the actual pseudo-elements stop being first here, change
+  // GetPseudoType.
+#define CSS_PSEUDO_ELEMENT(_name, _value_, _flags) \
+  _name,
+#include "nsCSSPseudoElementList.h"
+#undef CSS_PSEUDO_ELEMENT
+  Count,
+  AnonBox = Count,
+#ifdef MOZ_XUL
+  XULTree,
+#endif
+  NotPseudo,
+  MAX
+};
+
+} // namespace mozilla
+
 // Empty class derived from nsIAtom so that function signatures can
 // require an atom from this atom list.
 class nsICSSPseudoElement : public nsIAtom {};
 
-class nsCSSPseudoElements {
-public:
+class nsCSSPseudoElements
+{
+  typedef mozilla::CSSPseudoElementType Type;
+  typedef mozilla::CSSEnabledState EnabledState;
 
+public:
   static void AddRefAtoms();
 
   static bool IsPseudoElement(nsIAtom *aAtom);
@@ -53,25 +81,9 @@ public:
 #include "nsCSSPseudoElementList.h"
 #undef CSS_PSEUDO_ELEMENT
 
-  enum Type {
-    // If the actual pseudo-elements stop being first here, change
-    // GetPseudoType.
-#define CSS_PSEUDO_ELEMENT(_name, _value_, _flags) \
-    ePseudo_##_name,
-#include "nsCSSPseudoElementList.h"
-#undef CSS_PSEUDO_ELEMENT
-    ePseudo_PseudoElementCount,
-    ePseudo_AnonBox = ePseudo_PseudoElementCount,
-#ifdef MOZ_XUL
-    ePseudo_XULTree,
-#endif
-    ePseudo_NotPseudoElement,
-    ePseudo_MAX
-  };
+  static Type GetPseudoType(nsIAtom* aAtom, EnabledState aEnabledState);
 
-  static Type GetPseudoType(nsIAtom* aAtom);
-
-  // Get the atom for a given Type.  aType must be < ePseudo_PseudoElementCount
+  // Get the atom for a given Type.  aType must be < CSSPseudoElementType::Count
   static nsIAtom* GetPseudoAtom(Type aType);
 
   static bool PseudoElementContainsElements(const Type aType) {
@@ -79,25 +91,38 @@ public:
   }
 
   static bool PseudoElementSupportsStyleAttribute(const Type aType) {
-    MOZ_ASSERT(aType < ePseudo_PseudoElementCount);
-    return PseudoElementHasFlags(aType, CSS_PSEUDO_ELEMENT_SUPPORTS_STYLE_ATTRIBUTE);
+    MOZ_ASSERT(aType < Type::Count);
+    return PseudoElementHasFlags(aType,
+                                 CSS_PSEUDO_ELEMENT_SUPPORTS_STYLE_ATTRIBUTE);
   }
 
   static bool PseudoElementSupportsUserActionState(const Type aType);
 
-  static bool PseudoElementIsUASheetOnly(const Type aType) {
-    MOZ_ASSERT(aType < ePseudo_PseudoElementCount);
-    return PseudoElementHasFlags(aType, CSS_PSEUDO_ELEMENT_UA_SHEET_ONLY);
+  static bool IsEnabled(Type aType, EnabledState aEnabledState)
+  {
+    return !PseudoElementHasFlags(aType, CSS_PSEUDO_ELEMENT_UA_SHEET_ONLY) ||
+           (aEnabledState & EnabledState::eInUASheets);
   }
 
 private:
-  static uint32_t FlagsForPseudoElement(const Type aType);
-
   // Does the given pseudo-element have all of the flags given?
+
+  // Work around https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64037 ,
+  // which is a general gcc bug that we seem to have hit only on Android/x86.
+#if defined(ANDROID) && defined(__i386__) && defined(__GNUC__) && \
+    !defined(__clang__)
+#if (MOZ_GCC_VERSION_AT_LEAST(4,8,0) && MOZ_GCC_VERSION_AT_MOST(4,8,4)) || \
+    (MOZ_GCC_VERSION_AT_LEAST(4,9,0) && MOZ_GCC_VERSION_AT_MOST(4,9,2))
+   __attribute__((noinline))
+#endif
+#endif
   static bool PseudoElementHasFlags(const Type aType, uint32_t aFlags)
   {
-    return (FlagsForPseudoElement(aType) & aFlags) == aFlags;
+    MOZ_ASSERT(aType < Type::Count);
+    return (kPseudoElementFlags[size_t(aType)] & aFlags) == aFlags;
   }
+
+  static const uint32_t kPseudoElementFlags[size_t(Type::Count)];
 };
 
 #endif /* nsCSSPseudoElements_h___ */

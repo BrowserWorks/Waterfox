@@ -4,35 +4,25 @@
 
 "use strict";
 
-const Services = require("Services");
-
-/*
- * Returns the directory name of the path
- */
-exports.dirname = path => {
-  return Services.io.newURI(
-    ".", null, Services.io.newURI(path, null, null)).spec;
-}
-
 /*
  * Join all the arguments together and normalize the resulting URI.
  * The initial path must be an full URI with a protocol (i.e. http://).
  */
 exports.joinURI = (initialPath, ...paths) => {
-  let uri;
+  let url;
 
   try {
-    uri = Services.io.newURI(initialPath, null, null);
+    url = new URL(initialPath);
   }
-  catch(e) {
+  catch (e) {
     return;
   }
 
-  for(let path of paths) {
+  for (let path of paths) {
     if (path) {
-      uri = Services.io.newURI(path, null, uri);
+      url = new URL(path, url);
     }
   }
 
-  return uri.spec;
-}
+  return url.href;
+};

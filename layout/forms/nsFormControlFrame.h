@@ -8,14 +8,15 @@
 
 #include "mozilla/Attributes.h"
 #include "nsIFormControlFrame.h"
-#include "nsLeafFrame.h"
+#include "nsAtomicContainerFrame.h"
+#include "nsDisplayList.h"
 
-/** 
+/**
  * nsFormControlFrame is the base class for radio buttons and
  * checkboxes.  It also has two static methods (RegUnRegAccessKey and
  * GetScreenHeight) that are used by other form controls.
  */
-class nsFormControlFrame : public nsLeafFrame,
+class nsFormControlFrame : public nsAtomicContainerFrame,
                            public nsIFormControlFrame
 {
 public:
@@ -30,18 +31,46 @@ public:
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
-    return nsLeafFrame::IsFrameOfType(aFlags &
+    return nsAtomicContainerFrame::IsFrameOfType(aFlags &
       ~(nsIFrame::eReplaced | nsIFrame::eReplacedContainsBlock));
   }
 
   NS_DECL_QUERYFRAME
   NS_DECL_ABSTRACT_FRAME(nsFormControlFrame)
 
-  /** 
+  // nsIFrame replacements
+  virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
+                                const nsRect&           aDirtyRect,
+                                const nsDisplayListSet& aLists) override {
+    DO_GLOBAL_REFLOW_COUNT_DSP("nsFormControlFrame");
+    DisplayBorderBackgroundOutline(aBuilder, aLists);
+  }
+
+  /**
+   * Both GetMinISize and GetPrefISize will return whatever GetIntrinsicISize
+   * returns.
+   */
+  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+
+  /**
+   * Our auto size is just intrinsic width and intrinsic height.
+   */
+  virtual mozilla::LogicalSize
+  ComputeAutoSize(nsRenderingContext *aRenderingContext,
+                  mozilla::WritingMode aWritingMode,
+                  const mozilla::LogicalSize& aCBSize,
+                  nscoord aAvailableISize,
+                  const mozilla::LogicalSize& aMargin,
+                  const mozilla::LogicalSize& aBorder,
+                  const mozilla::LogicalSize& aPadding,
+                  bool aShrinkWrap) override;
+
+  /**
     * Respond to a gui event
     * @see nsIFrame::HandleEvent
     */
-  virtual nsresult HandleEvent(nsPresContext* aPresContext, 
+  virtual nsresult HandleEvent(nsPresContext* aPresContext,
                                mozilla::WidgetGUIEvent* aEvent,
                                nsEventStatus* aEventStatus) override;
 
@@ -79,14 +108,14 @@ protected:
 
   virtual ~nsFormControlFrame();
 
-  virtual nscoord GetIntrinsicISize() override;
-  virtual nscoord GetIntrinsicBSize() override;
+  nscoord GetIntrinsicISize();
+  nscoord GetIntrinsicBSize();
 
 //
 //-------------------------------------------------------------------------------------
 //  Utility methods for managing checkboxes and radiobuttons
 //-------------------------------------------------------------------------------------
-//   
+//
    /**
     * Get the state of the checked attribute.
     * @param aState set to true if the checked attribute is set,

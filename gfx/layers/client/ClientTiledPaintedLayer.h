@@ -54,10 +54,10 @@ public:
   // PaintedLayer
   virtual Layer* AsLayer() override { return this; }
   virtual void InvalidateRegion(const nsIntRegion& aRegion) override {
-    mInvalidRegion.Or(mInvalidRegion, aRegion);
-    mInvalidRegion.SimplifyOutward(20);
-    mValidRegion.Sub(mValidRegion, mInvalidRegion);
-    mLowPrecisionValidRegion.Sub(mLowPrecisionValidRegion, mInvalidRegion);
+    mInvalidRegion.Add(aRegion);
+    nsIntRegion invalidRegion = mInvalidRegion.GetRegion();
+    mValidRegion.Sub(mValidRegion, invalidRegion);
+    mLowPrecisionValidRegion.Sub(mLowPrecisionValidRegion, invalidRegion);
   }
 
   // Shadow methods
@@ -72,6 +72,13 @@ public:
   virtual void RenderLayer() override;
 
   virtual void ClearCachedResources() override;
+
+  virtual void HandleMemoryPressure() override
+  {
+    if (mContentClient) {
+      mContentClient->HandleMemoryPressure();
+    }
+  }
 
   /**
    * Helper method to find the nearest ancestor layers which
@@ -133,6 +140,9 @@ private:
   void EndPaint();
 
   RefPtr<TiledContentClient> mContentClient;
+  // Flag to indicate if mContentClient is a SingleTiledContentClient. This is
+  // only valid when mContentClient is non-null.
+  bool mHaveSingleTiledContentClient;
   nsIntRegion mLowPrecisionValidRegion;
   BasicTiledLayerPaintData mPaintData;
 };

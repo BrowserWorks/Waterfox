@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure that stepping out of a function displays the right return value.
@@ -11,7 +13,11 @@ var gTab, gPanel, gDebugger;
 var gVars;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -22,8 +28,8 @@ function test() {
 }
 
 function testNormalReturn() {
-  waitForSourceAndCaretAndScopes(gPanel, ".html", 17).then(() => {
-    waitForCaretAndScopes(gPanel, 19).then(() => {
+  waitForCaretAndScopes(gPanel, 17).then(() => {
+    waitForCaretAndScopes(gPanel, 20).then(() => {
       let innerScope = gVars.getScopeAtIndex(0);
       let returnVar = innerScope.get("<return>");
 
@@ -33,7 +39,7 @@ function testNormalReturn() {
         "Should have the right property value for the returned value.");
       ok(returnVar._internalItem, "Should be an internal item");
       ok(returnVar._target.hasAttribute("pseudo-item"),
-         "Element should be marked as a pseudo-item")
+         "Element should be marked as a pseudo-item");
 
       resumeDebuggee().then(() => testReturnWithException());
     });
@@ -58,7 +64,7 @@ function testReturnWithException() {
         "Should have the right property value for the returned value.");
       ok(exceptionVar._internalItem, "Should be an internal item");
       ok(exceptionVar._target.hasAttribute("pseudo-item"),
-         "Element should be marked as a pseudo-item")
+         "Element should be marked as a pseudo-item");
 
       resumeDebuggee().then(() => closeDebuggerAndFinish(gPanel));
     });
@@ -77,7 +83,7 @@ function resumeDebuggee() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

@@ -1,8 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Tests that document.body autocompletes in the web console.
 
@@ -71,7 +70,7 @@ function autocompletePopupHidden() {
 
   ok(!popup.isOpen, "popup is not open");
 
-  jsterm.once("autocomplete-updated", function() {
+  jsterm.once("autocomplete-updated", function () {
     is(completeNode.value, testStr + "dy", "autocomplete shows document.body");
     deferred.resolve();
   });

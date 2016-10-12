@@ -4,9 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-[ChromeOnly,
- Exposed=(Window,Worker)]
-interface Console {
+[Exposed=(Window,Worker,WorkerDebugger),
+ ClassString="Console",
+ ProtoObjectHack]
+namespace console {
   void log(any... data);
   void info(any... data);
   void warn(any... data);
@@ -23,6 +24,7 @@ interface Console {
   void time(optional any time);
   void timeEnd(optional any time);
   void timeStamp(optional any data);
+  void clear(any... data);
 
   void profile(any... data);
   void profileEnd(any... data);
@@ -32,19 +34,21 @@ interface Console {
 
   // No-op methods for compatibility with other browsers.
   [BinaryName="noopMethod"]
-  void clear();
-  [BinaryName="noopMethod"]
   void markTimeline();
   [BinaryName="noopMethod"]
   void timeline();
   [BinaryName="noopMethod"]
   void timelineEnd();
+
+  [ChromeOnly]
+  const boolean IS_NATIVE_CONSOLE = true;
 };
 
 // This is used to propagate console events to the observers.
 dictionary ConsoleEvent {
   (unsigned long long or DOMString) ID;
   (unsigned long long or DOMString) innerID;
+  any originAttributes = null;
   DOMString level = "";
   DOMString filename = "";
   unsigned long lineNumber = 0;
@@ -52,10 +56,7 @@ dictionary ConsoleEvent {
   DOMString functionName = "";
   double timeStamp = 0;
   sequence<any> arguments;
-
-  // This array will only hold strings or null elements.
-  sequence<any> styles;
-
+  sequence<DOMString?> styles;
   boolean private = false;
   // stacktrace is handled via a getter in some cases so we can construct it
   // lazily.  Note that we're not making this whole thing an interface because

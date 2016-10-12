@@ -15,6 +15,7 @@
 #include "js/HashTable.h"
 #include "js/TypeDecls.h"
 #include "js/Vector.h"
+#include "threading/Mutex.h"
 #include "vm/TraceLoggingGraph.h"
 #include "vm/TraceLoggingTypes.h"
 
@@ -241,7 +242,7 @@ class TraceLoggerThread
 
         // If we are in a consecutive iteration we are only sure we didn't lose any events,
         // when the lastSize equals the maximum size 'events' can get.
-        if (lastIteration == iteration_ - 1 && lastSize == CONTINUOUSSPACE_LIMIT)
+        if (lastIteration == iteration_ - 1 && lastSize == events.maxSize())
             return false;
 
         return true;
@@ -311,7 +312,7 @@ class TraceLoggerThreadState
 
   public:
     uint64_t startupTime;
-    PRLock* lock;
+    Mutex lock;
 
     TraceLoggerThreadState()
       :
@@ -320,8 +321,7 @@ class TraceLoggerThreadState
 #endif
         mainThreadEnabled(false),
         offThreadEnabled(false),
-        graphSpewingEnabled(false),
-        lock(nullptr)
+        graphSpewingEnabled(false)
     { }
 
     bool init();

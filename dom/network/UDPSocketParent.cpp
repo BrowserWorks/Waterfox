@@ -23,13 +23,6 @@
 #include "mozilla/ipc/PBackgroundParent.h"
 #include "mtransport/runnable_utils.h"
 
-//
-// set NSPR_LOG_MODULES=UDPSocket:5
-//
-extern mozilla::LazyLogModule gUDPSocketLog;
-#define UDPSOCKET_LOG(args)     MOZ_LOG(gUDPSocketLog, mozilla::LogLevel::Debug, args)
-#define UDPSOCKET_LOG_ENABLED() MOZ_LOG_TEST(gUDPSocketLog, mozilla::LogLevel::Debug)
-
 namespace mozilla {
 namespace dom {
 
@@ -133,7 +126,7 @@ UDPSocketParent::Init(const IPC::Principal& aPrincipal,
   if (!aFilter.IsEmpty()) {
     nsAutoCString contractId(NS_NETWORK_UDP_SOCKET_FILTER_HANDLER_PREFIX);
     contractId.Append(aFilter);
-    nsCOMPtr<nsIUDPSocketFilterHandler> filterHandler =
+    nsCOMPtr<nsISocketFilterHandler> filterHandler =
       do_GetService(contractId.get());
     if (filterHandler) {
       nsresult rv = filterHandler->NewFilter(getter_AddRefs(mFilter));
@@ -161,11 +154,15 @@ UDPSocketParent::Init(const IPC::Principal& aPrincipal,
 
 bool
 UDPSocketParent::RecvBind(const UDPAddressInfo& aAddressInfo,
-                          const bool& aAddressReuse, const bool& aLoopback)
+                          const bool& aAddressReuse, const bool& aLoopback,
+                          const uint32_t& recvBufferSize,
+                          const uint32_t& sendBufferSize)
 {
   UDPSOCKET_LOG(("%s: %s:%u", __FUNCTION__, aAddressInfo.addr().get(), aAddressInfo.port()));
 
-  if (NS_FAILED(BindInternal(aAddressInfo.addr(), aAddressInfo.port(), aAddressReuse, aLoopback))) {
+  if (NS_FAILED(BindInternal(aAddressInfo.addr(), aAddressInfo.port(),
+                             aAddressReuse, aLoopback, recvBufferSize,
+                             sendBufferSize))) {
     FireInternalError(__LINE__);
     return true;
   }
@@ -193,11 +190,15 @@ UDPSocketParent::RecvBind(const UDPAddressInfo& aAddressInfo,
 
 nsresult
 UDPSocketParent::BindInternal(const nsCString& aHost, const uint16_t& aPort,
-                              const bool& aAddressReuse, const bool& aLoopback)
+                              const bool& aAddressReuse, const bool& aLoopback,
+                              const uint32_t& recvBufferSize,
+                              const uint32_t& sendBufferSize)
 {
   nsresult rv;
 
-  UDPSOCKET_LOG(("%s: [this=%p] %s:%u addressReuse: %d loopback: %d", __FUNCTION__, this, nsCString(aHost).get(), aPort, aAddressReuse, aLoopback));
+  UDPSOCKET_LOG(("%s: [this=%p] %s:%u addressReuse: %d loopback: %d recvBufferSize: %lu, sendBufferSize: %lu",
+                __FUNCTION__, this, nsCString(aHost).get(), aPort,
+                aAddressReuse, aLoopback, recvBufferSize, sendBufferSize));
 
   nsCOMPtr<nsIUDPSocket> sock =
       do_CreateInstance("@mozilla.org/network/udp-socket;1", &rv);
@@ -241,6 +242,19 @@ UDPSocketParent::BindInternal(const nsCString& aHost, const uint16_t& aPort,
     rv = sock->SetMulticastLoopback(aLoopback);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
+    }
+  }
+  // TODO: once bug 1252759 is fixed query buffer first and only increase
+  if (recvBufferSize != 0) {
+    rv = sock->SetRecvBufferSize(recvBufferSize);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      UDPSOCKET_LOG(("%s: [this=%p] %s:%u failed to set recv buffer size to: %lu", __FUNCTION__, this, nsCString(aHost).get(), aPort, recvBufferSize));
+    }
+  }
+  if (sendBufferSize != 0) {
+    rv = sock->SetSendBufferSize(sendBufferSize);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      UDPSOCKET_LOG(("%s: [this=%p] %s:%u failed to set send buffer size to: %lu", __FUNCTION__, this, nsCString(aHost).get(), aPort, sendBufferSize));
     }
   }
 
@@ -374,8 +388,6 @@ UDPSocketParent::RecvOutgoingData(const UDPData& aData,
 
   nsresult rv;
   if (mFilter) {
-    // TODO, Bug 933102, filter packets that are sent with hostname.
-    // Until then we simply throw away packets that are sent to a hostname.
     if (aAddr.type() != UDPSocketAddr::TNetAddr) {
       return true;
     }
@@ -388,7 +400,7 @@ UDPSocketParent::RecvOutgoingData(const UDPData& aData,
     bool allowed;
     const InfallibleTArray<uint8_t>& data(aData.get_ArrayOfuint8_t());
     rv = mFilter->FilterPacket(&aAddr.get_NetAddr(), data.Elements(),
-                               data.Length(), nsIUDPSocketFilter::SF_OUTGOING,
+                               data.Length(), nsISocketFilter::SF_OUTGOING,
                                &allowed);
 
     // Sending unallowed data, kill content.
@@ -563,7 +575,7 @@ UDPSocketParent::OnPacketReceived(nsIUDPSocket* aSocket, nsIUDPMessage* aMessage
     fromAddr->GetNetAddr(&addr);
     nsresult rv = mFilter->FilterPacket(&addr,
                                         (const uint8_t*)buffer, len,
-                                        nsIUDPSocketFilter::SF_INCOMING,
+                                        nsISocketFilter::SF_INCOMING,
                                         &allowed);
     // Receiving unallowed data, drop.
     if (NS_WARN_IF(NS_FAILED(rv)) || !allowed) {

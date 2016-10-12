@@ -68,6 +68,15 @@ extern NSMenu* sApplicationMenu; // Application menu shared by all menubars
 // defined in nsChildView.mm
 extern BOOL                gSomeMenuBarPainted;
 
+#if !defined(MAC_OS_X_VERSION_10_12) || \
+    MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
+
+@interface NSWindow(AutomaticWindowTabbing)
++ (void)setAllowsAutomaticWindowTabbing:(BOOL)allow;
+@end
+
+#endif
+
 extern "C" {
   // CGSPrivate.h
   typedef NSInteger CGSConnection;
@@ -121,7 +130,11 @@ nsCocoaWindow::nsCocoaWindow()
 , mInResize(false)
 , mNumModalDescendents(0)
 {
-
+  if ([NSWindow respondsToSelector:@selector(setAllowsAutomaticWindowTabbing:)]) {
+    // Disable automatic tabbing on 10.12. We need to do this before we
+    // orderFront any of our windows.
+    [NSWindow setAllowsAutomaticWindowTabbing:NO];
+  }
 }
 
 void nsCocoaWindow::DestroyNativeWindow()
@@ -174,7 +187,7 @@ nsCocoaWindow::~nsCocoaWindow()
   if (mModal) {
     NS_WARNING("Widget destroyed while running modal!");
     --gXULModalLevel;
-    NS_ASSERTION(gXULModalLevel >= 0, "Wierdness setting modality!");
+    NS_ASSERTION(gXULModalLevel >= 0, "Weirdness setting modality!");
   }
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
@@ -596,6 +609,10 @@ void* nsCocoaWindow::GetNativeData(uint32_t aDataType)
       NS_ERROR("Requesting NS_NATIVE_GRAPHIC on a top-level window!");
       break;
     case NS_RAW_NATIVE_IME_CONTEXT: {
+      retVal = GetPseudoIMEContext();
+      if (retVal) {
+        break;
+      }
       NSView* view = mWindow ? [mWindow contentView] : nil;
       if (view) {
         retVal = [view inputContext];
@@ -1584,7 +1601,7 @@ NS_IMETHODIMP nsCocoaWindow::Resize(double aX, double aY,
 // Coordinates are desktop pixels
 NS_IMETHODIMP nsCocoaWindow::Resize(double aWidth, double aHeight, bool aRepaint)
 {
-  double invScale = 1.0 / GetDefaultScale().scale;
+  double invScale = 1.0 / BackingScaleFactor();
   return DoResize(mBounds.x * invScale, mBounds.y * invScale,
                   aWidth, aHeight, aRepaint, true);
 }
@@ -1874,13 +1891,10 @@ nsCocoaWindow::DispatchEvent(WidgetGUIEvent* event, nsEventStatus& aStatus)
 {
   aStatus = nsEventStatus_eIgnore;
 
-  nsIWidget* aWidget = event->widget;
-  NS_IF_ADDREF(aWidget);
+  nsCOMPtr<nsIWidget> kungFuDeathGrip(event->mWidget);
 
   if (mWidgetListener)
     aStatus = mWidgetListener->HandleEvent(event, mUseAttachedEvents);
-
-  NS_IF_RELEASE(aWidget);
 
   return NS_OK;
 }
@@ -2309,19 +2323,6 @@ void nsCocoaWindow::SetPopupWindowLevel()
     // appear just above their parent and essentially ignore the level.
     [mWindow setLevel:NSPopUpMenuWindowLevel];
     [mWindow setHidesOnDeactivate:NO];
-  }
-}
-
-nsresult
-nsCocoaWindow::NotifyIMEInternal(const IMENotification& aIMENotification)
-{
-  switch (aIMENotification.mMessage) {
-    case NOTIFY_IME_OF_FOCUS:
-      return NS_OK;
-    case NOTIFY_IME_OF_BLUR:
-      return NS_OK;
-    default:
-      return NS_ERROR_NOT_IMPLEMENTED;
   }
 }
 
@@ -3411,6 +3412,16 @@ static const NSString* kStateCollectionBehavior = @"collectionBehavior";
 - (NSColor*)windowBackgroundColor
 {
   return mBackgroundColor;
+}
+
+- (void)setTemporaryBackgroundColor
+{
+  [super setBackgroundColor:[NSColor whiteColor]];
+}
+
+- (void)restoreBackgroundColor
+{
+  [super setBackgroundColor:mBackgroundColor];
 }
 
 - (void)setTitlebarNeedsDisplayInRect:(NSRect)aRect

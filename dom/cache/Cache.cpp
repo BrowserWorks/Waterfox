@@ -15,7 +15,6 @@
 #include "mozilla/dom/CacheBinding.h"
 #include "mozilla/dom/cache/AutoUtils.h"
 #include "mozilla/dom/cache/CacheChild.h"
-#include "mozilla/dom/cache/CachePushStreamChild.h"
 #include "mozilla/dom/cache/Feature.h"
 #include "mozilla/dom/cache/ReadStream.h"
 #include "mozilla/ErrorResult.h"
@@ -29,6 +28,7 @@ namespace cache {
 
 using mozilla::dom::workers::GetCurrentThreadWorkerPrivate;
 using mozilla::dom::workers::WorkerPrivate;
+using mozilla::ipc::PBackgroundChild;
 
 namespace {
 
@@ -114,7 +114,7 @@ public:
     // an Array of Response objects.  The following code unwraps these
     // JS values back to an nsTArray<RefPtr<Response>>.
 
-    nsAutoTArray<RefPtr<Response>, 256> responseList;
+    AutoTArray<RefPtr<Response>, 256> responseList;
     responseList.SetCapacity(mRequestList.Length());
 
     bool isArray;
@@ -155,6 +155,26 @@ public:
 
       if (NS_WARN_IF(response->Type() == ResponseType::Error)) {
         Fail();
+        return;
+      }
+
+      // Do not allow the convenience methods .add()/.addAll() to store failed
+      // responses.  A consequence of this is that these methods cannot be
+      // used to store opaque or opaqueredirect responses since they always
+      // expose a 0 status value.
+      if (!response->Ok()) {
+        uint32_t t = static_cast<uint32_t>(response->Type());
+        NS_ConvertASCIItoUTF16 type(ResponseTypeValues::strings[t].value,
+                                    ResponseTypeValues::strings[t].length);
+        nsAutoString status;
+        status.AppendInt(response->Status());
+        nsAutoString url;
+        mRequestList[i]->GetUrl(url);
+        ErrorResult rv;
+        rv.ThrowTypeError<MSG_CACHE_ADD_FAILED_RESPONSE>(type, status, url);
+
+        // TODO: abort the fetch requests we have running (bug 1157434)
+        mPromise->MaybeReject(rv);
         return;
       }
 
@@ -244,7 +264,7 @@ Cache::Match(const RequestOrUSVString& aRequest,
   CacheQueryParams params;
   ToCacheQueryParams(params, aOptions);
 
-  AutoChildOpArgs args(this, CacheMatchArgs(CacheRequest(), params));
+  AutoChildOpArgs args(this, CacheMatchArgs(CacheRequest(), params), 1);
 
   args.Add(ir, IgnoreBody, IgnoreInvalidScheme, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
@@ -268,7 +288,7 @@ Cache::MatchAll(const Optional<RequestOrUSVString>& aRequest,
   CacheQueryParams params;
   ToCacheQueryParams(params, aOptions);
 
-  AutoChildOpArgs args(this, CacheMatchAllArgs(void_t(), params));
+  AutoChildOpArgs args(this, CacheMatchAllArgs(void_t(), params), 1);
 
   if (aRequest.WasPassed()) {
     RefPtr<InternalRequest> ir = ToInternalRequest(aRequest.Value(),
@@ -390,7 +410,7 @@ Cache::Put(const RequestOrUSVString& aRequest, Response& aResponse,
     return nullptr;
   }
 
-  AutoChildOpArgs args(this, CachePutAllArgs());
+  AutoChildOpArgs args(this, CachePutAllArgs(), 1);
 
   args.Add(ir, ReadBody, TypeErrorOnInvalidScheme,
            aResponse, aRv);
@@ -420,7 +440,7 @@ Cache::Delete(const RequestOrUSVString& aRequest,
   CacheQueryParams params;
   ToCacheQueryParams(params, aOptions);
 
-  AutoChildOpArgs args(this, CacheDeleteArgs(CacheRequest(), params));
+  AutoChildOpArgs args(this, CacheDeleteArgs(CacheRequest(), params), 1);
 
   args.Add(ir, IgnoreBody, IgnoreInvalidScheme, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
@@ -444,7 +464,7 @@ Cache::Keys(const Optional<RequestOrUSVString>& aRequest,
   CacheQueryParams params;
   ToCacheQueryParams(params, aOptions);
 
-  AutoChildOpArgs args(this, CacheKeysArgs(void_t(), params));
+  AutoChildOpArgs args(this, CacheKeysArgs(void_t(), params), 1);
 
   if (aRequest.WasPassed()) {
     RefPtr<InternalRequest> ir = ToInternalRequest(aRequest.Value(),
@@ -520,13 +540,12 @@ Cache::AssertOwningThread() const
 }
 #endif
 
-CachePushStreamChild*
-Cache::CreatePushStream(nsIAsyncInputStream* aStream)
+PBackgroundChild*
+Cache::GetIPCManager()
 {
   NS_ASSERT_OWNINGTHREAD(Cache);
   MOZ_ASSERT(mActor);
-  MOZ_ASSERT(aStream);
-  return mActor->CreatePushStream(this, aStream);
+  return mActor->Manager();
 }
 
 Cache::~Cache()
@@ -571,7 +590,7 @@ Cache::AddAll(const GlobalObject& aGlobal,
     return promise.forget();
   }
 
-  nsAutoTArray<RefPtr<Promise>, 256> fetchList;
+  AutoTArray<RefPtr<Promise>, 256> fetchList;
   fetchList.SetCapacity(aRequestList.Length());
 
   // Begin fetching each request in parallel.  For now, if an error occurs just
@@ -621,7 +640,7 @@ Cache::PutAll(const nsTArray<RefPtr<Request>>& aRequestList,
 
   CacheChild::AutoLock actorLock(mActor);
 
-  AutoChildOpArgs args(this, CachePutAllArgs());
+  AutoChildOpArgs args(this, CachePutAllArgs(), aRequestList.Length());
 
   for (uint32_t i = 0; i < aRequestList.Length(); ++i) {
     RefPtr<InternalRequest> ir = aRequestList[i]->GetInternalRequest();

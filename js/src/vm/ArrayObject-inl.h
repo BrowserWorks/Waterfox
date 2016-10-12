@@ -41,10 +41,10 @@ ArrayObject::createArrayInternal(ExclusiveContext* cx, gc::AllocKind kind, gc::I
     MOZ_ASSERT(shape && group);
     MOZ_ASSERT(group->clasp() == shape->getObjectClass());
     MOZ_ASSERT(group->clasp() == &ArrayObject::class_);
-    MOZ_ASSERT_IF(group->clasp()->finalize, heap == gc::TenuredHeap);
+    MOZ_ASSERT_IF(group->clasp()->hasFinalize(), heap == gc::TenuredHeap);
     MOZ_ASSERT_IF(group->hasUnanalyzedPreliminaryObjects(),
                   heap == js::gc::TenuredHeap);
-    MOZ_ASSERT(group->clasp()->shouldDelayMetadataCallback());
+    MOZ_ASSERT(group->clasp()->shouldDelayMetadataBuilder());
 
     // Arrays can use their fixed slots to store elements, so can't have shapes
     // which allow named properties to be stored in the fixed slots.

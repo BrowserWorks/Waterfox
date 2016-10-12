@@ -1,7 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Tests if the JSTerm sandbox is updated when the user navigates from one
 // domain to another, in order to avoid permission denied errors with a sandbox
@@ -42,7 +42,7 @@ add_task(function* () {
   yield waitForMessages(msgForLocation1);
 
   // load second url
-  content.location = TEST_URI2;
+  BrowserTestUtils.loadURI(gBrowser.selectedBrowser, TEST_URI2);
   yield loadBrowser(gBrowser.selectedBrowser);
 
   is(hud.outputNode.textContent.indexOf("Permission denied"), -1,
@@ -72,19 +72,26 @@ add_task(function* () {
   is(hud.outputNode.textContent.indexOf("Permission denied"), -1,
      "no permission denied errors");
 
+  // Navigation clears messages. Wait for that clear to happen before
+  // continuing the test or it might destroy messages we wait later on (Bug
+  // 1270234).
+  let cleared = hud.jsterm.once("messages-cleared");
+
   gBrowser.goBack();
 
+  info("Waiting for page to navigate");
   yield waitForSuccess({
     name: "go back",
-    validator: function() {
+    validator: function () {
       return content.location.href == TEST_URI1;
     },
   });
 
-  hud.jsterm.clearOutput();
-  executeSoon(() => {
-    hud.jsterm.execute("window.location.href");
-  });
+  info("Waiting for messages to be cleared due to navigation");
+  yield cleared;
+
+  info("Messages cleared after navigation; checking location");
+  hud.jsterm.execute("window.location.href");
 
   info("wait for window.location.href after goBack()");
   yield waitForMessages(msgForLocation1);

@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Test the webconsole output for various types of objects.
 
@@ -159,7 +159,7 @@ var inputTests = [
 
 function test() {
   requestLongerTimeout(2);
-  Task.spawn(function*() {
+  Task.spawn(function* () {
     const {tab} = yield loadTab(TEST_URI);
     const hud = yield openConsole(tab);
     yield checkOutputForInputs(hud, inputTests);

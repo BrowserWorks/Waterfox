@@ -13,7 +13,6 @@
 #include "nsParserMsgUtils.h"
 #include "nsIURL.h"
 #include "nsIUnicharInputStream.h"
-#include "nsISimpleUnicharStreamFactory.h"
 #include "nsIProtocolHandler.h"
 #include "nsNetUtil.h"
 #include "prprf.h"
@@ -33,20 +32,14 @@
 
 #include "mozilla/Logging.h"
 
+using mozilla::fallible;
 using mozilla::LogLevel;
 
 #define kExpatSeparatorChar 0xFFFF
 
 static const char16_t kUTF16[] = { 'U', 'T', 'F', '-', '1', '6', '\0' };
 
-static PRLogModuleInfo *
-GetExpatDriverLog()
-{
-  static PRLogModuleInfo *sLog;
-  if (!sLog)
-    sLog = PR_NewLogModule("expatdriver");
-  return sLog;
-}
+static mozilla::LazyLogModule gExpatDriverLog("expatdriver");
 
 /***************************** EXPAT CALL BACKS ******************************/
 // The callback handlers that get called from the expat parser.
@@ -415,7 +408,9 @@ nsExpatDriver::HandleCharacterData(const char16_t *aValue,
   NS_ASSERTION(mSink, "content sink not found!");
 
   if (mInCData) {
-    mCDataText.Append(aValue, aLength);
+    if (!mCDataText.Append(aValue, aLength, fallible)) {
+      MaybeStopParser(NS_ERROR_OUT_OF_MEMORY);
+    }
   }
   else if (mSink) {
     nsresult rv = mSink->HandleCharacterData(aValue, aLength);
@@ -799,7 +794,6 @@ nsExpatDriver::OpenInputStreamFromExternalDTD(const char16_t* aFPIStr,
     }
     if (!loadingPrincipal) {
       loadingPrincipal = nsNullPrincipal::Create();
-      NS_ENSURE_TRUE(loadingPrincipal, NS_ERROR_FAILURE);
     }
     rv = NS_NewChannel(getter_AddRefs(channel),
                        uri,
@@ -1056,7 +1050,7 @@ nsExpatDriver::ConsumeToken(nsScanner& aScanner, bool& aFlushTokens)
   nsScannerIterator end;
   aScanner.EndReading(end);
 
-  MOZ_LOG(GetExpatDriverLog(), LogLevel::Debug,
+  MOZ_LOG(gExpatDriverLog, LogLevel::Debug,
          ("Remaining in expat's buffer: %i, remaining in scanner: %i.",
           mExpatBuffered, Distance(start, end)));
 
@@ -1077,7 +1071,7 @@ nsExpatDriver::ConsumeToken(nsScanner& aScanner, bool& aFlushTokens)
       length = 0;
 
       if (blocked) {
-        MOZ_LOG(GetExpatDriverLog(), LogLevel::Debug,
+        MOZ_LOG(gExpatDriverLog, LogLevel::Debug,
                ("Resuming Expat, will parse data remaining in Expat's "
                 "buffer.\nContent of Expat's buffer:\n-----\n%s\n-----\n",
                 NS_ConvertUTF16toUTF8(currentExpatPosition.get(),
@@ -1086,7 +1080,7 @@ nsExpatDriver::ConsumeToken(nsScanner& aScanner, bool& aFlushTokens)
       else {
         NS_ASSERTION(mExpatBuffered == Distance(currentExpatPosition, end),
                      "Didn't pass all the data to Expat?");
-        MOZ_LOG(GetExpatDriverLog(), LogLevel::Debug,
+        MOZ_LOG(gExpatDriverLog, LogLevel::Debug,
                ("Last call to Expat, will parse data remaining in Expat's "
                 "buffer.\nContent of Expat's buffer:\n-----\n%s\n-----\n",
                 NS_ConvertUTF16toUTF8(currentExpatPosition.get(),
@@ -1097,7 +1091,7 @@ nsExpatDriver::ConsumeToken(nsScanner& aScanner, bool& aFlushTokens)
       buffer = start.get();
       length = uint32_t(start.size_forward());
 
-      MOZ_LOG(GetExpatDriverLog(), LogLevel::Debug,
+      MOZ_LOG(gExpatDriverLog, LogLevel::Debug,
              ("Calling Expat, will parse data remaining in Expat's buffer and "
               "new data.\nContent of Expat's buffer:\n-----\n%s\n-----\nNew "
               "data:\n-----\n%s\n-----\n",
@@ -1125,19 +1119,25 @@ nsExpatDriver::ConsumeToken(nsScanner& aScanner, bool& aFlushTokens)
         // last line until the point where we stopped parsing.
         nsScannerIterator startLastLine = currentExpatPosition;
         startLastLine.advance(-((ptrdiff_t)lastLineLength));
-        CopyUnicodeTo(startLastLine, currentExpatPosition, mLastLine);
+        if (!CopyUnicodeTo(startLastLine, currentExpatPosition, mLastLine)) {
+          return (mInternalState = NS_ERROR_OUT_OF_MEMORY);
+        }
       }
       else {
         // There was no line break in the consumed data, append the consumed
         // data.
-        AppendUnicodeTo(oldExpatPosition, currentExpatPosition, mLastLine);
+        if (!AppendUnicodeTo(oldExpatPosition,
+                             currentExpatPosition,
+                             mLastLine)) {
+          return (mInternalState = NS_ERROR_OUT_OF_MEMORY);
+        }
       }
     }
 
     mExpatBuffered += length - consumed;
 
     if (BlockedOrInterrupted()) {
-      MOZ_LOG(GetExpatDriverLog(), LogLevel::Debug,
+      MOZ_LOG(gExpatDriverLog, LogLevel::Debug,
              ("Blocked or interrupted parser (probably for loading linked "
               "stylesheets or scripts)."));
 
@@ -1198,7 +1198,7 @@ nsExpatDriver::ConsumeToken(nsScanner& aScanner, bool& aFlushTokens)
   aScanner.SetPosition(currentExpatPosition, true);
   aScanner.Mark();
 
-  MOZ_LOG(GetExpatDriverLog(), LogLevel::Debug,
+  MOZ_LOG(gExpatDriverLog, LogLevel::Debug,
          ("Remaining in expat's buffer: %i, remaining in scanner: %i.",
           mExpatBuffered, Distance(currentExpatPosition, end)));
 
@@ -1244,20 +1244,20 @@ nsExpatDriver::WillBuildModel(const CParserContext& aParserContext,
 
   nsCOMPtr<nsIDocument> doc = do_QueryInterface(mOriginalSink->GetTarget());
   if (doc) {
-    nsCOMPtr<nsPIDOMWindow> win = doc->GetWindow();
-    if (!win) {
+    nsCOMPtr<nsPIDOMWindowOuter> win = doc->GetWindow();
+    nsCOMPtr<nsPIDOMWindowInner> inner;
+    if (win) {
+      inner = win->GetCurrentInnerWindow();
+    } else {
       bool aHasHadScriptHandlingObject;
       nsIScriptGlobalObject *global =
         doc->GetScriptHandlingObject(aHasHadScriptHandlingObject);
       if (global) {
-        win = do_QueryInterface(global);
+        inner = do_QueryInterface(global);
       }
     }
-    if (win && !win->IsInnerWindow()) {
-      win = win->GetCurrentInnerWindow();
-    }
-    if (win) {
-      mInnerWindowID = win->WindowID();
+    if (inner) {
+      mInnerWindowID = inner->WindowID();
     }
   }
 

@@ -9,23 +9,26 @@
 
 #include "nsCOMPtr.h"
 #include "nsIObserver.h"
-#include "nsRefPtrHashtable.h"
 #include "nsTObserverArray.h"
+#include "PresentationServiceBase.h"
 #include "PresentationSessionInfo.h"
 
 class nsIPresentationSessionRequest;
 class nsIURI;
+class nsIPresentationSessionTransportBuilder;
 
 namespace mozilla {
 namespace dom {
 
+class PresentationDeviceRequest;
 class PresentationRespondingInfo;
 
 class PresentationService final : public nsIPresentationService
                                 , public nsIObserver
+                                , public PresentationServiceBase
 {
 public:
-  NS_DECL_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIOBSERVER
   NS_DECL_NSIPRESENTATIONSERVICE
 
@@ -33,43 +36,49 @@ public:
   bool Init();
 
   already_AddRefed<PresentationSessionInfo>
-  GetSessionInfo(const nsAString& aSessionId)
+  GetSessionInfo(const nsAString& aSessionId, const uint8_t aRole)
   {
+    MOZ_ASSERT(aRole == nsIPresentationService::ROLE_CONTROLLER ||
+               aRole == nsIPresentationService::ROLE_RECEIVER);
+
     RefPtr<PresentationSessionInfo> info;
-    return mSessionInfo.Get(aSessionId, getter_AddRefs(info)) ?
-           info.forget() : nullptr;
+    if (aRole == nsIPresentationService::ROLE_CONTROLLER) {
+      return mSessionInfoAtController.Get(aSessionId, getter_AddRefs(info)) ?
+             info.forget() : nullptr;
+    } else {
+      return mSessionInfoAtReceiver.Get(aSessionId, getter_AddRefs(info)) ?
+             info.forget() : nullptr;
+    }
   }
 
   bool IsSessionAccessible(const nsAString& aSessionId,
+                           const uint8_t aRole,
                            base::ProcessId aProcessId);
 
+  nsresult RegisterTransportBuilder(const nsAString& aSessionId,
+                                    uint8_t aRole,
+                                    nsIPresentationSessionTransportBuilder* aBuilder);
+
 private:
-  ~PresentationService();
+  friend class PresentationDeviceRequest;
+
+  virtual ~PresentationService();
   void HandleShutdown();
   nsresult HandleDeviceChange();
   nsresult HandleSessionRequest(nsIPresentationSessionRequest* aRequest);
   void NotifyAvailableChange(bool aIsAvailable);
   bool IsAppInstalled(nsIURI* aUri);
 
+  // This is meant to be called by PresentationDeviceRequest.
+  already_AddRefed<PresentationSessionInfo>
+  CreateControllingSessionInfo(const nsAString& aUrl,
+                               const nsAString& aSessionId,
+                               uint64_t aWindowId);
+
   bool mIsAvailable;
   nsTObserverArray<nsCOMPtr<nsIPresentationAvailabilityListener>> mAvailabilityListeners;
-
-  // Store the responding listener based on the window ID of the (in-process or
-  // OOP) receiver page.
-  // TODO Bug 1195605 - Support many-to-one session.
-  // So far responding listeners are registered but |notifySessionConnect| hasn't
-  // been called in any place until many-to-one session becomes supported.
-  nsRefPtrHashtable<nsUint64HashKey, nsIPresentationRespondingListener> mRespondingListeners;
-
-  nsRefPtrHashtable<nsStringHashKey, PresentationSessionInfo> mSessionInfo;
-
-  // Store the mapping between the window ID of the in-process page and the ID
-  // of the responding session. It's used for an in-process receiver page to
-  // retrieve the correspondent session ID. Besides, also keep the mapping
-  // between the responding session ID and the window ID to help look up the
-  // window ID.
-  nsClassHashtable<nsUint64HashKey, nsString> mRespondingSessionIds;
-  nsDataHashtable<nsStringHashKey, uint64_t> mRespondingWindowIds;
+  nsRefPtrHashtable<nsStringHashKey, PresentationSessionInfo> mSessionInfoAtController;
+  nsRefPtrHashtable<nsStringHashKey, PresentationSessionInfo> mSessionInfoAtReceiver;
 };
 
 } // namespace dom

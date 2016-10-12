@@ -24,18 +24,18 @@
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 
-#include "mtransport_test_utils.h"
 
 #define GTEST_HAS_RTTI 0
 #include "gtest/gtest.h"
 #include "gtest_utils.h"
 
-MtransportTestUtils *test_utils;
+using namespace mozilla;
 
 namespace {
-class SocketTransportServiceTest : public ::testing::Test {
+class SocketTransportServiceTest : public MtransportTest {
  public:
-  SocketTransportServiceTest() : received_(0),
+  SocketTransportServiceTest() : MtransportTest(),
+                                 received_(0),
                                  readpipe_(nullptr),
                                  writepipe_(nullptr),
                                  registered_(false) {
@@ -76,7 +76,7 @@ class SocketTransportServiceTest : public ::testing::Test {
 
 
 // Received an event.
-class EventReceived : public nsRunnable {
+class EventReceived : public Runnable {
 public:
   explicit EventReceived(SocketTransportServiceTest *test) :
       test_(test) {}
@@ -91,7 +91,7 @@ public:
 
 
 // Register our listener on the socket
-class RegisterEvent : public nsRunnable {
+class RegisterEvent : public Runnable {
 public:
   explicit RegisterEvent(SocketTransportServiceTest *test) :
       test_(test) {}
@@ -143,6 +143,8 @@ class SocketHandler : public nsASocketHandler {
 NS_IMPL_ISUPPORTS0(SocketHandler)
 
 void SocketTransportServiceTest::SetUp() {
+  MtransportTest::SetUp();
+
   // Get the transport service as a dispatch target
   nsresult rv;
   target_ = do_GetService(NS_SOCKETTRANSPORTSERVICE_CONTRACTID, &rv);
@@ -204,15 +206,3 @@ TEST_F(SocketTransportServiceTest, SendPacket) {
 
 
 }  // end namespace
-
-
-int main(int argc, char **argv) {
-  test_utils = new MtransportTestUtils();
-
-  // Start the tests
-  ::testing::InitGoogleTest(&argc, argv);
-
-  int rv = RUN_ALL_TESTS();
-  delete test_utils;
-  return rv;
-}

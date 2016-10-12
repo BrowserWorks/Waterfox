@@ -30,9 +30,9 @@ class nsDOMDataChannel final : public mozilla::DOMEventTargetHelper,
 {
 public:
   nsDOMDataChannel(already_AddRefed<mozilla::DataChannel>& aDataChannel,
-                   nsPIDOMWindow* aWindow);
+                   nsPIDOMWindowInner* aWindow);
 
-  nsresult Init(nsPIDOMWindow* aDOMWindow);
+  nsresult Init(nsPIDOMWindowInner* aDOMWindow);
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIDOMDATACHANNEL
@@ -42,9 +42,13 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsDOMDataChannel,
                                            mozilla::DOMEventTargetHelper)
 
+  // EventTarget
+  virtual void EventListenerAdded(nsIAtom* aType) override;
+  virtual void EventListenerRemoved(nsIAtom* aType) override;
+
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
     override;
-  nsPIDOMWindow* GetParentObject() const
+  nsPIDOMWindowInner* GetParentObject() const
   {
     return GetOwner();
   }
@@ -103,8 +107,19 @@ public:
   virtual nsresult
   OnBufferLow(nsISupports* aContext) override;
 
+  virtual nsresult
+  NotBuffered(nsISupports* aContext) override;
+
   virtual void
   AppReady();
+
+  // if there are "strong event listeners" or outgoing not sent messages
+  // then this method keeps the object alive when js doesn't have strong
+  // references to it.
+  void UpdateMustKeepAlive();
+  // ATTENTION, when calling this method the object can be released
+  // (and possibly collected).
+  void DontKeepAliveAnyMore();
 
 protected:
   ~nsDOMDataChannel();
@@ -113,6 +128,8 @@ private:
   void Send(nsIInputStream* aMsgStream, const nsACString& aMsgString,
             uint32_t aMsgLength, bool aIsBinary, mozilla::ErrorResult& aRv);
 
+  // to keep us alive while we have listeners
+  RefPtr<nsDOMDataChannel> mSelfRef;
   // Owning reference
   RefPtr<mozilla::DataChannel> mDataChannel;
   nsString  mOrigin;
@@ -121,6 +138,8 @@ private:
     DC_BINARY_TYPE_BLOB,
   };
   DataChannelBinaryType mBinaryType;
+  bool mCheckMustKeepAlive;
+  bool mSentClose;
 };
 
 #endif // nsDOMDataChannel_h

@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,6 +12,7 @@
 #include "base/waitable_event.h"
 #include "chrome/common/child_process_host.h"
 
+#include "mozilla/Atomics.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ipc/FileDescriptor.h"
 #include "mozilla/Monitor.h"
@@ -82,7 +85,7 @@ public:
                                   base::ProcessArchitecture aArch=base::GetCurrentProcessArchitecture());
 
   virtual void OnChannelConnected(int32_t peer_pid);
-  virtual void OnMessageReceived(const IPC::Message& aMsg);
+  virtual void OnMessageReceived(IPC::Message&& aMsg);
   virtual void OnChannelError();
   virtual void GetQueuedMessages(std::queue<IPC::Message>& queue);
 
@@ -124,6 +127,14 @@ public:
 
   // For bug 943174: Skip the EnsureProcessTerminated call in the destructor.
   void SetAlreadyDead();
+
+  // This associates an actor telling the process host to stay alive at least
+  // until DissociateActor has been called.
+  void AssociateActor() { mAssociatedActors++; }
+
+  // This gets called when actors get destroyed and will schedule the object
+  // for deletion when all actors have cleared their associations.
+  void DissociateActor();
 
 protected:
   GeckoProcessType mProcessType;
@@ -187,9 +198,14 @@ private:
                                   base::ProcessArchitecture arch);
 
   bool RunPerformAsyncLaunch(StringVector aExtraOpts=StringVector(),
-			     base::ProcessArchitecture aArch=base::GetCurrentProcessArchitecture());
+                             base::ProcessArchitecture aArch=base::GetCurrentProcessArchitecture());
 
   static void GetPathToBinary(FilePath& exePath);
+
+  // The buffer is passed to preserve its lifetime until we are done
+  // with launching the sub-process.
+  void SetChildLogName(const char* varName, const char* origLogName,
+                       nsACString &buffer);
 
   // In between launching the subprocess and handing off its IPC
   // channel, there's a small window of time in which *we* might still
@@ -199,6 +215,16 @@ private:
   //
   // FIXME/cjones: this strongly indicates bad design.  Shame on us.
   std::queue<IPC::Message> mQueue;
+
+  // This tracks how many actors are associated with this process that require
+  // it to stay alive and have not yet been destroyed.
+  Atomic<int32_t> mAssociatedActors;
+
+  // Remember original env values so we can restore it (there is no other
+  // simple way how to change environment of a child process than to modify
+  // the current environment).
+  nsCString mRestoreOrigNSPRLogName;
+  nsCString mRestoreOrigMozLogName;
 
   static uint32_t sNextUniqueID;
 };

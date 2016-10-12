@@ -395,7 +395,7 @@ status_t SampleTable::setCompositionTimeToSampleParams(
         return ERROR_MALFORMED;
     }
 
-    if (data_size != ((uint64_t)numEntries + 1) * 8) {
+    if (data_size < ((uint64_t)numEntries + 1) * 8) {
         return ERROR_MALFORMED;
     }
 
@@ -636,8 +636,8 @@ SampleTable::parseSampleCencInfo() {
         return OK;
     }
 
-    if (!mCencSizes.IsEmpty() && mCencOffsets.Length() > 1 &&
-        mCencSizes.IsEmpty() != mCencOffsets.Length()) {
+    if ((mCencOffsets.Length() > 1 && mCencOffsets.Length() < mCencInfoCount) ||
+        (!mCencDefaultSize && mCencSizes.Length() < mCencInfoCount)) {
         return ERROR_MALFORMED;
     }
 

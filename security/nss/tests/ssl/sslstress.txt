@@ -8,7 +8,6 @@
 # Enable  return  server     client                         Test Case name
 #  ECC    value   params     params
 # ------- ------  ------     ------                         ---------------
-  noECC     0      _         -c_1000_-C_A                  Stress SSL2 RC4 128 with MD5
   noECC     0      _         -c_1000_-C_c_-V_:ssl3               Stress SSL3 RC4 128 with MD5
   noECC     0      _         -c_1000_-C_c                  Stress TLS  RC4 128 with MD5
   noECC     0      _         -c_1000_-C_c_-g               Stress TLS  RC4 128 with MD5 (false start)
@@ -21,7 +20,6 @@
 #
 # add client auth versions here...
 #
-  noECC     0      -r_-r     -c_100_-C_A_-N_-n_TestUser    Stress SSL2 RC4 128 with MD5 (no reuse, client auth)
   noECC     0      -r_-r     -c_100_-C_c_-V_:ssl3_-N_-n_TestUser Stress SSL3 RC4 128 with MD5 (no reuse, client auth)
   noECC     0      -r_-r     -c_100_-C_c_-N_-n_TestUser    Stress TLS RC4 128 with MD5 (no reuse, client auth)
   noECC     0      -r_-r_-u  -V_ssl3:_-c_100_-C_c_-n_TestUser_-u Stress TLS RC4 128 with MD5 (session ticket, client auth)
@@ -75,6 +73,7 @@
 
    noECC    0      -c_:006B  -V_ssl3:_-c_100_-C_:006B_-N  Stress TLS DHE_RSA_WITH_AES_256_CBC_SHA256 (no reuse)
    noECC    0      -c_:009E  -V_ssl3:_-c_100_-C_:009E_-N  Stress TLS DHE_RSA_WITH_AES_128_GCM_SHA256 (no reuse)
+   noECC    0      -c_:009F  -V_ssl3:_-c_100_-C_:009F_-N  Stress TLS DHE_RSA_WITH_AES_256_GCM_SHA384 (no reuse)
 #
 # add client auth versions here...
 #
@@ -82,5 +81,7 @@
    noECC    0      -r_-r_-c_:0067  -V_ssl3:_-c_1000_-C_:0067_-n_TestUser-dsamixed  Stress TLS DHE_RSA_WITH_AES_128_CBC_SHA256 (client auth)
 
 #  noECC    0   -r_-r_-c_:00A2_-u  -V_ssl3:_-c_1000_-C_:00A2_-n_TestUser-dsa_-u       Stress TLS DHE_DSS_WITH_AES_128_GCM_SHA256 (session ticket, client auth)
+#  noECC    0   -r_-r_-c_:00A3_-u  -V_ssl3:_-c_1000_-C_:00A3_-n_TestUser-dsa_-u       Stress TLS DHE_DSS_WITH_AES_256_GCM_SHA384 (session ticket, client auth)
 # use the above session ticket test, once session tickets with DHE_DSS are working
    noECC    0   -r_-r_-c_:00A2_-u  -V_ssl3:_-c_1000_-C_:00A2_-N_-n_TestUser-dsa    Stress TLS DHE_DSS_WITH_AES_128_GCM_SHA256 (no reuse, client auth)
+   noECC    0   -r_-r_-c_:00A3_-u  -V_ssl3:_-c_1000_-C_:00A3_-N_-n_TestUser-dsa    Stress TLS DHE_DSS_WITH_AES_256_GCM_SHA384 (no reuse, client auth)

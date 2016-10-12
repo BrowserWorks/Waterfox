@@ -4,44 +4,43 @@ var gTestTab;
 var gContentAPI;
 var gContentWindow;
 
-function test() {
-  requestLongerTimeout(2);
-  UITourTest();
-}
+requestLongerTimeout(2);
+add_task(setup_UITourTest);
 
-var tests = [
-  function test_bg_getConfiguration(done) {
-    info("getConfiguration is on the allowed list so should work");
-    loadForegroundTab().then(() => {
-      gContentAPI.getConfiguration("availableTargets", (data) => {
-        ok(data, "Got data from getConfiguration");
-        gBrowser.removeCurrentTab();
-        done();
+add_UITour_task(function* test_bg_getConfiguration() {
+  info("getConfiguration is on the allowed list so should work");
+  yield* loadForegroundTab();
+  let data = yield getConfigurationPromise("availableTargets");
+  ok(data, "Got data from getConfiguration");
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+});
+
+add_UITour_task(function* test_bg_showInfo() {
+  info("showInfo isn't on the allowed action list so should be denied");
+  yield* loadForegroundTab();
+
+  yield showInfoPromise("appMenu", "Hello from the background", "Surprise!").then(
+    () => ok(false, "panel shouldn't have shown from a background tab"),
+    () => ok(true, "panel wasn't shown from a background tab"));
+
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+});
+
+
+function* loadForegroundTab() {
+  // Spawn a content task that resolves once we're sure the visibilityState was
+  // changed. This state is what the tests in this file rely on.
+  let promise = ContentTask.spawn(gBrowser.selectedTab.linkedBrowser, null, function* () {
+    return new Promise(resolve => {
+      let document = content.document;
+      document.addEventListener("visibilitychange", function onStateChange() {
+        Assert.equal(document.visibilityState, "hidden", "UITour page should be hidden now.");
+        document.removeEventListener("visibilitychange", onStateChange);
+        resolve();
       });
     });
-  },
-  taskify(function* test_bg_showInfo() {
-    info("showInfo isn't on the allowed action list so should be denied");
-    yield loadForegroundTab();
-
-    yield showInfoPromise("appMenu", "Hello from the backgrund", "Surprise!").then(
-      () => ok(false, "panel shouldn't have shown from a background tab"),
-      () => ok(true, "panel wasn't shown from a background tab"));
-
-    gBrowser.removeCurrentTab();
-  }),
-];
-
-
-function loadForegroundTab() {
-  let newTab = gBrowser.addTab("about:blank", {skipAnimation: true});
-  gBrowser.selectedTab = newTab;
-
-  return new Promise((resolve) => {
-    newTab.linkedBrowser.addEventListener("load", function onLoad() {
-      newTab.linkedBrowser.removeEventListener("load", onLoad, true);
-      isnot(gBrowser.selectedTab, gTestTab, "Make sure tour tab isn't selected");
-      resolve();
-    }, true);
   });
+  yield BrowserTestUtils.openNewForegroundTab(gBrowser);
+  yield promise;
+  isnot(gBrowser.selectedTab, gTestTab, "Make sure tour tab isn't selected");
 }

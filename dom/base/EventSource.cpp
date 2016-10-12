@@ -12,6 +12,7 @@
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/EventSourceBinding.h"
 #include "mozilla/dom/MessageEvent.h"
+#include "mozilla/dom/MessageEventBinding.h"
 #include "mozilla/dom/ScriptSettings.h"
 
 #include "nsNetUtil.h"
@@ -58,7 +59,7 @@ namespace dom {
 #define DEFAULT_RECONNECTION_TIME_VALUE   5000
 #define MAX_RECONNECTION_TIME_VALUE       PR_IntervalToMilliseconds(DELAY_INTERVAL_LIMIT)
 
-EventSource::EventSource(nsPIDOMWindow* aOwnerWindow) :
+EventSource::EventSource(nsPIDOMWindowInner* aOwnerWindow) :
   DOMEventTargetHelper(aOwnerWindow),
   mStatus(PARSE_STATE_OFF),
   mFrozen(false),
@@ -184,12 +185,13 @@ EventSource::Init(nsISupports* aOwner,
                   const nsAString& aURL,
                   bool aWithCredentials)
 {
-  if (mReadyState != CONNECTING || !PrefEnabled()) {
+  if (mReadyState != CONNECTING) {
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
   nsCOMPtr<nsIScriptGlobalObject> sgo = do_QueryInterface(aOwner);
   NS_ENSURE_STATE(sgo);
+  // XXXbz why are we checking this?  This doesn't match anything in the spec.
   nsCOMPtr<nsIScriptContext> scriptContext = sgo->GetContext();
   NS_ENSURE_STATE(scriptContext);
 
@@ -212,19 +214,13 @@ EventSource::Init(nsISupports* aOwner,
   // Get the load group for the page. When requesting we'll add ourselves to it.
   // This way any pending requests will be automatically aborted if the user
   // leaves the page.
-  nsresult rv;
-  nsIScriptContext* sc = GetContextForEventHandlers(&rv);
-  if (sc) {
-    nsCOMPtr<nsIDocument> doc =
-      nsContentUtils::GetDocumentFromScriptContext(sc);
-    if (doc) {
-      mLoadGroup = doc->GetDocumentLoadGroup();
-    }
+  nsCOMPtr<nsIDocument> doc = GetDocumentIfCurrent();
+  if (doc) {
+    mLoadGroup = doc->GetDocumentLoadGroup();
   }
-
   // get the src
   nsCOMPtr<nsIURI> baseURI;
-  rv = GetBaseURI(getter_AddRefs(baseURI));
+  nsresult rv = GetBaseURI(getter_AddRefs(baseURI));
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIURI> srcURI;
@@ -280,7 +276,7 @@ EventSource::Constructor(const GlobalObject& aGlobal,
                          const EventSourceInit& aEventSourceInitDict,
                          ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> ownerWindow =
+  nsCOMPtr<nsPIDOMWindowInner> ownerWindow =
     do_QueryInterface(aGlobal.GetAsSupports());
   if (!ownerWindow) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
@@ -307,7 +303,7 @@ EventSource::Observe(nsISupports* aSubject,
     return NS_OK;
   }
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aSubject);
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aSubject);
   if (!GetOwner() || window != GetOwner()) {
     return NS_OK;
   }
@@ -368,11 +364,7 @@ EventSource::OnStartRequest(nsIRequest *aRequest,
     return NS_ERROR_ABORT;
   }
 
-  nsCOMPtr<nsIRunnable> event =
-    NS_NewRunnableMethod(this, &EventSource::AnnounceConnection);
-  NS_ENSURE_STATE(event);
-
-  rv = NS_DispatchToMainThread(event);
+  rv = NS_DispatchToMainThread(NewRunnableMethod(this, &EventSource::AnnounceConnection));
   NS_ENSURE_SUCCESS(rv, rv);
 
   mStatus = PARSE_STATE_BEGIN_OF_STREAM;
@@ -478,11 +470,7 @@ EventSource::OnStopRequest(nsIRequest *aRequest,
 
   ClearFields();
 
-  nsCOMPtr<nsIRunnable> event =
-    NS_NewRunnableMethod(this, &EventSource::ReestablishConnection);
-  NS_ENSURE_STATE(event);
-
-  rv = NS_DispatchToMainThread(event);
+  rv = NS_DispatchToMainThread(NewRunnableMethod(this, &EventSource::ReestablishConnection));
   NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
@@ -525,8 +513,9 @@ EventSource::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
   mHttpChannel = do_QueryInterface(aNewChannel);
   NS_ENSURE_STATE(mHttpChannel);
 
-  rv = SetupHttpChannel();
-  NS_ENSURE_SUCCESS(rv, rv);
+  SetupHttpChannel();
+  // The HTTP impl already copies over the referrer and referrer policy on
+  // redirects, so we don't need to SetupReferrerPolicy().
 
   if ((aFlags & nsIChannelEventSink::REDIRECT_PERMANENT) != 0) {
     rv = NS_GetFinalChannelURI(mHttpChannel, getter_AddRefs(mSrc));
@@ -564,7 +553,7 @@ EventSource::GetInterface(const nsIID & aIID,
     // Get the an auth prompter for our window so that the parenting
     // of the dialogs works as it should when using tabs.
 
-    nsCOMPtr<nsIDOMWindow> window;
+    nsCOMPtr<nsPIDOMWindowOuter> window;
     if (GetOwner()) {
       window = GetOwner()->GetOuterWindow();
     }
@@ -573,13 +562,6 @@ EventSource::GetInterface(const nsIID & aIID,
   }
 
   return QueryInterface(aIID, aResult);
-}
-
-// static
-bool
-EventSource::PrefEnabled(JSContext* aCx, JSObject* aGlobal)
-{
-  return Preferences::GetBool("dom.server-events.enabled", false);
 }
 
 nsresult
@@ -592,17 +574,14 @@ EventSource::GetBaseURI(nsIURI **aBaseURI)
   nsCOMPtr<nsIURI> baseURI;
 
   // first we try from document->GetBaseURI()
-  nsresult rv;
-  nsIScriptContext* sc = GetContextForEventHandlers(&rv);
-  nsCOMPtr<nsIDocument> doc =
-    nsContentUtils::GetDocumentFromScriptContext(sc);
+  nsCOMPtr<nsIDocument> doc = GetDocumentIfCurrent();
   if (doc) {
     baseURI = doc->GetBaseURI();
   }
 
   // otherwise we get from the doc's principal
   if (!baseURI) {
-    rv = mPrincipal->GetURI(getter_AddRefs(baseURI));
+    nsresult rv = mPrincipal->GetURI(getter_AddRefs(baseURI));
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -612,18 +591,7 @@ EventSource::GetBaseURI(nsIURI **aBaseURI)
   return NS_OK;
 }
 
-net::ReferrerPolicy
-EventSource::GetReferrerPolicy()
-{
-  nsresult rv;
-  nsIScriptContext* sc = GetContextForEventHandlers(&rv);
-  NS_ENSURE_SUCCESS(rv, mozilla::net::RP_Default);
-
-  nsCOMPtr<nsIDocument> doc = nsContentUtils::GetDocumentFromScriptContext(sc);
-  return doc ? doc->GetReferrerPolicy() : mozilla::net::RP_Default;
-}
-
-nsresult
+void
 EventSource::SetupHttpChannel()
 {
   mHttpChannel->SetRequestMethod(NS_LITERAL_CSTRING("GET"));
@@ -639,11 +607,15 @@ EventSource::SetupHttpChannel()
     mHttpChannel->SetRequestHeader(NS_LITERAL_CSTRING("Last-Event-ID"),
       NS_ConvertUTF16toUTF8(mLastEventID), false);
   }
+}
 
-  nsCOMPtr<nsIURI> codebase;
-  nsresult rv = GetBaseURI(getter_AddRefs(codebase));
-  if (NS_SUCCEEDED(rv)) {
-    rv = mHttpChannel->SetReferrerWithPolicy(codebase, this->GetReferrerPolicy());
+nsresult
+EventSource::SetupReferrerPolicy()
+{
+  nsCOMPtr<nsIDocument> doc = GetDocumentIfCurrent();
+  if (doc) {
+    nsresult rv = mHttpChannel->SetReferrerWithPolicy(doc->GetDocumentURI(),
+                                                      doc->GetReferrerPolicy());
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -670,9 +642,7 @@ EventSource::InitChannelAndRequestEventSource()
   nsLoadFlags loadFlags;
   loadFlags = nsIRequest::LOAD_BACKGROUND | nsIRequest::LOAD_BYPASS_CACHE;
 
-  nsIScriptContext* sc = GetContextForEventHandlers(&rv);
-  nsCOMPtr<nsIDocument> doc =
-    nsContentUtils::GetDocumentFromScriptContext(sc);
+  nsCOMPtr<nsIDocument> doc = GetDocumentIfCurrent();
 
   nsSecurityFlags securityFlags =
     nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS;
@@ -709,7 +679,8 @@ EventSource::InitChannelAndRequestEventSource()
   mHttpChannel = do_QueryInterface(channel);
   NS_ENSURE_TRUE(mHttpChannel, NS_ERROR_NO_INTERFACE);
 
-  rv = SetupHttpChannel();
+  SetupHttpChannel();
+  rv = SetupReferrerPolicy();
   NS_ENSURE_SUCCESS(rv, rv);
 
 #ifdef DEBUG
@@ -921,11 +892,8 @@ EventSource::ConsoleError()
 nsresult
 EventSource::DispatchFailConnection()
 {
-  nsCOMPtr<nsIRunnable> event =
-    NS_NewRunnableMethod(this, &EventSource::FailConnection);
-  NS_ENSURE_STATE(event);
 
-  return NS_DispatchToMainThread(event);
+  return NS_DispatchToMainThread(NewRunnableMethod(this, &EventSource::FailConnection));
 }
 
 void
@@ -999,7 +967,7 @@ EventSource::Thaw()
   nsresult rv;
   if (!mGoingToDispatchAllMessages && mMessagesToDispatch.GetSize() > 0) {
     nsCOMPtr<nsIRunnable> event =
-      NS_NewRunnableMethod(this, &EventSource::DispatchAllMessageEvents);
+      NewRunnableMethod(this, &EventSource::DispatchAllMessageEvents);
     NS_ENSURE_STATE(event);
 
     mGoingToDispatchAllMessages = true;
@@ -1059,7 +1027,7 @@ EventSource::DispatchCurrentMessageEvent()
 
   if (!mGoingToDispatchAllMessages) {
     nsCOMPtr<nsIRunnable> event =
-      NS_NewRunnableMethod(this, &EventSource::DispatchAllMessageEvents);
+      NewRunnableMethod(this, &EventSource::DispatchAllMessageEvents);
     NS_ENSURE_STATE(event);
 
     mGoingToDispatchAllMessages = true;
@@ -1112,13 +1080,8 @@ EventSource::DispatchAllMessageEvents()
     RefPtr<MessageEvent> event =
       NS_NewDOMMessageEvent(this, nullptr, nullptr);
 
-    rv = event->InitMessageEvent(message->mEventName, false, false, jsData,
-                                 mOrigin, message->mLastEventID, nullptr);
-    if (NS_FAILED(rv)) {
-      NS_WARNING("Failed to init the message event!!!");
-      return;
-    }
-
+    event->InitMessageEvent(nullptr, message->mEventName, false, false, jsData,
+                            mOrigin, message->mLastEventID, nullptr, nullptr);
     event->SetTrusted(true);
 
     rv = DispatchDOMEvent(nullptr, static_cast<Event*>(event), nullptr,

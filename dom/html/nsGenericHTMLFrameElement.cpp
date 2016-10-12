@@ -8,6 +8,7 @@
 
 #include "mozilla/dom/BrowserElementAudioChannel.h"
 #include "mozilla/dom/ContentChild.h"
+#include "mozilla/dom/HTMLIFrameElement.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/ErrorResult.h"
 #include "GeckoProfiler.h"
@@ -25,6 +26,7 @@
 #include "nsPresContext.h"
 #include "nsServiceManagerUtils.h"
 #include "nsSubDocumentFrame.h"
+#include "nsXULElement.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -85,7 +87,7 @@ nsGenericHTMLFrameElement::GetContentDocument(nsIDOMDocument** aContentDocument)
 nsIDocument*
 nsGenericHTMLFrameElement::GetContentDocument()
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetContentWindow();
+  nsCOMPtr<nsPIDOMWindowOuter> win = GetContentWindow();
   if (!win) {
     return nullptr;
   }
@@ -103,16 +105,7 @@ nsGenericHTMLFrameElement::GetContentDocument()
   return doc;
 }
 
-nsresult
-nsGenericHTMLFrameElement::GetContentWindow(nsIDOMWindow** aContentWindow)
-{
-  NS_PRECONDITION(aContentWindow, "Null out param");
-  nsCOMPtr<nsPIDOMWindow> window = GetContentWindow();
-  window.forget(aContentWindow);
-  return NS_OK;
-}
-
-already_AddRefed<nsPIDOMWindow>
+already_AddRefed<nsPIDOMWindowOuter>
 nsGenericHTMLFrameElement::GetContentWindow()
 {
   EnsureFrameLoader();
@@ -130,8 +123,11 @@ nsGenericHTMLFrameElement::GetContentWindow()
 
   nsCOMPtr<nsIDocShell> doc_shell;
   mFrameLoader->GetDocShell(getter_AddRefs(doc_shell));
+  if (!doc_shell) {
+    return nullptr;
+  }
 
-  nsCOMPtr<nsPIDOMWindow> win = do_GetInterface(doc_shell);
+  nsCOMPtr<nsPIDOMWindowOuter> win = doc_shell->GetWindow();
 
   if (!win) {
     return nullptr;
@@ -220,11 +216,37 @@ nsGenericHTMLFrameElement::GetParentApplication(mozIApplication** aApplication)
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsGenericHTMLFrameElement::SwapFrameLoaders(nsIFrameLoaderOwner* aOtherOwner)
+void
+nsGenericHTMLFrameElement::SwapFrameLoaders(HTMLIFrameElement& aOtherLoaderOwner,
+                                            ErrorResult& rv)
 {
-  // We don't support this yet
-  return NS_ERROR_NOT_IMPLEMENTED;
+  if (&aOtherLoaderOwner == this) {
+    // nothing to do
+    return;
+  }
+
+  SwapFrameLoaders(aOtherLoaderOwner.mFrameLoader, rv);
+}
+
+void
+nsGenericHTMLFrameElement::SwapFrameLoaders(nsXULElement& aOtherLoaderOwner,
+                                            ErrorResult& rv)
+{
+  aOtherLoaderOwner.SwapFrameLoaders(mFrameLoader, rv);
+}
+
+void
+nsGenericHTMLFrameElement::SwapFrameLoaders(RefPtr<nsFrameLoader>& aOtherLoader,
+                                            mozilla::ErrorResult& rv)
+{
+  if (!mFrameLoader || !aOtherLoader) {
+    rv.Throw(NS_ERROR_NOT_IMPLEMENTED);
+    return;
+  }
+
+  rv = mFrameLoader->SwapWithOtherLoader(aOtherLoader,
+                                         mFrameLoader,
+                                         aOtherLoader);
 }
 
 NS_IMETHODIMP
@@ -560,6 +582,20 @@ nsGenericHTMLFrameElement::GetReallyIsWidget(bool *aOut)
 }
 
 /* [infallible] */ NS_IMETHODIMP
+nsGenericHTMLFrameElement::GetIsolated(bool *aOut)
+{
+  *aOut = true;
+
+  if (!nsContentUtils::IsSystemPrincipal(NodePrincipal())) {
+    return NS_OK;
+  }
+
+  // Isolation is only disabled if the attribute is present
+  *aOut = !HasAttr(kNameSpaceID_None, nsGkAtoms::noisolation);
+  return NS_OK;
+}
+
+/* [infallible] */ NS_IMETHODIMP
 nsGenericHTMLFrameElement::GetIsExpectingSystemMessage(bool *aOut)
 {
   *aOut = false;
@@ -707,11 +743,3 @@ nsGenericHTMLFrameElement::InitializeBrowserAPI()
   InitBrowserElementAPI();
   return NS_OK;
 }
-
-void
-nsGenericHTMLFrameElement::SwapFrameLoaders(nsXULElement& aOtherOwner,
-                                            ErrorResult& aError)
-{
-  aError.Throw(NS_ERROR_NOT_IMPLEMENTED);
-}
-

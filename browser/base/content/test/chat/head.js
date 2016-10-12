@@ -11,28 +11,28 @@ function promiseOpenChat(url, mode, focus, buttonSet = null) {
   let uri = Services.io.newURI(url, null, null);
   let origin = uri.prePath;
   let title = origin;
-  let deferred = Promise.defer();
-  // we just through a few hoops to ensure the content document is fully
-  // loaded, otherwise tests that rely on that content may intermittently fail.
-  let callback = function(chatbox) {
-    if (chatbox.contentDocument.readyState == "complete") {
-      // already loaded.
-      deferred.resolve(chatbox);
-      return;
+  return new Promise(resolve => {
+    // we just through a few hoops to ensure the content document is fully
+    // loaded, otherwise tests that rely on that content may intermittently fail.
+    let callback = function(chatbox) {
+      let mm = chatbox.content.messageManager;
+      mm.sendAsyncMessage("WaitForDOMContentLoaded");
+      mm.addMessageListener("DOMContentLoaded", function cb() {
+        mm.removeMessageListener("DOMContentLoaded", cb);
+        resolve(chatbox);
+      });
     }
-    chatbox.addEventListener("load", function onload(event) {
-      if (event.target != chatbox.contentDocument || chatbox.contentDocument.location.href == "about:blank") {
-        return;
-      }
-      chatbox.removeEventListener("load", onload, true);
-      deferred.resolve(chatbox);
-    }, true);
-  }
-  let chatbox = Chat.open(null, origin, title, url, mode, focus, callback);
-  if (buttonSet) {
-    chatbox.setAttribute("buttonSet", buttonSet);
-  }
-  return deferred.promise;
+    let chatbox = Chat.open(null, {
+      origin: origin,
+      title: title,
+      url: url,
+      mode: mode,
+      focus: focus
+    }, callback);
+    if (buttonSet) {
+      chatbox.setAttribute("buttonSet", buttonSet);
+    }
+  });
 }
 
 // Opens a chat, returns a promise resolved when the chat callback fired.
@@ -40,21 +40,30 @@ function promiseOpenChatCallback(url, mode) {
   let uri = Services.io.newURI(url, null, null);
   let origin = uri.prePath;
   let title = origin;
-  let deferred = Promise.defer();
-  let callback = deferred.resolve;
-  Chat.open(null, origin, title, url, mode, undefined, callback);
-  return deferred.promise;
+  return new Promise(resolve => {
+    Chat.open(null, { origin, title, url, mode }, resolve);
+  });
 }
 
 // Opens a chat, returns the chat window's promise which fires when the chat
 // starts loading.
 function promiseOneEvent(target, eventName, capture) {
-  let deferred = Promise.defer();
-  target.addEventListener(eventName, function handler(event) {
-    target.removeEventListener(eventName, handler, capture);
-    deferred.resolve();
-  }, capture);
-  return deferred.promise;
+  return new Promise(resolve => {
+    target.addEventListener(eventName, function handler(event) {
+      target.removeEventListener(eventName, handler, capture);
+      resolve();
+    }, capture);
+  });
+}
+
+function promiseOneMessage(target, messageName) {
+  return new Promise(resolve => {
+    let mm = target.messageManager;
+    mm.addMessageListener(messageName, function handler() {
+      mm.removeMessageListener(messageName, handler);
+      resolve();
+    });
+  });
 }
 
 // Return the number of chats in a browser window.
@@ -64,9 +73,7 @@ function numChatsInWindow(win) {
 }
 
 function promiseWaitForFocus() {
-  let deferred = Promise.defer();
-  waitForFocus(deferred.resolve);
-  return deferred.promise;
+  return new Promise(resolve => waitForFocus(resolve));
 }
 
 // A simple way to clean up after each test.
@@ -91,5 +98,33 @@ function add_chat_task(genFunction) {
         win.close();
       }
     }
+  });
+}
+
+function waitForCondition(condition, nextTest, errorMsg) {
+  var tries = 0;
+  var interval = setInterval(function() {
+    if (tries >= 100) {
+      ok(false, errorMsg);
+      moveOn();
+    }
+    var conditionPassed;
+    try {
+      conditionPassed = condition();
+    } catch (e) {
+      ok(false, e + "\n" + e.stack);
+      conditionPassed = false;
+    }
+    if (conditionPassed) {
+      moveOn();
+    }
+    tries++;
+  }, 100);
+  var moveOn = function() { clearInterval(interval); nextTest(); };
+}
+
+function promiseWaitForCondition(aConditionFn) {
+  return new Promise((resolve, reject) => {
+    waitForCondition(aConditionFn, resolve, "Condition didn't pass.");
   });
 }

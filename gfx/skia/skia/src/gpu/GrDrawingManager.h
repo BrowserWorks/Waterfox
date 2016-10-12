@@ -16,14 +16,10 @@
 
 class GrContext;
 class GrDrawContext;
+class GrSingleOWner;
 class GrSoftwarePathRenderer;
-class GrTextContext;
 
-// Currently the DrawingManager creates a separate GrTextContext for each
-// combination of text drawing options (pixel geometry x DFT use)
-// and hands the appropriate one back given the DrawContext's request.
-//
-// It allocates a new GrDrawContext for each GrRenderTarget
+// The GrDrawingManager allocates a new GrDrawContext for each GrRenderTarget
 // but all of them still land in the same GrDrawTarget!
 //
 // In the future this class will allocate a new GrDrawContext for
@@ -35,11 +31,9 @@ public:
     bool abandoned() const { return fAbandoned; }
     void freeGpuResources();
 
-    GrDrawContext* drawContext(GrRenderTarget* rt, const SkSurfaceProps* surfaceProps);
+    GrDrawContext* drawContext(GrRenderTarget* rt, const SkSurfaceProps*);
 
-    GrTextContext* textContext(const SkSurfaceProps& props, GrRenderTarget* rt);
-
-    // The caller automatically gets a ref on the returned drawTarget. It must 
+    // The caller automatically gets a ref on the returned drawTarget. It must
     // be balanced by an unref call.
     GrDrawTarget* newDrawTarget(GrRenderTarget* rt);
 
@@ -53,15 +47,16 @@ public:
     static bool ProgramUnitTest(GrContext* context, int maxStages);
 
 private:
-    GrDrawingManager(GrContext* context, const GrDrawTarget::Options& optionsForDrawTargets)
+    GrDrawingManager(GrContext* context, const GrDrawTarget::Options& optionsForDrawTargets,
+                     GrSingleOwner* singleOwner)
         : fContext(context)
         , fOptionsForDrawTargets(optionsForDrawTargets)
+        , fSingleOwner(singleOwner)
         , fAbandoned(false)
-        , fNVPRTextContext(nullptr)
         , fPathRendererChain(nullptr)
         , fSoftwarePathRenderer(nullptr)
-        , fFlushState(context->getGpu(), context->resourceProvider()) {
-        sk_bzero(fTextContexts, sizeof(fTextContexts));
+        , fFlushState(context->getGpu(), context->resourceProvider())
+        , fFlushing(false) {
     }
 
     void abandon();
@@ -77,16 +72,17 @@ private:
     GrContext*                  fContext;
     GrDrawTarget::Options       fOptionsForDrawTargets;
 
+    // In debug builds we guard against improper thread handling
+    GrSingleOwner*              fSingleOwner;
+
     bool                        fAbandoned;
     SkTDArray<GrDrawTarget*>    fDrawTargets;
-
-    GrTextContext*              fNVPRTextContext;
-    GrTextContext*              fTextContexts[kNumPixelGeometries][kNumDFTOptions];
 
     GrPathRendererChain*        fPathRendererChain;
     GrSoftwarePathRenderer*     fSoftwarePathRenderer;
 
     GrBatchFlushState           fFlushState;
+    bool                        fFlushing;
 };
 
 #endif

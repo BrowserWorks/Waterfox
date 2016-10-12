@@ -1,14 +1,15 @@
 [
 {
-"size": 80458572,
-"digest": "e5101f9dee1e462f6cbd3897ea57eede41d23981825c7b20d91d23ab461875d54d3dfc24999aa58a31e8b01f49fb3140e05ffe5af2957ef1d1afb89fd0dfe1ad",
+"version": "gcc 4.8.5 + PR64905",
+"size": 80160264,
+"digest": "c1a9dc9da289b8528874d16300b9d13a997cec99195bb0bc46ff665216d8535d6d6cb5af6b4b1f2749af6815dab12e703fdb3849014e5c23a70eff351a0baf4e",
 "algorithm": "sha512",
 "filename": "gcc.tar.xz",
 "unpack": true
 },
 {
-"size": 11179576,
-"digest": "91567ce8e2bb8ab0ebc60c31e90731d88a1ea889fb71bcf55c735746a60fa7610b7e040ea3d8f727b6f692ae3ee703d6f3b30cdbd76fdf5617f77d9c38aa20ed",
+"size": 11189216,
+"digest": "18bc52b0599b1308b667e282abb45f47597bfc98a5140cfcab8da71dacf89dd76d0dee22a04ce26fe7ad1f04e2d6596991f9e5b01fd2aaaab5542965f596b0e6",
 "algorithm": "sha512",
 "filename": "gtk3.tar.xz",
 "setup": "setup.sh",

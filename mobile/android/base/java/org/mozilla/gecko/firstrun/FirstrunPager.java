@@ -13,17 +13,15 @@ import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.AnimatorSet;
-import com.nineoldandroids.animation.ObjectAnimator;
-import com.nineoldandroids.view.ViewHelper;
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 
-import org.mozilla.gecko.Restrictions;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
-import org.mozilla.gecko.animation.TransitionsTracker;
 import org.mozilla.gecko.home.HomePager.Decor;
 import org.mozilla.gecko.home.TabMenuStrip;
+import org.mozilla.gecko.restrictions.Restrictions;
 
 import java.util.List;
 
@@ -37,7 +35,6 @@ public class FirstrunPager extends ViewPager {
     private Context context;
     protected FirstrunPanel.PagerNavigation pagerNavigation;
     private Decor mDecor;
-    private View mTabStrip;
 
     public FirstrunPager(Context context) {
         this(context, null);
@@ -53,8 +50,6 @@ public class FirstrunPager extends ViewPager {
         if (child instanceof Decor) {
             ((ViewPager.LayoutParams) params).isDecor = true;
             mDecor = (Decor) child;
-            mTabStrip = child;
-
             mDecor.setOnTitleClickListener(new TabMenuStrip.OnTitleClickListener() {
                 @Override
                 public void onTitleClicked(int index) {
@@ -73,9 +68,6 @@ public class FirstrunPager extends ViewPager {
             panels = FirstrunPagerConfig.getRestricted();
         } else {
             panels = FirstrunPagerConfig.getDefault(appContext);
-            if (panels.size() == 1) {
-                mTabStrip.setVisibility(GONE);
-            }
         }
 
         setAdapter(new ViewPagerAdapter(fm, panels));
@@ -122,8 +114,8 @@ public class FirstrunPager extends ViewPager {
     }
 
     private void animateLoad() {
-        ViewHelper.setTranslationY(this, 500);
-        ViewHelper.setAlpha(this, 0);
+        setTranslationY(500);
+        setAlpha(0);
 
         final Animator translateAnimator = ObjectAnimator.ofFloat(this, "translationY", 0);
         translateAnimator.setDuration(400);
@@ -135,7 +127,6 @@ public class FirstrunPager extends ViewPager {
         final AnimatorSet set = new AnimatorSet();
         set.playTogether(alphaAnimator, translateAnimator);
         set.setStartDelay(400);
-        TransitionsTracker.track(set);
 
         set.start();
     }

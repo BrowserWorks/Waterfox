@@ -17,7 +17,13 @@
 #include "nsThreadUtils.h"
 #include "prlink.h"
 
-#define URI_PREFIX "urn:moz-tts:sapi:"
+#include <math.h>
+#include <stdlib.h>
+
+#define URI_PREFIX "urn:moz-tts:speechd:"
+
+#define MAX_RATE static_cast<float>(2.5)
+#define MIN_RATE static_cast<float>(0.5)
 
 // Some structures for libspeechd
 typedef enum {
@@ -268,7 +274,7 @@ speechd_cb(size_t msg_id, size_t client_id, SPDNotificationType state)
 
   if (service) {
     NS_DispatchToMainThread(
-      NS_NewRunnableMethodWithArgs<uint32_t, SPDNotificationType>(
+      NewRunnableMethod<uint32_t, SPDNotificationType>(
         service, &SpeechDispatcherService::EventNotify,
         static_cast<uint32_t>(msg_id), state));
   }
@@ -305,7 +311,7 @@ SpeechDispatcherService::Init()
                                              getter_AddRefs(mInitThread));
   MOZ_ASSERT(NS_SUCCEEDED(rv));
   rv = mInitThread->Dispatch(
-    NS_NewRunnableMethod(this, &SpeechDispatcherService::Setup), NS_DISPATCH_NORMAL);
+    NewRunnableMethod(this, &SpeechDispatcherService::Setup), NS_DISPATCH_NORMAL);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
 
@@ -335,6 +341,13 @@ SpeechDispatcherService::Setup()
 
   if (!speechdLib) {
     NS_WARNING("Failed to load speechd library");
+    return;
+  }
+
+  if (!PR_FindFunctionSymbol(speechdLib, "spd_get_volume")) {
+    // There is no version getter function, so we rely on a symbol that was
+    // introduced in release 0.8.2 in order to check for ABI compatibility.
+    NS_WARNING("Unsupported version of speechd detected");
     return;
   }
 
@@ -406,48 +419,36 @@ SpeechDispatcherService::Setup()
     }
   }
 
-  NS_DispatchToMainThread(NS_NewRunnableMethod(this, &SpeechDispatcherService::RegisterVoices));
+  NS_DispatchToMainThread(NewRunnableMethod(this, &SpeechDispatcherService::RegisterVoices));
 
   //mInitialized = true;
 }
 
-struct VoiceTraverserData
-{
-  SpeechDispatcherService* mService;
-  nsSynthVoiceRegistry* mRegistry;
-};
-
 // private methods
-
-static PLDHashOperator
-AddVoiceTraverser(const nsAString& aUri,
-                  RefPtr<SpeechDispatcherVoice>& aVoice,
-                  void* aUserArg)
-{
-  VoiceTraverserData* data = static_cast<VoiceTraverserData*>(aUserArg);
-
-  // This service can only speak one utterance at a time, se we set
-  // aQueuesUtterances to true in order to track global state and schedule
-  // access to this service.
-  DebugOnly<nsresult> rv = data->mRegistry->AddVoice(data->mService, aUri,
-                                                     aVoice->mName, aVoice->mLanguage,
-                                                     aVoice->mName.EqualsLiteral("default"), true);
-
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to add voice");
-
-  return PL_DHASH_NEXT;
-}
 
 void
 SpeechDispatcherService::RegisterVoices()
 {
-  VoiceTraverserData data = { this, nsSynthVoiceRegistry::GetInstance() };
-  mVoices.Enumerate(AddVoiceTraverser, &data);
+  RefPtr<nsSynthVoiceRegistry> registry = nsSynthVoiceRegistry::GetInstance();
+  for (auto iter = mVoices.Iter(); !iter.Done(); iter.Next()) {
+    RefPtr<SpeechDispatcherVoice>& voice = iter.Data();
+
+    // This service can only speak one utterance at a time, so we set
+    // aQueuesUtterances to true in order to track global state and schedule
+    // access to this service.
+    DebugOnly<nsresult> rv =
+      registry->AddVoice(this, iter.Key(), voice->mName, voice->mLanguage,
+                         voice->mName.EqualsLiteral("default"), true);
+
+    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to add voice");
+  }
 
   mInitThread->Shutdown();
   mInitThread = nullptr;
 
   mInitialized = true;
+
+  registry->NotifyVoicesChanged();
 }
 
 // nsIObserver
@@ -487,17 +488,18 @@ SpeechDispatcherService::Speak(const nsAString& aText, const nsAString& aUri,
   // We provide a volume of 0.0 to 1.0, speech-dispatcher expects 0 - 100.
   spd_set_volume(mSpeechdClient, static_cast<int>(aVolume * 100));
 
-  // We provide a rate of 0.1 to 10 with 1 being default.
-  // speech-dispatcher expects -100 to 100 with 0 being default.
-  int rate = 0;
-
+  // aRate is a value of 0.1 (0.1x) to 10 (10x) with 1 (1x) being normal rate.
+  // speechd expects -100 to 100 with 0 being normal rate.
+  float rate = 0;
   if (aRate > 1) {
-    rate = static_cast<int>((aRate - 1) * 10);
-  } else if (aRate <= 1) {
-    rate = static_cast<int>((aRate - 1) * (100/0.9));
+    // Each step to 100 is logarithmically distributed up to 2.5x.
+    rate = log10(std::min(aRate, MAX_RATE)) / log10(MAX_RATE) * 100;
+  } else if (aRate < 1) {
+    // Each step to -100 is logarithmically distributed down to 0.5x.
+    rate = log10(std::max(aRate, MIN_RATE)) / log10(MIN_RATE) * -100;
   }
 
-  spd_set_voice_rate(mSpeechdClient, rate);
+  spd_set_voice_rate(mSpeechdClient, static_cast<int>(rate));
 
   // We provide a pitch of 0 to 2 with 1 being the default.
   // speech-dispatcher expects -100 to 100 with 0 being default.
@@ -523,10 +525,10 @@ SpeechDispatcherService::Speak(const nsAString& aText, const nsAString& aUri,
     // Speech dispatcher does not work well with empty strings.
     // In that case, don't send empty string to speechd,
     // and just emulate a speechd start and end event.
-    NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs<SPDNotificationType>(
+    NS_DispatchToMainThread(NewRunnableMethod<SPDNotificationType>(
         callback, &SpeechDispatcherCallback::OnSpeechEvent, SPD_EVENT_BEGIN));
 
-    NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs<SPDNotificationType>(
+    NS_DispatchToMainThread(NewRunnableMethod<SPDNotificationType>(
         callback, &SpeechDispatcherCallback::OnSpeechEvent, SPD_EVENT_END));
   }
 

@@ -68,17 +68,13 @@ public class GeckoEvent {
     // Make sure to keep these values in sync with the enum in
     // AndroidGeckoEvent in widget/android/AndroidJavaWrappers.h
     @JNITarget
-    private enum NativeGeckoEvent {
+    public enum NativeGeckoEvent {
         NATIVE_POKE(0),
         MOTION_EVENT(2),
         SENSOR_EVENT(3),
         LOCATION_EVENT(5),
-        SIZE_CHANGED(8),
-        APP_BACKGROUNDING(9),
-        APP_FOREGROUNDING(10),
         LOAD_URI(12),
         NOOP(15),
-        BROADCAST(19),
         VIEWPORT(20),
         VISITED(21),
         NETWORK_CHANGED(22),
@@ -117,7 +113,6 @@ public class GeckoEvent {
 
     private final int mType;
     private int mAction;
-    private boolean mAckNeeded;
     private long mTime;
     private Point[] mPoints;
     private int[] mPointIndicies;
@@ -160,14 +155,6 @@ public class GeckoEvent {
 
     private GeckoEvent(NativeGeckoEvent event) {
         mType = event.value;
-    }
-
-    public static GeckoEvent createAppBackgroundingEvent() {
-        return GeckoEvent.get(NativeGeckoEvent.APP_BACKGROUNDING);
-    }
-
-    public static GeckoEvent createAppForegroundingEvent() {
-        return GeckoEvent.get(NativeGeckoEvent.APP_FOREGROUNDING);
     }
 
     public static GeckoEvent createNoOpEvent() {
@@ -335,11 +322,11 @@ public class GeckoEvent {
             // reverse which radius is major and minor
             if (mOrientations[index] < 0) {
                 mOrientations[index] += 90;
-                mPointRadii[index] = new Point((int)event.getToolMajor(eventIndex)/2,
-                                               (int)event.getToolMinor(eventIndex)/2);
+                mPointRadii[index] = new Point((int) event.getToolMajor(eventIndex) / 2,
+                                               (int) event.getToolMinor(eventIndex) / 2);
             } else {
-                mPointRadii[index] = new Point((int)event.getToolMinor(eventIndex)/2,
-                                               (int)event.getToolMajor(eventIndex)/2);
+                mPointRadii[index] = new Point((int) event.getToolMinor(eventIndex) / 2,
+                                               (int) event.getToolMajor(eventIndex) / 2);
             }
 
             if (!keepInViewCoordinates) {
@@ -378,7 +365,7 @@ public class GeckoEvent {
         int sensor_type = s.sensor.getType();
         GeckoEvent event = null;
 
-        switch(sensor_type) {
+        switch (sensor_type) {
 
         case Sensor.TYPE_ACCELEROMETER:
             event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
@@ -433,8 +420,11 @@ public class GeckoEvent {
             break;
 
         case Sensor.TYPE_ROTATION_VECTOR:
+        case Sensor.TYPE_GAME_ROTATION_VECTOR: // API >= 18
             event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
-            event.mFlags = GeckoHalDefines.SENSOR_ROTATION_VECTOR;
+            event.mFlags = (sensor_type == Sensor.TYPE_ROTATION_VECTOR ?
+                    GeckoHalDefines.SENSOR_ROTATION_VECTOR :
+                    GeckoHalDefines.SENSOR_GAME_ROTATION_VECTOR);
             event.mMetaState = HalSensorAccuracyFor(s.accuracy);
             event.mX = s.values[0];
             event.mY = s.values[1];
@@ -445,44 +435,20 @@ public class GeckoEvent {
                 // s.values[3] was optional in API <= 18, so we need to compute it
                 // The values form a unit quaternion, so we can compute the angle of
                 // rotation purely based on the given 3 values.
-                event.mW = 1 - s.values[0]*s.values[0] - s.values[1]*s.values[1] - s.values[2]*s.values[2];
+                event.mW = 1 - s.values[0] * s.values[0] - s.values[1] * s.values[1] - s.values[2] * s.values[2];
                 event.mW = (event.mW > 0.0) ? Math.sqrt(event.mW) : 0.0;
             }
             break;
-
-        // case Sensor.TYPE_GAME_ROTATION_VECTOR: // API >= 18
-        case 15:
-            event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
-            event.mFlags = GeckoHalDefines.SENSOR_GAME_ROTATION_VECTOR;
-            event.mMetaState = HalSensorAccuracyFor(s.accuracy);
-            event.mX = s.values[0];
-            event.mY = s.values[1];
-            event.mZ = s.values[2];
-            event.mW = s.values[3];
-            break;
         }
+
+        // SensorEvent timestamp is in nanoseconds, Gecko expects microseconds.
+        event.mTime = s.timestamp / 1000;
         return event;
     }
 
     public static GeckoEvent createLocationEvent(Location l) {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.LOCATION_EVENT);
         event.mLocation = l;
-        return event;
-    }
-
-    public static GeckoEvent createSizeChangedEvent(int w, int h, int screenw, int screenh) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.SIZE_CHANGED);
-        event.mPoints = new Point[2];
-        event.mPoints[0] = new Point(w, h);
-        event.mPoints[1] = new Point(screenw, screenh);
-        return event;
-    }
-
-    @RobocopTarget
-    public static GeckoEvent createBroadcastEvent(String subject, String data) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.BROADCAST);
-        event.mCharacters = subject;
-        event.mCharactersExtra = data;
         return event;
     }
 
@@ -519,11 +485,12 @@ public class GeckoEvent {
         return event;
     }
 
-    public static GeckoEvent createNetworkEvent(int connectionType, boolean isWifi, int DHCPGateway) {
+    public static GeckoEvent createNetworkEvent(int connectionType, boolean isWifi, int DHCPGateway, String status) {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.NETWORK_CHANGED);
         event.mConnectionType = connectionType;
         event.mIsWifi = isWifi;
         event.mDHCPGateway = DHCPGateway;
+        event.mCharacters = status;
         return event;
     }
 
@@ -635,7 +602,7 @@ public class GeckoEvent {
         int bits = 0;
         for (int i = 0; i < array.length; i++) {
             if (array[i]) {
-                bits |= 1<<i;
+                bits |= 1 << i;
             }
         }
         return bits;
@@ -663,9 +630,5 @@ public class GeckoEvent {
         event.mCount = values.length;
         event.mGamepadValues = values;
         return event;
-    }
-
-    public void setAckNeeded(boolean ackNeeded) {
-        mAckNeeded = ackNeeded;
     }
 }

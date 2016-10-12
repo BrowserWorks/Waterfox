@@ -55,19 +55,14 @@ using namespace mozilla;
 #define NSCONTEXTMENUISMOUSEUP 1
 #endif
 
-static void
-AssertNotCalled(void* aPropertyValue)
-{
-  NS_ERROR("popup list should never be destroyed by the FramePropertyTable");
-}
-NS_DECLARE_FRAME_PROPERTY(PopupListProperty, AssertNotCalled)
+NS_DECLARE_FRAME_PROPERTY_FRAMELIST(PopupListProperty)
 
 static int32_t gEatMouseMove = false;
 
 const int32_t kBlinkDelay = 67; // milliseconds
 
 // this class is used for dispatching menu activation events asynchronously.
-class nsMenuActivateEvent : public nsRunnable
+class nsMenuActivateEvent : public Runnable
 {
 public:
   nsMenuActivateEvent(nsIContent *aMenu,
@@ -112,7 +107,7 @@ private:
   bool mIsActivate;
 };
 
-class nsMenuAttributeChangedEvent : public nsRunnable
+class nsMenuAttributeChangedEvent : public Runnable
 {
 public:
   nsMenuAttributeChangedEvent(nsIFrame* aFrame, nsIAtom* aAttr)
@@ -275,8 +270,7 @@ nsMenuFrame::GetPopupList() const
   if (!HasPopup()) {
     return nullptr;
   }
-  nsFrameList* prop =
-    static_cast<nsFrameList*>(Properties().Get(PopupListProperty()));
+  nsFrameList* prop = Properties().Get(PopupListProperty());
   NS_ASSERTION(prop && prop->GetLength() == 1 &&
                prop->FirstChild()->GetType() == nsGkAtoms::menuPopupFrame,
                "popup list should have exactly one nsMenuPopupFrame");
@@ -287,8 +281,7 @@ void
 nsMenuFrame::DestroyPopupList()
 {
   NS_ASSERTION(HasPopup(), "huh?");
-  nsFrameList* prop =
-    static_cast<nsFrameList*>(Properties().Remove(PopupListProperty()));
+  nsFrameList* prop = Properties().Remove(PopupListProperty());
   NS_ASSERTION(prop && prop->IsEmpty(),
                "popup list must exist and be empty when destroying");
   RemoveStateBits(NS_STATE_MENU_HAS_POPUP_LIST);
@@ -315,8 +308,8 @@ void
 nsMenuFrame::SetInitialChildList(ChildListID     aListID,
                                  nsFrameList&    aChildList)
 {
-  NS_ASSERTION(!HasPopup(), "SetInitialChildList called twice?");
   if (aListID == kPrincipalList || aListID == kPopupList) {
+    NS_ASSERTION(!HasPopup(), "SetInitialChildList called twice?");
     SetPopupFrame(aChildList);
   }
   nsBoxFrame::SetInitialChildList(aListID, aChildList);
@@ -396,10 +389,10 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
 
   if (aEvent->mMessage == eKeyPress && !IsDisabled()) {
     WidgetKeyboardEvent* keyEvent = aEvent->AsKeyboardEvent();
-    uint32_t keyCode = keyEvent->keyCode;
+    uint32_t keyCode = keyEvent->mKeyCode;
 #ifdef XP_MACOSX
     // On mac, open menulist on either up/down arrow or space (w/o Cmd pressed)
-    if (!IsOpen() && ((keyEvent->charCode == NS_VK_SPACE && !keyEvent->IsMeta()) ||
+    if (!IsOpen() && ((keyEvent->mCharCode == ' ' && !keyEvent->IsMeta()) ||
         (keyCode == NS_VK_UP || keyCode == NS_VK_DOWN))) {
       *aEventStatus = nsEventStatus_eConsumeNoDefault;
       OpenMenu(false);
@@ -474,7 +467,11 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
         if (IsMenu() && !onmenubar && IsOpen()) {
           // Submenus don't get closed up immediately.
         }
-        else if (this == menuParent->GetCurrentMenuItem()) {
+        else if (this == menuParent->GetCurrentMenuItem()
+#ifdef XP_WIN
+                 && GetParentMenuListType() == eNotMenuList
+#endif
+        ) {
           menuParent->ChangeMenuItem(nullptr, false, false);
         }
       }
@@ -719,9 +716,9 @@ nsMenuFrame::IsSizedToPopup(nsIContent* aContent, bool aRequireAlways)
 }
 
 nsSize
-nsMenuFrame::GetMinSize(nsBoxLayoutState& aBoxLayoutState)
+nsMenuFrame::GetXULMinSize(nsBoxLayoutState& aBoxLayoutState)
 {
-  nsSize size = nsBoxFrame::GetMinSize(aBoxLayoutState);
+  nsSize size = nsBoxFrame::GetXULMinSize(aBoxLayoutState);
   DISPLAY_MIN_SIZE(this, size);
 
   if (IsSizedToPopup(mContent, true))
@@ -731,10 +728,10 @@ nsMenuFrame::GetMinSize(nsBoxLayoutState& aBoxLayoutState)
 }
 
 NS_IMETHODIMP
-nsMenuFrame::DoLayout(nsBoxLayoutState& aState)
+nsMenuFrame::DoXULLayout(nsBoxLayoutState& aState)
 {
   // lay us out
-  nsresult rv = nsBoxFrame::DoLayout(aState);
+  nsresult rv = nsBoxFrame::DoXULLayout(aState);
 
   nsMenuPopupFrame* popupFrame = GetPopup();
   if (popupFrame) {
@@ -747,7 +744,7 @@ nsMenuFrame::DoLayout(nsBoxLayoutState& aState)
 
 #ifdef DEBUG_LAYOUT
 nsresult
-nsMenuFrame::SetDebug(nsBoxLayoutState& aState, bool aDebug)
+nsMenuFrame::SetXULDebug(nsBoxLayoutState& aState, bool aDebug)
 {
   // see if our state matches the given debug state
   bool debugSet = mState & NS_STATE_CURRENTLY_IN_DEBUG;
@@ -756,24 +753,24 @@ nsMenuFrame::SetDebug(nsBoxLayoutState& aState, bool aDebug)
   // if it doesn't then tell each child below us the new debug state
   if (debugChanged)
   {
-      nsBoxFrame::SetDebug(aState, aDebug);
+      nsBoxFrame::SetXULDebug(aState, aDebug);
       nsMenuPopupFrame* popupFrame = GetPopup();
       if (popupFrame)
-        SetDebug(aState, popupFrame, aDebug);
+        SetXULDebug(aState, popupFrame, aDebug);
   }
 
   return NS_OK;
 }
 
 nsresult
-nsMenuFrame::SetDebug(nsBoxLayoutState& aState, nsIFrame* aList, bool aDebug)
+nsMenuFrame::SetXULDebug(nsBoxLayoutState& aState, nsIFrame* aList, bool aDebug)
 {
       if (!aList)
           return NS_OK;
 
       while (aList) {
-        if (aList->IsBoxFrame())
-          aList->SetDebug(aState, aDebug);
+        if (aList->IsXULBoxFrame())
+          aList->SetXULDebug(aState, aDebug);
 
         aList = aList->GetNextSibling();
       }
@@ -1239,7 +1236,7 @@ nsMenuFrame::CreateMenuCommandEvent(WidgetGUIEvent* aEvent, bool aFlipChecked)
   // Create a trusted event if the triggering event was trusted, or if
   // we're called from chrome code (since at least one of our caller
   // passes in a null event).
-  bool isTrusted = aEvent ? aEvent->mFlags.mIsTrusted :
+  bool isTrusted = aEvent ? aEvent->IsTrusted() :
                               nsContentUtils::IsCallerChrome();
 
   bool shift = false, control = false, alt = false, meta = false;
@@ -1299,7 +1296,7 @@ nsMenuFrame::InsertFrames(ChildListID     aListID,
     if (HasPopup()) {
 #ifdef DEBUG_LAYOUT
       nsBoxLayoutState state(PresContext());
-      SetDebug(state, aFrameList, mState & NS_STATE_CURRENTLY_IN_DEBUG);
+      SetXULDebug(state, aFrameList, mState & NS_STATE_CURRENTLY_IN_DEBUG);
 #endif
 
       PresContext()->PresShell()->
@@ -1328,7 +1325,7 @@ nsMenuFrame::AppendFrames(ChildListID     aListID,
 
 #ifdef DEBUG_LAYOUT
       nsBoxLayoutState state(PresContext());
-      SetDebug(state, aFrameList, mState & NS_STATE_CURRENTLY_IN_DEBUG);
+      SetXULDebug(state, aFrameList, mState & NS_STATE_CURRENTLY_IN_DEBUG);
 #endif
       PresContext()->PresShell()->
         FrameNeedsReflow(this, nsIPresShell::eTreeChange,
@@ -1345,15 +1342,15 @@ nsMenuFrame::AppendFrames(ChildListID     aListID,
 bool
 nsMenuFrame::SizeToPopup(nsBoxLayoutState& aState, nsSize& aSize)
 {
-  if (!IsCollapsed()) {
+  if (!IsXULCollapsed()) {
     bool widthSet, heightSet;
     nsSize tmpSize(-1, 0);
-    nsIFrame::AddCSSPrefSize(this, tmpSize, widthSet, heightSet);
-    if (!widthSet && GetFlex() == 0) {
+    nsIFrame::AddXULPrefSize(this, tmpSize, widthSet, heightSet);
+    if (!widthSet && GetXULFlex() == 0) {
       nsMenuPopupFrame* popupFrame = GetPopup();
       if (!popupFrame)
         return false;
-      tmpSize = popupFrame->GetPrefSize(aState);
+      tmpSize = popupFrame->GetXULPrefSize(aState);
 
       // Produce a size such that:
       //  (1) the menu and its popup can be the same width
@@ -1362,10 +1359,10 @@ nsMenuFrame::SizeToPopup(nsBoxLayoutState& aState, nsSize& aSize)
       //  (3) there's enough room in the popup for the content and its
       //      scrollbar
       nsMargin borderPadding;
-      GetBorderAndPadding(borderPadding);
+      GetXULBorderAndPadding(borderPadding);
 
       // if there is a scroll frame, add the desired width of the scrollbar as well
-      nsIScrollableFrame* scrollFrame = do_QueryFrame(popupFrame->GetFirstPrincipalChild());
+      nsIScrollableFrame* scrollFrame = do_QueryFrame(popupFrame->PrincipalChildList().FirstChild());
       nscoord scrollbarWidth = 0;
       if (scrollFrame) {
         scrollbarWidth =
@@ -1383,9 +1380,9 @@ nsMenuFrame::SizeToPopup(nsBoxLayoutState& aState, nsSize& aSize)
 }
 
 nsSize
-nsMenuFrame::GetPrefSize(nsBoxLayoutState& aState)
+nsMenuFrame::GetXULPrefSize(nsBoxLayoutState& aState)
 {
-  nsSize size = nsBoxFrame::GetPrefSize(aState);
+  nsSize size = nsBoxFrame::GetXULPrefSize(aState);
   DISPLAY_PREF_SIZE(this, size);
 
   // If we are using sizetopopup="always" then
@@ -1394,8 +1391,8 @@ nsMenuFrame::GetPrefSize(nsBoxLayoutState& aState)
       IsSizedToPopup(mContent, false) &&
       SizeToPopup(aState, size)) {
     // We now need to ensure that size is within the min - max range.
-    nsSize minSize = nsBoxFrame::GetMinSize(aState);
-    nsSize maxSize = GetMaxSize(aState);
+    nsSize minSize = nsBoxFrame::GetXULMinSize(aState);
+    nsSize maxSize = GetXULMaxSize(aState);
     size = BoundsCheck(minSize, size, maxSize);
   }
 
@@ -1448,7 +1445,7 @@ nsIScrollableFrame* nsMenuFrame::GetScrollTargetFrame()
   nsMenuPopupFrame* popupFrame = GetPopup();
   if (!popupFrame)
     return nullptr;
-  nsIFrame* childFrame = popupFrame->GetFirstPrincipalChild();
+  nsIFrame* childFrame = popupFrame->PrincipalChildList().FirstChild();
   if (childFrame)
     return popupFrame->GetScrollFrame(childFrame);
   return nullptr;

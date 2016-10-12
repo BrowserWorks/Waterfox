@@ -199,7 +199,9 @@ class nsDisplayCanvasBackgroundImage : public nsDisplayBackgroundImage {
 public:
   nsDisplayCanvasBackgroundImage(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
                                  uint32_t aLayer, const nsStyleBackground* aBg)
-    : nsDisplayBackgroundImage(aBuilder, aFrame, aLayer, aBg)
+    : nsDisplayBackgroundImage(aBuilder, aFrame, aLayer,
+                               aFrame->GetRectRelativeToSelf() + aBuilder->ToReferenceFrame(aFrame),
+                               aBg)
   {
     if (ShouldFixToViewport(aBuilder)) {
       mAnimatedGeometryRoot = aBuilder->FindAnimatedGeometryRootFor(this);
@@ -220,13 +222,17 @@ public:
     // compositing layer. Since we know their background painting area can't
     // change (unless the viewport size itself changes), async scrolling
     // will work well.
-    return mBackgroundStyle->mLayers[mLayer].mAttachment == NS_STYLE_BG_ATTACHMENT_FIXED &&
-           !mBackgroundStyle->mLayers[mLayer].mImage.IsEmpty();
+    return ShouldTreatAsFixed() &&
+           !mBackgroundStyle->mImage.mLayers[mLayer].mImage.IsEmpty();
   }
  
   // We still need to paint a background color as well as an image for this item, 
   // so we can't support this yet.
   virtual bool SupportsOptimizingToImage() override { return false; }
+
+ bool IsSingleFixedPositionImage(nsDisplayListBuilder* aBuilder,
+                                  const nsRect& aClipRect,
+                                  gfxRect* aDestRect);
   
   
   NS_DISPLAY_DECL_NAME("CanvasBackgroundImage", TYPE_CANVAS_BACKGROUND_IMAGE)
@@ -235,7 +241,8 @@ public:
 class nsDisplayCanvasThemedBackground : public nsDisplayThemedBackground {
 public:
   nsDisplayCanvasThemedBackground(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame)
-    : nsDisplayThemedBackground(aBuilder, aFrame)
+    : nsDisplayThemedBackground(aBuilder, aFrame,
+                                aFrame->GetRectRelativeToSelf() + aBuilder->ToReferenceFrame(aFrame))
   {}
 
   virtual void Paint(nsDisplayListBuilder* aBuilder, nsRenderingContext* aCtx) override;

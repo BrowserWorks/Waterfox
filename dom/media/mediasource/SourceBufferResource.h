@@ -111,9 +111,9 @@ public:
     ReentrantMonitorAutoEnter mon(mMonitor);
     return mEnded;
   }
-  // Remove data from resource if it holds more than the threshold
-  // number of bytes. Returns amount evicted.
-  uint32_t EvictData(uint64_t aPlaybackOffset, uint32_t aThreshold,
+  // Remove data from resource if it holds more than the threshold reduced by
+  // the given number of bytes. Returns amount evicted.
+  uint32_t EvictData(uint64_t aPlaybackOffset, int64_t aThresholdReduct,
                      ErrorResult& aRv);
 
   // Remove data from resource before the given offset.
@@ -136,8 +136,6 @@ public:
 
 private:
   virtual ~SourceBufferResource();
-  nsresult SeekInternal(int64_t aOffset);
-  nsresult ReadInternal(char* aBuffer, uint32_t aCount, uint32_t* aBytes, bool aMayBlock);
   nsresult ReadAtInternal(int64_t aOffset, char* aBuffer, uint32_t aCount, uint32_t* aBytes, bool aMayBlock);
 
   const nsCString mType;

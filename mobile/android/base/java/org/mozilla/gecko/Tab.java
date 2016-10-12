@@ -18,12 +18,15 @@ import org.json.JSONObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.URLMetadata;
+import org.mozilla.gecko.favicons.FaviconGenerator;
 import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.favicons.LoadFaviconTask;
 import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
 import org.mozilla.gecko.favicons.RemoteFavicon;
 import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.gfx.Layer;
+import org.mozilla.gecko.reader.ReaderModeUtils;
+import org.mozilla.gecko.reader.ReadingListHelper;
 import org.mozilla.gecko.toolbar.BrowserToolbar.TabEditingState;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -33,6 +36,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -61,9 +65,10 @@ public class Tab {
     private SiteLogins mSiteLogins;
     private BitmapDrawable mThumbnail;
     private final int mParentId;
+    // Indicates the url was loaded from a source external to the app. This will be cleared
+    // when the user explicitly loads a new url (e.g. clicking a link is not explicit).
     private final boolean mExternal;
     private boolean mBookmark;
-    private boolean mIsInReadingList;
     private int mFaviconLoadId;
     private String mContentType;
     private boolean mHasTouchListeners;
@@ -82,6 +87,14 @@ public class Tab {
     private volatile int mRecordingCount;
     private volatile boolean mIsAudioPlaying;
     private String mMostRecentHomePanel;
+    private boolean mShouldShowToolbarWithoutAnimationOnFirstSelection;
+
+    /*
+     * Bundle containing restore data for the panel referenced in mMostRecentHomePanel. This can be
+     * e.g. the most recent folder for the bookmarks panel, or any other state that should be
+     * persisted. This is then used e.g. when returning to homepanels via history.
+     */
+    private Bundle mMostRecentHomePanelData;
 
     private int mHistoryIndex;
     private int mHistorySize;
@@ -136,7 +149,6 @@ public class Tab {
         mBackgroundColor = DEFAULT_BACKGROUND_COLOR;
 
         updateBookmark();
-        updateReadingList();
     }
 
     private ContentResolver getContentResolver() {
@@ -215,8 +227,17 @@ public class Tab {
         return mMostRecentHomePanel;
     }
 
+    public Bundle getMostRecentHomePanelData() {
+        return mMostRecentHomePanelData;
+    }
+
     public void setMostRecentHomePanel(String panelId) {
         mMostRecentHomePanel = panelId;
+        mMostRecentHomePanelData = null;
+    }
+
+    public void setMostRecentHomePanelData(Bundle data) {
+        mMostRecentHomePanelData = data;
     }
 
     public Bitmap getThumbnailBitmap(int width, int height) {
@@ -292,10 +313,6 @@ public class Tab {
         return mBookmark;
     }
 
-    public boolean isInReadingList() {
-        return mIsInReadingList;
-    }
-
     public boolean isExternal() {
         return mExternal;
     }
@@ -337,7 +354,7 @@ public class Tab {
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
-                urlMetadata.save(cr, mUrl, data);
+                urlMetadata.save(cr, data);
             }
         });
     }
@@ -444,8 +461,16 @@ public class Tab {
             mFaviconUrl = null;
         }
 
+        final Favicons.LoadType loadType;
+        if (mSiteIdentity.getSecurityMode() == SiteIdentity.SecurityMode.CHROMEUI) {
+            loadType = Favicons.LoadType.PRIVILEGED;
+        } else {
+            loadType = Favicons.LoadType.UNPRIVILEGED;
+        }
+
         int flags = (isPrivate() || mErrorType != ErrorType.NONE) ? 0 : LoadFaviconTask.FLAG_PERSIST;
-        mFaviconLoadId = Favicons.getSizedFavicon(mAppContext, mUrl, mFaviconUrl, Favicons.browserToolbarFaviconSize, flags,
+        mFaviconLoadId = Favicons.getSizedFavicon(mAppContext, mUrl, mFaviconUrl,
+                loadType, Favicons.browserToolbarFaviconSize, flags,
                 new OnFaviconLoadedListener() {
                     @Override
                     public void onFaviconLoaded(String pageUrl, String faviconURL, Bitmap favicon) {
@@ -469,8 +494,9 @@ public class Tab {
                                 return;
                             }
 
-                            // Total failure: display the default favicon.
-                            favicon = Favicons.defaultFavicon;
+                            // Total failure: generate a default favicon.
+                            FaviconGenerator.generate(mAppContext, mUrl, this);
+                            return;
                         }
 
                         mFavicon = favicon;
@@ -527,90 +553,54 @@ public class Tab {
                 if (url == null) {
                     return;
                 }
+                final String pageUrl = ReaderModeUtils.stripAboutReaderUrl(url);
 
-                mBookmark = mDB.isBookmark(getContentResolver(), url);
-                Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.MENU_UPDATED);
-            }
-        });
-    }
-
-    void updateReadingList() {
-        if (getURL() == null) {
-            return;
-        }
-
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                final String url = getURL();
-                if (url == null) {
-                    return;
-                }
-
-                mIsInReadingList = mDB.getReadingListAccessor().isReadingListItem(getContentResolver(), url);
+                mBookmark = mDB.isBookmark(getContentResolver(), pageUrl);
                 Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.MENU_UPDATED);
             }
         });
     }
 
     public void addBookmark() {
+        final String url = getURL();
+        if (url == null) {
+            return;
+        }
+
+        final String pageUrl = ReaderModeUtils.stripAboutReaderUrl(getURL());
+
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
-                String url = getURL();
-                if (url == null)
-                    return;
-
-                mDB.addBookmark(getContentResolver(), mTitle, url);
+                mDB.addBookmark(getContentResolver(), mTitle, pageUrl);
                 Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.BOOKMARK_ADDED);
             }
         });
+
+        if (AboutPages.isAboutReader(url)) {
+            ReadingListHelper.cacheReaderItem(pageUrl, mId, mAppContext);
+        }
     }
 
     public void removeBookmark() {
+        final String url = getURL();
+        if (url == null) {
+            return;
+        }
+
+        final String pageUrl = ReaderModeUtils.stripAboutReaderUrl(getURL());
+
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
-                String url = getURL();
-                if (url == null)
-                    return;
-
-                mDB.removeBookmarksWithURL(getContentResolver(), url);
+                mDB.removeBookmarksWithURL(getContentResolver(), pageUrl);
                 Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.BOOKMARK_REMOVED);
             }
         });
-    }
 
-    public void addToReadingList() {
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                String url = getURL();
-                if (url == null) {
-                    return;
-                }
-
-                mDB.getReadingListAccessor().addBasicReadingListItem(getContentResolver(), url, mTitle);
-                Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.READING_LIST_ADDED);
-            }
-        });
-    }
-
-    public void removeFromReadingList() {
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                String url = getURL();
-                if (url == null) {
-                    return;
-                }
-                if (AboutPages.isAboutReader(url)) {
-                    url = ReaderModeUtils.getUrlFromAboutReader(url);
-                }
-                mDB.getReadingListAccessor().removeReadingListItemWithURL(getContentResolver(), url);
-                Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.READING_LIST_REMOVED);
-            }
-        });
+        // We need to ensure we remove readercached items here - we could have switched out of readermode
+        // before unbookmarking, so we don't necessarily have an about:reader URL here.
+        ReadingListHelper.removeCachedReaderItem(pageUrl, mAppContext);
     }
 
     public boolean isEnteringReaderMode() {
@@ -618,8 +608,7 @@ public class Tab {
     }
 
     public void doReload(boolean bypassCache) {
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Reload", "{\"bypassCache\":" + String.valueOf(bypassCache) + "}");
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Session:Reload", "{\"bypassCache\":" + String.valueOf(bypassCache) + "}");
     }
 
     // Our version of nsSHistory::GetCanGoBack
@@ -631,14 +620,12 @@ public class Tab {
         if (!canDoBack())
             return false;
 
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Back", "");
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Session:Back", "");
         return true;
     }
 
     public void doStop() {
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Stop", "");
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Session:Stop", "");
     }
 
     // Our version of nsSHistory::GetCanGoForward
@@ -650,8 +637,7 @@ public class Tab {
         if (!canDoForward())
             return false;
 
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Forward", "");
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Session:Forward", "");
         return true;
     }
 
@@ -668,7 +654,6 @@ public class Tab {
         if (!TextUtils.equals(oldUrl, uri)) {
             updateURL(uri);
             updateBookmark();
-            updateReadingList();
             if (!sameDocument) {
                 // We can unconditionally clear the favicon and title here: we
                 // already filtered both cases in which this was a (pseudo-)
@@ -808,25 +793,25 @@ public class Tab {
     }
 
     public void addPluginLayer(Object surfaceOrView, Layer layer) {
-        synchronized(mPluginLayers) {
+        synchronized (mPluginLayers) {
             mPluginLayers.put(surfaceOrView, layer);
         }
     }
 
     public Layer getPluginLayer(Object surfaceOrView) {
-        synchronized(mPluginLayers) {
+        synchronized (mPluginLayers) {
             return mPluginLayers.get(surfaceOrView);
         }
     }
 
     public Collection<Layer> getPluginLayers() {
-        synchronized(mPluginLayers) {
+        synchronized (mPluginLayers) {
             return new ArrayList<Layer>(mPluginLayers.values());
         }
     }
 
     public Layer removePluginLayer(Object surfaceOrView) {
-        synchronized(mPluginLayers) {
+        synchronized (mPluginLayers) {
             return mPluginLayers.remove(surfaceOrView);
         }
     }
@@ -939,5 +924,13 @@ public class Tab {
 
     public TabEditingState getEditingState() {
         return mEditingState;
+    }
+
+    public void setShouldShowToolbarWithoutAnimationOnFirstSelection(final boolean shouldShowWithoutAnimation) {
+        mShouldShowToolbarWithoutAnimationOnFirstSelection = shouldShowWithoutAnimation;
+    }
+
+    public boolean getShouldShowToolbarWithoutAnimationOnFirstSelection() {
+        return mShouldShowToolbarWithoutAnimationOnFirstSelection;
     }
 }

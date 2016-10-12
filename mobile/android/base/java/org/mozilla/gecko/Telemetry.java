@@ -169,8 +169,11 @@ public class Telemetry {
             throw new IllegalArgumentException("Expected non-null method - use Method.NONE?");
         }
 
-        Log.d(LOGTAG, "SendUIEvent: event = " + eventName + " method = " + method +
-                " timestamp = " + timestamp + " extras = " + extras);
+        if (!AppConstants.RELEASE_BUILD) {
+            final String logString = "SendUIEvent: event = " + eventName + " method = " + method + " timestamp = " +
+                    timestamp + " extras = " + extras;
+            Log.d(LOGTAG, logString);
+        }
         final GeckoEvent geckoEvent = GeckoEvent.createTelemetryUIEvent(
                 eventName, method.toString(), timestamp, extras);
         GeckoAppShell.sendEventToGecko(geckoEvent);

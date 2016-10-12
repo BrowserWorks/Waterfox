@@ -28,7 +28,7 @@ function getExperimentAddons() {
 
 function getInstallItem() {
   let doc = gManagerWindow.document;
-  let view = doc.getElementById("view-port").selectedPanel;
+  let view = get_current_view(gManagerWindow);
   let list = doc.getElementById("addon-list");
 
   let node = list.firstChild;
@@ -225,7 +225,12 @@ add_task(function* testOpenPreferences() {
   }, "advanced-pane-loaded", false);
 
   info("Loading preferences pane.");
-  EventUtils.synthesizeMouseAtCenter(btn, {}, gManagerWindow);
+  // We need to focus before synthesizing the mouse event (bug 1240052) as
+  // synthesizeMouseAtCenter currently only synthesizes the mouse in the child process.
+  // This can cause some subtle differences if the child isn't focused.
+  yield SimpleTest.promiseFocus();
+  yield BrowserTestUtils.synthesizeMouseAtCenter("#experiments-change-telemetry", {},
+                                                 gBrowser.selectedBrowser);
 
   yield deferred.promise;
 });

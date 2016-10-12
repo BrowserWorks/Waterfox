@@ -51,6 +51,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.SystemClock;
+import android.support.annotation.WorkerThread;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -127,8 +128,13 @@ public class Distribution {
      * false. In the other two callbacks, it will return true.
      */
     public interface ReadyCallback {
+        @WorkerThread
         void distributionNotFound();
+
+        @WorkerThread
         void distributionFound(Distribution distribution);
+
+        @WorkerThread
         void distributionArrivedLate(Distribution distribution);
     }
 
@@ -218,7 +224,14 @@ public class Distribution {
             public void run() {
                 boolean distributionSet = distribution.doInit();
                 if (distributionSet) {
-                    GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Distribution:Set", ""));
+                    String preferencesJSON = "";
+                    try {
+                        final File descFile = distribution.getDistributionFile("preferences.json");
+                        preferencesJSON = FileUtils.readStringFromFile(descFile);
+                    } catch (IOException e) {
+                        // Just send empty string
+                    }
+                    GeckoAppShell.notifyObservers("Distribution:Set", preferencesJSON);
                 }
             }
         });
@@ -318,7 +331,7 @@ public class Distribution {
         runLateReadyQueue();
 
         // Make sure that changes to search defaults are applied immediately.
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Distribution:Changed", ""));
+        GeckoAppShell.notifyObservers("Distribution:Changed", "");
     }
 
     /**
@@ -358,7 +371,7 @@ public class Distribution {
         }
 
         try {
-            JSONObject all = new JSONObject(FileUtils.getFileContents(descFile));
+            JSONObject all = FileUtils.readJSONObjectFromFile(descFile);
 
             if (!all.has("Global")) {
                 Log.e(LOGTAG, "Distribution preferences.json has no Global entry!");
@@ -390,7 +403,7 @@ public class Distribution {
         }
 
         try {
-            final JSONObject all = new JSONObject(FileUtils.getFileContents(descFile));
+            final JSONObject all = FileUtils.readJSONObjectFromFile(descFile);
 
             if (!all.has("AndroidPreferences")) {
                 return new JSONObject();
@@ -417,7 +430,7 @@ public class Distribution {
         }
 
         try {
-            return new JSONArray(FileUtils.getFileContents(bookmarks));
+            return new JSONArray(FileUtils.readStringFromFile(bookmarks));
         } catch (IOException e) {
             Log.e(LOGTAG, "Error getting bookmarks", e);
             Telemetry.addToHistogram(HISTOGRAM_CODE_CATEGORY, CODE_CATEGORY_MALFORMED_DISTRIBUTION);
@@ -463,11 +476,13 @@ public class Distribution {
             return true;
         }
 
-        // We try the install intent, then the APK, then the system directory.
+        // We try to find the install intent, then the APK, then the system directory, and finally
+        // an already copied distribution.  Already copied might originate from the bouncer APK.
         final boolean distributionSet =
                 checkIntentDistribution(referrer) ||
                 copyAndCheckAPKDistribution() ||
-                checkSystemDistribution();
+                checkSystemDistribution() ||
+                checkDataDistribution();
 
         // If this is our first run -- and thus we weren't already in STATE_NONE or STATE_SET above --
         // and we didn't find a distribution already, then we should hold on to callbacks in case we
@@ -591,7 +606,7 @@ public class Distribution {
         } else {
             value = status / 100;
         }
-        
+
         Telemetry.addToHistogram(HISTOGRAM_CODE_CATEGORY, value);
 
         if (status != 200) {
@@ -643,7 +658,7 @@ public class Distribution {
     private boolean copyAndCheckAPKDistribution() {
         try {
             // First, try copying distribution files out of the APK.
-            if (copyFiles()) {
+            if (copyFilesFromPackagedAssets()) {
                 // We always copy to the data dir, and we only copy files from
                 // a 'distribution' subdirectory. Now determine our actual distribution directory.
                 return checkDataDistribution();
@@ -718,12 +733,15 @@ public class Distribution {
     }
 
     /**
-     * Copies the /distribution folder out of the APK and into the app's data directory.
+     * Copies the /assets/distribution folder out of the APK and into the app's data directory.
      * Returns true if distribution files were found and copied.
      */
-    private boolean copyFiles() throws IOException {
+    private boolean copyFilesFromPackagedAssets() throws IOException {
         final File applicationPackage = new File(packagePath);
         final ZipFile zip = new ZipFile(applicationPackage);
+
+        final String assetsPrefix = "assets/";
+        final String fullPrefix = assetsPrefix + DISTRIBUTION_PATH;
 
         boolean distributionSet = false;
         try {
@@ -739,11 +757,14 @@ public class Distribution {
                     continue;
                 }
 
-                if (!name.startsWith(DISTRIBUTION_PATH)) {
+                // Read from "assets/distribution/**".
+                if (!name.startsWith(fullPrefix)) {
                     continue;
                 }
 
-                final File outFile = getDataFile(name);
+                // Write to "distribution/**".
+                final String nameWithoutPrefix = name.substring(assetsPrefix.length());
+                final File outFile = getDataFile(nameWithoutPrefix);
                 if (outFile == null) {
                     continue;
                 }
@@ -915,7 +936,10 @@ public class Distribution {
             }
         }
 
-        return new String[] { baseDirectory };
+        return new String[] {
+                baseDirectory + "/default",
+                baseDirectory
+        };
     }
 
     /**
@@ -971,6 +995,7 @@ public class Distribution {
 
     private void invokeCallbackDelayed(final ReadyCallback callback) {
         ThreadUtils.postToBackgroundThread(new Runnable() {
+            @WorkerThread
             @Override
             public void run() {
                 switch (state) {

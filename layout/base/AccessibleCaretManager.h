@@ -50,6 +50,9 @@ public:
   explicit AccessibleCaretManager(nsIPresShell* aPresShell);
   virtual ~AccessibleCaretManager();
 
+  // Called by AccessibleCaretEventHub to inform us that PresShell is destroyed.
+  void Terminate();
+
   // The aPoint in the following public methods should be relative to root
   // frame.
 
@@ -95,6 +98,10 @@ public:
   // Handle key event.
   virtual void OnKeyboardEvent();
 
+  // The canvas frame holding the accessible caret anonymous content elements
+  // was reconstructed, resulting in the content elements getting cloned.
+  virtual void OnFrameReconstruction();
+
 protected:
   // This enum representing the number of AccessibleCarets on the screen.
   enum class CaretMode : uint8_t {
@@ -124,18 +131,16 @@ protected:
   friend std::ostream& operator<<(std::ostream& aStream,
                                   const UpdateCaretsHint& aResult);
 
-  // Update carets based on current selection status.
+  // Update carets based on current selection status. This function will flush
+  // layout, so caller must ensure the PresShell is still valid after calling
+  // this method.
   void UpdateCarets(UpdateCaretsHint aHint = UpdateCaretsHint::Default);
 
   // Force hiding all carets regardless of the current selection status.
   void HideCarets();
 
-  // Force carets to be "present" logically, but not visible. Allows ActionBar
-  // to stay open when carets visibility is supressed during scroll.
-  void DoNotShowCarets();
-
   void UpdateCaretsForCursorMode(UpdateCaretsHint aHint);
-  void UpdateCaretsForSelectionMode();
+  void UpdateCaretsForSelectionMode(UpdateCaretsHint aHint);
 
   // Provide haptic / touch feedback, primarily for select on longpress.
   void ProvideHapticFeedback();
@@ -150,30 +155,51 @@ protected:
 
   nsresult SelectWord(nsIFrame* aFrame, const nsPoint& aPoint) const;
   void SetSelectionDragState(bool aState) const;
+
+  // Called to extend a selection if possible that it's a phone number.
+  void SelectMoreIfPhoneNumber() const;
+  // Extend the current phone number selection in the requested direction.
+  void ExtendPhoneNumberSelection(const nsAString& aDirection) const;
+
   void SetSelectionDirection(nsDirection aDir) const;
 
-  // If aBackward is false, find the first node from the first range in current
-  // selection, and return the frame and the offset into that frame. If aBackward
-  // is true, find the last node from the last range instead.
-  nsIFrame* FindFirstNodeWithFrame(bool aBackward, int32_t* aOutOffset) const;
+  // If aDirection is eDirNext, get the frame for the range start in the first
+  // range from the current selection, and return the offset into that frame as
+  // well as the range start node and the node offset. Otherwise, get the frame
+  // and offset for the range end in the last range instead.
+  nsIFrame* GetFrameForFirstRangeStartOrLastRangeEnd(
+    nsDirection aDirection, int32_t* aOutOffset, nsINode** aOutNode = nullptr,
+    int32_t* aOutNodeOffset = nullptr) const;
 
   nsresult DragCaretInternal(const nsPoint& aPoint);
   nsPoint AdjustDragBoundary(const nsPoint& aPoint) const;
   void ClearMaintainedSelection() const;
+
+  // Caller is responsible to use IsTerminated() to check whether PresShell is
+  // still valid.
   void FlushLayout() const;
+
   dom::Element* GetEditingHostForFrame(nsIFrame* aFrame) const;
   dom::Selection* GetSelection() const;
   already_AddRefed<nsFrameSelection> GetFrameSelection() const;
 
-  // Get the bounding rectangle for aFrame where the caret under cursor mode can
-  // be positioned. The rectangle is relative to the root frame.
-  nsRect GetContentBoundaryForFrame(nsIFrame* aFrame) const;
+  // Get the union of all the child frame scrollable overflow rects for aFrame,
+  // which is used as a helper function to restrict the area where the caret can
+  // be dragged. Returns the rect relative to aFrame.
+  nsRect GetAllChildFrameRectsUnion(nsIFrame* aFrame) const;
 
-  // If we're dragging the first caret, we do not want to drag it over the
-  // previous character of the second caret. Same as the second caret. So we
-  // check if content offset exceeds the previous/next character of second/first
-  // caret base the active caret.
-  bool CompareRangeWithContentOffset(nsIFrame::ContentOffsets& aOffsets);
+  // Restrict the active caret's dragging position based on
+  // sCaretsAllowDraggingAcrossOtherCaret. If the active caret is the first
+  // caret, the `limit` will be the previous character of the second caret.
+  // Otherwise, the `limit` will be the next character of the first caret.
+  //
+  // @param aOffsets is the new position of the active caret, and it will be set
+  // to the `limit` when 1) sCaretsAllowDraggingAcrossOtherCaret is false and
+  // it's being dragged past the limit. 2) sCaretsAllowDraggingAcrossOtherCaret
+  // is true and the active caret's position is the same as the inactive's
+  // position.
+  // @return true if the aOffsets is suitable for changing the selection.
+  bool RestrictCaretDraggingOffsets(nsIFrame::ContentOffsets& aOffsets);
 
   // Timeout in milliseconds to hide the AccessibleCaret under cursor mode while
   // no one touches it.
@@ -184,6 +210,9 @@ protected:
   // ---------------------------------------------------------------------------
   // The following functions are made virtual for stubbing or mocking in gtest.
   //
+  // @return true if Terminate() had been called.
+  virtual bool IsTerminated() const { return !mPresShell; }
+
   // Get caret mode based on current selection.
   virtual CaretMode GetCaretMode() const;
 
@@ -192,7 +221,11 @@ protected:
                                    nsIFrame* aEndFrame) const;
 
   // Check if the two carets is overlapping to become tilt.
-  virtual void UpdateCaretsForTilt();
+  virtual void UpdateCaretsForOverlappingTilt();
+
+  // Make the two carets always tilt.
+  virtual void UpdateCaretsForAlwaysTilt(nsIFrame* aStartFrame,
+                                         nsIFrame* aEndFrame);
 
   // Check whether AccessibleCaret is displayable in cursor mode or not.
   // @param aOutFrame returns frame of the cursor if it's displayable.
@@ -202,8 +235,8 @@ protected:
 
   virtual bool HasNonEmptyTextContent(nsINode* aNode) const;
 
-  // This function will call FlushPendingNotifications. So caller must ensure
-  // everything exists after calling this method.
+  // This function will flush layout, so caller must ensure the PresShell is
+  // still valid after calling this method.
   virtual void DispatchCaretStateChangedEvent(dom::CaretChangedReason aReason) const;
 
   // ---------------------------------------------------------------------------
@@ -211,10 +244,12 @@ protected:
   //
   nscoord mOffsetYToCaretLogicalPosition = NS_UNCONSTRAINEDSIZE;
 
-  // AccessibleCaretEventHub owns us. When it's Terminate() called by
-  // PresShell::Destroy(), we will be destroyed. No need to worry we outlive
-  // mPresShell.
-  nsIPresShell* MOZ_NON_OWNING_REF const mPresShell = nullptr;
+  // AccessibleCaretEventHub owns us by a UniquePtr. When it's destroyed, we'll
+  // also be destroyed. No need to worry if we outlive mPresShell.
+  //
+  // mPresShell will be set to nullptr in Terminate(). Therefore mPresShell is
+  // nullptr either we are in gtest or PresShell::IsDestroying() is true.
+  nsIPresShell* MOZ_NON_OWNING_REF mPresShell = nullptr;
 
   // First caret is attached to nsCaret in cursor mode, and is attached to
   // selection highlight as the left caret in selection mode.
@@ -234,9 +269,11 @@ protected:
   // The caret mode since last update carets.
   CaretMode mLastUpdateCaretMode = CaretMode::None;
 
-  // Store the appearance of the first caret when calling OnScrollStart so that
-  // it can be restored in OnScrollEnd.
+  // Store the appearance of the carets when calling OnScrollStart() so that it
+  // can be restored in OnScrollEnd().
   AccessibleCaret::Appearance mFirstCaretAppearanceOnScrollStart =
+                                 AccessibleCaret::Appearance::None;
+  AccessibleCaret::Appearance mSecondCaretAppearanceOnScrollStart =
                                  AccessibleCaret::Appearance::None;
 
   static const int32_t kAutoScrollTimerDelay = 30;
@@ -251,11 +288,34 @@ protected:
   // selection bar is always disabled in cursor mode.
   static bool sSelectionBarEnabled;
 
-  // AccessibleCaret visibility preference. Used to avoid hiding caret during
-  // (NO_REASON) selection change notifications generated by keyboard IME, and to
-  // maintain a visible ActionBar while carets NotShown during scroll and while
-  // cursor is on an empty input.
-  static bool sCaretsExtendedVisibility;
+  // Preference to allow smarter selection of phone numbers,
+  // when user long presses text to start.
+  static bool sExtendSelectionForPhoneNumber;
+
+  // Preference to show caret in cursor mode when long tapping on an empty
+  // content. This also changes the default update behavior in cursor mode,
+  // which is based on the emptiness of the content, into something more
+  // heuristic. See UpdateCaretsForCursorMode() for the details.
+  static bool sCaretShownWhenLongTappingOnEmptyContent;
+
+  // Preference to make carets always tilt in selection mode. By default, the
+  // carets become tilt only when they are overlapping.
+  static bool sCaretsAlwaysTilt;
+
+  // Preference to allow carets always show when scrolling (either panning or
+  // zooming) the page. When set to false, carets will hide during scrolling,
+  // and show again after the user lifts the finger off the screen.
+  static bool sCaretsAlwaysShowWhenScrolling;
+
+  // By default, javascript content selection changes closes AccessibleCarets and
+  // UI interactions. Optionally, we can try to maintain the active UI, keeping
+  // carets and ActionBar available.
+  static bool sCaretsScriptUpdates;
+
+  // Preference to allow one caret to be dragged across the other caret without
+  // any limitation. When set to false, one caret cannot be dragged across the
+  // other one.
+  static bool sCaretsAllowDraggingAcrossOtherCaret;
 
   // AccessibleCaret pref for haptic feedback behaviour on longPress.
   static bool sHapticFeedback;

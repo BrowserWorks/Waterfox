@@ -321,4 +321,30 @@ PluginPRLibrary::EndUpdateBackground(NPP instance, const nsIntRect&)
   return NS_ERROR_NOT_AVAILABLE;
 }
 
+#if defined(XP_WIN)
+nsresult
+PluginPRLibrary::GetScrollCaptureContainer(NPP aInstance, ImageContainer** aContainer)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+nsresult
+PluginPRLibrary::UpdateScrollState(NPP aInstance, bool aIsScrolling)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+#endif
+
+nsresult
+PluginPRLibrary::HandledWindowedPluginKeyEvent(
+                   NPP aInstance,
+                   const NativeEventData& aNativeKeyData,
+                   bool aIsConsumed)
+{
+  nsNPAPIPluginInstance* instance = (nsNPAPIPluginInstance*)aInstance->ndata;
+  if (NS_WARN_IF(!instance)) {
+    return NS_ERROR_NULL_POINTER;
+  }
+  return NS_OK;
+}
+
 } // namespace mozilla

@@ -60,18 +60,21 @@ function Object_toLocaleString() {
     return callContentFunction(O.toString, O);
 }
 
+// ES7 draft (2016 March 8) B.2.2.3
 function ObjectDefineSetter(name, setter) {
-    var object;
     if (this === null || this === undefined)
-        object = global;
+        AddContentTelemetry(TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED, 1);
     else
-        object = ToObject(this);
+        AddContentTelemetry(TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED, 0);
 
+    // Step 1.
+    var object = ToObject(this);
+
+    // Step 2.
     if (!IsCallable(setter))
         ThrowTypeError(JSMSG_BAD_GETTER_OR_SETTER, "setter");
 
-    var key = ToPropertyKey(name);
-
+    // Step 3.
     var desc = {
         __proto__: null,
         enumerable: true,
@@ -79,21 +82,30 @@ function ObjectDefineSetter(name, setter) {
         set: setter
     };
 
+    // Step 4.
+    var key = ToPropertyKey(name);
+
+    // Step 5.
     std_Object_defineProperty(object, key, desc);
+
+    // Step 6. (implicit)
 }
 
+// ES7 draft (2016 March 8) B.2.2.2
 function ObjectDefineGetter(name, getter) {
-    var object;
     if (this === null || this === undefined)
-        object = global;
+        AddContentTelemetry(TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED, 1);
     else
-        object = ToObject(this);
+        AddContentTelemetry(TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED, 0);
 
+    // Step 1.
+    var object = ToObject(this);
+
+    // Step 2.
     if (!IsCallable(getter))
         ThrowTypeError(JSMSG_BAD_GETTER_OR_SETTER, "getter");
 
-    var key = ToPropertyKey(name);
-
+    // Step 3.
     var desc = {
         __proto__: null,
         enumerable: true,
@@ -101,81 +113,69 @@ function ObjectDefineGetter(name, getter) {
         get: getter
     };
 
+    // Step 4.
+    var key = ToPropertyKey(name);
+
+    // Step 5.
     std_Object_defineProperty(object, key, desc);
+
+    // Step 6. (implicit)
 }
 
+// ES7 draft (2016 March 8) B.2.2.5
 function ObjectLookupSetter(name) {
-    var key = ToPropertyKey(name);
+    // Step 1.
     var object = ToObject(this);
 
+    // Step 2.
+    var key = ToPropertyKey(name)
+
     do {
+        // Step 3.a.
         var desc = std_Object_getOwnPropertyDescriptor(object, key);
+
+        // Step 3.b.
         if (desc) {
+            // Step.b.i.
             if (callFunction(std_Object_hasOwnProperty, desc, "set"))
                 return desc.set;
+
+            // Step.b.ii.
             return undefined;
         }
+
+        // Step 3.c.
         object = std_Reflect_getPrototypeOf(object);
     } while (object !== null);
+
+    // Step 3.d. (implicit)
 }
 
+// ES7 draft (2016 March 8) B.2.2.4
 function ObjectLookupGetter(name) {
-    var key = ToPropertyKey(name);
+    // Step 1.
     var object = ToObject(this);
 
+    // Step 2.
+    var key = ToPropertyKey(name)
+
     do {
+        // Step 3.a.
         var desc = std_Object_getOwnPropertyDescriptor(object, key);
+
+        // Step 3.b.
         if (desc) {
+            // Step.b.i.
             if (callFunction(std_Object_hasOwnProperty, desc, "get"))
                 return desc.get;
+
+            // Step.b.ii.
             return undefined;
         }
+
+        // Step 3.c.
         object = std_Reflect_getPrototypeOf(object);
     } while (object !== null);
-}
 
-// Draft proposal http://tc39.github.io/proposal-object-values-entries/#Object.values
-function ObjectValues(O) {
-    // Steps 1-2.
-    var object = ToObject(O);
-
-    // Steps 3-4.
-    // EnumerableOwnProperties is inlined here.
-    var keys = OwnPropertyKeys(object, JSITER_OWNONLY | JSITER_HIDDEN);
-    var values = [];
-    var valuesCount = 0;
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        if (!callFunction(std_Object_propertyIsEnumerable, object, key))
-            continue;
-
-        var value = object[key];
-        _DefineDataProperty(values, valuesCount++, value);
-    }
-
-    // Step 5.
-    return values;
-}
-
-// Draft proposal http://tc39.github.io/proposal-object-values-entries/#Object.entries
-function ObjectEntries(O) {
-    // Steps 1-2.
-    var object = ToObject(O);
-
-    // Steps 3-4.
-    // EnumerableOwnProperties is inlined here.
-    var keys = OwnPropertyKeys(object, JSITER_OWNONLY | JSITER_HIDDEN);
-    var entries = [];
-    var entriesCount = 0;
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        if (!callFunction(std_Object_propertyIsEnumerable, object, key))
-            continue;
-
-        var value = object[key];
-        _DefineDataProperty(entries, entriesCount++, [key, value]);
-    }
-
-    // Step 5.
-    return entries;
+    // Step 3.d. (implicit)
 }

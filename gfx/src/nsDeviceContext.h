@@ -11,7 +11,7 @@
 #include "gfxTypes.h"                   // for gfxFloat
 #include "gfxFont.h"                    // for gfxFont::Orientation
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
-#include "nsAutoPtr.h"                  // for nsRefPtr
+#include "mozilla/RefPtr.h"             // for RefPtr
 #include "nsCOMPtr.h"                   // for nsCOMPtr
 #include "nsCoord.h"                    // for nscoord
 #include "nsError.h"                    // for nsresult
@@ -19,6 +19,7 @@
 #include "nsMathUtils.h"                // for NS_round
 #include "nscore.h"                     // for char16_t, nsAString
 #include "mozilla/AppUnits.h"           // for AppUnits
+#include "nsFontMetrics.h"              // for nsFontMetrics::Params
 
 class gfxASurface;
 class gfxContext;
@@ -26,7 +27,6 @@ class gfxTextPerfMetrics;
 class gfxUserFontSet;
 struct nsFont;
 class nsFontCache;
-class nsFontMetrics;
 class nsIAtom;
 class nsIDeviceContextSpec;
 class nsIScreen;
@@ -113,17 +113,9 @@ public:
      * Get the nsFontMetrics that describe the properties of
      * an nsFont.
      * @param aFont font description to obtain metrics for
-     * @param aLanguage the language of the document
-     * @param aMetrics out parameter for font metrics
-     * @param aUserFontSet user font set
-     * @return error status
      */
-    nsresult GetMetricsFor(const nsFont& aFont,
-                           nsIAtom* aLanguage, bool aExplicitLanguage,
-                           gfxFont::Orientation aOrientation,
-                           gfxUserFontSet* aUserFontSet,
-                           gfxTextPerfMetrics* aTextPerf,
-                           nsFontMetrics*& aMetrics);
+    already_AddRefed<nsFontMetrics> GetMetricsFor(
+        const nsFont& aFont, const nsFontMetrics::Params& aParams);
 
     /**
      * Notification when a font metrics instance created for this device is
@@ -227,12 +219,18 @@ public:
     nsresult EndPage();
 
     /**
-     * Check to see if the DPI has changed
+     * Check to see if the DPI has changed, or impose a new DPI scale value.
+     * @param  aScale - If non-null, the default (unzoomed) CSS to device pixel
+     *                  scale factor will be returned here; and if it is > 0.0
+     *                  on input, the given value will be used instead of
+     *                  getting it from the widget (if any). This is used to
+     *                  allow subdocument contexts to inherit the resolution
+     *                  setting of their parent.
      * @return whether there was actually a change in the DPI (whether
      *         AppUnitsPerDevPixel() or AppUnitsPerPhysicalInch()
      *         changed)
      */
-    bool CheckDPIChange();
+    bool CheckDPIChange(double* aScale = nullptr);
 
     /**
      * Set the full zoom factor: all lengths are multiplied by this factor
@@ -251,11 +249,13 @@ public:
      */
     bool IsPrinterSurface();
 
+    mozilla::DesktopToLayoutDeviceScale GetDesktopToDeviceScale();
+
 private:
     // Private destructor, to discourage deletion outside of Release():
     ~nsDeviceContext();
 
-    void SetDPI();
+    void SetDPI(double* aScale = nullptr);
     void ComputeClientRectUsingScreen(nsRect *outRect);
     void ComputeFullAreaUsingScreen(nsRect *outRect);
     void FindScreen(nsIScreen **outScreen);
@@ -273,7 +273,7 @@ private:
     float    mFullZoom;
     float    mPrintingScale;
 
-    nsFontCache*                   mFontCache;
+    RefPtr<nsFontCache>            mFontCache;
     nsCOMPtr<nsIWidget>            mWidget;
     nsCOMPtr<nsIScreenManager>     mScreenManager;
     nsCOMPtr<nsIDeviceContextSpec> mDeviceContextSpec;

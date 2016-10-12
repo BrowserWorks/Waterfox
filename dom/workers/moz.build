@@ -6,12 +6,15 @@
 
 # Public stuff.
 EXPORTS.mozilla.dom += [
+    'FileReaderSync.h',
     'ServiceWorkerCommon.h',
     'ServiceWorkerContainer.h',
     'ServiceWorkerEvents.h',
     'ServiceWorkerMessageEvent.h',
     'ServiceWorkerRegistrar.h',
     'ServiceWorkerRegistration.h',
+    'WorkerLocation.h',
+    'WorkerNavigator.h',
     'WorkerPrefs.h',
     'WorkerPrivate.h',
     'WorkerRunnable.h',
@@ -19,18 +22,16 @@ EXPORTS.mozilla.dom += [
 ]
 
 EXPORTS.mozilla.dom.workers += [
+    'RuntimeService.h',
+    'ServiceWorkerInfo.h',
     'ServiceWorkerManager.h',
+    'ServiceWorkerRegistrationInfo.h',
     'WorkerDebuggerManager.h',
     'Workers.h',
 ]
 
 # Stuff needed for the bindings, not really public though.
 EXPORTS.mozilla.dom.workers.bindings += [
-    'DataStore.h',
-    'DataStoreCursor.h',
-    'FileReaderSync.h',
-    'Location.h',
-    'Navigator.h',
     'Performance.h',
     'ServiceWorker.h',
     'ServiceWorkerClient.h',
@@ -52,11 +53,7 @@ XPIDL_SOURCES += [
 
 UNIFIED_SOURCES += [
     'ChromeWorkerScope.cpp',
-    'DataStore.cpp',
-    'DataStoreCursor.cpp',
     'FileReaderSync.cpp',
-    'Location.cpp',
-    'Navigator.cpp',
     'Performance.cpp',
     'Principal.cpp',
     'RegisterBindings.cpp',
@@ -67,19 +64,28 @@ UNIFIED_SOURCES += [
     'ServiceWorkerClients.cpp',
     'ServiceWorkerContainer.cpp',
     'ServiceWorkerEvents.cpp',
+    'ServiceWorkerInfo.cpp',
+    'ServiceWorkerJob.cpp',
+    'ServiceWorkerJobQueue.cpp',
     'ServiceWorkerManager.cpp',
     'ServiceWorkerManagerChild.cpp',
     'ServiceWorkerManagerParent.cpp',
     'ServiceWorkerManagerService.cpp',
     'ServiceWorkerMessageEvent.cpp',
     'ServiceWorkerPrivate.cpp',
+    'ServiceWorkerRegisterJob.cpp',
     'ServiceWorkerRegistrar.cpp',
     'ServiceWorkerRegistration.cpp',
+    'ServiceWorkerRegistrationInfo.cpp',
     'ServiceWorkerScriptCache.cpp',
+    'ServiceWorkerUnregisterJob.cpp',
+    'ServiceWorkerUpdateJob.cpp',
     'ServiceWorkerWindowClient.cpp',
     'SharedWorker.cpp',
     'URL.cpp',
     'WorkerDebuggerManager.cpp',
+    'WorkerLocation.cpp',
+    'WorkerNavigator.cpp',
     'WorkerPrivate.cpp',
     'WorkerRunnable.cpp',
     'WorkerScope.cpp',
@@ -129,3 +135,6 @@ XPCSHELL_TESTS_MANIFESTS += ['test/xpcshell/xpcshell.ini']
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
 
 TEST_DIRS += ['test/gtest']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

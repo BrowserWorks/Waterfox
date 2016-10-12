@@ -15,13 +15,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.GeckoSharedPrefs;
-import org.mozilla.gecko.Restrictions;
 import org.mozilla.gecko.home.HomeConfig.HomeConfigBackend;
 import org.mozilla.gecko.home.HomeConfig.OnReloadListener;
 import org.mozilla.gecko.home.HomeConfig.PanelConfig;
 import org.mozilla.gecko.home.HomeConfig.PanelType;
 import org.mozilla.gecko.home.HomeConfig.State;
-import org.mozilla.gecko.restrictions.Restrictable;
 import org.mozilla.gecko.util.HardwareUtils;
 
 import android.content.BroadcastReceiver;
@@ -33,17 +31,17 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-class HomeConfigPrefsBackend implements HomeConfigBackend {
+public class HomeConfigPrefsBackend implements HomeConfigBackend {
     private static final String LOGTAG = "GeckoHomeConfigBackend";
 
     // Increment this to trigger a migration.
-    private static final int VERSION = 3;
+    private static final int VERSION = 6;
 
     // This key was originally used to store only an array of panel configs.
-    private static final String PREFS_CONFIG_KEY_OLD = "home_panels";
+    public static final String PREFS_CONFIG_KEY_OLD = "home_panels";
 
     // This key is now used to store a version number with the array of panel configs.
-    private static final String PREFS_CONFIG_KEY = "home_panels_with_version";
+    public static final String PREFS_CONFIG_KEY = "home_panels_with_version";
 
     // Keys used with JSON object stored in prefs.
     private static final String JSON_KEY_PANELS = "panels";
@@ -74,15 +72,10 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
                                                   EnumSet.of(PanelConfig.Flags.DEFAULT_PANEL)));
 
         panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.BOOKMARKS));
-        panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.HISTORY));
+        panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.COMBINED_HISTORY));
 
-        // We disable Synced Tabs for guest mode / restricted profiles.
-        if (Restrictions.isAllowed(mContext, Restrictable.MODIFY_ACCOUNTS)) {
-            panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.REMOTE_TABS));
-        }
 
         panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.RECENT_TABS));
-        panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.READING_LIST));
 
         return new State(panelConfigs, true);
     }
@@ -151,6 +144,137 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
     }
 
     /**
+     * Updates the panels to combine the History and Sync panels into the (Combined) History panel.
+     *
+     * Tries to replace the History panel with the Combined History panel if visible, or falls back to
+     * replacing the Sync panel if it's visible. That way, we minimize panel reordering during a migration.
+     * @param context Android context
+     * @param jsonPanels array of original JSON panels
+     * @return new array of updated JSON panels
+     * @throws JSONException
+     */
+    private static JSONArray combineHistoryAndSyncPanels(Context context, JSONArray jsonPanels) throws JSONException {
+        EnumSet<PanelConfig.Flags> historyFlags = null;
+        EnumSet<PanelConfig.Flags> syncFlags = null;
+
+        int historyIndex = -1;
+        int syncIndex = -1;
+
+        // Determine state and location of History and Sync panels.
+        for (int i = 0; i < jsonPanels.length(); i++) {
+            JSONObject panelObj = jsonPanels.getJSONObject(i);
+            final PanelConfig panelConfig = new PanelConfig(panelObj);
+            final PanelType type = panelConfig.getType();
+            if (type == PanelType.DEPRECATED_HISTORY) {
+                historyIndex = i;
+                historyFlags = panelConfig.getFlags();
+            } else if (type == PanelType.DEPRECATED_REMOTE_TABS) {
+                syncIndex = i;
+                syncFlags = panelConfig.getFlags();
+            } else if (type == PanelType.COMBINED_HISTORY) {
+                // Partial landing of bug 1220928 combined the History and Sync panels of users who didn't
+                // have home panel customizations (including new users), thus they don't this migration.
+                return jsonPanels;
+            }
+        }
+
+        if (historyIndex == -1 || syncIndex == -1) {
+            throw new IllegalArgumentException("Expected both History and Sync panels to be present prior to Combined History.");
+        }
+
+        PanelConfig newPanel;
+        int replaceIndex;
+        int removeIndex;
+
+        if (historyFlags.contains(PanelConfig.Flags.DISABLED_PANEL) && !syncFlags.contains(PanelConfig.Flags.DISABLED_PANEL)) {
+            // Replace the Sync panel if it's visible and the History panel is disabled.
+            replaceIndex = syncIndex;
+            removeIndex = historyIndex;
+            newPanel = createBuiltinPanelConfig(context, PanelType.COMBINED_HISTORY, syncFlags);
+        } else {
+            // Otherwise, just replace the History panel.
+            replaceIndex = historyIndex;
+            removeIndex = syncIndex;
+            newPanel = createBuiltinPanelConfig(context, PanelType.COMBINED_HISTORY, historyFlags);
+        }
+
+        // Copy the array with updated panel and removed panel.
+        final JSONArray newArray = new JSONArray();
+        for (int i = 0; i < jsonPanels.length(); i++) {
+            if (i == replaceIndex) {
+                newArray.put(newPanel.toJSON());
+            } else if (i == removeIndex) {
+                continue;
+            } else {
+                newArray.put(jsonPanels.get(i));
+            }
+        }
+
+        return newArray;
+    }
+
+    private static void ensureDefaultPanelForV5(Context context, JSONArray jsonPanels) throws JSONException {
+        int historyIndex = -1;
+
+        for (int i = 0; i < jsonPanels.length(); i++) {
+            final PanelConfig panelConfig = new PanelConfig(jsonPanels.getJSONObject(i));
+            if (panelConfig.isDefault()) {
+                return;
+            }
+
+            if (panelConfig.getType() == PanelType.COMBINED_HISTORY) {
+                historyIndex = i;
+            }
+        }
+
+        // Make the History panel default. We can't modify existing PanelConfigs, so make a new one.
+        final PanelConfig historyPanelConfig = createBuiltinPanelConfig(context, PanelType.COMBINED_HISTORY, EnumSet.of(PanelConfig.Flags.DEFAULT_PANEL));
+        jsonPanels.put(historyIndex, historyPanelConfig.toJSON());
+    }
+
+    /**
+     * Remove the reading list panel.
+     * If the reading list panel used to be the default panel, we make bookmarks the new default.
+     */
+    private static JSONArray removeReadingListPanel(Context context, JSONArray jsonPanels) throws JSONException {
+        boolean wasDefault = false;
+        int bookmarksIndex = -1;
+
+        // JSONArrary doesn't provide remove() for API < 19, therefore we need to manually copy all
+        // the items we don't want deleted into a new array.
+        final JSONArray newJSONPanels = new JSONArray();
+
+        for (int i = 0; i < jsonPanels.length(); i++) {
+            final JSONObject panelJSON = jsonPanels.getJSONObject(i);
+            final PanelConfig panelConfig = new PanelConfig(panelJSON);
+
+            if (panelConfig.getType() == PanelType.DEPRECATED_READING_LIST) {
+                // If this panel was the default we'll need to assign a new default:
+                wasDefault = panelConfig.isDefault();
+            } else {
+                if (panelConfig.getType() == PanelType.BOOKMARKS) {
+                    bookmarksIndex = newJSONPanels.length();
+                }
+
+                newJSONPanels.put(panelJSON);
+            }
+        }
+
+        if (wasDefault) {
+            // This will make the bookmarks panel visible if it was previously hidden - this is desired
+            // since this will make the new equivalent of the reading list visible by default.
+            final JSONObject bookmarksPanelConfig = createBuiltinPanelConfig(context, PanelType.BOOKMARKS, EnumSet.of(PanelConfig.Flags.DEFAULT_PANEL)).toJSON();
+            if (bookmarksIndex != -1) {
+                newJSONPanels.put(bookmarksIndex, bookmarksPanelConfig);
+            } else {
+                newJSONPanels.put(bookmarksPanelConfig);
+            }
+        }
+
+        return newJSONPanels;
+    }
+
+    /**
      * Checks to see if the reading list panel already exists.
      *
      * @param jsonPanels JSONArray array representing the curent set of panel configs.
@@ -163,7 +287,7 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
             try {
                 final JSONObject jsonPanelConfig = jsonPanels.getJSONObject(i);
                 final PanelConfig panelConfig = new PanelConfig(jsonPanelConfig);
-                if (panelConfig.getType() == PanelType.READING_LIST) {
+                if (panelConfig.getType() == PanelType.DEPRECATED_READING_LIST) {
                     return true;
                 }
             } catch (Exception e) {
@@ -193,7 +317,7 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
         // Make sure we only do this version check once.
         sMigrationDone = true;
 
-        final JSONArray jsonPanels;
+        JSONArray jsonPanels;
         final int version;
 
         final SharedPreferences prefs = GeckoSharedPrefs.forProfile(context);
@@ -231,7 +355,7 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
                 case 2:
                     // Add "Remote Tabs"/"Synced Tabs" panel.
                     addBuiltinPanelConfig(context, jsonPanels,
-                            PanelType.REMOTE_TABS, Position.FRONT, Position.BACK);
+                            PanelType.DEPRECATED_REMOTE_TABS, Position.FRONT, Position.BACK);
                     break;
 
                 case 3:
@@ -240,11 +364,27 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
                     // considered "low memory". Now, we expose the panel to all devices.
                     // This migration should only occur for "low memory" devices.
                     // Note: This will not agree with the default configuration, which
-                    // has REMOTE_TABS after READING_LIST on some devices.
+                    // has DEPRECATED_REMOTE_TABS after DEPRECATED_READING_LIST on some devices.
                     if (!readingListPanelExists(jsonPanels)) {
                         addBuiltinPanelConfig(context, jsonPanels,
-                                PanelType.READING_LIST, Position.BACK, Position.BACK);
+                                PanelType.DEPRECATED_READING_LIST, Position.BACK, Position.BACK);
                     }
+                    break;
+
+                case 4:
+                    // Combine the History and Sync panels. In order to minimize an unexpected reordering
+                    // of panels, we try to replace the History panel if it's visible, and fall back to
+                    // the Sync panel if that's visible.
+                    jsonPanels = combineHistoryAndSyncPanels(context, jsonPanels);
+                    break;
+
+                case 5:
+                    // This is the fix for bug 1264136 where we lost track of the default panel during some migrations.
+                    ensureDefaultPanelForV5(context, jsonPanels);
+                    break;
+
+                case 6:
+                    jsonPanels = removeReadingListPanel(context, jsonPanels);
                     break;
             }
         }
@@ -264,6 +404,7 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
         final JSONArray jsonPanelConfigs;
         try {
             jsonPanelConfigs = maybePerformMigration(mContext, jsonString);
+            updatePrefsFromConfig(jsonPanelConfigs);
         } catch (JSONException e) {
             Log.e(LOGTAG, "Error loading the list of home panels from JSON prefs", e);
 
@@ -381,6 +522,40 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
             registerReloadReceiver();
         }
     }
+
+    /**
+     * Update prefs that depend on home panels state.
+     *
+     * This includes the prefs that keep track of whether bookmarks or history are enabled, which are
+     * used to control the visibility of the corresponding menu items.
+     */
+    private void updatePrefsFromConfig(JSONArray panelsArray) {
+        final SharedPreferences prefs = GeckoSharedPrefs.forProfile(mContext);
+        if (!prefs.contains(HomeConfig.PREF_KEY_BOOKMARKS_PANEL_ENABLED)
+                || !prefs.contains(HomeConfig.PREF_KEY_HISTORY_PANEL_ENABLED)) {
+
+            final String bookmarkType = PanelType.BOOKMARKS.toString();
+            final String historyType = PanelType.COMBINED_HISTORY.toString();
+            try {
+                for (int i = 0; i < panelsArray.length(); i++) {
+                    final JSONObject panelObj = panelsArray.getJSONObject(i);
+                    final String panelType = panelObj.optString(PanelConfig.JSON_KEY_TYPE, null);
+                    if (panelType == null) {
+                        break;
+                    }
+                    final boolean isDisabled = panelObj.optBoolean(PanelConfig.JSON_KEY_DISABLED, false);
+                    if (bookmarkType.equals(panelType)) {
+                        prefs.edit().putBoolean(HomeConfig.PREF_KEY_BOOKMARKS_PANEL_ENABLED, !isDisabled).apply();
+                    } else if (historyType.equals(panelType)) {
+                        prefs.edit().putBoolean(HomeConfig.PREF_KEY_HISTORY_PANEL_ENABLED, !isDisabled).apply();
+                    }
+                }
+            } catch (JSONException e) {
+                Log.e(LOGTAG, "Error fetching panel from config to update prefs");
+            }
+        }
+    }
+
 
     private void sendReloadBroadcast() {
         final LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(mContext);

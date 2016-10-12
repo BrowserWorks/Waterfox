@@ -207,12 +207,12 @@ class JitRuntime
   public:
     explicit JitRuntime(JSRuntime* rt);
     ~JitRuntime();
-    bool initialize(JSContext* cx);
+    bool initialize(JSContext* cx, js::AutoLockForExclusiveAccess& lock);
 
     uint8_t* allocateOsrTempData(size_t size);
     void freeOsrTempData();
 
-    static void Mark(JSTracer* trc);
+    static void Mark(JSTracer* trc, js::AutoLockForExclusiveAccess& lock);
     static void MarkJitcodeGlobalTableUnconditionally(JSTracer* trc);
     static bool MarkJitcodeGlobalTableIteratively(JSTracer* trc);
     static void SweepJitcodeGlobalTable(JSRuntime* rt);
@@ -318,11 +318,11 @@ class JitRuntime
 
     JitCode* preBarrier(MIRType type) const {
         switch (type) {
-          case MIRType_Value: return valuePreBarrier_;
-          case MIRType_String: return stringPreBarrier_;
-          case MIRType_Object: return objectPreBarrier_;
-          case MIRType_Shape: return shapePreBarrier_;
-          case MIRType_ObjectGroup: return objectGroupPreBarrier_;
+          case MIRType::Value: return valuePreBarrier_;
+          case MIRType::String: return stringPreBarrier_;
+          case MIRType::Object: return objectPreBarrier_;
+          case MIRType::Shape: return shapePreBarrier_;
+          case MIRType::ObjectGroup: return objectGroupPreBarrier_;
           default: MOZ_CRASH();
         }
     }
@@ -382,12 +382,40 @@ class JitZone
     }
 };
 
+enum class CacheKind;
+class CacheIRStubInfo;
+
+struct CacheIRStubKey : public DefaultHasher<CacheIRStubKey> {
+    struct Lookup {
+        CacheKind kind;
+        const uint8_t* code;
+        uint32_t length;
+
+        Lookup(CacheKind kind, const uint8_t* code, uint32_t length)
+          : kind(kind), code(code), length(length)
+        {}
+    };
+
+    static HashNumber hash(const Lookup& l);
+    static bool match(const CacheIRStubKey& entry, const Lookup& l);
+
+    UniquePtr<CacheIRStubInfo, JS::FreePolicy> stubInfo;
+
+    explicit CacheIRStubKey(CacheIRStubInfo* info) : stubInfo(info) {}
+    CacheIRStubKey(CacheIRStubKey&& other) : stubInfo(Move(other.stubInfo)) { }
+
+    void operator=(CacheIRStubKey&& other) {
+        stubInfo = Move(other.stubInfo);
+    }
+};
+
 class JitCompartment
 {
     friend class JitActivation;
 
+    template<typename Key>
     struct IcStubCodeMapGCPolicy {
-        static bool needsSweep(uint32_t* key, ReadBarrieredJitCode* value) {
+        static bool needsSweep(Key*, ReadBarrieredJitCode* value) {
             return IsAboutToBeFinalized(value);
         }
     };
@@ -397,8 +425,16 @@ class JitCompartment
                                     ReadBarrieredJitCode,
                                     DefaultHasher<uint32_t>,
                                     RuntimeAllocPolicy,
-                                    IcStubCodeMapGCPolicy>;
+                                    IcStubCodeMapGCPolicy<uint32_t>>;
     ICStubCodeMap* stubCodes_;
+
+    // Map ICStub keys to ICStub shared code objects.
+    using CacheIRStubCodeMap = GCHashMap<CacheIRStubKey,
+                                         ReadBarrieredJitCode,
+                                         CacheIRStubKey,
+                                         RuntimeAllocPolicy,
+                                         IcStubCodeMapGCPolicy<CacheIRStubKey>>;
+    CacheIRStubCodeMap* cacheIRStubCodes_;
 
     // Keep track of offset into various baseline stubs' code at return
     // point from called script.
@@ -414,12 +450,14 @@ class JitCompartment
     // CodeGenerator::link.
     JitCode* stringConcatStub_;
     JitCode* regExpMatcherStub_;
+    JitCode* regExpSearcherStub_;
     JitCode* regExpTesterStub_;
 
     mozilla::EnumeratedArray<SimdType, SimdType::Count, ReadBarrieredObject> simdTemplateObjects_;
 
     JitCode* generateStringConcatStub(JSContext* cx);
     JitCode* generateRegExpMatcherStub(JSContext* cx);
+    JitCode* generateRegExpSearcherStub(JSContext* cx);
     JitCode* generateRegExpTesterStub(JSContext* cx);
 
   public:
@@ -460,6 +498,22 @@ class JitCompartment
             return false;
         }
         return true;
+    }
+    JitCode* getCacheIRStubCode(const CacheIRStubKey::Lookup& key, CacheIRStubInfo** stubInfo) {
+        CacheIRStubCodeMap::Ptr p = cacheIRStubCodes_->lookup(key);
+        if (p) {
+            *stubInfo = p->key().stubInfo.get();
+            return p->value();
+        }
+        *stubInfo = nullptr;
+        return nullptr;
+    }
+    bool putCacheIRStubCode(const CacheIRStubKey::Lookup& lookup, CacheIRStubKey& key,
+                            JitCode* stubCode)
+    {
+        CacheIRStubCodeMap::AddPtr p = cacheIRStubCodes_->lookupForAdd(lookup);
+        MOZ_ASSERT(!p);
+        return cacheIRStubCodes_->add(p, Move(key), stubCode);
     }
     void initBaselineCallReturnAddr(void* addr, bool constructing) {
         MOZ_ASSERT(baselineCallReturnAddrs_[constructing] == nullptr);
@@ -515,6 +569,17 @@ class JitCompartment
         return regExpMatcherStub_ != nullptr;
     }
 
+    JitCode* regExpSearcherStubNoBarrier() const {
+        return regExpSearcherStub_;
+    }
+
+    bool ensureRegExpSearcherStubExists(JSContext* cx) {
+        if (regExpSearcherStub_)
+            return true;
+        regExpSearcherStub_ = generateRegExpSearcherStub(cx);
+        return regExpSearcherStub_ != nullptr;
+    }
+
     JitCode* regExpTesterStubNoBarrier() const {
         return regExpTesterStub_;
     }
@@ -525,6 +590,8 @@ class JitCompartment
         regExpTesterStub_ = generateRegExpTesterStub(cx);
         return regExpTesterStub_ != nullptr;
     }
+
+    size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
 };
 
 // Called from JSCompartment::discardJitCode().

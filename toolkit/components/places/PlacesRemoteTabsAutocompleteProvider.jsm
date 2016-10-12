@@ -15,12 +15,21 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://services-sync/main.js");
 
 XPCOMUtils.defineLazyGetter(this, "weaveXPCService", function() {
   return Cc["@mozilla.org/weave/service;1"]
            .getService(Ci.nsISupports)
            .wrappedJSObject;
+});
+
+XPCOMUtils.defineLazyGetter(this, "Weave", () => {
+  try {
+    let {Weave} = Cu.import("resource://services-sync/main.js", {});
+    return Weave;
+  } catch (ex) {
+    // The app didn't build Sync.
+  }
+  return null;
 });
 
 // from MDN...
@@ -63,7 +72,11 @@ function ensureItems() {
   return _items;
 }
 
-// An observer to invalidate _items.
+// A preference used to disable the showing of icons in remote tab records.
+const PREF_SHOW_REMOTE_ICONS = "services.sync.syncedTabs.showRemoteIcons";
+let showRemoteIcons;
+
+// An observer to invalidate _items and watch for changed prefs.
 function observe(subject, topic, data) {
   switch (topic) {
     case "weave:engine:sync:finish":
@@ -80,6 +93,16 @@ function observe(subject, topic, data) {
       _items = null;
       break;
 
+    case "nsPref:changed":
+      if (data == PREF_SHOW_REMOTE_ICONS) {
+        try {
+          showRemoteIcons = Services.prefs.getBoolPref(PREF_SHOW_REMOTE_ICONS);
+        } catch(_) {
+          showRemoteIcons = true; // no such pref - default is to show the icons.
+        }
+      }
+      break;
+
     default:
       break;
   }
@@ -88,12 +111,17 @@ function observe(subject, topic, data) {
 Services.obs.addObserver(observe, "weave:engine:sync:finish", false);
 Services.obs.addObserver(observe, "weave:service:start-over", false);
 
+// Observe the pref for showing remote icons and prime our bool that reflects its value.
+Services.prefs.addObserver(PREF_SHOW_REMOTE_ICONS, observe, false);
+observe(null, "nsPref:changed", PREF_SHOW_REMOTE_ICONS);
+
 // This public object is a static singleton.
 this.PlacesRemoteTabsAutocompleteProvider = {
   // a promise that resolves with an array of matching remote tabs.
   getMatches(searchString) {
     // If Sync isn't configured we bail early.
-    if (!Services.prefs.prefHasUserValue("services.sync.username")) {
+    if (Weave === null ||
+        !Services.prefs.prefHasUserValue("services.sync.username")) {
       return Promise.resolve([]);
     }
 
@@ -105,10 +133,10 @@ this.PlacesRemoteTabsAutocompleteProvider = {
       if (url.match(re) || (title && title.match(re))) {
         // lookup the client record.
         let client = clients.get(clientId);
+        let icon = showRemoteIcons ? tab.icon : null;
         // create the record we return for auto-complete.
         let record = {
-          url, title,
-          icon: tab.icon,
+          url, title, icon,
           deviceClass: Weave.Service.clientsEngine.isMobile(clientId) ? "mobile" : "desktop",
           deviceName: client.clientName,
         };

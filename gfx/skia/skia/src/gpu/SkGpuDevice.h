@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2010 Google Inc.
  *
@@ -15,8 +14,10 @@
 #include "SkPicture.h"
 #include "SkRegion.h"
 #include "SkSurface.h"
+#include "GrDrawContext.h"
 #include "GrContext.h"
 #include "GrSurfacePriv.h"
+#include "GrTypes.h"
 
 class GrAccelData;
 class GrTextureProducer;
@@ -50,10 +51,11 @@ public:
      * sampleCount. The Budgeted param controls whether the device's backing store counts against
      * the resource cache budget. On failure, returns nullptr.
      */
-    static SkGpuDevice* Create(GrContext*, SkSurface::Budgeted, const SkImageInfo&,
-                               int sampleCount, const SkSurfaceProps*, InitContents);
+    static SkGpuDevice* Create(GrContext*, SkBudgeted, const SkImageInfo&,
+                               int sampleCount, const SkSurfaceProps*,
+                               InitContents, GrTextureStorageAllocator = GrTextureStorageAllocator());
 
-    virtual ~SkGpuDevice();
+    ~SkGpuDevice() override {}
 
     SkGpuDevice* cloneDevice(const SkSurfaceProps& props) {
         SkBaseDevice* dev = this->onCreateDevice(CreateInfo(this->imageInfo(), kPossible_TileUsage,
@@ -140,6 +142,9 @@ public:
 
     static SkImageFilter::Cache* NewImageFilterCache();
 
+    // for debugging purposes only
+    void drawTexture(GrTexture*, const SkRect& dst, const SkPaint&);
+
 protected:
     bool onReadPixels(const SkImageInfo&, void*, size_t, int, int) override;
     bool onWritePixels(const SkImageInfo&, const void*, size_t, int, int) override;
@@ -150,15 +155,16 @@ protected:
                                           const SkMatrix*, const SkPaint*) override;
 
 private:
-    GrContext*                      fContext;
+    // We want these unreffed in DrawContext, RenderTarget, GrContext order.
+    SkAutoTUnref<GrContext>         fContext;
+    SkAutoTUnref<GrRenderTarget>    fRenderTarget;
+    SkAutoTUnref<GrDrawContext>     fDrawContext;
+
     SkAutoTUnref<const SkClipStack> fClipStack;
     SkIPoint                        fClipOrigin;
-    GrClip                          fClip;
-    SkAutoTUnref<GrDrawContext>     fDrawContext;
-    GrRenderTarget*                 fRenderTarget;
+    GrClip                          fClip;;
     // remove when our clients don't rely on accessBitmap()
     SkBitmap                        fLegacyBitmap;
-    bool                            fNeedClear;
     bool                            fOpaque;
 
     enum Flags {
@@ -173,7 +179,7 @@ private:
 
     SkBaseDevice* onCreateDevice(const CreateInfo&, const SkPaint*) override;
 
-    SkSurface* newSurface(const SkImageInfo&, const SkSurfaceProps&) override;
+    sk_sp<SkSurface> makeSurface(const SkImageInfo&, const SkSurfaceProps&) override;
 
     SkImageFilter::Cache* getImageFilterCache() override;
 
@@ -228,7 +234,6 @@ private:
                          bool bicubic);
 
     void drawTextureProducer(GrTextureProducer*,
-                             bool alphaOnly,
                              const SkRect* srcRect,
                              const SkRect* dstRect,
                              SkCanvas::SrcRectConstraint,
@@ -237,7 +242,6 @@ private:
                              const SkPaint&);
 
     void drawTextureProducerImpl(GrTextureProducer*,
-                                 bool alphaOnly,
                                  const SkRect& clippedSrcRect,
                                  const SkRect& clippedDstRect,
                                  SkCanvas::SrcRectConstraint,
@@ -246,10 +250,19 @@ private:
                                  const GrClip&,
                                  const SkPaint&);
 
+    bool drawFilledDRRect(const SkMatrix& viewMatrix, const SkRRect& outer,
+                          const SkRRect& inner, const SkPaint& paint);
+
+    void drawProducerNine(const SkDraw&, GrTextureProducer*, const SkIRect& center,
+                          const SkRect& dst, const SkPaint&);
+
     bool drawDashLine(const SkPoint pts[2], const SkPaint& paint);
 
-    static GrRenderTarget* CreateRenderTarget(GrContext*, SkSurface::Budgeted, const SkImageInfo&,
-                                              int sampleCount);
+    static GrRenderTarget* CreateRenderTarget(GrContext*, SkBudgeted, const SkImageInfo&,
+                                              int sampleCount, GrTextureStorageAllocator);
+
+    void drawSpriteWithFilter(const SkDraw&, const SkBitmap&, int x, int y,
+                              const SkPaint&) override;
 
     friend class GrAtlasTextContext;
     friend class SkSurface_Gpu;      // for access to surfaceProps

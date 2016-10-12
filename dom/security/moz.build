@@ -7,12 +7,14 @@
 TEST_DIRS += ['test']
 
 EXPORTS.mozilla.dom += [
+    'ContentVerifier.h',
     'nsContentSecurityManager.h',
     'nsCSPContext.h',
     'nsCSPService.h',
     'nsCSPUtils.h',
     'nsMixedContentBlocker.h',
     'SRICheck.h',
+    'SRILogHelper.h',
     'SRIMetadata.h',
 ]
 
@@ -21,6 +23,7 @@ EXPORTS += [
 ]
 
 UNIFIED_SOURCES += [
+    'ContentVerifier.cpp',
     'nsContentSecurityManager.cpp',
     'nsCSPContext.cpp',
     'nsCSPParser.cpp',
@@ -40,5 +43,5 @@ LOCAL_INCLUDES += [
 ]
 
 if CONFIG['GNU_CC']:
-    CFLAGS += ['-Wshadow', '-Wformat-security']
-    CXXFLAGS += ['-Wshadow', '-Wformat-security']
+    CFLAGS += ['-Wformat-security']
+    CXXFLAGS += ['-Wformat-security']

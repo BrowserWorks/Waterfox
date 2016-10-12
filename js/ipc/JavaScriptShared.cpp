@@ -83,16 +83,6 @@ IdToObjectMap::empty() const
     return table_.empty();
 }
 
-ObjectToIdMap::ObjectToIdMap(JSRuntime* rt)
-  : rt_(rt)
-{
-}
-
-ObjectToIdMap::~ObjectToIdMap()
-{
-    JS_ClearAllPostBarrierCallbacks(rt_);
-}
-
 bool
 ObjectToIdMap::init()
 {
@@ -145,9 +135,7 @@ bool JavaScriptShared::sStackLoggingEnabled;
 JavaScriptShared::JavaScriptShared(JSRuntime* rt)
   : rt_(rt),
     refcount_(1),
-    nextSerialNumber_(1),
-    unwaivedObjectIds_(rt),
-    waivedObjectIds_(rt)
+    nextSerialNumber_(1)
 {
     if (!sLoggingInitialized) {
         sLoggingInitialized = true;
@@ -522,7 +510,7 @@ JavaScriptShared::findObjectById(JSContext* cx, const ObjectId& objId)
 static const uint64_t UnknownPropertyOp = 1;
 
 bool
-JavaScriptShared::fromDescriptor(JSContext* cx, Handle<JSPropertyDescriptor> desc,
+JavaScriptShared::fromDescriptor(JSContext* cx, Handle<PropertyDescriptor> desc,
                                  PPropertyDescriptor* out)
 {
     out->attrs() = desc.attributes();
@@ -578,7 +566,7 @@ UnknownStrictPropertyStub(JSContext* cx, HandleObject obj, HandleId id, MutableH
 
 bool
 JavaScriptShared::toDescriptor(JSContext* cx, const PPropertyDescriptor& in,
-                               MutableHandle<JSPropertyDescriptor> out)
+                               MutableHandle<PropertyDescriptor> out)
 {
     out.setAttributes(in.attrs());
     if (!fromVariant(cx, in.value(), out.value()))

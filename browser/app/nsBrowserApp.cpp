@@ -36,11 +36,15 @@
 // support Windows XP SP2 in ASAN builds.
 #define XRE_DONT_SUPPORT_XPSP2
 #endif
+#define XRE_WANT_ENVIRON
 #include "nsWindowsWMain.cpp"
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
 #define snprintf _snprintf
 #endif
 #define strcasecmp _stricmp
+#ifdef MOZ_SANDBOX
+#include "mozilla/sandboxing/SandboxInitialization.h"
+#endif
 #endif
 #include "BinaryPath.h"
 
@@ -123,6 +127,7 @@ XRE_TelemetryAccumulateType XRE_TelemetryAccumulate;
 XRE_StartupTimelineRecordType XRE_StartupTimelineRecord;
 XRE_mainType XRE_main;
 XRE_StopLateWriteChecksType XRE_StopLateWriteChecks;
+XRE_XPCShellMainType XRE_XPCShellMain;
 
 static const nsDynamicFunctionLoad kXULFuncs[] = {
     { "XRE_GetFileFromPath", (NSFuncPtr*) &XRE_GetFileFromPath },
@@ -132,10 +137,11 @@ static const nsDynamicFunctionLoad kXULFuncs[] = {
     { "XRE_StartupTimelineRecord", (NSFuncPtr*) &XRE_StartupTimelineRecord },
     { "XRE_main", (NSFuncPtr*) &XRE_main },
     { "XRE_StopLateWriteChecks", (NSFuncPtr*) &XRE_StopLateWriteChecks },
+    { "XRE_XPCShellMain", (NSFuncPtr*) &XRE_XPCShellMain },
     { nullptr, nullptr }
 };
 
-static int do_main(int argc, char* argv[], nsIFile *xreDirectory)
+static int do_main(int argc, char* argv[], char* envp[], nsIFile *xreDirectory)
 {
   nsCOMPtr<nsIFile> appini;
   nsresult rv;
@@ -165,13 +171,25 @@ static int do_main(int argc, char* argv[], nsIFile *xreDirectory)
 
     char appEnv[MAXPATHLEN];
     snprintf(appEnv, MAXPATHLEN, "XUL_APP_FILE=%s", argv[2]);
-    if (putenv(appEnv)) {
+    if (putenv(strdup(appEnv))) {
       Output("Couldn't set %s.\n", appEnv);
       return 255;
     }
     argv[2] = argv[0];
     argv += 2;
     argc -= 2;
+  } else if (argc > 1 && IsArg(argv[1], "xpcshell")) {
+    for (int i = 1; i < argc; i++) {
+      argv[i] = argv[i + 1];
+    }
+
+    XREShellData shellData;
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+    shellData.sandboxBrokerServices =
+      sandboxing::GetInitializedBrokerServices();
+#endif
+
+    return XRE_XPCShellMain(--argc, argv, envp, &shellData);
   }
 
   if (appini) {
@@ -208,6 +226,18 @@ static int do_main(int argc, char* argv[], nsIFile *xreDirectory)
   SetStrongPtr(appData.directory, static_cast<nsIFile*>(appSubdir.get()));
   // xreDirectory already has a refcount from NS_NewLocalFile
   appData.xreDirectory = xreDirectory;
+
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+  sandbox::BrokerServices* brokerServices =
+    sandboxing::GetInitializedBrokerServices();
+#if defined(MOZ_CONTENT_SANDBOX)
+  if (!brokerServices) {
+    Output("Couldn't initialize the broker services.\n");
+    return 255;
+  }
+#endif
+  appData.sandboxBrokerServices = brokerServices;
+#endif
 
   return XRE_main(argc, argv, &appData, mainFlags);
 }
@@ -283,9 +313,22 @@ sizeof(XPCOM_DLL) - 1))
   return rv;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv[], char* envp[])
 {
   mozilla::TimeStamp start = mozilla::TimeStamp::Now();
+
+#ifdef HAS_DLL_BLOCKLIST
+  DllBlocklist_Initialize();
+
+#ifdef DEBUG
+  // In order to be effective against AppInit DLLs, the blocklist must be
+  // initialized before user32.dll is loaded into the process (bug 932100).
+  if (GetModuleHandleA("user32.dll")) {
+    fprintf(stderr, "DLL blocklist was unable to intercept AppInit DLLs.\n");
+  }
+#endif
+#endif
+
 
 #ifdef XP_MACOSX
   TriggerQuirks();
@@ -303,18 +346,6 @@ int main(int argc, char* argv[])
 #endif
 
   nsIFile *xreDirectory;
-
-#ifdef HAS_DLL_BLOCKLIST
-  DllBlocklist_Initialize();
-
-#ifdef DEBUG
-  // In order to be effective against AppInit DLLs, the blocklist must be
-  // initialized before user32.dll is loaded into the process (bug 932100).
-  if (GetModuleHandleA("user32.dll")) {
-    fprintf(stderr, "DLL blocklist was unable to intercept AppInit DLLs.\n");
-  }
-#endif
-#endif
 
   nsresult rv = InitXPCOMGlue(argv[0], &xreDirectory);
   if (NS_FAILED(rv)) {
@@ -349,7 +380,7 @@ int main(int argc, char* argv[])
 #endif
   }
 
-  int result = do_main(argc, argv, xreDirectory);
+  int result = do_main(argc, argv, envp, xreDirectory);
 
   NS_LogTerm();
 

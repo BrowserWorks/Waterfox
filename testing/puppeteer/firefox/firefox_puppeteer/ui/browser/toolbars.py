@@ -97,7 +97,9 @@ class LocationBar(UIBaseLib):
         """Clears the contents of the url bar (via the DELETE shortcut)."""
         self.focus('shortcut')
         self.urlbar.send_keys(keys.Keys.DELETE)
-        Wait(self.marionette).until(lambda _: self.urlbar.get_attribute('value') == '')
+        Wait(self.marionette).until(
+            lambda _: self.urlbar.get_attribute('value') == '',
+            message='Contents of location bar could not be cleared.')
 
     def close_context_menu(self):
         """Closes the Location Bar context menu by a key event."""
@@ -152,7 +154,9 @@ class LocationBar(UIBaseLib):
         else:
             raise ValueError("An unknown event type was passed: %s" % event)
 
-        Wait(self.marionette).until(lambda _: self.focused)
+        Wait(self.marionette).until(
+            lambda _: self.focused,
+            message='Location bar has not be focused.')
 
     def get_contextmenu_entry(self, action):
         """Retrieves the urlbar context menu entry corresponding
@@ -232,8 +236,11 @@ class LocationBar(UIBaseLib):
         return self.marionette.find_element(By.ID, "notification-popup")
 
     def open_identity_popup(self):
+        """Open the identity popup."""
         self.identity_box.click()
-        Wait(self.marionette).until(lambda _: self.identity_popup.is_open)
+        Wait(self.marionette).until(
+            lambda _: self.identity_popup.is_open,
+            message='Identity popup has not been opened.')
 
     @property
     def reload_button(self):
@@ -313,7 +320,9 @@ class AutocompleteResults(UIBaseLib):
         else:
             self.element.send_keys(keys.Keys.ESCAPE)
 
-        Wait(self.marionette).until(lambda _: not self.is_open)
+        Wait(self.marionette).until(
+            lambda _: not self.is_open,
+            message='Autocomplete popup has not been closed.')
 
     def get_matching_text(self, result, match_type):
         """Returns an array of strings of the matching text within an autocomplete
@@ -323,27 +332,17 @@ class AutocompleteResults(UIBaseLib):
         :param match_type: The type of match to search for (one of `title` or `url`).
         """
 
-        if match_type == 'title':
-            descnode = self.marionette.execute_script("""
-              return arguments[0].boxObject.firstChild.childNodes[1].childNodes[0];
-            """, script_args=[result])
-        elif match_type == 'url':
-            descnode = self.marionette.execute_script("""
-              return arguments[0].boxObject.lastChild.childNodes[2].childNodes[0];
-            """, script_args=[result])
-        else:
+        if match_type not in ('title', 'url'):
             raise ValueError('match_type provided must be one of'
                              '"title" or "url", not %s' % match_type)
 
-        return self.marionette.execute_script("""
-          let rv = [];
-          for (let node of arguments[0].childNodes) {
-            if (node.nodeName == 'span') {
-              rv.push(node.innerHTML);
-            }
-          }
-          return rv;
-        """, script_args=[descnode])
+        # Search for nodes of the given type with emphasized text
+        emphasized_nodes = result.find_elements(
+            By.ANON_ATTRIBUTE,
+            {'class': 'ac-emphasize-text ac-emphasize-text-%s' % match_type}
+        )
+
+        return [node.get_attribute('textContent') for node in emphasized_nodes]
 
     @property
     def visible_results(self):
@@ -351,17 +350,19 @@ class AutocompleteResults(UIBaseLib):
 
         :returns: The list of visible results.
         """
+        match_count = self.element.get_attribute('_matchCount')
+
         return self.marionette.execute_script("""
           let rv = [];
           let node = arguments[0];
-          for (let i = 0; i < node.itemCount; ++i) {
-            let item = node.getItemAtIndex(i);
-            if (!item.hasAttribute("collapsed")) {
-              rv.push(item);
-            }
+          let count = arguments[1];
+
+          for (let i = 0; i < count; ++i) {
+            rv.push(node.getItemAtIndex(i));
           }
+
           return rv;
-        """, script_args=[self.results])
+        """, script_args=[self.results, match_count])
 
     @property
     def is_open(self):
@@ -415,14 +416,6 @@ class IdentityPopup(UIBaseLib):
         self._view = None
 
     @property
-    def host(self):
-        """The DOM element which represents the identity-popup content host.
-
-        :returns: Reference to the identity-popup content host.
-        """
-        return self.marionette.find_element(By.ID, 'identity-popup-content-host')
-
-    @property
     def is_open(self):
         """Returns whether this popup is currently open.
 
@@ -446,7 +439,9 @@ class IdentityPopup(UIBaseLib):
         else:
             self.element.send_keys(keys.Keys.ESCAPE)
 
-        Wait(self.marionette).until(lambda _: not self.is_open)
+        Wait(self.marionette).until(
+            lambda _: not self.is_open,
+            message='Identity popup has not been closed.')
 
     @property
     def view(self):
@@ -527,6 +522,14 @@ class IdentityPopupMainView(IdentityPopupView):
         return self.element.find_element(By.CLASS_NAME, 'identity-popup-expander')
 
     @property
+    def host(self):
+        """The DOM element which represents the identity-popup content host.
+
+        :returns: Reference to the identity-popup content host.
+        """
+        return self.element.find_element(By.CLASS_NAME, 'identity-popup-headline host')
+
+    @property
     def insecure_connection_label(self):
         """The DOM element which represents the identity popup insecure connection label.
 
@@ -578,6 +581,14 @@ class IdentityPopupSecurityView(IdentityPopupView):
         """
         return self.element.find_element(By.CSS_SELECTOR,
                                          'button[when-mixedcontent=active-loaded]')
+
+    @property
+    def host(self):
+        """The DOM element which represents the identity-popup content host.
+
+        :returns: Reference to the identity-popup content host.
+        """
+        return self.element.find_element(By.CLASS_NAME, 'identity-popup-headline host')
 
     @property
     def insecure_connection_label(self):

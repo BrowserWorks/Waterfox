@@ -45,16 +45,27 @@ function resolvePromise() {
 }
 
 onmessage = function(event) {
-  // FIXME(catalinb): we cannot treat these events as extendable
-  // yet. Bug 1143717
-  event.source.postMessage({type: "message", state: state});
+  var lastState = state;
   state = event.data;
-  if (event.data === "release") {
+  if (state === 'wait') {
+    event.waitUntil(new Promise(function(res, rej) {
+      if (resolvePromiseCallback) {
+        dump("ERROR: service worker was already waiting on a promise.\n");
+      }
+      resolvePromiseCallback = res;
+    }));
+  } else if (state === 'release') {
     resolvePromise();
   }
+  event.source.postMessage({type: "message", state: lastState});
 }
 
 onpush = function(event) {
+  var pushResolve;
+  event.waitUntil(new Promise(function(resolve) {
+    pushResolve = resolve;
+  }));
+
   // FIXME(catalinb): push message carry no data. So we assume the only
   // push message we get is "wait"
   clients.matchAll().then(function(client) {
@@ -65,11 +76,10 @@ onpush = function(event) {
     client[0].postMessage({type: "push", state: state});
 
     state = "wait";
-    event.waitUntil(new Promise(function(res, rej) {
-      if (resolvePromiseCallback) {
-        dump("ERROR: service worker was already waiting on a promise.\n");
-      }
-      resolvePromiseCallback = res;
-    }));
+    if (resolvePromiseCallback) {
+      dump("ERROR: service worker was already waiting on a promise.\n");
+    } else {
+      resolvePromiseCallback = pushResolve;
+    }
   });
 }

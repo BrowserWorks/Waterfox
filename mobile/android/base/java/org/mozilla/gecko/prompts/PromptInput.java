@@ -13,10 +13,10 @@ import org.json.JSONObject;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.widget.AllCapsTextView;
 import org.mozilla.gecko.widget.DateTimePicker;
-import org.mozilla.gecko.widget.FloatingHintEditText;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.widget.AppCompatCheckBox;
 import android.text.Html;
 import android.text.InputType;
@@ -35,7 +35,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
-public class PromptInput {
+public abstract class PromptInput {
     protected final String mLabel;
     protected final String mType;
     protected final String mId;
@@ -47,7 +47,7 @@ public class PromptInput {
     public static final String LOGTAG = "GeckoPromptInput";
 
     public interface OnChangeListener {
-        public void onChange(PromptInput input);
+        void onChange(PromptInput input);
     }
 
     public void setListener(OnChangeListener listener) {
@@ -67,7 +67,7 @@ public class PromptInput {
 
         @Override
         public View getView(final Context context) throws UnsupportedOperationException {
-            EditText input = new FloatingHintEditText(context);
+            EditText input = new EditText(context);
             input.setInputType(InputType.TYPE_CLASS_TEXT);
             input.setText(mValue);
 
@@ -87,14 +87,17 @@ public class PromptInput {
                 input.requestFocus();
             }
 
-            mView = (View)input;
+            TextInputLayout inputLayout = new TextInputLayout(context);
+            inputLayout.addView(input);
+
+            mView = (View) inputLayout;
             return mView;
         }
 
         @Override
         public Object getValue() {
-            EditText edit = (EditText)mView;
-            return edit.getText();
+            final TextInputLayout inputLayout = (TextInputLayout) mView;
+            return inputLayout.getEditText().getText();
         }
     }
 
@@ -106,7 +109,8 @@ public class PromptInput {
 
         @Override
         public View getView(final Context context) throws UnsupportedOperationException {
-            EditText input = (EditText) super.getView(context);
+            final TextInputLayout inputLayout = (TextInputLayout) super.getView(context);
+            final EditText input = inputLayout.getEditText();
             input.setRawInputType(Configuration.KEYBOARD_12KEY);
             input.setInputType(InputType.TYPE_CLASS_NUMBER |
                                InputType.TYPE_NUMBER_FLAG_SIGNED);
@@ -122,17 +126,11 @@ public class PromptInput {
 
         @Override
         public View getView(Context context) throws UnsupportedOperationException {
-            EditText input = (EditText) super.getView(context);
-            input.setInputType(InputType.TYPE_CLASS_TEXT |
+            final TextInputLayout inputLayout = (TextInputLayout) super.getView(context);
+            inputLayout.getEditText().setInputType(InputType.TYPE_CLASS_TEXT |
                                InputType.TYPE_TEXT_VARIATION_PASSWORD |
                                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-            return input;
-        }
-
-        @Override
-        public Object getValue() {
-            EditText edit = (EditText)mView;
-            return edit.getText();
+            return inputLayout;
         }
     }
 
@@ -219,9 +217,9 @@ public class PromptInput {
                 input.setCurrentMinute(calendar.get(GregorianCalendar.MINUTE));
                 mView = (View)input;
             } else if (mType.equals("datetime-local") || mType.equals("datetime")) {
-                DateTimePicker input = new DateTimePicker(context, "yyyy-MM-dd HH:mm", mValue.replace("T"," ").replace("Z", ""),
-                                                          DateTimePicker.PickersState.DATETIME, 
-                                                          mMinValue.replace("T"," ").replace("Z",""), mMaxValue.replace("T"," ").replace("Z", ""));
+                DateTimePicker input = new DateTimePicker(context, "yyyy-MM-dd HH:mm", mValue.replace("T", " ").replace("Z", ""),
+                                                          DateTimePicker.PickersState.DATETIME,
+                                                          mMinValue.replace("T", " ").replace("Z", ""), mMaxValue.replace("T", " ").replace("Z", ""));
                 input.toggleCalendar(true);
                 mView = (View)input;
             } else if (mType.equals("month")) {
@@ -238,34 +236,27 @@ public class PromptInput {
 
         @Override
         public Object getValue() {
-            if (Versions.preHC && mType.equals("date")) {
-                // We can't use the custom DateTimePicker with a sdk older than 11.
-                // Fallback on the native DatePicker.
-                DatePicker dp = (DatePicker)mView;
-                GregorianCalendar calendar =
-                    new GregorianCalendar(dp.getYear(),dp.getMonth(),dp.getDayOfMonth());
-                return formatDateString("yyyy-MM-dd",calendar);
-            } else if (mType.equals("time")) {
+            if (mType.equals("time")) {
                 TimePicker tp = (TimePicker)mView;
                 GregorianCalendar calendar =
-                    new GregorianCalendar(0,0,0,tp.getCurrentHour(),tp.getCurrentMinute());
-                return formatDateString("HH:mm",calendar);
+                    new GregorianCalendar(0, 0, 0, tp.getCurrentHour(), tp.getCurrentMinute());
+                return formatDateString("HH:mm", calendar);
             } else {
                 DateTimePicker dp = (DateTimePicker)mView;
                 GregorianCalendar calendar = new GregorianCalendar();
                 calendar.setTimeInMillis(dp.getTimeInMillis());
                 if (mType.equals("date")) {
-                    return formatDateString("yyyy-MM-dd",calendar);
+                    return formatDateString("yyyy-MM-dd", calendar);
                 } else if (mType.equals("week")) {
-                    return formatDateString("yyyy-'W'ww",calendar);
+                    return formatDateString("yyyy-'W'ww", calendar);
                 } else if (mType.equals("datetime-local")) {
-                    return formatDateString("yyyy-MM-dd'T'HH:mm",calendar);
+                    return formatDateString("yyyy-MM-dd'T'HH:mm", calendar);
                 } else if (mType.equals("datetime")) {
-                    calendar.set(GregorianCalendar.ZONE_OFFSET,0);
+                    calendar.set(GregorianCalendar.ZONE_OFFSET, 0);
                     calendar.setTimeInMillis(dp.getTimeInMillis());
-                    return formatDateString("yyyy-MM-dd'T'HH:mm'Z'",calendar);
+                    return formatDateString("yyyy-MM-dd'T'HH:mm'Z'", calendar);
                 } else if (mType.equals("month")) {
-                    return formatDateString("yyyy-MM",calendar);
+                    return formatDateString("yyyy-MM", calendar);
                 }
             }
             return super.getValue();
@@ -288,11 +279,7 @@ public class PromptInput {
 
         @Override
         public View getView(final Context context) throws UnsupportedOperationException {
-            if (Versions.preHC) {
-                spinner = new Spinner(context);
-            } else {
-                spinner = new Spinner(context, Spinner.MODE_DIALOG);
-            }
+            spinner = new Spinner(context, Spinner.MODE_DIALOG);
             try {
                 if (mListitems.length > 0) {
                     ArrayAdapter<String> adapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, mListitems);
@@ -385,9 +372,7 @@ public class PromptInput {
         return null;
     }
 
-    public View getView(Context context) throws UnsupportedOperationException {
-        return null;
-    }
+    public abstract View getView(Context context) throws UnsupportedOperationException;
 
     public String getId() {
         return mId;

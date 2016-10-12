@@ -5,6 +5,7 @@
 
 package org.mozilla.gecko.gfx;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.util.FloatUtils;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -16,11 +17,23 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 public class DynamicToolbarAnimator {
     private static final String LOGTAG = "GeckoDynamicToolbarAnimator";
     private static final String PREF_SCROLL_TOOLBAR_THRESHOLD = "browser.ui.scroll-toolbar-threshold";
+
+    public static enum PinReason {
+        RELAYOUT,
+        ACTION_MODE,
+        FULL_SCREEN,
+        CARET_DRAG
+    }
+
+    private final Set<PinReason> pinFlags = Collections.synchronizedSet(EnumSet.noneOf(PinReason.class));
 
     // The duration of the animation in ns
     private static final long ANIMATION_DURATION = 250000000;
@@ -49,9 +62,6 @@ public class DynamicToolbarAnimator {
      * toolbar. */
     private float mMaxTranslation;
 
-    /* If this boolean is true, scroll changes will not affect translation */
-    private boolean mPinned;
-
     /* This interpolator is used for the above mentioned animation */
     private DecelerateInterpolator mInterpolator;
 
@@ -60,7 +70,7 @@ public class DynamicToolbarAnimator {
      */
     private float SCROLL_TOOLBAR_THRESHOLD = 0.20f;
     /* The ID of the prefs listener for the scroll-toolbar threshold */
-    private Integer mPrefObserverId;
+    private final PrefsHelper.PrefHandler mPrefObserver;
 
     /* While we are resizing the viewport to account for the toolbar, the Java
      * code and painted layer metrics in the compositor have different notions
@@ -85,6 +95,9 @@ public class DynamicToolbarAnimator {
     private PointF mTouchStart;
     private float mLastTouch;
 
+    /* Set to true when root content is being scrolled */
+    private boolean mScrollingRootContent;
+
     public DynamicToolbarAnimator(GeckoLayerClient aTarget) {
         mTarget = aTarget;
         mListeners = new ArrayList<LayerView.DynamicToolbarListener>();
@@ -92,24 +105,22 @@ public class DynamicToolbarAnimator {
         mInterpolator = new DecelerateInterpolator();
 
         // Listen to the dynamic toolbar pref
-        mPrefObserverId = PrefsHelper.getPref(PREF_SCROLL_TOOLBAR_THRESHOLD, new PrefsHelper.PrefHandlerBase() {
+        mPrefObserver = new PrefsHelper.PrefHandlerBase() {
             @Override
             public void prefValue(String pref, int value) {
                 SCROLL_TOOLBAR_THRESHOLD = value / 100.0f;
             }
+        };
+        PrefsHelper.addObserver(new String[] { PREF_SCROLL_TOOLBAR_THRESHOLD }, mPrefObserver);
 
-            @Override
-            public boolean isObserver() {
-                return true;
-            }
-        });
+        // JPZ doesn't notify when scrolling root content. This maintains existing behaviour.
+        if (!AppConstants.MOZ_ANDROID_APZ) {
+            mScrollingRootContent = true;
+        }
     }
 
     public void destroy() {
-        if (mPrefObserverId != null) {
-            PrefsHelper.removeObserver(mPrefObserverId);
-            mPrefObserverId = null;
-        }
+        PrefsHelper.removeObserver(mPrefObserver);
     }
 
     public void addTranslationListener(LayerView.DynamicToolbarListener aListener) {
@@ -156,12 +167,23 @@ public class DynamicToolbarAnimator {
         return mToolbarTranslation;
     }
 
-    public void setPinned(boolean pinned) {
-        mPinned = pinned;
+    /**
+     * If true, scroll changes will not affect translation.
+     */
+    public boolean isPinned() {
+        return !pinFlags.isEmpty();
     }
 
-    public boolean isPinned() {
-        return mPinned;
+    public boolean isPinnedBy(PinReason reason) {
+        return pinFlags.contains(reason);
+    }
+
+    public void setPinned(boolean pinned, PinReason reason) {
+        if (pinned) {
+            pinFlags.add(reason);
+        } else {
+            pinFlags.remove(reason);
+        }
     }
 
     public void showToolbar(boolean immediately) {
@@ -170,6 +192,10 @@ public class DynamicToolbarAnimator {
 
     public void hideToolbar(boolean immediately) {
         animateToolbar(false, immediately);
+    }
+
+    public void setScrollingRootContent(boolean isRootContent) {
+        mScrollingRootContent = isRootContent;
     }
 
     private void animateToolbar(final boolean showToolbar, boolean immediately) {
@@ -326,11 +352,12 @@ public class DynamicToolbarAnimator {
             // translation to take effect right away. Or if the user has moved
             // their finger past the required threshold (and is not trying to
             // scroll past the bottom of the page) then also we want the touch
-            // to cause translation.
+            // to cause translation. If the toolbar is fully visible, we only
+            // want the toolbar to hide if the user is scrolling the root content.
             boolean inBetween = (mToolbarTranslation != 0 && mToolbarTranslation != mMaxTranslation);
             boolean reachedThreshold = -aTouchTravelDistance >= exposeThreshold;
             boolean atBottomOfPage = aMetrics.viewportRectBottom() >= aMetrics.pageRectBottom;
-            if (inBetween || (reachedThreshold && !atBottomOfPage)) {
+            if (inBetween || (mScrollingRootContent && reachedThreshold && !atBottomOfPage)) {
                 return translation;
             }
         } else {    // finger moving downwards
@@ -351,8 +378,13 @@ public class DynamicToolbarAnimator {
         return 0;
     }
 
+    // Timestamp of the start of the touch event used to calculate toolbar velocity
+    private long mLastEventTime;
+    // Current velocity of the toolbar. Used to populate the velocity queue in C++APZ.
+    private float mVelocity;
+
     boolean onInterceptTouchEvent(MotionEvent event) {
-        if (mPinned) {
+        if (isPinned()) {
             return false;
         }
 
@@ -364,12 +396,14 @@ public class DynamicToolbarAnimator {
 
         // we only care about single-finger drags here; any other kind of event
         // should reset and cause us to start over.
-        if (event.getActionMasked() != MotionEvent.ACTION_MOVE ||
+        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_MOUSE ||
+            event.getActionMasked() != MotionEvent.ACTION_MOVE ||
             event.getPointerCount() != 1)
         {
             if (mTouchStart != null) {
                 Log.v(LOGTAG, "Resetting touch sequence due to non-move");
                 mTouchStart = null;
+                mVelocity = 0.0f;
             }
 
             if (event.getActionMasked() == MotionEvent.ACTION_UP) {
@@ -387,20 +421,29 @@ public class DynamicToolbarAnimator {
             float prevDir = mLastTouch - mTouchStart.y;
             float newDir = event.getRawY() - mLastTouch;
             if (prevDir != 0 && newDir != 0 && ((prevDir < 0) != (newDir < 0))) {
-                Log.v(LOGTAG, "Direction changed: " + mTouchStart.y + " -> " + mLastTouch + " -> " + event.getRawY());
                 // If the direction of movement changed, reset the travel
                 // distance properties.
                 mTouchStart = null;
+                mVelocity = 0.0f;
             }
         }
 
         if (mTouchStart == null) {
             mTouchStart = new PointF(event.getRawX(), event.getRawY());
             mLastTouch = event.getRawY();
+            mLastEventTime = event.getEventTime();
             return false;
         }
 
         float deltaY = event.getRawY() - mLastTouch;
+        long currentTime = event.getEventTime();
+        float deltaTime = (float)(currentTime - mLastEventTime);
+        mLastEventTime = currentTime;
+        if (deltaTime > 0.0f) {
+            mVelocity = -deltaY / deltaTime;
+        } else {
+            mVelocity = 0.0f;
+        }
         mLastTouch = event.getRawY();
         float travelDistance = event.getRawY() - mTouchStart.y;
 
@@ -414,7 +457,6 @@ public class DynamicToolbarAnimator {
         }
 
         float translation = decideTranslation(deltaY, metrics, travelDistance);
-        Log.v(LOGTAG, "Got vertical translation " + translation);
 
         float oldToolbarTranslation = mToolbarTranslation;
         float oldLayerViewTranslation = mLayerViewTranslation;
@@ -426,9 +468,22 @@ public class DynamicToolbarAnimator {
             return false;
         }
 
+        if (mToolbarTranslation == mMaxTranslation) {
+            Log.v(LOGTAG, "Toolbar at maximum translation, calling shiftLayerView(" + mMaxTranslation + ")");
+            shiftLayerView(mMaxTranslation);
+        } else if (mToolbarTranslation == 0) {
+            Log.v(LOGTAG, "Toolbar at minimum translation, calling shiftLayerView(0)");
+            shiftLayerView(0);
+        }
+
         fireListeners();
         mTarget.getView().requestRender();
         return true;
+    }
+
+    // Get the current velocity of the toolbar.
+    float getVelocity() {
+        return mVelocity;
     }
 
     public PointF getVisibleEndOfLayerView() {

@@ -114,7 +114,6 @@ class JitCode : public gc::TenuredCell
 
     void traceChildren(JSTracer* trc);
     void finalize(FreeOp* fop);
-    void fixupAfterMovingGC() {}
     void setInvalidated() {
         invalidated_ = true;
     }
@@ -160,7 +159,7 @@ class JitCode : public gc::TenuredCell
                         ExecutablePool* pool, CodeKind kind);
 
   public:
-    static inline ThingRootKind rootKind() { return THING_ROOT_JIT_CODE; }
+    static const JS::TraceKind TraceKind = JS::TraceKind::JitCode;
 };
 
 class SnapshotWriter;
@@ -332,6 +331,12 @@ struct IonScript
     // Do not call directly, use IonScript::New. This is public for cx->new_.
     IonScript();
 
+    ~IonScript() {
+        // The contents of the fallback stub space are removed and freed
+        // separately after the next minor GC. See IonScript::Destroy.
+        MOZ_ASSERT(fallbackStubSpace_.isEmpty());
+    }
+
     static IonScript* New(JSContext* cx, RecompileInfo recompileInfo,
                           uint32_t frameSlots, uint32_t argumentSlots, uint32_t frameSize,
                           size_t snapshotsListSize, size_t snapshotsRVATableSize,
@@ -418,11 +423,8 @@ struct IonScript
     void incNumBailouts() {
         numBailouts_++;
     }
-    uint32_t numBailouts() const {
-        return numBailouts_;
-    }
     bool bailoutExpected() const {
-        return numBailouts_ > 0;
+        return numBailouts_ >= JitOptions.frequentBailoutThreshold;
     }
     void setHasProfilingInstrumentation() {
         hasProfilingInstrumentation_ = true;
@@ -615,7 +617,8 @@ struct IonBlockCounts
 
   public:
 
-    bool init(uint32_t id, uint32_t offset, char* description, uint32_t numSuccessors) {
+    MOZ_MUST_USE bool init(uint32_t id, uint32_t offset, char* description,
+                           uint32_t numSuccessors) {
         id_ = id;
         offset_ = offset;
         description_ = description;
@@ -714,7 +717,7 @@ struct IonScriptCounts
         }
     }
 
-    bool init(size_t numBlocks) {
+    MOZ_MUST_USE bool init(size_t numBlocks) {
         blocks_ = js_pod_calloc<IonBlockCounts>(numBlocks);
         if (!blocks_)
             return false;
@@ -801,6 +804,17 @@ struct Concrete<js::jit::JitCode> : TracerConcrete<js::jit::JitCode> {
 };
 
 } // namespace ubi
+
+template <>
+struct DeletePolicy<js::jit::IonScript>
+{
+    explicit DeletePolicy(JSRuntime* rt) : rt_(rt) {}
+    void operator()(const js::jit::IonScript* script);
+
+  private:
+    JSRuntime* rt_;
+};
+
 } // namespace JS
 
 #endif /* jit_IonCode_h */

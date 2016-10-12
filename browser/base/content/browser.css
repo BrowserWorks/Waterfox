@@ -7,6 +7,7 @@
 @namespace svg url("http://www.w3.org/2000/svg");
 
 :root {
+  --identity-popup-expander-width: 38px;
   --panelui-subview-transition-duration: 150ms;
 }
 
@@ -72,10 +73,6 @@ toolbar[customizable="true"] {
 #toolbar-menubar {
   -moz-binding: url("chrome://browser/content/customizableui/toolbar.xml#toolbar-menubar-stub");
 }
-
-toolbar[customizable="true"]:not([nowindowdrag="true"]) {
-  -moz-binding: url("chrome://browser/content/customizableui/toolbar.xml#toolbar-drag");
-}
 %endif
 
 #toolbar-menubar[autohide="true"] {
@@ -120,6 +117,10 @@ panelview {
 panelview:not([mainview]):not([current]) {
   transition: visibility 0s linear var(--panelui-subview-transition-duration);
   visibility: collapse;
+}
+
+browser[frameType="social"][remote="true"] {
+  -moz-binding: url("chrome://global/content/bindings/remote-browser.xml#remote-browser");
 }
 
 tabbrowser {
@@ -227,10 +228,7 @@ toolbar[customizing] > .overflow-button {
 
 #titlebar {
   -moz-binding: url("chrome://global/content/bindings/general.xml#windowdragbox");
-
-%ifdef XP_MACOSX
   -moz-window-dragging: drag;
-%endif
 }
 
 #titlebar-spacer {
@@ -245,19 +243,13 @@ toolbar[customizing] > .overflow-button {
   -moz-appearance: -moz-window-button-box;
 }
 
+#personal-bookmarks {
+  -moz-window-dragging: inherit;
+}
+
 %ifdef XP_MACOSX
 #titlebar-fullscreen-button {
   -moz-appearance: -moz-mac-fullscreen-button;
-}
-
-/* Because these buttons don't move, they should always be aligned the same,
- * left and right were deprecated, so we have to do work to get it to mean that: */
-#titlebar-buttonbox-container:-moz-locale-dir(ltr) {
-  -moz-box-align: start;
-}
-
-#titlebar-buttonbox-container:-moz-locale-dir(rtl) {
-  -moz-box-align: end;
 }
 
 /* Fullscreen and caption buttons don't move with RTL on OS X so override the automatic ordering. */
@@ -274,6 +266,17 @@ toolbar[customizing] > .overflow-button {
 .titlebar-placeholder[type="fullscreen-button"]:-moz-locale-dir(rtl) {
   -moz-box-ordinal-group: 0;
 }
+
+/* In private windows, the #titlebar-content is higher because of the
+ * private browsing indicator. With the margin-top the titlebar buttons
+ * align to the top correctly in that case, but only if we don't stretch
+ * the box they're in because the container is too high, so we override
+ * the default alignment value (stretch).
+ */
+#main-window[tabsintitlebar] > #titlebar > #titlebar-content > #titlebar-buttonbox-container {
+  -moz-box-align: start;
+}
+
 %else
 /* On non-OSX, these should be start-aligned */
 #titlebar-buttonbox-container {
@@ -297,6 +300,11 @@ toolbar[customizing] > .overflow-button {
   display: none !important;
 }
 
+#main-window[tabsintitlebar] #TabsToolbar,
+#main-window[tabsintitlebar] #toolbar-menubar,
+#main-window[tabsintitlebar] #navigator-toolbox > toolbar:-moz-lwtheme {
+  -moz-window-dragging: drag;
+}
 %endif
 
 %endif
@@ -334,6 +342,14 @@ toolbarpaletteitem[removable="false"] {
   opacity: 0.5;
   cursor: default;
 }
+
+%ifndef XP_MACOSX
+toolbarpaletteitem[place="palette"],
+toolbarpaletteitem[place="panel"],
+toolbarpaletteitem[place="toolbar"] {
+  -moz-user-focus: normal;
+}
+%endif
 
 #bookmarks-toolbar-placeholder,
 toolbarpaletteitem > #personal-bookmarks > #PlacesToolbar,
@@ -435,24 +451,28 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   -moz-binding: url(chrome://browser/content/urlbarBindings.xml#urlbar);
 }
 
-.ac-url-text:-moz-locale-dir(rtl),
-.ac-title:-moz-locale-dir(rtl) > description {
+/* Always show URLs LTR. */
+.ac-url-text:-moz-locale-dir(rtl) {
   direction: ltr !important;
 }
 
-/* For results that are actions, their description text is shown instead of
-   the URL - this needs to follow the locale's direction, unlike URLs. */
-panel:not([noactions]) > richlistbox > richlistitem.overridable-action:-moz-locale-dir(rtl) > .ac-url-box {
-  direction: rtl;
+/* For non-action items, hide the action text; for action items, hide the URL
+   text. */
+.ac-url[actiontype],
+.ac-action:not([actiontype]) {
+  display: none;
 }
 
-panel[noactions] > richlistbox > richlistitem.overridable-action > .ac-url-box > .ac-url > .ac-action-text,
-panel[noactions] > richlistbox > richlistitem.overridable-action > .ac-url-box > .ac-action-icon {
-  visibility: collapse;
+/* For action items in a noactions popup, show the URL text and hide the action
+   text and type icon. */
+#PopupAutoCompleteRichResult[noactions] > richlistbox > richlistitem.overridable-action > .ac-url {
+  display: -moz-box;
 }
-
-panel[noactions] > richlistbox > richlistitem.overridable-action > .ac-url-box > .ac-url > .ac-url-text {
-  visibility: visible;
+#PopupAutoCompleteRichResult[noactions] > richlistbox > richlistitem.overridable-action > .ac-action {
+  display: none;
+}
+#PopupAutoCompleteRichResult[noactions] > richlistbox > richlistitem.overridable-action > .ac-type-icon {
+  list-style-image: none;
 }
 
 #urlbar:not([actiontype="switchtab"]) > #urlbar-display-box {
@@ -555,7 +575,7 @@ panel[noactions] > richlistbox > richlistitem.overridable-action > .ac-url-box >
 }
 
 #identity-box.verifiedIdentity > #identity-icon-labels > #identity-icon-label {
-  -moz-margin-end: 0.25em !important;
+  margin-inline-end: 0.25em !important;
 }
 
 #main-window[customizing] :-moz-any(#urlbar, .searchbar-textbox) > .autocomplete-textbox-container > .textbox-input-box {
@@ -587,19 +607,15 @@ toolbarbutton.bookmark-item {
   #personal-bookmarks[cui-areatype="toolbar"] > #bookmarks-toolbar-placeholder > .toolbarbutton-icon {
     image-rendering: -moz-crisp-edges;
   }
+  /* Synced Tabs sidebar */
+  html|*.tabs-container html|*.item-tabs-list html|*.item-icon-container {
+    image-rendering: -moz-crisp-edges;
+  }
 }
 
 #editBMPanel_tagsSelector {
   /* override default listbox width from xul.css */
   width: auto;
-}
-
-/* The star doesn't make sense as text */
-toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
-  display: -moz-box !important;
-}
-toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-text {
-  display: none;
 }
 
 menupopup[emptyplacesresult="true"] > .hide-if-empty-places-result {
@@ -676,6 +692,9 @@ html|*#fullscreen-warning[ontop] {
   /* Use -10px to hide the border and border-radius on the top */
   transform: translate(-50%, -10px);
 }
+#main-window[OSXLionFullscreen] html|*#fullscreen-warning[ontop] {
+  transform: translate(-50%, 80px);
+}
 
 html|*#fullscreen-domain-text,
 html|*#fullscreen-generic-text {
@@ -737,11 +756,6 @@ html|*#fullscreen-exit-button {
   display: none;
 }
 
-#notification-popup .text-link.custom-link {
-  -moz-binding: url("chrome://global/content/bindings/text.xml#text-label");
-  text-decoration: none;
-}
-
 #invalid-form-popup > description {
   max-width: 280px;
 }
@@ -756,10 +770,6 @@ html|*#fullscreen-exit-button {
 
 #addon-progress-notification {
   -moz-binding: url("chrome://browser/content/urlbarBindings.xml#addon-progress-notification");
-}
-
-#identity-request-notification {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#identity-request-notification");
 }
 
 #click-to-play-plugins-notification {
@@ -830,10 +840,6 @@ statuspanel[inactive][previoustype=overLink] {
   height: 3em;
   width: 100%;
   -moz-box-align: end;
-}
-
-.panel-inner-arrowcontentfooter[footertype="promobox"] {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#promobox");
 }
 
 /* gcli */
@@ -979,16 +985,16 @@ chatbar[customSize] > .chatbar-innerbox {
 /* Bug 924050: If we've loaded the indicator, for now we hide it in the menu panel,
    and just show the icon. This is a hack to side-step very weird layout bugs that
    seem to be caused by the indicator stack interacting with the menu panel. */
-#downloads-button[indicator]:not([cui-areatype="menu-panel"]) > image.toolbarbutton-icon,
+#downloads-button[indicator]:not([cui-areatype="menu-panel"]) > .toolbarbutton-badge-stack > image.toolbarbutton-icon,
 #downloads-button[indicator][cui-areatype="menu-panel"] > #downloads-indicator-anchor {
   display: none;
 }
 
-toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > image.toolbarbutton-icon {
+toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > .toolbarbutton-badge-stack > image.toolbarbutton-icon {
   display: -moz-box;
 }
 
-toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > stack.toolbarbutton-icon {
+toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-indicator-anchor {
   display: none;
 }
 
@@ -999,55 +1005,15 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > stack.toolb
   visibility: hidden;
 }
 
-/* Hacks for toolbar full and text modes, until bug 573329 removes them */
-
-toolbar[mode="text"] > #downloads-button {
-  display: -moz-box;
-  -moz-box-orient: vertical;
-  -moz-box-pack: center;
-}
-
-toolbar[mode="text"] > #downloads-button > .toolbarbutton-text {
-  -moz-box-ordinal-group: 1;
-}
-
-toolbar[mode="text"] > #downloads-button > .toolbarbutton-icon {
-  display: -moz-box;
-  -moz-box-ordinal-group: 2;
-  visibility: collapse;
-}
-
-/* full screen chat window support */
-chatbar:-moz-full-screen-ancestor,
-chatbox:-moz-full-screen-ancestor  {
-  border: none;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  margin: 0 !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  box-sizing: border-box !important;
-}
-
 /* hide chat chrome when chat is fullscreen */
-chatbox:-moz-full-screen-ancestor > .chat-titlebar {
+#chat-window[sizemode="fullscreen"] chatbox > .chat-titlebar {
   display: none;
 }
 
-/* hide chatbar if browser tab is fullscreen */
-*:-moz-full-screen-ancestor chatbar:not(:-moz-full-screen-ancestor) {
-  display: none;
-}
-
-/* hide sidebar when fullscreen */
-*:-moz-full-screen-ancestor #social-sidebar-box:not(:-moz-full-screen-ancestor) {
+/* hide chatbar and sidebar if browser tab is fullscreen */
+#main-window[inFullscreen][inDOMFullscreen] chatbar,
+#main-window[inFullscreen][inDOMFullscreen] #social-sidebar-box,
+#main-window[inFullscreen][inDOMFullscreen] #social-sidebar-splitter {
   display: none;
 }
 
@@ -1061,7 +1027,7 @@ chatbox:-moz-full-screen-ancestor > .chat-titlebar {
 
 /* Indent options in optgroups */
 .contentSelectDropdown-ingroup .menu-iconic-text {
-  -moz-padding-start: 2em;
+  padding-inline-start: 2em;
 }
 
 /* Give this menupopup an arrow panel styling */
@@ -1318,26 +1284,8 @@ toolbarpaletteitem[place="palette"][hidden] {
   box-shadow: 0 0 2px 2px rgba(255,0,0,0.4);
 }
 
-#password-notification-password::after {
-  color: hsl(0,0%,60%);
-  content: attr(show-content);
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  transition: color 250ms;
-}
-
-#password-notification-password:hover::after {
-  color: hsl(210,100%,50%);
-}
-
-#password-notification-password[focused]::after {
-  content: none;
-}
-
-/* Bug 1175941: Disable the transition on 10.10 due to flickering, possibly due to an OS X bug. */
-@media (-moz-mac-yosemite-theme) {
-  #password-notification-password::after {
-    transition: none;
-  }
+.dragfeedback-tab {
+  -moz-appearance: none;
+  opacity: 0.65;
+  -moz-window-shadow: none;
 }

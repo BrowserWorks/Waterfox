@@ -11,10 +11,6 @@ if CONFIG['OS_TARGET'] != 'Android':
         'crashreporter.cpp',
     ]
 
-LOCAL_INCLUDES += [
-    '../google-breakpad/src',
-]
-
 if CONFIG['OS_ARCH'] == 'WINNT':
     UNIFIED_SOURCES += [
         'crashreporter_win.cpp',
@@ -22,7 +18,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     DEFINES['UNICODE'] = True
     DEFINES['_UNICODE'] = True
     USE_LIBS += [
-        'google_breakpad_libxul_staticruntime_s',
+        'google_breakpad_libxul_s',
     ]
     OS_LIBS += [
         'comctl32',
@@ -30,7 +26,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'wininet',
         'shlwapi',
     ]
-    USE_STATIC_LIBS = True
 elif CONFIG['OS_ARCH'] == 'Darwin':
     UNIFIED_SOURCES += [
         'crashreporter_osx.mm',
@@ -42,7 +37,6 @@ elif CONFIG['OS_ARCH'] == 'Darwin':
     OS_LIBS += ['-framework Cocoa']
     USE_LIBS += [
         'breakpad_common_s',
-        'breakpad_logging',
         'breakpad_mac_common_s',
     ]
 elif CONFIG['OS_ARCH'] == 'SunOS':
@@ -54,7 +48,7 @@ elif CONFIG['OS_ARCH'] == 'SunOS':
         'breakpad_solaris_common_s',
     ]
 
-if CONFIG['MOZ_ENABLE_GTK']:
+if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
     UNIFIED_SOURCES += [
         'crashreporter_gtk_common.cpp',
         'crashreporter_linux.cpp',
@@ -67,6 +61,11 @@ if CONFIG['MOZ_ENABLE_GTK']:
     OS_LIBS += CONFIG['MOZ_GTHREAD_LIBS']
     CXXFLAGS += CONFIG['TK_CFLAGS']
     CXXFLAGS += CONFIG['MOZ_GTHREAD_CFLAGS']
+
+if CONFIG['OS_ARCH'] == 'Linux' or CONFIG['OS_ARCH'] == 'SunOS':
+    FINAL_TARGET_FILES += [
+        '/toolkit/themes/windows/global/throbber/Throbber-small.gif',
+    ]
 
 RCINCLUDE = 'crashreporter.rc'
 

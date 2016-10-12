@@ -87,10 +87,10 @@ private:
     }
 
     nsCOMPtr<nsIRunnable> destroyRunnable =
-      NS_NewNonOwningRunnableMethod(this, &StreamWrapper::Destroy);
+      NewNonOwningRunnableMethod(this, &StreamWrapper::Destroy);
 
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mOwningThread->Dispatch(destroyRunnable,
-                                                         NS_DISPATCH_NORMAL)));
+    MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(destroyRunnable,
+                                                NS_DISPATCH_NORMAL));
   }
 
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -99,7 +99,7 @@ private:
 };
 
 class StreamWrapper::CloseRunnable final
-  : public nsRunnable
+  : public Runnable
 {
   friend class StreamWrapper;
 
@@ -219,8 +219,8 @@ StreamWrapper::Close()
 
   RefPtr<CloseRunnable> closeRunnable = new CloseRunnable(this);
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mOwningThread->Dispatch(closeRunnable,
-                                                       NS_DISPATCH_NORMAL)));
+  MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(closeRunnable,
+                                              NS_DISPATCH_NORMAL));
 
   return NS_OK;
 }
@@ -283,7 +283,7 @@ StreamWrapper::Deserialize(const InputStreamParams& aParams,
 }
 
 NS_IMPL_ISUPPORTS_INHERITED0(StreamWrapper::CloseRunnable,
-                             nsRunnable)
+                             Runnable)
 
 NS_IMETHODIMP
 StreamWrapper::

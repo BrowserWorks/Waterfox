@@ -8,6 +8,7 @@ SOURCES += [
     'pkixbuild_tests.cpp',
     'pkixcert_extension_tests.cpp',
     'pkixcert_signature_algorithm_tests.cpp',
+    'pkixcheck_CheckExtendedKeyUsage_tests.cpp',
     'pkixcheck_CheckKeyUsage_tests.cpp',
     'pkixcheck_CheckSignatureAlgorithm_tests.cpp',
     'pkixcheck_CheckValidity_tests.cpp',
@@ -38,13 +39,17 @@ include('../../warnings.mozbuild')
 # These warnings are disabled in order to minimize the amount of boilerplate
 # required to implement tests, and/or because they originate in the GTest
 # framework in a way we cannot otherwise work around.
-if CONFIG['CLANG_CXX']:
+if CONFIG['GNU_CXX']:
   CXXFLAGS += [
-    '-Wno-exit-time-destructors',
-    '-Wno-global-constructors',
+    '-Wno-error=shadow',
     '-Wno-old-style-cast',
-    '-Wno-used-but-marked-unused',
   ]
+  if CONFIG['CLANG_CXX']:
+    CXXFLAGS += [
+      '-Wno-exit-time-destructors',
+      '-Wno-global-constructors',
+      '-Wno-used-but-marked-unused',
+    ]
 elif CONFIG['_MSC_VER']:
   CXXFLAGS += [
     '-wd4350', # behavior change: 'std::_Wrap_alloc<std::allocator<_Ty>>::...
@@ -53,4 +58,8 @@ elif CONFIG['_MSC_VER']:
     '-wd4625', # copy constructor could not be generated.
     '-wd4626', # assugment operator could not be generated.
     '-wd4640', # construction of local static object is not thread safe.
+
+    # This is intended as a temporary hack to support building with VS2015.
+    # declaration of '*' hides class member
+    '-wd4458',
   ]

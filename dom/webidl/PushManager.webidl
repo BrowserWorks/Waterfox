@@ -7,32 +7,30 @@
 * https://w3c.github.io/push-api/
 */
 
-// Please see comments in dom/push/PushManager.h for the split between
-// PushManagerImpl and PushManager.
-[JSImplementation="@mozilla.org/push/PushManager;1",
- NoInterfaceObject]
-interface PushManagerImpl {
-    Promise<PushSubscription>     subscribe();
-    Promise<PushSubscription?>    getSubscription();
-    Promise<PushPermissionState> permissionState();
-
-    // We need a setter in the bindings so that the C++ can use it,
-    // but we don't want it exposed to client JS.  WebPushMethodHider
-    // always returns false.
-    [Func="ServiceWorkerRegistration::WebPushMethodHider"] void setScope(DOMString scope);
+dictionary PushSubscriptionOptionsInit {
+  // boolean userVisibleOnly = false;
+  BufferSource? applicationServerKey = null;
 };
 
-[Exposed=(Window,Worker), Func="nsContentUtils::PushEnabled"]
-interface PushManager {
-  [ChromeOnly, Throws, Exposed=Window]
-  void setPushManagerImpl(PushManagerImpl store);
+// The main thread JS implementation. Please see comments in
+// dom/push/PushManager.h for the split between PushManagerImpl and PushManager.
+[JSImplementation="@mozilla.org/push/PushManager;1",
+ ChromeOnly, Constructor(DOMString scope)]
+interface PushManagerImpl {
+  Promise<PushSubscription>    subscribe(optional PushSubscriptionOptionsInit options);
+  Promise<PushSubscription?>   getSubscription();
+  Promise<PushPermissionState> permissionState(optional PushSubscriptionOptionsInit options);
+};
 
+[Exposed=(Window,Worker), Func="nsContentUtils::PushEnabled",
+ ChromeConstructor(DOMString scope)]
+interface PushManager {
   [Throws, UseCounter]
-  Promise<PushSubscription>     subscribe();
+  Promise<PushSubscription>    subscribe(optional PushSubscriptionOptionsInit options);
   [Throws]
-  Promise<PushSubscription?>    getSubscription();
+  Promise<PushSubscription?>   getSubscription();
   [Throws]
-  Promise<PushPermissionState> permissionState();
+  Promise<PushPermissionState> permissionState(optional PushSubscriptionOptionsInit options);
 };
 
 enum PushPermissionState

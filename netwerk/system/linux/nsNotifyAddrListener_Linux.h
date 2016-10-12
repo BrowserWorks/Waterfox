@@ -41,7 +41,7 @@ public:
     nsresult Init(void);
 
 private:
-    class ChangeEvent : public nsRunnable {
+    class ChangeEvent : public mozilla::Runnable {
     public:
         NS_DECL_NSIRUNNABLE
         ChangeEvent(nsINetworkLinkService *aService, const char *aEventID)
@@ -60,6 +60,10 @@ private:
 
     // Sends the network event.
     nsresult SendEvent(const char *aEventID);
+
+    // Figure out the current "network identification"
+    void calculateNetworkId(void);
+    nsCString mNetworkId;
 
     // Checks if there's a network "link"
     void checkLink(void);
@@ -80,9 +84,6 @@ private:
 
     // Network changed events are enabled
     bool mAllowChangedEvent;
-
-    // Flag to signal child thread kill with
-    mozilla::Atomic<bool, mozilla::Relaxed> mChildThreadShutdown;
 
     // Flag set while coalescing change events
     bool mCoalescingActive;

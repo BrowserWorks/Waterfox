@@ -120,6 +120,10 @@ public class DoorHangerPopup extends AnchoredPopup
             doorhangerType = DoorHanger.Type.GEOLOCATION;
         } else if (DoorHanger.Type.DESKTOPNOTIFICATION2.toString().equals(typeString)) {
             doorhangerType = DoorHanger.Type.DESKTOPNOTIFICATION2;
+        } else if (DoorHanger.Type.WEBRTC.toString().equals(typeString)) {
+            doorhangerType = DoorHanger.Type.WEBRTC;
+        } else if (DoorHanger.Type.VIBRATION.toString().equals(typeString)) {
+            doorhangerType = DoorHanger.Type.VIBRATION;
         }
 
         final DoorhangerConfig config = new DoorhangerConfig(tabId, id, doorhangerType, this);
@@ -145,8 +149,8 @@ public class DoorHangerPopup extends AnchoredPopup
 
     // This callback is automatically executed on the UI thread.
     @Override
-    public void onTabChanged(final Tab tab, final Tabs.TabEvents msg, final Object data) {
-        switch(msg) {
+    public void onTabChanged(final Tab tab, final Tabs.TabEvents msg, final String data) {
+        switch (msg) {
             case CLOSED:
                 // Remove any doorhangers for a tab when it's closed (make
                 // a temporary set to avoid a ConcurrentModificationException)
@@ -209,8 +213,7 @@ public class DoorHangerPopup extends AnchoredPopup
      */
     @Override
     public void onButtonClick(JSONObject response, DoorHanger doorhanger) {
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Doorhanger:Reply", response.toString());
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Doorhanger:Reply", response.toString());
         removeDoorHanger(doorhanger);
         updatePopup();
     }
@@ -306,10 +309,6 @@ public class DoorHangerPopup extends AnchoredPopup
         }
 
         showDividers();
-        if (isShowing()) {
-            show();
-            return;
-        }
 
         final String baseDomain = tab.getBaseDomain();
 
@@ -317,6 +316,11 @@ public class DoorHangerPopup extends AnchoredPopup
             firstDoorhanger.hideTitle();
         } else {
             firstDoorhanger.showTitle(tab.getFavicon(), baseDomain);
+        }
+
+        if (isShowing()) {
+            show();
+            return;
         }
 
         // Make the popup focusable for accessibility. This gets done here
@@ -327,11 +331,6 @@ public class DoorHangerPopup extends AnchoredPopup
         }
 
         show();
-
-        if (Versions.preICS) {
-            // Make the popup focusable for keyboard accessibility.
-            setFocusable(true);
-        }
     }
 
     //Show all inter-DoorHanger dividers (ie. Dividers on all visible DoorHangers except the last one)

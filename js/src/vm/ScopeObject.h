@@ -130,15 +130,21 @@ class NestedStaticScope : public StaticScope
  */
 class StaticBlockScope : public NestedStaticScope
 {
-    static const unsigned LOCAL_OFFSET_SLOT = NestedStaticScope::RESERVED_SLOTS;
+    static const unsigned LOCAL_OFFSET_AND_FLAGS_SLOT = NestedStaticScope::RESERVED_SLOTS;
+
+    static const uint32_t LocalOffsetShift = 1;
+    static const uint32_t BlockFlagsMask = 0x1;
+    static const uint32_t IsForCatchParametersFlag = 0x1;
 
   public:
-    static const unsigned RESERVED_SLOTS = LOCAL_OFFSET_SLOT + 1;
+    static const unsigned RESERVED_SLOTS = LOCAL_OFFSET_AND_FLAGS_SLOT + 1;
 
     /* Return the number of variables associated with this block. */
     uint32_t numVariables() const {
-        // TODO: propertyCount() is O(n), use O(1) lastProperty()->slot() instead
-        return propertyCount();
+        uint32_t num = 0;
+        if (!lastProperty()->isEmptyShape())
+            num = lastProperty()->slot() + 1 - RESERVED_SLOTS;
+        return num;
     }
 
   private:
@@ -152,6 +158,20 @@ class StaticBlockScope : public NestedStaticScope
 
     void setSlotValue(unsigned i, const Value& v) {
         setSlot(RESERVED_SLOTS + i, v);
+    }
+
+    uint32_t localOffsetAndBlockFlags() const {
+        return getReservedSlot(LOCAL_OFFSET_AND_FLAGS_SLOT).toPrivateUint32();
+    }
+
+    uint32_t blockFlags() const {
+        return localOffsetAndBlockFlags() & BlockFlagsMask;
+    }
+
+    void setBlockFlags(uint32_t flags) {
+        MOZ_ASSERT((flags & ~BlockFlagsMask) == 0);
+        setReservedSlot(LOCAL_OFFSET_AND_FLAGS_SLOT,
+                        PrivateUint32Value(localOffsetAndBlockFlags() | flags));
     }
 
   public:
@@ -184,15 +204,15 @@ class StaticBlockScope : public NestedStaticScope
      */
     inline StaticBlockScope* enclosingBlock() const;
 
-    uint32_t localOffset() {
-        return getReservedSlot(LOCAL_OFFSET_SLOT).toPrivateUint32();
+    uint32_t localOffset() const {
+        return localOffsetAndBlockFlags() >> LocalOffsetShift;
     }
 
     // Return the local corresponding to the 'var'th binding where 'var' is in the
     // range [0, numVariables()).
     uint32_t blockIndexToLocalIndex(uint32_t index) {
         MOZ_ASSERT(index < numVariables());
-        return getReservedSlot(LOCAL_OFFSET_SLOT).toPrivateUint32() + index;
+        return localOffset() + index;
     }
 
     // Return the slot corresponding to block index 'index', where 'index' is
@@ -239,6 +259,10 @@ class StaticBlockScope : public NestedStaticScope
         return !isExtensible() || isGlobal();
     }
 
+    bool isForCatchParameters() const {
+        return blockFlags() & IsForCatchParametersFlag;
+    }
+
     /* Frontend-only functions ***********************************************/
 
     /* Initialization functions for above fields. */
@@ -252,8 +276,20 @@ class StaticBlockScope : public NestedStaticScope
     }
 
     void setLocalOffset(uint32_t offset) {
-        MOZ_ASSERT(getReservedSlot(LOCAL_OFFSET_SLOT).isUndefined());
-        initReservedSlot(LOCAL_OFFSET_SLOT, PrivateUint32Value(offset));
+        MOZ_ASSERT(getReservedSlot(LOCAL_OFFSET_AND_FLAGS_SLOT).isUndefined());
+        MOZ_ASSERT(offset < LOCALNO_LIMIT);
+        initReservedSlot(LOCAL_OFFSET_AND_FLAGS_SLOT,
+                         PrivateUint32Value(offset << LocalOffsetShift));
+    }
+
+    void setLocalOffsetToInvalid() {
+        MOZ_ASSERT(getReservedSlot(LOCAL_OFFSET_AND_FLAGS_SLOT).isUndefined());
+        initReservedSlot(LOCAL_OFFSET_AND_FLAGS_SLOT,
+                         PrivateUint32Value(LOCALNO_LIMIT << LocalOffsetShift));
+    }
+
+    void setIsForCatchParameters() {
+        setBlockFlags(IsForCatchParametersFlag);
     }
 
     /*
@@ -782,6 +818,8 @@ class ModuleEnvironmentObject : public LexicalScopeBase
 {
     static const uint32_t MODULE_SLOT = 1;
 
+    static const ObjectOps objectOps_;
+
   public:
     static const Class class_;
 
@@ -807,7 +845,7 @@ class ModuleEnvironmentObject : public LexicalScopeBase
     static bool setProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
                             HandleValue receiver, JS::ObjectOpResult& result);
     static bool getOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id,
-                                         MutableHandle<JSPropertyDescriptor> desc);
+                                         MutableHandle<PropertyDescriptor> desc);
     static bool deleteProperty(JSContext* cx, HandleObject obj, HandleId id,
                                ObjectOpResult& result);
     static bool enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties,
@@ -859,7 +897,7 @@ class NestedScopeObject : public ScopeObject
   public:
     // Return the static scope corresponding to this scope chain object.
     inline NestedStaticScope* staticScope() {
-        return &getProto()->as<NestedStaticScope>();
+        return &staticPrototype()->as<NestedStaticScope>();
     }
 
     void initEnclosingScope(JSObject* obj) {
@@ -889,7 +927,7 @@ class DynamicWithObject : public NestedScopeObject
            WithKind kind = SyntacticWith);
 
     StaticWithScope& staticWith() const {
-        return getProto()->as<StaticWithScope>();
+        return staticPrototype()->as<StaticWithScope>();
     }
 
     /* Return the 'o' in 'with (o)'. */
@@ -927,6 +965,7 @@ class ClonedBlockObject : public NestedScopeObject
 
   public:
     static const unsigned RESERVED_SLOTS = 2;
+    static const ObjectOps objectOps_;
     static const Class class_;
 
   private:
@@ -968,7 +1007,7 @@ class ClonedBlockObject : public NestedScopeObject
   public:
     /* The static block from which this block was cloned. */
     StaticBlockScope& staticBlock() const {
-        return getProto()->as<StaticBlockScope>();
+        return staticPrototype()->as<StaticBlockScope>();
     }
 
     /* Assuming 'put' has been called, return the value of the ith let var. */
@@ -995,6 +1034,10 @@ class ClonedBlockObject : public NestedScopeObject
 
     bool isSyntactic() const {
         return !isExtensible() || isGlobal();
+    }
+
+    bool isForCatchParameters() const {
+        return staticBlock().isForCatchParameters();
     }
 
     /* Copy in all the unaliased formals and locals. */
@@ -1170,7 +1213,7 @@ class LiveScopeVal
     friend class MissingScopeKey;
 
     AbstractFramePtr frame_;
-    RelocatablePtrObject staticScope_;
+    HeapPtr<JSObject*> staticScope_;
 
     static void staticAsserts();
 
@@ -1344,7 +1387,7 @@ template<>
 inline bool
 JSObject::is<js::StaticBlockScope>() const
 {
-    return hasClass(&js::ClonedBlockObject::class_) && !getProto();
+    return hasClass(&js::ClonedBlockObject::class_) && !staticPrototype();
 }
 
 template<>
@@ -1368,7 +1411,7 @@ template<>
 inline bool
 JSObject::is<js::ClonedBlockObject>() const
 {
-    return hasClass(&js::ClonedBlockObject::class_) && !!getProto();
+    return hasClass(&js::ClonedBlockObject::class_) && staticPrototype();
 }
 
 template<>
@@ -1567,5 +1610,19 @@ AnalyzeEntrainedVariables(JSContext* cx, HandleScript script);
 #endif
 
 } // namespace js
+
+namespace JS {
+
+template <>
+struct DeletePolicy<js::DebugScopeObject>
+{
+    explicit DeletePolicy(JSRuntime* rt) : rt_(rt) {}
+    void operator()(const js::DebugScopeObject* ptr);
+
+  private:
+    JSRuntime* rt_;
+};
+
+} // namespace JS
 
 #endif /* vm_ScopeObject_h */

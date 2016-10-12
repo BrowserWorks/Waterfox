@@ -101,12 +101,17 @@ class ABIArgGenerator
     ABIArg next(MIRType argType);
     ABIArg& current() { return current_; }
     uint32_t stackBytesConsumedSoFar() const { return stackOffset_; }
-
-    static const Register NonArgReturnReg0;
-    static const Register NonArgReturnReg1;
-    static const Register NonReturn_VolatileReg0;
-    static const Register NonReturn_VolatileReg1;
 };
+
+static MOZ_CONSTEXPR_VAR Register ABINonArgReg0 = r4;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReg1 = r5;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReturnReg0 = r4;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReturnReg1 = r5;
+
+// Registers used for asm.js/wasm table calls. These registers must be disjoint
+// from the ABI argument registers and from each other.
+static MOZ_CONSTEXPR_VAR Register WasmTableCallPtrReg = ABINonArgReg0;
+static MOZ_CONSTEXPR_VAR Register WasmTableCallSigReg = ABINonArgReg1;
 
 static MOZ_CONSTEXPR_VAR Register PreBarrierReg = r1;
 
@@ -118,6 +123,7 @@ static MOZ_CONSTEXPR_VAR Register JSReturnReg_Data = r2;
 static MOZ_CONSTEXPR_VAR Register StackPointer = sp;
 static MOZ_CONSTEXPR_VAR Register FramePointer = InvalidReg;
 static MOZ_CONSTEXPR_VAR Register ReturnReg = r0;
+static MOZ_CONSTEXPR_VAR Register64 ReturnReg64(InvalidReg, InvalidReg);
 static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32Reg = { FloatRegisters::d0, VFPRegister::Single };
 static MOZ_CONSTEXPR_VAR FloatRegister ReturnDoubleReg = { FloatRegisters::d0, VFPRegister::Double};
 static MOZ_CONSTEXPR_VAR FloatRegister ReturnSimd128Reg = InvalidFloatReg;
@@ -164,13 +170,11 @@ static MOZ_CONSTEXPR_VAR Register AsmJSIonExitRegD2 = r4;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherRegExpReg = CallTempReg0;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherStringReg = CallTempReg1;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherLastIndexReg = CallTempReg2;
-static MOZ_CONSTEXPR_VAR Register RegExpMatcherStickyReg = CallTempReg3;
 
 // Registerd used in RegExpTester instruction (do not use ReturnReg).
 static MOZ_CONSTEXPR_VAR Register RegExpTesterRegExpReg = CallTempReg0;
 static MOZ_CONSTEXPR_VAR Register RegExpTesterStringReg = CallTempReg1;
 static MOZ_CONSTEXPR_VAR Register RegExpTesterLastIndexReg = CallTempReg2;
-static MOZ_CONSTEXPR_VAR Register RegExpTesterStickyReg = CallTempReg3;
 
 static MOZ_CONSTEXPR_VAR FloatRegister d0  = {FloatRegisters::d0, VFPRegister::Double};
 static MOZ_CONSTEXPR_VAR FloatRegister d1  = {FloatRegisters::d1, VFPRegister::Double};
@@ -219,6 +223,14 @@ static_assert(JitStackAlignment % SimdMemoryAlignment == 0,
   "spilled values.  Thus it should be larger than the alignment for SIMD accesses.");
 
 static const uint32_t AsmJSStackAlignment = SimdMemoryAlignment;
+
+// Does this architecture support SIMD conversions between Uint32x4 and Float32x4?
+static MOZ_CONSTEXPR_VAR bool SupportsUint32x4FloatConversions = false;
+
+// Does this architecture support comparisons of unsigned integer vectors?
+static MOZ_CONSTEXPR_VAR bool SupportsUint8x16Compares = false;
+static MOZ_CONSTEXPR_VAR bool SupportsUint16x8Compares = false;
+static MOZ_CONSTEXPR_VAR bool SupportsUint32x4Compares = false;
 
 static const Scale ScalePointer = TimesFour;
 
@@ -905,6 +917,13 @@ class EDtrAddr
     uint32_t encode() const {
         return data;
     }
+#ifdef DEBUG
+    Register maybeOffsetRegister() const {
+        if (data & IsImmEDTR)
+            return InvalidReg;
+        return Register::FromCode(data & 0xf);
+    }
+#endif
 };
 
 class VFPOff
@@ -1129,6 +1148,18 @@ class Operand
         return VFPAddr(baseReg(), VFPOffImm(offset));
     }
 };
+
+inline Imm32
+Imm64::firstHalf() const
+{
+    return low();
+}
+
+inline Imm32
+Imm64::secondHalf() const
+{
+    return hi();
+}
 
 void
 PatchJump(CodeLocationJump& jump_, CodeLocationLabel label,
@@ -1591,6 +1622,7 @@ class Assembler : public AssemblerShared
     BufferOffset as_b(BOffImm off, Condition c, Label* documentation = nullptr);
 
     BufferOffset as_b(Label* l, Condition c = Always);
+    BufferOffset as_b(wasm::JumpTarget target, Condition c = Always);
     BufferOffset as_b(BOffImm off, Condition c, BufferOffset inst);
 
     // blx can go to either an immediate or a register. When blx'ing to a
@@ -1698,10 +1730,10 @@ class Assembler : public AssemblerShared
     bool nextLink(BufferOffset b, BufferOffset* next);
     void bind(Label* label, BufferOffset boff = BufferOffset());
     void bind(RepatchLabel* label);
+    void bindLater(Label* label, wasm::JumpTarget target);
     uint32_t currentOffset() {
         return nextOffset().getOffset();
     }
-    void retargetWithOffset(size_t baseOffset, const LabelBase* label, LabelBase* target);
     void retarget(Label* label, Label* target);
     // I'm going to pretend this doesn't exist for now.
     void retarget(Label* label, void* target, Relocation::Kind reloc);

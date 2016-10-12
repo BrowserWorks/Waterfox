@@ -29,10 +29,10 @@ namespace mozilla {
 static StaticRefPtr<WifiProxyService> gWifiProxyService;
 
 // The singleton supplicant class, that can be used on any thread.
-static nsAutoPtr<WpaSupplicant> gWpaSupplicant;
+static UniquePtr<WpaSupplicant> gWpaSupplicant;
 
 // Runnable used dispatch the WaitForEvent result on the main thread.
-class WifiEventDispatcher : public nsRunnable
+class WifiEventDispatcher : public Runnable
 {
 public:
   WifiEventDispatcher(const nsAString& aEvent, const nsACString& aInterface)
@@ -55,7 +55,7 @@ private:
 };
 
 // Runnable used to call WaitForEvent on the event thread.
-class EventRunnable : public nsRunnable
+class EventRunnable : public Runnable
 {
 public:
   EventRunnable(const nsACString& aInterface)
@@ -87,7 +87,7 @@ private:
 };
 
 // Runnable used dispatch the Command result on the main thread.
-class WifiResultDispatcher : public nsRunnable
+class WifiResultDispatcher : public Runnable
 {
 public:
   WifiResultDispatcher(WifiResultOptions& aResult, const nsACString& aInterface)
@@ -110,7 +110,7 @@ private:
 };
 
 // Runnable used to call SendCommand on the control thread.
-class ControlRunnable : public nsRunnable
+class ControlRunnable : public Runnable
 {
 public:
   ControlRunnable(CommandOptions aOptions, const nsACString& aInterface)
@@ -160,7 +160,7 @@ WifiProxyService::FactoryCreate()
     gWifiProxyService = new WifiProxyService();
     ClearOnShutdown(&gWifiProxyService);
 
-    gWpaSupplicant = new WpaSupplicant();
+    gWpaSupplicant = MakeUnique<WpaSupplicant>();
     ClearOnShutdown(&gWpaSupplicant);
   }
 

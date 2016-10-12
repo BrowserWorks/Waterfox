@@ -1,11 +1,13 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Check extension-added global actor API.
  */
 
-const CHROME_URL = "chrome://mochitests/content/browser/devtools/client/debugger/test/mochitest/"
+const CHROME_URL = "chrome://mochitests/content/browser/devtools/client/debugger/test/mochitest/";
 const ACTORS_URL = CHROME_URL + "testactors.js";
 
 function test() {
@@ -20,13 +22,13 @@ function test() {
 
   let transport = DebuggerServer.connectPipe();
   gClient = new DebuggerClient(transport);
-  gClient.connect((aType, aTraits) => {
+  gClient.connect().then(([aType, aTraits]) => {
     is(aType, "browser",
       "Root actor should identify itself as a browser.");
 
     gClient.listTabs(aResponse => {
       let globalActor = aResponse.testGlobalActor1;
-      ok(globalActor, "Found the test tab actor.")
+      ok(globalActor, "Found the test tab actor.");
       ok(globalActor.includes("test_one"),
         "testGlobalActor1's actorPrefix should be used.");
 

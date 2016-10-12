@@ -7,8 +7,9 @@
 // Test that if a tooltip is visible when a new selection is made, it closes
 
 const TEST_URI = "<div class='one'>el 1</div><div class='two'>el 2</div>";
+const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode(".one", inspector);
@@ -17,7 +18,7 @@ add_task(function*() {
   yield testRuleView(view, inspector);
 
   info("Testing computed view tooltip closes on new selection");
-  ({view} = yield openComputedView());
+  view = selectComputedView(inspector);
   yield testComputedView(view, inspector);
 });
 
@@ -25,7 +26,9 @@ function* testRuleView(ruleView, inspector) {
   info("Showing the tooltip");
 
   let tooltip = ruleView.tooltips.previewTooltip;
-  tooltip.setTextContent({messages: ["rule-view tooltip"]});
+  let tooltipContent = ruleView.styleDocument.createElementNS(XHTML_NS, "div");
+  yield tooltip.setContent(tooltipContent, 100, 30);
+
   // Stop listening for mouse movements because it's not needed for this test,
   // and causes intermittent failures on Linux. When this test runs in the suite
   // sometimes a mouseleave event is dispatched at the start, which causes the
@@ -48,7 +51,8 @@ function* testComputedView(computedView, inspector) {
   info("Showing the tooltip");
 
   let tooltip = computedView.tooltips.previewTooltip;
-  tooltip.setTextContent({messages: ["computed-view tooltip"]});
+  let tooltipContent = computedView.styleDocument.createElementNS(XHTML_NS, "div");
+  yield tooltip.setContent(tooltipContent, 100, 30);
   // Stop listening for mouse movements because it's not needed for this test,
   // and causes intermittent failures on Linux. When this test runs in the suite
   // sometimes a mouseleave event is dispatched at the start, which causes the

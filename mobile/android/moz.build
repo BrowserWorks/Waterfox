@@ -26,7 +26,8 @@ DIRS += [
     'geckoview_library',
 ]
 
-DIRS += ['../../xulrunner/tools/redit']
+if CONFIG['MOZ_ANDROID_PACKAGE_INSTALL_BOUNCER']:
+    DIRS += ['bouncer'] # No ordering implied with respect to base.
 
 TEST_DIRS += [
     'tests',

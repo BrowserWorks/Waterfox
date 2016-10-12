@@ -16,7 +16,7 @@
 #include "prerror.h"
 #include "prinit.h"
 
-extern PRLogModuleInfo* gPIPNSSLog;
+extern mozilla::LazyLogModule gPIPNSSLog;
 
 #define CONST_OID static const unsigned char
 #define OI(x) { siDEROID, (unsigned char*) x, sizeof x }
@@ -648,6 +648,20 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     nullptr
   },
   {
+    // CN=Certum Trusted Network CA 2,OU=Certum Certification Authority,O=Unizeto Technologies S.A.,C=PL
+    "1.2.616.1.113527.2.5.1.1",
+    "Certum EV OID",
+    SEC_OID_UNKNOWN,
+    { 0xB6, 0x76, 0xF2, 0xED, 0xDA, 0xE8, 0x77, 0x5C, 0xD3, 0x6C, 0xB0,
+      0xF6, 0x3C, 0xD1, 0xD4, 0x60, 0x39, 0x61, 0xF4, 0x9E, 0x62, 0x65,
+      0xBA, 0x01, 0x3A, 0x2F, 0x03, 0x07, 0xB6, 0xD0, 0xB8, 0x04 },
+    "MIGAMQswCQYDVQQGEwJQTDEiMCAGA1UEChMZVW5pemV0byBUZWNobm9sb2dpZXMg"
+    "Uy5BLjEnMCUGA1UECxMeQ2VydHVtIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MSQw"
+    "IgYDVQQDExtDZXJ0dW0gVHJ1c3RlZCBOZXR3b3JrIENBIDI=",
+    "IdbQSk8lD8kyN/yqXhKN6Q==",
+    nullptr
+  },
+  {
     // CN=Izenpe.com,O=IZENPE S.A.,C=ES
     "1.3.6.1.4.1.14777.6.1.1",
     "Izenpe EV OID 1",
@@ -684,22 +698,6 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     "MIGCMQswCQYDVQQGEwJERTErMCkGA1UECgwiVC1TeXN0ZW1zIEVudGVycHJpc2Ug"
     "U2VydmljZXMgR21iSDEfMB0GA1UECwwWVC1TeXN0ZW1zIFRydXN0IENlbnRlcjEl"
     "MCMGA1UEAwwcVC1UZWxlU2VjIEdsb2JhbFJvb3QgQ2xhc3MgMw==",
-    "AQ==",
-    nullptr
-  },
-  {
-    // CN=TURKTRUST Elektronik Sertifika Hizmet Saglayicisi,O=TURKTRUST Bilgi Illetisim ve Bilisim Guvenligi Hizmetleri A.S.,C=TR
-    "2.16.792.3.0.3.1.1.5",
-    "TurkTrust EV OID",
-    SEC_OID_UNKNOWN,
-    { 0x97, 0x8C, 0xD9, 0x66, 0xF2, 0xFA, 0xA0, 0x7B, 0xA7, 0xAA, 0x95,
-      0x00, 0xD9, 0xC0, 0x2E, 0x9D, 0x77, 0xF2, 0xCD, 0xAD, 0xA6, 0xAD,
-      0x6B, 0xA7, 0x4A, 0xF4, 0xB9, 0x1C, 0x66, 0x59, 0x3C, 0x50 },
-    "MIG/MT8wPQYDVQQDDDZUw5xSS1RSVVNUIEVsZWt0cm9uaWsgU2VydGlmaWthIEhp"
-    "em1ldCBTYcSfbGF5xLFjxLFzxLExCzAJBgNVBAYTAlRSMQ8wDQYDVQQHDAZBbmth"
-    "cmExXjBcBgNVBAoMVVTDnFJLVFJVU1QgQmlsZ2kgxLBsZXRpxZ9pbSB2ZSBCaWxp"
-    "xZ9pbSBHw7x2ZW5sacSfaSBIaXptZXRsZXJpIEEuxZ4uIChjKSBBcmFsxLFrIDIw"
-    "MDc=",
     "AQ==",
     nullptr
   },

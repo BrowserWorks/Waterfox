@@ -1,13 +1,15 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-// Check that Dead Objects do not break the Web/Browser Consoles. See bug 883649.
+// Check that Dead Objects do not break the Web/Browser Consoles.
+// See bug 883649.
 // This test does:
 // - opens a new tab,
 // - opens the Browser Console,
-// - stores a reference to the content document of the tab on the chrome window object,
+// - stores a reference to the content document of the tab on the chrome
+//   window object,
 // - closes the tab,
 // - tries to use the object that was pointing to the now-defunct content
 // document. This is the dead object.

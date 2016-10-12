@@ -15,16 +15,15 @@
 using namespace js;
 using namespace js::jit;
 
-void
-LIRGeneratorMIPS::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1,
-                              Register reg2, bool useAtStart)
+LBoxAllocation
+LIRGeneratorMIPS::useBoxFixed(MDefinition* mir, Register reg1, Register reg2, bool useAtStart)
 {
-    MOZ_ASSERT(mir->type() == MIRType_Value);
+    MOZ_ASSERT(mir->type() == MIRType::Value);
     MOZ_ASSERT(reg1 != reg2);
 
     ensureDefined(mir);
-    lir->setOperand(n, LUse(reg1, mir->virtualRegister(), useAtStart));
-    lir->setOperand(n + 1, LUse(reg2, VirtualRegisterOfPayload(mir), useAtStart));
+    return LBoxAllocation(LUse(reg1, mir->virtualRegister(), useAtStart),
+                          LUse(reg2, VirtualRegisterOfPayload(mir), useAtStart));
 }
 
 void
@@ -45,7 +44,7 @@ LIRGeneratorMIPS::visitBox(MBox* box)
     }
 
     if (inner->isConstant()) {
-        defineBox(new(alloc()) LValue(inner->toConstant()->value()), box);
+        defineBox(new(alloc()) LValue(inner->toConstant()->toJSValue()), box);
         return;
     }
 
@@ -72,7 +71,7 @@ LIRGeneratorMIPS::visitUnbox(MUnbox* unbox)
 {
     MDefinition* inner = unbox->getOperand(0);
 
-    if (inner->type() == MIRType_ObjectOrNull) {
+    if (inner->type() == MIRType::ObjectOrNull) {
         LUnboxObjectOrNull* lir = new(alloc()) LUnboxObjectOrNull(useRegisterAtStart(inner));
         if (unbox->fallible())
             assignSnapshot(lir, unbox->bailoutKind());
@@ -83,15 +82,14 @@ LIRGeneratorMIPS::visitUnbox(MUnbox* unbox)
     // An unbox on mips reads in a type tag (either in memory or a register) and
     // a payload. Unlike most instructions consuming a box, we ask for the type
     // second, so that the result can re-use the first input.
-    MOZ_ASSERT(inner->type() == MIRType_Value);
+    MOZ_ASSERT(inner->type() == MIRType::Value);
 
     ensureDefined(inner);
 
     if (IsFloatingPointType(unbox->type())) {
-        LUnboxFloatingPoint* lir = new(alloc()) LUnboxFloatingPoint(unbox->type());
+        LUnboxFloatingPoint* lir = new(alloc()) LUnboxFloatingPoint(useBox(inner), unbox->type());
         if (unbox->fallible())
             assignSnapshot(lir, unbox->bailoutKind());
-        useBox(lir, LUnboxFloatingPoint::Input, inner);
         define(lir, unbox);
         return;
     }
@@ -117,7 +115,7 @@ void
 LIRGeneratorMIPS::visitReturn(MReturn* ret)
 {
     MDefinition* opd = ret->getOperand(0);
-    MOZ_ASSERT(opd->type() == MIRType_Value);
+    MOZ_ASSERT(opd->type() == MIRType::Value);
 
     LReturn* ins = new(alloc()) LReturn;
     ins->setOperand(0, LUse(JSReturnReg_Type));
@@ -160,7 +158,7 @@ void
 LIRGeneratorMIPS::lowerTruncateDToInt32(MTruncateToInt32* ins)
 {
     MDefinition* opd = ins->input();
-    MOZ_ASSERT(opd->type() == MIRType_Double);
+    MOZ_ASSERT(opd->type() == MIRType::Double);
 
     define(new(alloc()) LTruncateDToInt32(useRegister(opd), LDefinition::BogusTemp()), ins);
 }
@@ -169,7 +167,7 @@ void
 LIRGeneratorMIPS::lowerTruncateFToInt32(MTruncateToInt32* ins)
 {
     MDefinition* opd = ins->input();
-    MOZ_ASSERT(opd->type() == MIRType_Float32);
+    MOZ_ASSERT(opd->type() == MIRType::Float32);
 
     define(new(alloc()) LTruncateFToInt32(useRegister(opd), LDefinition::BogusTemp()), ins);
 }

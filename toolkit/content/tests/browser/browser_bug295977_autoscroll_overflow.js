@@ -97,7 +97,7 @@ add_task(function* ()
 
     yield BrowserTestUtils.synthesizeMouse("#" + test.elem, 50, 80, { button: 1 },
                                            gBrowser.selectedBrowser);
- 
+
     // This ensures bug 605127 is fixed: pagehide in an unrelated document
     // should not cancel the autoscroll.
     yield ContentTask.spawn(gBrowser.selectedBrowser, { }, function* () {
@@ -155,11 +155,11 @@ add_task(function* ()
     let scrollVert = test.expected & expectScrollVert;
     let scrollHori = test.expected & expectScrollHori;
 
-    let checkScroll = yield ContentTask.spawn(gBrowser.selectedBrowser,
-                                              { scrollVert : scrollVert,
-                                                scrollHori: scrollHori,
-                                                elemid : test.elem,
-                                                checkWindow: test.testwindow },
+    yield ContentTask.spawn(gBrowser.selectedBrowser,
+                            { scrollVert : scrollVert,
+                              scrollHori: scrollHori,
+                              elemid : test.elem,
+                              checkWindow: test.testwindow },
       function* (args) {
         let msg = "";
         if (args.checkWindow) {
@@ -168,7 +168,7 @@ add_task(function* ()
             msg += "Failed: ";
           }
           msg += 'Window for ' + args.elemid + ' should' + (args.scrollVert ? '' : ' not') + ' have scrolled vertically\n';
-         
+
           if (!((args.scrollHori && content.scrollX > 0) ||
                 (!args.scrollHori && content.scrollX == 0))) {
             msg += "Failed: ";
@@ -188,11 +188,9 @@ add_task(function* ()
           msg += args.elemid + ' should' + (args.scrollHori ? '' : ' not') + ' have scrolled horizontally';
         }
 
-        return msg;
+        Assert.ok(msg.indexOf("Failed") == -1, msg);
        }
     );
-
-    ok(checkScroll.indexOf("Failed") == -1, checkScroll)
 
     // Before continuing the test, we need to ensure that the IPC
     // message that stops autoscrolling has had time to arrive.

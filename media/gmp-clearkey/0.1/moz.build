@@ -8,6 +8,8 @@ SharedLibrary('clearkey')
 
 FINAL_TARGET = 'dist/bin/gmp-clearkey/0.1'
 
+FINAL_TARGET_PP_FILES += ['clearkey.info.in']
+
 UNIFIED_SOURCES += [
     'ClearKeyAsyncShutdown.cpp',
     'ClearKeyBase64.cpp',
@@ -56,9 +58,6 @@ USE_STATIC_LIBS = True
 
 DISABLE_STL_WRAPPING = True
 DEFINES['MOZ_NO_MOZALLOC'] = True
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']
 
 # Suppress warnings in third-party code.
 if CONFIG['GNU_CXX']:

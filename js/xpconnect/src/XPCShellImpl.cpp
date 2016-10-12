@@ -44,6 +44,9 @@
 #ifdef XP_WIN
 #include "mozilla/widget/AudioSession.h"
 #include <windows.h>
+#if defined(MOZ_SANDBOX)
+#include "SandboxBroker.h"
+#endif
 #endif
 
 // all this crap is needed to do the interactive shell stuff
@@ -141,7 +144,7 @@ GetLocationProperty(JSContext* cx, unsigned argc, Value* vp)
     //XXX: your platform should really implement this
     return false;
 #else
-    JS::UniqueChars filename;
+    JS::AutoFilename filename;
     if (JS::DescribeScriptedCaller(cx, &filename) && filename.get()) {
         nsresult rv;
         nsCOMPtr<nsIXPConnect> xpc =
@@ -445,7 +448,7 @@ GCZeal(JSContext* cx, unsigned argc, Value* vp)
     if (!ToUint32(cx, args.get(0), &zeal))
         return false;
 
-    JS_SetGCZeal(cx, uint8_t(zeal), JS_DEFAULT_ZEAL_FREQ);
+    JS_SetGCZeal(JS_GetRuntime(cx), uint8_t(zeal), JS_DEFAULT_ZEAL_FREQ);
     args.rval().setUndefined();
     return true;
 }
@@ -561,13 +564,13 @@ Btoa(JSContext* cx, unsigned argc, Value* vp)
   return xpc::Base64Encode(cx, args[0], args.rval());
 }
 
-static PersistentRootedValue sScriptedInterruptCallback;
+static PersistentRootedValue *sScriptedInterruptCallback = nullptr;
 
 static bool
 XPCShellInterruptCallback(JSContext* cx)
 {
-    MOZ_ASSERT(sScriptedInterruptCallback.initialized());
-    RootedValue callback(cx, sScriptedInterruptCallback);
+    MOZ_ASSERT(sScriptedInterruptCallback->initialized());
+    RootedValue callback(cx, *sScriptedInterruptCallback);
 
     // If no interrupt callback was set by script, no-op.
     if (callback.isUndefined())
@@ -589,7 +592,7 @@ XPCShellInterruptCallback(JSContext* cx)
 static bool
 SetInterruptCallback(JSContext* cx, unsigned argc, Value* vp)
 {
-    MOZ_ASSERT(sScriptedInterruptCallback.initialized());
+    MOZ_ASSERT(sScriptedInterruptCallback->initialized());
 
     // Sanity-check args.
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -600,7 +603,7 @@ SetInterruptCallback(JSContext* cx, unsigned argc, Value* vp)
 
     // Allow callers to remove the interrupt callback by passing undefined.
     if (args[0].isUndefined()) {
-        sScriptedInterruptCallback = UndefinedValue();
+        *sScriptedInterruptCallback = UndefinedValue();
         return true;
     }
 
@@ -610,7 +613,7 @@ SetInterruptCallback(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    sScriptedInterruptCallback = args[0];
+    *sScriptedInterruptCallback = args[0];
 
     return true;
 }
@@ -791,10 +794,14 @@ env_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
     return true;
 }
 
-static const JSClass env_class = {
-    "environment", JSCLASS_HAS_PRIVATE,
+static const JSClassOps env_classOps = {
     nullptr, nullptr, nullptr, env_setProperty,
     env_enumerate, env_resolve
+};
+
+static const JSClass env_class = {
+    "environment", JSCLASS_HAS_PRIVATE,
+    &env_classOps
 };
 
 /***************************************************************************/
@@ -809,7 +816,7 @@ typedef enum JSShellErrNum {
 
 static const JSErrorFormatString jsShell_ErrorFormatString[JSShellErr_Limit] = {
 #define MSG_DEF(name, number, count, exception, format) \
-    { format, count } ,
+    { #name, format, count } ,
 #include "jsshell.msg"
 #undef MSG_DEF
 };
@@ -984,7 +991,8 @@ ProcessArgsForCompartment(JSContext* cx, char** argv, int argc)
             break;
         case 'I':
             RuntimeOptionsRef(cx).toggleIon()
-                                 .toggleAsmJS();
+                                 .toggleAsmJS()
+                                 .toggleWasm();
             break;
         }
     }
@@ -1257,8 +1265,11 @@ GetCurrentWorkingDirectory(nsAString& workingDirectory)
 static JSSecurityCallbacks shellSecurityCallbacks;
 
 int
-XRE_XPCShellMain(int argc, char** argv, char** envp)
+XRE_XPCShellMain(int argc, char** argv, char** envp,
+                 const XREShellData* aShellData)
 {
+    MOZ_ASSERT(aShellData);
+
     JSRuntime* rt;
     JSContext* cx;
     int result = 0;
@@ -1433,7 +1444,8 @@ XRE_XPCShellMain(int argc, char** argv, char** envp)
         // Override the default XPConnect interrupt callback. We could store the
         // old one and restore it before shutting down, but there's not really a
         // reason to bother.
-        sScriptedInterruptCallback.init(rt, UndefinedValue());
+        sScriptedInterruptCallback = new PersistentRootedValue;
+        sScriptedInterruptCallback->init(rt, UndefinedValue());
         JS_SetInterruptCallback(rt, XPCShellInterruptCallback);
 
         AutoJSAPI jsapi;
@@ -1516,6 +1528,16 @@ XRE_XPCShellMain(int argc, char** argv, char** envp)
         // Plugin may require audio session if installed plugin can initialize
         // asynchronized.
         AutoAudioSession audioSession;
+
+#if defined(MOZ_SANDBOX)
+        // Required for sandboxed child processes.
+        if (aShellData->sandboxBrokerServices) {
+          SandboxBroker::Initialize(aShellData->sandboxBrokerServices);
+        } else {
+          NS_WARNING("Failed to initialize broker services, sandboxed "
+                     "processes will fail to start.");
+        }
+#endif
 #endif
 
         {
@@ -1565,9 +1587,8 @@ XRE_XPCShellMain(int argc, char** argv, char** envp)
                 AutoEntryScript aes(backstagePass, "xpcshell argument processing");
 
                 // If an exception is thrown, we'll set our return code
-                // appropriately, and then let the AutoJSAPI destructor report
+                // appropriately, and then let the AutoEntryScript destructor report
                 // the error to the console.
-                aes.TakeOwnershipOfErrorReporting();
                 if (!ProcessArgs(aes, argv, argc, &dirprovider)) {
                     if (gExitCode) {
                         result = gExitCode;

@@ -43,7 +43,6 @@ add_task(function* test_unregister_invalid_json() {
   let unregisterPromise = new Promise(resolve => unregisterDone = after(2, resolve));
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -75,13 +74,12 @@ add_task(function* test_unregister_invalid_json() {
   yield PushService.unregister({
     scope: 'https://example.net/page/1',
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
   });
   record = yield db.getByKeyID(
     '057caa8f-9b99-47ff-891c-adad18ce603e');
   ok(!record,
     'Failed to delete unregistered record after receiving invalid JSON');
 
-  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for unregister');
+  yield unregisterPromise;
 });

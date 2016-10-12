@@ -76,7 +76,7 @@
 }
 
 #forward-button > .toolbarbutton-icon {
-  -moz-border-start: none !important;
+  border-inline-start: none !important;
 }
 
 /* Override a box shadow for disabled back button */
@@ -143,7 +143,7 @@
   #main-window[sizemode=normal] .tabbrowser-tabs[overflow="true"] {
     background-clip: padding-box;
     border-top: 1px solid var(--chrome-nav-bar-separator-color);
-    -moz-border-end: 1px solid var(--chrome-nav-bar-separator-color);
+    border-inline-end: 1px solid var(--chrome-nav-bar-separator-color);
     background-color: var(--tab-background-color); /* Make sure there is no transparent gap during tab close animation */
   }
 
@@ -151,8 +151,8 @@
      instead of #TabsToolbar because it will work even in customize mode. */
   #main-window[sizemode=normal] .tabbrowser-tabs {
     background-clip: padding-box;
-    -moz-border-start: 1px solid var(--chrome-nav-bar-separator-color);
-    -moz-border-end: 1px solid transparent;
+    border-inline-start: 1px solid var(--chrome-nav-bar-separator-color);
+    border-inline-end: 1px solid transparent;
   }
 
   #main-window[sizemode=normal] .tabbrowser-tabs:not([overflow="true"]) .tabbrowser-tab,
@@ -170,7 +170,7 @@
 
   #main-window[sizemode=normal] .tabbrowser-tabs:not([overflow="true"]) .closing-tabs-spacer {
     background-clip: padding-box;
-    -moz-border-start: 1px solid var(--chrome-nav-bar-separator-color);
+    border-inline-start: 1px solid var(--chrome-nav-bar-separator-color);
   }
 
   .tabs-newtab-button {
@@ -260,6 +260,11 @@
   border-right: none !important;
 }
 
+/* Disable dragging like in the default theme: */
+#main-window[tabsintitlebar] #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):-moz-lwtheme {
+  -moz-window-dragging: no-drag;
+}
+
 /* The sidebar header has no background now that the background of the #browser-panel
  * has no image and is transparent. Fix: */
 .sidebar-header:-moz-lwtheme,
@@ -317,4 +322,10 @@
   :root[devtoolstheme="light"] #titlebar-close:hover {
     list-style-image: url(chrome://browser/skin/caption-buttons.svg#close-white);
   }
+}
+
+.ac-type-icon {
+  /* Left-align the type icon in awesomebar popup results with the icon in the
+     urlbar. */
+  margin-inline-start: 13px;
 }

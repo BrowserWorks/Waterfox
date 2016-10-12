@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2015 Google Inc.
  *
@@ -25,7 +24,6 @@
 #include "SkPathPriv.h"
 #include "batches/GrVertexBatch.h"
 #include "glsl/GrGLSLGeometryProcessor.h"
-#include "glsl/GrGLSLProgramBuilder.h"
 
 static const int DEFAULT_BUFFER_SIZE = 100;
 
@@ -54,7 +52,7 @@ bool GrAALinearizingConvexPathRenderer::onCanDrawPath(const CanDrawPathArgs& arg
         }
         SkScalar strokeWidth = args.fViewMatrix->getMaxScale() * args.fStroke->getWidth();
         return strokeWidth >= 1.0f && strokeWidth <= kMaxStrokeWidth && !args.fStroke->isDashed() &&
-                SkPathPriv::LastVerbIsClose(*args.fPath) &&
+                SkPathPriv::IsClosedSingleContour(*args.fPath) &&
                 args.fStroke->getJoin() != SkPaint::Join::kRound_Join;
     }
     return args.fStroke->getStyle() == SkStrokeRec::kFill_Style;
@@ -135,13 +133,12 @@ public:
 
     const char* name() const override { return "AAConvexBatch"; }
 
-    void computePipelineOptimizations(GrInitInvariantOutput* color, 
+    void computePipelineOptimizations(GrInitInvariantOutput* color,
                                       GrInitInvariantOutput* coverage,
                                       GrBatchToXPOverrides* overrides) const override {
         // When this is called on a batch, there is only one geometry bundle
         color->setKnownFourComponents(fGeoData[0].fColor);
         coverage->setUnknownSingleComponent();
-        overrides->fUsePLSDstRead = false;
     }
 
 private:
@@ -161,13 +158,13 @@ private:
         fBatch.fCanTweakAlphaForCoverage = overrides.canTweakAlphaForCoverage();
     }
 
-    void draw(GrVertexBatch::Target* target, const GrPipeline* pipeline, int vertexCount,
+    void draw(GrVertexBatch::Target* target, const GrGeometryProcessor* gp, int vertexCount,
               size_t vertexStride, void* vertices, int indexCount, uint16_t* indices) const {
         if (vertexCount == 0 || indexCount == 0) {
             return;
         }
-        const GrVertexBuffer* vertexBuffer;
-        GrVertices info;
+        const GrBuffer* vertexBuffer;
+        GrMesh mesh;
         int firstVertex;
         void* verts = target->makeVertexSpace(vertexStride, vertexCount, &vertexBuffer,
                                               &firstVertex);
@@ -177,7 +174,7 @@ private:
         }
         memcpy(verts, vertices, vertexCount * vertexStride);
 
-        const GrIndexBuffer* indexBuffer;
+        const GrBuffer* indexBuffer;
         int firstIndex;
         uint16_t* idxs = target->makeIndexSpace(indexCount, &indexBuffer, &firstIndex);
         if (!idxs) {
@@ -185,9 +182,9 @@ private:
             return;
         }
         memcpy(idxs, indices, indexCount * sizeof(uint16_t));
-        info.initIndexed(kTriangles_GrPrimitiveType, vertexBuffer, indexBuffer, firstVertex,
-                firstIndex, vertexCount, indexCount);
-        target->draw(info);
+        mesh.initIndexed(kTriangles_GrPrimitiveType, vertexBuffer, indexBuffer, firstVertex,
+                         firstIndex, vertexCount, indexCount);
+        target->draw(gp, mesh);
     }
 
     void onPrepareDraws(Target* target) const override {
@@ -202,8 +199,6 @@ private:
             SkDebugf("Couldn't create a GrGeometryProcessor\n");
             return;
         }
-
-        target->initDraw(gp, this->pipeline());
 
         size_t vertexStride = gp->getVertexStride();
 
@@ -232,8 +227,7 @@ private:
             if (indexCount + currentIndices > UINT16_MAX) {
                 // if we added the current instance, we would overflow the indices we can store in a
                 // uint16_t. Draw what we've got so far and reset.
-                this->draw(target, this->pipeline(), vertexCount, vertexStride, vertices,
-                           indexCount, indices);
+                this->draw(target, gp, vertexCount, vertexStride, vertices, indexCount, indices);
                 vertexCount = 0;
                 indexCount = 0;
             }
@@ -252,8 +246,7 @@ private:
             vertexCount += currentVertices;
             indexCount += currentIndices;
         }
-        this->draw(target, this->pipeline(), vertexCount, vertexStride, vertices, indexCount,
-                   indices);
+        this->draw(target, gp, vertexCount, vertexStride, vertices, indexCount, indices);
         sk_free(vertices);
         sk_free(indices);
     }
@@ -323,6 +316,8 @@ private:
 };
 
 bool GrAALinearizingConvexPathRenderer::onDrawPath(const DrawPathArgs& args) {
+    GR_AUDIT_TRAIL_AUTO_FRAME(args.fTarget->getAuditTrail(),
+                              "GrAALinearizingConvexPathRenderer::onDrawPath");
     if (args.fPath->isEmpty()) {
         return true;
     }

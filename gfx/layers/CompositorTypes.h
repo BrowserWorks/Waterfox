@@ -63,9 +63,14 @@ enum class TextureFlags : uint32_t {
   IMMEDIATE_UPLOAD   = 1 << 10,
   // The texture is part of a component-alpha pair
   COMPONENT_ALPHA    = 1 << 11,
+  // The texture is being allocated for a compositor that no longer exists.
+  // This flag is only used in the parent process.
+  INVALID_COMPOSITOR = 1 << 12,
+  // The texture was created by converting from YCBCR to RGB
+  RGB_FROM_YCBCR = 1 << 13,
 
   // OR union of all valid bits
-  ALL_BITS           = (1 << 12) - 1,
+  ALL_BITS           = (1 << 14) - 1,
   // the default flags
   DEFAULT = NO_FLAGS
 };
@@ -161,7 +166,6 @@ struct TextureFactoryIdentifier
 {
   LayersBackend mParentBackend;
   GeckoProcessType mParentProcessId;
-  EnumSet<gfx::CompositionOp> mSupportedBlendModes;
   int32_t mMaxTextureSize;
   bool mSupportsTextureBlitting;
   bool mSupportsPartialUploads;
@@ -175,7 +179,6 @@ struct TextureFactoryIdentifier
                                     SyncHandle aSyncHandle = 0)
     : mParentBackend(aLayersBackend)
     , mParentProcessId(aParentProcessId)
-    , mSupportedBlendModes(gfx::CompositionOp::OP_OVER)
     , mMaxTextureSize(aMaxTextureSize)
     , mSupportsTextureBlitting(aSupportsTextureBlitting)
     , mSupportsPartialUploads(aSupportsPartialUploads)
@@ -232,8 +235,7 @@ MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(OpenMode)
 // We rely on the items in this enum being sequential
 enum class MaskType : uint8_t {
   MaskNone = 0,   // no mask layer
-  Mask2d,         // mask layer for layers with 2D transforms
-  Mask3d,         // mask layer for layers with 3D transforms
+  Mask,           // mask layer
   NumMaskTypes
 };
 

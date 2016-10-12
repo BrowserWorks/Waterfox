@@ -130,7 +130,8 @@ class nsView;
 class nsMenuPopupFrame;
 
 // this class is used for dispatching popupshown events asynchronously.
-class nsXULPopupShownEvent : public nsRunnable, public nsIDOMEventListener
+class nsXULPopupShownEvent : public mozilla::Runnable,
+                             public nsIDOMEventListener
 {
 public:
   nsXULPopupShownEvent(nsIContent *aPopup, nsPresContext* aPresContext)
@@ -426,7 +427,7 @@ protected:
   nsPopupLevel PopupLevel(bool aIsNoAutoHide) const;
 
   // redefine to tell the box system not to move the views.
-  virtual void GetLayoutFlags(uint32_t& aFlags) override;
+  virtual uint32_t GetXULLayoutFlags() override;
 
   void InitPositionFromAnchorAlign(const nsAString& aAnchor,
                                    const nsAString& aAlign);

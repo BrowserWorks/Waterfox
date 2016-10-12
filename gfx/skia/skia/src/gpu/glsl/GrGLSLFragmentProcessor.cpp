@@ -9,7 +9,7 @@
 #include "GrFragmentProcessor.h"
 #include "GrProcessor.h"
 #include "glsl/GrGLSLFragmentShaderBuilder.h"
-#include "glsl/GrGLSLProgramBuilder.h"
+#include "glsl/GrGLSLUniformHandler.h"
 
 void GrGLSLFragmentProcessor::setData(const GrGLSLProgramDataManager& pdman,
                                       const GrFragmentProcessor& processor) {
@@ -28,7 +28,7 @@ void GrGLSLFragmentProcessor::emitChild(int childIndex, const char* inputColor,
                                         SkString* outputColor, EmitArgs& args) {
 
     SkASSERT(outputColor);
-    GrGLSLFragmentBuilder* fragBuilder = args.fFragBuilder;
+    GrGLSLFPFragmentBuilder* fragBuilder = args.fFragBuilder;
     outputColor->append(fragBuilder->getMangleString());
     fragBuilder->codeAppendf("vec4 %s;", outputColor->c_str());
     this->internalEmitChild(childIndex, inputColor, outputColor->c_str(), args);
@@ -36,7 +36,7 @@ void GrGLSLFragmentProcessor::emitChild(int childIndex, const char* inputColor,
 
 void GrGLSLFragmentProcessor::internalEmitChild(int childIndex, const char* inputColor,
                                                 const char* outputColor, EmitArgs& args) {
-    GrGLSLFragmentBuilder* fragBuilder = args.fFragBuilder;
+    GrGLSLFPFragmentBuilder* fragBuilder = args.fFragBuilder;
 
     fragBuilder->onBeforeChildProcEmitCode();  // call first so mangleString is updated
 
@@ -93,8 +93,8 @@ void GrGLSLFragmentProcessor::internalEmitChild(int childIndex, const char* inpu
     fragBuilder->codeAppend("{\n");
     fragBuilder->codeAppendf("// Child Index %d (mangle: %s): %s\n", childIndex,
                              fragBuilder->getMangleString().c_str(), childProc.name());
-    EmitArgs childArgs(args.fBuilder,
-                       fragBuilder,
+    EmitArgs childArgs(fragBuilder,
+                       args.fUniformHandler,
                        args.fGLSLCaps,
                        childProc,
                        outputColor,

@@ -665,7 +665,7 @@ if (IsCSSPropertyPrefEnabled("layout.css.prefixes.webkit")) {
     "-webkit-gradient(linear, 1 2, 3 4, color-stop(0, rgb(1,2,3)))",
     "-webkit-gradient(linear, 1 2, 3 4, color-stop(0, #00ff00))",
     "-webkit-gradient(linear, 1 2, 3 4, color-stop(0, #00f))",
-    "-webkit-gradient(linear, 1 2, 3 4, color-stop(0, hsla(240, 30%, 50%, 0.9)))",
+    "-webkit-gradient(linear, 1 2, 3 4, color-stop(0, hsla(240, 30%, 50%, 0.8)))",
     "-webkit-gradient(linear, 1 2, 3 4, color-stop(0, rgba(255, 230, 10, 0.5)))",
 
     // linear w/ multiple color stops:
@@ -1016,7 +1016,7 @@ var gCSSProperties = {
     get_computed: logical_box_prop_get_computed,
     initial_values: [ "currentColor" ],
     other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000" ]
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "000000" ]
   },
   "border-inline-end-style": {
     domProp: "borderInlineEndStyle",
@@ -1264,7 +1264,7 @@ var gCSSProperties = {
     get_computed: logical_box_prop_get_computed,
     initial_values: [ "currentColor" ],
     other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000" ]
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "000000" ]
   },
   "border-inline-start-style": {
     domProp: "borderInlineStartStyle",
@@ -1367,6 +1367,14 @@ var gCSSProperties = {
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
     alias_for: "box-sizing",
     subproperties: [ "box-sizing" ],
+  },
+  "color-adjust": {
+    domProp: "colorAdjust",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "economy" ],
+    other_values: [ "exact" ],
+    invalid_values: []
   },
   "-moz-columns": {
     domProp: "MozColumns",
@@ -2132,7 +2140,7 @@ var gCSSProperties = {
     domProp: "background",
     inherited: false,
     type: CSS_TYPE_TRUE_SHORTHAND,
-    subproperties: [ "background-attachment", "background-color", "background-image", "background-position", "background-repeat", "background-clip", "background-origin", "background-size" ],
+    subproperties: [ "background-attachment", "background-color", "background-image", "background-position-x", "background-position-y", "background-repeat", "background-clip", "background-origin", "background-size" ],
     initial_values: [ "transparent", "none", "repeat", "scroll", "0% 0%", "top left", "left top", "0% 0% / auto", "top left / auto", "left top / auto", "0% 0% / auto auto",
       "transparent none", "top left none", "left top none", "none left top", "none top left", "none 0% 0%", "left top / auto none", "left top / auto auto none",
       "transparent none repeat scroll top left", "left top repeat none scroll transparent", "transparent none repeat scroll top left / auto", "left top / auto repeat none scroll transparent", "none repeat scroll 0% 0% / auto auto transparent" ],
@@ -2221,6 +2229,10 @@ var gCSSProperties = {
       /* error inside functions */
       "-moz-image-rect(url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==), rubbish, 50%, 30%, 0) transparent",
       "-moz-element(#a rubbish) black",
+      "text",
+      "text border-box",
+      "content-box text text",
+      "padding-box text url(404.png) text",
     ]
   },
   "background-attachment": {
@@ -2249,7 +2261,7 @@ var gCSSProperties = {
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "transparent", "rgba(255, 127, 15, 0)", "hsla(240, 97%, 50%, 0.0)", "rgba(0, 0, 0, 0)", "rgba(255,255,255,-3.7)" ],
     other_values: [ "green", "rgb(255, 0, 128)", "#fc2", "#96ed2a", "black", "rgba(255,255,0,3)", "hsl(240, 50%, 50%)", "rgb(50%, 50%, 50%)", "-moz-default-background-color" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "rgb(100, 100.0, 100)" ],
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "rgb(100, 100.0, 100)" ],
     quirks_values: { "000000": "#000000", "96ed2a": "#96ed2a" },
   },
   "background-image": {
@@ -2281,7 +2293,7 @@ var gCSSProperties = {
   "background-position": {
     domProp: "backgroundPosition",
     inherited: false,
-    type: CSS_TYPE_LONGHAND,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
     initial_values: [ "top 0% left 0%", "top 0% left", "top left", "left top", "0% 0%", "0% top", "left 0%" ],
     other_values: [ "top", "left", "right", "bottom", "center", "center bottom", "bottom center", "center right", "right center", "center top", "top center", "center left", "left center", "right bottom", "bottom right", "50%", "top left, top left", "top left, top right", "top right, top left", "left top, 0% 0%", "10% 20%, 30%, 40%", "top left, bottom right", "right bottom, left top", "0%", "0px", "30px", "0%, 10%, 20%, 30%", "top, top, top, top, top",
       "calc(20px)",
@@ -2313,6 +2325,7 @@ var gCSSProperties = {
       "left 20%",
       "right 20%"
     ],
+    subproperties: [ "background-position-x", "background-position-y" ],
     invalid_values: [ "center 10px center 4px", "center 10px center",
                       "top 20%", "bottom 20%", "50% left", "top 50%",
                       "50% bottom 10%", "right 10% 50%", "left right",
@@ -2324,6 +2337,58 @@ var gCSSProperties = {
       "10 5px": "10px 5px",
       "7px 2": "7px 2px",
     },
+  },
+  "background-position-x": {
+    domProp: "backgroundPositionX",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "left 0%", "left", "0%" ],
+    other_values: [ "right", "center", "50%", "left, left", "left, right", "right, left", "left, 0%", "10%, 20%, 40%", "0px", "30px", "0%, 10%, 20%, 30%", "left, left, left, left, left",
+      "calc(20px)",
+      "calc(20px + 1em)",
+      "calc(20px / 2)",
+      "calc(20px + 50%)",
+      "calc(50% - 10px)",
+      "calc(-20px)",
+      "calc(-50%)",
+      "calc(-20%)",
+      "right 20px",
+      "left 20px",
+      "right -50px",
+      "left -50px",
+      "right 20px",
+      "right 3em",
+    ],
+    invalid_values: [ "center 10px", "right 10% 50%", "left right", "left left",
+                      "bottom 20px", "top 10%", "bottom 3em",
+                      "top", "bottom", "top, top", "top, bottom", "bottom, top", "top, 0%", "top, top, top, top, top",
+                      "calc(0px + rubbish)"],
+  },
+  "background-position-y": {
+    domProp: "backgroundPositionY",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "top 0%", "top", "0%" ],
+    other_values: [ "bottom", "center", "50%", "top, top", "top, bottom", "bottom, top", "top, 0%", "10%, 20%, 40%", "0px", "30px", "0%, 10%, 20%, 30%", "top, top, top, top, top",
+      "calc(20px)",
+      "calc(20px + 1em)",
+      "calc(20px / 2)",
+      "calc(20px + 50%)",
+      "calc(50% - 10px)",
+      "calc(-20px)",
+      "calc(-50%)",
+      "calc(-20%)",
+      "bottom 20px",
+      "top 20px",
+      "bottom -50px",
+      "top -50px",
+      "bottom 20px",
+      "bottom 3em",
+    ],
+    invalid_values: [ "center 10px", "bottom 10% 50%", "top bottom", "top top",
+                      "right 20px", "left 10%", "right 3em",
+                      "left", "right", "left, left", "left, right", "right, left", "left, 0%", "left, left, left, left, left",
+                      "calc(0px + rubbish)"],
   },
   "background-repeat": {
     domProp: "backgroundRepeat",
@@ -2339,13 +2404,32 @@ var gCSSProperties = {
       "no-repeat repeat",
       "no-repeat no-repeat",
       "repeat repeat, repeat repeat",
+      "round, repeat",
+      "round repeat, repeat-x",
+      "round no-repeat, repeat-y",
+      "round round",
+      "space, repeat",
+      "space repeat, repeat-x",
+      "space no-repeat, repeat-y",
+      "space space",
+      "space round"
     ],
     invalid_values: [ "repeat repeat repeat",
                       "repeat-x repeat-y",
                       "repeat repeat-x",
                       "repeat repeat-y",
                       "repeat-x repeat",
-                      "repeat-y repeat" ]
+                      "repeat-y repeat",
+                      "round round round",
+                      "repeat-x round",
+                      "round repeat-x",
+                      "repeat-y round",
+                      "round repeat-y",
+                      "space space space",
+                      "repeat-x space",
+                      "space repeat-x",
+                      "repeat-y space",
+                      "space repeat-y" ]
   },
   "background-size": {
     domProp: "backgroundSize",
@@ -2391,7 +2475,7 @@ var gCSSProperties = {
     prerequisites: { "color": "black" },
     initial_values: [ "currentColor", "-moz-use-text-color" ],
     other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000" ],
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000" ],
     quirks_values: { "000000": "#000000", "96ed2a": "#96ed2a" },
   },
   "border-bottom-style": {
@@ -2437,7 +2521,7 @@ var gCSSProperties = {
     subproperties: [ "border-top-color", "border-right-color", "border-bottom-color", "border-left-color" ],
     initial_values: [ "currentColor", "currentColor currentColor", "currentColor currentColor currentColor", "currentColor currentColor currentcolor CURRENTcolor" ],
     other_values: [ "green", "currentColor green", "currentColor currentColor green", "currentColor currentColor currentColor green", "rgba(255,128,0,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "red rgb(nonsense)", "red 1px" ],
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "red rgb(nonsense)", "red 1px" ],
     unbalanced_values: [ "red rgb(" ],
     quirks_values: { "000000": "#000000", "96ed2a": "#96ed2a" },
   },
@@ -2457,7 +2541,7 @@ var gCSSProperties = {
     prerequisites: { "color": "black" },
     initial_values: [ "currentColor", "-moz-use-text-color" ],
     other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000" ],
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000" ],
     quirks_values: { "000000": "#000000", "96ed2a": "#96ed2a" },
   },
   "border-left-style": {
@@ -2504,7 +2588,7 @@ var gCSSProperties = {
     prerequisites: { "color": "black" },
     initial_values: [ "currentColor", "-moz-use-text-color" ],
     other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000" ],
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000" ],
     quirks_values: { "000000": "#000000", "96ed2a": "#96ed2a" },
   },
   "border-right-style": {
@@ -2574,7 +2658,7 @@ var gCSSProperties = {
     prerequisites: { "color": "black" },
     initial_values: [ "currentColor", "-moz-use-text-color" ],
     other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000" ],
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000" ],
     quirks_values: { "000000": "#000000", "96ed2a": "#96ed2a" },
   },
   "border-top-style": {
@@ -2688,9 +2772,9 @@ var gCSSProperties = {
     inherited: true,
     type: CSS_TYPE_LONGHAND,
     /* XXX should test currentColor, but may or may not be initial */
-    initial_values: [ "black", "#000", "-moz-default-color" ],
-    other_values: [ "green", "#f3c", "#fed292", "rgba(45,300,12,2)", "transparent", "-moz-nativehyperlinktext", "rgba(255,128,0,0.5)" ],
-    invalid_values: [ "#f", "#ff", "#ffff", "#fffff", "#fffffff", "#ffffffff", "#fffffffff" ],
+    initial_values: [ "black", "#000", "#000f", "#000000ff", "rgb(0, 0, 0)", "rgba(0, 0, 0, 1.0)", "-moz-default-color" ],
+    other_values: [ "green", "#f3c", "#fed292", "rgba(45,300,12,2)", "transparent", "-moz-nativehyperlinktext", "rgba(255,128,0,0.5)", "#e0fc", "#10fcee72" ],
+    invalid_values: [ "#f", "#ff", "#fffff", "#fffffff", "#fffffffff" ],
     quirks_values: { "000000": "#000000", "96ed2a": "#96ed2a", "fff": "#ffffff", "ffffff": "#ffffff", },
   },
   "content": {
@@ -2797,8 +2881,19 @@ var gCSSProperties = {
       "caption", "icon", "menu", "message-box", "small-caption", "status-bar",
       // Gecko-specific system fonts
       "-moz-window", "-moz-document", "-moz-desktop", "-moz-info", "-moz-dialog", "-moz-button", "-moz-pull-down-menu", "-moz-list", "-moz-field", "-moz-workspace",
+      // line-height with calc()
+      "condensed bold italic small-caps 24px/calc(2px) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(50%) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(3*25px) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(25px*3) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(3*25px + 50%) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(1 + 2*3/4) Times New Roman, serif",
     ],
-    invalid_values: [ "9 fantasy", "-2px fantasy" ]
+    invalid_values: [ "9 fantasy", "-2px fantasy",
+      // line-height with calc()
+      "condensed bold italic small-caps 24px/calc(1 + 2px) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(100% + 0.1) Times New Roman, serif",
+    ]
   },
   "font-family": {
     domProp: "fontFamily",
@@ -3060,8 +3155,8 @@ var gCSSProperties = {
      */
     prerequisites: { "font-size": "19px", "font-size-adjust": "none", "font-family": "serif", "font-weight": "normal", "font-style": "normal", "height": "18px", "display": "block"},
     initial_values: [ "normal" ],
-    other_values: [ "1.0", "1", "1em", "47px", "-moz-block-height" ],
-    invalid_values: []
+    other_values: [ "1.0", "1", "1em", "47px", "-moz-block-height", "calc(2px)", "calc(50%)", "calc(3*25px)", "calc(25px*3)", "calc(3*25px + 50%)", "calc(1 + 2*3/4)" ],
+    invalid_values: [ "calc(1 + 2px)", "calc(100% + 0.1)" ]
   },
   "list-style": {
     domProp: "listStyle",
@@ -3363,7 +3458,7 @@ var gCSSProperties = {
     prerequisites: { "color": "black" },
     initial_values: [ "currentColor", "-moz-use-text-color" ], // XXX should be invert
     other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000", "cc00ff" ]
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "000000", "cc00ff" ]
   },
   "outline-offset": {
     domProp: "outlineOffset",
@@ -3537,7 +3632,7 @@ var gCSSProperties = {
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "static" ],
-    other_values: [ "relative", "absolute", "fixed" ],
+    other_values: [ "relative", "absolute", "fixed", "sticky" ],
     invalid_values: []
   },
   "quotes": {
@@ -3606,8 +3701,8 @@ var gCSSProperties = {
     other_values: [ "center", "justify", "end", "match-parent" ],
     invalid_values: [ "true", "true true" ]
   },
-  "-moz-text-align-last": {
-    domProp: "MozTextAlignLast",
+  "text-align-last": {
+    domProp: "textAlignLast",
     inherited: true,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "auto" ],
@@ -3631,7 +3726,7 @@ var gCSSProperties = {
     prerequisites: { "color": "black" },
     initial_values: [ "currentColor", "-moz-use-text-color" ],
     other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000", "ff00ff" ]
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "000000", "ff00ff" ]
   },
   "text-decoration-line": {
     domProp: "textDecorationLine",
@@ -3648,6 +3743,45 @@ var gCSSProperties = {
     initial_values: [ "solid" ],
     other_values: [ "double", "dotted", "dashed", "wavy", "-moz-none" ],
     invalid_values: [ "none", "groove", "ridge", "inset", "outset", "solid dashed", "wave" ]
+  },
+  "text-emphasis": {
+    domProp: "textEmphasis",
+    inherited: true,
+    type: CSS_TYPE_TRUE_SHORTHAND,
+    prerequisites: { "color": "black" },
+    subproperties: [ "text-emphasis-style", "text-emphasis-color" ],
+    initial_values: [ "none currentColor", "currentColor none", "none", "currentColor", "none black" ],
+    other_values: [ "filled dot black", "#f00 circle open", "sesame filled rgba(0,0,255,0.5)", "red", "green none", "currentColor filled", "currentColor open" ],
+    invalid_values: [ "filled black dot", "filled filled red", "open open circle #000", "circle dot #f00", "rubbish" ]
+  },
+  "text-emphasis-color": {
+    domProp: "textEmphasisColor",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    prerequisites: { "color": "black" },
+    initial_values: [ "currentColor", "black", "rgb(0,0,0)" ],
+    other_values: [ "red", "rgba(255,255,255,0.5)", "transparent" ],
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "000000", "ff00ff", "rgb(255,xxx,255)" ]
+  },
+  "text-emphasis-position": {
+    domProp: "textEmphasisPosition",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "over right", "right over" ],
+    other_values: [ "over left", "left over", "under left", "left under", "under right", "right under" ],
+    invalid_values: [ "over over", "left left", "over right left", "rubbish left", "over rubbish" ]
+  },
+  "text-emphasis-style": {
+    domProp: "textEmphasisStyle",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "none" ],
+    other_values: [ "filled", "open", "dot", "circle", "double-circle", "triangle", "sesame", "'#'",
+                    "filled dot", "filled circle", "filled double-circle", "filled triangle", "filled sesame",
+                    "dot filled", "circle filled", "double-circle filled", "triangle filled", "sesame filled",
+                    "dot open", "circle open", "double-circle open", "triangle open", "sesame open" ],
+    invalid_values: [ "rubbish", "dot rubbish", "rubbish dot", "open rubbish", "rubbish open", "open filled", "dot circle",
+                      "open '#'", "'#' filled", "dot '#'", "'#' circle", "1", "1 open", "open 1" ]
   },
   "text-indent": {
     domProp: "textIndent",
@@ -3945,8 +4079,8 @@ var gCSSProperties = {
     invalid_values: [],
     quirks_values: { "5": "5px" },
   },
-  "word-wrap": {
-    domProp: "wordWrap",
+  "overflow-wrap": {
+    domProp: "overflowWrap",
     inherited: true,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "normal" ],
@@ -4111,14 +4245,6 @@ var gCSSProperties = {
     other_values: [ "url(#mysym)" ],
     invalid_values: []
   },
-  "mask": {
-    domProp: "mask",
-    inherited: false,
-    type: CSS_TYPE_LONGHAND,
-    initial_values: [ "none" ],
-    other_values: [ "url(#mymask)" ],
-    invalid_values: []
-  },
   "shape-rendering": {
     domProp: "shapeRendering",
     inherited: true,
@@ -4234,10 +4360,10 @@ var gCSSProperties = {
   },
   "-moz-window-dragging": {
     domProp: "MozWindowDragging",
-    inherited: true,
+    inherited: false,
     type: CSS_TYPE_LONGHAND,
-    initial_values: [ "no-drag" ],
-    other_values: [ "drag" ],
+    initial_values: [ "default" ],
+    other_values: [ "drag", "no-drag" ],
     invalid_values: [ "none" ]
   },
   "align-content": {
@@ -4511,6 +4637,13 @@ var gCSSProperties = {
   },
 
   // Aliases
+  "word-wrap": {
+    domProp: "wordWrap",
+    inherited: true,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "overflow-wrap",
+    subproperties: [ "overflow-wrap" ],
+  },
   "-moz-transform": {
     domProp: "MozTransform",
     inherited: false,
@@ -4742,7 +4875,14 @@ var gCSSProperties = {
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
     alias_for: "hyphens",
     subproperties: [ "hyphens" ],
-  }
+  },
+  "-moz-text-align-last": {
+    domProp: "MozTextAlignLast",
+    inherited: true,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "text-align-last",
+    subproperties: [ "text-align-last" ],
+  },
 }
 
 function logical_axis_prop_get_computed(cs, property)
@@ -4860,25 +5000,6 @@ function logical_box_prop_get_computed(cs, property)
   return cs.getPropertyValue(property);
 }
 
-// Helper to get computed style of "-webkit-box-orient" from "flex-direction"
-// and the "writing-mode".
-function webkit_orient_get_computed(cs, property)
-{
-  var writingMode = cs.getPropertyValue("writing-mode") || "horizontal-tb";
-
-  var mapping; // map from flex-direction values to -webkit-box-orient values.
-  if (writingMode == "horizontal-tb") {
-    // Horizontal writing-mode
-    mapping = { "row" : "horizontal", "column" : "vertical"};
-  } else {
-    // Vertical writing-mode
-    mapping = { "row" : "vertical",   "column" : "horizontal"};
-  }
-
-  var flexDirection = cs.getPropertyValue("flex-direction");
-  return mapping[flexDirection];
-}
-
 // Get the computed value for a property.  For shorthands, return the
 // computed values of all the subproperties, delimited by " ; ".
 function get_computed_value(cs, property)
@@ -4886,7 +5007,7 @@ function get_computed_value(cs, property)
   var info = gCSSProperties[property];
   if (info.type == CSS_TYPE_TRUE_SHORTHAND ||
       (info.type == CSS_TYPE_SHORTHAND_AND_LONGHAND &&
-       property == "text-decoration")) {
+        (property == "text-decoration" || property == "mask"))) {
     var results = [];
     for (var idx in info.subproperties) {
       var subprop = info.subproperties[idx];
@@ -4973,7 +5094,7 @@ if (IsCSSPropertyPrefEnabled("layout.css.vertical-text.enabled")) {
       get_computed: logical_box_prop_get_computed,
       initial_values: [ "currentColor" ],
       other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-      invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000" ]
+      invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "000000" ]
     },
     "border-block-end-style": {
       domProp: "borderBlockEndStyle",
@@ -5023,7 +5144,7 @@ if (IsCSSPropertyPrefEnabled("layout.css.vertical-text.enabled")) {
       get_computed: logical_box_prop_get_computed,
       initial_values: [ "currentColor" ],
       other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
-      invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000" ]
+      invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "000000" ]
     },
     "border-block-start-style": {
       domProp: "borderBlockStartStyle",
@@ -5430,11 +5551,15 @@ if (IsCSSPropertyPrefEnabled("layout.css.text-combine-upright.enabled")) {
     inherited: true,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "none" ],
-    other_values: [ "all", "digits", "digits 2", "digits 3", "digits 4", "digits     3" ],
+    other_values: [ "all" ],
     invalid_values: [ "auto", "all 2", "none all", "digits -3", "digits 0",
                       "digits 12", "none 3", "digits 3.1415", "digits3", "digits 1",
                       "digits 3 all", "digits foo", "digits all", "digits 3.0" ]
   };
+  if (IsCSSPropertyPrefEnabled("layout.css.text-combine-upright-digits.enabled")) {
+    gCSSProperties["text-combine-upright"].other_values.push(
+      "digits", "digits 2", "digits 3", "digits 4", "digits     3");
+  }
 }
 
 if (IsCSSPropertyPrefEnabled("layout.css.masking.enabled")) {
@@ -5989,12 +6114,14 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
       "[a] 2.5fr [z] Repeat(4, 20px auto) [d]",
       "repeat(auto-fill, 0)",
       "[a] repeat( Auto-fill,1%)",
-      "[a] repeat(Auto-fit, 0)",
-      "repeat(Auto-fit,[] 1%)",
-      "repeat(auto-fit, [a] 1em) auto",
+      "minmax(auto,0) [a] repeat(Auto-fit, 0) minmax(0,auto)",
+      "minmax(calc(1% + 1px),auto) repeat(Auto-fit,[] 1%) minmax(auto,1%)",
       "[a] repeat( auto-fit,[a b] minmax(0,0) )",
       "[a] 40px repeat(auto-fit,[a b] minmax(1px, 0) [])",
-      "[a] auto [b] repeat(auto-fit,[a b] minmax(1mm, 1%) [c]) [c] auto",
+      "[a] calc(1%) [b] repeat(auto-fit,[a b] minmax(1mm, 1%) [c]) [c]",
+      "repeat(auto-fill,minmax(1%,auto))",
+      "repeat(auto-fill,minmax(1em,min-content)) minmax(min-content,0)",
+      "repeat(auto-fill,minmax(max-content,1mm))",
     ],
     invalid_values: [
       "",
@@ -6044,9 +6171,15 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
       "repeat(auto-fill, 0 [] 0)",
       "repeat(auto-fill, min-content)",
       "repeat(auto-fit,max-content)",
+      "repeat(auto-fit,1fr)",
       "repeat(auto-fit,minmax(auto,auto))",
-      "repeat(auto-fit,[] minmax(1px, min-content))",
-      "repeat(auto-fit,[a] minmax(1%, auto) [])",
+      "repeat(auto-fit,minmax(min-content,1fr))",
+      "repeat(auto-fit,minmax(1fr,auto))",
+      "repeat(auto-fill,minmax(1fr,1em))",
+      "repeat(auto-fill, 10px) auto",
+      "auto repeat(auto-fit, 10px)",
+      "minmax(min-content,max-content) repeat(auto-fit, 0)",
+      "10px [a] 10px [b a] 1fr [b] repeat(auto-fill, 0)",
     ],
     unbalanced_values: [
       "(foo] 40px",
@@ -6061,10 +6194,9 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
       "subgrid [] [foo bar]",
       "subgrid repeat(1, [])",
       "subgrid Repeat(4, [a] [b c] [] [d])",
-      "repeat(auto-fill, [])",
-      "[] repeat(Auto-fill, [a] [b c] [] [d])",
-      "[x] repeat( Auto-fill, [a b c]) []",
-      "[x] repeat(auto-fill, []) [y z]"
+      "subgrid repeat(auto-fill, [])",
+      "subgrid [x] repeat( Auto-fill, [a b c]) []",
+      "subgrid [x] repeat(auto-fill, []) [y z]"
     );
     gCSSProperties["grid-template-columns"].invalid_values.push(
       "subgrid (foo) 40px",
@@ -6086,6 +6218,7 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
       "subgrid [a] repeat(auto-fit,[])",
       "subgrid repeat(auto-fill, 1px)",
       "subgrid repeat(auto-fill, 1px [])",
+      "subgrid repeat(Auto-fill, [a] [b c] [] [d])",
       "subgrid repeat(auto-fill, []) repeat(auto-fill, [])"
     );
   }
@@ -6130,15 +6263,15 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
     type: CSS_TYPE_TRUE_SHORTHAND,
     subproperties: [
       "grid-template-areas",
-      "grid-template-columns",
       "grid-template-rows",
+      "grid-template-columns",
     ],
     initial_values: [
       "none",
       "none / none",
     ],
     other_values: [
-      // <'grid-template-columns'> / <'grid-template-rows'>
+      // <'grid-template-rows'> / <'grid-template-columns'>
       "40px / 100px",
       "[foo] 40px [bar] / [baz] 100px [fizz]",
       " none/100px",
@@ -6146,18 +6279,18 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
       // [ <track-list> / ]? [ <line-names>? <string> <track-size>? <line-names>? ]+
       "'fizz'",
       "[bar] 'fizz'",
-      "[foo] 40px / 'fizz'",
-      "[foo] 40px / [bar] 'fizz'",
-      "[foo] 40px / 'fizz' 100px",
-      "[foo] 40px / [bar] 'fizz' 100px",
-      "[foo] 40px / [bar] 'fizz' 100px [buzz]",
-      "[foo] 40px / [bar] 'fizz' 100px [buzz] \n [a] '.' 200px [b]",
+      "'fizz' / [foo] 40px",
+      "[bar] 'fizz' / [foo] 40px",
+      "'fizz' 100px / [foo] 40px",
+      "[bar] 'fizz' 100px / [foo] 40px",
+      "[bar] 'fizz' 100px [buzz] / [foo] 40px",
+      "[bar] 'fizz' 100px [buzz] \n [a] '.' 200px [b] / [foo] 40px",
     ],
     invalid_values: [
       "[foo] [bar] 40px / 100px",
-      "40px / [fizz] [buzz] 100px",
-      "40px / [fizz] [buzz] 'foo'",
-      "none / 'foo'"
+      "[fizz] [buzz] 100px / 40px",
+      "[fizz] [buzz] 'foo' / 40px",
+      "'foo' / none"
     ]
   };
   if (isGridTemplateSubgridValueEnabled) {
@@ -6183,11 +6316,11 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
     type: CSS_TYPE_TRUE_SHORTHAND,
     subproperties: [
       "grid-template-areas",
-      "grid-template-columns",
       "grid-template-rows",
+      "grid-template-columns",
       "grid-auto-flow",
-      "grid-auto-columns",
       "grid-auto-rows",
+      "grid-auto-columns",
       "grid-column-gap",
       "grid-row-gap",
     ],
@@ -6375,16 +6508,18 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "0" ],
-    other_values: [ "2px", "1em", "calc(1px + 1em)" ],
-    invalid_values: [ "-1px", "2%", "auto", "none", "1px 1px", "calc(1%)" ],
+    other_values: [ "2px", "2%", "1em", "calc(1px + 1em)", "calc(1%)",
+                    "calc(1% + 1ch)" ],
+    invalid_values: [ "-1px", "auto", "none", "1px 1px", "-1%" ],
   };
   gCSSProperties["grid-row-gap"] = {
     domProp: "gridRowGap",
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "0" ],
-    other_values: [ "2px", "1em", "calc(1px + 1em)" ],
-    invalid_values: [ "-1px", "2%", "auto", "none", "1px 1px", "calc(1%)" ],
+    other_values: [ "2px", "2%", "1em", "calc(1px + 1em)", "calc(1%)",
+                    "calc(1% + 1ch)" ],
+    invalid_values: [ "-1px", "auto", "none", "1px 1px", "-1%" ],
   };
   gCSSProperties["grid-gap"] = {
     domProp: "gridGap",
@@ -6392,9 +6527,9 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
     type: CSS_TYPE_TRUE_SHORTHAND,
     subproperties: [ "grid-column-gap", "grid-row-gap" ],
     initial_values: [ "0", "0 0" ],
-    other_values: [ "1ch 0", "1em 1px", "calc(1px + 1ch)" ],
+    other_values: [ "1ch 0", "1px 1%", "1em 1px", "calc(1px) calc(1%)" ],
     invalid_values: [ "-1px", "1px -1px", "1px 1px 1px", "inherit 1px",
-                      "1px 1%", "1px auto" ]
+                      "1px auto" ]
   };
 }
 
@@ -6526,10 +6661,6 @@ if (IsCSSPropertyPrefEnabled("layout.css.osx-font-smoothing.enabled")) {
     other_values: [ "grayscale" ],
     invalid_values: [ "none", "subpixel-antialiased", "antialiased" ]
   };
-}
-
-if (IsCSSPropertyPrefEnabled("layout.css.sticky.enabled")) {
-  gCSSProperties["position"].other_values.push("sticky");
 }
 
 if (IsCSSPropertyPrefEnabled("layout.css.mix-blend-mode.enabled")) {
@@ -6731,6 +6862,284 @@ if (IsCSSPropertyPrefEnabled("layout.css.scroll-snap.enabled")) {
   };
 }
 
+function SupportsMaskShorthand() {
+  return "maskImage" in document.documentElement.style;
+}
+
+if (SupportsMaskShorthand()) {
+  gCSSProperties["mask"] = {
+    domProp: "mask",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    /* FIXME: All mask-border-* should be added when we implement them. */
+    subproperties: ["mask-clip", "mask-image", "mask-mode", "mask-origin", "mask-position-x", "mask-position-y", "mask-repeat", "mask-size" , "mask-composite"],
+    initial_values: [ "match-source", "none", "repeat", "add", "0% 0%", "top left", "left top", "0% 0% / auto", "top left / auto", "left top / auto", "0% 0% / auto auto",
+      "top left none", "left top none", "none left top", "none top left", "none 0% 0%", "left top / auto none", "left top / auto auto none",
+      "match-source none repeat add top left", "left top repeat none add", "none repeat add top left / auto", "left top / auto repeat none add match-source", "none repeat add 0% 0% / auto auto match-source" ],
+    other_values: [
+      "none alpha repeat add left top",
+      "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==)",
+      "repeat url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==') alpha left top add",
+      "repeat-x",
+      "repeat-y",
+      "no-repeat",
+      "none repeat-y alpha add 0% 0%",
+      "substract",
+      "0% top substract alpha repeat none",
+      "top",
+      "left",
+      "50% 50%",
+      "center",
+      "top / 100px",
+      "left / contain",
+      "left / cover",
+      "10px / 10%",
+      "10em / calc(20px)",
+      "top left / 100px 100px",
+      "top left / 100px auto",
+      "top left / 100px 10%",
+      "top left / 100px calc(20px)",
+      "bottom right add none alpha repeat",
+      "50% alpha",
+      "alpha 50%",
+      "50%",
+      "url(#mymask)",
+      "-moz-radial-gradient(10% bottom, #ffffff, black) add no-repeat",
+      "-moz-linear-gradient(10px 10px -45deg, red, blue) repeat",
+      "-moz-linear-gradient(10px 10px -0.125turn, red, blue) repeat",
+      "-moz-repeating-radial-gradient(10% bottom, #ffffff, black) add no-repeat",
+      "-moz-repeating-linear-gradient(10px 10px -45deg, red, blue) repeat",
+      "-moz-element(#test) alpha",
+      /* multiple mask-image */
+      "url(404.png), url(404.png)",
+      "repeat-x, substract, none",
+      "0% top url(404.png), url(404.png) 0% top",
+      "substract repeat-y top left url(404.png), repeat-x alpha",
+      "url(404.png), -moz-linear-gradient(20px 20px -45deg, blue, green), -moz-element(#a) alpha",
+      "top left / contain, bottom right / cover",
+      /* test cases with clip+origin in the shorthand */
+      "url(404.png) alpha padding-box",
+      "url(404.png) border-box alpha",
+      "content-box url(404.png)",
+      "url(404.png) alpha padding-box padding-box",
+      "url(404.png) alpha padding-box border-box",
+      "content-box border-box url(404.png)",
+    ],
+    invalid_values: [
+      /* mixes with keywords have to be in correct order */
+      "50% left", "top 50%",
+      /* no quirks mode colors */
+      "-moz-radial-gradient(10% bottom, ffffff, black) add no-repeat",
+      /* no quirks mode lengths */
+      "-moz-linear-gradient(10 10px -45deg, red, blue) repeat",
+      "-moz-linear-gradient(10px 10 -45deg, red, blue) repeat",
+      "linear-gradient(red -99, yellow, green, blue 120%)",
+      /* bug 258080: don't accept background-position separated */
+      "left url(404.png) top", "top url(404.png) left",
+      "alpha padding-box url(404.png) border-box",
+      "alpha padding-box url(404.png) padding-box",
+      "-moz-element(#a rubbish)",
+      "left top / match-source"
+    ]
+  };
+  gCSSProperties["mask-clip"] = {
+    domProp: "maskClip",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "border-box" ],
+    other_values: [ "content-box", "padding-box", "border-box, padding-box", "padding-box, padding-box, padding-box", "border-box, border-box" ],
+    invalid_values: [ "margin-box", "content-box content-box" ]
+  };
+  gCSSProperties["mask-image"] = {
+    domProp: "maskImage",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "none" ],
+    other_values: [
+    "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==)", "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==')", 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==")',
+    "none, none",
+    "none, none, none, none, none",
+    "url(#mymask)",
+    "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==), none",
+    "none, url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==), none",
+    "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==), url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==)",
+    ].concat(validGradientAndElementValues),
+    invalid_values: [
+    ].concat(invalidGradientAndElementValues),
+    unbalanced_values: [
+    ].concat(unbalancedGradientAndElementValues)
+  };
+  gCSSProperties["mask-mode"] = {
+    domProp: "maskMode",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "match-source" ],
+    other_values: [ "alpha", "luminance", "match-source, match-source", "match-source, alpha", "alpha, luminance, match-source"],
+    invalid_values: [ "match-source match-source", "alpha match-source" ]
+  };
+  gCSSProperties["mask-composite"] = {
+    domProp: "maskComposite",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "add" ],
+    other_values: [ "substract", "intersect", "exclude", "add, add", "substract, intersect", "substract, substract, add"],
+    invalid_values: [ "add substract", "intersect exclude" ]
+  };
+  gCSSProperties["mask-origin"] = {
+    domProp: "maskOrigin",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "border-box" ],
+    other_values: [ "padding-box", "content-box", "border-box, padding-box", "padding-box, padding-box, padding-box", "border-box, border-box" ],
+    invalid_values: [ "margin-box", "padding-box padding-box" ]
+  };
+  gCSSProperties["mask-position"] = {
+    domProp: "maskPosition",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    initial_values: [ "top 0% left 0%", "top 0% left", "top left", "left top", "0% 0%", "0% top", "left 0%" ],
+    other_values: [ "top", "left", "right", "bottom", "center", "center bottom", "bottom center", "center right", "right center", "center top", "top center", "center left", "left center", "right bottom", "bottom right", "50%", "top left, top left", "top left, top right", "top right, top left", "left top, 0% 0%", "10% 20%, 30%, 40%", "top left, bottom right", "right bottom, left top", "0%", "0px", "30px", "0%, 10%, 20%, 30%", "top, top, top, top, top",
+      "calc(20px)",
+      "calc(20px) 10px",
+      "10px calc(20px)",
+      "calc(20px) 25%",
+      "25% calc(20px)",
+      "calc(20px) calc(20px)",
+      "calc(20px + 1em) calc(20px / 2)",
+      "calc(20px + 50%) calc(50% - 10px)",
+      "calc(-20px) calc(-50%)",
+      "calc(-20%) calc(-50%)",
+      "0px 0px",
+      "right 20px top 60px",
+      "right 20px bottom 60px",
+      "left 20px top 60px",
+      "left 20px bottom 60px",
+      "right -50px top -50px",
+      "left -50px bottom -50px",
+      "right 20px top -50px",
+      "right -20px top 50px",
+      "right 3em bottom 10px",
+      "bottom 3em right 10px",
+      "top 3em right 10px",
+      "left 15px",
+      "10px top",
+      "left top 15px",
+      "left 10px top",
+      "left 20%",
+      "right 20%"
+    ],
+    subproperties: [ "mask-position-x", "mask-position-y" ],
+    invalid_values: [ "center 10px center 4px", "center 10px center",
+                      "top 20%", "bottom 20%", "50% left", "top 50%",
+                      "50% bottom 10%", "right 10% 50%", "left right",
+                      "top bottom", "left 10% right",
+                      "top 20px bottom 20px", "left left",
+                      "0px calc(0px + rubbish)"],
+  };
+  gCSSProperties["mask-position-x"] = {
+    domProp: "maskPositionX",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "left 0%", "left", "0%" ],
+    other_values: [ "right", "center", "50%", "left, left", "left, right", "right, left", "left, 0%", "10%, 20%, 40%", "0px", "30px", "0%, 10%, 20%, 30%", "left, left, left, left, left",
+      "calc(20px)",
+      "calc(20px + 1em)",
+      "calc(20px / 2)",
+      "calc(20px + 50%)",
+      "calc(50% - 10px)",
+      "calc(-20px)",
+      "calc(-50%)",
+      "calc(-20%)",
+      "right 20px",
+      "left 20px",
+      "right -50px",
+      "left -50px",
+      "right 20px",
+      "right 3em",
+    ],
+    invalid_values: [ "center 10px", "right 10% 50%", "left right", "left left",
+                      "bottom 20px", "top 10%", "bottom 3em",
+                      "top", "bottom", "top, top", "top, bottom", "bottom, top", "top, 0%", "top, top, top, top, top",
+                      "calc(0px + rubbish)"],
+  };
+  gCSSProperties["mask-position-y"] = {
+    domProp: "maskPositionY",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "top 0%", "top", "0%" ],
+    other_values: [ "bottom", "center", "50%", "top, top", "top, bottom", "bottom, top", "top, 0%", "10%, 20%, 40%", "0px", "30px", "0%, 10%, 20%, 30%", "top, top, top, top, top",
+      "calc(20px)",
+      "calc(20px + 1em)",
+      "calc(20px / 2)",
+      "calc(20px + 50%)",
+      "calc(50% - 10px)",
+      "calc(-20px)",
+      "calc(-50%)",
+      "calc(-20%)",
+      "bottom 20px",
+      "top 20px",
+      "bottom -50px",
+      "top -50px",
+      "bottom 20px",
+      "bottom 3em",
+    ],
+    invalid_values: [ "center 10px", "bottom 10% 50%", "top bottom", "top top",
+                      "right 20px", "left 10%", "right 3em",
+                      "left", "right", "left, left", "left, right", "right, left", "left, 0%", "left, left, left, left, left",
+                      "calc(0px + rubbish)"],
+  };
+  gCSSProperties["mask-repeat"] = {
+    domProp: "maskRepeat",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "repeat", "repeat repeat" ],
+    other_values: [ "repeat-x", "repeat-y", "no-repeat",
+      "repeat-x, repeat-x",
+      "repeat, no-repeat",
+      "repeat-y, no-repeat, repeat-y",
+      "repeat, repeat, repeat",
+      "repeat no-repeat",
+      "no-repeat repeat",
+      "no-repeat no-repeat",
+      "repeat repeat, repeat repeat",
+    ],
+    invalid_values: [ "repeat repeat repeat",
+                      "repeat-x repeat-y",
+                      "repeat repeat-x",
+                      "repeat repeat-y",
+                      "repeat-x repeat",
+                      "repeat-y repeat" ]
+  };
+  gCSSProperties["mask-size"] = {
+    domProp: "maskSize",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "auto", "auto auto" ],
+    other_values: [ "contain", "cover", "100px auto", "auto 100px", "100% auto", "auto 100%", "25% 50px", "3em 40%",
+      "calc(20px)",
+      "calc(20px) 10px",
+      "10px calc(20px)",
+      "calc(20px) 25%",
+      "25% calc(20px)",
+      "calc(20px) calc(20px)",
+      "calc(20px + 1em) calc(20px / 2)",
+      "calc(20px + 50%) calc(50% - 10px)",
+      "calc(-20px) calc(-50%)",
+      "calc(-20%) calc(-50%)"
+    ],
+    invalid_values: [ "contain contain", "cover cover", "cover auto", "auto cover", "contain cover", "cover contain", "-5px 3px", "3px -5px", "auto -5px", "-5px auto", "5 3", "10px calc(10px + rubbish)" ]
+  };
+} else {
+  gCSSProperties["mask"] = {
+    domProp: "mask",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "none" ],
+    other_values: [ "url(#mymask)" ],
+    invalid_values: []
+  };
+}
+
 if (IsCSSPropertyPrefEnabled("layout.css.prefixes.webkit")) {
   gCSSProperties["-webkit-animation"] = {
     domProp: "webkitAnimation",
@@ -6802,6 +7211,42 @@ if (IsCSSPropertyPrefEnabled("layout.css.prefixes.webkit")) {
     alias_for: "filter",
     subproperties: [ "filter" ],
   };
+  gCSSProperties["-webkit-text-fill-color"] = {
+    domProp: "webkitTextFillColor",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    prerequisites: { "color": "black" },
+    initial_values: [ "currentColor", "black", "#000", "#000000", "rgb(0,0,0)" ],
+    other_values: [ "red", "rgba(255,255,255,0.5)", "transparent" ],
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "000000", "ff00ff", "rgb(255,xxx,255)" ]
+  };
+  gCSSProperties["-webkit-text-stroke"] = {
+    domProp: "webkitTextStroke",
+    inherited: true,
+    type: CSS_TYPE_TRUE_SHORTHAND,
+    prerequisites: { "color": "black" },
+    subproperties: [ "-webkit-text-stroke-width", "-webkit-text-stroke-color" ],
+    initial_values: [ "0 currentColor", "currentColor 0px", "0", "currentColor", "0px black" ],
+    other_values: [ "thin black", "#f00 medium", "thick rgba(0,0,255,0.5)", "calc(4px - 8px) green", "2px", "green 0", "currentColor 4em", "currentColor calc(5px - 1px)" ],
+    invalid_values: [ "-3px black", "calc(50%+ 2px) #000", "30% #f00" ]
+  };
+  gCSSProperties["-webkit-text-stroke-color"] = {
+    domProp: "webkitTextStrokeColor",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    prerequisites: { "color": "black" },
+    initial_values: [ "currentColor", "black", "#000", "#000000", "rgb(0,0,0)" ],
+    other_values: [ "red", "rgba(255,255,255,0.5)", "transparent" ],
+    invalid_values: [ "#0", "#00", "#00000", "#0000000", "#000000000", "000000", "ff00ff", "rgb(255,xxx,255)" ]
+  };
+  gCSSProperties["-webkit-text-stroke-width"] = {
+    domProp: "webkitTextStrokeWidth",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "0", "0px", "0em", "0ex", "calc(0pt)", "calc(4px - 8px)" ],
+    other_values: [ "thin", "medium", "thick", "17px", "0.2em", "calc(3*25px + 5em)", "calc(5px - 1px)" ],
+    invalid_values: [ "5%", "1px calc(nonsense)", "1px red", "-0.1px", "-3px", "30%" ]
+  },
   gCSSProperties["-webkit-text-size-adjust"] = {
     domProp: "webkitTextSizeAdjust",
     inherited: true,
@@ -6921,13 +7366,6 @@ if (IsCSSPropertyPrefEnabled("layout.css.prefixes.webkit")) {
     alias_for: "border-bottom-right-radius",
     subproperties: [ "border-bottom-right-radius" ],
   };
-  gCSSProperties["-webkit-appearance"] = {
-    domProp: "webkitAppearance",
-    inherited: false,
-    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
-    alias_for: "-moz-appearance",
-    subproperties: [ "-moz-appearance" ],
-  };
   gCSSProperties["-webkit-background-clip"] = {
     domProp: "webkitBackgroundClip",
     inherited: false,
@@ -6974,44 +7412,127 @@ if (IsCSSPropertyPrefEnabled("layout.css.prefixes.webkit")) {
     domProp: "webkitBoxFlex",
     inherited: false,
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
-    alias_for: "flex-grow",
-    subproperties: [ "flex-grow" ],
+    alias_for: "-moz-box-flex",
+    subproperties: [ "-moz-box-flex" ],
   };
   gCSSProperties["-webkit-box-ordinal-group"] = {
     domProp: "webkitBoxOrdinalGroup",
     inherited: false,
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
-    alias_for: "order",
-    subproperties: [ "order" ],
+    alias_for: "-moz-box-ordinal-group",
+    subproperties: [ "-moz-box-ordinal-group" ],
   };
-  /* This one is not an alias - it's implemented as a logical property: */
   gCSSProperties["-webkit-box-orient"] = {
     domProp: "webkitBoxOrient",
     inherited: false,
-    type: CSS_TYPE_LONGHAND,
-    logical: true,
-    get_computed: webkit_orient_get_computed,
-    initial_values: [ "horizontal" ],
-    other_values: [ "vertical" ],
-    invalid_values: [
-      "0", "0px", "auto",
-      /* Flex-direction values: */
-      "row", "column", "row-reverse", "column-reverse",
-    ],
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "-moz-box-orient",
+    subproperties: [ "-moz-box-orient" ],
+  };
+  gCSSProperties["-webkit-box-direction"] = {
+    domProp: "webkitBoxDirection",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "-moz-box-direction",
+    subproperties: [ "-moz-box-direction" ],
   };
   gCSSProperties["-webkit-box-align"] = {
     domProp: "webkitBoxAlign",
     inherited: false,
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
-    alias_for: "align-items",
-    subproperties: [ "align-items" ],
+    alias_for: "-moz-box-align",
+    subproperties: [ "-moz-box-align" ],
   };
   gCSSProperties["-webkit-box-pack"] = {
     domProp: "webkitBoxPack",
     inherited: false,
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "-moz-box-pack",
+    subproperties: [ "-moz-box-pack" ],
+  };
+  gCSSProperties["-webkit-flex-direction"] = {
+    domProp: "webkitFlexDirection",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-direction",
+    subproperties: [ "flex-direction" ],
+  };
+  gCSSProperties["-webkit-flex-wrap"] = {
+    domProp: "webkitFlexWrap",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-wrap",
+    subproperties: [ "flex-wrap" ],
+  };
+  gCSSProperties["-webkit-flex-flow"] = {
+    domProp: "webkitFlexFlow",
+    inherited: false,
+    type: CSS_TYPE_TRUE_SHORTHAND,
+    alias_for: "flex-flow",
+    subproperties: [ "flex-direction", "flex-wrap" ],
+  };
+  gCSSProperties["-webkit-order"] = {
+    domProp: "webkitOrder",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "order",
+    subproperties: [ "order" ],
+  };
+  gCSSProperties["-webkit-flex"] = {
+    domProp: "webkitFlex",
+    inherited: false,
+    type: CSS_TYPE_TRUE_SHORTHAND,
+    alias_for: "flex",
+    subproperties: [ "flex-grow", "flex-shrink", "flex-basis" ],
+  };
+  gCSSProperties["-webkit-flex-grow"] = {
+    domProp: "webkitFlexGrow",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-grow",
+    subproperties: [ "flex-grow" ],
+  };
+  gCSSProperties["-webkit-flex-shrink"] = {
+    domProp: "webkitFlexShrink",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-shrink",
+    subproperties: [ "flex-shrink" ],
+  };
+  gCSSProperties["-webkit-flex-basis"] = {
+    domProp: "webkitFlexBasis",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-basis",
+    subproperties: [ "flex-basis" ],
+  };
+  gCSSProperties["-webkit-justify-content"] = {
+    domProp: "webkitJustifyContent",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
     alias_for: "justify-content",
     subproperties: [ "justify-content" ],
+  };
+  gCSSProperties["-webkit-align-items"] = {
+    domProp: "webkitAlignItems",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "align-items",
+    subproperties: [ "align-items" ],
+  };
+  gCSSProperties["-webkit-align-self"] = {
+    domProp: "webkitAlignSelf",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "align-self",
+    subproperties: [ "align-self" ],
+  };
+  gCSSProperties["-webkit-align-content"] = {
+    domProp: "webkitAlignContent",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "align-content",
+    subproperties: [ "align-content" ],
   };
   gCSSProperties["-webkit-user-select"] = {
     domProp: "webkitUserSelect",
@@ -7020,6 +7541,81 @@ if (IsCSSPropertyPrefEnabled("layout.css.prefixes.webkit")) {
     alias_for: "-moz-user-select",
     subproperties: [ "-moz-user-select" ],
   };
+
+  if (SupportsMaskShorthand()) {
+    gCSSProperties["-webkit-mask"] = {
+      domProp: "webkitMask",
+      inherited: false,
+      type: CSS_TYPE_TRUE_SHORTHAND,
+      alias_for: "mask",
+      subproperties: [ "mask-clip", "mask-image", "mask-mode", "mask-origin", "mask-position", "mask-repeat", "mask-size" , "mask-composite" ],
+    };
+    gCSSProperties["-webkit-mask-clip"] = {
+      domProp: "webkitMaskClip",
+      inherited: false,
+      type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+      alias_for: "mask-clip",
+      subproperties: [ "mask-clip" ],
+    };
+
+    gCSSProperties["-webkit-mask-composite"] = {
+      domProp: "webkitMaskComposite",
+      inherited: false,
+      type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+      alias_for: "mask-composite",
+      subproperties: [ "mask-composite" ],
+    };
+
+    gCSSProperties["-webkit-mask-image"] = {
+      domProp: "webkitMaskImage",
+      inherited: false,
+      type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+      alias_for: "mask-image",
+      subproperties: [ "mask-image" ],
+    };
+    gCSSProperties["-webkit-mask-origin"] = {
+      domProp: "webkitMaskOrigin",
+      inherited: false,
+      type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+      alias_for: "mask-origin",
+      subproperties: [ "mask-origin" ],
+    };
+    gCSSProperties["-webkit-mask-position"] = {
+      domProp: "webkitMaskPosition",
+      inherited: false,
+      type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+      alias_for: "mask-position",
+      subproperties: [ "mask-position" ],
+    };
+    gCSSProperties["-webkit-mask-position-x"] = {
+      domProp: "webkitMaskPositionX",
+      inherited: false,
+      type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+      alias_for: "mask-position-x",
+      subproperties: [ "mask-position-x" ],
+    };
+    gCSSProperties["-webkit-mask-position-y"] = {
+      domProp: "webkitMaskPositionY",
+      inherited: false,
+      type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+      alias_for: "mask-position-y",
+      subproperties: [ "mask-position-y" ],
+    };
+    gCSSProperties["-webkit-mask-repeat"] = {
+      domProp: "webkitMaskRepeat",
+      inherited: false,
+      type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+      alias_for: "mask-repeat",
+      subproperties: [ "mask-repeat" ],
+    };
+    gCSSProperties["-webkit-mask-size"] = {
+      domProp: "webkitMaskSize",
+      inherited: false,
+      type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+      alias_for: "mask-size",
+      subproperties: [ "mask-size" ],
+    };
+  }
 }
 
 if (IsCSSPropertyPrefEnabled("layout.css.unset-value.enabled")) {
@@ -7049,7 +7645,7 @@ if (IsCSSPropertyPrefEnabled("layout.css.unset-value.enabled")) {
   if (IsCSSPropertyPrefEnabled("layout.css.filters.enabled")) {
     gCSSProperties["filter"].invalid_values.push("drop-shadow(unset, 2px 2px)", "drop-shadow(2px 2px, unset)");
   }
-  if (IsCSSPropertyPrefEnabled("layout.css.text-align-true-value.enabled")) {
+  if (IsCSSPropertyPrefEnabled("layout.css.text-align-unsafe-value.enabled")) {
     gCSSProperties["text-align"].other_values.push("true left");
   } else {
     gCSSProperties["text-align"].invalid_values.push("true left");
@@ -7068,46 +7664,28 @@ if (IsCSSPropertyPrefEnabled("layout.css.float-logical-values.enabled")) {
   gCSSProperties["clear"].invalid_values.push("inline-end");
 }
 
-if (IsCSSPropertyPrefEnabled("layout.css.text-emphasis.enabled")) {
-  gCSSProperties["text-emphasis"] = {
-    domProp: "textEmphasis",
-    inherited: true,
-    type: CSS_TYPE_TRUE_SHORTHAND,
-    prerequisites: { "color": "black" },
-    subproperties: [ "text-emphasis-style", "text-emphasis-color" ],
-    initial_values: [ "none currentColor", "currentColor none", "none", "currentColor", "none black" ],
-    other_values: [ "filled dot black", "#f00 circle open", "sesame filled rgba(0,0,255,0.5)", "red", "green none", "currentColor filled", "currentColor open" ],
-    invalid_values: [ "filled black dot", "filled filled red", "open open circle #000", "circle dot #f00", "rubbish" ]
-  };
-  gCSSProperties["text-emphasis-color"] = {
-    domProp: "textEmphasisColor",
-    inherited: true,
-    type: CSS_TYPE_LONGHAND,
-    prerequisites: { "color": "black" },
-    initial_values: [ "currentColor", "black", "rgb(0,0,0)" ],
-    other_values: [ "red", "rgba(255,255,255,0.5)", "transparent" ],
-    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000", "ff00ff", "rgb(255,xxx,255)" ]
-  };
-  gCSSProperties["text-emphasis-position"] = {
-    domProp: "textEmphasisPosition",
-    inherited: true,
-    type: CSS_TYPE_LONGHAND,
-    initial_values: [ "over right", "right over" ],
-    other_values: [ "over left", "left over", "under left", "left under", "under right", "right under" ],
-    invalid_values: [ "over over", "left left", "over right left", "rubbish left", "over rubbish" ]
-  };
-  gCSSProperties["text-emphasis-style"] = {
-    domProp: "textEmphasisStyle",
-    inherited: true,
-    type: CSS_TYPE_LONGHAND,
-    initial_values: [ "none" ],
-    other_values: [ "filled", "open", "dot", "circle", "double-circle", "triangle", "sesame", "'#'",
-                    "filled dot", "filled circle", "filled double-circle", "filled triangle", "filled sesame",
-                    "dot filled", "circle filled", "double-circle filled", "triangle filled", "sesame filled",
-                    "dot open", "circle open", "double-circle open", "triangle open", "sesame open" ],
-    invalid_values: [ "rubbish", "dot rubbish", "rubbish dot", "open rubbish", "rubbish open", "open filled", "dot circle",
-                      "open '#'", "'#' filled", "dot '#'", "'#' circle", "1", "1 open", "open 1" ]
-  };
+if (IsCSSPropertyPrefEnabled("layout.css.background-clip-text.enabled")) {
+  gCSSProperties["background-clip"].other_values.push(
+    "text",
+    "content-box, text",
+    "text, border-box",
+    "text, text"
+  );
+  gCSSProperties["background"].other_values.push(
+    "url(404.png) green padding-box text",
+    "content-box text url(404.png) blue"
+  );
+} else {
+  gCSSProperties["background-clip"].invalid_values.push(
+    "text",
+    "content-box, text",
+    "text, border-box",
+    "text, text"
+  );
+  gCSSProperties["background"].invalid_values.push(
+    "url(404.png) green padding-box text",
+    "content-box text url(404.png) blue"
+  );
 }
 
 // Copy aliased properties' fields from their alias targets.

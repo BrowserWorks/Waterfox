@@ -32,7 +32,7 @@ var HTML5_VOID_ELEMENTS = [ 'area', 'base', 'br', 'col', 'command', 'embed',
 
 // https://html.spec.whatwg.org/multipage/multipage/forms.html#form-associated-element
 var HTML5_FORM_ASSOCIATED_ELEMENTS = [ 'button', 'fieldset', 'input', 'keygen',
-        'label', 'object', 'output', 'select', 'textarea' ];
+        'object', 'output', 'select', 'textarea' ];
 
 function newDocument() {
     var d = document.implementation.createDocument();
@@ -155,10 +155,6 @@ function assert_nodelist_contents_equal_noorder(actual, expected, message) {
                     + expected[i]);
         }
     }
-}
-
-function isVisible(el) {
-    return el.offsetTop != 0;
 }
 
 function isVoidElement(elementName) {

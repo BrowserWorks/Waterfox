@@ -3,7 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ifndef MOZ_NATIVE_NSS
+ifndef MOZ_SYSTEM_NSS
 
 CC_WRAPPER =
 CXX_WRAPPER =
@@ -68,8 +68,17 @@ endif
 endif
 endif
 
+ifeq ($(OS_TARGET),Linux)
+HAVE_FREEBL_LIBS = 
+HAVE_FREEBL_LIBS_PRIV = 1
+FREEBL_LOWHASH_FLAG = FREEBL_LOWHASH=1
+endif
+
 ifdef HAVE_FREEBL_LIBS
 NSS_EXTRA_DLLS += freebl3
+endif
+ifdef HAVE_FREEBL_LIBS_PRIV
+NSS_EXTRA_DLLS += freeblpriv3
 endif
 ifdef HAVE_FREEBL_LIBS_32INT32
 NSS_EXTRA_DLLS += freebl_32int_3
@@ -87,17 +96,20 @@ endif
 
 # For all variables such as DLLFLAGS, that may contain $(DIST)
 DIST := $(ABS_DIST)
+# TODO: move this all to configure, but in Python
+ifndef MOZ_BUILD_NSPR
 NSPR_INCLUDE_DIR = $(firstword $(filter -I%,$(NSPR_CFLAGS)))
 ifneq (,$(strip $(NSPR_INCLUDE_DIR)))
 NSPR_INCLUDE_DIR := $(subst -I,,$(subst -I$(DIST),-I$(ABS_DIST),$(NSPR_INCLUDE_DIR)))
 else
-NSPR_INCLUDE_DIR = $(ABS_DIST)/include/nspr
+$(error Your NSPR CFLAGS are broken!)
 endif
 NSPR_LIB_DIR = $(firstword $(filter -L%,$(NSPR_LIBS)))
 ifneq (,$(strip $(NSPR_LIB_DIR)))
 NSPR_LIB_DIR := $(subst -L,,$(subst -L$(DIST),-L$(ABS_DIST),$(NSPR_LIB_DIR)))
 else
-NSPR_LIB_DIR = $(ABS_DIST)/lib
+$(error Your NSPR LDFLAGS are broken!)
+endif
 endif
 
 # To get debug symbols from NSS
@@ -113,10 +125,11 @@ DEFAULT_GMAKE_FLAGS += NSPR_LIB_DIR=$(NSPR_LIB_DIR)
 DEFAULT_GMAKE_FLAGS += MOZILLA_CLIENT=1
 DEFAULT_GMAKE_FLAGS += NO_MDUPDATE=1
 DEFAULT_GMAKE_FLAGS += NSS_ENABLE_ECC=1
+DEFAULT_GMAKE_FLAGS += NSS_ENABLE_TLS_1_3=1
 ifeq ($(OS_ARCH)_$(GNU_CC),WINNT_1)
 DEFAULT_GMAKE_FLAGS += OS_DLLFLAGS='-static-libgcc' NSPR31_LIB_PREFIX=lib
 endif
-ifndef MOZ_NATIVE_SQLITE
+ifndef MOZ_SYSTEM_SQLITE
 ifdef MOZ_FOLD_LIBS
 DEFAULT_GMAKE_FLAGS += SQLITE_LIB_NAME=nss3
 else
@@ -172,7 +185,7 @@ endif
 
 # Turn off TLS compression support because it requires system zlib.
 # See bug 580679 comment 18.
-DEFAULT_GMAKE_FLAGS += NSS_ENABLE_ZLIB=
+DEFAULT_GMAKE_FLAGS += NSS_SSL_ENABLE_ZLIB=
 
 # Disable building of the test programs in security/nss/lib/zlib
 DEFAULT_GMAKE_FLAGS += PROGRAMS=
@@ -226,16 +239,13 @@ DEFAULT_GMAKE_FLAGS += \
 	$(NULL)
 endif
 
-DEFAULT_GMAKE_FLAGS += FREEBL_NO_DEPEND=0
-ifeq ($(OS_TARGET),Linux)
-DEFAULT_GMAKE_FLAGS += FREEBL_LOWHASH=1
-endif
+DEFAULT_GMAKE_FLAGS += FREEBL_NO_DEPEND=0 $(FREEBL_LOWHASH_FLAG)
 
 ifdef MOZ_NO_WLZDEFS
 DEFAULT_GMAKE_FLAGS += ZDEFS_FLAG=
 endif
 ifdef MOZ_CFLAGS_NSS
-DEFAULT_GMAKE_FLAGS += XCFLAGS='$(filter-out -W%,$(CFLAGS))'
+NSS_XCFLAGS += $(filter-out -W%,$(CFLAGS))
 DEFAULT_GMAKE_FLAGS += DARWIN_DYLIB_VERSIONS='-compatibility_version 1 -current_version 1 $(LDFLAGS)'
 endif
 ifeq (1_1,$(CLANG_CL)_$(MOZ_ASAN))
@@ -258,15 +268,18 @@ DEFAULT_GMAKE_FLAGS += MAKE_OBJDIR='$$(INSTALL) -D $$(OBJDIR)'
 DEFAULT_GMAKE_FLAGS += TARGETS='$$(LIBRARY) $$(SHARED_LIBRARY) $$(PROGRAM)'
 
 ifdef MOZ_FOLD_LIBS_FLAGS
-DEFAULT_GMAKE_FLAGS += XCFLAGS='$(MOZ_FOLD_LIBS_FLAGS)'
+NSS_XCFLAGS += $(MOZ_FOLD_LIBS_FLAGS)
 endif
 
-ifndef WARNINGS_AS_ERRORS
-DEFAULT_GMAKE_FLAGS += NSS_ENABLE_WERROR=0
+# Pass on the MSVC target arch from the main build system.
+# Note this is case- and switch-character sensitive, while
+# the MSVC option is not.
+ifeq (WINNT,$(OS_TARGET))
+NSS_XCFLAGS += $(filter -arch:%,$(CFLAGS))
 endif
-ifeq ($(OS_TARGET),Android)
-DEFAULT_GMAKE_FLAGS += NSS_ENABLE_WERROR=0
-endif
+
+# Export accumulated XCFLAGS to modify nss defaults.
+DEFAULT_GMAKE_FLAGS += XCFLAGS='$(NSS_XCFLAGS)'
 
 NSS_SRCDIR = $(topsrcdir)
 
@@ -346,6 +359,10 @@ INSTALL_TARGETS += IMPORT_LIB
 endif # MOZ_FOLD_LIBS
 
 include $(topsrcdir)/config/rules.mk
+
+ifeq (1,$(ALLOW_COMPILER_WARNINGS))
+DEFAULT_GMAKE_FLAGS += NSS_ENABLE_WERROR=0
+endif
 
 # Can't pass this in DEFAULT_GMAKE_FLAGS because that overrides
 # definitions in NSS, so just export it into the sub-make's environment.

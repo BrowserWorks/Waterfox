@@ -1,5 +1,9 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
+
+/* import-globals-from shared-head.js */
 
 // shared-head.js handles imports, constants, and utility functions
 Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtools/client/framework/test/shared-head.js", this);
@@ -29,11 +33,11 @@ function getChromeActors(callback)
   DebuggerServer.allowChromeProcess = true;
 
   let client = new DebuggerClient(DebuggerServer.connectPipe());
-  client.connect(() => {
-    client.getProcess().then(response => {
+  client.connect()
+    .then(() => client.getProcess())
+    .then(response => {
       callback(client, response.form);
     });
-  });
 
   SimpleTest.registerCleanupFunction(() => {
     DebuggerServer.destroy();
@@ -51,7 +55,7 @@ function getSourceActor(aSources, aURL) {
  * @return nsIDOMWindow
  *         The new window object that holds Scratchpad.
  */
-function *openScratchpadWindow () {
+function* openScratchpadWindow() {
   let { promise: p, resolve } = promise.defer();
   let win = ScratchpadManager.openScratchpad();
 
@@ -98,7 +102,7 @@ function waitForContentMessage(name) {
  * @return {Promise} Resolves to the response data if a response is expected,
  * immediately resolves otherwise
  */
-function executeInContent(name, data={}, objects={}, expectResponse=true) {
+function executeInContent(name, data = {}, objects = {}, expectResponse = true) {
   info("Sending message " + name + " to content");
   let mm = gBrowser.selectedBrowser.messageManager;
 
@@ -118,7 +122,7 @@ function executeInContent(name, data={}, objects={}, expectResponse=true) {
 function synthesizeKeyElement(el) {
   let key = el.getAttribute("key") || el.getAttribute("keycode");
   let mod = {};
-  el.getAttribute("modifiers").split(" ").forEach((m) => mod[m+"Key"] = true);
+  el.getAttribute("modifiers").split(" ").forEach((m) => mod[m + "Key"] = true);
   info(`Synthesizing: key=${key}, mod=${JSON.stringify(mod)}`);
   EventUtils.synthesizeKey(key, mod, el.ownerDocument.defaultView);
 }
@@ -138,7 +142,7 @@ function checkHostType(toolbox, hostType, previousHostType) {
   is(pref, hostType, "host pref is " + hostType);
 
   if (previousHostType) {
-    is (Services.prefs.getCharPref("devtools.toolbox.previousHost"),
+    is(Services.prefs.getCharPref("devtools.toolbox.previousHost"),
       previousHostType, "The previous host is correct");
   }
 }

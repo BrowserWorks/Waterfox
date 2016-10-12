@@ -12,7 +12,7 @@
 #include "vm/Stack-inl.h"
 
 /* static */ inline bool
-js::Debugger::onLeaveFrame(JSContext* cx, AbstractFramePtr frame, bool ok)
+js::Debugger::onLeaveFrame(JSContext* cx, AbstractFramePtr frame, jsbytecode* pc, bool ok)
 {
     MOZ_ASSERT_IF(frame.isInterpreterFrame(), frame.asInterpreterFrame() == cx->interpreterFrame());
     MOZ_ASSERT_IF(frame.script()->isDebuggee(), frame.isDebuggee());
@@ -21,7 +21,7 @@ js::Debugger::onLeaveFrame(JSContext* cx, AbstractFramePtr frame, bool ok)
                                          frame.script()->hasAnyBreakpointsOrStepMode();
     MOZ_ASSERT_IF(evalTraps, frame.isDebuggee());
     if (frame.isDebuggee())
-        ok = slowPathOnLeaveFrame(cx, frame, ok);
+        ok = slowPathOnLeaveFrame(cx, frame, pc, ok);
     MOZ_ASSERT(!inFrameMaps(frame));
     return ok;
 }
@@ -29,8 +29,16 @@ js::Debugger::onLeaveFrame(JSContext* cx, AbstractFramePtr frame, bool ok)
 /* static */ inline js::Debugger*
 js::Debugger::fromJSObject(const JSObject* obj)
 {
-    MOZ_ASSERT(js::GetObjectClass(obj) == &jsclass);
+    MOZ_ASSERT(js::GetObjectClass(obj) == &class_);
     return (Debugger*) obj->as<NativeObject>().getPrivate();
+}
+
+/* static */ inline bool
+js::Debugger::checkNoExecute(JSContext* cx, HandleScript script)
+{
+    if (!cx->compartment()->isDebuggee() || !cx->runtime()->noExecuteDebuggerTop)
+        return true;
+    return slowPathCheckNoExecute(cx, script);
 }
 
 /* static */ JSTrapStatus
@@ -58,27 +66,21 @@ js::Debugger::onExceptionUnwind(JSContext* cx, AbstractFramePtr frame)
     return slowPathOnExceptionUnwind(cx, frame);
 }
 
-/* static */ bool
-js::Debugger::observesIonCompilation(JSContext* cx)
+/* static */ void
+js::Debugger::onNewWasmModule(JSContext* cx, Handle<WasmModuleObject*> wasmModule)
 {
-    // If the current compartment is observed by any Debugger.
-    if (!cx->compartment()->isDebuggee())
-        return false;
-
-    // If any attached Debugger watch for Jit compilation results.
-    if (!Debugger::hasLiveHook(cx->global(), Debugger::OnIonCompilation))
-        return false;
-
-    return true;
+    // Insert the wasm::Module into a compartment-wide list for discovery
+    // later without a heap walk.
+    cx->compartment()->wasmModuleWeakList.insertBack(&wasmModule->module());
+    if (cx->compartment()->isDebuggee())
+        slowPathOnNewWasmModule(cx, wasmModule);
 }
 
-/* static */ void
-js::Debugger::onIonCompilation(JSContext* cx, Handle<ScriptVector> scripts, LSprinter& graph)
+inline js::Debugger*
+js::DebuggerObject::owner() const
 {
-    if (!observesIonCompilation(cx))
-        return;
-
-    slowPathOnIonCompilation(cx, scripts, graph);
+    JSObject* dbgobj = &getReservedSlot(OWNER_SLOT).toObject();
+    return Debugger::fromJSObject(dbgobj);
 }
 
 #endif /* vm_Debugger_inl_h */

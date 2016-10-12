@@ -31,6 +31,9 @@
 namespace js {
 namespace jit {
 
+// How far forward/back can a jump go? Provide a generous buffer for thunks.
+static const uint32_t JumpImmediateRange = 100 * 1024;
+
 class Registers
 {
   public:
@@ -305,8 +308,15 @@ class FloatRegisterMIPSShared
     }
 };
 
-uint32_t GetMIPSFlags();
-bool hasFPU();
+namespace mips_private {
+    extern uint32_t Flags;
+    extern bool hasFPU;
+    extern bool isLoongson;
+}
+
+inline uint32_t GetMIPSFlags() { return mips_private::Flags; }
+inline bool hasFPU() { return mips_private::hasFPU; }
+inline bool isLoongson() { return mips_private::isLoongson; }
 
 // MIPS doesn't have double registers that can NOT be treated as float32.
 inline bool
@@ -322,11 +332,11 @@ hasMultiAlias() {
     return true;
 }
 
-// See the comments above AsmJSMappedSize in AsmJS.cpp for more info.
+// See MIRGenerator::foldableOffsetRange for more info.
 // TODO: Implement this for MIPS. Note that it requires Codegen to respect the
 // offset field of AsmJSHeapAccess.
-static const size_t AsmJSCheckedImmediateRange = 0;
-static const size_t AsmJSImmediateRange = 0;
+static const size_t WasmCheckedImmediateRange = 0;
+static const size_t WasmImmediateRange = 0;
 
 } // namespace jit
 } // namespace js

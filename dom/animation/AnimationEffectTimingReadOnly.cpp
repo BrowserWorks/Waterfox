@@ -5,43 +5,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/AnimationEffectTimingReadOnly.h"
+
+#include "mozilla/AnimationUtils.h"
+#include "mozilla/dom/AnimatableBinding.h"
 #include "mozilla/dom/AnimationEffectTimingReadOnlyBinding.h"
+#include "mozilla/dom/CSSPseudoElement.h"
+#include "mozilla/dom/KeyframeEffectBinding.h"
 
 namespace mozilla {
-
-TimingParams&
-TimingParams::operator=(const dom::AnimationEffectTimingProperties& aRhs)
-{
-  mDuration = aRhs.mDuration;
-  mDelay = TimeDuration::FromMilliseconds(aRhs.mDelay);
-  mIterations = aRhs.mIterations;
-  mDirection = aRhs.mDirection;
-  mFill = aRhs.mFill;
-
-  return *this;
-}
-
-bool
-TimingParams::operator==(const TimingParams& aOther) const
-{
-  bool durationEqual;
-  if (mDuration.IsUnrestrictedDouble()) {
-    durationEqual = aOther.mDuration.IsUnrestrictedDouble() &&
-                    (mDuration.GetAsUnrestrictedDouble() ==
-                     aOther.mDuration.GetAsUnrestrictedDouble());
-  } else {
-    // We consider all string values and uninitialized values as meaning "auto".
-    // Since mDuration is either a string or uninitialized, we consider it equal
-    // if aOther.mDuration is also either a string or uninitialized.
-    durationEqual = !aOther.mDuration.IsUnrestrictedDouble();
-  }
-  return durationEqual &&
-         mDelay == aOther.mDelay &&
-         mIterations == aOther.mIterations &&
-         mDirection == aOther.mDirection &&
-         mFill == aOther.mFill;
-}
-
 namespace dom {
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(AnimationEffectTimingReadOnly, mParent)
@@ -53,6 +24,27 @@ JSObject*
 AnimationEffectTimingReadOnly::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   return AnimationEffectTimingReadOnlyBinding::Wrap(aCx, this, aGivenProto);
+}
+
+void
+AnimationEffectTimingReadOnly::GetDuration(
+    OwningUnrestrictedDoubleOrString& aRetVal) const
+{
+  if (mTiming.mDuration) {
+    aRetVal.SetAsUnrestrictedDouble() = mTiming.mDuration->ToMilliseconds();
+  } else {
+    aRetVal.SetAsString().AssignLiteral("auto");
+  }
+}
+
+void
+AnimationEffectTimingReadOnly::GetEasing(nsString& aRetVal) const
+{
+  if (mTiming.mFunction) {
+    mTiming.mFunction->AppendToString(aRetVal);
+  } else {
+    aRetVal.AssignLiteral("linear");
+  }
 }
 
 } // namespace dom

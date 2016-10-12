@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test adding and modifying conditional breakpoints (with server-side support)
@@ -8,14 +10,18 @@
 const TAB_URL = EXAMPLE_URL + "doc_conditional-breakpoints.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gEditor = gDebugger.DebuggerView.editor;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
-    const constants = gDebugger.require('./content/constants');
+    const queries = gDebugger.require("./content/queries");
+    const constants = gDebugger.require("./content/constants");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
 
@@ -113,8 +119,17 @@ function test() {
                                 gDebugger);
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceAndCaretAndScopes(gPanel, ".html", 17);
+    function waitForConditionUpdate() {
+      // This will close the popup and send another request to update
+      // the condition
+      gSources._hideConditionalPopup();
+      return waitForDispatch(gPanel, constants.SET_BREAKPOINT_CONDITION);
+    }
+
+    Task.spawn(function* () {
+      let onCaretUpdated = waitForCaretAndScopes(gPanel, 17);
+      callInTab(gTab, "ermahgerd");
+      yield onCaretUpdated;
 
       is(gDebugger.gThreadClient.state, "paused",
          "Should only be getting stack frames while paused.");
@@ -129,14 +144,16 @@ function test() {
          "No breakpoints currently added.");
 
       yield addBreakpoint1();
-      testBreakpoint(18, false, undefined)
+      testBreakpoint(18, false, undefined);
 
       yield addBreakpoint2();
       testBreakpoint(19, false, undefined);
       yield modBreakpoint2();
       testBreakpoint(19, true, undefined);
+      yield waitForConditionUpdate();
       yield addBreakpoint3();
-      testBreakpoint(20, false, undefined);
+      testBreakpoint(20, true, "");
+      yield waitForConditionUpdate();
       yield modBreakpoint3();
       testBreakpoint(20, false, "bamboocha");
       yield addBreakpoint4();
@@ -181,7 +198,5 @@ function test() {
 
       resumeDebuggerThenCloseAndFinish(gPanel);
     });
-
-    callInTab(gTab, "ermahgerd");
   });
 }

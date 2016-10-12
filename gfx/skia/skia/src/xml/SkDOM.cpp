@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2006 The Android Open Source Project
  *
@@ -240,7 +239,7 @@ protected:
         }
         *fParentStack.push() = node;
 
-        memcpy(node->attrs(), fAttrs.begin(), attrCount * sizeof(SkDOM::Attr));
+        sk_careful_memcpy(node->attrs(), fAttrs.begin(), attrCount * sizeof(SkDOM::Attr));
         fAttrs.reset();
 
     }
@@ -374,7 +373,7 @@ SkXMLParser* SkDOM::beginParsing() {
 const SkDOM::Node* SkDOM::finishParsing() {
     SkASSERT(fParser);
     fRoot = fParser->getRoot();
-    fParser.free();
+    fParser.reset();
 
     return fRoot;
 }

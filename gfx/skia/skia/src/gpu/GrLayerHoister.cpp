@@ -12,9 +12,9 @@
 #include "SkBigPicture.h"
 #include "SkCanvas.h"
 #include "SkGpuDevice.h"
-#include "SkGrPixelRef.h"
 #include "SkLayerInfo.h"
 #include "SkRecordDraw.h"
+#include "SkSpecialImage.h"
 #include "SkSurface.h"
 #include "SkSurface_Gpu.h"
 
@@ -93,7 +93,7 @@ static bool compute_source_rect(const SkLayerInfo::BlockInfo& info, const SkMatr
     totMat.preConcat(info.fLocalMat);
 
     if (info.fPaint && info.fPaint->getImageFilter()) {
-        info.fPaint->getImageFilter()->filterBounds(clipBounds, totMat, &clipBounds);
+        clipBounds = info.fPaint->getImageFilter()->filterBounds(clipBounds, totMat);
     }
 
     if (!info.fSrcBounds.isEmpty()) {
@@ -232,7 +232,7 @@ void GrLayerHoister::DrawLayersToAtlas(GrContext* context,
     if (atlased.count() > 0) {
         // All the atlased layers are rendered into the same GrTexture
         SkSurfaceProps props(0, kUnknown_SkPixelGeometry);
-        SkAutoTUnref<SkSurface> surface(SkSurface::NewRenderTargetDirect(
+        auto surface(SkSurface::MakeRenderTargetDirect(
                                         atlased[0].fLayer->texture()->asRenderTarget(), &props));
 
         SkCanvas* atlasCanvas = surface->getCanvas();
@@ -277,15 +277,6 @@ void GrLayerHoister::DrawLayersToAtlas(GrContext* context,
     }
 }
 
-SkBitmap wrap_texture(GrTexture* texture) {
-    SkASSERT(texture);
-
-    SkBitmap result;
-    result.setInfo(texture->surfacePriv().info(kPremul_SkAlphaType));
-    result.setPixelRef(new SkGrPixelRef(result.info(), texture))->unref();
-    return result;
-}
-
 void GrLayerHoister::FilterLayer(GrContext* context,
                                  SkGpuDevice* device,
                                  const GrHoistedLayer& info) {
@@ -295,34 +286,40 @@ void GrLayerHoister::FilterLayer(GrContext* context,
 
     static const int kDefaultCacheSize = 32 * 1024 * 1024;
 
-    SkBitmap filteredBitmap;
-    SkIPoint offset = SkIPoint::Make(0, 0);
-
     const SkIPoint filterOffset = SkIPoint::Make(layer->srcIR().fLeft, layer->srcIR().fTop);
 
-    SkMatrix totMat = SkMatrix::I();
-    totMat.preConcat(info.fPreMat);
+    SkMatrix totMat(info.fPreMat);
     totMat.preConcat(info.fLocalMat);
     totMat.postTranslate(-SkIntToScalar(filterOffset.fX), -SkIntToScalar(filterOffset.fY));
 
     SkASSERT(0 == layer->rect().fLeft && 0 == layer->rect().fTop);
-    SkIRect clipBounds = layer->rect();
+    const SkIRect& clipBounds = layer->rect();
 
     // This cache is transient, and is freed (along with all its contained
     // textures) when it goes out of scope.
     SkAutoTUnref<SkImageFilter::Cache> cache(SkImageFilter::Cache::Create(kDefaultCacheSize));
-    SkImageFilter::Context filterContext(totMat, clipBounds, cache, SkImageFilter::kApprox_SizeConstraint);
+    SkImageFilter::Context filterContext(totMat, clipBounds, cache);
 
     SkImageFilter::DeviceProxy proxy(device);
-    const SkBitmap src = wrap_texture(layer->texture());
 
-    if (!layer->filter()->filterImage(&proxy, src, filterContext, &filteredBitmap, &offset)) {
+    // TODO: should the layer hoister store stand alone layers as SkSpecialImages internally?
+    const SkIRect subset = SkIRect::MakeWH(layer->texture()->width(), layer->texture()->height());
+    sk_sp<SkSpecialImage> img(SkSpecialImage::MakeFromGpu(&proxy, subset,
+                                                          kNeedNewImageUniqueID_SpecialImage,
+                                                          layer->texture(),
+                                                          &device->surfaceProps()));
+
+    SkIPoint offset = SkIPoint::Make(0, 0);
+    sk_sp<SkSpecialImage> result(layer->filter()->filterImage(img.get(),
+                                                              filterContext,
+                                                              &offset));
+    if (!result) {
         // Filtering failed. Press on with the unfiltered version.
         return;
     }
 
-    SkIRect newRect = SkIRect::MakeWH(filteredBitmap.width(), filteredBitmap.height());
-    layer->setTexture(filteredBitmap.getTexture(), newRect, false);
+    SkASSERT(result->peekTexture());
+    layer->setTexture(result->peekTexture(), result->subset(), false);
     layer->setOffset(offset);
 }
 
@@ -338,7 +335,7 @@ void GrLayerHoister::DrawLayers(GrContext* context, const SkTDArray<GrHoistedLay
 
         // Each non-atlased layer has its own GrTexture
         SkSurfaceProps props(0, kUnknown_SkPixelGeometry);
-        SkAutoTUnref<SkSurface> surface(SkSurface::NewRenderTargetDirect(
+        auto surface(SkSurface::MakeRenderTargetDirect(
                                         layer->texture()->asRenderTarget(), &props));
 
         SkCanvas* layerCanvas = surface->getCanvas();

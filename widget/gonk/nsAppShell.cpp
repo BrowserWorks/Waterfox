@@ -72,7 +72,7 @@
 
 // Defines kKeyMapping and GetKeyNameIndex()
 #include "GonkKeyMapping.h"
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "GeckoTouchDispatcher.h"
 
 #undef LOG
@@ -301,21 +301,21 @@ KeyEventDispatcher::DispatchKeyEventInternal(EventMessage aEventMessage)
     if (aEventMessage == eKeyPress) {
         // XXX If the charCode is not a printable character, the charCode
         //     should be computed without Ctrl/Alt/Meta modifiers.
-        event.charCode = static_cast<uint32_t>(mChar);
+        event.mCharCode = static_cast<uint32_t>(mChar);
     }
-    if (!event.charCode) {
-        event.keyCode = mDOMKeyCode;
+    if (!event.mCharCode) {
+        event.mKeyCode = mDOMKeyCode;
     }
-    event.isChar = !!event.charCode;
+    event.mIsChar = !!event.mCharCode;
     event.mIsRepeat = IsRepeat();
     event.mKeyNameIndex = mDOMKeyNameIndex;
     if (mDOMPrintableKeyValue) {
         event.mKeyValue = mDOMPrintableKeyValue;
     }
     event.mCodeNameIndex = mDOMCodeNameIndex;
-    event.modifiers = getDOMModifiers(mData.metaState);
-    event.location = mDOMKeyLocation;
-    event.time = mData.timeMs;
+    event.mModifiers = getDOMModifiers(mData.metaState);
+    event.mLocation = mDOMKeyLocation;
+    event.mTime = mData.timeMs;
     return nsWindow::DispatchKeyInput(event);
 }
 
@@ -354,7 +354,7 @@ KeyEventDispatcher::DispatchKeyUpEvent()
     DispatchKeyEventInternal(eKeyUp);
 }
 
-class SwitchEventRunnable : public nsRunnable {
+class SwitchEventRunnable : public mozilla::Runnable {
 public:
     SwitchEventRunnable(hal::SwitchEvent& aEvent) : mEvent(aEvent)
     {}

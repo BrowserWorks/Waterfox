@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure that the editing or removing watch expressions works properly.
@@ -11,7 +13,11 @@ var gTab, gPanel, gDebugger;
 var gL10N, gEditor, gVars, gWatch;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -20,7 +26,9 @@ function test() {
     gVars = gDebugger.DebuggerView.Variables;
     gWatch = gDebugger.DebuggerView.WatchExpressions;
 
-    waitForDebuggerEvents(gPanel, gDebugger.EVENTS.FETCHED_WATCH_EXPRESSIONS)
+    promise.all([
+      waitForDebuggerEvents(gPanel, gDebugger.EVENTS.FETCHED_WATCH_EXPRESSIONS),
+      waitForCaretAndScopes(gPanel, 18)])
       .then(() => testInitialVariablesInScope())
       .then(() => testInitialExpressionsInScope())
       .then(() => testModification("document.title = 42", "document.title = 43", "43", "undefined"))
@@ -491,7 +499,7 @@ function addCmdExpression(aString) {
   gEditor.focus();
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

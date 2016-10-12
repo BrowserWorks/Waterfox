@@ -3,9 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { Cc, Ci, Cu, Cr } = require("chrome");
+const { Cc, Ci } = require("chrome");
 
-const promise = require("promise");
 const RecordingUtils = require("devtools/shared/performance/recording-utils");
 const { FileUtils } = require("resource://gre/modules/FileUtils.jsm");
 const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
@@ -26,9 +25,9 @@ const PERF_TOOL_SERIALIZER_CURRENT_VERSION = 2;
  * Gets a nsIScriptableUnicodeConverter instance with a default UTF-8 charset.
  * @return object
  */
-function getUnicodeConverter () {
-  let className = "@mozilla.org/intl/scriptableunicodeconverter";
-  let converter = Cc[className].createInstance(Ci.nsIScriptableUnicodeConverter);
+function getUnicodeConverter() {
+  let cname = "@mozilla.org/intl/scriptableunicodeconverter";
+  let converter = Cc[cname].createInstance(Ci.nsIScriptableUnicodeConverter);
   converter.charset = "UTF-8";
   return converter;
 }
@@ -45,18 +44,17 @@ function getUnicodeConverter () {
  *         A promise that is resolved once streaming finishes, or rejected
  *         if there was an error.
  */
-function saveRecordingToFile (recordingData, file) {
-  let deferred = promise.defer();
-
+function saveRecordingToFile(recordingData, file) {
   recordingData.fileType = PERF_TOOL_SERIALIZER_IDENTIFIER;
   recordingData.version = PERF_TOOL_SERIALIZER_CURRENT_VERSION;
 
   let string = JSON.stringify(recordingData);
-  let inputStream = this.getUnicodeConverter().convertToInputStream(string);
+  let inputStream = getUnicodeConverter().convertToInputStream(string);
   let outputStream = FileUtils.openSafeFileOutputStream(file);
 
-  NetUtil.asyncCopy(inputStream, outputStream, deferred.resolve);
-  return deferred.promise;
+  return new Promise(resolve => {
+    NetUtil.asyncCopy(inputStream, outputStream, resolve);
+  });
 }
 
 /**
@@ -68,45 +66,53 @@ function saveRecordingToFile (recordingData, file) {
  *         A promise that is resolved once importing finishes, or rejected
  *         if there was an error.
  */
-function loadRecordingFromFile (file) {
-  let deferred = promise.defer();
-
+function loadRecordingFromFile(file) {
   let channel = NetUtil.newChannel({
     uri: NetUtil.newURI(file),
-    loadUsingSystemPrincipal: true});
+    loadUsingSystemPrincipal: true
+  });
 
   channel.contentType = "text/plain";
 
-  NetUtil.asyncFetch(channel, (inputStream, status) => {
-    try {
-      let string = NetUtil.readInputStreamToString(inputStream, inputStream.available());
-      var recordingData = JSON.parse(string);
-    } catch (e) {
-      deferred.reject(new Error("Could not read recording data file."));
-      return;
-    }
-    if (recordingData.fileType != PERF_TOOL_SERIALIZER_IDENTIFIER) {
-      deferred.reject(new Error("Unrecognized recording data file."));
-      return;
-    }
-    if (!isValidSerializerVersion(recordingData.version)) {
-      deferred.reject(new Error("Unsupported recording data file version."));
-      return;
-    }
-    if (recordingData.version === PERF_TOOL_SERIALIZER_LEGACY_VERSION) {
-      recordingData = convertLegacyData(recordingData);
-    }
-    if (recordingData.profile.meta.version === 2) {
-      RecordingUtils.deflateProfile(recordingData.profile);
-    }
-    if (!recordingData.label) {
-      // set the label to the filename without its extension
-      recordingData.label = file.leafName.replace(/\..+$/, "");
-    }
-    deferred.resolve(recordingData);
-  });
+  return new Promise((resolve, reject) => {
+    NetUtil.asyncFetch(channel, (inputStream) => {
+      let recordingData;
 
-  return deferred.promise;
+      try {
+        let string = NetUtil.readInputStreamToString(inputStream, inputStream.available());
+        recordingData = JSON.parse(string);
+      } catch (e) {
+        reject(new Error("Could not read recording data file."));
+        return;
+      }
+
+      if (recordingData.fileType != PERF_TOOL_SERIALIZER_IDENTIFIER) {
+        reject(new Error("Unrecognized recording data file."));
+        return;
+      }
+
+      if (!isValidSerializerVersion(recordingData.version)) {
+        reject(new Error("Unsupported recording data file version."));
+        return;
+      }
+
+      if (recordingData.version === PERF_TOOL_SERIALIZER_LEGACY_VERSION) {
+        recordingData = convertLegacyData(recordingData);
+      }
+
+      if (recordingData.profile.meta.version === 2) {
+        RecordingUtils.deflateProfile(recordingData.profile);
+      }
+
+      // If the recording has no label, set it to be the
+      // filename without its extension.
+      if (!recordingData.label) {
+        recordingData.label = file.leafName.replace(/\..+$/, "");
+      }
+
+      resolve(recordingData);
+    });
+  });
 }
 
 /**
@@ -116,7 +122,7 @@ function loadRecordingFromFile (file) {
  * @param number version
  * @return boolean
  */
-function isValidSerializerVersion (version) {
+function isValidSerializerVersion(version) {
   return !!~[
     PERF_TOOL_SERIALIZER_LEGACY_VERSION,
     PERF_TOOL_SERIALIZER_CURRENT_VERSION
@@ -124,14 +130,14 @@ function isValidSerializerVersion (version) {
 }
 
 /**
- * Takes recording data (with version `1`, from the original profiler tool), and
- * massages the data to be line with the current performance tool's property names
- * and values.
+ * Takes recording data (with version `1`, from the original profiler tool),
+ * and massages the data to be line with the current performance tool's
+ * property names and values.
  *
  * @param object legacyData
  * @return object
  */
-function convertLegacyData (legacyData) {
+function convertLegacyData(legacyData) {
   let { profilerData, ticksData, recordingDuration } = legacyData;
 
   // The `profilerData` and `ticksData` stay, but the previously unrecorded
@@ -146,7 +152,7 @@ function convertLegacyData (legacyData) {
     allocations: { sites: [], timestamps: [], frames: [], sizes: [] },
     profile: profilerData.profile,
     // Fake a configuration object here if there's tick data,
-    // so that it can be rendered
+    // so that it can be rendered.
     configuration: {
       withTicks: !!ticksData.length,
       withMarkers: false,
@@ -160,6 +166,5 @@ function convertLegacyData (legacyData) {
   return data;
 }
 
-exports.getUnicodeConverter = getUnicodeConverter;
 exports.saveRecordingToFile = saveRecordingToFile;
 exports.loadRecordingFromFile = loadRecordingFromFile;

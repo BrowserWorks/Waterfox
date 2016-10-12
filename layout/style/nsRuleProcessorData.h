@@ -336,7 +336,7 @@ struct MOZ_STACK_CLASS TreeMatchContext {
   nsRuleWalker::VisitedHandlingType mVisitedHandling;
 
   // For matching :scope
-  nsAutoTArray<mozilla::dom::Element*, 1> mScopes;
+  AutoTArray<mozilla::dom::Element*, 1> mScopes;
  public:
   // The document we're working with.
   nsIDocument* const mDocument;
@@ -380,7 +380,7 @@ struct MOZ_STACK_CLASS TreeMatchContext {
 
   // List of ancestor elements that define a style scope (due to having a
   // <style scoped> child).
-  nsAutoTArray<mozilla::dom::Element*, 1> mStyleScopes;
+  AutoTArray<mozilla::dom::Element*, 1> mStyleScopes;
 
   // The current style scope element for selector matching.
   mozilla::dom::Element* mCurrentStyleScope;
@@ -404,13 +404,9 @@ struct MOZ_STACK_CLASS TreeMatchContext {
     , mCurrentStyleScope(nullptr)
   {
     if (aMatchVisited != eNeverMatchVisited) {
-      nsCOMPtr<nsISupports> container = mDocument->GetContainer();
-      if (container) {
-        nsCOMPtr<nsILoadContext> loadContext = do_QueryInterface(container);
-        NS_ASSERTION(loadContext, "Couldn't get loadContext from container; assuming no private browsing.");
-        if (loadContext) {
-          mUsingPrivateBrowsing = loadContext->UsePrivateBrowsing();
-        }
+      nsILoadContext* loadContext = mDocument->GetLoadContext();
+      if (loadContext) {
+        mUsingPrivateBrowsing = loadContext->UsePrivateBrowsing();
       }
     }
   }
@@ -470,7 +466,7 @@ struct MOZ_STACK_CLASS PseudoElementRuleProcessorData :
   PseudoElementRuleProcessorData(nsPresContext* aPresContext,
                                  mozilla::dom::Element* aParentElement,
                                  nsRuleWalker* aRuleWalker,
-                                 nsCSSPseudoElements::Type aPseudoType,
+                                 mozilla::CSSPseudoElementType aPseudoType,
                                  TreeMatchContext& aTreeMatchContext,
                                  mozilla::dom::Element* aPseudoElement)
     : ElementDependentRuleProcessorData(aPresContext, aParentElement, aRuleWalker,
@@ -478,14 +474,13 @@ struct MOZ_STACK_CLASS PseudoElementRuleProcessorData :
       mPseudoType(aPseudoType),
       mPseudoElement(aPseudoElement)
   {
-    NS_PRECONDITION(aPseudoType <
-                      nsCSSPseudoElements::ePseudo_PseudoElementCount,
+    NS_PRECONDITION(aPseudoType < mozilla::CSSPseudoElementType::Count,
                     "invalid aPseudoType value");
     NS_PRECONDITION(aTreeMatchContext.mForStyling, "Styling here!");
     NS_PRECONDITION(aRuleWalker, "Must have rule walker");
   }
 
-  nsCSSPseudoElements::Type mPseudoType;
+  mozilla::CSSPseudoElementType mPseudoType;
   mozilla::dom::Element* const mPseudoElement; // weak ref
 };
 
@@ -550,7 +545,7 @@ struct MOZ_STACK_CLASS PseudoElementStateRuleProcessorData :
   PseudoElementStateRuleProcessorData(nsPresContext* aPresContext,
                                       mozilla::dom::Element* aElement,
                                       mozilla::EventStates aStateMask,
-                                      nsCSSPseudoElements::Type aPseudoType,
+                                      mozilla::CSSPseudoElementType aPseudoType,
                                       TreeMatchContext& aTreeMatchContext,
                                       mozilla::dom::Element* aPseudoElement)
     : StateRuleProcessorData(aPresContext, aElement, aStateMask,
@@ -564,7 +559,7 @@ struct MOZ_STACK_CLASS PseudoElementStateRuleProcessorData :
   // We kind of want to inherit from both StateRuleProcessorData and
   // PseudoElementRuleProcessorData.  Instead we've just copied those
   // members from PseudoElementRuleProcessorData to this struct.
-  nsCSSPseudoElements::Type mPseudoType;
+  mozilla::CSSPseudoElementType mPseudoType;
   mozilla::dom::Element* const mPseudoElement; // weak ref
 };
 

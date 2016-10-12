@@ -334,7 +334,7 @@ function makeMoveToDeletedStatement(aGuid, aNow, aData, aBindingArrays) {
       // TODO: Add these items to the deleted items table once we've sorted
       //       out the issues from bug 756701
       if (!queryTerms)
-        return;
+        return undefined;
 
       query += " SELECT guid, :timeDeleted FROM moz_formhistory WHERE " + queryTerms;
     }
@@ -842,10 +842,6 @@ this.FormHistory = {
   },
 
   update : function formHistoryUpdate(aChanges, aCallbacks) {
-    if (!Prefs.enabled) {
-      return;
-    }
-
     // Used to keep track of how many searches have been started. When that number
     // are finished, updateFormHistoryWrite can be called.
     let numSearches = 0;
@@ -859,6 +855,20 @@ this.FormHistory = {
 
     if (!("length" in aChanges))
       aChanges = [aChanges];
+
+    let isRemoveOperation = aChanges.every(change => change && change.op && change.op == "remove");
+    if (!Prefs.enabled && !isRemoveOperation) {
+      if (aCallbacks && aCallbacks.handleError) {
+        aCallbacks.handleError({
+          message: "Form history is disabled, only remove operations are allowed",
+          result: Ci.mozIStorageError.MISUSE
+        });
+      }
+      if (aCallbacks && aCallbacks.handleCompletion) {
+        aCallbacks.handleCompletion(1);
+      }
+      return;
+    }
 
     for (let change of aChanges) {
       switch (change.op) {

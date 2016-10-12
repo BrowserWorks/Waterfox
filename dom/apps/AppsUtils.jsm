@@ -16,9 +16,6 @@ Cu.import("resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
   "resource://gre/modules/FileUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "WebappOSUtils",
-  "resource://gre/modules/WebappOSUtils.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
   "resource://gre/modules/NetUtil.jsm");
 
@@ -135,10 +132,6 @@ function _setAppProperties(aObj, aApp) {
     aApp.blockedStatus !== undefined ? aApp.blockedStatus
                                      : Ci.nsIBlocklistService.STATE_NOT_BLOCKED;
   aObj.blocklistId = aApp.blocklistId;
-#ifdef MOZ_B2GDROID
-  aObj.android_packagename = aApp.android_packagename;
-  aObj.android_classname = aApp.android_classname;
-#endif
 }
 
 this.AppsUtils = {
@@ -149,16 +142,17 @@ this.AppsUtils = {
     return obj;
   },
 
-  // Creates a nsILoadContext object with a given appId and isBrowser flag.
-  createLoadContext: function createLoadContext(aAppId, aIsBrowser) {
+  // Creates a nsILoadContext object with a given appId and inIsolatedMozBrowser
+  // flag.
+  createLoadContext: function createLoadContext(aAppId, aInIsolatedMozBrowser) {
     return {
        associatedWindow: null,
        topWindow : null,
        appId: aAppId,
-       isInBrowserElement: aIsBrowser,
+       isInIsolatedMozBrowserElement: aInIsolatedMozBrowser,
        originAttributes: {
          appId: aAppId,
-         inBrowser: aIsBrowser
+         inIsolatedMozBrowser: aInIsolatedMozBrowser
        },
        usePrivateBrowsing: false,
        isContent: false,
@@ -226,7 +220,7 @@ this.AppsUtils = {
         deferred.resolve(file);
       }
     });
-    aRequestChannel.asyncOpen(listener, null);
+    aRequestChannel.asyncOpen2(listener);
 
     return deferred.promise;
   },
@@ -344,6 +338,10 @@ this.AppsUtils = {
     return "";
   },
 
+  areAnyAppsInstalled: function(aApps) {
+    return Object.getOwnPropertyNames(aApps).length > 0;
+  },
+
   getCoreAppsBasePath: function getCoreAppsBasePath() {
     debug("getCoreAppsBasePath()");
     try {
@@ -371,16 +369,7 @@ this.AppsUtils = {
 #endif
     debug(app.basePath + " isCoreApp: " + isCoreApp);
 
-    // Before bug 910473, this is a temporary workaround to get correct path
-    // from child process in mochitest.
-    let prefName = "dom.mozApps.auto_confirm_install";
-    if (Services.prefs.prefHasUserValue(prefName) &&
-        Services.prefs.getBoolPref(prefName)) {
-      return { "path": app.basePath + "/" + app.id,
-               "isCoreApp": isCoreApp };
-    }
-
-    return { "path": WebappOSUtils.getPackagePath(app),
+    return { "path": app.basePath + "/" + app.id,
              "isCoreApp": isCoreApp };
   },
 
@@ -629,20 +618,20 @@ this.AppsUtils = {
   isFirstRun: function isFirstRun(aPrefBranch) {
     let savedmstone = null;
     try {
-      savedmstone = aPrefBranch.getCharPref("gecko.mstone");
+      savedmstone = aPrefBranch.getCharPref("dom.apps.lastUpdate.mstone");
     } catch (e) {}
 
     let mstone = Services.appinfo.platformVersion;
 
     let savedBuildID = null;
     try {
-      savedBuildID = aPrefBranch.getCharPref("gecko.buildID");
+      savedBuildID = aPrefBranch.getCharPref("dom.apps.lastUpdate.buildID");
     } catch (e) {}
 
     let buildID = Services.appinfo.platformBuildID;
 
-    aPrefBranch.setCharPref("gecko.mstone", mstone);
-    aPrefBranch.setCharPref("gecko.buildID", buildID);
+    aPrefBranch.setCharPref("dom.apps.lastUpdate.mstone", mstone);
+    aPrefBranch.setCharPref("dom.apps.lastUpdate.buildID", buildID);
 
     if ((mstone != savedmstone) || (buildID != savedBuildID)) {
       aPrefBranch.setBoolPref("dom.apps.reset-permissions", false);
@@ -850,7 +839,7 @@ ManifestHelper.prototype = {
   _localeProp: function(aProp) {
     if (this._localeRoot[aProp] != undefined)
       return this._localeRoot[aProp];
-    return this._manifest[aProp];
+    return (aProp in this._manifest) ? this._manifest[aProp] : undefined;
   },
 
   get name() {

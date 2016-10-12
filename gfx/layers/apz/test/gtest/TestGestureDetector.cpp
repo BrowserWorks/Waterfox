@@ -193,7 +193,7 @@ protected:
     int touchEnd = 10;
 
     // Start the fling down.
-    Pan(apzc, mcc, touchStart, touchEnd);
+    Pan(apzc, touchStart, touchEnd);
     // The touchstart from the pan will leave some cancelled tasks in the queue, clear them out
 
     // If we want to tap while the fling is fast, let the fling advance for 10ms only. If we want
@@ -210,12 +210,12 @@ protected:
     // Deliver a tap to abort the fling. Ensure that we get a HandleSingleTap
     // call out of it if and only if the fling is slow.
     EXPECT_CALL(*mcc, HandleSingleTap(_, 0, apzc->GetGuid())).Times(tapCallsExpected);
-    Tap(apzc, ScreenIntPoint(10, 10), mcc, 0);
+    Tap(apzc, ScreenIntPoint(10, 10), 0);
     while (mcc->RunThroughDelayedTasks());
 
     // Deliver another tap, to make sure that taps are flowing properly once
     // the fling is aborted.
-    Tap(apzc, ScreenIntPoint(100, 100), mcc, 0);
+    Tap(apzc, ScreenIntPoint(100, 100), 0);
     while (mcc->RunThroughDelayedTasks());
 
     // Verify that we didn't advance any further after the fling was aborted, in either case.
@@ -235,7 +235,7 @@ protected:
     uint64_t blockId = 0;
 
     // Start the fling down.
-    Pan(apzc, mcc, touchStart, touchEnd, false, nullptr, nullptr, &blockId);
+    Pan(apzc, touchStart, touchEnd, false, nullptr, nullptr, &blockId);
     apzc->ConfirmTarget(blockId);
     apzc->ContentReceivedInputBlock(blockId, false);
 
@@ -271,18 +271,22 @@ protected:
 };
 
 TEST_F(APZCFlingStopTester, FlingStop) {
+  SCOPED_GFX_PREF(APZFlingMinVelocityThreshold, float, 0.0f);
   DoFlingStopTest(false);
 }
 
 TEST_F(APZCFlingStopTester, FlingStopTap) {
+  SCOPED_GFX_PREF(APZFlingMinVelocityThreshold, float, 0.0f);
   DoFlingStopTest(true);
 }
 
 TEST_F(APZCFlingStopTester, FlingStopSlowListener) {
+  SCOPED_GFX_PREF(APZFlingMinVelocityThreshold, float, 0.0f);
   DoFlingStopWithSlowListener(false);
 }
 
 TEST_F(APZCFlingStopTester, FlingStopPreventDefault) {
+  SCOPED_GFX_PREF(APZFlingMinVelocityThreshold, float, 0.0f);
   DoFlingStopWithSlowListener(true);
 }
 
@@ -300,7 +304,7 @@ TEST_F(APZCGestureDetectorTester, ShortPress) {
   }
 
   check.Call("pre-tap");
-  TapAndCheckStatus(apzc, ScreenIntPoint(10, 10), mcc, TimeDuration::FromMilliseconds(100));
+  TapAndCheckStatus(apzc, ScreenIntPoint(10, 10), TimeDuration::FromMilliseconds(100));
   check.Call("post-tap");
 
   apzc->AssertStateIsReset();
@@ -320,7 +324,7 @@ TEST_F(APZCGestureDetectorTester, MediumPress) {
   }
 
   check.Call("pre-tap");
-  TapAndCheckStatus(apzc, ScreenIntPoint(10, 10), mcc, TimeDuration::FromMilliseconds(400));
+  TapAndCheckStatus(apzc, ScreenIntPoint(10, 10), TimeDuration::FromMilliseconds(400));
   check.Call("post-tap");
 
   apzc->AssertStateIsReset();
@@ -482,7 +486,7 @@ TEST_F(APZCGestureDetectorTester, DoubleTap) {
   EXPECT_CALL(*mcc, HandleDoubleTap(CSSPoint(10, 10), 0, apzc->GetGuid())).Times(1);
 
   uint64_t blockIds[2];
-  DoubleTapAndCheckStatus(apzc, ScreenIntPoint(10, 10), mcc, &blockIds);
+  DoubleTapAndCheckStatus(apzc, ScreenIntPoint(10, 10), &blockIds);
 
   // responses to the two touchstarts
   apzc->ContentReceivedInputBlock(blockIds[0], false);
@@ -499,7 +503,7 @@ TEST_F(APZCGestureDetectorTester, DoubleTapNotZoomable) {
   EXPECT_CALL(*mcc, HandleDoubleTap(CSSPoint(10, 10), 0, apzc->GetGuid())).Times(0);
 
   uint64_t blockIds[2];
-  DoubleTapAndCheckStatus(apzc, ScreenIntPoint(10, 10), mcc, &blockIds);
+  DoubleTapAndCheckStatus(apzc, ScreenIntPoint(10, 10), &blockIds);
 
   // responses to the two touchstarts
   apzc->ContentReceivedInputBlock(blockIds[0], false);
@@ -516,7 +520,7 @@ TEST_F(APZCGestureDetectorTester, DoubleTapPreventDefaultFirstOnly) {
   EXPECT_CALL(*mcc, HandleDoubleTap(CSSPoint(10, 10), 0, apzc->GetGuid())).Times(0);
 
   uint64_t blockIds[2];
-  DoubleTapAndCheckStatus(apzc, ScreenIntPoint(10, 10), mcc, &blockIds);
+  DoubleTapAndCheckStatus(apzc, ScreenIntPoint(10, 10), &blockIds);
 
   // responses to the two touchstarts
   apzc->ContentReceivedInputBlock(blockIds[0], true);
@@ -533,7 +537,7 @@ TEST_F(APZCGestureDetectorTester, DoubleTapPreventDefaultBoth) {
   EXPECT_CALL(*mcc, HandleDoubleTap(CSSPoint(10, 10), 0, apzc->GetGuid())).Times(0);
 
   uint64_t blockIds[2];
-  DoubleTapAndCheckStatus(apzc, ScreenIntPoint(10, 10), mcc, &blockIds);
+  DoubleTapAndCheckStatus(apzc, ScreenIntPoint(10, 10), &blockIds);
 
   // responses to the two touchstarts
   apzc->ContentReceivedInputBlock(blockIds[0], true);
@@ -549,7 +553,7 @@ TEST_F(APZCGestureDetectorTester, TapFollowedByPinch) {
 
   EXPECT_CALL(*mcc, HandleSingleTap(CSSPoint(10, 10), 0, apzc->GetGuid())).Times(1);
 
-  Tap(apzc, ScreenIntPoint(10, 10), mcc, TimeDuration::FromMilliseconds(100));
+  Tap(apzc, ScreenIntPoint(10, 10), TimeDuration::FromMilliseconds(100));
 
   int inputId = 0;
   MultiTouchInput mti;
@@ -571,7 +575,7 @@ TEST_F(APZCGestureDetectorTester, TapFollowedByMultipleTouches) {
 
   EXPECT_CALL(*mcc, HandleSingleTap(CSSPoint(10, 10), 0, apzc->GetGuid())).Times(1);
 
-  Tap(apzc, ScreenIntPoint(10, 10), mcc, TimeDuration::FromMilliseconds(100));
+  Tap(apzc, ScreenIntPoint(10, 10), TimeDuration::FromMilliseconds(100));
 
   int inputId = 0;
   MultiTouchInput mti;
@@ -592,3 +596,38 @@ TEST_F(APZCGestureDetectorTester, TapFollowedByMultipleTouches) {
   apzc->AssertStateIsReset();
 }
 
+TEST_F(APZCGestureDetectorTester, LongPressInterruptedByWheel) {
+  // Since the wheel block interrupted the long-press, we don't expect
+  // any long-press notifications. However, this also shouldn't crash, which
+  // is what it used to do.
+  EXPECT_CALL(*mcc, HandleLongTap(_, _, _, _)).Times(0);
+
+  uint64_t touchBlockId = 0;
+  uint64_t wheelBlockId = 0;
+  TouchDown(apzc, ScreenIntPoint(10, 10), mcc->Time(), &touchBlockId);
+  mcc->AdvanceByMillis(10);
+  Wheel(apzc, ScreenIntPoint(10, 10), ScreenPoint(0, -10), mcc->Time(), &wheelBlockId);
+  EXPECT_NE(touchBlockId, wheelBlockId);
+  mcc->AdvanceByMillis(1000);
+}
+
+TEST_F(APZCGestureDetectorTester, TapTimeoutInterruptedByWheel) {
+  // In this test, even though the wheel block comes right after the tap, the
+  // tap should still be dispatched because it completes fully before the wheel
+  // block arrived.
+  EXPECT_CALL(*mcc, HandleSingleTap(CSSPoint(10, 10), 0, apzc->GetGuid())).Times(1);
+
+  // We make the APZC zoomable so the gesture detector needs to wait to
+  // distinguish between tap and double-tap. During that timeout is when we
+  // insert the wheel event.
+  MakeApzcZoomable();
+
+  uint64_t touchBlockId = 0;
+  uint64_t wheelBlockId = 0;
+  Tap(apzc, ScreenIntPoint(10, 10), TimeDuration::FromMilliseconds(100),
+      nullptr, &touchBlockId);
+  mcc->AdvanceByMillis(10);
+  Wheel(apzc, ScreenIntPoint(10, 10), ScreenPoint(0, -10), mcc->Time(), &wheelBlockId);
+  EXPECT_NE(touchBlockId, wheelBlockId);
+  while (mcc->RunThroughDelayedTasks());
+}

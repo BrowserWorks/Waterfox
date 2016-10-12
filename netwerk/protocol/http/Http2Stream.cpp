@@ -40,6 +40,8 @@ Http2Stream::Http2Stream(nsAHttpTransaction *httpTransaction,
                          int32_t priority)
   : mStreamID(0)
   , mSession(session)
+  , mSegmentReader(nullptr)
+  , mSegmentWriter(nullptr)
   , mUpstreamState(GENERATING_HEADERS)
   , mState(IDLE)
   , mRequestHeadersDone(0)
@@ -48,8 +50,6 @@ Http2Stream::Http2Stream(nsAHttpTransaction *httpTransaction,
   , mQueued(0)
   , mTransaction(httpTransaction)
   , mSocketTransport(session->SocketTransport())
-  , mSegmentReader(nullptr)
-  , mSegmentWriter(nullptr)
   , mChunkSize(session->SendingChunkSize())
   , mRequestBlockedOnRead(0)
   , mRecvdFin(0)
@@ -67,7 +67,6 @@ Http2Stream::Http2Stream(nsAHttpTransaction *httpTransaction,
   , mRequestBodyLenRemaining(0)
   , mLocalUnacked(0)
   , mBlockedOnRwin(false)
-  , mSentPushWindowBump(false)
   , mTotalSent(0)
   , mTotalRead(0)
   , mPushSource(nullptr)
@@ -235,28 +234,12 @@ Http2Stream::ReadSegments(nsAHttpSegmentReader *reader,
   return rv;
 }
 
-static bool
-IsDataAvailable(nsIInputStream *stream)
-{
-  if (!stream) {
-    return false;
-  }
-  uint64_t avail;
-  if (NS_FAILED(stream->Available(&avail))) {
-    return false;
-  }
-  return (avail > 0);
-}
-
 uint64_t
 Http2Stream::LocalUnAcked()
 {
   // reduce unacked by the amount of undelivered data
   // to help assert flow control
-  uint64_t undelivered = 0;
-  if (mInputBufferIn) {
-    mInputBufferIn->Available(&undelivered);
-  }
+  uint64_t undelivered = mSimpleBuffer.Available();
 
   if (undelivered > mLocalUnacked) {
     return 0;
@@ -267,25 +250,20 @@ Http2Stream::LocalUnAcked()
 nsresult
 Http2Stream::BufferInput(uint32_t count, uint32_t *countWritten)
 {
-  static const uint32_t segmentSize = 32768;
-  char buf[segmentSize];
-
-  count = std::min(segmentSize, count);
-  if (!mInputBufferOut) {
-    NS_NewPipe(getter_AddRefs(mInputBufferIn), getter_AddRefs(mInputBufferOut),
-               segmentSize, UINT32_MAX);
-    if (!mInputBufferOut) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
+  char buf[SimpleBufferPage::kSimpleBufferPageSize];
+  if (SimpleBufferPage::kSimpleBufferPageSize < count) {
+    count = SimpleBufferPage::kSimpleBufferPageSize;
   }
+
   mBypassInputBuffer = 1;
   nsresult rv = mSegmentWriter->OnWriteSegment(buf, count, countWritten);
   mBypassInputBuffer = 0;
+
   if (NS_SUCCEEDED(rv)) {
-    uint32_t buffered;
-    rv = mInputBufferOut->Write(buf, *countWritten, &buffered);
-    if (NS_SUCCEEDED(rv) && (buffered != *countWritten)) {
-      rv = NS_ERROR_OUT_OF_MEMORY;
+    rv = mSimpleBuffer.Write(buf, *countWritten);
+    if (NS_FAILED(rv)) {
+      MOZ_ASSERT(rv == NS_ERROR_OUT_OF_MEMORY);
+      return NS_ERROR_OUT_OF_MEMORY;
     }
   }
   return rv;
@@ -295,7 +273,7 @@ bool
 Http2Stream::DeferCleanup(nsresult status)
 {
   // do not cleanup a stream that has data buffered for the transaction
-  return (NS_SUCCEEDED(status) && IsDataAvailable(mInputBufferIn));
+  return (NS_SUCCEEDED(status) && mSimpleBuffer.Available());
 }
 
 // WriteSegments() is used to read data off the socket. Generally this is
@@ -344,7 +322,7 @@ nsresult
 Http2Stream::MakeOriginURL(const nsACString &origin, RefPtr<nsStandardURL> &url)
 {
   nsAutoCString scheme;
-  nsresult rv = net_ExtractURLScheme(origin, nullptr, nullptr, &scheme);
+  nsresult rv = net_ExtractURLScheme(origin, scheme);
   NS_ENSURE_SUCCESS(rv, rv);
   return MakeOriginURL(scheme, origin, url);
 }
@@ -410,7 +388,7 @@ Http2Stream::ParseHttpRequestHeaders(const char *buf,
         this, avail, mUpstreamState));
 
   mFlatHttpRequestHeaders.Append(buf, avail);
-  const nsHttpRequestHead *head = mTransaction->RequestHead();
+  nsHttpRequestHead *head = mTransaction->RequestHead();
 
   // We can use the simple double crlf because firefox is the
   // only client we are parsing
@@ -437,18 +415,20 @@ Http2Stream::ParseHttpRequestHeaders(const char *buf,
   nsAutoCString hashkey;
   head->GetHeader(nsHttp::Host, authorityHeader);
 
+  nsAutoCString requestURI;
+  head->RequestURI(requestURI);
   CreatePushHashKey(nsDependentCString(head->IsHTTPS() ? "https" : "http"),
                     authorityHeader, mSession->Serial(),
-                    head->RequestURI(),
+                    requestURI,
                     mOrigin, hashkey);
 
   // check the push cache for GET
   if (head->IsGet()) {
     // from :scheme, :authority, :path
-    nsISchedulingContext *schedulingContext = mTransaction->SchedulingContext();
+    nsIRequestContext *requestContext = mTransaction->RequestContext();
     SpdyPushCache *cache = nullptr;
-    if (schedulingContext) {
-      schedulingContext->GetSpdyPushCache(&cache);
+    if (requestContext) {
+      requestContext->GetSpdyPushCache(&cache);
     }
 
     Http2PushedStream *pushedStream = nullptr;
@@ -475,8 +455,8 @@ Http2Stream::ParseHttpRequestHeaders(const char *buf,
     }
 
     LOG3(("Pushed Stream Lookup "
-          "session=%p key=%s schedulingcontext=%p cache=%p hit=%p\n",
-          mSession, hashkey.get(), schedulingContext, cache, pushedStream));
+          "session=%p key=%s requestcontext=%p cache=%p hit=%p\n",
+          mSession, hashkey.get(), requestContext, cache, pushedStream));
 
     if (pushedStream) {
       LOG3(("Pushed Stream Match located %p id=0x%X key=%s\n",
@@ -509,9 +489,11 @@ Http2Stream::GenerateOpen()
 
   mOpenGenerated = 1;
 
-  const nsHttpRequestHead *head = mTransaction->RequestHead();
+  nsHttpRequestHead *head = mTransaction->RequestHead();
+  nsAutoCString requestURI;
+  head->RequestURI(requestURI);
   LOG3(("Http2Stream %p Stream ID 0x%X [session=%p] for URI %s\n",
-        this, mStreamID, mSession, nsCString(head->RequestURI()).get()));
+        this, mStreamID, mSession, requestURI.get()));
 
   if (mStreamID >= 0x80000000) {
     // streamID must fit in 31 bits. Evading This is theoretically possible
@@ -551,9 +533,13 @@ Http2Stream::GenerateOpen()
     authorityHeader.AppendInt(ci->OriginPort());
   }
 
+  nsAutoCString method;
+  nsAutoCString path;
+  head->Method(method);
+  head->Path(path);
   mSession->Compressor()->EncodeHeaderBlock(mFlatHttpRequestHeaders,
-                                            head->Method(),
-                                            head->Path(),
+                                            method,
+                                            path,
                                             authorityHeader,
                                             scheme,
                                             head->IsConnect(),
@@ -577,8 +563,7 @@ Http2Stream::GenerateOpen()
     firstFrameFlags |= Http2Session::kFlag_END_STREAM;
   } else if (head->IsPost() ||
              head->IsPut() ||
-             head->IsConnect() ||
-             head->IsOptions()) {
+             head->IsConnect()) {
     // place fin in a data frame even for 0 length messages for iterop
   } else if (!mRequestBodyLenRemaining) {
     // for other HTTP extension methods, rely on the content-length
@@ -620,7 +605,7 @@ Http2Stream::GenerateOpen()
   LOG3(("Http2Stream %p Generating %d bytes of HEADERS for stream 0x%X with "
         "priority weight %u dep 0x%X frames %u uri=%s\n",
         this, mTxInlineFrameUsed, mStreamID, mPriorityWeight,
-        mPriorityDependency, numFrames, nsCString(head->RequestURI()).get()));
+        mPriorityDependency, numFrames, requestURI.get()));
 
   uint32_t outputOffset = 0;
   uint32_t compressedDataOffset = 0;
@@ -666,7 +651,7 @@ Http2Stream::GenerateOpen()
   // The size of the input headers is approximate
   uint32_t ratio =
     compressedData.Length() * 100 /
-    (11 + head->RequestURI().Length() +
+    (11 + requestURI.Length() +
      mFlatHttpRequestHeaders.Length());
 
   mFlatHttpRequestHeaders.Truncate();
@@ -760,8 +745,7 @@ Http2Stream::AdjustPushedPriority()
   mTxInlineFrameUsed += Http2Session::kFrameHeaderBytes + 5;
 
   mSession->CreateFrameHeader(packet, 5,
-                              Http2Session::FRAME_TYPE_PRIORITY,
-                              Http2Session::kFlag_PRIORITY,
+                              Http2Session::FRAME_TYPE_PRIORITY, 0,
                               mPushSource->mStreamID);
 
   mPushSource->SetPriority(mPriority);
@@ -1086,7 +1070,9 @@ Http2Stream::ConvertPushHeaders(Http2Decompressor *decompressor,
   }
 
   aHeadersIn.Truncate();
-  LOG (("decoded push headers are:\n%s", aHeadersOut.BeginReading()));
+  LOG (("id 0x%X decoded push headers %s %s %s are:\n%s", mStreamID,
+        mHeaderScheme.get(), mHeaderHost.get(), mHeaderPath.get(),
+        aHeadersOut.BeginReading()));
   return NS_OK;
 }
 
@@ -1094,6 +1080,15 @@ void
 Http2Stream::Close(nsresult reason)
 {
   mTransaction->Close(reason);
+}
+
+void
+Http2Stream::SetResponseIsComplete()
+{
+  nsHttpTransaction *trans = mTransaction->QueryHttpTransaction();
+  if (trans) {
+    trans->SetResponseIsComplete();
+  }
 }
 
 void
@@ -1388,11 +1383,8 @@ Http2Stream::OnReadSegment(const char *buf,
     break;
 
   case UPSTREAM_COMPLETE:
-    MOZ_ASSERT(mPushSource && !mSentPushWindowBump, "unexpected upstream_complete");
+    MOZ_ASSERT(mPushSource);
     rv = TransmitFrame(nullptr, nullptr, true);
-    if (NS_SUCCEEDED(rv)) {
-      mSentPushWindowBump = true;
-    }
     break;
 
   default:
@@ -1432,16 +1424,12 @@ Http2Stream::OnWriteSegment(char *buf,
   // so that other streams can proceed when the gecko caller is not processing
   // data events fast enough and flow control hasn't caught up yet. This
   // gets the stored data out of that pipe
-  if (!mBypassInputBuffer && IsDataAvailable(mInputBufferIn)) {
-    nsresult rv = mInputBufferIn->Read(buf, count, countWritten);
+  if (!mBypassInputBuffer && mSimpleBuffer.Available()) {
+    *countWritten = mSimpleBuffer.Read(buf, count);
+    MOZ_ASSERT(*countWritten);
     LOG3(("Http2Stream::OnWriteSegment read from flow control buffer %p %x %d\n",
           this, mStreamID, *countWritten));
-    if (!IsDataAvailable(mInputBufferIn)) {
-      // drop the pipe if we don't need it anymore
-      mInputBufferIn = nullptr;
-      mInputBufferOut = nullptr;
-    }
-    return rv;
+    return NS_OK;
   }
 
   // read from the network

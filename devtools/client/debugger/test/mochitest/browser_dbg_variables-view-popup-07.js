@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests the variable inspection popup behaves correctly when switching
@@ -9,8 +11,12 @@
 const TAB_URL = EXAMPLE_URL + "doc_frame-parameters.html";
 
 function test() {
-  Task.spawn(function*() {
-    let [tab,, panel] = yield initDebugger(TAB_URL);
+  Task.spawn(function* () {
+    let options = {
+      source: TAB_URL,
+      line: 1
+    };
+    let [tab,, panel] = yield initDebugger(TAB_URL, options);
     let win = panel.panelWin;
     let bubble = win.DebuggerView.VariableBubble;
     let tooltip = bubble._tooltip.panel;
@@ -42,8 +48,9 @@ function test() {
         "There should be some properties displayed.");
     }
 
+    let onCaretAndScopes = waitForCaretAndScopes(panel, 24);
     callInTab(tab, "start");
-    yield waitForSourceAndCaretAndScopes(panel, ".html", 24);
+    yield onCaretAndScopes;
 
     // Inspect variables.
     yield openVarPopup(panel, { line: 15, ch: 12 });

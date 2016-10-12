@@ -411,7 +411,7 @@ nsXMLContentSink::OnTransformDone(nsresult aResult,
 }
 
 NS_IMETHODIMP
-nsXMLContentSink::StyleSheetLoaded(CSSStyleSheet* aSheet,
+nsXMLContentSink::StyleSheetLoaded(StyleSheetHandle aSheet,
                                    bool aWasAlternate,
                                    nsresult aStatus)
 {
@@ -592,25 +592,7 @@ nsXMLContentSink::CloseElement(nsIContent* aContent)
                                   &isAlternate);
       if (NS_SUCCEEDED(rv) && willNotify && !isAlternate && !mRunsToCompletion) {
         ++mPendingSheetCount;
-        mScriptLoader->AddExecuteBlocker();
-      }
-    }
-    // Look for <link rel="dns-prefetch" href="hostname">
-    // and look for <link rel="next" href="hostname"> like in HTML sink
-    if (nodeInfo->Equals(nsGkAtoms::link, kNameSpaceID_XHTML)) {
-      nsAutoString relVal;
-      aContent->GetAttr(kNameSpaceID_None, nsGkAtoms::rel, relVal);
-      if (!relVal.IsEmpty()) {
-        uint32_t linkTypes =
-          nsStyleLinkElement::ParseLinkTypes(relVal, aContent->NodePrincipal());
-        bool hasPrefetch = linkTypes & nsStyleLinkElement::ePREFETCH;
-        if (hasPrefetch || (linkTypes & nsStyleLinkElement::eNEXT)) {
-          nsAutoString hrefVal;
-          aContent->GetAttr(kNameSpaceID_None, nsGkAtoms::href, hrefVal);
-          if (!hrefVal.IsEmpty()) {
-            PrefetchHref(hrefVal, aContent, hasPrefetch);
-          }
-        }
+        mScriptLoader->AddParserBlockingScriptExecutionBlocker();
       }
     }
   }
@@ -1152,7 +1134,7 @@ nsXMLContentSink::HandleDoctypeDecl(const nsAString & aSubset,
 
   NS_ASSERTION(mDocument, "Shouldn't get here from a document fragment");
 
-  nsCOMPtr<nsIAtom> name = do_GetAtom(aName);
+  nsCOMPtr<nsIAtom> name = NS_Atomize(aName);
   NS_ENSURE_TRUE(name, NS_ERROR_OUT_OF_MEMORY);
 
   // Create a new doctype node
@@ -1231,7 +1213,7 @@ nsXMLContentSink::HandleProcessingInstruction(const char16_t *aTarget,
       // Successfully started a stylesheet load
       if (!isAlternate && !mRunsToCompletion) {
         ++mPendingSheetCount;
-        mScriptLoader->AddExecuteBlocker();
+        mScriptLoader->AddParserBlockingScriptExecutionBlocker();
       }
 
       return NS_OK;
@@ -1571,7 +1553,7 @@ nsXMLContentSink::ContinueInterruptedParsingIfEnabled()
 void
 nsXMLContentSink::ContinueInterruptedParsingAsync()
 {
-  nsCOMPtr<nsIRunnable> ev = NS_NewRunnableMethod(this,
+  nsCOMPtr<nsIRunnable> ev = NewRunnableMethod(this,
     &nsXMLContentSink::ContinueInterruptedParsingIfEnabled);
 
   NS_DispatchToCurrentThread(ev);

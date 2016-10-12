@@ -13,6 +13,7 @@
  * https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/NavigationTiming/Overview.html
  * https://dvcs.w3.org/hg/webcrypto-api/raw-file/tip/spec/Overview.html
  * http://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html
+ * https://w3c.github.io/webappsec-secure-contexts/#monkey-patching-global-object
  */
 
 interface ApplicationCache;
@@ -23,7 +24,7 @@ interface nsIDOMCrypto;
 typedef any Transferable;
 
 // http://www.whatwg.org/specs/web-apps/current-work/
-[PrimaryGlobal, NeedResolve]
+[PrimaryGlobal, LegacyUnenumerableNamedProperties, NeedResolve]
 /*sealed*/ interface Window : EventTarget {
   // the current browsing context
   [Unforgeable, Constant, StoreInSlot,
@@ -69,7 +70,7 @@ typedef any Transferable;
 #ifdef HAVE_SIDEBAR
   [Replaceable, Throws] readonly attribute External external;
 #endif
-  [Throws] readonly attribute ApplicationCache applicationCache;
+  [Throws, Pref="browser.cache.offline.enable"] readonly attribute ApplicationCache applicationCache;
 
   // user prompts
   [Throws, UnsafeInPrerendering] void alert();
@@ -88,15 +89,21 @@ typedef any Transferable;
 Window implements GlobalEventHandlers;
 Window implements WindowEventHandlers;
 
+[NoInterfaceObject, Exposed=(Window)]
+interface AppInstallEventHandlersMixin {
+  attribute EventHandler oninstall;
+};
+Window implements AppInstallEventHandlersMixin;
+
 // http://www.whatwg.org/specs/web-apps/current-work/
 [NoInterfaceObject, Exposed=(Window,Worker)]
 interface WindowTimers {
   [Throws] long setTimeout(Function handler, optional long timeout = 0, any... arguments);
   [Throws] long setTimeout(DOMString handler, optional long timeout = 0, any... unused);
-  [Throws] void clearTimeout(optional long handle = 0);
+  void clearTimeout(optional long handle = 0);
   [Throws] long setInterval(Function handler, optional long timeout, any... arguments);
   [Throws] long setInterval(DOMString handler, optional long timeout, any... unused);
-  [Throws] void clearInterval(optional long handle = 0);
+  void clearInterval(optional long handle = 0);
 };
 Window implements WindowTimers;
 
@@ -245,6 +252,9 @@ partial interface Window {
 
 // https://dvcs.w3.org/hg/webcrypto-api/raw-file/tip/spec/Overview.html
 Window implements GlobalCrypto;
+
+// https://fidoalliance.org/specifications/download/
+Window implements GlobalU2F;
 
 #ifdef MOZ_WEBSPEECH
 // http://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html
@@ -409,10 +419,9 @@ partial interface Window {
 };
 #endif
 
-// ConsoleAPI
+// https://w3c.github.io/webappsec-secure-contexts/#monkey-patching-global-object
 partial interface Window {
-  [Replaceable, GetterThrows]
-  readonly attribute Console console;
+  readonly attribute boolean isSecureContext;
 };
 
 #ifdef HAVE_SIDEBAR

@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that the event listener states are preserved in the view after the
@@ -9,17 +11,19 @@
 const TAB_URL = EXAMPLE_URL + "doc_event-listeners-02.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     let gDebugger = aPanel.panelWin;
     let gView = gDebugger.DebuggerView;
-    let gController = gDebugger.DebuggerController
+    let gController = gDebugger.DebuggerController;
     let gEvents = gView.EventListeners;
     let gBreakpoints = gController.Breakpoints;
-    let constants = gDebugger.require('./content/constants');
+    let constants = gDebugger.require("./content/constants");
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(aPanel, ".html");
-
+    Task.spawn(function* () {
       let fetched = waitForDispatch(aPanel, constants.FETCH_EVENT_LISTENERS);
       gView.toggleInstrumentsPane({ visible: true, animated: false }, 1);
       yield fetched;

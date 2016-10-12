@@ -47,6 +47,8 @@ ScopedResolveTexturesForDraw::ScopedResolveTexturesForDraw(WebGLContext* webgl,
                                                            bool* const out_error)
     : mWebGL(webgl)
 {
+    MOZ_ASSERT(webgl->gl->IsCurrent());
+
     typedef decltype(WebGLContext::mBound2DTextures) TexturesT;
 
     const auto fnResolveAll = [this, funcName](const TexturesT& textures)
@@ -64,7 +66,12 @@ ScopedResolveTexturesForDraw::ScopedResolveTexturesForDraw(WebGLContext* webgl,
             if (fakeBlack == FakeBlackType::None)
                 continue;
 
-            mWebGL->BindFakeBlack(texUnit, tex->Target(), fakeBlack);
+            if (!mWebGL->BindFakeBlack(texUnit, tex->Target(), fakeBlack)) {
+                mWebGL->ErrorOutOfMemory("%s: Failed to create fake black texture.",
+                                         funcName);
+                return false;
+            }
+
             mRebindRequests.push_back({texUnit, tex});
         }
 
@@ -99,7 +106,7 @@ ScopedResolveTexturesForDraw::~ScopedResolveTexturesForDraw()
     gl->fActiveTexture(LOCAL_GL_TEXTURE0 + mWebGL->mActiveTexture);
 }
 
-void
+bool
 WebGLContext::BindFakeBlack(uint32_t texUnit, TexTarget target, FakeBlackType fakeBlack)
 {
     MOZ_ASSERT(fakeBlack == FakeBlackType::RGBA0000 ||
@@ -138,12 +145,16 @@ WebGLContext::BindFakeBlack(uint32_t texUnit, TexTarget target, FakeBlackType fa
     UniquePtr<FakeBlackTexture>& fakeBlackTex = *slot;
 
     if (!fakeBlackTex) {
-        fakeBlackTex.reset(new FakeBlackTexture(gl, target, fakeBlack));
+        fakeBlackTex = FakeBlackTexture::Create(gl, target, fakeBlack);
+        if (!fakeBlackTex) {
+            return false;
+        }
     }
 
     gl->fActiveTexture(LOCAL_GL_TEXTURE0 + texUnit);
     gl->fBindTexture(target.get(), fakeBlackTex->mGLName);
     gl->fActiveTexture(LOCAL_GL_TEXTURE0 + mActiveTexture);
+    return true;
 }
 
 ////////////////////////////////////////
@@ -220,7 +231,7 @@ WebGLContext::DrawArrays_check(GLint first, GLsizei count, GLsizei primcount,
         return false;
     }
 
-    MakeContextCurrent();
+    MOZ_ASSERT(gl->IsCurrent());
 
     if (mBoundDrawFramebuffer) {
         if (!mBoundDrawFramebuffer->ValidateAndInitAttachments(info))
@@ -245,6 +256,8 @@ WebGLContext::DrawArrays(GLenum mode, GLint first, GLsizei count)
 
     if (!ValidateDrawModeEnum(mode, funcName))
         return;
+
+    MakeContextCurrent();
 
     bool error;
     ScopedResolveTexturesForDraw scopedResolve(this, funcName, &error);
@@ -273,6 +286,8 @@ WebGLContext::DrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsiz
 
     if (!ValidateDrawModeEnum(mode, funcName))
         return;
+
+    MakeContextCurrent();
 
     bool error;
     ScopedResolveTexturesForDraw scopedResolve(this, funcName, &error);
@@ -354,8 +369,10 @@ WebGLContext::DrawElements_check(GLsizei count, GLenum type,
         return false;
     }
 
-    // Any checks below this depend on a program being available.
-    if (!mCurrentProgram) {
+    // Any checks below this depend on mActiveProgramLinkInfo being available.
+    if (!mActiveProgramLinkInfo) {
+        // Technically, this will only be null iff CURRENT_PROGRAM is null.
+        // But it's better to branch on what we actually care about.
         ErrorInvalidOperation("%s: null CURRENT_PROGRAM", info);
         return false;
     }
@@ -409,7 +426,7 @@ WebGLContext::DrawElements_check(GLsizei count, GLenum type,
                         WebGLContext::EnumName(type));
     }
 
-    MakeContextCurrent();
+    MOZ_ASSERT(gl->IsCurrent());
 
     if (mBoundDrawFramebuffer) {
         if (!mBoundDrawFramebuffer->ValidateAndInitAttachments(info))
@@ -435,6 +452,8 @@ WebGLContext::DrawElements(GLenum mode, GLsizei count, GLenum type,
 
     if (!ValidateDrawModeEnum(mode, funcName))
         return;
+
+    MakeContextCurrent();
 
     bool error;
     ScopedResolveTexturesForDraw scopedResolve(this, funcName, &error);
@@ -472,6 +491,8 @@ WebGLContext::DrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
 
     if (!ValidateDrawModeEnum(mode, funcName))
         return;
+
+    MakeContextCurrent();
 
     bool error;
     ScopedResolveTexturesForDraw scopedResolve(this, funcName, &error);
@@ -799,10 +820,9 @@ CreateGLTexture(gl::GLContext* gl)
     return ret;
 }
 
-WebGLContext::FakeBlackTexture::FakeBlackTexture(gl::GLContext* gl, TexTarget target,
-                                                 FakeBlackType type)
-    : mGL(gl)
-    , mGLName(CreateGLTexture(gl))
+UniquePtr<WebGLContext::FakeBlackTexture>
+WebGLContext::FakeBlackTexture::Create(gl::GLContext* gl, TexTarget target,
+                                       FakeBlackType type)
 {
     GLenum texFormat;
     switch (type) {
@@ -818,10 +838,11 @@ WebGLContext::FakeBlackTexture::FakeBlackTexture(gl::GLContext* gl, TexTarget ta
         MOZ_CRASH("bad type");
     }
 
-    gl::ScopedBindTexture scopedBind(mGL, mGLName, target.get());
+    UniquePtr<FakeBlackTexture> result(new FakeBlackTexture(gl));
+    gl::ScopedBindTexture scopedBind(gl, result->mGLName, target.get());
 
-    mGL->fTexParameteri(target.get(), LOCAL_GL_TEXTURE_MIN_FILTER, LOCAL_GL_NEAREST);
-    mGL->fTexParameteri(target.get(), LOCAL_GL_TEXTURE_MAG_FILTER, LOCAL_GL_NEAREST);
+    gl->fTexParameteri(target.get(), LOCAL_GL_TEXTURE_MIN_FILTER, LOCAL_GL_NEAREST);
+    gl->fTexParameteri(target.get(), LOCAL_GL_TEXTURE_MAG_FILTER, LOCAL_GL_NEAREST);
 
     // We allocate our zeros on the heap, and we overallocate (16 bytes instead of 4) to
     // minimize the risk of running into a driver bug in texImage2D, as it is a bit
@@ -831,21 +852,34 @@ WebGLContext::FakeBlackTexture::FakeBlackTexture(gl::GLContext* gl, TexTarget ta
     const webgl::DriverUnpackInfo dui = {texFormat, texFormat, LOCAL_GL_UNSIGNED_BYTE};
     UniqueBuffer zeros = moz_xcalloc(1, 16); // Infallible allocation.
 
+    MOZ_ASSERT(gl->IsCurrent());
+
     if (target == LOCAL_GL_TEXTURE_CUBE_MAP) {
         for (int i = 0; i < 6; ++i) {
             const TexImageTarget curTarget = LOCAL_GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
-            const GLenum error = DoTexImage(mGL, curTarget.get(), 0, &dui, 1, 1, 1,
+            const GLenum error = DoTexImage(gl, curTarget.get(), 0, &dui, 1, 1, 1,
                                             zeros.get());
-            if (error)
-                MOZ_CRASH("Unexpected error during FakeBlack creation.");
+            if (error) {
+                return nullptr;
+            }
         }
     } else {
-        const GLenum error = DoTexImage(mGL, target.get(), 0, &dui, 1, 1, 1,
+        const GLenum error = DoTexImage(gl, target.get(), 0, &dui, 1, 1, 1,
                                         zeros.get());
-        if (error)
-            MOZ_CRASH("Unexpected error during FakeBlack creation.");
+        if (error) {
+            return nullptr;
+        }
     }
+
+    return result;
 }
+
+WebGLContext::FakeBlackTexture::FakeBlackTexture(gl::GLContext* gl)
+    : mGL(gl)
+    , mGLName(CreateGLTexture(gl))
+{
+}
+
 
 WebGLContext::FakeBlackTexture::~FakeBlackTexture()
 {

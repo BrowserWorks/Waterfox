@@ -10,7 +10,8 @@ public:
   AgnosticDecoderModule() = default;
   virtual ~AgnosticDecoderModule() = default;
 
-  bool SupportsMimeType(const nsACString& aMimeType) const override;
+  bool SupportsMimeType(const nsACString& aMimeType,
+                        DecoderDoctorDiagnostics* aDiagnostics) const override;
 
   ConversionRequired
   DecoderNeedsConversion(const TrackInfo& aConfig) const override
@@ -24,14 +25,16 @@ protected:
   CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
-                     FlushableTaskQueue* aVideoTaskQueue,
-                     MediaDataDecoderCallback* aCallback) override;
+                     TaskQueue* aTaskQueue,
+                     MediaDataDecoderCallback* aCallback,
+                     DecoderDoctorDiagnostics* aDiagnostics) override;
 
   // Decode thread.
   already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const AudioInfo& aConfig,
-                     FlushableTaskQueue* aAudioTaskQueue,
-                     MediaDataDecoderCallback* aCallback) override;
+                     TaskQueue* aTaskQueue,
+                     MediaDataDecoderCallback* aCallback,
+                     DecoderDoctorDiagnostics* aDiagnostics) override;
 };
 
 } // namespace mozilla

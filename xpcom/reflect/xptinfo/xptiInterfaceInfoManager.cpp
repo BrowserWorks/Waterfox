@@ -52,7 +52,7 @@ XPTInterfaceInfoManager::CollectReports(nsIHandleReportCallback* aHandleReport,
     // Measure gXPTIStructArena here, too.  This is a bit grotty because it
     // doesn't belong to the XPTIInterfaceInfoManager, but there's no
     // obviously better place to measure it.
-    amount += XPT_SizeOfArena(gXPTIStructArena, XPTIMallocSizeOf);
+    amount += XPT_SizeOfArenaIncludingThis(gXPTIStructArena, XPTIMallocSizeOf);
 
     return MOZ_COLLECT_REPORT(
         "explicit/xpti-working-set", KIND_HEAP, UNITS_BYTES, amount,
@@ -99,22 +99,19 @@ XPTInterfaceInfoManager::InitMemoryReporter()
 void
 XPTInterfaceInfoManager::RegisterBuffer(char *buf, uint32_t length)
 {
-    XPTState *state = XPT_NewXDRState(XPT_DECODE, buf, length);
-    if (!state)
-        return;
+    XPTState state;
+    XPT_InitXDRState(&state, buf, length);
 
-    XPTCursor cursor;
-    if (!XPT_MakeCursor(state, XPT_HEADER, 0, &cursor)) {
-        XPT_DestroyXDRState(state);
+    XPTCursor curs;
+    NotNull<XPTCursor*> cursor = WrapNotNull(&curs);
+    if (!XPT_MakeCursor(&state, XPT_HEADER, 0, cursor)) {
         return;
     }
 
     XPTHeader *header = nullptr;
-    if (XPT_DoHeader(gXPTIStructArena, &cursor, &header)) {
+    if (XPT_DoHeader(gXPTIStructArena, cursor, &header)) {
         RegisterXPTHeader(header);
     }
-
-    XPT_DestroyXDRState(state);
 }
 
 void
@@ -279,9 +276,10 @@ NS_IMETHODIMP
 XPTInterfaceInfoManager::EnumerateInterfacesWhoseNamesStartWith(const char *prefix, nsIEnumerator **_retval)
 {
     nsCOMPtr<nsISupportsArray> array;
-    NS_NewISupportsArray(getter_AddRefs(array));
-    if (!array)
-        return NS_ERROR_UNEXPECTED;
+    nsresult rv = NS_NewISupportsArray(getter_AddRefs(array));
+    if (NS_FAILED(rv)) {
+        return rv;
+    }
 
     ReentrantMonitorAutoEnter monitor(mWorkingSet.mTableReentrantMonitor);
     uint32_t length = static_cast<uint32_t>(strlen(prefix));

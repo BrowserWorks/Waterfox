@@ -17,10 +17,8 @@ class nsSVGForeignObjectFrame;
 ////////////////////////////////////////////////////////////////////////
 // nsSVGOuterSVGFrame class
 
-typedef nsSVGDisplayContainerFrame nsSVGOuterSVGFrameBase;
-
-class nsSVGOuterSVGFrame final : public nsSVGOuterSVGFrameBase,
-                                 public nsISVGSVGFrame
+class nsSVGOuterSVGFrame final : public nsSVGDisplayContainerFrame
+                               , public nsISVGSVGFrame
 {
   friend nsContainerFrame*
   NS_NewSVGOuterSVGFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
@@ -64,7 +62,7 @@ public:
                          const nsHTMLReflowState*  aReflowState,
                          nsDidReflowStatus aStatus) override;
 
-  virtual bool UpdateOverflow() override;
+  virtual void UnionChildOverflow(nsOverflowAreas& aOverflowAreas) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
@@ -96,11 +94,11 @@ public:
 
   virtual nsContainerFrame* GetContentInsertionFrame() override {
     // Any children must be added to our single anonymous inner frame kid.
-    MOZ_ASSERT(GetFirstPrincipalChild() &&
-               GetFirstPrincipalChild()->GetType() ==
+    MOZ_ASSERT(PrincipalChildList().FirstChild() &&
+               PrincipalChildList().FirstChild()->GetType() ==
                  nsGkAtoms::svgOuterSVGAnonChildFrame,
                "Where is our anonymous child?");
-    return GetFirstPrincipalChild()->GetContentInsertionFrame();
+    return PrincipalChildList().FirstChild()->GetContentInsertionFrame();
   }
 
   virtual bool IsSVGTransformed(Matrix *aOwnTransform,
@@ -108,7 +106,7 @@ public:
     // Our anonymous wrapper performs the transforms. We simply
     // return whether we are transformed here but don't apply the transforms
     // themselves.
-    return GetFirstPrincipalChild()->IsSVGTransformed();
+    return PrincipalChildList().FirstChild()->IsSVGTransformed();
   }
 
   // nsISVGSVGFrame interface:
@@ -209,8 +207,6 @@ protected:
 ////////////////////////////////////////////////////////////////////////
 // nsSVGOuterSVGAnonChildFrame class
 
-typedef nsSVGDisplayContainerFrame nsSVGOuterSVGAnonChildFrameBase;
-
 /**
  * nsSVGOuterSVGFrames have a single direct child that is an instance of this
  * class, and which is used to wrap their real child frames. Such anonymous
@@ -234,15 +230,14 @@ typedef nsSVGDisplayContainerFrame nsSVGOuterSVGAnonChildFrameBase;
  * example, the implementations of IsSVGTransformed and GetCanvasTM assume
  * nsSVGContainerFrame instances all the way up to the nsSVGOuterSVGFrame.
  */
-class nsSVGOuterSVGAnonChildFrame
-  : public nsSVGOuterSVGAnonChildFrameBase
+class nsSVGOuterSVGAnonChildFrame : public nsSVGDisplayContainerFrame
 {
   friend nsContainerFrame*
   NS_NewSVGOuterSVGAnonChildFrame(nsIPresShell* aPresShell,
                                   nsStyleContext* aContext);
 
   explicit nsSVGOuterSVGAnonChildFrame(nsStyleContext* aContext)
-    : nsSVGOuterSVGAnonChildFrameBase(aContext)
+    : nsSVGDisplayContainerFrame(aContext)
   {}
 
 public:

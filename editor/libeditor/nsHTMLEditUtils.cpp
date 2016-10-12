@@ -259,16 +259,13 @@ nsHTMLEditUtils::IsTableCell(nsINode* aNode)
 
 
 ///////////////////////////////////////////////////////////////////////////
-// IsTableCell: true if node an html td or th
+// IsTableCellOrCaption: true if node an html td or th or caption
 //
 bool
-nsHTMLEditUtils::IsTableCellOrCaption(nsIDOMNode* aNode)
+nsHTMLEditUtils::IsTableCellOrCaption(nsINode& aNode)
 {
-  NS_PRECONDITION(aNode, "null parent passed to nsHTMLEditUtils::IsTableCell");
-  nsCOMPtr<nsIAtom> nodeAtom = nsEditor::GetTag(aNode);
-  return (nodeAtom == nsGkAtoms::td)
-      || (nodeAtom == nsGkAtoms::th)
-      || (nodeAtom == nsGkAtoms::caption);
+  return aNode.IsAnyOfHTMLElements(nsGkAtoms::td, nsGkAtoms::th,
+                                   nsGkAtoms::caption);
 }
 
 
@@ -537,10 +534,10 @@ nsHTMLEditUtils::SupportsAlignAttr(nsIDOMNode* aNode)
 // button, form, input, label, select, textarea
 #define GROUP_FORMCONTROL      (1 << 6)
 
-// address, applet, article, aside, blockquote, button, center, del, dir, div,
-// dl, fieldset, figure, footer, form, h1, h2, h3, h4, h5, h6, header, hgroup,
-// hr, iframe, ins, main, map, menu, nav, noframes, noscript, object, ol, p,
-// pre, table, section, ul
+// address, applet, article, aside, blockquote, button, center, del, details,
+// dir, div, dl, fieldset, figure, footer, form, h1, h2, h3, h4, h5, h6, header,
+// hgroup, hr, iframe, ins, main, map, menu, nav, noframes, noscript, object,
+// ol, p, pre, table, section, summary, ul
 #define GROUP_BLOCK            (1 << 7)
 
 // frame, frameset
@@ -657,6 +654,7 @@ static const nsElementInfo kElements[eHTMLTag_userdefined] = {
        GROUP_OPTIONS | GROUP_INLINE_ELEMENT),
   ELEM(dd, true, false, GROUP_DL_CONTENT, GROUP_FLOW_ELEMENT),
   ELEM(del, true, true, GROUP_PHRASE | GROUP_BLOCK, GROUP_FLOW_ELEMENT),
+  ELEM(details, true, true, GROUP_BLOCK, GROUP_FLOW_ELEMENT),
   ELEM(dfn, true, true, GROUP_PHRASE, GROUP_INLINE_ELEMENT),
   ELEM(dir, true, false, GROUP_BLOCK, GROUP_LI),
   ELEM(div, true, true, GROUP_BLOCK, GROUP_FLOW_ELEMENT),
@@ -664,7 +662,6 @@ static const nsElementInfo kElements[eHTMLTag_userdefined] = {
   ELEM(dt, true, true, GROUP_DL_CONTENT, GROUP_INLINE_ELEMENT),
   ELEM(em, true, true, GROUP_PHRASE, GROUP_INLINE_ELEMENT),
   ELEM(embed, false, false, GROUP_NONE, GROUP_NONE),
-  ELEM(extapp, true, true, GROUP_NONE, GROUP_NONE),
   ELEM(fieldset, true, true, GROUP_BLOCK, GROUP_FLOW_ELEMENT),
   ELEM(figcaption, true, false, GROUP_FIGCAPTION, GROUP_FLOW_ELEMENT),
   ELEM(figure, true, true, GROUP_BLOCK,
@@ -755,6 +752,7 @@ static const nsElementInfo kElements[eHTMLTag_userdefined] = {
   ELEM(strong, true, true, GROUP_PHRASE, GROUP_INLINE_ELEMENT),
   ELEM(style, true, false, GROUP_HEAD_CONTENT, GROUP_LEAF),
   ELEM(sub, true, true, GROUP_SPECIAL, GROUP_INLINE_ELEMENT),
+  ELEM(summary, true, true, GROUP_BLOCK, GROUP_FLOW_ELEMENT),
   ELEM(sup, true, true, GROUP_SPECIAL, GROUP_INLINE_ELEMENT),
   ELEM(table, true, false, GROUP_BLOCK, GROUP_TABLE_CONTENT),
   ELEM(tbody, true, false, GROUP_TABLE_CONTENT, GROUP_TBODY_CONTENT),

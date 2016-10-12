@@ -17,11 +17,14 @@
 #include "mozilla/dom/TabContext.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/File.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/Move.h"
 #include "nsCOMPtr.h"
 #include "nsIAuthPromptProvider.h"
 #include "nsIBrowserDOMWindow.h"
 #include "nsIDOMEventListener.h"
+#include "nsIKeyEventInPluginCallback.h"
 #include "nsISecureBrowserUI.h"
 #include "nsITabParent.h"
 #include "nsIWebBrowserPersistable.h"
@@ -50,8 +53,6 @@ class CpowHolder;
 } // namespace jsipc
 
 namespace layers {
-class AsyncDragMetrics;
-struct FrameMetrics;
 struct TextureFactoryIdentifier;
 } // namespace layers
 
@@ -79,18 +80,51 @@ namespace ipc {
 class StructuredCloneData;
 } // ipc namespace
 
+// This observer runs on the compositor thread, so we dispatch a runnable to the
+// main thread to actually dispatch the event.
+class LayerTreeUpdateObserver : public layers::CompositorUpdateObserver
+{
+public:
+  explicit LayerTreeUpdateObserver(TabParent* aTabParent)
+    : mTabParent(aTabParent)
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+  }
+
+  virtual void ObserveUpdate(uint64_t aLayersId, bool aActive) override;
+
+  virtual void SwapTabParent(LayerTreeUpdateObserver* aOther) {
+    MOZ_ASSERT(NS_IsMainThread());
+    Swap(mTabParent, aOther->mTabParent);
+  }
+
+  void TabParentDestroyed() {
+    MOZ_ASSERT(NS_IsMainThread());
+    mTabParent = nullptr;
+  }
+
+  TabParent* GetTabParent() {
+    MOZ_ASSERT(NS_IsMainThread());
+    return mTabParent;
+  }
+
+private:
+  // NB: Should never be touched off the main thread!
+  TabParent* mTabParent;
+};
+
 class TabParent final : public PBrowserParent
                       , public nsIDOMEventListener
                       , public nsITabParent
                       , public nsIAuthPromptProvider
                       , public nsISecureBrowserUI
+                      , public nsIKeyEventInPluginCallback
                       , public nsSupportsWeakReference
                       , public TabContext
                       , public nsAPostRefreshObserver
                       , public nsIWebBrowserPersistable
 {
   typedef mozilla::dom::ClonedMessageData ClonedMessageData;
-  typedef mozilla::layers::AsyncDragMetrics AsyncDragMetrics;
 
   virtual ~TabParent();
 
@@ -162,6 +196,12 @@ public:
   virtual bool RecvMoveFocus(const bool& aForward,
                              const bool& aForDocumentNavigation) override;
 
+  virtual bool RecvSizeShellTo(const uint32_t& aFlags,
+                               const int32_t& aWidth,
+                               const int32_t& aHeight,
+                               const int32_t& aShellItemWidth,
+                               const int32_t& aShellItemHeight) override;
+
   virtual bool RecvEvent(const RemoteDOMEvent& aEvent) override;
 
   virtual bool RecvReplyKeyEvent(const WidgetKeyboardEvent& aEvent) override;
@@ -169,11 +209,17 @@ public:
   virtual bool
   RecvDispatchAfterKeyboardEvent(const WidgetKeyboardEvent& aEvent) override;
 
+  virtual bool
+  RecvAccessKeyNotHandled(const WidgetKeyboardEvent& aEvent) override;
+
   virtual bool RecvBrowserFrameOpenWindow(PBrowserParent* aOpener,
+                                          PRenderFrameParent* aRenderFrame,
                                           const nsString& aURL,
                                           const nsString& aName,
                                           const nsString& aFeatures,
-                                          bool* aOutWindowOpened) override;
+                                          bool* aOutWindowOpened,
+                                          TextureFactoryIdentifier* aTextureFactoryIdentifier,
+                                          uint64_t* aLayersId) override;
 
   virtual bool
   RecvSyncMessage(const nsString& aMessage,
@@ -190,9 +236,9 @@ public:
                  nsTArray<ipc::StructuredCloneData>* aRetVal) override;
 
   virtual bool RecvAsyncMessage(const nsString& aMessage,
-                                const ClonedMessageData& aData,
                                 InfallibleTArray<CpowEntry>&& aCpows,
-                                const IPC::Principal& aPrincipal) override;
+                                const IPC::Principal& aPrincipal,
+                                const ClonedMessageData& aData) override;
 
   virtual bool
   RecvNotifyIMEFocus(const ContentCache& aContentCache,
@@ -238,8 +284,8 @@ public:
 
   virtual bool RecvSetPluginFocused(const bool& aFocused) override;
 
-  virtual bool RecvSetCandidateWindowForPlugin(const int32_t& aX,
-                                               const int32_t& aY) override;
+  virtual bool RecvSetCandidateWindowForPlugin(
+                 const widget::CandidateWindowPosition& aPosition) override;
 
   virtual bool
   RecvDefaultProcOfPluginEvent(const WidgetPluginEvent& aEvent) override;
@@ -255,7 +301,22 @@ public:
                                    const int32_t& aCause,
                                    const int32_t& aFocusChange) override;
 
+
+  // See nsIKeyEventInPluginCallback
+  virtual void HandledWindowedPluginKeyEvent(
+                 const NativeEventData& aKeyEventData,
+                 bool aIsConsumed) override;
+
+  virtual bool RecvOnWindowedPluginKeyEvent(
+                 const NativeEventData& aKeyEventData) override;
+
   virtual bool RecvRequestFocus(const bool& aCanRaise) override;
+
+  virtual bool RecvLookUpDictionary(
+                 const nsString& aText,
+                 nsTArray<mozilla::FontRange>&& aFontRangeArray,
+                 const bool& aIsVertical,
+                 const LayoutDeviceIntPoint& aPoint) override;
 
   virtual bool
   RecvEnableDisableCommands(const nsString& aAction,
@@ -281,7 +342,8 @@ public:
 
   virtual bool RecvShowTooltip(const uint32_t& aX,
                                const uint32_t& aY,
-                               const nsString& aTooltip) override;
+                               const nsString& aTooltip,
+                               const nsString& aDirection) override;
 
   virtual bool RecvHideTooltip() override;
 
@@ -297,30 +359,8 @@ public:
 
   virtual bool RecvDispatchFocusToTopLevelWindow() override;
 
-  virtual bool RecvZoomToRect(const uint32_t& aPresShellId,
-                              const ViewID& aViewId,
-                              const CSSRect& aRect,
-                              const uint32_t& aFlags) override;
-
-  virtual bool
-  RecvUpdateZoomConstraints(const uint32_t& aPresShellId,
-                            const ViewID& aViewId,
-                            const MaybeZoomConstraints& aConstraints) override;
-
   virtual bool RecvRespondStartSwipeEvent(const uint64_t& aInputBlockId,
                                           const bool& aStartSwipe) override;
-
-  virtual bool
-  RecvContentReceivedInputBlock(const ScrollableLayerGuid& aGuid,
-                                const uint64_t& aInputBlockId,
-                                const bool& aPreventDefault) override;
-
-  virtual bool RecvSetTargetAPZC(const uint64_t& aInputBlockId,
-                                 nsTArray<ScrollableLayerGuid>&& aTargets) override;
-
-  virtual bool
-  RecvSetAllowedTouchBehavior(const uint64_t& aInputBlockId,
-                              nsTArray<TouchBehaviorFlags>&& aTargets) override;
 
   virtual bool
   RecvDispatchWheelEvent(const mozilla::WidgetWheelEvent& aEvent) override;
@@ -330,9 +370,6 @@ public:
 
   virtual bool
   RecvDispatchKeyboardEvent(const mozilla::WidgetKeyboardEvent& aEvent) override;
-
-  virtual bool
-  RecvStartScrollbarDrag(const AsyncDragMetrics& aDragMetrics) override;
 
   virtual PColorPickerParent*
   AllocPColorPickerParent(const nsString& aTitle,
@@ -365,43 +402,15 @@ public:
 
   void UpdateDimensions(const nsIntRect& aRect, const ScreenIntSize& aSize);
 
-  void UpdateFrame(const layers::FrameMetrics& aFrameMetrics);
+  void SizeModeChanged(const nsSizeMode& aSizeMode);
 
   void UIResolutionChanged();
 
   void ThemeChanged();
 
-  void HandleAccessKey(nsTArray<uint32_t>& aCharCodes,
-                       const bool& aIsTrusted,
+  void HandleAccessKey(const WidgetKeyboardEvent& aEvent,
+                       nsTArray<uint32_t>& aCharCodes,
                        const int32_t& aModifierMask);
-
-  void RequestFlingSnap(const FrameMetrics::ViewID& aScrollId,
-                        const mozilla::CSSPoint& aDestination);
-
-  void AcknowledgeScrollUpdate(const ViewID& aScrollId,
-                               const uint32_t& aScrollGeneration);
-
-  void HandleDoubleTap(const CSSPoint& aPoint,
-                       Modifiers aModifiers,
-                       const ScrollableLayerGuid& aGuid);
-
-  void HandleSingleTap(const CSSPoint& aPoint,
-                       Modifiers aModifiers,
-                       const ScrollableLayerGuid& aGuid);
-
-  void HandleLongTap(const CSSPoint& aPoint,
-                     Modifiers aModifiers,
-                     const ScrollableLayerGuid& aGuid,
-                     uint64_t aInputBlockId);
-
-  void NotifyAPZStateChange(ViewID aViewId,
-                            APZStateChange aChange,
-                            int aArg);
-
-  void NotifyMouseScrollTestEvent(const ViewID& aScrollId,
-                                  const nsString& aEvent);
-
-  void NotifyFlushComplete();
 
   void Activate();
 
@@ -449,13 +458,13 @@ public:
   virtual bool
   RecvSynthesizeNativeTouchPoint(const uint32_t& aPointerId,
                                  const TouchPointerState& aPointerState,
-                                 const ScreenIntPoint& aPointerScreenPoint,
+                                 const LayoutDeviceIntPoint& aPoint,
                                  const double& aPointerPressure,
                                  const uint32_t& aPointerOrientation,
                                  const uint64_t& aObserverId) override;
 
   virtual bool
-  RecvSynthesizeNativeTouchTap(const ScreenIntPoint& aPointerScreenPoint,
+  RecvSynthesizeNativeTouchTap(const LayoutDeviceIntPoint& aPoint,
                                const bool& aLongTap,
                                const uint64_t& aObserverId) override;
 
@@ -481,19 +490,6 @@ public:
   bool SendRealKeyEvent(mozilla::WidgetKeyboardEvent& event);
 
   bool SendRealTouchEvent(WidgetTouchEvent& event);
-
-  bool SendHandleSingleTap(const CSSPoint& aPoint,
-                           const Modifiers& aModifiers,
-                           const ScrollableLayerGuid& aGuid);
-
-  bool SendHandleLongTap(const CSSPoint& aPoint,
-                         const Modifiers& aModifiers,
-                         const ScrollableLayerGuid& aGuid,
-                         const uint64_t& aInputBlockId);
-
-  bool SendHandleDoubleTap(const CSSPoint& aPoint,
-                           const Modifiers& aModifiers,
-                           const ScrollableLayerGuid& aGuid);
 
   virtual PDocumentRendererParent*
   AllocPDocumentRendererParent(const nsRect& documentRect,
@@ -567,6 +563,7 @@ public:
   }
 
   LayoutDeviceIntPoint GetChildProcessOffset();
+  CSSPoint AdjustTapToChildWidget(const CSSPoint& aPoint);
 
   /**
    * Native widget remoting protocol for use with windowed plugins with e10s.
@@ -597,7 +594,7 @@ public:
   virtual bool
   RecvInvokeDragSession(nsTArray<IPCDataTransfer>&& aTransfers,
                         const uint32_t& aAction,
-                        const nsCString& aVisualDnDData,
+                        const OptionalShmem& aVisualDnDData,
                         const uint32_t& aWidth, const uint32_t& aHeight,
                         const uint32_t& aStride, const uint8_t& aFormat,
                         const int32_t& aDragAreaX, const int32_t& aDragAreaY) override;
@@ -609,15 +606,13 @@ public:
 
   layout::RenderFrameParent* GetRenderFrame();
 
-  // Called by HttpChannelParent. The function may use a new process to
-  // reload the URI associated with the given channel.
-  void OnStartSignedPackageRequest(nsIChannel* aChannel,
-                                   const nsACString& aPackageId);
-
-  void AudioChannelChangeNotification(nsPIDOMWindow* aWindow,
+  void AudioChannelChangeNotification(nsPIDOMWindowOuter* aWindow,
                                       AudioChannel aAudioChannel,
                                       float aVolume,
                                       bool aMuted);
+  bool SetRenderFrame(PRenderFrameParent* aRFParent);
+  bool GetRenderFrameInfo(TextureFactoryIdentifier* aTextureFactoryIdentifier,
+                          uint64_t* aLayersId);
 
 protected:
   bool ReceiveMessage(const nsString& aMessage,
@@ -644,23 +639,14 @@ protected:
 
   virtual bool RecvRemotePaintIsReady() override;
 
-  virtual bool RecvGetRenderFrameInfo(PRenderFrameParent* aRenderFrame,
-                                      TextureFactoryIdentifier* aTextureFactoryIdentifier,
-                                      uint64_t* aLayersId) override;
-
   virtual bool RecvSetDimensions(const uint32_t& aFlags,
                                  const int32_t& aX, const int32_t& aY,
                                  const int32_t& aCx, const int32_t& aCy) override;
 
+  virtual bool RecvGetTabCount(uint32_t* aValue) override;
+
   virtual bool RecvAudioChannelActivityNotification(const uint32_t& aAudioChannel,
                                                     const bool& aActive) override;
-
-  bool InitBrowserConfiguration(const nsCString& aURI,
-                                BrowserConfiguration& aConfiguration);
-
-  // Decide whether we have to use a new process to reload the URI associated
-  // with the given channel.
-  bool ShouldSwitchProcess(nsIChannel* aChannel, const nsACString& aSignedPkg);
 
   ContentCacheInParent mContentCache;
 
@@ -670,6 +656,8 @@ protected:
   float mDPI;
   CSSToLayoutDeviceScale mDefaultScale;
   bool mUpdatedDimensions;
+  nsSizeMode mSizeMode;
+  LayoutDeviceIntPoint mClientOffset;
   LayoutDeviceIntPoint mChromeOffset;
 
 private:
@@ -682,8 +670,6 @@ private:
   void TryCacheDPIAndScale();
 
   nsresult UpdatePosition();
-
-  CSSPoint AdjustTapToChildWidget(const CSSPoint& aPoint);
 
   bool AsyncPanZoomEnabled() const;
 
@@ -716,19 +702,7 @@ private:
 
   uint32_t mChromeFlags;
 
-  struct DataTransferItem
-  {
-    nsCString mFlavor;
-    nsString mStringData;
-    RefPtr<mozilla::dom::BlobImpl> mBlobData;
-    enum DataType
-    {
-      eString,
-      eBlob
-    };
-    DataType mType;
-  };
-  nsTArray<nsTArray<DataTransferItem>> mInitialDataTransferItems;
+  nsTArray<nsTArray<IPCDataTransferItem>> mInitialDataTransferItems;
 
   RefPtr<gfx::DataSourceSurface> mDnDVisualization;
   int32_t mDragAreaX;
@@ -801,7 +775,9 @@ private:
 
   bool mHasContentOpener;
 
-  DebugOnly<int32_t> mActiveSupressDisplayportCount;
+#ifdef DEBUG
+  int32_t mActiveSupressDisplayportCount;
+#endif
 
   ShowInfo GetShowInfo();
 
@@ -814,6 +790,8 @@ private:
   static void AddTabParentToTable(uint64_t aLayersId, TabParent* aTabParent);
 
   static void RemoveTabParentFromTable(uint64_t aLayersId);
+
+  RefPtr<LayerTreeUpdateObserver> mLayerUpdateObserver;
 
 public:
   static TabParent* GetTabParentFromLayersId(uint64_t aLayersId);

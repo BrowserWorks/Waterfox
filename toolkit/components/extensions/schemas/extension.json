@@ -13,6 +13,9 @@
         "description": "Set for the lifetime of a callback if an ansychronous extension api has resulted in an error. If no error has occured lastError will be <var>undefined</var>.",
         "properties": {
           "message": { "type": "string", "description": "Description of the error that has taken place." }
+        },
+        "additionalProperties": {
+          "type": "any"
         }
       },
       "inIncognitoContext": {
@@ -95,9 +98,9 @@
       },
       {
         "name": "isAllowedIncognitoAccess",
-        "unsupported": true,
         "type": "function",
         "description": "Retrieves the state of the extension's access to Incognito-mode (as determined by the user-controlled 'Allowed in Incognito' checkbox.",
+        "async": "callback",
         "parameters": [
           {
             "type": "function",
@@ -114,9 +117,9 @@
       },
       {
         "name": "isAllowedFileSchemeAccess",
-        "unsupported": true,
         "type": "function",
         "description": "Retrieves the state of the extension's access to the 'file://' scheme (as determined by the user-controlled 'Allow access to File URLs' checkbox.",
+        "async": "callback",
         "parameters": [
           {
             "type": "function",

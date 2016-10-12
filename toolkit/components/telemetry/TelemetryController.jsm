@@ -39,22 +39,17 @@ const PREF_CACHED_CLIENTID = PREF_BRANCH + "cachedClientID";
 const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
 const PREF_SESSIONS_BRANCH = "datareporting.sessions.";
 const PREF_UNIFIED = PREF_BRANCH + "unified";
-const PREF_UNIFIED_OPTIN = PREF_BRANCH + "unifiedIsOptIn";
-const PREF_OPTOUT_SAMPLE = PREF_BRANCH + "optoutSample";
 
 // Whether the FHR/Telemetry unification features are enabled.
 // Changing this pref requires a restart.
 const IS_UNIFIED_TELEMETRY = Preferences.get(PREF_UNIFIED, false);
-// This preference allows to leave unified Telemetry behavior on only for people that
-// opted into Telemetry. Changing this pref requires a restart.
-const IS_UNIFIED_OPTIN = Preferences.get(PREF_UNIFIED_OPTIN, false);
 
 const PING_FORMAT_VERSION = 4;
 
 // Delay before intializing telemetry (ms)
 const TELEMETRY_DELAY = Preferences.get("toolkit.telemetry.initDelay", 60) * 1000;
 // Delay before initializing telemetry if we're testing (ms)
-const TELEMETRY_TEST_DELAY = 100;
+const TELEMETRY_TEST_DELAY = 1;
 
 // Ping types.
 const PING_TYPE_MAIN = "main";
@@ -89,29 +84,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "TelemetrySend",
                                   "resource://gre/modules/TelemetrySend.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryReportingPolicy",
                                   "resource://gre/modules/TelemetryReportingPolicy.jsm");
-
-XPCOMUtils.defineLazyGetter(this, "gCrcTable", function() {
-  let c;
-  let table = [];
-  for (let n = 0; n < 256; n++) {
-      c = n;
-      for (let k =0; k < 8; k++) {
-          c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
-      }
-      table[n] = c;
-  }
-  return table;
-});
-
-function crc32(str) {
-    let crc = 0 ^ (-1);
-
-    for (let i = 0; i < str.length; i++ ) {
-        crc = (crc >>> 8) ^ gCrcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
-    }
-
-    return (crc ^ (-1)) >>> 0;
-}
 
 /**
  * Setup Telemetry logging. This function also gets called when loggin related
@@ -153,7 +125,6 @@ var Policy = {
   now: () => new Date(),
   generatePingId: () => Utils.generateUUID(),
   getCachedClientID: () => ClientID.getCachedClientID(),
-  isUnifiedOptin: () => IS_UNIFIED_OPTIN,
 }
 
 this.EXPORTED_SYMBOLS = ["TelemetryController"];
@@ -164,29 +135,39 @@ this.TelemetryController = Object.freeze({
     PREF_LOG_DUMP: PREF_LOG_DUMP,
     PREF_SERVER: PREF_SERVER,
   }),
+
   /**
    * Used only for testing purposes.
    */
-  initLogging: function() {
+  testInitLogging: function() {
     configureLogging();
   },
+
   /**
    * Used only for testing purposes.
    */
-  reset: function() {
+  testReset: function() {
     return Impl.reset();
   },
+
   /**
    * Used only for testing purposes.
    */
-  setup: function() {
+  testSetup: function() {
     return Impl.setupTelemetry(true);
   },
 
   /**
    * Used only for testing purposes.
    */
-  setupContent: function() {
+  testShutdown: function() {
+    return Impl.shutdown();
+  },
+
+  /**
+   * Used only for testing purposes.
+   */
+  testSetupContent: function() {
     return Impl.setupContentTelemetry(true);
   },
 
@@ -328,22 +309,6 @@ this.TelemetryController = Object.freeze({
   },
 
   /**
-   * Whether this client is part of a sample that gets opt-out Telemetry.
-   *
-   * @return {Boolean} Whether the client is part of the opt-out sample.
-   */
-  get isInOptoutSample() {
-    return Impl.isInOptoutSample;
-  },
-
-  /**
-   * The AsyncShutdown.Barrier to synchronize with TelemetryController shutdown.
-   */
-  get shutdown() {
-    return Impl._shutdownBarrier.client;
-  },
-
-  /**
    * The session recorder instance managed by Telemetry.
    * @return {Object} The active SessionRecorder instance or null if not available.
    */
@@ -419,6 +384,7 @@ var Impl = {
       buildId: Services.appinfo.appBuildID,
       name: Services.appinfo.name,
       version: Services.appinfo.version,
+      displayVersion: AppConstants.MOZ_APP_VERSION_DISPLAY,
       vendor: Services.appinfo.vendor,
       platformVersion: Services.appinfo.platformVersion,
       xpcomAbi: Services.appinfo.XPCOMABI,
@@ -620,34 +586,6 @@ var Impl = {
   },
 
   /**
-   *
-   */
-  _isInOptoutSample: function() {
-    if (!Preferences.get(PREF_OPTOUT_SAMPLE, false)) {
-      this._log.config("_sampleForOptoutTelemetry - optout sampling is disabled");
-      return false;
-    }
-
-    const clientId = Policy.getCachedClientID();
-    if (!clientId) {
-      this._log.config("_sampleForOptoutTelemetry - no cached client id available")
-      return false;
-    }
-
-    // This mimics the server-side 1% sampling, so that we can get matching populations.
-    // The server samples on ((crc32(clientId) % 100) == 42), we match 42+X here to get
-    // a bigger sample.
-    const sample = crc32(clientId) % 100;
-    const offset = 42;
-    const range = 5; // sampling from 5%
-
-    const optout = (sample >= offset && sample < (offset + range));
-    this._log.config("_sampleForOptoutTelemetry - sampling for optout Telemetry - " +
-                     "offset: " + offset + ", range: " + range + ", sample: " + sample);
-    return optout;
-  },
-
-  /**
    * Perform telemetry initialization for either chrome or content process.
    * @return {Boolean} True if Telemetry is allowed to record at least base (FHR) data,
    *                   false otherwise.
@@ -664,12 +602,10 @@ var Impl = {
     }
 
     // Configure base Telemetry recording.
-    // Unified Telemetry makes it opt-out unless the unifedOptin pref is set.
-    // Additionally, we make Telemetry opt-out for a 5% sample.
-    // If extended Telemetry is enabled, base recording is always on as well.
+    // Unified Telemetry makes it opt-out. If extended Telemetry is enabled, base recording
+    // is always on as well.
     const enabled = Utils.isTelemetryEnabled;
-    const isOptout = IS_UNIFIED_TELEMETRY && (!Policy.isUnifiedOptin() || this._isInOptoutSample());
-    Telemetry.canRecordBase = enabled || isOptout;
+    Telemetry.canRecordBase = enabled || IS_UNIFIED_TELEMETRY;
     Telemetry.canRecordExtended = enabled;
 
     this._log.config("enableTelemetryRecording - canRecordBase:" + Telemetry.canRecordBase +
@@ -688,6 +624,9 @@ var Impl = {
    *   2) _delayedInitTask was scheduled, but didn't run yet.
    *   3) _delayedInitTask is currently running.
    *   4) _delayedInitTask finished running and is nulled out.
+   *
+   * @return {Promise} Resolved when TelemetryController and TelemetrySession are fully
+   *                   initialized. This is only used in tests.
    */
   setupTelemetry: function setupTelemetry(testing) {
     this._initStarted = true;
@@ -721,6 +660,10 @@ var Impl = {
 
     this._attachObservers();
 
+    // Perform a lightweight, early initialization for the component, just registering
+    // a few observers and initializing the session.
+    TelemetrySession.earlyInit(this._testMode);
+
     // For very short session durations, we may never load the client
     // id from disk.
     // We try to cache it in prefs to avoid this, even though this may
@@ -742,8 +685,11 @@ var Impl = {
         // Load the ClientID.
         this._clientID = yield ClientID.getClientID();
 
-        // Purge the pings archive by removing outdated pings. We don't wait for this
-        // task to complete, but TelemetryStorage blocks on it during shutdown.
+        // Perform TelemetrySession delayed init.
+        yield TelemetrySession.delayedInit();
+        // Purge the pings archive by removing outdated pings. We don't wait for
+        // this task to complete, but TelemetryStorage blocks on it during
+        // shutdown.
         TelemetryStorage.runCleanPingArchiveTask();
 
         // Now that FHR/healthreporter is gone, make sure to remove FHR's DB from
@@ -780,6 +726,7 @@ var Impl = {
       this._log.trace("setupContentTelemetry - Content process recording disabled.");
       return;
     }
+    TelemetrySession.setupContent(testing);
   },
 
   // Do proper shutdown waiting and cleanup.
@@ -795,9 +742,12 @@ var Impl = {
     try {
       // Stop the datachoices infobar display.
       TelemetryReportingPolicy.shutdown();
+      TelemetryEnvironment.shutdown();
 
       // Stop any ping sending.
       yield TelemetrySend.shutdown();
+
+      yield TelemetrySession.shutdown();
 
       // First wait for clients processing shutdown.
       yield this._shutdownBarrier.wait();
@@ -861,14 +811,11 @@ var Impl = {
       return this.setupContentTelemetry();
       break;
     }
+    return undefined;
   },
 
   get clientID() {
     return this._clientID;
-  },
-
-  get isInOptoutSample() {
-    return this._isInOptoutSample();
   },
 
   /**
@@ -962,12 +909,22 @@ var Impl = {
     this._clientID = null;
     this._detachObservers();
 
+    yield TelemetrySession.testReset();
+
+    this._connectionsBarrier = new AsyncShutdown.Barrier(
+      "TelemetryController: Waiting for pending ping activity"
+    );
+    this._shutdownBarrier = new AsyncShutdown.Barrier(
+      "TelemetryController: Waiting for clients."
+    );
+
     // We need to kick of the controller setup first for tests that check the
     // cached client id.
     let controllerSetup = this.setupTelemetry(true);
 
     yield TelemetrySend.reset();
     yield TelemetryStorage.reset();
+    yield TelemetryEnvironment.testReset();
 
     yield controllerSetup;
   }),

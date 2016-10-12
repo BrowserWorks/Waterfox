@@ -1,6 +1,7 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // This is a test for the Open URL context menu item
 // that is shown for network requests
@@ -65,7 +66,6 @@ function onConsoleMessage(results) {
   let isDisabled = !controller || !controller.isCommandEnabled(COMMAND_NAME);
   ok(isDisabled, COMMAND_NAME + " should be disabled.");
 
-  outputNode.selectedItem.scrollIntoView();
   return waitForContextMenu(contextMenu, outputNode.selectedItem, () => {
     let isHidden = contextMenu.querySelector(CONTEXT_MENU_ID).hidden;
     ok(isHidden, CONTEXT_MENU_ID + " should be hidden.");
@@ -130,7 +130,6 @@ function testOnNetActivityContextMenu(msg) {
 
   outputNode.focus();
   HUD.ui.output.selectMessage(msg);
-  msg.scrollIntoView();
 
   info("net activity context menu");
 

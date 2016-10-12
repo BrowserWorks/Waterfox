@@ -20,6 +20,8 @@ class HeapSnapshot;
 
 namespace dom {
 
+class ArrayBufferViewOrArrayBuffer;
+
 class ThreadSafeChromeUtils
 {
 public:
@@ -43,13 +45,25 @@ public:
                                              JS::Handle<JS::Value> aSet,
                                              JS::MutableHandle<JS::Value> aRetval,
                                              ErrorResult& aRv);
+
+  static void Base64URLEncode(GlobalObject& aGlobal,
+                              const ArrayBufferViewOrArrayBuffer& aSource,
+                              const Base64URLEncodeOptions& aOptions,
+                              nsACString& aResult,
+                              ErrorResult& aRv);
+
+  static void Base64URLDecode(GlobalObject& aGlobal,
+                              const nsACString& aString,
+                              const Base64URLDecodeOptions& aOptions,
+                              JS::MutableHandle<JSObject*> aRetval,
+                              ErrorResult& aRv);
 };
 
 class ChromeUtils : public ThreadSafeChromeUtils
 {
 public:
   static void
-  OriginAttributesToSuffix(dom::GlobalObject& aGlobal,
+  OriginAttributesToSuffix(GlobalObject& aGlobal,
                            const dom::OriginAttributesDictionary& aAttrs,
                            nsCString& aSuffix);
 
@@ -59,11 +73,24 @@ public:
                                const dom::OriginAttributesPatternDictionary& aPattern);
 
   static void
-  CreateOriginAttributesWithUserContextId(dom::GlobalObject& aGlobal,
-                                          const nsAString& aOrigin,
-                                          uint32_t aUserContextId,
-                                          dom::OriginAttributesDictionary& aAttrs,
-                                          ErrorResult& aRv);
+  CreateOriginAttributesFromOrigin(dom::GlobalObject& aGlobal,
+                                   const nsAString& aOrigin,
+                                   dom::OriginAttributesDictionary& aAttrs,
+                                   ErrorResult& aRv);
+
+  static void
+  FillNonDefaultOriginAttributes(dom::GlobalObject& aGlobal,
+                                 const dom::OriginAttributesDictionary& aAttrs,
+                                 dom::OriginAttributesDictionary& aNewAttrs);
+
+  static bool
+  IsOriginAttributesEqual(dom::GlobalObject& aGlobal,
+                          const dom::OriginAttributesDictionary& aA,
+                          const dom::OriginAttributesDictionary& aB);
+
+  static bool
+  IsOriginAttributesEqualIgnoringAddonId(const dom::OriginAttributesDictionary& aA,
+                                         const dom::OriginAttributesDictionary& aB);
 };
 
 } // namespace dom

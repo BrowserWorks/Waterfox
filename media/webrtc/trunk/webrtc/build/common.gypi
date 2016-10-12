@@ -320,7 +320,7 @@
               ['arm_neon==1', {
                 'defines': ['WEBRTC_ARCH_ARM_NEON',],
               }],
-              ['arm_neon==0 and (OS=="android" or moz_widget_toolkit_gonk==1)', {
+              ['arm_neon==0 and arm_neon_optional==1', {
                 'defines': ['WEBRTC_DETECT_ARM_NEON',],
               }],
             ],
@@ -331,12 +331,6 @@
         'defines': [
           'WEBRTC_BSD',
           'WEBRTC_THREAD_RR',
-        ],
-      }],
-      ['OS=="dragonfly" or OS=="netbsd"', {
-        'defines': [
-          # doesn't support pthread_condattr_setclock
-          'WEBRTC_CLOCK_TYPE_REALTIME',
         ],
       }],
       ['OS=="openbsd"', {

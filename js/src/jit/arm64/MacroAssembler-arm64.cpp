@@ -156,11 +156,13 @@ MacroAssemblerCompat::handleFailureWithHandlerTail(void* handler)
     MOZ_ASSERT(GetStackPointer64().Is(x28)); // Lets the code below be a little cleaner.
 
     loadPtr(Address(r28, offsetof(ResumeFromException, kind)), r0);
-    branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_ENTRY_FRAME), &entryFrame);
-    branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_CATCH), &catch_);
-    branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_FINALLY), &finally);
-    branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_FORCED_RETURN), &return_);
-    branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
+    asMasm().branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_ENTRY_FRAME),
+                      &entryFrame);
+    asMasm().branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_CATCH), &catch_);
+    asMasm().branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_FINALLY), &finally);
+    asMasm().branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_FORCED_RETURN),
+                      &return_);
+    asMasm().branch32(Assembler::Equal, r0, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
 
     breakpoint(); // Invalid kind.
 
@@ -213,44 +215,6 @@ MacroAssemblerCompat::handleFailureWithHandlerTail(void* handler)
     Ldr(x1, MemOperand(GetStackPointer64(), offsetof(ResumeFromException, target)));
     Mov(x0, BAILOUT_RETURN_OK);
     Br(x1);
-}
-
-void
-MacroAssemblerCompat::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp,
-                                              Label* label)
-{
-    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-    MOZ_ASSERT(ptr != temp);
-    MOZ_ASSERT(ptr != ScratchReg && ptr != ScratchReg2); // Both may be used internally.
-    MOZ_ASSERT(temp != ScratchReg && temp != ScratchReg2);
-
-    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
-    movePtr(ImmWord(-ptrdiff_t(nursery.start())), temp);
-    asMasm().addPtr(ptr, temp);
-    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
-              temp, ImmWord(nursery.nurserySize()), label);
-}
-
-void
-MacroAssemblerCompat::branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp,
-                                                 Label* label)
-{
-    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-    MOZ_ASSERT(temp != ScratchReg && temp != ScratchReg2); // Both may be used internally.
-
-    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
-
-    // Avoid creating a bogus ObjectValue below.
-    if (!nursery.exists())
-        return;
-
-    // 'Value' representing the start of the nursery tagged as a JSObject
-    Value start = ObjectValue(*reinterpret_cast<JSObject*>(nursery.start()));
-
-    movePtr(ImmWord(-ptrdiff_t(start.asRawBits())), temp);
-    asMasm().addPtr(value.valueReg(), temp);
-    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
-              temp, ImmWord(nursery.nurserySize()), label);
 }
 
 void
@@ -344,6 +308,15 @@ MacroAssemblerCompat::atomicExchangeToTypedIntArray(Scalar::Type arrayType, cons
                                                     Register value, Register temp, AnyRegister output);
 
 //{{{ check_macroassembler_style
+// ===============================================================
+// MacroAssembler high-level usage.
+
+void
+MacroAssembler::flush()
+{
+    Assembler::flush();
+}
+
 // ===============================================================
 // Stack manipulation functions.
 
@@ -566,10 +539,52 @@ MacroAssembler::patchCall(uint32_t callerOffset, uint32_t calleeOffset)
     MOZ_CRASH("NYI");
 }
 
+CodeOffset
+MacroAssembler::thunkWithPatch()
+{
+    MOZ_CRASH("NYI");
+}
+
+void
+MacroAssembler::patchThunk(uint32_t thunkOffset, uint32_t targetOffset)
+{
+    MOZ_CRASH("NYI");
+}
+
+void
+MacroAssembler::repatchThunk(uint8_t* code, uint32_t thunkOffset, uint32_t targetOffset)
+{
+    MOZ_CRASH("NYI");
+}
+
+CodeOffset
+MacroAssembler::nopPatchableToNearJump()
+{
+    MOZ_CRASH("NYI");
+}
+
+void
+MacroAssembler::patchNopToNearJump(uint8_t* jump, uint8_t* target)
+{
+    MOZ_CRASH("NYI");
+}
+
+void
+MacroAssembler::patchNearJumpToNop(uint8_t* jump)
+{
+    MOZ_CRASH("NYI");
+}
+
 void
 MacroAssembler::pushReturnAddress()
 {
     push(lr);
+}
+
+void
+MacroAssembler::popReturnAddress()
+{
+    pop(lr);
 }
 
 // ===============================================================
@@ -699,6 +714,116 @@ MacroAssembler::pushFakeReturnAddress(Register scratch)
     leaveNoPool();
     return pseudoReturnOffset;
 }
+
+// ===============================================================
+// Branch functions
+
+void
+MacroAssembler::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp,
+                                        Label* label)
+{
+    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+    MOZ_ASSERT(ptr != temp);
+    MOZ_ASSERT(ptr != ScratchReg && ptr != ScratchReg2); // Both may be used internally.
+    MOZ_ASSERT(temp != ScratchReg && temp != ScratchReg2);
+
+    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
+    movePtr(ImmWord(-ptrdiff_t(nursery.start())), temp);
+    addPtr(ptr, temp);
+    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
+              temp, ImmWord(nursery.nurserySize()), label);
+}
+
+void
+MacroAssembler::branchValueIsNurseryObject(Condition cond, const Address& address, Register temp,
+                                           Label* label)
+{
+    branchValueIsNurseryObjectImpl(cond, address, temp, label);
+}
+
+void
+MacroAssembler::branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp,
+                                           Label* label)
+{
+    branchValueIsNurseryObjectImpl(cond, value.valueReg(), temp, label);
+}
+
+template <typename T>
+void
+MacroAssembler::branchValueIsNurseryObjectImpl(Condition cond, const T& value, Register temp,
+                                               Label* label)
+{
+   MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+    MOZ_ASSERT(temp != ScratchReg && temp != ScratchReg2); // Both may be used internally.
+
+    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
+
+    // Avoid creating a bogus ObjectValue below.
+    if (!nursery.exists())
+        return;
+
+    // 'Value' representing the start of the nursery tagged as a JSObject
+    Value start = ObjectValue(*reinterpret_cast<JSObject*>(nursery.start()));
+
+    movePtr(ImmWord(-ptrdiff_t(start.asRawBits())), temp);
+    addPtr(value, temp);
+    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
+              temp, ImmWord(nursery.nurserySize()), label);
+}
+
+void
+MacroAssembler::branchTestValue(Condition cond, const ValueOperand& lhs,
+                                const Value& rhs, Label* label)
+{
+    MOZ_ASSERT(cond == Equal || cond == NotEqual);
+    vixl::UseScratchRegisterScope temps(this);
+    const ARMRegister scratch64 = temps.AcquireX();
+    MOZ_ASSERT(scratch64.asUnsized() != lhs.valueReg());
+    moveValue(rhs, ValueOperand(scratch64.asUnsized()));
+    Cmp(ARMRegister(lhs.valueReg(), 64), scratch64);
+    B(label, cond);
+}
+
+// ========================================================================
+// Memory access primitives.
+template <typename T>
+void
+MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest,
+                                  MIRType slotType)
+{
+    if (valueType == MIRType::Double) {
+        storeDouble(value.reg().typedReg().fpu(), dest);
+        return;
+    }
+
+    // For known integers and booleans, we can just store the unboxed value if
+    // the slot has the same type.
+    if ((valueType == MIRType::Int32 || valueType == MIRType::Boolean) && slotType == valueType) {
+        if (value.constant()) {
+            Value val = value.value();
+            if (valueType == MIRType::Int32)
+                store32(Imm32(val.toInt32()), dest);
+            else
+                store32(Imm32(val.toBoolean() ? 1 : 0), dest);
+        } else {
+            store32(value.reg().typedReg().gpr(), dest);
+        }
+        return;
+    }
+
+    if (value.constant())
+        storeValue(value.value(), dest);
+    else
+        storeValue(ValueTypeFromMIRType(valueType), value.reg().typedReg().gpr(), dest);
+
+}
+
+template void
+MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType,
+                                  const Address& dest, MIRType slotType);
+template void
+MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType,
+                                  const BaseIndex& dest, MIRType slotType);
 
 //}}} check_macroassembler_style
 

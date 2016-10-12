@@ -164,6 +164,12 @@ public:
 
   already_AddRefed<DominatorTree> ComputeDominatorTree(ErrorResult& rv);
 
+  void ComputeShortestPaths(JSContext*cx, uint64_t start,
+                            const dom::Sequence<uint64_t>& targets,
+                            uint64_t maxNumPaths,
+                            JS::MutableHandleObject results,
+                            ErrorResult& rv);
+
   dom::Nullable<uint64_t> GetCreationTime() {
     static const uint64_t maxTime = uint64_t(1) << 53;
     if (timestamp.isSome() && timestamp.ref() <= maxTime) {
@@ -206,7 +212,7 @@ WriteHeapGraph(JSContext* cx,
                const JS::ubi::Node& node,
                CoreDumpWriter& writer,
                bool wantNames,
-               JS::ZoneSet* zones,
+               JS::CompartmentSet* compartments,
                JS::AutoCheckCannotGC& noGC,
                uint32_t& outNodeCount,
                uint32_t& outEdgeCount);
@@ -215,12 +221,12 @@ WriteHeapGraph(JSContext* cx,
                const JS::ubi::Node& node,
                CoreDumpWriter& writer,
                bool wantNames,
-               JS::ZoneSet* zones,
+               JS::CompartmentSet* compartments,
                JS::AutoCheckCannotGC& noGC)
 {
   uint32_t ignoreNodeCount;
   uint32_t ignoreEdgeCount;
-  return WriteHeapGraph(cx, node, writer, wantNames, zones, noGC,
+  return WriteHeapGraph(cx, node, writer, wantNames, compartments, noGC,
                         ignoreNodeCount, ignoreEdgeCount);
 }
 

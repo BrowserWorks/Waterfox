@@ -50,6 +50,8 @@ public:
       mResponseTextResult(NS_OK), mStatusResult(NS_OK),
       mResponseResult(NS_OK)
     { }
+
+    void trace(JSTracer* trc);
   };
 
 private:
@@ -107,7 +109,7 @@ public:
   Unpin();
 
   bool
-  Notify(JSContext* aCx, Status aStatus) override;
+  Notify(Status aStatus) override;
 
   IMPL_EVENT_HANDLER(readystatechange)
 

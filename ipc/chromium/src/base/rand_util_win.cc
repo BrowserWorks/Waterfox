@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2012 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -11,7 +13,7 @@
 // "Community Additions" comment on MSDN here:
 // http://msdn.microsoft.com/en-us/library/windows/desktop/aa387694.aspx
 #define SystemFunction036 NTAPI SystemFunction036
-#include <NTSecAPI.h>
+#include <ntsecapi.h>
 #undef SystemFunction036
 
 #include <algorithm>

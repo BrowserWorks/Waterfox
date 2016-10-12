@@ -13,6 +13,7 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
+Cu.import("resource://gre/modules/AsyncPrefs.jsm");
 Cu.import("resource://gre/modules/DelayedInit.jsm");
 
 if (AppConstants.ACCESSIBILITY) {
@@ -93,8 +94,8 @@ XPCOMUtils.defineLazyServiceGetter(this, "Profiler",
 XPCOMUtils.defineLazyModuleGetter(this, "SimpleServiceDiscovery",
                                   "resource://gre/modules/SimpleServiceDiscovery.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "WebappManager",
-                                  "resource://gre/modules/WebappManager.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionManagement",
+                                  "resource://gre/modules/ExtensionManagement.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "CharsetMenu",
                                   "resource://gre/modules/CharsetMenu.jsm");
@@ -155,20 +156,22 @@ var lazilyLoadedObserverScripts = [
   ["Feedback", ["Feedback:Show"], "chrome://browser/content/Feedback.js"],
   ["SelectionHandler", ["TextSelection:Get"], "chrome://browser/content/SelectionHandler.js"],
   ["EmbedRT", ["GeckoView:ImportScript"], "chrome://browser/content/EmbedRT.js"],
-  ["Reader", ["Reader:FetchContent", "Reader:Added", "Reader:Removed"], "chrome://browser/content/Reader.js"],
+  ["Reader", ["Reader:AddToCache", "Reader:RemoveFromCache"], "chrome://browser/content/Reader.js"],
   ["PrintHelper", ["Print:PDF"], "chrome://browser/content/PrintHelper.js"],
 ];
-if (AppConstants.NIGHTLY_BUILD) {
-  lazilyLoadedObserverScripts.push(
-    ["ActionBarHandler", ["TextSelection:Get", "TextSelection:Action", "TextSelection:End"],
-      "chrome://browser/content/ActionBarHandler.js"]
-  );
-}
+
+lazilyLoadedObserverScripts.push(
+["ActionBarHandler", ["TextSelection:Get", "TextSelection:Action", "TextSelection:End"],
+  "chrome://browser/content/ActionBarHandler.js"]
+);
+
 if (AppConstants.MOZ_WEBRTC) {
   lazilyLoadedObserverScripts.push(
     ["WebrtcUI", ["getUserMedia:request",
                   "PeerConnection:request",
-                  "recording-device-events"], "chrome://browser/content/WebrtcUI.js"])
+                  "recording-device-events",
+                  "VideoCapture:Paused",
+                  "VideoCapture:Resumed"], "chrome://browser/content/WebrtcUI.js"])
 }
 
 lazilyLoadedObserverScripts.forEach(function (aScript) {
@@ -191,19 +194,15 @@ lazilyLoadedObserverScripts.forEach(function (aScript) {
 // Lazily-loaded browser scripts that use message listeners.
 [
   ["Reader", [
-    ["Reader:AddToList", false],
+    ["Reader:AddToCache", false],
+    ["Reader:RemoveFromCache", false],
     ["Reader:ArticleGet", false],
     ["Reader:DropdownClosed", true], // 'true' allows us to survive mid-air cycle-collection.
     ["Reader:DropdownOpened", false],
     ["Reader:FaviconRequest", false],
-    ["Reader:ListStatusRequest", false],
-    ["Reader:RemoveFromList", false],
-    ["Reader:Share", false],
     ["Reader:ToolbarHidden", false],
     ["Reader:SystemUIVisibility", false],
     ["Reader:UpdateReaderButton", false],
-    ["Reader:SetIntPref", false],
-    ["Reader:SetCharPref", false],
   ], "chrome://browser/content/Reader.js"],
 ].forEach(aScript => {
   let [name, messages, script] = aScript;
@@ -267,65 +266,6 @@ if (AppConstants.MOZ_WEBRTC) {
   XPCOMUtils.defineLazyServiceGetter(this, "MediaManagerService",
     "@mozilla.org/mediaManagerService;1", "nsIMediaManagerService");
 }
-
-XPCOMUtils.defineLazyModuleGetter(
-  this,
-  "DOMApplicationRegistry",
-  "resource://gre/modules/Webapps.jsm",
-  null,
-  function() {
-    XPCOMUtils.defineLazyServiceGetter(this, "ppmm",
-                                   "@mozilla.org/parentprocessmessagemanager;1",
-                                   "nsIMessageBroadcaster");
-
-    // Keep the messages in sync with the initialization in Webapps.jsm (bug 1171013).
-    this.messages = ["Webapps:Install",
-                     "Webapps:Uninstall",
-                     "Webapps:GetSelf",
-                     "Webapps:CheckInstalled",
-                     "Webapps:GetInstalled",
-                     "Webapps:GetNotInstalled",
-                     "Webapps:Launch",
-                     "Webapps:LocationChange",
-                     "Webapps:InstallPackage",
-                     "Webapps:GetList",
-                     "Webapps:RegisterForMessages",
-                     "Webapps:UnregisterForMessages",
-                     "Webapps:CancelDownload",
-                     "Webapps:CheckForUpdate",
-                     "Webapps:Download",
-                     "Webapps:ApplyDownload",
-                     "Webapps:Install:Return:Ack",
-                     "Webapps:AddReceipt",
-                     "Webapps:RemoveReceipt",
-                     "Webapps:ReplaceReceipt",
-                     "Webapps:RegisterBEP",
-                     "Webapps:Export",
-                     "Webapps:Import",
-                     "Webapps:GetIcon",
-                     "Webapps:ExtractManifest",
-                     "Webapps:SetEnabled",
-                     "child-process-shutdown"];
-
-    this.messages.forEach(msgName => {
-      this.ppmm.addMessageListener(msgName, this);
-    });
-  },
-  function() {
-    this.messages.forEach(msgName => {
-      this.ppmm.removeMessageListener(msgName, this);
-    });
-  },
-  {
-    receiveMessage: function() {
-      // This is called only once when we receive a message for the first time.
-      // With this, we trigger the import of Webapps.jsm and forward the message
-      // to the real registry.
-      return DOMApplicationRegistry.receiveMessage.apply(
-          DOMApplicationRegistry, arguments);
-    }
-  }
-);
 
 XPCOMUtils.defineLazyModuleGetter(this, "Log",
   "resource://gre/modules/AndroidLog.jsm", "AndroidLog");
@@ -397,7 +337,6 @@ function InitLater(fn, object, name) {
 var BrowserApp = {
   _tabs: [],
   _selectedTab: null,
-  _prefObservers: [],
 
   get isTablet() {
     let sysInfo = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2);
@@ -437,7 +376,6 @@ var BrowserApp = {
     Services.obs.addObserver(this, "Session:Stop", false);
     Services.obs.addObserver(this, "SaveAs:PDF", false);
     Services.obs.addObserver(this, "Browser:Quit", false);
-    Services.obs.addObserver(this, "Preferences:Set", false);
     Services.obs.addObserver(this, "ScrollTo:FocusedInput", false);
     Services.obs.addObserver(this, "Sanitize:ClearData", false);
     Services.obs.addObserver(this, "FullScreen:Exit", false);
@@ -445,24 +383,24 @@ var BrowserApp = {
     Services.obs.addObserver(this, "Viewport:Flush", false);
     Services.obs.addObserver(this, "Passwords:Init", false);
     Services.obs.addObserver(this, "FormHistory:Init", false);
+    Services.obs.addObserver(this, "android-get-pref", false);
+    Services.obs.addObserver(this, "android-set-pref", false);
     Services.obs.addObserver(this, "gather-telemetry", false);
     Services.obs.addObserver(this, "keyword-search", false);
-    Services.obs.addObserver(this, "webapps-runtime-install", false);
-    Services.obs.addObserver(this, "webapps-runtime-install-package", false);
-    Services.obs.addObserver(this, "webapps-ask-install", false);
-    Services.obs.addObserver(this, "webapps-ask-uninstall", false);
-    Services.obs.addObserver(this, "webapps-launch", false);
-    Services.obs.addObserver(this, "webapps-runtime-uninstall", false);
-    Services.obs.addObserver(this, "Webapps:AutoInstall", false);
-    Services.obs.addObserver(this, "Webapps:Load", false);
-    Services.obs.addObserver(this, "Webapps:AutoUninstall", false);
     Services.obs.addObserver(this, "sessionstore-state-purge-complete", false);
     Services.obs.addObserver(this, "Fonts:Reload", false);
+    Services.obs.addObserver(this, "Vibration:Request", false);
+
+    // Register extension source files.
+    ExtensionManagement.registerScript("chrome://browser/content/ext-pageAction.js");
+
+    // Register extension schemas.
+    ExtensionManagement.registerSchema("chrome://browser/content/schemas/page_action.json");
 
     Messaging.addListener(this.getHistory.bind(this), "Session:GetHistory");
 
     function showFullScreenWarning() {
-      Snackbars.show(Strings.browser.GetStringFromName("alertFullScreenToast"), Snackbars.LENGTH_SHORT);
+      Snackbars.show(Strings.browser.GetStringFromName("alertFullScreenToast"), Snackbars.LENGTH_LONG);
     }
 
     window.addEventListener("fullscreen", function() {
@@ -471,19 +409,19 @@ var BrowserApp = {
       });
     }, false);
 
-    window.addEventListener("mozfullscreenchange", function(e) {
+    window.addEventListener("fullscreenchange", function(e) {
       // This event gets fired on the document and its entire ancestor chain
       // of documents. When enabling fullscreen, it is fired on the top-level
       // document first and goes down; when disabling the order is reversed
       // (per spec). This means the last event on enabling will be for the innermost
-      // document, which will have mozFullScreenElement set correctly.
+      // document, which will have fullscreenElement set correctly.
       let doc = e.target;
       Messaging.sendRequest({
-        type: doc.mozFullScreen ? "DOMFullScreen:Start" : "DOMFullScreen:Stop",
-        rootElement: (doc.mozFullScreen && doc.mozFullScreenElement == doc.documentElement)
+        type: doc.fullscreenElement ? "DOMFullScreen:Start" : "DOMFullScreen:Stop",
+        rootElement: doc.fullscreenElement == doc.documentElement
       });
 
-      if (doc.mozFullScreen)
+      if (doc.fullscreenElement)
         showFullScreenWarning();
     }, false);
 
@@ -503,6 +441,7 @@ var BrowserApp = {
     Distribution.init();
     Tabs.init();
     SearchEngines.init();
+    Experiments.init();
 
     if ("arguments" in window) {
       if (window.arguments[0])
@@ -559,14 +498,14 @@ var BrowserApp = {
       ExternalApps.init();
     }, NativeWindow, "contextmenus");
 
-    InitLater(() => {
-      let mm = window.getGroupMessageManager("browsers");
-      mm.loadFrameScript("chrome://browser/content/content.js", true);
-    });
-
     if (AppConstants.ACCESSIBILITY) {
       InitLater(() => AccessFu.attach(window), window, "AccessFu");
     }
+
+    // Don't delay loading content.js because when we restore reader mode tabs,
+    // we require the reader mode scripts in content.js right away.
+    let mm = window.getGroupMessageManager("browsers");
+    mm.loadFrameScript("chrome://browser/content/content.js", true);
 
     // We can't delay registering WebChannel listeners: if the first page is
     // about:accounts, which can happen when starting the Firefox Account flow
@@ -589,7 +528,7 @@ var BrowserApp = {
       BrowserApp.deck.removeEventListener("DOMContentLoaded", BrowserApp_delayedStartup, false);
 
       InitLater(() => Cu.import("resource://gre/modules/NotificationDB.jsm"));
-      InitLater(() => Cu.import("resource://gre/modules/Payment.jsm"));
+      InitLater(() => Cu.import("resource://gre/modules/PresentationDeviceInfoManager.jsm"));
 
       InitLater(() => Services.obs.notifyObservers(window, "browser-delayed-startup-finished", ""));
       InitLater(() => Messaging.sendRequest({ type: "Gecko:DelayedStartup" }));
@@ -622,11 +561,9 @@ var BrowserApp = {
     }, false);
 
     // Pass caret StateChanged events to ActionBarHandler.
-    if (AppConstants.NIGHTLY_BUILD) {
-      window.addEventListener("mozcaretstatechanged", e => {
-        ActionBarHandler.caretStateChangedHandler(e);
-      }, /* useCapture = */ true, /* wantsUntrusted = */ false);
-    }
+    window.addEventListener("mozcaretstatechanged", e => {
+      ActionBarHandler.caretStateChangedHandler(e);
+    }, /* useCapture = */ true, /* wantsUntrusted = */ false);
   },
 
   get _startupStatus() {
@@ -653,13 +590,6 @@ var BrowserApp = {
   setLocale: function (locale) {
     console.log("browser.js: requesting locale set: " + locale);
     Messaging.sendRequest({ type: "Locale:Set", locale: locale });
-  },
-
-  _initRuntime: function(status, url, callback) {
-    let sandbox = {};
-    Services.scriptloader.loadSubScript("chrome://browser/content/WebappRT.js", sandbox);
-    window.WebappRT = sandbox.WebappRT;
-    WebappRT.init(status, url, callback);
   },
 
   initContextMenu: function () {
@@ -719,20 +649,6 @@ var BrowserApp = {
           });
         });
     }
-
-    NativeWindow.contextmenus.add(stringGetter("contextmenu.addToReadingList"),
-      NativeWindow.contextmenus.linkOpenableContext,
-      function(aTarget) {
-        UITelemetry.addEvent("action.1", "contextmenu", null, "web_reading_list");
-        UITelemetry.addEvent("save.1", "contextmenu", null, "reading_list");
-
-        let url = NativeWindow.contextmenus._getLinkURL(aTarget);
-        Messaging.sendRequestForResult({
-            type: "Reader:AddToList",
-            title: truncate(url, MAX_TITLE_LENGTH),
-            url: truncate(url, MAX_URI_LENGTH),
-        }).catch(Cu.reportError);
-      });
 
     NativeWindow.contextmenus.add(stringGetter("contextmenu.copyLink"),
       NativeWindow.contextmenus.linkCopyableContext,
@@ -883,7 +799,8 @@ var BrowserApp = {
     NativeWindow.contextmenus.add({
       label: stringGetter("contextmenu.shareMedia"),
       order: NativeWindow.contextmenus.DEFAULT_HTML5_ORDER - 1,
-      selector: NativeWindow.contextmenus._disableRestricted("SHARE", NativeWindow.contextmenus.SelectorContext("video")),
+      selector: NativeWindow.contextmenus._disableRestricted(
+        "SHARE", NativeWindow.contextmenus.videoContext()),
       showAsActions: function(aElement) {
         let url = (aElement.currentSrc || aElement.src);
         let title = aElement.textContent || aElement.title;
@@ -901,10 +818,10 @@ var BrowserApp = {
     });
 
     NativeWindow.contextmenus.add(stringGetter("contextmenu.fullScreen"),
-      NativeWindow.contextmenus.SelectorContext("video:not(:-moz-full-screen)"),
+      NativeWindow.contextmenus.videoContext("not-fullscreen"),
       function(aTarget) {
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_fullscreen");
-        aTarget.mozRequestFullScreen();
+        aTarget.requestFullscreen();
       });
 
     NativeWindow.contextmenus.add(stringGetter("contextmenu.mute"),
@@ -921,6 +838,18 @@ var BrowserApp = {
         aTarget.muted = false;
       });
 
+    NativeWindow.contextmenus.add(stringGetter("contextmenu.viewImage"),
+      NativeWindow.contextmenus.imageLocationCopyableContext,
+      function(aTarget) {
+        let url = aTarget.src;
+        ContentAreaUtils.urlSecurityCheck(url, aTarget.ownerDocument.nodePrincipal,
+                                          Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
+
+        UITelemetry.addEvent("action.1", "contextmenu", null, "web_view_image");
+        UITelemetry.addEvent("loadurl.1", "contextmenu", null);
+        BrowserApp.selectedBrowser.loadURI(url);
+      });
+
     NativeWindow.contextmenus.add(stringGetter("contextmenu.copyImageLocation"),
       NativeWindow.contextmenus.imageLocationCopyableContext,
       function(aTarget) {
@@ -932,7 +861,7 @@ var BrowserApp = {
 
     NativeWindow.contextmenus.add({
       label: stringGetter("contextmenu.shareImage"),
-      selector: NativeWindow.contextmenus._disableRestricted("SHARE", NativeWindow.contextmenus.imageSaveableContext),
+      selector: NativeWindow.contextmenus._disableRestricted("SHARE", NativeWindow.contextmenus.imageShareableContext),
       order: NativeWindow.contextmenus.DEFAULT_HTML5_ORDER - 1, // Show above HTML5 menu items
       showAsActions: function(aTarget) {
         let doc = aTarget.ownerDocument;
@@ -959,9 +888,15 @@ var BrowserApp = {
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_save_image");
         UITelemetry.addEvent("save.1", "contextmenu", null, "image");
 
-        ContentAreaUtils.saveImageURL(aTarget.currentURI.spec, null, "SaveImageTitle",
-                                      false, true, aTarget.ownerDocument.documentURIObject,
-                                      aTarget.ownerDocument);
+        RuntimePermissions.waitForPermissions(RuntimePermissions.WRITE_EXTERNAL_STORAGE).then(function(permissionGranted) {
+            if (!permissionGranted) {
+                return;
+            }
+
+            ContentAreaUtils.saveImageURL(aTarget.currentURI.spec, null, "SaveImageTitle",
+                                          false, true, aTarget.ownerDocument.documentURIObject,
+                                          aTarget.ownerDocument);
+        });
       });
 
     NativeWindow.contextmenus.add(stringGetter("contextmenu.setImageAs"),
@@ -1016,7 +951,7 @@ var BrowserApp = {
           return;
         }
         let message = Strings.browser.GetStringFromName("imageblocking.downloadedImage");
-        Snackbars.show(message, Snackbars.LENGTH_SHORT, {
+        Snackbars.show(message, Snackbars.LENGTH_LONG, {
           action: {
             label: Strings.browser.GetStringFromName("imageblocking.showAllImages"),
             callback: () => {
@@ -1131,7 +1066,6 @@ var BrowserApp = {
   },
 
   contentDocumentChanged: function() {
-    dump("GeckoBug1151102: Setting first-paint flag on DWU");
     window.top.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils).isFirstPaint = true;
     Services.androidBridge.contentDocumentChanged();
   },
@@ -1286,15 +1220,6 @@ var BrowserApp = {
     Messaging.sendRequest(message);
   },
 
-  _loadWebapp: function(aMessage) {
-    // Entry point for WebApps. This is the point in which we know
-    // the code is being used as a WebApp runtime.
-    this._initRuntime(this._startupStatus, aMessage.url, aUrl => {
-      this.manifestUrl = aMessage.url;
-      this.addTab(aUrl, { title: aMessage.name });
-    });
-  },
-
   // Calling this will update the state in BrowserApp after a tab has been
   // closed in the Java UI.
   _handleTabClosed: function _handleTabClosed(aTab, aShowUndoSnackbar) {
@@ -1314,14 +1239,17 @@ var BrowserApp = {
 
       let message;
       let title = closedTabData.entries[closedTabData.index - 1].title;
+      let isPrivate = PrivateBrowsingUtils.isBrowserPrivate(aTab.browser);
 
-      if (title) {
+      if (isPrivate) {
+        message = Strings.browser.GetStringFromName("privateClosedMessage.message");
+      } else if (title) {
         message = Strings.browser.formatStringFromName("undoCloseToast.message", [title], 1);
       } else {
         message = Strings.browser.GetStringFromName("undoCloseToast.messageDefault");
       }
 
-      Snackbars.show(message, Snackbars.LENGTH_SHORT, {
+      Snackbars.show(message, Snackbars.LENGTH_LONG, {
         action: {
           label: Strings.browser.GetStringFromName("undoCloseToast.action2"),
           callback: function() {
@@ -1349,7 +1277,7 @@ var BrowserApp = {
     if (aTab == this.selectedTab)
       return;
 
-    this.selectedBrowser.contentDocument.mozCancelFullScreen();
+    this.selectedBrowser.contentDocument.exitFullscreen();
 
     let message = {
       type: "Tab:Select",
@@ -1472,12 +1400,6 @@ var BrowserApp = {
     });
   },
 
-  notifyPrefObservers: function(aPref) {
-    this._prefObservers[aPref].forEach(function(aRequestId) {
-      this.getPreferences(aRequestId, [aPref], 1);
-    }, this);
-  },
-
   // These values come from pref_tracking_protection_entries in arrays.xml.
   PREF_TRACKING_PROTECTION_ENABLED: "2",
   PREF_TRACKING_PROTECTION_ENABLED_PB: "1",
@@ -1495,205 +1417,6 @@ var BrowserApp = {
       return this.PREF_TRACKING_PROTECTION_ENABLED_PB;
     }
     return this.PREF_TRACKING_PROTECTION_DISABLED;
-  },
-
-  handlePreferencesRequest: function handlePreferencesRequest(aRequestId,
-                                                              aPrefNames,
-                                                              aListen) {
-
-    let prefs = [];
-
-    for (let prefName of aPrefNames) {
-      let pref = {
-        name: prefName,
-        type: "",
-        value: null
-      };
-
-      if (aListen) {
-        if (this._prefObservers[prefName])
-          this._prefObservers[prefName].push(aRequestId);
-        else
-          this._prefObservers[prefName] = [ aRequestId ];
-        Services.prefs.addObserver(prefName, this, false);
-      }
-
-      // These pref names are not "real" pref names.
-      // They are used in the setting menu,
-      // and these are passed when initializing the setting menu.
-      switch (prefName) {
-        // The plugin pref is actually two separate prefs, so
-        // we need to handle it differently
-        case "plugin.enable":
-          pref.type = "string";// Use a string type for java's ListPreference
-          pref.value = PluginHelper.getPluginPreference();
-          prefs.push(pref);
-          continue;
-        // Handle master password
-        case "privacy.masterpassword.enabled":
-          pref.type = "bool";
-          pref.value = MasterPassword.enabled;
-          prefs.push(pref);
-          continue;
-        case "privacy.trackingprotection.state": {
-          pref.type = "string";
-          pref.value = this.getTrackingProtectionState();
-          prefs.push(pref);
-          continue;
-        }
-        // Crash reporter submit pref must be fetched from nsICrashReporter service.
-        case "datareporting.crashreporter.submitEnabled":
-          let crashReporterBuilt = "nsICrashReporter" in Ci && Services.appinfo instanceof Ci.nsICrashReporter;
-          if (crashReporterBuilt) {
-            pref.type = "bool";
-            pref.value = Services.appinfo.submitReports;
-            prefs.push(pref);
-          }
-          continue;
-      }
-
-      try {
-        switch (Services.prefs.getPrefType(prefName)) {
-          case Ci.nsIPrefBranch.PREF_BOOL:
-            pref.type = "bool";
-            pref.value = Services.prefs.getBoolPref(prefName);
-            break;
-          case Ci.nsIPrefBranch.PREF_INT:
-            pref.type = "int";
-            pref.value = Services.prefs.getIntPref(prefName);
-            break;
-          case Ci.nsIPrefBranch.PREF_STRING:
-          default:
-            pref.type = "string";
-            try {
-              // Try in case it's a localized string (will throw an exception if not)
-              pref.value = Services.prefs.getComplexValue(prefName, Ci.nsIPrefLocalizedString).data;
-            } catch (e) {
-              pref.value = Services.prefs.getCharPref(prefName);
-            }
-            break;
-        }
-      } catch (e) {
-        dump("Error reading pref [" + prefName + "]: " + e);
-        // preference does not exist; do not send it
-        continue;
-      }
-
-      // Some Gecko preferences use integers or strings to reference
-      // state instead of directly representing the value.
-      // Since the Java UI uses the type to determine which ui elements
-      // to show and how to handle them, we need to normalize these
-      // preferences to the correct type.
-      switch (prefName) {
-        // (string) index for determining which multiple choice value to display.
-        case "browser.chrome.titlebarMode":
-        case "network.cookie.cookieBehavior":
-        case "font.size.inflation.minTwips":
-        case "home.sync.updateMode":
-        case "browser.image_blocking":
-          pref.type = "string";
-          pref.value = pref.value.toString();
-          break;
-      }
-
-      prefs.push(pref);
-    }
-
-    Messaging.sendRequest({
-      type: "Preferences:Data",
-      requestId: aRequestId,    // opaque request identifier, can be any string/int/whatever
-      preferences: prefs
-    });
-  },
-
-  setPreferences: function (aPref) {
-    let json = JSON.parse(aPref);
-
-    switch (json.name) {
-      // The plugin pref is actually two separate prefs, so
-      // we need to handle it differently
-      case "plugin.enable":
-        PluginHelper.setPluginPreference(json.value);
-        return;
-
-      // MasterPassword pref is not real, we just need take action and leave
-      case "privacy.masterpassword.enabled":
-        if (MasterPassword.enabled)
-          MasterPassword.removePassword(json.value);
-        else
-          MasterPassword.setPassword(json.value);
-        return;
-
-      // "privacy.trackingprotection.state" is not a "real" pref name, but it's used in the setting menu.
-      // By default "privacy.trackingprotection.pbmode.enabled" is true,
-      // and "privacy.trackingprotection.enabled" is false.
-      case "privacy.trackingprotection.state": {
-        switch (json.value) {
-          // Tracking protection disabled.
-          case this.PREF_TRACKING_PROTECTION_DISABLED:
-            Services.prefs.setBoolPref("privacy.trackingprotection.pbmode.enabled", false);
-            Services.prefs.setBoolPref("privacy.trackingprotection.enabled", false);
-            break;
-          // Tracking protection only in private browsing,
-          case this.PREF_TRACKING_PROTECTION_ENABLED_PB:
-            Services.prefs.setBoolPref("privacy.trackingprotection.pbmode.enabled", true);
-            Services.prefs.setBoolPref("privacy.trackingprotection.enabled", false);
-            break;
-          // Tracking protection everywhere.
-          case this.PREF_TRACKING_PROTECTION_ENABLED:
-            Services.prefs.setBoolPref("privacy.trackingprotection.pbmode.enabled", true);
-            Services.prefs.setBoolPref("privacy.trackingprotection.enabled", true);
-            break;
-        }
-        return;
-      }
-      // Enabling or disabling suggestions will prevent future prompts
-      case SearchEngines.PREF_SUGGEST_ENABLED:
-        Services.prefs.setBoolPref(SearchEngines.PREF_SUGGEST_PROMPTED, true);
-        break;
-
-      // Crash reporter preference is in a service; set and return.
-      case "datareporting.crashreporter.submitEnabled":
-        let crashReporterBuilt = "nsICrashReporter" in Ci && Services.appinfo instanceof Ci.nsICrashReporter;
-        if (crashReporterBuilt) {
-          Services.appinfo.submitReports = json.value;
-        }
-        return;
-
-      // When sending to Java, we normalized special preferences that use
-      // integers and strings to represent booleans. Here, we convert them back
-      // to their actual types so we can store them.
-      case "browser.chrome.titlebarMode":
-      case "network.cookie.cookieBehavior":
-      case "font.size.inflation.minTwips":
-      case "home.sync.updateMode":
-      case "browser.image_blocking":
-        json.type = "int";
-        json.value = parseInt(json.value);
-        break;
-    }
-
-    switch (json.type) {
-      case "bool":
-        Services.prefs.setBoolPref(json.name, json.value);
-        break;
-      case "int":
-        Services.prefs.setIntPref(json.name, json.value);
-        break;
-      default: {
-        let pref = Cc["@mozilla.org/pref-localizedstring;1"].createInstance(Ci.nsIPrefLocalizedString);
-        pref.data = json.value;
-        Services.prefs.setComplexValue(json.name, Ci.nsISupportsString, pref);
-        break;
-      }
-    }
-
-    // Finally, if we were asked to flush, flush prefs to disk right now.
-    // This allows us to be confident that prefs set in Settings are persisted,
-    // even if we crash very soon after.
-    if (json.flush) {
-      Services.prefs.savePrefFile(null);
-    }
   },
 
   sanitize: function (aItems, callback) {
@@ -1752,8 +1475,10 @@ var BrowserApp = {
       focused = doc.activeElement;
     }
 
-    if (focused instanceof HTMLInputElement && focused.mozIsTextField(false))
+    if (focused instanceof HTMLInputElement &&
+        (focused.mozIsTextField(false) || focused.type === "number")) {
       return focused;
+    }
 
     if (aOnlyInputElements)
       return null;
@@ -1787,10 +1512,45 @@ var BrowserApp = {
             aAllowZoom && shouldZoom && !ViewportHandler.isViewportSpecified(aBrowser.contentWindow));
       }
     } else {
-      // Using a timeout to let the viewport propagate to the compositor thread before requesting a pan and zoom animation
-      // so the element will end up in the middle of the correctly sized viewport. See Bug 1231517.
+      let dwu = aBrowser.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+      if (!dwu) {
+        return;
+      }
+
+      let apzFlushDone = function() {
+        Services.obs.removeObserver(apzFlushDone, "apz-repaints-flushed", false);
+        dwu.zoomToFocusedInput();
+      };
+
+      let paintDone = function() {
+        window.removeEventListener("MozAfterPaint", paintDone, false);
+        if (dwu.flushApzRepaints()) {
+          Services.obs.addObserver(apzFlushDone, "apz-repaints-flushed", false);
+        } else {
+          apzFlushDone();
+        }
+      };
+
+      let gotResizeWindow = false;
+      let resizeWindow = function(e) {
+        gotResizeWindow = true;
+        aBrowser.contentWindow.removeEventListener("resize", resizeWindow, false);
+        if (dwu.isMozAfterPaintPending) {
+          window.addEventListener("MozAfterPaint", paintDone, false);
+        } else {
+          paintDone();
+        }
+      }
+
+      aBrowser.contentWindow.addEventListener("resize", resizeWindow, false);
+
+      // The "resize" event sometimes fails to fire, so set a timer to catch that case
+      // and unregister the event listener. See Bug 1253469
       setTimeout(function(e) {
-        aBrowser.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils).zoomToFocusedInput();
+        if (!gotResizeWindow) {
+          aBrowser.contentWindow.removeEventListener("resize", resizeWindow, false);
+          dwu.zoomToFocusedInput();
+        }
       }, 500);
     }
   },
@@ -1998,10 +1758,6 @@ var BrowserApp = {
         this.saveAsPDF(browser);
         break;
 
-      case "Preferences:Set":
-        this.setPreferences(aData);
-        break;
-
       case "ScrollTo:FocusedInput":
         // these messages come from a change in the viewable area and not user interaction
         // we allow scrolling to the selected input, but not zooming the page
@@ -2013,7 +1769,7 @@ var BrowserApp = {
         break;
 
       case "FullScreen:Exit":
-        browser.contentDocument.mozCancelFullScreen();
+        browser.contentDocument.exitFullscreen();
         break;
 
       case "Viewport:Change":
@@ -2040,54 +1796,111 @@ var BrowserApp = {
         break;
       }
 
+      case "android-get-pref": {
+        // These pref names are not "real" pref names. They are used in the
+        // setting menu, and these are passed when initializing the setting
+        // menu. aSubject is a nsIWritableVariant to hold the pref value.
+        aSubject.QueryInterface(Ci.nsIWritableVariant);
+
+        switch (aData) {
+          // The plugin pref is actually two separate prefs, so
+          // we need to handle it differently
+          case "plugin.enable":
+            aSubject.setAsAString(PluginHelper.getPluginPreference());
+            break;
+
+          // Handle master password
+          case "privacy.masterpassword.enabled":
+            aSubject.setAsBool(MasterPassword.enabled);
+            break;
+
+          case "privacy.trackingprotection.state": {
+            aSubject.setAsAString(this.getTrackingProtectionState());
+            break;
+          }
+
+          // Crash reporter submit pref must be fetched from nsICrashReporter
+          // service.
+          case "datareporting.crashreporter.submitEnabled":
+            let crashReporterBuilt = "nsICrashReporter" in Ci &&
+                Services.appinfo instanceof Ci.nsICrashReporter;
+            if (crashReporterBuilt) {
+              aSubject.setAsBool(Services.appinfo.submitReports);
+            }
+            break;
+        }
+        break;
+      }
+
+      case "android-set-pref": {
+        // Pseudo-prefs. aSubject is an nsIWritableVariant that holds the pref
+        // value. Set to empty to signal the pref was handled.
+        aSubject.QueryInterface(Ci.nsIWritableVariant);
+        let value = aSubject.QueryInterface(Ci.nsIVariant);
+
+        switch (aData) {
+          // The plugin pref is actually two separate prefs, so we need to
+          // handle it differently.
+          case "plugin.enable":
+            PluginHelper.setPluginPreference(value);
+            aSubject.setAsEmpty();
+            break;
+
+          // MasterPassword pref is not real, we just need take action and leave
+          case "privacy.masterpassword.enabled":
+            if (MasterPassword.enabled) {
+              MasterPassword.removePassword(value);
+            } else {
+              MasterPassword.setPassword(value);
+            }
+            aSubject.setAsEmpty();
+            break;
+
+          // "privacy.trackingprotection.state" is not a "real" pref name, but
+          // it's used in the setting menu.  By default
+          // "privacy.trackingprotection.pbmode.enabled" is true, and
+          // "privacy.trackingprotection.enabled" is false.
+          case "privacy.trackingprotection.state": {
+            switch (value) {
+              // Tracking protection disabled.
+              case this.PREF_TRACKING_PROTECTION_DISABLED:
+                Services.prefs.setBoolPref("privacy.trackingprotection.pbmode.enabled", false);
+                Services.prefs.setBoolPref("privacy.trackingprotection.enabled", false);
+                break;
+              // Tracking protection only in private browsing,
+              case this.PREF_TRACKING_PROTECTION_ENABLED_PB:
+                Services.prefs.setBoolPref("privacy.trackingprotection.pbmode.enabled", true);
+                Services.prefs.setBoolPref("privacy.trackingprotection.enabled", false);
+                break;
+              // Tracking protection everywhere.
+              case this.PREF_TRACKING_PROTECTION_ENABLED:
+                Services.prefs.setBoolPref("privacy.trackingprotection.pbmode.enabled", true);
+                Services.prefs.setBoolPref("privacy.trackingprotection.enabled", true);
+                break;
+            }
+            aSubject.setAsEmpty();
+            break;
+          }
+
+          // Crash reporter preference is in a service; set and return.
+          case "datareporting.crashreporter.submitEnabled":
+            let crashReporterBuilt = "nsICrashReporter" in Ci &&
+                Services.appinfo instanceof Ci.nsICrashReporter;
+            if (crashReporterBuilt) {
+              Services.appinfo.submitReports = value;
+              aSubject.setAsEmpty();
+            }
+            break;
+        }
+        break;
+      }
+
       case "sessionstore-state-purge-complete":
         Messaging.sendRequest({ type: "Session:StatePurged" });
         break;
 
       case "gather-telemetry":
         Messaging.sendRequest({ type: "Telemetry:Gather" });
-        break;
-
-      case "nsPref:changed":
-        this.notifyPrefObservers(aData);
-        break;
-
-      case "webapps-runtime-install":
-        WebappManager.install(JSON.parse(aData), aSubject);
-        break;
-
-      case "webapps-runtime-install-package":
-        WebappManager.installPackage(JSON.parse(aData), aSubject);
-        break;
-
-      case "webapps-ask-install":
-        WebappManager.askInstall(JSON.parse(aData));
-        break;
-
-      case "webapps-ask-uninstall":
-        WebappManager.askUninstall(JSON.parse(aData));
-        break;
-
-      case "webapps-launch": {
-        WebappManager.launch(JSON.parse(aData));
-        break;
-      }
-
-      case "webapps-runtime-uninstall": {
-        WebappManager.uninstall(JSON.parse(aData), aSubject);
-        break;
-      }
-
-      case "Webapps:AutoInstall":
-        WebappManager.autoInstall(JSON.parse(aData));
-        break;
-
-      case "Webapps:Load":
-        this._loadWebapp(JSON.parse(aData));
-        break;
-
-      case "Webapps:AutoUninstall":
-        WebappManager.autoUninstall(JSON.parse(aData));
         break;
 
       case "Locale:OS":
@@ -2148,6 +1961,31 @@ var BrowserApp = {
 
       case "Fonts:Reload":
         FontEnumerator.updateFontList();
+        break;
+
+      case "Vibration:Request":
+        if (aSubject instanceof Navigator) {
+          let navigator = aSubject;
+          let buttons = [
+            {
+              label: Strings.browser.GetStringFromName("vibrationRequest.denyButton"),
+              callback: function() {
+                navigator.setVibrationPermission(false);
+              }
+            },
+            {
+              label: Strings.browser.GetStringFromName("vibrationRequest.allowButton"),
+              callback: function() {
+                navigator.setVibrationPermission(true);
+              },
+              positive: true
+            }
+          ];
+          let message = Strings.browser.GetStringFromName("vibrationRequest.message");
+          let options = {};
+          NativeWindow.doorhanger.show(message, "vibration-request", buttons,
+              BrowserApp.selectedTab.id, options, "VIBRATION");
+        }
         break;
 
       default:
@@ -2226,34 +2064,6 @@ var BrowserApp = {
 
   getUITelemetryObserver: function() {
     return UITelemetry;
-  },
-
-  getPreferences: function getPreferences(requestId, prefNames, count) {
-    this.handlePreferencesRequest(requestId, prefNames, false);
-  },
-
-  observePreferences: function observePreferences(requestId, prefNames, count) {
-    this.handlePreferencesRequest(requestId, prefNames, true);
-  },
-
-  removePreferenceObservers: function removePreferenceObservers(aRequestId) {
-    let newPrefObservers = [];
-    for (let prefName in this._prefObservers) {
-      let requestIds = this._prefObservers[prefName];
-      // Remove the requestID from the preference handlers
-      let i = requestIds.indexOf(aRequestId);
-      if (i >= 0) {
-        requestIds.splice(i, 1);
-      }
-
-      // If there are no more request IDs, remove the observer
-      if (requestIds.length == 0) {
-        Services.prefs.removeObserver(prefName, this);
-      } else {
-        newPrefObservers[prefName] = requestIds;
-      }
-    }
-    this._prefObservers = newPrefObservers;
   },
 
   // This method will return a list of history items and toIndex based on the action provided from the fromIndex to toIndex,
@@ -2420,6 +2230,11 @@ var NativeWindow = {
         aButtons = [];
       }
 
+      if (aButtons.length > 2) {
+        console.log("Doorhanger can have a maximum of two buttons!");
+        aButtons.length = 2;
+      }
+
       aButtons.forEach((function(aButton) {
         this._callbacks[this._callbacksId] = { cb: aButton.callback, prompt: this._promptId };
         aButton.callback = this._callbacksId;
@@ -2508,6 +2323,8 @@ var NativeWindow = {
       delete this.items[aId];
     },
 
+    // Although we do not use this ourselves anymore, add-ons may still
+    // need it as it has been documented, so we shouldn't remove it.
     SelectorContext: function(aSelector) {
       return {
         matches: function(aElt) {
@@ -2624,6 +2441,30 @@ var NativeWindow = {
       }
     },
 
+    imageShareableContext: {
+      matches: function imageShareableContextMatches(aElement) {
+        let imgSrc = '';
+        if (aElement instanceof Ci.nsIDOMHTMLImageElement) {
+          imgSrc = aElement.src;
+        } else if (aElement instanceof Ci.nsIImageLoadingContent &&
+            aElement.currentURI &&
+            aElement.currentURI.spec) {
+          imgSrc = aElement.currentURI.spec;
+        }
+
+        // In order to share an image, we need to pass the image src over IPC via an Intent (in
+        // `ApplicationPackageManager.queryIntentActivities`). However, the transaction has a 1MB limit
+        // (shared by all transactions in progress) - otherwise we crash! (bug 1243305)
+        //   https://developer.android.com/reference/android/os/TransactionTooLargeException.html
+        //
+        // The transaction limit is 1MB and we arbitrarily choose to cap this transaction at 1/4 of that = 250,000 bytes.
+        // In Java, a UTF-8 character is 1-4 bytes so, 250,000 bytes / 4 bytes/char = 62,500 char
+        let MAX_IMG_SRC_LEN = 62500;
+        let isTooLong = imgSrc.length >= MAX_IMG_SRC_LEN;
+        return !isTooLong && this.NativeWindow.contextmenus.imageSaveableContext.matches(aElement);
+      }.bind(this)
+    },
+
     mediaSaveableContext: {
       matches: function mediaSaveableContextMatches(aElement) {
         return (aElement instanceof HTMLVideoElement ||
@@ -2666,6 +2507,26 @@ var NativeWindow = {
               return true;
             else if (!muted && aMode == "media-unmuted")
               return true;
+          }
+          return false;
+        }
+      };
+    },
+
+    videoContext: function(aMode) {
+      return {
+        matches: function(aElt) {
+          if (aElt instanceof HTMLVideoElement) {
+            if (!aMode) {
+              return true;
+            }
+            var isFullscreen = aElt.ownerDocument.fullscreenElement == aElt;
+            if (aMode == "not-fullscreen") {
+              return !isFullscreen;
+            }
+            if (aMode == "fullscreen") {
+              return isFullscreen;
+            }
           }
           return false;
         }
@@ -2803,6 +2664,12 @@ var NativeWindow = {
         return;
       }
 
+      // If the event was already defaultPrevented by somebody (web content, or
+      // some other part of gecko), then don't do anything with it.
+      if (event.defaultPrevented) {
+        return;
+      }
+
       // Use the highlighted element for the context menu target. When accessibility is
       // enabled, elements may not be highlighted so use the event target instead.
       this._target = BrowserEventHandler._highlightElement || event.target;
@@ -2873,7 +2740,9 @@ var NativeWindow = {
         }
         return node.currentURI.spec;
       } else if (node instanceof Ci.nsIDOMHTMLMediaElement) {
-        return (node.currentSrc || node.src);
+        let srcUrl = node.currentSrc || node.src;
+        // If URL prepended with blob or mediasource, we'll remove it.
+        return srcUrl.replace(/^(?:blob|mediasource):/, '');
       }
 
       return "";
@@ -3133,7 +3002,7 @@ var NativeWindow = {
     _copyStringToDefaultClipboard: function(aString) {
       let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
       clipboard.copyString(aString);
-      Snackbars.show(Strings.browser.GetStringFromName("selectionHelper.textCopied"), Snackbars.LENGTH_SHORT);
+      Snackbars.show(Strings.browser.GetStringFromName("selectionHelper.textCopied"), Snackbars.LENGTH_LONG);
     },
 
     _stripScheme: function(aString) {
@@ -3523,6 +3392,7 @@ function Tab(aURL, aParams) {
   this.desktopMode = false;
   this.originalURI = null;
   this.hasTouchListener = false;
+  this.playingAudio = false;
 
   this.create(aURL, aParams);
 }
@@ -3582,7 +3452,8 @@ Tab.prototype = {
       let manifest = appsService.getAppByManifestURL(BrowserApp.manifestUrl);
       if (manifest) {
         let app = manifest.QueryInterface(Ci.mozIApplication);
-        this.browser.docShell.setIsApp(app.localId);
+        this.browser.docShell.frameType = Ci.nsIDocShell.FRAME_TYPE_APP;
+        this.browser.docShell.setOriginAttributes({appId: app.localId});
       }
     }
 
@@ -3677,6 +3548,7 @@ Tab.prototype = {
     this.browser.addEventListener("MozScrolledAreaChanged", this, true);
     this.browser.addEventListener("pageshow", this, true);
     this.browser.addEventListener("MozApplicationManifest", this, true);
+    this.browser.addEventListener("TabPreZombify", this, true);
 
     // Note that the XBL binding is untrusted
     this.browser.addEventListener("PluginBindingAttached", this, true, true);
@@ -3685,16 +3557,21 @@ Tab.prototype = {
 
     Services.obs.addObserver(this, "before-first-paint", false);
 
+    // Always intialise new tabs with basic session store data to avoid
+    // problems with functions that always expect it to be present
+    this.browser.__SS_data = {
+      entries: [{
+        url: aURL,
+        title: truncate(title, MAX_TITLE_LENGTH)
+      }],
+      index: 1,
+      desktopMode: this.desktopMode,
+      isPrivate: isPrivate
+    };
+
     if (aParams.delayLoad) {
-      // If this is a zombie tab, attach restore data so the tab will be
-      // restored when selected
-      this.browser.__SS_data = {
-        entries: [{
-          url: aURL,
-          title: truncate(title, MAX_TITLE_LENGTH)
-        }],
-        index: 1
-      };
+      // If this is a zombie tab, mark the browser for delay loading, which will
+      // restore the tab when selected using the session data added above
       this.browser.__SS_restore = true;
     } else {
       let flags = "flags" in aParams ? aParams.flags : Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
@@ -3784,6 +3661,7 @@ Tab.prototype = {
     this.browser.removeEventListener("MozScrolledAreaChanged", this, true);
     this.browser.removeEventListener("pageshow", this, true);
     this.browser.removeEventListener("MozApplicationManifest", this, true);
+    this.browser.removeEventListener("TabPreZombify", this, true);
 
     this.browser.removeEventListener("PluginBindingAttached", this, true, true);
     this.browser.removeEventListener("VideoBindingAttached", this, true, true);
@@ -3976,8 +3854,8 @@ Tab.prototype = {
        * error should be no more than one app unit so doing the floor is overkill, but safe in the
        * sense that the extra page size updates that get sent as a result will be mostly harmless.
        */
-      let pageLargerThanScreen = (cssPageRect.width >= Math.floor(viewport.cssWidth))
-                              && (cssPageRect.height >= Math.floor(viewport.cssHeight));
+      let pageLargerThanScreen = (Math.ceil(cssPageRect.width) >= Math.floor(viewport.cssWidth))
+                              && (Math.ceil(cssPageRect.height) >= Math.floor(viewport.cssHeight));
       if (doc.readyState === 'complete' || pageLargerThanScreen) {
         viewport.cssPageLeft = cssPageRect.left;
         viewport.cssPageTop = cssPageRect.top;
@@ -4013,7 +3891,7 @@ Tab.prototype = {
   addMetadata: function(type, value, quality = 1) {
     if (!this.metatags) {
       this.metatags = {
-        url: this.browser.currentURI.spec
+        url: this.browser.currentURI.specIgnoringRef
       };
     }
 
@@ -4097,7 +3975,7 @@ Tab.prototype = {
     }
   },
 
-  makeOpenSearchMessage: function(eventTarget) {
+  sendOpenSearchMessage: function(eventTarget) {
     let type = eventTarget.type && eventTarget.type.toLowerCase();
     // Replace all starting or trailing spaces or spaces before "*;" globally w/ "".
     type = type.replace(/^\s+|\s*(?:;.*)?$/g, "");
@@ -4143,11 +4021,11 @@ Tab.prototype = {
           return null;
 
         // Broadcast message that this tab contains search engines that should be visible.
-        return {
+        Messaging.sendRequest({
           type: "Link:OpenSearch",
           tabID: this.id,
           visible: true
-        };
+        });
       });
     }
   },
@@ -4175,12 +4053,21 @@ Tab.prototype = {
 
         let docURI = target.documentURI;
         let errorType = "";
-        if (docURI.startsWith("about:certerror"))
+        if (docURI.startsWith("about:certerror")) {
           errorType = "certerror";
-        else if (docURI.startsWith("about:blocked"))
-          errorType = "blocked"
-        else if (docURI.startsWith("about:neterror"))
+        }
+        else if (docURI.startsWith("about:blocked")) {
+          errorType = "blocked";
+        }
+        else if (docURI.startsWith("about:neterror")) {
+          let error = docURI.search(/e\=/);
+          let duffUrl = docURI.search(/\&u\=/);
+          let errorExtra = decodeURIComponent(docURI.slice(error + 2, duffUrl));
+          // Here is a list of errorExtra types (et_*)
+          // http://mxr.mozilla.org/mozilla-central/source/mobile/android/chrome/content/netError.xhtml#287
+          UITelemetry.addEvent("neterror.1", "content", null, errorExtra);
           errorType = "neterror";
+        }
 
         // Attach a listener to watch for "click" events bubbling up from error
         // pages and other similar page. This lets us fix bugs like 401575 which
@@ -4259,9 +4146,10 @@ Tab.prototype = {
         let list = this.sanitizeRelString(target.rel);
         if (list.indexOf("[icon]") != -1) {
           jsonMessage = this.makeFaviconMessage(target);
-        } else if (list.indexOf("[apple-touch-icon]") != -1) {
-          let message = this.makeFaviconMessage(target);
-          this.addMetadata("touchIconList", message.href, message.size);
+        } else if (list.indexOf("[apple-touch-icon]") != -1 ||
+            list.indexOf("[apple-touch-icon-precomposed]") != -1) {
+          jsonMessage = this.makeFaviconMessage(target);
+          this.addMetadata("touchIconList", jsonMessage.href, jsonMessage.size);
         } else if (list.indexOf("[alternate]") != -1 && aEvent.type == "DOMLinkAdded") {
           let type = target.type.toLowerCase().replace(/^\s+|\s*(?:;.*)?$/g, "");
           let isFeed = (type == "application/rss+xml" || type == "application/atom+xml");
@@ -4271,7 +4159,7 @@ Tab.prototype = {
 
           jsonMessage = this.makeFeedMessage(target, type);
         } else if (list.indexOf("[search]" != -1) && aEvent.type == "DOMLinkAdded") {
-          jsonMessage = this.makeOpenSearchMessage(target);
+          this.sendOpenSearchMessage(target);
         }
         if (!jsonMessage)
          return;
@@ -4296,6 +4184,13 @@ Tab.prototype = {
         break;
       }
 
+      case "TabPreZombify": {
+        if (!this.playingAudio) {
+          return;
+        }
+        // Fall through to the DOMAudioPlayback events, so the
+        // audio playback indicator gets reset upon zombification.
+      }
       case "DOMAudioPlaybackStarted":
       case "DOMAudioPlaybackStopped": {
         if (!Services.prefs.getBoolPref("browser.tabs.showAudioPlayingIcon") ||
@@ -4308,10 +4203,12 @@ Tab.prototype = {
           return;
         }
 
+        this.playingAudio = aEvent.type === "DOMAudioPlaybackStarted";
+
         Messaging.sendRequest({
           type: "Tab:AudioPlayingChange",
           tabID: this.id,
-          isAudioPlaying: aEvent.type === "DOMAudioPlaybackStarted"
+          isAudioPlaying: this.playingAudio
         });
         return;
       }
@@ -4563,7 +4460,7 @@ Tab.prototype = {
     if (appOrigin) {
       let originHost = "";
       try {
-        let originHost = Services.io.newURI(appOrigin, null, null).host;
+        originHost = Services.io.newURI(appOrigin, null, null).host;
       } catch (e if (e.result == Cr.NS_ERROR_FAILURE)) {
         // NS_ERROR_FAILURE can be thrown by nsIURI.host if the URI scheme does not possess a host - in this case
         // we just act as if we have an empty host.
@@ -4603,6 +4500,7 @@ Tab.prototype = {
       // browser.contentDocument is changed to the new document we're loading
       this.contentDocumentIsDisplayed = false;
       this.hasTouchListener = false;
+      Services.obs.notifyObservers(this.browser, "Session:NotifyLocationChange", null);
     } else {
       setTimeout(function() {
         this.sendViewportUpdate();
@@ -5292,13 +5190,13 @@ var ErrorPageEventHandler = {
           // can use the right strings/links
           let bucketName = "";
           let sendTelemetry = false;
-          if (errorDoc.documentURI.contains("e=malwareBlocked")) {
+          if (errorDoc.documentURI.includes("e=malwareBlocked")) {
             sendTelemetry = true;
             bucketName = "WARNING_MALWARE_PAGE_";
-          } else if (errorDoc.documentURI.contains("e=phishingBlocked")) {
+          } else if (errorDoc.documentURI.includes("e=deceptiveBlocked")) {
             sendTelemetry = true;
             bucketName = "WARNING_PHISHING_PAGE_";
-          } else if (errorDoc.documentURI.contains("e=unwantedBlocked")) {
+          } else if (errorDoc.documentURI.includes("e=unwantedBlocked")) {
             sendTelemetry = true;
             bucketName = "WARNING_UNWANTED_PAGE_";
           }
@@ -5461,15 +5359,15 @@ var FormAssistant = {
     if (!aInvalidElements.length)
       return;
 
-    // Ignore this notificaiton if the current tab doesn't contain the invalid form
+    // Ignore this notificaiton if the current tab doesn't contain the invalid element
+    let currentElement = aInvalidElements.queryElementAt(0, Ci.nsISupports);
     if (BrowserApp.selectedBrowser.contentDocument !=
-        aFormElement.ownerDocument.defaultView.top.document)
+        currentElement.ownerDocument.defaultView.top.document)
       return;
 
     this._invalidSubmit = true;
 
     // Our focus listener will show the element's validation message
-    let currentElement = aInvalidElements.queryElementAt(0, Ci.nsISupports);
     currentElement.focus();
   },
 
@@ -5748,7 +5646,7 @@ var XPInstallObserver = {
 
     switch (aTopic) {
       case "addon-install-started":
-        Snackbars.show(strings.GetStringFromName("alertAddonsDownloading"), Snackbars.LENGTH_SHORT);
+        Snackbars.show(strings.GetStringFromName("alertAddonsDownloading"), Snackbars.LENGTH_LONG);
         break;
       case "addon-install-disabled": {
         if (!tab)
@@ -6044,8 +5942,10 @@ var ViewportHandler = {
       let scrollChange = JSON.parse(aData);
       let windowUtils = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
       windowUtils.setNextPaintSyncId(scrollChange.id);
-      let win = BrowserApp.selectedTab.browser.contentWindow;
-      win.scrollBy(scrollChange.x, scrollChange.y);
+      if (!AppConstants.MOZ_ANDROID_APZ) {
+        let win = BrowserApp.selectedTab.browser.contentWindow;
+        win.scrollBy(scrollChange.x, scrollChange.y);
+      }
     }
   },
 
@@ -6167,7 +6067,7 @@ var PopupBlockerObserver = {
     let pageReport = BrowserApp.selectedBrowser.pageReport;
     if (pageReport) {
       for (let i = 0; i < pageReport.length; ++i) {
-        let popupURIspec = pageReport[i].popupWindowURI.spec;
+        let popupURIspec = pageReport[i].popupWindowURIspec;
 
         // Sometimes the popup URI that we get back from the pageReport
         // isn't useful (for instance, netscape.com's popup URI ends up
@@ -6433,7 +6333,7 @@ var IdentityHandler = {
     }
 
     // We also allow "about:" by allowing the selector to be empty (i.e. '(|.....|...|...)'
-    let whitelist = /^about:($|about|accounts|addons|buildconfig|cache|config|crashes|devices|downloads|fennec|firefox|feedback|healthreport|license|logins|logo|memory|mozilla|networking|plugins|privatebrowsing|rights|serviceworkers|support|telemetry|webrtc)($|\?)/i;
+    let whitelist = /^about:($|about|accounts|addons|buildconfig|cache|config|crashes|devices|downloads|fennec|firefox|feedback|healthreport|home|license|logins|logo|memory|mozilla|networking|plugins|privatebrowsing|rights|serviceworkers|support|telemetry|webrtc)($|\?)/i;
     if (uri.schemeIs("about") && whitelist.test(uri.spec)) {
         return this.IDENTITY_MODE_CHROMEUI;
     }
@@ -6576,14 +6476,18 @@ var IdentityHandler = {
 
       // Build an appropriate supplemental block out of whatever location data we have
       let supplemental = "";
-      if (iData.city)
+      if (iData.city) {
         supplemental += iData.city + "\n";
-      if (iData.state && iData.country)
+      }
+      if (iData.state && iData.country) {
         supplemental += Strings.browser.formatStringFromName("identity.identified.state_and_country", [iData.state, iData.country], 2);
-      else if (iData.state) // State only
+        result.country = iData.country;
+      } else if (iData.state) { // State only
         supplemental += iData.state;
-      else if (iData.country) // Country only
+      } else if (iData.country) { // Country only
         supplemental += iData.country;
+        result.country = iData.country;
+      }
       result.supplemental = supplemental;
 
       return result;
@@ -6810,7 +6714,7 @@ var SearchEngines = {
     Services.search.addEngine(engine.url, Ci.nsISearchEngine.DATA_XML, engine.iconURL, false, {
       onSuccess: function() {
         // Display a toast confirming addition of new search engine.
-        Snackbars.show(Strings.browser.formatStringFromName("alertSearchEngineAddedToast", [engine.title], 1), Snackbars.LENGTH_SHORT);
+        Snackbars.show(Strings.browser.formatStringFromName("alertSearchEngineAddedToast", [engine.title], 1), Snackbars.LENGTH_LONG);
       },
 
       onError: function(aCode) {
@@ -6824,59 +6728,117 @@ var SearchEngines = {
           errorMessage = "alertSearchEngineErrorToast";
         }
 
-        Snackbars.show(Strings.browser.formatStringFromName(errorMessage, [engine.title], 1), Snackbars.LENGTH_SHORT);
+        Snackbars.show(Strings.browser.formatStringFromName(errorMessage, [engine.title], 1), Snackbars.LENGTH_LONG);
       }
     });
   },
 
-  addEngine: function addEngine(aElement) {
+  /**
+   * Build and return an array of sorted form data / Query Parameters
+   * for an element in a submission form.
+   *
+   * @param element
+   *        A valid submission element of a form.
+   */
+  _getSortedFormData: function(element) {
+    let formData = [];
+
+    for (let formElement of element.form.elements) {
+      if (!formElement.type) {
+        continue;
+      }
+
+      // Make this text field a generic search parameter.
+      if (element == formElement) {
+        formData.push({ name: formElement.name, value: "{searchTerms}" });
+        continue;
+      }
+
+      // Add other form elements as parameters.
+      switch (formElement.type.toLowerCase()) {
+        case "checkbox":
+        case "radio":
+          if (!formElement.checked) {
+            break;
+          }
+        case "text":
+        case "hidden":
+        case "textarea":
+          formData.push({ name: escape(formElement.name), value: escape(formElement.value) });
+          break;
+
+        case "select-one": {
+          for (let option of formElement.options) {
+            if (option.selected) {
+              formData.push({ name: escape(formElement.name), value: escape(formElement.value) });
+              break;
+            }
+          }
+        }
+      }
+    };
+
+    // Return valid, pre-sorted queryParams. 
+    return formData.filter(a => a.name && a.value).sort((a, b) => {
+      // nsIBrowserSearchService.hasEngineWithURL() ensures sort, but this helps.
+      if (a.name > b.name) {
+        return 1;
+      }
+      if (b.name > a.name) {
+        return -1;
+      }
+
+      if (a.value > b.value) {
+        return 1;
+      }
+      if (b.value > a.value) {
+        return -1;
+      }
+
+      return 0;
+    });
+  },
+
+  /**
+   * Check if any search engines already handle an EngineURL of type
+   * URLTYPE_SEARCH_HTML, matching this request-method, formURL, and queryParams.
+   */
+  visibleEngineExists: function(element) {
+    let formData = this._getSortedFormData(element);
+
+    let form = element.form;
+    let method = form.method.toUpperCase();
+
+    let charset = element.ownerDocument.characterSet;
+    let docURI = Services.io.newURI(element.ownerDocument.URL, charset, null);
+    let formURL = Services.io.newURI(form.getAttribute("action"), charset, docURI).spec;
+
+    return Services.search.hasEngineWithURL(method, formURL, formData);
+  },
+
+  /**
+   * Adds a new search engine to the BrowserSearchService, based on its provided element. Prompts for an engine
+   * name, and appends a simple version-number in case of collision with an existing name.
+   *
+   * @return callback to handle success value. Currently used for ActionBarHandler.js and UI updates.
+   */
+  addEngine: function addEngine(aElement, resultCallback) {
     let form = aElement.form;
     let charset = aElement.ownerDocument.characterSet;
     let docURI = Services.io.newURI(aElement.ownerDocument.URL, charset, null);
     let formURL = Services.io.newURI(form.getAttribute("action"), charset, docURI).spec;
     let method = form.method.toUpperCase();
-    let formData = [];
-
-    for (let i = 0; i < form.elements.length; ++i) {
-      let el = form.elements[i];
-      if (!el.type)
-        continue;
-
-      // make this text field a generic search parameter
-      if (aElement == el) {
-        formData.push({ name: el.name, value: "{searchTerms}" });
-        continue;
-      }
-
-      let type = el.type.toLowerCase();
-      let escapedName = escape(el.name);
-      let escapedValue = escape(el.value);
-
-      // add other form elements as parameters
-      switch (el.type) {
-        case "checkbox":
-        case "radio":
-          if (!el.checked) break;
-        case "text":
-        case "hidden":
-        case "textarea":
-          formData.push({ name: escapedName, value: escapedValue });
-          break;
-        case "select-one":
-          for (let option of el.options) {
-            if (option.selected) {
-              formData.push({ name: escapedName, value: escapedValue });
-              break;
-            }
-          }
-      }
-    }
+    let formData = this._getSortedFormData(aElement);
 
     // prompt user for name of search engine
-    let promptTitle = Strings.browser.GetStringFromName("contextmenu.addSearchEngine2");
+    let promptTitle = Strings.browser.GetStringFromName("contextmenu.addSearchEngine3");
     let title = { value: (aElement.ownerDocument.title || docURI.host) };
-    if (!Services.prompt.prompt(null, promptTitle, null, title, null, {}))
+    if (!Services.prompt.prompt(null, promptTitle, null, title, null, {})) {
+      if (resultCallback) {
+        resultCallback(false);
+      };
       return;
+    }
 
     // fetch the favicon for this page
     let dbFile = FileUtils.getFile("ProfD", ["browser.db"]);
@@ -6885,11 +6847,16 @@ var SearchEngines = {
     stmts[0] = mDBConn.createStatement("SELECT favicon FROM history_with_favicons WHERE url = ?");
     stmts[0].bindByIndex(0, docURI.spec);
     let favicon = null;
+
     Services.search.init(function addEngine_cb(rv) {
       if (!Components.isSuccessCode(rv)) {
         Cu.reportError("Could not initialize search service, bailing out.");
+        if (resultCallback) {
+          resultCallback(false);
+        };
         return;
       }
+
       mDBConn.executeAsync(stmts, stmts.length, {
         handleResult: function (results) {
           let bytes = results.getNextRow().getResultByName("favicon");
@@ -6905,14 +6872,15 @@ var SearchEngines = {
             name = title.value + " " + i;
 
           Services.search.addEngineWithDetails(name, favicon, null, null, method, formURL);
-          Snackbars.show(Strings.browser.formatStringFromName("alertSearchEngineAddedToast", [name], 1), Snackbars.LENGTH_SHORT);
+          Snackbars.show(Strings.browser.formatStringFromName("alertSearchEngineAddedToast", [name], 1), Snackbars.LENGTH_LONG);
+
           let engine = Services.search.getEngineByName(name);
           engine.wrappedJSObject._queryCharset = charset;
-          for (let i = 0; i < formData.length; ++i) {
-            let param = formData[i];
-            if (param.name && param.value)
-              engine.addParam(param.name, param.value, null);
-          }
+          formData.forEach(param => { engine.addParam(param.name, param.value, null); });
+
+          if (resultCallback) {
+            return resultCallback(true);
+          };
         }
       });
     });
@@ -6929,11 +6897,13 @@ var ActivityObserver = {
     let isForeground = false;
     let tab = BrowserApp.selectedTab;
 
+    UITelemetry.addEvent("show.1", "system", null, aTopic);
+
     switch (aTopic) {
       case "application-background" :
         let doc = (tab ? tab.browser.contentDocument : null);
-        if (doc && doc.mozFullScreen) {
-          doc.mozCancelFullScreen();
+        if (doc && doc.fullscreenElement) {
+          doc.exitFullscreen();
         }
         isForeground = false;
         break;
@@ -6953,6 +6923,56 @@ var Telemetry = {
     let histogram = Services.telemetry.getHistogramById(aHistogramId);
     histogram.add(aValue);
   },
+};
+
+var Experiments = {
+  // Enable malware download protection (bug 936041)
+  MALWARE_DOWNLOAD_PROTECTION: "malware-download-protection",
+
+  // Try to load pages from disk cache when network is offline (bug 935190)
+  OFFLINE_CACHE: "offline-cache",
+
+  init() {
+    Messaging.sendRequestForResult({
+      type: "Experiments:GetActive"
+    }).then(experiments => {
+      let names = JSON.parse(experiments);
+      for (let name of names) {
+        switch (name) {
+          case this.MALWARE_DOWNLOAD_PROTECTION: {
+            // Apply experiment preferences on the default branch. This allows
+            // us to avoid migrating user prefs when experiments are enabled/disabled,
+            // and it also allows users to override these prefs in about:config.
+            let defaults = Services.prefs.getDefaultBranch(null);
+            defaults.setBoolPref("browser.safebrowsing.downloads.enabled", true);
+            defaults.setBoolPref("browser.safebrowsing.downloads.remote.enabled", true);
+            continue;
+          }
+
+          case this.OFFLINE_CACHE: {
+            let defaults = Services.prefs.getDefaultBranch(null);
+            defaults.setBoolPref("browser.tabs.useCache", true);
+            continue;
+          }
+        }
+      }
+    });
+  },
+
+  setOverride(name, isEnabled) {
+    Messaging.sendRequest({
+      type: "Experiments:SetOverride",
+      name: name,
+      isEnabled: isEnabled
+    });
+  },
+
+  clearOverride(name) {
+    Messaging.sendRequest({
+      type: "Experiments:ClearOverride",
+      name: name
+    });
+  }
 };
 
 var ExternalApps = {
@@ -7104,6 +7124,8 @@ var Distribution = {
   // File used to store campaign data
   _file: null,
 
+  _preferencesJSON: null,
+
   init: function dc_init() {
     Services.obs.addObserver(this, "Distribution:Changed", false);
     Services.obs.addObserver(this, "Distribution:Set", false);
@@ -7126,9 +7148,18 @@ var Distribution = {
         } catch (e) {
           console.log("Unable to reinit search service.");
         }
+        // Make sure we don't reuse the original preferences
+        this._preferencesJSON = null;
         // Fall through.
 
       case "Distribution:Set":
+        if (aData) {
+          try {
+            this._preferencesJSON = JSON.parse(aData);
+          } catch (e) {
+            console.log("Invalid distribution JSON.");
+          }
+        }
         // Reload the default prefs so we can observe "prefservice:after-app-defaults"
         Services.prefs.QueryInterface(Ci.nsIObserver).observe(null, "reload-default-prefs", null);
         this.installDistroAddons();
@@ -7163,6 +7194,11 @@ var Distribution = {
   },
 
   getPrefs: function dc_getPrefs() {
+    if (this._preferencesJSON) {
+        this.applyPrefs(this._preferencesJSON);
+        return;
+    }
+
     // Get the distribution directory, and bail if it doesn't exist.
     let file = FileUtils.getDir("XREAppDist", [], false);
     if (!file.exists())
@@ -7366,7 +7402,7 @@ var Tabs = {
         if (["down", "unknown", "up"].indexOf(aData) == -1) {
           return;
         }
-        this.useCache = (aData != "up");
+        this.useCache = (aData === "down");
         break;
     }
   },
@@ -7386,7 +7422,14 @@ var Tabs = {
           let targetURI = targetDoc.documentURI;
           if (isTopLevel && !targetURI.startsWith("about:")) {
             UITelemetry.addEvent("neterror.1", "toast", null, "usecache");
-            Snackbars.show(Strings.browser.GetStringFromName("networkOffline.message"), Snackbars.LENGTH_INDEFINITE);
+            Snackbars.show(
+              Strings.browser.GetStringFromName("networkOffline.message2"),
+              Snackbars.LENGTH_INDEFINITE,
+              {
+                // link_blue
+                backgroundColor: "#0096DD"
+              }
+            );
           }
         }
         break;
@@ -7413,8 +7456,11 @@ var Tabs = {
     let lruTab = null;
     // Find the least recently used non-zombie tab.
     for (let i = 0; i < tabs.length; i++) {
-      if (tabs[i] == selected || tabs[i].browser.__SS_restore) {
-        // This tab is selected or already a zombie, skip it.
+      if (tabs[i] == selected ||
+          tabs[i].browser.__SS_restore ||
+          tabs[i].playingAudio) {
+        // This tab is selected, is already a zombie, or is currently playing
+        // audio, skip it.
         continue;
       }
       if (lruTab == null || tabs[i].lastTouchedAt < lruTab.lastTouchedAt) {
@@ -7451,9 +7497,9 @@ var Tabs = {
     BrowserApp.tabs.forEach(function(tab) {
       if (tab.browser && tab.browser.docShell) {
         if (aUseCache) {
-          tab.browser.docShell.defaultLoadFlags &= ~Ci.nsIRequest.LOAD_FROM_CACHE;
-        } else {
           tab.browser.docShell.defaultLoadFlags |= Ci.nsIRequest.LOAD_FROM_CACHE;
+        } else {
+          tab.browser.docShell.defaultLoadFlags &= ~Ci.nsIRequest.LOAD_FROM_CACHE;
         }
       }
     });

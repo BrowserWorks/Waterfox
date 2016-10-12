@@ -38,15 +38,19 @@ class PsutilStub(object):
     def virtual_memory(self):
         return self.svmem(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+
 # psutil will raise NotImplementedError if the platform is not supported.
 try:
     import psutil
+    have_psutil = True
 except Exception:
     try:
         # The PsutilStub should get us time intervals, at least
         psutil = PsutilStub()
     except Exception:
         psutil = None
+
+    have_psutil = False
 
 from contextlib import contextmanager
 
@@ -278,7 +282,7 @@ class SystemResourceMonitor(object):
         assert self._running
         assert not self._stopped
 
-        self._pipe.send(('terminate'))
+        self._pipe.send(('terminate',))
         self._running = False
         self._stopped = True
 
@@ -286,13 +290,19 @@ class SystemResourceMonitor(object):
 
         done = False
 
-        while self._pipe.poll(0.1):
+        # The child process will send each data sample over the pipe
+        # as a separate data structure. When it has finished sending
+        # samples, it sends a special "done" message to indicate it
+        # is finished.
+        while self._pipe.poll(1.0):
             start_time, end_time, io_diff, cpu_diff, cpu_percent, virt_mem, \
                 swap_mem = self._pipe.recv()
 
+            # There should be nothing after the "done" message so
+            # terminate.
             if start_time == 'done':
                 done = True
-                continue
+                break
 
             io = self._io_type(*io_diff)
             virt = self._virt_type(*virt_mem)
@@ -302,8 +312,17 @@ class SystemResourceMonitor(object):
             self.measurements.append(SystemResourceUsage(start_time, end_time,
                 cpu_times, cpu_percent, io, virt, swap))
 
-        self._process.join()
-        assert done
+        # We establish a timeout so we don't hang forever if the child
+        # process has crashed.
+        self._process.join(10)
+        if self._process.is_alive():
+            self._process.terminate()
+            self._process.join(10)
+        else:
+            # We should have received a "done" message from the
+            # child indicating it shut down properly. This only
+            # happens if the child shuts down cleanly.
+            assert done
 
         if len(self.measurements):
             self.start_time = self.measurements[0].start
@@ -535,7 +554,7 @@ class SystemResourceMonitor(object):
 
         The returned dict has the following keys:
 
-          version - Integer version number being rendered. Currently 1.
+          version - Integer version number being rendered. Currently 2.
           cpu_times_fields - A list of the names of the CPU times fields.
           io_fields - A list of the names of the I/O fields.
           virt_fields - A list of the names of the virtual memory fields.
@@ -547,6 +566,10 @@ class SystemResourceMonitor(object):
           phases - A list of dicts describing phases. Each phase looks a lot
             like an entry from samples (see below). Some phases may not have
             data recorded against them, so some keys may be None.
+          overall - A dict representing overall resource usage. This resembles
+            a sample entry.
+          system - Contains additional information about the system including
+            number of processors and amount of memory.
 
         Each entry in the sample list is a dict with the following keys:
 
@@ -567,13 +590,14 @@ class SystemResourceMonitor(object):
         """
 
         o = dict(
-            version=1,
+            version=2,
             cpu_times_fields=list(self._cpu_times_type._fields),
             io_fields=list(self._io_type._fields),
             virt_fields=list(self._virt_type._fields),
             swap_fields=list(self._swap_type._fields),
             samples=[],
             phases=[],
+            system={},
         )
 
         def populate_derived(e):
@@ -590,6 +614,19 @@ class SystemResourceMonitor(object):
 
                 e['cpu_times_total'] = sum(e['cpu_times_sum'])
 
+        def phase_entry(name, start, end):
+            e = dict(
+                name=name,
+                start=start,
+                end=end,
+                duration=end - start,
+                cpu_percent_cores=self.aggregate_cpu_percent(phase=name),
+                cpu_times=[list(c) for c in
+                           self.aggregate_cpu_times(phase=name)],
+                io=list(self.aggregate_io(phase=name)),
+            )
+            populate_derived(e)
+            return e
 
         for m in self.measurements:
             e = dict(
@@ -609,26 +646,24 @@ class SystemResourceMonitor(object):
             o['start'] = o['samples'][0]['start']
             o['end'] = o['samples'][-1]['end']
             o['duration'] = o['end'] - o['start']
+            o['overall'] = phase_entry(None, o['start'], o['end'])
         else:
             o['start'] = None
             o['end'] = None
             o['duration'] = None
+            o['overall'] = None
 
         o['events'] = [list(ev) for ev in self.events]
 
         for phase, v in self.phases.items():
-            e = dict(
-                name=phase,
-                start=v[0],
-                end=v[1],
-                duration=v[1] - v[0],
-                cpu_percent_cores=self.aggregate_cpu_percent(phase=phase),
-                cpu_times=[list(c) for c in
-                    self.aggregate_cpu_times(phase=phase)],
-                io=list(self.aggregate_io(phase=phase)),
-            )
+            o['phases'].append(phase_entry(phase, v[0], v[1]))
 
-            populate_derived(e)
-            o['phases'].append(e)
+        if have_psutil:
+            o['system'].update(dict(
+                cpu_logical_count=psutil.cpu_count(logical=True),
+                cpu_physical_count=psutil.cpu_count(logical=False),
+                swap_total=psutil.swap_memory()[0],
+                vmem_total=psutil.virtual_memory()[0],
+            ))
 
         return o

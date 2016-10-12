@@ -9,7 +9,7 @@
 
 const TEST_URL = URL_ROOT + "doc_markup_links.html";
 
-add_task(function*() {
+add_task(function* () {
   let {inspector} = yield openInspectorForURL(TEST_URL);
 
   info("Adding a contextmenu attribute to the body node");
@@ -17,7 +17,8 @@ add_task(function*() {
 
   info("Checking for links in the new attribute");
   let {editor} = yield getContainerForSelector("body", inspector);
-  let linkEls = editor.attrElements.get("contextmenu").querySelectorAll(".link");
+  let linkEls = editor.attrElements.get("contextmenu")
+                                   .querySelectorAll(".link");
   is(linkEls.length, 1, "There is one link in the contextmenu attribute");
   is(linkEls[0].dataset.type, "idref", "The link has the right type");
   is(linkEls[0].textContent, "menu1", "The link has the right value");

@@ -21,7 +21,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/PodOperations.h"
 
-#include "asmjs/AsmJS.h"
+#include "asmjs/Wasm.h"
 #include "asmjs/WasmModule.h"
 #include "jit/AtomicOperations.h"
 #include "jit/Disassembler.h"
@@ -44,7 +44,7 @@ extern "C" MFBT_API bool IsSignalHandlingBroken();
 
 // For platforms where the signal/exception handler runs on the same
 // thread/stack as the victim (Unix and Windows), we can use TLS to find any
-// currently executing asm.js code.
+// currently executing wasm code.
 static JSRuntime*
 RuntimeForCurrentThread()
 {
@@ -647,7 +647,7 @@ EmulateHeapAccess(EMULATOR_CONTEXT* context, uint8_t* pc, uint8_t* faultingAddre
                        "faulting address range");
     MOZ_RELEASE_ASSERT(accessAddress >= module.heap(),
                        "Access begins outside the asm.js heap");
-    MOZ_RELEASE_ASSERT(accessAddress + access.size() <= module.heap() + AsmJSMappedSize,
+    MOZ_RELEASE_ASSERT(accessAddress + access.size() <= module.heap() + MappedSize,
                        "Access extends beyond the asm.js heap guard region");
     MOZ_RELEASE_ASSERT(accessAddress + access.size() > module.heap() + module.heapLength(),
                        "Computed access address is not actually out of bounds");
@@ -659,10 +659,10 @@ EmulateHeapAccess(EMULATOR_CONTEXT* context, uint8_t* pc, uint8_t* faultingAddre
     // However, we wish to support the optimization of folding immediates
     // and scaled indices into addresses, and any address arithmetic we fold
     // gets done at full pointer width, so it doesn't get properly wrapped.
-    // We support this by extending AsmJSMappedSize to the greatest size
-    // that could be reached by such an unwrapped address, and then when we
-    // arrive here in the signal handler for such an access, we compute the
-    // fully wrapped address, and perform the load or store on it.
+    // We support this by extending MappedSize to the greatest size that could
+    // be reached by such an unwrapped address, and then when we arrive here in
+    // the signal handler for such an access, we compute the fully wrapped
+    // address, and perform the load or store on it.
     //
     // Taking a signal is really slow, but in theory programs really shouldn't
     // be hitting this anyway.
@@ -670,8 +670,7 @@ EmulateHeapAccess(EMULATOR_CONTEXT* context, uint8_t* pc, uint8_t* faultingAddre
     uint32_t wrappedOffset = uint32_t(unwrappedOffset);
     size_t size = access.size();
     MOZ_RELEASE_ASSERT(wrappedOffset + size > wrappedOffset);
-    bool inBounds = wrappedOffset < module.heapLength() &&
-                    wrappedOffset + size < module.heapLength();
+    bool inBounds = wrappedOffset + size < module.heapLength();
 
     // If this is storing Z of an XYZ, check whether X is also in bounds, so
     // that we don't store anything before throwing.
@@ -730,6 +729,33 @@ EmulateHeapAccess(EMULATOR_CONTEXT* context, uint8_t* pc, uint8_t* faultingAddre
     return end;
 }
 
+#elif defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_UNALIGNED)
+
+MOZ_COLD static uint8_t*
+EmulateHeapAccess(EMULATOR_CONTEXT* context, uint8_t* pc, uint8_t* faultingAddress,
+                  const HeapAccess* heapAccess, const Module& module)
+{
+    // TODO: Implement unaligned accesses.
+    return module.outOfBounds();
+}
+
+#endif // defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_UNALIGNED)
+
+#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS)
+
+MOZ_COLD static bool
+IsHeapAccessAddress(const Module &module, uint8_t* faultingAddress)
+{
+#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+    size_t accessLimit = MappedSize;
+#elif defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_UNALIGNED)
+    size_t accessLimit = module.heapLength();
+#endif
+    return module.usesHeap() &&
+           faultingAddress >= module.heap() &&
+           faultingAddress < module.heap() + accessLimit;
+}
+
 #if defined(XP_WIN)
 
 static bool
@@ -759,15 +785,12 @@ HandleFault(PEXCEPTION_POINTERS exception)
 
     const Module& module = activation->module();
 
-    // These checks aren't necessary, but, since we can, check anyway to make
-    // sure we aren't covering up a real bug.
     uint8_t* faultingAddress = reinterpret_cast<uint8_t*>(record->ExceptionInformation[1]);
-    if (!module.usesHeap() ||
-        faultingAddress < module.heap() ||
-        faultingAddress >= module.heap() + AsmJSMappedSize)
-    {
+
+    // This check isn't necessary, but, since we can, check anyway to make
+    // sure we aren't covering up a real bug.
+    if (!IsHeapAccessAddress(module, faultingAddress))
         return false;
-    }
 
     if (!module.containsFunctionPC(pc)) {
         // On Windows, it is possible for InterruptRunningCode to execute
@@ -904,15 +927,12 @@ HandleMachException(JSRuntime* rt, const ExceptionRequest& request)
     if (!module.containsFunctionPC(pc))
         return false;
 
-    // These checks aren't necessary, but, since we can, check anyway to make
-    // sure we aren't covering up a real bug.
     uint8_t* faultingAddress = reinterpret_cast<uint8_t*>(request.body.code[1]);
-    if (!module.usesHeap() ||
-        faultingAddress < module.heap() ||
-        faultingAddress >= module.heap() + AsmJSMappedSize)
-    {
+
+    // This check isn't necessary, but, since we can, check anyway to make
+    // sure we aren't covering up a real bug.
+    if (!IsHeapAccessAddress(module, faultingAddress))
         return false;
-    }
 
     const HeapAccess* heapAccess = module.lookupHeapAccess(pc);
     if (!heapAccess)
@@ -938,9 +958,8 @@ static const mach_msg_id_t sExceptionId = 2405;
 static const mach_msg_id_t sQuitId = 42;
 
 static void
-MachExceptionHandlerThread(void* threadArg)
+MachExceptionHandlerThread(JSRuntime* rt)
 {
-    JSRuntime* rt = reinterpret_cast<JSRuntime*>(threadArg);
     mach_port_t port = rt->wasmMachExceptionHandler.port();
     kern_return_t kret;
 
@@ -992,7 +1011,6 @@ MachExceptionHandlerThread(void* threadArg)
 
 MachExceptionHandler::MachExceptionHandler()
   : installed_(false),
-    thread_(nullptr),
     port_(MACH_PORT_NULL)
 {}
 
@@ -1011,7 +1029,7 @@ MachExceptionHandler::uninstall()
             MOZ_CRASH();
         installed_ = false;
     }
-    if (thread_ != nullptr) {
+    if (thread_.joinable()) {
         // Break the handler thread out of the mach_msg loop.
         mach_msg_header_t msg;
         msg.msgh_bits = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
@@ -1028,8 +1046,7 @@ MachExceptionHandler::uninstall()
         }
 
         // Wait for the handler thread to complete before deallocating the port.
-        PR_JoinThread(thread_);
-        thread_ = nullptr;
+        thread_.join();
     }
     if (port_ != MACH_PORT_NULL) {
         DebugOnly<kern_return_t> kret = mach_port_destroy(mach_task_self(), port_);
@@ -1054,9 +1071,7 @@ MachExceptionHandler::install(JSRuntime* rt)
         goto error;
 
     // Create a thread to block on reading port_.
-    thread_ = PR_CreateThread(PR_USER_THREAD, MachExceptionHandlerThread, rt,
-                              PR_PRIORITY_NORMAL, PR_GLOBAL_THREAD, PR_JOINABLE_THREAD, 0);
-    if (!thread_)
+    if (!thread_.init(MachExceptionHandlerThread, rt))
         goto error;
 
     // Direct exceptions on this thread to port_ (and thus our handler thread).
@@ -1114,15 +1129,12 @@ HandleFault(int signum, siginfo_t* info, void* ctx)
     if (!module.containsFunctionPC(pc))
         return false;
 
-    // These checks aren't necessary, but, since we can, check anyway to make
-    // sure we aren't covering up a real bug.
     uint8_t* faultingAddress = reinterpret_cast<uint8_t*>(info->si_addr);
-    if (!module.usesHeap() ||
-        faultingAddress < module.heap() ||
-        faultingAddress >= module.heap() + AsmJSMappedSize)
-    {
+
+    // This check isn't necessary, but, since we can, check anyway to make
+    // sure we aren't covering up a real bug.
+    if (!IsHeapAccessAddress(module, faultingAddress))
         return false;
-    }
 
     const HeapAccess* heapAccess = module.lookupHeapAccess(pc);
     if (!heapAccess)
@@ -1162,7 +1174,7 @@ AsmJSFaultHandler(int signum, siginfo_t* info, void* context)
 }
 #endif
 
-#endif // defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+#endif // defined(ASMJS_MAY_USE_SIGNAL_HANDLERS)
 
 static void
 RedirectIonBackedgesToInterruptCheck(JSRuntime* rt)
@@ -1223,7 +1235,7 @@ JitInterruptHandler(int signum, siginfo_t* info, void* context)
 bool
 wasm::EnsureSignalHandlersInstalled(JSRuntime* rt)
 {
-#if defined(XP_DARWIN) && defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+#if defined(XP_DARWIN) && defined(ASMJS_MAY_USE_SIGNAL_HANDLERS)
     // On OSX, each JSRuntime gets its own handler thread.
     if (!rt->wasmMachExceptionHandler.installed() && !rt->wasmMachExceptionHandler.install(rt))
         return false;
@@ -1280,9 +1292,9 @@ wasm::EnsureSignalHandlersInstalled(JSRuntime* rt)
     }
 #endif // defined(XP_WIN)
 
-#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS)
     // Install a SIGSEGV handler to handle safely-out-of-bounds asm.js heap
-    // access.
+    // access and/or unaligned accesses.
 # if defined(XP_WIN)
     if (!AddVectoredExceptionHandler(/* FirstHandler = */ true, AsmJSFaultHandler))
         return false;
@@ -1300,7 +1312,7 @@ wasm::EnsureSignalHandlersInstalled(JSRuntime* rt)
     if (sigaction(SIGSEGV, &faultHandler, &sPrevSEGVHandler))
         MOZ_CRASH("unable to install segv handler");
 # endif
-#endif // defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+#endif // defined(ASMJS_MAY_USE_SIGNAL_HANDLERS)
 
     sResult = true;
     return true;
@@ -1309,16 +1321,16 @@ wasm::EnsureSignalHandlersInstalled(JSRuntime* rt)
 // JSRuntime::requestInterrupt sets interrupt_ (which is checked frequently by
 // C++ code at every Baseline JIT loop backedge) and jitStackLimit_ (which is
 // checked at every Baseline and Ion JIT function prologue). The remaining
-// sources of potential iloops (Ion loop backedges and all asm.js code) are
+// sources of potential iloops (Ion loop backedges and all wasm code) are
 // handled by this function:
-//  1. Ion loop backedges are patched to instead point to a stub that handles the
-//     interrupt;
-//  2. if the main thread's pc is inside asm.js code, the pc is updated to point
+//  1. Ion loop backedges are patched to instead point to a stub that handles
+//     the interrupt;
+//  2. if the main thread's pc is inside wasm code, the pc is updated to point
 //     to a stub that handles the interrupt.
 void
 js::InterruptRunningJitCode(JSRuntime* rt)
 {
-    // If signal handlers weren't installed, then Ion and asm.js emit normal
+    // If signal handlers weren't installed, then Ion and wasm emit normal
     // interrupt checks and don't need asynchronous interruption.
     if (!rt->canUseSignalHandlers())
         return;
@@ -1328,8 +1340,8 @@ js::InterruptRunningJitCode(JSRuntime* rt)
     if (!rt->startHandlingJitInterrupt())
         return;
 
-    // If we are on runtime's main thread, then: pc is not in asm.js code (so
-    // nothing to do for asm.js) and we can patch Ion backedges without any
+    // If we are on runtime's main thread, then: pc is not in wasm code (so
+    // nothing to do for wasm) and we can patch Ion backedges without any
     // special synchronization.
     if (rt == RuntimeForCurrentThread()) {
         RedirectIonBackedgesToInterruptCheck(rt);
@@ -1362,4 +1374,21 @@ js::InterruptRunningJitCode(JSRuntime* rt)
     pthread_t thread = (pthread_t)rt->ownerThreadNative();
     pthread_kill(thread, sInterruptSignal);
 #endif
+}
+
+MOZ_COLD bool
+js::wasm::IsPCInWasmCode(void *pc)
+{
+    JSRuntime* rt = RuntimeForCurrentThread();
+    if (!rt)
+        return false;
+
+    MOZ_RELEASE_ASSERT(!rt->handlingSegFault);
+
+    WasmActivation* activation = rt->wasmActivationStack();
+    if (!activation)
+        return false;
+
+    const Module& module = activation->module();
+    return module.containsFunctionPC(pc);
 }

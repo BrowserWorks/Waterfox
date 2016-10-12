@@ -10,7 +10,12 @@ EXPORTS.mozilla += [
 ]
 
 EXPORTS.mozilla.gfx += [
+    'GPUProcessManager.h',
     'SharedDIB.h',
+]
+
+EXPORTS.mozilla.layers += [
+    'CompositorSession.h',
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
@@ -24,7 +29,9 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     ]
 
 UNIFIED_SOURCES += [
+    'CompositorSession.cpp',
     'D3DMessageUtils.cpp',
+    'GPUProcessManager.cpp',
     'SharedDIB.cpp',
 ]
 
@@ -38,6 +45,3 @@ FINAL_LIBRARY = 'xul'
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

@@ -99,6 +99,11 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
   MOZ_ASSERT(aSource != BUFFER_BOTH);
   RefPtr<SourceSurface> snapshot = GetSourceSurface(aSource);
 
+  if (!snapshot) {
+    gfxCriticalError() << "Invalid snapshot in RotatedBuffer::DrawBufferQuadrant";
+    return;
+  }
+
   // direct2d is much slower when using OP_SOURCE so use OP_OVER and
   // (maybe) a clear instead. Normally we need to draw in a single operation
   // (to avoid flickering) but direct2d is ok since it defers rendering.
@@ -135,7 +140,7 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
     transform *= inverseMask;
 
 #ifdef MOZ_GFX_OPTIMIZE_MOBILE
-    SurfacePattern source(snapshot, ExtendMode::CLAMP, transform, Filter::POINT);
+    SurfacePattern source(snapshot, ExtendMode::CLAMP, transform, SamplingFilter::POINT);
 #else
     SurfacePattern source(snapshot, ExtendMode::CLAMP, transform);
 #endif
@@ -145,7 +150,7 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
     aTarget->SetTransform(oldTransform);
   } else {
 #ifdef MOZ_GFX_OPTIMIZE_MOBILE
-    DrawSurfaceOptions options(Filter::POINT);
+    DrawSurfaceOptions options(SamplingFilter::POINT);
 #else
     DrawSurfaceOptions options;
 #endif
@@ -222,13 +227,13 @@ RotatedContentBuffer::DrawTo(PaintedLayer* aLayer,
   if (!aLayer->GetValidRegion().Contains(BufferRect()) ||
       (ToData(aLayer)->GetClipToVisibleRegion() &&
        !aLayer->GetVisibleRegion().ToUnknownRegion().Contains(BufferRect())) ||
-      IsClippingCheap(aTarget, aLayer->GetEffectiveVisibleRegion().ToUnknownRegion())) {
+      IsClippingCheap(aTarget, aLayer->GetLocalVisibleRegion().ToUnknownRegion())) {
     // We don't want to draw invalid stuff, so we need to clip. Might as
     // well clip to the smallest area possible --- the visible region.
     // Bug 599189 if there is a non-integer-translation transform in aTarget,
-    // we might sample pixels outside GetEffectiveVisibleRegion(), which is wrong
+    // we might sample pixels outside GetLocalVisibleRegion(), which is wrong
     // and may cause gray lines.
-    gfxUtils::ClipToRegion(aTarget, aLayer->GetEffectiveVisibleRegion().ToUnknownRegion());
+    gfxUtils::ClipToRegion(aTarget, aLayer->GetLocalVisibleRegion().ToUnknownRegion());
     clipped = true;
   }
 
@@ -275,7 +280,7 @@ RotatedContentBuffer::BorrowDrawTargetForQuadrantUpdate(const IntRect& aBounds,
     if (!EnsureBufferOnWhite()) {
       return nullptr;
     }
-    MOZ_ASSERT(mDTBuffer && mDTBufferOnWhite);
+    MOZ_ASSERT(mDTBuffer && mDTBuffer->IsValid() && mDTBufferOnWhite && mDTBufferOnWhite->IsValid());
     mLoanedDrawTarget = Factory::CreateDualDrawTarget(mDTBuffer, mDTBufferOnWhite);
   } else if (aSource == BUFFER_WHITE) {
     if (!EnsureBufferOnWhite()) {
@@ -318,12 +323,12 @@ BorrowDrawTarget::ReturnDrawTarget(gfx::DrawTarget*& aReturned)
 gfxContentType
 RotatedContentBuffer::BufferContentType()
 {
-  if (mBufferProvider || mDTBuffer) {
-    SurfaceFormat format;
+  if (mBufferProvider || (mDTBuffer && mDTBuffer->IsValid())) {
+    SurfaceFormat format = SurfaceFormat::B8G8R8A8;
 
     if (mBufferProvider) {
       format = mBufferProvider->GetFormat();
-    } else if (mDTBuffer) {
+    } else if (mDTBuffer && mDTBuffer->IsValid()) {
       format = mDTBuffer->GetFormat();
     }
 
@@ -344,13 +349,13 @@ bool
 RotatedContentBuffer::EnsureBuffer()
 {
   NS_ASSERTION(!mLoanedDrawTarget, "Loaned draw target must be returned");
-  if (!mDTBuffer) {
+  if (!mDTBuffer || !mDTBuffer->IsValid()) {
     if (mBufferProvider) {
       mDTBuffer = mBufferProvider->BorrowDrawTarget();
     }
   }
 
-  NS_WARN_IF_FALSE(mDTBuffer, "no buffer");
+  NS_WARN_IF_FALSE(mDTBuffer && mDTBuffer->IsValid(), "no buffer");
   return !!mDTBuffer;
 }
 
@@ -372,13 +377,13 @@ RotatedContentBuffer::EnsureBufferOnWhite()
 bool
 RotatedContentBuffer::HaveBuffer() const
 {
-  return mDTBuffer || mBufferProvider;
+  return mBufferProvider || (mDTBuffer && mDTBuffer->IsValid());
 }
 
 bool
 RotatedContentBuffer::HaveBufferOnWhite() const
 {
-  return mDTBufferOnWhite || mBufferProviderOnWhite;
+  return mBufferProviderOnWhite || (mDTBufferOnWhite && mDTBufferOnWhite->IsValid());
 }
 
 static void
@@ -591,13 +596,13 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
         if (mBufferRotation == IntPoint(0,0)) {
           IntRect srcRect(IntPoint(0, 0), mBufferRect.Size());
           IntPoint dest = mBufferRect.TopLeft() - destBufferRect.TopLeft();
-          MOZ_ASSERT(mDTBuffer);
+          MOZ_ASSERT(mDTBuffer && mDTBuffer->IsValid());
           mDTBuffer->CopyRect(srcRect, dest);
           if (mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
             if (!EnsureBufferOnWhite()) {
               return result;
             }
-            MOZ_ASSERT(mDTBufferOnWhite);
+            MOZ_ASSERT(mDTBufferOnWhite && mDTBufferOnWhite->IsValid());
             mDTBufferOnWhite->CopyRect(srcRect, dest);
           }
           result.mDidSelfCopy = true;
@@ -625,7 +630,7 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
               if (!EnsureBufferOnWhite()) {
                 return result;
               }
-              MOZ_ASSERT(mDTBufferOnWhite);
+              MOZ_ASSERT(mDTBufferOnWhite && mDTBufferOnWhite->IsValid());
               mDTBufferOnWhite->LockBits(&data, &size, &stride, &format);
               uint8_t bytesPerPixel = BytesPerPixel(format);
               BufferUnrotate(data,
@@ -692,7 +697,7 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
       if (!EnsureBuffer()) {
         return result;
       }
-       MOZ_ASSERT(mDTBuffer, "Have we got a Thebes buffer for some reason?");
+      MOZ_ASSERT(mDTBuffer && mDTBuffer->IsValid(), "Have we got a Thebes buffer for some reason?");
       DrawBufferWithRotation(destDTBuffer, BUFFER_BLACK, 1.0, CompositionOp::OP_SOURCE);
       destDTBuffer->SetTransform(Matrix());
 
@@ -700,7 +705,7 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
         if (!destDTBufferOnWhite || !EnsureBufferOnWhite()) {
           return result;
         }
-        MOZ_ASSERT(mDTBufferOnWhite, "Have we got a Thebes buffer for some reason?");
+        MOZ_ASSERT(mDTBufferOnWhite && mDTBufferOnWhite->IsValid(), "Have we got a Thebes buffer for some reason?");
         destDTBufferOnWhite->SetTransform(mat);
         DrawBufferWithRotation(destDTBufferOnWhite, BUFFER_WHITE, 1.0, CompositionOp::OP_SOURCE);
         destDTBufferOnWhite->SetTransform(Matrix());
@@ -753,26 +758,25 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
   }
 
   if (aPaintState.mMode == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
-    if (!mDTBuffer || !mDTBufferOnWhite) {
+    if (!mDTBuffer || !mDTBuffer->IsValid() ||
+        !mDTBufferOnWhite || !mDTBufferOnWhite->IsValid()) {
       // This can happen in release builds if allocating one of the two buffers
       // failed. This in turn can happen if unreasonably large textures are
       // requested.
       return nullptr;
     }
-    nsIntRegionRectIterator iter(*drawPtr);
-    const IntRect *iterRect;
-    while ((iterRect = iter.Next())) {
-      mDTBuffer->FillRect(Rect(iterRect->x, iterRect->y, iterRect->width, iterRect->height),
+    for (auto iter = drawPtr->RectIter(); !iter.Done(); iter.Next()) {
+      const IntRect& rect = iter.Get();
+      mDTBuffer->FillRect(Rect(rect.x, rect.y, rect.width, rect.height),
                           ColorPattern(Color(0.0, 0.0, 0.0, 1.0)));
-      mDTBufferOnWhite->FillRect(Rect(iterRect->x, iterRect->y, iterRect->width, iterRect->height),
+      mDTBufferOnWhite->FillRect(Rect(rect.x, rect.y, rect.width, rect.height),
                                  ColorPattern(Color(1.0, 1.0, 1.0, 1.0)));
     }
   } else if (aPaintState.mContentType == gfxContentType::COLOR_ALPHA && HaveBuffer()) {
     // HaveBuffer() => we have an existing buffer that we must clear
-    nsIntRegionRectIterator iter(*drawPtr);
-    const IntRect *iterRect;
-    while ((iterRect = iter.Next())) {
-      result->ClearRect(Rect(iterRect->x, iterRect->y, iterRect->width, iterRect->height));
+    for (auto iter = drawPtr->RectIter(); !iter.Done(); iter.Next()) {
+      const IntRect& rect = iter.Get();
+      result->ClearRect(Rect(rect.x, rect.y, rect.width, rect.height));
     }
   }
 
@@ -782,11 +786,18 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
 already_AddRefed<SourceSurface>
 RotatedContentBuffer::GetSourceSurface(ContextSource aSource) const
 {
-  MOZ_ASSERT(mDTBuffer);
+  if (!mDTBuffer || !mDTBuffer->IsValid()) {
+    gfxCriticalNote << "Invalid buffer in RotatedContentBuffer::GetSourceSurface " << gfx::hexa(mDTBuffer);
+    return nullptr;
+  }
+
   if (aSource == BUFFER_BLACK) {
     return mDTBuffer->Snapshot();
   } else {
-    MOZ_ASSERT(mDTBufferOnWhite);
+    if (!mDTBufferOnWhite || !mDTBufferOnWhite->IsValid()) {
+    gfxCriticalNote << "Invalid buffer on white in RotatedContentBuffer::GetSourceSurface " << gfx::hexa(mDTBufferOnWhite);
+      return nullptr;
+    }
     MOZ_ASSERT(aSource == BUFFER_WHITE);
     return mDTBufferOnWhite->Snapshot();
   }

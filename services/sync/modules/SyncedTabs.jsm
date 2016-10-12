@@ -53,24 +53,19 @@ let log = Log.repository.getLogger("Sync.RemoteTabs");
 
 // A private singleton that does the work.
 let SyncedTabsInternal = {
-  _getClientIcon(id) {
-    let isMobile = Weave.Service.clientsEngine.isMobile(id);
-    if (isMobile) {
-      return "chrome://browser/skin/sync-mobileIcon.png";
-    }
-    return "chrome://browser/skin/sync-desktopIcon.png";
-  },
-
   /* Make a "tab" record. Returns a promise */
-  _makeTab: Task.async(function* (client, tab, url) {
-    let icon = tab.icon;
+  _makeTab: Task.async(function* (client, tab, url, showRemoteIcons) {
+    let icon;
+    if (showRemoteIcons) {
+      icon = tab.icon;
+    }
     if (!icon) {
       try {
         icon = (yield PlacesUtils.promiseFaviconLinkUrl(url)).spec;
       } catch (ex) { /* no favicon avaiable */ }
     }
     if (!icon) {
-      icon = PlacesUtils.favicons.defaultFavicon.spec;
+      icon = "";
     }
     return {
       type:  "tab",
@@ -87,8 +82,9 @@ let SyncedTabsInternal = {
     return {
       id: client.id,
       type: "client",
-      name: client.clientName,
-      icon:  this._getClientIcon(client.id),
+      name: Weave.Service.clientsEngine.getClientName(client.id),
+      isMobile: Weave.Service.clientsEngine.isMobile(client.id),
+      lastModified: client.lastModified * 1000, // sec to ms
       tabs: []
     };
   }),
@@ -108,6 +104,9 @@ let SyncedTabsInternal = {
       return result;
     }
 
+    // A boolean that controls whether we should show the icon from the remote tab.
+    const showRemoteIcons = Preferences.get("services.sync.syncedTabs.showRemoteIcons", true);
+
     let engine = Weave.Service.engineManager.get("tabs");
 
     let seenURLs = new Set();
@@ -115,6 +114,9 @@ let SyncedTabsInternal = {
     let ntabs = 0;
 
     for (let [guid, client] in Iterator(engine.getAllClients())) {
+      if (!Weave.Service.clientsEngine.remoteClientExists(client.id)) {
+        continue;
+      }
       let clientRepr = yield this._makeClient(client);
       log.debug("Processing client", clientRepr);
 
@@ -134,7 +136,7 @@ let SyncedTabsInternal = {
         if (!url || seenURLs.has(url)) {
           continue;
         }
-        let tabRepr = yield this._makeTab(client, tab, url);
+        let tabRepr = yield this._makeTab(client, tab, url, showRemoteIcons);
         if (filter && !this._tabMatchesFilter(tabRepr, filter)) {
           continue;
         }
@@ -202,6 +204,9 @@ let SyncedTabsInternal = {
         Preferences.reset("services.sync.lastTabFetch");
         Services.obs.notifyObservers(null, TOPIC_TABS_CHANGED, null);
         break;
+      case "nsPref:changed":
+        Services.obs.notifyObservers(null, TOPIC_TABS_CHANGED, null);
+        break;
       default:
         break;
     }
@@ -226,6 +231,10 @@ let SyncedTabsInternal = {
 
 Services.obs.addObserver(SyncedTabsInternal, "weave:engine:sync:finish", false);
 Services.obs.addObserver(SyncedTabsInternal, "weave:service:start-over", false);
+// Observe the pref the indicates the state of the tabs engine has changed.
+// This will force consumers to re-evaluate the state of sync and update
+// accordingly.
+Services.prefs.addObserver("services.sync.engine.tabs", SyncedTabsInternal, false);
 
 // The public interface.
 this.SyncedTabs = {
@@ -262,6 +271,31 @@ this.SyncedTabs = {
   // recent sync wasn't "recently".
   syncTabs(force) {
     return this._internal.syncTabs(force);
+  },
+
+  sortTabClientsByLastUsed(clients, maxTabs = Infinity) {
+    // First sort and filter the list of tabs for each client. Note that
+    // this module promises that the objects it returns are never
+    // shared, so we are free to mutate those objects directly.
+    for (let client of clients) {
+      let tabs = client.tabs;
+      tabs.sort((a, b) => b.lastUsed - a.lastUsed);
+      if (Number.isFinite(maxTabs)) {
+        client.tabs = tabs.slice(0, maxTabs);
+      }
+    }
+    // Now sort the clients - the clients are sorted in the order of the
+    // most recent tab for that client (ie, it is important the tabs for
+    // each client are already sorted.)
+    clients.sort((a, b) => {
+      if (a.tabs.length == 0) {
+        return 1; // b comes first.
+      }
+      if (b.tabs.length == 0) {
+        return -1; // a comes first.
+      }
+      return b.tabs[0].lastUsed - a.tabs[0].lastUsed;
+    });
   },
 };
 

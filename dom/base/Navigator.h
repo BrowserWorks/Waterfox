@@ -25,7 +25,7 @@
 
 class nsPluginArray;
 class nsMimeTypeArray;
-class nsPIDOMWindow;
+class nsPIDOMWindowInner;
 class nsIDOMNavigatorSystemMessages;
 class nsDOMCameraManager;
 class nsDOMDeviceStorage;
@@ -42,6 +42,9 @@ class WakeLock;
 class ArrayBufferViewOrBlobOrStringOrFormData;
 struct MobileIdOptions;
 class ServiceWorkerContainer;
+class DOMRequest;
+struct FlyWebPublishOptions;
+struct FlyWebFilter;
 } // namespace dom
 } // namespace mozilla
 
@@ -70,11 +73,9 @@ class MozIdleObserver;
 #ifdef MOZ_GAMEPAD
 class Gamepad;
 #endif // MOZ_GAMEPAD
-#ifdef MOZ_MEDIA_NAVIGATOR
 class NavigatorUserMediaSuccessCallback;
 class NavigatorUserMediaErrorCallback;
 class MozGetUserMediaDevicesSuccessCallback;
-#endif // MOZ_MEDIA_NAVIGATOR
 
 namespace network {
 class Connection;
@@ -116,7 +117,7 @@ class Navigator final : public nsIDOMNavigator
                       , public nsWrapperCache
 {
 public:
-  explicit Navigator(nsPIDOMWindow* aInnerWindow);
+  explicit Navigator(nsPIDOMWindowInner* aInnerWindow);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(Navigator,
@@ -127,7 +128,7 @@ public:
   static void Init();
 
   void Invalidate();
-  nsPIDOMWindow *GetWindow() const
+  nsPIDOMWindowInner *GetWindow() const
   {
     return mWindow;
   }
@@ -139,7 +140,7 @@ public:
   /**
    * For use during document.write where our inner window changes.
    */
-  void SetWindow(nsPIDOMWindow *aInnerWindow);
+  void SetWindow(nsPIDOMWindowInner *aInnerWindow);
 
   /**
    * Called when the inner window navigates to a new page.
@@ -151,6 +152,10 @@ public:
 
   // The XPCOM GetProduct is OK
   // The XPCOM GetLanguage is OK
+  void GetUserAgent(nsString& aUserAgent, ErrorResult& /* unused */)
+  {
+    GetUserAgent(aUserAgent);
+  }
   bool OnLine();
   void RegisterProtocolHandler(const nsAString& aScheme, const nsAString& aURL,
                                const nsAString& aTitle, ErrorResult& aRv);
@@ -164,11 +169,9 @@ public:
   Promise* GetBattery(ErrorResult& aRv);
   battery::BatteryManager* GetDeprecatedBattery(ErrorResult& aRv);
 
-  static already_AddRefed<Promise> GetDataStores(nsPIDOMWindow* aWindow,
-                                                 const nsAString& aName,
-                                                 const nsAString& aOwner,
-                                                 ErrorResult& aRv);
-
+  already_AddRefed<Promise> PublishServer(const nsAString& aName,
+                                          const FlyWebPublishOptions& aOptions,
+                                          ErrorResult& aRv);
   static void AppName(nsAString& aAppName, bool aUsePrefOverriddenValue);
 
   static nsresult GetPlatform(nsAString& aPlatform,
@@ -177,7 +180,7 @@ public:
   static nsresult GetAppVersion(nsAString& aAppVersion,
                                 bool aUsePrefOverriddenValue);
 
-  static nsresult GetUserAgent(nsPIDOMWindow* aWindow,
+  static nsresult GetUserAgent(nsPIDOMWindowInner* aWindow,
                                nsIURI* aURI,
                                bool aIsCallerChrome,
                                nsAString& aUserAgent);
@@ -185,10 +188,6 @@ public:
   // Clears the user agent cache by calling:
   // NavigatorBinding::ClearCachedUserAgentValue(this);
   void ClearUserAgentCache();
-
-  already_AddRefed<Promise> GetDataStores(const nsAString& aName,
-                                          const nsAString& aOwner,
-                                          ErrorResult& aRv);
 
   // Feature Detection API
   already_AddRefed<Promise> GetFeature(const nsAString& aName,
@@ -199,6 +198,7 @@ public:
 
   bool Vibrate(uint32_t aDuration);
   bool Vibrate(const nsTArray<uint32_t>& aDuration);
+  void SetVibrationPermission(bool aPermitted, bool aPersistent);
   uint32_t MaxTouchPoints();
   void GetAppCodeName(nsString& aAppCodeName, ErrorResult& aRv)
   {
@@ -218,6 +218,7 @@ public:
   }
   PowerManager* GetMozPower(ErrorResult& aRv);
   bool JavaEnabled(ErrorResult& aRv);
+  uint64_t HardwareConcurrency();
   bool TaintEnabled()
   {
     return false;
@@ -288,7 +289,6 @@ public:
                   const Nullable<ArrayBufferViewOrBlobOrStringOrFormData>& aData,
                   ErrorResult& aRv);
 
-#ifdef MOZ_MEDIA_NAVIGATOR
   void MozGetUserMedia(const MediaStreamConstraints& aConstraints,
                        NavigatorUserMediaSuccessCallback& aOnSuccess,
                        NavigatorUserMediaErrorCallback& aOnError,
@@ -299,21 +299,18 @@ public:
                               uint64_t aInnerWindowID,
                               const nsAString& aCallID,
                               ErrorResult& aRv);
-#endif // MOZ_MEDIA_NAVIGATOR
 
   already_AddRefed<ServiceWorkerContainer> ServiceWorker();
 
-  bool DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
-                 JS::Handle<jsid> aId,
-                 JS::MutableHandle<JSPropertyDescriptor> aDesc);
-  // The return value is whether DoResolve might end up resolving the given id.
-  // If in doubt, return true.
-  static bool MayResolve(jsid aId);
-  void GetOwnPropertyNames(JSContext* aCx, nsTArray<nsString>& aNames,
-                           ErrorResult& aRv);
   void GetLanguages(nsTArray<nsString>& aLanguages);
 
   bool MozE10sEnabled();
+
+#ifdef MOZ_PAY
+  already_AddRefed<DOMRequest> MozPay(JSContext* aCx,
+                                      JS::Handle<JS::Value> aJwts,
+                                      ErrorResult& aRv);
+#endif // MOZ_PAY
 
   static void GetAcceptLanguages(nsTArray<nsString>& aLanguages);
 
@@ -326,14 +323,8 @@ public:
 #ifdef MOZ_NFC
   static bool HasNFCSupport(JSContext* /* unused */, JSObject* aGlobal);
 #endif // MOZ_NFC
-#ifdef MOZ_MEDIA_NAVIGATOR
   static bool HasUserMediaSupport(JSContext* /* unused */,
                                   JSObject* /* unused */);
-#endif // MOZ_MEDIA_NAVIGATOR
-
-  static bool HasDataStoreSupport(nsIPrincipal* aPrincipal);
-
-  static bool HasDataStoreSupport(JSContext* cx, JSObject* aGlobal);
 
 #ifdef MOZ_B2G
   static bool HasMobileIdSupport(JSContext* aCx, JSObject* aGlobal);
@@ -343,7 +334,7 @@ public:
 
   static bool IsE10sEnabled(JSContext* aCx, JSObject* aGlobal);
 
-  nsPIDOMWindow* GetParentObject() const
+  nsPIDOMWindowInner* GetParentObject() const
   {
     return GetWindow();
   }
@@ -352,7 +343,7 @@ public:
 
   // GetWindowFromGlobal returns the inner window for this global, if
   // any, else null.
-  static already_AddRefed<nsPIDOMWindow> GetWindowFromGlobal(JSObject* aGlobal);
+  static already_AddRefed<nsPIDOMWindowInner> GetWindowFromGlobal(JSObject* aGlobal);
 
 #ifdef MOZ_EME
   already_AddRefed<Promise>
@@ -367,7 +358,7 @@ private:
   virtual ~Navigator();
 
   bool CheckPermission(const char* type);
-  static bool CheckPermission(nsPIDOMWindow* aWindow, const char* aType);
+  static bool CheckPermission(nsPIDOMWindowInner* aWindow, const char* aType);
 
   already_AddRefed<nsDOMDeviceStorage> FindDeviceStorage(const nsAString& aName,
                                                          const nsAString& aType);
@@ -406,18 +397,14 @@ private:
   nsTArray<nsWeakPtr> mDeviceStorageStores;
   RefPtr<time::TimeManager> mTimeManager;
   RefPtr<ServiceWorkerContainer> mServiceWorkerContainer;
-  nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsCOMPtr<nsPIDOMWindowInner> mWindow;
   RefPtr<DeviceStorageAreaListener> mDeviceStorageAreaListener;
   RefPtr<Presentation> mPresentation;
 
-  // Hashtable for saving cached objects DoResolve created, so we don't create
-  // the object twice if asked for it twice, whether due to use of "delete" or
-  // due to Xrays.  We could probably use a nsJSThingHashtable here, but then
-  // we'd need to figure out exactly how to trace that, and that seems to be
-  // rocket science.  :(
-  nsInterfaceHashtable<nsStringHashKey, nsISupports> mCachedResolveResults;
-
   nsTArray<RefPtr<Promise> > mVRGetDevicesPromises;
+  nsTArray<uint32_t> mRequestedVibrationPattern;
+
+  bool mBatteryTelemetryReported;
 };
 
 } // namespace dom

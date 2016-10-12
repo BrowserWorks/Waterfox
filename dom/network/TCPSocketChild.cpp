@@ -34,7 +34,9 @@ DeserializeArrayBuffer(JSContext* cx,
   JSObject* obj = JS_NewArrayBufferWithContents(cx, aBuffer.Length(), data.get());
   if (!obj)
       return false;
-  data.release();
+  // If JS_NewArrayBufferWithContents returns non-null, the ownership of
+  // the data is transfered to obj, so we release the ownership here.
+  mozilla::Unused << data.release();
 
   aVal.setObject(*obj);
   return true;
@@ -100,6 +102,7 @@ TCPSocketChild::SendOpen(nsITCPSocketCallback* aSocket, bool aUseSSL, bool aUseA
 
   AddIPDLReference();
   gNeckoChild->SendPTCPSocketConstructor(this, mHost, mPort);
+  MOZ_ASSERT(mFilterName.IsEmpty()); // Currently nobody should use this
   PTCPSocketChild::SendOpen(mHost, mPort, aUseSSL, aUseArrayBuffers);
 }
 
@@ -116,7 +119,7 @@ TCPSocketChild::SendWindowlessOpenBind(nsITCPSocketCallback* aSocket,
                                          aRemotePort);
   PTCPSocketChild::SendOpenBind(nsCString(aRemoteHost), aRemotePort,
                                 nsCString(aLocalHost), aLocalPort,
-                                aUseSSL, true);
+                                aUseSSL, true, mFilterName);
 }
 
 void
@@ -124,6 +127,7 @@ TCPSocketChildBase::ReleaseIPDLReference()
 {
   MOZ_ASSERT(mIPCOpen);
   mIPCOpen = false;
+  mSocket = nullptr;
   this->Release();
 }
 
@@ -226,6 +230,17 @@ void
 TCPSocketChild::GetPort(uint16_t* aPort)
 {
   *aPort = mPort;
+}
+
+nsresult
+TCPSocketChild::SetFilterName(const nsACString& aFilterName)
+{
+  if (!mFilterName.IsEmpty()) {
+    // filter name can only be set once.
+    return NS_ERROR_FAILURE;
+  }
+  mFilterName = aFilterName;
+  return NS_OK;
 }
 
 bool

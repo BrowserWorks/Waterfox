@@ -27,7 +27,7 @@ const uint32_t kMagicInt = 0xc001feed;
 const uint16_t kMajorRevision = 4;
 // A change in minor revision means additions of new events. New streams will
 // not play in older players.
-const uint16_t kMinorRevision = 0;
+const uint16_t kMinorRevision = 1;
 
 struct ReferencePtr
 {
@@ -138,7 +138,7 @@ struct RadialGradientPatternStorage
 struct SurfacePatternStorage
 {
   ExtendMode mExtend;
-  Filter mFilter;
+  SamplingFilter mSamplingFilter;
   ReferencePtr mSurface;
   Matrix mMatrix;
 };
@@ -192,6 +192,9 @@ public:
     FILTERNODESETINPUT,
     CREATESIMILARDRAWTARGET,
     FONTDATA,
+    FONTDESC,
+    PUSHLAYER,
+    POPLAYER,
   };
   static const uint32_t kTotalEventTypes = RecordedEvent::FILTERNODESETINPUT + 1;
 
@@ -624,6 +627,55 @@ private:
   MOZ_IMPLICIT RecordedPopClip(std::istream &aStream);
 };
 
+class RecordedPushLayer : public RecordedDrawingEvent {
+public:
+  RecordedPushLayer(DrawTarget* aDT, bool aOpaque, Float aOpacity,
+                    SourceSurface* aMask, const Matrix& aMaskTransform,
+                    const IntRect& aBounds, bool aCopyBackground)
+    : RecordedDrawingEvent(PUSHLAYER, aDT), mOpaque(aOpaque)
+    , mOpacity(aOpacity), mMask(aMask), mMaskTransform(aMaskTransform)
+    , mBounds(aBounds), mCopyBackground(aCopyBackground)
+  {
+  }
+
+  virtual void PlayEvent(Translator *aTranslator) const;
+
+  virtual void RecordToStream(std::ostream &aStream) const;
+  virtual void OutputSimpleEventInfo(std::stringstream &aStringStream) const;
+
+  virtual std::string GetName() const { return "PushLayer"; }
+private:
+  friend class RecordedEvent;
+
+  MOZ_IMPLICIT RecordedPushLayer(std::istream &aStream);
+
+  bool mOpaque;
+  Float mOpacity;
+  ReferencePtr mMask;
+  Matrix mMaskTransform;
+  IntRect mBounds;
+  bool mCopyBackground;
+};
+
+class RecordedPopLayer : public RecordedDrawingEvent {
+public:
+  MOZ_IMPLICIT RecordedPopLayer(DrawTarget* aDT)
+    : RecordedDrawingEvent(POPLAYER, aDT)
+  {
+  }
+
+  virtual void PlayEvent(Translator *aTranslator) const;
+
+  virtual void RecordToStream(std::ostream &aStream) const;
+  virtual void OutputSimpleEventInfo(std::stringstream &aStringStream) const;
+
+  virtual std::string GetName() const { return "PopLayer"; }
+private:
+  friend class RecordedEvent;
+
+  MOZ_IMPLICIT RecordedPopLayer(std::istream &aStream);
+};
+
 class RecordedSetTransform : public RecordedDrawingEvent {
 public:
   RecordedSetTransform(DrawTarget *aDT, const Matrix &aTransform)
@@ -989,6 +1041,51 @@ private:
   bool mGetFontFileDataSucceeded = false;
 
   MOZ_IMPLICIT RecordedFontData(std::istream &aStream);
+};
+
+class RecordedFontDescriptor : public RecordedEvent {
+public:
+
+  static void FontDescCb(const uint8_t *aData, uint32_t aSize,
+                         Float aFontSize, void* aBaton)
+  {
+    auto recordedFontDesc = static_cast<RecordedFontDescriptor*>(aBaton);
+    recordedFontDesc->SetFontDescriptor(aData, aSize, aFontSize);
+  }
+
+  explicit RecordedFontDescriptor(ScaledFont* aScaledFont)
+    : RecordedEvent(FONTDESC)
+    , mType(aScaledFont->GetType())
+    , mRefPtr(aScaledFont)
+  {
+    mHasDesc = aScaledFont->GetFontDescriptor(FontDescCb, this);
+  }
+
+  ~RecordedFontDescriptor();
+
+  bool IsValid() const { return mHasDesc; }
+
+  virtual void PlayEvent(Translator *aTranslator) const;
+
+  virtual void RecordToStream(std::ostream &aStream) const;
+  virtual void OutputSimpleEventInfo(std::stringstream &aStringStream) const;
+
+  virtual std::string GetName() const { return "Font Desc"; }
+  virtual ReferencePtr GetObjectRef() const { return mRefPtr; }
+
+private:
+  friend class RecordedEvent;
+
+  void SetFontDescriptor(const uint8_t* aData, uint32_t aSize, Float aFontSize);
+
+  bool mHasDesc;
+
+  FontType mType;
+  Float mFontSize;
+  std::vector<uint8_t> mData;
+  ReferencePtr mRefPtr;
+
+  MOZ_IMPLICIT RecordedFontDescriptor(std::istream &aStream);
 };
 
 class RecordedScaledFontCreation : public RecordedEvent {

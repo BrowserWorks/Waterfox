@@ -17,7 +17,7 @@ var panelProgressListener = {
                                  aCurSelfProgress, aMaxSelfProgress,
                                  aCurTotalProgress, aMaxTotalProgress) {
     },
-    
+
     onStateChange : function(aWebProgress, aRequest, aStateFlags, aStatus)
     {
         if (!aRequest)
@@ -27,7 +27,7 @@ var panelProgressListener = {
         if (aStatus == NS_NET_STATUS_READ_FROM || aStatus == NS_NET_STATUS_WROTE_TO)
            return;
 
-        if (aStateFlags & Ci.nsIWebProgressListener.STATE_START && 
+        if (aStateFlags & Ci.nsIWebProgressListener.STATE_START &&
             aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK) {
             window.parent.document.getElementById('sidebar-throbber').setAttribute("loading", "true");
         }
@@ -45,7 +45,7 @@ var panelProgressListener = {
     onStatusChange : function(aWebProgress, aRequest, aStatus, aMessage) {
     },
 
-    onSecurityChange : function(aWebProgress, aRequest, aState) { 
+    onSecurityChange : function(aWebProgress, aRequest, aState) {
     },
 
     QueryInterface : function(aIID)
@@ -74,6 +74,7 @@ function load()
     var panelBrowser = getPanelBrowser();
     panelBrowser.webProgress.addProgressListener(panelProgressListener,
                                                  Ci.nsIWebProgress.NOTIFY_ALL);
+    panelBrowser.messageManager.loadFrameScript("chrome://browser/content/content.js", true);
     var cachedurl = panelBrowser.getAttribute("cachedurl")
     if (cachedurl) {
         panelBrowser.webNavigation

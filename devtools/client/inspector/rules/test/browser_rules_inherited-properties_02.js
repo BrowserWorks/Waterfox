@@ -7,8 +7,6 @@
 // Check that no inherited properties appear when the property does not apply
 // to the nested element.
 
-var {ELEMENT_STYLE} = require("devtools/server/actors/styles");
-
 const TEST_URI = `
   <style type="text/css">
     #test2 {
@@ -18,7 +16,7 @@ const TEST_URI = `
   <div id="test2"><div id="test1">Styled Node</div></div>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode("#test1", inspector);

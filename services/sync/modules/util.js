@@ -60,6 +60,25 @@ this.Utils = {
   getHTTPMACSHA1Header: CryptoUtils.getHTTPMACSHA1Header,
 
   /**
+   * The string to use as the base User-Agent in Sync requests.
+   * This string will look something like
+   *
+   *   Firefox/49.0a1 (Windows NT 6.1; WOW64; rv:46.0) FxSync/1.51.0.20160516142357.desktop
+   */
+  _userAgent: null,
+  get userAgent() {
+    if (!this._userAgent) {
+      let hph = Cc["@mozilla.org/network/protocol;1?name=http"].getService(Ci.nsIHttpProtocolHandler);
+      this._userAgent =
+        Services.appinfo.name + "/" + Services.appinfo.version +  // Product.
+        " (" + hph.oscpu + ")" +                                  // (oscpu)
+        " FxSync/" + WEAVE_VERSION + "." +                        // Sync.
+        Services.appinfo.appBuildID + ".";                        // Build.
+    }
+    return this._userAgent + Svc.Prefs.get("client.type", "desktop");
+  },
+
+  /**
    * Wrap a function to catch all exceptions and log them
    *
    * @usage MyObj._catch = Utils.catch;
@@ -336,11 +355,13 @@ this.Utils = {
 
     try {
       json = yield CommonUtils.readJSON(path);
-    } catch (e if e instanceof OS.File.Error && e.becauseNoSuchFile) {
-      // Ignore non-existent files.
     } catch (e) {
-      if (that._log) {
-        that._log.debug("Failed to load json", e);
+      if (e instanceof OS.File.Error && e.becauseNoSuchFile) {
+        // Ignore non-existent files.
+      } else {
+        if (that._log) {
+          that._log.debug("Failed to load json", e);
+        }
       }
     }
 
@@ -612,30 +633,12 @@ this.Utils = {
    * Get the FxA identity hosts.
    */
   getSyncCredentialsHostsFxA: function() {
-    // This is somewhat expensive and the result static, so we cache the result.
-    if (this._syncCredentialsHostsFxA) {
-      return this._syncCredentialsHostsFxA;
-    }
     let result = new Set();
     // the FxA host
     result.add(FxAccountsCommon.FXA_PWDMGR_HOST);
-    //
-    // The FxA hosts - these almost certainly all have the same hostname, but
-    // better safe than sorry...
-    for (let prefName of ["identity.fxaccounts.remote.force_auth.uri",
-                          "identity.fxaccounts.remote.signup.uri",
-                          "identity.fxaccounts.remote.signin.uri",
-                          "identity.fxaccounts.settings.uri"]) {
-      let prefVal;
-      try {
-        prefVal = Services.prefs.getCharPref(prefName);
-      } catch (_) {
-        continue;
-      }
-      let uri = Services.io.newURI(prefVal, null, null);
-      result.add(uri.prePath);
-    }
-    return this._syncCredentialsHostsFxA = result;
+    // We used to include the FxA hosts (hence the Set() result) but we now
+    // don't give them special treatment (hence the Set() with exactly 1 item)
+    return result;
   },
 
   getDefaultDeviceName() {

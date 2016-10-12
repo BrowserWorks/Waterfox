@@ -17,7 +17,7 @@
 #include "nsIDocShell.h"
 #include "nsIDocShellTreeItem.h"
 #include "nsIDocShellTreeOwner.h"
-#include "nsIDOMWindow.h"
+#include "nsPIDOMWindow.h"
 #include "nsIDOMOfflineResourceList.h"
 #include "nsIDocument.h"
 #include "nsIObserverService.h"
@@ -46,7 +46,7 @@ using mozilla::dom::ContentChild;
 // this enables LogLevel::Debug level information and places all output in
 // the file offlineupdate.log
 //
-extern PRLogModuleInfo *gOfflineCacheUpdateLog;
+extern mozilla::LazyLogModule gOfflineCacheUpdateLog;
 
 #undef LOG
 #define LOG(args) MOZ_LOG(gOfflineCacheUpdateLog, mozilla::LogLevel::Debug, args)
@@ -73,7 +73,7 @@ NS_IMPL_RELEASE(OfflineCacheUpdateChild)
 // OfflineCacheUpdateChild <public>
 //-----------------------------------------------------------------------------
 
-OfflineCacheUpdateChild::OfflineCacheUpdateChild(nsIDOMWindow* aWindow)
+OfflineCacheUpdateChild::OfflineCacheUpdateChild(nsPIDOMWindowInner* aWindow)
     : mState(STATE_UNINITIALIZED)
     , mIsUpgrade(false)
     , mSucceeded(false)
@@ -378,22 +378,14 @@ OfflineCacheUpdateChild::Schedule()
 
     NS_ASSERTION(mWindow, "Window must be provided to the offline cache update child");
 
-    nsCOMPtr<nsPIDOMWindow> piWindow = 
-        do_QueryInterface(mWindow);
-    mWindow = nullptr;
-
-    nsIDocShell *docshell = piWindow->GetDocShell();
-
-    nsCOMPtr<nsIDocShellTreeItem> item = do_QueryInterface(docshell);
-    if (!item) {
+    nsCOMPtr<nsPIDOMWindowInner> window = mWindow.forget();
+    nsCOMPtr<nsIDocShell >docshell = window->GetDocShell();
+    if (!docshell) {
       NS_WARNING("doc shell tree item is null");
       return NS_ERROR_FAILURE;
     }
 
-    nsCOMPtr<nsIDocShellTreeOwner> owner;
-    item->GetTreeOwner(getter_AddRefs(owner));
-
-    nsCOMPtr<nsITabChild> tabchild = do_GetInterface(owner);
+    nsCOMPtr<nsITabChild> tabchild = docshell->GetTabChild();
     // because owner implements nsITabChild, we can assume that it is
     // the one and only TabChild.
     TabChild* child = tabchild ? static_cast<TabChild*>(tabchild.get()) : nullptr;

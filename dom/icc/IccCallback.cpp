@@ -121,7 +121,7 @@ IccContactListToMozContactList(JSContext* aCx, GlobalObject& aGlobal,
 
 NS_IMPL_ISUPPORTS(IccCallback, nsIIccCallback)
 
-IccCallback::IccCallback(nsPIDOMWindow* aWindow, DOMRequest* aRequest,
+IccCallback::IccCallback(nsPIDOMWindowInner* aWindow, DOMRequest* aRequest,
                          bool aIsCardLockEnabled)
   : mWindow(aWindow)
   , mRequest(aRequest)
@@ -129,7 +129,7 @@ IccCallback::IccCallback(nsPIDOMWindow* aWindow, DOMRequest* aRequest,
 {
 }
 
-IccCallback::IccCallback(nsPIDOMWindow* aWindow, Promise* aPromise)
+IccCallback::IccCallback(nsPIDOMWindowInner* aWindow, Promise* aPromise)
   : mWindow(aWindow)
   , mPromise(aPromise)
 {
@@ -159,7 +159,7 @@ IccCallback::NotifyGetCardLockEnabled(bool aResult)
   JSContext* cx = jsapi.cx();
   JS::Rooted<JS::Value> jsResult(cx);
   if (!ToJSValue(cx, result, &jsResult)) {
-    JS_ClearPendingException(cx);
+    jsapi.ClearException();
     return NS_ERROR_TYPE_ERR;
   }
 
@@ -201,7 +201,7 @@ IccCallback::NotifyGetCardLockRetryCount(int32_t aCount)
   JSContext* cx = jsapi.cx();
   JS::Rooted<JS::Value> jsResult(cx);
   if (!ToJSValue(cx, result, &jsResult)) {
-    JS_ClearPendingException(cx);
+    jsapi.ClearException();
     return NS_ERROR_TYPE_ERR;
   }
 

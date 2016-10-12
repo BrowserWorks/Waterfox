@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests if the function searching works properly.
@@ -11,7 +13,11 @@ var gTab, gPanel, gDebugger;
 var gEditor, gSources, gSearchBox, gFilteredFunctions;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_function-search-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -20,8 +26,7 @@ function test() {
     gSearchBox = gDebugger.DebuggerView.Filtering._searchbox;
     gFilteredFunctions = gDebugger.DebuggerView.Filtering.FilteredFunctions;
 
-    waitForSourceShown(gPanel, "-01.js")
-      .then(() => showSource("doc_function-search.html"))
+   showSource("doc_function-search.html")
       .then(htmlSearch)
       .then(() => showSource("code_function-search-01.js"))
       .then(firstJsSearch)
@@ -167,7 +172,7 @@ function firstJsSearch() {
       ok(isCaretPos(gPanel, expectedResults[0][3], expectedResults[0][4]),
         "The editor didn't jump to the correct line again.");
 
-      deferred.resolve()
+      deferred.resolve();
     } else {
       ok(false, "How did you get here? Go away, you.");
     }
@@ -456,7 +461,7 @@ function writeInfo() {
   info("Debugger editor text:\n" + gEditor.getText());
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

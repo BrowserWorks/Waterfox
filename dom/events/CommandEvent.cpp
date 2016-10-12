@@ -18,7 +18,7 @@ CommandEvent::CommandEvent(EventTarget* aOwner,
           aEvent ? aEvent :
                    new WidgetCommandEvent(false, nullptr, nullptr, nullptr))
 {
-  mEvent->time = PR_Now();
+  mEvent->mTime = PR_Now();
   if (aEvent) {
     mEventIsInternal = false;
   } else {
@@ -36,7 +36,7 @@ NS_IMPL_RELEASE_INHERITED(CommandEvent, Event)
 NS_IMETHODIMP
 CommandEvent::GetCommand(nsAString& aCommand)
 {
-  nsIAtom* command = mEvent->AsCommandEvent()->command;
+  nsIAtom* command = mEvent->AsCommandEvent()->mCommand;
   if (command) {
     command->ToString(aCommand);
   } else {
@@ -53,7 +53,7 @@ CommandEvent::InitCommandEvent(const nsAString& aTypeArg,
 {
   Event::InitEvent(aTypeArg, aCanBubbleArg, aCancelableArg);
 
-  mEvent->AsCommandEvent()->command = do_GetAtom(aCommand);
+  mEvent->AsCommandEvent()->mCommand = NS_Atomize(aCommand);
   return NS_OK;
 }
 

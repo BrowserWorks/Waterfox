@@ -10,7 +10,7 @@
 #include "VRDeviceProxy.h"
 #include "VRDeviceProxyOrientationFallBack.h"
 #include "mozilla/StaticPtr.h"
-#include "mozilla/layers/CompositorParent.h" // for CompositorParent
+#include "mozilla/layers/CompositorThread.h" // for CompositorThread
 #include "mozilla/dom/Navigator.h"
 
 namespace mozilla {
@@ -24,6 +24,7 @@ void ReleaseVRManagerParentSingleton() {
 }
 
 VRManagerChild::VRManagerChild()
+  : mInputFrameID(-1)
 {
   MOZ_COUNT_CTOR(VRManagerChild);
   MOZ_ASSERT(NS_IsMainThread());
@@ -37,8 +38,8 @@ VRManagerChild::~VRManagerChild()
   Transport* trans = GetTransport();
   if (trans) {
     MOZ_ASSERT(XRE_GetIOMessageLoop());
-    XRE_GetIOMessageLoop()->PostTask(FROM_HERE,
-                                     new DeleteTask<Transport>(trans));
+    RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(trans);
+    XRE_GetIOMessageLoop()->PostTask(task.forget());
   }
 }
 
@@ -76,7 +77,7 @@ VRManagerChild::StartUpSameProcess()
     sVRManagerChildSingleton = new VRManagerChild();
     sVRManagerParentSingleton = VRManagerParent::CreateSameProcess();
     sVRManagerChildSingleton->Open(sVRManagerParentSingleton->GetIPCChannel(),
-                                   mozilla::layers::CompositorParent::CompositorLoop(),
+                                   mozilla::layers::CompositorThreadHolder::Loop(),
                                    mozilla::ipc::ChildSide);
   }
 }
@@ -108,7 +109,7 @@ VRManagerChild::Destroy()
 
   // The DeferredDestroyVRManager task takes ownership of
   // the VRManagerChild and will release it when it runs.
-  MessageLoop::current()->PostTask(FROM_HERE,
+  MessageLoop::current()->PostTask(
              NewRunnableFunction(DeferredDestroy, selfRef));
 }
 
@@ -157,6 +158,7 @@ VRManagerChild::RecvUpdateDeviceSensors(nsTArray<VRSensorUpdate>&& aDeviceSensor
     for (auto& device: mDevices) {
       if (device->GetDeviceInfo().GetDeviceID() == sensorUpdate.mDeviceID) {
         device->UpdateSensorState(sensorUpdate.mSensorState);
+        mInputFrameID = sensorUpdate.mSensorState.inputFrameID;
         break;
       }
     }
@@ -180,6 +182,12 @@ VRManagerChild::RefreshVRDevicesWithCallback(dom::Navigator* aNavigator)
     mNavigatorCallbacks.AppendElement(aNavigator);
   }
   return success;
+}
+
+int
+VRManagerChild::GetInputFrameID()
+{
+  return mInputFrameID;
 }
 
 } // namespace gfx

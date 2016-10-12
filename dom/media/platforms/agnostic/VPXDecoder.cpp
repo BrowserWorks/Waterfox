@@ -9,36 +9,41 @@
 #include "nsError.h"
 #include "TimeUnits.h"
 #include "mozilla/PodOperations.h"
+#include "mozilla/SyncRunnable.h"
 #include "prsystem.h"
 
 #include <algorithm>
 
 #undef LOG
-extern mozilla::LogModule* GetPDMLog();
-#define LOG(arg, ...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, ("VPXDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define LOG(arg, ...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, ("VPXDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
 namespace mozilla {
 
 using namespace gfx;
 using namespace layers;
 
+static int MimeTypeToCodec(const nsACString& aMimeType)
+{
+  if (aMimeType.EqualsLiteral("video/webm; codecs=vp8")) {
+    return VPXDecoder::Codec::VP8;
+  } else if (aMimeType.EqualsLiteral("video/webm; codecs=vp9")) {
+    return VPXDecoder::Codec::VP9;
+  }
+  return -1;
+}
+
 VPXDecoder::VPXDecoder(const VideoInfo& aConfig,
                        ImageContainer* aImageContainer,
-                       FlushableTaskQueue* aTaskQueue,
+                       TaskQueue* aTaskQueue,
                        MediaDataDecoderCallback* aCallback)
   : mImageContainer(aImageContainer)
   , mTaskQueue(aTaskQueue)
   , mCallback(aCallback)
+  , mIsFlushing(false)
   , mInfo(aConfig)
+  , mCodec(MimeTypeToCodec(aConfig.mMimeType))
 {
   MOZ_COUNT_CTOR(VPXDecoder);
-  if (aConfig.mMimeType.EqualsLiteral("video/webm; codecs=vp8")) {
-    mCodec = Codec::VP8;
-  } else if (aConfig.mMimeType.EqualsLiteral("video/webm; codecs=vp9")) {
-    mCodec = Codec::VP9;
-  } else {
-    mCodec = -1;
-  }
   PodZero(&mVPX);
 }
 
@@ -85,13 +90,20 @@ VPXDecoder::Init()
 nsresult
 VPXDecoder::Flush()
 {
-  mTaskQueue->Flush();
+  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
+  mIsFlushing = true;
+  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([this] () {
+    // nothing to do for now.
+  });
+  SyncRunnable::DispatchToThread(mTaskQueue, r);
+  mIsFlushing = false;
   return NS_OK;
 }
 
 int
-VPXDecoder::DoDecodeFrame(MediaRawData* aSample)
+VPXDecoder::DoDecode(MediaRawData* aSample)
 {
+  MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
 #if defined(DEBUG)
   vpx_codec_stream_info_t si;
   PodZero(&si);
@@ -151,17 +163,16 @@ VPXDecoder::DoDecodeFrame(MediaRawData* aSample)
       return -1;
     }
 
-    VideoInfo info;
-    info.mDisplay = mInfo.mDisplay;
-    RefPtr<VideoData> v = VideoData::Create(info,
-                                              mImageContainer,
-                                              aSample->mOffset,
-                                              aSample->mTime,
-                                              aSample->mDuration,
-                                              b,
-                                              aSample->mKeyframe,
-                                              aSample->mTimecode,
-                                              mInfo.mImage);
+    RefPtr<VideoData> v = VideoData::Create(mInfo,
+                                            mImageContainer,
+                                            aSample->mOffset,
+                                            aSample->mTime,
+                                            aSample->mDuration,
+                                            b,
+                                            aSample->mKeyframe,
+                                            aSample->mTimecode,
+                                            mInfo.ScaledImageRect(img->d_w,
+                                                                  img->d_h));
 
     if (!v) {
       LOG("Image allocation error source %ldx%ld display %ldx%ld picture %ldx%ld",
@@ -175,10 +186,14 @@ VPXDecoder::DoDecodeFrame(MediaRawData* aSample)
 }
 
 void
-VPXDecoder::DecodeFrame(MediaRawData* aSample)
+VPXDecoder::ProcessDecode(MediaRawData* aSample)
 {
-  if (DoDecodeFrame(aSample) == -1) {
-    mCallback->Error();
+  MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
+  if (mIsFlushing) {
+    return;
+  }
+  if (DoDecode(aSample) == -1) {
+    mCallback->Error(MediaDataDecoderError::DECODE_ERROR);
   } else if (mTaskQueue->IsEmpty()) {
     mCallback->InputExhausted();
   }
@@ -187,37 +202,37 @@ VPXDecoder::DecodeFrame(MediaRawData* aSample)
 nsresult
 VPXDecoder::Input(MediaRawData* aSample)
 {
-  nsCOMPtr<nsIRunnable> runnable(
-    NS_NewRunnableMethodWithArg<RefPtr<MediaRawData>>(
-      this, &VPXDecoder::DecodeFrame,
-      RefPtr<MediaRawData>(aSample)));
-  mTaskQueue->Dispatch(runnable.forget());
+  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
+  mTaskQueue->Dispatch(NewRunnableMethod<RefPtr<MediaRawData>>(
+                       this, &VPXDecoder::ProcessDecode, aSample));
 
   return NS_OK;
 }
 
 void
-VPXDecoder::DoDrain()
+VPXDecoder::ProcessDrain()
 {
+  MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
   mCallback->DrainComplete();
 }
 
 nsresult
 VPXDecoder::Drain()
 {
-  nsCOMPtr<nsIRunnable> runnable(
-    NS_NewRunnableMethod(this, &VPXDecoder::DoDrain));
-  mTaskQueue->Dispatch(runnable.forget());
+  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
+  mTaskQueue->Dispatch(NewRunnableMethod(this, &VPXDecoder::ProcessDrain));
 
   return NS_OK;
 }
 
 /* static */
 bool
-VPXDecoder::IsVPX(const nsACString& aMimeType)
+VPXDecoder::IsVPX(const nsACString& aMimeType, uint8_t aCodecMask)
 {
-  return aMimeType.EqualsLiteral("video/webm; codecs=vp8") ||
-    aMimeType.EqualsLiteral("video/webm; codecs=vp9");
+  return ((aCodecMask & VPXDecoder::VP8) &&
+          aMimeType.EqualsLiteral("video/webm; codecs=vp8")) ||
+         ((aCodecMask & VPXDecoder::VP9) &&
+          aMimeType.EqualsLiteral("video/webm; codecs=vp9"));
 }
 
 } // namespace mozilla

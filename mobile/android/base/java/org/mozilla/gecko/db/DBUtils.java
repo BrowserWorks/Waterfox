@@ -27,6 +27,8 @@ import java.util.Map;
 public class DBUtils {
     private static final String LOGTAG = "GeckoDBUtils";
 
+    public static final int SQLITE_MAX_VARIABLE_NUMBER = 999;
+
     public static final String qualifyColumn(String table, String column) {
         return table + "." + column;
     }
@@ -59,6 +61,34 @@ public class DBUtils {
         String[] result = new String[originalValues.length + newValues.length];
         System.arraycopy(originalValues, 0, result, 0, originalValues.length);
         System.arraycopy(newValues, 0, result, originalValues.length, newValues.length);
+
+        return result;
+    }
+
+    /**
+     * Concatenate multiple lists of selection arguments. <code>values</code> may be <code>null</code>.
+     */
+    public static String[] concatenateSelectionArgs(String[]... values) {
+        // Since we're most likely to be concatenating a few arrays of many values, it is most
+        // efficient to iterate over the arrays once to obtain their lengths, allowing us to create one target array
+        // (as opposed to copying arrays on every iteration, which would result in many more copies).
+        int totalLength = 0;
+        for (String[] v : values) {
+            if (v != null) {
+                totalLength += v.length;
+            }
+        }
+
+        String[] result = new String[totalLength];
+
+        int position = 0;
+        for (String[] v: values) {
+            if (v != null) {
+                int currentLength = v.length;
+                System.arraycopy(v, 0, result, position, currentLength);
+                position += currentLength;
+            }
+        }
 
         return result;
     }
@@ -220,7 +250,7 @@ public class DBUtils {
     }
 
     public static Uri appendProfileWithDefault(final String profile, final Uri uri) {
-        if (TextUtils.isEmpty(profile)) {
+        if (profile == null) {
             return appendProfile(GeckoProfile.DEFAULT_PROFILE, uri);
         }
         return appendProfile(profile, uri);

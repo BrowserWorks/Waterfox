@@ -6,46 +6,54 @@
 
 "use strict";
 
-var {utils: Cu, interfaces: Ci, classes: Cc} = Components;
-
-Cu.import("resource://gre/modules/Task.jsm");
-const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
-Cu.import("resource://gre/modules/Console.jsm");
-Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
-
-const {InplaceEditor, editableItem} = require("devtools/client/shared/inplace-editor");
+const {Cc, Ci} = require("chrome");
+const {Task} = require("devtools/shared/task");
+const {InplaceEditor, editableItem} =
+      require("devtools/client/shared/inplace-editor");
 const {ReflowFront} = require("devtools/server/actors/layout");
+const {LocalizationHelper} = require("devtools/client/shared/l10n");
+const {getCssProperties} = require("devtools/shared/fronts/css-properties");
 
 const STRINGS_URI = "chrome://devtools/locale/shared.properties";
-const SHARED_L10N = new ViewHelpers.L10N(STRINGS_URI);
+const SHARED_L10N = new LocalizationHelper(STRINGS_URI);
 const NUMERIC = /^-?[\d\.]+$/;
 const LONG_TEXT_ROTATE_LIMIT = 3;
 
 /**
  * An instance of EditingSession tracks changes that have been made during the
  * modification of box model values. All of these changes can be reverted by
- * calling revert.
+ * calling revert. The main parameter is the LayoutView that created it.
  *
- * @param doc    A DOM document that can be used to test style rules.
- * @param rules  An array of the style rules defined for the node being edited.
- *               These should be in order of priority, least important first.
+ * @param inspector The inspector panel.
+ * @param doc       A DOM document that can be used to test style rules.
+ * @param rules     An array of the style rules defined for the node being
+ *                  edited. These should be in order of priority, least
+ *                  important first.
  */
-function EditingSession(doc, rules) {
+function EditingSession({inspector, doc, elementRules}) {
   this._doc = doc;
-  this._rules = rules;
+  this._rules = elementRules;
   this._modifications = new Map();
+  this._cssProperties = getCssProperties(inspector.toolbox);
 }
 
 EditingSession.prototype = {
   /**
    * Gets the value of a single property from the CSS rule.
    *
-   * @param rule      The CSS rule
-   * @param property  The name of the property
+   * @param {StyleRuleFront} rule The CSS rule.
+   * @param {String} property The name of the property.
+   * @return {String} The value.
    */
-  getPropertyFromRule: function(rule, property) {
-    let dummyStyle = this._element.style;
+  getPropertyFromRule: function (rule, property) {
+    // Use the parsed declarations in the StyleRuleFront object if available.
+    let index = this.getPropertyIndex(property, rule);
+    if (index !== -1) {
+      return rule.declarations[index].value;
+    }
 
+    // Fallback to parsing the cssText locally otherwise.
+    let dummyStyle = this._element.style;
     dummyStyle.cssText = rule.cssText;
     return dummyStyle.getPropertyValue(property);
   },
@@ -56,11 +64,11 @@ EditingSession.prototype = {
    *
    * @param property  The name of the property as a string
    */
-  getProperty: function(property) {
+  getProperty: function (property) {
     // Create a hidden element for getPropertyFromRule to use
     let div = this._doc.createElement("div");
     div.setAttribute("style", "display: none");
-    this._doc.body.appendChild(div);
+    this._doc.getElementById("sidebar-panel-layoutview").appendChild(div);
     this._element = this._doc.createElement("p");
     div.appendChild(this._element);
 
@@ -78,51 +86,95 @@ EditingSession.prototype = {
   },
 
   /**
-   * Sets a number of properties on the node. Returns a promise that will be
-   * resolved when the modifications are complete.
-   *
+   * Get the index of a given css property name in a CSS rule.
+   * Or -1, if there are no properties in the rule yet.
+   * @param {String} name The property name.
+   * @param {StyleRuleFront} rule Optional, defaults to the element style rule.
+   * @return {Number} The property index in the rule.
+   */
+  getPropertyIndex: function (name, rule = this._rules[0]) {
+    let elementStyleRule = this._rules[0];
+    if (!elementStyleRule.declarations.length) {
+      return -1;
+    }
+
+    return elementStyleRule.declarations.findIndex(p => p.name === name);
+  },
+
+  /**
+   * Sets a number of properties on the node.
    * @param properties  An array of properties, each is an object with name and
    *                    value properties. If the value is "" then the property
    *                    is removed.
+   * @return {Promise} Resolves when the modifications are complete.
    */
-  setProperties: function(properties) {
-    let modifications = this._rules[0].startModifyingProperties();
-
+  setProperties: Task.async(function* (properties) {
     for (let property of properties) {
+      // Get a RuleModificationList or RuleRewriter helper object from the
+      // StyleRuleActor to make changes to CSS properties.
+      // Note that RuleRewriter doesn't support modifying several properties at
+      // once, so we do this in a sequence here.
+      let modifications = this._rules[0].startModifyingProperties(
+        this._cssProperties);
+
+      // Remember the property so it can be reverted.
       if (!this._modifications.has(property.name)) {
         this._modifications.set(property.name,
           this.getPropertyFromRule(this._rules[0], property.name));
       }
 
-      if (property.value == "") {
-        modifications.removeProperty(-1, property.name);
-      } else {
-        modifications.setProperty(-1, property.name, property.value, "");
+      // Find the index of the property to be changed, or get the next index to
+      // insert the new property at.
+      let index = this.getPropertyIndex(property.name);
+      if (index === -1) {
+        index = this._rules[0].declarations.length;
       }
-    }
 
-    return modifications.apply().then(null, console.error);
-  },
+      if (property.value == "") {
+        modifications.removeProperty(index, property.name);
+      } else {
+        modifications.setProperty(index, property.name, property.value, "");
+      }
+
+      yield modifications.apply();
+    }
+  }),
 
   /**
-   * Reverts all of the property changes made by this instance. Returns a
-   * promise that will be resolved when complete.
+   * Reverts all of the property changes made by this instance.
+   * @return {Promise} Resolves when all properties have been reverted.
    */
-  revert: function() {
-    let modifications = this._rules[0].startModifyingProperties();
-
+  revert: Task.async(function* () {
+    // Revert each property that we modified previously, one by one. See
+    // setProperties for information about why.
     for (let [property, value] of this._modifications) {
+      let modifications = this._rules[0].startModifyingProperties(
+        this._cssProperties);
+
+      // Find the index of the property to be reverted.
+      let index = this.getPropertyIndex(property);
+
       if (value != "") {
-        modifications.setProperty(-1, property, value, "");
+        // If the property doesn't exist anymore, insert at the beginning of the
+        // rule.
+        if (index === -1) {
+          index = 0;
+        }
+        modifications.setProperty(index, property, value, "");
       } else {
-        modifications.removeProperty(-1, property);
+        // If the property doesn't exist anymore, no need to remove it. It had
+        // not been added after all.
+        if (index === -1) {
+          continue;
+        }
+        modifications.removeProperty(index, property);
       }
+
+      yield modifications.apply();
     }
+  }),
 
-    return modifications.apply().then(null, console.error);
-  },
-
-  destroy: function() {
+  destroy: function () {
     this._doc = null;
     this._rules = null;
     this._modifications.clear();
@@ -137,16 +189,16 @@ EditingSession.prototype = {
  */
 function LayoutView(inspector, win) {
   this.inspector = inspector;
-
   this.doc = win.document;
-  this.sizeLabel = this.doc.querySelector(".size > span");
-  this.sizeHeadingLabel = this.doc.getElementById("element-size");
+  this.sizeLabel = this.doc.querySelector(".layout-size > span");
+  this.sizeHeadingLabel = this.doc.getElementById("layout-element-size");
+  this._geometryEditorHighlighter = null;
 
   this.init();
 }
 
 LayoutView.prototype = {
-  init: function() {
+  init: function () {
     this.update = this.update.bind(this);
 
     this.onNewSelection = this.onNewSelection.bind(this);
@@ -158,50 +210,83 @@ LayoutView.prototype = {
     this.onSidebarSelect = this.onSidebarSelect.bind(this);
     this.inspector.sidebar.on("select", this.onSidebarSelect);
 
+    this.onPickerStarted = this.onPickerStarted.bind(this);
+    this.onMarkupViewLeave = this.onMarkupViewLeave.bind(this);
+    this.onMarkupViewNodeHover = this.onMarkupViewNodeHover.bind(this);
+    this.onWillNavigate = this.onWillNavigate.bind(this);
+
+    this.initBoxModelHighlighter();
+
     // Store for the different dimensions of the node.
     // 'selector' refers to the element that holds the value in view.xhtml;
     // 'property' is what we are measuring;
     // 'value' is the computed dimension, computed in update().
     this.map = {
-      position: {selector: "#element-position",
-                 property: "position",
-                 value: undefined},
-      marginTop: {selector: ".margin.top > span",
-                  property: "margin-top",
-                  value: undefined},
-      marginBottom: {selector: ".margin.bottom > span",
-                  property: "margin-bottom",
-                  value: undefined},
-      marginLeft: {selector: ".margin.left > span",
-                  property: "margin-left",
-                  value: undefined},
-      marginRight: {selector: ".margin.right > span",
-                  property: "margin-right",
-                  value: undefined},
-      paddingTop: {selector: ".padding.top > span",
-                  property: "padding-top",
-                  value: undefined},
-      paddingBottom: {selector: ".padding.bottom > span",
-                  property: "padding-bottom",
-                  value: undefined},
-      paddingLeft: {selector: ".padding.left > span",
-                  property: "padding-left",
-                  value: undefined},
-      paddingRight: {selector: ".padding.right > span",
-                  property: "padding-right",
-                  value: undefined},
-      borderTop: {selector: ".border.top > span",
-                  property: "border-top-width",
-                  value: undefined},
-      borderBottom: {selector: ".border.bottom > span",
-                  property: "border-bottom-width",
-                  value: undefined},
-      borderLeft: {selector: ".border.left > span",
-                  property: "border-left-width",
-                  value: undefined},
-      borderRight: {selector: ".border.right > span",
-                  property: "border-right-width",
-                  value: undefined}
+      position: {
+        selector: "#layout-element-position",
+        property: "position",
+        value: undefined
+      },
+      marginTop: {
+        selector: ".layout-margin.layout-top > span",
+        property: "margin-top",
+        value: undefined
+      },
+      marginBottom: {
+        selector: ".layout-margin.layout-bottom > span",
+        property: "margin-bottom",
+        value: undefined
+      },
+      marginLeft: {
+        selector: ".layout-margin.layout-left > span",
+        property: "margin-left",
+        value: undefined
+      },
+      marginRight: {
+        selector: ".layout-margin.layout-right > span",
+        property: "margin-right",
+        value: undefined
+      },
+      paddingTop: {
+        selector: ".layout-padding.layout-top > span",
+        property: "padding-top",
+        value: undefined
+      },
+      paddingBottom: {
+        selector: ".layout-padding.layout-bottom > span",
+        property: "padding-bottom",
+        value: undefined
+      },
+      paddingLeft: {
+        selector: ".layout-padding.layout-left > span",
+        property: "padding-left",
+        value: undefined
+      },
+      paddingRight: {
+        selector: ".layout-padding.layout-right > span",
+        property: "padding-right",
+        value: undefined
+      },
+      borderTop: {
+        selector: ".layout-border.layout-top > span",
+        property: "border-top-width",
+        value: undefined
+      },
+      borderBottom: {
+        selector: ".layout-border.layout-bottom > span",
+        property: "border-bottom-width",
+        value: undefined
+      },
+      borderLeft: {
+        selector: ".layout-border.layout-left > span",
+        property: "border-left-width",
+        value: undefined
+      },
+      borderRight: {
+        selector: ".layout-border.layout-right > span",
+        property: "border-right-width",
+        value: undefined
+      }
     };
 
     // Make each element the dimensions editable
@@ -219,12 +304,35 @@ LayoutView.prototype = {
     }
 
     this.onNewNode();
+
+    // Mark document as RTL or LTR:
+    let chromeReg = Cc["@mozilla.org/chrome/chrome-registry;1"]
+                    .getService(Ci.nsIXULChromeRegistry);
+    let dir = chromeReg.isLocaleRTL("global");
+    let container = this.doc.getElementById("layout-container");
+    container.setAttribute("dir", dir ? "rtl" : "ltr");
+
+    let nodeGeometry = this.doc.getElementById("layout-geometry-editor");
+
+    this.onGeometryButtonClick = this.onGeometryButtonClick.bind(this);
+    nodeGeometry.addEventListener("click", this.onGeometryButtonClick);
+  },
+
+  initBoxModelHighlighter: function () {
+    let highlightElts = this.doc.querySelectorAll("#layout-container *[title]");
+    this.onHighlightMouseOver = this.onHighlightMouseOver.bind(this);
+    this.onHighlightMouseOut = this.onHighlightMouseOut.bind(this);
+
+    for (let element of highlightElts) {
+      element.addEventListener("mouseover", this.onHighlightMouseOver, true);
+      element.addEventListener("mouseout", this.onHighlightMouseOut, true);
+    }
   },
 
   /**
    * Start listening to reflows in the current tab.
    */
-  trackReflows: function() {
+  trackReflows: function () {
     if (!this.reflowFront) {
       let toolbox = this.inspector.toolbox;
       if (toolbox.target.form.reflowActor) {
@@ -242,7 +350,7 @@ LayoutView.prototype = {
   /**
    * Stop listening to reflows in the current tab.
    */
-  untrackReflows: function() {
+  untrackReflows: function () {
     if (!this.reflowFront) {
       return;
     }
@@ -254,17 +362,20 @@ LayoutView.prototype = {
   /**
    * Called when the user clicks on one of the editable values in the layoutview
    */
-  initEditor: function(element, event, dimension) {
+  initEditor: function (element, event, dimension) {
     let { property } = dimension;
-    let session = new EditingSession(document, this.elementRules);
+    let session = new EditingSession(this);
     let initialValue = session.getProperty(property);
 
     let editor = new InplaceEditor({
       element: element,
       initial: initialValue,
-
-      start: editor => {
-        editor.elt.parentNode.classList.add("editing");
+      contentType: InplaceEditor.CONTENT_TYPES.CSS_VALUE,
+      property: {
+        name: dimension.property
+      },
+      start: self => {
+        self.elt.parentNode.classList.add("layout-editing");
       },
 
       change: value => {
@@ -284,14 +395,15 @@ LayoutView.prototype = {
           }
         }
 
-        session.setProperties(properties);
+        session.setProperties(properties).catch(e => console.error(e));
       },
 
       done: (value, commit) => {
-        editor.elt.parentNode.classList.remove("editing");
+        editor.elt.parentNode.classList.remove("layout-editing");
         if (!commit) {
-          session.revert();
-          session.destroy();
+          session.revert().then(() => {
+            session.destroy();
+          }, e => console.error(e));
         }
       }
     }, event);
@@ -301,7 +413,7 @@ LayoutView.prototype = {
    * Is the layoutview visible in the sidebar.
    * @return {Boolean}
    */
-  isViewVisible: function() {
+  isViewVisible: function () {
     return this.inspector &&
            this.inspector.sidebar.getCurrentTabID() == "layoutview";
   },
@@ -311,7 +423,7 @@ LayoutView.prototype = {
    * be displayed in the view.
    * @return {Boolean}
    */
-  isViewVisibleAndNodeValid: function() {
+  isViewVisibleAndNodeValid: function () {
     return this.isViewVisible() &&
            this.inspector.selection.isConnected() &&
            this.inspector.selection.isElementNode();
@@ -320,10 +432,31 @@ LayoutView.prototype = {
   /**
    * Destroy the nodes. Remove listeners.
    */
-  destroy: function() {
+  destroy: function () {
+    let highlightElts = this.doc.querySelectorAll("#layout-container *[title]");
+
+    for (let element of highlightElts) {
+      element.removeEventListener("mouseover", this.onHighlightMouseOver, true);
+      element.removeEventListener("mouseout", this.onHighlightMouseOut, true);
+    }
+
+    let nodeGeometry = this.doc.getElementById("layout-geometry-editor");
+    nodeGeometry.removeEventListener("click", this.onGeometryButtonClick);
+
+    this.inspector.off("picker-started", this.onPickerStarted);
+
+    // Inspector Panel will destroy `markup` object on "will-navigate" event,
+    // therefore we have to check if it's still available in case LayoutView
+    // is destroyed immediately after.
+    if (this.inspector.markup) {
+      this.inspector.markup.off("leave", this.onMarkupViewLeave);
+      this.inspector.markup.off("node-hover", this.onMarkupViewNodeHover);
+    }
+
     this.inspector.sidebar.off("layoutview-selected", this.onNewNode);
     this.inspector.selection.off("new-node-front", this.onNewSelection);
     this.inspector.sidebar.off("select", this.onSidebarSelect);
+    this.inspector._target.off("will-navigate", this.onWillNavigate);
 
     this.sizeHeadingLabel = null;
     this.sizeLabel = null;
@@ -337,27 +470,73 @@ LayoutView.prototype = {
     }
   },
 
-  onSidebarSelect: function(e, sidebar) {
+  onSidebarSelect: function (e, sidebar) {
     this.setActive(sidebar === "layoutview");
   },
 
   /**
    * Selection 'new-node-front' event handler.
    */
-  onNewSelection: function() {
+  onNewSelection: function () {
     let done = this.inspector.updating("layoutview");
-    this.onNewNode().then(done, err => {
-      console.error(err);
-      done();
-    });
+    this.onNewNode()
+      .then(() => this.hideGeometryEditor())
+      .then(done, (err) => {
+        console.error(err);
+        done();
+      }).catch(console.error);
   },
 
   /**
    * @return a promise that resolves when the view has been updated
    */
-  onNewNode: function() {
+  onNewNode: function () {
     this.setActive(this.isViewVisibleAndNodeValid());
     return this.update();
+  },
+
+  onHighlightMouseOver: function (e) {
+    let region = e.target.getAttribute("data-box");
+    if (!region) {
+      return;
+    }
+
+    this.showBoxModel({
+      region,
+      showOnly: region,
+      onlyRegionArea: true
+    });
+  },
+
+  onHighlightMouseOut: function () {
+    this.hideBoxModel();
+  },
+
+  onGeometryButtonClick: function ({target}) {
+    if (target.hasAttribute("checked")) {
+      target.removeAttribute("checked");
+      this.hideGeometryEditor();
+    } else {
+      target.setAttribute("checked", "true");
+      this.showGeometryEditor();
+    }
+  },
+
+  onPickerStarted: function () {
+    this.hideGeometryEditor();
+  },
+
+  onMarkupViewLeave: function () {
+    this.showGeometryEditor(true);
+  },
+
+  onMarkupViewNodeHover: function () {
+    this.hideGeometryEditor(false);
+  },
+
+  onWillNavigate: function () {
+    this._geometryEditorHighlighter.release().catch(console.error);
+    this._geometryEditorHighlighter = null;
   },
 
   /**
@@ -365,13 +544,15 @@ LayoutView.prototype = {
    * layout-view is hidden, otherwise track reflows and show values.
    * @param {Boolean} isActive
    */
-  setActive: function(isActive) {
+  setActive: function (isActive) {
     if (isActive === this.isActive) {
       return;
     }
     this.isActive = isActive;
 
-    this.doc.body.classList.toggle("inactive", !isActive);
+    let panel = this.doc.getElementById("sidebar-panel-layoutview");
+    panel.classList.toggle("inactive", !isActive);
+
     if (isActive) {
       this.trackReflows();
     } else {
@@ -384,10 +565,10 @@ LayoutView.prototype = {
    * the layoutview/view.xhtml document.
    * @return a promise that will be resolved when complete.
    */
-  update: function() {
-    let lastRequest = Task.spawn((function*() {
+  update: function () {
+    let lastRequest = Task.spawn((function* () {
       if (!this.isViewVisibleAndNodeValid()) {
-        return;
+        return null;
       }
 
       let node = this.inspector.selection.nodeFront;
@@ -395,6 +576,8 @@ LayoutView.prototype = {
         autoMargins: this.isActive
       });
       let styleEntries = yield this.inspector.pageStyle.getApplied(node, {});
+
+      yield this.updateGeometryButton();
 
       // If a subsequent request has been made, wait for that one instead.
       if (this._lastRequest != lastRequest) {
@@ -474,9 +657,11 @@ LayoutView.prototype = {
       this.elementRules = styleEntries.map(e => e.rule);
 
       this.inspector.emit("layoutview-updated");
-    }).bind(this)).then(null, console.error);
+      return undefined;
+    }).bind(this)).catch(console.error);
 
-    return this._lastRequest = lastRequest;
+    this._lastRequest = lastRequest;
+    return this._lastRequest;
   },
 
   /**
@@ -487,7 +672,7 @@ LayoutView.prototype = {
    * @param {Array} rules An array of applied rules retrieved by
    * styleActor.getApplied.
    */
-  updateSourceRuleTooltip: function(el, property, rules) {
+  updateSourceRuleTooltip: function (el, property, rules) {
     // Dummy element used to parse the cssText of applied rules.
     let dummyEl = this.doc.createElement("div");
 
@@ -517,7 +702,7 @@ LayoutView.prototype = {
    * Show the box-model highlighter on the currently selected element
    * @param {Object} options Options passed to the highlighter actor
    */
-  showBoxModel: function(options={}) {
+  showBoxModel: function (options = {}) {
     let toolbox = this.inspector.toolbox;
     let nodeFront = this.inspector.selection.nodeFront;
 
@@ -527,73 +712,92 @@ LayoutView.prototype = {
   /**
    * Hide the box-model highlighter on the currently selected element
    */
-  hideBoxModel: function() {
+  hideBoxModel: function () {
     let toolbox = this.inspector.toolbox;
 
     toolbox.highlighterUtils.unhighlight();
   },
 
-  manageOverflowingText: function(span) {
+  /**
+   * Show the geometry editor highlighter on the currently selected element
+   * @param {Boolean} [showOnlyIfActive=false]
+   *   Indicates if the Geometry Editor should be shown only if it's active but
+   *   hidden.
+   */
+  showGeometryEditor: function (showOnlyIfActive = false) {
+    let toolbox = this.inspector.toolbox;
+    let nodeFront = this.inspector.selection.nodeFront;
+    let nodeGeometry = this.doc.getElementById("layout-geometry-editor");
+    let isActive = nodeGeometry.hasAttribute("checked");
+
+    if (showOnlyIfActive && !isActive) {
+      return;
+    }
+
+    if (this._geometryEditorHighlighter) {
+      this._geometryEditorHighlighter.show(nodeFront).catch(console.error);
+      return;
+    }
+
+    // instantiate Geometry Editor highlighter
+    toolbox.highlighterUtils
+      .getHighlighterByType("GeometryEditorHighlighter").then(highlighter => {
+        highlighter.show(nodeFront).catch(console.error);
+        this._geometryEditorHighlighter = highlighter;
+
+        // Hide completely the geometry editor if the picker is clicked
+        toolbox.on("picker-started", this.onPickerStarted);
+
+        // Temporary hide the geometry editor
+        this.inspector.markup.on("leave", this.onMarkupViewLeave);
+        this.inspector.markup.on("node-hover", this.onMarkupViewNodeHover);
+
+        // Release the actor on will-navigate event
+        this.inspector._target.once("will-navigate", this.onWillNavigate);
+      });
+  },
+
+  /**
+   * Hide the geometry editor highlighter on the currently selected element
+   * @param {Boolean} [updateButton=true]
+   *   Indicates if the Geometry Editor's button needs to be unchecked too
+   */
+  hideGeometryEditor: function (updateButton = true) {
+    if (this._geometryEditorHighlighter) {
+      this._geometryEditorHighlighter.hide().catch(console.error);
+    }
+
+    if (updateButton) {
+      let nodeGeometry = this.doc.getElementById("layout-geometry-editor");
+      nodeGeometry.removeAttribute("checked");
+    }
+  },
+
+  /**
+   * Update the visibility and the state of the geometry editor button,
+   * based on the selected node.
+   */
+  updateGeometryButton: Task.async(function* () {
+    let node = this.inspector.selection.nodeFront;
+    let isEditable = false;
+
+    if (node) {
+      isEditable = yield this.inspector.pageStyle.isPositionEditable(node);
+    }
+
+    let nodeGeometry = this.doc.getElementById("layout-geometry-editor");
+    nodeGeometry.style.visibility = isEditable ? "visible" : "hidden";
+  }),
+
+  manageOverflowingText: function (span) {
     let classList = span.parentNode.classList;
 
-    if (classList.contains("left") || classList.contains("right")) {
+    if (classList.contains("layout-left") ||
+        classList.contains("layout-right")) {
       let force = span.textContent.length > LONG_TEXT_ROTATE_LIMIT;
-      classList.toggle("rotate", force);
+      classList.toggle("layout-rotate", force);
     }
   }
 };
 
-var elts;
-
-var onmouseover = function(e) {
-  let region = e.target.getAttribute("data-box");
-  if (!region) {
-    return false;
-  }
-
-  this.layoutview.showBoxModel({
-    region,
-    showOnly: region,
-    onlyRegionArea: true
-  });
-
-  return false;
-}.bind(window);
-
-var onmouseout = function() {
-  this.layoutview.hideBoxModel();
-  return false;
-}.bind(window);
-
-window.setPanel = function(panel) {
-  this.layoutview = new LayoutView(panel, window);
-
-  // Box model highlighter mechanism
-  elts = document.querySelectorAll("*[title]");
-  for (let i = 0; i < elts.length; i++) {
-    let elt = elts[i];
-    elt.addEventListener("mouseover", onmouseover, true);
-    elt.addEventListener("mouseout", onmouseout, true);
-  }
-
-  // Mark document as RTL or LTR:
-  let chromeReg = Cc["@mozilla.org/chrome/chrome-registry;1"]
-                  .getService(Ci.nsIXULChromeRegistry);
-  let dir = chromeReg.isLocaleRTL("global");
-  document.body.setAttribute("dir", dir ? "rtl" : "ltr");
-
-  window.parent.postMessage("layoutview-ready", "*");
-};
-
-window.onunload = function() {
-  if (this.layoutview) {
-    this.layoutview.destroy();
-  }
-  if (elts) {
-    for (let i = 0; i < elts.length; i++) {
-      let elt = elts[i];
-      elt.removeEventListener("mouseover", onmouseover, true);
-      elt.removeEventListener("mouseout", onmouseout, true);
-    }
-  }
-};
+exports.LayoutView = LayoutView;

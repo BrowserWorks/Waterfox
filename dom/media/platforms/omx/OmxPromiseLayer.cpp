@@ -5,40 +5,36 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "OmxPromiseLayer.h"
-#include "OmxPlatformLayer.h"
+
+#include "ImageContainer.h"
+
 #include "OmxDataDecoder.h"
+#include "OmxPlatformLayer.h"
 
-#if defined(MOZ_WIDGET_GONK) && (ANDROID_VERSION == 20 || ANDROID_VERSION == 19)
-#include "GonkOmxPlatformLayer.h"
-#endif
-
-extern mozilla::LogModule* GetPDMLog();
 
 #ifdef LOG
 #undef LOG
 #endif
 
-#define LOG(arg, ...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, ("OmxPromiseLayer(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define LOG(arg, ...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, ("OmxPromiseLayer(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
 namespace mozilla {
-
-extern void GetPortIndex(nsTArray<uint32_t>& aPortIndex);
 
 OmxPromiseLayer::OmxPromiseLayer(TaskQueue* aTaskQueue,
                                  OmxDataDecoder* aDataDecoder,
                                  layers::ImageContainer* aImageContainer)
   : mTaskQueue(aTaskQueue)
 {
-#if defined(MOZ_WIDGET_GONK) && (ANDROID_VERSION == 20 || ANDROID_VERSION == 19)
-  mPlatformLayer = new GonkOmxPlatformLayer(aDataDecoder, this, aTaskQueue, aImageContainer);
-#endif
+  mPlatformLayer = OmxPlatformLayer::Create(aDataDecoder,
+                                            this,
+                                            aTaskQueue,
+                                            aImageContainer);
   MOZ_ASSERT(!!mPlatformLayer);
 }
 
 RefPtr<OmxPromiseLayer::OmxCommandPromise>
-OmxPromiseLayer::Init(TaskQueue* aTaskQueue, const TrackInfo* aInfo)
+OmxPromiseLayer::Init(const TrackInfo* aInfo)
 {
-  mTaskQueue = aTaskQueue;
   MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
 
   OMX_ERRORTYPE err = mPlatformLayer->InitOmxToStateLoaded(aInfo);
@@ -56,6 +52,14 @@ OmxPromiseLayer::Init(TaskQueue* aTaskQueue, const TrackInfo* aInfo)
 
   OmxCommandFailureHolder failure(OMX_ErrorUndefined, OMX_CommandStateSet);
   return OmxCommandPromise::CreateAndReject(failure, __func__);
+}
+
+OMX_ERRORTYPE
+OmxPromiseLayer::Config()
+{
+  MOZ_ASSERT(GetState() == OMX_StateLoaded);
+
+  return mPlatformLayer->Config();
 }
 
 RefPtr<OmxPromiseLayer::OmxBufferPromise>
@@ -350,6 +354,18 @@ OmxPromiseLayer::SetParameter(OMX_INDEXTYPE aParamIndex,
   return mPlatformLayer->SetParameter(aParamIndex,
                                       aComponentParameterStructure,
                                       aComponentParameterSize);
+}
+
+OMX_U32
+OmxPromiseLayer::InputPortIndex()
+{
+  return mPlatformLayer->InputPortIndex();
+}
+
+OMX_U32
+OmxPromiseLayer::OutputPortIndex()
+{
+  return mPlatformLayer->OutputPortIndex();
 }
 
 nsresult

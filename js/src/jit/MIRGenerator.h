@@ -37,8 +37,16 @@ class MIRGenerator
   public:
     MIRGenerator(CompileCompartment* compartment, const JitCompileOptions& options,
                  TempAllocator* alloc, MIRGraph* graph,
-                 const CompileInfo* info, const OptimizationInfo* optimizationInfo,
-                 bool usesSignalHandlersForAsmJSOOB = false);
+                 const CompileInfo* info, const OptimizationInfo* optimizationInfo);
+
+    void initUsesSignalHandlersForAsmJSOOB(bool init) {
+#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+        usesSignalHandlersForAsmJSOOB_ = init;
+#endif
+    }
+    void initMinAsmJSHeapLength(uint32_t init) {
+        minAsmJSHeapLength_ = init;
+    }
 
     TempAllocator& alloc() {
         return *alloc_;
@@ -127,19 +135,17 @@ class MIRGenerator
         return info_->compilingAsmJS();
     }
 
-    uint32_t maxAsmJSStackArgBytes() const {
+    uint32_t wasmMaxStackArgBytes() const {
         MOZ_ASSERT(compilingAsmJS());
-        return maxAsmJSStackArgBytes_;
+        return wasmMaxStackArgBytes_;
     }
-    uint32_t resetAsmJSMaxStackArgBytes() {
+    void initWasmMaxStackArgBytes(uint32_t n) {
         MOZ_ASSERT(compilingAsmJS());
-        uint32_t old = maxAsmJSStackArgBytes_;
-        maxAsmJSStackArgBytes_ = 0;
-        return old;
+        MOZ_ASSERT(wasmMaxStackArgBytes_ == 0);
+        wasmMaxStackArgBytes_ = n;
     }
-    void setAsmJSMaxStackArgBytes(uint32_t n) {
-        MOZ_ASSERT(compilingAsmJS());
-        maxAsmJSStackArgBytes_ = n;
+    uint32_t minAsmJSHeapLength() const {
+        return minAsmJSHeapLength_;
     }
     void setPerformsCall() {
         performsCall_ = true;
@@ -170,8 +176,6 @@ class MIRGenerator
     const CompileInfo* info_;
     const OptimizationInfo* optimizationInfo_;
     TempAllocator* alloc_;
-    JSFunction* fun_;
-    uint32_t nslots_;
     MIRGraph* graph_;
     AbortReason abortReason_;
     bool shouldForceAbort_; // Force AbortReason_Disable
@@ -180,7 +184,7 @@ class MIRGenerator
     mozilla::Atomic<bool, mozilla::Relaxed>* pauseBuild_;
     mozilla::Atomic<bool, mozilla::Relaxed> cancelBuild_;
 
-    uint32_t maxAsmJSStackArgBytes_;
+    uint32_t wasmMaxStackArgBytes_;
     bool performsCall_;
     bool usesSimd_;
     bool usesSimdCached_;
@@ -199,6 +203,7 @@ class MIRGenerator
 #if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
     bool usesSignalHandlersForAsmJSOOB_;
 #endif
+    uint32_t minAsmJSHeapLength_;
 
     void setForceAbort() {
         shouldForceAbort_ = true;
@@ -219,6 +224,7 @@ class MIRGenerator
 
     bool needsAsmJSBoundsCheckBranch(const MAsmJSHeapAccess* access) const;
     size_t foldableOffsetRange(const MAsmJSHeapAccess* access) const;
+    size_t foldableOffsetRange(bool accessNeedsBoundsCheck, bool atomic) const;
 
   private:
     GraphSpewer gs_;

@@ -121,7 +121,7 @@ class SpidermonkeyBuild(MockMixin,
                 'check-expectations',
             ],
             config={
-                'default_vcs': 'hgtool',
+                'default_vcs': 'hg',
                 'vcs_share_base': os.environ.get('HG_SHARE_BASE_DIR'),
                 'ccache': True,
                 'buildbot_json_path': os.environ.get('PROPERTIES_FILE'),
@@ -150,13 +150,8 @@ class SpidermonkeyBuild(MockMixin,
 
         if self.buildbot_config:
             bb_props = [('mock_target', 'mock_target', None),
-                        ('base_bundle_urls', 'hgtool_base_bundle_urls', None),
-                        ('base_mirror_urls', 'hgtool_base_mirror_urls', None),
                         ('hgurl', 'hgurl', None),
                         ('clobberer_url', 'clobberer_url', 'https://api.pub.build.mozilla.org/clobberer/lastclobber'),
-                        ('purge_minsize', 'purge_minsize', 15),
-                        ('purge_maxage', 'purge_maxage', None),
-                        ('purge_skip', 'purge_skip', None),
                         ('force_clobber', 'force_clobber', None),
                         ('branch', 'blob_upload_branch', None),
                         ]
@@ -178,6 +173,7 @@ class SpidermonkeyBuild(MockMixin,
                                   partial_env=self.config['partial_env'],
                                   purge_env=nuisance_env_vars)
         self.env['MOZ_UPLOAD_DIR'] = dirs['abs_blob_upload_dir']
+        self.env['TOOLTOOL_DIR'] = dirs['abs_work_dir']
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -364,7 +360,7 @@ class SpidermonkeyBuild(MockMixin,
                 raise Exception("Cannot run from source checkout to avoid overwriting subdirs")
 
         rev = self.vcs_checkout(
-            vcs='hg',  # Don't have hgtool.py yet
+            vcs='hg',
             repo=self.config['tools_repo'],
             clean=False,
             dest=dirs['abs_tools_dir'],

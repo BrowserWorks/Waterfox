@@ -6,12 +6,13 @@
 #include "WebGLTexture.h"
 
 #include <algorithm>
+
 #include "CanvasUtils.h"
 #include "GLBlitHelper.h"
 #include "GLContext.h"
+#include "mozilla/gfx/2D.h"
 #include "mozilla/dom/HTMLVideoElement.h"
 #include "mozilla/dom/ImageData.h"
-#include "mozilla/gfx/SourceSurfaceRawData.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Scoped.h"
 #include "mozilla/unused.h"
@@ -183,14 +184,16 @@ UnpackBlobFromImageData(WebGLContext* webgl, const char* funcName, GLenum unpack
     const gfx::IntSize size(imageData->Width(), imageData->Height());
     const size_t stride = size.width * 4;
     const gfx::SurfaceFormat surfFormat = gfx::SurfaceFormat::R8G8B8A8;
-    const bool ownsData = false;
 
     MOZ_ASSERT(dataSize == stride * size.height);
 
-    const RefPtr<gfx::SourceSurfaceRawData> surf = new gfx::SourceSurfaceRawData;
-
     uint8_t* wrappableData = (uint8_t*)data;
-    surf->InitWrappingData(wrappableData, size, stride, surfFormat, ownsData);
+
+    const RefPtr<gfx::SourceSurface> surf =
+        gfx::Factory::CreateWrappingDataSourceSurface(wrappableData,
+                                                      stride,
+                                                      size,
+                                                      surfFormat);
 
     // WhatWG "HTML Living Standard" (30 October 2015):
     // "The getImageData(sx, sy, sw, sh) method [...] Pixels must be returned as
@@ -208,7 +211,8 @@ WebGLTexture::TexOrSubImage(bool isSubImage, const char* funcName, TexImageTarge
                             GLint yOffset, GLint zOffset, GLenum unpackFormat,
                             GLenum unpackType, dom::ImageData* imageData)
 {
-    dom::Uint8ClampedArray scopedArr;
+    dom::RootedTypedArray<dom::Uint8ClampedArray> scopedArr(
+      nsContentUtils::RootingCxForThread());
 
     UniquePtr<webgl::TexUnpackBlob> blob;
     blob = UnpackBlobFromImageData(mContext, funcName, unpackType, imageData, &scopedArr);
@@ -1031,6 +1035,24 @@ WebGLTexture::TexImage(const char* funcName, TexImageTarget target, GLint level,
     auto dstUsage = fua->GetSizedTexUsage(internalFormat);
     if (!dstUsage) {
         if (internalFormat != unpackFormat) {
+            if (!fua->AreUnpackEnumsValid(unpackFormat, unpackType)) {
+                mContext->ErrorInvalidEnum("%s: Invalid unpack format/type:"
+                                           " 0x%04x/0x%04x",
+                                           funcName, unpackFormat, unpackType);
+                return;
+            }
+
+            if (!fua->IsInternalFormatEnumValid(internalFormat)) {
+                mContext->ErrorInvalidValue("%s: Invalid internalformat: 0x%04x",
+                                            funcName, internalFormat);
+                return;
+            }
+
+            /* GL ES Version 3.0.4 - 3.8.3 Texture Image Specification
+             *   "Specifying a combination of values for format, type, and
+             *   internalformat that is not listed as a valid combination
+             *   in tables 3.2 or 3.3 generates the error INVALID_OPERATION."
+             */
             mContext->ErrorInvalidOperation("%s: Unsized internalFormat must match"
                                             " unpack format.",
                                             funcName);
@@ -1041,19 +1063,17 @@ WebGLTexture::TexImage(const char* funcName, TexImageTarget target, GLint level,
     }
 
     if (!dstUsage) {
-        if (!mContext->IsWebGL2()) {
-            if (!fua->IsInternalFormatEnumValid(internalFormat)) {
-                mContext->ErrorInvalidValue("%s: Invalid internalformat: 0x%04x",
-                                            funcName, internalFormat);
-                return;
-            }
+        if (!fua->IsInternalFormatEnumValid(internalFormat)) {
+            mContext->ErrorInvalidValue("%s: Invalid internalformat: 0x%04x",
+                                        funcName, internalFormat);
+            return;
+        }
 
-            if (!fua->AreUnpackEnumsValid(unpackFormat, unpackType)) {
-                mContext->ErrorInvalidEnum("%s: Invalid unpack format/type:"
-                                           " 0x%04x/0x%04x",
-                                           funcName, unpackFormat, unpackType);
-                return;
-            }
+        if (!fua->AreUnpackEnumsValid(unpackFormat, unpackType)) {
+            mContext->ErrorInvalidEnum("%s: Invalid unpack format/type:"
+                                       " 0x%04x/0x%04x",
+                                       funcName, unpackFormat, unpackType);
+            return;
         }
 
         mContext->ErrorInvalidOperation("%s: Invalid internalformat/format/type:"
@@ -1183,14 +1203,12 @@ WebGLTexture::TexSubImage(const char* funcName, TexImageTarget target, GLint lev
     const webgl::PackingInfo srcPacking = { unpackFormat, unpackType };
     const webgl::DriverUnpackInfo* driverUnpackInfo;
     if (!dstUsage->IsUnpackValid(srcPacking, &driverUnpackInfo)) {
-        if (!mContext->IsWebGL2()) {
-            const auto& fua = mContext->mFormatUsage;
-            if (!fua->AreUnpackEnumsValid(unpackFormat, unpackType)) {
-                mContext->ErrorInvalidEnum("%s: Invalid unpack format/type:"
-                                           " 0x%04x/0x%04x",
-                                           funcName, unpackFormat, unpackType);
-                return;
-            }
+        const auto& fua = mContext->mFormatUsage;
+        if (!fua->AreUnpackEnumsValid(unpackFormat, unpackType)) {
+            mContext->ErrorInvalidEnum("%s: Invalid unpack format/type:"
+                                       " 0x%04x/0x%04x",
+                                       funcName, unpackFormat, unpackType);
+            return;
         }
 
         mContext->ErrorInvalidOperation("%s: Mismatched internalFormat and format/type:"
@@ -1704,9 +1722,20 @@ WebGLTexture::CopyTexImage2D(TexImageTarget target, GLint level, GLenum internal
     const webgl::FormatUsageInfo* srcUsage;
     uint32_t srcWidth;
     uint32_t srcHeight;
-    if (!mContext->ValidateCurFBForRead(funcName, &srcUsage, &srcWidth, &srcHeight))
+    GLenum srcMode;
+    if (!mContext->ValidateCurFBForRead(funcName, &srcUsage, &srcWidth, &srcHeight,
+                                        &srcMode))
         return;
     auto srcFormat = srcUsage->format;
+
+    // GLES 3.0.4 p145:
+    // "Calling CopyTexSubImage3D, CopyTexImage2D, or CopyTexSubImage2D will result in an
+    //  INVALID_OPERATION error if any of the following conditions is true: READ_BUFFER
+    //  is NONE"
+    if (srcMode == LOCAL_GL_NONE) {
+        mContext->ErrorInvalidOperation("%s: READ_BUFFER is NONE. ", funcName);
+        return;
+    }
 
     ////////////////////////////////////
     // Check that source and dest info are compatible
@@ -1854,9 +1883,20 @@ WebGLTexture::CopyTexSubImage(const char* funcName, TexImageTarget target, GLint
     const webgl::FormatUsageInfo* srcUsage;
     uint32_t srcWidth;
     uint32_t srcHeight;
-    if (!mContext->ValidateCurFBForRead(funcName, &srcUsage, &srcWidth, &srcHeight))
+    GLenum srcMode;
+    if (!mContext->ValidateCurFBForRead(funcName, &srcUsage, &srcWidth, &srcHeight,
+                                        &srcMode))
         return;
     auto srcFormat = srcUsage->format;
+
+    // GLES 3.0.4 p145:
+    // "Calling CopyTexSubImage3D, CopyTexImage2D, or CopyTexSubImage2D will result in an
+    //  INVALID_OPERATION error if any of the following conditions is true: READ_BUFFER
+    //  is NONE"
+    if (srcMode == LOCAL_GL_NONE) {
+        mContext->ErrorInvalidOperation("%s: READ_BUFFER is NONE. ", funcName);
+        return;
+    }
 
     ////////////////////////////////////
     // Check that source and dest info are compatible

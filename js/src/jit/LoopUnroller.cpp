@@ -21,7 +21,10 @@ struct LoopUnroller
                     PointerHasher<MDefinition*, 2>, SystemAllocPolicy> DefinitionMap;
 
     explicit LoopUnroller(MIRGraph& graph)
-      : graph(graph), alloc(graph.alloc())
+      : graph(graph), alloc(graph.alloc()),
+        header(nullptr), backedge(nullptr),
+        unrolledHeader(nullptr), unrolledBackedge(nullptr),
+        oldPreheader(nullptr), newPreheader(nullptr)
     {}
 
     MIRGraph& graph;
@@ -68,7 +71,7 @@ LoopUnroller::getReplacementDefinition(MDefinition* def)
         // the block itself.
         MOZ_ASSERT(def->isConstant());
 
-        MConstant* constant = MConstant::New(alloc, def->toConstant()->value());
+        MConstant* constant = new(alloc) MConstant(*def->toConstant());
         oldPreheader->insertBefore(*oldPreheader->begin(), constant);
         return constant;
     }

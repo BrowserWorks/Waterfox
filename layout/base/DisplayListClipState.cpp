@@ -36,6 +36,24 @@ DisplayListClipState::GetCurrentCombinedClip(nsDisplayListBuilder* aBuilder)
 }
 
 void
+DisplayListClipState::SetScrollClipForContainingBlockDescendants(
+    nsDisplayListBuilder* aBuilder,
+    const DisplayItemScrollClip* aScrollClip)
+{
+  if (aBuilder->IsPaintingToWindow() &&
+      mClipContentDescendants &&
+      aScrollClip != mScrollClipContainingBlockDescendants &&
+      !DisplayItemScrollClip::IsAncestor(mClipContentDescendantsScrollClip, aScrollClip)) {
+    if (mClipContentDescendantsScrollClip && mClipContentDescendantsScrollClip->mScrollableFrame) {
+      mClipContentDescendantsScrollClip->mScrollableFrame->SetScrollsClipOnUnscrolledOutOfFlow();
+    }
+    mClipContentDescendantsScrollClip = nullptr;
+  }
+  mScrollClipContainingBlockDescendants = aScrollClip;
+  mStackingContextAncestorSC = DisplayItemScrollClip::PickAncestor(mStackingContextAncestorSC, aScrollClip);
+}
+
+void
 DisplayListClipState::ClipContainingBlockDescendants(const nsRect& aRect,
                                                      const nscoord* aRadii,
                                                      DisplayItemClip& aClipOnStack)
@@ -49,6 +67,7 @@ DisplayListClipState::ClipContainingBlockDescendants(const nsRect& aRect,
     aClipOnStack.IntersectWith(*mClipContainingBlockDescendants);
   }
   mClipContainingBlockDescendants = &aClipOnStack;
+  mClipContentDescendantsScrollClip = GetCurrentInnermostScrollClip();
   mCurrentCombinedClip = nullptr;
 }
 
@@ -111,7 +130,7 @@ DisplayListClipState::ClipContainingBlockDescendantsToContentBox(nsDisplayListBu
 const DisplayItemScrollClip*
 DisplayListClipState::GetCurrentInnermostScrollClip()
 {
-  return DisplayItemScrollClip::PickInnermost(
+  return DisplayItemScrollClip::PickDescendant(
     mScrollClipContentDescendants, mScrollClipContainingBlockDescendants);
 }
 
@@ -120,12 +139,8 @@ DisplayListClipState::TurnClipIntoScrollClipForContentDescendants(
     nsDisplayListBuilder* aBuilder, nsIScrollableFrame* aScrollableFrame)
 {
   const DisplayItemScrollClip* parent = GetCurrentInnermostScrollClip();
-  const DisplayItemScrollClip* crossStackingContextParent = parent;
-  if (!crossStackingContextParent) {
-    crossStackingContextParent = mCrossStackingContextParentScrollClip;
-  }
   mScrollClipContentDescendants =
-    aBuilder->AllocateDisplayItemScrollClip(parent, crossStackingContextParent,
+    aBuilder->AllocateDisplayItemScrollClip(parent,
                                       aScrollableFrame,
                                       GetCurrentCombinedClip(aBuilder), true);
   Clear();
@@ -136,12 +151,8 @@ DisplayListClipState::TurnClipIntoScrollClipForContainingBlockDescendants(
     nsDisplayListBuilder* aBuilder, nsIScrollableFrame* aScrollableFrame)
 {
   const DisplayItemScrollClip* parent = GetCurrentInnermostScrollClip();
-  const DisplayItemScrollClip* crossStackingContextParent = parent;
-  if (!crossStackingContextParent) {
-    crossStackingContextParent = mCrossStackingContextParentScrollClip;
-  }
   mScrollClipContainingBlockDescendants =
-    aBuilder->AllocateDisplayItemScrollClip(parent, crossStackingContextParent,
+    aBuilder->AllocateDisplayItemScrollClip(parent,
                                       aScrollableFrame,
                                       GetCurrentCombinedClip(aBuilder), true);
   Clear();
@@ -170,12 +181,8 @@ DisplayListClipState::CreateInactiveScrollClip(
     WithoutRoundedCorners(aBuilder, GetCurrentCombinedClip(aBuilder));
 
   const DisplayItemScrollClip* parent = GetCurrentInnermostScrollClip();
-  const DisplayItemScrollClip* crossStackingContextParent = parent;
-  if (!crossStackingContextParent) {
-    crossStackingContextParent = mCrossStackingContextParentScrollClip;
-  }
   DisplayItemScrollClip* scrollClip =
-    aBuilder->AllocateDisplayItemScrollClip(parent, crossStackingContextParent,
+    aBuilder->AllocateDisplayItemScrollClip(parent,
                                             aScrollableFrame,
                                             rectClip, false);
   return scrollClip;
@@ -204,8 +211,13 @@ DisplayListClipState::InsertInactiveScrollClipForContainingBlockDescendants(
 DisplayListClipState::AutoSaveRestore::AutoSaveRestore(nsDisplayListBuilder* aBuilder)
   : mState(aBuilder->ClipState())
   , mSavedState(aBuilder->ClipState())
+#ifdef DEBUG
   , mClipUsed(false)
   , mRestored(false)
-{}
+#endif
+  , mClearedForStackingContextContents(false)
+{
+  mState.mStackingContextAncestorSC = mState.GetCurrentInnermostScrollClip();
+}
 
 } // namespace mozilla

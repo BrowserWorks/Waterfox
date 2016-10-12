@@ -77,11 +77,11 @@ SharedSurface_GLXDrawable::UnlockProdImpl()
 bool
 SharedSurface_GLXDrawable::ToSurfaceDescriptor(layers::SurfaceDescriptor* const out_descriptor)
 {
-  if (!mXlibSurface)
-      return false;
+    if (!mXlibSurface)
+        return false;
 
-   *out_descriptor = layers::SurfaceDescriptorX11(mXlibSurface, mInSameProcess);
-   return true;
+    *out_descriptor = layers::SurfaceDescriptorX11(mXlibSurface, mInSameProcess);
+    return true;
 }
 
 bool
@@ -120,7 +120,7 @@ SharedSurface_GLXDrawable::ReadbackBySharedHandle(gfx::DataSourceSurface* out_su
 UniquePtr<SurfaceFactory_GLXDrawable>
 SurfaceFactory_GLXDrawable::Create(GLContext* prodGL,
                                    const SurfaceCaps& caps,
-                                   const RefPtr<layers::ISurfaceAllocator>& allocator,
+                                   const RefPtr<layers::ClientIPCAllocator>& allocator,
                                    const layers::TextureFlags& flags)
 {
     MOZ_ASSERT(caps.alpha, "GLX surfaces require an alpha channel!");

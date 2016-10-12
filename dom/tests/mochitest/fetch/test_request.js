@@ -344,6 +344,7 @@ function testFormDataBodyCreation() {
     ok(fd.has("more"), "more should exist.");
 
     var b = fd.get("blob");
+    ok(b.name, "blob", "blob entry should be a Blob.");
     ok(b instanceof Blob, "blob entry should be a Blob.");
 
     return readAsText(b).then(function(output) {
@@ -418,6 +419,7 @@ function testFormDataBodyExtraction() {
     var entries = fd.getAll("blob");
     is(entries.length, 1, "getAll returns all items.");
     is(entries[0].name, "blob", "Filename should be blob.");
+    ok(entries[0] instanceof Blob, "getAll returns blobs.");
   });
 
   var ws = "\r\n\r\n\r\n\r\n";
@@ -429,6 +431,7 @@ function testFormDataBodyExtraction() {
     var entries = fd.getAll("blob");
     is(entries.length, 1, "getAll returns all items.");
     is(entries[0].name, "blob", "Filename should be blob.");
+    ok(entries[0] instanceof Blob, "getAll returns blobs.");
 
     ok(fd.has("key"), "Has entry 'key'.");
     var f = fd.get("key");

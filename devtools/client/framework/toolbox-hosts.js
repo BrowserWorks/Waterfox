@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,7 +9,7 @@
 const {Cu} = require("chrome");
 const EventEmitter = require("devtools/shared/event-emitter");
 const promise = require("promise");
-Cu.import("resource://gre/modules/Services.jsm");
+const Services = require("Services");
 Cu.import("resource://devtools/client/shared/DOMHelpers.jsm");
 
 loader.lazyRequireGetter(this, "system", "devtools/shared/system");
@@ -51,7 +53,7 @@ BottomHost.prototype = {
   /**
    * Create a box at the bottom of the host tab.
    */
-  create: function() {
+  create: function () {
     let deferred = promise.defer();
 
     let gBrowser = this.hostTab.ownerDocument.defaultView.gBrowser;
@@ -60,6 +62,8 @@ BottomHost.prototype = {
 
     this._splitter = ownerDocument.createElement("splitter");
     this._splitter.setAttribute("class", "devtools-horizontal-splitter");
+    // Avoid resizing notification containers
+    this._splitter.setAttribute("resizebefore", "flex");
 
     this.frame = ownerDocument.createElement("iframe");
     this.frame.className = "devtools-toolbox-bottom-iframe";
@@ -92,7 +96,7 @@ BottomHost.prototype = {
   /**
    * Raise the host.
    */
-  raise: function() {
+  raise: function () {
     focusTab(this.hostTab);
   },
 
@@ -101,7 +105,7 @@ BottomHost.prototype = {
    * @param {Number} height The height to minimize to. Defaults to 0, which
    * means that the toolbox won't be visible at all once minimized.
    */
-  minimize: function(height=0) {
+  minimize: function (height = 0) {
     if (this.isMinimized) {
       return;
     }
@@ -125,7 +129,7 @@ BottomHost.prototype = {
    * If the host was minimized before, maximize it again (the host will be
    * maximized to the height it previously had).
    */
-  maximize: function() {
+  maximize: function () {
     if (!this.isMinimized) {
       return;
     }
@@ -149,7 +153,7 @@ BottomHost.prototype = {
    * Toggle the minimize mode.
    * @param {Number} minHeight The height to minimize to.
    */
-  toggleMinimizeMode: function(minHeight) {
+  toggleMinimizeMode: function (minHeight) {
     this.isMinimized ? this.maximize() : this.minimize(minHeight);
   },
 
@@ -157,12 +161,12 @@ BottomHost.prototype = {
    * Set the toolbox title.
    * Nothing to do for this host type.
    */
-  setTitle: function() {},
+  setTitle: function () {},
 
   /**
    * Destroy the bottom dock.
    */
-  destroy: function() {
+  destroy: function () {
     if (!this._destroyed) {
       this._destroyed = true;
 
@@ -192,7 +196,7 @@ SidebarHost.prototype = {
   /**
    * Create a box in the sidebar of the host tab.
    */
-  create: function() {
+  create: function () {
     let deferred = promise.defer();
 
     let gBrowser = this.hostTab.ownerDocument.defaultView.gBrowser;
@@ -232,7 +236,7 @@ SidebarHost.prototype = {
   /**
    * Raise the host.
    */
-  raise: function() {
+  raise: function () {
     focusTab(this.hostTab);
   },
 
@@ -240,12 +244,12 @@ SidebarHost.prototype = {
    * Set the toolbox title.
    * Nothing to do for this host type.
    */
-  setTitle: function() {},
+  setTitle: function () {},
 
   /**
    * Destroy the sidebar.
    */
-  destroy: function() {
+  destroy: function () {
     if (!this._destroyed) {
       this._destroyed = true;
 
@@ -275,7 +279,7 @@ WindowHost.prototype = {
   /**
    * Create a new xul window to contain the toolbox.
    */
-  create: function() {
+  create: function () {
     let deferred = promise.defer();
 
     let flags = "chrome,centerscreen,resizable,dialog=no";
@@ -311,7 +315,7 @@ WindowHost.prototype = {
   /**
    * Catch the user closing the window.
    */
-  _boundUnload: function(event) {
+  _boundUnload: function (event) {
     if (event.target.location != this.WINDOW_URL) {
       return;
     }
@@ -323,21 +327,21 @@ WindowHost.prototype = {
   /**
    * Raise the host.
    */
-  raise: function() {
+  raise: function () {
     this._window.focus();
   },
 
   /**
    * Set the toolbox title.
    */
-  setTitle: function(title) {
+  setTitle: function (title) {
     this._window.document.title = title;
   },
 
   /**
    * Destroy the window.
    */
-  destroy: function() {
+  destroy: function () {
     if (!this._destroyed) {
       this._destroyed = true;
 
@@ -361,7 +365,7 @@ function CustomHost(hostTab, options) {
 CustomHost.prototype = {
   type: "custom",
 
-  _sendMessageToTopWindow: function(msg, data) {
+  _sendMessageToTopWindow: function (msg, data) {
     // It's up to the custom frame owner (parent window) to honor
     // "close" or "raise" instructions.
     let topWindow = this.frame.ownerDocument.defaultView;
@@ -378,28 +382,28 @@ CustomHost.prototype = {
   /**
    * Create a new xul window to contain the toolbox.
    */
-  create: function() {
+  create: function () {
     return promise.resolve(this.frame);
   },
 
   /**
    * Raise the host.
    */
-  raise: function() {
+  raise: function () {
     this._sendMessageToTopWindow("raise");
   },
 
   /**
    * Set the toolbox title.
    */
-  setTitle: function(title) {
+  setTitle: function (title) {
     this._sendMessageToTopWindow("title", { value: title });
   },
 
   /**
    * Destroy the window.
    */
-  destroy: function() {
+  destroy: function () {
     if (!this._destroyed) {
       this._destroyed = true;
       this._sendMessageToTopWindow("close");

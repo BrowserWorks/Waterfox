@@ -29,14 +29,14 @@ var Assert = null;
 
 this.LoginTestUtils = {
   set Assert(assert) {
-    Assert = assert;
+    Assert = assert; // eslint-disable-line no-native-reassign
   },
 
   /**
    * Forces the storage module to save all data, and the Login Manager service
    * to replace the storage module with a newly initialized instance.
    */
-  reloadData() {
+  * reloadData() {
     Services.obs.notifyObservers(null, "passwordmgr-storage-replace", null);
     yield TestUtils.topicObserved("passwordmgr-storage-replace-complete");
   },
@@ -69,15 +69,6 @@ this.LoginTestUtils = {
   assertLoginListsEqual(actual, expected) {
     Assert.equal(expected.length, actual.length);
     Assert.ok(expected.every(e => actual.some(a => a.equals(e))));
-  },
-
-  /**
-   * Checks that every login in "expected" matches one in "actual".
-   * The comparison uses the "matches" method of nsILoginInfo.
-   */
-  assertLoginListsMatches(actual, expected, ignorePassword) {
-    Assert.equal(expected.length, actual.length);
-    Assert.ok(expected.every(e => actual.some(a => a.matches(e, ignorePassword))));
   },
 
   /**
@@ -175,6 +166,9 @@ this.LoginTestUtils.testData = {
       new LoginInfo("http://www3.example.com", "http://www.example.com", null,
                     "the username", "the password",
                     "form_field_username", "form_field_password"),
+      new LoginInfo("http://www3.example.com", "https://www.example.com", null,
+                    "the username", "the password",
+                    "form_field_username", "form_field_password"),
       new LoginInfo("http://www3.example.com", "http://example.com", null,
                     "the username", "the password",
                     "form_field_username", "form_field_password"),
@@ -241,5 +235,17 @@ this.LoginTestUtils.testData = {
       new LoginInfo("chrome://example_extension", null, "Example Login Two",
                     "the username", "the password two", "", ""),
     ];
+  },
+};
+
+this.LoginTestUtils.recipes = {
+  getRecipeParent() {
+    let { LoginManagerParent } = Cu.import("resource://gre/modules/LoginManagerParent.jsm", {});
+    if (!LoginManagerParent.recipeParentPromise) {
+      return null;
+    }
+    return LoginManagerParent.recipeParentPromise.then((recipeParent) => {
+      return recipeParent;
+    });
   },
 };

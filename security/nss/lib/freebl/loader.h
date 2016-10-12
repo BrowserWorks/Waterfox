@@ -10,7 +10,8 @@
 
 #include "blapi.h"
 
-#define FREEBL_VERSION 0x0311
+
+#define FREEBL_VERSION 0x0312
 
 struct FREEBLVectorStr {
 
@@ -707,13 +708,75 @@ struct FREEBLVectorStr {
 
   /* Version 3.017 came to here */
 
+ SECStatus (* p_ChaCha20Poly1305_InitContext)(ChaCha20Poly1305Context *ctx,
+                                              const unsigned char *key,
+                                              unsigned int keyLen,
+                                              unsigned int tagLen);
+
+ ChaCha20Poly1305Context *(* p_ChaCha20Poly1305_CreateContext)(
+     const unsigned char *key, unsigned int keyLen, unsigned int tagLen);
+
+ void (* p_ChaCha20Poly1305_DestroyContext)(ChaCha20Poly1305Context *ctx,
+                                            PRBool freeit);
+
+ SECStatus (* p_ChaCha20Poly1305_Seal)(
+     const ChaCha20Poly1305Context *ctx, unsigned char *output,
+     unsigned int *outputLen, unsigned int maxOutputLen,
+     const unsigned char *input, unsigned int inputLen,
+     const unsigned char *nonce, unsigned int nonceLen,
+     const unsigned char *ad, unsigned int adLen);
+
+ SECStatus (* p_ChaCha20Poly1305_Open)(
+     const ChaCha20Poly1305Context *ctx, unsigned char *output,
+     unsigned int *outputLen, unsigned int maxOutputLen,
+     const unsigned char *input, unsigned int inputLen,
+     const unsigned char *nonce, unsigned int nonceLen,
+     const unsigned char *ad, unsigned int adLen);
+
+  /* Version 3.018 came to here */
+
   /* Add new function pointers at the end of this struct and bump
    * FREEBL_VERSION at the beginning of this file. */
  };
 
 typedef struct FREEBLVectorStr FREEBLVector;
 
+#ifdef FREEBL_LOWHASH
+#include "nsslowhash.h"
+
+#define NSSLOW_VERSION 0x0300
+
+struct NSSLOWVectorStr {
+  unsigned short length;  /* of this struct in bytes */
+  unsigned short version; /* of this struct. */
+  const FREEBLVector *(*p_FREEBL_GetVector)(void);
+  NSSLOWInitContext *(*p_NSSLOW_Init)(void);
+  void (*p_NSSLOW_Shutdown)(NSSLOWInitContext *context);
+  void (*p_NSSLOW_Reset)(NSSLOWInitContext *context);
+  NSSLOWHASHContext *(*p_NSSLOWHASH_NewContext)(
+			NSSLOWInitContext *initContext, 
+			HASH_HashType hashType);
+  void (*p_NSSLOWHASH_Begin)(NSSLOWHASHContext *context);
+  void (*p_NSSLOWHASH_Update)(NSSLOWHASHContext *context, 
+			const unsigned char *buf, 
+			unsigned int len);
+  void (*p_NSSLOWHASH_End)(NSSLOWHASHContext *context, 
+			unsigned char *buf, 
+			unsigned int *ret, unsigned int len);
+  void (*p_NSSLOWHASH_Destroy)(NSSLOWHASHContext *context);
+  unsigned int (*p_NSSLOWHASH_Length)(NSSLOWHASHContext *context);
+};
+
+typedef struct NSSLOWVectorStr NSSLOWVector;
+#endif
+
 SEC_BEGIN_PROTOS
+
+#ifdef FREEBL_LOWHASH
+typedef const NSSLOWVector * NSSLOWGetVectorFn(void);
+
+extern NSSLOWGetVectorFn NSSLOW_GetVector;
+#endif
 
 typedef const FREEBLVector * FREEBLGetVectorFn(void);
 

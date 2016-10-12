@@ -15,21 +15,15 @@ from mozbuild.base import (
     MachCommandConditions as conditions,
 )
 
+from mozbuild.shellutil import (
+    split as shell_split,
+)
+
 from mach.decorators import (
     CommandArgument,
     CommandProvider,
     Command,
 )
-
-SUCCESS = '''
-You should be ready to build with Gradle and import into IntelliJ!  Test with
-
-    ./mach gradle build
-
-and in IntelliJ select File > Import project... and choose
-
-    {topobjdir}/mobile/android/gradle
-'''
 
 
 # NOTE python/mach/mach/commands/commandinfo.py references this function
@@ -67,7 +61,28 @@ class MachCommands(MachCommandBase):
         # Avoid logging the command
         self.log_manager.terminal_handler.setLevel(logging.CRITICAL)
 
-        return self.run_process(['./gradlew'] + args,
+
+        # In automation, JAVA_HOME is set via mozconfig, which needs
+        # to be specially handled in each mach command. This turns
+        # $JAVA_HOME/bin/java into $JAVA_HOME.
+        java_home = os.path.dirname(os.path.dirname(self.substs['JAVA']))
+
+        gradle_flags = shell_split(self.substs.get('GRADLE_FLAGS', ''))
+
+        # We force the Gradle JVM to run with the UTF-8 encoding, since we
+        # filter strings.xml, which is really UTF-8; the ellipsis character is
+        # replaced with ??? in some encodings (including ASCII).  It's not yet
+        # possible to filter with encodings in Gradle
+        # (https://github.com/gradle/gradle/pull/520) and it's challenging to
+        # do our filtering with Gradle's Ant support.  Moreover, all of the
+        # Android tools expect UTF-8: see
+        # http://tools.android.com/knownissues/encoding.  See
+        # http://stackoverflow.com/a/21267635 for discussion of this approach.
+        return self.run_process([self.substs['GRADLE']] + gradle_flags + args,
+            append_env={
+                'GRADLE_OPTS': '-Dfile.encoding=utf-8',
+                'JAVA_HOME': java_home,
+            },
             pass_thru=True, # Allow user to run gradle interactively.
             ensure_exit_code=False, # Don't throw on non-zero exit code.
             cwd=mozpath.join(self.topsrcdir))
@@ -88,8 +103,8 @@ class AndroidEmulatorCommands(MachCommandBase):
     @Command('android-emulator', category='devenv',
         conditions=[],
         description='Run the Android emulator with an AVD from test automation.')
-    @CommandArgument('--version', metavar='VERSION', choices=['2.3', '4.3', 'x86'],
-        help='Specify Android version to run in emulator. One of "2.3", "4.3", or "x86".',
+    @CommandArgument('--version', metavar='VERSION', choices=['4.3', 'x86'],
+        help='Specify Android version to run in emulator. One of "4.3", or "x86".',
         default='4.3')
     @CommandArgument('--wait', action='store_true',
         help='Wait for emulator to be closed.')
@@ -155,4 +170,47 @@ class AndroidEmulatorCommands(MachCommandBase):
             else:
                 self.log(logging.WARN, "emulator", {},
                          "Unable to retrieve Android emulator return code.")
+        return 0
+
+
+@CommandProvider
+class AutophoneCommands(MachCommandBase):
+    """
+       Run autophone, https://wiki.mozilla.org/Auto-tools/Projects/Autophone.
+
+       If necessary, autophone is cloned from github, installed, and configured.
+    """
+    @Command('autophone', category='devenv',
+        conditions=[],
+        description='Run autophone.')
+    @CommandArgument('--clean', action='store_true',
+        help='Delete an existing autophone installation.')
+    @CommandArgument('--verbose', action='store_true',
+        help='Log informative status messages.')
+    def autophone(self, clean=False, verbose=False):
+        import platform
+        from mozrunner.devices.autophone import AutophoneRunner
+
+        if platform.system() == "Windows":
+            # Autophone is normally run on Linux or OSX.
+            self.log(logging.ERROR, "autophone", {},
+                "This mach command is not supported on Windows!")
+            return -1
+
+        runner = AutophoneRunner(self, verbose)
+        runner.load_config()
+        if clean:
+            runner.reset_to_clean()
+            return 0
+        if not runner.setup_directory():
+            return 1
+        if not runner.install_requirements():
+            runner.save_config()
+            return 2
+        if not runner.configure():
+            runner.save_config()
+            return 3
+        runner.save_config()
+        runner.launch_autophone()
+        runner.command_prompts()
         return 0

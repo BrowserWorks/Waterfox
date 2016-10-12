@@ -12,6 +12,8 @@
 #include "SkTRegistry.h"
 
 class SkBitmap;
+class SkPixelSerializer;
+class SkPixmap;
 class SkData;
 class SkWStream;
 
@@ -64,10 +66,16 @@ public:
                               Type, int quality);
     static SkData* EncodeData(const SkBitmap&, Type, int quality);
 
+    static SkData* EncodeData(const SkPixmap&, Type, int quality);
+
     static bool EncodeFile(const char file[], const SkBitmap&, Type,
                            int quality);
     static bool EncodeStream(SkWStream*, const SkBitmap&, Type,
                            int quality);
+
+    /** Uses SkImageEncoder to serialize images that are not already
+        encoded as SkImageEncoder::kPNG_Type images. */
+    static SkPixelSerializer* CreatePixelSerializer();
 
 protected:
     /**
@@ -102,8 +110,12 @@ DECLARE_ENCODER_CREATOR(PNGImageEncoder);
 DECLARE_ENCODER_CREATOR(KTXImageEncoder);
 DECLARE_ENCODER_CREATOR(WEBPImageEncoder);
 
-#ifdef SK_BUILD_FOR_IOS
-DECLARE_ENCODER_CREATOR(PNGImageEncoder_IOS);
+#if defined(SK_BUILD_FOR_MAC) || defined(SK_BUILD_FOR_IOS)
+DECLARE_ENCODER_CREATOR(PNGImageEncoder_CG);
+#endif
+
+#if defined(SK_BUILD_FOR_WIN)
+DECLARE_ENCODER_CREATOR(ImageEncoder_WIC);
 #endif
 
 // Typedef to make registering encoder callback easier

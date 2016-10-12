@@ -34,8 +34,10 @@
 #include "nsAttrValue.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/DOMTokenListSupportedTokens.h"
 #include "mozilla/dom/WindowBinding.h"
 #include "mozilla/dom/ElementBinding.h"
+#include "mozilla/dom/Nullable.h"
 #include "Units.h"
 
 class nsIFrame;
@@ -44,7 +46,6 @@ class nsIURI;
 class nsIScrollableFrame;
 class nsAttrValueOrString;
 class nsContentList;
-class nsDOMSettableTokenList;
 class nsDOMTokenList;
 struct nsRect;
 class nsFocusManager;
@@ -55,8 +56,11 @@ class nsDocument;
 
 namespace mozilla {
 namespace dom {
+  struct AnimationFilter;
   struct ScrollIntoViewOptions;
   struct ScrollToOptions;
+  class ElementOrCSSPseudoElement;
+  class UnrestrictedDoubleOrKeyframeAnimationOptions;
 } // namespace dom
 } // namespace mozilla
 
@@ -118,6 +122,7 @@ enum {
 ASSERT_NODE_FLAGS_SPACE(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET);
 
 namespace mozilla {
+enum class CSSPseudoElementType : uint8_t;
 class EventChainPostVisitor;
 class EventChainPreVisitor;
 class EventChainVisitor;
@@ -178,7 +183,7 @@ public:
    * removing it from the document).
    */
   void UpdateState(bool aNotify);
-  
+
   /**
    * Method to update mState with link state information.  This does not notify.
    */
@@ -338,7 +343,7 @@ public:
         break;
     }
 
-    /* 
+    /*
      * Only call UpdateState if we need to notify, because we call
      * SetDirectionality for every element, and UpdateState is very very slow
      * for some elements.
@@ -655,7 +660,7 @@ public:
                          ErrorResult& aError);
   bool HasAttribute(const nsAString& aName) const
   {
-    return InternalGetExistingAttrNameFromQName(aName) != nullptr;
+    return InternalGetAttrNameFromQName(aName) != nullptr;
   }
   bool HasAttributeNS(const nsAString& aNamespaceURI,
                       const nsAString& aLocalName) const;
@@ -675,6 +680,26 @@ public:
                            ErrorResult& aError);
   already_AddRefed<nsIHTMLCollection>
     GetElementsByClassName(const nsAString& aClassNames);
+
+private:
+  /**
+   * Implement the algorithm specified at
+   * https://dom.spec.whatwg.org/#insert-adjacent for both
+   * |insertAdjacentElement()| and |insertAdjacentText()| APIs.
+   */
+  nsINode* InsertAdjacent(const nsAString& aWhere,
+                          nsINode* aNode,
+                          ErrorResult& aError);
+
+public:
+  Element* InsertAdjacentElement(const nsAString& aWhere,
+                                 Element& aElement,
+                                 ErrorResult& aError);
+
+  void InsertAdjacentText(const nsAString& aWhere,
+                          const nsAString& aData,
+                          ErrorResult& aError);
+
   void SetPointerCapture(int32_t aPointerId, ErrorResult& aError)
   {
     bool activeState = false;
@@ -682,7 +707,7 @@ public:
       aError.Throw(NS_ERROR_DOM_INVALID_POINTER_ERR);
       return;
     }
-    if (!IsInDoc()) {
+    if (!IsInUncomposedDoc()) {
       aError.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
       return;
     }
@@ -728,8 +753,8 @@ public:
   }
 
   // aCx == nullptr is allowed only if aOptions.isNullOrUndefined()
-  void MozRequestFullScreen(JSContext* aCx, JS::Handle<JS::Value> aOptions,
-                            ErrorResult& aError);
+  void RequestFullscreen(JSContext* aCx, JS::Handle<JS::Value> aOptions,
+                         ErrorResult& aError);
   void MozRequestPointerLock();
   Attr* GetAttributeNode(const nsAString& aName);
   already_AddRefed<Attr> SetAttributeNode(Attr& aNewAttr,
@@ -825,9 +850,27 @@ public:
   {
   }
 
+  already_AddRefed<Animation>
+  Animate(JSContext* aContext,
+          JS::Handle<JSObject*> aKeyframes,
+          const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
+          ErrorResult& aError);
+
+  // A helper method that factors out the common functionality needed by
+  // Element::Animate and CSSPseudoElement::Animate
+  static already_AddRefed<Animation>
+  Animate(const Nullable<ElementOrCSSPseudoElement>& aTarget,
+          JSContext* aContext,
+          JS::Handle<JSObject*> aKeyframes,
+          const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
+          ErrorResult& aError);
+
   // Note: GetAnimations will flush style while GetAnimationsUnsorted won't.
-  void GetAnimations(nsTArray<RefPtr<Animation>>& aAnimations);
-  void GetAnimationsUnsorted(nsTArray<RefPtr<Animation>>& aAnimations);
+  void GetAnimations(const AnimationFilter& filter,
+                     nsTArray<RefPtr<Animation>>& aAnimations);
+  static void GetAnimationsUnsorted(Element* aElement,
+                                    CSSPseudoElementType aPseudoType,
+                                    nsTArray<RefPtr<Animation>>& aAnimations);
 
   NS_IMETHOD GetInnerHTML(nsAString& aInnerHTML);
   virtual void SetInnerHTML(const nsAString& aInnerHTML, ErrorResult& aError);
@@ -958,7 +1001,7 @@ public:
    * Return the CORS mode for a given string
    */
   static CORSMode StringToCORSMode(const nsAString& aValue);
-  
+
   /**
    * Return the CORS mode for a given nsAttrValue (which may be null,
    * but if not should have been parsed via ParseCORSValue).
@@ -1230,9 +1273,13 @@ protected:
     GetEventListenerManagerForAttr(nsIAtom* aAttrName, bool* aDefer);
 
   /**
-   * Internal hook for converting an attribute name-string to an atomized name
+   * Internal hook for converting an attribute name-string to nsAttrName in
+   * case there is such existing attribute. aNameToUse can be passed to get
+   * name which was used for looking for the attribute (lowercase in HTML).
    */
-  virtual const nsAttrName* InternalGetExistingAttrNameFromQName(const nsAString& aStr) const;
+  const nsAttrName*
+  InternalGetAttrNameFromQName(const nsAString& aStr,
+                               nsAutoString* aNameToUse = nullptr) const;
 
   nsIFrame* GetStyledFrame();
 
@@ -1291,9 +1338,8 @@ protected:
    */
   virtual void GetLinkTarget(nsAString& aTarget);
 
-  nsDOMSettableTokenList* GetTokenList(nsIAtom* aAtom);
-  void GetTokenList(nsIAtom* aAtom, nsIVariant** aResult);
-  nsresult SetTokenList(nsIAtom* aAtom, nsIVariant* aValue);
+  nsDOMTokenList* GetTokenList(nsIAtom* aAtom,
+                               const DOMTokenListSupportedTokenArray aSupportedTokens = nullptr);
 
 private:
   /**
@@ -1309,7 +1355,7 @@ private:
   EventStates mState;
 };
 
-class RemoveFromBindingManagerRunnable : public nsRunnable
+class RemoveFromBindingManagerRunnable : public mozilla::Runnable
 {
 public:
   RemoveFromBindingManagerRunnable(nsBindingManager* aManager,
@@ -1801,8 +1847,8 @@ NS_IMETHOD ReleaseCapture(void) final override                                \
 NS_IMETHOD MozRequestFullScreen(void) final override                          \
 {                                                                             \
   mozilla::ErrorResult rv;                                                    \
-  Element::MozRequestFullScreen(nullptr, JS::UndefinedHandleValue, rv);       \
-  return rv.StealNSResult();                                                      \
+  Element::RequestFullscreen(nullptr, JS::UndefinedHandleValue, rv);          \
+  return rv.StealNSResult();                                                  \
 }                                                                             \
 NS_IMETHOD MozRequestPointerLock(void) final override                         \
 {                                                                             \

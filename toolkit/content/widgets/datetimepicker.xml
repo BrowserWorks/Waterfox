@@ -463,7 +463,7 @@
           <![CDATA[
             // aNoWrap is true when the user entered a value, so just
             // constrain within limits. If false, the value is being
-            // incremented or decremented, so wrap around values 
+            // incremented or decremented, so wrap around values
             var max = (aField == this.hourField) ? 24 : 60;
             if (aValue < 0)
               return aNoWrap ? 0 : max + aValue;
@@ -673,7 +673,7 @@
         <body>
           <![CDATA[
             if (aField == this.yearField) {
-              var oldDate = this.date;
+              let oldDate = this.date;
               this._dateValue.setFullYear(aValue);
               if (oldDate != this.date) {
                 this._dateValue.setDate(0);
@@ -681,7 +681,7 @@
               }
             }
             else if (aField == this.monthField) {
-              var oldDate = this.date;
+              let oldDate = this.date;
               this._dateValue.setMonth(aValue);
               if (oldDate != this.date) {
                 this._dateValue.setDate(0);
@@ -778,24 +778,29 @@
 
               var yi = 2, mi = 4, di = 6;
 
+              function fieldForNumber(i) {
+                if (i == 2)
+                  return "input-one";
+                if (i == 4)
+                  return "input-two";
+                return "input-three";
+              }
+
               for (var i = 1; i < numberFields.length; i++) {
                 switch (Number(numberFields[i])) {
                   case 2:
                     twoDigitYear = true; // fall through
                   case 2002:
                     yi = i;
-                    yfield = (i == 2 ? "input-one" :
-                             (i == 4 ? "input-two" : "input-three"));
+                    yfield = fieldForNumber(i);
                     break;
                   case 9, 10:
                     mi = i;
-                    mfield = (i == 2 ? "input-one" :
-                             (i == 4 ? "input-two" : "input-three"));
+                    mfield = fieldForNumber(i);
                     break;
                   case 4:
                     di = i;
-                    dfield = (i == 2 ? "input-one" :
-                             (i == 4 ? "input-two" : "input-three"));
+                    dfield = fieldForNumber(i);
                     break;
                 }
               }

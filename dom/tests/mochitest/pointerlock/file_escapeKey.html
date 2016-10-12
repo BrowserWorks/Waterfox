@@ -29,13 +29,12 @@
         , pointerUnLocked = false;
 
       function start() {
-        document.addEventListener("mozfullscreenchange", enteredFullscreen);
-        div.mozRequestFullScreen();
+        addFullscreenChangeContinuation("enter", enteredFullscreen);
+        div.requestFullscreen();
       }
 
       function enteredFullscreen(e) {
-        document.removeEventListener("mozfullscreenchange", enteredFullscreen);
-        is(document.mozFullScreenElement, div, "Element #div should entered fullscreen");
+        is(document.fullscreenElement, div, "Element #div should entered fullscreen");
         ok(!document.mozPointerLockElement, "Pointer shouldn't have been locked");
         document.addEventListener("mozpointerlockchange", lockedPointer);
         div.mozRequestPointerLock();
@@ -45,7 +44,7 @@
         document.removeEventListener("mozpointerlockchange", lockedPointer);
         is(document.mozPointerLockElement, div, "Pointer should have been locked on #div");
         document.addEventListener("mozpointerlockchange", unlockedPointer);
-        document.addEventListener("mozfullscreenchange", leavedFullscreen);
+        addFullscreenChangeContinuation("exit", leavedFullscreen);
         SimpleTest.executeSoon(() => synthesizeKey("VK_ESCAPE", {}));
       }
 
@@ -61,9 +60,8 @@
       }
 
       function leavedFullscreen() {
-        document.removeEventListener("mozfullscreenchange", leavedFullscreen);
         ok(!exitedFullscreen, "Shouldn't have exited fullscreen before");
-        ok(!document.mozFullScreenElement, "Should have exited fullscreen now");
+        ok(!document.fullscreenElement, "Should have exited fullscreen now");
         exitedFullscreen = true;
         finishTest();
       }

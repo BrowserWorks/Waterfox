@@ -42,6 +42,7 @@ PRLogModuleInfo* gWin32ClipboardLog = nullptr;
 
 // oddly, this isn't in the MSVC headers anywhere.
 UINT nsClipboard::CF_HTML = ::RegisterClipboardFormatW(L"HTML Format");
+UINT nsClipboard::CF_CUSTOMTYPES = ::RegisterClipboardFormatW(L"application/x-moz-custom-clipdata");
 
 
 //-------------------------------------------------------------------------
@@ -88,12 +89,13 @@ nsClipboard::Observe(nsISupports *aSubject, const char *aTopic,
 }
 
 //-------------------------------------------------------------------------
-UINT nsClipboard::GetFormat(const char* aMimeStr)
+UINT nsClipboard::GetFormat(const char* aMimeStr, bool aMapHTMLMime)
 {
   UINT format;
 
-  if (strcmp(aMimeStr, kTextMime) == 0 ||
-      strcmp(aMimeStr, kUnicodeMime) == 0)
+  if (strcmp(aMimeStr, kTextMime) == 0)
+    format = CF_TEXT;
+  else if (strcmp(aMimeStr, kUnicodeMime) == 0)
     format = CF_UNICODETEXT;
   else if (strcmp(aMimeStr, kRTFMime) == 0)
     format = ::RegisterClipboardFormat(L"Rich Text Format");
@@ -105,8 +107,10 @@ UINT nsClipboard::GetFormat(const char* aMimeStr)
            strcmp(aMimeStr, kFilePromiseMime) == 0)
     format = CF_HDROP;
   else if (strcmp(aMimeStr, kNativeHTMLMime) == 0 ||
-           strcmp(aMimeStr, kHTMLMime) == 0)
+           aMapHTMLMime && strcmp(aMimeStr, kHTMLMime) == 0)
     format = CF_HTML;
+  else if (strcmp(aMimeStr, kCustomTypesMime) == 0)
+    format = CF_CUSTOMTYPES;
   else
     format = ::RegisterClipboardFormatW(NS_ConvertASCIItoUTF16(aMimeStr).get());
 
@@ -168,7 +172,9 @@ nsresult nsClipboard::SetupNativeDataObject(nsITransferable * aTransferable, IDa
     if ( currentFlavor ) {
       nsXPIDLCString flavorStr;
       currentFlavor->ToString(getter_Copies(flavorStr));
-      UINT format = GetFormat(flavorStr);
+      // When putting data onto the clipboard, we want to maintain kHTMLMime
+      // ("text/html") and not map it to CF_HTML here since this will be done below.
+      UINT format = GetFormat(flavorStr, false);
 
       // Now tell the native IDataObject about both our mime type and 
       // the native data format
@@ -179,7 +185,14 @@ nsresult nsClipboard::SetupNativeDataObject(nsITransferable * aTransferable, IDa
       // Do various things internal to the implementation, like map one
       // flavor to another or add additional flavors based on what's required
       // for the win32 impl.
-      if ( strcmp(flavorStr, kHTMLMime) == 0 ) {
+      if ( strcmp(flavorStr, kUnicodeMime) == 0 ) {
+        // if we find text/unicode, also advertise text/plain (which we will convert
+        // on our own in nsDataObj::GetText().
+        FORMATETC textFE;
+        SET_FORMATETC(textFE, CF_TEXT, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL);
+        dObj->AddDataFlavor(kTextMime, &textFE);
+      }
+      else if ( strcmp(flavorStr, kHTMLMime) == 0 ) {      
         // if we find text/html, also advertise win32's html flavor (which we will convert
         // on our own in nsDataObj::GetText().
         FORMATETC htmlFE;
@@ -191,10 +204,14 @@ nsresult nsClipboard::SetupNativeDataObject(nsITransferable * aTransferable, IDa
         // the "file" flavors so that the win32 shell knows to create an internet
         // shortcut when it sees one of these beasts.
         FORMATETC shortcutFE;
+        SET_FORMATETC(shortcutFE, ::RegisterClipboardFormat(CFSTR_FILEDESCRIPTORA), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL)
+        dObj->AddDataFlavor(kURLMime, &shortcutFE);      
         SET_FORMATETC(shortcutFE, ::RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL)
         dObj->AddDataFlavor(kURLMime, &shortcutFE);      
         SET_FORMATETC(shortcutFE, ::RegisterClipboardFormat(CFSTR_FILECONTENTS), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL)
         dObj->AddDataFlavor(kURLMime, &shortcutFE);  
+        SET_FORMATETC(shortcutFE, ::RegisterClipboardFormat(CFSTR_INETURLA), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL)
+        dObj->AddDataFlavor(kURLMime, &shortcutFE);      
         SET_FORMATETC(shortcutFE, ::RegisterClipboardFormat(CFSTR_INETURLW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL)
         dObj->AddDataFlavor(kURLMime, &shortcutFE);      
       }
@@ -520,6 +537,9 @@ nsresult nsClipboard::GetNativeDataOffClipboard(IDataObject * aDataObject, UINT 
                     // do that in FindPlatformHTML(). For now, return the allocLen. This
                     // case is mostly to ensure we don't try to call strlen on the buffer.
                     *aLen = allocLen;
+                  } else if (fe.cfFormat == CF_CUSTOMTYPES) {
+                    // Binary data
+                    *aLen = allocLen;
                   } else if (fe.cfFormat == preferredDropEffect) {
                     // As per the MSDN doc entitled: "Shell Clipboard Formats"
                     // CFSTR_PREFERREDDROPEFFECT should return a DWORD
@@ -607,9 +627,11 @@ nsresult nsClipboard::GetDataFromDataObject(IDataObject     * aDataObject,
       // when directly asking for the flavor. Let's try digging around in other
       // flavors to help satisfy our craving for data.
       if ( !dataFound ) {
-        if ( strcmp(flavorStr, kURLMime) == 0 ) {
+        if ( strcmp(flavorStr, kUnicodeMime) == 0 )
+          dataFound = FindUnicodeFromPlainText ( aDataObject, anIndex, &data, &dataLen );
+        else if ( strcmp(flavorStr, kURLMime) == 0 ) {
           // drags from other windows apps expose the native
-          // CFSTR_INETURLW flavor
+          // CFSTR_INETURL{A,W} flavor
           dataFound = FindURLFromNativeURL ( aDataObject, anIndex, &data, &dataLen );
           if ( !dataFound )
             dataFound = FindURLFromLocalFile ( aDataObject, anIndex, &data, &dataLen );
@@ -666,16 +688,19 @@ nsresult nsClipboard::GetDataFromDataObject(IDataObject     * aDataObject,
           NS_IF_RELEASE(imageStream);
         }
         else {
-          // we probably have some form of text. The DOM only wants LF, so convert from Win32 line 
-          // endings to DOM line endings.
-          int32_t signedLen = static_cast<int32_t>(dataLen);
-          nsLinebreakHelpers::ConvertPlatformToDOMLinebreaks ( flavorStr, &data, &signedLen );
-          dataLen = signedLen;
+          // Treat custom types as a string of bytes.
+          if (strcmp(flavorStr, kCustomTypesMime) != 0) {
+            // we probably have some form of text. The DOM only wants LF, so convert from Win32 line 
+            // endings to DOM line endings.
+            int32_t signedLen = static_cast<int32_t>(dataLen);
+            nsLinebreakHelpers::ConvertPlatformToDOMLinebreaks ( flavorStr, &data, &signedLen );
+            dataLen = signedLen;
 
-          if (strcmp(flavorStr, kRTFMime) == 0) {
-            // RTF on Windows is known to sometimes deliver an extra null byte.
-            if (dataLen > 0 && static_cast<char*>(data)[dataLen - 1] == '\0')
-              dataLen--;
+            if (strcmp(flavorStr, kRTFMime) == 0) {
+              // RTF on Windows is known to sometimes deliver an extra null byte.
+              if (dataLen > 0 && static_cast<char*>(data)[dataLen - 1] == '\0')
+                dataLen--;
+            }
           }
 
           nsPrimitiveHelpers::CreatePrimitiveForData ( flavorStr, data, dataLen, getter_AddRefs(genericDataWrapper) );
@@ -760,6 +785,39 @@ nsClipboard :: FindPlatformHTML ( IDataObject* inDataObject, UINT inIndex,
 
 
 //
+// FindUnicodeFromPlainText
+//
+// we are looking for text/unicode and we failed to find it on the clipboard first,
+// try again with text/plain. If that is present, convert it to unicode.
+//
+bool
+nsClipboard :: FindUnicodeFromPlainText ( IDataObject* inDataObject, UINT inIndex, void** outData, uint32_t* outDataLen )
+{
+  // we are looking for text/unicode and we failed to find it on the clipboard first,
+  // try again with text/plain. If that is present, convert it to unicode.
+  nsresult rv = GetNativeDataOffClipboard(inDataObject, inIndex, GetFormat(kTextMime), nullptr, outData, outDataLen);
+  if (NS_FAILED(rv) || !*outData) {
+    return false;
+  }
+
+  const char* castedText = static_cast<char*>(*outData);
+  nsAutoString tmp;
+  rv = NS_CopyNativeToUnicode(nsDependentCSubstring(castedText, *outDataLen), tmp);
+  if (NS_FAILED(rv)) {
+    return false;
+  }
+
+  // out with the old, in with the new
+  free(*outData);
+  *outData = ToNewUnicode(tmp);
+  *outDataLen = tmp.Length() * sizeof(char16_t);
+
+  return true;
+
+} // FindUnicodeFromPlainText
+
+
+//
 // FindURLFromLocalFile
 //
 // we are looking for a URL and couldn't find it, try again with looking for 
@@ -789,7 +847,7 @@ nsClipboard :: FindURLFromLocalFile ( IDataObject* inDataObject, UINT inIndex, v
       ResolveShortcut( file, url );
       if ( !url.IsEmpty() ) {
         // convert it to unicode and pass it out
-        nsDependentString urlString(UTF8ToNewUnicode(url));
+        NS_ConvertUTF8toUTF16 urlString(url);
         // the internal mozilla URL format, text/x-moz-url, contains
         // URL\ntitle.  We can guess the title from the file's name.
         nsAutoString title;
@@ -825,7 +883,7 @@ nsClipboard :: FindURLFromLocalFile ( IDataObject* inDataObject, UINT inIndex, v
 //
 // we are looking for a URL and couldn't find it using our internal
 // URL flavor, so look for it using the native URL flavor,
-// CF_INETURLSTRW
+// CF_INETURLSTRW (We don't handle CF_INETURLSTRA currently)
 //
 bool
 nsClipboard :: FindURLFromNativeURL ( IDataObject* inDataObject, UINT inIndex, void** outData, uint32_t* outDataLen )
@@ -845,6 +903,29 @@ nsClipboard :: FindURLFromNativeURL ( IDataObject* inDataObject, UINT inIndex, v
     *outDataLen = NS_strlen(static_cast<char16_t*>(*outData)) * sizeof(char16_t);
     free(tempOutData);
     dataFound = true;
+  }
+  else {
+    loadResult = GetNativeDataOffClipboard(inDataObject, inIndex, ::RegisterClipboardFormat(CFSTR_INETURLA), nullptr, &tempOutData, &tempDataLen);
+    if ( NS_SUCCEEDED(loadResult) && tempOutData ) {
+      // CFSTR_INETURLA is (currently) equal to CFSTR_SHELLURL which is equal to CF_TEXT
+      // which is by definition ANSI encoded.
+      nsCString urlUnescapedA;
+      bool unescaped = NS_UnescapeURL(static_cast<char*>(tempOutData), tempDataLen, esc_OnlyNonASCII | esc_SkipControl, urlUnescapedA);
+
+      nsString urlString;
+      if (unescaped)
+        NS_CopyNativeToUnicode(urlUnescapedA, urlString);
+      else
+        NS_CopyNativeToUnicode(nsDependentCString(static_cast<char*>(tempOutData), tempDataLen), urlString);
+
+      // the internal mozilla URL format, text/x-moz-url, contains
+      // URL\ntitle.  Since we don't actually have a title here,
+      // just repeat the URL to fake it.
+      *outData = ToNewUnicode(urlString + NS_LITERAL_STRING("\n") + urlString);
+      *outDataLen = NS_strlen(static_cast<char16_t*>(*outData)) * sizeof(char16_t);
+      free(tempOutData);
+      dataFound = true;
+    }
   }
 
   return dataFound;
@@ -941,6 +1022,16 @@ NS_IMETHODIMP nsClipboard::HasDataMatchingFlavors(const char** aFlavorList,
     if (IsClipboardFormatAvailable(format)) {
       *_retval = true;
       break;
+    }
+    else {
+      // We haven't found the exact flavor the client asked for, but maybe we can
+      // still find it from something else that's on the clipboard...
+      if (strcmp(aFlavorList[i], kUnicodeMime) == 0) {
+        // client asked for unicode and it wasn't present, check if we have CF_TEXT.
+        // We'll handle the actual data substitution in the data object.
+        if (IsClipboardFormatAvailable(GetFormat(kTextMime)))
+          *_retval = true;
+      }
     }
   }
 

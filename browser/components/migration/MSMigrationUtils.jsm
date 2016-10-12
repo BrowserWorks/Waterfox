@@ -310,7 +310,7 @@ function getEdgeLocalDataFolder() {
     Cu.reportError("Exception trying to find the Edge favorites directory: " + ex);
   }
   return null;
-};
+}
 
 
 function Bookmarks(migrationType) {
@@ -623,7 +623,7 @@ Cookies.prototype = {
       // a domain cookie.  See bug 222343.
       if (host.length > 0) {
         // Fist delete any possible extant matching host cookie.
-        Services.cookies.remove(host, name, path, false);
+        Services.cookies.remove(host, name, path, false, {});
         // Now make it a domain cookie.
         if (host[0] != "." && !hostIsIPAddress(host))
           host = "." + host;
@@ -646,7 +646,8 @@ Cookies.prototype = {
                            Number(flags) & 0x1, // secure
                            false, // httpOnly
                            false, // session
-                           expireTime);
+                           expireTime,
+                           {});
     }
   }
 };
@@ -710,8 +711,12 @@ function getTypedURLs(registryKeyPath) {
   } catch (ex) {
     Cu.reportError("Error reading typed URL history: " + ex);
   } finally {
-    typedURLKey.close();
-    typedURLTimeKey.close();
+    if (typedURLKey) {
+      typedURLKey.close();
+    }
+    if (typedURLTimeKey) {
+      typedURLTimeKey.close();
+    }
     cTypes.finalize();
   }
   return typedURLs;
@@ -868,6 +873,7 @@ WindowsVaultFormPasswords.prototype = {
     if (aOnlyCheckExists) {
       return false;
     }
+    return undefined;
   }
 };
 

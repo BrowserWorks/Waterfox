@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -30,7 +32,7 @@ function onViewOpened(hud, event, view) {
     { name: /^(width|height)$/, dontMatch: 1 },
     { name: "foobar._val", value: getterValue },
     { name: "foobar.val", isGetter: true },
-  ], { webconsole: hud }).then(function() {
+  ], { webconsole: hud }).then(function () {
     is(doc.foobar._val, getterValue, "getter did not execute");
     is(doc.foobar.val, getterValue + 1, "getter executed");
     is(doc.foobar._val, getterValue + 1, "getter executed (recheck)");

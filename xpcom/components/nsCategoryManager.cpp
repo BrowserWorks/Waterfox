@@ -418,9 +418,7 @@ nsCategoryManager::nsCategoryManager()
 void
 nsCategoryManager::InitMemoryReporter()
 {
-#if !defined(MOZILLA_XPCOMRT_API)
   RegisterStrongMemoryReporter(this);
-#endif // !defined(MOZILLA_XPCOMRT_API)
 }
 
 nsCategoryManager::~nsCategoryManager()
@@ -473,7 +471,7 @@ nsCategoryManager::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
 
 namespace {
 
-class CategoryNotificationRunnable : public nsRunnable
+class CategoryNotificationRunnable : public Runnable
 {
 public:
   CategoryNotificationRunnable(nsISupports* aSubject,
@@ -764,7 +762,8 @@ nsCategoryManager::SuppressNotifications(bool aSuppress)
 void
 NS_CreateServicesFromCategory(const char* aCategory,
                               nsISupports* aOrigin,
-                              const char* aObserverTopic)
+                              const char* aObserverTopic,
+                              const char16_t* aObserverData)
 {
   nsresult rv;
 
@@ -805,10 +804,8 @@ NS_CreateServicesFromCategory(const char* aCategory,
 
     nsCOMPtr<nsISupports> instance = do_GetService(contractID);
     if (!instance) {
-#if !defined(MOZILLA_XPCOMRT_API)
       LogMessage("While creating services from category '%s', could not create service for entry '%s', contract ID '%s'",
                  aCategory, entryString.get(), contractID.get());
-#endif // !defined(MOZILLA_XPCOMRT_API)
       continue;
     }
 
@@ -816,12 +813,11 @@ NS_CreateServicesFromCategory(const char* aCategory,
       // try an observer, if it implements it.
       nsCOMPtr<nsIObserver> observer = do_QueryInterface(instance);
       if (observer) {
-        observer->Observe(aOrigin, aObserverTopic, EmptyString().get());
+        observer->Observe(aOrigin, aObserverTopic,
+                          aObserverData ? aObserverData : MOZ_UTF16(""));
       } else {
-#if !defined(MOZILLA_XPCOMRT_API)
         LogMessage("While creating services from category '%s', service for entry '%s', contract ID '%s' does not implement nsIObserver.",
                    aCategory, entryString.get(), contractID.get());
-#endif // !defined(MOZILLA_XPCOMRT_API)
       }
     }
   }

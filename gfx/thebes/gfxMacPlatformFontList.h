@@ -29,7 +29,8 @@ public:
     friend class gfxMacPlatformFontList;
 
     MacOSFontEntry(const nsAString& aPostscriptName, int32_t aWeight,
-                   bool aIsStandardFace = false);
+                   bool aIsStandardFace = false,
+                   double aSizeHint = 0.0);
 
     // for use with data fonts
     MacOSFontEntry(const nsAString& aPostscriptName, CGFontRef aFontRef,
@@ -64,6 +65,8 @@ protected:
 
     CGFontRef mFontRef; // owning reference to the CGFont, released on destruction
 
+    double mSizeHint;
+
     bool mFontRefInitialized;
     bool mRequiresAAT;
     bool mIsCFF;
@@ -95,9 +98,10 @@ public:
                                    const uint8_t* aFontData,
                                    uint32_t aLength) override;
 
-    gfxFontFamily* FindFamily(const nsAString& aFamily,
-                              gfxFontStyle* aStyle = nullptr,
-                              gfxFloat aDevToCssSize = 1.0) override;
+    bool FindAndAddFamilies(const nsAString& aFamily,
+                            nsTArray<gfxFontFamily*>* aOutput,
+                            gfxFontStyle* aStyle = nullptr,
+                            gfxFloat aDevToCssSize = 1.0) override;
 
     // lookup the system font for a particular system font type and set
     // the name and style characteristics
@@ -105,10 +109,6 @@ public:
                           nsAString& aSystemFontName,
                           gfxFontStyle &aFontStyle,
                           float aDevPixPerCSSPixel);
-
-    virtual void
-    AppendLinkedSystemFamilies(nsIAtom* aLanguage,
-                               nsTArray<gfxFontFamily*>& aFamilyList) override;
 
 private:
     friend class gfxPlatformMac;
@@ -123,11 +123,7 @@ private:
     void InitSingleFaceList();
 
     // initialize system fonts
-    void InitSystemFonts();
-
-    // helper function for looking up font cascades
-    void LookupFontCascadeForLang(const nsACString& aLang,
-                                  nsTArray<gfxFontFamily*>& aCascadeList);
+    void InitSystemFontNames();
 
     // helper function to lookup in both hidden system fonts and normal fonts
     gfxFontFamily* FindSystemFontFamily(const nsAString& aFamily);
@@ -140,7 +136,7 @@ private:
 
     // search fonts system-wide for a given character, null otherwise
     gfxFontEntry* GlobalFontFallback(const uint32_t aCh,
-                                     int32_t aRunScript,
+                                     Script aRunScript,
                                      const gfxFontStyle* aMatchStyle,
                                      uint32_t& aCmapCount,
                                      gfxFontFamily** aMatchedFamily) override;
@@ -176,25 +172,8 @@ private:
     // or Helvetica Neue. For OSX 10.11, Apple uses pair of families
     // for the UI, one for text sizes and another for display sizes
     bool mUseSizeSensitiveSystemFont;
-    RefPtr<gfxFontFamily> mSystemTextFontFamily;
-    RefPtr<gfxFontFamily> mSystemDisplayFontFamily; // only used on OSX 10.11
-
-    // system font cascade - under OSX, the system font is effectively
-    // not a single family but a fontlist with the Latin font at the end
-    // of the list (e.g. Lucida Grande, Helevetica Neue, San Francisco)
-
-    // most languages use a common default set of choices matching lang=en
-    PrefFontList mDefaultCascadeFamilies;
-
-    // languages for which the cascade matches the default cascade
-    nsTHashtable<nsCStringHashKey> mDefaultCascadeLangs;
-
-    // for languages where the fontlist doesn't match the default list
-    // (e.g. zh-TW will prioritize the traditional Chinese font over the
-    // Japanese font)
-    nsBaseHashtable<nsCStringHashKey,
-                    nsAutoPtr<PrefFontList>,
-                    PrefFontList*> mNonDefaultCascadeFamilies;
+    nsString mSystemTextFontFamilyName;
+    nsString mSystemDisplayFontFamilyName; // only used on OSX 10.11
 };
 
 #endif /* gfxMacPlatformFontList_H_ */

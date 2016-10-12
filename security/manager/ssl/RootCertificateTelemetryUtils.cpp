@@ -13,8 +13,7 @@
 
 namespace mozilla { namespace psm {
 
-PRLogModuleInfo* gPublicKeyPinningTelemetryLog =
-  PR_NewLogModule("PublicKeyPinningTelemetryService");
+mozilla::LazyLogModule gPublicKeyPinningTelemetryLog("PublicKeyPinningTelemetryService");
 
 // Used in the BinarySearch method, this does a memcmp between the pointer
 // provided to its construtor and whatever the binary search is looking for.
@@ -59,9 +58,9 @@ RootCABinNumber(const SECItem* cert)
             digest.get().data[0], digest.get().data[1], digest.get().data[2], digest.get().data[3]));
 
   if (mozilla::BinarySearchIf(ROOT_TABLE, 0, ArrayLength(ROOT_TABLE),
-          BinaryHashSearchArrayComparator(
-            reinterpret_cast<const uint8_t*>(digest.get().data), digest.get().len),
-         &idx)) {
+        BinaryHashSearchArrayComparator(static_cast<uint8_t*>(digest.get().data),
+                                        digest.get().len),
+        &idx)) {
 
     MOZ_LOG(gPublicKeyPinningTelemetryLog, LogLevel::Debug,
           ("pkpinTelem: Telemetry index was %lu, bin is %d\n",

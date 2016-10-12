@@ -5,6 +5,9 @@
 #include "nsStreamListenerTee.h"
 #include "nsProxyRelease.h"
 
+namespace mozilla {
+namespace net {
+
 NS_IMPL_ISUPPORTS(nsStreamListenerTee,
                   nsIStreamListener,
                   nsIRequestObserver,
@@ -39,12 +42,7 @@ nsStreamListenerTee::OnStopRequest(nsIRequest *request,
 
     // release sink on the same thread where the data was written (bug 716293)
     if (mEventTarget) {
-        nsIOutputStream *sink = nullptr;
-        mSink.swap(sink);
-        if (NS_FAILED(NS_ProxyRelease(mEventTarget, sink))) {
-            NS_WARNING("Releasing sink on the current thread!");
-            NS_RELEASE(sink);
-        }
+      NS_ProxyRelease(mEventTarget, mSink.forget());
     }
     else {
         mSink = 0;
@@ -139,3 +137,6 @@ nsStreamListenerTee::InitAsync(nsIStreamListener *listener,
     mEventTarget = eventTarget;
     return Init(listener, sink, requestObserver);
 }
+
+} // namespace net
+} // namespace mozilla

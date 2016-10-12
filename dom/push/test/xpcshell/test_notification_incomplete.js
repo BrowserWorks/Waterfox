@@ -55,8 +55,8 @@ add_task(function* test_notification_incomplete() {
     ok(false, 'Should not deliver malformed updates');
   }
   do_register_cleanup(() =>
-    Services.obs.removeObserver(observeMessage, 'push-message'));
-  Services.obs.addObserver(observeMessage, 'push-message', false);
+    Services.obs.removeObserver(observeMessage, PushServiceComponent.pushTopic));
+  Services.obs.addObserver(observeMessage, PushServiceComponent.pushTopic, false);
 
   let notificationDone;
   let notificationPromise = new Promise(resolve => notificationDone = after(2, resolve));
@@ -67,7 +67,6 @@ add_task(function* test_notification_incomplete() {
   };
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -108,8 +107,7 @@ add_task(function* test_notification_incomplete() {
     }
   });
 
-  yield waitForPromise(notificationPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for incomplete notifications');
+  yield notificationPromise;
 
   let storeRecords = yield db.getAllKeyIDs();
   storeRecords.sort(({pushEndpoint: a}, {pushEndpoint: b}) =>

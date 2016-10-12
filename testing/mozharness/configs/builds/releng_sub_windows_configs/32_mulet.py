@@ -31,8 +31,9 @@ config = {
         'PROPERTIES_FILE': os.path.join(os.getcwd(), 'buildprops.json'),
         'TINDERBOX_OUTPUT': '1',
         'XPCOM_DEBUG_BREAK': 'stack-and-abort',
+        'TOOLTOOL_CACHE': '/c/builds/tooltool_cache',
+        'TOOLTOOL_HOME': '/c/builds',
     },
     'src_mozconfig': 'b2g/dev/config/mozconfigs/win32/mulet',
-    'purge_minsize': 9,
     #######################
 }

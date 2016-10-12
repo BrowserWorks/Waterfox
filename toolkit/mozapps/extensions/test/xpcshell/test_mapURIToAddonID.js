@@ -33,7 +33,7 @@ TestProvider.prototype = {
     if (aURI.spec === this.uri.spec) {
       return this.id;
     }
-    throw Components.Exception("Not mapped", result);
+    throw Components.Exception("Not mapped", this.result);
   }
 };
 
@@ -83,8 +83,10 @@ function run_test_early() {
         "resource://gre/modules/addons/XPIProvider.jsm", {});
 
       // Make the early API call.
-      do_check_null(s.XPIProvider.mapURIToAddonID(uri));
+      // AddonManager still misses its provider and so doesn't work yet.
       do_check_null(AddonManager.mapURIToAddonID(uri));
+      // But calling XPIProvider directly works immediately
+      do_check_eq(s.XPIProvider.mapURIToAddonID(uri), id);
 
       // Actually start up the manager.
       startupManager(false);

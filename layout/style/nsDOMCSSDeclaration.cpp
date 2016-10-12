@@ -80,15 +80,22 @@ nsDOMCSSDeclaration::SetPropertyValue(const nsCSSProperty aPropID,
 {
   switch (aPropID) {
     case eCSSProperty_background_position:
+    case eCSSProperty_background_position_x:
+    case eCSSProperty_background_position_y:
     case eCSSProperty_transform:
     case eCSSProperty_top:
     case eCSSProperty_left:
     case eCSSProperty_bottom:
     case eCSSProperty_right:
+    case eCSSProperty_margin:
     case eCSSProperty_margin_top:
     case eCSSProperty_margin_left:
     case eCSSProperty_margin_bottom:
     case eCSSProperty_margin_right:
+    case eCSSProperty_margin_inline_start:
+    case eCSSProperty_margin_inline_end:
+    case eCSSProperty_margin_block_start:
+    case eCSSProperty_margin_block_end:
       mozilla::layers::ScrollLinkedEffectDetector::PositioningPropertyMutated();
       break;
     default:
@@ -189,8 +196,7 @@ nsDOMCSSDeclaration::GetPropertyValue(const nsAString& aPropertyName,
                                       nsAString& aReturn)
 {
   const nsCSSProperty propID =
-    nsCSSProps::LookupProperty(aPropertyName,
-                               nsCSSProps::eEnabledForAllContent);
+    nsCSSProps::LookupProperty(aPropertyName, CSSEnabledState::eForAllContent);
   if (propID == eCSSProperty_UNKNOWN) {
     aReturn.Truncate();
     return NS_OK;
@@ -209,8 +215,7 @@ nsDOMCSSDeclaration::GetAuthoredPropertyValue(const nsAString& aPropertyName,
                                               nsAString& aReturn)
 {
   const nsCSSProperty propID =
-    nsCSSProps::LookupProperty(aPropertyName,
-                               nsCSSProps::eEnabledForAllContent);
+    nsCSSProps::LookupProperty(aPropertyName, CSSEnabledState::eForAllContent);
   if (propID == eCSSProperty_UNKNOWN) {
     aReturn.Truncate();
     return NS_OK;
@@ -251,8 +256,7 @@ nsDOMCSSDeclaration::SetProperty(const nsAString& aPropertyName,
 {
   // In the common (and fast) cases we can use the property id
   nsCSSProperty propID =
-    nsCSSProps::LookupProperty(aPropertyName,
-                               nsCSSProps::eEnabledForAllContent);
+    nsCSSProps::LookupProperty(aPropertyName, CSSEnabledState::eForAllContent);
   if (propID == eCSSProperty_UNKNOWN) {
     return NS_OK;
   }
@@ -288,8 +292,7 @@ nsDOMCSSDeclaration::RemoveProperty(const nsAString& aPropertyName,
                                     nsAString& aReturn)
 {
   const nsCSSProperty propID =
-    nsCSSProps::LookupProperty(aPropertyName,
-                               nsCSSProps::eEnabledForAllContent);
+    nsCSSProps::LookupProperty(aPropertyName, CSSEnabledState::eForAllContent);
   if (propID == eCSSProperty_UNKNOWN) {
     aReturn.Truncate();
     return NS_OK;

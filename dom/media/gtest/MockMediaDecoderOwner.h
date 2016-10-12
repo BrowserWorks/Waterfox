@@ -25,6 +25,7 @@ public:
   }
   void NetworkError() override {}
   void DecodeError() override {}
+  bool HasError() const override { return false; }
   void LoadAborted() override {}
   void PlaybackEnded() override {}
   void SeekStarted() override {}
@@ -47,7 +48,7 @@ public:
     return nullptr;
   }
   void ResetConnectionState() override {}
-  void NotifyAudibleStateChanged(bool aAudible) override {}
+  void SetAudibleState(bool aAudible) override {}
 };
 }
 

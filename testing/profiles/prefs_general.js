@@ -14,7 +14,6 @@ user_pref("dom.forms.color", true); // on for testing
 user_pref("dom.max_script_run_time", 0); // no slow script dialogs
 user_pref("hangmonitor.timeout", 0); // no hang monitor
 user_pref("dom.max_chrome_script_run_time", 0);
-user_pref("dom.max_child_script_run_time", 0);
 user_pref("dom.ipc.reportProcessHangs", false); // process hang monitor
 user_pref("dom.popup_maximum", -1);
 user_pref("dom.send_after_paint_to_content", true);
@@ -28,7 +27,6 @@ user_pref("javascript.options.showInConsole", true);
 user_pref("devtools.browsertoolbox.panel", "jsdebugger");
 user_pref("devtools.debugger.remote-port", 6023);
 user_pref("devtools.devedition.promo.enabled", false);
-user_pref("devtools.errorconsole.enabled", true);
 user_pref("browser.EULA.override", true);
 user_pref("gfx.color_management.force_srgb", true);
 user_pref("network.manage-offline-status", false);
@@ -50,9 +48,6 @@ user_pref("dom.w3c_touch_events.enabled", 1);
 user_pref("dom.undo_manager.enabled", true);
 user_pref("dom.webcomponents.enabled", true);
 user_pref("dom.htmlimports.enabled", true);
-// Set a future policy version to avoid the telemetry prompt.
-user_pref("toolkit.telemetry.prompted", 999);
-user_pref("toolkit.telemetry.notifiedOptOut", 999);
 // Existing tests assume there is no font size inflation.
 user_pref("font.size.inflation.emPerLine", 0);
 user_pref("font.size.inflation.minTwips", 0);
@@ -62,6 +57,10 @@ user_pref("experiments.supported", true);
 // Point the manifest at something local so we don't risk it hitting production
 // data and installing experiments that may vary over time.
 user_pref("experiments.manifest.uri", "http://%(server)s/experiments-dummy/manifest");
+
+// Don't allow background tabs to be zombified, otherwise for tests that
+// open additional tabs, the test harness tab itself might get unloaded.
+user_pref("browser.tabs.disableBackgroundZombification", true);
 
 // Only load extensions from the application and user profile
 // AddonManager.SCOPE_PROFILE + AddonManager.SCOPE_APPLICATION
@@ -73,13 +72,15 @@ user_pref("extensions.getAddons.cache.enabled", false);
 user_pref("extensions.installDistroAddons", false);
 // XPI extensions are required for test harnesses to load
 user_pref("extensions.defaultProviders.enabled", true);
-// Disable signature requirements where possible
 user_pref("xpinstall.signatures.required", false);
 
 user_pref("geo.wifi.uri", "http://%(server)s/tests/dom/tests/mochitest/geolocation/network_geolocation.sjs");
 user_pref("geo.wifi.timeToWaitBeforeSending", 2000);
 user_pref("geo.wifi.scan", false);
 user_pref("geo.wifi.logging.enabled", true);
+
+// Prevent connection to the push server for tests.
+user_pref("dom.push.connection.enabled", false);
 
 // Make url-classifier updates so rare that they won't affect tests
 user_pref("urlclassifier.updateinterval", 172800);
@@ -93,13 +94,13 @@ user_pref("privacy.trackingprotection.introURL", "http://%(server)s/trackingprot
 // Point update checks to the local testing server for fast failures
 user_pref("extensions.update.url", "http://%(server)s/extensions-dummy/updateURL");
 user_pref("extensions.update.background.url", "http://%(server)s/extensions-dummy/updateBackgroundURL");
+user_pref("extensions.blocklist.detailsURL", "http://%(server)s/extensions-dummy/blocklistDetailsURL");
+user_pref("extensions.blocklist.itemURL", "http://%(server)s/extensions-dummy/blocklistItemURL");
 user_pref("extensions.blocklist.url", "http://%(server)s/extensions-dummy/blocklistURL");
 user_pref("extensions.hotfix.url", "http://%(server)s/extensions-dummy/hotfixURL");
 user_pref("extensions.systemAddon.update.url", "http://%(server)s/dummy-system-addons.xml");
 // Turn off extension updates so they don't bother tests
 user_pref("extensions.update.enabled", false);
-// Bug 1235627 Turn off pocket add-on so it doesn't bother tests
-user_pref("extensions.pocket.enabled", false);
 // Make sure opening about:addons won't hit the network
 user_pref("extensions.webservice.discoverURL", "http://%(server)s/extensions-dummy/discoveryURL");
 // Make sure AddonRepository won't hit the network
@@ -108,6 +109,8 @@ user_pref("extensions.getAddons.get.url", "http://%(server)s/extensions-dummy/re
 user_pref("extensions.getAddons.getWithPerformance.url", "http://%(server)s/extensions-dummy/repositoryGetWithPerformanceURL");
 user_pref("extensions.getAddons.search.browseURL", "http://%(server)s/extensions-dummy/repositoryBrowseURL");
 user_pref("extensions.getAddons.search.url", "http://%(server)s/extensions-dummy/repositorySearchURL");
+// Ensure blocklist updates don't hit the network
+user_pref("services.settings.server", "http://%(server)s/dummy-kinto/v1");
 // Make sure that opening the plugins check page won't hit the network
 user_pref("plugins.update.url", "http://%(server)s/plugins-dummy/updateCheckURL");
 // Make sure SNTP requests don't hit the network
@@ -145,14 +148,14 @@ user_pref("datareporting.policy.dataSubmissionPolicyBypassNotification", true);
 // Point Firefox Health Report at a local server. We don't care if it actually
 // works. It just can't hit the default production endpoint.
 user_pref("datareporting.healthreport.documentServerURI", "http://%(server)s/healthreport/");
-user_pref("datareporting.healthreport.about.reportUrl", "http://%(server)s/abouthealthreport/");
-user_pref("datareporting.healthreport.about.reportUrlUnified", "http://%(server)s/abouthealthreport/v4/");
+user_pref("datareporting.healthreport.about.reportUrl", "http://%(server)s/abouthealthreport/v4/");
 
 // Make sure CSS error reporting is enabled for tests
 user_pref("layout.css.report_errors", true);
 
 // Enable CSS Grid for testing
 user_pref("layout.css.grid.enabled", true);
+user_pref("layout.css.grid-template-subgrid-value.enabled", true);
 
 // Enable CSS 'contain' for testing
 user_pref("layout.css.contain.enabled", true);
@@ -202,9 +205,6 @@ user_pref("browser.download.panel.shown", true);
 // which test runs first and happens to open about:newtab
 user_pref("browser.newtabpage.introShown", true);
 
-// Tell the PBackground infrastructure to run a test at startup.
-user_pref("pbackground.testing", true);
-
 // Enable webapps testing mode, which bypasses native installation.
 user_pref("browser.webapps.testing", true);
 
@@ -233,9 +233,6 @@ user_pref('browser.contentHandlers.types.5.uri', 'http://test1.example.org/rss?u
 
 // We want to collect telemetry, but we don't want to send in the results.
 user_pref('toolkit.telemetry.server', 'https://%(server)s/telemetry-dummy/');
-// Our current tests expect the unified Telemetry feature to be opt-out,
-// which is not true while we hold back shipping it.
-user_pref('toolkit.telemetry.unifiedIsOptIn', false);
 
 // A couple of preferences with default values to test that telemetry preference
 // watching is working.
@@ -284,13 +281,6 @@ user_pref("dom.apps.customization.enabled", true);
 user_pref("browser.newtabpage.directory.source", 'data:application/json,{"testing":1}');
 user_pref("browser.newtabpage.directory.ping", "");
 
-// Enable Loop
-user_pref("loop.debug.loglevel", "All");
-user_pref("loop.enabled", true);
-user_pref("loop.throttled", false);
-user_pref("loop.server", "http://%(server)s/browser/browser/extensions/loop/chrome/test/mochitest/loop_fxa.sjs?");
-user_pref("loop.CSP","default-src 'self' about: file: chrome: data: wss://* http://* https://*");
-
 // Ensure UITour won't hit the network
 user_pref("browser.uitour.pinnedTabUrl", "http://%(server)s/uitour-dummy/pinnedTab");
 user_pref("browser.uitour.url", "http://%(server)s/uitour-dummy/tour");
@@ -313,13 +303,14 @@ user_pref("media.autoplay.enabled", true);
 user_pref("media.decoder.heuristic.dormant.timeout", 0);
 #endif
 
-// Don't prompt about e10s
-user_pref("browser.displayedE10SPrompt.1", 5);
 // Don't use auto-enabled e10s
 user_pref("browser.tabs.remote.autostart.1", false);
 user_pref("browser.tabs.remote.autostart.2", false);
 // Don't forceably kill content processes after a timeout
 user_pref("dom.ipc.tabs.shutdownTimeoutSecs", 0);
+
+// Don't block add-ons for e10s
+user_pref("extensions.e10sBlocksEnabling", false);
 
 // Avoid performing Reader Mode intros during tests.
 user_pref("browser.reader.detectedFirstArticle", true);
@@ -346,3 +337,6 @@ user_pref("browser.urlbar.userMadeSearchSuggestionsChoice", true);
 user_pref("dom.audiochannel.mutedByDefault", false);
 
 user_pref("webextensions.tests", true);
+user_pref("startup.homepage_welcome_url", "about:blank");
+user_pref("startup.homepage_welcome_url.additional", "");
+user_pref("browser.usedOnWindows10.introURL", "");

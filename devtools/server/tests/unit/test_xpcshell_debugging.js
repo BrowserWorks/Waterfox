@@ -12,14 +12,14 @@ function run_test() {
   let DebuggerServer = _setupDebuggerServer([testFile.path], () => testResumed = true);
   let transport = DebuggerServer.connectPipe();
   let client = new DebuggerClient(transport);
-  client.connect(() => {
+  client.connect().then(() => {
     // Even though we have no tabs, listTabs gives us the chromeDebugger.
     client.getProcess().then(response => {
       let actor = response.form.actor;
       client.attachTab(actor, (response, tabClient) => {
         tabClient.attachThread(null, (response, threadClient) => {
           threadClient.addOneTimeListener("paused", (event, packet) => {
-          equal(packet.why.type, "breakpoint",
+            equal(packet.why.type, "breakpoint",
                 "yay - hit the breakpoint at the first line in our script");
             // Resume again - next stop should be our "debugger" statement.
             threadClient.addOneTimeListener("paused", (event, packet) => {

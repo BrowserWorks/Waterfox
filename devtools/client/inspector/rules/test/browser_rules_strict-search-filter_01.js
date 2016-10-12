@@ -23,31 +23,36 @@ const TEST_URI = `
 
 const TEST_DATA = [
   {
-    desc: "Tests that the strict search filter works properly for property names",
+    desc: "Tests that the strict search filter works properly for property " +
+          "names",
     search: "`color`",
     ruleCount: 2,
     propertyIndex: 1
   },
   {
-    desc: "Tests that the strict search filter works properly for property values",
+    desc: "Tests that the strict search filter works properly for property " +
+          "values",
     search: "`2%`",
     ruleCount: 2,
     propertyIndex: 0
   },
   {
-    desc: "Tests that the strict search filter works properly for parsed property names",
+    desc: "Tests that the strict search filter works properly for parsed " +
+          "property names",
     search: "`color`:",
     ruleCount: 2,
     propertyIndex: 1
   },
   {
-    desc: "Tests that the strict search filter works properly for parsed property values",
+    desc: "Tests that the strict search filter works properly for parsed " +
+          "property values",
     search: ":`2%`",
     ruleCount: 2,
     propertyIndex: 0
   },
   {
-    desc: "Tests that the strict search filter works properly for property line input",
+    desc: "Tests that the strict search filter works properly for property " +
+          "line input",
     search: "`width`:`2%`",
     ruleCount: 2,
     propertyIndex: 0
@@ -68,7 +73,7 @@ const TEST_DATA = [
   }
 ];
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode("#testid", inspector);

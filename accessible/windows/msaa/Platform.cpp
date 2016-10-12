@@ -118,3 +118,19 @@ a11y::ProxyTextChangeEvent(ProxyAccessible* aText, const nsString& aStr,
     nsIAccessibleEvent::EVENT_TEXT_REMOVED;
   AccessibleWrap::FireWinEvent(wrapper, eventType);
 }
+
+void
+a11y::ProxyShowHideEvent(ProxyAccessible* aTarget, ProxyAccessible*, bool aInsert, bool)
+{
+  uint32_t event = aInsert ? nsIAccessibleEvent::EVENT_SHOW :
+    nsIAccessibleEvent::EVENT_HIDE;
+  AccessibleWrap* wrapper = WrapperFor(aTarget);
+  AccessibleWrap::FireWinEvent(wrapper, event);
+}
+
+void
+a11y::ProxySelectionEvent(ProxyAccessible* aTarget, ProxyAccessible*, uint32_t aType)
+{
+  AccessibleWrap* wrapper = WrapperFor(aTarget);
+  AccessibleWrap::FireWinEvent(wrapper, aType);
+}

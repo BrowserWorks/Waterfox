@@ -468,6 +468,13 @@ nsDragService::SetAlphaPixmap(SourceSurface *aSurface,
 #ifdef cairo_image_surface_create
 #error "Looks like we're including Mozilla's cairo instead of system cairo"
 #endif
+    // Prior to GTK 3.9.12, cairo surfaces passed into gtk_drag_set_icon_surface
+    // had their shape information derived from the alpha channel and used with
+    // the X SHAPE extension instead of being displayed as an ARGB window.
+    // See bug 1249604.
+    if (gtk_check_version(3, 9, 12))
+      return false;
+
     // TODO: grab X11 pixmap or image data instead of expensive readback.
     cairo_surface_t *surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
                                                        dragRect.width,
@@ -963,12 +970,14 @@ nsDragService::GetData(nsITransferable * aTransferable,
             } // else we try one last ditch effort to find our data
 
             if (dataFound) {
-                // the DOM only wants LF, so convert from MacOS line endings
-                // to DOM line endings.
-                nsLinebreakHelpers::ConvertPlatformToDOMLinebreaks(
-                             flavorStr,
-                             &mTargetDragData,
-                             reinterpret_cast<int*>(&mTargetDragDataLen));
+                if (strcmp(flavorStr, kCustomTypesMime) != 0) {
+                  // the DOM only wants LF, so convert from MacOS line endings
+                  // to DOM line endings.
+                  nsLinebreakHelpers::ConvertPlatformToDOMLinebreaks(
+                               flavorStr,
+                               &mTargetDragData,
+                               reinterpret_cast<int*>(&mTargetDragDataLen));
+                }
         
                 // put it into the transferable.
                 nsCOMPtr<nsISupports> genericDataWrapper;
@@ -1659,7 +1668,11 @@ void nsDragService::SetDragIcon(GdkDragContext* aContext)
 
     // If a popup is set as the drag image, use its widget. Otherwise, use
     // the surface that DrawDrag created.
-    if (mDragPopup) {
+    //
+    // XXX: Disable drag popups on GTK 3.19.4 and above: see bug 1264454.
+    //      Fix this once a new GTK version ships that does not destroy our
+    //      widget in gtk_drag_set_icon_widget.
+    if (mDragPopup && gtk_check_version(3, 19, 4)) {
         GtkWidget* gtkWidget = nullptr;
         nsIFrame* frame = mDragPopup->GetPrimaryFrame();
         if (frame) {

@@ -13,6 +13,7 @@
 #include "nsXPCOMPrivate.h"
 #include "mozilla/SyncRunnable.h"
 #include "runnable_utils.h"
+#include "base/task.h"
 
 namespace mozilla {
 
@@ -72,10 +73,11 @@ public:
     base::ProcessId otherProcess;
     nsCString displayName;
     uint32_t pluginId;
+    nsresult rv;
     bool ok = aGMPServiceChild->SendLoadGMP(mNodeId, mAPI, mTags,
                                             alreadyBridgedTo, &otherProcess,
-                                            &displayName, &pluginId);
-    if (!ok) {
+                                            &displayName, &pluginId, &rv);
+    if (!ok || rv == NS_ERROR_ILLEGAL_DURING_SHUTDOWN) {
       mCallback->Done(nullptr);
       return;
     }
@@ -251,8 +253,8 @@ GMPServiceChild::GMPServiceChild()
 
 GMPServiceChild::~GMPServiceChild()
 {
-  XRE_GetIOMessageLoop()->PostTask(FROM_HERE,
-                                   new DeleteTask<Transport>(GetTransport()));
+  RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(GetTransport());
+  XRE_GetIOMessageLoop()->PostTask(task.forget());
 }
 
 PGMPContentParent*
@@ -304,7 +306,7 @@ GMPServiceChild::GetAlreadyBridgedTo(nsTArray<base::ProcessId>& aAlreadyBridgedT
   }
 }
 
-class OpenPGMPServiceChild : public nsRunnable
+class OpenPGMPServiceChild : public mozilla::Runnable
 {
 public:
   OpenPGMPServiceChild(UniquePtr<GMPServiceChild>&& aGMPServiceChild,

@@ -50,7 +50,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Preferences.h"
 
-PRLogModuleInfo* nsURILoader::mLog = nullptr;
+mozilla::LazyLogModule nsURILoader::mLog("URILoader");
 
 #define LOG(args) MOZ_LOG(nsURILoader::mLog, mozilla::LogLevel::Debug, args)
 #define LOG_ERROR(args) MOZ_LOG(nsURILoader::mLog, mozilla::LogLevel::Error, args)
@@ -626,7 +626,6 @@ nsDocumentOpenInfo::ConvertData(nsIRequest *request,
   //
   RefPtr<nsDocumentOpenInfo> nextLink =
     new nsDocumentOpenInfo(m_originalContext, mFlags, mURILoader);
-  if (!nextLink) return NS_ERROR_OUT_OF_MEMORY;
 
   LOG(("  Downstream DocumentOpenInfo would be: 0x%p", nextLink.get()));
   
@@ -754,9 +753,6 @@ nsDocumentOpenInfo::TryContentListener(nsIURIContentListener* aListener,
 
 nsURILoader::nsURILoader()
 {
-  if (!mLog) {
-    mLog = PR_NewLogModule("URILoader");
-  }
 }
 
 nsURILoader::~nsURILoader()
@@ -875,8 +871,6 @@ nsresult nsURILoader::OpenChannel(nsIChannel* channel,
   RefPtr<nsDocumentOpenInfo> loader =
     new nsDocumentOpenInfo(aWindowContext, aFlags, this);
 
-  if (!loader) return NS_ERROR_OUT_OF_MEMORY;
-
   // Set the correct loadgroup on the channel
   nsCOMPtr<nsILoadGroup> loadGroup(do_GetInterface(aWindowContext));
 
@@ -890,8 +884,6 @@ nsresult nsURILoader::OpenChannel(nsIChannel* channel,
       listener->GetLoadCookie(getter_AddRefs(cookie));
       if (!cookie) {
         RefPtr<nsDocLoader> newDocLoader = new nsDocLoader();
-        if (!newDocLoader)
-          return NS_ERROR_OUT_OF_MEMORY;
         nsresult rv = newDocLoader->Init();
         if (NS_FAILED(rv))
           return rv;

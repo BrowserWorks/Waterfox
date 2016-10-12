@@ -33,7 +33,8 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/Element.h"
 #include "nsHashKeys.h"
-#include "RestyleManager.h"
+#include "mozilla/RestyleManagerHandle.h"
+#include "mozilla/RestyleManagerHandleInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -163,7 +164,7 @@ struct MappedAttrTableEntry : public PLDHashEntryHdr {
 };
 
 static PLDHashNumber
-MappedAttrTable_HashKey(PLDHashTable *table, const void *key)
+MappedAttrTable_HashKey(const void *key)
 {
   nsMappedAttributes *attributes =
     static_cast<nsMappedAttributes*>(const_cast<void*>(key));
@@ -181,8 +182,7 @@ MappedAttrTable_ClearEntry(PLDHashTable *table, PLDHashEntryHdr *hdr)
 }
 
 static bool
-MappedAttrTable_MatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                           const void *key)
+MappedAttrTable_MatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   nsMappedAttributes *attributes =
     static_cast<nsMappedAttributes*>(const_cast<void*>(key));
@@ -207,7 +207,7 @@ struct LangRuleTableEntry : public PLDHashEntryHdr {
 };
 
 static PLDHashNumber
-LangRuleTable_HashKey(PLDHashTable *table, const void *key)
+LangRuleTable_HashKey(const void *key)
 {
   const nsString *lang = static_cast<const nsString*>(key);
   return HashString(*lang);
@@ -223,8 +223,7 @@ LangRuleTable_ClearEntry(PLDHashTable *table, PLDHashEntryHdr *hdr)
 }
 
 static bool
-LangRuleTable_MatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                         const void *key)
+LangRuleTable_MatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   const nsString *lang = static_cast<const nsString*>(key);
   const LangRuleTableEntry *entry = static_cast<const LangRuleTableEntry*>(hdr);

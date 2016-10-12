@@ -41,6 +41,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
     private String[] mButtons;
     private PromptInput[] mInputs;
     private AlertDialog mDialog;
+    private int mDoubleTapButtonType;
 
     private final LayoutInflater mInflater;
     private final Context mContext;
@@ -52,6 +53,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
     private static int mInputPaddingSize;
 
     private int mTabId = Tabs.INVALID_TAB_ID;
+    private Object mPreviousInputValue = null;
 
     public Prompt(Context context, PromptCallback callback) {
         this(context);
@@ -83,6 +85,9 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
         mGuid = message.optString("guid");
 
         mButtons = getStringArray(message, "buttons");
+        final int buttonCount = mButtons == null ? 0 : mButtons.length;
+        mDoubleTapButtonType = convertIndexToButtonType(message.optInt("doubleTapButton", -1), buttonCount);
+        mPreviousInputValue = null;
 
         JSONArray inputs = getSafeArray(message, "inputs");
         mInputs = new PromptInput[inputs.length()];
@@ -90,7 +95,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
             try {
                 mInputs[i] = PromptInput.getInput(inputs.getJSONObject(i));
                 mInputs[i].setListener(this);
-            } catch(Exception ex) { }
+            } catch (Exception ex) { }
         }
 
         PromptListItem[] menuitems = PromptListItem.getArray(message.optJSONArray("listitems"));
@@ -110,12 +115,31 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
         show(title, text, menuitems, choiceMode);
     }
 
-     public void show(String title, String text, PromptListItem[] listItems, int choiceMode) {
+    private int convertIndexToButtonType(final int buttonIndex, final int buttonCount) {
+        if (buttonIndex < 0 || buttonIndex >= buttonCount) {
+            // All valid DialogInterface button values are < 0,
+            // so we return 0 as an invalid value.
+            return 0;
+        }
+
+        switch (buttonIndex) {
+            case 0:
+                return DialogInterface.BUTTON_POSITIVE;
+            case 1:
+                return DialogInterface.BUTTON_NEUTRAL;
+            case 2:
+                return DialogInterface.BUTTON_NEGATIVE;
+            default:
+                return 0;
+        }
+    }
+
+    public void show(String title, String text, PromptListItem[] listItems, int choiceMode) {
         ThreadUtils.assertOnUiThread();
 
         try {
             create(title, text, listItems, choiceMode);
-        } catch(IllegalStateException ex) {
+        } catch (IllegalStateException ex) {
             Log.i(LOGTAG, "Error building dialog", ex);
             return;
         }
@@ -133,12 +157,12 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
     }
 
     @Override
-    public void onTabChanged(final Tab tab, final Tabs.TabEvents msg, final Object data) {
+    public void onTabChanged(final Tab tab, final Tabs.TabEvents msg, final String data) {
         if (tab != Tabs.getInstance().getTab(mTabId)) {
             return;
         }
 
-        switch(msg) {
+        switch (msg) {
             case SELECTED:
                 Log.i(LOGTAG, "Selected");
                 mDialog.show();
@@ -232,7 +256,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
             }
 
             result.put("list", selected);
-        } catch(JSONException ex) { }
+        } catch (JSONException ex) { }
     }
 
     /* Adds to a result value from the inputs that can be shown in dialogs.
@@ -247,7 +271,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
                     }
                 }
             }
-        } catch(JSONException ex) { }
+        } catch (JSONException ex) { }
     }
 
     /* Adds the selected button to a result. This should only be called if there
@@ -256,14 +280,14 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
      */
     private void addButtonResult(final JSONObject result, int which) {
         int button = -1;
-        switch(which) {
+        switch (which) {
             case DialogInterface.BUTTON_POSITIVE : button = 0; break;
             case DialogInterface.BUTTON_NEUTRAL  : button = 1; break;
             case DialogInterface.BUTTON_NEGATIVE : button = 2; break;
         }
         try {
             result.put("button", button);
-        } catch(JSONException ex) { }
+        } catch (JSONException ex) { }
     }
 
     @Override
@@ -280,10 +304,10 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
      * @param listItems
      *        The items to add.
      * @param choiceMode
-     *        One of the ListView.CHOICE_MODE constants to designate whether this list shows checkmarks, radios buttons, or nothing. 
+     *        One of the ListView.CHOICE_MODE constants to designate whether this list shows checkmarks, radios buttons, or nothing.
     */
     private void addListItems(AlertDialog.Builder builder, PromptListItem[] listItems, int choiceMode) {
-        switch(choiceMode) {
+        switch (choiceMode) {
             case ListView.CHOICE_MODE_MULTIPLE_MODAL:
             case ListView.CHOICE_MODE_MULTIPLE:
                 addMultiSelectList(builder, listItems);
@@ -408,7 +432,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
                 view.addView(root);
                 builder.setView(view);
             }
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             Log.e(LOGTAG, "Error showing prompt inputs", ex);
             // We cannot display these input widgets with this sdk version,
             // do not display any dialog and finish the prompt now.
@@ -456,13 +480,13 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
     }
 
     /* Called in situations where we want to cancel the dialog . This can happen if the user hits back,
-     *  or if the dialog can't be created because of invalid JSON.
+     * or if the dialog can't be created because of invalid JSON.
      */
     private void cancelDialog() {
         JSONObject ret = new JSONObject();
         try {
             ret.put("button", -1);
-        } catch(Exception ex) { }
+        } catch (Exception ex) { }
         addInputValues(ret);
         notifyClosing(ret);
     }
@@ -484,10 +508,10 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
     /* Called any time we're closing the dialog to cleanup and notify listeners that the dialog
      * is closing.
      */
-    private void notifyClosing(final JSONObject aReturn) {
+    private void notifyClosing(JSONObject aReturn) {
         try {
             aReturn.put("guid", mGuid);
-        } catch(JSONException ex) { }
+        } catch (JSONException ex) { }
 
         if (mTabId != Tabs.INVALID_TAB_ID) {
             Tabs.unregisterOnTabsChangedListener(this);
@@ -497,12 +521,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
         GeckoAppShell.sendEventToGecko(GeckoEvent.createNoOpEvent());
 
         if (mCallback != null) {
-            ThreadUtils.postToBackgroundThread(new Runnable() {
-                @Override
-                public void run() {
-                    mCallback.onPromptFinished(aReturn.toString());
-                }
-            });
+            mCallback.onPromptFinished(aReturn.toString());
         }
     }
 
@@ -512,7 +531,21 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
         // If there are no buttons on this dialog, assuming that "changing" an input
         // means something was selected and we can close. This provides a way to tap
         // on a list item and close the dialog automatically.
-        closeIfNoButtons(-1);
+        if (!closeIfNoButtons(-1)) {
+            // Alternatively, if a default button has been specified for double tapping,
+            // we want to close the dialog if the same input value has been transmitted
+            // twice in a row.
+            closeIfDoubleTapEnabled(input.getValue());
+        }
+    }
+
+    private boolean closeIfDoubleTapEnabled(Object inputValue) {
+        if (mDoubleTapButtonType != 0 && inputValue == mPreviousInputValue) {
+            closeDialog(mDoubleTapButtonType);
+            return true;
+        }
+        mPreviousInputValue = inputValue;
+        return false;
     }
 
     private static JSONArray getSafeArray(JSONObject json, String key) {
@@ -530,7 +563,7 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
         for (int i = 0; i < length; i++) {
             try {
                 list[i] = items.getString(i);
-            } catch(Exception ex) { }
+            } catch (Exception ex) { }
         }
         return list;
     }
@@ -539,18 +572,23 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
         JSONArray items = new JSONArray();
         try {
             items = aObject.getJSONArray(aName);
-        } catch(Exception ex) { return null; }
+        } catch (Exception ex) { return null; }
         int length = items.length();
         boolean[] list = new boolean[length];
         for (int i = 0; i < length; i++) {
             try {
                 list[i] = items.getBoolean(i);
-            } catch(Exception ex) { }
+            } catch (Exception ex) { }
         }
         return list;
     }
 
     public interface PromptCallback {
+
+        /**
+         * Called when the Prompt has been completed (i.e. when the user has selected an item or action in the Prompt).
+         * This callback is run on the UI thread.
+         */
         public void onPromptFinished(String jsonResult);
     }
 }

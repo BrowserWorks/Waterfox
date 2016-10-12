@@ -200,11 +200,6 @@ class ReftestRunner(MozbuildObject):
                                                             "test-stage", "jsreftest",
                                                             "tests", "user.js"))
 
-        if not kwargs["runTestsInParallel"]:
-            kwargs["logFile"] = "%s.log" % kwargs["suite"]
-
-        # Remove the stdout handler from the internal logger and let mach deal with it
-        runreftest.log.removeHandler(runreftest.log.handlers[0])
         self.log_manager.enable_unstructured()
         try:
             rv = runreftest.run(**kwargs)
@@ -242,9 +237,14 @@ class ReftestRunner(MozbuildObject):
             kwargs["xrePath"] = os.environ.get("MOZ_HOST_BIN")
         if not kwargs["app"]:
             kwargs["app"] = self.substs["ANDROID_PACKAGE_NAME"]
+        if not kwargs["utilityPath"]:
+            kwargs["utilityPath"] = kwargs["xrePath"]
         kwargs["dm_trans"] = "adb"
         kwargs["ignoreWindowSize"] = True
         kwargs["printDeviceInfo"] = False
+
+        from mozrunner.devices.android_device import grant_runtime_permissions
+        grant_runtime_permissions(self, kwargs['app'])
 
         # A symlink and some path manipulations are required so that test
         # manifests can be found both locally and remotely (via a url)
@@ -280,8 +280,6 @@ class ReftestRunner(MozbuildObject):
                 imp.load_module('reftest', fh, path, ('.py', 'r', imp.PY_SOURCE))
             import reftest
 
-        # Remove the stdout handler from the internal logger and let mach deal with it
-        runreftest.log.removeHandler(runreftest.log.handlers[0])
         self.log_manager.enable_unstructured()
         try:
             rv = reftest.run(**kwargs)

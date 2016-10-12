@@ -8,9 +8,6 @@
 #include "Logging.h"
 
 #include "SourceSurfaceD2D1.h"
-#include "SourceSurfaceD2D.h"
-#include "SourceSurfaceD2DTarget.h"
-#include "DrawTargetD2D.h"
 #include "DrawTargetD2D1.h"
 #include "ExtendInputEffectD2D1.h"
 
@@ -31,14 +28,14 @@ D2D1_COLORMATRIX_ALPHA_MODE D2DAlphaMode(uint32_t aMode)
   return D2D1_COLORMATRIX_ALPHA_MODE_PREMULTIPLIED;
 }
 
-D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE D2DAffineTransformInterpolationMode(Filter aFilter)
+D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE D2DAffineTransformInterpolationMode(SamplingFilter aSamplingFilter)
 {
-  switch (aFilter) {
-  case Filter::GOOD:
+  switch (aSamplingFilter) {
+  case SamplingFilter::GOOD:
     return D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_LINEAR;
-  case Filter::LINEAR:
+  case SamplingFilter::LINEAR:
     return D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_LINEAR;
-  case Filter::POINT:
+  case SamplingFilter::POINT:
     return D2D1_2DAFFINETRANSFORM_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
   default:
     MOZ_CRASH("GFX: Unknown enum value D2DAffineTIM!");
@@ -159,8 +156,6 @@ already_AddRefed<ID2D1Image> GetImageForSourceSurface(DrawTarget *aDT, SourceSur
   switch (aDT->GetBackendType()) {
     case BackendType::DIRECT2D1_1:
       return static_cast<DrawTargetD2D1*>(aDT)->GetImageForSurface(aSurface, ExtendMode::CLAMP);
-    case BackendType::DIRECT2D:
-      return static_cast<DrawTargetD2D*>(aDT)->GetImageForSurface(aSurface);
     default:
       gfxDevCrash(LogReason::FilterNodeD2D1Backend) << "Unknown draw target type! " << (int)aDT->GetBackendType();
       return nullptr;
@@ -177,7 +172,7 @@ uint32_t ConvertValue(FilterType aType, uint32_t aAttribute, uint32_t aValue)
     break;
   case FilterType::TRANSFORM:
     if (aAttribute == ATT_TRANSFORM_FILTER) {
-      aValue = D2DAffineTransformInterpolationMode(Filter(aValue));
+      aValue = D2DAffineTransformInterpolationMode(SamplingFilter(aValue));
     }
     break;
   case FilterType::BLEND:

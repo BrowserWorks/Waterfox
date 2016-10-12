@@ -8,6 +8,7 @@
 #include "BluetoothReplyRunnable.h"
 #include "BluetoothUtils.h"
 #include "DOMRequest.h"
+#include "nsContentUtils.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
 #include "mozilla/dom/Promise.h"
@@ -19,15 +20,15 @@ USING_BLUETOOTH_NAMESPACE
 
 BluetoothReplyRunnable::BluetoothReplyRunnable(nsIDOMDOMRequest* aReq,
                                                Promise* aPromise)
-  : mDOMRequest(aReq)
-  , mPromise(aPromise)
+  : mPromise(aPromise)
+  , mDOMRequest(aReq)
   , mErrorStatus(STATUS_FAIL)
 {}
 
 void
 BluetoothReplyRunnable::SetReply(BluetoothReply* aReply)
 {
-  mReply = aReply;
+  mReply.reset(aReply);
 }
 
 void
@@ -92,13 +93,11 @@ BluetoothReplyRunnable::Run()
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mReply);
 
-  AutoSafeJSContext cx;
-  JS::Rooted<JS::Value> v(cx, JS::UndefinedValue());
+  JS::Rooted<JS::Value> v(nsContentUtils::RootingCx(), JS::UndefinedValue());
 
   nsresult rv;
   if (mReply->type() != BluetoothReply::TBluetoothReplySuccess) {
-    SetError(mReply->get_BluetoothReplyError().errorString(),
-             mReply->get_BluetoothReplyError().errorStatus());
+    ParseErrorStatus();
     rv = FireErrorString();
   } else if (!ParseSuccessfulReply(&v)) {
     rv = FireErrorString();
@@ -128,6 +127,22 @@ BluetoothReplyRunnable::OnSuccessFired()
 void
 BluetoothReplyRunnable::OnErrorFired()
 {}
+
+void
+BluetoothReplyRunnable::ParseErrorStatus()
+{
+  MOZ_ASSERT(mReply);
+  MOZ_ASSERT(mReply->type() == BluetoothReply::TBluetoothReplyError);
+
+  if (mReply->get_BluetoothReplyError().errorStatus().type() ==
+      BluetoothErrorStatus::TBluetoothStatus) {
+    SetError(
+      mReply->get_BluetoothReplyError().errorString(),
+      mReply->get_BluetoothReplyError().errorStatus().get_BluetoothStatus());
+  } else {
+    SetError(mReply->get_BluetoothReplyError().errorString(), STATUS_FAIL);
+  }
+}
 
 BluetoothVoidReplyRunnable::BluetoothVoidReplyRunnable(nsIDOMDOMRequest* aReq,
                                                        Promise* aPromise)

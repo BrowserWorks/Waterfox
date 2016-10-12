@@ -11,6 +11,7 @@
 
 /* Show the right elements for the right connection states. */
 #identity-popup[connection=not-secure] [when-connection~=not-secure],
+#identity-popup[connection=secure-cert-user-overridden] [when-connection~=secure-cert-user-overridden],
 #identity-popup[connection=secure-ev] [when-connection~=secure-ev],
 #identity-popup[connection=secure] [when-connection~=secure],
 #identity-popup[connection=chrome] [when-connection~=chrome],
@@ -82,13 +83,7 @@
 
 #identity-popup-multiView > .panel-viewcontainer > .panel-viewstack > .panel-subviews {
   background: var(--panel-arrowcontent-background);
-  border-bottom-right-radius: 3.5px;
   padding: 0;
-}
-
-#identity-popup-multiView > .panel-viewcontainer > .panel-viewstack > .panel-subviews:-moz-locale-dir(rtl) {
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 3.5px;
 }
 
 .identity-popup-section:not(:first-child) {
@@ -99,12 +94,18 @@
 #identity-popup-security-content,
 #identity-popup-permissions-content,
 #tracking-protection-content {
-  padding: 0.5em 0 1em;
-  -moz-padding-start: calc(2em + 24px);
-  -moz-padding-end: 1em;
   background-repeat: no-repeat;
   background-position: 1em 1em;
   background-size: 24px auto;
+}
+
+#identity-popup-security-content,
+#identity-popup-permissions-content,
+#tracking-protection-content {
+  padding: 0.5em 0 1em;
+  /* .identity-popup-headline.host depends on this width */
+  padding-inline-start: calc(2em + 24px);
+  padding-inline-end: 1em;
 }
 
 #identity-popup-securityView:-moz-locale-dir(rtl),
@@ -120,7 +121,7 @@
   margin: 0;
   padding: 4px 0;
   min-width: auto;
-  width: 38px;
+  width: var(--identity-popup-expander-width);
   border: 0 none;
   -moz-appearance: none;
   background-image: url("chrome://browser/skin/controlcenter/arrow-subview.svg"),
@@ -181,13 +182,20 @@
   font-size: 150%;
 }
 
+.identity-popup-headline.host {
+  word-wrap: break-word;
+  /* 1em + 2em + 24px is #identity-popup-security-content padding
+   * 30em is .panel-mainview:not([panelid="PanelUI-popup"]) width */
+  max-width: calc(30rem - 3rem - 24px - var(--identity-popup-expander-width))
+}
+
 .identity-popup-warning-gray {
-  -moz-padding-start: 24px;
+  padding-inline-start: 24px;
   background: url(chrome://browser/skin/controlcenter/warning-gray.svg) no-repeat 0 50%;
 }
 
 .identity-popup-warning-yellow {
-  -moz-padding-start: 24px;
+  padding-inline-start: 24px;
   background: url(chrome://browser/skin/controlcenter/warning-yellow.svg) no-repeat 0 50%;
 }
 
@@ -207,7 +215,6 @@
 }
 
 #identity-popup-securityView {
-  padding-bottom: 2em;
   overflow: hidden;
 }
 
@@ -234,6 +241,11 @@
   background-image: url(chrome://browser/skin/controlcenter/conn-degraded.svg);
 }
 
+#identity-popup[connection=secure-cert-user-overridden] #identity-popup-securityView,
+#identity-popup[connection=secure-cert-user-overridden] #identity-popup-security-content {
+  background-image: url(chrome://browser/skin/identity-mixed-passive-loaded.svg);
+}
+
 #identity-popup[loginforms=insecure] #identity-popup-securityView,
 #identity-popup[loginforms=insecure] #identity-popup-security-content,
 #identity-popup[mixedcontent~=active-loaded][isbroken] #identity-popup-securityView,
@@ -246,13 +258,44 @@
   color: Graytext;
 }
 
+#identity-popup-securityView-header,
+#identity-popup-securityView-body {
+  margin-inline-start: calc(2em + 24px);
+  margin-inline-end: 1em;
+}
+
 #identity-popup-securityView-header {
+  margin-top: 0.5em;
   border-bottom: 1px solid var(--panel-separator-color);
   padding-bottom: 1em;
 }
 
 #identity-popup-securityView-body {
-  -moz-padding-end: 1em;
+  padding-inline-end: 1em;
+}
+
+#identity-popup-securityView-footer {
+  margin-top: 1em;
+  background-color: hsla(210,4%,10%,.07);
+}
+
+#identity-popup-securityView-footer > button {
+  -moz-appearance: none;
+  margin: 0;
+  border: none;
+  border-top: 1px solid #ccc;
+  padding: 8px 20px;
+  color: ButtonText;
+  background-color: transparent;
+}
+
+#identity-popup-securityView-footer > button:hover,
+#identity-popup-securityView-footer > button:focus {
+  background-color: hsla(210,4%,10%,.07);
+}
+
+#identity-popup-securityView-footer > button:hover:active {
+  background-color: hsla(210,4%,10%,.12);
 }
 
 #identity-popup-content-verifier ~ description {
@@ -319,7 +362,7 @@ description#identity-popup-content-verifier,
 }
 
 .identity-popup-permission-label {
-  -moz-margin-start: 0;
+  margin-inline-start: 0;
   word-wrap: break-word;
 }
 

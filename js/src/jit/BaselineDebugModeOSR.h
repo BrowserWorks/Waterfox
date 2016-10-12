@@ -64,7 +64,7 @@ class DebugModeOSRVolatileStub
 
     bool invalid() const {
         if (engine_ == ICStubCompiler::Engine::IonMonkey)
-            return false;
+            return stub_->invalid();
         MOZ_ASSERT(!frame_->isHandlingException());
         ICEntry& entry = frame_->script()->baselineScript()->icEntryFromPCOffset(pcOffset_);
         return stub_ != entry.fallbackStub();
@@ -135,7 +135,7 @@ struct BaselineDebugModeOSRInfo
     void popValueInto(PCMappingSlotInfo::SlotLocation loc, Value* vp);
 };
 
-bool
+MOZ_MUST_USE bool
 RecompileOnStackBaselineScriptsForDebugMode(JSContext* cx,
                                             const Debugger::ExecutionObservableSet& obs,
                                             Debugger::IsObserving observing);

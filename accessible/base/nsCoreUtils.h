@@ -7,6 +7,7 @@
 #define nsCoreUtils_h_
 
 #include "mozilla/EventForwards.h"
+#include "nsIAccessibleEvent.h"
 #include "nsIContent.h"
 #include "nsIDocument.h" // for GetShell()
 #include "nsIPresShell.h"
@@ -106,17 +107,6 @@ public:
    * Return DOM node for the given DOM point.
    */
   static nsINode *GetDOMNodeFromDOMPoint(nsINode *aNode, uint32_t aOffset);
-
-  /**
-   * Return the nsIContent* to check for ARIA attributes on -- this may not
-   * always be the DOM node for the accessible. Specifically, for doc
-   * accessibles, it is not the document node, but either the root element or
-   * <body> in HTML.
-   *
-   * @param aNode  [in] DOM node for the accessible that may be affected by ARIA
-   * @return        the nsIContent which may have ARIA markup
-   */
-  static nsIContent* GetRoleContent(nsINode *aNode);
 
   /**
    * Is the first passed in node an ancestor of the second?
@@ -319,6 +309,21 @@ public:
     return aChar == ' ' || aChar == '\n' ||
       aChar == '\r' || aChar == '\t' || aChar == 0xa0;
   }
+
+  /*
+   * Return true if there are any observers of accessible events.
+   */
+  static bool AccEventObserversExist();
+
+  /**
+   * Notify accessible event observers of an event.
+   */
+  static void DispatchAccEvent(RefPtr<nsIAccessibleEvent> aEvent);
+
+  /**
+   * Return a role attribute on XBL bindings of the element.
+   */
+  static void XBLBindingRole(const nsIContent* aEl, nsAString& aRole);
 };
 
 #endif

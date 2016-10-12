@@ -11,11 +11,11 @@ const { PromisesFront } = require("devtools/server/actors/promises");
 
 var events = require("sdk/event/core");
 
-add_task(function*() {
+add_task(function* () {
   let client = yield startTestDebuggerServer("promises-object-test");
   let chromeActors = yield getChromeActors(client);
 
-  ok(Promise.toString().contains("native code"), "Expect native DOM Promise.");
+  ok(Promise.toString().includes("native code"), "Expect native DOM Promise.");
 
   // We have to attach the chrome TabActor before playing with the PromiseActor
   yield attachTab(client, chromeActors);

@@ -18,9 +18,8 @@
 
 var Cc = require('chrome').Cc;
 var Ci = require('chrome').Ci;
-var URL = require('sdk/url').URL;
 
-var Task = require('resource://gre/modules/Task.jsm').Task;
+var { Task } = require("devtools/shared/task");
 
 var util = require('./util');
 
@@ -60,13 +59,6 @@ exports.Highlighter = Highlighter;
 /**
  * See docs in lib/gcli/util/host.js
  */
-exports.spawn = function(context, spawnSpec) {
-  throw new Error('Not supported');
-};
-
-/**
- * See docs in lib/gcli/util/host.js
- */
 exports.exec = function(task) {
   return Task.spawn(task);
 };
@@ -75,7 +67,7 @@ exports.exec = function(task) {
  * The URL API is new enough that we need specific platform help
  */
 exports.createUrl = function(uristr, base) {
-  return URL(uristr, base);
+  return new URL(uristr, base);
 };
 
 /**

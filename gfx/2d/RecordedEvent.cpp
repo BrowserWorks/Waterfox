@@ -10,6 +10,7 @@
 #include "Tools.h"
 #include "Filters.h"
 #include "Logging.h"
+#include "ScaledFontBase.h"
 #include "SFNTData.h"
 
 namespace mozilla {
@@ -80,6 +81,9 @@ RecordedEvent::LoadEventFromStream(std::istream &aStream, EventType aType)
     LOAD_EVENT_TYPE(FILTERNODESETINPUT, RecordedFilterNodeSetInput);
     LOAD_EVENT_TYPE(CREATESIMILARDRAWTARGET, RecordedCreateSimilarDrawTarget);
     LOAD_EVENT_TYPE(FONTDATA, RecordedFontData);
+    LOAD_EVENT_TYPE(FONTDESC, RecordedFontDescriptor);
+    LOAD_EVENT_TYPE(PUSHLAYER, RecordedPushLayer);
+    LOAD_EVENT_TYPE(POPLAYER, RecordedPopLayer);
   default:
     return nullptr;
   }
@@ -157,6 +161,12 @@ RecordedEvent::GetEventName(EventType aType)
     return "CreateSimilarDrawTarget";
   case FONTDATA:
     return "FontData";
+  case FONTDESC:
+    return "FontDescriptor";
+  case PUSHLAYER:
+    return "PushLayer";
+  case POPLAYER:
+    return "PopLayer";
   default:
     return "Unknown";
   }
@@ -269,7 +279,7 @@ RecordedEvent::StorePattern(PatternStorage &aDestination, const Pattern &aSource
       const SurfacePattern *pat =
         static_cast<const SurfacePattern*>(&aSource);
       store->mExtend = pat->mExtendMode;
-      store->mFilter = pat->mFilter;
+      store->mSamplingFilter = pat->mSamplingFilter;
       store->mMatrix = pat->mMatrix;
       store->mSurface = pat->mSurface;
       return;
@@ -523,7 +533,8 @@ struct GenericPattern
         SurfacePatternStorage *storage = reinterpret_cast<SurfacePatternStorage*>(&mStorage->mStorage);
         mPattern =
           new (mSurfPat) SurfacePattern(mTranslator->LookupSourceSurface(storage->mSurface),
-                                        storage->mExtend, storage->mMatrix, storage->mFilter);
+                                        storage->mExtend, storage->mMatrix,
+                                        storage->mSamplingFilter);
         return mPattern;
       }
     case PatternType::LINEAR_GRADIENT:
@@ -925,6 +936,68 @@ void
 RecordedPopClip::OutputSimpleEventInfo(stringstream &aStringStream) const
 {
   aStringStream << "[" << mDT << "] PopClip";
+}
+
+void
+RecordedPushLayer::PlayEvent(Translator *aTranslator) const
+{
+  SourceSurface* mask = mMask ? aTranslator->LookupSourceSurface(mMask)
+                              : nullptr;
+  aTranslator->LookupDrawTarget(mDT)->
+    PushLayer(mOpaque, mOpacity, mask, mMaskTransform, mBounds, mCopyBackground);
+}
+
+void
+RecordedPushLayer::RecordToStream(ostream &aStream) const
+{
+  RecordedDrawingEvent::RecordToStream(aStream);
+  WriteElement(aStream, mOpaque);
+  WriteElement(aStream, mOpacity);
+  WriteElement(aStream, mMask);
+  WriteElement(aStream, mMaskTransform);
+  WriteElement(aStream, mBounds);
+  WriteElement(aStream, mCopyBackground);
+}
+
+RecordedPushLayer::RecordedPushLayer(istream &aStream)
+  : RecordedDrawingEvent(PUSHLAYER, aStream)
+{
+  ReadElement(aStream, mOpaque);
+  ReadElement(aStream, mOpacity);
+  ReadElement(aStream, mMask);
+  ReadElement(aStream, mMaskTransform);
+  ReadElement(aStream, mBounds);
+  ReadElement(aStream, mCopyBackground);
+}
+
+void
+RecordedPushLayer::OutputSimpleEventInfo(stringstream &aStringStream) const
+{
+  aStringStream << "[" << mDT << "] PushPLayer (Opaque=" << mOpaque <<
+    ", Opacity=" << mOpacity << ", Mask Ref=" << mMask << ") ";
+}
+
+void
+RecordedPopLayer::PlayEvent(Translator *aTranslator) const
+{
+  aTranslator->LookupDrawTarget(mDT)->PopLayer();
+}
+
+void
+RecordedPopLayer::RecordToStream(ostream &aStream) const
+{
+  RecordedDrawingEvent::RecordToStream(aStream);
+}
+
+RecordedPopLayer::RecordedPopLayer(istream &aStream)
+  : RecordedDrawingEvent(POPLAYER, aStream)
+{
+}
+
+void
+RecordedPopLayer::OutputSimpleEventInfo(stringstream &aStringStream) const
+{
+  aStringStream << "[" << mDT << "] PopLayer";
 }
 
 void
@@ -1453,6 +1526,66 @@ RecordedFontData::RecordedFontData(istream &aStream)
   ReadElement(aStream, mFontDetails.size);
   mData = new uint8_t[mFontDetails.size];
   aStream.read((char*)mData, mFontDetails.size);
+}
+
+RecordedFontDescriptor::~RecordedFontDescriptor()
+{
+}
+
+void
+RecordedFontDescriptor::PlayEvent(Translator *aTranslator) const
+{
+  MOZ_ASSERT(mType == FontType::GDI);
+
+  NativeFont nativeFont;
+  nativeFont.mType = (NativeFontType)mType;
+  nativeFont.mFont = (void*)&mData[0];
+
+  RefPtr<ScaledFont> font =
+    Factory::CreateScaledFontForNativeFont(nativeFont, mFontSize);
+
+#ifdef USE_CAIRO_SCALED_FONT
+  static_cast<ScaledFontBase*>(font.get())->PopulateCairoScaledFont();
+#endif
+
+  aTranslator->AddScaledFont(mRefPtr, font);
+}
+
+void
+RecordedFontDescriptor::RecordToStream(std::ostream &aStream) const
+{
+  MOZ_ASSERT(mHasDesc);
+  WriteElement(aStream, mType);
+  WriteElement(aStream, mFontSize);
+  WriteElement(aStream, mRefPtr);
+  WriteElement(aStream, (size_t)mData.size());
+  aStream.write((char*)&mData[0], mData.size());
+}
+
+void
+RecordedFontDescriptor::OutputSimpleEventInfo(stringstream &aStringStream) const
+{
+  aStringStream << "[" << mRefPtr << "] Font Descriptor";
+}
+
+void
+RecordedFontDescriptor::SetFontDescriptor(const uint8_t* aData, uint32_t aSize, Float aFontSize)
+{
+  mData.assign(aData, aData + aSize);
+  mFontSize = aFontSize;
+}
+
+RecordedFontDescriptor::RecordedFontDescriptor(istream &aStream)
+  : RecordedEvent(FONTDATA)
+{
+  ReadElement(aStream, mType);
+  ReadElement(aStream, mFontSize);
+  ReadElement(aStream, mRefPtr);
+
+  size_t size;
+  ReadElement(aStream, size);
+  mData.resize(size);
+  aStream.read((char*)&mData[0], size);
 }
 
 void

@@ -30,6 +30,7 @@ from mozbuild.frontend.data import (
     JARManifest,
     LocalInclude,
     Program,
+    SdkFiles,
     SharedLibrary,
     SimpleProgram,
     Sources,
@@ -65,12 +66,16 @@ class TestEmitterBasic(unittest.TestCase):
         os.environ.clear()
         os.environ.update(self._old_env)
 
-    def reader(self, name, enable_tests=False):
-        config = MockConfig(mozpath.join(data_path, name), extra_substs=dict(
+    def reader(self, name, enable_tests=False, extra_substs=None):
+        substs = dict(
             ENABLE_TESTS='1' if enable_tests else '',
             BIN_SUFFIX='.prog',
             OS_TARGET='WINNT',
-        ))
+            COMPILE_ENVIRONMENT='1',
+        )
+        if extra_substs:
+            substs.update(extra_substs)
+        config = MockConfig(mozpath.join(data_path, name), extra_substs=substs)
 
         return BuildReader(config)
 
@@ -178,7 +183,6 @@ class TestEmitterBasic(unittest.TestCase):
             'RESFILE': 'bar.res',
             'RCINCLUDE': 'bar.rc',
             'DEFFILE': 'baz.def',
-            'USE_STATIC_LIBS': True,
             'MOZBUILD_CFLAGS': ['-fno-exceptions', '-w'],
             'MOZBUILD_CXXFLAGS': ['-fcxx-exceptions', '-include foo.h'],
             'MOZBUILD_LDFLAGS': ['-framework Foo', '-x', '-DELAYLOAD:foo.dll',
@@ -195,17 +199,44 @@ class TestEmitterBasic(unittest.TestCase):
         self.assertEqual(wanted, variables)
         self.maxDiff = maxDiff
 
+    def test_use_yasm(self):
+        # When yasm is not available, this should raise.
+        reader = self.reader('use-yasm')
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'yasm is not available'):
+            objs = self.read_topsrcdir(reader)
+
+        # When yasm is available, this should work.
+        reader = self.reader('use-yasm',
+                             extra_substs=dict(
+                                 YASM='yasm',
+                                 YASM_ASFLAGS='-foo',
+                             ))
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 1)
+        self.assertIsInstance(objs[0], VariablePassthru)
+        maxDiff = self.maxDiff
+        self.maxDiff = None
+        self.assertEqual(objs[0].variables,
+                         {'AS': 'yasm',
+                          'ASFLAGS': '-foo',
+                          'AS_DASH_C_FLAG': ''})
+        self.maxDiff = maxDiff
+
+
     def test_generated_files(self):
         reader = self.reader('generated-files')
         objs = self.read_topsrcdir(reader)
 
-        self.assertEqual(len(objs), 2)
+        self.assertEqual(len(objs), 3)
         for o in objs:
             self.assertIsInstance(o, GeneratedFile)
 
-        expected = ['bar.c', 'foo.c']
-        for o, expected_filename in zip(objs, expected):
-            self.assertEqual(o.output, expected_filename)
+        expected = ['bar.c', 'foo.c', ('xpidllex.py', 'xpidlyacc.py'), ]
+        for o, f in zip(objs, expected):
+            expected_filename = f if isinstance(f, tuple) else (f,)
+            self.assertEqual(o.outputs, expected_filename)
             self.assertEqual(o.script, None)
             self.assertEqual(o.method, None)
             self.assertEqual(o.inputs, [])
@@ -221,7 +252,7 @@ class TestEmitterBasic(unittest.TestCase):
         expected = ['bar.c', 'foo.c']
         expected_method_names = ['make_bar', 'main']
         for o, expected_filename, expected_method in zip(objs, expected, expected_method_names):
-            self.assertEqual(o.output, expected_filename)
+            self.assertEqual(o.outputs, (expected_filename,))
             self.assertEqual(o.method, expected_method)
             self.assertEqual(o.inputs, [])
 
@@ -233,7 +264,7 @@ class TestEmitterBasic(unittest.TestCase):
 
         o = objs[0]
         self.assertIsInstance(o, GeneratedFile)
-        self.assertEqual(o.output, 'bar.c')
+        self.assertEqual(o.outputs, ('bar.c',))
         self.assertRegexpMatches(o.script, 'script.py$')
         self.assertEqual(o.method, 'make_bar')
         self.assertEqual(o.inputs, [])
@@ -320,7 +351,7 @@ class TestEmitterBasic(unittest.TestCase):
             'testing/mochitest': ['mochitest.py', 'mochitest.ini'],
         }
 
-        for path, strings in objs[0].srcdir_files.iteritems():
+        for path, strings in objs[0].files.walk():
             self.assertTrue(path in expected)
             basenames = sorted(mozpath.basename(s) for s in strings)
             self.assertEqual(sorted(expected[path]), basenames)
@@ -337,6 +368,22 @@ class TestEmitterBasic(unittest.TestCase):
 
         self.assertEqual(len(objs), 1)
         self.assertIsInstance(objs[0], BrandingFiles)
+
+        files = objs[0].files
+
+        self.assertEqual(files._strings, ['bar.ico', 'baz.png', 'foo.xpm'])
+
+        self.assertIn('icons', files._children)
+        icons = files._children['icons']
+
+        self.assertEqual(icons._strings, ['quux.icns'])
+
+    def test_sdk_files(self):
+        reader = self.reader('sdk-files')
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 1)
+        self.assertIsInstance(objs[0], SdkFiles)
 
         files = objs[0].files
 
@@ -364,7 +411,7 @@ class TestEmitterBasic(unittest.TestCase):
         """A missing manifest file should result in an error."""
         reader = self.reader('test-manifest-missing-manifest')
 
-        with self.assertRaisesRegexp(SandboxValidationError, 'IOError: Missing files'):
+        with self.assertRaisesRegexp(BuildReaderError, 'IOError: Missing files'):
             self.read_topsrcdir(reader)
 
     def test_empty_test_manifest_rejected(self):
@@ -376,15 +423,21 @@ class TestEmitterBasic(unittest.TestCase):
 
 
     def test_test_manifest_just_support_files(self):
-        """A test manifest with no tests but support-files is supported."""
+        """A test manifest with no tests but support-files is not supported."""
         reader = self.reader('test-manifest-just-support')
 
-        objs = self.read_topsrcdir(reader)
-        self.assertEqual(len(objs), 1)
-        o = objs[0]
-        self.assertEqual(len(o.installs), 2)
-        paths = sorted([k[len(o.directory)+1:] for k in o.installs.keys()])
-        self.assertEqual(paths, ["foo.txt", "just-support.ini"])
+        with self.assertRaisesRegexp(SandboxValidationError, 'Empty test manifest'):
+            self.read_topsrcdir(reader)
+
+    def test_test_manifest_dupe_support_files(self):
+        """A test manifest with dupe support-files in a single test is not
+        supported.
+        """
+        reader = self.reader('test-manifest-dupes')
+
+        with self.assertRaisesRegexp(SandboxValidationError, 'bar.js appears multiple times '
+            'in a test manifest under a support-files field, please omit the duplicate entry.'):
+            self.read_topsrcdir(reader)
 
     def test_test_manifest_absolute_support_files(self):
         """Support files starting with '/' are placed relative to the install root"""
@@ -393,13 +446,41 @@ class TestEmitterBasic(unittest.TestCase):
         objs = self.read_topsrcdir(reader)
         self.assertEqual(len(objs), 1)
         o = objs[0]
-        self.assertEqual(len(o.installs), 2)
+        self.assertEqual(len(o.installs), 3)
         expected = [
             mozpath.normpath(mozpath.join(o.install_prefix, "../.well-known/foo.txt")),
             mozpath.join(o.install_prefix, "absolute-support.ini"),
+            mozpath.join(o.install_prefix, "test_file.js"),
         ]
         paths = sorted([v[0] for v in o.installs.values()])
         self.assertEqual(paths, expected)
+
+    def test_test_manifest_shared_support_files(self):
+        """Support files starting with '!' are given separate treatment, so their
+        installation can be resolved when running tests.
+        """
+        reader = self.reader('test-manifest-shared-support')
+        supported, child = self.read_topsrcdir(reader)
+
+        expected_deferred_installs = {
+            '!/child/test_sub.js',
+            '!/child/another-file.sjs',
+            '!/child/data/**',
+        }
+
+        self.assertEqual(len(supported.installs), 3)
+        self.assertEqual(set(supported.deferred_installs),
+                         expected_deferred_installs)
+        self.assertEqual(len(child.installs), 3)
+        self.assertEqual(len(child.pattern_installs), 1)
+
+    def test_test_manifest_deffered_install_missing(self):
+        """A non-existent shared support file reference produces an error."""
+        reader = self.reader('test-manifest-shared-missing')
+
+        with self.assertRaisesRegexp(SandboxValidationError,
+                                     'entry in support-files not present in the srcdir'):
+            self.read_topsrcdir(reader)
 
     def test_test_manifest_install_to_subdir(self):
         """ """
@@ -454,6 +535,12 @@ class TestEmitterBasic(unittest.TestCase):
         for t in obj.tests:
             self.assertTrue(t['manifest'].endswith(expected_manifests[t['name']]))
 
+    def test_python_unit_test_missing(self):
+        """Missing files in PYTHON_UNIT_TESTS should raise."""
+        reader = self.reader('test-python-unit-test-missing')
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'Path specified in PYTHON_UNIT_TESTS does not exist:'):
+            objs = self.read_topsrcdir(reader)
 
     def test_test_manifest_keys_extracted(self):
         """Ensure all metadata from test manifests is extracted."""
@@ -462,7 +549,7 @@ class TestEmitterBasic(unittest.TestCase):
         objs = [o for o in self.read_topsrcdir(reader)
                 if isinstance(o, TestManifest)]
 
-        self.assertEqual(len(objs), 8)
+        self.assertEqual(len(objs), 9)
 
         metadata = {
             'a11y.ini': {
@@ -527,6 +614,10 @@ class TestEmitterBasic(unittest.TestCase):
                 'flavor': 'crashtest',
                 'installs': {},
             },
+            'moz.build': {
+                'flavor': 'python',
+                'installs': {},
+            }
         }
 
         for o in objs:
@@ -740,6 +831,8 @@ class TestEmitterBasic(unittest.TestCase):
         reader = self.reader('sources')
         objs = self.read_topsrcdir(reader)
 
+        # The last object is a Linkable, ignore it
+        objs = objs[:-1]
         self.assertEqual(len(objs), 6)
         for o in objs:
             self.assertIsInstance(o, Sources)
@@ -766,6 +859,8 @@ class TestEmitterBasic(unittest.TestCase):
         reader = self.reader('generated-sources')
         objs = self.read_topsrcdir(reader)
 
+        # The last object is a Linkable, ignore it
+        objs = objs[:-1]
         self.assertEqual(len(objs), 6)
 
         generated_sources = [o for o in objs if isinstance(o, GeneratedSources)]
@@ -793,6 +888,8 @@ class TestEmitterBasic(unittest.TestCase):
         reader = self.reader('host-sources')
         objs = self.read_topsrcdir(reader)
 
+        # The last object is a Linkable, ignore it
+        objs = objs[:-1]
         self.assertEqual(len(objs), 3)
         for o in objs:
             self.assertIsInstance(o, HostSources)
@@ -816,6 +913,8 @@ class TestEmitterBasic(unittest.TestCase):
         reader = self.reader('unified-sources')
         objs = self.read_topsrcdir(reader)
 
+        # The last object is a Linkable, ignore it
+        objs = objs[:-1]
         self.assertEqual(len(objs), 3)
         for o in objs:
             self.assertIsInstance(o, UnifiedSources)
@@ -840,6 +939,8 @@ class TestEmitterBasic(unittest.TestCase):
         reader = self.reader('unified-sources-non-unified')
         objs = self.read_topsrcdir(reader)
 
+        # The last object is a Linkable, ignore it
+        objs = objs[:-1]
         self.assertEqual(len(objs), 3)
         for o in objs:
             self.assertIsInstance(o, UnifiedSources)
@@ -924,6 +1025,17 @@ class TestEmitterBasic(unittest.TestCase):
         self.assertIsInstance(objs[2], SharedLibrary)
         self.assertEqual(objs[2].basename, 'bar')
 
+    def test_install_shared_lib(self):
+        """Test that we can install a shared library with TEST_HARNESS_FILES"""
+        reader = self.reader('test-install-shared-lib')
+        objs = self.read_topsrcdir(reader)
+        self.assertIsInstance(objs[0], TestHarnessFiles)
+        self.assertIsInstance(objs[1], VariablePassthru)
+        self.assertIsInstance(objs[2], SharedLibrary)
+        for path, files in objs[0].files.walk():
+            for f in files:
+                self.assertEqual(str(f), '!libfoo.so')
+                self.assertEqual(path, 'foo/bar')
 
 if __name__ == '__main__':
     main()

@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2006-2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -9,24 +11,6 @@
 #include "base/string_piece.h"
 
 namespace base {
-
-// Do not assert in this function since it is used by the asssertion code!
-std::string SysWideToUTF8(const std::wstring& wide) {
-  return SysWideToMultiByte(wide, CP_UTF8);
-}
-
-// Do not assert in this function since it is used by the asssertion code!
-std::wstring SysUTF8ToWide(const StringPiece& utf8) {
-  return SysMultiByteToWide(utf8, CP_UTF8);
-}
-
-std::string SysWideToNativeMB(const std::wstring& wide) {
-  return SysWideToMultiByte(wide, CP_ACP);
-}
-
-std::wstring SysNativeMBToWide(const StringPiece& native_mb) {
-  return SysMultiByteToWide(native_mb, CP_ACP);
-}
 
 // Do not assert in this function since it is used by the asssertion code!
 std::wstring SysMultiByteToWide(const StringPiece& mb, uint32_t code_page) {
@@ -65,6 +49,24 @@ std::string SysWideToMultiByte(const std::wstring& wide, uint32_t code_page) {
                       &mb[0], charcount, NULL, NULL);
 
   return mb;
+}
+
+// Do not assert in this function since it is used by the asssertion code!
+std::string SysWideToUTF8(const std::wstring& wide) {
+  return SysWideToMultiByte(wide, CP_UTF8);
+}
+
+// Do not assert in this function since it is used by the asssertion code!
+std::wstring SysUTF8ToWide(const StringPiece& utf8) {
+  return SysMultiByteToWide(utf8, CP_UTF8);
+}
+
+std::string SysWideToNativeMB(const std::wstring& wide) {
+  return SysWideToMultiByte(wide, CP_ACP);
+}
+
+std::wstring SysNativeMBToWide(const StringPiece& native_mb) {
+  return SysMultiByteToWide(native_mb, CP_ACP);
 }
 
 }  // namespace base

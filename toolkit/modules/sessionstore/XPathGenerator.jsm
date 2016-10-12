@@ -80,9 +80,11 @@ this.XPathGenerator = {
    * @returns a properly quoted string to insert into an XPath query
    */
   quoteArgument: function sss_xph_quoteArgument(aArg) {
-    return !/'/.test(aArg) ? "'" + aArg + "'" :
-           !/"/.test(aArg) ? '"' + aArg + '"' :
-           "concat('" + aArg.replace(/'+/g, "',\"$&\",'") + "')";
+    if (!/'/.test(aArg))
+      return "'" + aArg + "'";
+    if (!/"/.test(aArg))
+      return '"' + aArg + '"';
+    return "concat('" + aArg.replace(/'+/g, "',\"$&\",'") + "')";
   },
 
   /**
@@ -91,13 +93,22 @@ this.XPathGenerator = {
   get restorableFormNodes() {
     // for a comprehensive list of all available <INPUT> types see
     // http://mxr.mozilla.org/mozilla-central/search?string=kInputTypeTable
-    let ignoreTypes = ["password", "hidden", "button", "image", "submit", "reset"];
+    let ignoreInputs = new Map([
+      ["type", ["password", "hidden", "button", "image", "submit", "reset"]],
+      ["autocomplete", ["off"]]
+    ]);
     // XXXzeniko work-around until lower-case has been implemented (bug 398389)
     let toLowerCase = '"ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"';
-    let ignore = "not(translate(@type, " + toLowerCase + ")='" +
-      ignoreTypes.join("' or translate(@type, " + toLowerCase + ")='") + "')";
-    let formNodesXPath = "//textarea|//select|//xhtml:textarea|//xhtml:select|" +
-      "//input[" + ignore + "]|//xhtml:input[" + ignore + "]";
+    let ignores = [];
+    for (let [attrName, attrValues] of ignoreInputs) {
+      for (let attrValue of attrValues)
+        ignores.push(`translate(@${attrName}, ${toLowerCase})='${attrValue}'`);
+    }
+    let ignore = `not(${ignores.join(" or ")})`;
+
+    let formNodesXPath = `//textarea[${ignore}]|//xhtml:textarea[${ignore}]|` +
+      `//select[${ignore}]|//xhtml:select[${ignore}]|` +
+      `//input[${ignore}]|//xhtml:input[${ignore}]`;
 
     // Special case for about:config's search field.
     formNodesXPath += '|/xul:window[@id="config"]//xul:textbox[@id="textbox"]';

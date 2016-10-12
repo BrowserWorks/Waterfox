@@ -188,6 +188,10 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/ThreadLocal.h"
 
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#endif
+
 using namespace mozilla;
 
 //#define COLLECT_TIME_DEBUG
@@ -364,9 +368,9 @@ public:
 
   void Clear()
   {
-    Block* b = Blocks();
+    EdgeBlock* b = EdgeBlocks();
     while (b) {
-      Block* next = b->Next();
+      EdgeBlock* next = b->Next();
       delete b;
       b = next;
     }
@@ -384,27 +388,27 @@ public:
 #endif
 
 private:
-  struct Block;
+  struct EdgeBlock;
   union PtrInfoOrBlock
   {
     // Use a union to avoid reinterpret_cast and the ensuing
     // potential aliasing bugs.
     PtrInfo* ptrInfo;
-    Block* block;
+    EdgeBlock* block;
   };
-  struct Block
+  struct EdgeBlock
   {
-    enum { BlockSize = 16 * 1024 };
+    enum { EdgeBlockSize = 16 * 1024 };
 
-    PtrInfoOrBlock mPointers[BlockSize];
-    Block()
+    PtrInfoOrBlock mPointers[EdgeBlockSize];
+    EdgeBlock()
     {
-      mPointers[BlockSize - 2].block = nullptr; // sentinel
-      mPointers[BlockSize - 1].block = nullptr; // next block pointer
+      mPointers[EdgeBlockSize - 2].block = nullptr; // sentinel
+      mPointers[EdgeBlockSize - 1].block = nullptr; // next block pointer
     }
-    Block*& Next()
+    EdgeBlock*& Next()
     {
-      return mPointers[BlockSize - 1].block;
+      return mPointers[EdgeBlockSize - 1].block;
     }
     PtrInfoOrBlock* Start()
     {
@@ -412,7 +416,7 @@ private:
     }
     PtrInfoOrBlock* End()
     {
-      return &mPointers[BlockSize - 2];
+      return &mPointers[EdgeBlockSize - 2];
     }
   };
 
@@ -420,11 +424,11 @@ private:
   // before adding any edges and without adding any blocks.
   PtrInfoOrBlock mSentinelAndBlocks[2];
 
-  Block*& Blocks()
+  EdgeBlock*& EdgeBlocks()
   {
     return mSentinelAndBlocks[1].block;
   }
-  Block* Blocks() const
+  EdgeBlock* EdgeBlocks() const
   {
     return mSentinelAndBlocks[1].block;
   }
@@ -483,7 +487,7 @@ public:
     explicit Builder(EdgePool& aPool)
       : mCurrent(&aPool.mSentinelAndBlocks[0])
       , mBlockEnd(&aPool.mSentinelAndBlocks[0])
-      , mNextBlockPtr(&aPool.Blocks())
+      , mNextBlockPtr(&aPool.EdgeBlocks())
     {
     }
 
@@ -495,7 +499,7 @@ public:
     void Add(PtrInfo* aEdge)
     {
       if (mCurrent == mBlockEnd) {
-        Block* b = new Block();
+        EdgeBlock* b = new EdgeBlock();
         *mNextBlockPtr = b;
         mCurrent = b->Start();
         mBlockEnd = b->End();
@@ -507,13 +511,13 @@ public:
     // mBlockEnd points to space for null sentinel
     PtrInfoOrBlock* mCurrent;
     PtrInfoOrBlock* mBlockEnd;
-    Block** mNextBlockPtr;
+    EdgeBlock** mNextBlockPtr;
   };
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
   {
     size_t n = 0;
-    Block* b = Blocks();
+    EdgeBlock* b = EdgeBlocks();
     while (b) {
       n += aMallocSizeOf(b);
       b = b->Next();
@@ -573,7 +577,7 @@ public:
     MOZ_ASSERT(!IsGrayJS() && !IsBlackJS());
   }
 
-  // Allow NodePool::Block's constructor to compile.
+  // Allow NodePool::NodeBlock's constructor to compile.
   PtrInfo()
   {
     NS_NOTREACHED("should never be called");
@@ -623,38 +627,38 @@ public:
 
 /**
  * A structure designed to be used like a linked list of PtrInfo, except
- * that allocates the PtrInfo 32K-at-a-time.
+ * it allocates many PtrInfos at a time.
  */
 class NodePool
 {
 private:
-  // The -2 allows us to use |BlockSize + 1| for |mEntries|, and fit |mNext|,
-  // all without causing slop.
-  enum { BlockSize = 8 * 1024 - 2 };
+  // The -2 allows us to use |NodeBlockSize + 1| for |mEntries|, and fit
+  // |mNext|, all without causing slop.
+  enum { NodeBlockSize = 4 * 1024 - 2 };
 
-  struct Block
+  struct NodeBlock
   {
-    // We create and destroy Block using moz_xmalloc/free rather
-    // than new and delete to avoid calling its constructor and
-    // destructor.
-    Block()
+    // We create and destroy NodeBlock using moz_xmalloc/free rather than new
+    // and delete to avoid calling its constructor and destructor.
+    NodeBlock()
     {
       NS_NOTREACHED("should never be called");
 
-      // Ensure Block is the right size (see the comment on BlockSize above).
+      // Ensure NodeBlock is the right size (see the comment on NodeBlockSize
+      // above).
       static_assert(
-        sizeof(Block) == 163824 ||      // 32-bit; equals 39.997 pages
-        sizeof(Block) == 262120,        // 64-bit; equals 63.994 pages
-        "ill-sized NodePool::Block"
+        sizeof(NodeBlock) ==  81904 ||  // 32-bit; equals 19.996 x 4 KiB pages
+        sizeof(NodeBlock) == 131048,    // 64-bit; equals 31.994 x 4 KiB pages
+        "ill-sized NodeBlock"
       );
     }
-    ~Block()
+    ~NodeBlock()
     {
       NS_NOTREACHED("should never be called");
     }
 
-    Block* mNext;
-    PtrInfo mEntries[BlockSize + 1]; // +1 to store last child of last node
+    NodeBlock* mNext;
+    PtrInfo mEntries[NodeBlockSize + 1]; // +1 to store last child of last node
   };
 
 public:
@@ -671,9 +675,9 @@ public:
 
   void Clear()
   {
-    Block* b = mBlocks;
+    NodeBlock* b = mBlocks;
     while (b) {
-      Block* n = b->mNext;
+      NodeBlock* n = b->mNext;
       free(b);
       b = n;
     }
@@ -704,17 +708,21 @@ public:
     PtrInfo* Add(void* aPointer, nsCycleCollectionParticipant* aParticipant)
     {
       if (mNext == mBlockEnd) {
-        Block* block = static_cast<Block*>(moz_xmalloc(sizeof(Block)));
+        NodeBlock* block = static_cast<NodeBlock*>(malloc(sizeof(NodeBlock)));
+        if (!block) {
+          return nullptr;
+        }
+
         *mNextBlock = block;
         mNext = block->mEntries;
-        mBlockEnd = block->mEntries + BlockSize;
+        mBlockEnd = block->mEntries + NodeBlockSize;
         block->mNext = nullptr;
         mNextBlock = &block->mNext;
       }
       return new (mNext++) PtrInfo(aPointer, aParticipant);
     }
   private:
-    Block** mNextBlock;
+    NodeBlock** mNextBlock;
     PtrInfo*& mNext;
     PtrInfo* mBlockEnd;
   };
@@ -747,9 +755,9 @@ public:
     {
       MOZ_ASSERT(!IsDone(), "calling GetNext when done");
       if (mNext == mBlockEnd) {
-        Block* nextBlock = mCurBlock ? mCurBlock->mNext : mFirstBlock;
+        NodeBlock* nextBlock = mCurBlock ? mCurBlock->mNext : mFirstBlock;
         mNext = nextBlock->mEntries;
-        mBlockEnd = mNext + BlockSize;
+        mBlockEnd = mNext + NodeBlockSize;
         mCurBlock = nextBlock;
       }
       return mNext++;
@@ -757,8 +765,8 @@ public:
   private:
     // mFirstBlock is a reference to allow an Enumerator to be constructed
     // for an empty graph.
-    Block*& mFirstBlock;
-    Block* mCurBlock;
+    NodeBlock*& mFirstBlock;
+    NodeBlock* mCurBlock;
     // mNext is the next value we want to return, unless mNext == mBlockEnd
     // NB: mLast is a reference to allow enumerating while building!
     PtrInfo* mNext;
@@ -771,7 +779,7 @@ public:
     // We don't measure the things pointed to by mEntries[] because those
     // pointers are non-owning.
     size_t n = 0;
-    Block* b = mBlocks;
+    NodeBlock* b = mBlocks;
     while (b) {
       n += aMallocSizeOf(b);
       b = b->mNext;
@@ -780,7 +788,7 @@ public:
   }
 
 private:
-  Block* mBlocks;
+  NodeBlock* mBlocks;
   PtrInfo* mLast;
 };
 
@@ -794,9 +802,7 @@ struct PtrToNodeEntry : public PLDHashEntryHdr
 };
 
 static bool
-PtrToNodeMatchEntry(PLDHashTable* aTable,
-                    const PLDHashEntryHdr* aEntry,
-                    const void* aKey)
+PtrToNodeMatchEntry(const PLDHashEntryHdr* aEntry, const void* aKey)
 {
   const PtrToNodeEntry* n = static_cast<const PtrToNodeEntry*>(aEntry);
   return n->mNode->mPointer == aKey;
@@ -986,9 +992,9 @@ class nsCycleCollector;
 struct nsPurpleBuffer
 {
 private:
-  struct Block
+  struct PurpleBlock
   {
-    Block* mNext;
+    PurpleBlock* mNext;
     // Try to match the size of a jemalloc bucket, to minimize slop bytes.
     // - On 32-bit platforms sizeof(nsPurpleBufferEntry) is 12, so mEntries
     //   is 16,380 bytes, which leaves 4 bytes for mNext.
@@ -996,13 +1002,13 @@ private:
     //   is 32,544 bytes, which leaves 8 bytes for mNext.
     nsPurpleBufferEntry mEntries[1365];
 
-    Block() : mNext(nullptr)
+    PurpleBlock() : mNext(nullptr)
     {
-      // Ensure Block is the right size (see above).
+      // Ensure PurpleBlock is the right size (see above).
       static_assert(
-        sizeof(Block) == 16384 ||       // 32-bit
-        sizeof(Block) == 32768,         // 64-bit
-        "ill-sized nsPurpleBuffer::Block"
+        sizeof(PurpleBlock) == 16384 ||       // 32-bit
+        sizeof(PurpleBlock) == 32768,         // 64-bit
+        "ill-sized nsPurpleBuffer::PurpleBlock"
       );
     }
 
@@ -1022,7 +1028,7 @@ private:
   // buffer.
 
   uint32_t mCount;
-  Block mFirstBlock;
+  PurpleBlock mFirstBlock;
   nsPurpleBufferEntry* mFreeList;
 
 public:
@@ -1039,7 +1045,7 @@ public:
   template<class PurpleVisitor>
   void VisitEntries(PurpleVisitor& aVisitor)
   {
-    for (Block* b = &mFirstBlock; b; b = b->mNext) {
+    for (PurpleBlock* b = &mFirstBlock; b; b = b->mNext) {
       b->VisitEntries(*this, aVisitor);
     }
   }
@@ -1051,7 +1057,7 @@ public:
     StartBlock(&mFirstBlock);
   }
 
-  void StartBlock(Block* aBlock)
+  void StartBlock(PurpleBlock* aBlock)
   {
     MOZ_ASSERT(!mFreeList, "should not have free list");
 
@@ -1071,12 +1077,12 @@ public:
     if (mCount > 0) {
       UnmarkRemainingPurple(&mFirstBlock);
     }
-    Block* b = mFirstBlock.mNext;
+    PurpleBlock* b = mFirstBlock.mNext;
     while (b) {
       if (mCount > 0) {
         UnmarkRemainingPurple(b);
       }
-      Block* next = b->mNext;
+      PurpleBlock* next = b->mNext;
       delete b;
       b = next;
     }
@@ -1097,7 +1103,7 @@ public:
     }
   };
 
-  void UnmarkRemainingPurple(Block* aBlock)
+  void UnmarkRemainingPurple(PurpleBlock* aBlock)
   {
     UnmarkRemainingPurpleVisitor visitor;
     aBlock->VisitEntries(*this, visitor);
@@ -1120,7 +1126,7 @@ public:
   MOZ_ALWAYS_INLINE nsPurpleBufferEntry* NewEntry()
   {
     if (MOZ_UNLIKELY(!mFreeList)) {
-      Block* b = new Block;
+      PurpleBlock* b = new PurpleBlock;
       StartBlock(b);
 
       // Add the new block as the second block in the list.
@@ -1171,7 +1177,7 @@ public:
     size_t n = 0;
 
     // Don't measure mFirstBlock because it's within |this|.
-    const Block* block = mFirstBlock.mNext;
+    const PurpleBlock* block = mFirstBlock.mNext;
     while (block) {
       n += aMallocSizeOf(block);
       block = block->mNext;
@@ -1275,7 +1281,9 @@ private:
   nsAutoPtr<CCGraphBuilder> mBuilder;
   RefPtr<nsCycleCollectorLogger> mLogger;
 
-  DebugOnly<void*> mThread;
+#ifdef DEBUG
+  void* mThread;
+#endif
 
   nsCycleCollectorParams mParams;
 
@@ -1492,6 +1500,26 @@ struct CCGraphDescriber : public LinkedListElement<CCGraphDescriber>
   Type mType;
 };
 
+class LogStringMessageAsync : public CancelableRunnable
+{
+public:
+  explicit LogStringMessageAsync(const nsAString& aMsg) : mMsg(aMsg)
+  {}
+
+  NS_IMETHOD Run() override
+  {
+    nsCOMPtr<nsIConsoleService> cs =
+      do_GetService(NS_CONSOLESERVICE_CONTRACTID);
+    if (cs) {
+       cs->LogStringMessage(mMsg.get());
+    }
+    return NS_OK;
+  }
+
+private:
+  nsString mMsg;
+};
+
 class nsCycleCollectorLogSinkToFile final : public nsICycleCollectorLogSink
 {
 public:
@@ -1690,17 +1718,16 @@ private:
     aLog->mFile = logFileFinalDestination;
 
     // Log to the error console.
-    nsCOMPtr<nsIConsoleService> cs =
-      do_GetService(NS_CONSOLESERVICE_CONTRACTID);
-    if (cs) {
-      // Copy out the path.
-      nsAutoString logPath;
-      logFileFinalDestination->GetPath(logPath);
+    nsAutoString logPath;
+    logFileFinalDestination->GetPath(logPath);
+    nsAutoString msg = aCollectorKind +
+      NS_LITERAL_STRING(" Collector log dumped to ") + logPath;
 
-      nsString msg = aCollectorKind +
-        NS_LITERAL_STRING(" Collector log dumped to ") + logPath;
-      cs->LogStringMessage(msg.get());
-    }
+    // We don't want any JS to run between ScanRoots and CollectWhite calls,
+    // and since ScanRoots calls this method, better to log the message
+    // asynchronously.
+    RefPtr<LogStringMessageAsync> log = new LogStringMessageAsync(msg);
+    NS_DispatchToCurrentThread(log);
     return NS_OK;
   }
 
@@ -2197,6 +2224,10 @@ CCGraphBuilder::AddNode(void* aPtr, nsCycleCollectionParticipant* aParticipant)
   if (!e->mNode) {
     // New entry.
     result = mNodeBuilder.Add(aPtr, aParticipant);
+    if (!result) {
+      return nullptr;
+    }
+
     e->mNode = result;
     NS_ASSERTION(result, "mNodeBuilder.Add returned null");
   } else {
@@ -2451,8 +2482,9 @@ CCGraphBuilder::NoteWeakMapping(JSObject* aMap, JS::GCCellPtr aKey,
   mapping->mVal = aVal ? AddWeakMapNode(aVal) : nullptr;
 
   if (mLogger) {
-    mLogger->NoteWeakMapEntry((uint64_t)aMap, aKey.unsafeAsInteger(),
-                              (uint64_t)aKdelegate, aVal.unsafeAsInteger());
+    mLogger->NoteWeakMapEntry((uint64_t)aMap, aKey ? aKey.unsafeAsInteger() : 0,
+                              (uint64_t)aKdelegate,
+                              aVal ? aVal.unsafeAsInteger() : 0);
   }
 }
 
@@ -3056,7 +3088,7 @@ nsCycleCollector::ScanIncrementalRoots()
       // If the object is still marked gray by the GC, nothing could have gotten
       // hold of it, so it isn't an incremental root.
       if (pi->mParticipant == jsParticipant) {
-        JS::GCCellPtr ptr(pi->mPointer, js::GCThingTraceKind(pi->mPointer));
+        JS::GCCellPtr ptr(pi->mPointer, JS::GCThingTraceKind(pi->mPointer));
         if (GCThingIsGrayCCThing(ptr)) {
           continue;
         }
@@ -3136,8 +3168,17 @@ nsCycleCollector::ScanWhiteNodes(bool aFullySynchGraphBuild)
       continue;
     }
 
-    MOZ_RELEASE_ASSERT(pi->mInternalRefs < pi->mRefCount,
-                       "Cycle collector found more references to an object than its refcount");
+    if (pi->mInternalRefs > pi->mRefCount) {
+#ifdef MOZ_CRASHREPORTER
+      const char* piName = "Unknown";
+      if (pi->mParticipant) {
+        piName = pi->mParticipant->ClassName();
+      }
+      nsPrintfCString msg("More references to an object than its refcount, for class %s", piName);
+      CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("CycleCollector"), msg);
+#endif
+      MOZ_CRASH();
+    }
 
     // This node will get marked black in the next pass.
   }
@@ -3264,10 +3305,17 @@ nsCycleCollector::CollectWhite()
     PtrInfo* pinfo = etor.GetNext();
     if (pinfo->mColor == white && pinfo->mParticipant) {
       if (pinfo->IsGrayJS()) {
+        MOZ_ASSERT(mJSRuntime);
         ++numWhiteGCed;
+        JS::Zone* zone;
         if (MOZ_UNLIKELY(pinfo->mParticipant == zoneParticipant)) {
           ++numWhiteJSZones;
+          zone = static_cast<JS::Zone*>(pinfo->mPointer);
+        } else {
+          JS::GCCellPtr ptr(pinfo->mPointer, JS::GCThingTraceKind(pinfo->mPointer));
+          zone = JS::GetTenuredGCThingZone(ptr);
         }
+        mJSRuntime->AddZoneWaitingForGC(zone);
       } else {
         whiteNodes.InfallibleAppend(pinfo);
         pinfo->mParticipant->Root(pinfo->mPointer);
@@ -3376,7 +3424,9 @@ nsCycleCollector::nsCycleCollector() :
   mScanInProgress(false),
   mJSRuntime(nullptr),
   mIncrementalPhase(IdlePhase),
+#ifdef DEBUG
   mThread(NS_GetCurrentThread()),
+#endif
   mWhiteNodeCount(0),
   mBeforeUnlinkCB(nullptr),
   mForgetSkippableCB(nullptr),
@@ -3999,11 +4049,13 @@ nsCycleCollector_suspectedCount()
 bool
 nsCycleCollector_init()
 {
-  static DebugOnly<bool> sInitialized;
+#ifdef DEBUG
+  static bool sInitialized;
 
   MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
   MOZ_ASSERT(!sInitialized, "Called twice!?");
   sInitialized = true;
+#endif
 
   return sCollectorData.init();
 }
@@ -4166,6 +4218,11 @@ nsCycleCollector_shutdown()
 
     data->mCollector->Shutdown();
     data->mCollector = nullptr;
+    if (data->mRuntime) {
+      // Run any remaining tasks that may have been enqueued via
+      // RunInStableState during the final cycle collection.
+      data->mRuntime->ProcessStableStateQueue();
+    }
     if (!data->mRuntime) {
       delete data;
       sCollectorData.set(nullptr);

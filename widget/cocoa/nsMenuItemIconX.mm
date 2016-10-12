@@ -16,7 +16,9 @@
    We use <limits> to get the libstdc++ version. */
 #include <limits>
 #if __GLIBCXX__ <= 20070719
+#ifndef __EXCEPTIONS
 #define __EXCEPTIONS
+#endif
 #endif
 
 #include "nsMenuItemIconX.h"
@@ -178,11 +180,7 @@ nsMenuItemIconX::GetIconURI(nsIURI** aIconURI)
     if (!document)
       return NS_ERROR_FAILURE;
 
-    nsCOMPtr<nsPIDOMWindow> window = document->GetWindow();
-    if (!window)
-      return NS_ERROR_FAILURE;
-
-    window = window->GetCurrentInnerWindow();
+    nsCOMPtr<nsPIDOMWindowInner> window = document->GetInnerWindow();
     if (!window)
       return NS_ERROR_FAILURE;
 
@@ -314,7 +312,7 @@ nsMenuItemIconX::LoadIcon(nsIURI* aIconURI)
   nsresult rv = loader->LoadImage(aIconURI, nullptr, nullptr,
                                   mozilla::net::RP_Default,
                                   nullptr, loadGroup, this,
-                                  nullptr, nsIRequest::LOAD_NORMAL, nullptr,
+                                  nullptr, nullptr, nsIRequest::LOAD_NORMAL, nullptr,
                                   nsIContentPolicy::TYPE_INTERNAL_IMAGE, EmptyString(),
                                   getter_AddRefs(mIconRequest));
   if (NS_FAILED(rv)) return rv;

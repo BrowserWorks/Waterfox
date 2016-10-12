@@ -53,9 +53,10 @@ public:
   virtual void ResetToURI(nsIURI* aURI, nsILoadGroup* aLoadGroup,
                           nsIPrincipal* aPrincipal) override;
 
-  virtual already_AddRefed<nsIPresShell> CreateShell(nsPresContext* aContext,
-                                                     nsViewManager* aViewManager,
-                                                     nsStyleSet* aStyleSet) override;
+  virtual already_AddRefed<nsIPresShell> CreateShell(
+      nsPresContext* aContext,
+      nsViewManager* aViewManager,
+      mozilla::StyleSetHandle aStyleSet) override;
 
   virtual nsresult StartDocumentLoad(const char* aCommand,
                                      nsIChannel* aChannel,
@@ -173,8 +174,7 @@ public:
   void NamedGetter(JSContext* cx, const nsAString& aName, bool& aFound,
                    JS::MutableHandle<JSObject*> aRetval,
                    mozilla::ErrorResult& rv);
-  bool NameIsEnumerable(const nsAString& aName);
-  void GetSupportedNames(unsigned, nsTArray<nsString>& aNames);
+  void GetSupportedNames(nsTArray<nsString>& aNames);
   nsGenericHTMLElement *GetBody();
   void SetBody(nsGenericHTMLElement* aBody, mozilla::ErrorResult& rv);
   mozilla::dom::HTMLSharedElement *GetHead() {
@@ -194,17 +194,17 @@ public:
     return NS_GetFuncStringNodeList(this, MatchNameAttribute, nullptr,
                                     UseExistingNameString, aName);
   }
-  already_AddRefed<nsINodeList> GetItems(const nsAString& aTypeNames);
   already_AddRefed<nsIDocument> Open(JSContext* cx,
                                      const nsAString& aType,
                                      const nsAString& aReplace,
                                      mozilla::ErrorResult& rv);
-  already_AddRefed<nsIDOMWindow> Open(JSContext* cx,
-                                      const nsAString& aURL,
-                                      const nsAString& aName,
-                                      const nsAString& aFeatures,
-                                      bool aReplace,
-                                      mozilla::ErrorResult& rv);
+  already_AddRefed<nsPIDOMWindowOuter>
+  Open(JSContext* cx,
+       const nsAString& aURL,
+       const nsAString& aName,
+       const nsAString& aFeatures,
+       bool aReplace,
+       mozilla::ErrorResult& rv);
   void Close(mozilla::ErrorResult& rv);
   void Write(JSContext* cx, const mozilla::dom::Sequence<nsString>& aText,
              mozilla::ErrorResult& rv);

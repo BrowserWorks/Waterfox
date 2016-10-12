@@ -7,40 +7,40 @@
 #define nsAlertsIconListener_h__
 
 #include "nsCOMPtr.h"
-#include "imgINotificationObserver.h"
+#include "nsIAlertsService.h"
 #include "nsString.h"
 #include "nsIObserver.h"
 #include "nsWeakReference.h"
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-class imgIRequest;
 class nsIAlertNotification;
+class nsICancelable;
+class nsSystemAlertsService;
 
 struct NotifyNotification;
 
-class nsAlertsIconListener : public imgINotificationObserver,
+class nsAlertsIconListener : public nsIAlertNotificationImageListener,
                              public nsIObserver,
                              public nsSupportsWeakReference
 {
 public:
   NS_DECL_ISUPPORTS
-  NS_DECL_IMGINOTIFICATIONOBSERVER
+  NS_DECL_NSIALERTNOTIFICATIONIMAGELISTENER
   NS_DECL_NSIOBSERVER
 
-  nsAlertsIconListener();
+  nsAlertsIconListener(nsSystemAlertsService* aBackend,
+                       const nsAString& aAlertName);
 
   nsresult InitAlertAsync(nsIAlertNotification* aAlert,
                           nsIObserver* aAlertListener);
+  nsresult Close();
 
   void SendCallback();
   void SendClosed();
 
 protected:
   virtual ~nsAlertsIconListener();
-
-  nsresult OnLoadComplete(imgIRequest* aRequest);
-  nsresult OnFrameComplete(imgIRequest* aRequest);
 
   /**
    * The only difference between libnotify.so.4 and libnotify.so.1 for these symbols
@@ -53,18 +53,21 @@ protected:
   typedef bool (*notify_init_t)(const char*);
   typedef GList* (*notify_get_server_caps_t)(void);
   typedef NotifyNotification* (*notify_notification_new_t)(const char*, const char*, const char*, const char*);
-  typedef bool (*notify_notification_show_t)(void*, char*);
+  typedef bool (*notify_notification_show_t)(void*, GError**);
   typedef void (*notify_notification_set_icon_from_pixbuf_t)(void*, GdkPixbuf*);
   typedef void (*notify_notification_add_action_t)(void*, const char*, const char*, NotifyActionCallback, gpointer, GFreeFunc);
+  typedef bool (*notify_notification_close_t)(void*, GError**);
 
-  nsCOMPtr<imgIRequest> mIconRequest;
+  nsCOMPtr<nsICancelable> mIconRequest;
   nsCString mAlertTitle;
   nsCString mAlertText;
 
   nsCOMPtr<nsIObserver> mAlertListener;
   nsString mAlertCookie;
+  nsString mAlertName;
 
-  bool mLoadedFrame;
+  RefPtr<nsSystemAlertsService> mBackend;
+
   bool mAlertHasAction;
 
   static void* libNotifyHandle;
@@ -76,11 +79,13 @@ protected:
   static notify_notification_show_t notify_notification_show;
   static notify_notification_set_icon_from_pixbuf_t notify_notification_set_icon_from_pixbuf;
   static notify_notification_add_action_t notify_notification_add_action;
+  static notify_notification_close_t notify_notification_close;
   NotifyNotification* mNotification;
   gulong mClosureHandler;
 
-  nsresult StartRequest(const nsAString & aImageUrl, bool aInPrivateBrowsing);
   nsresult ShowAlert(GdkPixbuf* aPixbuf);
+
+  void NotifyFinished();
 };
 
 #endif

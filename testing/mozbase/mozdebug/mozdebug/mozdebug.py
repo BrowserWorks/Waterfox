@@ -107,15 +107,19 @@ def get_debugger_info(debugger, debuggerArgs = None, debuggerInteractive = False
 
         debuggerPath = find_executable(debugger)
 
-    # windbg is not installed with the standard set of tools, and it's
-    # entirely possible that the user hasn't added the install location to
-    # PATH, so we have to be a little more clever than normal to locate it.
-    # Just try to look for it in the standard installed location(s).
-    if not debuggerPath and debugger == 'windbg.exe':
-        for candidate in _windbg_installation_paths():
-            if os.path.exists(candidate):
-                debuggerPath = candidate
-                break
+    if not debuggerPath:
+        # windbg is not installed with the standard set of tools, and it's
+        # entirely possible that the user hasn't added the install location to
+        # PATH, so we have to be a little more clever than normal to locate it.
+        # Just try to look for it in the standard installed location(s).
+        if debugger == 'windbg.exe':
+            for candidate in _windbg_installation_paths():
+                if os.path.exists(candidate):
+                    debuggerPath = candidate
+                    break
+        else:
+            if os.path.exists(debugger):
+                debuggerPath = debugger
 
     if not debuggerPath:
         print 'Error: Could not find debugger %s.' % debugger
@@ -170,8 +174,11 @@ def get_default_debugger_name(search=DebuggerSearch.OnlyFirst):
      looking for other compatible debuggers (|DebuggerSearch.KeepLooking|).
     '''
 
+    mozinfo.find_and_update_from_json()
+    os = mozinfo.info['os']
+
     # Find out which debuggers are preferred for use on this platform.
-    debuggerPriorities = _DEBUGGER_PRIORITIES[mozinfo.os if mozinfo.os in _DEBUGGER_PRIORITIES else 'unknown']
+    debuggerPriorities = _DEBUGGER_PRIORITIES[os if os in _DEBUGGER_PRIORITIES else 'unknown']
 
     # Finally get the debugger information.
     for debuggerName in debuggerPriorities:
@@ -233,8 +240,6 @@ def get_default_valgrind_args():
              '--vex-iropt-register-updates=allregs-at-mem-access',
              '--trace-children=yes',
              '--child-silent-after-fork=yes',
-             '--leak-check=full',
-             '--show-possibly-lost=no',
              ('--trace-children-skip='
               + '/usr/bin/hg,/bin/rm,*/bin/certutil,*/bin/pk12util,'
               + '*/bin/ssltunnel,*/bin/uname,*/bin/which,*/bin/ps,'
@@ -242,7 +247,10 @@ def get_default_valgrind_args():
             ]
             + get_default_valgrind_tool_specific_args())
 
+# The default tool is Memcheck.  Feeding these arguments to a different
+# Valgrind tool will cause it to fail at startup, so don't do that!
 def get_default_valgrind_tool_specific_args():
-    return [
-            '--partial-loads-ok=yes'
-    ]
+    return ['--partial-loads-ok=yes',
+            '--leak-check=full',
+            '--show-possibly-lost=no',
+           ]

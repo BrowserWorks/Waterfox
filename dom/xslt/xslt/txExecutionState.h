@@ -17,19 +17,24 @@
 #include "txStylesheet.h"
 #include "txXPathTreeWalker.h"
 #include "nsTArray.h"
-#include "nsURIHashKey.h"
 
 class txAOutputHandlerFactory;
 class txAXMLEventHandler;
 class txInstruction;
 
-class txLoadedDocumentInfo
+class txLoadedDocumentEntry : public nsStringHashKey
 {
 public:
-    explicit txLoadedDocumentInfo() : mLoadResult(NS_OK)
+    explicit txLoadedDocumentEntry(KeyTypePointer aStr) : nsStringHashKey(aStr),
+                                                          mLoadResult(NS_OK)
     {
     }
-    ~txLoadedDocumentInfo()
+    txLoadedDocumentEntry(const txLoadedDocumentEntry& aToCopy)
+        : nsStringHashKey(aToCopy)
+    {
+        NS_ERROR("We're horked.");
+    }
+    ~txLoadedDocumentEntry()
     {
         if (mDocument) {
             txXPathNodeUtils::release(mDocument);
@@ -47,11 +52,11 @@ public:
     nsresult mLoadResult;
 };
 
-class txLoadedDocumentsHash : public nsClassHashtable<nsURIHashKey, txLoadedDocumentInfo>
+class txLoadedDocumentsHash : public nsTHashtable<txLoadedDocumentEntry>
 {
 public:
     txLoadedDocumentsHash()
-        : nsClassHashtable<nsURIHashKey, txLoadedDocumentInfo>(4),
+        : nsTHashtable<txLoadedDocumentEntry>(4),
           mSourceDocument(nullptr)
     {
     }
@@ -67,8 +72,7 @@ private:
 class txExecutionState : public txIMatchContext
 {
 public:
-    txExecutionState(txStylesheet* aStylesheet, bool aDisableLoads,
-                     nsIDocument* aLoaderDocument);
+    txExecutionState(txStylesheet* aStylesheet, bool aDisableLoads);
     ~txExecutionState();
     nsresult init(const txXPathNode& aNode,
                   txOwningExpandedNameMap<txIGlobalParameter>* aGlobalParams);
@@ -103,7 +107,7 @@ public:
 
     // state-getting functions
     txIEvalContext* getEvalContext();
-    const txXPathNode* retrieveDocument(nsIURI* aUri);
+    const txXPathNode* retrieveDocument(const nsAString& aUri);
     nsresult getKeyNodes(const txExpandedName& aKeyName,
                          const txXPathNode& aRoot,
                          const nsAString& aKeyValue, bool aIndexIfNotFound,
@@ -150,14 +154,13 @@ private:
     RefPtr<txAExprResult> mGlobalVarPlaceholderValue;
     int32_t mRecursionDepth;
 
-    AutoInfallibleTArray<TemplateRule, 10> mTemplateRules;
+    AutoTArray<TemplateRule, 10> mTemplateRules;
 
     txIEvalContext* mEvalContext;
     txIEvalContext* mInitialEvalContext;
     //Document* mRTFDocument;
     txOwningExpandedNameMap<txIGlobalParameter>* mGlobalParams;
 
-    nsCOMPtr<nsIDocument> mLoadingDocument;
     txLoadedDocumentsHash mLoadedDocuments;
     txKeyHash mKeyHash;
     RefPtr<txResultRecycler> mRecycler;

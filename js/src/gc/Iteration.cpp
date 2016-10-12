@@ -26,7 +26,7 @@ js::TraceRuntime(JSTracer* trc)
     rt->gc.evictNursery();
     AutoPrepareForTracing prep(rt, WithAtoms);
     gcstats::AutoPhase ap(rt->gc.stats, gcstats::PHASE_TRACE_HEAP);
-    rt->gc.markRuntime(trc);
+    rt->gc.markRuntime(trc, GCRuntime::TraceRuntime, prep.session().lock);
 }
 
 static void
@@ -43,9 +43,9 @@ IterateCompartmentsArenasCells(JSRuntime* rt, Zone* zone, void* data,
         size_t thingSize = Arena::thingSize(thingKind);
 
         for (ArenaIter aiter(zone, thingKind); !aiter.done(); aiter.next()) {
-            ArenaHeader* aheader = aiter.get();
-            (*arenaCallback)(rt, data, aheader->getArena(), traceKind, thingSize);
-            for (ArenaCellIterUnderGC iter(aheader); !iter.done(); iter.next())
+            Arena* arena = aiter.get();
+            (*arenaCallback)(rt, data, arena, traceKind, thingSize);
+            for (ArenaCellIterUnderGC iter(arena); !iter.done(); iter.next())
                 (*cellCallback)(rt, data, iter.getCell(), traceKind, thingSize);
         }
     }
@@ -94,19 +94,20 @@ void
 js::IterateScripts(JSRuntime* rt, JSCompartment* compartment,
                    void* data, IterateScriptCallback scriptCallback)
 {
-    rt->gc.evictNursery();
+    MOZ_ASSERT(!rt->mainThread.suppressGC);
+    AutoEmptyNursery empty(rt);
     AutoPrepareForTracing prep(rt, SkipAtoms);
 
     if (compartment) {
-        for (ZoneCellIterUnderGC i(compartment->zone(), gc::AllocKind::SCRIPT); !i.done(); i.next()) {
-            JSScript* script = i.get<JSScript>();
+        Zone* zone = compartment->zone();
+        for (auto script = zone->cellIter<JSScript>(empty); !script.done(); script.next()) {
             if (script->compartment() == compartment)
                 scriptCallback(rt, data, script);
         }
     } else {
         for (ZonesIter zone(rt, SkipAtoms); !zone.done(); zone.next()) {
-            for (ZoneCellIterUnderGC i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next())
-                scriptCallback(rt, data, i.get<JSScript>());
+            for (auto script = zone->cellIter<JSScript>(empty); !script.done(); script.next())
+                scriptCallback(rt, data, script);
         }
     }
 }
@@ -114,14 +115,14 @@ js::IterateScripts(JSRuntime* rt, JSCompartment* compartment,
 void
 js::IterateGrayObjects(Zone* zone, GCThingCallback cellCallback, void* data)
 {
-    zone->runtimeFromMainThread()->gc.evictNursery();
-    AutoPrepareForTracing prep(zone->runtimeFromMainThread(), SkipAtoms);
+    JSRuntime* rt = zone->runtimeFromMainThread();
+    AutoEmptyNursery empty(rt);
+    AutoPrepareForTracing prep(rt, SkipAtoms);
 
     for (auto thingKind : ObjectAllocKinds()) {
-        for (ZoneCellIterUnderGC i(zone, thingKind); !i.done(); i.next()) {
-            JSObject* obj = i.get<JSObject>();
+        for (auto obj = zone->cellIter<JSObject>(thingKind, empty); !obj.done(); obj.next()) {
             if (obj->asTenured().isMarked(GRAY))
-                cellCallback(data, JS::GCCellPtr(obj));
+                cellCallback(data, JS::GCCellPtr(obj.get()));
         }
     }
 }
@@ -130,8 +131,6 @@ JS_PUBLIC_API(void)
 JS_IterateCompartments(JSRuntime* rt, void* data,
                        JSIterateCompartmentCallback compartmentCallback)
 {
-    MOZ_ASSERT(!rt->isHeapBusy());
-
     AutoTraceSession session(rt);
 
     for (CompartmentsIter c(rt, WithAtoms); !c.done(); c.next())

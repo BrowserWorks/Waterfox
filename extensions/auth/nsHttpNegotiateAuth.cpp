@@ -38,6 +38,8 @@
 #include "prnetdb.h"
 #include "mozilla/Likely.h"
 #include "mozilla/Snprintf.h"
+#include "nsIChannel.h"
+#include "nsNetUtil.h"
 
 //-----------------------------------------------------------------------------
 
@@ -51,6 +53,35 @@ static const char kNegotiateAuthSSPI[] = "network.auth.use-sspi";
 #define kNegotiateLen  (sizeof(kNegotiate)-1)
 
 //-----------------------------------------------------------------------------
+
+// Return false when the channel comes from a Private browsing window.
+static bool
+TestNotInPBMode(nsIHttpAuthenticableChannel *authChannel)
+{
+    nsCOMPtr<nsIChannel> bareChannel = do_QueryInterface(authChannel);
+    MOZ_ASSERT(bareChannel);
+
+    if (!NS_UsePrivateBrowsing(bareChannel)) {
+        return true;
+    }
+
+    nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+    if (!prefs) {
+        return true;
+    }
+
+    // When the "Never remember history" option is set, all channels are
+    // set PB mode flag, but here we want to make an exception, users
+    // want their credentials go out.
+    bool dontRememberHistory;
+    if (NS_SUCCEEDED(prefs->GetBoolPref("browser.privatebrowsing.autostart",
+                                        &dontRememberHistory)) &&
+        dontRememberHistory) {
+        return true;
+    }
+
+    return false;
+}
 
 NS_IMETHODIMP
 nsHttpNegotiateAuth::GetAuthFlags(uint32_t *flags)
@@ -113,8 +144,9 @@ nsHttpNegotiateAuth::ChallengeReceived(nsIHttpAuthenticableChannel *authChannel,
         proxyInfo->GetHost(service);
     }
     else {
-        bool allowed = TestNonFqdn(uri) ||
-                       TestPref(uri, kNegotiateAuthTrustedURIs);
+        bool allowed = TestNotInPBMode(authChannel) &&
+                       (TestNonFqdn(uri) ||
+                       TestPref(uri, kNegotiateAuthTrustedURIs));
         if (!allowed) {
             LOG(("nsHttpNegotiateAuth::ChallengeReceived URI blocked\n"));
             return NS_ERROR_ABORT;

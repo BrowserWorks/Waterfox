@@ -50,7 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "sigslot.h"
 
 #include "mozilla/RefPtr.h"
-#include "mozilla/Scoped.h"
+#include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
 #include "nsIEventTarget.h"
 #include "nsITimer.h"
@@ -60,6 +60,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace mozilla {
 
+typedef struct nr_ice_ctx_ nr_ice_ctx;
+typedef struct nr_ice_peer_ctx_ nr_ice_peer_ctx;
 typedef struct nr_ice_media_stream_ nr_ice_media_stream;
 
 class NrIceCtx;
@@ -159,7 +161,12 @@ class NrIceMediaStream {
   // Get the candidate pair currently active. It's the
   // caller's responsibility to free these.
   nsresult GetActivePair(int component,
-                         NrIceCandidate** local, NrIceCandidate** remote);
+                         UniquePtr<NrIceCandidate>* local,
+                         UniquePtr<NrIceCandidate>* remote);
+
+  // Get the current ICE consent send status plus the timeval of the last
+  // consent update time.
+  nsresult GetConsentStatus(int component, bool *can_send, struct timeval *ts);
 
   // The number of components
   size_t components() const { return components_; }
@@ -198,22 +205,17 @@ class NrIceMediaStream {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(NrIceMediaStream)
 
  private:
-  NrIceMediaStream(NrIceCtx *ctx,  const std::string& name,
-                   size_t components) :
-      state_(ICE_CONNECTING),
-      ctx_(ctx),
-      name_(name),
-      components_(components),
-      stream_(nullptr),
-      level_(0),
-      has_parsed_attrs_(false) {}
+  NrIceMediaStream(NrIceCtx *ctx,
+                   const std::string& name,
+                   size_t components);
 
   ~NrIceMediaStream();
 
   DISALLOW_COPY_ASSIGN(NrIceMediaStream);
 
   State state_;
-  NrIceCtx *ctx_;
+  nr_ice_ctx *ctx_;
+  nr_ice_peer_ctx *ctx_peer_;
   const std::string name_;
   const size_t components_;
   nr_ice_media_stream *stream_;

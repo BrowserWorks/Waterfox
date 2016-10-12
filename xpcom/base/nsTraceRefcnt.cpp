@@ -61,17 +61,24 @@
 // only held for a very short time, and gets grabbed at a very high frequency
 // (~100000 times per second). On Mac, the overhead of using a regular lock
 // is very high, see bug 1137963.
-static mozilla::Atomic<bool, mozilla::ReleaseAcquire> gTraceLogLocked;
+static mozilla::Atomic<uintptr_t, mozilla::ReleaseAcquire> gTraceLogLocked;
 
 struct MOZ_STACK_CLASS AutoTraceLogLock final
 {
+  bool doRelease;
   AutoTraceLogLock()
+    : doRelease(true)
   {
-    while (!gTraceLogLocked.compareExchange(false, true)) {
-      PR_Sleep(PR_INTERVAL_NO_WAIT); /* yield */
+    uintptr_t currentThread = reinterpret_cast<uintptr_t>(PR_GetCurrentThread());
+    if (gTraceLogLocked == currentThread) {
+      doRelease = false;
+    } else {
+      while (!gTraceLogLocked.compareExchange(0, currentThread)) {
+        PR_Sleep(PR_INTERVAL_NO_WAIT); /* yield */
+      }
     }
   }
-  ~AutoTraceLogLock() { gTraceLogLocked = false; }
+  ~AutoTraceLogLock() { if (doRelease) gTraceLogLocked = 0; }
 };
 
 static PLHashTable* gBloatView;
@@ -470,14 +477,14 @@ DumpSerialNumbers(PLHashEntry* aHashEntry, int aIndex, void* aClosure)
   fprintf(outputFile, "%" PRIdPTR
           " @%p (%d references; %d from COMPtrs)\n",
           record->serialNumber,
-          NS_INT32_TO_PTR(aHashEntry->key),
+          aHashEntry->key,
           record->refCount,
           record->COMPtrCount);
 #else
   fprintf(outputFile, "%" PRIdPTR
           " @%p (%d references)\n",
           record->serialNumber,
-          NS_INT32_TO_PTR(aHashEntry->key),
+          aHashEntry->key,
           record->refCount);
 #endif
 #ifdef MOZ_STACKWALKING
@@ -706,6 +713,7 @@ InitLog(const char* aEnvVar, const char* aMsg, FILE** aResult)
       } else {
         fprintf(stdout, "### %s defined -- unable to log %s to %s\n",
                 aEnvVar, aMsg, fname.get());
+        MOZ_ASSERT(false, "Tried and failed to create an XPCOM log");
       }
       return stream != nullptr;
     }
@@ -1118,14 +1126,14 @@ NS_LogAddRef(void* aPtr, nsrefcnt aRefcnt,
 
     bool loggingThisObject = (!gObjectsToLog || LogThisObj(serialno));
     if (aRefcnt == 1 && gAllocLog && loggingThisType && loggingThisObject) {
-      fprintf(gAllocLog, "\n<%s> %p %" PRIdPTR " Create\n", aClass, aPtr, serialno);
+      fprintf(gAllocLog, "\n<%s> %p %" PRIdPTR " Create [thread %p]\n", aClass, aPtr, serialno, PR_GetCurrentThread());
       nsTraceRefcnt::WalkTheStackCached(gAllocLog);
     }
 
     if (gRefcntsLog && loggingThisType && loggingThisObject) {
       // Can't use MOZ_LOG(), b/c it truncates the line
-      fprintf(gRefcntsLog, "\n<%s> %p %" PRIuPTR " AddRef %" PRIuPTR "\n",
-              aClass, aPtr, serialno, aRefcnt);
+      fprintf(gRefcntsLog, "\n<%s> %p %" PRIuPTR " AddRef %" PRIuPTR " [thread %p]\n",
+              aClass, aPtr, serialno, aRefcnt, PR_GetCurrentThread());
       nsTraceRefcnt::WalkTheStackCached(gRefcntsLog);
       fflush(gRefcntsLog);
     }
@@ -1172,8 +1180,8 @@ NS_LogRelease(void* aPtr, nsrefcnt aRefcnt, const char* aClass)
     if (gRefcntsLog && loggingThisType && loggingThisObject) {
       // Can't use MOZ_LOG(), b/c it truncates the line
       fprintf(gRefcntsLog,
-              "\n<%s> %p %" PRIuPTR " Release %" PRIuPTR "\n",
-              aClass, aPtr, serialno, aRefcnt);
+              "\n<%s> %p %" PRIuPTR " Release %" PRIuPTR " [thread %p]\n",
+              aClass, aPtr, serialno, aRefcnt, PR_GetCurrentThread());
       nsTraceRefcnt::WalkTheStackCached(gRefcntsLog);
       fflush(gRefcntsLog);
     }
@@ -1182,7 +1190,7 @@ NS_LogRelease(void* aPtr, nsrefcnt aRefcnt, const char* aClass)
     // yet we still want to see deletion information:
 
     if (aRefcnt == 0 && gAllocLog && loggingThisType && loggingThisObject) {
-      fprintf(gAllocLog, "\n<%s> %p %" PRIdPTR " Destroy\n", aClass, aPtr, serialno);
+      fprintf(gAllocLog, "\n<%s> %p %" PRIdPTR " Destroy [thread %p]\n", aClass, aPtr, serialno, PR_GetCurrentThread());
       nsTraceRefcnt::WalkTheStackCached(gAllocLog);
     }
 
@@ -1282,16 +1290,16 @@ NS_LogCOMPtrAddRef(void* aCOMPtr, nsISupports* aObject)
   if (!gTypesToLog || !gSerialNumbers) {
     return;
   }
-  intptr_t serialno = GetSerialNumber(object, false);
-  if (serialno == 0) {
-    return;
-  }
-
   if (!gInitialized) {
     InitTraceLog();
   }
   if (gLogging == FullLogging) {
     AutoTraceLogLock lock;
+
+    intptr_t serialno = GetSerialNumber(object, false);
+    if (serialno == 0) {
+      return;
+    }
 
     int32_t* count = GetCOMPtrCount(object);
     if (count) {
@@ -1323,16 +1331,16 @@ NS_LogCOMPtrRelease(void* aCOMPtr, nsISupports* aObject)
   if (!gTypesToLog || !gSerialNumbers) {
     return;
   }
-  intptr_t serialno = GetSerialNumber(object, false);
-  if (serialno == 0) {
-    return;
-  }
-
   if (!gInitialized) {
     InitTraceLog();
   }
   if (gLogging == FullLogging) {
     AutoTraceLogLock lock;
+
+    intptr_t serialno = GetSerialNumber(object, false);
+    if (serialno == 0) {
+      return;
+    }
 
     int32_t* count = GetCOMPtrCount(object);
     if (count) {

@@ -64,6 +64,9 @@ public:
   // resource has a decode error during metadata loading or decoding.
   virtual void DecodeError() = 0;
 
+  // Return true if media element error attribute is not null.
+  virtual bool HasError() const = 0;
+
   // Called by the video decoder object, on the main thread, when the
   // resource load has been cancelled.
   virtual void LoadAborted() = 0;
@@ -131,7 +134,7 @@ public:
   virtual void ResetConnectionState() = 0;
 
   // Called by media decoder when the audible state changed
-  virtual void NotifyAudibleStateChanged(bool aAudible) = 0;
+  virtual void SetAudibleState(bool aAudible) = 0;
 
 #ifdef MOZ_EME
   // Dispatches a "encrypted" event to the HTMLMediaElement, with the

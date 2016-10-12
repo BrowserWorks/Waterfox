@@ -30,6 +30,7 @@
 
 #include "nsArrayUtils.h"
 #include "nsAutoPtr.h"
+#include "nsCharSeparatedTokenizer.h"
 #include "nsGlobalWindow.h"
 #include "nsServiceManagerUtils.h"
 #include "nsIFile.h"
@@ -76,9 +77,34 @@ using namespace mozilla::dom;
 using namespace mozilla::dom::devicestorage;
 using namespace mozilla::ipc;
 
-namespace mozilla {
+namespace mozilla
+{
   MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedPRFileDesc, PRFileDesc, PR_Close);
 } // namespace mozilla
+
+namespace {
+
+void
+NormalizeFilePath(nsAString& aPath)
+{
+#if defined(XP_WIN)
+  char16_t* cur = aPath.BeginWriting();
+  char16_t* end = aPath.EndWriting();
+  for (; cur < end; ++cur) {
+    if (char16_t('\\') == *cur) {
+      *cur = FILESYSTEM_DOM_PATH_SEPARATOR_CHAR;
+    }
+  }
+#endif
+}
+
+bool
+TokenizerIgnoreNothing(char16_t /* aChar */)
+{
+  return false;
+}
+
+} // anonymous namespace
 
 StaticAutoPtr<DeviceStorageUsedSpaceCache>
   DeviceStorageUsedSpaceCache::sDeviceStorageUsedSpaceCache;
@@ -461,7 +487,7 @@ DeviceStorageTypeChecker::IsSharedMediaRoot(const nsAString& aType)
 #endif
 }
 
-class IOEventComplete : public nsRunnable
+class IOEventComplete : public Runnable
 {
 public:
   IOEventComplete(DeviceStorageFile *aFile, const char *aType)
@@ -510,7 +536,8 @@ DeviceStorageFile::DeviceStorageFile(const nsAString& aStorageType,
   if (!mPath.EqualsLiteral("")) {
     AppendRelativePath(mPath);
   }
-  NormalizeFilePath();
+
+  NormalizeFilePath(mPath);
 }
 
 DeviceStorageFile::DeviceStorageFile(const nsAString& aStorageType,
@@ -525,7 +552,7 @@ DeviceStorageFile::DeviceStorageFile(const nsAString& aStorageType,
 {
   Init();
   AppendRelativePath(aPath);
-  NormalizeFilePath();
+  NormalizeFilePath(mPath);
 }
 
 DeviceStorageFile::DeviceStorageFile(const nsAString& aStorageType,
@@ -734,7 +761,7 @@ DeviceStorageFile::CreateUnique(const nsAString& aStorageType,
 void
 DeviceStorageFile::SetPath(const nsAString& aPath) {
   mPath.Assign(aPath);
-  NormalizeFilePath();
+  NormalizeFilePath(mPath);
 }
 
 void
@@ -745,13 +772,14 @@ DeviceStorageFile::SetEditable(bool aEditable) {
 // we want to make sure that the names of file can't reach
 // outside of the type of storage the user asked for.
 bool
-DeviceStorageFile::IsSafePath()
+DeviceStorageFile::IsSafePath() const
 {
-  return IsSafePath(mRootDir) && IsSafePath(mPath);
+  return ValidateAndSplitPath(mRootDir) && ValidateAndSplitPath(mPath);
 }
 
 bool
-DeviceStorageFile::IsSafePath(const nsAString& aPath)
+DeviceStorageFile::ValidateAndSplitPath(const nsAString& aPath,
+                                        nsTArray<nsString>* aParts) const
 {
   nsAString::const_iterator start, end;
   aPath.BeginReading(start);
@@ -764,33 +792,43 @@ DeviceStorageFile::IsSafePath(const nsAString& aPath)
       StringBeginsWith(aPath, tildeSlash)) {
     NS_WARNING("Path name starts with tilde!");
     return false;
-   }
-  // split on /.  if any token is "", ., or .., return false.
-  NS_ConvertUTF16toUTF8 cname(aPath);
-  char* buffer = cname.BeginWriting();
-  const char* token;
+  }
 
-  while ((token = nsCRT::strtok(buffer, "/", &buffer))) {
-    if (PL_strcmp(token, "") == 0 ||
-        PL_strcmp(token, ".") == 0 ||
-        PL_strcmp(token, "..") == 0 ) {
+  NS_NAMED_LITERAL_STRING(kCurrentDir, ".");
+  NS_NAMED_LITERAL_STRING(kParentDir, "..");
+
+  // Split path and check each path component.
+  nsCharSeparatedTokenizerTemplate<TokenizerIgnoreNothing>
+    tokenizer(aPath, FILESYSTEM_DOM_PATH_SEPARATOR_CHAR);
+
+  while (tokenizer.hasMoreTokens()) {
+    nsDependentSubstring pathComponent = tokenizer.nextToken();
+    // The path containing empty components, such as "foo//bar", is invalid.
+    // We don't allow paths, such as "../foo", "foo/./bar" and "foo/../bar",
+    // to walk up the directory.
+    if (pathComponent.IsEmpty() ||
+        pathComponent.Equals(kCurrentDir) ||
+        pathComponent.Equals(kParentDir)) {
       return false;
+    }
+
+    if (aParts) {
+      aParts->AppendElement(pathComponent);
     }
   }
   return true;
 }
 
 void
-DeviceStorageFile::NormalizeFilePath() {
-  FileSystemUtils::LocalPathToNormalizedPath(mPath, mPath);
-}
-
-void
-DeviceStorageFile::AppendRelativePath(const nsAString& aPath) {
+DeviceStorageFile::AppendRelativePath(const nsAString& aPath)
+{
   if (!mFile) {
     return;
   }
-  if (!IsSafePath(aPath)) {
+
+  nsTArray<nsString> parts;
+
+  if (!ValidateAndSplitPath(aPath, &parts)) {
     // All of the APIs (in the child) do checks to verify that the path is
     // valid and return PERMISSION_DENIED if a non-safe path is entered.
     // This check is done in the parent and prevents a compromised
@@ -800,9 +838,13 @@ DeviceStorageFile::AppendRelativePath(const nsAString& aPath) {
     NS_WARNING(NS_LossyConvertUTF16toASCII(aPath).get());
     return;
   }
-  nsString localPath;
-  FileSystemUtils::NormalizedPathToLocalPath(aPath, localPath);
-  mFile->AppendRelativePath(localPath);
+
+  for (uint32_t i = 0; i < parts.Length(); ++i) {
+    nsresult rv = mFile->AppendRelativePath(parts[i]);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return;
+    }
+  }
 }
 
 nsresult
@@ -2417,7 +2459,7 @@ public:
       return Allow(JS::UndefinedHandleValue);
     }
 
-    mWindow = nsGlobalWindow::GetInnerWindowWithId(mWindowID);
+    mWindow = nsGlobalWindow::GetInnerWindowWithId(mWindowID)->AsInner();
     if (NS_WARN_IF(!mWindow)) {
       return Cancel();
     }
@@ -2480,7 +2522,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD GetWindow(nsIDOMWindow * *aRequestingWindow) override
+  NS_IMETHOD GetWindow(mozIDOMWindow * *aRequestingWindow) override
   {
     NS_IF_ADDREF(*aRequestingWindow = mWindow);
     return NS_OK;
@@ -2509,7 +2551,7 @@ private:
   RefPtr<DeviceStorageRequest> mRequest;
   uint64_t mWindowID;
   PrincipalInfo mPrincipalInfo;
-  nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsCOMPtr<nsPIDOMWindowInner> mWindow;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCOMPtr<nsIContentPermissionRequester> mRequester;
 };
@@ -2541,7 +2583,7 @@ NS_IMPL_RELEASE_INHERITED(nsDOMDeviceStorage, DOMEventTargetHelper)
 
 int nsDOMDeviceStorage::sInstanceCount = 0;
 
-nsDOMDeviceStorage::nsDOMDeviceStorage(nsPIDOMWindow* aWindow)
+nsDOMDeviceStorage::nsDOMDeviceStorage(nsPIDOMWindowInner* aWindow)
   : DOMEventTargetHelper(aWindow)
   , mIsShareable(false)
   , mIsRemovable(false)
@@ -2605,7 +2647,7 @@ nsDOMDeviceStorage::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto
 }
 
 nsresult
-nsDOMDeviceStorage::Init(nsPIDOMWindow* aWindow, const nsAString &aType,
+nsDOMDeviceStorage::Init(nsPIDOMWindowInner* aWindow, const nsAString &aType,
                          const nsAString &aVolName)
 {
   MOZ_ASSERT(aWindow);
@@ -2675,7 +2717,9 @@ nsDOMDeviceStorage::~nsDOMDeviceStorage()
 
 // static
 nsresult
-nsDOMDeviceStorage::CheckPrincipal(nsPIDOMWindow* aWindow, bool aIsAppsStorage, nsIPrincipal** aPrincipal)
+nsDOMDeviceStorage::CheckPrincipal(nsPIDOMWindowInner* aWindow,
+                                   bool aIsAppsStorage,
+                                   nsIPrincipal** aPrincipal)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aWindow);
@@ -2800,7 +2844,7 @@ nsDOMDeviceStorage::GetOrderedVolumeNames(
 
 // static
 void
-nsDOMDeviceStorage::CreateDeviceStorageFor(nsPIDOMWindow* aWin,
+nsDOMDeviceStorage::CreateDeviceStorageFor(nsPIDOMWindowInner* aWin,
                                            const nsAString &aType,
                                            nsDOMDeviceStorage** aStore)
 {
@@ -2818,7 +2862,7 @@ nsDOMDeviceStorage::CreateDeviceStorageFor(nsPIDOMWindow* aWin,
 // static
 void
 nsDOMDeviceStorage::CreateDeviceStorageByNameAndType(
-  nsPIDOMWindow* aWin,
+  nsPIDOMWindowInner* aWin,
   const nsAString& aName,
   const nsAString& aType,
   nsDOMDeviceStorage** aStore)
@@ -2844,7 +2888,7 @@ nsDOMDeviceStorage::CreateDeviceStorageByNameAndType(
 }
 
 bool
-nsDOMDeviceStorage::Equals(nsPIDOMWindow* aWin,
+nsDOMDeviceStorage::Equals(nsPIDOMWindowInner* aWin,
                            const nsAString& aName,
                            const nsAString& aType)
 {
@@ -2920,7 +2964,7 @@ nsDOMDeviceStorage::GetStorageByName(const nsAString& aStorageName)
 
 // static
 already_AddRefed<nsDOMDeviceStorage>
-nsDOMDeviceStorage::GetStorageByNameAndType(nsPIDOMWindow* aWin,
+nsDOMDeviceStorage::GetStorageByNameAndType(nsPIDOMWindowInner* aWin,
                                             const nsAString& aStorageName,
                                             const nsAString& aType)
 {
@@ -3714,8 +3758,7 @@ DeviceStorageRequestManager::~DeviceStorageRequestManager()
     while (i > 0) {
       --i;
       DS_LOG_ERROR("terminate %u", mPending[i].mId);
-      NS_ProxyRelease(mOwningThread,
-        NS_ISUPPORTS_CAST(EventTarget*, mPending[i].mRequest.forget().take()));
+      NS_ProxyRelease(mOwningThread, mPending[i].mRequest.forget());
     }
   }
 }
@@ -3933,14 +3976,8 @@ DeviceStorageRequestManager::Resolve(uint32_t aId, uint64_t aValue,
     return NS_OK;
   }
 
-  nsIGlobalObject* global = mPending[i].mRequest->GetOwnerGlobal();
-
-  AutoJSAPI jsapi;
-  if (NS_WARN_IF(!jsapi.Init(global))) {
-    return RejectInternal(i, NS_LITERAL_STRING(POST_ERROR_EVENT_UNKNOWN));
-  }
-
-  JS::RootedValue value(jsapi.cx(), JS_NumberValue((double)aValue));
+  JS::RootedValue value(nsContentUtils::RootingCxForThread(),
+                        JS_NumberValue((double)aValue));
   return ResolveInternal(i, value);
 }
 

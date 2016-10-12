@@ -7,6 +7,7 @@
 #include "ServiceWorkerManagerService.h"
 #include "ServiceWorkerManagerParent.h"
 #include "ServiceWorkerRegistrar.h"
+#include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/unused.h"
@@ -33,7 +34,7 @@ struct NotifySoftUpdateData
   }
 };
 
-class NotifySoftUpdateIfPrincipalOkRunnable final : public nsRunnable
+class NotifySoftUpdateIfPrincipalOkRunnable final : public Runnable
 {
 public:
   NotifySoftUpdateIfPrincipalOkRunnable(
@@ -63,20 +64,20 @@ public:
         // mContentParent needs to be released in the main thread.
         data.mContentParent = nullptr;
         // We only send the notification about the soft update to the
-        // tabs/apps with the same appId and inBrowser values.
+        // tabs/apps with the same appId and inIsolatedMozBrowser values.
         // Sending a notification to the wrong process will make the process
         // to be killed.
         for (uint32_t j = 0; j < contextArray.Length(); ++j) {
           if ((contextArray[j].OwnOrContainingAppId() == mOriginAttributes.mAppId) &&
-              (contextArray[j].IsBrowserElement() == mOriginAttributes.mInBrowser)) {
+              (contextArray[j].IsIsolatedMozBrowserElement() == mOriginAttributes.mInIsolatedMozBrowser)) {
             continue;
           }
           // Array entries with no mParent won't receive any notification.
           data.mParent = nullptr;
         }
       }
-      nsresult rv = mBackgroundThread->Dispatch(this, NS_DISPATCH_NORMAL);
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(rv));
+
+      MOZ_ALWAYS_SUCCEEDS(mBackgroundThread->Dispatch(this, NS_DISPATCH_NORMAL));
       return NS_OK;
     }
 
@@ -230,8 +231,7 @@ ServiceWorkerManagerService::PropagateSoftUpdate(
     new NotifySoftUpdateIfPrincipalOkRunnable(notifySoftUpdateDataArray,
                                               aOriginAttributes, aScope);
   MOZ_ASSERT(!notifySoftUpdateDataArray);
-  nsresult rv = NS_DispatchToMainThread(runnable);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(rv));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
 
 #ifdef DEBUG
   MOZ_ASSERT(parentFound);

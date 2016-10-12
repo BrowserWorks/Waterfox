@@ -6,7 +6,7 @@
 
 #include "nsDOMWindowUtils.h"
 
-#include "mozilla/layers/CompositorChild.h"
+#include "mozilla/layers/CompositorBridgeChild.h"
 #include "mozilla/layers/LayerTransactionChild.h"
 #include "nsPresContext.h"
 #include "nsDOMClassInfoID.h"
@@ -77,8 +77,8 @@
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/dom/IDBFactoryBinding.h"
 #include "mozilla/dom/IDBMutableFileBinding.h"
-#include "mozilla/dom/indexedDB/IDBMutableFile.h"
-#include "mozilla/dom/indexedDB/IndexedDatabaseManager.h"
+#include "mozilla/dom/IDBMutableFile.h"
+#include "mozilla/dom/IndexedDatabaseManager.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/quota/PersistenceType.h"
 #include "mozilla/dom/quota/QuotaManager.h"
@@ -101,11 +101,14 @@
 #include "nsIDOMStyleSheet.h"
 #include "nsIStyleSheetService.h"
 #include "nsContentPermissionHelper.h"
+#include "nsCSSPseudoElements.h"            // for CSSPseudoElementType
 #include "nsNetUtil.h"
 #include "nsDocument.h"
 #include "HTMLImageElement.h"
 #include "mozilla/css/ImageLoader.h"
 #include "mozilla/layers/APZCTreeManager.h" // for layers::ZoomToRectBehavior
+#include "mozilla/dom/Promise.h"
+#include "mozilla/CSSStyleSheet.h"
 
 #ifdef XP_WIN
 #undef GetClassName
@@ -119,6 +122,51 @@ using namespace mozilla::widget;
 using namespace mozilla::gfx;
 
 class gfxContext;
+
+class OldWindowSize : public LinkedListElement<OldWindowSize>
+{
+public:
+  static void Set(nsIWeakReference* aWindowRef, const nsSize& aSize)
+  {
+    OldWindowSize* item = GetItem(aWindowRef);
+    if (item) {
+      item->mSize = aSize;
+    } else {
+      item = new OldWindowSize(aWindowRef, aSize);
+      sList.insertBack(item);
+    }
+  }
+
+  static nsSize GetAndRemove(nsIWeakReference* aWindowRef)
+  {
+    nsSize result;
+    if (OldWindowSize* item = GetItem(aWindowRef)) {
+      result = item->mSize;
+      delete item;
+    }
+    return result;
+  }
+
+private:
+  explicit OldWindowSize(nsIWeakReference* aWindowRef, const nsSize& aSize)
+    : mWindowRef(aWindowRef), mSize(aSize) { }
+  ~OldWindowSize() { };
+
+  static OldWindowSize* GetItem(nsIWeakReference* aWindowRef)
+  {
+    OldWindowSize* item = sList.getFirst();
+    while (item && item->mWindowRef != aWindowRef) {
+      item = item->getNext();
+    }
+    return item;
+  }
+
+  static LinkedList<OldWindowSize> sList;
+  nsWeakPtr mWindowRef;
+  nsSize mSize;
+};
+
+LinkedList<OldWindowSize> OldWindowSize::sList;
 
 NS_INTERFACE_MAP_BEGIN(nsDOMWindowUtils)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIDOMWindowUtils)
@@ -138,12 +186,13 @@ nsDOMWindowUtils::nsDOMWindowUtils(nsGlobalWindow *aWindow)
 
 nsDOMWindowUtils::~nsDOMWindowUtils()
 {
+  OldWindowSize::GetAndRemove(mWindow);
 }
 
 nsIPresShell*
 nsDOMWindowUtils::GetPresShell()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   if (!window)
     return nullptr;
 
@@ -157,7 +206,7 @@ nsDOMWindowUtils::GetPresShell()
 nsPresContext*
 nsDOMWindowUtils::GetPresContext()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   if (!window)
     return nullptr;
   nsIDocShell *docShell = window->GetDocShell();
@@ -171,7 +220,7 @@ nsDOMWindowUtils::GetPresContext()
 nsIDocument*
 nsDOMWindowUtils::GetDocument()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   if (!window) {
     return nullptr;
   }
@@ -236,7 +285,7 @@ nsDOMWindowUtils::GetDocumentMetadata(const nsAString& aName,
 {
   nsIDocument* doc = GetDocument();
   if (doc) {
-    nsCOMPtr<nsIAtom> name = do_GetAtom(aName);
+    nsCOMPtr<nsIAtom> name = NS_Atomize(aName);
     doc->GetHeaderData(name, aValue);
     return NS_OK;
   }
@@ -288,6 +337,22 @@ nsDOMWindowUtils::UpdateLayerTree()
 }
 
 NS_IMETHODIMP
+nsDOMWindowUtils::GetContentViewerSize(uint32_t *aDisplayWidth, uint32_t *aDisplayHeight)
+{
+  nsIPresShell* presShell = GetPresShell();
+  LayoutDeviceIntSize displaySize;
+
+  if (!presShell || !nsLayoutUtils::GetContentViewerSize(presShell->GetPresContext(), displaySize)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  *aDisplayWidth = displaySize.width;
+  *aDisplayHeight = displaySize.height;
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsDOMWindowUtils::GetViewportInfo(uint32_t aDisplayWidth,
                                   uint32_t aDisplayHeight,
                                   double *aDefaultZoom, bool *aAllowZoom,
@@ -331,7 +396,7 @@ nsDOMWindowUtils::SetDisplayPortForElement(float aXPx, float aYPx,
     return NS_ERROR_INVALID_ARG;
   }
 
-  if (content->GetCurrentDoc() != presShell->GetDocument()) {
+  if (content->GetUncomposedDoc() != presShell->GetDocument()) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -377,9 +442,12 @@ nsDOMWindowUtils::SetDisplayPortForElement(float aXPx, float aYPx,
         LayerManager* manager = widget->GetLayerManager(&isRetainingManager);
         if (isRetainingManager) {
           manager->BeginTransaction();
-          nsLayoutUtils::PaintFrame(nullptr, rootFrame, nsRegion(), NS_RGB(255, 255, 255),
-                                    nsLayoutUtils::PAINT_WIDGET_LAYERS |
-                                    nsLayoutUtils::PAINT_EXISTING_TRANSACTION);
+          using PaintFrameFlags = nsLayoutUtils::PaintFrameFlags;
+          nsLayoutUtils::PaintFrame(nullptr, rootFrame, nsRegion(),
+                                    NS_RGB(255, 255, 255),
+                                    nsDisplayListBuilderMode::PAINTING,
+                                    PaintFrameFlags::PAINT_WIDGET_LAYERS |
+                                    PaintFrameFlags::PAINT_EXISTING_TRANSACTION);
         }
       }
     }
@@ -411,7 +479,7 @@ nsDOMWindowUtils::SetDisplayPortMarginsForElement(float aLeftMargin,
     return NS_ERROR_INVALID_ARG;
   }
 
-  if (content->GetCurrentDoc() != presShell->GetDocument()) {
+  if (content->GetUncomposedDoc() != presShell->GetDocument()) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -451,7 +519,7 @@ nsDOMWindowUtils::SetDisplayPortBaseForElement(int32_t aX,
     return NS_ERROR_INVALID_ARG;
   }
 
-  if (content->GetCurrentDoc() != presShell->GetDocument()) {
+  if (content->GetUncomposedDoc() != presShell->GetDocument()) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -486,6 +554,22 @@ nsDOMWindowUtils::SetResolutionAndScaleTo(float aResolution)
   }
 
   presShell->SetResolutionAndScaleTo(aResolution);
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::SetRestoreResolution(float aResolution,
+                                       uint32_t aDisplayWidth,
+                                       uint32_t aDisplayHeight)
+{
+  nsIPresShell* presShell = GetPresShell();
+  if (!presShell) {
+    return NS_ERROR_FAILURE;
+  }
+
+  presShell->SetRestoreResolution(aResolution,
+    LayoutDeviceIntSize(aDisplayWidth, aDisplayHeight));
 
   return NS_OK;
 }
@@ -666,10 +750,9 @@ nsDOMWindowUtils::SendPointerEventCommon(const nsAString& aType,
   }
 
   WidgetPointerEvent event(true, msg, widget);
-  event.modifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
+  event.mModifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
   event.button = aButton;
   event.buttons = nsContentUtils::GetButtonsFlagForButton(aButton);
-  event.widget = widget;
   event.pressure = aPressure;
   event.inputSource = aInputSourceArg;
   event.pointerId = aPointerId;
@@ -678,8 +761,8 @@ nsDOMWindowUtils::SendPointerEventCommon(const nsAString& aType,
   event.tiltX = aTiltX;
   event.tiltY = aTiltY;
   event.isPrimary = (nsIDOMMouseEvent::MOZ_SOURCE_MOUSE == aInputSourceArg) ? true : aIsPrimary;
-  event.clickCount = aClickCount;
-  event.time = PR_IntervalNow();
+  event.mClickCount = aClickCount;
+  event.mTime = PR_IntervalNow();
   event.mFlags.mIsSynthesizedForTests = aOptionalArgCount >= 10 ? aIsSynthesized : true;
 
   nsPresContext* presContext = GetPresContext();
@@ -687,8 +770,9 @@ nsDOMWindowUtils::SendPointerEventCommon(const nsAString& aType,
     return NS_ERROR_FAILURE;
   }
 
-  event.refPoint = nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
-  event.ignoreRootScrollFrame = aIgnoreRootScrollFrame;
+  event.mRefPoint =
+    nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
+  event.mIgnoreRootScrollFrame = aIgnoreRootScrollFrame;
 
   nsEventStatus status;
   if (aToWindow) {
@@ -789,29 +873,29 @@ nsDOMWindowUtils::SendWheelEvent(float aX,
   }
 
   WidgetWheelEvent wheelEvent(true, eWheel, widget);
-  wheelEvent.modifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
-  wheelEvent.deltaX = aDeltaX;
-  wheelEvent.deltaY = aDeltaY;
-  wheelEvent.deltaZ = aDeltaZ;
-  wheelEvent.deltaMode = aDeltaMode;
-  wheelEvent.isMomentum =
+  wheelEvent.mModifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
+  wheelEvent.mDeltaX = aDeltaX;
+  wheelEvent.mDeltaY = aDeltaY;
+  wheelEvent.mDeltaZ = aDeltaZ;
+  wheelEvent.mDeltaMode = aDeltaMode;
+  wheelEvent.mIsMomentum =
     (aOptions & WHEEL_EVENT_CAUSED_BY_MOMENTUM) != 0;
   wheelEvent.mIsNoLineOrPageDelta =
     (aOptions & WHEEL_EVENT_CAUSED_BY_NO_LINE_OR_PAGE_DELTA_DEVICE) != 0;
-  wheelEvent.customizedByUserPrefs =
+  wheelEvent.mCustomizedByUserPrefs =
     (aOptions & WHEEL_EVENT_CUSTOMIZED_BY_USER_PREFS) != 0;
-  wheelEvent.lineOrPageDeltaX = aLineOrPageDeltaX;
-  wheelEvent.lineOrPageDeltaY = aLineOrPageDeltaY;
-  wheelEvent.widget = widget;
+  wheelEvent.mLineOrPageDeltaX = aLineOrPageDeltaX;
+  wheelEvent.mLineOrPageDeltaY = aLineOrPageDeltaY;
 
-  wheelEvent.time = PR_Now() / 1000;
+  wheelEvent.mTime = PR_Now() / 1000;
 
   nsPresContext* presContext = GetPresContext();
   NS_ENSURE_TRUE(presContext, NS_ERROR_FAILURE);
 
-  wheelEvent.refPoint = nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
+  wheelEvent.mRefPoint =
+    nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
 
-  widget->DispatchAPZAwareEvent(&wheelEvent);
+  widget->DispatchInputEvent(&wheelEvent);
 
   if (widget->AsyncPanZoomEnabled()) {
     // Computing overflow deltas is not compatible with APZ, so if APZ is
@@ -821,40 +905,40 @@ nsDOMWindowUtils::SendWheelEvent(float aX,
 
   bool failedX = false;
   if ((aOptions & WHEEL_EVENT_EXPECTED_OVERFLOW_DELTA_X_ZERO) &&
-      wheelEvent.overflowDeltaX != 0) {
+      wheelEvent.mOverflowDeltaX != 0) {
     failedX = true;
   }
   if ((aOptions & WHEEL_EVENT_EXPECTED_OVERFLOW_DELTA_X_POSITIVE) &&
-      wheelEvent.overflowDeltaX <= 0) {
+      wheelEvent.mOverflowDeltaX <= 0) {
     failedX = true;
   }
   if ((aOptions & WHEEL_EVENT_EXPECTED_OVERFLOW_DELTA_X_NEGATIVE) &&
-      wheelEvent.overflowDeltaX >= 0) {
+      wheelEvent.mOverflowDeltaX >= 0) {
     failedX = true;
   }
   bool failedY = false;
   if ((aOptions & WHEEL_EVENT_EXPECTED_OVERFLOW_DELTA_Y_ZERO) &&
-      wheelEvent.overflowDeltaY != 0) {
+      wheelEvent.mOverflowDeltaY != 0) {
     failedY = true;
   }
   if ((aOptions & WHEEL_EVENT_EXPECTED_OVERFLOW_DELTA_Y_POSITIVE) &&
-      wheelEvent.overflowDeltaY <= 0) {
+      wheelEvent.mOverflowDeltaY <= 0) {
     failedY = true;
   }
   if ((aOptions & WHEEL_EVENT_EXPECTED_OVERFLOW_DELTA_Y_NEGATIVE) &&
-      wheelEvent.overflowDeltaY >= 0) {
+      wheelEvent.mOverflowDeltaY >= 0) {
     failedY = true;
   }
 
 #ifdef DEBUG
   if (failedX) {
-    nsPrintfCString debugMsg("SendWheelEvent(): unexpected overflowDeltaX: %f",
-                             wheelEvent.overflowDeltaX);
+    nsPrintfCString debugMsg("SendWheelEvent(): unexpected mOverflowDeltaX: %f",
+                             wheelEvent.mOverflowDeltaX);
     NS_WARNING(debugMsg.get());
   }
   if (failedY) {
-    nsPrintfCString debugMsg("SendWheelEvent(): unexpected overflowDeltaY: %f",
-                             wheelEvent.overflowDeltaY);
+    nsPrintfCString debugMsg("SendWheelEvent(): unexpected mOverflowDeltaY: %f",
+                             wheelEvent.mOverflowDeltaY);
     NS_WARNING(debugMsg.get());
   }
 #endif
@@ -934,15 +1018,14 @@ nsDOMWindowUtils::SendTouchEventCommon(const nsAString& aType,
     return NS_ERROR_UNEXPECTED;
   }
   WidgetTouchEvent event(true, msg, widget);
-  event.modifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
-  event.widget = widget;
-  event.time = PR_Now();
+  event.mModifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
+  event.mTime = PR_Now();
 
   nsPresContext* presContext = GetPresContext();
   if (!presContext) {
     return NS_ERROR_FAILURE;
   }
-  event.touches.SetCapacity(aCount);
+  event.mTouches.SetCapacity(aCount);
   for (uint32_t i = 0; i < aCount; ++i) {
     LayoutDeviceIntPoint pt =
       nsContentUtils::ToWidgetPoint(CSSPoint(aXs[i], aYs[i]), offset, presContext);
@@ -954,7 +1037,7 @@ nsDOMWindowUtils::SendTouchEventCommon(const nsAString& aType,
     RefPtr<Touch> t =
       new Touch(aIdentifiers[i], pt, radius, aRotationAngles[i], aForces[i]);
 
-    event.touches.AppendElement(t);
+    event.mTouches.AppendElement(t);
   }
 
   nsEventStatus status;
@@ -1003,7 +1086,7 @@ nsDOMWindowUtils::SendNativeKeyEvent(int32_t aNativeKeyboardLayout,
   if (!widget)
     return NS_ERROR_FAILURE;
 
-  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
+  NS_DispatchToMainThread(NewRunnableMethod
     <int32_t, int32_t, uint32_t, nsString, nsString, nsIObserver*>
     (widget, &nsIWidget::SynthesizeNativeKeyEvent, aNativeKeyboardLayout,
     aNativeKeyCode, aModifiers, aCharacters, aUnmodifiedCharacters, aObserver));
@@ -1023,7 +1106,7 @@ nsDOMWindowUtils::SendNativeMouseEvent(int32_t aScreenX,
   if (!widget)
     return NS_ERROR_FAILURE;
 
-  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
+  NS_DispatchToMainThread(NewRunnableMethod
     <LayoutDeviceIntPoint, int32_t, int32_t, nsIObserver*>
     (widget, &nsIWidget::SynthesizeNativeMouseEvent,
     LayoutDeviceIntPoint(aScreenX, aScreenY), aNativeMessage, aModifierFlags,
@@ -1042,7 +1125,7 @@ nsDOMWindowUtils::SendNativeMouseMove(int32_t aScreenX,
   if (!widget)
     return NS_ERROR_FAILURE;
 
-  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
+  NS_DispatchToMainThread(NewRunnableMethod
     <LayoutDeviceIntPoint, nsIObserver*>
     (widget, &nsIWidget::SynthesizeNativeMouseMove,
     LayoutDeviceIntPoint(aScreenX, aScreenY), aObserver));
@@ -1067,7 +1150,7 @@ nsDOMWindowUtils::SendNativeMouseScrollEvent(int32_t aScreenX,
     return NS_ERROR_FAILURE;
   }
 
-  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
+  NS_DispatchToMainThread(NewRunnableMethod
     <mozilla::LayoutDeviceIntPoint, uint32_t, double, double, double, uint32_t, uint32_t, nsIObserver*>
     (widget, &nsIWidget::SynthesizeNativeMouseScrollEvent,
     LayoutDeviceIntPoint(aScreenX, aScreenY), aNativeMessage, aDeltaX, aDeltaY,
@@ -1093,11 +1176,11 @@ nsDOMWindowUtils::SendNativeTouchPoint(uint32_t aPointerId,
     return NS_ERROR_INVALID_ARG;
   }
 
-  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
-    <uint32_t, nsIWidget::TouchPointerState, ScreenIntPoint, double, uint32_t, nsIObserver*>
+  NS_DispatchToMainThread(NewRunnableMethod
+    <uint32_t, nsIWidget::TouchPointerState, LayoutDeviceIntPoint, double, uint32_t, nsIObserver*>
     (widget, &nsIWidget::SynthesizeNativeTouchPoint, aPointerId,
     (nsIWidget::TouchPointerState)aTouchState,
-    ScreenIntPoint(aScreenX, aScreenY),
+    LayoutDeviceIntPoint(aScreenX, aScreenY),
     aPressure, aOrientation, aObserver));
   return NS_OK;
 }
@@ -1113,10 +1196,10 @@ nsDOMWindowUtils::SendNativeTouchTap(int32_t aScreenX,
     return NS_ERROR_FAILURE;
   }
 
-  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
-    <ScreenIntPoint, bool, nsIObserver*>
+  NS_DispatchToMainThread(NewRunnableMethod
+    <LayoutDeviceIntPoint, bool, nsIObserver*>
     (widget, &nsIWidget::SynthesizeNativeTouchTap,
-    ScreenIntPoint(aScreenX, aScreenY), aLongTap, aObserver));
+    LayoutDeviceIntPoint(aScreenX, aScreenY), aLongTap, aObserver));
   return NS_OK;
 }
 
@@ -1128,7 +1211,7 @@ nsDOMWindowUtils::ClearNativeTouchSequence(nsIObserver* aObserver)
     return NS_ERROR_FAILURE;
   }
 
-  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs<nsIObserver*>
+  NS_DispatchToMainThread(NewRunnableMethod<nsIObserver*>
     (widget, &nsIWidget::ClearNativeTouchSequence, aObserver));
   return NS_OK;
 }
@@ -1158,7 +1241,7 @@ nsDOMWindowUtils::ForceUpdateNativeMenuAt(const nsAString& indexString)
 nsIWidget*
 nsDOMWindowUtils::GetWidget(nsPoint* aOffset)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   if (window) {
     nsIDocShell *docShell = window->GetDocShell();
     if (docShell) {
@@ -1177,7 +1260,7 @@ nsDOMWindowUtils::GetWidgetForElement(nsIDOMElement* aElement)
     return GetWidget();
 
   nsCOMPtr<nsIContent> content = do_QueryInterface(aElement);
-  nsIDocument* doc = content->GetCurrentDoc();
+  nsIDocument* doc = content->GetUncomposedDoc();
   nsIPresShell* presShell = doc ? doc->GetShell() : nullptr;
 
   if (presShell) {
@@ -1195,7 +1278,7 @@ nsDOMWindowUtils::GetWidgetForElement(nsIDOMElement* aElement)
 NS_IMETHODIMP
 nsDOMWindowUtils::Focus(nsIDOMElement* aElement)
 {
-  nsCOMPtr<nsIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   nsIFocusManager* fm = nsFocusManager::GetFocusManager();
   if (fm) {
     if (aElement)
@@ -1289,17 +1372,18 @@ nsDOMWindowUtils::SendSimpleGestureEvent(const nsAString& aType,
   }
 
   WidgetSimpleGestureEvent event(true, msg, widget);
-  event.modifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
-  event.direction = aDirection;
-  event.delta = aDelta;
-  event.clickCount = aClickCount;
-  event.time = PR_IntervalNow();
+  event.mModifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
+  event.mDirection = aDirection;
+  event.mDelta = aDelta;
+  event.mClickCount = aClickCount;
+  event.mTime = PR_IntervalNow();
 
   nsPresContext* presContext = GetPresContext();
   if (!presContext)
     return NS_ERROR_FAILURE;
 
-  event.refPoint = nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
+  event.mRefPoint =
+    nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
 
   nsEventStatus status;
   return widget->DispatchEvent(&event, status);
@@ -1530,7 +1614,7 @@ nsDOMWindowUtils::ClearMozAfterPaintEvents()
 NS_IMETHODIMP
 nsDOMWindowUtils::DisableNonTestMouseEvents(bool aDisable)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
   nsIDocShell *docShell = window->GetDocShell();
   NS_ENSURE_TRUE(docShell, NS_ERROR_FAILURE);
@@ -1557,7 +1641,7 @@ nsDOMWindowUtils::SuppressEventHandling(bool aSuppress)
 
 static nsresult
 getScrollXYAppUnits(nsWeakPtr aWindow, bool aFlushLayout, nsPoint& aScrollPos) {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(aWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(aWindow);
   nsCOMPtr<nsIDocument> doc = window ? window->GetExtantDoc() : nullptr;
   NS_ENSURE_STATE(doc);
 
@@ -1630,7 +1714,7 @@ NS_IMETHODIMP
 nsDOMWindowUtils::GetBoundsWithoutFlushing(nsIDOMElement *aElement,
                                            nsIDOMClientRect** aResult)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   nsresult rv;
@@ -1670,7 +1754,7 @@ nsDOMWindowUtils::GetRootBounds(nsIDOMClientRect** aResult)
     }
   }
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   RefPtr<DOMRect> rect = new DOMRect(window);
   rect->SetRect(nsPresContext::AppUnitsToFloatCSSPixels(bounds.x),
                 nsPresContext::AppUnitsToFloatCSSPixels(bounds.y),
@@ -1732,14 +1816,6 @@ nsDOMWindowUtils::GetFocusedInputType(char** aType)
 }
 
 NS_IMETHODIMP
-nsDOMWindowUtils::FindElementWithViewId(nsViewID aID,
-                                        nsIDOMElement** aResult)
-{
-  RefPtr<nsIContent> content = nsLayoutUtils::FindContentFor(aID);
-  return content ? CallQueryInterface(content, aResult) : NS_OK;
-}
-
-NS_IMETHODIMP
 nsDOMWindowUtils::GetViewId(nsIDOMElement* aElement, nsViewID* aResult)
 {
   nsCOMPtr<nsIContent> content = do_QueryInterface(aElement);
@@ -1752,7 +1828,7 @@ nsDOMWindowUtils::GetViewId(nsIDOMElement* aElement, nsViewID* aResult)
 NS_IMETHODIMP
 nsDOMWindowUtils::GetScreenPixelsPerCSSPixel(float* aScreenPixels)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
   return window->GetDevicePixelRatio(aScreenPixels);
 }
@@ -1780,15 +1856,15 @@ nsDOMWindowUtils::DispatchDOMEventViaPresShell(nsIDOMNode* aTarget,
 {
   NS_ENSURE_STATE(aEvent);
   aEvent->SetTrusted(aTrusted);
-  WidgetEvent* internalEvent = aEvent->GetInternalNSEvent();
+  WidgetEvent* internalEvent = aEvent->WidgetEventPtr();
   NS_ENSURE_STATE(internalEvent);
   nsCOMPtr<nsIContent> content = do_QueryInterface(aTarget);
   NS_ENSURE_STATE(content);
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   if (content->OwnerDoc()->GetWindow() != window) {
     return NS_ERROR_DOM_HIERARCHY_REQUEST_ERR;
   }
-  nsCOMPtr<nsIDocument> targetDoc = content->GetCurrentDoc();
+  nsCOMPtr<nsIDocument> targetDoc = content->GetUncomposedDoc();
   NS_ENSURE_STATE(targetDoc);
   RefPtr<nsIPresShell> targetShell = targetDoc->GetShell();
   NS_ENSURE_STATE(targetShell);
@@ -1805,9 +1881,9 @@ static void
 InitEvent(WidgetGUIEvent& aEvent, LayoutDeviceIntPoint* aPt = nullptr)
 {
   if (aPt) {
-    aEvent.refPoint = *aPt;
+    aEvent.mRefPoint = *aPt;
   }
-  aEvent.time = PR_IntervalNow();
+  aEvent.mTime = PR_IntervalNow();
 }
 
 NS_IMETHODIMP
@@ -1819,7 +1895,7 @@ nsDOMWindowUtils::SendQueryContentEvent(uint32_t aType,
 {
   *aResult = nullptr;
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
   nsIDocShell *docShell = window->GetDocShell();
@@ -2009,16 +2085,16 @@ nsDOMWindowUtils::GetVisitedDependentComputedStyle(
 {
   aResult.Truncate();
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   nsCOMPtr<Element> element = do_QueryInterface(aElement);
   NS_ENSURE_STATE(window && element);
-  window = window->GetCurrentInnerWindow();
+  nsCOMPtr<nsPIDOMWindowInner> innerWindow = window->GetCurrentInnerWindow();
   NS_ENSURE_STATE(window);
 
   nsCOMPtr<nsIDOMCSSStyleDeclaration> decl;
   {
     ErrorResult rv;
-    decl = window->GetComputedStyle(*element, aPseudoElement, rv);
+    decl = innerWindow->GetComputedStyle(*element, aPseudoElement, rv);
     ENSURE_SUCCESS(rv, rv.StealNSResult());
   }
 
@@ -2032,7 +2108,7 @@ nsDOMWindowUtils::GetVisitedDependentComputedStyle(
 NS_IMETHODIMP
 nsDOMWindowUtils::EnterModalState()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   window->EnterModalState();
@@ -2042,7 +2118,7 @@ nsDOMWindowUtils::EnterModalState()
 NS_IMETHODIMP
 nsDOMWindowUtils::LeaveModalState()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   window->LeaveModalState();
@@ -2052,27 +2128,27 @@ nsDOMWindowUtils::LeaveModalState()
 NS_IMETHODIMP
 nsDOMWindowUtils::IsInModalState(bool *retval)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
-  *retval = static_cast<nsGlobalWindow*>(window.get())->IsInModalState();
+  *retval = nsGlobalWindow::Cast(window)->IsInModalState();
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsDOMWindowUtils::SetDesktopModeViewport(bool aDesktopMode)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
-  static_cast<nsGlobalWindow*>(window.get())->SetDesktopModeViewport(aDesktopMode);
+  window->SetDesktopModeViewport(aDesktopMode);
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsDOMWindowUtils::GetOuterWindowID(uint64_t *aWindowID)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   NS_ASSERTION(window->IsOuterWindow(), "How did that happen?");
@@ -2083,12 +2159,12 @@ nsDOMWindowUtils::GetOuterWindowID(uint64_t *aWindowID)
 NS_IMETHODIMP
 nsDOMWindowUtils::GetCurrentInnerWindowID(uint64_t *aWindowID)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_NOT_AVAILABLE);
 
   NS_ASSERTION(window->IsOuterWindow(), "How did that happen?");
   nsGlobalWindow* inner =
-    static_cast<nsGlobalWindow*>(window.get())->GetCurrentInnerWindowInternal();
+    nsGlobalWindow::Cast(window)->GetCurrentInnerWindowInternal();
   if (!inner) {
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -2099,7 +2175,7 @@ nsDOMWindowUtils::GetCurrentInnerWindowID(uint64_t *aWindowID)
 NS_IMETHODIMP
 nsDOMWindowUtils::SuspendTimeouts()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
   window->SuspendTimeouts(1, true, false);
@@ -2110,7 +2186,7 @@ nsDOMWindowUtils::SuspendTimeouts()
 NS_IMETHODIMP
 nsDOMWindowUtils::ResumeTimeouts()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
   window->ResumeTimeouts(true, false);
@@ -2150,26 +2226,30 @@ nsDOMWindowUtils::GetLayerManagerRemote(bool* retval)
 }
 
 NS_IMETHODIMP
-nsDOMWindowUtils::GetSupportsHardwareH264Decoding(nsAString& aRetval)
+nsDOMWindowUtils::GetSupportsHardwareH264Decoding(JS::MutableHandle<JS::Value> aPromise)
 {
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
+  NS_ENSURE_STATE(window);
+  nsCOMPtr<nsIGlobalObject> parentObject =
+    do_QueryInterface(window->GetCurrentInnerWindow());
+  NS_ENSURE_STATE(parentObject);
 #ifdef MOZ_FMP4
   nsCOMPtr<nsIWidget> widget = GetWidget();
-  if (!widget)
-    return NS_ERROR_FAILURE;
-
+  NS_ENSURE_STATE(widget);
   LayerManager *mgr = widget->GetLayerManager();
-  if (!mgr)
-    return NS_ERROR_FAILURE;
-
-  nsCString failureReason;
-  if (MP4Decoder::IsVideoAccelerated(mgr->GetCompositorBackendType(), failureReason)) {
-    aRetval.AssignLiteral("Yes");
-  } else {
-    aRetval.AssignLiteral("No; ");
-    AppendUTF8toUTF16(failureReason, aRetval);
-  }
+  NS_ENSURE_STATE(mgr);
+  RefPtr<Promise> promise =
+    MP4Decoder::IsVideoAccelerated(mgr->GetCompositorBackendType(), parentObject);
+  NS_ENSURE_STATE(promise);
+  aPromise.setObject(*promise->PromiseObj());
 #else
-  aRetval.AssignLiteral("No; Compiled without MP4 support.");
+  ErrorResult rv;
+  RefPtr<Promise> promise = Promise::Create(parentObject, rv);
+  if (rv.Failed()) {
+    return rv.StealNSResult();
+  }
+  promise.MaybeResolve(NS_LITERAL_STRING("No; Compiled without MP4 support."));
+  aPromise.setObject(*promise->PromiseObj());
 #endif
   return NS_OK;
 }
@@ -2249,20 +2329,19 @@ ComputeAnimationValue(nsCSSProperty aProperty,
                       const nsAString& aInput,
                       StyleAnimationValue& aOutput)
 {
-
-  if (!StyleAnimationValue::ComputeValue(aProperty, aElement, aInput,
-                                         false, aOutput)) {
+  nsIDocument* doc = aElement->GetUncomposedDoc();
+  nsIPresShell* shell = doc->GetShell();
+  if (!shell) {
     return false;
   }
 
-  // This matches TransExtractComputedValue in nsTransitionManager.cpp.
-  if (aProperty == eCSSProperty_visibility) {
-    MOZ_ASSERT(aOutput.GetUnit() == StyleAnimationValue::eUnit_Enumerated,
-               "unexpected unit");
-    aOutput.SetIntValue(aOutput.GetIntValue(),
-                        StyleAnimationValue::eUnit_Visibility);
-  }
+  RefPtr<nsStyleContext> styleContext =
+    nsComputedDOMStyle::GetStyleContextForElement(aElement, nullptr, shell);
 
+  if (!StyleAnimationValue::ComputeValue(aProperty, aElement, styleContext,
+                                         aInput, false, aOutput)) {
+    return false;
+  }
   return true;
 }
 
@@ -2295,6 +2374,19 @@ nsDOMWindowUtils::AdvanceTimeAndRefresh(int64_t aMilliseconds)
     }
   }
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::GetLastTransactionId(uint64_t *aLastTransactionId)
+{
+  nsPresContext* presContext = GetPresContext();
+  if (!presContext) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  nsRefreshDriver* driver = presContext->GetRootPresContext()->RefreshDriver();
+  *aLastTransactionId = driver->LastTransactionId();
   return NS_OK;
 }
 
@@ -2465,9 +2557,15 @@ nsDOMWindowUtils::ZoomToFocusedInput()
     uint32_t flags = layers::DISABLE_ZOOM_OUT;
     if (!Preferences::GetBool("formhelper.autozoom")) {
       flags |= layers::PAN_INTO_VIEW_ONLY;
+    } else {
+      flags |= layers::ONLY_ZOOM_TO_DEFAULT_SCALE;
     }
 
     CSSRect bounds = nsLayoutUtils::GetBoundingContentRect(content, rootScrollFrame);
+    if (bounds.IsEmpty()) {
+      // Do not zoom on empty bounds. Bail out.
+      return NS_OK;
+    }
     bounds.Inflate(15.0f, 0.0f);
     widget->ZoomToRect(presShellId, viewId, bounds, flags);
   }
@@ -2487,7 +2585,7 @@ nsDOMWindowUtils::ComputeAnimationDistance(nsIDOMElement* aElement,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCSSProperty property =
-    nsCSSProps::LookupProperty(aProperty, nsCSSProps::eIgnoreEnabledState);
+    nsCSSProps::LookupProperty(aProperty, CSSEnabledState::eIgnoreEnabledState);
   if (property != eCSSProperty_UNKNOWN && nsCSSProps::IsShorthand(property)) {
     property = eCSSProperty_UNKNOWN;
   }
@@ -2590,7 +2688,7 @@ nsDOMWindowUtils::GetOuterWindowWithId(uint64_t aWindowID,
 NS_IMETHODIMP
 nsDOMWindowUtils::GetContainerElement(nsIDOMElement** aResult)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   nsCOMPtr<nsIDOMElement> element =
@@ -2608,10 +2706,10 @@ nsDOMWindowUtils::WrapDOMFile(nsIFile *aFile,
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
-  nsPIDOMWindow* innerWindow = window->GetCurrentInnerWindow();
+  nsPIDOMWindowInner* innerWindow = window->GetCurrentInnerWindow();
   if (!innerWindow) {
     return NS_ERROR_FAILURE;
   }
@@ -2732,8 +2830,8 @@ nsDOMWindowUtils::IsPartOfOpaqueLayer(nsIDOMElement* aElement, bool* aResult)
     return NS_ERROR_FAILURE;
   }
 
-  Layer* layer = FrameLayerBuilder::GetDebugSingleOldLayerForFrame(frame);
-  if (!layer || !layer->AsPaintedLayer()) {
+  PaintedLayer* layer = FrameLayerBuilder::GetDebugSingleOldPaintedLayerForFrame(frame);
+  if (!layer) {
     return NS_ERROR_FAILURE;
   }
 
@@ -2761,12 +2859,12 @@ nsDOMWindowUtils::NumberOfAssignedPaintedLayers(nsIDOMElement** aElements,
       return NS_ERROR_FAILURE;
     }
 
-    Layer* layer = FrameLayerBuilder::GetDebugSingleOldLayerForFrame(frame);
-    if (!layer || !layer->AsPaintedLayer()) {
+    PaintedLayer* layer = FrameLayerBuilder::GetDebugSingleOldPaintedLayerForFrame(frame);
+    if (!layer) {
       return NS_ERROR_FAILURE;
     }
 
-    layers.PutEntry(layer->AsPaintedLayer());
+    layers.PutEntry(layer);
   }
 
   *aResult = layers.Count();
@@ -2776,10 +2874,10 @@ nsDOMWindowUtils::NumberOfAssignedPaintedLayers(nsIDOMElement** aElements,
 NS_IMETHODIMP
 nsDOMWindowUtils::EnableDialogs()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
-  static_cast<nsGlobalWindow*>(window.get())->EnableDialogs();
+  nsGlobalWindow::Cast(window)->EnableDialogs();
   return NS_OK;
 }
 
@@ -2790,10 +2888,10 @@ nsDOMWindowUtils::DisableDialogs()
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
-  static_cast<nsGlobalWindow*>(window.get())->DisableDialogs();
+  nsGlobalWindow::Cast(window)->DisableDialogs();
   return NS_OK;
 }
 
@@ -2804,10 +2902,10 @@ nsDOMWindowUtils::AreDialogsEnabled(bool* aResult)
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
-  *aResult = static_cast<nsGlobalWindow*>(window.get())->AreDialogsEnabled();
+  *aResult = nsGlobalWindow::Cast(window)->AreDialogsEnabled();
   return NS_OK;
 }
 
@@ -2822,7 +2920,7 @@ nsDOMWindowUtils::GetFileId(JS::Handle<JS::Value> aFile, JSContext* aCx,
 
   JSObject* obj = aFile.toObjectOrNull();
 
-  indexedDB::IDBMutableFile* mutableFile = nullptr;
+  IDBMutableFile* mutableFile = nullptr;
   if (NS_SUCCEEDED(UNWRAP_OBJECT(IDBMutableFile, obj, mutableFile))) {
     *_retval = mutableFile->GetFileId();
     return NS_OK;
@@ -2873,12 +2971,13 @@ nsDOMWindowUtils::GetFileReferences(const nsAString& aDatabaseName, int64_t aId,
                                     int32_t* aSliceRefCnt, JSContext* aCx,
                                     bool* aResult)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
   nsCString origin;
   nsresult rv =
-    quota::QuotaManager::GetInfoFromWindow(window, nullptr, &origin, nullptr);
+    quota::QuotaManager::GetInfoFromWindow(window, nullptr, nullptr, &origin,
+                                           nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
   IDBOpenDBOptions options;
@@ -2890,8 +2989,7 @@ nsDOMWindowUtils::GetFileReferences(const nsAString& aDatabaseName, int64_t aId,
   quota::PersistenceType persistenceType =
     quota::PersistenceTypeFromStorage(options.mStorage);
 
-  RefPtr<indexedDB::IndexedDatabaseManager> mgr =
-    indexedDB::IndexedDatabaseManager::Get();
+  RefPtr<IndexedDatabaseManager> mgr = IndexedDatabaseManager::Get();
 
   if (mgr) {
     rv = mgr->BlockAndGetFileReferences(persistenceType, origin, aDatabaseName,
@@ -2910,8 +3008,6 @@ nsDOMWindowUtils::GetFileReferences(const nsAString& aDatabaseName, int64_t aId,
 NS_IMETHODIMP
 nsDOMWindowUtils::FlushPendingFileDeletions()
 {
-  using mozilla::dom::indexedDB::IndexedDatabaseManager;
-
   RefPtr<IndexedDatabaseManager> mgr = IndexedDatabaseManager::Get();
   if (mgr) {
     nsresult rv = mgr->FlushPendingFileDeletions();
@@ -2987,7 +3083,7 @@ nsDOMWindowUtils::GetPCCountScriptContents(int32_t script, JSContext* cx, nsAStr
 NS_IMETHODIMP
 nsDOMWindowUtils::GetPaintingSuppressed(bool *aPaintingSuppressed)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
   nsIDocShell *docShell = window->GetDocShell();
   NS_ENSURE_TRUE(docShell, NS_ERROR_FAILURE);
@@ -3053,97 +3149,30 @@ nsDOMWindowUtils::RemoteFrameFullscreenReverted()
   return NS_OK;
 }
 
-class MOZ_STACK_CLASS FullscreenChangePrepare
+static void
+PrepareForFullscreenChange(nsIPresShell* aPresShell, const nsSize& aSize,
+                           nsSize* aOldSize = nullptr)
 {
-public:
-  FullscreenChangePrepare(nsIPresShell* aPresShell,
-                          const nsSize& aSize, nsSize* aOldSize = nullptr)
-    : mPresShell(aPresShell)
-  {
-    if (mPresShell) {
-      mPresShell->SetIsInFullscreenChange(true);
-    }
-    if (aSize.IsEmpty()) {
-      return;
-    }
-    if (nsViewManager* viewManager = mPresShell->GetViewManager()) {
+  if (!aPresShell) {
+    return;
+  }
+  if (nsRefreshDriver* rd = aPresShell->GetRefreshDriver()) {
+    rd->SetIsResizeSuppressed();
+  }
+  if (!aSize.IsEmpty()) {
+    if (nsViewManager* viewManager = aPresShell->GetViewManager()) {
       if (aOldSize) {
         viewManager->GetWindowDimensions(&aOldSize->width, &aOldSize->height);
       }
       viewManager->SetWindowDimensions(aSize.width, aSize.height);
     }
   }
-
-  ~FullscreenChangePrepare()
-  {
-    if (mPresShell) {
-      mPresShell->SetIsInFullscreenChange(false);
-    }
-  }
-
-private:
-  nsCOMPtr<nsIPresShell> mPresShell;
-};
-
-class OldWindowSize : public LinkedListElement<OldWindowSize>
-{
-public:
-  static void Set(nsPIDOMWindow* aWindow, const nsSize& aSize)
-  {
-    OldWindowSize* item = GetItem(aWindow);
-    if (item) {
-      item->mSize = aSize;
-    } else if (aWindow) {
-      item = new OldWindowSize(do_GetWeakReference(aWindow), aSize);
-      sList.insertBack(item);
-    }
-  }
-
-  static nsSize GetAndRemove(nsPIDOMWindow* aWindow)
-  {
-    nsSize result;
-    if (OldWindowSize* item = GetItem(aWindow)) {
-      result = item->mSize;
-      delete item;
-    }
-    return result;
-  }
-
-private:
-  explicit OldWindowSize(already_AddRefed<nsIWeakReference>&& aWindow,
-                         const nsSize& aSize)
-    : mWindow(Move(aWindow)), mSize(aSize) { }
-  ~OldWindowSize() { };
-
-  static OldWindowSize* GetItem(nsPIDOMWindow* aWindow)
-  {
-    OldWindowSize* item = sList.getFirst();
-    while (item) {
-      nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(item->mWindow);
-      if (!window) {
-        OldWindowSize* thisItem = item;
-        item = thisItem->getNext();
-        delete thisItem;
-        continue;
-      }
-      if (window == aWindow) {
-        break;
-      }
-      item = item->getNext();
-    }
-    return item;
-  }
-
-  static LinkedList<OldWindowSize> sList;
-  nsWeakPtr mWindow;
-  nsSize mSize;
-};
-
-LinkedList<OldWindowSize> OldWindowSize::sList;
+}
 
 NS_IMETHODIMP
 nsDOMWindowUtils::HandleFullscreenRequests(bool* aRetVal)
 {
+  PROFILER_MARKER("Enter fullscreen");
   nsCOMPtr<nsIDocument> doc = GetDocument();
   NS_ENSURE_STATE(doc);
 
@@ -3156,8 +3185,8 @@ nsDOMWindowUtils::HandleFullscreenRequests(bool* aRetVal)
     presContext->DeviceContext()->GetRect(screenRect);
   }
   nsSize oldSize;
-  FullscreenChangePrepare prepare(GetPresShell(), screenRect.Size(), &oldSize);
-  OldWindowSize::Set(doc->GetWindow(), oldSize);
+  PrepareForFullscreenChange(GetPresShell(), screenRect.Size(), &oldSize);
+  OldWindowSize::Set(mWindow, oldSize);
 
   *aRetVal = nsIDocument::HandlePendingFullscreenRequests(doc);
   return NS_OK;
@@ -3166,13 +3195,14 @@ nsDOMWindowUtils::HandleFullscreenRequests(bool* aRetVal)
 nsresult
 nsDOMWindowUtils::ExitFullscreen()
 {
+  PROFILER_MARKER("Exit fullscreen");
   nsCOMPtr<nsIDocument> doc = GetDocument();
   NS_ENSURE_STATE(doc);
 
   // Although we would not use the old size if we have already exited
   // fullscreen, we still want to cleanup in case we haven't.
-  nsSize oldSize = OldWindowSize::GetAndRemove(doc->GetWindow());
-  if (!doc->IsFullScreenDoc()) {
+  nsSize oldSize = OldWindowSize::GetAndRemove(mWindow);
+  if (!doc->GetFullscreenElement()) {
     return NS_OK;
   }
 
@@ -3180,7 +3210,7 @@ nsDOMWindowUtils::ExitFullscreen()
   // set the window dimensions in advance. Since the resize message
   // comes after the fullscreen change call, doing so could avoid an
   // extra resize reflow after this point.
-  FullscreenChangePrepare prepare(GetPresShell(), oldSize);
+  PrepareForFullscreenChange(GetPresShell(), oldSize);
   nsIDocument::ExitFullscreenInDocTree(doc);
   return NS_OK;
 }
@@ -3360,9 +3390,9 @@ nsDOMWindowUtils::GetIsHandlingUserInput(bool* aHandlingUserInput)
 NS_IMETHODIMP
 nsDOMWindowUtils::AllowScriptsToClose()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
-  static_cast<nsGlobalWindow*>(window.get())->AllowScriptsToClose();
+  nsGlobalWindow::Cast(window)->AllowScriptsToClose();
   return NS_OK;
 }
 
@@ -3371,7 +3401,7 @@ nsDOMWindowUtils::GetIsParentWindowMainWidgetVisible(bool* aIsVisible)
 {
   // this should reflect the "is parent window visible" logic in
   // nsWindowWatcher::OpenWindowInternal()
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   nsCOMPtr<nsIWidget> parentWidget;
@@ -3454,7 +3484,7 @@ nsDOMWindowUtils::DispatchEventToChromeOnly(nsIDOMEventTarget* aTarget,
 {
   *aRetVal = false;
   NS_ENSURE_STATE(aTarget && aEvent);
-  aEvent->GetInternalNSEvent()->mFlags.mOnlyChromeDispatch = true;
+  aEvent->WidgetEventPtr()->mFlags.mOnlyChromeDispatch = true;
   aTarget->DispatchEvent(aEvent, aRetVal);
   return NS_OK;
 }
@@ -3617,8 +3647,10 @@ nsDOMWindowUtils::GetContentAPZTestData(JSContext* aContext,
 {
   if (nsIWidget* widget = GetWidget()) {
     RefPtr<LayerManager> lm = widget->GetLayerManager();
-    if (lm && lm->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
-      ClientLayerManager* clm = static_cast<ClientLayerManager*>(lm.get());
+    if (!lm) {
+      return NS_OK;
+    }
+    if (ClientLayerManager* clm = lm->AsClientLayerManager()) {
       if (!clm->GetAPZTestData().ToJS(aOutContentTestData, aContext)) {
         return NS_ERROR_FAILURE;
       }
@@ -3634,8 +3666,10 @@ nsDOMWindowUtils::GetCompositorAPZTestData(JSContext* aContext,
 {
   if (nsIWidget* widget = GetWidget()) {
     RefPtr<LayerManager> lm = widget->GetLayerManager();
-    if (lm && lm->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
-      ClientLayerManager* clm = static_cast<ClientLayerManager*>(lm.get());
+    if (!lm) {
+      return NS_OK;
+    }
+    if (ClientLayerManager* clm = lm->AsClientLayerManager()) {
       APZTestData compositorSideData;
       clm->GetCompositorSideAPZTestData(&compositorSideData);
       if (!compositorSideData.ToJS(aOutCompositorTestData, aContext)) {
@@ -3660,9 +3694,29 @@ nsDOMWindowUtils::PostRestyleSelfEvent(nsIDOMElement* aElement)
 }
 
 NS_IMETHODIMP
+nsDOMWindowUtils::GetMediaSuspend(uint32_t* aSuspend)
+{
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
+  NS_ENSURE_STATE(window);
+
+  *aSuspend = window->GetMediaSuspend();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::SetMediaSuspend(uint32_t aSuspend)
+{
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
+  NS_ENSURE_STATE(window);
+
+  window->SetMediaSuspend(aSuspend);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsDOMWindowUtils::GetAudioMuted(bool* aMuted)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   *aMuted = window->GetAudioMuted();
@@ -3672,7 +3726,7 @@ nsDOMWindowUtils::GetAudioMuted(bool* aMuted)
 NS_IMETHODIMP
 nsDOMWindowUtils::SetAudioMuted(bool aMuted)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   window->SetAudioMuted(aMuted);
@@ -3682,7 +3736,7 @@ nsDOMWindowUtils::SetAudioMuted(bool aMuted)
 NS_IMETHODIMP
 nsDOMWindowUtils::GetAudioVolume(float* aVolume)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   *aVolume = window->GetAudioVolume();
@@ -3692,7 +3746,7 @@ nsDOMWindowUtils::GetAudioVolume(float* aVolume)
 NS_IMETHODIMP
 nsDOMWindowUtils::SetAudioVolume(float aVolume)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   return window->SetAudioVolume(aVolume);
@@ -3704,7 +3758,7 @@ nsDOMWindowUtils::SetChromeMargin(int32_t aTop,
                                   int32_t aBottom,
                                   int32_t aLeft)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   if (window) {
     nsCOMPtr<nsIBaseWindow> baseWindow = do_QueryInterface(window->GetDocShell());
     if (baseWindow) {
@@ -3750,8 +3804,20 @@ nsDOMWindowUtils::XpconnectArgument(nsIDOMWindowUtils* aThis)
 NS_IMETHODIMP
 nsDOMWindowUtils::AskPermission(nsIContentPermissionRequest* aRequest)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   return nsContentPermissionUtils::AskPermission(aRequest, window->GetCurrentInnerWindow());
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::GetElementsRestyled(uint64_t* aResult)
+{
+  nsPresContext* presContext = GetPresContext();
+  if (!presContext) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  *aResult = presContext->ElementsRestyledCount();
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -3781,7 +3847,7 @@ nsDOMWindowUtils::GetFramesReflowed(uint64_t* aResult)
 NS_IMETHODIMP
 nsDOMWindowUtils::SetServiceWorkersTestingEnabled(bool aEnabled)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   window->SetServiceWorkersTestingEnabled(aEnabled);
@@ -3792,7 +3858,7 @@ nsDOMWindowUtils::SetServiceWorkersTestingEnabled(bool aEnabled)
 NS_IMETHODIMP
 nsDOMWindowUtils::GetServiceWorkersTestingEnabled(bool *aEnabled)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryReferent(mWindow);
   NS_ENSURE_STATE(window);
 
   *aEnabled = window->GetServiceWorkersTestingEnabled();
@@ -3855,14 +3921,32 @@ nsDOMWindowUtils::SetNextPaintSyncId(int32_t aSyncId)
 {
   if (nsIWidget* widget = GetWidget()) {
     RefPtr<LayerManager> lm = widget->GetLayerManager();
-    if (lm && lm->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
-      ClientLayerManager* clm = static_cast<ClientLayerManager*>(lm.get());
-      clm->SetNextPaintSyncId(aSyncId);
+    if (lm && lm->AsClientLayerManager()) {
+      lm->AsClientLayerManager()->SetNextPaintSyncId(aSyncId);
       return NS_OK;
     }
   }
 
   NS_WARNING("Paint sync id could not be set on the ClientLayerManager");
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::RespectDisplayPortSuppression(bool aEnabled)
+{
+  nsCOMPtr<nsIPresShell> shell(GetPresShell());
+  APZCCallbackHelper::RespectDisplayPortSuppression(aEnabled, shell);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::ForceReflowInterrupt()
+{
+  nsPresContext* pc = GetPresContext();
+  if (!pc) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  pc->SetPendingInterruptFromTest();
   return NS_OK;
 }
 

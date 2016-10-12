@@ -5,6 +5,7 @@
 #ifndef _JSEPTRACK_H_
 #define _JSEPTRACK_H_
 
+#include <algorithm>
 #include <string>
 #include <map>
 #include <set>
@@ -73,7 +74,8 @@ public:
       : mType(type),
         mStreamId(streamid),
         mTrackId(trackid),
-        mDirection(direction)
+        mDirection(direction),
+        mActive(false)
   {}
 
   virtual mozilla::SdpMediaSection::MediaType
@@ -136,8 +138,35 @@ public:
     mSsrcs.push_back(ssrc);
   }
 
+  bool
+  GetActive() const
+  {
+    return mActive;
+  }
+
+  void
+  SetActive(bool active)
+  {
+    mActive = active;
+  }
+
   virtual void PopulateCodecs(
       const std::vector<JsepCodecDescription*>& prototype);
+
+  template <class UnaryFunction>
+  void ForEachCodec(UnaryFunction func)
+  {
+    std::for_each(mPrototypeCodecs.values.begin(),
+                  mPrototypeCodecs.values.end(), func);
+  }
+
+  template <class BinaryPredicate>
+  void SortCodecs(BinaryPredicate sorter)
+  {
+    std::stable_sort(mPrototypeCodecs.values.begin(),
+                     mPrototypeCodecs.values.end(), sorter);
+  }
+
   virtual void AddToOffer(SdpMediaSection* offer) const;
   virtual void AddToAnswer(const SdpMediaSection& offer,
                            SdpMediaSection* answer) const;
@@ -217,15 +246,12 @@ private:
       const std::vector<JsepCodecDescription*>& negotiatedCodecs,
       JsepTrackNegotiatedDetails* details);
 
-  // |answer| is set when performing the final negotiation on completion of
-  // offer/answer, and is used to update the formats in |codecs|, since the
-  // answer is authoritative. |formatChanges| is also set on completion of
-  // offer/answer, and records how the formats in |codecs| were changed, which
-  // is used by |Negotiate| to update |mPrototypeCodecs|.
+  // |formatChanges| is set on completion of offer/answer, and records how the
+  // formats in |codecs| were changed, which is used by |Negotiate| to update
+  // |mPrototypeCodecs|.
   virtual void NegotiateCodecs(
       const SdpMediaSection& remote,
       std::vector<JsepCodecDescription*>* codecs,
-      const SdpMediaSection* answer = nullptr,
       std::map<std::string, std::string>* formatChanges = nullptr) const;
 
   JsConstraints* FindConstraints(
@@ -246,6 +272,7 @@ private:
   std::vector<JsConstraints> mJsEncodeConstraints;
   UniquePtr<JsepTrackNegotiatedDetails> mNegotiatedDetails;
   std::vector<uint32_t> mSsrcs;
+  bool mActive;
 };
 
 // Need a better name for this.

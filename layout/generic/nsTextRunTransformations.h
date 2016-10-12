@@ -32,6 +32,7 @@ struct nsTransformedCharStyle final {
   uint8_t                 mTextTransform;
   uint8_t                 mMathVariant;
   bool                    mExplicitLanguage;
+  bool                    mForceNonFullWidth = false;
 
 private:
   ~nsTransformedCharStyle() {}
@@ -44,16 +45,19 @@ public:
   virtual ~nsTransformingTextRunFactory() {}
 
   // Default 8-bit path just transforms to Unicode and takes that path
-  nsTransformedTextRun* MakeTextRun(const uint8_t* aString, uint32_t aLength,
-                                    const gfxFontGroup::Parameters* aParams,
-                                    gfxFontGroup* aFontGroup, uint32_t aFlags,
-                                    nsTArray<RefPtr<nsTransformedCharStyle>>&& aStyles,
-                                    bool aOwnsFactory);
-  nsTransformedTextRun* MakeTextRun(const char16_t* aString, uint32_t aLength,
-                                    const gfxFontGroup::Parameters* aParams,
-                                    gfxFontGroup* aFontGroup, uint32_t aFlags,
-                                    nsTArray<RefPtr<nsTransformedCharStyle>>&& aStyles,
-                                    bool aOwnsFactory);
+  mozilla::UniquePtr<nsTransformedTextRun>
+  MakeTextRun(const uint8_t* aString, uint32_t aLength,
+              const gfxFontGroup::Parameters* aParams,
+              gfxFontGroup* aFontGroup, uint32_t aFlags,
+              nsTArray<RefPtr<nsTransformedCharStyle>>&& aStyles,
+              bool aOwnsFactory);
+
+  mozilla::UniquePtr<nsTransformedTextRun>
+  MakeTextRun(const char16_t* aString, uint32_t aLength,
+              const gfxFontGroup::Parameters* aParams,
+              gfxFontGroup* aFontGroup, uint32_t aFlags,
+              nsTArray<RefPtr<nsTransformedCharStyle>>&& aStyles,
+              bool aOwnsFactory);
 
   virtual void RebuildTextRun(nsTransformedTextRun* aTextRun,
                               mozilla::gfx::DrawTarget* aRefDrawTarget,
@@ -114,13 +118,14 @@ protected:
 class nsTransformedTextRun final : public gfxTextRun {
 public:
 
-  static nsTransformedTextRun *Create(const gfxTextRunFactory::Parameters* aParams,
-                                      nsTransformingTextRunFactory* aFactory,
-                                      gfxFontGroup* aFontGroup,
-                                      const char16_t* aString, uint32_t aLength,
-                                      const uint32_t aFlags,
-                                      nsTArray<RefPtr<nsTransformedCharStyle>>&& aStyles,
-                                      bool aOwnsFactory);
+  static mozilla::UniquePtr<nsTransformedTextRun>
+  Create(const gfxTextRunFactory::Parameters* aParams,
+         nsTransformingTextRunFactory* aFactory,
+         gfxFontGroup* aFontGroup,
+         const char16_t* aString, uint32_t aLength,
+         const uint32_t aFlags,
+         nsTArray<RefPtr<nsTransformedCharStyle>>&& aStyles,
+         bool aOwnsFactory);
 
   ~nsTransformedTextRun() {
     if (mOwnsFactory) {
@@ -130,8 +135,7 @@ public:
   
   void SetCapitalization(uint32_t aStart, uint32_t aLength,
                          bool* aCapitalization);
-  virtual bool SetPotentialLineBreaks(uint32_t aStart, uint32_t aLength,
-                                      uint8_t* aBreakBefore);
+  virtual bool SetPotentialLineBreaks(Range aRange, uint8_t* aBreakBefore);
   /**
    * Called after SetCapitalization and SetPotentialLineBreaks
    * are done and before we request any data from the textrun. Also always

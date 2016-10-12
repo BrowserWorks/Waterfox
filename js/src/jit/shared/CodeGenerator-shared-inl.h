@@ -25,10 +25,20 @@ ToInt32(const LAllocation* a)
     MOZ_CRASH("this is not a constant!");
 }
 
+static inline int64_t
+ToInt64(const LAllocation* a)
+{
+    if (a->isConstantValue())
+        return a->toConstant()->toInt64();
+    if (a->isConstantIndex())
+        return a->toConstantIndex()->index();
+    MOZ_CRASH("this is not a constant!");
+}
+
 static inline double
 ToDouble(const LAllocation* a)
 {
-    return a->toConstant()->toNumber();
+    return a->toConstant()->numberToDouble();
 }
 
 static inline Register
@@ -48,6 +58,18 @@ static inline Register
 ToRegister(const LDefinition* def)
 {
     return ToRegister(*def->output());
+}
+
+static inline Register64
+ToOutRegister64(LInstruction* ins)
+{
+#if JS_BITS_PER_WORD == 32
+    Register loReg = ToRegister(ins->getDef(0));
+    Register hiReg = ToRegister(ins->getDef(1));
+    return Register64(hiReg, loReg);
+#else
+    return Register64(ToRegister(ins->getDef(0)));
+#endif
 }
 
 static inline Register
@@ -118,12 +140,12 @@ ToAnyRegister(const LDefinition* def)
     return ToAnyRegister(def->output());
 }
 
-static inline Int32Key
-ToInt32Key(const LAllocation* a)
+static inline RegisterOrInt32Constant
+ToRegisterOrInt32Constant(const LAllocation* a)
 {
     if (a->isConstant())
-        return Int32Key(ToInt32(a));
-    return Int32Key(ToRegister(a));
+        return RegisterOrInt32Constant(ToInt32(a));
+    return RegisterOrInt32Constant(ToRegister(a));
 }
 
 static inline ValueOperand
@@ -222,26 +244,17 @@ CodeGeneratorShared::ToStackOffset(const LAllocation* a) const
     return ToStackOffset(*a);
 }
 
-Operand
-CodeGeneratorShared::ToOperand(const LAllocation& a)
+Address
+CodeGeneratorShared::ToAddress(const LAllocation& a)
 {
-    if (a.isGeneralReg())
-        return Operand(a.toGeneralReg()->reg());
-    if (a.isFloatReg())
-        return Operand(a.toFloatReg()->reg());
-    return Operand(masm.getStackPointer(), ToStackOffset(&a));
+    MOZ_ASSERT(a.isMemory());
+    return Address(masm.getStackPointer(), ToStackOffset(&a));
 }
 
-Operand
-CodeGeneratorShared::ToOperand(const LAllocation* a)
+Address
+CodeGeneratorShared::ToAddress(const LAllocation* a)
 {
-    return ToOperand(*a);
-}
-
-Operand
-CodeGeneratorShared::ToOperand(const LDefinition* def)
-{
-    return ToOperand(def->output());
+    return ToAddress(*a);
 }
 
 void
@@ -325,6 +338,8 @@ CodeGeneratorShared::verifyHeapAccessDisassembly(uint32_t begin, uint32_t end, b
       case Scalar::Float32:
       case Scalar::Float64:
       case Scalar::Float32x4:
+      case Scalar::Int8x16:
+      case Scalar::Int16x8:
       case Scalar::Int32x4:
         op = OtherOperand(ToFloatRegister(alloc).encoding());
         break;

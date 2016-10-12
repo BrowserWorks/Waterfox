@@ -1,17 +1,18 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+/* import-globals-from ../../framework/test/shared-head.js */
 "use strict";
 
 // shared-head.js handles imports, constants, and utility functions
 Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtools/client/framework/test/shared-head.js", this);
 
-var {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 var {Utils: WebConsoleUtils} = require("devtools/shared/webconsole/utils");
 var {Messages} = require("devtools/client/webconsole/console-output");
 const asyncStorage = require("devtools/shared/async-storage");
+const HUDService = require("devtools/client/webconsole/hudservice");
 
 // Services.prefs.setBoolPref("devtools.debugger.log", true);
 
@@ -38,7 +39,7 @@ const GROUP_INDENT = 12;
 
 const WEBCONSOLE_STRINGS_URI = "chrome://devtools/locale/" +
                                "webconsole.properties";
-var WCUL10n = new WebConsoleUtils.l10n(WEBCONSOLE_STRINGS_URI);
+var WCUL10n = new WebConsoleUtils.L10n(WEBCONSOLE_STRINGS_URI);
 
 DevToolsUtils.testing = true;
 
@@ -209,7 +210,7 @@ function findLogEntry(str) {
  * @return object
  *         A promise that is resolved once the web console is open.
  */
-var openConsole = function(tab) {
+var openConsole = function (tab) {
   let webconsoleOpened = promise.defer();
   let target = TargetFactory.forTab(tab || gBrowser.selectedTab);
   gDevTools.showToolbox(target, "webconsole").then(toolbox => {
@@ -241,58 +242,11 @@ var closeConsole = Task.async(function* (tab) {
 });
 
 /**
- * Wait for a context menu popup to open.
- *
- * @param nsIDOMElement popup
- *        The XUL popup you expect to open.
- * @param nsIDOMElement button
- *        The button/element that receives the contextmenu event. This is
- *        expected to open the popup.
- * @param function onShown
- *        Function to invoke on popupshown event.
- * @param function onHidden
- *        Function to invoke on popuphidden event.
- * @return object
- *         A Promise object that is resolved after the popuphidden event
- *         callback is invoked.
- */
-function waitForContextMenu(popup, button, onShown, onHidden) {
-  let deferred = promise.defer();
-
-  function onPopupShown() {
-    info("onPopupShown");
-    popup.removeEventListener("popupshown", onPopupShown);
-
-    onShown && onShown();
-
-    // Use executeSoon() to get out of the popupshown event.
-    popup.addEventListener("popuphidden", onPopupHidden);
-    executeSoon(() => popup.hidePopup());
-  }
-  function onPopupHidden() {
-    info("onPopupHidden");
-    popup.removeEventListener("popuphidden", onPopupHidden);
-
-    onHidden && onHidden();
-
-    deferred.resolve(popup);
-  }
-
-  popup.addEventListener("popupshown", onPopupShown);
-
-  info("wait for the context menu to open");
-  let eventDetails = {type: "contextmenu", button: 2};
-  EventUtils.synthesizeMouse(button, 2, 2, eventDetails,
-                             button.ownerDocument.defaultView);
-  return deferred.promise;
-}
-
-/**
  * Listen for a new tab to open and return a promise that resolves when one
  * does and completes the load event.
  * @return a promise that resolves to the tab object
  */
-var waitForTab = Task.async(function*() {
+var waitForTab = Task.async(function* () {
   info("Waiting for a tab to open");
   yield once(gBrowser.tabContainer, "TabOpen");
   let tab = gBrowser.selectedTab;
@@ -364,7 +318,7 @@ var finishTest = Task.async(function* () {
   finish();
 });
 
-registerCleanupFunction(function*() {
+registerCleanupFunction(function* () {
   DevToolsUtils.testing = false;
 
   // Remove stored console commands in between tests
@@ -529,12 +483,12 @@ function findVariableViewProperties(view, rules, options) {
       rule.name = lastName;
 
       let matched = matchVariablesViewProperty(prop, rule, options);
-      return matched.then(onMatch.bind(null, prop, rule)).then(function() {
+      return matched.then(onMatch.bind(null, prop, rule)).then(function () {
         rule.name = name;
       });
     }, function onFailure() {
       return promise.resolve(null);
-    }).then(processExpandRules.bind(null, rules)).then(function() {
+    }).then(processExpandRules.bind(null, rules)).then(function () {
       deferred.resolve(null);
     });
 
@@ -705,7 +659,7 @@ function variablesViewExpandTo(options) {
     let deferred = promise.defer();
 
     if (prop._fetched || !jsterm) {
-      executeSoon(function() {
+      executeSoon(function () {
         deferred.resolve(prop);
       });
     } else {
@@ -1069,16 +1023,16 @@ function waitForMessages(options) {
   }
 
   function checkSource(rule, element) {
-    let location = element.querySelector(".message-location");
+    let location = getRenderedSource(element);
     if (!location) {
       return false;
     }
 
-    if (!checkText(rule.source.url, location.getAttribute("title"))) {
+    if (!checkText(rule.source.url, location.url)) {
       return false;
     }
 
-    if ("line" in rule.source && location.sourceLine != rule.source.line) {
+    if ("line" in rule.source && location.line === rule.source.line) {
       return false;
     }
 
@@ -1110,10 +1064,10 @@ function waitForMessages(options) {
       }
 
       if (expected.file) {
-        let file = frame.querySelector(".message-location").title;
-        if (!checkText(expected.file, file)) {
+        let url = getRenderedSource(frame).url;
+        if (!checkText(expected.file, url)) {
           ok(false, "frame #" + i + " does not match file name: " +
-                    expected.file + " != " + file);
+                    expected.file + " != " + url);
           displayErrorContext(rule, element);
           return false;
         }
@@ -1130,7 +1084,7 @@ function waitForMessages(options) {
       }
 
       if (expected.line) {
-        let line = frame.querySelector(".message-location").sourceLine;
+        let line = getRenderedSource(frame).line;
         if (!checkText(expected.line, line)) {
           ok(false, "frame #" + i + " does not match the line number: " +
                     expected.line + " != " + line);
@@ -1316,9 +1270,9 @@ function waitForMessages(options) {
   function onMessagesAdded(event, newMessages) {
     for (let msg of newMessages) {
       let elem = msg.node;
-      let location = elem.querySelector(".message-location");
-      if (location) {
-        let url = location.title;
+      let location = getRenderedSource(elem);
+      if (location && location.url) {
+        let url = location.url;
         // Prevent recursion with the browser console and any potential
         // messages coming from head.js.
         if (url.indexOf("devtools/client/webconsole/test/head.js") != -1) {
@@ -1476,7 +1430,7 @@ function checkOutputForInputs(hud, inputTests) {
   }
 
   function* checkConsoleLog(entry) {
-    info("Logging: " + entry.input);
+    info("Logging");
     hud.jsterm.clearOutput();
     hud.jsterm.execute("console.log(" + entry.input + ")");
 
@@ -1500,13 +1454,13 @@ function checkOutputForInputs(hud, inputTests) {
     }
 
     if (typeof entry.inspectorIcon == "boolean") {
-      info("Checking Inspector Link: " + entry.input);
+      info("Checking Inspector Link");
       yield checkLinkToInspector(entry.inspectorIcon, msg);
     }
   }
 
   function checkPrintOutput(entry) {
-    info("Printing: " + entry.input);
+    info("Printing");
     hud.jsterm.clearOutput();
     hud.jsterm.execute("print(" + entry.input + ")");
 
@@ -1523,7 +1477,7 @@ function checkOutputForInputs(hud, inputTests) {
   }
 
   function* checkJSEval(entry) {
-    info("Evaluating: " + entry.input);
+    info("Evaluating");
     hud.jsterm.clearOutput();
     hud.jsterm.execute(entry.input);
 
@@ -1549,7 +1503,7 @@ function checkOutputForInputs(hud, inputTests) {
   }
 
   function* checkObjectClick(entry, msg) {
-    info("Clicking: " + entry.input);
+    info("Clicking");
     let body;
     if (entry.getClickableNode) {
       body = entry.getClickableNode(msg);
@@ -1594,7 +1548,7 @@ function checkOutputForInputs(hud, inputTests) {
   }
 
   function onVariablesViewOpen(entry, {resolve, reject}, event, view, options) {
-    info("Variables view opened: " + entry.input);
+    info("Variables view opened");
     let label = entry.variablesViewLabel || entry.output;
     if (typeof label == "string" && options.label != label) {
       return;
@@ -1613,34 +1567,159 @@ function checkOutputForInputs(hud, inputTests) {
   function onTabOpen(entry, {resolve, reject}, event) {
     container.removeEventListener("TabOpen", entry._onTabOpen, true);
     entry._onTabOpen = null;
-
     let tab = event.target;
     let browser = gBrowser.getBrowserForTab(tab);
-    loadBrowser(browser).then(() => {
-      let uri = content.location.href;
+
+    Task.spawn(function* () {
+      yield loadBrowser(browser);
+      let uri = yield ContentTask.spawn(browser, {}, function* () {
+        return content.location.href;
+      });
       ok(entry.expectedTab && entry.expectedTab == uri,
          "opened tab '" + uri + "', expected tab '" + entry.expectedTab + "'");
-      return closeTab(tab);
+      yield closeTab(tab);
     }).then(resolve, reject);
   }
 
   return Task.spawn(runner);
 }
 
+/**
+ * Check the web console DOM element output for the given inputs.
+ * Each input is checked for the expected JS eval result. The JS eval result is
+ * also checked if it opens the inspector with the correct node selected on
+ * inspector icon click
+ *
+ * @param object hud
+ *        The web console instance to work with.
+ * @param array inputTests
+ *        An array of input tests. An input test element is an object. Each
+ *        object has the following properties:
+ *        - input: string, JS input value to execute.
+ *
+ *        - output: string, expected JS eval result.
+ *
+ *        - displayName: string, expected NodeFront's displayName.
+ *
+ *        - attr: Array, expected NodeFront's attributes
+ */
+function checkDomElementHighlightingForInputs(hud, inputs) {
+  function* runner() {
+    let toolbox = gDevTools.getToolbox(hud.target);
+
+    // Loading the inspector panel at first, to make it possible to listen for
+    // new node selections
+    yield toolbox.selectTool("inspector");
+    let inspector = toolbox.getCurrentPanel();
+    yield toolbox.selectTool("webconsole");
+
+    info("Iterating over the test data");
+    for (let data of inputs) {
+      let [result] = yield jsEval(data.input, {text: data.output});
+      let {msg} = yield checkWidgetAndMessage(result);
+      yield checkNodeHighlight(toolbox, inspector, msg, data);
+    }
+  }
+
+  function jsEval(input, message) {
+    info("Executing '" + input + "' in the web console");
+
+    hud.jsterm.clearOutput();
+    hud.jsterm.execute(input);
+
+    return waitForMessages({
+      webconsole: hud,
+      messages: [message]
+    });
+  }
+
+  function* checkWidgetAndMessage(result) {
+    info("Getting the output ElementNode widget");
+
+    let msg = [...result.matched][0];
+    let widget = [...msg._messageObject.widgets][0];
+    ok(widget, "ElementNode widget found in the output");
+
+    info("Waiting for the ElementNode widget to be linked to the inspector");
+    yield widget.linkToInspector();
+
+    return {widget, msg};
+  }
+
+  function* checkNodeHighlight(toolbox, inspector, msg, testData) {
+    let inspectorIcon = msg.querySelector(".open-inspector");
+    ok(inspectorIcon, "Inspector icon found in the ElementNode widget");
+
+    info("Clicking on the inspector icon and waiting for the " +
+         "inspector to be selected");
+    let onInspectorSelected = toolbox.once("inspector-selected");
+    let onInspectorUpdated = inspector.once("inspector-updated");
+    let onNewNode = toolbox.selection.once("new-node-front");
+    let onNodeHighlight = toolbox.once("node-highlight");
+
+    EventUtils.synthesizeMouseAtCenter(inspectorIcon, {},
+      inspectorIcon.ownerDocument.defaultView);
+    yield onInspectorSelected;
+    yield onInspectorUpdated;
+    yield onNodeHighlight;
+    let nodeFront = yield onNewNode;
+
+    ok(true, "Inspector selected and new node got selected");
+
+    is(nodeFront.displayName, testData.displayName,
+      "The correct node was highlighted");
+
+    if (testData.attrs) {
+      let attrs = nodeFront.attributes;
+      for (let i in testData.attrs) {
+        is(attrs[i].name, testData.attrs[i].name,
+           "Expected attribute's name is present");
+        is(attrs[i].value, testData.attrs[i].value,
+           "Expected attribute's value is present");
+      }
+    }
+
+    info("Unhighlight the node by moving away from the markup view");
+    let onNodeUnhighlight = toolbox.once("node-unhighlight");
+    let btn = inspector.toolbox.doc.querySelector(".toolbox-dock-button");
+    EventUtils.synthesizeMouseAtCenter(btn, {type: "mousemove"},
+      inspector.toolbox.win);
+    yield onNodeUnhighlight;
+
+    info("Switching back to the console");
+    yield toolbox.selectTool("webconsole");
+  }
+
+  return Task.spawn(runner);
+}
 
 /**
  * Finish the request and resolve with the request object.
  *
+ * @param {Function} predicate A predicate function that takes the request
+ * object as an argument and returns true if the request was the expected one,
+ * false otherwise. The returned promise is resolved ONLY if the predicate
+ * matches a request. Defaults to accepting any request.
  * @return promise
  * @resolves The request object.
  */
-function waitForFinishedRequest() {
-  registerCleanupFunction(function() {
+function waitForFinishedRequest(predicate = () => true) {
+  registerCleanupFunction(function () {
     HUDService.lastFinishedRequest.callback = null;
   });
 
   return new Promise(resolve => {
-    HUDService.lastFinishedRequest.callback = request => { resolve(request) };
+    HUDService.lastFinishedRequest.callback = request => {
+      // Check if this is the expected request
+      if (predicate(request)) {
+        // Match found. Clear the listener.
+        HUDService.lastFinishedRequest.callback = null;
+
+        resolve(request);
+      } else {
+        info(`Ignoring unexpected request ${JSON.stringify(request, null, 2)}`);
+      }
+    };
   });
 }
 
@@ -1652,7 +1731,7 @@ function waitForFinishedRequest() {
  * @param {Boolean} useCapture Optional for addEventListener/removeEventListener
  * @return A promise that resolves when the event has been handled
  */
-function once(target, eventName, useCapture=false) {
+function once(target, eventName, useCapture = false) {
   info("Waiting for event: '" + eventName + "' on " + target + ".");
 
   let deferred = promise.defer();
@@ -1734,7 +1813,7 @@ function simulateMessageLinkClick(element, expectedLink) {
   // Invoke the click event and check if a new tab would
   // open to the correct page.
   let oldOpenUILinkIn = window.openUILinkIn;
-  window.openUILinkIn = function(link) {
+  window.openUILinkIn = function (link) {
     if (link == expectedLink) {
       ok(true, "Clicking the message link opens the desired page");
       window.openUILinkIn = oldOpenUILinkIn;
@@ -1751,4 +1830,13 @@ function simulateMessageLinkClick(element, expectedLink) {
   element.dispatchEvent(event);
 
   return deferred.promise;
+}
+
+function getRenderedSource(root) {
+  let location = root.querySelector(".message-location .frame-link");
+  return location ? {
+    url: location.getAttribute("data-url"),
+    line: location.getAttribute("data-line"),
+    column: location.getAttribute("data-column"),
+  } : null;
 }

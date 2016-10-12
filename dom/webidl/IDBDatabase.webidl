@@ -10,7 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
-[Exposed=(Window,Worker)]
+[Exposed=(Window,Worker,System)]
 interface IDBDatabase : EventTarget {
     readonly    attribute DOMString          name;
     readonly    attribute unsigned long long version;
@@ -35,7 +35,7 @@ interface IDBDatabase : EventTarget {
 };
 
 partial interface IDBDatabase {
-    [Func="mozilla::dom::indexedDB::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
+    [Func="mozilla::dom::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
     readonly    attribute StorageType        storage;
 
     [Exposed=Window, Throws]

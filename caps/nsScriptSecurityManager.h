@@ -58,10 +58,6 @@ public:
     static nsSystemPrincipal*
     SystemPrincipalSingletonConstructor();
 
-    JSContext* GetCurrentJSContext();
-
-    JSContext* GetSafeJSContext();
-
     /**
      * Utility method for comparing two URIs.  For security purposes, two URIs
      * are equivalent if their schemes, hosts, and ports (if any) match.  This
@@ -120,6 +116,10 @@ private:
     // If aURI is a moz-extension:// URI, set mAddonId to the associated addon.
     nsresult MaybeSetAddonIdFromURI(mozilla::PrincipalOriginAttributes& aAttrs, nsIURI* aURI);
 
+    nsresult GetChannelResultPrincipal(nsIChannel* aChannel,
+                                       nsIPrincipal** aPrincipal,
+                                       bool aIgnoreSandboxing);
+
     nsCOMPtr<nsIPrincipal> mSystemPrincipal;
     bool mPrefInitialized;
     bool mIsJavaScriptEnabled;
@@ -151,7 +151,7 @@ namespace mozilla {
 
 void
 GetJarPrefix(uint32_t aAppid,
-             bool aInMozBrowser,
+             bool aInIsolatedMozBrowser,
              nsACString& aJarPrefix);
 
 } // namespace mozilla

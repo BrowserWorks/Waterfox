@@ -20,6 +20,9 @@
 #include "nsMimeTypes.h"
 #include <algorithm>
 
+namespace mozilla {
+namespace net {
+
 nsBinHexDecoder::nsBinHexDecoder() :
   mState(0), mCRC(0), mFileCRC(0), mOctetin(26),
   mDonePos(3), mInCRC(0), mCount(0), mMarker(0), mPosInbuff(0),
@@ -27,6 +30,8 @@ nsBinHexDecoder::nsBinHexDecoder() :
 {
   mDataBuffer = nullptr;
   mOutgoingBuffer = nullptr;
+  mPosInDataBuffer = 0;
+  mRlebuf = 0;
 
   mOctetBuf.val = 0;
   mHeader.type = 0;
@@ -508,3 +513,6 @@ nsBinHexDecoder::OnStopRequest(nsIRequest* request, nsISupports *aCtxt,
 
   return rv;
 }
+
+} // namespace net
+} // namespace mozilla

@@ -51,6 +51,7 @@ struct DefaultJitOptions
     bool disableEaa;
     bool disableEagerSimdUnbox;
     bool disableEdgeCaseAnalysis;
+    bool disableFlowAA;
     bool disableGvn;
     bool disableInlining;
     bool disableLicm;
@@ -58,6 +59,7 @@ struct DefaultJitOptions
     bool disablePgo;
     bool disableInstructionReordering;
     bool disableRangeAnalysis;
+    bool disableRecoverIns;
     bool disableScalarReplacement;
     bool disableSharedStubs;
     bool disableSincos;
@@ -66,13 +68,16 @@ struct DefaultJitOptions
     bool forceInlineCaches;
     bool limitScriptSize;
     bool osr;
+    bool wasmTestMode;
     uint32_t baselineWarmUpThreshold;
     uint32_t exceptionBailoutThreshold;
     uint32_t frequentBailoutThreshold;
     uint32_t maxStackArgs;
     uint32_t osrPcMismatchesBeforeRecompile;
     uint32_t smallFunctionMaxBytecodeLength_;
+    uint32_t jumpThreshold;
     mozilla::Maybe<uint32_t> forcedDefaultIonWarmUpThreshold;
+    mozilla::Maybe<uint32_t> forcedDefaultIonSmallFunctionWarmUpThreshold;
     mozilla::Maybe<IonRegisterAllocator> forcedRegisterAllocator;
 
     // The options below affect the rest of the VM, and not just the JIT.

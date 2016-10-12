@@ -16,7 +16,7 @@ function run_test()
     run_test_with_server(WorkerDebuggerServer, do_test_finished);
   });
   do_test_pending();
-};
+}
 
 function run_test_with_server(aServer, aCallback)
 {
@@ -24,7 +24,7 @@ function run_test_with_server(aServer, aCallback)
   initTestDebuggerServer(aServer);
   gDebuggee = addTestGlobal("test-stack", aServer);
   gClient = new DebuggerClient(aServer.connectPipe());
-  gClient.connect(function () {
+  gClient.connect().then(function () {
     attachTestTabAndResume(gClient, "test-stack", function (aResponse, aTabClient, aThreadClient) {
       gThreadClient = aThreadClient;
       test_simple_stepping();
@@ -38,7 +38,7 @@ function test_simple_stepping()
     gThreadClient.addOneTimeListener("paused", function (aEvent, aPacket) {
       // Check the return value.
       do_check_eq(aPacket.type, "paused");
-      do_check_eq(aPacket.frame.where.line, gDebuggee.line0 + 4);
+      do_check_eq(aPacket.frame.where.line, gDebuggee.line0 + 5);
       do_check_eq(aPacket.why.type, "resumeLimit");
       // Check that stepping worked.
       do_check_eq(gDebuggee.a, 1);

@@ -20,7 +20,6 @@
 #include "nsIDOMClipboardEvent.h"
 #include "nsIDOMCommandEvent.h"
 #include "nsIDOMComment.h"
-#include "nsIDOMCompositionEvent.h"
 #include "nsIDOMCSSPrimitiveValue.h"
 #include "nsIDOMCSSStyleDeclaration.h"
 #include "nsIDOMCSSStyleSheet.h"
@@ -96,7 +95,6 @@
 #include "nsIDOMKeyEvent.h"
 #include "nsIDOMMediaError.h"
 #include "nsIDOMMediaList.h"
-#include "nsIDOMMessageEvent.h"
 #include "nsIDOMMouseEvent.h"
 #include "nsIDOMMouseScrollEvent.h"
 #include "nsIDOMMutationEvent.h"
@@ -151,7 +149,6 @@
 #include "mozilla/dom/ClipboardEventBinding.h"
 #include "mozilla/dom/CommandEventBinding.h"
 #include "mozilla/dom/CommentBinding.h"
-#include "mozilla/dom/CompositionEventBinding.h"
 #include "mozilla/dom/ContainerBoxObjectBinding.h"
 #include "mozilla/dom/CSSPrimitiveValueBinding.h"
 #include "mozilla/dom/CSSStyleDeclarationBinding.h"
@@ -342,7 +339,6 @@ const ComponentsInterfaceShimEntry kComponentsInterfaceShimMap[] =
   DEFINE_SHIM(ClipboardEvent),
   DEFINE_SHIM(CommandEvent),
   DEFINE_SHIM(Comment),
-  DEFINE_SHIM(CompositionEvent),
   DEFINE_SHIM_WITH_CUSTOM_INTERFACE(nsIContainerBoxObject, ContainerBoxObject),
   DEFINE_SHIM(CSSPrimitiveValue),
   DEFINE_SHIM(CSSStyleDeclaration),
@@ -421,7 +417,6 @@ const ComponentsInterfaceShimEntry kComponentsInterfaceShimMap[] =
   DEFINE_SHIM(MediaError),
   DEFINE_SHIM(MediaList),
   DEFINE_SHIM_WITH_CUSTOM_INTERFACE(nsIMenuBoxObject, MenuBoxObject),
-  DEFINE_SHIM(MessageEvent),
   DEFINE_SHIM(MouseEvent),
   DEFINE_SHIM(MouseScrollEvent),
   DEFINE_SHIM(MutationEvent),
@@ -565,8 +560,8 @@ ShimInterfaceInfo::GetConstantCount(uint16_t* aCount)
         };
         for (size_t i = 0; i < ArrayLength(props); ++i) {
             auto prop = props[i];
-            if (prop && prop->constants) {
-                for (auto cs = prop->constants->specs; cs->name; ++cs) {
+            if (prop && prop->HasConstants()) {
+                for (auto cs = prop->Constants()->specs; cs->name; ++cs) {
                     // We have found one constant here.  We explicitly do not
                     // bother calling isEnabled() here because it's OK to define
                     // potentially extra constants on these shim interfaces.
@@ -611,8 +606,8 @@ ShimInterfaceInfo::GetConstant(uint16_t aIndex, JS::MutableHandleValue aConstant
         };
         for (size_t i = 0; i < ArrayLength(props); ++i) {
             auto prop = props[i];
-            if (prop && prop->constants) {
-                for (auto cs = prop->constants->specs; cs->name; ++cs) {
+            if (prop && prop->HasConstants()) {
+                for (auto cs = prop->Constants()->specs; cs->name; ++cs) {
                     // We have found one constant here.  We explicitly do not
                     // bother calling isEnabled() here because it's OK to define
                     // potentially extra constants on these shim interfaces.

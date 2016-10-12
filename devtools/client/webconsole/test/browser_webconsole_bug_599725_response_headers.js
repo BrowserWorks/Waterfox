@@ -1,12 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* ***** BEGIN LICENSE BLOCK *****
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- *
- * Contributor(s):
- *  Mihai Șucan <mihai.sucan@gmail.com>
- *
- * ***** END LICENSE BLOCK ***** */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -30,7 +25,7 @@ function performTest(request, console) {
   }
 
   console.webConsoleClient.getResponseHeaders(request.actor,
-    function(response) {
+    function (response) {
       headers = response.headers;
       ok(headers, "we have the response headers for reload");
 
@@ -39,14 +34,6 @@ function performTest(request, console) {
 
       ok(!contentType, "we do not have the Content-Type header");
       isnot(contentLength, 60, "Content-Length != 60");
-
-      if (contentType || contentLength == 60) {
-        console.debug("lastFinishedRequest", lastFinishedRequest,
-                      "request", lastFinishedRequest.request,
-                      "response", lastFinishedRequest.response,
-                      "updates", lastFinishedRequest.updates,
-                      "response headers", headers);
-      }
 
       executeSoon(deferred.resolve);
     });
@@ -77,11 +64,11 @@ add_task(function* () {
   let gotLastRequest = waitForRequest();
 
   let loaded = loadBrowser(browser);
-  content.location = TEST_URI;
+  BrowserTestUtils.loadURI(browser, TEST_URI);
   yield loaded;
 
   let reloaded = loadBrowser(browser);
-  content.location.reload();
+  ContentTask.spawn(browser, null, "() => content.location.reload()");
   yield reloaded;
 
   yield gotLastRequest;

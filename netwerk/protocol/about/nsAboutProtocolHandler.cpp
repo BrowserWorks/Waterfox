@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "base/basictypes.h"
+#include "mozilla/ArrayUtils.h"
 
 #include "nsAboutProtocolHandler.h"
 #include "nsIURI.h"
@@ -18,6 +19,10 @@
 #include "nsAutoPtr.h"
 #include "nsIWritablePropertyBag2.h"
 #include "nsIChannel.h"
+#include "nsIScriptError.h"
+
+namespace mozilla {
+namespace net {
 
 static NS_DEFINE_CID(kSimpleURICID,     NS_SIMPLEURI_CID);
 static NS_DEFINE_CID(kNestedAboutURICID, NS_NESTEDABOUTURI_CID);
@@ -35,11 +40,12 @@ static bool IsSafeToLinkForUntrustedContent(nsIAboutModule *aModule, nsIURI *aUR
   nsresult rv = aModule->GetURIFlags(aURI, &flags);
   NS_ENSURE_SUCCESS(rv, false);
 
-  return (flags & nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT) && !(flags & nsIAboutModule::MAKE_UNLINKABLE);
+  return (flags & nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT) && (flags & nsIAboutModule::MAKE_LINKABLE);
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-NS_IMPL_ISUPPORTS(nsAboutProtocolHandler, nsIProtocolHandler, nsISupportsWeakReference)
+NS_IMPL_ISUPPORTS(nsAboutProtocolHandler, nsIProtocolHandler,
+    nsIProtocolHandlerWithDynamicFlags, nsISupportsWeakReference)
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsIProtocolHandler methods:
@@ -62,6 +68,39 @@ NS_IMETHODIMP
 nsAboutProtocolHandler::GetProtocolFlags(uint32_t *result)
 {
     *result = URI_NORELATIVE | URI_NOAUTH | URI_DANGEROUS_TO_LOAD;
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsAboutProtocolHandler::GetFlagsForURI(nsIURI* aURI, uint32_t* aFlags)
+{
+    // First use the default (which is "unsafe for content"):
+    GetProtocolFlags(aFlags);
+
+    // Now try to see if this URI overrides the default:
+    nsCOMPtr<nsIAboutModule> aboutMod;
+    nsresult rv = NS_GetAboutModule(aURI, getter_AddRefs(aboutMod));
+    if (NS_FAILED(rv)) {
+      // Swallow this and just tell the consumer the default:
+      return NS_OK;
+    }
+    uint32_t aboutModuleFlags = 0;
+    rv = aboutMod->GetURIFlags(aURI, &aboutModuleFlags);
+    // This should never happen, so pass back the error:
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    // Secure (https) pages can load safe about pages without becoming
+    // mixed content.
+    if (aboutModuleFlags & nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT) {
+        *aFlags |= URI_SAFE_TO_LOAD_IN_SECURE_CONTEXT;
+        // about: pages can only be loaded by unprivileged principals
+        // if they are marked as LINKABLE
+        if (aboutModuleFlags & nsIAboutModule::MAKE_LINKABLE) {
+            // Replace URI_DANGEROUS_TO_LOAD with URI_LOADABLE_BY_ANYONE.
+            *aFlags &= ~URI_DANGEROUS_TO_LOAD;
+            *aFlags |= URI_LOADABLE_BY_ANYONE;
+        }
+    }
     return NS_OK;
 }
 
@@ -155,9 +194,23 @@ nsAboutProtocolHandler::NewChannel2(nsIURI* uri,
             // set the LoadInfo on the newly created channel yet, as
             // an interim solution we set the LoadInfo here if not
             // available on the channel. Bug 1087720
-            nsCOMPtr<nsILoadInfo> loadInfo;
-            (*result)->GetLoadInfo(getter_AddRefs(loadInfo));
-            if (!loadInfo) {
+            nsCOMPtr<nsILoadInfo> loadInfo = (*result)->GetLoadInfo();
+            if (aLoadInfo != loadInfo) {
+                if (loadInfo) {
+                    NS_ASSERTION(false,
+                        "nsIAboutModule->newChannel(aURI, aLoadInfo) needs to set LoadInfo");
+                    const char16_t* params[] = {
+                        MOZ_UTF16("nsIAboutModule->newChannel(aURI)"),
+                        MOZ_UTF16("nsIAboutModule->newChannel(aURI, aLoadInfo)")
+                    };
+                    nsContentUtils::ReportToConsole(
+                        nsIScriptError::warningFlag,
+                        NS_LITERAL_CSTRING("Security by Default"),
+                        nullptr, // aDocument
+                        nsContentUtils::eNECKO_PROPERTIES,
+                        "APIDeprecationWarning",
+                        params, mozilla::ArrayLength(params));
+                }
                 (*result)->SetLoadInfo(aLoadInfo);
             }
 
@@ -374,3 +427,6 @@ nsNestedAboutURI::GetClassIDNoAlloc(nsCID *aClassIDNoAlloc)
     *aClassIDNoAlloc = kNestedAboutURICID;
     return NS_OK;
 }
+
+} // namespace net
+} // namespace mozilla

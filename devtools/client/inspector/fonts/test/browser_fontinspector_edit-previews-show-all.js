@@ -8,7 +8,7 @@
 
 const TEST_URI = URL_ROOT + "browser_fontinspector.html";
 
-add_task(function*() {
+add_task(function* () {
   let { inspector, view } = yield openFontInspectorForURL(TEST_URI);
   let viewDoc = view.chromeDoc;
 
@@ -21,7 +21,7 @@ add_task(function*() {
   let onUpdated = inspector.once("fontinspector-updated");
 
   info("Clicking 'Select all' button.");
-  viewDoc.getElementById("showall").click();
+  viewDoc.getElementById("font-showall").click();
 
   info("Waiting for font-inspector to update.");
   yield onUpdated;

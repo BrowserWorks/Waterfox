@@ -99,7 +99,7 @@ public:
 
   virtual void Clear() override
   {
-    mBuffer = nullptr;
+    mBackBuffer = mFrontBuffer = nullptr;
   }
 
   virtual void Update(gfx::IntSize aSize, ClientCanvasLayer* aLayer) override;
@@ -112,7 +112,7 @@ public:
 
   virtual void OnDetach() override
   {
-    mBuffer = nullptr;
+    mBackBuffer = mFrontBuffer = nullptr;
   }
 
 private:
@@ -122,7 +122,8 @@ private:
                                  TextureFlags aFlags,
                                  ClientCanvasLayer* aLayer);
 
-  RefPtr<TextureClient> mBuffer;
+  RefPtr<TextureClient> mBackBuffer;
+  RefPtr<TextureClient> mFrontBuffer;
 };
 
 // Used for GL canvases where we don't need to do any readback, i.e., with a
@@ -159,9 +160,7 @@ public:
 
   virtual void Updated() override;
 
-  virtual void OnDetach() override {
-    ClearSurfaces();
-  }
+  virtual void OnDetach() override;
 };
 
 /**

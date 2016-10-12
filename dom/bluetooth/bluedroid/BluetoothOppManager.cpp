@@ -10,7 +10,7 @@
 #include "BluetoothService.h"
 #include "BluetoothSocket.h"
 #include "BluetoothUtils.h"
-#include "BluetoothUuid.h"
+#include "BluetoothUuidHelper.h"
 #include "ObexBase.h"
 
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
@@ -20,7 +20,6 @@
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/UniquePtr.h"
-#include "nsAutoPtr.h"
 #include "nsCExternalHandlerService.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
@@ -103,7 +102,7 @@ BluetoothOppManager::Observe(nsISupports* aSubject,
   return NS_ERROR_UNEXPECTED;
 }
 
-class BluetoothOppManager::SendSocketDataTask final : public nsRunnable
+class BluetoothOppManager::SendSocketDataTask final : public Runnable
 {
 public:
   SendSocketDataTask(UniquePtr<uint8_t[]> aStream, uint32_t aSize)
@@ -127,7 +126,7 @@ private:
   uint32_t mSize;
 };
 
-class BluetoothOppManager::ReadFileTask final : public nsRunnable
+class BluetoothOppManager::ReadFileTask final : public Runnable
 {
 public:
   ReadFileTask(nsIInputStream* aInputStream,
@@ -173,7 +172,7 @@ private:
   uint32_t mAvailablePacketSize;
 };
 
-class BluetoothOppManager::CloseSocketTask final : public Task
+class BluetoothOppManager::CloseSocketTask final : public Runnable
 {
 public:
   CloseSocketTask(BluetoothSocket* aSocket) : mSocket(aSocket)
@@ -181,10 +180,11 @@ public:
     MOZ_ASSERT(aSocket);
   }
 
-  void Run() override
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
     mSocket->Close();
+    return NS_OK;
   }
 
 private:
@@ -803,7 +803,7 @@ BluetoothOppManager::ExtractPacketHeaders(const ObexHeaderSet& aHeader)
       aHeader.Has(ObexHeaderId::EndOfBody)) {
     uint8_t* bodyPtr;
     aHeader.GetBody(&bodyPtr, &mBodySegmentLength);
-    mBodySegment = bodyPtr;
+    mBodySegment.reset(bodyPtr);
   }
 }
 
@@ -934,7 +934,7 @@ BluetoothOppManager::ComposePacket(uint8_t aOpCode, UnixSocketBuffer* aMessage)
      * so here we keep a variable mPutPacketReceivedLength to indicate if
      * current PUT request is done.
      */
-    mReceivedDataBuffer = new uint8_t[mPacketLength];
+    mReceivedDataBuffer.reset(new uint8_t[mPacketLength]);
     mPutFinalFlag = (aOpCode == ObexRequestCode::PutFinal);
   }
 
@@ -1159,8 +1159,8 @@ BluetoothOppManager::ClientDataHandler(UnixSocketBuffer* aMessage)
     // Disconnect request, so we make a delay here. If the socket hasn't been
     // disconnected, we will close it.
     if (mSocket) {
-      MessageLoop::current()->
-        PostDelayedTask(FROM_HERE, new CloseSocketTask(mSocket), 1000);
+      MessageLoop::current()->PostDelayedTask(
+        MakeAndAddRef<CloseSocketTask>(mSocket), 1000);
     }
   } else if (mLastCommand == ObexRequestCode::Connect) {
     MOZ_ASSERT(!mFileName.IsEmpty());
@@ -1227,12 +1227,12 @@ BluetoothOppManager::ClientDataHandler(UnixSocketBuffer* aMessage)
 // Virtual function of class SocketConsumer
 void
 BluetoothOppManager::ReceiveSocketData(BluetoothSocket* aSocket,
-                                       nsAutoPtr<UnixSocketBuffer>& aBuffer)
+                                       UniquePtr<UnixSocketBuffer>& aBuffer)
 {
   if (mIsServer) {
-    ServerDataHandler(aBuffer);
+    ServerDataHandler(aBuffer.get());
   } else {
-    ClientDataHandler(aBuffer);
+    ClientDataHandler(aBuffer.get());
   }
 }
 

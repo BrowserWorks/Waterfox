@@ -62,8 +62,10 @@ js::AutoCycleDetector::init()
     AutoCycleDetector::Set& set = cx->cycleDetectorSet;
     hashsetAddPointer = set.lookupForAdd(obj);
     if (!hashsetAddPointer) {
-        if (!set.add(hashsetAddPointer, obj))
+        if (!set.add(hashsetAddPointer, obj)) {
+            ReportOutOfMemory(cx);
             return false;
+        }
         cyclic = false;
         hashsetGenerationAtInit = set.generation();
     }
@@ -152,7 +154,7 @@ js::DestroyContext(JSContext* cx, DestroyContextMode mode)
         MOZ_CRASH("Attempted to destroy a context while it is in a request.");
 
     cx->roots.checkNoGCRooters();
-    FinishPersistentRootedChains(cx->roots);
+    cx->roots.finishPersistentRoots();
 
     if (mode != DCM_NEW_FAILED) {
         if (JSContextCallback cxCallback = rt->cxCallback) {
@@ -186,8 +188,9 @@ js::DestroyContext(JSContext* cx, DestroyContextMode mode)
 void
 RootLists::checkNoGCRooters() {
 #ifdef DEBUG
-    for (int i = 0; i < THING_ROOT_LIMIT; ++i)
-        MOZ_ASSERT(stackRoots_[i] == nullptr);
+    for (auto const& stackRootPtr : stackRoots_) {
+        MOZ_ASSERT(stackRootPtr == nullptr);
+    }
 #endif
 }
 
@@ -294,14 +297,13 @@ js::ReportOutOfMemory(ExclusiveContext* cxArg)
 
     JSContext* cx = cxArg->asJSContext();
     cx->runtime()->hadOutOfMemory = true;
+    AutoSuppressGC suppressGC(cx);
 
     /* Report the oom. */
-    if (JS::OutOfMemoryCallback oomCallback = cx->runtime()->oomCallback) {
-        AutoSuppressGC suppressGC(cx);
+    if (JS::OutOfMemoryCallback oomCallback = cx->runtime()->oomCallback)
         oomCallback(cx, cx->runtime()->oomCallbackData);
-    }
 
-    if (JS_IsRunning(cx)) {
+    if (cx->options().autoJSAPIOwnsErrorReporting() || JS_IsRunning(cx)) {
         cx->setPendingException(StringValue(cx->names().outOfMemory));
         return;
     }
@@ -317,10 +319,8 @@ js::ReportOutOfMemory(ExclusiveContext* cxArg)
     PopulateReportBlame(cx, &report);
 
     /* Report the error. */
-    if (JSErrorReporter onError = cx->runtime()->errorReporter) {
-        AutoSuppressGC suppressGC(cx);
+    if (JSErrorReporter onError = cx->runtime()->errorReporter)
         onError(cx, msg, &report);
-    }
 
     /*
      * We would like to enforce the invariant that any exception reported
@@ -335,8 +335,8 @@ js::ReportOutOfMemory(ExclusiveContext* cxArg)
     MOZ_ASSERT(!cx->isExceptionPending());
 }
 
-JS_FRIEND_API(void)
-js::ReportOverRecursed(JSContext* maybecx)
+void
+js::ReportOverRecursed(JSContext* maybecx, unsigned errorNumber)
 {
 #ifdef JS_MORE_DETERMINISTIC
     /*
@@ -350,9 +350,15 @@ js::ReportOverRecursed(JSContext* maybecx)
     fprintf(stderr, "ReportOverRecursed called\n");
 #endif
     if (maybecx) {
-        JS_ReportErrorNumber(maybecx, GetErrorMessage, nullptr, JSMSG_OVER_RECURSED);
+        JS_ReportErrorNumber(maybecx, GetErrorMessage, nullptr, errorNumber);
         maybecx->overRecursed_ = true;
     }
+}
+
+JS_FRIEND_API(void)
+js::ReportOverRecursed(JSContext* maybecx)
+{
+    ReportOverRecursed(maybecx, JSMSG_OVER_RECURSED);
 }
 
 void
@@ -521,20 +527,28 @@ js::PrintError(JSContext* cx, FILE* file, const char* message, JSErrorReport* re
         fputs(prefix, file);
     fputs(message, file);
 
-    if (report->linebuf) {
-        /* report->linebuf usually ends with a newline. */
-        int n = strlen(report->linebuf);
-        fprintf(file, ":\n%s%s%s%s",
-                prefix,
-                report->linebuf,
-                (n > 0 && report->linebuf[n-1] == '\n') ? "" : "\n",
-                prefix);
-        n = report->tokenptr - report->linebuf;
-        for (int i = 0, j = 0; i < n; i++) {
-            if (report->linebuf[i] == '\t') {
-                for (int k = (j + 8) & ~7; j < k; j++) {
+    if (const char16_t* linebuf = report->linebuf()) {
+        size_t n = report->linebufLength();
+
+        fputs(":\n", file);
+        if (prefix)
+            fputs(prefix, file);
+
+        for (size_t i = 0; i < n; i++)
+            fputc(static_cast<char>(linebuf[i]), file);
+
+        // linebuf usually ends with a newline. If not, add one here.
+        if (n == 0 || linebuf[n-1] != '\n')
+            fputc('\n', file);
+
+        if (prefix)
+            fputs(prefix, file);
+
+        n = report->tokenOffset();
+        for (size_t i = 0, j = 0; i < n; i++) {
+            if (linebuf[i] == '\t') {
+                for (size_t k = (j + 8) & ~7; j < k; j++)
                     fputc('.', file);
-                }
                 continue;
             }
             fputc('.', file);
@@ -873,12 +887,11 @@ js::ReportMissingArg(JSContext* cx, HandleValue v, unsigned arg)
 {
     char argbuf[11];
     UniqueChars bytes;
-    RootedAtom atom(cx);
 
     JS_snprintf(argbuf, sizeof argbuf, "%u", arg);
     if (IsFunctionObject(v)) {
-        atom = v.toObject().as<JSFunction>().atom();
-        bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, v, atom);
+        RootedAtom name(cx, v.toObject().as<JSFunction>().name());
+        bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, v, name);
         if (!bytes)
             return;
     }
@@ -908,7 +921,7 @@ js::ReportValueErrorFlags(JSContext* cx, unsigned flags, const unsigned errorNum
 
 const JSErrorFormatString js_ErrorFormatString[JSErr_Limit] = {
 #define MSG_DEF(name, count, exception, format) \
-    { format, count, exception } ,
+    { #name, format, count, exception } ,
 #include "js.msg"
 #undef MSG_DEF
 };
@@ -957,8 +970,6 @@ JSContext::JSContext(JSRuntime* rt)
     reportGranularity(JS_DEFAULT_JITREPORT_GRANULARITY),
     resolvingList(nullptr),
     generatingError(false),
-    savedFrameChains_(),
-    cycleDetectorSet(this),
     data(nullptr),
     data2(nullptr),
     outstandingRequests(0),
@@ -1004,42 +1015,20 @@ JSContext::isClosingGenerator()
 }
 
 bool
-JSContext::saveFrameChain()
+JSContext::isThrowingDebuggeeWouldRun()
 {
-    if (!savedFrameChains_.append(SavedFrameChain(compartment(), enterCompartmentDepth_)))
-        return false;
-
-    if (Activation* act = runtime()->activation())
-        act->saveFrameChain();
-
-    setCompartment(nullptr);
-    enterCompartmentDepth_ = 0;
-
-    return true;
-}
-
-void
-JSContext::restoreFrameChain()
-{
-    MOZ_ASSERT(enterCompartmentDepth_ == 0); // We're about to clobber it, and it
-                                            // will be wrong forevermore.
-    SavedFrameChain sfc = savedFrameChains_.popCopy();
-    setCompartment(sfc.compartment);
-    enterCompartmentDepth_ = sfc.enterCompartmentCount;
-
-    if (Activation* act = runtime()->activation())
-        act->restoreFrameChain();
+    return throwing &&
+           unwrappedException_.isObject() &&
+           unwrappedException_.toObject().is<ErrorObject>() &&
+           unwrappedException_.toObject().as<ErrorObject>().type() == JSEXN_DEBUGGEEWOULDRUN;
 }
 
 bool
 JSContext::currentlyRunning() const
 {
     for (ActivationIterator iter(runtime()); !iter.done(); ++iter) {
-        if (iter->cx() == this) {
-            if (iter->hasSavedFrameChain())
-                return false;
+        if (iter->cx() == this)
             return true;
-        }
     }
 
     return false;
@@ -1219,4 +1208,18 @@ AutoEnterOOMUnsafeRegion::crash(const char* reason)
     JS_snprintf(msgbuf, sizeof(msgbuf), "[unhandlable oom] %s", reason);
     MOZ_ReportAssertionFailure(msgbuf, __FILE__, __LINE__);
     MOZ_CRASH();
+}
+
+AutoEnterOOMUnsafeRegion::AnnotateOOMAllocationSizeCallback
+AutoEnterOOMUnsafeRegion::annotateOOMSizeCallback = nullptr;
+
+void
+AutoEnterOOMUnsafeRegion::crash(size_t size, const char* reason)
+{
+    {
+        JS::AutoSuppressGCAnalysis suppress;
+        if (annotateOOMSizeCallback)
+            annotateOOMSizeCallback(size);
+    }
+    crash(reason);
 }

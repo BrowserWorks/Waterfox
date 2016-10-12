@@ -374,13 +374,14 @@ private:
   /**
    * Calculate composition offset then notify composition update to widget
    */
-  void NotityUpdateComposition(const WidgetCompositionEvent* aCompositionEvent);
+  void OnCompositionEventHandled(
+         const WidgetCompositionEvent* aCompositionEvent);
 
   /**
    * CompositionEventDispatcher dispatches the specified composition (or text)
    * event.
    */
-  class CompositionEventDispatcher : public nsRunnable
+  class CompositionEventDispatcher : public Runnable
   {
   public:
     CompositionEventDispatcher(TextComposition* aTextComposition,
@@ -429,7 +430,7 @@ private:
  */
 
 class TextCompositionArray final :
-  public nsAutoTArray<RefPtr<TextComposition>, 2>
+  public AutoTArray<RefPtr<TextComposition>, 2>
 {
 public:
   // Looking for per native IME context.

@@ -296,7 +296,7 @@ nsEditorSpellCheck::CanSpellCheck(bool* _retval)
 }
 
 // Instances of this class can be used as either runnables or RAII helpers.
-class CallbackCaller final : public nsRunnable
+class CallbackCaller final : public Runnable
 {
 public:
   explicit CallbackCaller(nsIEditorSpellCheckCallback* aCallback)
@@ -702,7 +702,7 @@ nsEditorSpellCheck::UpdateCurrentDictionary(nsIEditorSpellCheckCallback* aCallba
   RefPtr<DictionaryFetcher> fetcher =
     new DictionaryFetcher(this, aCallback, mDictionaryFetcherGroup);
   rootContent->GetLang(fetcher->mRootContentLang);
-  nsCOMPtr<nsIDocument> doc = rootContent->GetCurrentDoc();
+  nsCOMPtr<nsIDocument> doc = rootContent->GetUncomposedDoc();
   NS_ENSURE_STATE(doc);
   doc->GetContentLanguage(fetcher->mRootDocContentLang);
 

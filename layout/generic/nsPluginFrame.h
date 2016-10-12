@@ -26,6 +26,7 @@
 #undef GetBinaryType
 #undef RemoveDirectory
 #undef LoadIcon
+#undef GetObject
 #endif
 
 class nsPresContext;
@@ -42,13 +43,11 @@ class LayerManager;
 } // namespace layers
 } // namespace mozilla
 
-typedef nsFrame nsPluginFrameSuper;
-
 class PluginFrameDidCompositeObserver;
 
-class nsPluginFrame : public nsPluginFrameSuper,
-                      public nsIObjectFrame,
-                      public nsIReflowCallback
+class nsPluginFrame : public nsFrame
+                    , public nsIObjectFrame
+                    , public nsIReflowCallback
 {
 public:
   typedef mozilla::LayerState LayerState;
@@ -91,7 +90,8 @@ public:
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
-    return nsPluginFrameSuper::IsFrameOfType(aFlags & ~(nsIFrame::eReplaced));
+    return nsFrame::IsFrameOfType(aFlags &
+      ~(nsIFrame::eReplaced | nsIFrame::eReplacedSizing));
   }
 
   virtual bool NeedsView() override { return true; }
@@ -192,7 +192,12 @@ public:
    */
   static void EndSwapDocShells(nsISupports* aSupports, void*);
 
-  nsIWidget* GetWidget() override { return mInnerView ? mWidget : nullptr; }
+  nsIWidget* GetWidget() override {
+    if (!mInnerView) {
+      return nullptr;
+    }
+    return mWidget;
+  }
 
   /**
    * Adjust the plugin's idea of its size, using aSize as its new size.
@@ -290,7 +295,7 @@ private:
     return region;
   }
 
-  class PluginEventNotifier : public nsRunnable {
+  class PluginEventNotifier : public mozilla::Runnable {
   public:
     explicit PluginEventNotifier(const nsString &aEventType) : 
       mEventType(aEventType) {}

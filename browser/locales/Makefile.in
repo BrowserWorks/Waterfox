@@ -62,6 +62,10 @@ STUB_HOOK = $(NSINSTALL) -D '$(ABS_DIST)/$(PKG_INST_PATH)'; \
 endif
 
 SEARCHPLUGINS_NAMES = $(shell cat $(call MERGE_FILE,/searchplugins/list.txt)) ddg
+ifeq (,$(filter-out en-US ru be kk tr uk zh-CN zh-TW,$(AB_CD)))
+    SEARCHPLUGINS_NAMES := $(subst google,google:hidden,$(SEARCHPLUGINS_NAMES))
+    SEARCHPLUGINS_NAMES += google-nocodes
+endif
 SEARCHPLUGINS_FILENAMES = $(subst :hidden,,$(SEARCHPLUGINS_NAMES))
 SEARCHPLUGINS_PATH := .deps/generated_$(AB_CD)
 SEARCHPLUGINS_TARGET := libs searchplugins
@@ -100,9 +104,6 @@ libs-%:
 	$(NSINSTALL) -D $(DIST)/install
 	@$(MAKE) -C ../../toolkit/locales libs-$* XPI_ROOT_APPID='$(XPI_ROOT_APPID)'
 	@$(MAKE) -C ../../services/sync/locales AB_CD=$* XPI_NAME=locale-$*
-ifdef MOZ_WEBAPP_RUNTIME
-	@$(MAKE) -C ../../webapprt/locales AB_CD=$* XPI_NAME=locale-$*
-endif
 	@$(MAKE) -C ../../extensions/spellcheck/locales AB_CD=$* XPI_NAME=locale-$*
 	@$(MAKE) -C ../extensions/pocket/locales AB_CD=$* XPI_NAME=locale-$*
 	@$(MAKE) -C ../../intl/locales AB_CD=$* XPI_NAME=locale-$*
@@ -137,14 +138,11 @@ endif
 clobber-zip:
 	$(RM) $(STAGEDIST)/chrome/$(AB_CD).jar \
 	  $(STAGEDIST)/chrome/$(AB_CD).manifest \
-	  $(STAGEDIST)/webapprt/chrome/$(AB_CD).jar \
-	  $(STAGEDIST)/webapprt/chrome/$(AB_CD).manifest \
 	  $(STAGEDIST)/$(PREF_DIR)/firefox-l10n.js
 	$(RM) -rf  $(STAGEDIST)/dictionaries \
 	  $(STAGEDIST)/hyphenation \
 	  $(STAGEDIST)/defaults/profile \
-	  $(STAGEDIST)/chrome/$(AB_CD) \
-	  $(STAGEDIST)/webapprt/chrome/$(AB_CD)
+	  $(STAGEDIST)/chrome/$(AB_CD)
 
 
 langpack: langpack-$(AB_CD)
@@ -203,6 +201,6 @@ l10n-check::
 	@# ZIP_IN='$(ZIP_IN)' will pass down the *current* value of ZIP_IN, based
 	@# on MOZ_SIMPLE_PACKAGE_NAME not being reset, overwriting the value it
 	@# would get with MOZ_SIMPLE_PACKAGE_NAME reset.
-	$(MAKE) installers-x-test L10NBASEDIR='$(PWD)' LOCALE_MERGEDIR='$(PWD)/mergedir' ZIP_IN='$(ZIP_IN)' MOZ_SIMPLE_PACKAGE_NAME=
-	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/unpack.py $(DIST)/l10n-stage/$(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)
-	cd $(DIST)/l10n-stage && test $$(cat $(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)/update.locale) = x-test
+	$(MAKE) installers-x-test L10NBASEDIR='$(PWD)' LOCALE_MERGEDIR='$(PWD)/mergedir' ZIP_IN='$(ZIP_IN)' MOZ_SIMPLE_PACKAGE_NAME= UNIVERSAL_BINARY=
+	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/unpack.py $(DIST)/l10n-stage/$(MOZ_PKG_DIR)$(_RESPATH)
+	cd $(DIST)/l10n-stage && test $$(cat $(MOZ_PKG_DIR)$(_RESPATH)/update.locale) = x-test

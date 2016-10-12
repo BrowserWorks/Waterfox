@@ -7,31 +7,29 @@
 #include "sandboxBroker.h"
 
 #include "base/win/windows_version.h"
+#include "mozilla/Assertions.h"
 #include "sandbox/win/src/sandbox.h"
-#include "sandbox/win/src/sandbox_factory.h"
 #include "sandbox/win/src/security_level.h"
-#include "mozilla/sandboxing/sandboxLogging.h"
 
 namespace mozilla
 {
 
 sandbox::BrokerServices *SandboxBroker::sBrokerService = nullptr;
 
+/* static */
+void
+SandboxBroker::Initialize(sandbox::BrokerServices* aBrokerServices)
+{
+  sBrokerService = aBrokerServices;
+}
+
 SandboxBroker::SandboxBroker()
 {
-  // XXX: This is not thread-safe! Two threads could simultaneously try
-  // to set `sBrokerService`
-  if (!sBrokerService) {
-    sBrokerService = sandbox::SandboxFactory::GetBrokerServices();
-    if (sBrokerService) {
-      sandbox::ResultCode result = sBrokerService->Init();
-      if (result != sandbox::SBOX_ALL_OK) {
-        sBrokerService = nullptr;
-      }
-    }
+  if (sBrokerService) {
+    mPolicy = sBrokerService->CreatePolicy();
+  } else {
+    mPolicy = nullptr;
   }
-
-  mPolicy = sBrokerService->CreatePolicy();
 }
 
 bool
@@ -50,8 +48,23 @@ SandboxBroker::LaunchApp(const wchar_t *aPath,
 
   // If logging enabled, set up the policy.
   if (aEnableLogging) {
-    mozilla::sandboxing::ApplyLoggingPolicy(*mPolicy);
+    ApplyLoggingPolicy();
   }
+
+#if defined(DEBUG)
+  // Allow write access to TEMP directory in debug builds for logging purposes.
+  // The path from GetTempPathW can have a length up to MAX_PATH + 1, including
+  // the null, so we need MAX_PATH + 2, so we can add an * to the end.
+  wchar_t tempPath[MAX_PATH + 2];
+  uint32_t pathLen = ::GetTempPathW(MAX_PATH + 1, tempPath);
+  if (pathLen > 0) {
+    // GetTempPath path ends with \ and returns the length without the null.
+    tempPath[pathLen] = L'*';
+    tempPath[pathLen + 1] = L'\0';
+    mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
+                     sandbox::TargetPolicy::FILES_ALLOW_ANY, tempPath);
+  }
+#endif
 
   // Ceate the sandboxed process
   PROCESS_INFORMATION targetInfo = {0};
@@ -98,7 +111,7 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
     accessTokenLevel = sandbox::USER_LIMITED;
     initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
     delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
-  } else if (aSandboxLevel == 2) {
+  } else if (aSandboxLevel >= 2) {
     jobLevel = sandbox::JOB_INTERACTIVE;
     accessTokenLevel = sandbox::USER_INTERACTIVE;
     initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
@@ -109,10 +122,8 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
     initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
     delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
   } else {
-    jobLevel = sandbox::JOB_NONE;
-    accessTokenLevel = sandbox::USER_NON_ADMIN;
-    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_MEDIUM;
-    delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_MEDIUM;
+    MOZ_ASSERT_UNREACHABLE("Should not be called with aSandboxLevel < 1");
+    return false;
   }
 
   sandbox::ResultCode result = mPolicy->SetJobLevel(jobLevel,
@@ -133,24 +144,22 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
     ret = ret && (sandbox::SBOX_ALL_OK == result);
   }
 
-  if (aSandboxLevel >= 1) {
-    sandbox::MitigationFlags mitigations =
-      sandbox::MITIGATION_BOTTOM_UP_ASLR |
-      sandbox::MITIGATION_HEAP_TERMINATE |
-      sandbox::MITIGATION_SEHOP |
-      sandbox::MITIGATION_DEP_NO_ATL_THUNK |
-      sandbox::MITIGATION_DEP;
+  sandbox::MitigationFlags mitigations =
+    sandbox::MITIGATION_BOTTOM_UP_ASLR |
+    sandbox::MITIGATION_HEAP_TERMINATE |
+    sandbox::MITIGATION_SEHOP |
+    sandbox::MITIGATION_DEP_NO_ATL_THUNK |
+    sandbox::MITIGATION_DEP;
 
-    result = mPolicy->SetProcessMitigations(mitigations);
-    ret = ret && (sandbox::SBOX_ALL_OK == result);
+  result = mPolicy->SetProcessMitigations(mitigations);
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
 
-    mitigations =
-      sandbox::MITIGATION_STRICT_HANDLE_CHECKS |
-      sandbox::MITIGATION_DLL_SEARCH_ORDER;
+  mitigations =
+    sandbox::MITIGATION_STRICT_HANDLE_CHECKS |
+    sandbox::MITIGATION_DLL_SEARCH_ORDER;
 
-    result = mPolicy->SetDelayedProcessMitigations(mitigations);
-    ret = ret && (sandbox::SBOX_ALL_OK == result);
-  }
+  result = mPolicy->SetDelayedProcessMitigations(mitigations);
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
 
   // Add the policy for the client side of a pipe. It is just a file
   // in the \pipe\ namespace. We restrict it to pipes that start with
@@ -289,7 +298,7 @@ SandboxBroker::SetSecurityLevelForIPDLUnitTestProcess()
 }
 
 bool
-SandboxBroker::SetSecurityLevelForGMPlugin()
+SandboxBroker::SetSecurityLevelForGMPlugin(SandboxLevel aLevel)
 {
   if (!mPolicy) {
     return false;
@@ -298,8 +307,9 @@ SandboxBroker::SetSecurityLevelForGMPlugin()
   auto result = mPolicy->SetJobLevel(sandbox::JOB_LOCKDOWN, 0);
   bool ret = (sandbox::SBOX_ALL_OK == result);
 
-  result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
-                                  sandbox::USER_LOCKDOWN);
+  auto level = (aLevel == Restricted) ?
+    sandbox::USER_RESTRICTED : sandbox::USER_LOCKDOWN;
+  result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS, level);
   ret = ret && (sandbox::SBOX_ALL_OK == result);
 
   result = mPolicy->SetAlternateDesktop(true);
@@ -410,6 +420,10 @@ SandboxBroker::SetSecurityLevelForGMPlugin()
 bool
 SandboxBroker::AllowReadFile(wchar_t const *file)
 {
+  if (!mPolicy) {
+    return false;
+  }
+
   auto result =
     mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
                      sandbox::TargetPolicy::FILES_ALLOW_READONLY,
@@ -420,6 +434,10 @@ SandboxBroker::AllowReadFile(wchar_t const *file)
 bool
 SandboxBroker::AllowReadWriteFile(wchar_t const *file)
 {
+  if (!mPolicy) {
+    return false;
+  }
+
   auto result =
     mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
                      sandbox::TargetPolicy::FILES_ALLOW_ANY,
@@ -430,6 +448,10 @@ SandboxBroker::AllowReadWriteFile(wchar_t const *file)
 bool
 SandboxBroker::AllowDirectory(wchar_t const *dir)
 {
+  if (!mPolicy) {
+    return false;
+  }
+
   auto result =
     mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
                      sandbox::TargetPolicy::FILES_ALLOW_DIR_ANY,
@@ -440,8 +462,34 @@ SandboxBroker::AllowDirectory(wchar_t const *dir)
 bool
 SandboxBroker::AddTargetPeer(HANDLE aPeerProcess)
 {
+  if (!sBrokerService) {
+    return false;
+  }
+
   sandbox::ResultCode result = sBrokerService->AddTargetPeer(aPeerProcess);
   return (sandbox::SBOX_ALL_OK == result);
+}
+
+void
+SandboxBroker::ApplyLoggingPolicy()
+{
+  MOZ_ASSERT(mPolicy);
+
+  // Add dummy rules, so that we can log in the interception code.
+  // We already have a file interception set up for the client side of pipes.
+  // Also, passing just "dummy" for file system policy causes win_utils.cc
+  // IsReparsePoint() to loop.
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_NAMED_PIPES,
+                  sandbox::TargetPolicy::NAMEDPIPES_ALLOW_ANY, L"dummy");
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_PROCESS,
+                  sandbox::TargetPolicy::PROCESS_MIN_EXEC, L"dummy");
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_REGISTRY,
+                  sandbox::TargetPolicy::REG_ALLOW_READONLY,
+                  L"HKEY_CURRENT_USER\\dummy");
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_SYNC,
+                  sandbox::TargetPolicy::EVENTS_ALLOW_READONLY, L"dummy");
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_HANDLES,
+                  sandbox::TargetPolicy::HANDLES_DUP_BROKER, L"dummy");
 }
 
 SandboxBroker::~SandboxBroker()

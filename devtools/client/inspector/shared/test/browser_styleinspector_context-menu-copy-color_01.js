@@ -6,36 +6,25 @@
 // Test "Copy color" item of the context menu #1: Test _isColorPopup.
 
 const TEST_URI = `
-  <div style="color: #123ABC; margin: 0px; background: span[data-color];">
+  <div style="color:rgb(18, 58, 188);margin:0px;background:span[data-color];">
     Test "Copy color" context menu option
   </div>
 `;
-
-const TEST_CASES = [
-  {
-    viewName: "RuleView",
-    initializer: openRuleView
-  },
-  {
-    viewName: "ComputedView",
-    initializer: openComputedView
-  }
-];
 
 add_task(function* () {
   // Test is slow on Linux EC2 instances - Bug 1137765
   requestLongerTimeout(2);
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-
-  for (let test of TEST_CASES) {
-    yield testView(test);
-  }
+  let {inspector} = yield openInspector();
+  yield testView("ruleview", inspector);
+  yield testView("computedview", inspector);
 });
 
-function* testView({viewName, initializer}) {
-  info("Testing " + viewName);
+function* testView(viewId, inspector) {
+  info("Testing " + viewId);
 
-  let {inspector, view} = yield initializer();
+  yield inspector.sidebar.select(viewId);
+  let view = inspector[viewId].view;
   yield selectNode("div", inspector);
 
   testIsColorValueNode(view);

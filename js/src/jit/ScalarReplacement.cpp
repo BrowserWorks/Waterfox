@@ -142,7 +142,7 @@ IsLambdaEscaped(MLambda* lambda, JSObject* obj)
 static bool
 IsObjectEscaped(MInstruction* ins, JSObject* objDefault)
 {
-    MOZ_ASSERT(ins->type() == MIRType_Object);
+    MOZ_ASSERT(ins->type() == MIRType::Object);
     MOZ_ASSERT(ins->isNewObject() || ins->isGuardShape() || ins->isCreateThisWithTemplate() ||
                ins->isNewCallObject() || ins->isFunctionEnvironment());
 
@@ -565,7 +565,7 @@ ObjectMemoryView::visitStoreSlot(MStoreSlot* ins)
     MSlots* slots = ins->slots()->toSlots();
     if (slots->object() != obj_) {
         // Guard objects are replaced when they are visited.
-        MOZ_ASSERT(!slots->object()->isGuardShape() || slots->object()->toGuardShape()->obj() != obj_);
+        MOZ_ASSERT(!slots->object()->isGuardShape() || slots->object()->toGuardShape()->object() != obj_);
         return;
     }
 
@@ -597,7 +597,7 @@ ObjectMemoryView::visitLoadSlot(MLoadSlot* ins)
     MSlots* slots = ins->slots()->toSlots();
     if (slots->object() != obj_) {
         // Guard objects are replaced when they are visited.
-        MOZ_ASSERT(!slots->object()->isGuardShape() || slots->object()->toGuardShape()->obj() != obj_);
+        MOZ_ASSERT(!slots->object()->isGuardShape() || slots->object()->toGuardShape()->object() != obj_);
         return;
     }
 
@@ -620,7 +620,7 @@ void
 ObjectMemoryView::visitGuardShape(MGuardShape* ins)
 {
     // Skip loads made on other objects.
-    if (ins->obj() != obj_)
+    if (ins->object() != obj_)
         return;
 
     // Replace the shape guard by its object.
@@ -659,7 +659,7 @@ ObjectMemoryView::visitLambda(MLambda* ins)
 static size_t
 GetOffsetOf(MDefinition* index, size_t width, int32_t baseOffset)
 {
-    int32_t idx = index->toConstant()->value().toInt32();
+    int32_t idx = index->toConstant()->toInt32();
     MOZ_ASSERT(idx >= 0);
     MOZ_ASSERT(baseOffset >= 0 && size_t(baseOffset) >= UnboxedPlainObject::offsetOfData());
     return idx * width + baseOffset - UnboxedPlainObject::offsetOfData();
@@ -780,13 +780,10 @@ IndexOf(MDefinition* ins, int32_t* res)
         indexDef = indexDef->toBoundsCheck()->index();
     if (indexDef->isToInt32())
         indexDef = indexDef->toToInt32()->getOperand(0);
-    if (!indexDef->isConstantValue())
+    MConstant* indexDefConst = indexDef->maybeConstantValue();
+    if (!indexDefConst || indexDefConst->type() != MIRType::Int32)
         return false;
-
-    Value index = indexDef->constantValue();
-    if (!index.isInt32())
-        return false;
-    *res = index.toInt32();
+    *res = indexDefConst->toInt32();
     return true;
 }
 
@@ -799,7 +796,7 @@ IsElementEscaped(MElements* def, uint32_t arraySize)
     JitSpewIndent spewIndent(JitSpew_Escape);
 
     for (MUseIterator i(def->usesBegin()); i != def->usesEnd(); i++) {
-        // The MIRType_Elements cannot be captured in a resume point as
+        // The MIRType::Elements cannot be captured in a resume point as
         // it does not represent a value allocation.
         MDefinition* access = (*i)->consumer()->toDefinition();
 
@@ -861,7 +858,7 @@ IsElementEscaped(MElements* def, uint32_t arraySize)
             }
 
             // We are not yet encoding magic hole constants in resume points.
-            if (access->toStoreElement()->value()->type() == MIRType_MagicHole) {
+            if (access->toStoreElement()->value()->type() == MIRType::MagicHole) {
                 JitSpewDef(JitSpew_Escape, "has a store element with an magic-hole constant\n", access);
                 return true;
             }
@@ -897,7 +894,7 @@ IsElementEscaped(MElements* def, uint32_t arraySize)
 static bool
 IsArrayEscaped(MInstruction* ins)
 {
-    MOZ_ASSERT(ins->type() == MIRType_Object);
+    MOZ_ASSERT(ins->type() == MIRType::Object);
     MOZ_ASSERT(ins->isNewArray());
     uint32_t length = ins->toNewArray()->length();
 
@@ -1258,7 +1255,7 @@ ArrayMemoryView::visitSetInitializedLength(MSetInitializedLength* ins)
         return;
     }
 
-    int32_t initLengthValue = ins->index()->constantValue().toInt32() + 1;
+    int32_t initLengthValue = ins->index()->maybeConstantValue()->toInt32() + 1;
     MConstant* initLength = MConstant::New(alloc_, Int32Value(initLengthValue));
     ins->block()->insertBefore(ins, initLength);
     ins->block()->insertBefore(ins, state_);

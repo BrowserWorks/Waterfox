@@ -70,15 +70,18 @@ public:
     }
 
     struct KeyHeader {
-        uint8_t                     fFragPosKey;   // set by GrGLShaderBuilder if there are
-                                                   // effects that read the fragment position.
-                                                   // Otherwise, 0.
+        // Set to uniquely identify the rt's origin, or 0 if the shader does not require this info.
+        uint8_t                     fSurfaceOriginKey;
+        // Set to uniquely identify the sample pattern, or 0 if the shader doesn't use sample
+        // locations.
+        uint8_t                     fSamplePatternKey;
+        // Set to uniquely idenitify any swizzling of the shader's output color(s).
+        uint8_t                     fOutputSwizzle;
         uint8_t                     fSnapVerticesToPixelCenters;
         int8_t                      fColorEffectCnt;
         int8_t                      fCoverageEffectCnt;
         uint8_t                     fIgnoresCoverage;
     };
-    GR_STATIC_ASSERT(sizeof(KeyHeader) == 5);
 
     int numColorEffects() const {
         return this->header().fColorEffectCnt;

@@ -19,12 +19,14 @@
 #ifndef wasm_types_h
 #define wasm_types_h
 
-#include "mozilla/DebugOnly.h"
+#include "mozilla/EnumeratedArray.h"
 #include "mozilla/HashFunctions.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/Move.h"
 
 #include "NamespaceImports.h"
 
+#include "asmjs/WasmBinary.h"
 #include "ds/LifoAlloc.h"
 #include "jit/IonTypes.h"
 #include "js/UniquePtr.h"
@@ -37,118 +39,33 @@ class PropertyName;
 
 namespace wasm {
 
-using mozilla::Move;
 using mozilla::DebugOnly;
+using mozilla::EnumeratedArray;
+using mozilla::Maybe;
+using mozilla::Move;
 using mozilla::MallocSizeOf;
 
-// The ValType enum represents the WebAssembly "value type", which are used to
-// specify the type of locals and parameters.
+typedef Vector<uint32_t, 0, SystemAllocPolicy> Uint32Vector;
 
-// FIXME: uint8_t would make more sense for the underlying storage class, but
-// causes miscompilations in GCC (fixed in 4.8.5 and 4.9.3).
-enum class ValType
+// ValType/ExprType utilities
+
+// ExprType::Limit is an out-of-band value and has no wasm-semantic meaning. For
+// the purpose of recursive validation, we use this value to represent the type
+// of branch/return instructions that don't actually return to the parent
+// expression and can thus be used in any context.
+const ExprType AnyType = ExprType::Limit;
+
+inline ExprType
+Unify(ExprType a, ExprType b)
 {
-    I32,
-    I64,
-    F32,
-    F64,
-    I32x4,
-    F32x4,
-    B32x4
-};
-
-typedef Vector<ValType, 8, SystemAllocPolicy> ValTypeVector;
-
-static inline bool
-IsSimdType(ValType vt)
-{
-    return vt == ValType::I32x4 || vt == ValType::F32x4 || vt == ValType::B32x4;
+    if (a == AnyType)
+        return b;
+    if (b == AnyType)
+        return a;
+    if (a == b)
+        return a;
+    return ExprType::Void;
 }
-
-static inline jit::MIRType
-ToMIRType(ValType vt)
-{
-    switch (vt) {
-      case ValType::I32: return jit::MIRType_Int32;
-      case ValType::I64: MOZ_CRASH("NYI");
-      case ValType::F32: return jit::MIRType_Float32;
-      case ValType::F64: return jit::MIRType_Double;
-      case ValType::I32x4: return jit::MIRType_Int32x4;
-      case ValType::F32x4: return jit::MIRType_Float32x4;
-      case ValType::B32x4: return jit::MIRType_Bool32x4;
-    }
-    MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("bad type");
-}
-
-// The Val class represents a single WebAssembly value of a given value type,
-// mostly for the purpose of numeric literals and initializers. A Val does not
-// directly map to a JS value since there is not (currently) a precise
-// representation of i64 values. A Val may contain non-canonical NaNs since,
-// within WebAssembly, floats are not canonicalized. Canonicalization must
-// happen at the JS boundary.
-
-class Val
-{
-  public:
-    typedef int32_t I32x4[4];
-    typedef float F32x4[4];
-
-  private:
-    ValType type_;
-    union {
-        uint32_t i32_;
-        uint64_t i64_;
-        float f32_;
-        double f64_;
-        I32x4 i32x4_;
-        F32x4 f32x4_;
-    } u;
-
-  public:
-    Val() = default;
-
-    explicit Val(uint32_t i32) : type_(ValType::I32) { u.i32_ = i32; }
-    explicit Val(uint64_t i64) : type_(ValType::I64) { u.i64_ = i64; }
-    explicit Val(float f32) : type_(ValType::F32) { u.f32_ = f32; }
-    explicit Val(double f64) : type_(ValType::F64) { u.f64_ = f64; }
-
-    explicit Val(const I32x4& i32x4, ValType type = ValType::I32x4) : type_(type) {
-        MOZ_ASSERT(type_ == ValType::I32x4 || type_ == ValType::B32x4);
-        memcpy(u.i32x4_, i32x4, sizeof(u.i32x4_));
-    }
-    explicit Val(const F32x4& f32x4) : type_(ValType::F32x4) { memcpy(u.f32x4_, f32x4, sizeof(u.f32x4_)); }
-
-    ValType type() const { return type_; }
-    bool isSimd() const { return IsSimdType(type()); }
-
-    uint32_t i32() const { MOZ_ASSERT(type_ == ValType::I32); return u.i32_; }
-    uint64_t i64() const { MOZ_ASSERT(type_ == ValType::I64); return u.i64_; }
-    float f32() const { MOZ_ASSERT(type_ == ValType::F32); return u.f32_; }
-    double f64() const { MOZ_ASSERT(type_ == ValType::F64); return u.f64_; }
-    const I32x4& i32x4() const {
-        MOZ_ASSERT(type_ == ValType::I32x4 || type_ == ValType::B32x4);
-        return u.i32x4_;
-    }
-    const F32x4& f32x4() const { MOZ_ASSERT(type_ == ValType::F32x4); return u.f32x4_; }
-};
-
-// The ExprType enum represents the type of a WebAssembly expression or return
-// value and may either be a value type or void. A future WebAssembly extension
-// may generalize expression types to instead be a list of value types (with
-// void represented by the empty list). For now it's easier to have a flat enum
-// and be explicit about conversions to/from value types.
-
-enum class ExprType : uint8_t
-{
-    I32 = uint8_t(ValType::I32),
-    I64 = uint8_t(ValType::I64),
-    F32 = uint8_t(ValType::F32),
-    F64 = uint8_t(ValType::F64),
-    I32x4 = uint8_t(ValType::I32x4),
-    F32x4 = uint8_t(ValType::F32x4),
-    B32x4 = uint8_t(ValType::B32x4),
-    Void
-};
 
 static inline bool
 IsVoid(ExprType et)
@@ -170,22 +87,211 @@ ToExprType(ValType vt)
 }
 
 static inline bool
+IsSimdType(ValType vt)
+{
+    switch (vt) {
+      case ValType::I8x16:
+      case ValType::I16x8:
+      case ValType::I32x4:
+      case ValType::F32x4:
+      case ValType::B8x16:
+      case ValType::B16x8:
+      case ValType::B32x4:
+        return true;
+      default:
+        return false;
+    }
+}
+
+static inline uint32_t
+NumSimdElements(ValType vt)
+{
+    MOZ_ASSERT(IsSimdType(vt));
+    switch (vt) {
+      case ValType::I8x16:
+      case ValType::B8x16:
+        return 16;
+      case ValType::I16x8:
+      case ValType::B16x8:
+        return 8;
+      case ValType::I32x4:
+      case ValType::F32x4:
+      case ValType::B32x4:
+        return 4;
+     default:
+        MOZ_CRASH("Unhandled SIMD type");
+    }
+}
+
+static inline ValType
+SimdElementType(ValType vt)
+{
+    MOZ_ASSERT(IsSimdType(vt));
+    switch (vt) {
+      case ValType::I8x16:
+      case ValType::I16x8:
+      case ValType::I32x4:
+        return ValType::I32;
+      case ValType::F32x4:
+        return ValType::F32;
+      case ValType::B8x16:
+      case ValType::B16x8:
+      case ValType::B32x4:
+        return ValType::I32;
+     default:
+        MOZ_CRASH("Unhandled SIMD type");
+    }
+}
+
+static inline ValType
+SimdBoolType(ValType vt)
+{
+    MOZ_ASSERT(IsSimdType(vt));
+    switch (vt) {
+      case ValType::I8x16:
+      case ValType::B8x16:
+        return ValType::B8x16;
+      case ValType::I16x8:
+      case ValType::B16x8:
+        return ValType::B16x8;
+      case ValType::I32x4:
+      case ValType::F32x4:
+      case ValType::B32x4:
+        return ValType::B32x4;
+     default:
+        MOZ_CRASH("Unhandled SIMD type");
+    }
+}
+
+static inline bool
 IsSimdType(ExprType et)
 {
     return IsVoid(et) ? false : IsSimdType(ValType(et));
 }
 
 static inline bool
-IsSimdBoolType(ExprType vt)
+IsSimdBoolType(ValType vt)
 {
-    return vt == ExprType::B32x4;
+    return vt == ValType::B8x16 || vt == ValType::B16x8 || vt == ValType::B32x4;
+}
+
+static inline jit::MIRType
+ToMIRType(ValType vt)
+{
+    switch (vt) {
+      case ValType::I32: return jit::MIRType::Int32;
+      case ValType::I64: return jit::MIRType::Int64;
+      case ValType::F32: return jit::MIRType::Float32;
+      case ValType::F64: return jit::MIRType::Double;
+      case ValType::I8x16: return jit::MIRType::Int8x16;
+      case ValType::I16x8: return jit::MIRType::Int16x8;
+      case ValType::I32x4: return jit::MIRType::Int32x4;
+      case ValType::F32x4: return jit::MIRType::Float32x4;
+      case ValType::B8x16: return jit::MIRType::Bool8x16;
+      case ValType::B16x8: return jit::MIRType::Bool16x8;
+      case ValType::B32x4: return jit::MIRType::Bool32x4;
+      case ValType::Limit: break;
+    }
+    MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("bad type");
 }
 
 static inline jit::MIRType
 ToMIRType(ExprType et)
 {
-    return IsVoid(et) ? jit::MIRType_None : ToMIRType(ValType(et));
+    return IsVoid(et) ? jit::MIRType::None : ToMIRType(ValType(et));
 }
+
+static inline const char*
+ToCString(ExprType type)
+{
+    switch (type) {
+      case ExprType::Void:  return "void";
+      case ExprType::I32:   return "i32";
+      case ExprType::I64:   return "i64";
+      case ExprType::F32:   return "f32";
+      case ExprType::F64:   return "f64";
+      case ExprType::I8x16: return "i8x16";
+      case ExprType::I16x8: return "i16x8";
+      case ExprType::I32x4: return "i32x4";
+      case ExprType::F32x4: return "f32x4";
+      case ExprType::B8x16: return "b8x16";
+      case ExprType::B16x8: return "b16x8";
+      case ExprType::B32x4: return "b32x4";
+      case ExprType::Limit:;
+    }
+    MOZ_CRASH("bad expression type");
+}
+
+static inline const char*
+ToCString(ValType type)
+{
+    return ToCString(ToExprType(type));
+}
+
+// The Val class represents a single WebAssembly value of a given value type,
+// mostly for the purpose of numeric literals and initializers. A Val does not
+// directly map to a JS value since there is not (currently) a precise
+// representation of i64 values. A Val may contain non-canonical NaNs since,
+// within WebAssembly, floats are not canonicalized. Canonicalization must
+// happen at the JS boundary.
+
+class Val
+{
+    ValType type_;
+    union {
+        uint32_t i32_;
+        uint64_t i64_;
+        float f32_;
+        double f64_;
+        I8x16 i8x16_;
+        I16x8 i16x8_;
+        I32x4 i32x4_;
+        F32x4 f32x4_;
+    } u;
+
+  public:
+    Val() = default;
+
+    explicit Val(uint32_t i32) : type_(ValType::I32) { u.i32_ = i32; }
+    explicit Val(uint64_t i64) : type_(ValType::I64) { u.i64_ = i64; }
+    explicit Val(float f32) : type_(ValType::F32) { u.f32_ = f32; }
+    explicit Val(double f64) : type_(ValType::F64) { u.f64_ = f64; }
+
+    explicit Val(const I8x16& i8x16, ValType type = ValType::I8x16) : type_(type) {
+        MOZ_ASSERT(type_ == ValType::I8x16 || type_ == ValType::B8x16);
+        memcpy(u.i8x16_, i8x16, sizeof(u.i8x16_));
+    }
+    explicit Val(const I16x8& i16x8, ValType type = ValType::I16x8) : type_(type) {
+        MOZ_ASSERT(type_ == ValType::I16x8 || type_ == ValType::B16x8);
+        memcpy(u.i16x8_, i16x8, sizeof(u.i16x8_));
+    }
+    explicit Val(const I32x4& i32x4, ValType type = ValType::I32x4) : type_(type) {
+        MOZ_ASSERT(type_ == ValType::I32x4 || type_ == ValType::B32x4);
+        memcpy(u.i32x4_, i32x4, sizeof(u.i32x4_));
+    }
+    explicit Val(const F32x4& f32x4) : type_(ValType::F32x4) { memcpy(u.f32x4_, f32x4, sizeof(u.f32x4_)); }
+
+    ValType type() const { return type_; }
+    bool isSimd() const { return IsSimdType(type()); }
+
+    uint32_t i32() const { MOZ_ASSERT(type_ == ValType::I32); return u.i32_; }
+    uint64_t i64() const { MOZ_ASSERT(type_ == ValType::I64); return u.i64_; }
+    float f32() const { MOZ_ASSERT(type_ == ValType::F32); return u.f32_; }
+    double f64() const { MOZ_ASSERT(type_ == ValType::F64); return u.f64_; }
+    const I8x16& i8x16() const {
+        MOZ_ASSERT(type_ == ValType::I8x16 || type_ == ValType::B8x16);
+        return u.i8x16_;
+    }
+    const I16x8& i16x8() const {
+        MOZ_ASSERT(type_ == ValType::I16x8 || type_ == ValType::B16x8);
+        return u.i16x8_;
+    }
+    const I32x4& i32x4() const {
+        MOZ_ASSERT(type_ == ValType::I32x4 || type_ == ValType::B32x4);
+        return u.i32x4_;
+    }
+    const F32x4& f32x4() const { MOZ_ASSERT(type_ == ValType::F32x4); return u.f32x4_; }
+};
 
 // The Sig class represents a WebAssembly function signature which takes a list
 // of value types and returns an expression type. The engine uses two in-memory
@@ -210,7 +316,7 @@ class Sig
     Sig(Sig&& rhs) : args_(Move(rhs.args_)), ret_(rhs.ret_) {}
     Sig(ValTypeVector&& args, ExprType ret) : args_(Move(args)), ret_(ret) {}
 
-    bool clone(const Sig& rhs) {
+    MOZ_MUST_USE bool clone(const Sig& rhs) {
         ret_ = rhs.ret_;
         MOZ_ASSERT(args_.empty());
         return args_.appendAll(rhs.args_);
@@ -226,26 +332,37 @@ class Sig
     const ExprType& ret() const { return ret_; }
 
     HashNumber hash() const {
-        HashNumber hn = HashNumber(ret_);
-        for (unsigned i = 0; i < args_.length(); i++)
-            hn = mozilla::AddToHash(hn, HashNumber(args_[i]));
-        return hn;
+        return AddContainerToHash(args_, HashNumber(ret_));
     }
     bool operator==(const Sig& rhs) const {
-        if (ret() != rhs.ret())
-            return false;
-        if (args().length() != rhs.args().length())
-            return false;
-        for (unsigned i = 0; i < args().length(); i++) {
-            if (arg(i) != rhs.arg(i))
-                return false;
-        }
-        return true;
+        return ret() == rhs.ret() && EqualContainers(args(), rhs.args());
     }
     bool operator!=(const Sig& rhs) const {
         return !(*this == rhs);
     }
 };
+
+struct SigHashPolicy
+{
+    typedef const Sig& Lookup;
+    static HashNumber hash(Lookup sig) { return sig.hash(); }
+    static bool match(const Sig* lhs, Lookup rhs) { return *lhs == rhs; }
+};
+
+// A GlobalDesc describes a single global variable. Currently, globals are only
+// exposed through asm.js.
+
+struct GlobalDesc
+{
+    ValType type;
+    unsigned globalDataOffset;
+    bool isConst;
+    GlobalDesc(ValType type, unsigned offset, bool isConst)
+      : type(type), globalDataOffset(offset), isConst(isConst)
+    {}
+};
+
+typedef Vector<GlobalDesc, 0, SystemAllocPolicy> GlobalDescVector;
 
 // A "declared" signature is a Sig object that is created and owned by the
 // ModuleGenerator. These signature objects are read-only and have the same
@@ -269,7 +386,7 @@ typedef Vector<const DeclaredSig*, 0, SystemAllocPolicy> DeclaredSigPtrVector;
 
 struct Offsets
 {
-    MOZ_IMPLICIT Offsets(uint32_t begin = 0, uint32_t end = 0)
+    explicit Offsets(uint32_t begin = 0, uint32_t end = 0)
       : begin(begin), end(end)
     {}
 
@@ -307,14 +424,21 @@ struct ProfilingOffsets : Offsets
 
 struct FuncOffsets : ProfilingOffsets
 {
-    MOZ_IMPLICIT FuncOffsets(uint32_t nonProfilingEntry = 0,
-                             uint32_t profilingJump = 0,
-                             uint32_t profilingEpilogue = 0)
+    MOZ_IMPLICIT FuncOffsets()
       : ProfilingOffsets(),
-        nonProfilingEntry(nonProfilingEntry),
-        profilingJump(profilingJump),
-        profilingEpilogue(profilingEpilogue)
+        tableEntry(0),
+        tableProfilingJump(0),
+        nonProfilingEntry(0),
+        profilingJump(0),
+        profilingEpilogue(0)
     {}
+
+    // Function CodeRanges have a table entry which takes an extra signature
+    // argument which is checked against the callee's signature before falling
+    // through to the normal prologue. When profiling is enabled, a nop on the
+    // fallthrough is patched to instead jump to the profiling epilogue.
+    uint32_t tableEntry;
+    uint32_t tableProfilingJump;
 
     // Function CodeRanges have an additional non-profiling entry that comes
     // after the profiling entry and a non-profiling epilogue that comes before
@@ -328,6 +452,8 @@ struct FuncOffsets : ProfilingOffsets
 
     void offsetBy(uint32_t offset) {
         ProfilingOffsets::offsetBy(offset);
+        tableEntry += offset;
+        tableProfilingJump += offset;
         nonProfilingEntry += offset;
         profilingJump += offset;
         profilingEpilogue += offset;
@@ -342,8 +468,7 @@ struct FuncOffsets : ProfilingOffsets
 
 class CallSiteDesc
 {
-    uint32_t line_;
-    uint32_t column_ : 31;
+    uint32_t lineOrBytecode_ : 31;
     uint32_t kind_ : 1;
   public:
     enum Kind {
@@ -352,15 +477,14 @@ class CallSiteDesc
     };
     CallSiteDesc() {}
     explicit CallSiteDesc(Kind kind)
-      : line_(0), column_(0), kind_(kind)
+      : lineOrBytecode_(0), kind_(kind)
     {}
-    CallSiteDesc(uint32_t line, uint32_t column, Kind kind)
-      : line_(line), column_(column), kind_(kind)
+    CallSiteDesc(uint32_t lineOrBytecode, Kind kind)
+      : lineOrBytecode_(lineOrBytecode), kind_(kind)
     {
-        MOZ_ASSERT(column_ == column, "column must fit in 31 bits");
+        MOZ_ASSERT(lineOrBytecode_ == lineOrBytecode, "must fit in 31 bits");
     }
-    uint32_t line() const { return line_; }
-    uint32_t column() const { return column_; }
+    uint32_t lineOrBytecode() const { return lineOrBytecode_; }
     Kind kind() const { return Kind(kind_); }
 };
 
@@ -403,6 +527,15 @@ class CallSiteAndTarget : public CallSite
     bool isInternal() const { return targetIndex_ != NOT_INTERNAL; }
     uint32_t targetIndex() const { MOZ_ASSERT(isInternal()); return targetIndex_; }
 };
+
+} // namespace wasm
+} // namespace js
+namespace mozilla {
+template <> struct IsPod<js::wasm::CallSite>          : TrueType {};
+template <> struct IsPod<js::wasm::CallSiteAndTarget> : TrueType {};
+}
+namespace js {
+namespace wasm {
 
 typedef Vector<CallSite, 0, SystemAllocPolicy> CallSiteVector;
 typedef Vector<CallSiteAndTarget, 0, SystemAllocPolicy> CallSiteAndTargetVector;
@@ -506,6 +639,14 @@ class HeapAccess {
 };
 #endif
 
+} // namespace wasm
+} // namespace js
+namespace mozilla {
+template <> struct IsPod<js::wasm::HeapAccess> : TrueType {};
+}
+namespace js {
+namespace wasm {
+
 typedef Vector<HeapAccess, 0, SystemAllocPolicy> HeapAccessVector;
 
 // A wasm::SymbolicAddress represents a pointer to a well-known function or
@@ -540,6 +681,10 @@ enum class SymbolicAddress
     CeilF,
     FloorD,
     FloorF,
+    TruncD,
+    TruncF,
+    NearbyIntD,
+    NearbyIntF,
     ExpD,
     LogD,
     PowD,
@@ -548,11 +693,11 @@ enum class SymbolicAddress
     RuntimeInterruptUint32,
     StackLimit,
     ReportOverRecursed,
-    OnOutOfBounds,
-    OnImpreciseConversion,
     HandleExecutionInterrupt,
+    HandleTrap,
     InvokeImport_Void,
     InvokeImport_I32,
+    InvokeImport_I64,
     InvokeImport_F64,
     CoerceInPlace_ToInt32,
     CoerceInPlace_ToNumber,
@@ -561,6 +706,58 @@ enum class SymbolicAddress
 
 void*
 AddressOf(SymbolicAddress imm, ExclusiveContext* cx);
+
+// Extracts low and high from an int64 object {low: int32, high: int32}, for
+// testing purposes mainly.
+MOZ_MUST_USE bool ReadI64Object(JSContext* cx, HandleValue v, int64_t* val);
+
+// A wasm::Trap is a reason for why we reached a trap in executed code. Each
+// different trap is mapped to a different error message.
+
+enum class Trap
+{
+    // The Unreachable opcode has been executed.
+    Unreachable,
+    // An integer arithmetic operation led to an overflow.
+    IntegerOverflow,
+    // Trying to coerce NaN to an integer.
+    InvalidConversionToInteger,
+    // Integer division by zero.
+    IntegerDivideByZero,
+    // Out of bounds on wasm memory accesses and asm.js SIMD/atomic accesses.
+    OutOfBounds,
+    // Bad signature for an indirect call.
+    BadIndirectCall,
+
+    // (asm.js only) SIMD float to int conversion failed because the input
+    // wasn't in bounds.
+    ImpreciseSimdConversion,
+
+    Limit
+};
+
+// A wasm::JumpTarget represents one of a special set of stubs that can be
+// jumped to from any function. Because wasm modules can be larger than the
+// range of a plain jump, these potentially out-of-range jumps must be recorded
+// and patched specially by the MacroAssembler and ModuleGenerator.
+
+enum class JumpTarget
+{
+    // Traps
+    Unreachable = unsigned(Trap::Unreachable),
+    IntegerOverflow = unsigned(Trap::IntegerOverflow),
+    InvalidConversionToInteger = unsigned(Trap::InvalidConversionToInteger),
+    IntegerDivideByZero = unsigned(Trap::IntegerDivideByZero),
+    OutOfBounds = unsigned(Trap::OutOfBounds),
+    BadIndirectCall = unsigned(Trap::BadIndirectCall),
+    ImpreciseSimdConversion = unsigned(Trap::ImpreciseSimdConversion),
+    // Non-traps
+    StackOverflow,
+    Throw,
+    Limit
+};
+
+typedef EnumeratedArray<JumpTarget, JumpTarget::Limit, Uint32Vector> JumpSiteArray;
 
 // The CompileArgs struct captures global parameters that affect all wasm code
 // generation. It also currently is the single source of truth for whether or
@@ -577,13 +774,31 @@ struct CompileArgs
     bool operator!=(CompileArgs rhs) const { return !(*this == rhs); }
 };
 
+// A Module can either be asm.js or wasm.
+
+enum ModuleKind
+{
+    Wasm,
+    AsmJS
+};
+
 // Constants:
 
 static const unsigned ActivationGlobalDataOffset = 0;
-static const unsigned HeapGlobalDataOffset = ActivationGlobalDataOffset + sizeof(void*);
-static const unsigned NaN64GlobalDataOffset = HeapGlobalDataOffset + sizeof(void*);
-static const unsigned NaN32GlobalDataOffset = NaN64GlobalDataOffset + sizeof(double);
-static const unsigned InitialGlobalDataBytes = NaN32GlobalDataOffset + sizeof(float);
+static const unsigned HeapGlobalDataOffset       = ActivationGlobalDataOffset + sizeof(void*);
+static const unsigned NaN64GlobalDataOffset      = HeapGlobalDataOffset + sizeof(void*);
+static const unsigned NaN32GlobalDataOffset      = NaN64GlobalDataOffset + sizeof(double);
+static const unsigned InitialGlobalDataBytes     = NaN32GlobalDataOffset + sizeof(float);
+
+static const unsigned MaxSigs                    =        4 * 1024;
+static const unsigned MaxFuncs                   =      512 * 1024;
+static const unsigned MaxLocals                  =       64 * 1024;
+static const unsigned MaxImports                 =       64 * 1024;
+static const unsigned MaxExports                 =       64 * 1024;
+static const unsigned MaxTables                  =        4 * 1024;
+static const unsigned MaxTableElems              =      128 * 1024;
+static const unsigned MaxArgsPerFunc             =        4 * 1024;
+static const unsigned MaxBrTableElems            = 4 * 1024 * 1024;
 
 } // namespace wasm
 } // namespace js

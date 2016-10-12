@@ -18,6 +18,7 @@
 #include "js/GCAPI.h"
 #include "vm/Debugger.h"
 #include "vm/Opcodes.h"
+#include "vm/ScopeObject.h"
 
 #include "jit/JitFrameIterator-inl.h"
 #include "vm/Interpreter-inl.h"
@@ -61,8 +62,8 @@ InterpreterFrame::initExecuteFrame(JSContext* cx, HandleScript script, AbstractF
     prevpc_ = nullptr;
     prevsp_ = nullptr;
 
-    MOZ_ASSERT_IF(evalInFramePrev, isDebuggerEvalFrame());
     evalInFramePrev_ = evalInFramePrev;
+    MOZ_ASSERT_IF(evalInFramePrev, isDebuggerEvalFrame());
 
     if (script->isDebuggee())
         setIsDebuggee();
@@ -80,12 +81,12 @@ InterpreterFrame::isNonGlobalEvalFrame() const
 }
 
 bool
-InterpreterFrame::copyRawFrameSlots(AutoValueVector* vec)
+InterpreterFrame::copyRawFrameSlots(MutableHandle<GCVector<Value>> vec)
 {
-    if (!vec->resize(numFormalArgs() + script()->nfixed()))
+    if (!vec.resize(numFormalArgs() + script()->nfixed()))
         return false;
-    PodCopy(vec->begin(), argv(), numFormalArgs());
-    PodCopy(vec->begin() + numFormalArgs(), slots(), script()->nfixed());
+    PodCopy(vec.begin(), argv(), numFormalArgs());
+    PodCopy(vec.begin() + numFormalArgs(), slots(), script()->nfixed());
     return true;
 }
 
@@ -516,21 +517,6 @@ FrameIter::settleOnActivation()
 
         Activation* activation = data_.activations_.activation();
 
-        // If JS_SaveFrameChain was called, stop iterating here (unless
-        // GO_THROUGH_SAVED is set).
-        if (data_.savedOption_ == STOP_AT_SAVED && activation->hasSavedFrameChain()) {
-            data_.state_ = DONE;
-            return;
-        }
-
-        // Skip activations from another context if needed.
-        MOZ_ASSERT(activation->cx());
-        MOZ_ASSERT(data_.cx_);
-        if (data_.contextOption_ == CURRENT_CONTEXT && activation->cx() != data_.cx_) {
-            ++data_.activations_;
-            continue;
-        }
-
         // If the caller supplied principals, only show activations which are subsumed (of the same
         // origin or of an origin accessible) by these principals.
         if (data_.principals_) {
@@ -596,12 +582,9 @@ FrameIter::settleOnActivation()
     }
 }
 
-FrameIter::Data::Data(JSContext* cx, SavedOption savedOption,
-                      ContextOption contextOption, DebuggerEvalOption debuggerEvalOption,
+FrameIter::Data::Data(JSContext* cx, DebuggerEvalOption debuggerEvalOption,
                       JSPrincipals* principals)
   : cx_(cx),
-    savedOption_(savedOption),
-    contextOption_(contextOption),
     debuggerEvalOption_(debuggerEvalOption),
     principals_(principals),
     pc_(nullptr),
@@ -615,8 +598,6 @@ FrameIter::Data::Data(JSContext* cx, SavedOption savedOption,
 
 FrameIter::Data::Data(const FrameIter::Data& other)
   : cx_(other.cx_),
-    savedOption_(other.savedOption_),
-    contextOption_(other.contextOption_),
     debuggerEvalOption_(other.debuggerEvalOption_),
     principals_(other.principals_),
     state_(other.state_),
@@ -629,8 +610,8 @@ FrameIter::Data::Data(const FrameIter::Data& other)
 {
 }
 
-FrameIter::FrameIter(JSContext* cx, SavedOption savedOption)
-  : data_(cx, savedOption, CURRENT_CONTEXT, FOLLOW_DEBUGGER_EVAL_PREV_LINK, nullptr),
+FrameIter::FrameIter(JSContext* cx, DebuggerEvalOption debuggerEvalOption)
+  : data_(cx, debuggerEvalOption, nullptr),
     ionInlineFrames_(cx, (js::jit::JitFrameIterator*) nullptr)
 {
     // settleOnActivation can only GC if principals are given.
@@ -638,20 +619,9 @@ FrameIter::FrameIter(JSContext* cx, SavedOption savedOption)
     settleOnActivation();
 }
 
-FrameIter::FrameIter(JSContext* cx, ContextOption contextOption,
-                     SavedOption savedOption, DebuggerEvalOption debuggerEvalOption)
-  : data_(cx, savedOption, contextOption, debuggerEvalOption, nullptr),
-    ionInlineFrames_(cx, (js::jit::JitFrameIterator*) nullptr)
-{
-    // settleOnActivation can only GC if principals are given.
-    JS::AutoSuppressGCAnalysis nogc;
-    settleOnActivation();
-}
-
-FrameIter::FrameIter(JSContext* cx, ContextOption contextOption,
-                     SavedOption savedOption, DebuggerEvalOption debuggerEvalOption,
+FrameIter::FrameIter(JSContext* cx, DebuggerEvalOption debuggerEvalOption,
                      JSPrincipals* principals)
-  : data_(cx, savedOption, contextOption, debuggerEvalOption, principals),
+  : data_(cx, debuggerEvalOption, principals),
     ionInlineFrames_(cx, (js::jit::JitFrameIterator*) nullptr)
 {
     settleOnActivation();
@@ -734,13 +704,6 @@ FrameIter::operator++()
         {
             AbstractFramePtr eifPrev = interpFrame()->evalInFramePrev();
 
-            // Eval-in-frame can cross contexts and works across saved frame
-            // chains.
-            ContextOption prevContextOption = data_.contextOption_;
-            SavedOption prevSavedOption = data_.savedOption_;
-            data_.contextOption_ = ALL_CONTEXTS;
-            data_.savedOption_ = GO_THROUGH_SAVED;
-
             popInterpreterFrame();
 
             while (!hasUsableAbstractFramePtr() || abstractFramePtr() != eifPrev) {
@@ -750,8 +713,6 @@ FrameIter::operator++()
                     popInterpreterFrame();
             }
 
-            data_.contextOption_ = prevContextOption;
-            data_.savedOption_ = prevSavedOption;
             data_.cx_ = data_.activations_->cx();
             break;
         }
@@ -879,6 +840,21 @@ FrameIter::functionDisplayAtom() const
     MOZ_CRASH("Unexpected state");
 }
 
+ScriptSource*
+FrameIter::scriptSource() const
+{
+    switch (data_.state_) {
+      case DONE:
+      case WASM:
+        break;
+      case INTERP:
+      case JIT:
+        return script()->scriptSource();
+    }
+
+    MOZ_CRASH("Unexpected state");
+}
+
 const char*
 FrameIter::filename() const
 {
@@ -922,7 +898,9 @@ FrameIter::computeLine(uint32_t* column) const
       case JIT:
         return PCToLineNumber(script(), pc(), column);
       case WASM:
-        return data_.wasmFrames_.computeLine(column);
+        if (column)
+            *column = 0;
+        return data_.wasmFrames_.lineOrBytecode();
     }
 
     MOZ_CRASH("Unexpected state");
@@ -1383,7 +1361,7 @@ ActivationEntryMonitor::ActivationEntryMonitor(JSContext* cx, InterpreterFrame* 
         // be traced if we trigger GC here. Suppress GC to avoid this.
         gc::AutoSuppressGC suppressGC(cx);
         RootedValue stack(cx, asyncStack(cx));
-        RootedString asyncCause(cx, cx->runtime()->asyncCauseForNewActivations);
+        const char* asyncCause = cx->runtime()->asyncCauseForNewActivations;
         if (entryFrame->isFunctionFrame())
             entryMonitor_->Entry(cx, &entryFrame->callee(), stack, asyncCause);
         else
@@ -1399,7 +1377,7 @@ ActivationEntryMonitor::ActivationEntryMonitor(JSContext* cx, jit::CalleeToken e
         // a GC to discard the code we're about to enter, so we suppress GC.
         gc::AutoSuppressGC suppressGC(cx);
         RootedValue stack(cx, asyncStack(cx));
-        RootedString asyncCause(cx, cx->runtime()->asyncCauseForNewActivations);
+        const char* asyncCause = cx->runtime()->asyncCauseForNewActivations;
         if (jit::CalleeTokenIsFunction(entryToken))
             entryMonitor_->Entry(cx_, jit::CalleeTokenToFunction(entryToken), stack, asyncCause);
         else
@@ -1412,7 +1390,6 @@ ActivationEntryMonitor::ActivationEntryMonitor(JSContext* cx, jit::CalleeToken e
 jit::JitActivation::JitActivation(JSContext* cx, bool active)
   : Activation(cx, Jit),
     active_(active),
-    isLazyLinkExitFrame_(false),
     rematerializedFrames_(nullptr),
     ionRecovery_(cx),
     bailoutData_(nullptr),
@@ -1921,9 +1898,9 @@ JS::ProfilingFrameIterator::getPhysicalFrameAndEntry(jit::JitcodeGlobalEntry* en
     void* returnAddr = jitIter().returnAddressToFp();
     jit::JitcodeGlobalTable* table = rt_->jitRuntime()->getJitcodeGlobalTable();
     if (hasSampleBufferGen())
-        table->lookupForSampler(returnAddr, entry, rt_, sampleBufferGen_);
+        *entry = table->lookupForSamplerInfallible(returnAddr, rt_, sampleBufferGen_);
     else
-        table->lookupInfallible(returnAddr, entry, rt_);
+        *entry = table->lookupInfallible(returnAddr);
 
     MOZ_ASSERT(entry->isIon() || entry->isIonCache() || entry->isBaseline() || entry->isDummy());
 

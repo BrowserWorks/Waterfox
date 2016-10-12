@@ -2,6 +2,61 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
+ * Use this variable if you specify duration or some other properties
+ * for script animation.
+ * E.g., div.animate({ opacity: [0, 1] }, 100 * MS_PER_SEC);
+ *
+ * NOTE: Creating animations with short duration may cause intermittent
+ * failures in asynchronous test. For example, the short duration animation
+ * might be finished when animation.ready has been fulfilled because of slow
+ * platforms or busyness of the main thread.
+ * Setting short duration to cancel its animation does not matter but
+ * if you don't want to cancel the animation, consider using longer duration.
+ */
+const MS_PER_SEC = 1000;
+
+/* The recommended minimum precision to use for time values[1].
+ *
+ * [1] https://w3c.github.io/web-animations/#precision-of-time-values
+ */
+var TIME_PRECISION = 0.0005; // ms
+
+/*
+ * Allow implementations to substitute an alternative method for comparing
+ * times based on their precision requirements.
+ */
+function assert_times_equal(actual, expected, description) {
+  assert_approx_equals(actual, expected, TIME_PRECISION, description);
+}
+
+/**
+ * Appends a div to the document body and creates an animation on the div.
+ * NOTE: This function asserts when trying to create animations with durations
+ * shorter than 100s because the shorter duration may cause intermittent
+ * failures.  If you are not sure how long it is suitable, use 100s; it's
+ * long enough but shorter than our test framework timeout (330s).
+ * If you really need to use shorter durations, use animate() function directly.
+ *
+ * @param t  The testharness.js Test object. If provided, this will be used
+ *           to register a cleanup callback to remove the div when the test
+ *           finishes.
+ * @param attrs  A dictionary object with attribute names and values to set on
+ *               the div.
+ * @param frames  The keyframes passed to Element.animate().
+ * @param options  The options passed to Element.animate().
+ */
+function addDivAndAnimate(t, attrs, frames, options) {
+  let animDur = (typeof options === 'object') ?
+    options.duration : options;
+  assert_greater_than_equal(animDur, 100 * MS_PER_SEC,
+      'Clients of this addDivAndAnimate API must request a duration ' +
+      'of at least 100s, to avoid intermittent failures from e.g.' +
+      'the main thread being busy for an extended period');
+
+  return addDiv(t, attrs).animate(frames, options);
+}
+
+/**
  * Appends a div to the document body.
  *
  * @param t  The testharness.js Test object. If provided, this will be used
@@ -30,6 +85,34 @@ function addDiv(t, attrs) {
 }
 
 /**
+ * Appends a style div to the document head.
+ *
+ * @param t  The testharness.js Test object. If provided, this will be used
+ *           to register a cleanup callback to remove the style element
+ *           when the test finishes.
+ *
+ * @param rules  A dictionary object with selector names and rules to set on
+ *               the style sheet.
+ */
+function addStyle(t, rules) {
+  var extraStyle = document.createElement('style');
+  document.head.appendChild(extraStyle);
+  if (rules) {
+    var sheet = extraStyle.sheet;
+    for (var selector in rules) {
+      sheet.insertRule(selector + '{' + rules[selector] + '}',
+                       sheet.cssRules.length);
+    }
+  }
+
+  if (t && typeof t.add_cleanup === 'function') {
+    t.add_cleanup(function() {
+      extraStyle.remove();
+    });
+  }
+}
+
+/**
  * Promise wrapper for requestAnimationFrame.
  */
 function waitForFrame() {
@@ -48,12 +131,12 @@ function waitForFrame() {
 function waitForAnimationFrames(frameCount, onFrame) {
   return new Promise(function(resolve, reject) {
     function handleFrame() {
+      if (onFrame && typeof onFrame === 'function') {
+        onFrame();
+      }
       if (--frameCount <= 0) {
         resolve();
       } else {
-        if (onFrame && typeof onFrame === 'function') {
-          onFrame();
-        }
         window.requestAnimationFrame(handleFrame); // wait another frame
       }
     }

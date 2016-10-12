@@ -11,6 +11,7 @@
 #include "NumericTools.h"
 #include "Point.h"
 #include "Tools.h"
+#include "mozilla/Maybe.h"
 
 #include <cmath>
 
@@ -84,6 +85,7 @@ struct IntRectTyped :
                   "'units' must be a coordinate system tag");
 
     typedef BaseRect<int32_t, IntRectTyped<units>, IntPointTyped<units>, IntSizeTyped<units>, IntMarginTyped<units> > Super;
+    typedef IntRectTyped<units> Self;
 
     IntRectTyped() : Super() {}
     IntRectTyped(const IntPointTyped<units>& aPos, const IntSizeTyped<units>& aSize) :
@@ -115,6 +117,41 @@ struct IntRectTyped :
       return !xMost.isValid() || !yMost.isValid();
     }
 
+    // Same as Union(), but in the cases where aRect is non-empty, the union is
+    // done while guarding against overflow. If an overflow is detected, Nothing
+    // is returned.
+    MOZ_MUST_USE Maybe<Self> SafeUnion(const Self& aRect) const
+    {
+      if (this->IsEmpty()) {
+        return aRect.Overflows() ? Nothing() : Some(aRect);
+      } else if (aRect.IsEmpty()) {
+        return Some(*static_cast<const Self*>(this));
+      } else {
+        return this->SafeUnionEdges(aRect);
+      }
+    }
+
+    // Same as UnionEdges, but guards against overflow. If an overflow is detected,
+    // Nothing is returned.
+    MOZ_MUST_USE Maybe<Self> SafeUnionEdges(const Self& aRect) const
+    {
+      if (this->Overflows() || aRect.Overflows()) {
+        return Nothing();
+      }
+      // If neither |this| nor |aRect| overflow, then their XMost/YMost values
+      // should be safe to use.
+      CheckedInt<int32_t> newX = std::min(this->x, aRect.x);
+      CheckedInt<int32_t> newY = std::min(this->y, aRect.y);
+      CheckedInt<int32_t> newXMost = std::max(this->XMost(), aRect.XMost());
+      CheckedInt<int32_t> newYMost = std::max(this->YMost(), aRect.YMost());
+      CheckedInt<int32_t> newW = newXMost - newX;
+      CheckedInt<int32_t> newH = newYMost - newY;
+      if (!newW.isValid() || !newH.isValid()) {
+        return Nothing();
+      }
+      return Some(Self(newX.value(), newY.value(), newW.value(), newH.value()));
+    }
+
     // This is here only to keep IPDL-generated code happy. DO NOT USE.
     bool operator==(const IntRectTyped<units>& aRect) const
     {
@@ -123,6 +160,10 @@ struct IntRectTyped :
 
     void InflateToMultiple(const IntSizeTyped<units>& aTileSize)
     {
+      if (this->IsEmpty()) {
+        return;
+      }
+
       int32_t yMost = this->YMost();
       int32_t xMost = this->XMost();
 
@@ -156,22 +197,6 @@ struct RectTyped :
         Super(F(rect.x), F(rect.y),
               F(rect.width), F(rect.height)) {}
 
-    // Returns the largest rectangle that can be represented with 32-bit
-    // signed integers, centered around a point at 0,0.  As BaseRect's represent
-    // the dimensions as a top-left point with a width and height, the width
-    // and height will be the largest positive 32-bit value.  The top-left
-    // position coordinate is divided by two to center the rectangle around a
-    // point at 0,0.
-    static RectTyped<units, F> MaxIntRect()
-    {
-      return RectTyped<units, F>(
-        -std::numeric_limits<int32_t>::max() * 0.5,
-        -std::numeric_limits<int32_t>::max() * 0.5,
-        std::numeric_limits<int32_t>::max(),
-        std::numeric_limits<int32_t>::max()
-      );
-    };
-
     void NudgeToIntegers()
     {
       NudgeToInteger(&(this->x));
@@ -184,8 +209,8 @@ struct RectTyped :
     {
       *aOut = IntRectTyped<units>(int32_t(this->X()), int32_t(this->Y()),
                                   int32_t(this->Width()), int32_t(this->Height()));
-      return RectTyped<units>(F(aOut->x), F(aOut->y),
-                              F(aOut->width), F(aOut->height))
+      return RectTyped<units, F>(F(aOut->x), F(aOut->y),
+                                 F(aOut->width), F(aOut->height))
              .IsEqualEdges(*this);
     }
 
@@ -254,6 +279,21 @@ template<class units>
 RectTyped<units> IntRectToRect(const IntRectTyped<units>& aRect)
 {
   return RectTyped<units>(aRect.x, aRect.y, aRect.width, aRect.height);
+}
+
+// Convenience function for intersecting two IntRects wrapped in Maybes.
+template <typename Units>
+Maybe<IntRectTyped<Units>>
+IntersectMaybeRects(const Maybe<IntRectTyped<Units>>& a,
+                    const Maybe<IntRectTyped<Units>>& b)
+{
+  if (!a) {
+    return b;
+  } else if (!b) {
+    return a;
+  } else {
+    return Some(a->Intersect(*b));
+  }
 }
 
 } // namespace gfx

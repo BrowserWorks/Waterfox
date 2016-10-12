@@ -61,7 +61,7 @@ public:
 
   void SetWidth(uint32_t aValue, ErrorResult& aRv)
   {
-    SetHTMLIntAttr(nsGkAtoms::width, aValue, aRv);
+    SetUnsignedIntAttr(nsGkAtoms::width, aValue, 0, aRv);
   }
 
   uint32_t Height() const
@@ -71,17 +71,36 @@ public:
 
   void SetHeight(uint32_t aValue, ErrorResult& aRv)
   {
-    SetHTMLIntAttr(nsGkAtoms::height, aValue, aRv);
+    SetUnsignedIntAttr(nsGkAtoms::height, aValue, 0, aRv);
   }
 
   uint32_t VideoWidth() const
   {
-    return mMediaInfo.HasVideo() ? mMediaInfo.mVideo.mDisplay.width : 0;
+    if (mMediaInfo.HasVideo()) {
+      if (mMediaInfo.mVideo.mRotation == VideoInfo::Rotation::kDegree_90 ||
+          mMediaInfo.mVideo.mRotation == VideoInfo::Rotation::kDegree_270) {
+        return mMediaInfo.mVideo.mDisplay.height;
+      }
+      return mMediaInfo.mVideo.mDisplay.width;
+    }
+    return 0;
   }
 
   uint32_t VideoHeight() const
   {
-    return mMediaInfo.HasVideo() ? mMediaInfo.mVideo.mDisplay.height : 0;
+    if (mMediaInfo.HasVideo()) {
+      if (mMediaInfo.mVideo.mRotation == VideoInfo::Rotation::kDegree_90 ||
+          mMediaInfo.mVideo.mRotation == VideoInfo::Rotation::kDegree_270) {
+        return mMediaInfo.mVideo.mDisplay.width;
+      }
+      return mMediaInfo.mVideo.mDisplay.height;
+    }
+    return 0;
+  }
+
+  VideoInfo::Rotation RotationDegrees() const
+  {
+    return mMediaInfo.mVideo.mRotation;
   }
 
   void GetPoster(nsAString& aValue)

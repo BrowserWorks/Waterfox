@@ -16,10 +16,6 @@ DASH_R		= -r
 
 # Define keyword generator before rules.mk, see bug 323979 comment 50
 
-GARBAGE += jsautokw.h host_jskwgen$(HOST_BIN_SUFFIX)
-
-GARBAGE += selfhosted.out.h
-
 USE_HOST_CXX = 1
 
 ifdef HAVE_DTRACE
@@ -40,16 +36,6 @@ symverscript: symverscript.in
 
 EXTRA_DEPS += symverscript
 endif
-
-export_files = js-config.h
-ifdef HAVE_DTRACE
-export_files += $(CURDIR)/javascript-trace.h
-endif
-
-INSTALL_TARGETS += jsconfig
-jsconfig_FILES = $(export_files)
-jsconfig_DEST = $(DIST)/include
-jsconfig_TARGET := export
 
 include $(topsrcdir)/config/rules.mk
 
@@ -173,7 +159,6 @@ endif
 endif
 
 SCRIPTS = $(JS_CONFIG_NAME)
-SDK_BINARY = $(JS_CONFIG_NAME)
 
 $(LIBRARY_NAME).pc: js.pc
 	cp $^ $@
@@ -231,30 +216,8 @@ ifneq (,$(IMPORT_LIBRARY))
 endif
 	$(MAKE) -C shell install
 
-# Use CURDIR to avoid finding a jsautokw.h in the source tree (from a
-# previous build?) via VPATH when we're building in a separate tree.
-$(CURDIR)/jsautokw.h: host_jskwgen$(HOST_BIN_SUFFIX)
-	./host_jskwgen$(HOST_BIN_SUFFIX) $@
-
-# Force auto-header generation before compiling any source that may use them
-$(OBJS): $(CURDIR)/jsautokw.h
-
-ifdef MOZ_ETW
-ETWProvider.h ETWProvider.rc ETWProvider.mof: ETWProvider.man
-	$(MC) -um -mof $^
-
-ETWProvider.res: ETWProvider.rc
-	$(RC) -r -i '$(SDKDIR)Include' $^
-
-export:: ETWProvider.res
-
-install:: ETWProvider.mof ETWProvider.man
-	$(SYSINSTALL) $^ $(DESTDIR)$(bindir)
-
-endif
-
 ifdef HAVE_DTRACE
-$(CURDIR)/javascript-trace.h: $(srcdir)/devtools/javascript-trace.d
+javascript-trace.h: $(srcdir)/devtools/javascript-trace.d
 	dtrace -x nolibs -h -s $(srcdir)/devtools/javascript-trace.d -o javascript-trace.h.in
 	sed -e 's/if _DTRACE_VERSION/ifdef INCLUDE_MOZILLA_DTRACE/' \
 	    -e '/const/!s/char \*/const char */g' \
@@ -273,7 +236,6 @@ ifneq (,$(TAR))
 source-package:
 	SRCDIR=$(srcdir) \
 	DIST=$(DIST) \
-	MAKE=$(MAKE) \
 	MKDIR=$(MKDIR) \
 	TAR=$(TAR) \
 	MOZJS_MAJOR_VERSION=$(MOZJS_MAJOR_VERSION) \

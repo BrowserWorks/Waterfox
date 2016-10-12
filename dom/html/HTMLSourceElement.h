@@ -13,6 +13,7 @@
 #include "mozilla/dom/HTMLMediaElement.h"
 
 class nsMediaList;
+class nsAttrValue;
 
 namespace mozilla {
 namespace dom {
@@ -107,17 +108,16 @@ protected:
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
-  virtual void GetItemValueText(DOMString& text) override;
-  virtual void SetItemValueText(const nsAString& text) override;
-
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
                                 bool aNotify) override;
 
-
 private:
   RefPtr<nsMediaList> mMediaList;
   RefPtr<MediaSource> mSrcMediaSource;
+
+  // Generates a new nsMediaList using the given input
+  void UpdateMediaList(const nsAttrValue* aValue);
 };
 
 } // namespace dom

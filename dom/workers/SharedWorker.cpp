@@ -21,11 +21,12 @@
 
 using mozilla::dom::Optional;
 using mozilla::dom::Sequence;
+using mozilla::dom::MessagePort;
 using namespace mozilla;
 
 USING_WORKERS_NAMESPACE
 
-SharedWorker::SharedWorker(nsPIDOMWindow* aWindow,
+SharedWorker::SharedWorker(nsPIDOMWindowInner* aWindow,
                            WorkerPrivate* aWorkerPrivate,
                            MessagePort* aMessagePort)
   : DOMEventTargetHelper(aWindow)

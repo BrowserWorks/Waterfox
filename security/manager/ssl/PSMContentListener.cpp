@@ -29,7 +29,7 @@
 
 #include "mozilla/Logging.h"
 
-extern PRLogModuleInfo* gPIPNSSLog;
+extern mozilla::LazyLogModule gPIPNSSLog;
 
 namespace mozilla { namespace psm {
 
@@ -152,8 +152,8 @@ PSMContentStreamListener::OnStopRequest(nsIRequest* request,
   // Because importing the cert can spin the event loop (via alerts), we can't
   // do it here. Do it off the event loop instead.
   nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableMethod(this, &PSMContentStreamListener::ImportCertificate);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(r)));
+    NewRunnableMethod(this, &PSMContentStreamListener::ImportCertificate);
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
 
   return NS_OK;
 }
@@ -182,17 +182,20 @@ PSMContentStreamListener::ImportCertificate()
 
   switch (mType) {
   case X509_CA_CERT:
-    certdb->ImportCertificates(reinterpret_cast<uint8_t*>(mByteData.BeginWriting()),
+    certdb->ImportCertificates(BitwiseCast<uint8_t*, char*>(
+                                 mByteData.BeginWriting()),
                                mByteData.Length(), mType, ctx);
     break;
 
   case X509_USER_CERT:
-    certdb->ImportUserCertificate(reinterpret_cast<uint8_t*>(mByteData.BeginWriting()),
+    certdb->ImportUserCertificate(BitwiseCast<uint8_t*, char*>(
+                                    mByteData.BeginWriting()),
                                   mByteData.Length(), ctx);
     break;
 
   case X509_EMAIL_CERT:
-    certdb->ImportEmailCertificate(reinterpret_cast<uint8_t*>(mByteData.BeginWriting()),
+    certdb->ImportEmailCertificate(BitwiseCast<uint8_t*, char*>(
+                                     mByteData.BeginWriting()),
                                    mByteData.Length(), ctx);
     break;
 

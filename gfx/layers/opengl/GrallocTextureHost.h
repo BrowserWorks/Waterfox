@@ -30,6 +30,8 @@ public:
 
   virtual void SetCompositor(Compositor* aCompositor) override;
 
+  virtual Compositor* GetCompositor() override { return mCompositor; }
+
   virtual void DeallocateSharedData() override;
 
   virtual void ForgetSharedData() override;
@@ -59,6 +61,17 @@ public:
   virtual const char* Name() override { return "GrallocTextureHostOGL"; }
 
   gl::GLContext* GetGLContext() const { return mCompositor ? mCompositor->gl() : nullptr; }
+
+  virtual bool NeedsFenceHandle() override
+  {
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
+    return true;
+#else
+    return false;
+#endif
+  }
+
+  virtual FenceHandle GetCompositorReleaseFence() override;
 
 private:
   void DestroyEGLImage();

@@ -8,6 +8,8 @@
 %extensionsDTD;
 ]>
 
+<!-- import-globals-from extensions.js -->
+
 <bindings xmlns="http://www.mozilla.org/xbl"
           xmlns:xbl="http://www.mozilla.org/xbl"
           xmlns:html="http://www.w3.org/1999/xhtml"
@@ -28,7 +30,7 @@
         this.addEventListener("keypress", function(event) {
           event.stopPropagation();
         }, false);
-        
+
         if (this.usePref)
           Services.prefs.addObserver(this.pref, this._observer, true);
       ]]></constructor>

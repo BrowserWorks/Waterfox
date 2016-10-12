@@ -118,8 +118,8 @@
 
       inp.type = "search";
       inp.placeholder = cm.l10n("findCmd.promptMessage");
-      inp.style.MozMarginStart = "1em";
-      inp.style.MozMarginEnd = "1em";
+      inp.style.marginInlineStart = "1em";
+      inp.style.marginInlineEnd = "1em";
       inp.style.flexGrow = "1";
       inp.addEventListener("focus", () => inp.select());
 
@@ -136,7 +136,10 @@
       persistentDialog(cm, queryDialog, q, function(query, event) {
         CodeMirror.e_stop(event);
         if (!query) return;
-        if (query != state.queryText) startSearch(cm, state, query);
+        if (query != state.queryText) {
+          startSearch(cm, state, query);
+          state.posFrom = state.posTo = cm.getCursor();
+        }
         if (hiding) hiding.style.opacity = 1
         findNext(cm, event.shiftKey, function(_, to) {
           var dialog
@@ -208,7 +211,7 @@
           replaceAll(cm, query, text)
         } else {
           clearSearch(cm);
-          var cursor = getSearchCursor(cm, query, cm.getCursor());
+          var cursor = getSearchCursor(cm, query, cm.getCursor("from"));
           var advance = function() {
             var start = cursor.from(), match;
             if (!(match = cursor.findNext())) {

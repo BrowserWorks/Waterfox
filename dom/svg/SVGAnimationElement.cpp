@@ -314,7 +314,7 @@ SVGAnimationElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
   if (!aValue) {
     mHrefTarget.Unlink();
     AnimationTargetChanged();
-  } else if (IsInDoc()) {
+  } else if (IsInUncomposedDoc()) {
     MOZ_ASSERT(aValue->Type() == nsAttrValue::eString,
                "Expected href attribute to be string type");
     UpdateHrefTarget(this, aValue->GetStringValue());
@@ -372,7 +372,7 @@ SVGAnimationElement::ActivateByHyperlink()
     // else, silently fail. We mustn't be part of an SVG document fragment that
     // is attached to the document tree so there's nothing we can do here
   } else {
-    ErrorResult rv;
+    IgnoredErrorResult rv;
     BeginElement(rv);
   }
 }

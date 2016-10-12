@@ -167,6 +167,25 @@ interface nsINavHistoryResultNode : nsISupports
    * separator.
    */
   readonly attribute ACString bookmarkGuid;
+
+  /**
+   * The unique ID associated with the history visit. For node types other than
+   * history visit nodes, this value is -1.
+   */
+  readonly attribute long long visitId;
+
+  /**
+   * The unique ID associated with visit node which was the referrer of this
+   * history visit. For node types other than history visit nodes, or visits
+   * without any known referrer, this value is -1.
+   */
+  readonly attribute long long fromVisitId;
+
+  /**
+   * The transition type associated with this visit. For node types other than
+   * history visit nodes, this value is 0.
+   */
+  readonly attribute unsigned long visitType;
 };
 
 
@@ -904,16 +923,8 @@ interface nsINavHistoryQuery : nsISupports
   readonly attribute boolean hasDomain;
 
   /**
-   * Controls the interpretation of 'uri'. When unset (default), the URI will
-   * request an exact match of the specified URI. When set, any history entry
-   * beginning in 'uri' will match. For example "http://bar.com/foo" will match
-   * "http://bar.com/foo" as well as "http://bar.com/foo/baz.gif".
-   */
-  attribute boolean uriIsPrefix;
-
-  /**
    * This is a URI to match, to, for example, find out every time you visited
-   * a given URI. Use uriIsPrefix to control whether this is an exact match.
+   * a given URI. This is an exact match.
    */
   attribute nsIURI uri;
   readonly attribute boolean hasUri;

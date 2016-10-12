@@ -186,7 +186,7 @@ public class BrowserSearch extends HomeFragment
     private View mSuggestionsOptInPrompt;
 
     public interface OnSearchListener {
-        public void onSearch(SearchEngine engine, String text);
+        void onSearch(SearchEngine engine, String text, TelemetryContract.Method method);
     }
 
     public interface OnEditSuggestionListener {
@@ -253,7 +253,7 @@ public class BrowserSearch extends HomeFragment
     @Override
     public void onHiddenChanged(boolean hidden) {
         if (!hidden) {
-            Tab tab = Tabs.getInstance().getSelectedTab();
+            final Tab tab = Tabs.getInstance().getSelectedTab();
             final boolean isPrivate = (tab != null && tab.isPrivate());
 
             // Removes Search Suggestions Loader if in private browsing mode
@@ -262,7 +262,7 @@ public class BrowserSearch extends HomeFragment
                 getLoaderManager().destroyLoader(LOADER_ID_SUGGESTION);
             }
 
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("SearchEngines:GetVisible", null));
+            GeckoAppShell.notifyObservers("SearchEngines:GetVisible", null);
         }
         super.onHiddenChanged(hidden);
     }
@@ -276,7 +276,7 @@ public class BrowserSearch extends HomeFragment
 
         // Fetch engines if we need to.
         if (mSearchEngines.isEmpty() || !Locale.getDefault().equals(mLastLocale)) {
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("SearchEngines:GetVisible", null));
+            GeckoAppShell.notifyObservers("SearchEngines:GetVisible", null);
         } else {
             updateSearchEngineBar();
         }
@@ -435,7 +435,7 @@ public class BrowserSearch extends HomeFragment
         }
 
         // Prefetch auto-completed domain since it's a likely target
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Session:Prefetch", "http://" + autocompletion));
+        GeckoAppShell.notifyObservers("Session:Prefetch", "http://" + autocompletion);
 
         mAutocompleteHandler.onAutocomplete(autocompletion);
         mAutocompleteHandler = null;
@@ -534,7 +534,7 @@ public class BrowserSearch extends HomeFragment
 
             if (searchCount == 0) {
                 // Prefetch the first item in the list since it's weighted the highest
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Session:Prefetch", url));
+                GeckoAppShell.notifyObservers("Session:Prefetch", url);
             }
 
             // Does the completion match against the whole URL? This will match
@@ -593,7 +593,13 @@ public class BrowserSearch extends HomeFragment
     }
 
     private void filterSuggestions() {
-        if (mSuggestClient == null || (!mSuggestionsEnabled && !mSavedSearchesEnabled)) {
+        Tab tab = Tabs.getInstance().getSelectedTab();
+        final boolean isPrivate = (tab != null && tab.isPrivate());
+
+        // mSuggestClient may be null if we haven't received our search engine list yet - hence
+        // we need to exit here in that case.
+        if (isPrivate || mSuggestClient == null || (!mSuggestionsEnabled && !mSavedSearchesEnabled)) {
+            mSearchHistorySuggestions.clear();
             return;
         }
 
@@ -670,16 +676,7 @@ public class BrowserSearch extends HomeFragment
                     // is also the default engine.
                     searchEngines.add(0, engine);
 
-                    // The only time Tabs.getInstance().getSelectedTab() should
-                    // be null is when we're restoring after a crash. We should
-                    // never restore private tabs when that happens, so it
-                    // should be safe to assume that null means non-private.
-                    Tab tab = Tabs.getInstance().getSelectedTab();
-                    final boolean isPrivate = (tab != null && tab.isPrivate());
-
-                    // Only create a new instance of SuggestClient if it hasn't been
-                    // set yet.
-                    maybeSetSuggestClient(suggestTemplate, isPrivate);
+                    ensureSuggestClientIsSet(suggestTemplate);
                 } else {
                     searchEngines.add(engine);
                 }
@@ -696,12 +693,15 @@ public class BrowserSearch extends HomeFragment
                 mAdapter.notifyDataSetChanged();
             }
 
+            final Tab tab = Tabs.getInstance().getSelectedTab();
+            final boolean isPrivate = (tab != null && tab.isPrivate());
+
             // Show suggestions opt-in prompt only if suggestions are not enabled yet,
             // user hasn't been prompted and we're not on a private browsing tab.
             // The prompt might have been inflated already when this view was previously called.
             // Remove the opt-in prompt if it has been inflated in the view and dealt with by the user,
             // or if we're on a private browsing tab
-            if (!mSuggestionsEnabled && !suggestionsPrompted && mSuggestClient != null) {
+            if (!mSuggestionsEnabled && !suggestionsPrompted && !isPrivate) {
                 showSuggestionsOptIn();
             } else {
                 removeSuggestionsOptIn();
@@ -729,19 +729,14 @@ public class BrowserSearch extends HomeFragment
 
     @Override
     public void onSearchBarClickListener(final SearchEngine searchEngine) {
-        Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.LIST_ITEM,
-                "searchenginebar");
-
-        mSearchListener.onSearch(searchEngine, mSearchTerm);
+        final TelemetryContract.Method method = TelemetryContract.Method.LIST_ITEM;
+        Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, method, "searchenginebar");
+        mSearchListener.onSearch(searchEngine, mSearchTerm, method);
     }
 
-    private void maybeSetSuggestClient(final String suggestTemplate, final boolean isPrivate) {
-        if (isPrivate) {
-            mSuggestClient = null;
-            return;
-        }
-
-        if (mSuggestClient != null) {
+    private void ensureSuggestClientIsSet(final String suggestTemplate) {
+        // Don't update the suggestClient if we already have a client with the correct template
+        if (mSuggestClient != null && suggestTemplate.equals(mSuggestClient.getSuggestTemplate())) {
             return;
         }
 
@@ -820,8 +815,10 @@ public class BrowserSearch extends HomeFragment
             }
         });
 
-        // Pref observer in gecko will also set prompted = true
+        PrefsHelper.setPref("browser.search.suggest.prompted", true);
         PrefsHelper.setPref("browser.search.suggest.enabled", enabled);
+
+        Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.BUTTON, (enabled ? "suggestions_optin_yes" : "suggestions_optin_no"));
 
         TranslateAnimation slideAnimation = new TranslateAnimation(0, mSuggestionsOptInPrompt.getWidth(), 0, 0);
         slideAnimation.setDuration(ANIMATION_DURATION);
@@ -993,7 +990,7 @@ public class BrowserSearch extends HomeFragment
             // search term  can occur if the user has previously searched for the same thing.
             final int maxSavedSuggestions = NETWORK_SUGGESTION_MAX + 1 + getContext().getResources().getInteger(R.integer.max_saved_suggestions);
 
-            final String sortOrderAndLimit = BrowserContract.SearchHistory.DATE +" DESC LIMIT " + maxSavedSuggestions;
+            final String sortOrderAndLimit = BrowserContract.SearchHistory.DATE + " DESC LIMIT " + maxSavedSuggestions;
             final Cursor result =  cr.query(BrowserContract.SearchHistory.CONTENT_URI, columns, actualQuery, queryArgs, sortOrderAndLimit);
 
             if (result == null) {

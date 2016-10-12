@@ -26,19 +26,8 @@ var gSearchPane = {
    * Initialize autocomplete to ensure prefs are in sync.
    */
   _initAutocomplete: function () {
-    let unifiedCompletePref = false;
-    try {
-      unifiedCompletePref =
-        Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
-    } catch (ex) {}
-
-    if (unifiedCompletePref) {
-      Components.classes["@mozilla.org/autocomplete/search;1?name=unifiedcomplete"]
-                .getService(Components.interfaces.mozIPlacesAutoComplete);
-    } else {
-      Components.classes["@mozilla.org/autocomplete/search;1?name=history"]
-                .getService(Components.interfaces.mozIPlacesAutoComplete);
-    }
+    Components.classes["@mozilla.org/autocomplete/search;1?name=unifiedcomplete"]
+              .getService(Components.interfaces.mozIPlacesAutoComplete);
   },
 
   init: function ()
@@ -70,14 +59,11 @@ var gSearchPane = {
   },
 
   updateSuggestsCheckbox() {
-    let urlbarSuggests = document.getElementById("urlBarSuggestion");
-    urlbarSuggests.hidden =
-      !Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
-
     let suggestsPref =
       document.getElementById("browser.search.suggest.enabled");
     let permanentPB =
       Services.prefs.getBoolPref("browser.privatebrowsing.autostart");
+    let urlbarSuggests = document.getElementById("urlBarSuggestion");
     urlbarSuggests.disabled = !suggestsPref.value || permanentPB;
 
     let urlbarSuggestsPref =
@@ -183,7 +169,13 @@ var gSearchPane = {
         gSearchPane.remove(aEngine);
         break;
       case "engine-current":
-        gSearchPane.buildDefaultEngineDropDown();
+        // If the user is going through the drop down using up/down keys, the
+        // dropdown may still be open (eg. on Windows) when engine-current is
+        // fired, so rebuilding the list unconditionally would get in the way.
+        let selectedEngine =
+          document.getElementById("defaultEngine").selectedItem.engine;
+        if (selectedEngine.name != aEngine.name)
+          gSearchPane.buildDefaultEngineDropDown();
         break;
       case "engine-default":
         // Not relevant
@@ -242,17 +234,18 @@ var gSearchPane = {
   },
 
   editKeyword: Task.async(function* (aEngine, aNewKeyword) {
-    if (aNewKeyword) {
+    let keyword = aNewKeyword.trim();
+    if (keyword) {
       let eduplicate = false;
       let dupName = "";
 
       // Check for duplicates in Places keywords.
-      let bduplicate = !!(yield PlacesUtils.keywords.fetch(aNewKeyword));
+      let bduplicate = !!(yield PlacesUtils.keywords.fetch(keyword));
 
       // Check for duplicates in changes we haven't committed yet
       let engines = gEngineView._engineStore.engines;
       for (let engine of engines) {
-        if (engine.alias == aNewKeyword &&
+        if (engine.alias == keyword &&
             engine.name != aEngine.name) {
           eduplicate = true;
           dupName = engine.name;
@@ -272,7 +265,7 @@ var gSearchPane = {
       }
     }
 
-    gEngineView._engineStore.changeEngine(aEngine, "alias", aNewKeyword);
+    gEngineView._engineStore.changeEngine(aEngine, "alias", keyword);
     gEngineView.invalidate();
     return true;
   }),
@@ -481,9 +474,15 @@ EngineView.prototype = {
   },
 
   getImageSrc: function(index, column) {
-    if (column.id == "engineName" && this._engineStore.engines[index].iconURI) {
-      return this._engineStore.engines[index].iconURI.spec;
+    if (column.id == "engineName") {
+      if (this._engineStore.engines[index].iconURI)
+        return this._engineStore.engines[index].iconURI.spec;
+
+      if (window.devicePixelRatio > 1)
+        return "chrome://browser/skin/search-engine-placeholder@2x.png";
+      return "chrome://browser/skin/search-engine-placeholder.png";
     }
+
     return "";
   },
 

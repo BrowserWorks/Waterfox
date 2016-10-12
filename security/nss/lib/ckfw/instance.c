@@ -26,6 +26,8 @@
  *  NSSCKFWInstance_CreateMutex
  *  NSSCKFWInstance_GetConfigurationData
  *  NSSCKFWInstance_GetInitArgs
+ *  NSSCKFWInstance_DestroySessionHandle
+ *  NSSCKFWInstance_FindSessionHandle
  *
  *  -- implement public accessors --
  *  nssCKFWInstance_GetMDInstance
@@ -34,12 +36,12 @@
  *  nssCKFWInstance_CreateMutex
  *  nssCKFWInstance_GetConfigurationData
  *  nssCKFWInstance_GetInitArgs
+ *  nssCKFWInstance_DestroySessionHandle
+ *  nssCKFWInstance_FindSessionHandle
  *
  *  -- private accessors --
  *  nssCKFWInstance_CreateSessionHandle
  *  nssCKFWInstance_ResolveSessionHandle
- *  nssCKFWInstance_DestroySessionHandle
- *  nssCKFWInstance_FindSessionHandle
  *  nssCKFWInstance_CreateObjectHandle
  *  nssCKFWInstance_ResolveObjectHandle
  *  nssCKFWInstance_DestroyObjectHandle
@@ -190,13 +192,11 @@ nssCKFWInstance_Create(
         fwInstance->pInitArgs = &fwInstance->initArgs;
         if (pInitArgs->flags & CKF_LIBRARY_CANT_CREATE_OS_THREADS) {
             fwInstance->mayCreatePthreads = CK_FALSE;
-        }
-        else {
+        } else {
             fwInstance->mayCreatePthreads = CK_TRUE;
         }
         fwInstance->configurationData = (NSSUTF8 *)(pInitArgs->pReserved);
-    }
-    else {
+    } else {
         fwInstance->mayCreatePthreads = CK_TRUE;
     }
 
@@ -221,8 +221,7 @@ nssCKFWInstance_Create(
     if (mdInstance->ModuleHandlesSessionObjects) {
         fwInstance->moduleHandlesSessionObjects =
             mdInstance->ModuleHandlesSessionObjects(mdInstance, fwInstance);
-    }
-    else {
+    } else {
         fwInstance->moduleHandlesSessionObjects = CK_FALSE;
     }
 
@@ -879,8 +878,7 @@ nssCKFWInstance_GetCryptokiVersion(
     if (fwInstance->mdInstance->GetCryptokiVersion) {
         fwInstance->cryptokiVersion = fwInstance->mdInstance->GetCryptokiVersion(
             fwInstance->mdInstance, fwInstance);
-    }
-    else {
+    } else {
         fwInstance->cryptokiVersion.major = 2;
         fwInstance->cryptokiVersion.minor = 1;
     }
@@ -926,8 +924,7 @@ nssCKFWInstance_GetManufacturerID(
             if ((!fwInstance->manufacturerID) && (CKR_OK != error)) {
                 goto done;
             }
-        }
-        else {
+        } else {
             fwInstance->manufacturerID = (NSSUTF8 *)"";
         }
     }
@@ -992,8 +989,7 @@ nssCKFWInstance_GetLibraryDescription(
             if ((!fwInstance->libraryDescription) && (CKR_OK != error)) {
                 goto done;
             }
-        }
-        else {
+        } else {
             fwInstance->libraryDescription = (NSSUTF8 *)"";
         }
     }
@@ -1037,8 +1033,7 @@ nssCKFWInstance_GetLibraryVersion(
     if (fwInstance->mdInstance->GetLibraryVersion) {
         fwInstance->libraryVersion = fwInstance->mdInstance->GetLibraryVersion(
             fwInstance->mdInstance, fwInstance);
-    }
-    else {
+    } else {
         fwInstance->libraryVersion.major = 0;
         fwInstance->libraryVersion.minor = 3;
     }
@@ -1272,4 +1267,28 @@ NSSCKFWInstance_GetInitArgs(
 #endif /* DEBUG */
 
     return nssCKFWInstance_GetInitArgs(fwInstance);
+}
+
+/*
+ * nssCKFWInstance_DestroySessionHandle
+ *
+ */
+NSS_IMPLEMENT void
+NSSCKFWInstance_DestroySessionHandle(
+    NSSCKFWInstance *fwInstance,
+    CK_SESSION_HANDLE hSession)
+{
+    nssCKFWInstance_DestroySessionHandle(fwInstance, hSession);
+}
+
+/*
+ * nssCKFWInstance_FindSessionHandle
+ *
+ */
+NSS_IMPLEMENT CK_SESSION_HANDLE
+NSSCKFWInstance_FindSessionHandle(
+    NSSCKFWInstance *fwInstance,
+    NSSCKFWSession *fwSession)
+{
+    return nssCKFWInstance_FindSessionHandle(fwInstance, fwSession);
 }

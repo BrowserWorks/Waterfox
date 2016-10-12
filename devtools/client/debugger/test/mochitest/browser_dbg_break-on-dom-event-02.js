@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that the break-on-dom-events request works even for bound event
@@ -18,7 +20,7 @@ function test() {
 
   let transport = DebuggerServer.connectPipe();
   gClient = new DebuggerClient(transport);
-  gClient.connect((aType, aTraits) => {
+  gClient.connect().then(([aType, aTraits]) => {
     is(aType, "browser",
       "Root actor should identify itself as a browser.");
 
@@ -68,7 +70,7 @@ function testBreakOnClick() {
       is(aPacket.why.type, "pauseOnDOMEvents",
         "A hidden breakpoint was hit.");
 
-      switch(handlers.length) {
+      switch (handlers.length) {
         case 1:
           is(aPacket.frame.where.line, 26, "Found the clicker handler.");
           handlers.push("handleEventClick");
@@ -93,7 +95,7 @@ function testBreakOnClick() {
 }
 
 function triggerButtonClick(aNodeId) {
-  let button  = content.document.getElementById(aNodeId);
+  let button = content.document.getElementById(aNodeId);
   EventUtils.sendMouseEvent({ type: "click" }, button);
 }
 
@@ -103,7 +105,7 @@ function closeConnection() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gClient = null;
   gThreadClient = null;
 });

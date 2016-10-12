@@ -18,6 +18,7 @@
 #include "mozilla/dom/CanvasRenderingContext2D.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/HTMLCanvasElementBinding.h"
+#include "mozilla/dom/MediaStreamTrack.h"
 #include "mozilla/dom/MouseEvent.h"
 #include "mozilla/dom/OffscreenCanvas.h"
 #include "mozilla/EventDispatcher.h"
@@ -222,7 +223,7 @@ HTMLCanvasPrintState::Done()
       mCanvas->InvalidateCanvas();
     }
     RefPtr<nsRunnableMethod<HTMLCanvasPrintState> > doneEvent =
-      NS_NewRunnableMethod(this, &HTMLCanvasPrintState::NotifyDone);
+      NewRunnableMethod(this, &HTMLCanvasPrintState::NotifyDone);
     if (NS_SUCCEEDED(NS_DispatchToCurrentThread(doneEvent))) {
       mPendingNotify = true;
     }
@@ -502,7 +503,7 @@ HTMLCanvasElement::DispatchPrintCallback(nsITimerCallback* aCallback)
   mPrintState = new HTMLCanvasPrintState(this, mCurrentContext, aCallback);
 
   RefPtr<nsRunnableMethod<HTMLCanvasElement> > renderEvent =
-        NS_NewRunnableMethod(this, &HTMLCanvasElement::CallPrintCallback);
+        NewRunnableMethod(this, &HTMLCanvasElement::CallPrintCallback);
   return NS_DispatchToCurrentThread(renderEvent);
 }
 
@@ -592,10 +593,10 @@ HTMLCanvasElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
   if (aAttribute == nsGkAtoms::width ||
       aAttribute == nsGkAtoms::height)
   {
-    NS_UpdateHint(retval, NS_STYLE_HINT_REFLOW);
+    retval |= NS_STYLE_HINT_REFLOW;
   } else if (aAttribute == nsGkAtoms::moz_opaque)
   {
-    NS_UpdateHint(retval, NS_STYLE_HINT_VISUAL);
+    retval |= NS_STYLE_HINT_VISUAL;
   }
   return retval;
 }
@@ -654,7 +655,7 @@ HTMLCanvasElement::CaptureStream(const Optional<double>& aFrameRate,
     return nullptr;
   }
 
-  nsIDOMWindow* window = OwnerDoc()->GetInnerWindow();
+  nsPIDOMWindowInner* window = OwnerDoc()->GetInnerWindow();
   if (!window) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -672,17 +673,17 @@ HTMLCanvasElement::CaptureStream(const Optional<double>& aFrameRate,
     return nullptr;
   }
 
-  RefPtr<nsIPrincipal> principal = NodePrincipal();
-  stream->CombineWithPrincipal(principal);
-
   TrackID videoTrackId = 1;
-  nsresult rv = stream->Init(aFrameRate, videoTrackId);
+  nsCOMPtr<nsIPrincipal> principal = NodePrincipal();
+  nsresult rv =
+    stream->Init(aFrameRate, videoTrackId, principal);
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
     return nullptr;
   }
 
-  stream->CreateOwnDOMTrack(videoTrackId, MediaSegment::VIDEO, nsString());
+  stream->CreateDOMTrack(videoTrackId, MediaSegment::VIDEO,
+                         new BasicUnstoppableTrackSource(principal));
 
   rv = RegisterFrameCaptureListener(stream->FrameCaptureListener());
   if (NS_FAILED(rv)) {
@@ -864,7 +865,7 @@ HTMLCanvasElement::MozGetAsBlobImpl(const nsAString& aName,
     JS_updateMallocCounter(cx, imgSize);
   }
 
-  nsCOMPtr<nsPIDOMWindow> win = do_QueryInterface(OwnerDoc()->GetScopeObject());
+  nsCOMPtr<nsPIDOMWindowInner> win = do_QueryInterface(OwnerDoc()->GetScopeObject());
 
   // The File takes ownership of the buffer
   nsCOMPtr<nsIDOMBlob> file =
@@ -895,7 +896,8 @@ HTMLCanvasElement::GetContext(JSContext* aCx,
   }
 
   return CanvasRenderingContextHelper::GetContext(aCx, aContextId,
-                                                  aContextOptions, aRv);
+    aContextOptions.isObject() ? aContextOptions : JS::NullHandleValue,
+    aRv);
 }
 
 NS_IMETHODIMP
@@ -1261,7 +1263,7 @@ HTMLCanvasElement::OnVisibilityChange()
   }
 
   if (mOffscreenCanvas) {
-    class Runnable final : public nsCancelableRunnable
+    class Runnable final : public CancelableRunnable
     {
     public:
       explicit Runnable(AsyncCanvasRenderer* aRenderer)
@@ -1303,7 +1305,7 @@ void
 HTMLCanvasElement::OnMemoryPressure()
 {
   if (mOffscreenCanvas) {
-    class Runnable final : public nsCancelableRunnable
+    class Runnable final : public CancelableRunnable
     {
     public:
       explicit Runnable(AsyncCanvasRenderer* aRenderer)
@@ -1356,12 +1358,14 @@ HTMLCanvasElement::SetAttrFromAsyncCanvasRenderer(AsyncCanvasRenderer *aRenderer
   gfx::IntSize asyncCanvasSize = aRenderer->GetSize();
 
   ErrorResult rv;
-  element->SetUnsignedIntAttr(nsGkAtoms::width, asyncCanvasSize.width, rv);
+  element->SetUnsignedIntAttr(nsGkAtoms::width, asyncCanvasSize.width,
+                              DEFAULT_CANVAS_WIDTH, rv);
   if (rv.Failed()) {
     NS_WARNING("Failed to set width attribute to a canvas element asynchronously.");
   }
 
-  element->SetUnsignedIntAttr(nsGkAtoms::height, asyncCanvasSize.height, rv);
+  element->SetUnsignedIntAttr(nsGkAtoms::height, asyncCanvasSize.height,
+                              DEFAULT_CANVAS_HEIGHT, rv);
   if (rv.Failed()) {
     NS_WARNING("Failed to set height attribute to a canvas element asynchronously.");
   }

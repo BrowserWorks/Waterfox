@@ -15,7 +15,7 @@
 #include "mozilla/gfx/MatrixFwd.h"      // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for Point
 #include "mozilla/gfx/Rect.h"           // for Rect
-#include "mozilla/gfx/Types.h"          // for Filter
+#include "mozilla/gfx/Types.h"          // for SamplingFilter
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/CompositorTypes.h"  // for TextureInfo, etc
@@ -81,8 +81,8 @@ public:
                          EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::Matrix4x4& aTransform,
-                         const gfx::Filter& aFilter,
-                         const gfx::Rect& aClipRect,
+                         const gfx::SamplingFilter aSamplingFilter,
+                         const gfx::IntRect& aClipRect,
                          const nsIntRegion* aVisibleRegion = nullptr) = 0;
 
   /**
@@ -121,8 +121,7 @@ public:
    * @return true if the effect was added, false otherwise.
    */
   bool AddMaskEffect(EffectChain& aEffects,
-                     const gfx::Matrix4x4& aTransform,
-                     bool aIs3D = false);
+                     const gfx::Matrix4x4& aTransform);
 
   void RemoveMaskEffect();
 
@@ -194,6 +193,7 @@ public:
     gfx::IntRect mPictureRect;
     int32_t mFrameID;
     int32_t mProducerID;
+    int32_t mInputFrameID;
   };
   virtual void UseTextureHost(const nsTArray<TimedTexture>& aTextures);
   virtual void UseComponentAlphaTextures(TextureHost* aTextureOnBlack,
@@ -231,9 +231,16 @@ public:
 
   virtual void Unlock() { }
 
-  virtual already_AddRefed<TexturedEffect> GenEffect(const gfx::Filter& aFilter) {
+  virtual already_AddRefed<TexturedEffect> GenEffect(const gfx::SamplingFilter aSamplingFilter) {
     return nullptr;
   }
+
+  virtual int32_t GetLastInputFrameID() const { return -1; }
+
+  /// Called when shutting down the layer tree.
+  /// This is a good place to clear all potential gpu resources before the widget
+  /// is is destroyed.
+  virtual void CleanupResources() {}
 
 protected:
   TextureInfo mTextureInfo;

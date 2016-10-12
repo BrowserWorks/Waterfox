@@ -127,13 +127,7 @@ MediaOmxCommonDecoder::PauseStateMachine()
   MOZ_ASSERT(NS_IsMainThread());
   DECODER_LOG(LogLevel::Debug, ("%s", __PRETTY_FUNCTION__));
 
-  if (mShuttingDown) {
-    return;
-  }
-
-  if (!GetStateMachine()) {
-    return;
-  }
+  MOZ_ASSERT(GetStateMachine());
   // enter dormant state
   GetStateMachine()->DispatchSetDormant(true);
 }
@@ -258,6 +252,7 @@ void
 MediaOmxCommonDecoder::SetElementVisibility(bool aIsVisible)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  MediaDecoder::SetElementVisibility(aIsVisible);
   if (mAudioOffloadPlayer) {
     mAudioOffloadPlayer->SetElementVisibility(aIsVisible);
   }

@@ -73,7 +73,7 @@ GrallocImage::SetData(const Data& aData)
     return false;
   }
 
-  ISurfaceAllocator* allocator = ImageBridgeChild::GetSingleton();
+  ClientIPCAllocator* allocator = ImageBridgeChild::GetSingleton();
   GrallocTextureData* texData = GrallocTextureData::Create(mData.mYSize, HAL_PIXEL_FORMAT_YV12,
                                                            gfx::BackendType::NONE,
                                                            GraphicBuffer::USAGE_SW_READ_OFTEN |
@@ -144,7 +144,7 @@ GrallocImage::SetData(const Data& aData)
 }
 
 void
-GrallocImage::SetData(TextureClient* aGraphicBuffer, const gfx::IntSize& aSize)
+GrallocImage::AdoptData(TextureClient* aGraphicBuffer, const gfx::IntSize& aSize)
 {
   mTextureClient = aGraphicBuffer;
   mSize = aSize;

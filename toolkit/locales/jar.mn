@@ -45,6 +45,7 @@
 #ifndef MOZ_FENNEC
   locale/@AB_CD@/global/editMenuOverlay.dtd             (%chrome/global/editMenuOverlay.dtd)
 #endif
+  locale/@AB_CD@/global/extensions.properties           (%chrome/global/extensions.properties)
   locale/@AB_CD@/global/fallbackMenubar.properties      (%chrome/global/fallbackMenubar.properties)
   locale/@AB_CD@/global/filefield.properties            (%chrome/global/filefield.properties)
   locale/@AB_CD@/global/filepicker.dtd                  (%chrome/global/filepicker.dtd)
@@ -62,6 +63,7 @@
   locale/@AB_CD@/global/keys.properties                 (%chrome/global/keys.properties)
   locale/@AB_CD@/global/languageNames.properties        (%chrome/global/languageNames.properties)
   locale/@AB_CD@/global/mozilla.dtd                     (%chrome/global/mozilla.dtd)
+  locale/@AB_CD@/global/narrate.properties              (%chrome/global/narrate.properties)
   locale/@AB_CD@/global/notification.dtd                (%chrome/global/notification.dtd)
   locale/@AB_CD@/global/preferences.dtd                 (%chrome/global/preferences.dtd)
   locale/@AB_CD@/global/printdialog.dtd                 (%chrome/global/printdialog.dtd)
@@ -100,13 +102,11 @@
   locale/@AB_CD@/mozapps/downloads/settingsChange.dtd             (%chrome/mozapps/downloads/settingsChange.dtd)
   locale/@AB_CD@/mozapps/downloads/downloads.dtd                  (%chrome/mozapps/downloads/downloads.dtd)
   locale/@AB_CD@/mozapps/downloads/downloads.properties           (%chrome/mozapps/downloads/downloads.properties)
-#ifndef MOZ_FENNEC
   locale/@AB_CD@/mozapps/extensions/extensions.dtd                (%chrome/mozapps/extensions/extensions.dtd)
+#ifndef MOZ_FENNEC
   locale/@AB_CD@/mozapps/extensions/extensions.properties         (%chrome/mozapps/extensions/extensions.properties)
   locale/@AB_CD@/mozapps/extensions/blocklist.dtd                 (%chrome/mozapps/extensions/blocklist.dtd)
   locale/@AB_CD@/mozapps/extensions/about.dtd                     (%chrome/mozapps/extensions/about.dtd)
-  locale/@AB_CD@/mozapps/extensions/selectAddons.dtd              (%chrome/mozapps/extensions/selectAddons.dtd)
-  locale/@AB_CD@/mozapps/extensions/selectAddons.properties       (%chrome/mozapps/extensions/selectAddons.properties)
   locale/@AB_CD@/mozapps/extensions/update.dtd                    (%chrome/mozapps/extensions/update.dtd)
   locale/@AB_CD@/mozapps/extensions/update.properties             (%chrome/mozapps/extensions/update.properties)
   locale/@AB_CD@/mozapps/extensions/newaddon.dtd                  (%chrome/mozapps/extensions/newaddon.dtd)

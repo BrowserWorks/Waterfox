@@ -19,6 +19,9 @@
 #include "nsIThreadPool.h"
 #include "mozilla/Services.h"
 
+namespace mozilla {
+namespace net {
+
 //-----------------------------------------------------------------------------
 // nsInputStreamTransport
 //
@@ -511,7 +514,7 @@ nsStreamTransportService::DispatchFromScript(nsIRunnable *task, uint32_t flags)
 }
 
 NS_IMETHODIMP
-nsStreamTransportService::Dispatch(already_AddRefed<nsIRunnable>&& task, uint32_t flags)
+nsStreamTransportService::Dispatch(already_AddRefed<nsIRunnable> task, uint32_t flags)
 {
     nsCOMPtr<nsIRunnable> event(task); // so it gets released on failure paths
     nsCOMPtr<nsIThreadPool> pool;
@@ -524,6 +527,12 @@ nsStreamTransportService::Dispatch(already_AddRefed<nsIRunnable>&& task, uint32_
     }
     NS_ENSURE_TRUE(pool, NS_ERROR_NOT_INITIALIZED);
     return pool->Dispatch(event.forget(), flags);
+}
+
+NS_IMETHODIMP
+nsStreamTransportService::DelayedDispatch(already_AddRefed<nsIRunnable>, uint32_t)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
@@ -588,3 +597,6 @@ nsStreamTransportService::Observe(nsISupports *subject, const char *topic,
   }
   return NS_OK;
 }
+
+} // namespace net
+} // namespace mozilla

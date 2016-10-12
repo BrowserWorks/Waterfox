@@ -15,7 +15,8 @@
 #include "CPOWTimer.h"
 #include "WrapperFactory.h"
 
-#include "nsIRemoteTagService.h"
+#include "nsIDocShellTreeItem.h"
+#include "nsIDOMDocument.h"
 
 using namespace js;
 using namespace JS;
@@ -98,9 +99,9 @@ class CPOWProxyHandler : public BaseProxyHandler
     }
 
     virtual bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                          MutableHandle<JSPropertyDescriptor> desc) const override;
+                                          MutableHandle<PropertyDescriptor> desc) const override;
     virtual bool defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
-                                Handle<JSPropertyDescriptor> desc,
+                                Handle<PropertyDescriptor> desc,
                                 ObjectOpResult& result) const override;
     virtual bool ownPropertyKeys(JSContext* cx, HandleObject proxy,
                                  AutoIdVector& props) const override;
@@ -119,7 +120,7 @@ class CPOWProxyHandler : public BaseProxyHandler
     virtual bool construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const override;
 
     virtual bool getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                       MutableHandle<JSPropertyDescriptor> desc) const override;
+                                       MutableHandle<PropertyDescriptor> desc) const override;
     virtual bool hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const override;
     virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
                                               AutoIdVector& props) const override;
@@ -136,6 +137,8 @@ class CPOWProxyHandler : public BaseProxyHandler
     virtual bool isCallable(JSObject* obj) const override;
     virtual bool isConstructor(JSObject* obj) const override;
     virtual bool getPrototype(JSContext* cx, HandleObject proxy, MutableHandleObject protop) const override;
+    virtual bool getPrototypeIfOrdinary(JSContext* cx, HandleObject proxy, bool* isOrdinary,
+                                        MutableHandleObject protop) const override;
 
     static const char family;
     static const CPOWProxyHandler singleton;
@@ -161,14 +164,14 @@ const CPOWProxyHandler CPOWProxyHandler::singleton;
 
 bool
 CPOWProxyHandler::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                        MutableHandle<JSPropertyDescriptor> desc) const
+                                        MutableHandle<PropertyDescriptor> desc) const
 {
     FORWARD(getPropertyDescriptor, (cx, proxy, id, desc));
 }
 
 bool
 WrapperOwner::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                    MutableHandle<JSPropertyDescriptor> desc)
+                                    MutableHandle<PropertyDescriptor> desc)
 {
     ObjectId objId = idOf(proxy);
 
@@ -191,14 +194,14 @@ WrapperOwner::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId 
 
 bool
 CPOWProxyHandler::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                           MutableHandle<JSPropertyDescriptor> desc) const
+                                           MutableHandle<PropertyDescriptor> desc) const
 {
     FORWARD(getOwnPropertyDescriptor, (cx, proxy, id, desc));
 }
 
 bool
 WrapperOwner::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                       MutableHandle<JSPropertyDescriptor> desc)
+                                       MutableHandle<PropertyDescriptor> desc)
 {
     ObjectId objId = idOf(proxy);
 
@@ -221,7 +224,7 @@ WrapperOwner::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, Handle
 
 bool
 CPOWProxyHandler::defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
-                                 Handle<JSPropertyDescriptor> desc,
+                                 Handle<PropertyDescriptor> desc,
                                  ObjectOpResult& result) const
 {
     FORWARD(defineProperty, (cx, proxy, id, desc, result));
@@ -229,7 +232,7 @@ CPOWProxyHandler::defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
 
 bool
 WrapperOwner::defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
-                             Handle<JSPropertyDescriptor> desc,
+                             Handle<PropertyDescriptor> desc,
                              ObjectOpResult& result)
 {
     ObjectId objId = idOf(proxy);
@@ -452,7 +455,7 @@ WrapperOwner::DOMQI(JSContext* cx, JS::HandleObject proxy, JS::CallArgs& args)
     // We could stash the actual QI function on our own function object to avoid
     // if we're called multiple times, but since we're transient, there's no
     // point right now.
-    JS::Rooted<JSPropertyDescriptor> propDesc(cx);
+    JS::Rooted<PropertyDescriptor> propDesc(cx);
     if (!JS_GetPropertyDescriptor(cx, proxy, "QueryInterface", &propDesc))
         return false;
 
@@ -828,6 +831,34 @@ WrapperOwner::getPrototype(JSContext* cx, HandleObject proxy, MutableHandleObjec
 }
 
 bool
+CPOWProxyHandler::getPrototypeIfOrdinary(JSContext* cx, HandleObject proxy, bool* isOrdinary,
+                                         MutableHandleObject objp) const
+{
+    FORWARD(getPrototypeIfOrdinary, (cx, proxy, isOrdinary, objp));
+}
+
+bool
+WrapperOwner::getPrototypeIfOrdinary(JSContext* cx, HandleObject proxy, bool* isOrdinary,
+                                     MutableHandleObject objp)
+{
+    ObjectId objId = idOf(proxy);
+
+    ObjectOrNullVariant val;
+    ReturnStatus status;
+    if (!SendGetPrototypeIfOrdinary(objId, &status, isOrdinary, &val))
+        return ipcfail(cx);
+
+    LOG_STACK();
+
+    if (!ok(cx, status))
+        return false;
+
+    objp.set(fromObjectOrNullVariant(cx, val));
+
+    return true;
+}
+
+bool
 CPOWProxyHandler::regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const
 {
     FORWARD(regexp_toShared, (cx, proxy, g));
@@ -850,8 +881,7 @@ WrapperOwner::regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g)
         return false;
 
     RootedObject regexp(cx);
-    RootedObject global(cx, JS::CurrentGlobalOrNull(cx));
-    regexp = JS_NewUCRegExpObject(cx, global, source.get(), source.Length(), flags);
+    regexp = JS_NewUCRegExpObject(cx, source.get(), source.Length(), flags);
     if (!regexp)
         return false;
 
@@ -1067,23 +1097,33 @@ WrapperOwner::ok(JSContext* cx, const ReturnStatus& status, ObjectOpResult& resu
     return result.succeed();
 }
 
+// CPOWs can have a tag string attached to them, originating in the local
+// process from this function.  It's sent with the CPOW to the remote process,
+// where it can be fetched with Components.utils.getCrossProcessWrapperTag.
+static nsCString
+GetRemoteObjectTag(JS::Handle<JSObject*> obj)
+{
+    if (nsCOMPtr<nsISupports> supports = xpc::UnwrapReflectorToISupports(obj)) {
+        nsCOMPtr<nsIDocShellTreeItem> treeItem(do_QueryInterface(supports));
+        if (treeItem)
+            return NS_LITERAL_CSTRING("ContentDocShellTreeItem");
+
+        nsCOMPtr<nsIDOMDocument> doc(do_QueryInterface(supports));
+        if (doc)
+            return NS_LITERAL_CSTRING("ContentDocument");
+    }
+
+    return NS_LITERAL_CSTRING("generic");
+}
+
 static RemoteObject
 MakeRemoteObject(JSContext* cx, ObjectId id, HandleObject obj)
 {
-    nsCString objectTag;
-
-    nsCOMPtr<nsIRemoteTagService> service =
-        do_GetService("@mozilla.org/addons/remote-tag-service;1");
-    if (service) {
-        RootedValue objVal(cx, ObjectValue(*obj));
-        service->GetRemoteObjectTag(objVal, objectTag);
-    }
-
     return RemoteObject(id.serialize(),
                         JS::IsCallable(obj),
                         JS::IsConstructor(obj),
                         dom::IsDOMObject(obj),
-                        objectTag);
+                        GetRemoteObjectTag(obj));
 }
 
 bool
@@ -1147,7 +1187,8 @@ WrapperOwner::fromRemoteObjectVariant(JSContext* cx, RemoteObject objVar)
         RootedObject junkScope(cx, xpc::PrivilegedJunkScope());
         JSAutoCompartment ac(cx, junkScope);
         RootedValue v(cx, UndefinedValue());
-        // We need to setLazyProto for the getPrototype hook.
+        // We need to setLazyProto for the getPrototype/getPrototypeIfOrdinary
+        // hooks.
         ProxyOptions options;
         options.setLazyProto(true);
         obj = NewProxyObject(cx,

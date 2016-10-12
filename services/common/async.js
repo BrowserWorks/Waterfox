@@ -2,13 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef MERGED_COMPARTMENT
-
 this.EXPORTED_SYMBOLS = ["Async"];
 
 var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
-
-#endif
 
 // Constants for makeSyncCallback, waitForSyncCallback.
 const CB_READY = {};
@@ -210,5 +206,15 @@ this.Async = {
     storageCallback.syncCb = Async.makeSyncCallback();
     query.executeAsync(storageCallback);
     return Async.waitForSyncCallback(storageCallback.syncCb);
+  },
+
+  promiseSpinningly(promise) {
+    let cb = Async.makeSpinningCallback();
+    promise.then(result =>  {
+      cb(null, result);
+    }, err => {
+      cb(err || new Error("Promise rejected without explicit error"));
+    });
+    return cb.wait();
   },
 };

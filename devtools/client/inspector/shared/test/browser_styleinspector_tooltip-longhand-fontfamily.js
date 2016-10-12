@@ -17,7 +17,7 @@ const TEST_URI = `
   <div id="testElement">test element</div>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode("#testElement", inspector);
@@ -25,7 +25,7 @@ add_task(function*() {
 
   info("Opening the computed view");
   let onComputedViewReady = inspector.once("computed-view-refreshed");
-  ({inspector, view} = yield openComputedView());
+  view = selectComputedView(inspector);
   yield onComputedViewReady;
 
   yield testComputedView(view, inspector.selection.nodeFront);
@@ -51,7 +51,7 @@ function* testRuleView(ruleView, nodeFront) {
   // And verify that the tooltip gets shown on this property
   yield assertHoverTooltipOn(tooltip, valueSpan);
 
-  let images = panel.getElementsByTagName("image");
+  let images = panel.getElementsByTagName("img");
   is(images.length, 1, "Tooltip contains an image");
   ok(images[0].getAttribute("src").startsWith("data:"),
     "Tooltip contains a data-uri image as expected");
@@ -70,7 +70,7 @@ function* testComputedView(computedView, nodeFront) {
 
   yield assertHoverTooltipOn(tooltip, valueSpan);
 
-  let images = panel.getElementsByTagName("image");
+  let images = panel.getElementsByTagName("img");
   is(images.length, 1, "Tooltip contains an image");
   ok(images[0].getAttribute("src").startsWith("data:"),
     "Tooltip contains a data-uri image as expected");
@@ -97,7 +97,7 @@ function* testExpandedComputedViewProperty(computedView, nodeFront) {
 
   yield assertHoverTooltipOn(tooltip, valueSpan);
 
-  let images = panel.getElementsByTagName("image");
+  let images = panel.getElementsByTagName("img");
   is(images.length, 1, "Tooltip contains an image");
   ok(images[0].getAttribute("src").startsWith("data:"),
     "Tooltip contains a data-uri image as expected");
@@ -109,7 +109,7 @@ function* testExpandedComputedViewProperty(computedView, nodeFront) {
 
 function getPropertyView(computedView, name) {
   let propertyView = null;
-  computedView.propertyViews.some(function(view) {
+  computedView.propertyViews.some(function (view) {
     if (view.name == name) {
       propertyView = view;
       return true;

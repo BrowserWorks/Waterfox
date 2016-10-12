@@ -40,7 +40,7 @@ class PTextureChild;
  * additionally forward modifications of the Layer tree).
  * ImageBridgeChild is another CompositableForwarder.
  */
-class CompositableForwarder : public ISurfaceAllocator
+class CompositableForwarder : public ClientIPCAllocator
 {
 public:
 
@@ -113,13 +113,14 @@ public:
 
   struct TimedTextureClient {
     TimedTextureClient()
-        : mTextureClient(nullptr), mFrameID(0), mProducerID(0) {}
+        : mTextureClient(nullptr), mFrameID(0), mProducerID(0), mInputFrameID(0) {}
 
     TextureClient* mTextureClient;
     TimeStamp mTimeStamp;
     nsIntRect mPictureRect;
     int32_t mFrameID;
     int32_t mProducerID;
+    int32_t mInputFrameID;
   };
   /**
    * Tell the CompositableHost on the compositor side what textures to use for
@@ -139,8 +140,6 @@ public:
   {
     return mTextureFactoryIdentifier.mMaxTextureSize;
   }
-
-  bool IsOnCompositorSide() const override { return false; }
 
   /**
    * Returns the type of backend that is used off the main thread.
@@ -170,6 +169,8 @@ public:
   int32_t GetSerial() { return mSerial; }
 
   SyncObject* GetSyncObject() { return mSyncObject; }
+
+  virtual CompositableForwarder* AsCompositableForwarder() override { return this; }
 
 protected:
   TextureFactoryIdentifier mTextureFactoryIdentifier;

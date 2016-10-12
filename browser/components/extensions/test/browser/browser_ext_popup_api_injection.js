@@ -16,26 +16,26 @@ add_task(function* testPageActionPopup() {
     },
 
     files: {
-      "popup-a.html": String.raw`<html><head><meta charset="utf-8"><script type="application/javascript">
-        browser.test.sendMessage("from-popup-a");
-      </script></head></html>`,
+      "popup-a.html": `<html><head><meta charset="utf-8">
+                       <script type="application/javascript" src="popup-a.js"></script></head></html>`,
+      "popup-a.js": 'browser.test.sendMessage("from-popup-a");',
 
-      "popup-b.html": String.raw`<html><head><meta charset="utf-8"><script type="application/javascript">
-        browser.test.sendMessage("from-popup-b");
-      </script></head></html>`,
+      "popup-b.html": `<html><head><meta charset="utf-8">
+                       <script type="application/javascript" src="popup-b.js"></script></head></html>`,
+      "popup-b.js": 'browser.test.sendMessage("from-popup-b");',
     },
 
     background: function() {
       let tabId;
-      browser.tabs.query({ active: true, currentWindow: true }, tabs => {
+      browser.tabs.query({active: true, currentWindow: true}, tabs => {
         tabId = tabs[0].id;
         browser.pageAction.show(tabId);
         browser.test.sendMessage("ready");
       });
 
       browser.test.onMessage.addListener(() => {
-        browser.browserAction.setPopup({ popup: "/popup-a.html" });
-        browser.pageAction.setPopup({ tabId, popup: "popup-b.html" });
+        browser.browserAction.setPopup({popup: "/popup-a.html"});
+        browser.pageAction.setPopup({tabId, popup: "popup-b.html"});
 
         browser.test.sendMessage("ok");
       });

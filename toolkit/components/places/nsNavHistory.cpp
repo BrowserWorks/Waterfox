@@ -248,6 +248,15 @@ const int32_t nsNavHistory::kGetInfoIndex_ItemTags = 11;
 const int32_t nsNavHistory::kGetInfoIndex_Frecency = 12;
 const int32_t nsNavHistory::kGetInfoIndex_Hidden = 13;
 const int32_t nsNavHistory::kGetInfoIndex_Guid = 14;
+const int32_t nsNavHistory::kGetInfoIndex_VisitId = 15;
+const int32_t nsNavHistory::kGetInfoIndex_FromVisitId = 16;
+const int32_t nsNavHistory::kGetInfoIndex_VisitType = 17;
+// These columns are followed by corresponding constants in nsNavBookmarks.cpp,
+// which must be kept in sync:
+// nsNavBookmarks::kGetChildrenIndex_Guid = 18;
+// nsNavBookmarks::kGetChildrenIndex_Position = 19;
+// nsNavBookmarks::kGetChildrenIndex_Type = 20;
+// nsNavBookmarks::kGetChildrenIndex_PlaceID = 21;
 
 PLACES_FACTORY_SINGLETON_IMPLEMENTATION(nsNavHistory, gHistoryService)
 
@@ -543,7 +552,7 @@ nsNavHistory::NotifyManyFrecenciesChanged()
 
 namespace {
 
-class FrecencyNotification : public nsRunnable
+class FrecencyNotification : public Runnable
 {
 public:
   FrecencyNotification(const nsACString& aSpec,
@@ -566,8 +575,14 @@ public:
     if (navHistory) {
       nsCOMPtr<nsIURI> uri;
       (void)NS_NewURI(getter_AddRefs(uri), mSpec);
-      navHistory->NotifyFrecencyChanged(uri, mNewFrecency, mGUID, mHidden,
-                                        mLastVisitDate);
+      // We cannot assert since some automated tests are checking this path.
+      NS_WARN_IF_FALSE(uri, "Invalid URI in FrecencyNotification");
+      // Notify a frecency change only if we have a valid uri, otherwise
+      // the observer couldn't gather any useful data from the notification.
+      if (uri) {
+        navHistory->NotifyFrecencyChanged(uri, mNewFrecency, mGUID, mHidden,
+                                          mLastVisitDate);
+      }
     }
     return NS_OK;
   }
@@ -889,27 +904,12 @@ nsNavHistory::EvaluateQueryForNode(const nsCOMArray<nsNavHistoryQuery>& aQueries
         if (NS_FAILED(NS_NewURI(getter_AddRefs(nodeUri), aNode->mURI)))
           continue;
       }
-      if (! query->UriIsPrefix()) {
-        // easy case: the URI is an exact match
-        bool equals;
-        nsresult rv = query->Uri()->Equals(nodeUri, &equals);
-        NS_ENSURE_SUCCESS(rv, false);
-        if (! equals)
-          continue;
-      } else {
-        // harder case: match prefix, note that we need to get the ASCII string
-        // from the node's parsed URI instead of using the node's mUrl string,
-        // because that might not be normalized
-        nsAutoCString nodeUriString;
-        nodeUri->GetAsciiSpec(nodeUriString);
-        nsAutoCString queryUriString;
-        query->Uri()->GetAsciiSpec(queryUriString);
-        if (queryUriString.Length() > nodeUriString.Length())
-          continue; // not long enough to match as prefix
-        nodeUriString.SetLength(queryUriString.Length());
-        if (! nodeUriString.Equals(queryUriString))
-          continue; // prefixes don't match
-      }
+
+      bool equals;
+      nsresult rv = query->Uri()->Equals(nodeUri, &equals);
+      NS_ENSURE_SUCCESS(rv, false);
+      if (! equals)
+        continue;
     }
 
     // Transitions matching.
@@ -1103,14 +1103,24 @@ nsNavHistory::CanAddURI(nsIURI* aURI, bool* canAdd)
   NS_ENSURE_ARG(aURI);
   NS_ENSURE_ARG_POINTER(canAdd);
 
+  // Default to false.
+  *canAdd = false;
+
   // If history is disabled, don't add any entry.
   if (IsHistoryDisabled()) {
-    *canAdd = false;
+    return NS_OK;
+  }
+
+  // If the url length is over a threshold, don't add it.
+  nsCString spec;
+  nsresult rv = aURI->GetSpec(spec);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (!mDB || spec.Length() > mDB->MaxUrlLength()) {
     return NS_OK;
   }
 
   nsAutoCString scheme;
-  nsresult rv = aURI->GetScheme(scheme);
+  rv = aURI->GetScheme(scheme);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // first check the most common cases (HTTP, HTTPS) to allow in to avoid most
@@ -1137,7 +1147,6 @@ nsNavHistory::CanAddURI(nsIURI* aURI, bool* canAdd)
       scheme.EqualsLiteral("wyciwyg") ||
       scheme.EqualsLiteral("javascript") ||
       scheme.EqualsLiteral("blob")) {
-    *canAdd = false;
     return NS_OK;
   }
   *canAdd = true;
@@ -1318,9 +1327,6 @@ bool IsOptimizableHistoryQuery(const nsCOMArray<nsNavHistoryQuery>& aQueries,
   if (aQuery->AnnotationIsNot() || !aQuery->Annotation().IsEmpty())
     return false;
 
-  if (aQuery->UriIsPrefix() || aQuery->Uri())
-    return false;
-
   if (aQuery->Folders().Length() > 0)
     return false;
 
@@ -1487,7 +1493,8 @@ PlacesSQLQueryBuilder::SelectAsURI()
       mQueryString = NS_LITERAL_CSTRING(
         "SELECT h.id, h.url, h.title AS page_title, h.rev_host, h.visit_count, "
         "h.last_visit_date, f.url, null, null, null, null, ") +
-        tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+        tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+        "null, null, null "
         "FROM moz_places h "
         "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
         // WHERE 1 is a no-op since additonal conditions will start with AND.
@@ -1514,7 +1521,7 @@ PlacesSQLQueryBuilder::SelectAsURI()
             "h.rev_host, h.visit_count, h.last_visit_date, f.url, b2.id, "
             "b2.dateAdded, b2.lastModified, b2.parent, ") +
             tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-            "b2.guid, b2.position, b2.type, b2.fk "
+            "null, null, null, b2.guid, b2.position, b2.type, b2.fk "
           "FROM moz_bookmarks b2 "
           "JOIN (SELECT b.fk "
                 "FROM moz_bookmarks b "
@@ -1539,7 +1546,7 @@ PlacesSQLQueryBuilder::SelectAsURI()
             "h.rev_host, h.visit_count, h.last_visit_date, f.url, b.id, "
             "b.dateAdded, b.lastModified, b.parent, ") +
             tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid,"
-            "b.guid, b.position, b.type, b.fk "
+            "null, null, null, b.guid, b.position, b.type, b.fk "
           "FROM moz_bookmarks b "
           "JOIN moz_places h ON b.fk = h.id "
           "LEFT OUTER JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -1571,7 +1578,8 @@ PlacesSQLQueryBuilder::SelectAsVisit()
   mQueryString = NS_LITERAL_CSTRING(
     "SELECT h.id, h.url, h.title AS page_title, h.rev_host, h.visit_count, "
       "v.visit_date, f.url, null, null, null, null, ") +
-      tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+      tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+      "v.id, v.from_visit, v.visit_type "
     "FROM moz_places h "
     "JOIN moz_historyvisits v ON h.id = v.place_id "
     "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -1606,7 +1614,8 @@ PlacesSQLQueryBuilder::SelectAsDay()
   mQueryString = nsPrintfCString(
      "SELECT null, "
        "'place:type=%ld&sort=%ld&beginTime='||beginTime||'&endTime='||endTime, "
-      "dayTitle, null, null, beginTime, null, null, null, null, null, null "
+      "dayTitle, null, null, beginTime, null, null, null, null, null, null, "
+      "null, null, null "
      "FROM (", // TOUTER BEGIN
      resultType,
      sortingMode);
@@ -1809,7 +1818,8 @@ PlacesSQLQueryBuilder::SelectAsSite()
 
   mQueryString = nsPrintfCString(
     "SELECT null, 'place:type=%ld&sort=%ld&domain=&domainIsHost=true'%s, "
-           ":localhost, :localhost, null, null, null, null, null, null, null "
+           ":localhost, :localhost, null, null, null, null, null, null, null, "
+           "null, null, null "
     "WHERE EXISTS ( "
       "SELECT h.id FROM moz_places h "
       "%s "
@@ -1822,7 +1832,8 @@ PlacesSQLQueryBuilder::SelectAsSite()
     "UNION ALL "
     "SELECT null, "
            "'place:type=%ld&sort=%ld&domain='||host||'&domainIsHost=true'%s, "
-           "host, host, null, null, null, null, null, null, null "
+           "host, host, null, null, null, null, null, null, null, "
+           "null, null, null "
     "FROM ( "
       "SELECT get_unreversed_host(h.rev_host) AS host "
       "FROM moz_places h "
@@ -1862,7 +1873,7 @@ PlacesSQLQueryBuilder::SelectAsTag()
   mQueryString = nsPrintfCString(
     "SELECT null, 'place:folder=' || id || '&queryType=%d&type=%ld', "
            "title, null, null, null, null, null, dateAdded, "
-           "lastModified, null, null, null "
+           "lastModified, null, null, null, null, null, null "
     "FROM moz_bookmarks "
     "WHERE parent = %lld",
     nsINavHistoryQueryOptions::QUERY_TYPE_BOOKMARKS,
@@ -2096,7 +2107,8 @@ nsNavHistory::ConstructQueryString(
     queryString = NS_LITERAL_CSTRING(
       "SELECT h.id, h.url, h.title AS page_title, h.rev_host, h.visit_count, h.last_visit_date, "
           "f.url, null, null, null, null, ") +
-          tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+          tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+          "null, null, null "
         "FROM moz_places h "
         "LEFT OUTER JOIN moz_favicons f ON h.favicon_id = f.id "
         "WHERE h.hidden = 0 "
@@ -2237,6 +2249,9 @@ nsNavHistory::AddObserver(nsINavHistoryObserver* aObserver, bool aOwnsWeak)
 {
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG(aObserver);
+
+  if (NS_WARN_IF(!mCanNotify))
+    return NS_ERROR_UNEXPECTED;
 
   return mObservers.AppendWeakElement(aObserver, aOwnsWeak);
 }
@@ -2467,6 +2482,13 @@ nsNavHistory::CleanupPlacesOnVisitsDelete(const nsCString& aPlaceIdsQueryString)
   );
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // Hosts accumulated during the places delete are updated through a trigger
+  // (see nsPlacesTriggers.h).
+  rv = mDB->MainConn()->ExecuteSimpleSQL(
+    NS_LITERAL_CSTRING("DELETE FROM moz_updatehosts_temp")
+  );
+  NS_ENSURE_SUCCESS(rv, rv);
+
   // Invalidate frecencies of touched places, since they need recalculation.
   rv = invalidateFrecencies(aPlaceIdsQueryString);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -2500,6 +2522,8 @@ nsNavHistory::RemovePages(nsIURI **aURIs, uint32_t aLength)
   for (uint32_t i = 0; i < aLength; i++) {
     int64_t placeId;
     nsAutoCString guid;
+    if (!aURIs[i])
+      continue;
     rv = GetIdForPage(aURIs[i], &placeId, guid);
     NS_ENSURE_SUCCESS(rv, rv);
     if (placeId != 0) {
@@ -2713,6 +2737,8 @@ nsNavHistory::RemovePagesByTimeframe(PRTime aBeginTime, PRTime aEndTime)
 NS_IMETHODIMP
 nsNavHistory::RemoveVisitsByTimeframe(PRTime aBeginTime, PRTime aEndTime)
 {
+  PLACES_WARN_DEPRECATED();
+
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
 
   nsresult rv;
@@ -2785,41 +2811,6 @@ nsNavHistory::RemoveVisitsByTimeframe(PRTime aBeginTime, PRTime aEndTime)
 
   // Invalidate the cached value for whether there's history or not.
   mDaysOfHistory = -1;
-
-  return NS_OK;
-}
-
-
-// nsNavHistory::RemoveAllPages
-//
-//    This function is used to clear history.
-
-NS_IMETHODIMP
-nsNavHistory::RemoveAllPages()
-{
-  PLACES_WARN_DEPRECATED();
-
-  NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
-
-  nsresult rv = mDB->MainConn()->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
-    "DELETE FROM moz_historyvisits"
-  ));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Clear the registered embed visits.
-  clearEmbedVisits();
-
-  // Update the cached value for whether there's history or not.
-  mDaysOfHistory = 0;
-
-  // Expiration will take care of orphans.
-  NOTIFY_OBSERVERS(mCanNotify, mCacheObservers, mObservers,
-                   nsINavHistoryObserver, OnClearHistory());
-
-  // Invalidate frecencies for the remaining places.  This must happen
-  // after the notification to ensure it runs enqueued to expiration.
-  rv = invalidateFrecencies(EmptyCString());
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "failed to fix invalid frecencies");
 
   return NS_OK;
 }
@@ -2980,7 +2971,7 @@ NS_IMETHODIMP
 nsNavHistory::GetShutdownClient(nsIAsyncShutdownClient **_shutdownClient)
 {
   NS_ENSURE_ARG_POINTER(_shutdownClient);
-  RefPtr<nsIAsyncShutdownClient> client = mDB->GetConnectionShutdown();
+  RefPtr<nsIAsyncShutdownClient> client = mDB->GetClientsShutdown();
   MOZ_ASSERT(client);
   client.forget(_shutdownClient);
 
@@ -3092,17 +3083,17 @@ nsNavHistory::Observe(nsISupports *aSubject, const char *aTopic,
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   if (strcmp(aTopic, TOPIC_PROFILE_TEARDOWN) == 0 ||
       strcmp(aTopic, TOPIC_PROFILE_CHANGE) == 0 ||
-      strcmp(aTopic, TOPIC_SIMULATE_PLACES_MUST_CLOSE_1) == 0 ||
-      strcmp(aTopic, TOPIC_SIMULATE_PLACES_MUST_CLOSE_2) == 0) {
+      strcmp(aTopic, TOPIC_SIMULATE_PLACES_SHUTDOWN) == 0) {
     // These notifications are used by tests to simulate a Places shutdown.
     // They should just be forwarded to the Database handle.
     mDB->Observe(aSubject, aTopic, aData);
   }
 
   else if (strcmp(aTopic, TOPIC_PLACES_CONNECTION_CLOSED) == 0) {
-      // Don't even try to notify observers from this point on, the category
-      // cache would init services that could try to use our APIs.
-      mCanNotify = false;
+    // Don't even try to notify observers from this point on, the category
+    // cache would init services that could try to use our APIs.
+    mCanNotify = false;
+    mObservers.Clear();
   }
 
 #ifdef MOZ_XUL
@@ -3361,12 +3352,7 @@ nsNavHistory::QueryToSelectClause(nsNavHistoryQuery* aQuery, // const
 
   // URI
   if (NS_SUCCEEDED(aQuery->GetHasUri(&hasIt)) && hasIt) {
-    if (aQuery->UriIsPrefix()) {
-      clause.Condition("h.url >= ").Param(":uri")
-            .Condition("h.url <= ").Param(":uri_upper");
-    }
-    else
-      clause.Condition("h.url =").Param(":uri");
+    clause.Condition("h.url =").Param(":uri");
   }
 
   // annotation
@@ -3560,15 +3546,6 @@ nsNavHistory::BindQueryClauseParameters(mozIStorageBaseStatement* statement,
       statement, NS_LITERAL_CSTRING("uri") + qIndex, aQuery->Uri()
     );
     NS_ENSURE_SUCCESS(rv, rv);
-    if (aQuery->UriIsPrefix()) {
-      nsAutoCString uriString;
-      aQuery->Uri()->GetSpec(uriString);
-      uriString.Append(char(0x7F)); // MAX_UTF8
-      rv = URIBinder::Bind(
-        statement, NS_LITERAL_CSTRING("uri_upper") + qIndex, uriString
-      );
-      NS_ENSURE_SUCCESS(rv, rv);
-    }
   }
 
   // annotation
@@ -3987,6 +3964,19 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
     rv = aRow->GetUTF8String(kGetInfoIndex_Guid, resultNode->mPageGuid);
     NS_ENSURE_SUCCESS(rv, rv);
 
+    rv = aRow->GetInt64(kGetInfoIndex_VisitId, &resultNode->mVisitId);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    int64_t fromVisitId;
+    rv = aRow->GetInt64(kGetInfoIndex_FromVisitId, &fromVisitId);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    if (fromVisitId > 0) {
+      resultNode->mFromVisitId = fromVisitId;
+    }
+
+    resultNode->mTransitionType = aRow->AsInt32(kGetInfoIndex_VisitType);
+
     resultNode.forget(aResult);
     return NS_OK;
   }
@@ -4095,7 +4085,8 @@ nsNavHistory::VisitIdToResultNode(int64_t visitId,
       statement = mDB->GetStatement(NS_LITERAL_CSTRING(
         "SELECT h.id, h.url, h.title, h.rev_host, h.visit_count, "
                "v.visit_date, f.url, null, null, null, null, "
-               ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+               ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+              "v.id, v.from_visit, v.visit_type "
         "FROM moz_places h "
         "JOIN moz_historyvisits v ON h.id = v.place_id "
         "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -4109,7 +4100,8 @@ nsNavHistory::VisitIdToResultNode(int64_t visitId,
       statement = mDB->GetStatement(NS_LITERAL_CSTRING(
         "SELECT h.id, h.url, h.title, h.rev_host, h.visit_count, "
                "h.last_visit_date, f.url, null, null, null, null, "
-               ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+               ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+              "null, null, null "
         "FROM moz_places h "
         "JOIN moz_historyvisits v ON h.id = v.place_id "
         "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -4156,7 +4148,7 @@ nsNavHistory::BookmarkIdToResultNode(int64_t aBookmarkId, nsNavHistoryQueryOptio
              "h.rev_host, h.visit_count, h.last_visit_date, f.url, b.id, "
              "b.dateAdded, b.lastModified, b.parent, "
              ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-             "b.guid, b.position, b.type, b.fk "
+             "null, null, null, b.guid, b.position, b.type, b.fk "
       "FROM moz_bookmarks b "
       "JOIN moz_places h ON b.fk = h.id "
       "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -4197,7 +4189,7 @@ nsNavHistory::URIToResultNode(nsIURI* aURI,
            "h.rev_host, h.visit_count, h.last_visit_date, f.url, "
            "b.id, b.dateAdded, b.lastModified, b.parent, "
            ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-           "b.guid, b.position, b.type, b.fk "
+           "null, null, null, b.guid, b.position, b.type, b.fk "
     "FROM moz_places h "
     "LEFT JOIN moz_bookmarks b ON b.fk = h.id "
     "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "

@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Test that inspector links in the webconsole output for DOM Nodes do not try
 // to highlight or select nodes once they have been detached
@@ -20,8 +20,12 @@ const TEST_DATA = [
     output: '<p some-attribute="some-value">'
   },
   {
+    input: "testSvgNode()",
+    output: '<clipPath>'
+  },
+  {
     input: "testBodyNode()",
-    output: '<body id="body-id" class="body-class">'
+    output: '<body class="body-class" id="body-id">'
   },
   {
     input: "testNodeInIframe()",
@@ -29,7 +33,7 @@ const TEST_DATA = [
   },
   {
     input: "testDocumentElement()",
-    output: '<html lang="en-US" dir="ltr">'
+    output: '<html dir="ltr" lang="en-US">'
   }
 ];
 
@@ -39,7 +43,7 @@ function test() {
   Services.prefs.setBoolPref(PREF, true);
   registerCleanupFunction(() => Services.prefs.clearUserPref(PREF));
 
-  Task.spawn(function*() {
+  Task.spawn(function* () {
     let {tab} = yield loadTab(TEST_URI);
     let hud = yield openConsole(tab);
     let toolbox = gDevTools.getToolbox(hud.target);

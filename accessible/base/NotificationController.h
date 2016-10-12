@@ -7,6 +7,7 @@
 #define mozilla_a11y_NotificationController_h_
 
 #include "EventQueue.h"
+#include "EventTree.h"
 
 #include "mozilla/IndexSequence.h"
 #include "mozilla/Tuple.h"
@@ -104,13 +105,36 @@ public:
   void Shutdown();
 
   /**
-   * Put an accessible event into the queue to process it later.
+   * Add an accessible event into the queue to process it later.
    */
   void QueueEvent(AccEvent* aEvent)
   {
-    if (PushEvent(aEvent))
+    if (PushEvent(aEvent)) {
       ScheduleProcessing();
+    }
   }
+
+  /**
+   * Creates and adds a name change event into the queue for a container of
+   * the given accessible, if the accessible is a part of name computation of
+   * the container.
+   */
+  void QueueNameChange(Accessible* aChangeTarget)
+  {
+    if (PushNameChange(aChangeTarget)) {
+      ScheduleProcessing();
+    }
+  }
+
+  /**
+   * Returns existing event tree for the given the accessible or creates one if
+   * it doesn't exists yet.
+   */
+  EventTree* QueueMutation(Accessible* aContainer);
+
+#ifdef A11Y_LOG
+  const EventTree& RootEventTree() const { return mEventTree; };
+#endif
 
   /**
    * Schedule binding the child document to the tree of this document.
@@ -122,8 +146,15 @@ public:
    */
   inline void ScheduleTextUpdate(nsIContent* aTextNode)
   {
-    if (mTextHash.PutEntry(aTextNode))
-      ScheduleProcessing();
+    // Make sure we are not called with a node that is not in the DOM tree or
+    // not visible.
+    MOZ_ASSERT(aTextNode->GetParentNode(), "A text node is not in DOM");
+    MOZ_ASSERT(aTextNode->GetPrimaryFrame(), "A text node doesn't have a frame");
+    MOZ_ASSERT(aTextNode->GetPrimaryFrame()->StyleVisibility()->IsVisible(),
+               "A text node is not visible");
+
+    mTextHash.PutEntry(aTextNode);
+    ScheduleProcessing();
   }
 
   /**
@@ -240,44 +271,10 @@ private:
   nsTArray<RefPtr<DocAccessible> > mHangingChildDocuments;
 
   /**
-   * Storage for content inserted notification information.
+   * Pending accessible tree update notifications for content insertions.
    */
-  class ContentInsertion
-  {
-  public:
-    ContentInsertion(DocAccessible* aDocument, Accessible* aContainer);
-
-    NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(ContentInsertion)
-    NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(ContentInsertion)
-
-    bool InitChildList(nsIContent* aStartChildNode, nsIContent* aEndChildNode);
-    void Process();
-
-  protected:
-    virtual ~ContentInsertion() { mDocument = nullptr; }
-
-  private:
-    ContentInsertion();
-    ContentInsertion(const ContentInsertion&);
-    ContentInsertion& operator = (const ContentInsertion&);
-
-    // The document used to process content insertion, matched to document of
-    // the notification controller that this notification belongs to, therefore
-    // it's ok to keep it as weak ref.
-    DocAccessible* mDocument;
-
-    // The container accessible that content insertion occurs within.
-    RefPtr<Accessible> mContainer;
-
-    // Array of inserted contents.
-    nsTArray<nsCOMPtr<nsIContent> > mInsertedContent;
-  };
-
-  /**
-   * A pending accessible tree update notifications for content insertions.
-   * Don't make this an nsAutoTArray; we use SwapElements() on it.
-   */
-  nsTArray<RefPtr<ContentInsertion> > mContentInsertions;
+  nsClassHashtable<nsRefPtrHashKey<Accessible>,
+                   nsTArray<nsCOMPtr<nsIContent>>> mContentInsertions;
 
   template<class T>
   class nsCOMPtrHashKey : public PLDHashEntryHdr
@@ -304,12 +301,12 @@ private:
   };
 
   /**
-   * A pending accessible tree update notifications for rendered text changes.
+   * Pending accessible tree update notifications for rendered text changes.
    */
   nsTHashtable<nsCOMPtrHashKey<nsIContent> > mTextHash;
 
   /**
-   * Other notifications like DOM events. Don't make this an nsAutoTArray; we
+   * Other notifications like DOM events. Don't make this an AutoTArray; we
    * use SwapElements() on it.
    */
   nsTArray<RefPtr<Notification> > mNotifications;
@@ -318,6 +315,11 @@ private:
    * Holds all scheduled relocations.
    */
   nsTArray<RefPtr<Accessible> > mRelocations;
+
+  /**
+   * Holds all mutation events.
+   */
+  EventTree mEventTree;
 };
 
 } // namespace a11y

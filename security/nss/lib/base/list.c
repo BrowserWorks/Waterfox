@@ -83,8 +83,7 @@ nssList_Create(NSSArena *arenaOpt, PRBool threadSafe)
     if (arenaOpt) {
         arena = arenaOpt;
         i_alloced = PR_FALSE;
-    }
-    else {
+    } else {
         arena = nssArena_Create();
         i_alloced = PR_TRUE;
     }
@@ -103,8 +102,7 @@ nssList_Create(NSSArena *arenaOpt, PRBool threadSafe)
         if (!list->lock) {
             if (arenaOpt) {
                 nss_ZFreeIf(list);
-            }
-            else {
+            } else {
                 NSSArena_Destroy(arena);
             }
             return (nssList *)NULL;
@@ -119,6 +117,9 @@ nssList_Create(NSSArena *arenaOpt, PRBool threadSafe)
 NSS_IMPLEMENT PRStatus
 nssList_Destroy(nssList *list)
 {
+    if (!list) {
+        return PR_SUCCESS;
+    }
     if (!list->i_alloced_arena) {
         nssList_Clear(list, NULL);
     }
@@ -157,6 +158,9 @@ nssList_Clear(nssList *list, nssListElementDestructorFunc destructor)
 {
     PRCList *link;
     nssListElement *node, *tmp;
+    if (!list) {
+        return;
+    }
     NSSLIST_LOCK_IF(list);
     node = list->head;
     list->head = NULL;
@@ -205,13 +209,11 @@ nsslist_add_element(nssList *list, void *data)
                 }
                 currNode = (nssListElement *)PR_NEXT_LINK(&currNode->link);
             }
-        }
-        else {
+        } else {
             /* not sorting */
             PR_APPEND_LINK(&node->link, &list->head->link);
         }
-    }
-    else {
+    } else {
         list->head = node;
     }
     ++list->count;
@@ -359,7 +361,9 @@ nssListIterator_Destroy(nssListIterator *iter)
     if (iter->lock) {
         (void)PZ_DestroyLock(iter->lock);
     }
-    nssList_Destroy(iter->list);
+    if (iter->list) {
+        nssList_Destroy(iter->list);
+    }
     nss_ZFreeIf(iter);
 }
 

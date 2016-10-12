@@ -1,6 +1,7 @@
-/* -*- js-indent-level: 2; indent-tabs-mode: nil -*- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Test basic pretty printing functionality. Would be an xpcshell test, except
 // for bug 921252.
@@ -10,7 +11,11 @@ var gTab, gPanel, gClient, gThreadClient, gSource;
 const TAB_URL = EXAMPLE_URL + "doc_pretty-print-2.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_ugly-2.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gClient = gPanel.panelWin.gClient;
@@ -23,7 +28,7 @@ function test() {
 function findSource() {
   gThreadClient.getSources(({ error, sources }) => {
     ok(!error);
-    sources = sources.filter(s => s.url.includes('code_ugly-2.js'));
+    sources = sources.filter(s => s.url.includes("code_ugly-2.js"));
     is(sources.length, 1);
     gSource = sources[0];
     prettyPrintSource();
@@ -52,6 +57,6 @@ function testUgly({ error, source }) {
   closeDebuggerAndFinish(gPanel);
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = gPanel = gClient = gThreadClient = gSource = null;
 });

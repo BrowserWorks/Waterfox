@@ -7,6 +7,12 @@
 # largely a copy of dom/media/gmp-fake/moz.build
 
 FINAL_TARGET = 'dist/bin/gmp-fakeopenh264/1.0'
+
+FINAL_TARGET_FILES += [
+    'fakeopenh264.info',
+    'fakeopenh264.voucher',
+]
+
 SOURCES += [
     'gmp-fake-openh264.cpp',
 ]
@@ -22,6 +28,3 @@ USE_STATIC_LIBS = True
 NO_VISIBILITY_FLAGS = True
 # Don't use STL wrappers; this isn't Gecko code
 DISABLE_STL_WRAPPING = True
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

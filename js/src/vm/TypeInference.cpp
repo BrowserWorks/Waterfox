@@ -340,36 +340,36 @@ TypeSet::mightBeMIRType(jit::MIRType type) const
     if (unknown())
         return true;
 
-    if (type == jit::MIRType_Object)
+    if (type == jit::MIRType::Object)
         return unknownObject() || baseObjectCount() != 0;
 
     switch (type) {
-      case jit::MIRType_Undefined:
+      case jit::MIRType::Undefined:
         return baseFlags() & TYPE_FLAG_UNDEFINED;
-      case jit::MIRType_Null:
+      case jit::MIRType::Null:
         return baseFlags() & TYPE_FLAG_NULL;
-      case jit::MIRType_Boolean:
+      case jit::MIRType::Boolean:
         return baseFlags() & TYPE_FLAG_BOOLEAN;
-      case jit::MIRType_Int32:
+      case jit::MIRType::Int32:
         return baseFlags() & TYPE_FLAG_INT32;
-      case jit::MIRType_Float32: // Fall through, there's no JSVAL for Float32.
-      case jit::MIRType_Double:
+      case jit::MIRType::Float32: // Fall through, there's no JSVAL for Float32.
+      case jit::MIRType::Double:
         return baseFlags() & TYPE_FLAG_DOUBLE;
-      case jit::MIRType_String:
+      case jit::MIRType::String:
         return baseFlags() & TYPE_FLAG_STRING;
-      case jit::MIRType_Symbol:
+      case jit::MIRType::Symbol:
         return baseFlags() & TYPE_FLAG_SYMBOL;
-      case jit::MIRType_MagicOptimizedArguments:
+      case jit::MIRType::MagicOptimizedArguments:
         return baseFlags() & TYPE_FLAG_LAZYARGS;
-      case jit::MIRType_MagicHole:
-      case jit::MIRType_MagicIsConstructing:
+      case jit::MIRType::MagicHole:
+      case jit::MIRType::MagicIsConstructing:
         // These magic constants do not escape to script and are not observed
         // in the type sets.
         //
         // The reason we can return false here is subtle: if Ion is asking the
         // type set if it has seen such a magic constant, then the MIR in
-        // question is the most generic type, MIRType_Value. A magic constant
-        // could only be emitted by a MIR of MIRType_Value if that MIR is a
+        // question is the most generic type, MIRType::Value. A magic constant
+        // could only be emitted by a MIR of MIRType::Value if that MIR is a
         // phi, and we check that different magic constants do not flow to the
         // same join point in GuessPhiType.
         return false;
@@ -680,6 +680,7 @@ ConstraintTypeSet::addType(ExclusiveContext* cxArg, Type type)
 void
 TypeSet::print(FILE* fp)
 {
+    bool fromDebugger = !fp;
     if (!fp)
         fp = stderr;
 
@@ -730,6 +731,9 @@ TypeSet::print(FILE* fp)
                 fprintf(fp, " %s", TypeString(ObjectType(key)));
         }
     }
+
+    if (fromDebugger)
+        fprintf(fp, "\n");
 }
 
 /* static */ void
@@ -772,10 +776,10 @@ TypeSet::IsTypeAllocatedDuringIncremental(TypeSet::Type v)
     bool rv;
     if (v.isSingletonUnchecked()) {
         JSObject* obj = v.singletonNoBarrier();
-        rv = obj->isTenured() && obj->asTenured().arenaHeader()->allocatedDuringIncremental;
+        rv = obj->isTenured() && obj->asTenured().arena()->allocatedDuringIncremental;
     } else if (v.isGroupUnchecked()) {
         ObjectGroup* group = v.groupNoBarrier();
-        rv = group->arenaHeader()->allocatedDuringIncremental;
+        rv = group->arena()->allocatedDuringIncremental;
     } else {
         rv = false;
     }
@@ -1211,7 +1215,7 @@ TypeSet::ObjectKey::clasp()
 TaggedProto
 TypeSet::ObjectKey::proto()
 {
-    return isGroup() ? group()->proto() : singleton()->getTaggedProto();
+    return isGroup() ? group()->proto() : singleton()->taggedProto();
 }
 
 TypeNewScript*
@@ -1575,25 +1579,25 @@ GetMIRTypeFromTypeFlags(TypeFlags flags)
 {
     switch (flags) {
       case TYPE_FLAG_UNDEFINED:
-        return jit::MIRType_Undefined;
+        return jit::MIRType::Undefined;
       case TYPE_FLAG_NULL:
-        return jit::MIRType_Null;
+        return jit::MIRType::Null;
       case TYPE_FLAG_BOOLEAN:
-        return jit::MIRType_Boolean;
+        return jit::MIRType::Boolean;
       case TYPE_FLAG_INT32:
-        return jit::MIRType_Int32;
+        return jit::MIRType::Int32;
       case (TYPE_FLAG_INT32 | TYPE_FLAG_DOUBLE):
-        return jit::MIRType_Double;
+        return jit::MIRType::Double;
       case TYPE_FLAG_STRING:
-        return jit::MIRType_String;
+        return jit::MIRType::String;
       case TYPE_FLAG_SYMBOL:
-        return jit::MIRType_Symbol;
+        return jit::MIRType::Symbol;
       case TYPE_FLAG_LAZYARGS:
-        return jit::MIRType_MagicOptimizedArguments;
+        return jit::MIRType::MagicOptimizedArguments;
       case TYPE_FLAG_ANYOBJECT:
-        return jit::MIRType_Object;
+        return jit::MIRType::Object;
       default:
-        return jit::MIRType_Value;
+        return jit::MIRType::Value;
     }
 }
 
@@ -1604,7 +1608,7 @@ TemporaryTypeSet::getKnownMIRType()
     jit::MIRType type;
 
     if (baseObjectCount())
-        type = flags ? jit::MIRType_Value : jit::MIRType_Object;
+        type = flags ? jit::MIRType::Value : jit::MIRType::Object;
     else
         type = GetMIRTypeFromTypeFlags(flags);
 
@@ -1616,7 +1620,7 @@ TemporaryTypeSet::getKnownMIRType()
      * added to the set.
      */
     DebugOnly<bool> empty = flags == 0 && baseObjectCount() == 0;
-    MOZ_ASSERT_IF(empty, type == jit::MIRType_Value);
+    MOZ_ASSERT_IF(empty, type == jit::MIRType::Value);
 
     return type;
 }
@@ -1627,17 +1631,17 @@ HeapTypeSetKey::knownMIRType(CompilerConstraintList* constraints)
     TypeSet* types = maybeTypes();
 
     if (!types || types->unknown())
-        return jit::MIRType_Value;
+        return jit::MIRType::Value;
 
     TypeFlags flags = types->baseFlags() & ~TYPE_FLAG_ANYOBJECT;
     jit::MIRType type;
 
     if (types->unknownObject() || types->getObjectCount())
-        type = flags ? jit::MIRType_Value : jit::MIRType_Object;
+        type = flags ? jit::MIRType::Value : jit::MIRType::Object;
     else
         type = GetMIRTypeFromTypeFlags(flags);
 
-    if (type != jit::MIRType_Value)
+    if (type != jit::MIRType::Value)
         freeze(constraints);
 
     /*
@@ -1647,7 +1651,7 @@ HeapTypeSetKey::knownMIRType(CompilerConstraintList* constraints)
      * that the exact tag is unknown, as it will stay unknown as more types are
      * added to the set.
      */
-    MOZ_ASSERT_IF(types->empty(), type == jit::MIRType_Value);
+    MOZ_ASSERT_IF(types->empty(), type == jit::MIRType::Value);
 
     return type;
 }
@@ -2219,7 +2223,7 @@ TemporaryTypeSet::convertDoubleElements(CompilerConstraintList* constraints)
         // Only bother with converting known packed arrays whose possible
         // element types are int or double. Other arrays require type tests
         // when elements are accessed regardless of the conversion.
-        if (property.knownMIRType(constraints) == jit::MIRType_Double &&
+        if (property.knownMIRType(constraints) == jit::MIRType::Double &&
             !key->hasFlags(constraints, OBJECT_FLAG_NON_PACKED))
         {
             maybeConvert = true;
@@ -2303,8 +2307,7 @@ TemporaryTypeSet::forAllClasses(CompilerConstraintList* constraints,
             true_results = true;
             if (false_results)
                 return ForAllResult::MIXED;
-        }
-        else {
+        } else {
             false_results = true;
             if (true_results)
                 return ForAllResult::MIXED;
@@ -2417,7 +2420,7 @@ TemporaryTypeSet::getCommonPrototype(CompilerConstraintList* constraints, JSObje
 
         TaggedProto nproto = key->proto();
         if (isFirst) {
-            if (nproto.isLazy())
+            if (nproto.isDynamic())
                 return false;
             *proto = nproto.toObjectOrNull();
             isFirst = false;
@@ -2463,9 +2466,9 @@ js::ClassCanHaveExtraProperties(const Class* clasp)
 {
     if (clasp == &UnboxedPlainObject::class_ || clasp == &UnboxedArrayObject::class_)
         return false;
-    return clasp->resolve
-        || clasp->ops.lookupProperty
-        || clasp->ops.getProperty
+    return clasp->getResolve()
+        || clasp->getOpsLookupProperty()
+        || clasp->getOpsGetProperty()
         || IsTypedArrayClass(clasp);
 }
 
@@ -2542,16 +2545,15 @@ js::PrintTypes(JSContext* cx, JSCompartment* comp, bool force)
     if (!force && !InferSpewActive(ISpewResult))
         return;
 
-    for (gc::ZoneCellIter i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next()) {
-        RootedScript script(cx, i.get<JSScript>());
+    RootedScript script(cx);
+    for (auto iter = zone->cellIter<JSScript>(); !iter.done(); iter.next()) {
+        script = iter;
         if (script->types())
             script->types()->printTypes(cx, script);
     }
 
-    for (gc::ZoneCellIter i(zone, gc::AllocKind::OBJECT_GROUP); !i.done(); i.next()) {
-        ObjectGroup* group = i.get<ObjectGroup>();
+    for (auto group = zone->cellIter<ObjectGroup>(); !group.done(); group.next())
         group->print();
-    }
 #endif
 }
 
@@ -2679,7 +2681,11 @@ ObjectGroup::addDefiniteProperties(ExclusiveContext* cx, Shape* shape)
             MOZ_ASSERT_IF(shape->slot() >= shape->numFixedSlots(),
                           shape->numFixedSlots() == NativeObject::MAX_FIXED_SLOTS);
             TypeSet* types = getProperty(cx, nullptr, id);
-            if (types && types->canSetDefinite(shape->slot()))
+            if (!types) {
+                MOZ_ASSERT(unknownProperties());
+                return;
+            }
+            if (types->canSetDefinite(shape->slot()))
                 types->setDefinite(shape->slot());
         }
 
@@ -2905,12 +2911,15 @@ ObjectGroup::detachNewScript(bool writeBarrier, ObjectGroup* replacement)
 
     if (newScript->analyzed()) {
         ObjectGroupCompartment& objectGroups = newScript->function()->compartment()->objectGroups;
+        TaggedProto proto = this->proto();
+        if (proto.isObject() && IsForwarded(proto.toObject()))
+            proto = TaggedProto(Forwarded(proto.toObject()));
+        JSObject* associated = MaybeForwarded(newScript->function());
         if (replacement) {
             MOZ_ASSERT(replacement->newScript()->function() == newScript->function());
-            objectGroups.replaceDefaultNewGroup(nullptr, proto(), newScript->function(),
-                                                replacement);
+            objectGroups.replaceDefaultNewGroup(nullptr, proto, associated, replacement);
         } else {
-            objectGroups.removeDefaultNewGroup(nullptr, proto(), newScript->function());
+            objectGroups.removeDefaultNewGroup(nullptr, proto, associated);
         }
     } else {
         MOZ_ASSERT(!replacement);
@@ -2997,8 +3006,11 @@ ObjectGroup::print()
     TaggedProto tagged(proto());
     fprintf(stderr, "%s : %s",
             TypeSet::ObjectGroupString(this),
-            tagged.isObject() ? TypeSet::TypeString(TypeSet::ObjectType(tagged.toObject()))
-                              : (tagged.isLazy() ? "(lazy)" : "(null)"));
+            tagged.isObject()
+            ? TypeSet::TypeString(TypeSet::ObjectType(tagged.toObject()))
+            : tagged.isDynamic()
+            ? "(dynamic)"
+            : "(null)");
 
     if (unknownProperties()) {
         fprintf(stderr, " unknown");
@@ -3098,14 +3110,18 @@ js::AddClearDefiniteGetterSetterForPrototypeChain(JSContext* cx, ObjectGroup* gr
     RootedObject proto(cx, group->proto().toObjectOrNull());
     while (proto) {
         ObjectGroup* protoGroup = proto->getGroup(cx);
-        if (!protoGroup || protoGroup->unknownProperties())
+        if (!protoGroup) {
+            cx->recoverFromOutOfMemory();
+            return false;
+        }
+        if (protoGroup->unknownProperties())
             return false;
         HeapTypeSet* protoTypes = protoGroup->getProperty(cx, proto, id);
         if (!protoTypes || protoTypes->nonDataProperty() || protoTypes->nonWritableProperty())
             return false;
         if (!protoTypes->addConstraint(cx, cx->typeLifoAlloc().new_<TypeConstraintClearDefiniteGetterSetter>(group)))
             return false;
-        proto = proto->getProto();
+        proto = proto->staticPrototype();
     }
     return true;
 }
@@ -3305,7 +3321,7 @@ JSFunction::setTypeForScriptedFunction(ExclusiveContext* cx, HandleFunction fun,
         if (!setSingleton(cx, fun))
             return false;
     } else {
-        RootedObject funProto(cx, fun->getProto());
+        RootedObject funProto(cx, fun->staticPrototype());
         Rooted<TaggedProto> taggedProto(cx, TaggedProto(funProto));
         ObjectGroup* group = ObjectGroupCompartment::makeGroup(cx, &JSFunction::class_,
                                                                taggedProto);
@@ -3395,7 +3411,7 @@ PreliminaryObjectArray::sweep()
                 obj->setGroup(objectProto->groupRaw());
                 MOZ_ASSERT(obj->is<NativeObject>());
                 MOZ_ASSERT(obj->getClass() == objectProto->getClass());
-                MOZ_ASSERT(!obj->getClass()->finalize);
+                MOZ_ASSERT(!obj->getClass()->hasFinalize());
             }
 
             *ptr = nullptr;
@@ -3406,8 +3422,7 @@ PreliminaryObjectArray::sweep()
 void
 PreliminaryObjectArrayWithTemplate::trace(JSTracer* trc)
 {
-    if (shape_)
-        TraceEdge(trc, &shape_, "PreliminaryObjectArrayWithTemplate_shape");
+    TraceNullableEdge(trc, &shape_, "PreliminaryObjectArrayWithTemplate_shape");
 }
 
 /* static */ void
@@ -3415,7 +3430,7 @@ PreliminaryObjectArrayWithTemplate::writeBarrierPre(PreliminaryObjectArrayWithTe
 {
     Shape* shape = objects->shape();
 
-    if (!shape || shape->runtimeFromAnyThread()->isHeapBusy())
+    if (!shape || shape->runtimeFromAnyThread()->isHeapCollecting())
         return;
 
     JS::Zone* zone = shape->zoneFromAnyThread();
@@ -3498,7 +3513,7 @@ PreliminaryObjectArrayWithTemplate::maybeAnalyze(ExclusiveContext* cx, ObjectGro
         }
     }
 
-    TryConvertToUnboxedLayout(cx, shape(), group, preliminaryObjects);
+    TryConvertToUnboxedLayout(cx, enter, shape(), group, preliminaryObjects);
     if (group->maybeUnboxedLayout())
         return;
 
@@ -3599,9 +3614,7 @@ ChangeObjectFixedSlotCount(JSContext* cx, PlainObject* obj, gc::AllocKind allocK
 {
     MOZ_ASSERT(OnlyHasDataProperties(obj->lastProperty()));
 
-    Shape* newShape = ReshapeForAllocKind(cx, obj->lastProperty(),
-                                          obj->getTaggedProto(),
-                                          allocKind);
+    Shape* newShape = ReshapeForAllocKind(cx, obj->lastProperty(), obj->taggedProto(), allocKind);
     if (!newShape)
         return false;
 
@@ -3781,7 +3794,7 @@ TypeNewScript::maybeAnalyze(JSContext* cx, ObjectGroup* group, bool* regenerate,
     }
 
     // Try to use an unboxed representation for the group.
-    if (!TryConvertToUnboxedLayout(cx, templateObject()->lastProperty(), group, preliminaryObjects))
+    if (!TryConvertToUnboxedLayout(cx, enter, templateObject()->lastProperty(), group, preliminaryObjects))
         return false;
 
     js_delete(preliminaryObjects);
@@ -3967,21 +3980,15 @@ void
 TypeNewScript::trace(JSTracer* trc)
 {
     TraceEdge(trc, &function_, "TypeNewScript_function");
-
-    if (templateObject_)
-        TraceEdge(trc, &templateObject_, "TypeNewScript_templateObject");
-
-    if (initializedShape_)
-        TraceEdge(trc, &initializedShape_, "TypeNewScript_initializedShape");
-
-    if (initializedGroup_)
-        TraceEdge(trc, &initializedGroup_, "TypeNewScript_initializedGroup");
+    TraceNullableEdge(trc, &templateObject_, "TypeNewScript_templateObject");
+    TraceNullableEdge(trc, &initializedShape_, "TypeNewScript_initializedShape");
+    TraceNullableEdge(trc, &initializedGroup_, "TypeNewScript_initializedGroup");
 }
 
 /* static */ void
 TypeNewScript::writeBarrierPre(TypeNewScript* newScript)
 {
-    if (newScript->function()->runtimeFromAnyThread()->isHeapBusy())
+    if (newScript->function()->runtimeFromAnyThread()->isHeapCollecting())
         return;
 
     JS::Zone* zone = newScript->function()->zoneFromAnyThread();
@@ -4051,14 +4058,20 @@ ConstraintTypeSet::trace(Zone* zone, JSTracer* trc)
     }
 }
 
-void
-ConstraintTypeSet::sweep(Zone* zone, AutoClearTypeInferenceStateOnOOM& oom)
+static inline void
+AssertGCStateForSweep(Zone* zone)
 {
     MOZ_ASSERT(zone->isGCSweepingOrCompacting());
 
     // IsAboutToBeFinalized doesn't work right on tenured objects when called
     // during a minor collection.
     MOZ_ASSERT(!zone->runtimeFromMainThread()->isHeapMinorCollecting());
+}
+
+void
+ConstraintTypeSet::sweep(Zone* zone, AutoClearTypeInferenceStateOnOOM& oom)
+{
+    AssertGCStateForSweep(zone);
 
     /*
      * Purge references to objects that are no longer live. Type sets hold
@@ -4177,8 +4190,7 @@ ObjectGroup::sweep(AutoClearTypeInferenceStateOnOOM* oom)
 
     setGeneration(zone()->types.generation);
 
-    MOZ_ASSERT(zone()->isGCSweepingOrCompacting());
-    MOZ_ASSERT(!zone()->runtimeFromMainThread()->isHeapMinorCollecting());
+    AssertGCStateForSweep(zone());
 
     Maybe<AutoClearTypeInferenceStateOnOOM> fallbackOOM;
     EnsureHasAutoClearTypeInferenceStateOnOOM(oom, zone(), fallbackOOM);
@@ -4272,8 +4284,7 @@ JSScript::maybeSweepTypes(AutoClearTypeInferenceStateOnOOM* oom)
 
     setTypesGeneration(zone()->types.generation);
 
-    MOZ_ASSERT(zone()->isGCSweepingOrCompacting());
-    MOZ_ASSERT(!zone()->runtimeFromMainThread()->isHeapMinorCollecting());
+    AssertGCStateForSweep(zone());
 
     Maybe<AutoClearTypeInferenceStateOnOOM> fallbackOOM;
     EnsureHasAutoClearTypeInferenceStateOnOOM(oom, zone(), fallbackOOM);
@@ -4303,6 +4314,12 @@ JSScript::maybeSweepTypes(AutoClearTypeInferenceStateOnOOM* oom)
     // Remove constraints and references to dead objects from stack type sets.
     for (unsigned i = 0; i < num; i++)
         typeArray[i].sweep(zone(), *oom);
+
+    if (oom->hadOOM()) {
+        // It's possible we OOM'd while copying freeze constraints, so they
+        // need to be regenerated.
+        hasFreezeConstraints_ = false;
+    }
 
     // Update the recompile indexes in any IonScripts still on the script.
     if (hasIonScript())
@@ -4411,10 +4428,8 @@ TypeZone::endSweep(JSRuntime* rt)
 void
 TypeZone::clearAllNewScriptsOnOOM()
 {
-    for (gc::ZoneCellIterUnderGC iter(zone(), gc::AllocKind::OBJECT_GROUP);
-         !iter.done(); iter.next())
-    {
-        ObjectGroup* group = iter.get<ObjectGroup>();
+    for (auto iter = zone()->cellIter<ObjectGroup>(); !iter.done(); iter.next()) {
+        ObjectGroup* group = iter;
         if (!IsAboutToBeFinalizedUnbarriered(&group))
             group->maybeClearNewScriptOnOOM();
     }
@@ -4423,8 +4438,9 @@ TypeZone::clearAllNewScriptsOnOOM()
 AutoClearTypeInferenceStateOnOOM::~AutoClearTypeInferenceStateOnOOM()
 {
     if (oom) {
+        JSRuntime* rt = zone->runtimeFromMainThread();
         zone->setPreservingCode(false);
-        zone->discardJitCode(zone->runtimeFromMainThread()->defaultFreeOp());
+        zone->discardJitCode(rt->defaultFreeOp());
         zone->types.clearAllNewScriptsOnOOM();
     }
 }
@@ -4449,7 +4465,7 @@ TypeScript::printTypes(JSContext* cx, HandleScript script) const
     fprintf(stderr, " %p %s:%" PRIuSIZE " ", script.get(), script->filename(), script->lineno());
 
     if (script->functionNonDelazifying()) {
-        if (js::PropertyName* name = script->functionNonDelazifying()->name())
+        if (JSAtom* name = script->functionNonDelazifying()->name())
             name->dumpCharsNoNewline();
     }
 

@@ -11,8 +11,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryController",
                                   "resource://gre/modules/TelemetryController.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "TelemetrySession",
-                                  "resource://gre/modules/TelemetrySession.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryEnvironment",
                                   "resource://gre/modules/TelemetryEnvironment.jsm");
 
@@ -28,7 +26,6 @@ TelemetryStartup.prototype.QueryInterface = XPCOMUtils.generateQI([Components.in
 TelemetryStartup.prototype.observe = function(aSubject, aTopic, aData) {
   if (aTopic == "profile-after-change" || aTopic == "app-startup") {
     TelemetryController.observe(null, aTopic, null);
-    TelemetrySession.observe(null, aTopic, null);
   }
   if (aTopic == "profile-after-change") {
     annotateEnvironment();
@@ -39,10 +36,11 @@ TelemetryStartup.prototype.observe = function(aSubject, aTopic, aData) {
 
 function annotateEnvironment() {
   try {
-    let cr = Cc["@mozilla.org/toolkit/crash-reporter;1"]
-      .getService(Ci.nsICrashReporter);
-    let env = JSON.stringify(TelemetryEnvironment.currentEnvironment);
-    cr.annotateCrashReport("TelemetryEnvironment", env);
+    let cr = Cc["@mozilla.org/toolkit/crash-reporter;1"];
+    if (cr) {
+      let env = JSON.stringify(TelemetryEnvironment.currentEnvironment);
+      cr.getService(Ci.nsICrashReporter).annotateCrashReport("TelemetryEnvironment", env);
+    }
   } catch (e) {
     // crash reporting not built or disabled? Ignore errors
   }

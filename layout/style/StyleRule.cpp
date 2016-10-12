@@ -23,7 +23,6 @@
 #include "nsDOMCSSDeclaration.h"
 #include "nsNameSpaceManager.h"
 #include "nsXMLNameSpaceMap.h"
-#include "nsCSSPseudoElements.h"
 #include "nsCSSPseudoClasses.h"
 #include "nsCSSAnonBoxes.h"
 #include "nsTArray.h"
@@ -68,7 +67,7 @@ nsAtomList::nsAtomList(const nsString& aAtomValue)
     mNext(nullptr)
 {
   MOZ_COUNT_CTOR(nsAtomList);
-  mAtom = do_GetAtom(aAtomValue);
+  mAtom = NS_Atomize(aAtomValue);
 }
 
 nsAtomList*
@@ -105,7 +104,7 @@ nsAtomList::~nsAtomList(void)
   NS_CSS_DELETE_LIST_MEMBER(nsAtomList, this, mNext);
 }
 
-nsPseudoClassList::nsPseudoClassList(nsCSSPseudoClasses::Type aType)
+nsPseudoClassList::nsPseudoClassList(CSSPseudoClassType aType)
   : mType(aType),
     mNext(nullptr)
 {
@@ -116,7 +115,7 @@ nsPseudoClassList::nsPseudoClassList(nsCSSPseudoClasses::Type aType)
   u.mMemory = nullptr;
 }
 
-nsPseudoClassList::nsPseudoClassList(nsCSSPseudoClasses::Type aType,
+nsPseudoClassList::nsPseudoClassList(CSSPseudoClassType aType,
                                      const char16_t* aString)
   : mType(aType),
     mNext(nullptr)
@@ -128,7 +127,7 @@ nsPseudoClassList::nsPseudoClassList(nsCSSPseudoClasses::Type aType,
   u.mString = NS_strdup(aString);
 }
 
-nsPseudoClassList::nsPseudoClassList(nsCSSPseudoClasses::Type aType,
+nsPseudoClassList::nsPseudoClassList(CSSPseudoClassType aType,
                                      const int32_t* aIntPair)
   : mType(aType),
     mNext(nullptr)
@@ -142,7 +141,7 @@ nsPseudoClassList::nsPseudoClassList(nsCSSPseudoClasses::Type aType,
 }
 
 // adopts aSelectorList
-nsPseudoClassList::nsPseudoClassList(nsCSSPseudoClasses::Type aType,
+nsPseudoClassList::nsPseudoClassList(CSSPseudoClassType aType,
                                      nsCSSSelectorList* aSelectorList)
   : mType(aType),
     mNext(nullptr)
@@ -222,46 +221,49 @@ nsAttrSelector::nsAttrSelector(int32_t aNameSpace, const nsString& aAttr)
     mCasedAttr(nullptr),
     mNameSpace(aNameSpace),
     mFunction(NS_ATTR_FUNC_SET),
-    mCaseSensitive(1)
+    // mValueCaseSensitivity doesn't matter; we have no value.
+    mValueCaseSensitivity(ValueCaseSensitivity::CaseSensitive)
 {
   MOZ_COUNT_CTOR(nsAttrSelector);
 
   nsAutoString lowercase;
   nsContentUtils::ASCIIToLower(aAttr, lowercase);
   
-  mCasedAttr = do_GetAtom(aAttr);
-  mLowercaseAttr = do_GetAtom(lowercase);
+  mCasedAttr = NS_Atomize(aAttr);
+  mLowercaseAttr = NS_Atomize(lowercase);
 }
 
 nsAttrSelector::nsAttrSelector(int32_t aNameSpace, const nsString& aAttr, uint8_t aFunction, 
-                               const nsString& aValue, bool aCaseSensitive)
+                               const nsString& aValue,
+                               ValueCaseSensitivity aValueCaseSensitivity)
   : mValue(aValue),
     mNext(nullptr),
     mLowercaseAttr(nullptr),
     mCasedAttr(nullptr),
     mNameSpace(aNameSpace),
     mFunction(aFunction),
-    mCaseSensitive(aCaseSensitive)
+    mValueCaseSensitivity(aValueCaseSensitivity)
 {
   MOZ_COUNT_CTOR(nsAttrSelector);
 
   nsAutoString lowercase;
   nsContentUtils::ASCIIToLower(aAttr, lowercase);
   
-  mCasedAttr = do_GetAtom(aAttr);
-  mLowercaseAttr = do_GetAtom(lowercase);
+  mCasedAttr = NS_Atomize(aAttr);
+  mLowercaseAttr = NS_Atomize(lowercase);
 }
 
 nsAttrSelector::nsAttrSelector(int32_t aNameSpace,  nsIAtom* aLowercaseAttr,
                                nsIAtom* aCasedAttr, uint8_t aFunction, 
-                               const nsString& aValue, bool aCaseSensitive)
+                               const nsString& aValue,
+                               ValueCaseSensitivity aValueCaseSensitivity)
   : mValue(aValue),
     mNext(nullptr),
     mLowercaseAttr(aLowercaseAttr),
     mCasedAttr(aCasedAttr),
     mNameSpace(aNameSpace),
     mFunction(aFunction),
-    mCaseSensitive(aCaseSensitive)
+    mValueCaseSensitivity(aValueCaseSensitivity)
 {
   MOZ_COUNT_CTOR(nsAttrSelector);
 }
@@ -271,7 +273,7 @@ nsAttrSelector::Clone(bool aDeep) const
 {
   nsAttrSelector *result =
     new nsAttrSelector(mNameSpace, mLowercaseAttr, mCasedAttr, 
-                       mFunction, mValue, mCaseSensitive);
+                       mFunction, mValue, mValueCaseSensitivity);
 
   if (aDeep)
     NS_CSS_CLONE_LIST_MEMBER(nsAttrSelector, this, mNext, result, (false));
@@ -312,11 +314,9 @@ nsCSSSelector::nsCSSSelector(void)
     mNext(nullptr),
     mNameSpace(kNameSpaceID_Unknown),
     mOperator(0),
-    mPseudoType(nsCSSPseudoElements::ePseudo_NotPseudoElement)
+    mPseudoType(CSSPseudoElementType::NotPseudo)
 {
   MOZ_COUNT_CTOR(nsCSSSelector);
-  static_assert(nsCSSPseudoElements::ePseudo_MAX < INT16_MAX,
-                "nsCSSPseudoElements::Type values overflow mPseudoType");
 }
 
 nsCSSSelector*
@@ -331,7 +331,7 @@ nsCSSSelector::Clone(bool aDeepNext, bool aDeepNegations) const
   result->mCasedTag = mCasedTag;
   result->mOperator = mOperator;
   result->mPseudoType = mPseudoType;
-  
+
   NS_IF_CLONE(mIDList);
   NS_IF_CLONE(mClassList);
   NS_IF_CLONE(mPseudoClassList);
@@ -392,11 +392,11 @@ void nsCSSSelector::SetTag(const nsString& aTag)
     return;
   }
 
-  mCasedTag = do_GetAtom(aTag);
+  mCasedTag = NS_Atomize(aTag);
  
   nsAutoString lowercase;
   nsContentUtils::ASCIIToLower(aTag, lowercase);
-  mLowercaseTag = do_GetAtom(lowercase);
+  mLowercaseTag = NS_Atomize(lowercase);
 }
 
 void nsCSSSelector::AddID(const nsString& aID)
@@ -421,24 +421,24 @@ void nsCSSSelector::AddClass(const nsString& aClass)
   }
 }
 
-void nsCSSSelector::AddPseudoClass(nsCSSPseudoClasses::Type aType)
+void nsCSSSelector::AddPseudoClass(CSSPseudoClassType aType)
 {
   AddPseudoClassInternal(new nsPseudoClassList(aType));
 }
 
-void nsCSSSelector::AddPseudoClass(nsCSSPseudoClasses::Type aType,
+void nsCSSSelector::AddPseudoClass(CSSPseudoClassType aType,
                                    const char16_t* aString)
 {
   AddPseudoClassInternal(new nsPseudoClassList(aType, aString));
 }
 
-void nsCSSSelector::AddPseudoClass(nsCSSPseudoClasses::Type aType,
+void nsCSSSelector::AddPseudoClass(CSSPseudoClassType aType,
                                    const int32_t* aIntPair)
 {
   AddPseudoClassInternal(new nsPseudoClassList(aType, aIntPair));
 }
 
-void nsCSSSelector::AddPseudoClass(nsCSSPseudoClasses::Type aType,
+void nsCSSSelector::AddPseudoClass(CSSPseudoClassType aType,
                                    nsCSSSelectorList* aSelectorList)
 {
   // Take ownership of nsCSSSelectorList instead of copying.
@@ -466,14 +466,15 @@ void nsCSSSelector::AddAttribute(int32_t aNameSpace, const nsString& aAttr)
 }
 
 void nsCSSSelector::AddAttribute(int32_t aNameSpace, const nsString& aAttr, uint8_t aFunc, 
-                                 const nsString& aValue, bool aCaseSensitive)
+                                 const nsString& aValue,
+                                 nsAttrSelector::ValueCaseSensitivity aCaseSensitivity)
 {
   if (!aAttr.IsEmpty()) {
     nsAttrSelector** list = &mAttrList;
     while (nullptr != *list) {
       list = &((*list)->mNext);
     }
-    *list = new nsAttrSelector(aNameSpace, aAttr, aFunc, aValue, aCaseSensitive);
+    *list = new nsAttrSelector(aNameSpace, aAttr, aFunc, aValue, aCaseSensitivity);
   }
 }
 
@@ -488,7 +489,7 @@ int32_t nsCSSSelector::CalcWeightWithoutNegations() const
 
 #ifdef MOZ_XUL
   MOZ_ASSERT(!(IsPseudoElement() &&
-               PseudoType() != nsCSSPseudoElements::ePseudo_XULTree &&
+               PseudoType() != CSSPseudoElementType::XULTree &&
                mClassList),
              "If non-XUL-tree pseudo-elements can have class selectors "
              "after them, specificity calculation must be updated");
@@ -513,7 +514,7 @@ int32_t nsCSSSelector::CalcWeightWithoutNegations() const
 #ifdef MOZ_XUL
   // XUL tree pseudo-elements abuse mClassList to store some private
   // data; ignore that.
-  if (PseudoType() == nsCSSPseudoElements::ePseudo_XULTree) {
+  if (PseudoType() == CSSPseudoElementType::XULTree) {
     list = nullptr;
   }
 #endif
@@ -562,7 +563,7 @@ nsCSSSelector::ToString(nsAString& aString, CSSStyleSheet* aSheet,
 
   // selectors are linked from right-to-left, so the next selector in
   // the linked list actually precedes this one in the resulting string
-  nsAutoTArray<const nsCSSSelector*, 8> stack;
+  AutoTArray<const nsCSSSelector*, 8> stack;
   for (const nsCSSSelector *s = this; s; s = s->mNext) {
     stack.AppendElement(s);
   }
@@ -865,6 +866,11 @@ nsCSSSelector::AppendToStringWithoutCombinatorsOrNegations
       
         // Append the value
         nsStyleUtil::AppendEscapedCSSString(list->mValue, aString);
+
+        if (list->mValueCaseSensitivity ==
+              nsAttrSelector::ValueCaseSensitivity::CaseInsensitive) {
+          aString.Append(NS_LITERAL_STRING(" i"));
+        }
       }
 
       aString.Append(char16_t(']'));

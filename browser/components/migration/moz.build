@@ -6,6 +6,8 @@
 
 XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']
 
+MARIONETTE_UNIT_MANIFESTS += ['tests/marionette/manifest.ini']
+
 JAR_MANIFESTS += ['jar.mn']
 
 XPIDL_SOURCES += [
@@ -14,52 +16,45 @@ XPIDL_SOURCES += [
 
 XPIDL_MODULE = 'migration'
 
-if CONFIG['OS_ARCH'] == 'WINNT':
-    SOURCES += [
-        'nsIEHistoryEnumerator.cpp',
-    ]
-
 EXTRA_COMPONENTS += [
+    'ChromeProfileMigrator.js',
     'FirefoxProfileMigrator.js',
     'ProfileMigrator.js',
 ]
 
-if CONFIG['OS_ARCH'] == 'WINNT':
-    EXTRA_COMPONENTS += [
-        '360seProfileMigrator.js',
-        'EdgeProfileMigrator.js',
-        'IEProfileMigrator.js',
-    ]
-    DEFINES['HAS_360SE_MIGRATOR'] = True
-    DEFINES['HAS_IE_MIGRATOR'] = True
-    DEFINES['HAS_EDGE_MIGRATOR'] = True
-
 EXTRA_PP_COMPONENTS += [
     'BrowserProfileMigrators.manifest',
-    'ChromeProfileMigrator.js',
 ]
 
-if CONFIG['OS_ARCH'] == 'WINNT':
-    EXTRA_PP_COMPONENTS += [
-        'SafariProfileMigrator.js',
-    ]
-    DEFINES['HAS_SAFARI_MIGRATOR'] = True
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
-    EXTRA_PP_COMPONENTS += [
-        'SafariProfileMigrator.js',
-    ]
-    DEFINES['HAS_SAFARI_MIGRATOR'] = True
-
-EXTRA_PP_JS_MODULES += [
+EXTRA_JS_MODULES += [
+    'AutoMigrate.jsm',
     'MigrationUtils.jsm',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
+    SOURCES += [
+        'nsIEHistoryEnumerator.cpp',
+    ]
+    EXTRA_COMPONENTS += [
+        '360seProfileMigrator.js',
+        'EdgeProfileMigrator.js',
+        'IEProfileMigrator.js',
+        'SafariProfileMigrator.js',
+    ]
     EXTRA_JS_MODULES += [
         'ESEDBReader.jsm',
         'MSMigrationUtils.jsm',
     ]
+    DEFINES['HAS_SAFARI_MIGRATOR'] = True
+    DEFINES['HAS_360SE_MIGRATOR'] = True
+    DEFINES['HAS_IE_MIGRATOR'] = True
+    DEFINES['HAS_EDGE_MIGRATOR'] = True
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    EXTRA_COMPONENTS += [
+        'SafariProfileMigrator.js',
+    ]
+    DEFINES['HAS_SAFARI_MIGRATOR'] = True
 
 FINAL_LIBRARY = 'browsercomps'
 

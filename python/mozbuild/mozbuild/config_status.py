@@ -52,9 +52,8 @@ VISUAL_STUDIO_ADVERTISEMENT = '''
 ===============================
 Visual Studio Support Available
 
-You are building Firefox on Windows. Please help us test the experimental
-Visual Studio project files (yes, IntelliSense works) by running the
-following:
+You are building Firefox on Windows. You can generate Visual Studio
+files by running:
 
    mach build-backend --backend=VisualStudio
 
@@ -62,8 +61,8 @@ following:
 '''.strip()
 
 
-def config_status(topobjdir='.', topsrcdir='.',
-        defines=[], non_global_defines=[], substs=[], source=None):
+def config_status(topobjdir='.', topsrcdir='.', defines=None,
+                  non_global_defines=None, substs=None, source=None):
     '''Main function, providing config.status functionality.
 
     Contrary to config.status, it doesn't use CONFIG_FILES or CONFIG_HEADERS
@@ -73,9 +72,6 @@ def config_status(topobjdir='.', topsrcdir='.',
     the current directory as the top object directory, even when config.status
     is in a different directory. It will, however, treat the directory
     containing config.status as the top object directory with the -n option.
-
-    The --recheck option, like with the original config.status, runs configure
-    again, with the options given in the "ac_configure_args" subst.
 
     The options to this function are passed when creating the
     ConfigEnvironment. These lists, as well as the actual wrapper script
@@ -95,17 +91,9 @@ def config_status(topobjdir='.', topsrcdir='.',
             '%s' % topsrcdir)
 
     default_backends = ['RecursiveMake']
-    # We have a chicken/egg problem, where we only have a dict for substs after
-    # creating the ConfigEnvironment, which requires argument parsing to have
-    # occurred.
-    for name, value in substs:
-        if name == 'BUILD_BACKENDS':
-            default_backends = value
-            break
+    default_backends = (substs or {}).get('BUILD_BACKENDS', ['RecursiveMake'])
 
     parser = ArgumentParser()
-    parser.add_argument('--recheck', dest='recheck', action='store_true',
-                        help='update config.status by reconfiguring in the same conditions')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
                         help='display verbose output')
     parser.add_argument('-n', dest='not_topobjdir', action='store_true',
@@ -147,11 +135,6 @@ def config_status(topobjdir='.', topsrcdir='.',
     emitter = TreeMetadataEmitter(env)
     # This won't actually do anything because of the magic of generators.
     definitions = emitter.emit(reader.read_topsrcdir())
-
-    if options.recheck:
-        # Execute configure from the top object directory
-        os.chdir(topobjdir)
-        os.execlp('sh', 'sh', '-c', ' '.join([os.path.join(topsrcdir, 'configure'), env.substs['ac_configure_args'], '--no-create', '--no-recursion']))
 
     log_level = logging.DEBUG if options.verbose else logging.INFO
     log_manager.add_terminal_logging(level=log_level)
@@ -199,4 +182,9 @@ def config_status(topobjdir='.', topsrcdir='.',
     if env.substs.get('MOZ_ARTIFACT_BUILDS', False):
         # Execute |mach artifact install| from the top source directory.
         os.chdir(topsrcdir)
-        return subprocess.check_call([sys.executable, os.path.join(topsrcdir, 'mach'), 'artifact', 'install'])
+        return subprocess.check_call([
+            sys.executable,
+            os.path.join(topsrcdir, 'mach'),
+            '--log-no-times',
+            'artifact',
+            'install'])

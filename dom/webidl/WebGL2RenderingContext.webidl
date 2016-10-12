@@ -475,7 +475,7 @@ interface WebGL2RenderingContext : WebGLRenderingContext
     // GLintptr here, otherwise interface generator returns error.
     (WebGLBuffer or GLintptr)? getIndexedParameter(GLenum target, GLuint index);
     sequence<GLuint>? getUniformIndices(WebGLProgram? program, sequence<DOMString> uniformNames);
-    sequence<GLint>? getActiveUniforms(WebGLProgram? program, sequence<GLuint> uniformIndices, GLenum pname);
+    any getActiveUniforms(WebGLProgram? program, sequence<GLuint> uniformIndices, GLenum pname);
     GLuint getUniformBlockIndex(WebGLProgram? program, DOMString uniformBlockName);
     [Throws]
     (GLuint or Uint32Array or GLboolean)? getActiveUniformBlockParameter(WebGLProgram? program, GLuint uniformBlockIndex, GLenum pname);
@@ -487,4 +487,8 @@ interface WebGL2RenderingContext : WebGLRenderingContext
     void deleteVertexArray(WebGLVertexArrayObject? vertexArray);
     [WebGLHandlesContextLoss] GLboolean isVertexArray(WebGLVertexArrayObject? vertexArray);
     void bindVertexArray(WebGLVertexArrayObject? array);
+};
+
+[NoInterfaceObject]
+interface EXT_color_buffer_float {
 };

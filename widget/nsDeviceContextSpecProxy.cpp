@@ -49,13 +49,13 @@ nsDeviceContextSpecProxy::Init(nsIWidget* aWidget,
   rv = mPrintSettings->GetPrintSession(getter_AddRefs(mPrintSession));
   if (NS_FAILED(rv) || !mPrintSession) {
     NS_WARNING("We can't print via the parent without an nsIPrintSession.");
-    return rv;
+    return NS_ERROR_FAILURE;
   }
 
   rv = mPrintSession->GetRemotePrintJob(getter_AddRefs(mRemotePrintJob));
   if (NS_FAILED(rv) || !mRemotePrintJob) {
     NS_WARNING("We can't print via the parent without a RemotePrintJobChild.");
-    return rv;
+    return NS_ERROR_FAILURE;
   }
 
   return NS_OK;
@@ -69,8 +69,8 @@ nsDeviceContextSpecProxy::GetSurfaceForPrinter(gfxASurface** aSurface)
 
   double width, height;
   nsresult rv = mPrintSettings->GetEffectivePageSize(&width, &height);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
+  if (NS_WARN_IF(NS_FAILED(rv)) || width <= 0 || height <= 0) {
+    return NS_ERROR_FAILURE;
   }
 
   // convert twips to points
@@ -79,7 +79,7 @@ nsDeviceContextSpecProxy::GetSurfaceForPrinter(gfxASurface** aSurface)
 
   RefPtr<gfxASurface> surface = gfxPlatform::GetPlatform()->
     CreateOffscreenSurface(mozilla::gfx::IntSize(width, height),
-                           SurfaceFormat::A8R8G8B8_UINT32);
+                           mozilla::gfx::SurfaceFormat::A8R8G8B8_UINT32);
 
   surface.forget(aSurface);
   return NS_OK;
@@ -115,7 +115,7 @@ nsDeviceContextSpecProxy::BeginDocument(const nsAString& aTitle,
                                         const nsAString& aPrintToFileName,
                                         int32_t aStartPage, int32_t aEndPage)
 {
-  mRecorder = new DrawEventRecorderMemory();
+  mRecorder = new mozilla::gfx::DrawEventRecorderMemory();
   return mRemotePrintJob->InitializePrint(nsString(aTitle),
                                           nsString(aPrintToFileName),
                                           aStartPage, aEndPage);

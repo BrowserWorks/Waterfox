@@ -73,7 +73,8 @@ ExceptionHandler::ExceptionHandler(const wstring& dump_path,
              handler_types,
              dump_type,
              pipe_name,
-             NULL,
+             NULL,  // pipe_handle
+             NULL,  // crash_generation_client
              custom_info);
 }
 
@@ -91,10 +92,32 @@ ExceptionHandler::ExceptionHandler(const wstring& dump_path,
              callback_context,
              handler_types,
              dump_type,
-             NULL,
+             NULL,  // pipe_name
              pipe_handle,
+             NULL,  // crash_generation_client
              custom_info);
-}  
+}
+
+ExceptionHandler::ExceptionHandler(
+    const wstring& dump_path,
+    FilterCallback filter,
+    MinidumpCallback callback,
+    void* callback_context,
+    int handler_types,
+    CrashGenerationClient* crash_generation_client) {
+  // The dump_type, pipe_name and custom_info that are passed in to Initialize()
+  // are not used.  The ones set in crash_generation_client are used instead.
+  Initialize(dump_path,
+             filter,
+             callback,
+             callback_context,
+             handler_types,
+             MiniDumpNormal,           // dump_type - not used
+             NULL,                     // pipe_name - not used
+             NULL,                     // pipe_handle
+             crash_generation_client,
+             NULL);                    // custom_info - not used
+}
 
 ExceptionHandler::ExceptionHandler(const wstring &dump_path,
                                    FilterCallback filter,
@@ -107,20 +130,23 @@ ExceptionHandler::ExceptionHandler(const wstring &dump_path,
              callback_context,
              handler_types,
              MiniDumpNormal,
-             NULL,
-             NULL,
-             NULL);
+             NULL,   // pipe_name
+             NULL,   // pipe_handle
+             NULL,   // crash_generation_client
+             NULL);  // custom_info
 }
 
-void ExceptionHandler::Initialize(const wstring& dump_path,
-                                  FilterCallback filter,
-                                  MinidumpCallback callback,
-                                  void* callback_context,
-                                  int handler_types,
-                                  MINIDUMP_TYPE dump_type,
-                                  const wchar_t* pipe_name,
-                                  HANDLE pipe_handle,
-                                  const CustomClientInfo* custom_info) {
+void ExceptionHandler::Initialize(
+    const wstring& dump_path,
+    FilterCallback filter,
+    MinidumpCallback callback,
+    void* callback_context,
+    int handler_types,
+    MINIDUMP_TYPE dump_type,
+    const wchar_t* pipe_name,
+    HANDLE pipe_handle,
+    CrashGenerationClient* crash_generation_client,
+    const CustomClientInfo* custom_info) {
   LONG instance_count = InterlockedIncrement(&instance_count_);
   filter_ = filter;
   callback_ = callback;
@@ -148,24 +174,22 @@ void ExceptionHandler::Initialize(const wstring& dump_path,
   assertion_ = NULL;
   handler_return_value_ = false;
   handle_debug_exceptions_ = false;
+  consume_invalid_handle_exceptions_ = false;
 
-  // Attempt to use out-of-process if user has specified a pipe.
-  if (pipe_name != NULL || pipe_handle != NULL) {
-    assert(!(pipe_name && pipe_handle));
+  // Attempt to use out-of-process if user has specified a pipe or a
+  // crash generation client.
+  scoped_ptr<CrashGenerationClient> client;
+  if (crash_generation_client) {
+    client.reset(crash_generation_client);
+  } else if (pipe_name) {
+    client.reset(
+      new CrashGenerationClient(pipe_name, dump_type_, custom_info));
+  } else if (pipe_handle) {
+    client.reset(
+      new CrashGenerationClient(pipe_handle, dump_type_, custom_info));
+  }
 
-    scoped_ptr<CrashGenerationClient> client;
-    if (pipe_name) {
-      client.reset(
-        new CrashGenerationClient(pipe_name,
-                                  dump_type_,
-                                  custom_info));
-    } else {
-      client.reset(
-        new CrashGenerationClient(pipe_handle,
-                                  dump_type_,
-                                  custom_info));
-    }
-
+  if (client.get() != NULL) {
     // If successful in registering with the monitoring process,
     // there is no need to setup in-process crash generation.
     if (client->Register()) {
@@ -458,6 +482,11 @@ LONG ExceptionHandler::HandleException(EXCEPTION_POINTERS* exinfo) {
   bool is_debug_exception = (code == EXCEPTION_BREAKPOINT) ||
                             (code == EXCEPTION_SINGLE_STEP);
 
+  if (code == EXCEPTION_INVALID_HANDLE &&
+      current_handler->consume_invalid_handle_exceptions_) {
+    return EXCEPTION_CONTINUE_EXECUTION;
+  }
+
   bool success = false;
 
   if (!is_debug_exception ||
@@ -735,9 +764,10 @@ bool ExceptionHandler::WriteMinidumpForException(EXCEPTION_POINTERS* exinfo) {
 // static
 bool ExceptionHandler::WriteMinidump(const wstring &dump_path,
                                      MinidumpCallback callback,
-                                     void* callback_context) {
+                                     void* callback_context,
+                                     MINIDUMP_TYPE dump_type) {
   ExceptionHandler handler(dump_path, NULL, callback, callback_context,
-                           HANDLER_NONE);
+                           HANDLER_NONE, dump_type, (HANDLE)NULL, NULL);
   return handler.WriteMinidump();
 }
 
@@ -746,7 +776,8 @@ bool ExceptionHandler::WriteMinidumpForChild(HANDLE child,
                                              DWORD child_blamed_thread,
                                              const wstring& dump_path,
                                              MinidumpCallback callback,
-                                             void* callback_context) {
+                                             void* callback_context,
+                                             MINIDUMP_TYPE dump_type) {
   EXCEPTION_RECORD ex;
   CONTEXT ctx;
   EXCEPTION_POINTERS exinfo = { NULL, NULL };
@@ -777,7 +808,7 @@ bool ExceptionHandler::WriteMinidumpForChild(HANDLE child,
   }
 
   ExceptionHandler handler(dump_path, NULL, callback, callback_context,
-                           HANDLER_NONE);
+                           HANDLER_NONE, dump_type, (HANDLE)NULL, NULL);
   bool success = handler.WriteMinidumpWithExceptionForProcess(
       child_blamed_thread,
       exinfo.ExceptionRecord ? &exinfo : NULL,
@@ -852,7 +883,7 @@ BOOL CALLBACK ExceptionHandler::MinidumpWriteDumpCallback(
     callback_context->iter++;
     return TRUE;
   }
-    
+
     // Include all modules.
   case IncludeModuleCallback:
   case ModuleCallback:

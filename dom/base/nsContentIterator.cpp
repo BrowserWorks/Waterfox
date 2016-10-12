@@ -155,7 +155,7 @@ protected:
   nsCOMPtr<nsINode> mCommonParent;
 
   // used by nsContentIterator to cache indices
-  nsAutoTArray<int32_t, 8> mIndexes;
+  AutoTArray<int32_t, 8> mIndexes;
 
   // used by nsSubtreeIterator to cache indices.  Why put them in the base
   // class?  Because otherwise I have to duplicate the routines GetNextSibling
@@ -774,7 +774,11 @@ nsContentIterator::NextNode(nsINode* aNode, nsTArray<int32_t>* aIndexes)
 
   // post-order
   nsINode* parent = node->GetParentNode();
-  NS_WARN_IF(!parent);
+  if (NS_WARN_IF(!parent)) {
+    MOZ_ASSERT(parent, "The node is the root node but not the last node");
+    mIsDone = true;
+    return node;
+  }
   nsIContent* sibling = nullptr;
   int32_t indx = 0;
 
@@ -839,7 +843,11 @@ nsContentIterator::PrevNode(nsINode* aNode, nsTArray<int32_t>* aIndexes)
   // if we are a Pre-order iterator, use pre-order
   if (mPre) {
     nsINode* parent = node->GetParentNode();
-    NS_WARN_IF(!parent);
+    if (NS_WARN_IF(!parent)) {
+      MOZ_ASSERT(parent, "The node is the root node but not the first node");
+      mIsDone = true;
+      return aNode;
+    }
     nsIContent* sibling = nullptr;
     int32_t indx = 0;
 
@@ -1058,8 +1066,8 @@ nsContentIterator::PositionAt(nsINode* aCurNode)
 
   // We can be at ANY node in the sequence.  Need to regenerate the array of
   // indexes back to the root or common parent!
-  nsAutoTArray<nsINode*, 8>     oldParentStack;
-  nsAutoTArray<int32_t, 8>      newIndexes;
+  AutoTArray<nsINode*, 8>     oldParentStack;
+  AutoTArray<int32_t, 8>      newIndexes;
 
   // Get a list of the parents up to the root, then compare the new node with
   // entries in that array until we find a match (lowest common ancestor).  If
@@ -1213,8 +1221,8 @@ protected:
   RefPtr<nsRange> mRange;
 
   // these arrays all typically are used and have elements
-  nsAutoTArray<nsIContent*, 8> mEndNodes;
-  nsAutoTArray<int32_t, 8>     mEndOffsets;
+  AutoTArray<nsIContent*, 8> mEndNodes;
+  AutoTArray<int32_t, 8>     mEndOffsets;
 };
 
 NS_IMPL_ADDREF_INHERITED(nsContentSubtreeIterator, nsContentIterator)
@@ -1329,8 +1337,8 @@ nsContentSubtreeIterator::Init(nsIDOMRange* aRange)
   // we have a range that does not fully contain any node.
 
   bool nodeBefore, nodeAfter;
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-    nsRange::CompareNodeToRange(firstCandidate, mRange, &nodeBefore, &nodeAfter)));
+  MOZ_ALWAYS_SUCCEEDS(
+    nsRange::CompareNodeToRange(firstCandidate, mRange, &nodeBefore, &nodeAfter));
 
   if (nodeBefore || nodeAfter) {
     MakeEmpty();
@@ -1373,8 +1381,8 @@ nsContentSubtreeIterator::Init(nsIDOMRange* aRange)
   // confirm that this last possible contained node is indeed contained.  Else
   // we have a range that does not fully contain any node.
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-    nsRange::CompareNodeToRange(lastCandidate, mRange, &nodeBefore, &nodeAfter)));
+  MOZ_ALWAYS_SUCCEEDS(
+    nsRange::CompareNodeToRange(lastCandidate, mRange, &nodeBefore, &nodeAfter));
 
   if (nodeBefore || nodeAfter) {
     MakeEmpty();
@@ -1526,8 +1534,8 @@ nsContentSubtreeIterator::GetTopAncestorInRange(nsINode* aNode)
     if (!parent || !parent->GetParentNode()) {
       return content;
     }
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      nsRange::CompareNodeToRange(parent, mRange, &nodeBefore, &nodeAfter)));
+    MOZ_ALWAYS_SUCCEEDS(
+      nsRange::CompareNodeToRange(parent, mRange, &nodeBefore, &nodeAfter));
 
     if (nodeBefore || nodeAfter) {
       return content;

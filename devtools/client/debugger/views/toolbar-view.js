@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -38,7 +40,7 @@ ToolbarView.prototype = {
   /**
    * Initialization function, called when the debugger is started.
    */
-  initialize: function() {
+  initialize: function () {
     dumpn("Initializing the ToolbarView");
 
     this._instrumentsPaneToggleButton = document.getElementById("instruments-pane-toggle");
@@ -77,7 +79,7 @@ ToolbarView.prototype = {
   /**
    * Destruction function, called when the debugger is closed.
    */
-  destroy: function() {
+  destroy: function () {
     dumpn("Destroying the ToolbarView");
 
     this._instrumentsPaneToggleButton.removeEventListener("mousedown", this._onTogglePanesPressed, false);
@@ -90,8 +92,8 @@ ToolbarView.prototype = {
   /**
    * Add commands that XUL can fire.
    */
-  _addCommands: function() {
-    XULUtils.addCommands(document.getElementById('debuggerCommands'), {
+  _addCommands: function () {
+    XULUtils.addCommands(document.getElementById("debuggerCommands"), {
       resumeCommand: () => this._onResumePressed(),
       stepOverCommand: () => this._onStepOverPressed(),
       stepInCommand: () => this._onStepInPressed(),
@@ -106,7 +108,7 @@ ToolbarView.prototype = {
    * @param string aPausedUrl
    *        The URL of the last paused debuggee.
    */
-  showResumeWarning: function(aPausedUrl) {
+  showResumeWarning: function (aPausedUrl) {
     let label = L10N.getFormatStr("resumptionOrderPanelTitle", aPausedUrl);
     let defaultStyle = "default-tooltip-simple-text-colors";
     this._resumeOrderTooltip.setTextContent({ messages: [label], isAlertTooltip: true });
@@ -121,7 +123,7 @@ ToolbarView.prototype = {
    * @param boolean hasLocation
    *        True if we are paused at a specific JS location
    */
-  toggleResumeButtonState: function(aState, hasLocation) {
+  toggleResumeButtonState: function (aState, hasLocation) {
     // Intermidiate state after pressing the pause button and waiting
     // for the next script execution to happen.
     if (aState == "breakOnNext") {
@@ -155,7 +157,7 @@ ToolbarView.prototype = {
     }
   },
 
-  _toggleButtonsState: function({ enabled }) {
+  _toggleButtonsState: function ({ enabled }) {
     const buttons = [
       this._stepOutButton,
       this._stepInButton,
@@ -169,7 +171,7 @@ ToolbarView.prototype = {
   /**
    * Listener handling the toggle button click event.
    */
-  _onTogglePanesPressed: function() {
+  _onTogglePanesPressed: function () {
     DebuggerView.toggleInstrumentsPane({
       visible: DebuggerView.instrumentsPaneHidden,
       animated: true,
@@ -180,7 +182,7 @@ ToolbarView.prototype = {
   /**
    * Listener handling the pause/resume button click event.
    */
-  _onResumePressed: function() {
+  _onResumePressed: function () {
     if (this.StackFrames._currentFrameDescription != FRAME_TYPE.NORMAL ||
         this._resumeButton.disabled) {
       return;
@@ -199,7 +201,7 @@ ToolbarView.prototype = {
   /**
    * Listener handling the step over button click event.
    */
-  _onStepOverPressed: function() {
+  _onStepOverPressed: function () {
     if (this.activeThread.paused && !this._stepOverButton.disabled) {
       this.StackFrames.currentFrameDepth = -1;
       this.activeThread.stepOver(this.resumptionWarnFunc);
@@ -209,7 +211,7 @@ ToolbarView.prototype = {
   /**
    * Listener handling the step in button click event.
    */
-  _onStepInPressed: function() {
+  _onStepInPressed: function () {
     if (this.StackFrames._currentFrameDescription != FRAME_TYPE.NORMAL ||
        this._stepInButton.disabled) {
       return;
@@ -224,7 +226,7 @@ ToolbarView.prototype = {
   /**
    * Listener handling the step out button click event.
    */
-  _onStepOutPressed: function() {
+  _onStepOutPressed: function () {
     if (this.activeThread.paused && !this._stepOutButton.disabled) {
       this.StackFrames.currentFrameDepth = -1;
       this.activeThread.stepOut(this.resumptionWarnFunc);

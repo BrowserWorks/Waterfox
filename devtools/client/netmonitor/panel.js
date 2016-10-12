@@ -5,10 +5,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { Cc, Ci, Cu, Cr } = require("chrome");
 const promise = require("promise");
 const EventEmitter = require("devtools/shared/event-emitter");
-const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const { Task } = require("devtools/shared/task");
 
 function NetMonitorPanel(iframeWindow, toolbox) {
   this.panelWin = iframeWindow;
@@ -17,9 +16,10 @@ function NetMonitorPanel(iframeWindow, toolbox) {
   this._view = this.panelWin.NetMonitorView;
   this._controller = this.panelWin.NetMonitorController;
   this._controller._target = this.target;
+  this._controller._toolbox = this._toolbox;
 
   EventEmitter.decorate(this);
-};
+}
 
 exports.NetMonitorPanel = NetMonitorPanel;
 
@@ -30,7 +30,7 @@ NetMonitorPanel.prototype = {
    * @return object
    *         A promise that is resolved when the NetMonitor completes opening.
    */
-  open: Task.async(function*() {
+  open: Task.async(function* () {
     if (this._opening) {
       return this._opening;
     }
@@ -56,7 +56,7 @@ NetMonitorPanel.prototype = {
     return this._toolbox.target;
   },
 
-  destroy: Task.async(function*() {
+  destroy: Task.async(function* () {
     if (this._destroying) {
       return this._destroying;
     }

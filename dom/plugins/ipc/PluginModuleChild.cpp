@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #ifdef MOZ_WIDGET_QT
-#include <unistd.h> // for _exit()
 #include <QtCore/QTimer>
 #include "nsQAppInstance.h"
 #include "NestedLoopTimer.h"
@@ -33,6 +32,7 @@
 #ifdef MOZ_X11
 # include "mozilla/X11Util.h"
 #endif
+#include "mozilla/ipc/ProcessChild.h"
 #include "mozilla/plugins/PluginInstanceChild.h"
 #include "mozilla/plugins/StreamNotifyChild.h"
 #include "mozilla/plugins/BrowserStreamChild.h"
@@ -57,6 +57,7 @@
 #include "GeckoProfiler.h"
 
 using namespace mozilla;
+using namespace mozilla::ipc;
 using namespace mozilla::plugins;
 using namespace mozilla::widget;
 using mozilla::dom::CrashReporterChild;
@@ -103,13 +104,6 @@ static GetWindowInfoPtr sGetWindowInfoPtrStub = nullptr;
 static HWND sBrowserHwnd = nullptr;
 #endif
 
-template<>
-struct RunnableMethodTraits<PluginModuleChild>
-{
-    static void RetainCallee(PluginModuleChild* obj) { }
-    static void ReleaseCallee(PluginModuleChild* obj) { }
-};
-
 /* static */
 PluginModuleChild*
 PluginModuleChild::CreateForContentProcess(mozilla::ipc::Transport* aTransport,
@@ -143,6 +137,7 @@ PluginModuleChild::PluginModuleChild(bool aIsChrome)
 #ifdef OS_WIN
   , mNestedEventHook(nullptr)
   , mGlobalCallWndProcHook(nullptr)
+  , mAsyncRenderSupport(false)
 #endif
 {
     memset(&mFunctions, 0, sizeof(mFunctions));
@@ -165,7 +160,8 @@ PluginModuleChild::~PluginModuleChild()
         // bridged protocol (bug 1090570). So we have to do it ourselves. This
         // code is only invoked for PluginModuleChild instances created via
         // bridging; otherwise mTransport is null.
-        XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new DeleteTask<Transport>(mTransport));
+        RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(mTransport);
+        XRE_GetIOMessageLoop()->PostTask(task.forget());
     }
 
     if (mIsChrome) {
@@ -271,26 +267,29 @@ PluginModuleChild::InitForChrome(const std::string& aPluginFilename,
 
     nsPluginFile pluginFile(localFile);
 
-#if defined(MOZ_X11) || defined(XP_MACOSX)
     nsPluginInfo info = nsPluginInfo();
     if (NS_FAILED(pluginFile.GetPluginInfo(info, &mLibrary))) {
         return false;
     }
 
+#if defined(XP_WIN)
+    // XXX quirks isn't initialized yet
+    mAsyncRenderSupport = info.fSupportsAsyncRender;
+#endif
 #if defined(MOZ_X11)
     NS_NAMED_LITERAL_CSTRING(flash10Head, "Shockwave Flash 10.");
     if (StringBeginsWith(nsDependentCString(info.fDescription), flash10Head)) {
         AddQuirk(QUIRK_FLASH_EXPOSE_COORD_TRANSLATION);
     }
-#else // defined(XP_MACOSX)
+#endif
+#if defined(XP_MACOSX)
     const char* namePrefix = "Plugin Content";
     char nameBuffer[80];
     snprintf(nameBuffer, sizeof(nameBuffer), "%s (%s)", namePrefix, info.fName);
     mozilla::plugins::PluginUtilsOSX::SetProcessName(nameBuffer);
 #endif
-
     pluginFile.FreePluginInfo(info);
-
+#if defined(MOZ_X11) || defined(XP_MACOSX)
     if (!mLibrary)
 #endif
     {
@@ -786,13 +785,6 @@ PluginModuleChild::RecvSetAudioSessionData(const nsID& aId,
 #endif
 }
 
-void
-PluginModuleChild::QuickExit()
-{
-    NS_WARNING("plugin process _exit()ing");
-    _exit(0);
-}
-
 PPluginModuleChild*
 PluginModuleChild::AllocPPluginModuleChild(mozilla::ipc::Transport* aTransport,
                                            base::ProcessId aOtherPid)
@@ -837,13 +829,15 @@ PluginModuleChild::ActorDestroy(ActorDestroyReason why)
         }
 
         // Destroy ourselves once we finish other teardown activities.
-        MessageLoop::current()->PostTask(FROM_HERE, new DeleteTask<PluginModuleChild>(this));
+        RefPtr<DeleteTask<PluginModuleChild>> task =
+            new DeleteTask<PluginModuleChild>(this);
+        MessageLoop::current()->PostTask(task.forget());
         return;
     }
 
     if (AbnormalShutdown == why) {
         NS_WARNING("shutting down early because of crash!");
-        QuickExit();
+        ProcessChild::QuickExit();
     }
 
     if (!mHasShutdown) {
@@ -2179,6 +2173,18 @@ PluginModuleChild::InitQuirksModes(const nsCString& aMimeType)
 }
 
 bool
+PluginModuleChild::AnswerModuleSupportsAsyncRender(bool* aResult)
+{
+#if defined(XP_WIN)
+    *aResult = gChromeInstance->mAsyncRenderSupport;
+    return true;
+#else
+    NS_NOTREACHED("Shouldn't get here!");
+    return false;
+#endif
+}
+
+bool
 PluginModuleChild::RecvPPluginInstanceConstructor(PPluginInstanceChild* aActor,
                                                   const nsCString& aMimeType,
                                                   const uint16_t& aMode,
@@ -2212,11 +2218,12 @@ public:
     {
     }
 
-    void Run() override
+    NS_IMETHOD Run() override
     {
         RemoveFromAsyncList();
         DebugOnly<bool> sendOk = mInstance->SendAsyncNPP_NewResult(mResult);
         MOZ_ASSERT(sendOk);
+        return NS_OK;
     }
 
 private:
@@ -2230,8 +2237,9 @@ RunAsyncNPP_New(void* aChildInstance)
     PluginInstanceChild* childInstance =
         static_cast<PluginInstanceChild*>(aChildInstance);
     NPError rv = childInstance->DoNPP_New();
-    AsyncNewResultSender* task = new AsyncNewResultSender(childInstance, rv);
-    childInstance->PostChildAsyncCall(task);
+    RefPtr<AsyncNewResultSender> task =
+        new AsyncNewResultSender(childInstance, rv);
+    childInstance->PostChildAsyncCall(task.forget());
 }
 
 bool

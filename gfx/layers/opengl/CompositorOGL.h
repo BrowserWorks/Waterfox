@@ -28,7 +28,7 @@
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_ASSERTION, NS_WARNING
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
-#include "nsTArray.h"                   // for nsAutoTArray, nsTArray, etc
+#include "nsTArray.h"                   // for AutoTArray, nsTArray, etc
 #include "nsThreadUtils.h"              // for nsRunnable
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType
 #include "nscore.h"                     // for NS_IMETHOD
@@ -193,13 +193,17 @@ class CompositorOGL final : public Compositor
 
   std::map<ShaderConfigOGL, ShaderProgramOGL*> mPrograms;
 public:
-  explicit CompositorOGL(nsIWidget *aWidget, int aSurfaceWidth = -1, int aSurfaceHeight = -1,
+  explicit CompositorOGL(CompositorBridgeParent* aParent,
+                         widget::CompositorWidgetProxy* aWidget,
+                         int aSurfaceWidth = -1, int aSurfaceHeight = -1,
                          bool aUseExternalSurfaceSize = false);
 
 protected:
   virtual ~CompositorOGL();
 
 public:
+  virtual CompositorOGL* AsCompositorOGL() override { return this; }
+
   virtual already_AddRefed<DataTextureSource>
   CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
 
@@ -215,12 +219,6 @@ public:
                                GetMaxTextureSize(),
                                mFBOTextureTarget == LOCAL_GL_TEXTURE_2D,
                                SupportsPartialTextureUpdate());
-    result.mSupportedBlendModes += gfx::CompositionOp::OP_SOURCE;
-    for (uint8_t op = 0; op < uint8_t(gfx::CompositionOp::OP_COUNT); op++) {
-      if (BlendOpIsMixBlendMode(gfx::CompositionOp(op))) {
-        result.mSupportedBlendModes += gfx::CompositionOp(op);
-      }
-    }
     return result;
   }
 
@@ -236,7 +234,7 @@ public:
   virtual CompositingRenderTarget* GetCurrentRenderTarget() const override;
 
   virtual void DrawQuad(const gfx::Rect& aRect,
-                        const gfx::Rect& aClipRect,
+                        const gfx::IntRect& aClipRect,
                         const EffectChain &aEffectChain,
                         gfx::Float aOpacity,
                         const gfx::Matrix4x4& aTransform,
@@ -279,8 +277,6 @@ public:
 
   virtual void Pause() override;
   virtual bool Resume() override;
-
-  virtual nsIWidget* GetWidget() const override { return mWidget; }
 
   virtual bool HasImageHostOverlays() override
   {
@@ -346,7 +342,7 @@ private:
   void DestroyVR(GLContext *gl);
 
   void DrawVRDistortion(const gfx::Rect& aRect,
-                        const gfx::Rect& aClipRect,
+                        const gfx::IntRect& aClipRect,
                         const EffectChain& aEffectChain,
                         gfx::Float aOpacity,
                         const gfx::Matrix4x4& aTransform);
@@ -354,7 +350,6 @@ private:
   void PrepareViewport(CompositingRenderTargetOGL *aRenderTarget);
 
   /** Widget associated with this compositor */
-  nsIWidget *mWidget;
   LayoutDeviceIntSize mWidgetSize;
   RefPtr<GLContext> mGLContext;
   UniquePtr<GLBlitTextureImageHelper> mBlitTextureImageHelper;
@@ -405,10 +400,11 @@ private:
    * sets *aClipRectOut to the screen dimensions.
    */
   virtual void BeginFrame(const nsIntRegion& aInvalidRegion,
-                          const gfx::Rect *aClipRectIn,
-                          const gfx::Rect& aRenderBounds,
-                          gfx::Rect *aClipRectOut = nullptr,
-                          gfx::Rect *aRenderBoundsOut = nullptr) override;
+                          const gfx::IntRect *aClipRectIn,
+                          const gfx::IntRect& aRenderBounds,
+                          const nsIntRegion& aOpaqueRegion,
+                          gfx::IntRect *aClipRectOut = nullptr,
+                          gfx::IntRect *aRenderBoundsOut = nullptr) override;
 
   ShaderConfigOGL GetShaderConfigFor(Effect *aEffect,
                                      MaskType aMask = MaskType::MaskNone,

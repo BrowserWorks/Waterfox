@@ -4,14 +4,13 @@
 
 // Tests that mouse interaction works fine with tree widget
 
-const TEST_URI = "data:text/html;charset=utf-8,<head><link rel='stylesheet' " +
-  "type='text/css' href='chrome://devtools/skin/common.css'><link " +
-  "rel='stylesheet' type='text/css' href='chrome://devtools/skin/widg" +
+const TEST_URI = "data:text/html;charset=utf-8,<head>" +
+  "<link rel='stylesheet' type='text/css' href='chrome://devtools/skin/widg" +
   "ets.css'></head><body><div></div><span></span></body>";
 const {TreeWidget} = require("devtools/client/shared/widgets/TreeWidget");
 const Promise = require("promise");
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("about:blank");
   let [host, win, doc] = yield createHost("bottom", TEST_URI);
 
@@ -100,8 +99,8 @@ function* testMouseInteraction(tree) {
   let [name, data, attachment] = yield event.promise;
   ok(node.classList.contains("theme-selected"),
      "Node has selected class after click");
-  is(data[0], "level1.2", "Correct tree path is emitted")
-  ok(attachment && attachment.foo, "Correct attachment is emitted")
+  is(data[0], "level1.2", "Correct tree path is emitted");
+  ok(attachment && attachment.foo, "Correct attachment is emitted");
   is(attachment.foo, "bar", "Correct attachment value is emitted");
 
   info("clicking second top level item with children to check if it expands");
@@ -116,8 +115,8 @@ function* testMouseInteraction(tree) {
   [name, data, attachment] = yield event.promise;
   ok(node2.classList.contains("theme-selected"),
      "New node has selected class after clicking");
-  is(data[0], "level1", "Correct tree path is emitted for new node")
-  ok(!attachment, "null attachment should be emitted for new node")
+  is(data[0], "level1", "Correct tree path is emitted for new node");
+  ok(!attachment, "null attachment should be emitted for new node");
   ok(node2.hasAttribute("expanded"), "New node expanded after click");
 
   ok(!node.classList.contains("theme-selected"),

@@ -14,7 +14,7 @@ config = {
         # bug 1222227 - temporarily disable for S3 migration
         # 'make-socorro-json',
         # 'upload-source-manifest',
-        'submit-to-balrog',
+        # 'submit-to-balrog',
     ],
     "upload": {
         "default": {
@@ -37,8 +37,7 @@ config = {
     },
     "gittool_share_base": "/builds/git-shared/git",
     "gittool_base_mirror_urls": [],
-    "hgtool_share_base": "/builds/hg-shared",
-    "hgtool_base_bundle_urls": ["https://ftp-ssl.mozilla.org/pub/mozilla.org/firefox/bundles"],
+    "vcs_share_base": "/builds/hg-shared",
     "exes": {
         "tooltool.py": "/tools/tooltool.py",
     },
@@ -61,15 +60,9 @@ config = {
         "CCACHE_COMPRESS": "1",
         "CCACHE_UMASK": "002",
         "GAIA_OPTIMIZE": "1",
-        "SYMBOL_SERVER_HOST": "symbolpush.mozilla.org",
-        "SYMBOL_SERVER_USER": "b2gbld",
-        "SYMBOL_SERVER_SSH_KEY": "/home/mock_mozilla/.ssh/b2gbld_dsa",
-        "SYMBOL_SERVER_PATH": "/mnt/netapp/breakpad/symbols_b2g/",
-        "POST_SYMBOL_UPLOAD_CMD": "/usr/local/bin/post-symbol-upload.py",
         "WGET_OPTS": "-c -q",
         "PATH": "/tools/python27/bin:%(PATH)s",
     },
-    "purge_minsize": 15,
     "clobberer_url": "https://api.pub.build.mozilla.org/clobberer/lastclobber",
     "is_automation": True,
     "repo_mirror_dir": "/builds/git-shared/repo",

@@ -14,6 +14,7 @@
 #include "nsIDocument.h"
 #include "nsIDOMDocument.h"
 #include "mozilla/css/Loader.h"
+#include "mozilla/dom/SRILogHelper.h"
 #include "nsStyleLinkElement.h"
 #include "nsIDocShell.h"
 #include "nsILoadContext.h"
@@ -52,13 +53,6 @@
 #include "nsSandboxFlags.h"
 
 using namespace mozilla;
-
-static LogModule*
-GetSriLog()
-{
-  static LazyLogModule gSriPRLog("SRI");
-  return gSriPRLog;
-}
 
 LazyLogModule gContentSinkLogModuleInfo("nscontentsink");
 
@@ -213,7 +207,7 @@ nsContentSink::Init(nsIDocument* aDoc,
 }
 
 NS_IMETHODIMP
-nsContentSink::StyleSheetLoaded(CSSStyleSheet* aSheet,
+nsContentSink::StyleSheetLoaded(StyleSheetHandle aSheet,
                                 bool aWasAlternate,
                                 nsresult aStatus)
 {
@@ -241,7 +235,7 @@ nsContentSink::StyleSheetLoaded(CSSStyleSheet* aSheet,
       ScrollToRef();
     }
     
-    mScriptLoader->RemoveExecuteBlocker();
+    mScriptLoader->RemoveParserBlockingScriptExecutionBlocker();
   }
 
   return NS_OK;
@@ -271,7 +265,7 @@ nsContentSink::ProcessHTTPHeaders(nsIChannel* aChannel)
                  "Already dispatched an event?");
 
     mProcessLinkHeaderEvent =
-      NS_NewNonOwningRunnableMethod(this,
+      NewNonOwningRunnableMethod(this,
         &nsContentSink::DoProcessLinkHeader);
     rv = NS_DispatchToCurrentThread(mProcessLinkHeaderEvent.get());
     if (NS_FAILED(rv)) {
@@ -692,7 +686,11 @@ nsContentSink::ProcessLink(const nsSubstring& aAnchor, const nsSubstring& aHref,
   if (!LinkContextIsOurDocument(aAnchor)) {
     return NS_OK;
   }
-  
+
+  if (!nsContentUtils::PrefetchEnabled(mDocShell)) {
+    return NS_OK;
+  }
+
   bool hasPrefetch = linkTypes & nsStyleLinkElement::ePREFETCH;
   // prefetch href if relation is "next" or "prefetch"
   if (hasPrefetch || (linkTypes & nsStyleLinkElement::eNEXT)) {
@@ -758,7 +756,7 @@ nsContentSink::ProcessStyleLink(nsIContent* aElement,
     aElement->GetAttr(kNameSpaceID_None, nsGkAtoms::integrity, integrity);
   }
   if (!integrity.IsEmpty()) {
-    MOZ_LOG(GetSriLog(), mozilla::LogLevel::Debug,
+    MOZ_LOG(dom::SRILogHelper::GetSriLog(), mozilla::LogLevel::Debug,
             ("nsContentSink::ProcessStyleLink, integrity=%s",
              NS_ConvertUTF16toUTF8(integrity).get()));
   }
@@ -774,7 +772,7 @@ nsContentSink::ProcessStyleLink(nsIContent* aElement,
   
   if (!isAlternate && !mRunsToCompletion) {
     ++mPendingSheetCount;
-    mScriptLoader->AddExecuteBlocker();
+    mScriptLoader->AddParserBlockingScriptExecutionBlocker();
   }
 
   return NS_OK;
@@ -802,7 +800,7 @@ nsContentSink::ProcessMETATag(nsIContent* aContent)
     nsAutoString result;
     aContent->GetAttr(kNameSpaceID_None, nsGkAtoms::content, result);
     if (!result.IsEmpty()) {
-      nsCOMPtr<nsIAtom> fieldAtom(do_GetAtom(header));
+      nsCOMPtr<nsIAtom> fieldAtom(NS_Atomize(header));
       rv = ProcessHeaderData(fieldAtom, result, aContent); 
     }
   }
@@ -827,35 +825,6 @@ nsContentSink::PrefetchHref(const nsAString &aHref,
                             nsINode *aSource,
                             bool aExplicit)
 {
-  //
-  // SECURITY CHECK: disable prefetching from mailnews!
-  //
-  // walk up the docshell tree to see if any containing
-  // docshell are of type MAIL.
-  //
-  if (!mDocShell)
-    return;
-
-  nsCOMPtr<nsIDocShell> docshell = mDocShell;
-
-  nsCOMPtr<nsIDocShellTreeItem> parentItem;
-  do {
-    uint32_t appType = 0;
-    nsresult rv = docshell->GetAppType(&appType);
-    if (NS_FAILED(rv) || appType == nsIDocShell::APP_TYPE_MAIL)
-      return; // do not prefetch from mailnews
-    docshell->GetParent(getter_AddRefs(parentItem));
-    if (parentItem) {
-      docshell = do_QueryInterface(parentItem);
-      if (!docshell) {
-        NS_ERROR("cannot get a docshell from a treeItem!");
-        return;
-      }
-    }
-  } while (parentItem);
-  
-  // OK, we passed the security check...
-  
   nsCOMPtr<nsIPrefetchService> prefetchService(do_GetService(NS_PREFETCHSERVICE_CONTRACTID));
   if (prefetchService) {
     // construct URI using document charset
@@ -1125,7 +1094,7 @@ nsContentSink::ProcessOfflineManifest(const nsAString& aManifestSpec)
       // Only continue if the document has permission to use offline APIs or
       // when preferences indicate to permit it automatically.
       if (!nsContentUtils::OfflineAppAllowed(mDocument->NodePrincipal()) &&
-          !nsContentUtils::MaybeAllowOfflineAppByDefault(mDocument->NodePrincipal(), mDocument->GetWindow()) &&
+          !nsContentUtils::MaybeAllowOfflineAppByDefault(mDocument->NodePrincipal()) &&
           !nsContentUtils::OfflineAppAllowed(mDocument->NodePrincipal())) {
         return;
       }

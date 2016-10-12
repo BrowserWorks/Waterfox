@@ -43,10 +43,17 @@ public:
                 DispatchFailureHandling aFailureHandling = AssertDispatchSuccess,
                 DispatchReason aReason = NormalDispatch) override
   {
-    MonitorAutoLock mon(mQueueMonitor);
-    nsresult rv = DispatchLocked(Move(aRunnable), AbortIfFlushing, aFailureHandling, aReason);
-    MOZ_DIAGNOSTIC_ASSERT(aFailureHandling == DontAssertDispatchSuccess || NS_SUCCEEDED(rv));
-    Unused << rv;
+    nsCOMPtr<nsIRunnable> r = aRunnable;
+    {
+      MonitorAutoLock mon(mQueueMonitor);
+      nsresult rv = DispatchLocked(/* passed by ref */r, AbortIfFlushing, aFailureHandling, aReason);
+      MOZ_DIAGNOSTIC_ASSERT(aFailureHandling == DontAssertDispatchSuccess || NS_SUCCEEDED(rv));
+      Unused << rv;
+    }
+    // If the ownership of |r| is not transferred in DispatchLocked() due to
+    // dispatch failure, it will be deleted here outside the lock. We do so
+    // since the destructor of the runnable might access TaskQueue and result
+    // in deadlocks.
   }
 
   // Puts the queue in a shutdown state and returns immediately. The queue will
@@ -81,7 +88,8 @@ protected:
 
   enum DispatchMode { AbortIfFlushing, IgnoreFlushing };
 
-  nsresult DispatchLocked(already_AddRefed<nsIRunnable> aRunnable, DispatchMode aMode,
+  nsresult DispatchLocked(nsCOMPtr<nsIRunnable>& aRunnable,
+                          DispatchMode aMode,
                           DispatchFailureHandling aFailureHandling,
                           DispatchReason aReason = NormalDispatch);
 
@@ -159,7 +167,7 @@ protected:
   // True if we're flushing; we reject new tasks if we're flushing.
   bool mIsFlushing;
 
-  class Runner : public nsRunnable {
+  class Runner : public Runnable {
   public:
     explicit Runner(TaskQueue* aQueue)
       : mQueue(aQueue)

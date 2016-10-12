@@ -19,8 +19,9 @@
 #include "nsIScriptError.h"
 #include "jswrapper.h"
 
-extern PRLogModuleInfo *MCD;
+extern mozilla::LazyLogModule MCD;
 using mozilla::AutoSafeJSContext;
+using mozilla::dom::AutoJSAPI;
 
 //*****************************************************************************
 
@@ -102,21 +103,31 @@ nsresult EvaluateAdminConfigScript(const char *js_buffer, size_t length,
         return rv;
     }
 
-    AutoSafeJSContext cx;
-    JSAutoCompartment ac(cx, autoconfigSb);
+    AutoJSAPI jsapi;
+    if (!jsapi.Init(autoconfigSb)) {
+        return NS_ERROR_UNEXPECTED;
+    }
+    JSContext* cx = jsapi.cx();
 
     nsAutoCString script(js_buffer, length);
     JS::RootedValue v(cx);
 
-    nsString convertedScript = NS_ConvertUTF8toUTF16(script);
-    if (convertedScript.Length() == 0) {
-      nsContentUtils::ReportToConsoleNonLocalized(
-        NS_LITERAL_STRING("Your AutoConfig file is ASCII. Please convert it to UTF-8."),
-        nsIScriptError::warningFlag,
-        NS_LITERAL_CSTRING("autoconfig"),
-        nullptr);
-      /* If the length is 0, the conversion failed. Fallback to ASCII */
-      convertedScript = NS_ConvertASCIItoUTF16(script);
+    nsString convertedScript;
+    bool isUTF8 = IsUTF8(script);
+    if (isUTF8) {
+        convertedScript = NS_ConvertUTF8toUTF16(script);
+    } else {
+        nsContentUtils::ReportToConsoleNonLocalized(
+            NS_LITERAL_STRING("Your AutoConfig file is ASCII. Please convert it to UTF-8."),
+            nsIScriptError::warningFlag,
+            NS_LITERAL_CSTRING("autoconfig"),
+            nullptr);
+        /* If the length is 0, the conversion failed. Fallback to ASCII */
+        convertedScript = NS_ConvertASCIItoUTF16(script);
+    }
+    JS::Rooted<JS::Value> value(cx, JS::BooleanValue(isUTF8));
+    if (!JS_DefineProperty(cx, autoconfigSb, "gIsUTF8", value, JSPROP_ENUMERATE)) {
+        return NS_ERROR_UNEXPECTED;
     }
     rv = xpc->EvalInSandboxObject(convertedScript, filename, cx,
                                   autoconfigSb, JSVERSION_LATEST, &v);

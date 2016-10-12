@@ -57,10 +57,13 @@ extern r_debug _r_debug;
 
 #define USE_GLIBC_BACKTRACE 1
 // To debug, use #define JPROF_STATIC
-#define JPROF_STATIC //static
+#define JPROF_STATIC static
 
 static int gLogFD = -1;
 static pthread_t main_thread;
+
+static bool gIsSlave = false;
+static int gFilenamePID;
 
 static void startSignalCounter(unsigned long millisec);
 static int enableRTCSignals(bool enable);
@@ -95,7 +98,6 @@ JPROF_STATIC void CrawlStack(malloc_log_entry* me,
     void *array[500];
     int cnt, i;
     u_long numpcs = 0;
-    bool tracing = false;
 
     // This is from glibc.  A more generic version might use
     // libunwind and/or CaptureStackBackTrace() on Windows
@@ -167,7 +169,13 @@ static void DumpAddressMap()
     startSignalCounter(0);
   }
 
-  int mfd = open(M_MAPFILE, O_CREAT|O_WRONLY|O_TRUNC, 0666);
+  char filename[2048];
+  if (gIsSlave)
+    snprintf(filename, sizeof(filename), "%s-%d", M_MAPFILE, gFilenamePID);
+  else
+    snprintf(filename, sizeof(filename), "%s", M_MAPFILE);
+
+  int mfd = open(filename, O_CREAT|O_WRONLY|O_TRUNC, 0666);
   if (mfd >= 0) {
     malloc_map_entry mme;
     link_map* map = _r_debug.r_map;
@@ -633,12 +641,12 @@ NS_EXPORT_(void) setupProfilingStuff(void)
                 size_t size = atol(circular_op+strlen("JP_CIRCULAR="));
                 if (size < 1000) {
                     fprintf(stderr,
-                            "JP_CIRCULAR of %d less than 1000, using 10000\n",
-                            size);
+                            "JP_CIRCULAR of %lu less than 1000, using 10000\n",
+                            (unsigned long) size);
                     size = 10000;
                 }
                 JprofBufferInit(size);
-                fprintf(stderr,"JP_CIRCULAR buffer of %d bytes\n",size);
+                fprintf(stderr,"JP_CIRCULAR buffer of %lu bytes\n", (unsigned long) size);
                 circular = true;
 	    }
 
@@ -668,7 +676,7 @@ NS_EXPORT_(void) setupProfilingStuff(void)
                   
 #endif
             }
-            char *f = strstr(tst,"JP_FILENAME=");
+            const char *f = strstr(tst,"JP_FILENAME=");
             if (f)
                 f = f + strlen("JP_FILENAME=");
             else
@@ -677,10 +685,11 @@ NS_EXPORT_(void) setupProfilingStuff(void)
             char *is_slave = getenv("JPROF_SLAVE");
             if (!is_slave)
                 setenv("JPROF_SLAVE","", 0);
+            gIsSlave = !!is_slave;
 
-            int pid = syscall(SYS_gettid); //gettid();
+            gFilenamePID = syscall(SYS_gettid); //gettid();
             if (is_slave)
-                snprintf(filename,sizeof(filename),"%s-%d",f,pid);
+                snprintf(filename,sizeof(filename),"%s-%d",f,gFilenamePID);
             else
                 snprintf(filename,sizeof(filename),"%s",f);
 

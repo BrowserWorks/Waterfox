@@ -115,8 +115,28 @@ let tabFinder = {
   }
 };
 
+/**
+ * Returns a Promise that's resolved after the next turn of the event loop.
+ *
+ * Just returning a resolved Promise would mean that any `then` callbacks
+ * would be called right after the end of the current turn, so `setTimeout`
+ * is used to delay Promise resolution until the next turn.
+ *
+ * In mochi tests, it's possible for this to be called after the
+ * about:performance window has been torn down, which causes `setTimeout` to
+ * throw an NS_ERROR_NOT_INITIALIZED exception. In that case, returning
+ * `undefined` is fine.
+ */
 function wait(ms = 0) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  try {
+    let resolve;
+    let p = new Promise(resolve_ => {resolve = resolve_});
+    setTimeout(resolve, ms);
+    return p;
+  } catch (e) {
+    dump("WARNING: wait aborted because of an invalid Window state in aboutPerformance.js.\n");
+    return undefined;
+  }
 }
 
 /**
@@ -398,7 +418,7 @@ var State = {
       }
       this._latest = this._oldest = yield this._monitor.promiseSnapshot();
       this._buffer.push(this._oldest);
-      yield new Promise(resolve => setTimeout(resolve, BUFFER_SAMPLING_RATE_MS * 1.1));
+      yield wait(BUFFER_SAMPLING_RATE_MS * 1.1);
     }
 
 
@@ -585,9 +605,9 @@ var View = {
         }
 
         cachedElements.eltFPS.textContent = `Impact on framerate: ${delta.diff.jank.longestDuration + 1}/${delta.diff.jank.durations.length}${jankSuffix}.`;
-        cachedElements.eltCPU.textContent = `CPU usage: ${Math.ceil(delta.diff.jank.totalCPUTime/delta.diff.deltaT)}%.`;
-        cachedElements.eltSystem.textContent = `System usage: ${Math.ceil(delta.diff.jank.totalSystemTime/delta.diff.deltaT)}%.`;
-        cachedElements.eltCPOW.textContent = `Blocking process calls: ${Math.ceil(delta.diff.cpow.totalCPOWTime/delta.diff.deltaT)}%.`;
+        cachedElements.eltCPU.textContent = `CPU usage: ${Math.ceil(delta.diff.jank.totalCPUTime/delta.diff.deltaT/10)}%.`;
+        cachedElements.eltSystem.textContent = `System usage: ${Math.ceil(delta.diff.jank.totalSystemTime/delta.diff.deltaT/10)}%.`;
+        cachedElements.eltCPOW.textContent = `Blocking process calls: ${Math.ceil(delta.diff.cpow.totalCPOWTime/delta.diff.deltaT/10)}%.`;
       } else {
         if (delta.alerts.length == 0) {
           eltImpact.textContent = " has performed well so far.";
@@ -628,9 +648,9 @@ var View = {
         }
 
         let result = delta.diff.jank.totalCPUTime/delta.diff.deltaT;
-        cachedElements.eltCPU.textContent = `CPU usage: ${Math.ceil(delta.diff.jank.totalCPUTime/delta.diff.deltaT)}% (total ${delta.diff.jank.totalUserTime}ms).`;
-        cachedElements.eltSystem.textContent = `System usage: ${Math.ceil(delta.diff.jank.totalSystemTime/delta.diff.deltaT)}% (total ${delta.diff.jank.totalSystemTime}ms).`;
-        cachedElements.eltCPOW.textContent = `Blocking process calls: ${Math.ceil(delta.diff.cpow.totalCPOWTime/delta.diff.deltaT)}% (total ${delta.diff.cpow.totalCPOWTime}ms).`;
+        cachedElements.eltCPU.textContent = `CPU usage: ${Math.ceil(delta.diff.jank.totalCPUTime/delta.diff.deltaT/10)}% (total ${delta.diff.jank.totalUserTime}ms).`;
+        cachedElements.eltSystem.textContent = `System usage: ${Math.ceil(delta.diff.jank.totalSystemTime/delta.diff.deltaT/10)}% (total ${delta.diff.jank.totalSystemTime}ms).`;
+        cachedElements.eltCPOW.textContent = `Blocking process calls: ${Math.ceil(delta.diff.cpow.totalCPOWTime/delta.diff.deltaT/10)}% (total ${delta.diff.cpow.totalCPOWTime}ms).`;
       }
     }
     this._insertElements(toAdd, id);
@@ -935,6 +955,6 @@ var go = Task.async(function*() {
   window.addEventListener("unload", () => Services.obs.removeObserver(testUpdate, TEST_DRIVER_TOPIC));
 
   yield Control.update();
-  yield new Promise(resolve => setTimeout(resolve, BUFFER_SAMPLING_RATE_MS * 1.1));
+  yield wait(BUFFER_SAMPLING_RATE_MS * 1.1);
   yield Control.update();
 });

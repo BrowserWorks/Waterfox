@@ -126,12 +126,6 @@ function savePing(aPing) {
   }
 }
 
-function tomorrow(date) {
-  let d = new Date(date);
-  d.setDate(d.getDate() + 1);
-  return d;
-}
-
 /**
  * @return {String} This returns a string with the gzip compressed data.
  */
@@ -911,6 +905,7 @@ var TelemetrySendImpl = {
     request.open("POST", url, true);
     request.overrideMimeType("text/plain");
     request.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+    request.setRequestHeader("Date", Policy.now().toUTCString());
 
     this._pendingPingRequests.set(id, request);
 

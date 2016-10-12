@@ -10,63 +10,15 @@ import sys
 import mozinfo
 import mozrunner.utils
 
-def _raw_log():
-    import logging
-    return logging.getLogger(__name__)
 
+def _get_default_logger():
+    from mozlog import get_default_logger
+    log = get_default_logger(component='mozleak')
 
-# Do not add anything to this list, unless one of the existing leaks below
-# has started to leak additional objects. This function returns a dict
-# mapping the names of objects as reported to the XPCOM leak checker to an
-# upper bound on the number of leaked objects of that kind that are allowed
-# to appear in a content process leak report.
-def expectedTabProcessLeakCounts():
-    leaks = {}
-
-    def appendExpectedLeakCounts(leaks2):
-        for obj, count in leaks2.iteritems():
-            leaks[obj] = leaks.get(obj, 0) + count
-
-    # Bug 1117203 - ImageBridgeChild is not shut down in tab processes.
-    appendExpectedLeakCounts({
-        'AsyncTransactionTrackersHolder': 1,
-        'CondVar': 2,
-        'IPC::Channel': 1,
-        'MessagePump': 1,
-        'Mutex': 2,
-        'PImageBridgeChild': 1,
-        'RefCountedMonitor': 1,
-        'RefCountedTask': 2,
-        'StoreRef': 1,
-        'WaitableEventKernel': 1,
-        'WeakReference<MessageListener>': 1,
-        'base::Thread': 1,
-        'ipc::MessageChannel': 1,
-        'nsTArray_base': 7,
-        'nsThread': 1,
-    })
-
-    # Bug 1215265 - CompositorChild is not shut down.
-    appendExpectedLeakCounts({
-        'CompositorChild': 1,
-        'CondVar': 1,
-        'IPC::Channel': 1,
-        'Mutex': 1,
-        'PCompositorChild': 1,
-        'RefCountedMonitor': 1,
-        'RefCountedTask': 2,
-        'StoreRef': 1,
-        'WeakReference<MessageListener>': 1,
-        'ipc::MessageChannel': 1,
-        'nsTArray_base': 2,
-    })
-
-    # Bug 1219369 - On Aurora, we leak a SyncObject in Windows.
-    appendExpectedLeakCounts({
-        'SyncObject': 1
-    })
-
-    return leaks
+    if not log:
+        import logging
+        log = logging.getLogger(__name__)
+    return log
 
 
 def process_single_leak_file(leakLogFileName, processType, leakThreshold,
@@ -85,10 +37,9 @@ def process_single_leak_file(leakLogFileName, processType, leakThreshold,
                         r"\s*-?\d+\s+(?P<numLeaked>-?\d+)")
     # The class name can contain spaces. We remove trailing whitespace later.
 
-    log = log or _raw_log()
+    log = log or _get_default_logger()
 
     processString = "%s process:" % processType
-    expectedLeaks = expectedTabProcessLeakCounts() if processType == 'tab' else {}
     crashedOnPurpose = False
     totalBytesLeaked = None
     logAsWarning = False
@@ -140,17 +91,9 @@ def process_single_leak_file(leakLogFileName, processType, leakThreshold,
                 logAsWarning = True
                 continue
             if name != "TOTAL" and numLeaked != 0 and recordLeakedObjects:
-                currExpectedLeak = expectedLeaks.get(name, 0)
-                if not expectedLeaks or numLeaked <= currExpectedLeak:
-                    if not expectedLeaks:
-                        leakedObjectNames.append(name)
-                    leakedObjectAnalysis.append("TEST-INFO | leakcheck | %s leaked %d %s"
-                                                % (processString, numLeaked, name))
-                else:
-                    leakedObjectNames.append(name)
-                    leakedObjectAnalysis.append("WARNING | leakcheck | %s leaked too many %s (expected %d, got %d)"
-                                                % (processString, name, currExpectedLeak, numLeaked))
-
+                leakedObjectNames.append(name)
+                leakedObjectAnalysis.append("TEST-INFO | leakcheck | %s leaked %d %s"
+                                            % (processString, numLeaked, name))
 
     leakAnalysis.extend(leakedObjectAnalysis)
     if logAsWarning:
@@ -180,7 +123,7 @@ def process_single_leak_file(leakLogFileName, processType, leakThreshold,
                  processString)
         return
 
-    if totalBytesLeaked > leakThreshold or (expectedLeaks and leakedObjectNames):
+    if totalBytesLeaked > leakThreshold:
         logAsWarning = True
         # Fail the run if we're over the threshold (which defaults to 0)
         prefix = "TEST-UNEXPECTED-FAIL"
@@ -231,7 +174,7 @@ def process_leak_log(leak_log_file, leak_thresholds=None,
     in the list ignore_missing_leaks.
     """
 
-    log = log or _raw_log()
+    log = log or _get_default_logger()
 
     leakLogFile = leak_log_file
     if not os.path.exists(leakLogFile):

@@ -14,6 +14,7 @@ import time
 import json
 import traceback
 
+import mozharness
 from mozharness.base.script import (
     PostScriptAction,
     PostScriptRun,
@@ -23,6 +24,11 @@ from mozharness.base.script import (
 from mozharness.base.errors import VirtualenvErrorList
 from mozharness.base.log import WARNING, FATAL
 from mozharness.mozilla.proxxy import Proxxy
+
+external_tools_path = os.path.join(
+    os.path.abspath(os.path.dirname(os.path.dirname(mozharness.__file__))),
+    'external_tools',
+)
 
 def get_tlsv1_post():
     # Monkeypatch to work around SSL errors in non-bleeding-edge Python.
@@ -157,7 +163,7 @@ class VirtualenvMixin(object):
             if not pip:
                 self.log("package_versions: Program pip not in path", level=error_level)
                 return {}
-            pip_freeze_output = self.get_output_from_command([pip, "freeze"], silent=True)
+            pip_freeze_output = self.get_output_from_command([pip, "freeze"], silent=True, ignore_errors=True)
             if not isinstance(pip_freeze_output, basestring):
                 self.fatal("package_versions: Error encountered running `pip freeze`: %s" % pip_freeze_output)
 
@@ -454,11 +460,18 @@ class ResourceMonitoringMixin(object):
     def __init__(self, *args, **kwargs):
         super(ResourceMonitoringMixin, self).__init__(*args, **kwargs)
 
-        self.register_virtualenv_module('psutil>=0.7.1', method='pip',
+        self.register_virtualenv_module('psutil>=3.1.1', method='pip',
                                         optional=True)
-        self.register_virtualenv_module('mozsystemmonitor==0.0.0',
+        self.register_virtualenv_module('mozsystemmonitor==0.3',
                                         method='pip', optional=True)
+        self.register_virtualenv_module('jsonschema==2.5.1',
+                                        method='pip')
         self._resource_monitor = None
+
+        # 2-tuple of (name, options) to assign Perfherder resource monitor
+        # metrics to. This needs to be assigned by a script in order for
+        # Perfherder metrics to be reported.
+        self.resource_monitor_perfherder_id = None
 
     @PostScriptAction('create-virtualenv')
     def _start_resource_monitoring(self, action, success=None):
@@ -506,11 +519,27 @@ class ResourceMonitoringMixin(object):
         try:
             self._resource_monitor.stop()
             self._log_resource_usage()
+
+            # Upload a JSON file containing the raw resource data.
+            try:
+                upload_dir = self.query_abs_dirs()['abs_blob_upload_dir']
+                if not os.path.exists(upload_dir):
+                    os.makedirs(upload_dir)
+                with open(os.path.join(upload_dir, 'resource-usage.json'), 'wb') as fh:
+                    json.dump(self._resource_monitor.as_dict(), fh,
+                              sort_keys=True, indent=4)
+            except (AttributeError, KeyError):
+                self.exception('could not upload resource usage JSON',
+                               level=WARNING)
+
         except Exception:
             self.warning("Exception when reporting resource usage: %s" %
                          traceback.format_exc())
 
     def _log_resource_usage(self):
+        # Delay import because not available until virtualenv is populated.
+        import jsonschema
+
         rm = self._resource_monitor
 
         if rm.start_time is None:
@@ -521,7 +550,10 @@ class ResourceMonitoringMixin(object):
             cpu_times = rm.aggregate_cpu_times(phase=phase, per_cpu=False)
             io = rm.aggregate_io(phase=phase)
 
-            return cpu_percent, cpu_times, io
+            swap_in = sum(m.swap.sin for m in rm.measurements)
+            swap_out = sum(m.swap.sout for m in rm.measurements)
+
+            return cpu_percent, cpu_times, io, (swap_in, swap_out)
 
         def log_usage(prefix, duration, cpu_percent, cpu_times, io):
             message = '{prefix} - Wall time: {duration:.0f}s; ' \
@@ -543,19 +575,124 @@ class ResourceMonitoringMixin(object):
                         io_write_time=io.write_time
                     )
                 )
+
             except ValueError:
                 self.warning("Exception when formatting: %s" %
                              traceback.format_exc())
 
-        cpu_percent, cpu_times, io = resources(None)
+        cpu_percent, cpu_times, io, (swap_in, swap_out) = resources(None)
         duration = rm.end_time - rm.start_time
+
+        # Write out Perfherder data if configured.
+        if self.resource_monitor_perfherder_id:
+            perfherder_name, perfherder_options = self.resource_monitor_perfherder_id
+
+            suites = []
+            overall = []
+
+            if cpu_percent:
+                overall.append({
+                    'name': 'cpu_percent',
+                    'value': cpu_percent,
+                })
+
+            overall.extend([
+                {'name': 'io_write_bytes', 'value': io.write_bytes},
+                {'name': 'io.read_bytes', 'value': io.read_bytes},
+                {'name': 'io_write_time', 'value': io.write_time},
+                {'name': 'io_read_time', 'value': io.read_time},
+            ])
+
+            suites.append({
+                'name': '%s.overall' % perfherder_name,
+                'extraOptions': perfherder_options,
+                'subtests': overall,
+
+            })
+
+            for phase in rm.phases.keys():
+                phase_duration = rm.phases[phase][1] - rm.phases[phase][0]
+                subtests = [
+                    {
+                        'name': 'time',
+                        'value': phase_duration,
+                    },
+                    {
+                        'name': 'cpu_percent',
+                        'value': rm.aggregate_cpu_percent(phase=phase,
+                                                          per_cpu=False),
+                    }
+                ]
+                # We don't report I/O during each step because measured I/O
+                # is system I/O and that I/O can be delayed (e.g. writes will
+                # buffer before being flushed and recorded in our metrics).
+                suites.append({
+                    'name': '%s.%s' % (perfherder_name, phase),
+                    'subtests': subtests,
+                })
+
+            data = {
+                'framework': {'name': 'job_resource_usage'},
+                'suites': suites,
+            }
+
+            try:
+                schema_path = os.path.join(external_tools_path,
+                                           'performance-artifact-schema.json')
+                with open(schema_path, 'rb') as fh:
+                    schema = json.load(fh)
+
+                self.info('Validating Perfherder data against %s' % schema_path)
+                jsonschema.validate(data, schema)
+            except Exception:
+                self.exception('error while validating Perfherder data; ignoring')
+            else:
+                self.info('PERFHERDER_DATA: %s' % json.dumps(data))
 
         log_usage('Total resource usage', duration, cpu_percent, cpu_times, io)
 
+        # Print special messages so usage shows up in Treeherder.
+        if cpu_percent:
+            self._tinderbox_print('CPU usage<br/>{:,.1f}%'.format(
+                                  cpu_percent))
+
+        self._tinderbox_print('I/O read bytes / time<br/>{:,} / {:,}'.format(
+                              io.read_bytes, io.read_time))
+        self._tinderbox_print('I/O write bytes / time<br/>{:,} / {:,}'.format(
+                              io.write_bytes, io.write_time))
+
+        # Print CPU components having >1%. "cpu_times" is a data structure
+        # whose attributes are measurements. Ideally we'd have an API that
+        # returned just the measurements as a dict or something.
+        cpu_attrs = []
+        for attr in sorted(dir(cpu_times)):
+            if attr.startswith('_'):
+                continue
+            if attr in ('count', 'index'):
+                continue
+            cpu_attrs.append(attr)
+
+        cpu_total = sum(getattr(cpu_times, attr) for attr in cpu_attrs)
+
+        for attr in cpu_attrs:
+            value = getattr(cpu_times, attr)
+            percent = value / cpu_total * 100.0
+            if percent > 1.00:
+                self._tinderbox_print('CPU {}<br/>{:,.1f} ({:,.1f}%)'.format(
+                                      attr, value, percent))
+
+        # Swap on Windows isn't reported by psutil.
+        if not self._is_windows():
+            self._tinderbox_print('Swap in / out<br/>{:,} / {:,}'.format(
+                                  swap_in, swap_out))
+
         for phase in rm.phases.keys():
             start_time, end_time = rm.phases[phase]
-            cpu_percent, cpu_times, io = resources(phase)
+            cpu_percent, cpu_times, io, swap = resources(phase)
             log_usage(phase, end_time - start_time, cpu_percent, cpu_times, io)
+
+    def _tinderbox_print(self, message):
+        self.info('TinderboxPrint: %s' % message)
 
 
 class InfluxRecordingMixin(object):
@@ -740,18 +877,18 @@ class InfluxRecordingMixin(object):
                 }
 
             # The top-level data has the overall resource usage, which we record
-            # under the name 'TOTAL' to separate it from the individual tiers.
+            # under the name 'TOTAL' to separate it from the individual phases.
             data['points'].append(self._get_resource_usage(resources, 'TOTAL', iolen, cpulen))
 
-            # Each tier also has the same resource stats as the top-level.
-            for tier in resources['tiers']:
-                data['points'].append(self._get_resource_usage(tier, tier['name'], iolen, cpulen))
-                if 'duration' not in tier:
+            # Each phases also has the same resource stats as the top-level.
+            for phase in resources['phases']:
+                data['points'].append(self._get_resource_usage(phase, phase['name'], iolen, cpulen))
+                if 'duration' not in phase:
                     self.build_metrics_summary = None
                 elif self.build_metrics_summary:
                     self.build_metrics_summary['subtests'].append({
-                        'name': tier['name'],
-                        'value': tier['duration'],
+                        'name': phase['name'],
+                        'value': phase['duration'],
                     })
 
             self.record_influx_stat([data])

@@ -576,7 +576,7 @@ add_test(function() {
   });
 });
 
-// Test for Bug 601442 - extensions.getAddons.showPane need to be update 
+// Test for Bug 601442 - extensions.getAddons.showPane need to be update
 // for the new addon manager.
 function bug_601442_test_elements(visible) {
   open_manager("addons://list/extension", function(aWindow) {
@@ -633,5 +633,19 @@ add_test(function() {
     is(gCategoryUtilities.selectedCategory, "extension", "Should be showing the extension view");
     close_manager(gManagerWindow, run_next_test);
     Services.prefs.clearUserPref(PREF_DISCOVER_ENABLED);
+  });
+});
+
+// Test for Bug 1219495 - should show placeholder content when offline
+add_test(function() {
+  // set a URL to cause an error
+  Services.prefs.setCharPref(PREF_DISCOVERURL, "https://nocert.example.com/");
+
+  open_manager("addons://discover/", function(aWindow) {
+    gManagerWindow = aWindow;
+
+    ok(isError(), "Should have shown the placeholder content");
+
+    close_manager(gManagerWindow, run_next_test);
   });
 });

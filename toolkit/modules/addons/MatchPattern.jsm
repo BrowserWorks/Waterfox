@@ -11,11 +11,12 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 
-this.EXPORTED_SYMBOLS = ["MatchPattern"];
+this.EXPORTED_SYMBOLS = ["MatchPattern", "MatchGlobs"];
 
-/* globals MatchPattern */
+/* globals MatchPattern, MatchGlobs */
 
-const PERMITTED_SCHEMES = ["http", "https", "file", "ftp", "app"];
+const PERMITTED_SCHEMES = ["http", "https", "file", "ftp", "app", "data"];
+const PERMITTED_SCHEMES_REGEXP = PERMITTED_SCHEMES.join("|");
 
 // This function converts a glob pattern (containing * and possibly ?
 // as wildcards) to a regular expression.
@@ -42,7 +43,7 @@ function SingleMatchPattern(pat) {
   } else if (!pat) {
     this.schemes = [];
   } else {
-    let re = new RegExp("^(http|https|file|ftp|app|\\*)://(\\*|\\*\\.[^*/]+|[^*/]+|)(/.*)$");
+    let re = new RegExp(`^(${PERMITTED_SCHEMES_REGEXP}|\\*)://(\\*|\\*\\.[^*/]+|[^*/]+|)(/.*)$`);
     let match = re.exec(pat);
     if (!match) {
       Cu.reportError(`Invalid match pattern: '${pat}'`);
@@ -153,7 +154,7 @@ MatchPattern.prototype = {
     // So, instead, we need to manually check our filters, and accept any
     // with hosts that end with our cookie's host.
 
-    let { host, isSecure } = cookie;
+    let {host, isSecure} = cookie;
 
     for (let matcher of this.matchers) {
       let schemes = matcher.schemes;
@@ -169,5 +170,24 @@ MatchPattern.prototype = {
 
   serialize() {
     return this.pat;
+  },
+};
+
+// Globs can match everything. Be careful, this DOES NOT filter by allowed schemes!
+this.MatchGlobs = function(globs) {
+  this.original = globs;
+  if (globs) {
+    this.regexps = Array.from(globs, (glob) => globToRegexp(glob, true));
+  } else {
+    this.regexps = [];
+  }
+};
+
+MatchGlobs.prototype = {
+  matches(str) {
+    return this.regexps.some(regexp => regexp.test(str));
+  },
+  serialize() {
+    return this.original;
   },
 };

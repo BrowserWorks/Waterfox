@@ -11,7 +11,6 @@
 #include "mozilla/dom/PannerNodeBinding.h"
 #include "ThreeDPoint.h"
 #include "mozilla/WeakPtr.h"
-#include "mozilla/Preferences.h"
 #include "WebAudioUtils.h"
 #include <set>
 
@@ -56,11 +55,7 @@ public:
   {
     return mPanningModel;
   }
-  void SetPanningModel(PanningModelType aPanningModel)
-  {
-    mPanningModel = aPanningModel;
-    SendInt32ParameterToStream(PANNING_MODEL, int32_t(mPanningModel));
-  }
+  void SetPanningModel(PanningModelType aPanningModel);
 
   DistanceModelType DistanceModel() const
   {

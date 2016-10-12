@@ -81,7 +81,7 @@ nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
              nsIPresShell::SetCapturingContent(GetContent(), CAPTURE_IGNOREALLOWED);
 
              // remember current mouse coordinates.
-             mLastPoint = aEvent->refPoint;
+             mLastPoint = aEvent->mRefPoint;
            }
          }
 
@@ -110,7 +110,7 @@ nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
    case eMouseMove: {
        if(mTrackingMouseMove)
        {
-         LayoutDeviceIntPoint nsMoveBy = aEvent->refPoint - mLastPoint;
+         LayoutDeviceIntPoint nsMoveBy = aEvent->mRefPoint - mLastPoint;
 
          nsIFrame* parent = GetParent();
          while (parent) {
@@ -134,7 +134,7 @@ nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
          }
          else {
            nsIPresShell* presShell = aPresContext->PresShell();
-           nsPIDOMWindow *window = presShell->GetDocument()->GetWindow();
+           nsPIDOMWindowOuter *window = presShell->GetDocument()->GetWindow();
            if (window) {
              window->MoveBy(nsMoveBy.x, nsMoveBy.y);
            }
@@ -169,6 +169,5 @@ void
 nsTitleBarFrame::MouseClicked(WidgetMouseEvent* aEvent)
 {
   // Execute the oncommand event handler.
-  nsContentUtils::DispatchXULCommand(mContent,
-                                     aEvent && aEvent->mFlags.mIsTrusted);
+  nsContentUtils::DispatchXULCommand(mContent, aEvent && aEvent->IsTrusted());
 }

@@ -38,13 +38,20 @@
         sendAsyncMessage("test:result", "principal.origin: " +
                          ("origin" in message.data ? "OK" : "KO"));
 
-        sendAsyncMessage("test:result", "principal.isInBrowserElement: " +
-                         ("isInBrowserElement" in message.data ? "OK" : "KO"));
+        sendAsyncMessage("test:result", "principal.isInIsolatedMozBrowserElement: " +
+                         ("isInIsolatedMozBrowserElement" in message.data ? "OK" : "KO"));
       });
 
       addMessageListener("test:system", function(message) {
         sendAsyncMessage("test:result", "isSystemPrincipal: " +
                          (secMan.isSystemPrincipal(message.data) ? "OK" : "KO"));
+      });
+
+      addMessageListener("test:ep", function(message) {
+        sendAsyncMessage("test:result", "expanded principal: " +
+                         (message.data.isExpandedPrincipal ? "OK" : "KO"));
+        sendAsyncMessage("test:result", "correct origin: " +
+                         (message.data.origin == "[Expanded Principal [http://bar.example.com, http://foo.example.com]]" ? "OK" : "KO"));
       });
 
       addMessageListener("test:null", function(message) {
@@ -64,6 +71,9 @@
       SpecialPowers.wrap(iframe).mozbrowser = true;
       iframe.id = "iframe";
       iframe.src = childFrameURL;
+
+      let sb = new Cu.Sandbox(['http://foo.example.com', 'http://bar.example.com']);
+      let ep = Components.utils.getObjectPrincipal(sb);
 
       iframe.addEventListener("mozbrowserloadend", function() {
         ok(true, "Got iframe load event.");
@@ -91,6 +101,8 @@
         let system = Cc["@mozilla.org/systemprincipal;1"].
           createInstance(Ci.nsIPrincipal);
         mm.sendAsyncMessage("test:system", system);
+
+        mm.sendAsyncMessage("test:ep", ep);
 
         let nullP = Cc["@mozilla.org/nullprincipal;1"].
           createInstance(Ci.nsIPrincipal);

@@ -13,7 +13,7 @@
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsISupportsUtils.h"           // for NS_ADDREF, NS_RELEASE
 #include "nsRegion.h"                   // for nsIntRegion
-#include "nsTArray.h"                   // for nsAutoTArray
+#include "nsTArray.h"                   // for AutoTArray
 #include "ReadbackProcessor.h"
 #include "ClientPaintedLayer.h"
 
@@ -50,7 +50,7 @@ public:
     
     DefaultComputeSupportsComponentAlphaChildren();
 
-    nsAutoTArray<Layer*, 12> children;
+    AutoTArray<Layer*, 12> children;
     SortChildrenBy3DZOrder(children);
 
     ReadbackProcessor readback;
@@ -58,9 +58,6 @@ public:
 
     for (uint32_t i = 0; i < children.Length(); i++) {
       Layer* child = children.ElementAt(i);
-      if (!child->IsVisible()) {
-        continue;
-      }
 
       ToClientLayer(child)->RenderLayerWithReadback(&readback);
 

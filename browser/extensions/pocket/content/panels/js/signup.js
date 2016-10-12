@@ -2,7 +2,7 @@
 PKT_SIGNUP_OVERLAY is the view itself and contains all of the methods to manipute the overlay and messaging.
 It does not contain any logic for saving or communication with the extension or server.
 */
-var PKT_SIGNUP_OVERLAY = function (options) 
+var PKT_SIGNUP_OVERLAY = function (options)
 {
     var myself = this;
     this.inited = false;
@@ -62,7 +62,7 @@ var PKT_SIGNUP_OVERLAY = function (options)
 };
 
 PKT_SIGNUP_OVERLAY.prototype = {
-    create : function() 
+    create : function()
     {
         var myself = this;
 
@@ -104,7 +104,7 @@ PKT_SIGNUP_OVERLAY.prototype = {
         this.dictJSON.variant = (this.variant ? this.variant : 'undefined');
         this.dictJSON.variant += this.fxasignedin ? '_fxa' : '_nonfxa';
         this.dictJSON.pockethost = this.pockethost;
-        this.dictJSON.showlearnmore = (this.variant.indexOf('_lm') > -1 || this.variant == 'storyboard' || this.variant == 'hero') ? 1 : 0;
+        this.dictJSON.showlearnmore = true;
 
         // extra modifier class for collapsed state
         if (this.inoverflowmenu)
@@ -119,13 +119,13 @@ PKT_SIGNUP_OVERLAY.prototype = {
         }
 
         // Create actual content
-        if (this.variant == 'storyboard' || this.variant == 'storyboard_lm' || this.variant == 'storyboard_nlm')
+        if (this.variant == 'overflow')
         {
-            $('body').append(Handlebars.templates.signupstoryboard_shell(this.dictJSON));
+            $('body').append(Handlebars.templates.signup_shell(this.dictJSON));
         }
         else
         {
-            $('body').append(Handlebars.templates.signup_shell(this.dictJSON));
+            $('body').append(Handlebars.templates.signupstoryboard_shell(this.dictJSON));
         }
 
 

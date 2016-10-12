@@ -4,6 +4,9 @@
 
 package org.mozilla.gecko;
 
+import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import org.mozilla.gecko.animation.AnimationUtils;
 import org.mozilla.gecko.menu.GeckoMenu;
 import org.mozilla.gecko.widget.GeckoPopupMenu;
@@ -36,22 +39,20 @@ class ActionModeCompatView extends LinearLayout implements GeckoMenu.ActionItemB
 
     private int mActionButtonsWidth;
 
-    public ActionModeCompatView(Context context) {
-        super(context);
-        init(context);
-    }
+    private Paint mBottomDividerPaint;
+    private int mBottomDividerOffset;
 
     public ActionModeCompatView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context);
+        init(context, attrs, 0);
     }
 
     public ActionModeCompatView(Context context, AttributeSet attrs, int style) {
         super(context, attrs, style);
-        init(context);
+        init(context, attrs, style);
     }
 
-    public void init(Context context) {
+    public void init(final Context context, final AttributeSet attrs, final int defStyle) {
         LayoutInflater.from(context).inflate(R.layout.actionbar, this);
 
         mTitleView = (Button) findViewById(R.id.actionmode_title);
@@ -59,7 +60,7 @@ class ActionModeCompatView extends LinearLayout implements GeckoMenu.ActionItemB
         mActionButtonBar = (ViewGroup) findViewById(R.id.actionbar_buttons);
 
         mPopupMenu = new GeckoPopupMenu(getContext(), mMenuButton);
-        ((GeckoMenu) mPopupMenu.getMenu()).setActionItemBarPresenter(this);
+        mPopupMenu.getMenu().setActionItemBarPresenter(this);
 
         mMenuButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,6 +68,15 @@ class ActionModeCompatView extends LinearLayout implements GeckoMenu.ActionItemB
                 openMenu();
             }
         });
+
+        // The built-in action bar uses colorAccent for the divider so we duplicate that here.
+        final TypedArray arr = context.obtainStyledAttributes(attrs, new int[] { R.attr.colorAccent }, defStyle, 0);
+        final int bottomDividerColor = arr.getColor(0, 0);
+        arr.recycle();
+
+        mBottomDividerPaint = new Paint();
+        mBottomDividerPaint.setColor(bottomDividerColor);
+        mBottomDividerOffset = getResources().getDimensionPixelSize(R.dimen.action_bar_divider_height);
     }
 
     public void initForMode(final ActionModeCompat mode) {
@@ -87,7 +97,7 @@ class ActionModeCompatView extends LinearLayout implements GeckoMenu.ActionItemB
         mTitleView.setText(resId);
     }
 
-    public Menu getMenu() {
+    public GeckoMenu getMenu() {
         return mPopupMenu.getMenu();
     }
 
@@ -172,6 +182,21 @@ class ActionModeCompatView extends LinearLayout implements GeckoMenu.ActionItemB
 
         mTitleView.startAnimation(t);
         mActionButtonBar.startAnimation(s);
-        mMenuButton.startAnimation(s);
+
+        if ((mMenuButton.getVisibility() == View.VISIBLE) &&
+            (mPopupMenu.getMenu().size() > 0)) {
+            mMenuButton.startAnimation(s);
+        }
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+        // Draw the divider at the bottom of the screen. We could do this with a layer-list
+        // but then we'd have overdraw (http://stackoverflow.com/a/13509472).
+        final int bottom = getHeight();
+        final int top = bottom - mBottomDividerOffset;
+        canvas.drawRect(0, top, getWidth(), bottom, mBottomDividerPaint);
     }
 }

@@ -125,6 +125,14 @@ public:
     virtual void GetLibraryPath(nsACString& aPath) { aPath.Assign(mFilePath); }
     virtual nsresult GetRunID(uint32_t* aRunID) override { return NS_ERROR_NOT_IMPLEMENTED; }
     virtual void SetHasLocalInstance() override { }
+#if defined(XP_WIN)
+    virtual nsresult GetScrollCaptureContainer(NPP aInstance, mozilla::layers::ImageContainer** aContainer) override;
+    virtual nsresult UpdateScrollState(NPP aInstance, bool aIsScrolling) override;
+#endif
+    virtual nsresult HandledWindowedPluginKeyEvent(
+                       NPP aInstance,
+                       const mozilla::NativeEventData& aNativeKeyData,
+                       bool aIsCOnsumed) override;
 
 private:
     NP_InitializeFunc mNP_Initialize;

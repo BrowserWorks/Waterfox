@@ -12,6 +12,7 @@ src_list = [
 ]
 
 netwerk_base_src = [
+    'PollableEvent.cpp',
     'nsDNSPrefetch.cpp',
     'nsNetAddr.cpp',
     'nsSocketTransportService2.cpp',
@@ -45,7 +46,9 @@ LOCAL_INCLUDES = [
 
 DEFINES['IDNA2008'] = False
 DEFINES['MOZILLA_INTERNAL_API'] = True
-DEFINES['MOZILLA_XPCOMRT_API'] = True
 DEFINES['MOZILLA_EXTERNAL_LINKAGE'] = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

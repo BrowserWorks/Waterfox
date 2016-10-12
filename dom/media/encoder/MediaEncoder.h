@@ -12,6 +12,7 @@
 #include "MediaStreamGraph.h"
 #include "nsIMemoryReporter.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Atomics.h"
 
 namespace mozilla {
 
@@ -49,7 +50,7 @@ namespace mozilla {
  * 4) To stop encoding, remove this component from its source stream.
  *    => sourceStream->RemoveListener(encoder);
  */
-class MediaEncoder : public MediaStreamListener
+class MediaEncoder : public MediaStreamDirectListener
 {
 public :
   enum {
@@ -74,9 +75,48 @@ public :
     , mSizeOfBuffer(0)
     , mState(MediaEncoder::ENCODE_METADDATA)
     , mShutdown(false)
-  {}
+    , mDirectConnected(false)
+    , mSuspended(false)
+{}
 
   ~MediaEncoder() {};
+
+  enum SuspendState {
+    RECORD_NOT_SUSPENDED,
+    RECORD_SUSPENDED,
+    RECORD_RESUMED
+  };
+
+  /* Note - called from control code, not on MSG threads. */
+  void Suspend()
+  {
+    mSuspended = RECORD_SUSPENDED;
+  }
+
+  /**
+   * Note - called from control code, not on MSG threads.
+   * Arm to collect the Duration of the next video frame and give it
+   * to the next frame, in order to avoid any possible loss of sync. */
+  void Resume()
+  {
+    if (mSuspended == RECORD_SUSPENDED) {
+      mSuspended = RECORD_RESUMED;
+    }
+  }
+
+  /**
+   * Tells us which Notify to pay attention to for media
+   */
+  void SetDirectConnect(bool aConnected);
+
+  /**
+   * Notified by the AppendToTrack in MediaStreamGraph; aRealtimeMedia is the raw
+   * track data in form of MediaSegment.
+   */
+  void NotifyRealtimeData(MediaStreamGraph* aGraph, TrackID aID,
+                          StreamTime aTrackOffset,
+                          uint32_t aTrackEvents,
+                          const MediaSegment& aRealtimeMedia) override;
 
   /**
    * Notified by the control loop of MediaStreamGraph; aQueueMedia is the raw
@@ -90,7 +130,17 @@ public :
                                 TrackID aInputTrackID) override;
 
   /**
-   * Notified the stream is being removed.
+   * Notifed by the control loop of MediaStreamGraph; aQueueMedia is the audio
+   * data in the form of an AudioSegment.
+   */
+  void NotifyQueuedAudioData(MediaStreamGraph* aGraph, TrackID aID,
+                             StreamTime aTrackOffset,
+                             const AudioSegment& aQueuedMedia,
+                             MediaStream* aInputStream,
+                             TrackID aInputTrackID) override;
+
+  /**
+   * * Notified the stream is being removed.
    */
   void NotifyEvent(MediaStreamGraph* aGraph,
                    MediaStreamListener::MediaStreamGraphEvent event) override;
@@ -169,6 +219,8 @@ private:
   int64_t mSizeOfBuffer;
   int mState;
   bool mShutdown;
+  bool mDirectConnected;
+  Atomic<int> mSuspended;
   // Get duration from create encoder, for logging purpose
   double GetEncodeTimeStamp()
   {

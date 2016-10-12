@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-var { Ci } = require("chrome");
 var promise = require("promise");
+var Services = require("Services");
 
 const FRAME_SCRIPT =
   "resource://devtools/shared/touch/simulator-content.js";
@@ -24,12 +24,7 @@ function TouchEventSimulator(browser) {
     return simulator;
   }
 
-  let mm = browser.messageManager;
-  if (!mm) {
-    // Maybe browser is an iframe
-    mm = browser.QueryInterface(Ci.nsIFrameLoaderOwner)
-                .frameLoader.messageManager;
-  }
+  let mm = browser.frameLoader.messageManager;
   mm.loadFrameScript(FRAME_SCRIPT, true);
 
   simulator = {

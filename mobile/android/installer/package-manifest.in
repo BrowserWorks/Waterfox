@@ -1,3 +1,4 @@
+
 ; This Source Code Form is subject to the terms of the Mozilla Public
 ; License, v. 2.0. If a copy of the MPL was not distributed with this
 ; file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -38,11 +39,10 @@
 @BINPATH@/@DLL_PREFIX@nspr4@DLL_SUFFIX@
 #endif
 @BINPATH@/@DLL_PREFIX@lgpllibs@DLL_SUFFIX@
+#ifdef MOZ_OMX_PLUGIN
 @BINPATH@/@DLL_PREFIX@omxplugin@DLL_SUFFIX@
-@BINPATH@/@DLL_PREFIX@omxplugingb@DLL_SUFFIX@
-@BINPATH@/@DLL_PREFIX@omxplugingb235@DLL_SUFFIX@
-@BINPATH@/@DLL_PREFIX@omxpluginhc@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxpluginkk@DLL_SUFFIX@
+#endif
 @BINPATH@/@DLL_PREFIX@xul@DLL_SUFFIX@
 
 @BINPATH@/@DLL_PREFIX@nssckbi@DLL_SUFFIX@
@@ -78,7 +78,6 @@
 [xpcom]
 @BINPATH@/package-name.txt
 @BINPATH@/classes.dex
-@BINPATH@/distribution/*
 
 [browser]
 ; [Base Browser Files]
@@ -108,7 +107,6 @@
 @BINPATH@/components/content_webrtc.xpt
 @BINPATH@/components/content_xslt.xpt
 @BINPATH@/components/cookie.xpt
-@BINPATH@/components/devtools_security.xpt
 @BINPATH@/components/directory.xpt
 @BINPATH@/components/docshell.xpt
 @BINPATH@/components/dom.xpt
@@ -128,8 +126,10 @@
 @BINPATH@/components/dom_html.xpt
 @BINPATH@/components/dom_offline.xpt
 @BINPATH@/components/dom_json.xpt
-@BINPATH@/components/dom_payment.xpt
 @BINPATH@/components/dom_power.xpt
+#ifdef MOZ_ANDROID_GCM
+@BINPATH@/components/dom_push.xpt
+#endif
 @BINPATH@/components/dom_quota.xpt
 @BINPATH@/components/dom_range.xpt
 @BINPATH@/components/dom_security.xpt
@@ -228,9 +228,8 @@
 @BINPATH@/components/toolkit_finalizationwitness.xpt
 @BINPATH@/components/toolkit_formautofill.xpt
 @BINPATH@/components/toolkit_osfile.xpt
-#ifdef NIGHTLY_BUILD
+@BINPATH@/components/toolkit_securityreporter.xpt
 @BINPATH@/components/toolkit_perfmonitoring.xpt
-#endif
 @BINPATH@/components/toolkit_xulstore.xpt
 @BINPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -263,9 +262,6 @@
 @BINPATH@/components/zipwriter.xpt
 
 ; JavaScript components
-@BINPATH@/components/RequestSync.manifest
-@BINPATH@/components/RequestSyncManager.js
-@BINPATH@/components/RequestSyncScheduler.js
 @BINPATH@/components/ChromeNotifications.js
 @BINPATH@/components/ChromeNotifications.manifest
 @BINPATH@/components/ConsoleAPI.manifest
@@ -276,6 +272,11 @@
 @BINPATH@/components/PhoneNumberService.manifest
 @BINPATH@/components/NotificationStorage.js
 @BINPATH@/components/NotificationStorage.manifest
+#ifdef MOZ_ANDROID_GCM
+@BINPATH@/components/Push.js
+@BINPATH@/components/Push.manifest
+@BINPATH@/components/PushComponents.js
+#endif
 @BINPATH@/components/SettingsManager.js
 @BINPATH@/components/SettingsManager.manifest
 @BINPATH@/components/BrowserElementParent.manifest
@@ -301,9 +302,13 @@
 @BINPATH@/components/nsLoginManagerPrompter.js
 @BINPATH@/components/storage-mozStorage.js
 @BINPATH@/components/crypto-SDR.js
+@BINPATH@/components/TooltipTextProvider.js
+@BINPATH@/components/TooltipTextProvider.manifest
 @BINPATH@/components/NetworkGeolocationProvider.manifest
 @BINPATH@/components/NetworkGeolocationProvider.js
 @BINPATH@/components/extensions.manifest
+@BINPATH@/components/utils.manifest
+@BINPATH@/components/simpleServices.js
 @BINPATH@/components/addonManager.js
 @BINPATH@/components/amContentHandler.js
 @BINPATH@/components/amInstallTrigger.js
@@ -407,9 +412,11 @@
 @BINPATH@/components/PresentationDeviceInfoManager.manifest
 @BINPATH@/components/PresentationDeviceInfoManager.js
 @BINPATH@/components/BuiltinProviders.manifest
-@BINPATH@/components/TCPPresentationServer.js
+@BINPATH@/components/PresentationControlService.js
 @BINPATH@/components/PresentationNetworkHelper.js
 @BINPATH@/components/PresentationNetworkHelper.manifest
+@BINPATH@/components/PresentationDataChannelSessionTransport.js
+@BINPATH@/components/PresentationDataChannelSessionTransport.manifest
 
 @BINPATH@/components/PACGenerator.js
 @BINPATH@/components/PACGenerator.manifest
@@ -433,6 +440,10 @@
 @BINPATH@/components/privatebrowsing.xpt
 @BINPATH@/components/PrivateBrowsing.manifest
 @BINPATH@/components/PrivateBrowsingTrackingProtectionWhitelist.js
+
+; Security Reports
+@BINPATH@/components/SecurityReporter.manifest
+@BINPATH@/components/SecurityReporter.js
 
 ; [Browser Chrome Files]
 @BINPATH@/chrome/toolkit@JAREXT@
@@ -480,20 +491,6 @@
 @BINPATH@/res/html/*
 @BINPATH@/res/language.properties
 @BINPATH@/res/entityTables/*
-#ifdef NIGHTLY_BUILD
-@BINPATH@/res/accessiblecaret.png
-@BINPATH@/res/accessiblecaret@1.5x.png
-@BINPATH@/res/accessiblecaret@2.25x.png
-@BINPATH@/res/accessiblecaret@2x.png
-@BINPATH@/res/accessiblecaret_tilt_left.png
-@BINPATH@/res/accessiblecaret_tilt_left@1.5x.png
-@BINPATH@/res/accessiblecaret_tilt_left@2.25x.png
-@BINPATH@/res/accessiblecaret_tilt_left@2x.png
-@BINPATH@/res/accessiblecaret_tilt_right.png
-@BINPATH@/res/accessiblecaret_tilt_right@1.5x.png
-@BINPATH@/res/accessiblecaret_tilt_right@2.25x.png
-@BINPATH@/res/accessiblecaret_tilt_right@2x.png
-#endif
 
 #ifndef MOZ_ANDROID_EXCLUDE_FONTS
 @BINPATH@/res/fonts/*
@@ -541,17 +538,11 @@
 @BINPATH@/components/MobileComponents.manifest
 @BINPATH@/components/MobileComponents.xpt
 @BINPATH@/components/NSSDialogService.js
+@BINPATH@/components/PresentationDevicePrompt.js
 @BINPATH@/components/PromptService.js
 @BINPATH@/components/SessionStore.js
 @BINPATH@/components/SiteSpecificUserAgent.js
 @BINPATH@/components/Snippets.js
-
-@BINPATH@/components/Payment.js
-@BINPATH@/components/PaymentFlowInfo.js
-@BINPATH@/components/PaymentProvider.js
-@BINPATH@/components/Payment.manifest
-@BINPATH@/components/PaymentsUI.js
-@BINPATH@/components/PaymentProviderStrategy.js
 
 @BINPATH@/components/XPIDialogService.js
 
@@ -562,11 +553,8 @@
 @BINPATH@/components/marionettecomponent.js
 #endif
 
-@BINPATH@/components/WebappsUpdateTimer.js
-@BINPATH@/components/DataStore.manifest
-@BINPATH@/components/DataStoreImpl.js
-@BINPATH@/components/dom_datastore.xpt
-
 #ifdef PKG_LOCALE_MANIFEST
 #include @PKG_LOCALE_MANIFEST@
 #endif
+
+@BINPATH@/components/dom_audiochannel.xpt

@@ -25,6 +25,7 @@
 #include "PluginDataResolver.h"
 
 #include "mozilla/unused.h"
+#include "mozilla/EventForwards.h"
 
 class gfxASurface;
 class gfxContext;
@@ -316,18 +317,6 @@ public:
         aOutput = mSrcAttribute;
     }
 
-    /**
-     * This function tells us whether this plugin instance would have been
-     * whitelisted for Shumway if Shumway had been enabled. This is being used
-     * for the purpose of gathering telemetry on Flash hangs that could
-     * potentially be avoided by using Shumway instead.
-     */
-    bool
-    IsWhitelistedForShumway() const
-    {
-        return mIsWhitelistedForShumway;
-    }
-
     virtual bool
     AnswerPluginFocusChange(const bool& gotFocus) override;
 
@@ -342,6 +331,10 @@ public:
     nsresult BeginUpdateBackground(const nsIntRect& aRect,
                                    DrawTarget** aDrawTarget);
     nsresult EndUpdateBackground(const nsIntRect& aRect);
+#if defined(XP_WIN)
+    nsresult GetScrollCaptureContainer(mozilla::layers::ImageContainer** aContainer);
+    nsresult UpdateScrollState(bool aIsScrolling);
+#endif
     void DidComposite();
 
     bool IsUsingDirectDrawing();
@@ -359,9 +352,18 @@ public:
                              nsTArray<uint8_t>* aBuffer,
                              int32_t* aLength) override;
     virtual bool
-    RecvSetCandidateWindow(const int32_t& aX, const int32_t& aY) override;
+    RecvSetCandidateWindow(
+        const mozilla::widget::CandidateWindowPosition& aPosition) override;
     virtual bool
     RecvRequestCommitOrCancel(const bool& aCommitted) override;
+
+    // for reserved shortcut key handling with windowed plugin on Windows
+    nsresult HandledWindowedPluginKeyEvent(
+      const mozilla::NativeEventData& aKeyEventData,
+      bool aIsConsumed);
+    virtual bool
+    RecvOnWindowedPluginKeyEvent(
+      const mozilla::NativeEventData& aKeyEventData) override;
 
 private:
     // Create an appropriate platform surface for a background of size
@@ -397,9 +399,9 @@ private:
     NPP mNPP;
     const NPNetscapeFuncs* mNPNIface;
     nsCString mSrcAttribute;
-    bool mIsWhitelistedForShumway;
     NPWindowType mWindowType;
     int16_t mDrawingModel;
+    IntSize mWindowSize;
 
     // Since plugins may request different drawing models to find a compatible
     // one, we only record the drawing model after a SetWindow call and if the
@@ -464,6 +466,18 @@ private:
     RefPtr<gfxASurface>    mBackground;
 
     RefPtr<ImageContainer> mImageContainer;
+
+#if defined(XP_WIN)
+    void ScheduleScrollCapture(int aTimeout);
+    void ScheduledUpdateScrollCaptureCallback();
+    bool UpdateScrollCapture(bool& aRequestNewCapture);
+    void CancelScheduledScrollCapture();
+
+    RefPtr<gfxASurface> mScrollCapture;
+    RefPtr<CancelableRunnable> mCaptureRefreshTask;
+    bool mValidFirstCapture;
+    bool mIsScrolling;
+#endif
 };
 
 

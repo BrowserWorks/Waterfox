@@ -1,6 +1,7 @@
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
+/* globals addMessageListener, sendAsyncMessage */
 
 "use strict";
 
@@ -11,10 +12,11 @@
  * @param {Object} data
  * - {String} selector The CSS selector to get the node (can be a "super"
  *   selector).
- * - {Number} animationIndex The index of the node's animationPlayers to play or pause
+ * - {Number} animationIndex The index of the node's animationPlayers to play
+ *   or pause
  * - {Boolean} pause True to pause the animation, false to play.
  */
-addMessageListener("Test:ToggleAnimationPlayer", function(msg) {
+addMessageListener("Test:ToggleAnimationPlayer", function (msg) {
   let {selector, animationIndex, pause} = msg.data;
   let node = superQuerySelector(selector);
   if (!node) {
@@ -39,7 +41,7 @@ addMessageListener("Test:ToggleAnimationPlayer", function(msg) {
  * - {Number} animationIndex The index of the node's animationPlayers to change.
  * - {Number} currentTime The current time to set.
  */
-addMessageListener("Test:SetAnimationPlayerCurrentTime", function(msg) {
+addMessageListener("Test:SetAnimationPlayerCurrentTime", function (msg) {
   let {selector, animationIndex, currentTime} = msg.data;
   let node = superQuerySelector(selector);
   if (!node) {
@@ -60,7 +62,7 @@ addMessageListener("Test:SetAnimationPlayerCurrentTime", function(msg) {
  * - {Number} animationIndex The index of the node's animationPlayers to change.
  * - {Number} playbackRate The rate to set.
  */
-addMessageListener("Test:SetAnimationPlayerPlaybackRate", function(msg) {
+addMessageListener("Test:SetAnimationPlayerPlaybackRate", function (msg) {
   let {selector, animationIndex, playbackRate} = msg.data;
   let node = superQuerySelector(selector);
   if (!node) {
@@ -80,7 +82,7 @@ addMessageListener("Test:SetAnimationPlayerPlaybackRate", function(msg) {
  *   selector).
  * - {Number} animationIndex The index of the node's animationPlayers to check
  */
-addMessageListener("Test:GetAnimationPlayerState", function(msg) {
+addMessageListener("Test:GetAnimationPlayerState", function (msg) {
   let {selector, animationIndex} = msg.data;
   let node = superQuerySelector(selector);
   if (!node) {
@@ -103,18 +105,18 @@ addMessageListener("Test:GetAnimationPlayerState", function(msg) {
  * @param {String} superSelector.
  * @return {DOMNode} The node, or null if not found.
  */
-function superQuerySelector(superSelector, root=content.document) {
+function superQuerySelector(superSelector, root = content.document) {
   let frameIndex = superSelector.indexOf("||");
   if (frameIndex === -1) {
     return root.querySelector(superSelector);
-  } else {
-    let rootSelector = superSelector.substring(0, frameIndex).trim();
-    let childSelector = superSelector.substring(frameIndex+2).trim();
-    root = root.querySelector(rootSelector);
-    if (!root || !root.contentWindow) {
-      return null;
-    }
-
-    return superQuerySelector(childSelector, root.contentWindow.document);
   }
+
+  let rootSelector = superSelector.substring(0, frameIndex).trim();
+  let childSelector = superSelector.substring(frameIndex + 2).trim();
+  root = root.querySelector(rootSelector);
+  if (!root || !root.contentWindow) {
+    return null;
+  }
+
+  return superQuerySelector(childSelector, root.contentWindow.document);
 }

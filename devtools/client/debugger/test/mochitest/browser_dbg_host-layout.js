@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * This if the debugger's layout is correctly modified when the toolbox's
@@ -33,7 +35,7 @@ function testHosts(aHostTypes, aLayoutTypes) {
   Services.prefs.setCharPref("devtools.toolbox.host", getHost(firstHost));
 
   return Task.spawn(function*() {
-    let [tab, debuggee, panel] = yield initDebugger("about:blank");
+    let [tab, debuggee, panel] = yield initDebugger();
     if (getHost(firstHost) === "window") {
       yield resizeToolboxWindow(panel, firstHost);
     }

@@ -307,13 +307,13 @@ void SkPixelRef::restoreMutability() {
     fMutability = kMutable;
 }
 
-bool SkPixelRef::readPixels(SkBitmap* dst, const SkIRect* subset) {
-    return this->onReadPixels(dst, subset);
+bool SkPixelRef::readPixels(SkBitmap* dst, SkColorType ct, const SkIRect* subset) {
+    return this->onReadPixels(dst, ct, subset);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool SkPixelRef::onReadPixels(SkBitmap* dst, const SkIRect* subset) {
+bool SkPixelRef::onReadPixels(SkBitmap* dst, SkColorType, const SkIRect* subset) {
     return false;
 }
 
@@ -321,11 +321,6 @@ void SkPixelRef::onNotifyPixelsChanged() { }
 
 SkData* SkPixelRef::onRefEncodedData() {
     return nullptr;
-}
-
-bool SkPixelRef::onGetYUV8Planes(SkISize sizes[3], void* planes[3], size_t rowBytes[3],
-                                 SkYUVColorSpace* colorSpace) {
-    return false;
 }
 
 size_t SkPixelRef::getAllocatedSizeInBytes() const {

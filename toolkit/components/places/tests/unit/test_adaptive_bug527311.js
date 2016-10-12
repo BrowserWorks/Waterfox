@@ -81,7 +81,7 @@ AutoCompleteInput.prototype = {
 function check_results() {
   let controller = Cc["@mozilla.org/autocomplete/controller;1"].
                    getService(Ci.nsIAutoCompleteController);
-  let input = new AutoCompleteInput(["history"]);
+  let input = new AutoCompleteInput(["unifiedcomplete"]);
   controller.input = input;
 
   input.onSearchComplete = function() {
@@ -128,7 +128,7 @@ function run_test() {
   do_test_pending();
 
   // Add a bookmark to our url.
-  bs.insertBookmark(bs.unfiledBookmarksFolder, uri(TEST_URL),                   
+  bs.insertBookmark(bs.unfiledBookmarksFolder, uri(TEST_URL),
                     bs.DEFAULT_INDEX, "test_book");
   // We want to search only history.
   for (let type of SUGGEST_TYPES) {

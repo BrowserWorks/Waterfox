@@ -5,23 +5,25 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "OmxDataDecoder.h"
-#include "OMX_Types.h"
-#include "OMX_Component.h"
-#include "OMX_Audio.h"
 
-extern mozilla::LogModule* GetPDMLog();
+#include "OMX_Audio.h"
+#include "OMX_Component.h"
+#include "OMX_Types.h"
+
+#include "OmxPlatformLayer.h"
+
 
 #ifdef LOG
 #undef LOG
 #undef LOGL
 #endif
 
-#define LOG(arg, ...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, ("OmxDataDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define LOG(arg, ...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, ("OmxDataDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
 #define LOGL(arg, ...)                                                     \
   {                                                                        \
     void* p = self;                                              \
-    MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug,                         \
+    MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug,                         \
             ("OmxDataDecoder(%p)::%s: " arg, p, __func__, ##__VA_ARGS__)); \
   }
 
@@ -30,9 +32,6 @@ extern mozilla::LogModule* GetPDMLog();
     NotifyError(err, __func__);\
     return;                    \
   }                            \
-
-// There should be a better way to calculate it.
-#define MIN_VIDEO_INPUT_BUFFER_SIZE 64 * 1024
 
 namespace mozilla {
 
@@ -62,20 +61,6 @@ StateTypeToStr(OMX_STATETYPE aType)
     default:
       return "Unknown";
   }
-}
-
-// There should be 2 ports and port number start from 0.
-void GetPortIndex(nsTArray<uint32_t>& aPortIndex) {
-  aPortIndex.AppendElement(0);
-  aPortIndex.AppendElement(1);
-}
-
-template<class T> void
-InitOmxParameter(T* aParam)
-{
-  PodZero(aParam);
-  aParam->nSize = sizeof(T);
-  aParam->nVersion.s.nVersionMajor = 1;
 }
 
 // A helper class to retrieve AudioData or VideoData.
@@ -128,9 +113,7 @@ OmxDataDecoder::OmxDataDecoder(const TrackInfo& aTrackInfo,
   LOG("");
   mOmxLayer = new OmxPromiseLayer(mOmxTaskQueue, this, aImageContainer);
 
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableMethod(this, &OmxDataDecoder::InitializationTask);
-  mOmxTaskQueue->Dispatch(r.forget());
+  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::InitializationTask));
 }
 
 OmxDataDecoder::~OmxDataDecoder()
@@ -178,7 +161,7 @@ OmxDataDecoder::Init()
   // TODO: it needs to get permission from resource manager before allocating
   //       Omx component.
   InvokeAsync(mOmxTaskQueue, mOmxLayer.get(), __func__, &OmxPromiseLayer::Init,
-              mOmxTaskQueue, mTrackInfo.get())
+              mTrackInfo.get())
     ->Then(mOmxTaskQueue, __func__,
       [self] () {
         // Omx state should be OMX_StateIdle.
@@ -223,9 +206,7 @@ OmxDataDecoder::Flush()
 
   mFlushing = true;
 
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableMethod(this, &OmxDataDecoder::DoFlush);
-  mOmxTaskQueue->Dispatch(r.forget());
+  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::DoFlush));
 
   // According to the definition of Flush() in PDM:
   // "the decoder must be ready to accept new input for decoding".
@@ -243,9 +224,7 @@ OmxDataDecoder::Drain()
 {
   LOG("");
 
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableMethod(this, &OmxDataDecoder::SendEosBuffer);
-  mOmxTaskQueue->Dispatch(r.forget());
+  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::SendEosBuffer));
 
   return NS_OK;
 }
@@ -257,9 +236,7 @@ OmxDataDecoder::Shutdown()
 
   mShuttingDown = true;
 
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableMethod(this, &OmxDataDecoder::DoAsyncShutdown);
-  mOmxTaskQueue->Dispatch(r.forget());
+  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::DoAsyncShutdown));
 
   {
     // DoAsyncShutdown() will be running for a while, it could be still running
@@ -461,10 +438,10 @@ OmxDataDecoder::EmptyBufferFailure(OmxBufferFailureHolder aFailureHolder)
 }
 
 void
-OmxDataDecoder::NotifyError(OMX_ERRORTYPE aError, const char* aLine)
+OmxDataDecoder::NotifyError(OMX_ERRORTYPE aOmxError, const char* aLine, MediaDataDecoderError aError)
 {
-  LOG("NotifyError %d at %s", aError, aLine);
-  mCallback->Error();
+  LOG("NotifyError %d (%d) at %s", aOmxError, aError, aLine);
+  mCallback->Error(aError);
 }
 
 void
@@ -602,12 +579,7 @@ OmxDataDecoder::OmxStateRunner()
   // TODO: maybe it'd be better to use promise CompletionPromise() to replace
   //       this state machine.
   if (mOmxState == OMX_StateLoaded) {
-    // Config codec parameters by minetype.
-    if (mTrackInfo->IsAudio()) {
-      ConfigAudioCodec();
-    } else if (mTrackInfo->IsVideo()) {
-      ConfigVideoCodec();
-    }
+    ConfigCodec();
 
     // Send OpenMax state command to OMX_StateIdle.
     RefPtr<OmxDataDecoder> self = this;
@@ -653,77 +625,10 @@ OmxDataDecoder::OmxStateRunner()
 }
 
 void
-OmxDataDecoder::ConfigAudioCodec()
+OmxDataDecoder::ConfigCodec()
 {
-  const AudioInfo* audioInfo = mTrackInfo->GetAsAudioInfo();
-  OMX_ERRORTYPE err;
-
-  // TODO: it needs to handle other formats like mp3, amr-nb...etc.
-  if (audioInfo->mMimeType.EqualsLiteral("audio/mp4a-latm")) {
-    OMX_AUDIO_PARAM_AACPROFILETYPE aac_profile;
-    InitOmxParameter(&aac_profile);
-    err = mOmxLayer->GetParameter(OMX_IndexParamAudioAac, &aac_profile, sizeof(aac_profile));
-    CHECK_OMX_ERR(err);
-    aac_profile.nSampleRate = audioInfo->mRate;
-    aac_profile.nChannels = audioInfo->mChannels;
-    aac_profile.eAACProfile = (OMX_AUDIO_AACPROFILETYPE)audioInfo->mProfile;
-    err = mOmxLayer->SetParameter(OMX_IndexParamAudioAac, &aac_profile, sizeof(aac_profile));
-    CHECK_OMX_ERR(err);
-    LOG("Config OMX_IndexParamAudioAac, channel %d, sample rate %d, profile %d",
-        audioInfo->mChannels, audioInfo->mRate, audioInfo->mProfile);
-  }
-}
-
-void
-OmxDataDecoder::ConfigVideoCodec()
-{
-  OMX_ERRORTYPE err;
-  const VideoInfo* videoInfo = mTrackInfo->GetAsVideoInfo();
-
-  OMX_PARAM_PORTDEFINITIONTYPE def;
-
-  // Set up in/out port definition.
-  nsTArray<uint32_t> ports;
-  GetPortIndex(ports);
-  for (auto idx : ports) {
-    InitOmxParameter(&def);
-    def.nPortIndex = idx;
-    err = mOmxLayer->GetParameter(OMX_IndexParamPortDefinition,
-                                  &def,
-                                  sizeof(def));
-    if (err != OMX_ErrorNone) {
-      return;
-    }
-
-    def.format.video.nFrameWidth =  videoInfo->mDisplay.width;
-    def.format.video.nFrameHeight = videoInfo->mDisplay.height;
-    def.format.video.nStride = videoInfo->mImage.width;
-    def.format.video.nSliceHeight = videoInfo->mImage.height;
-
-    // TODO: it needs to add other formats like webm, mp4, h263... etc.
-    OMX_VIDEO_CODINGTYPE codetype;
-    if (videoInfo->mMimeType.EqualsLiteral("video/avc")) {
-      codetype = OMX_VIDEO_CodingAVC;
-    }
-
-    if (def.eDir == OMX_DirInput) {
-      def.format.video.eCompressionFormat = codetype;
-      def.format.video.eColorFormat = OMX_COLOR_FormatUnused;
-      if (def.nBufferSize < MIN_VIDEO_INPUT_BUFFER_SIZE) {
-        def.nBufferSize = videoInfo->mImage.width * videoInfo->mImage.height;
-        LOG("Change input buffer size to %d", def.nBufferSize);
-      }
-    } else {
-      def.format.video.eCompressionFormat = OMX_VIDEO_CodingUnused;
-    }
-
-    err = mOmxLayer->SetParameter(OMX_IndexParamPortDefinition,
-                                  &def,
-                                  sizeof(def));
-    if (err != OMX_ErrorNone) {
-      return;
-    }
-  }
+  OMX_ERRORTYPE err = mOmxLayer->Config();
+  CHECK_OMX_ERR(err);
 }
 
 void
@@ -791,6 +696,11 @@ OmxDataDecoder::Event(OMX_EVENTTYPE aEvent, OMX_U32 aData1, OMX_U32 aData2)
     }
     default:
     {
+      // Got error during decoding, send msg to MFR skipping to next key frame.
+      if (aEvent == OMX_EventError && mOmxState == OMX_StateExecuting) {
+        NotifyError((OMX_ERRORTYPE)aData1, __func__, MediaDataDecoderError::DECODE_ERROR);
+        return true;
+      }
       LOG("WARNING: got none handle event: %d, aData1: %d, aData2: %d",
           aEvent, aData1, aData2);
       return false;
@@ -1002,17 +912,9 @@ MediaDataHelper::MediaDataHelper(const TrackInfo* aTrackInfo,
   , mAudioCompactor(mAudioQueue)
   , mImageContainer(aImageContainer)
 {
-  // Get latest port definition.
-  nsTArray<uint32_t> ports;
-  GetPortIndex(ports);
-  for (auto idx : ports) {
-    InitOmxParameter(&mOutputPortDef);
-    mOutputPortDef.nPortIndex = idx;
-    aOmxLayer->GetParameter(OMX_IndexParamPortDefinition, &mOutputPortDef, sizeof(mOutputPortDef));
-    if (mOutputPortDef.eDir == OMX_DirOutput) {
-      break;
-    }
-  }
+  InitOmxParameter(&mOutputPortDef);
+  mOutputPortDef.nPortIndex = aOmxLayer->OutputPortIndex();
+  aOmxLayer->GetParameter(OMX_IndexParamPortDefinition, &mOutputPortDef, sizeof(mOutputPortDef));
 }
 
 already_AddRefed<MediaData>
@@ -1121,9 +1023,7 @@ MediaDataHelper::CreateYUV420VideoData(BufferData* aBufferData)
   b.mPlanes[2].mOffset = 0;
   b.mPlanes[2].mSkip = 0;
 
-  VideoInfo info;
-  info.mDisplay = mTrackInfo->GetAsVideoInfo()->mDisplay;
-  info.mImage = mTrackInfo->GetAsVideoInfo()->mImage;
+  VideoInfo info(*mTrackInfo->GetAsVideoInfo());
   RefPtr<VideoData> data = VideoData::Create(info,
                                              mImageContainer,
                                              0, // Filled later by caller.
@@ -1132,7 +1032,7 @@ MediaDataHelper::CreateYUV420VideoData(BufferData* aBufferData)
                                              b,
                                              0, // Filled later by caller.
                                              -1,
-                                             info.mImage);
+                                             info.ImageRect());
 
   LOG("YUV420 VideoData: disp width %d, height %d, pic width %d, height %d, time %ld",
       info.mDisplay.width, info.mDisplay.height, info.mImage.width,

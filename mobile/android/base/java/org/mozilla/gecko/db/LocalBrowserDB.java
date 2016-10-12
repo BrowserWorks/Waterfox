@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.IllegalAccessException;
 import java.lang.NoSuchFieldException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,7 +23,7 @@ import java.util.regex.Pattern;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.gecko.AboutPages;
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
@@ -32,11 +33,12 @@ import org.mozilla.gecko.db.BrowserContract.Favicons;
 import org.mozilla.gecko.db.BrowserContract.History;
 import org.mozilla.gecko.db.BrowserContract.SyncColumns;
 import org.mozilla.gecko.db.BrowserContract.Thumbnails;
+import org.mozilla.gecko.db.BrowserContract.TopSites;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.favicons.decoders.FaviconDecoder;
 import org.mozilla.gecko.favicons.decoders.LoadFaviconResult;
 import org.mozilla.gecko.gfx.BitmapUtils;
-import org.mozilla.gecko.Restrictions;
+import org.mozilla.gecko.restrictions.Restrictions;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.util.GeckoJarReader;
 import org.mozilla.gecko.util.StringUtils;
@@ -47,11 +49,15 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.database.CursorWrapper;
+import android.database.MatrixCursor;
+import android.database.MergeCursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.support.annotation.CheckResult;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 import org.mozilla.gecko.util.IOUtils;
@@ -87,6 +93,11 @@ public class LocalBrowserDB implements BrowserDB {
 
     private volatile SuggestedSites mSuggestedSites;
 
+    // Constants used when importing history data from legacy browser.
+    public static String HISTORY_VISITS_DATE = "date";
+    public static String HISTORY_VISITS_COUNT = "visits";
+    public static String HISTORY_VISITS_URL = "url";
+
     private final Uri mBookmarksUriWithProfile;
     private final Uri mParentsUriWithProfile;
     private final Uri mHistoryUriWithProfile;
@@ -95,12 +106,13 @@ public class LocalBrowserDB implements BrowserDB {
     private final Uri mUpdateHistoryUriWithProfile;
     private final Uri mFaviconsUriWithProfile;
     private final Uri mThumbnailsUriWithProfile;
+    private final Uri mTopSitesUriWithProfile;
     private final Uri mSearchHistoryUri;
 
     private LocalSearches searches;
     private LocalTabsAccessor tabsAccessor;
     private LocalURLMetadata urlMetadata;
-    private LocalReadingListAccessor readingListAccessor;
+    private LocalUrlAnnotations urlAnnotations;
 
     private static final String[] DEFAULT_BOOKMARK_COLUMNS =
             new String[] { Bookmarks._ID,
@@ -120,6 +132,7 @@ public class LocalBrowserDB implements BrowserDB {
         mHistoryExpireUriWithProfile = DBUtils.appendProfile(profile, History.CONTENT_OLD_URI);
         mCombinedUriWithProfile = DBUtils.appendProfile(profile, Combined.CONTENT_URI);
         mFaviconsUriWithProfile = DBUtils.appendProfile(profile, Favicons.CONTENT_URI);
+        mTopSitesUriWithProfile = DBUtils.appendProfile(profile, TopSites.CONTENT_URI);
         mThumbnailsUriWithProfile = DBUtils.appendProfile(profile, Thumbnails.CONTENT_URI);
 
         mSearchHistoryUri = BrowserContract.SearchHistory.CONTENT_URI;
@@ -133,7 +146,7 @@ public class LocalBrowserDB implements BrowserDB {
         searches = new LocalSearches(mProfile);
         tabsAccessor = new LocalTabsAccessor(mProfile);
         urlMetadata = new LocalURLMetadata(mProfile);
-        readingListAccessor = new LocalReadingListAccessor(mProfile);
+        urlAnnotations = new LocalUrlAnnotations(mProfile);
     }
 
     @Override
@@ -151,9 +164,10 @@ public class LocalBrowserDB implements BrowserDB {
         return urlMetadata;
     }
 
+    @RobocopTarget
     @Override
-    public ReadingListAccessor getReadingListAccessor() {
-        return readingListAccessor;
+    public UrlAnnotations getUrlAnnotations() {
+        return urlAnnotations;
     }
 
     /**
@@ -557,14 +571,10 @@ public class LocalBrowserDB implements BrowserDB {
             selectionArgs = DBUtils.appendSelectionArgs(selectionArgs, new String[] { urlFilter.toString() });
         }
 
-        // Our version of frecency is computed by scaling the number of visits by a multiplier
-        // that approximates Gaussian decay, based on how long ago the entry was last visited.
-        // Since we're limited by the math we can do with sqlite, we're calculating this
-        // approximation using the Cauchy distribution: multiplier = 15^2 / (age^2 + 15^2).
-        // Using 15 as our scale parameter, we get a constant 15^2 = 225. Following this math,
-        // frecencyScore = numVisits * max(1, 100 * 225 / (age*age + 225)). (See bug 704977)
-        // We also give bookmarks an extra bonus boost by adding 100 points to their frecency score.
-        final String sortOrder = BrowserContract.getFrecencySortOrder(true, false);
+        // Order by combined remote+local frecency score.
+        // Local visits are preferred, so they will by far outweigh remote visits.
+        // Bookmarked history items get extra frecency points.
+        final String sortOrder = BrowserContract.getCombinedFrecencySortOrder(true, false);
 
         return cr.query(combinedUriWithLimit(limit),
                         projection,
@@ -639,30 +649,6 @@ public class LocalBrowserDB implements BrowserDB {
     }
 
     @Override
-    public Cursor getTopSites(ContentResolver cr, int limit) {
-        // Filter out unvisited bookmarks and the ones that don't have real
-        // parents (e.g. pinned sites or reading list items).
-        String selection = DBUtils.concatenateWhere(Combined.HISTORY_ID + " <> -1",
-                                             Combined.URL + " NOT IN (SELECT " +
-                                             Bookmarks.URL + " FROM bookmarks WHERE " +
-                                             DBUtils.qualifyColumn("bookmarks", Bookmarks.PARENT) + " < ? AND " +
-                                             DBUtils.qualifyColumn("bookmarks", Bookmarks.IS_DELETED) + " == 0)");
-        String[] selectionArgs = new String[] { String.valueOf(Bookmarks.FIXED_ROOT_ID) };
-
-        return filterAllSites(cr,
-                              new String[] { Combined._ID,
-                                             Combined.URL,
-                                             Combined.TITLE,
-                                             Combined.BOOKMARK_ID,
-                                             Combined.HISTORY_ID },
-                              "",
-                              limit,
-                              AboutPages.URL_FILTER,
-                              selection,
-                              selectionArgs);
-    }
-
-    @Override
     public void updateVisitedHistory(ContentResolver cr, String uri) {
         ContentValues values = new ContentValues();
 
@@ -729,6 +715,18 @@ public class LocalBrowserDB implements BrowserDB {
                 History.DATE_LAST_VISITED + " DESC");
     }
 
+    public Cursor getHistoryForURL(ContentResolver cr, String uri) {
+        return cr.query(mHistoryUriWithProfile,
+                new String[] {
+                    History.VISITS,
+                    History.DATE_LAST_VISITED
+                },
+                History.URL + "= ?",
+                new String[] { uri },
+                History.DATE_LAST_VISITED + " DESC"
+        );
+    }
+
     @Override
     public long getPrePathLastVisitedTimeMilliseconds(ContentResolver cr, String prePath) {
         if (prePath == null) {
@@ -776,10 +774,57 @@ public class LocalBrowserDB implements BrowserDB {
         }
     }
 
+    private void assertDefaultBookmarkColumnOrdering() {
+        // We need to insert MatrixCursor values in a specific order - in order to protect against changes
+        // in DEFAULT_BOOKMARK_COLUMNS we can just assert that we're using the correct ordering.
+        // Alternatively we could use RowBuilder.add(columnName, value) but that needs api >= 19,
+        // or we could iterate over DEFAULT_BOOKMARK_COLUMNS, but that gets messy once we need
+        // to add more than one artificial folder.
+        if (!((DEFAULT_BOOKMARK_COLUMNS[0].equals(Bookmarks._ID)) &&
+                (DEFAULT_BOOKMARK_COLUMNS[1].equals(Bookmarks.GUID)) &&
+                (DEFAULT_BOOKMARK_COLUMNS[2].equals(Bookmarks.URL)) &&
+                (DEFAULT_BOOKMARK_COLUMNS[3].equals(Bookmarks.TITLE)) &&
+                (DEFAULT_BOOKMARK_COLUMNS[4].equals(Bookmarks.TYPE)) &&
+                (DEFAULT_BOOKMARK_COLUMNS[5].equals(Bookmarks.PARENT)) &&
+                (DEFAULT_BOOKMARK_COLUMNS.length == 6))) {
+            // If DEFAULT_BOOKMARK_COLUMNS changes we need to update all the MatrixCursor rows
+            // to contain appropriate data.
+            throw new IllegalStateException("Fake folder MatrixCursor creation code must be updated to match DEFAULT_BOOKMARK_COLUMNS");
+        }
+    }
+
+    /**
+     * Retrieve the list of reader-view bookmarks, i.e. the equivalent of the former reading-list.
+     * This is the result of a join of bookmarks with reader-view annotations (as stored in
+     * UrlAnnotations).
+     */
+    private Cursor getReadingListBookmarks(ContentResolver cr) {
+        // group by URL to avoid having duplicate bookmarks listed. It's possible to have multiple
+        // bookmarks pointing to the same URL (this would most commonly happen by manually
+        // copying bookmarks on desktop, followed by syncing with mobile), and we don't want
+        // to show the same URL multiple times in the reading list folder.
+        final Uri bookmarksGroupedByUri = mBookmarksUriWithProfile.buildUpon()
+                .appendQueryParameter(BrowserContract.PARAM_GROUP_BY, Bookmarks.URL)
+                .build();
+
+        return cr.query(bookmarksGroupedByUri,
+                DEFAULT_BOOKMARK_COLUMNS,
+                Bookmarks.ANNOTATION_KEY + " == ? AND " +
+                Bookmarks.ANNOTATION_VALUE + " == ? AND " +
+                "(" + Bookmarks.TYPE + " = ? AND " + Bookmarks.URL + " IS NOT NULL)",
+                new String[] {
+                        BrowserContract.UrlAnnotations.Key.READER_VIEW.getDbValue(),
+                        BrowserContract.UrlAnnotations.READER_VIEW_SAVED_VALUE,
+                        String.valueOf(Bookmarks.TYPE_BOOKMARK) },
+                null);
+    }
+
     @Override
     @RobocopTarget
     public Cursor getBookmarksInFolder(ContentResolver cr, long folderId) {
         final boolean addDesktopFolder;
+        final boolean addScreenshotsFolder;
+        final boolean addReadingListFolder;
 
         // We always want to show mobile bookmarks in the root view.
         if (folderId == Bookmarks.FIXED_ROOT_ID) {
@@ -788,11 +833,19 @@ public class LocalBrowserDB implements BrowserDB {
             // We'll add a fake "Desktop Bookmarks" folder to the root view if desktop
             // bookmarks exist, so that the user can still access non-mobile bookmarks.
             addDesktopFolder = desktopBookmarksExist(cr);
+            addScreenshotsFolder = AppConstants.SCREENSHOTS_IN_BOOKMARKS_ENABLED;
+
+            final int readingListItemCount = getBookmarkCountForFolder(cr, Bookmarks.FAKE_READINGLIST_SMARTFOLDER_ID);
+            addReadingListFolder = (readingListItemCount > 0);
         } else {
             addDesktopFolder = false;
+            addScreenshotsFolder = false;
+            addReadingListFolder = false;
         }
 
         final Cursor c;
+
+        // (You can't switch on a long in Java, hence the if statements)
         if (folderId == Bookmarks.FAKE_DESKTOP_FOLDER_ID) {
             // Since the "Desktop Bookmarks" folder doesn't actually exist, we
             // just fake it by querying specifically certain known desktop folders.
@@ -805,6 +858,10 @@ public class LocalBrowserDB implements BrowserDB {
                                         Bookmarks.MENU_FOLDER_GUID,
                                         Bookmarks.UNFILED_FOLDER_GUID },
                          null);
+        } else if (folderId == Bookmarks.FIXED_SCREENSHOT_FOLDER_ID) {
+            c = getUrlAnnotations().getScreenshots(cr);
+        } else if (folderId == Bookmarks.FAKE_READINGLIST_SMARTFOLDER_ID) {
+            c = getReadingListBookmarks(cr);
         } else {
             // Right now, we only support showing folder and bookmark type of
             // entries. We should add support for other types though (bug 737024)
@@ -819,12 +876,62 @@ public class LocalBrowserDB implements BrowserDB {
                          null);
         }
 
-        if (addDesktopFolder) {
-            // Wrap cursor to add fake desktop bookmarks and reading list folders
-            return new SpecialFoldersCursorWrapper(c, addDesktopFolder);
+        final List<Cursor> cursorsToMerge = getSpecialFoldersCursorList(addDesktopFolder, addScreenshotsFolder, addReadingListFolder);
+        if (cursorsToMerge.size() >= 1) {
+            cursorsToMerge.add(c);
+            final Cursor[] arr = (Cursor[]) Array.newInstance(Cursor.class, cursorsToMerge.size());
+            return new MergeCursor(cursorsToMerge.toArray(arr));
+        } else {
+            return c;
+        }
+    }
+
+    @Override
+    public int getBookmarkCountForFolder(ContentResolver cr, long folderID) {
+        if (folderID == Bookmarks.FAKE_READINGLIST_SMARTFOLDER_ID) {
+            return getUrlAnnotations().getAnnotationCount(cr, BrowserContract.UrlAnnotations.Key.READER_VIEW);
+        } else {
+            throw new IllegalArgumentException("Retrieving bookmark count for folder with ID=" + folderID + " not supported yet");
+        }
+    }
+
+    @CheckResult
+    private ArrayList<Cursor> getSpecialFoldersCursorList(final boolean addDesktopFolder,
+            final boolean addScreenshotsFolder, final boolean addReadingListFolder) {
+        if (addDesktopFolder || addScreenshotsFolder || addReadingListFolder) {
+            // Avoid calling this twice.
+            assertDefaultBookmarkColumnOrdering();
         }
 
-        return c;
+        // Capacity is number of cursors added below plus one for non-special data.
+        final ArrayList<Cursor> out = new ArrayList<>(4);
+        if (addDesktopFolder) {
+            out.add(getSpecialFolderCursor(Bookmarks.FAKE_DESKTOP_FOLDER_ID, Bookmarks.FAKE_DESKTOP_FOLDER_GUID));
+        }
+
+        if (addScreenshotsFolder) {
+            out.add(getSpecialFolderCursor(Bookmarks.FIXED_SCREENSHOT_FOLDER_ID, Bookmarks.SCREENSHOT_FOLDER_GUID));
+        }
+
+        if (addReadingListFolder) {
+            out.add(getSpecialFolderCursor(Bookmarks.FAKE_READINGLIST_SMARTFOLDER_ID, Bookmarks.FAKE_READINGLIST_SMARTFOLDER_GUID));
+        }
+
+        return out;
+    }
+
+    @CheckResult
+    private MatrixCursor getSpecialFolderCursor(final int folderId, final String folderGuid) {
+        final MatrixCursor out = new MatrixCursor(DEFAULT_BOOKMARK_COLUMNS);
+        out.addRow(new Object[] {
+                folderId,
+                folderGuid,
+                "",
+                "", // Title localisation is done later, in the UI layer (BookmarksListAdapter)
+                Bookmarks.TYPE_FOLDER,
+                Bookmarks.FIXED_ROOT_ID
+        });
+        return out;
     }
 
     // Returns true if any desktop bookmarks exist, which will be true if the user
@@ -1049,6 +1156,23 @@ public class LocalBrowserDB implements BrowserDB {
                   values,
                   Bookmarks._ID + " = ?",
                   new String[] { String.valueOf(id) });
+    }
+
+    @Override
+    public boolean hasBookmarkWithGuid(ContentResolver cr, String guid) {
+        Cursor c = cr.query(bookmarksUriWithLimit(1),
+                new String[] { Bookmarks.GUID },
+                Bookmarks.GUID + " = ?",
+                new String[] { guid },
+                null);
+
+        try {
+            return c != null && c.getCount() > 0;
+        } finally {
+            if (c != null) {
+                c.close();
+            }
+        }
     }
 
     /**
@@ -1316,55 +1440,86 @@ public class LocalBrowserDB implements BrowserDB {
         cr.delete(mThumbnailsUriWithProfile, null, null);
     }
 
-    // Utility function for updating existing history using batch operations
+    /**
+     * Utility method used by AndroidImport for updating existing history record using batch operations.
+     *
+     * @param cr <code>ContentResolver</code> used for querying information about existing history records.
+     * @param operations Collection of operations for queueing record updates.
+     * @param url URL used for querying history records to update.
+     * @param title Optional new title.
+     * @param date  New last visited date. Will be used if newer than current last visited date.
+     * @param visits Will increment existing visit counts by this number.
+     */
     @Override
-    public void updateHistoryInBatch(ContentResolver cr,
-                                     Collection<ContentProviderOperation> operations,
-                                     String url, String title,
+    public void updateHistoryInBatch(@NonNull ContentResolver cr,
+                                     @NonNull Collection<ContentProviderOperation> operations,
+                                     @NonNull String url, @Nullable String title,
                                      long date, int visits) {
         final String[] projection = {
             History._ID,
             History.VISITS,
-            History.DATE_LAST_VISITED
+            History.LOCAL_VISITS,
+            History.DATE_LAST_VISITED,
+            History.LOCAL_DATE_LAST_VISITED
         };
 
-
-        // We need to get the old visit count.
+        // We need to get the old visit and date aggregates.
         final Cursor cursor = cr.query(withDeleted(mHistoryUriWithProfile),
                                        projection,
                                        History.URL + " = ?",
                                        new String[] { url },
                                        null);
+        if (cursor == null) {
+            Log.w(LOGTAG, "Null cursor while querying for old visit and date aggregates");
+            return;
+        }
+
         try {
-            ContentValues values = new ContentValues();
+            final ContentValues values = new ContentValues();
 
             // Restore deleted record if possible
             values.put(History.IS_DELETED, 0);
 
             if (cursor.moveToFirst()) {
-                int visitsCol = cursor.getColumnIndexOrThrow(History.VISITS);
-                int dateCol = cursor.getColumnIndexOrThrow(History.DATE_LAST_VISITED);
-                int oldVisits = cursor.getInt(visitsCol);
-                long oldDate = cursor.getLong(dateCol);
+                final int visitsCol = cursor.getColumnIndexOrThrow(History.VISITS);
+                final int localVisitsCol = cursor.getColumnIndexOrThrow(History.LOCAL_VISITS);
+                final int dateCol = cursor.getColumnIndexOrThrow(History.DATE_LAST_VISITED);
+                final int localDateCol = cursor.getColumnIndexOrThrow(History.LOCAL_DATE_LAST_VISITED);
+
+                final int oldVisits = cursor.getInt(visitsCol);
+                final int oldLocalVisits = cursor.getInt(localVisitsCol);
+                final long oldDate = cursor.getLong(dateCol);
+                final long oldLocalDate = cursor.getLong(localDateCol);
+
+                // NB: This will increment visit counts even if subsequent "insert visits" operations
+                // insert no new visits (see insertVisitsFromImportHistoryInBatch).
+                // So, we're doing a wrong thing here if user imports history more than once.
+                // See Bug 1277330.
                 values.put(History.VISITS, oldVisits + visits);
+                values.put(History.LOCAL_VISITS, oldLocalVisits + visits);
                 // Only update last visited if newer.
                 if (date > oldDate) {
                     values.put(History.DATE_LAST_VISITED, date);
                 }
+                if (date > oldLocalDate) {
+                    values.put(History.LOCAL_DATE_LAST_VISITED, date);
+                }
             } else {
                 values.put(History.VISITS, visits);
+                values.put(History.LOCAL_VISITS, visits);
                 values.put(History.DATE_LAST_VISITED, date);
+                values.put(History.LOCAL_DATE_LAST_VISITED, date);
             }
             if (title != null) {
                 values.put(History.TITLE, title);
             }
             values.put(History.URL, url);
 
-            Uri historyUri = withDeleted(mHistoryUriWithProfile).buildUpon().
+            final Uri historyUri = withDeleted(mHistoryUriWithProfile).buildUpon().
                 appendQueryParameter(BrowserContract.PARAM_INSERT_IF_NEEDED, "true").build();
 
             // Update or insert
-            ContentProviderOperation.Builder builder =
+            final ContentProviderOperation.Builder builder =
                 ContentProviderOperation.newUpdate(historyUri);
             builder.withSelection(History.URL + " = ?", new String[] { url });
             builder.withValues(values);
@@ -1373,6 +1528,72 @@ public class LocalBrowserDB implements BrowserDB {
             operations.add(builder.build());
         } finally {
             cursor.close();
+        }
+    }
+
+    /**
+     * Utility method used by AndroidImport to insert visit data for history records that were just imported.
+     * Uses batch operations.
+     *
+     * @param cr <code>ContentResolver</code> used to query history table and bulkInsert visit records
+     * @param operations Collection of operations for queueing inserts
+     * @param visitsToSynthesize List of ContentValues describing visit information for each history record:
+     *                                  (History URL, LAST DATE VISITED, VISIT COUNT)
+     */
+    public void insertVisitsFromImportHistoryInBatch(ContentResolver cr,
+                                                     Collection<ContentProviderOperation> operations,
+                                                     ArrayList<ContentValues> visitsToSynthesize) {
+        // If for any reason we fail to obtain history GUID for a tuple we're processing,
+        // let's just ignore it. It's possible that the "best-effort" history import
+        // did not fully succeed, so we could be missing some of the records.
+        int historyGUIDCol = -1;
+        for (ContentValues visitsInformation : visitsToSynthesize) {
+            final Cursor cursor = cr.query(mHistoryUriWithProfile,
+                    new String[] {History.GUID},
+                    History.URL + " = ?",
+                    new String[] {visitsInformation.getAsString(HISTORY_VISITS_URL)},
+                    null);
+            if (cursor == null) {
+                continue;
+            }
+
+            final String historyGUID;
+
+            try {
+                if (!cursor.moveToFirst()) {
+                    continue;
+                }
+                if (historyGUIDCol == -1) {
+                    historyGUIDCol = cursor.getColumnIndexOrThrow(History.GUID);
+                }
+
+                historyGUID = cursor.getString(historyGUIDCol);
+            } finally {
+                // We "continue" on a null cursor above, so it's safe to act upon it without checking.
+                cursor.close();
+            }
+            if (historyGUID == null) {
+                continue;
+            }
+
+            // This fakes the individual visit records, using last visited date as the starting point.
+            for (int i = 0; i < visitsInformation.getAsInteger(HISTORY_VISITS_COUNT); i++) {
+                // We rely on database defaults for IS_LOCAL and VISIT_TYPE.
+                final ContentValues visitToInsert = new ContentValues();
+                visitToInsert.put(BrowserContract.Visits.HISTORY_GUID, historyGUID);
+
+                // Visit timestamps are stored in microseconds, while Android Browser visit timestmaps
+                // are in milliseconds. This is the conversion point for imports.
+                visitToInsert.put(BrowserContract.Visits.DATE_VISITED,
+                        (visitsInformation.getAsLong(HISTORY_VISITS_DATE) - i) * 1000);
+
+                final ContentProviderOperation.Builder builder =
+                        ContentProviderOperation.newInsert(BrowserContract.Visits.CONTENT_URI);
+                builder.withValues(visitToInsert);
+
+                // Queue the insert operation
+                operations.add(builder.build());
+            }
         }
     }
 
@@ -1476,84 +1697,6 @@ public class LocalBrowserDB implements BrowserDB {
         operations.add(builder.build());
     }
 
-    // This wrapper adds a fake "Desktop Bookmarks" folder entry to the
-    // beginning of the cursor's data set.
-    private static class SpecialFoldersCursorWrapper extends CursorWrapper {
-        private int mIndexOffset;
-
-        private int mDesktopBookmarksIndex = -1;
-
-        private boolean mAtDesktopBookmarksPosition;
-
-        public SpecialFoldersCursorWrapper(Cursor c, boolean showDesktopBookmarks) {
-            super(c);
-
-            if (showDesktopBookmarks) {
-                mDesktopBookmarksIndex = mIndexOffset;
-                mIndexOffset++;
-            }
-        }
-
-        @Override
-        public int getCount() {
-            return super.getCount() + mIndexOffset;
-        }
-
-        @Override
-        public boolean moveToPosition(int position) {
-            mAtDesktopBookmarksPosition = (mDesktopBookmarksIndex == position);
-
-            if (mAtDesktopBookmarksPosition) {
-                return true;
-            }
-
-            return super.moveToPosition(position - mIndexOffset);
-        }
-
-        @Override
-        public long getLong(int columnIndex) {
-            if (!mAtDesktopBookmarksPosition) {
-                return super.getLong(columnIndex);
-            }
-
-            if (columnIndex == getColumnIndex(Bookmarks.PARENT)) {
-                return Bookmarks.FIXED_ROOT_ID;
-            }
-
-            return -1;
-        }
-
-        @Override
-        public int getInt(int columnIndex) {
-            if (!mAtDesktopBookmarksPosition) {
-                return super.getInt(columnIndex);
-            }
-
-            if (columnIndex == getColumnIndex(Bookmarks._ID) && mAtDesktopBookmarksPosition) {
-                return Bookmarks.FAKE_DESKTOP_FOLDER_ID;
-            }
-
-            if (columnIndex == getColumnIndex(Bookmarks.TYPE)) {
-                return Bookmarks.TYPE_FOLDER;
-            }
-
-            return -1;
-        }
-
-        @Override
-        public String getString(int columnIndex) {
-            if (!mAtDesktopBookmarksPosition) {
-                return super.getString(columnIndex);
-            }
-
-            if (columnIndex == getColumnIndex(Bookmarks.GUID) && mAtDesktopBookmarksPosition) {
-                return Bookmarks.FAKE_DESKTOP_FOLDER_GUID;
-            }
-
-            return "";
-        }
-    }
-
     @Override
     public void pinSite(ContentResolver cr, String url, String title, int position) {
         ContentValues values = new ContentValues();
@@ -1577,18 +1720,6 @@ public class LocalBrowserDB implements BrowserDB {
                   Bookmarks.PARENT + " = ?",
                   new String[] { Integer.toString(position),
                                  String.valueOf(Bookmarks.FIXED_PINNED_LIST_ID) });
-    }
-
-    @Override
-    public Cursor getPinnedSites(ContentResolver cr, int limit) {
-        return cr.query(bookmarksUriWithLimit(limit),
-                        new String[] { Bookmarks._ID,
-                                       Bookmarks.URL,
-                                       Bookmarks.TITLE,
-                                       Bookmarks.POSITION },
-                        Bookmarks.PARENT + " == ?",
-                        new String[] { String.valueOf(Bookmarks.FIXED_PINNED_LIST_ID) },
-                        Bookmarks.POSITION + " ASC");
     }
 
     @Override
@@ -1622,8 +1753,29 @@ public class LocalBrowserDB implements BrowserDB {
     }
 
     @Override
+    public Cursor getBookmarksForPartialUrl(ContentResolver cr, String partialUrl) {
+        Cursor c = cr.query(mBookmarksUriWithProfile,
+                new String[] { Bookmarks.GUID, Bookmarks._ID, Bookmarks.URL },
+                Bookmarks.URL + " LIKE '%" + partialUrl + "%'", // TODO: Escaping!
+                null,
+                null);
+
+        if (c != null && c.getCount() == 0) {
+            c.close();
+            c = null;
+        }
+
+        return c;
+    }
+
+    @Override
     public void setSuggestedSites(SuggestedSites suggestedSites) {
         mSuggestedSites = suggestedSites;
+    }
+
+    @Override
+    public SuggestedSites getSuggestedSites() {
+        return mSuggestedSites;
     }
 
     @Override
@@ -1674,27 +1826,51 @@ public class LocalBrowserDB implements BrowserDB {
     }
 
     @Override
-    public Cursor getTopSites(ContentResolver cr, int minLimit, int maxLimit) {
-        // Note this is not a single query anymore, but actually returns a mixture
-        // of two queries, one for topSites and one for pinned sites.
-        Cursor pinnedSites = getPinnedSites(cr, minLimit);
+    public Cursor getTopSites(ContentResolver cr, int suggestedRangeLimit, int limit) {
+        final Uri uri = mTopSitesUriWithProfile.buildUpon()
+                .appendQueryParameter(BrowserContract.PARAM_LIMIT,
+                        String.valueOf(limit))
+                .appendQueryParameter(BrowserContract.PARAM_SUGGESTEDSITES_LIMIT,
+                        String.valueOf(suggestedRangeLimit))
+                .build();
 
-        int pinnedCount = pinnedSites.getCount();
-        Cursor topSites = getTopSites(cr, maxLimit - pinnedCount);
-        int topCount = topSites.getCount();
+        Cursor topSitesCursor = cr.query(uri,
+                                         new String[] { Combined._ID,
+                                                 Combined.URL,
+                                                 Combined.TITLE,
+                                                 Combined.BOOKMARK_ID,
+                                                 Combined.HISTORY_ID },
+                                         null,
+                                         null,
+                                         null);
 
-        Cursor suggestedSites = null;
-        if (mSuggestedSites != null) {
-            final int count = minLimit - pinnedCount - topCount;
-            if (count > 0) {
-                final List<String> excludeUrls = new ArrayList<String>(pinnedCount + topCount);
-                appendUrlsFromCursor(excludeUrls, pinnedSites);
-                appendUrlsFromCursor(excludeUrls, topSites);
+        // It's possible that we will retrieve fewer sites than are required to fill the top-sites panel - in this case
+        // we need to add "blank" tiles. It's much easier to add these here (as opposed to SQL), since we don't care
+        // about their ordering (they go after all the other sites), but we do care about their number (and calculating
+        // that inside out topsites SQL query would be difficult given the other processing we're already doing there).
+        final int blanksRequired = suggestedRangeLimit - topSitesCursor.getCount();
 
-                suggestedSites = mSuggestedSites.get(count, excludeUrls);
-            }
+        if (blanksRequired <= 0) {
+            return topSitesCursor;
         }
 
-        return new TopSitesCursorWrapper(pinnedSites, topSites, suggestedSites, minLimit);
+        MatrixCursor blanksCursor = new MatrixCursor(new String[] {
+                TopSites._ID,
+                TopSites.BOOKMARK_ID,
+                TopSites.HISTORY_ID,
+                TopSites.URL,
+                TopSites.TITLE,
+                TopSites.TYPE});
+
+        final MatrixCursor.RowBuilder rb = blanksCursor.newRow();
+        rb.add(-1);
+        rb.add(-1);
+        rb.add(-1);
+        rb.add("");
+        rb.add("");
+        rb.add(TopSites.TYPE_BLANK);
+
+        return new MergeCursor(new Cursor[] {topSitesCursor, blanksCursor});
+
     }
 }

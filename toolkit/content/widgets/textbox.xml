@@ -171,8 +171,9 @@
 
       <destructor>
         <![CDATA[
-          if (this.inputField.value)
-            this.boxObject.setProperty('value', this.inputField.value);
+          var field = this.inputField;
+          if (field && field.value)
+            this.boxObject.setProperty('value', field.value);
           this.mInputField = null;
         ]]>
       </destructor>
@@ -266,7 +267,7 @@
           var scriptError = Components.classes["@mozilla.org/scripterror;1"]
                                       .createInstance(Components.interfaces.nsIScriptError);
           scriptError.init("Timed textboxes are deprecated. Consider using type=\"search\" instead.",
-                           this.ownerDocument.location.href, null, null, 
+                           this.ownerDocument.location.href, null, null,
                            null, scriptError.warningFlag, "XUL Widgets");
           consoleService.logMessage(scriptError);
         } catch (e) {}

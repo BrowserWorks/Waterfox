@@ -113,9 +113,7 @@ XPCWrappedNative::NoteTearoffs(nsCycleCollectionTraversalCallback& cb)
     // (see nsXPConnect::Traverse), but if their JS object has been finalized
     // then the tearoff is only reachable through the XPCWrappedNative, so we
     // record an edge here.
-    XPCWrappedNativeTearOffChunk* chunk;
-    for (chunk = &mFirstChunk; chunk; chunk = chunk->mNextChunk) {
-        XPCWrappedNativeTearOff* to = &chunk->mTearOff;
+    for (XPCWrappedNativeTearOff* to = &mFirstTearOff; to; to = to->GetNextTearOff()) {
         JSObject* jso = to->GetJSObjectPreserveColor();
         if (!jso) {
             NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "tearoff's mNative");
@@ -769,7 +767,7 @@ XPCWrappedNative::Init(const XPCNativeScriptableCreateInfo* sci)
 
     // create our flatJSObject
 
-    const JSClass* jsclazz = si ? si->GetJSClass() : Jsvalify(&XPC_WN_NoHelper_JSClass.base);
+    const JSClass* jsclazz = si ? si->GetJSClass() : Jsvalify(&XPC_WN_NoHelper_JSClass);
 
     // We should have the global jsclass flag if and only if we're a global.
     MOZ_ASSERT_IF(si, !!si->GetFlags().IsGlobalObject() == !!(jsclazz->flags & JSCLASS_IS_GLOBAL));
@@ -777,8 +775,8 @@ XPCWrappedNative::Init(const XPCNativeScriptableCreateInfo* sci)
     MOZ_ASSERT(jsclazz &&
                jsclazz->name &&
                jsclazz->flags &&
-               jsclazz->resolve &&
-               jsclazz->finalize, "bad class");
+               jsclazz->getResolve() &&
+               jsclazz->hasFinalize(), "bad class");
 
     // XXXbz JS_GetObjectPrototype wants an object, even though it then asserts
     // that this object is same-compartment with cx, which means it could just
@@ -898,9 +896,7 @@ XPCWrappedNative::FlatJSObjectFinalized()
     // dying tearoff object. We can safely assume that those remaining
     // JSObjects are about to be finalized too.
 
-    XPCWrappedNativeTearOffChunk* chunk;
-    for (chunk = &mFirstChunk; chunk; chunk = chunk->mNextChunk) {
-        XPCWrappedNativeTearOff* to = &chunk->mTearOff;
+    for (XPCWrappedNativeTearOff* to = &mFirstTearOff; to; to = to->GetNextTearOff()) {
         JSObject* jso = to->GetJSObjectPreserveColor();
         if (jso) {
             JS_SetPrivate(jso, nullptr);
@@ -971,7 +967,7 @@ XPCWrappedNative::SystemIsBeingShutDown()
 
     // We leak mIdentity (see above).
 
-    // short circuit future finalization
+    // Short circuit future finalization.
     JS_SetPrivate(mFlatJSObject, nullptr);
     mFlatJSObject = nullptr;
     mFlatJSObject.unsetFlags(FLAT_JS_OBJECT_VALID);
@@ -987,11 +983,8 @@ XPCWrappedNative::SystemIsBeingShutDown()
         delete mScriptableInfo;
     }
 
-    // cleanup the tearoffs...
-
-    XPCWrappedNativeTearOffChunk* chunk;
-    for (chunk = &mFirstChunk; chunk; chunk = chunk->mNextChunk) {
-        XPCWrappedNativeTearOff* to = &chunk->mTearOff;
+    // Cleanup the tearoffs.
+    for (XPCWrappedNativeTearOff* to = &mFirstTearOff; to; to = to->GetNextTearOff()) {
         if (JSObject* jso = to->GetJSObjectPreserveColor()) {
             JS_SetPrivate(jso, nullptr);
             to->SetJSObject(nullptr);
@@ -1000,11 +993,6 @@ XPCWrappedNative::SystemIsBeingShutDown()
         // (for the same reason we leak mIdentity - see above).
         Unused << to->TakeNative().take();
         to->SetInterface(nullptr);
-    }
-
-    if (mFirstChunk.mNextChunk) {
-        delete mFirstChunk.mNextChunk;
-        mFirstChunk.mNextChunk = nullptr;
     }
 }
 
@@ -1058,12 +1046,10 @@ XPCWrappedNative::FindTearOff(XPCNativeInterface* aInterface,
     XPCWrappedNativeTearOff* to;
     XPCWrappedNativeTearOff* firstAvailable = nullptr;
 
-    XPCWrappedNativeTearOffChunk* lastChunk;
-    XPCWrappedNativeTearOffChunk* chunk;
-    for (lastChunk = chunk = &mFirstChunk;
-         chunk;
-         lastChunk = chunk, chunk = chunk->mNextChunk) {
-        to = &chunk->mTearOff;
+    XPCWrappedNativeTearOff* lastTearOff;
+    for (lastTearOff = to = &mFirstTearOff;
+         to;
+         lastTearOff = to, to = to->GetNextTearOff()) {
         if (to->GetInterface() == aInterface) {
             if (needJSObject && !to->GetJSObjectPreserveColor()) {
                 AutoMarkingWrappedNativeTearOffPtr tearoff(cx, to);
@@ -1089,9 +1075,7 @@ XPCWrappedNative::FindTearOff(XPCNativeInterface* aInterface,
     to = firstAvailable;
 
     if (!to) {
-        auto newChunk = new XPCWrappedNativeTearOffChunk();
-        lastChunk->mNextChunk = newChunk;
-        to = &newChunk->mTearOff;
+        to = lastTearOff->AddTearOff();
     }
 
     {
@@ -1288,7 +1272,7 @@ class MOZ_STACK_CLASS CallMethodHelper
     const uint16_t mVTableIndex;
     HandleId mIdxValueId;
 
-    nsAutoTArray<nsXPTCVariant, 8> mDispatchParams;
+    AutoTArray<nsXPTCVariant, 8> mDispatchParams;
     uint8_t mJSContextIndex; // TODO make const
     uint8_t mOptArgcIndex; // TODO make const
 

@@ -4,6 +4,8 @@ config = {
     "products": {
         "installer": {
             "product-name": "Firefox-%(version)s",
+            "check_uptake": True,
+            "alias": "firefox-latest",
             "ssl-only": False,
             "add-locales": True,
             "paths": {
@@ -47,6 +49,7 @@ config = {
         },
         "installer-ssl": {
             "product-name": "Firefox-%(version)s-SSL",
+            "check_uptake": True,
             "ssl-only": True,
             "add-locales": True,
             "paths": {
@@ -90,6 +93,8 @@ config = {
         },
         "stub-installer": {
             "product-name": "Firefox-%(version)s-stub",
+            "check_uptake": True,
+            "alias": "firefox-stub",
             "ssl-only": True,
             "add-locales": True,
             "paths": {
@@ -97,14 +102,24 @@ config = {
                     "path": "/firefox/releases/%(version)s/win32/:lang/Firefox%%20Setup%%20Stub%%20%(version)s.exe",
                     "bouncer-platform": "win",
                 },
-                "win64": {
-                    "path": "/firefox/releases/%(version)s/win64/:lang/Firefox%%20Setup%%20Stub%%20%(version)s.exe",
-                    "bouncer-platform": "win64",
+            },
+        },
+        "sha1-installer": {
+            "product-name": "Firefox-%(version)s-sha1",
+            "check_uptake": True,
+            "alias": "firefox-sha1",
+            "ssl-only": True,
+            "add-locales": True,
+            "paths": {
+                "win32": {
+                    "path": "/firefox/releases/%(version)s/win32-sha1/:lang/Firefox%%20Setup%%20%(version)s.exe",
+                    "bouncer-platform": "win",
                 },
             },
         },
         "complete-mar": {
             "product-name": "Firefox-%(version)s-Complete",
+            "check_uptake": True,
             "ssl-only": False,
             "add-locales": True,
             "paths": {
@@ -148,6 +163,7 @@ config = {
         },
         "complete-mar-candidates": {
             "product-name": "Firefox-%(version)sbuild%(build_number)s-Complete",
+            "check_uptake": False,
             "ssl-only": False,
             "add-locales": True,
             "paths": {
@@ -177,6 +193,7 @@ config = {
     "partials": {
         "releases-dir": {
             "product-name": "Firefox-%(version)s-Partial-%(prev_version)s",
+            "check_uptake": True,
             "ssl-only": False,
             "add-locales": True,
             "paths": {
@@ -220,6 +237,7 @@ config = {
         },
         "candidates-dir": {
             "product-name": "Firefox-%(version)sbuild%(build_number)s-Partial-%(prev_version)sbuild%(prev_build_number)s",
+            "check_uptake": False,
             "ssl-only": False,
             "add-locales": True,
             "paths": {

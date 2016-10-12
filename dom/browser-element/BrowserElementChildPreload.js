@@ -13,7 +13,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/BrowserElementPromptService.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource://gre/modules/Microformats.js");
 Cu.import("resource://gre/modules/ExtensionContent.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "acs",
@@ -157,9 +156,11 @@ BrowserElementChild.prototype = {
                                  Ci.nsIWebProgress.NOTIFY_SECURITY |
                                  Ci.nsIWebProgress.NOTIFY_STATE_WINDOW);
 
-    docShell.QueryInterface(Ci.nsIWebNavigation)
-            .sessionHistory = Cc["@mozilla.org/browser/shistory;1"]
-                                .createInstance(Ci.nsISHistory);
+    let webNavigation = docShell.QueryInterface(Ci.nsIWebNavigation);
+    if (!webNavigation.sessionHistory) {
+      webNavigation.sessionHistory = Cc["@mozilla.org/browser/shistory;1"]
+                                       .createInstance(Ci.nsISHistory);
+    }
 
     // This is necessary to get security web progress notifications.
     var securityUI = Cc['@mozilla.org/secure_browser_ui;1']
@@ -283,7 +284,6 @@ BrowserElementChild.prototype = {
       "get-audio-channel-muted": this._recvGetAudioChannelMuted,
       "set-audio-channel-muted": this._recvSetAudioChannelMuted,
       "get-is-audio-channel-active": this._recvIsAudioChannelActive,
-      "get-structured-data": this._recvGetStructuredData,
       "get-web-manifest": this._recvGetWebManifest,
     }
 
@@ -530,7 +530,7 @@ BrowserElementChild.prototype = {
 
   _recvEnteredFullscreen: function() {
     if (!this._windowUtils.handleFullscreenRequests() &&
-        !content.document.mozFullScreen) {
+        !content.document.fullscreenElement) {
       // If we don't actually have any pending fullscreen request
       // to handle, neither we have been in fullscreen, tell the
       // parent to just exit.
@@ -1050,7 +1050,7 @@ BrowserElementChild.prototype = {
 
     try {
       let sandboxRv = Cu.evalInSandbox(data.json.args.script, sandbox, "1.8");
-      if (sandboxRv instanceof Promise) {
+      if (sandboxRv instanceof sandbox.Promise) {
         sandboxRv.then(rv => {
           if (isJSON(rv)) {
             sendSuccess(rv);
@@ -1544,300 +1544,6 @@ BrowserElementChild.prototype = {
     sendAsyncMsg('got-set-input-method-active', msgData);
   },
 
-  _processMicroformatValue(field, value) {
-    if (['node', 'resolvedNode', 'semanticType'].includes(field)) {
-      return null;
-    } else if (Array.isArray(value)) {
-      var result = value.map(i => this._processMicroformatValue(field, i))
-                        .filter(i => i !== null);
-      return result.length ? result : null;
-    } else if (typeof value == 'string') {
-      return value;
-    } else if (typeof value == 'object' && value !== null) {
-      return this._processMicroformatItem(value);
-    }
-    return null;
-  },
-
-  // This function takes legacy Microformat data (hCard and hCalendar)
-  // and produces the same result that the equivalent Microdata data
-  // would produce.
-  _processMicroformatItem(microformatData) {
-    var result = {};
-
-    if (microformatData.semanticType == 'geo') {
-      return microformatData.latitude + ';' + microformatData.longitude;
-    }
-
-    if (microformatData.semanticType == 'hCard') {
-      result.type = ["http://microformats.org/profile/hcard"];
-    } else if (microformatData.semanticType == 'hCalendar') {
-      result.type = ["http://microformats.org/profile/hcalendar#vevent"];
-    }
-
-    for (let field of Object.getOwnPropertyNames(microformatData)) {
-      var processed = this._processMicroformatValue(field, microformatData[field]);
-      if (processed === null) {
-        continue;
-      }
-      if (!result.properties) {
-        result.properties = {};
-      }
-      if (Array.isArray(processed)) {
-        result.properties[field] = processed;
-      } else {
-        result.properties[field] = [processed];
-      }
-    }
-
-    return result;
-  },
-
-  _findItemProperties: function(node, properties, alreadyProcessed) {
-    if (node.itemProp) {
-      var value;
-
-      if (node.itemScope) {
-        value = this._processItem(node, alreadyProcessed);
-      } else {
-        value = node.itemValue;
-      }
-
-      for (let i = 0; i < node.itemProp.length; ++i) {
-        var property = node.itemProp[i];
-        if (!properties[property]) {
-          properties[property] = [];
-        }
-
-        properties[property].push(value);
-      }
-    }
-
-    if (!node.itemScope) {
-      var childNodes = node.childNodes;
-      for (var childNode of childNodes) {
-        this._findItemProperties(childNode, properties, alreadyProcessed);
-      }
-    }
-  },
-
-  _processItem: function(node, alreadyProcessed = []) {
-    if (alreadyProcessed.includes(node)) {
-      return "ERROR";
-    }
-
-    alreadyProcessed.push(node);
-
-    var result = {};
-
-    if (node.itemId) {
-      result.id = node.itemId;
-    }
-    if (node.itemType) {
-      result.type = [];
-      for (let i = 0; i < node.itemType.length; ++i) {
-        result.type.push(node.itemType[i]);
-      }
-    }
-
-    var properties = {};
-
-    var childNodes = node.childNodes;
-    for (var childNode of childNodes) {
-      this._findItemProperties(childNode, properties, alreadyProcessed);
-    }
-
-    if (node.itemRef) {
-      for (let i = 0; i < node.itemRef.length; ++i) {
-        var refNode = content.document.getElementById(node.itemRef[i]);
-        this._findItemProperties(refNode, properties, alreadyProcessed);
-      }
-    }
-
-    result.properties = properties;
-    return result;
-  },
-
-  _recvGetStructuredData: function(data) {
-    var result = {
-      items: []
-    };
-
-    var microdataItems = content.document.getItems();
-
-    for (let microdataItem of microdataItems) {
-      result.items.push(this._processItem(microdataItem));
-    }
-
-    var hCardItems = Microformats.get("hCard", content.document);
-    for (let hCardItem of hCardItems) {
-      if (!hCardItem.node.itemScope) {  // If it's also marked with Microdata, ignore the Microformat
-        result.items.push(this._processMicroformatItem(hCardItem));
-      }
-    }
-
-    var hCalendarItems = Microformats.get("hCalendar", content.document);
-    for (let hCalendarItem of hCalendarItems) {
-      if (!hCalendarItem.node.itemScope) {  // If it's also marked with Microdata, ignore the Microformat
-        result.items.push(this._processMicroformatItem(hCalendarItem));
-      }
-    }
-
-    var resultString = JSON.stringify(result);
-
-    sendAsyncMsg('got-structured-data', {
-      id: data.json.id,
-      successRv: resultString
-    });
-  },
-
-  _processMicroformatValue(field, value) {
-    if (['node', 'resolvedNode', 'semanticType'].includes(field)) {
-      return null;
-    } else if (Array.isArray(value)) {
-      var result = value.map(i => this._processMicroformatValue(field, i))
-                        .filter(i => i !== null);
-      return result.length ? result : null;
-    } else if (typeof value == 'string') {
-      return value;
-    } else if (typeof value == 'object' && value !== null) {
-      return this._processMicroformatItem(value);
-    }
-    return null;
-  },
-
-  // This function takes legacy Microformat data (hCard and hCalendar)
-  // and produces the same result that the equivalent Microdata data
-  // would produce.
-  _processMicroformatItem(microformatData) {
-    var result = {};
-
-    if (microformatData.semanticType == 'geo') {
-      return microformatData.latitude + ';' + microformatData.longitude;
-    }
-
-    if (microformatData.semanticType == 'hCard') {
-      result.type = ["http://microformats.org/profile/hcard"];
-    } else if (microformatData.semanticType == 'hCalendar') {
-      result.type = ["http://microformats.org/profile/hcalendar#vevent"];
-    }
-
-    for (let field of Object.getOwnPropertyNames(microformatData)) {
-      var processed = this._processMicroformatValue(field, microformatData[field]);
-      if (processed === null) {
-        continue;
-      }
-      if (!result.properties) {
-        result.properties = {};
-      }
-      if (Array.isArray(processed)) {
-        result.properties[field] = processed;
-      } else {
-        result.properties[field] = [processed];
-      }
-    }
-
-    return result;
-  },
-
-  _findItemProperties: function(node, properties, alreadyProcessed) {
-    if (node.itemProp) {
-      var value;
-
-      if (node.itemScope) {
-        value = this._processItem(node, alreadyProcessed);
-      } else {
-        value = node.itemValue;
-      }
-
-      for (let i = 0; i < node.itemProp.length; ++i) {
-        var property = node.itemProp[i];
-        if (!properties[property]) {
-          properties[property] = [];
-        }
-
-        properties[property].push(value);
-      }
-    }
-
-    if (!node.itemScope) {
-      var childNodes = node.childNodes;
-      for (var childNode of childNodes) {
-        this._findItemProperties(childNode, properties, alreadyProcessed);
-      }
-    }
-  },
-
-  _processItem: function(node, alreadyProcessed = []) {
-    if (alreadyProcessed.includes(node)) {
-      return "ERROR";
-    }
-
-    alreadyProcessed.push(node);
-
-    var result = {};
-
-    if (node.itemId) {
-      result.id = node.itemId;
-    }
-    if (node.itemType) {
-      result.type = [];
-      for (let i = 0; i < node.itemType.length; ++i) {
-        result.type.push(node.itemType[i]);
-      }
-    }
-
-    var properties = {};
-
-    var childNodes = node.childNodes;
-    for (var childNode of childNodes) {
-      this._findItemProperties(childNode, properties, alreadyProcessed);
-    }
-
-    if (node.itemRef) {
-      for (let i = 0; i < node.itemRef.length; ++i) {
-        var refNode = content.document.getElementById(node.itemRef[i]);
-        this._findItemProperties(refNode, properties, alreadyProcessed);
-      }
-    }
-
-    result.properties = properties;
-    return result;
-  },
-
-  _recvGetStructuredData: function(data) {
-    var result = {
-      items: []
-    };
-
-    var microdataItems = content.document.getItems();
-
-    for (let microdataItem of microdataItems) {
-      result.items.push(this._processItem(microdataItem));
-    }
-
-    var hCardItems = Microformats.get("hCard", content.document);
-    for (let hCardItem of hCardItems) {
-      if (!hCardItem.node.itemScope) {  // If it's also marked with Microdata, ignore the Microformat
-        result.items.push(this._processMicroformatItem(hCardItem));
-      }
-    }
-
-    var hCalendarItems = Microformats.get("hCalendar", content.document);
-    for (let hCalendarItem of hCalendarItems) {
-      if (!hCalendarItem.node.itemScope) {  // If it's also marked with Microdata, ignore the Microformat
-        result.items.push(this._processMicroformatItem(hCalendarItem));
-      }
-    }
-
-    var resultString = JSON.stringify(result);
-
-    sendAsyncMsg('got-structured-data', {
-      id: data.json.id,
-      successRv: resultString
-    });
-  },
-
   // The docShell keeps a weak reference to the progress listener, so we need
   // to keep a strong ref to it ourselves.
   _progressListener: {
@@ -1887,6 +1593,7 @@ BrowserElementChild.prototype = {
           case Cr.NS_BINDING_ABORTED :
             // Ignoring NS_BINDING_ABORTED, which is set when loading page is
             // stopped.
+          case Cr.NS_ERROR_PARSED_DATA_CACHED:
             return;
 
           // TODO See nsDocShell::DisplayLoadError to see what extra
@@ -1914,7 +1621,7 @@ BrowserElementChild.prototype = {
             sendAsyncMsg('error', { type: 'cspBlocked' });
             return;
           case Cr.NS_ERROR_PHISHING_URI :
-            sendAsyncMsg('error', { type: 'phishingBlocked' });
+            sendAsyncMsg('error', { type: 'deceptiveBlocked' });
             return;
           case Cr.NS_ERROR_MALWARE_URI :
             sendAsyncMsg('error', { type: 'malwareBlocked' });
@@ -1966,7 +1673,7 @@ BrowserElementChild.prototype = {
             sendAsyncMsg('error', { type: 'unsafeContentType' });
             return;
           case Cr.NS_ERROR_CORRUPTED_CONTENT :
-            sendAsyncMsg('error', { type: 'corruptedContentError' });
+            sendAsyncMsg('error', { type: 'corruptedContentErrorv2' });
             return;
 
           default:

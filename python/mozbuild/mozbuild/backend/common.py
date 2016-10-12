@@ -7,10 +7,8 @@ from __future__ import absolute_import, unicode_literals
 import itertools
 import json
 import os
-import re
 
 import mozpack.path as mozpath
-import mozwebidlcodegen
 
 from mozbuild.backend.base import BuildBackend
 
@@ -21,6 +19,7 @@ from mozbuild.frontend.context import (
     VARIABLES,
 )
 from mozbuild.frontend.data import (
+    BaseProgram,
     ChromeManifestEntry,
     ConfigFileSubstitution,
     ExampleWebIDLInterface,
@@ -31,6 +30,8 @@ from mozbuild.frontend.data import (
     GeneratedWebIDLFile,
     PreprocessedTestWebIDLFile,
     PreprocessedWebIDLFile,
+    RustRlibLibrary,
+    SharedLibrary,
     TestManifest,
     TestWebIDLFile,
     UnifiedSources,
@@ -173,15 +174,13 @@ class TestManager(object):
         self.topsrcdir = mozpath.normpath(config.topsrcdir)
 
         self.tests_by_path = defaultdict(list)
+        self.installs_by_path = defaultdict(list)
+        self.deferred_installs = set()
+        self.manifest_default_support_files = {}
 
-    def add(self, t, flavor=None, topsrcdir=None):
+    def add(self, t, flavor, topsrcdir, default_supp_files):
         t = dict(t)
         t['flavor'] = flavor
-
-        if topsrcdir is None:
-            topsrcdir = self.topsrcdir
-        else:
-            topsrcdir = mozpath.normpath(topsrcdir)
 
         path = mozpath.normpath(t['path'])
         assert mozpath.basedir(path, [topsrcdir])
@@ -190,7 +189,36 @@ class TestManager(object):
         t['file_relpath'] = key
         t['dir_relpath'] = mozpath.dirname(key)
 
+        # Support files are propagated from the default section to individual
+        # tests by the manifest parser, but we end up storing a lot of
+        # redundant data due to the huge number of support files.
+        # So if we have support files that are the same as the manifest default
+        # we track that separately, per-manifest instead of per-test, to save
+        # space.
+        supp_files = t.get('support-files')
+        if supp_files and supp_files == default_supp_files:
+            self.manifest_default_support_files[t['manifest']] = default_supp_files
+            del t['support-files']
+
         self.tests_by_path[key].append(t)
+
+    def add_installs(self, obj, topsrcdir):
+        for src, (dest, _) in obj.installs.iteritems():
+            key = src[len(topsrcdir)+1:]
+            self.installs_by_path[key].append((src, dest))
+        for src, pat, dest in obj.pattern_installs:
+            key = mozpath.join(src[len(topsrcdir)+1:], pat)
+            self.installs_by_path[key].append((src, pat, dest))
+        for path in obj.deferred_installs:
+            self.deferred_installs.add(path[2:])
+
+
+class BinariesCollection(object):
+    """Tracks state of binaries produced by the build."""
+
+    def __init__(self):
+        self.shared_libraries = []
+        self.programs = []
 
 
 class CommonBackend(BuildBackend):
@@ -200,6 +228,7 @@ class CommonBackend(BuildBackend):
         self._idl_manager = XPIDLManager(self.environment)
         self._test_manager = TestManager(self.environment)
         self._webidls = WebIDLCollection()
+        self._binaries = BinariesCollection()
         self._configs = set()
         self._ipdl_sources = set()
 
@@ -208,10 +237,13 @@ class CommonBackend(BuildBackend):
 
         if isinstance(obj, TestManifest):
             for test in obj.tests:
-                self._test_manager.add(test, flavor=obj.flavor,
-                    topsrcdir=obj.topsrcdir)
+                self._test_manager.add(test, obj.flavor, obj.topsrcdir,
+                                       obj.default_support_files)
+            self._test_manager.add_installs(obj, obj.topsrcdir)
 
         elif isinstance(obj, XPIDLFile):
+            # TODO bug 1240134 tracks not processing XPIDL files during
+            # artifact builds.
             self._idl_manager.register_idl(obj)
 
         elif isinstance(obj, ConfigFileSubstitution):
@@ -225,39 +257,84 @@ class CommonBackend(BuildBackend):
 
         # We should consider aggregating WebIDL types in emitter.py.
         elif isinstance(obj, WebIDLFile):
+            # WebIDL isn't relevant to artifact builds.
+            if self.environment.is_artifact_build:
+                return True
+
             self._webidls.sources.add(mozpath.join(obj.srcdir, obj.basename))
 
         elif isinstance(obj, GeneratedEventWebIDLFile):
+            # WebIDL isn't relevant to artifact builds.
+            if self.environment.is_artifact_build:
+                return True
+
             self._webidls.generated_events_sources.add(mozpath.join(
                 obj.srcdir, obj.basename))
 
         elif isinstance(obj, TestWebIDLFile):
+            # WebIDL isn't relevant to artifact builds.
+            if self.environment.is_artifact_build:
+                return True
+
             self._webidls.test_sources.add(mozpath.join(obj.srcdir,
                 obj.basename))
 
         elif isinstance(obj, PreprocessedTestWebIDLFile):
+            # WebIDL isn't relevant to artifact builds.
+            if self.environment.is_artifact_build:
+                return True
+
             self._webidls.preprocessed_test_sources.add(mozpath.join(
                 obj.srcdir, obj.basename))
 
         elif isinstance(obj, GeneratedWebIDLFile):
+            # WebIDL isn't relevant to artifact builds.
+            if self.environment.is_artifact_build:
+                return True
+
             self._webidls.generated_sources.add(mozpath.join(obj.srcdir,
                 obj.basename))
 
         elif isinstance(obj, PreprocessedWebIDLFile):
+            # WebIDL isn't relevant to artifact builds.
+            if self.environment.is_artifact_build:
+                return True
+
             self._webidls.preprocessed_sources.add(mozpath.join(
                 obj.srcdir, obj.basename))
 
         elif isinstance(obj, ExampleWebIDLInterface):
+            # WebIDL isn't relevant to artifact builds.
+            if self.environment.is_artifact_build:
+                return True
+
             self._webidls.example_interfaces.add(obj.name)
 
         elif isinstance(obj, IPDLFile):
+            # IPDL isn't relevant to artifact builds.
+            if self.environment.is_artifact_build:
+                return True
+
             self._ipdl_sources.add(mozpath.join(obj.srcdir, obj.basename))
 
         elif isinstance(obj, UnifiedSources):
+            # Unified sources aren't relevant to artifact builds.
+            if self.environment.is_artifact_build:
+                return True
+
             if obj.have_unified_mapping:
                 self._write_unified_files(obj.unified_source_mapping, obj.objdir)
             if hasattr(self, '_process_unified_sources'):
                 self._process_unified_sources(obj)
+
+        elif isinstance(obj, BaseProgram):
+            self._binaries.programs.append(obj)
+            return False
+
+        elif isinstance(obj, SharedLibrary):
+            self._binaries.shared_libraries.append(obj)
+            return False
+
         else:
             return False
 
@@ -298,10 +375,26 @@ class CommonBackend(BuildBackend):
             self.backend_input_files.add(config.source)
 
         # Write out a machine-readable file describing every test.
-        path = mozpath.join(self.environment.topobjdir, 'all-tests.json')
+        topobjdir = self.environment.topobjdir
+        with self._write_file(mozpath.join(topobjdir, 'all-tests.json')) as fh:
+            json.dump([self._test_manager.tests_by_path,
+                       self._test_manager.manifest_default_support_files], fh)
+
+        path = mozpath.join(self.environment.topobjdir, 'test-installs.json')
         with self._write_file(path) as fh:
-            s = json.dumps(self._test_manager.tests_by_path)
-            fh.write(s)
+            json.dump({k: v for k, v in self._test_manager.installs_by_path.items()
+                       if k in self._test_manager.deferred_installs},
+                      fh,
+                      sort_keys=True,
+                      indent=4)
+
+        # Write out a machine-readable file describing binaries.
+        with self._write_file(mozpath.join(topobjdir, 'binaries.json')) as fh:
+            d = {
+                'shared_libraries': [s.to_dict() for s in self._binaries.shared_libraries],
+                'programs': [p.to_dict() for p in self._binaries.programs],
+            }
+            json.dump(d, fh, sort_keys=True, indent=4)
 
     def _handle_webidl_collection(self, webidls):
         if not webidls.all_stems():
@@ -328,6 +421,8 @@ class CommonBackend(BuildBackend):
         file_lists = mozpath.join(bindings_dir, 'file-lists.json')
         with self._write_file(file_lists) as fh:
             json.dump(o, fh, sort_keys=True, indent=2)
+
+        import mozwebidlcodegen
 
         manager = mozwebidlcodegen.create_build_system_manager(
             self.environment.topsrcdir,

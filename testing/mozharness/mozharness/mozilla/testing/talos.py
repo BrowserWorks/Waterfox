@@ -14,16 +14,22 @@ import copy
 import re
 import json
 
+import mozharness
 from mozharness.base.config import parse_config_file
 from mozharness.base.errors import PythonErrorList
-from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL, FATAL
+from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL
 from mozharness.base.log import INFO, WARNING
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
-from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options, INSTALLER_SUFFIXES
+from mozharness.mozilla.testing.testbase import TestingMixin, testing_config_options
 from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.testing.errors import TinderBoxPrintRe
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.buildbot import TBPL_RETRY, TBPL_FAILURE, TBPL_WARNING
+
+external_tools_path = os.path.join(
+    os.path.abspath(os.path.dirname(os.path.dirname(mozharness.__file__))),
+    'external_tools',
+)
 
 TalosErrorList = PythonErrorList + [
     {'regex': re.compile(r'''run-as: Package '.*' is unknown'''), 'level': DEBUG},
@@ -170,16 +176,24 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         if self.buildbot_config:
             # this is inside automation
             # now let's see if we added spsProfile specs in the commit message
-            junk, junk, opts = self.buildbot_config['sourcestamp']['changes'][-1]['comments'].partition('mozharness:')
+            try:
+                junk, junk, opts = self.buildbot_config['sourcestamp']['changes'][-1]['comments'].partition('mozharness:')
+            except IndexError:
+                # when we don't have comments on changes (bug 1255187)
+                opts = None
+
             if opts:
+              # In the case of a multi-line commit message, only examine
+              # the first line for mozharness options
+              opts = opts.split('\n')[0]
               opts = re.sub(r'\w+:.*', '', opts).strip().split(' ')
               if "--spsProfile" in opts:
                   # overwrite whatever was set here.
                   self.sps_profile = True
               try:
-                    idx = opts.index('--spsProfileInterval')
-                    if len(opts) > idx + 1:
-                        self.sps_profile_interval = opts[idx + 1]
+                  idx = opts.index('--spsProfileInterval')
+                  if len(opts) > idx + 1:
+                      self.sps_profile_interval = opts[idx + 1]
               except ValueError:
                   pass
         # finally, if sps_profile is set, we add that to the talos options
@@ -192,7 +206,6 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
         return sps_results
 
     def query_abs_dirs(self):
-        c = self.config
         if self.abs_dirs:
             return self.abs_dirs
         abs_dirs = super(Talos, self).query_abs_dirs()
@@ -333,8 +346,8 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
             parser.update_worst_log_and_tbpl_levels(WARNING, TBPL_WARNING)
             return
 
-        schema_path = os.path.join(self.talos_path, 'treeherder-schemas',
-                                   'performance-artifact.json')
+        schema_path = os.path.join(external_tools_path,
+                                   'performance-artifact-schema.json')
         self.info("Validating PERFHERDER_DATA against %s" % schema_path)
         try:
             with open(schema_path) as f:

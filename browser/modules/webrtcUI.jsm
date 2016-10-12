@@ -52,6 +52,11 @@ this.webrtcUI = {
     mm.removeMessageListener("webrtc:Request", this);
     mm.removeMessageListener("webrtc:CancelRequest", this);
     mm.removeMessageListener("webrtc:UpdateBrowserIndicators", this);
+
+    if (gIndicatorWindow) {
+      gIndicatorWindow.close();
+      gIndicatorWindow = null;
+    }
   },
 
   processIndicators: new Map(),
@@ -120,7 +125,7 @@ this.webrtcUI = {
     for (let stream of this._streams) {
       if (stream.browser == aOldBrowser)
         stream.browser = aNewBrowser;
-    };
+    }
   },
 
   showSharingDoorhanger: function(aActiveStream, aType) {
@@ -220,7 +225,18 @@ this.webrtcUI = {
         updateIndicators(aMessage.data, aMessage.target);
         break;
       case "webrtc:UpdateBrowserIndicators":
-        webrtcUI._streams.push({browser: aMessage.target, state: aMessage.data});
+        let id = aMessage.data.windowId;
+        let index;
+        for (index = 0; index < webrtcUI._streams.length; ++index) {
+          if (webrtcUI._streams[index].state.windowId == id)
+            break;
+        }
+        // If there's no documentURI, the update is actually a removal of the
+        // stream, triggered by the recording-window-ended notification.
+        if (!aMessage.data.documentURI && index < webrtcUI._streams.length)
+          webrtcUI._streams.splice(index, 1);
+        else
+          webrtcUI._streams[index] = {browser: aMessage.target, state: aMessage.data};
         updateBrowserSpecificIndicator(aMessage.target, aMessage.data);
         break;
       case "child-process-shutdown":
@@ -251,18 +267,11 @@ function getHost(uri, href) {
       uri = Services.io.newURI(href, null, null);
     }
     host = uri.host;
-  } catch (ex) {};
+  } catch (ex) {}
   if (!host) {
     if (uri && uri.scheme.toLowerCase() == "about") {
-      // Special case-ing Loop/ Hello gUM requests.
-      if (uri.specIgnoringRef == "about:loopconversation") {
-        const kBundleURI = "chrome://browser/locale/loop/loop.properties";
-        let bundle = Services.strings.createBundle(kBundleURI);
-        host = bundle.GetStringFromName("clientShortname2");
-      } else {
-        // For other about URIs, just use the full spec, without any #hash parts.
-        host = uri.specIgnoringRef;
-      }
+      // For about URIs, just use the full spec, without any #hash parts.
+      host = uri.specIgnoringRef;
     } else {
       // This is unfortunate, but we should display *something*...
       const kBundleURI = "chrome://browser/locale/browser.properties";
@@ -279,6 +288,7 @@ function prompt(aBrowser, aRequest) {
        requestTypes: requestTypes} = aRequest;
   let uri = Services.io.newURI(aRequest.documentURI, null, null);
   let host = getHost(uri);
+  let principal = Services.scriptSecurityManager.createCodebasePrincipal(uri, {});
   let chromeDoc = aBrowser.ownerDocument;
   let chromeWin = chromeDoc.defaultView;
   let stringBundle = chromeWin.gNavigatorBundle;
@@ -351,14 +361,14 @@ function prompt(aBrowser, aRequest) {
       let chromeDoc = this.browser.ownerDocument;
 
       if (aTopic == "shown") {
-        let PopupNotifications = chromeDoc.defaultView.PopupNotifications;
         let popupId = "Devices";
         if (requestTypes.length == 1 && (requestTypes[0] == "Microphone" ||
                                          requestTypes[0] == "AudioCapture"))
           popupId = "Microphone";
         if (requestTypes.indexOf("Screen") != -1)
           popupId = "Screen";
-        PopupNotifications.panel.firstChild.setAttribute("popupid", "webRTC-share" + popupId);
+        chromeDoc.getElementById("webRTC-shareDevices-notification")
+                 .setAttribute("popupid", "webRTC-share" + popupId);
       }
 
       if (aTopic != "showing")
@@ -374,7 +384,16 @@ function prompt(aBrowser, aRequest) {
         if (micPerm == perms.PROMPT_ACTION)
           micPerm = perms.UNKNOWN_ACTION;
 
+        let camPermanentPerm = perms.testExactPermanentPermission(principal, "camera");
         let camPerm = perms.testExactPermission(uri, "camera");
+
+        // Session approval given but never used to allocate a camera, remove
+        // and ask again
+        if (camPerm && !camPermanentPerm) {
+          perms.remove(uri, "camera");
+          camPerm = perms.UNKNOWN_ACTION;
+        }
+
         if (camPerm == perms.PROMPT_ACTION)
           camPerm = perms.UNKNOWN_ACTION;
 
@@ -500,14 +519,6 @@ function prompt(aBrowser, aRequest) {
       if (!sharingAudio)
         listDevices(micMenupopup, audioDevices);
 
-      if (requestTypes.length == 2) {
-        let stringBundle = chromeDoc.defaultView.gNavigatorBundle;
-        if (!sharingScreen)
-          addDeviceToList(camMenupopup, stringBundle.getString("getUserMedia.noVideo.label"), "-1");
-        if (!sharingAudio)
-          addDeviceToList(micMenupopup, stringBundle.getString("getUserMedia.noAudio.label"), "-1");
-      }
-
       this.mainAction.callback = function(aRemember) {
         let allowedDevices = [];
         let perms = Services.perms;
@@ -515,11 +526,14 @@ function prompt(aBrowser, aRequest) {
           let listId = "webRTC-select" + (sharingScreen ? "Window" : "Camera") + "-menulist";
           let videoDeviceIndex = chromeDoc.getElementById(listId).value;
           let allowCamera = videoDeviceIndex != "-1";
-          if (allowCamera)
+          if (allowCamera) {
             allowedDevices.push(videoDeviceIndex);
-          if (aRemember) {
-            perms.add(uri, "camera",
-                      allowCamera ? perms.ALLOW_ACTION : perms.DENY_ACTION);
+            // Session permission will be removed after use
+            // (it's really one-shot, not for the entire session)
+            perms.add(uri, "camera", perms.ALLOW_ACTION,
+                      aRemember ? perms.EXPIRE_NEVER : perms.EXPIRE_SESSION);
+          } else if (aRemember) {
+            perms.add(uri, "camera", perms.DENY_ACTION);
           }
         }
         if (audioDevices.length) {
@@ -898,9 +912,10 @@ function updateBrowserSpecificIndicator(aBrowser, aState) {
     dismissed: true,
     eventCallback: function(aTopic, aNewBrowser) {
       if (aTopic == "shown") {
-        let PopupNotifications = this.browser.ownerDocument.defaultView.PopupNotifications;
         let popupId = captureState == "Microphone" ? "Microphone" : "Devices";
-        PopupNotifications.panel.firstChild.setAttribute("popupid", "webRTC-sharing" + popupId);
+        this.browser.ownerDocument
+            .getElementById("webRTC-sharingDevices-notification")
+            .setAttribute("popupid", "webRTC-sharing" + popupId);
       }
 
       if (aTopic == "swapping") {
@@ -937,8 +952,9 @@ function updateBrowserSpecificIndicator(aBrowser, aState) {
     dismissed: true,
     eventCallback: function(aTopic, aNewBrowser) {
       if (aTopic == "shown") {
-        let PopupNotifications = this.browser.ownerDocument.defaultView.PopupNotifications;
-        PopupNotifications.panel.firstChild.setAttribute("popupid", "webRTC-sharingScreen");
+        this.browser.ownerDocument
+            .getElementById("webRTC-sharingScreen-notification")
+            .setAttribute("popupid", "webRTC-sharingScreen");
       }
 
       if (aTopic == "swapping") {

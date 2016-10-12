@@ -217,6 +217,7 @@ if (typeof(computedStyle) == 'undefined') {
 SimpleTest._tests = [];
 SimpleTest._stopOnLoad = true;
 SimpleTest._cleanupFunctions = [];
+SimpleTest._timeoutFunctions = [];
 SimpleTest.expected = 'pass';
 SimpleTest.num_failed = 0;
 SimpleTest._inChaosMode = false;
@@ -607,7 +608,6 @@ window.setTimeout = function SimpleTest_setTimeoutShim() {
         case "browser":
         case "chrome":
         case "a11y":
-        case "webapprtContent":
             break;
         default:
             if (!SimpleTest._alreadyFinished && arguments.length > 1 && arguments[1] > 0) {
@@ -646,12 +646,18 @@ SimpleTest.requestFlakyTimeout = function (reason) {
 SimpleTest._pendingWaitForFocusCount = 0;
 
 /**
- * Version of waitForFocus that returns a promise.
+ * Version of waitForFocus that returns a promise. The Promise will
+ * not resolve to the focused window, as it might be a CPOW (and Promises
+ * cannot be resolved with CPOWs). If you require the focused window,
+ * you should use waitForFocus instead.
  */
 SimpleTest.promiseFocus = function *(targetWindow, expectBlankPage)
 {
     return new Promise(function (resolve, reject) {
-        SimpleTest.waitForFocus(win => resolve(win), targetWindow, expectBlankPage);
+        SimpleTest.waitForFocus(win => {
+            // Just resolve, without passing the window (see bug 1233497)
+            resolve();
+        }, targetWindow, expectBlankPage);
     });
 }
 
@@ -787,7 +793,7 @@ SimpleTest.waitForFocus = function (callback, targetWindow, expectBlankPage) {
       if (isChildProcess) {
           /* This message is used when an inner child frame must be focused. */
           addMessageListener("WaitForFocus:FocusChild", function focusChild(msg) {
-              removeMessageListener("WaitForFocus:ChildFocused", focusChild);
+              removeMessageListener("WaitForFocus:FocusChild", focusChild);
               finished = false;
               waitForLoadAndFocusOnWindow(msg.objects.child);
           });
@@ -844,6 +850,7 @@ SimpleTest.waitForFocus = function (callback, targetWindow, expectBlankPage) {
             }
             else {
                 browser.messageManager.removeMessageListener("WaitForFocus:ChildFocused", waitTest);
+                SimpleTest._pendingWaitForFocusCount--;
                 setTimeout(callback, 0, browser ? browser.contentWindowAsCPOW : targetWindow);
             }
         });
@@ -967,6 +974,45 @@ SimpleTest.waitForClipboard = function(aExpectedStringOrValidatorFn, aSetupFn,
 }
 
 /**
+ * Wait for a condition for a while (actually up to 3s here).
+ *
+ * @param aCond
+ *        A function returns the result of the condition
+ * @param aCallback
+ *        A function called after the condition is passed or timeout.
+ * @param aErrorMsg
+ *        The message displayed when the condition failed to pass
+ *        before timeout.
+ */
+SimpleTest.waitForCondition = function (aCond, aCallback, aErrorMsg) {
+  var tries = 0;
+  var interval = setInterval(() => {
+    if (tries >= 30) {
+      ok(false, aErrorMsg);
+      moveOn();
+      return;
+    }
+    var conditionPassed;
+    try {
+      conditionPassed = aCond();
+    } catch (e) {
+      ok(false, `${e}\n${e.stack}`);
+      conditionPassed = false;
+    }
+    if (conditionPassed) {
+      moveOn();
+    }
+    tries++;
+  }, 100);
+  var moveOn = () => { clearInterval(interval); aCallback(); };
+};
+SimpleTest.promiseWaitForCondition = function (aCond, aErrorMsg) {
+  return new Promise(resolve => {
+    this.waitForCondition(aCond, resolve, aErrorMsg);
+  });
+};
+
+/**
  * Executes a function shortly after the call, but lets the caller continue
  * working (or finish).
  */
@@ -982,6 +1028,10 @@ SimpleTest.registerCleanupFunction = function(aFunc) {
     SimpleTest._cleanupFunctions.push(aFunc);
 };
 
+SimpleTest.registerTimeoutFunction = function(aFunc) {
+    SimpleTest._timeoutFunctions.push(aFunc);
+};
+
 SimpleTest.testInChaosMode = function() {
     if (SimpleTest._inChaosMode) {
       // It's already enabled for this test, don't enter twice
@@ -990,6 +1040,13 @@ SimpleTest.testInChaosMode = function() {
     SpecialPowers.DOMWindowUtils.enterChaosMode();
     SimpleTest._inChaosMode = true;
 };
+
+SimpleTest.timeout = function() {
+    for (let func of SimpleTest._timeoutFunctions) {
+        func();
+    }
+    SimpleTest._timeoutFunctions = [];
+}
 
 /**
  * Finishes the tests. This is automatically called, except when
@@ -1014,6 +1071,8 @@ SimpleTest.finish = function() {
         SimpleTest._logResult(test, successInfo, failureInfo);
         SimpleTest._tests.push(test);
     }
+
+    SimpleTest._timeoutFunctions = [];
 
     SimpleTest.testsLength = SimpleTest._tests.length;
 
@@ -1049,6 +1108,15 @@ SimpleTest.finish = function() {
                                + "SimpleTest.waitForExplicitFinish() if you need "
                                + "it.)");
         }
+        if (SimpleTest._expectingRegisteredServiceWorker) {
+            if (!SpecialPowers.isServiceWorkerRegistered()) {
+                SimpleTest.ok(false, "This test is expected to leave a service worker registered");
+            }
+        } else {
+            if (SpecialPowers.isServiceWorkerRegistered()) {
+                SimpleTest.ok(false, "This test left a service worker registered without cleaning it up");
+            }
+        }
 
         if (parentRunner) {
             /* We're running in an iframe, and the parent has a TestRunner */
@@ -1056,7 +1124,6 @@ SimpleTest.finish = function() {
         }
 
         if (!parentRunner || parentRunner.showTestReport) {
-            SpecialPowers.flushAllAppsLaunchable();
             SpecialPowers.flushPermissions(function () {
               SpecialPowers.flushPrefEnv(function() {
                 SimpleTest.showReport();
@@ -1272,6 +1339,14 @@ SimpleTest.isIgnoringAllUncaughtExceptions = function () {
 };
 
 /**
+ * Indicates to the test framework that this test is expected to leave a
+ * service worker registered when it finishes.
+ */
+SimpleTest.expectRegisteredServiceWorker = function () {
+    SimpleTest._expectingRegisteredServiceWorker = true;
+};
+
+/**
  * Resets any state this SimpleTest object has.  This is important for
  * browser chrome mochitests, which reuse the same SimpleTest object
  * across a run.
@@ -1279,6 +1354,7 @@ SimpleTest.isIgnoringAllUncaughtExceptions = function () {
 SimpleTest.reset = function () {
     SimpleTest._ignoringAllUncaughtExceptions = false;
     SimpleTest._expectingUncaughtException = false;
+    SimpleTest._expectingRegisteredServiceWorker = false;
     SimpleTest._bufferedMessages = [];
 };
 
@@ -1503,7 +1579,8 @@ var isDeeply = SimpleTest.isDeeply;
 var info = SimpleTest.info;
 
 var gOldOnError = window.onerror;
-window.onerror = function simpletestOnerror(errorMsg, url, lineNumber) {
+window.onerror = function simpletestOnerror(errorMsg, url, lineNumber,
+                                            columnNumber, originalException) {
     // Log the message.
     // XXX Chrome mochitests sometimes trigger this window.onerror handler,
     // but there are a number of uncaught JS exceptions from those tests.
@@ -1512,7 +1589,13 @@ window.onerror = function simpletestOnerror(errorMsg, url, lineNumber) {
     // a test failure.  See bug 652494.
     var isExpected = !!SimpleTest._expectingUncaughtException;
     var message = (isExpected ? "expected " : "") + "uncaught exception";
-    var error = errorMsg + " at " + url + ":" + lineNumber;
+    var error = errorMsg + " at ";
+    try {
+        error += originalException.stack;
+    } catch (e) {
+        // At least use the url+line+column we were given
+        error += url + ":" + lineNumber + ":" + columnNumber;
+    }
     if (!SimpleTest._ignoringAllUncaughtExceptions) {
         // Don't log if SimpleTest.finish() is already called, it would cause failures
         if (!SimpleTest._alreadyFinished)
@@ -1538,7 +1621,7 @@ window.onerror = function simpletestOnerror(errorMsg, url, lineNumber) {
         }
     }
 
-    if (!SimpleTest._stopOnLoad && !isExpected) {
+    if (!SimpleTest._stopOnLoad && !isExpected && !SimpleTest._alreadyFinished) {
         // Need to finish() manually here, yet let the test actually end first.
         SimpleTest.executeSoon(SimpleTest.finish);
     }

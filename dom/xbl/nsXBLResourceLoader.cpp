@@ -17,7 +17,8 @@
 #include "nsIDocumentObserver.h"
 #include "imgILoader.h"
 #include "imgRequestProxy.h"
-#include "mozilla/CSSStyleSheet.h"
+#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheetHandleInlines.h"
 #include "mozilla/css/Loader.h"
 #include "nsIURI.h"
 #include "nsNetUtil.h"
@@ -112,16 +113,11 @@ nsXBLResourceLoader::LoadResources(bool* aResult)
       continue;
 
     if (curr->mType == nsGkAtoms::image) {
-      if (!nsContentUtils::CanLoadImage(url, doc, doc, docPrincipal)) {
-        // We're not permitted to load this image, move on...
-        continue;
-      }
-
       // Now kick off the image load...
       // Passing nullptr for pretty much everything -- cause we don't care!
       // XXX: initialDocumentURI is nullptr! 
       RefPtr<imgRequestProxy> req;
-      nsContentUtils::LoadImage(url, doc, docPrincipal, docURL,
+      nsContentUtils::LoadImage(url, doc, doc, docPrincipal, docURL,
                                 doc->GetReferrerPolicy(), nullptr,
                                 nsIRequest::LOAD_BACKGROUND, EmptyString(),
                                 getter_AddRefs(req));
@@ -139,8 +135,8 @@ nsXBLResourceLoader::LoadResources(bool* aResult)
           CheckLoadURIWithPrincipal(docPrincipal, url,
                                     nsIScriptSecurityManager::ALLOW_CHROME);
         if (NS_SUCCEEDED(rv)) {
-          RefPtr<CSSStyleSheet> sheet;
-          rv = cssLoader->LoadSheetSync(url, getter_AddRefs(sheet));
+          StyleSheetHandle::RefPtr sheet;
+          rv = cssLoader->LoadSheetSync(url, &sheet);
           NS_ASSERTION(NS_SUCCEEDED(rv), "Load failed!!!");
           if (NS_SUCCEEDED(rv))
           {
@@ -168,7 +164,7 @@ nsXBLResourceLoader::LoadResources(bool* aResult)
 
 // nsICSSLoaderObserver
 NS_IMETHODIMP
-nsXBLResourceLoader::StyleSheetLoaded(CSSStyleSheet* aSheet,
+nsXBLResourceLoader::StyleSheetLoaded(StyleSheetHandle aSheet,
                                       bool aWasAlternate,
                                       nsresult aStatus)
 {
@@ -232,7 +228,7 @@ nsXBLResourceLoader::NotifyBoundElements()
     if (ready) {
       // We need the document to flush out frame construction and
       // such, so we want to use the current document.
-      nsIDocument* doc = content->GetCurrentDoc();
+      nsIDocument* doc = content->GetUncomposedDoc();
     
       if (doc) {
         // Flush first to make sure we can get the frame for content

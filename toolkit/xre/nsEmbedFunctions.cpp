@@ -79,7 +79,7 @@
  #include "base/histogram.h"
 
 #if defined(MOZ_SANDBOX) && defined(XP_WIN)
-#define TARGET_SANDBOX_EXPORTS
+#include "mozilla/sandboxTarget.h"
 #include "mozilla/sandboxing/loggingCallbacks.h"
 #endif
 
@@ -93,6 +93,10 @@ using mozilla::_ipdltest::IPDLUnitTestProcessChild;
 #ifdef MOZ_B2G_LOADER
 #include "nsLocalFile.h"
 #include "nsXREAppData.h"
+#endif
+
+#ifdef MOZ_JPROF
+#include "jprof.h"
 #endif
 
 using namespace mozilla;
@@ -214,7 +218,7 @@ const char*
 XRE_ChildProcessTypeToString(GeckoProcessType aProcessType)
 {
   return (aProcessType < GeckoProcessType_End) ?
-    kGeckoProcessTypeString[aProcessType] : nullptr;
+    kGeckoProcessTypeString[aProcessType] : "invalid";
 }
 
 namespace mozilla {
@@ -297,14 +301,16 @@ SetTaskbarGroupId(const nsString& aId)
 nsresult
 XRE_InitChildProcess(int aArgc,
                      char* aArgv[],
-                     GMPLoader* aGMPLoader)
+                     const XREChildData* aChildData)
 {
   NS_ENSURE_ARG_MIN(aArgc, 2);
   NS_ENSURE_ARG_POINTER(aArgv);
   NS_ENSURE_ARG_POINTER(aArgv[0]);
+  MOZ_ASSERT(aChildData);
 
-#ifdef HAS_DLL_BLOCKLIST
-  DllBlocklist_Initialize();
+#ifdef MOZ_JPROF
+  // Call the code to install our handler
+  setupProfilingStuff();
 #endif
 
   // This is needed by Telemetry to initialize histogram collection.
@@ -314,13 +320,13 @@ XRE_InitChildProcess(int aArgc,
 #if !defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_GONK)
   // On non-Fennec Gecko, the GMPLoader code resides in plugin-container,
   // and we must forward it through to the GMP code here.
-  GMPProcessChild::SetGMPLoader(aGMPLoader);
+  GMPProcessChild::SetGMPLoader(aChildData->gmpLoader.get());
 #else
   // On Fennec, the GMPLoader's code resides inside XUL (because for the time
   // being GMPLoader relies upon NSPR, which we can't use in plugin-container
   // on Android), so we create it here inside XUL and pass it to the GMP code.
-  nsAutoPtr<GMPLoader> loader(CreateGMPLoader(nullptr));
-  GMPProcessChild::SetGMPLoader(loader);
+  UniquePtr<GMPLoader> loader = CreateGMPLoader(nullptr);
+  GMPProcessChild::SetGMPLoader(loader.get());
 #endif
 
 #if defined(XP_WIN)
@@ -345,6 +351,12 @@ XRE_InitChildProcess(int aArgc,
     if (_fileno(stdin) == -1 || _get_osfhandle(fileno(stdin)) == -1)
         freopen("CONIN$", "r", stdin);
   }
+
+#if defined(MOZ_SANDBOX)
+  if (aChildData->sandboxTargetServices) {
+    SandboxTarget::Instance()->SetTargetServices(aChildData->sandboxTargetServices);
+  }
+#endif
 #endif
 
   // NB: This must be called before profiler_init
@@ -471,23 +483,33 @@ XRE_InitChildProcess(int aArgc,
 #if MOZ_WIDGET_GTK == 2
   XRE_GlibInit();
 #endif
+#ifdef MOZ_WIDGET_GTK
+  // Setting the name here avoids the need to pass this through to gtk_init().
+  g_set_prgname(aArgv[0]);
+#endif
 
 #if defined(MOZ_WIDGET_QT)
   nsQAppInstance::AddRef();
 #endif
 
-  if (PR_GetEnv("MOZ_DEBUG_CHILD_PROCESS")) {
 #ifdef OS_POSIX
-      printf("\n\nCHILDCHILDCHILDCHILD\n  debug me @ %d\n\n", getpid());
-      sleep(30);
-#elif defined(OS_WIN)
-      // Windows has a decent JIT debugging story, so NS_DebugBreak does the
-      // right thing.
-      NS_DebugBreak(NS_DEBUG_BREAK,
-                    "Invoking NS_DebugBreak() to debug child process",
-                    nullptr, __FILE__, __LINE__);
-#endif
+  if (PR_GetEnv("MOZ_DEBUG_CHILD_PROCESS") ||
+      PR_GetEnv("MOZ_DEBUG_CHILD_PAUSE")) {
+    printf_stderr("\n\nCHILDCHILDCHILDCHILD\n  debug me @ %d\n\n",
+                  base::GetCurrentProcId());
+    sleep(30);
   }
+#elif defined(OS_WIN)
+  if (PR_GetEnv("MOZ_DEBUG_CHILD_PROCESS")) {
+    NS_DebugBreak(NS_DEBUG_BREAK,
+                  "Invoking NS_DebugBreak() to debug child process",
+                  nullptr, __FILE__, __LINE__);
+  } else if (PR_GetEnv("MOZ_DEBUG_CHILD_PAUSE")) {
+    printf_stderr("\n\nCHILDCHILDCHILDCHILD\n  debug me @ %d\n\n",
+                  base::GetCurrentProcId());
+    ::Sleep(10000);
+  }
+#endif
 
   // child processes launched by GeckoChildProcessHost get this magic
   // argument appended to their command lines
@@ -606,6 +628,12 @@ XRE_InitChildProcess(int aArgc,
         return NS_ERROR_FAILURE;
       }
 
+#ifdef MOZ_CRASHREPORTER
+#if defined(XP_WIN) || defined(XP_MACOSX)
+      CrashReporter::InitChildProcessTmpDir();
+#endif
+#endif
+
 #if defined(XP_WIN)
       // Set child processes up such that they will get killed after the
       // chrome process is killed in cases where the user shuts the system
@@ -616,7 +644,7 @@ XRE_InitChildProcess(int aArgc,
 #if defined(MOZ_SANDBOX) && defined(XP_WIN)
       // We need to do this after the process has been initialised, as
       // InitLoggingIfRequired may need access to prefs.
-      mozilla::sandboxing::InitLoggingIfRequired();
+      mozilla::sandboxing::InitLoggingIfRequired(aChildData->ProvideLogFunction);
 #endif
 
       OverrideDefaultLocaleIfNeeded();
@@ -628,6 +656,11 @@ XRE_InitChildProcess(int aArgc,
       // scope and being deleted
       process->CleanUp();
       mozilla::Omnijar::CleanUp();
+
+#if defined(XP_MACOSX)
+      // Everybody should be done using shared memory by now.
+      mozilla::ipc::SharedMemoryBasic::Shutdown();
+#endif
     }
   }
 
@@ -648,7 +681,7 @@ XRE_GetIOMessageLoop()
 
 namespace {
 
-class MainFunctionRunnable : public nsRunnable
+class MainFunctionRunnable : public Runnable
 {
 public:
   NS_DECL_NSIRUNNABLE
@@ -780,7 +813,8 @@ XRE_RunAppShell()
       bool couldNest = loop->NestableTasksAllowed();
 
       loop->SetNestableTasksAllowed(true);
-      loop->PostTask(FROM_HERE, new MessageLoop::QuitTask());
+      RefPtr<Runnable> task = new MessageLoop::QuitTask();
+      loop->PostTask(task.forget());
       loop->Run();
 
       loop->SetNestableTasksAllowed(couldNest);
@@ -789,20 +823,10 @@ XRE_RunAppShell()
     return appShell->Run();
 }
 
-template<>
-struct RunnableMethodTraits<ContentChild>
-{
-    static void RetainCallee(ContentChild* obj) { }
-    static void ReleaseCallee(ContentChild* obj) { }
-};
-
 void
 XRE_ShutdownChildProcess()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
-#if defined(XP_MACOSX)
-  mozilla::ipc::SharedMemoryBasic::Shutdown();
-#endif
 
   mozilla::DebugOnly<MessageLoop*> ioLoop = XRE_GetIOMessageLoop();
   MOZ_ASSERT(!!ioLoop, "Bad shutdown order");

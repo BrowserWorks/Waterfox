@@ -19,17 +19,17 @@ const TEST_URI = `
   <div class="node-2">Node 2</div>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
 
   // Mock the highlighter front.
   let HighlighterFront = {
     isShown: false,
-    show: function() {
+    show: function () {
       this.isShown = true;
     },
-    hide: function() {
+    hide: function () {
       this.isShown = false;
     }
   };

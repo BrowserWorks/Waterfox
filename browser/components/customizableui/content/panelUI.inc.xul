@@ -24,6 +24,7 @@
           <hbox id="PanelUI-fxa-status"
                 defaultlabel="&fxaSignIn.label;"
                 signedinTooltiptext="&fxaSignedIn.tooltip;"
+                tooltiptext="&fxaSignedIn.tooltip;"
                 errorlabel="&fxaSignInError.label;"
                 unverifiedlabel="&fxaUnverified.label;"
                 onclick="if (event.which == 1) gFxAccounts.onMenuPanelCommand();">
@@ -84,11 +85,6 @@
                        label="&appMenuHistory.clearRecent.label;"
                        class="subviewbutton"
                        command="Tools:Sanitize"/>
-        <toolbarbutton id="sync-tabs-menuitem2"
-                       class="syncTabsMenuItem subviewbutton"
-                       label="&syncTabsMenu3.label;"
-                       oncommand="BrowserOpenSyncTabs();"
-                       hidden="true"/>
         <toolbarbutton id="appMenuRestoreLastSession"
                        label="&appMenuHistory.restoreSession.label;"
                        class="subviewbutton"
@@ -112,12 +108,18 @@
         <!-- this widget has 3 boxes in the body, but only 1 is ever visible -->
         <!-- When Sync is ready to sync -->
         <vbox id="PanelUI-remotetabs-main" observes="sync-syncnow-state">
-          <toolbarbutton id="PanelUI-remotetabs-syncnow"
-                         observes="sync-status"
-                         class="subviewbutton"
-                         oncommand="gSyncUI.doSync();"
-                         closemenu="none"/>
-          <menuseparator id="PanelUI-remotetabs-separator"/>
+          <vbox id="PanelUI-remotetabs-buttons">
+            <toolbarbutton id="PanelUI-remotetabs-view-sidebar"
+                           class="subviewbutton"
+                           observes="viewTabsSidebar"
+                           label="&appMenuRemoteTabs.sidebar.label;"/>
+            <toolbarbutton id="PanelUI-remotetabs-syncnow"
+                           observes="sync-status"
+                           class="subviewbutton"
+                           oncommand="gSyncUI.doSync();"
+                           closemenu="none"/>
+            <menuseparator id="PanelUI-remotetabs-separator"/>
+          </vbox>
           <deck id="PanelUI-remotetabs-deck">
             <!-- Sync is ready to Sync and the "tabs" engine is enabled -->
             <vbox id="PanelUI-remotetabs-tabspane">
@@ -135,13 +137,13 @@
                 <hbox pack="center">
                   <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                                  label="&appMenuRemoteTabs.openprefs.label;"
-                                 oncommand="gSyncUI.openSetup();"/>
+                                 oncommand="gSyncUI.openSetup(null, 'synced-tabs');"/>
                 </hbox>
               </vbox>
             </hbox>
             <!-- Sync is ready to Sync but we are still fetching the tabs to show -->
             <vbox id="PanelUI-remotetabs-fetching">
-              <label>&appMenuRemoteTabs.fetching.label;</label>
+              <!-- Show intentionally blank panel, see bug 1239845 -->
             </vbox>
             <!-- Sync has only 1 (ie, this) device connected -->
             <hbox id="PanelUI-remotetabs-nodevicespane" pack="center" flex="1">
@@ -149,9 +151,10 @@
                 <hbox pack="center">
                   <image class="fxaSyncIllustration" alt=""/>
                 </hbox>
-                <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.noclients.label;</label>
+                <label class="PanelUI-remotetabs-instruction-title">&appMenuRemoteTabs.noclients.title;</label>
+                <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.noclients.subtitle;</label>
                 <!-- The inner HTML for PanelUI-remotetabs-mobile-promo is built at runtime -->
-                <label id="PanelUI-remotetabs-mobile-promo"/>
+                <label id="PanelUI-remotetabs-mobile-promo" fxAccountsBrand="&syncBrand.fxAccount.label;"/>
               </vbox>
             </hbox>
           </deck>
@@ -168,7 +171,7 @@
             <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
             <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                            label="&appMenuRemoteTabs.signin.label;"
-                           oncommand="gSyncUI.openSetup();"/>
+                           oncommand="gSyncUI.openSetup(null, 'synced-tabs');"/>
           </vbox>
           <!-- When Sync needs re-authentication. This uses the exact same messaging
                as "Sync is not configured" but remains a separate box so we get
@@ -182,7 +185,7 @@
             <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
             <toolbarbutton class="PanelUI-remotetabs-prefs-button"
                            label="&appMenuRemoteTabs.signin.label;"
-                           oncommand="gSyncUI.openSetup();"/>
+                           oncommand="gSyncUI.openSetup(null, 'synced-tabs');"/>
           </vbox>
         </hbox>
       </vbox>
@@ -216,7 +219,7 @@
                        class="subviewbutton cui-withicon"
                        oncommand="PlacesCommandHook.showPlacesOrganizer('BookmarksToolbar'); PanelUI.hide();"/>
         <toolbarbutton id="panelMenu_unsortedBookmarks"
-                       label="&unsortedBookmarksCmd.label;"
+                       label="&otherBookmarksCmd.label;"
                        class="subviewbutton cui-withicon"
                        oncommand="PlacesCommandHook.showPlacesOrganizer('UnfiledBookmarks'); PanelUI.hide();"/>
         <toolbarseparator class="small-separator"/>
@@ -239,10 +242,13 @@
 
     <panelview id="PanelUI-socialapi" flex="1"/>
 
-    <panelview id="PanelUI-loopapi" flex="1"/>
-
     <panelview id="PanelUI-feeds" flex="1" oncommand="FeedHandler.subscribeToFeed(null, event);">
-      <label value="&feedsMenu.label;" class="panel-subview-header"/>
+      <label value="&feedsMenu2.label;" class="panel-subview-header"/>
+    </panelview>
+
+    <panelview id="PanelUI-containers" flex="1">
+      <label value="&containersMenu.label;" class="panel-subview-header"/>
+      <vbox id="PanelUI-containersItems"/>
     </panelview>
 
     <panelview id="PanelUI-helpView" flex="1" class="PanelUI-subView">

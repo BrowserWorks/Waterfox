@@ -1,0 +1,358 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test the web_accessible_resources manifest directive</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/ExtensionTestUtils.js"></script>
+  <script type="text/javascript" src="head.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+
+<script type="text/javascript">
+"use strict";
+
+/* eslint-disable mozilla/balanced-listeners */
+
+SimpleTest.registerCleanupFunction(() => {
+  SpecialPowers.clearUserPref("security.mixed_content.block_display_content");
+});
+
+let image = atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEUAA" +
+                 "ACnej3aAAAAAXRSTlMAQObYZgAAAApJREFUCNdjYAAAAAIAAeIhvDMAAAAASUVORK5CYII=");
+const IMAGE_ARRAYBUFFER = Uint8Array.from(image, byte => byte.charCodeAt(0)).buffer;
+
+function testImageLoading(src, expectedAction) {
+  let imageLoadingPromise = new Promise((resolve, reject) => {
+    let cleanupListeners;
+    let testImage = document.createElement("img");
+    testImage.setAttribute("src", src);
+
+    let loadListener = () => {
+      cleanupListeners();
+      resolve(expectedAction === "loaded");
+    };
+
+    let errorListener = () => {
+      cleanupListeners();
+      resolve(expectedAction === "blocked");
+    };
+
+    cleanupListeners = () => {
+      testImage.removeEventListener("load", loadListener);
+      testImage.removeEventListener("error", errorListener);
+    };
+
+    testImage.addEventListener("load", loadListener);
+    testImage.addEventListener("error", errorListener);
+
+    document.body.appendChild(testImage);
+  });
+
+  imageLoadingPromise.then(success => {
+    browser.runtime.sendMessage({name: "image-loading", expectedAction, success});
+  });
+}
+
+add_task(function* test_web_accessible_resources() {
+  function background() {
+    let gotURL;
+    let tabId;
+
+    function loadFrame(url) {
+      return new Promise(resolve => {
+        browser.tabs.sendMessage(tabId, ["load-iframe", url], reply => {
+          resolve(reply);
+        });
+      });
+    }
+
+    let urls = [
+      [browser.extension.getURL("accessible.html"), true],
+      [browser.extension.getURL("accessible.html") + "?foo=bar", true],
+      [browser.extension.getURL("accessible.html") + "#!foo=bar", true],
+      [browser.extension.getURL("forbidden.html"), false],
+      [browser.extension.getURL("wild1.html"), true],
+      [browser.extension.getURL("wild2.htm"), false],
+    ];
+
+    function runTest() {
+      if (!urls.length) {
+        browser.test.notifyPass("web-accessible-resources");
+        return;
+      }
+
+      let [url, shouldLoad] = urls.shift();
+      return loadFrame(url).then(success => {
+        browser.test.assertEq(shouldLoad, success, "Load was successful");
+        if (shouldLoad) {
+          browser.test.assertEq(url, gotURL, "Got expected url");
+        } else {
+          browser.test.assertEq(undefined, gotURL, "Got no url");
+        }
+        gotURL = undefined;
+
+        return runTest();
+      });
+    }
+
+    browser.runtime.onMessage.addListener(([msg, url], sender) => {
+      if (msg == "content-script-ready") {
+        tabId = sender.tab.id;
+        runTest();
+      } else if (msg == "page-script") {
+        browser.test.assertEq(undefined, gotURL, "Should have gotten only one message");
+        browser.test.assertEq("string", typeof(url), "URL should be a string");
+        gotURL = url;
+      }
+    });
+
+    browser.test.sendMessage("ready");
+  }
+
+  function contentScript() {
+    browser.runtime.onMessage.addListener(([msg, url], sender, respond) => {
+      if (msg == "load-iframe") {
+        let iframe = document.createElement("iframe");
+        iframe.setAttribute("src", url);
+        iframe.addEventListener("load", () => { respond(true); });
+        iframe.addEventListener("error", () => { respond(false); });
+        document.body.appendChild(iframe);
+        return true;
+      }
+    });
+    browser.runtime.sendMessage(["content-script-ready"]);
+  }
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      content_scripts: [
+        {
+          "matches": ["http://example.com/"],
+          "js": ["content_script.js"],
+          "run_at": "document_idle",
+        },
+      ],
+
+      "web_accessible_resources": [
+        "/accessible.html",
+        "wild*.html",
+      ],
+    },
+
+    background: `(${background})()`,
+
+    files: {
+      "content_script.js": `(${contentScript})()`,
+
+      "accessible.html": `<html><head>
+        <meta charset="utf-8">
+        <script src="accessible.js"></${"script"}>
+      </head></html>`,
+
+      "accessible.js": 'browser.runtime.sendMessage(["page-script", location.href]);',
+
+      "inaccessible.html": `<html><head>
+        <meta charset="utf-8">
+        <script src="inaccessible.js"></${"script"}>
+      </head></html>`,
+
+      "inaccessible.js": 'browser.runtime.sendMessage(["page-script", location.href]);',
+
+      "wild1.html": `<html><head>
+        <meta charset="utf-8">
+        <script src="wild.js"></${"script"}>
+      </head></html>`,
+
+      "wild2.htm": `<html><head>
+        <meta charset="utf-8">
+        <script src="wild.js"></${"script"}>
+      </head></html>`,
+
+      "wild.js": 'browser.runtime.sendMessage(["page-script", location.href]);',
+    },
+  });
+
+  yield extension.startup();
+
+  yield extension.awaitMessage("ready");
+
+  let win = window.open("http://example.com/");
+
+  yield extension.awaitFinish("web-accessible-resources");
+
+  win.close();
+
+  yield extension.unload();
+});
+
+add_task(function* test_web_accessible_resources_csp() {
+  function background() {
+    browser.runtime.onMessage.addListener((msg, sender) => {
+      if (msg.name === "image-loading") {
+        browser.test.assertTrue(msg.success, `Image was ${msg.expectedAction}`);
+        browser.test.sendMessage(`image-${msg.expectedAction}`);
+      } else {
+        browser.test.sendMessage(msg);
+      }
+    });
+
+    browser.test.sendMessage("background-ready");
+  }
+
+  function content() {
+    window.addEventListener("message", function rcv(event) {
+      browser.runtime.sendMessage("script-ran");
+      window.removeEventListener("message", rcv, false);
+    }, false);
+
+    testImageLoading(browser.extension.getURL("image.png"), "loaded");
+
+    let testScript = document.createElement("script");
+    testScript.setAttribute("src", browser.extension.getURL("test_script.js"));
+    document.head.appendChild(testScript);
+    browser.runtime.sendMessage("script-loaded");
+  }
+
+  function testScript() {
+    window.postMessage("test-script-loaded", "*");
+  }
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      "content_scripts": [{
+        "matches": ["http://example.com/*/file_csp.html"],
+        "run_at": "document_start",
+        "js": ["content_script_helper.js", "content_script.js"],
+      }],
+      "web_accessible_resources": [
+        "image.png",
+        "test_script.js",
+      ],
+    },
+    background: `(${background})()`,
+    files: {
+      "content_script_helper.js": `${testImageLoading}`,
+      "content_script.js": `(${content})()`,
+      "test_script.js": `(${testScript})()`,
+      "image.png": IMAGE_ARRAYBUFFER,
+    },
+  });
+
+  // This is used to watch the blocked data bounce off CSP.
+  function examiner() {
+    SpecialPowers.addObserver(this, "csp-on-violate-policy", false);
+  }
+
+  let cspEventCount = 0;
+
+  examiner.prototype = {
+    observe: function(subject, topic, data) {
+      cspEventCount++;
+      let spec = SpecialPowers.wrap(subject).QueryInterface(SpecialPowers.Ci.nsIURI).spec;
+      ok(spec.includes("file_image_bad.png") || spec.includes("file_script_bad.js"),
+         `Expected file: ${spec} rejected by CSP`);
+    },
+
+    // We must eventually call this to remove the listener,
+    // or mochitests might get borked.
+    remove: function() {
+      SpecialPowers.removeObserver(this, "csp-on-violate-policy");
+    },
+  };
+
+  let observer = new examiner();
+
+  yield Promise.all([extension.startup(), extension.awaitMessage("background-ready")]);
+
+  let win = window.open("http://example.com/tests/toolkit/components/extensions/test/mochitest/file_csp.html");
+
+  yield Promise.all([
+    extension.awaitMessage("image-loaded"),
+    extension.awaitMessage("script-loaded"),
+    extension.awaitMessage("script-ran"),
+  ]);
+  is(cspEventCount, 2, "Two items were rejected by CSP");
+  win.close();
+
+  observer.remove();
+  yield extension.unload();
+});
+
+add_task(function* test_web_accessible_resources_mixed_content() {
+  function background() {
+    browser.runtime.onMessage.addListener(msg => {
+      if (msg.name === "image-loading") {
+        browser.test.assertTrue(msg.success, `Image was ${msg.expectedAction}`);
+        browser.test.sendMessage(`image-${msg.expectedAction}`);
+      } else {
+        browser.test.sendMessage(msg);
+        if (msg === "accessible-script-loaded") {
+          browser.test.notifyPass("mixed-test");
+        }
+      }
+    });
+
+    browser.test.sendMessage("background-ready");
+  }
+
+  function content() {
+    testImageLoading("http://example.com/tests/toolkit/components/extensions/test/mochitest/file_image_bad.png", "blocked");
+    testImageLoading(browser.extension.getURL("image.png"), "loaded");
+
+    let testScript = document.createElement("script");
+    testScript.setAttribute("src", browser.extension.getURL("test_script.js"));
+    document.head.appendChild(testScript);
+
+    window.addEventListener("message", event => {
+      browser.runtime.sendMessage(event.data);
+    });
+  }
+
+  function testScript() {
+    window.postMessage("accessible-script-loaded", "*");
+  }
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      "content_scripts": [{
+        "matches": ["https://example.com/*/file_mixed.html"],
+        "run_at": "document_start",
+        "js": ["content_script_helper.js", "content_script.js"],
+      }],
+      "web_accessible_resources": [
+        "image.png",
+        "test_script.js",
+      ],
+    },
+    background: `(${background})()`,
+    files: {
+      "content_script_helper.js": `${testImageLoading}`,
+      "content_script.js": `(${content})()`,
+      "test_script.js": `(${testScript})()`,
+      "image.png": IMAGE_ARRAYBUFFER,
+    },
+  });
+
+  SpecialPowers.setBoolPref("security.mixed_content.block_display_content", true);
+
+  yield Promise.all([extension.startup(), extension.awaitMessage("background-ready")]);
+
+  let win = window.open("https://example.com/tests/toolkit/components/extensions/test/mochitest/file_mixed.html");
+
+  yield Promise.all([
+    extension.awaitMessage("image-blocked"),
+    extension.awaitMessage("image-loaded"),
+    extension.awaitMessage("accessible-script-loaded"),
+  ]);
+  yield extension.awaitFinish("mixed-test");
+  win.close();
+
+  yield extension.unload();
+});
+
+</script>
+
+</body>
+</html>

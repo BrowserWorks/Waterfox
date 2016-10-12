@@ -40,15 +40,16 @@ OptimizationInfo::initNormalOptimizationInfo()
 
     registerAllocator_ = RegisterAllocator_Backtracking;
 
-    inlineMaxBytecodePerCallSiteMainThread_ = 500;
-    inlineMaxBytecodePerCallSiteOffThread_ = 1000;
-    inlineMaxCalleeInlinedBytecodeLength_ = 3350;
-    inlineMaxTotalBytecodeLength_ = 80000;
-    inliningMaxCallerBytecodeLength_ = 1500;
+    inlineMaxBytecodePerCallSiteMainThread_ = 550;
+    inlineMaxBytecodePerCallSiteOffThread_ = 1100;
+    inlineMaxCalleeInlinedBytecodeLength_ = 3550;
+    inlineMaxTotalBytecodeLength_ = 85000;
+    inliningMaxCallerBytecodeLength_ = 1600;
     maxInlineDepth_ = 3;
     scalarReplacement_ = true;
     smallFunctionMaxInlineDepth_ = 10;
     compilerWarmUpThreshold_ = CompilerWarmupThreshold;
+    compilerSmallFunctionWarmUpThreshold_ = CompilerSmallFunctionWarmupThreshold;
     inliningWarmUpThresholdFactor_ = 0.125;
     inliningRecompileThresholdFactor_ = 4;
 }
@@ -85,6 +86,12 @@ OptimizationInfo::compilerWarmUpThreshold(JSScript* script, jsbytecode* pc) cons
     uint32_t warmUpThreshold = compilerWarmUpThreshold_;
     if (JitOptions.forcedDefaultIonWarmUpThreshold.isSome())
         warmUpThreshold = JitOptions.forcedDefaultIonWarmUpThreshold.ref();
+
+    if (JitOptions.isSmallFunction(script)) {
+        warmUpThreshold = compilerSmallFunctionWarmUpThreshold_;
+        if (JitOptions.forcedDefaultIonSmallFunctionWarmUpThreshold.isSome())
+            warmUpThreshold = JitOptions.forcedDefaultIonSmallFunctionWarmUpThreshold.ref();
+    }
 
     // If the script is too large to compile on the main thread, we can still
     // compile it off thread. In these cases, increase the warm-up counter

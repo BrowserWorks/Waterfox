@@ -1308,6 +1308,7 @@ sctp_iterator_work(struct sctp_iterator *it)
 
 	SCTP_INP_INFO_RLOCK();
 	SCTP_ITERATOR_LOCK();
+	sctp_it_ctl.cur_it = it;
 	if (it->inp) {
 		SCTP_INP_RLOCK(it->inp);
 		SCTP_INP_DECR_REF(it->inp);
@@ -1315,6 +1316,7 @@ sctp_iterator_work(struct sctp_iterator *it)
 	if (it->inp == NULL) {
 		/* iterator is complete */
 done_with_iterator:
+		sctp_it_ctl.cur_it = NULL;
 		SCTP_ITERATOR_UNLOCK();
 		SCTP_INP_INFO_RUNLOCK();
 		if (it->function_atend != NULL) {
@@ -1462,7 +1464,6 @@ sctp_iterator_worker(void)
 
 	sctp_it_ctl.iterator_running = 1;
 	TAILQ_FOREACH_SAFE(it, &sctp_it_ctl.iteratorhead, sctp_nxt_itr, nit) {
-		sctp_it_ctl.cur_it = it;
 		/* now lets work on this one */
 		TAILQ_REMOVE(&sctp_it_ctl.iteratorhead, it, sctp_nxt_itr);
 		SCTP_IPI_ITERATOR_WQ_UNLOCK();
@@ -1470,7 +1471,6 @@ sctp_iterator_worker(void)
 		CURVNET_SET(it->vn);
 #endif
 		sctp_iterator_work(it);
-		sctp_it_ctl.cur_it = NULL;
 #if defined(__FreeBSD__) && __FreeBSD_version >= 801000
 		CURVNET_RESTORE();
 #endif
@@ -4064,12 +4064,8 @@ sctp_abort_association(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 
 	vtag = 0;
 	if (stcb != NULL) {
-		/* We have a TCB to abort, send notification too */
 		vtag = stcb->asoc.peer_vtag;
-		sctp_abort_notification(stcb, 0, 0, NULL, SCTP_SO_NOT_LOCKED);
-		/* get the assoc vrf id and table id */
 		vrf_id = stcb->asoc.vrf_id;
-		stcb->asoc.state |= SCTP_STATE_WAS_ABORTED;
 	}
 	sctp_send_abort(m, iphlen, src, dst, sh, vtag, op_err,
 #if defined(__FreeBSD__)
@@ -4077,6 +4073,9 @@ sctp_abort_association(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 #endif
 	                vrf_id, port);
 	if (stcb != NULL) {
+		/* We have a TCB to abort, send notification too */
+		sctp_abort_notification(stcb, 0, 0, NULL, SCTP_SO_NOT_LOCKED);
+		stcb->asoc.state |= SCTP_STATE_WAS_ABORTED;
 		/* Ok, now lets free it */
 #if defined(__APPLE__) || defined(SCTP_SO_LOCK_TESTING)
 		so = SCTP_INP_SO(inp);
@@ -4204,16 +4203,16 @@ sctp_abort_an_association(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	} else {
 		stcb->asoc.state |= SCTP_STATE_WAS_ABORTED;
 	}
-	/* notify the ulp */
-	if ((inp->sctp_flags & SCTP_PCB_FLAGS_SOCKET_GONE) == 0) {
-		sctp_abort_notification(stcb, 0, 0, NULL, so_locked);
-	}
 	/* notify the peer */
 	sctp_send_abort_tcb(stcb, op_err, so_locked);
 	SCTP_STAT_INCR_COUNTER32(sctps_aborted);
 	if ((SCTP_GET_STATE(&stcb->asoc) == SCTP_STATE_OPEN) ||
 	    (SCTP_GET_STATE(&stcb->asoc) == SCTP_STATE_SHUTDOWN_RECEIVED)) {
 		SCTP_STAT_DECR_GAUGE32(sctps_currestab);
+	}
+	/* notify the ulp */
+	if ((inp->sctp_flags & SCTP_PCB_FLAGS_SOCKET_GONE) == 0) {
+		sctp_abort_notification(stcb, 0, 0, NULL, so_locked);
 	}
 	/* now free the asoc */
 #ifdef SCTP_ASOCLOG_OF_TSNS
@@ -5699,7 +5698,7 @@ sctp_sorecvmsg(struct socket *so,
 	 */
 	struct sctp_inpcb *inp = NULL;
 	int my_len = 0;
-	int cp_len = 0, error = 0;	
+	int cp_len = 0, error = 0;
 	struct sctp_queued_to_read *control = NULL, *ctl = NULL, *nxt = NULL;
 	struct mbuf *m = NULL;
 	struct sctp_tcb *stcb = NULL;

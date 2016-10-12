@@ -6,6 +6,7 @@
 
 #include "jit/MIRGraph.h"
 
+#include "asmjs/Wasm.h"
 #include "jit/BytecodeAnalysis.h"
 #include "jit/Ion.h"
 #include "jit/JitSpewer.h"
@@ -18,8 +19,7 @@ using mozilla::Swap;
 
 MIRGenerator::MIRGenerator(CompileCompartment* compartment, const JitCompileOptions& options,
                            TempAllocator* alloc, MIRGraph* graph, const CompileInfo* info,
-                           const OptimizationInfo* optimizationInfo,
-                           bool usesSignalHandlersForAsmJSOOB)
+                           const OptimizationInfo* optimizationInfo)
   : compartment(compartment),
     info_(info),
     optimizationInfo_(optimizationInfo),
@@ -31,7 +31,7 @@ MIRGenerator::MIRGenerator(CompileCompartment* compartment, const JitCompileOpti
     error_(false),
     pauseBuild_(nullptr),
     cancelBuild_(false),
-    maxAsmJSStackArgBytes_(0),
+    wasmMaxStackArgBytes_(0),
     performsCall_(false),
     usesSimd_(false),
     usesSimdCached_(false),
@@ -40,8 +40,9 @@ MIRGenerator::MIRGenerator(CompileCompartment* compartment, const JitCompileOpti
     instrumentedProfilingIsCached_(false),
     safeForMinorGC_(true),
 #if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
-    usesSignalHandlersForAsmJSOOB_(usesSignalHandlersForAsmJSOOB),
+    usesSignalHandlersForAsmJSOOB_(false),
 #endif
+    minAsmJSHeapLength_(0),
     options(options),
     gs_(alloc)
 { }
@@ -125,26 +126,42 @@ MIRGenerator::needsAsmJSBoundsCheckBranch(const MAsmJSHeapAccess* access) const
 size_t
 MIRGenerator::foldableOffsetRange(const MAsmJSHeapAccess* access) const
 {
-    // This determines whether it's ok to fold up to AsmJSImmediateSize
-    // offsets, instead of just AsmJSCheckedImmediateSize.
+    return foldableOffsetRange(access->needsBoundsCheck(), access->isAtomicAccess());
+}
 
-#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
-    // With signal-handler OOB handling, we reserve guard space for the full
-    // immediate size.
-    if (usesSignalHandlersForAsmJSOOB_)
-        return AsmJSImmediateRange;
+size_t
+MIRGenerator::foldableOffsetRange(bool accessNeedsBoundsCheck, bool atomic) const
+{
+    // This determines whether it's ok to fold up to WasmImmediateRange
+    // offsets, instead of just WasmCheckedImmediateRange.
+
+    static_assert(WasmCheckedImmediateRange <= WasmImmediateRange,
+                  "WasmImmediateRange should be the size of an unconstrained "
+                  "address immediate");
+
+#ifdef ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB
+    static_assert(wasm::Uint32Range + WasmImmediateRange + sizeof(wasm::Val) < wasm::MappedSize,
+                  "When using signal handlers for bounds checking, a uint32 is added to the base "
+                  "address followed by an immediate in the range [0, WasmImmediateRange). An "
+                  "unaligned access (whose size is conservatively approximated by wasm::Val) may "
+                  "spill over, so ensure a space at the end.");
+
+    // Signal-handling can be dynamically disabled by OS bugs or flags.
+    // Bug 1254935: Atomic accesses can't be handled with signal handlers yet.
+    if (usesSignalHandlersForAsmJSOOB_ && !atomic)
+        return WasmImmediateRange;
 #endif
 
     // On 32-bit platforms, if we've proven the access is in bounds after
     // 32-bit wrapping, we can fold full offsets because they're added with
     // 32-bit arithmetic.
-    if (sizeof(intptr_t) == sizeof(int32_t) && !access->needsBoundsCheck())
-        return AsmJSImmediateRange;
+    if (sizeof(intptr_t) == sizeof(int32_t) && !accessNeedsBoundsCheck)
+        return WasmImmediateRange;
 
     // Otherwise, only allow the checked size. This is always less than the
     // minimum heap length, and allows explicit bounds checks to fold in the
     // offset without overflow.
-    return AsmJSCheckedImmediateRange;
+    return WasmCheckedImmediateRange;
 }
 
 void
@@ -317,13 +334,76 @@ MBasicBlock::NewPendingLoopHeader(MIRGraph& graph, const CompileInfo& info,
 }
 
 MBasicBlock*
-MBasicBlock::NewSplitEdge(MIRGraph& graph, const CompileInfo& info, MBasicBlock* pred)
+MBasicBlock::NewSplitEdge(MIRGraph& graph, const CompileInfo& info, MBasicBlock* pred, size_t predEdgeIdx, MBasicBlock* succ)
 {
-    return pred->pc()
-           ? MBasicBlock::New(graph, nullptr, info, pred,
-                              new(graph.alloc()) BytecodeSite(pred->trackedTree(), pred->pc()),
-                              SPLIT_EDGE)
-           : MBasicBlock::NewAsmJS(graph, info, pred, SPLIT_EDGE);
+    MBasicBlock* split = nullptr;
+    if (!pred->pc()) {
+        // The predecessor does not have a PC, this is an AsmJS compilation.
+        split = MBasicBlock::NewAsmJS(graph, info, pred, SPLIT_EDGE);
+        if (!split)
+            return nullptr;
+    } else {
+        // The predecessor has a PC, this is an IonBuilder compilation.
+        MResumePoint* succEntry = succ->entryResumePoint();
+
+        BytecodeSite* site = new(graph.alloc()) BytecodeSite(succ->trackedTree(), succEntry->pc());
+        split = new(graph.alloc()) MBasicBlock(graph, info, site, SPLIT_EDGE);
+
+        if (!split->init())
+            return nullptr;
+
+        // A split edge is used to simplify the graph to avoid having a
+        // predecessor with multiple successors as well as a successor with
+        // multiple predecessors.  As instructions can be moved in this
+        // split-edge block, we need to give this block a resume point. To do
+        // so, we copy the entry resume points of the successor and filter the
+        // phis to keep inputs from the current edge.
+
+        // Propagate the caller resume point from the inherited block.
+        split->callerResumePoint_ = succ->callerResumePoint();
+
+        // Split-edge are created after the interpreter stack emulation. Thus,
+        // there is no need for creating slots.
+        split->stackPosition_ = succEntry->stackDepth();
+
+        // Create a resume point using our initial stack position.
+        MResumePoint* splitEntry = new(graph.alloc()) MResumePoint(split, succEntry->pc(),
+                                                                   MResumePoint::ResumeAt);
+        if (!splitEntry->init(graph.alloc()))
+            return nullptr;
+        split->entryResumePoint_ = splitEntry;
+
+        // The target entry resume point might have phi operands, keep the
+        // operands of the phi coming from our edge.
+        size_t succEdgeIdx = succ->indexForPredecessor(pred);
+
+        for (size_t i = 0, e = splitEntry->numOperands(); i < e; i++) {
+            MDefinition* def = succEntry->getOperand(i);
+            // This early in the pipeline, we have no recover instructions in
+            // any entry resume point.
+            MOZ_ASSERT_IF(def->block() == succ, def->isPhi());
+            if (def->block() == succ)
+                def = def->toPhi()->getOperand(succEdgeIdx);
+
+            splitEntry->initOperand(i, def);
+        }
+
+        // This is done in the NewAsmJS, so we cannot keep this line below,
+        // where the rest of the graph is modified.
+        if (!split->predecessors_.append(pred))
+            return nullptr;
+    }
+
+    split->setLoopDepth(succ->loopDepth());
+
+    // Insert the split edge block in-between.
+    split->end(MGoto::New(graph.alloc(), succ));
+
+    graph.insertBlockAfter(pred, split);
+
+    pred->replaceSuccessor(predEdgeIdx, split);
+    succ->replacePredecessor(pred, split);
+    return split;
 }
 
 MBasicBlock*
@@ -354,7 +434,7 @@ MBasicBlock::NewAsmJS(MIRGraph& graph, const CompileInfo& info, MBasicBlock* pre
             for (size_t i = 0; i < nphis; i++) {
                 MDefinition* predSlot = pred->getSlot(i);
 
-                MOZ_ASSERT(predSlot->type() != MIRType_Value);
+                MOZ_ASSERT(predSlot->type() != MIRType::Value);
 
                 MPhi* phi;
                 if (i < nfree)
@@ -363,7 +443,7 @@ MBasicBlock::NewAsmJS(MIRGraph& graph, const CompileInfo& info, MBasicBlock* pre
                     phi = phis + (i - nfree);
                 new(phi) MPhi(alloc, predSlot->type());
 
-                phi->addInput(predSlot);
+                phi->addInlineInput(predSlot);
 
                 // Add append Phis in the block.
                 block->addPhi(phi);
@@ -479,7 +559,7 @@ MBasicBlock::inherit(TempAllocator& alloc, BytecodeAnalysis* analysis, MBasicBlo
             size_t i = 0;
             for (i = 0; i < info().firstStackSlot(); i++) {
                 MPhi* phi = MPhi::New(alloc);
-                phi->addInput(pred->getSlot(i));
+                phi->addInlineInput(pred->getSlot(i));
                 addPhi(phi);
                 setSlot(i, phi);
                 entryResumePoint()->initOperand(i, phi);
@@ -499,7 +579,7 @@ MBasicBlock::inherit(TempAllocator& alloc, BytecodeAnalysis* analysis, MBasicBlo
 
             for (; i < stackDepth(); i++) {
                 MPhi* phi = MPhi::New(alloc);
-                phi->addInput(pred->getSlot(i));
+                phi->addInlineInput(pred->getSlot(i));
                 addPhi(phi);
                 setSlot(i, phi);
                 entryResumePoint()->initOperand(i, phi);
@@ -593,8 +673,6 @@ MBasicBlock::shimmySlots(int discardDepth)
 bool
 MBasicBlock::linkOsrValues(MStart* start)
 {
-    MOZ_ASSERT(start->startType() == MStart::StartType_Osr);
-
     MResumePoint* res = start->resumePoint();
 
     for (uint32_t i = 0; i < stackDepth(); i++) {
@@ -608,7 +686,7 @@ MBasicBlock::linkOsrValues(MStart* start)
                 cloneRp = def->toOsrReturnValue();
         } else if (info().hasArguments() && i == info().argsObjSlot()) {
             MOZ_ASSERT(def->isConstant() || def->isOsrArgumentsObject());
-            MOZ_ASSERT_IF(def->isConstant(), def->toConstant()->value() == UndefinedValue());
+            MOZ_ASSERT_IF(def->isConstant(), def->toConstant()->type() == MIRType::Undefined);
             if (def->isOsrArgumentsObject())
                 cloneRp = def->toOsrArgumentsObject();
         } else {
@@ -618,7 +696,7 @@ MBasicBlock::linkOsrValues(MStart* start)
             // A constant Undefined can show up here for an argument slot when
             // the function has an arguments object, but the argument in
             // question is stored on the scope chain.
-            MOZ_ASSERT_IF(def->isConstant(), def->toConstant()->value() == UndefinedValue());
+            MOZ_ASSERT_IF(def->isConstant(), def->toConstant()->type() == MIRType::Undefined);
 
             if (def->isOsrValue())
                 cloneRp = def->toOsrValue();
@@ -797,7 +875,7 @@ MBasicBlock::optimizedOutConstant(TempAllocator& alloc)
     // If the first instruction is a MConstant(MagicValue(JS_OPTIMIZED_OUT))
     // then reuse it.
     MInstruction* ins = *begin();
-    if (ins->type() == MIRType_MagicOptimizedOut)
+    if (ins->type() == MIRType::MagicOptimizedOut)
         return ins->toConstant();
 
     MConstant* constant = MConstant::New(alloc, MagicValue(JS_OPTIMIZED_OUT));
@@ -834,6 +912,9 @@ MBasicBlock::moveBefore(MInstruction* at, MInstruction* ins)
 MInstruction*
 MBasicBlock::safeInsertTop(MDefinition* ins, IgnoreTop ignore)
 {
+    MOZ_ASSERT(graph().osrBlock() != this,
+               "We are not supposed to add any instruction in OSR blocks.");
+
     // Beta nodes and interrupt checks are required to be located at the
     // beginnings of basic blocks, so we must insert new instructions after any
     // such instructions.
@@ -843,6 +924,7 @@ MBasicBlock::safeInsertTop(MDefinition* ins, IgnoreTop ignore)
     while (insertIter->isBeta() ||
            insertIter->isInterruptCheck() ||
            insertIter->isConstant() ||
+           insertIter->isParameter() ||
            (!(ignore & IgnoreRecover) && insertIter->isRecoveredOnBailout()))
     {
         insertIter++;
@@ -1256,7 +1338,7 @@ MBasicBlock::setBackedgeAsmJS(MBasicBlock* pred)
 
         // Assert that the phi already has the correct type.
         MOZ_ASSERT(entryDef->type() == exitDef->type());
-        MOZ_ASSERT(entryDef->type() != MIRType_Value);
+        MOZ_ASSERT(entryDef->type() != MIRType::Value);
 
         if (entryDef == exitDef) {
             // If the exit def is the same as the entry def, make a redundant
@@ -1269,8 +1351,9 @@ MBasicBlock::setBackedgeAsmJS(MBasicBlock* pred)
             exitDef = entryDef->getOperand(0);
         }
 
-        // Phis always have room for 2 operands, so we can use addInput.
-        entryDef->addInput(exitDef);
+        // Phis always have room for 2 operands, so this can't fail.
+        MOZ_ASSERT(phi->numOperands() == 1);
+        entryDef->addInlineInput(exitDef);
 
         MOZ_ASSERT(slot < pred->stackDepth());
         setSlot(slot, entryDef);

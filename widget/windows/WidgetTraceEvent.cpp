@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include "mozilla/RefPtr.h"
 #include "mozilla/WidgetTraceEvent.h"
 #include "nsAppShellCID.h"
 #include "nsComponentManagerUtils.h"
@@ -20,7 +21,6 @@
 #include "nsISupportsImpl.h"
 #include "nsIWidget.h"
 #include "nsIXULWindow.h"
-#include "nsAutoPtr.h"
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 #include "nsWindowDefs.h"
@@ -32,7 +32,7 @@ HANDLE sEventHandle = nullptr;
 
 // We need a runnable in order to find the hidden window on the main
 // thread.
-class HWNDGetter : public nsRunnable {
+class HWNDGetter : public mozilla::Runnable {
 public:
   HWNDGetter() : hidden_window_hwnd(nullptr) {
     MOZ_COUNT_CTOR(HWNDGetter);

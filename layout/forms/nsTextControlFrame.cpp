@@ -10,6 +10,7 @@
 #include "nsTextControlFrame.h"
 #include "nsIPlaintextEditor.h"
 #include "nsCaret.h"
+#include "nsCSSPseudoElements.h"
 #include "nsGenericHTMLElement.h"
 #include "nsIEditor.h"
 #include "nsIEditorIMESupport.h"
@@ -43,7 +44,8 @@
 #include "mozilla/dom/Selection.h"
 #include "nsContentUtils.h"
 #include "nsTextNode.h"
-#include "nsStyleSet.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/MathAlgorithms.h"
 #include "nsFrameSelection.h"
@@ -153,11 +155,8 @@ nsTextControlFrame::CalcIntrinsicSize(nsRenderingContext* aRenderingContext,
   nscoord charWidth   = 0;
   nscoord charMaxAdvance  = 0;
 
-  RefPtr<nsFontMetrics> fontMet;
-  nsresult rv =
-    nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fontMet),
-                                          aFontSizeInflation);
-  NS_ENSURE_SUCCESS(rv, rv);
+  RefPtr<nsFontMetrics> fontMet =
+    nsLayoutUtils::GetFontMetricsForFrame(this, aFontSizeInflation);
 
   lineHeight =
     nsHTMLReflowState::CalcLineHeight(GetContent(), StyleContext(),
@@ -210,7 +209,7 @@ nsTextControlFrame::CalcIntrinsicSize(nsRenderingContext* aRenderingContext,
 
   // Add in the size of the scrollbars for textarea
   if (IsTextArea()) {
-    nsIFrame* first = GetFirstPrincipalChild();
+    nsIFrame* first = PrincipalChildList().FirstChild();
 
     nsIScrollableFrame *scrollableFrame = do_QueryFrame(first);
     NS_ASSERTION(scrollableFrame, "Child must be scrollable");
@@ -346,8 +345,7 @@ nsTextControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
     NS_ENSURE_TRUE(placeholderNode, NS_ERROR_OUT_OF_MEMORY);
 
     // Associate ::-moz-placeholder pseudo-element with the placeholder node.
-    nsCSSPseudoElements::Type pseudoType =
-      nsCSSPseudoElements::ePseudo_mozPlaceholder;
+    CSSPseudoElementType pseudoType = CSSPseudoElementType::mozPlaceholder;
 
     RefPtr<nsStyleContext> placeholderStyleContext =
       PresContext()->StyleSet()->ResolvePseudoElementStyle(
@@ -396,12 +394,7 @@ nsTextControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
     }
     initializer = new EditorInitializer(this);
     Properties().Set(TextControlInitializer(),initializer);
-    if (!nsContentUtils::AddScriptRunner(initializer)) {
-      initializer->Revoke(); // paranoia
-      Properties().Delete(TextControlInitializer());
-      delete initializer;
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
+    nsContentUtils::AddScriptRunner(initializer);
   }
 
   return NS_OK;
@@ -479,7 +472,7 @@ nsTextControlFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
                                           aCBSize, aAvailableISize,
                                           aMargin, aBorder,
                                           aPadding, aShrinkWrap);
-      // Disabled when there's inflation; see comment in GetPrefSize.
+      // Disabled when there's inflation; see comment in GetXULPrefSize.
       MOZ_ASSERT(inflation != 1.0f ||
                  ancestorAutoSize.ISize(aWM) == autoSize.ISize(aWM),
                  "Incorrect size computed by ComputeAutoSize?");
@@ -522,9 +515,8 @@ nsTextControlFrame::Reflow(nsPresContext*   aPresContext,
     lineHeight = nsHTMLReflowState::CalcLineHeight(GetContent(), StyleContext(),
                                                    NS_AUTOHEIGHT, inflation);
   }
-  RefPtr<nsFontMetrics> fontMet;
-  nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fontMet),
-                                        inflation);
+  RefPtr<nsFontMetrics> fontMet =
+    nsLayoutUtils::GetFontMetricsForFrame(this, inflation);
   // now adjust for our borders and padding
   aDesiredSize.SetBlockStartAscent(
     nsLayoutUtils::GetCenteredFontBaseline(fontMet, lineHeight,
@@ -589,14 +581,14 @@ nsTextControlFrame::ReflowTextControlChild(nsIFrame*                aKid,
 }
 
 nsSize
-nsTextControlFrame::GetMinSize(nsBoxLayoutState& aState)
+nsTextControlFrame::GetXULMinSize(nsBoxLayoutState& aState)
 {
   // XXXbz why?  Why not the nsBoxFrame sizes?
-  return nsBox::GetMinSize(aState);
+  return nsBox::GetXULMinSize(aState);
 }
 
 bool
-nsTextControlFrame::IsCollapsed()
+nsTextControlFrame::IsXULCollapsed()
 {
   // We're never collapsed in the box sense.
   return false;
@@ -1224,21 +1216,21 @@ nsTextControlFrame::SetInitialChildList(ChildListID     aListID,
                                         nsFrameList&    aChildList)
 {
   nsContainerFrame::SetInitialChildList(aListID, aChildList);
-
-  nsIFrame* first = GetFirstPrincipalChild();
+  if (aListID != kPrincipalList) {
+    return;
+  }
 
   // Mark the scroll frame as being a reflow root. This will allow
   // incremental reflows to be initiated at the scroll frame, rather
   // than descending from the root frame of the frame hierarchy.
-  if (first) {
+  if (nsIFrame* first = PrincipalChildList().FirstChild()) {
     first->AddStateBits(NS_FRAME_REFLOW_ROOT);
 
     nsCOMPtr<nsITextControlElement> txtCtrl = do_QueryInterface(GetContent());
     NS_ASSERTION(txtCtrl, "Content not a text control element");
     txtCtrl->InitializeKeyboardEventListeners();
 
-    nsPoint* contentScrollPos = static_cast<nsPoint*>
-      (Properties().Get(ContentScrollPos()));
+    nsPoint* contentScrollPos = Properties().Get(ContentScrollPos());
     if (contentScrollPos) {
       // If we have a scroll pos stored to be passed to our anonymous
       // div, do it here!
@@ -1397,7 +1389,7 @@ nsTextControlFrame::RestoreState(nsPresState* aState)
   // Most likely, we don't have our anonymous content constructed yet, which
   // would cause us to end up here.  In this case, we'll just store the scroll
   // pos ourselves, and forward it to the scroll frame later when it's created.
-  Properties().Set(ContentScrollPos(), new nsPoint(aState->GetScrollState()));
+  Properties().Set(ContentScrollPos(), new nsPoint(aState->GetScrollPosition()));
   return NS_OK;
 }
 
@@ -1444,9 +1436,9 @@ nsTextControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 }
 
 mozilla::dom::Element*
-nsTextControlFrame::GetPseudoElement(nsCSSPseudoElements::Type aType)
+nsTextControlFrame::GetPseudoElement(CSSPseudoElementType aType)
 {
-  if (aType == nsCSSPseudoElements::ePseudo_mozPlaceholder) {
+  if (aType == CSSPseudoElementType::mozPlaceholder) {
     nsCOMPtr<nsITextControlElement> txtCtrl = do_QueryInterface(GetContent());
     return txtCtrl->GetPlaceholderNode();
   }

@@ -215,8 +215,8 @@ int nr_ice_candidate_create(nr_ice_ctx *ctx,nr_ice_component *comp,nr_ice_socket
 
     nr_ice_candidate_compute_codeword(cand);
 
-    r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): created candidate %s with type %s",
-      ctx->label,cand->label,nr_ctype_name(ctype));
+    r_log(LOG_ICE,LOG_DEBUG,"ICE(%s)/CAND(%s): created candidate %s with type %s",
+      ctx->label,cand->codeword,cand->label,nr_ctype_name(ctype));
 
     *candp=cand;
 
@@ -430,7 +430,7 @@ int nr_ice_candidate_compute_priority(nr_ice_candidate *cand)
           if(r=NR_reg_get_uchar(NR_ICE_REG_PREF_TYPE_RELAYED_TCP,&type_preference))
             ABORT(r);
         }
-        stun_priority=31-cand->stun_server->index;
+        stun_priority=31-cand->stun_server->id;
         break;
       case SERVER_REFLEXIVE:
         if(cand->base.protocol == IPPROTO_UDP) {
@@ -440,7 +440,7 @@ int nr_ice_candidate_compute_priority(nr_ice_candidate *cand)
           if(r=NR_reg_get_uchar(NR_ICE_REG_PREF_TYPE_SRV_RFLX_TCP,&type_preference))
             ABORT(r);
         }
-        stun_priority=31-cand->stun_server->index;
+        stun_priority=31-cand->stun_server->id;
         break;
       case PEER_REFLEXIVE:
         if(cand->base.protocol == IPPROTO_UDP) {

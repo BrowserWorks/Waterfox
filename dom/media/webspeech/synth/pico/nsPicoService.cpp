@@ -210,7 +210,7 @@ private:
     ~PicoVoice() {}
 };
 
-class PicoCallbackRunnable : public nsRunnable,
+class PicoCallbackRunnable : public Runnable,
                              public nsISpeechTaskCallback
 {
   friend class PicoSynthDataRunnable;
@@ -261,9 +261,9 @@ private:
   RefPtr<nsPicoService> mService;
 };
 
-NS_IMPL_ISUPPORTS_INHERITED(PicoCallbackRunnable, nsRunnable, nsISpeechTaskCallback)
+NS_IMPL_ISUPPORTS_INHERITED(PicoCallbackRunnable, Runnable, nsISpeechTaskCallback)
 
-// nsRunnable
+// Runnable
 
 NS_IMETHODIMP
 PicoCallbackRunnable::Run()
@@ -342,7 +342,7 @@ void
 PicoCallbackRunnable::DispatchSynthDataRunnable(
   already_AddRefed<SharedBuffer>&& aBuffer, size_t aBufferSize)
 {
-  class PicoSynthDataRunnable final : public nsRunnable
+  class PicoSynthDataRunnable final : public Runnable
   {
   public:
     PicoSynthDataRunnable(already_AddRefed<SharedBuffer>& aBuffer,
@@ -469,7 +469,7 @@ nsPicoService::Observe(nsISupports* aSubject, const char* aTopic,
   DebugOnly<nsresult> rv = NS_NewNamedThread("Pico Worker", getter_AddRefs(mThread));
   MOZ_ASSERT(NS_SUCCEEDED(rv));
   return mThread->Dispatch(
-    NS_NewRunnableMethod(this, &nsPicoService::Init), NS_DISPATCH_NORMAL);
+    NewRunnableMethod(this, &nsPicoService::Init), NS_DISPATCH_NORMAL);
 }
 // nsISpeechService
 
@@ -579,7 +579,7 @@ nsPicoService::Init()
     rv = dirIterator->HasMoreElements(&hasMoreElements);
   }
 
-  NS_DispatchToMainThread(NS_NewRunnableMethod(this, &nsPicoService::RegisterVoices));
+  NS_DispatchToMainThread(NewRunnableMethod(this, &nsPicoService::RegisterVoices));
 }
 
 void
@@ -640,10 +640,11 @@ nsPicoService::LoadEngine(PicoVoice* aVoice)
   }
 
   if (!mPicoMemArea) {
-    mPicoMemArea = new uint8_t[PICO_MEM_SIZE];
+    mPicoMemArea = MakeUnique<uint8_t[]>(PICO_MEM_SIZE);
   }
 
-  status = sPicoApi.pico_initialize(mPicoMemArea, PICO_MEM_SIZE, &mPicoSystem);
+  status = sPicoApi.pico_initialize(mPicoMemArea.get(),
+                                    PICO_MEM_SIZE, &mPicoSystem);
   PICO_ENSURE_SUCCESS_VOID("pico_initialize", status);
 
   status = sPicoApi.pico_loadResource(mPicoSystem, aVoice->mTaFile.get(), &mTaResource);

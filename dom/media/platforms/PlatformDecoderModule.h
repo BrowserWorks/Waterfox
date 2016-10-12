@@ -7,7 +7,6 @@
 #if !defined(PlatformDecoderModule_h_)
 #define PlatformDecoderModule_h_
 
-#include "FlushableTaskQueue.h"
 #include "MediaDecoderReader.h"
 #include "mozilla/MozPromise.h"
 #include "mozilla/layers/LayersTypes.h"
@@ -20,6 +19,7 @@ class TrackInfo;
 class AudioInfo;
 class VideoInfo;
 class MediaRawData;
+class DecoderDoctorDiagnostics;
 
 namespace layers {
 class ImageContainer;
@@ -27,8 +27,10 @@ class ImageContainer;
 
 class MediaDataDecoder;
 class MediaDataDecoderCallback;
-class FlushableTaskQueue;
+class TaskQueue;
 class CDMProxy;
+
+static LazyLogModule sPDMLog("PlatformDecoderModule");
 
 // The PlatformDecoderModule interface is used by the MediaFormatReader to
 // abstract access to decoders provided by various
@@ -53,7 +55,8 @@ public:
   virtual nsresult Startup() { return NS_OK; };
 
   // Indicates if the PlatformDecoderModule supports decoding of aMimeType.
-  virtual bool SupportsMimeType(const nsACString& aMimeType) const = 0;
+  virtual bool SupportsMimeType(const nsACString& aMimeType,
+                                DecoderDoctorDiagnostics* aDiagnostics) const = 0;
 
   enum ConversionRequired {
     kNeedNone,
@@ -88,8 +91,9 @@ protected:
   CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
-                     FlushableTaskQueue* aVideoTaskQueue,
-                     MediaDataDecoderCallback* aCallback) = 0;
+                     TaskQueue* aTaskQueue,
+                     MediaDataDecoderCallback* aCallback,
+                     DecoderDoctorDiagnostics* aDiagnostics) = 0;
 
   // Creates an Audio decoder with the specified properties.
   // Asynchronous decoding of audio should be done in runnables dispatched to
@@ -103,8 +107,14 @@ protected:
   // This is called on the decode task queue.
   virtual already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const AudioInfo& aConfig,
-                     FlushableTaskQueue* aAudioTaskQueue,
-                     MediaDataDecoderCallback* aCallback) = 0;
+                     TaskQueue* aTaskQueue,
+                     MediaDataDecoderCallback* aCallback,
+                     DecoderDoctorDiagnostics* aDiagnostics) = 0;
+};
+
+enum MediaDataDecoderError {
+  FATAL_ERROR,
+  DECODE_ERROR
 };
 
 // A callback used by MediaDataDecoder to return output/errors to the
@@ -119,7 +129,7 @@ public:
 
   // Denotes an error in the decoding process. The reader will stop calling
   // the decoder.
-  virtual void Error() = 0;
+  virtual void Error(MediaDataDecoderError aError) = 0;
 
   // Denotes that the last input sample has been inserted into the decoder,
   // and no more output can be produced unless more input is sent.

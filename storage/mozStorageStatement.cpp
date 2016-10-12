@@ -28,7 +28,7 @@
 #include "mozilla/Logging.h"
 
 
-extern PRLogModuleInfo* gStorageLog;
+extern mozilla::LazyLogModule gStorageLog;
 
 namespace mozilla {
 namespace storage {
@@ -545,6 +545,8 @@ Statement::Reset()
 NS_IMETHODIMP
 Statement::BindParameters(mozIStorageBindingParamsArray *aParameters)
 {
+  NS_ENSURE_ARG_POINTER(aParameters);
+
   if (!mDBStatement)
     return NS_ERROR_NOT_INITIALIZED;
 

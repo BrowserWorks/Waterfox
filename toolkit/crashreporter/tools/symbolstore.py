@@ -136,11 +136,15 @@ def read_output(*args):
 class HGRepoInfo:
     def __init__(self, path):
         self.path = path
-        rev = read_output('hg', '-R', path,
-                          'parent', '--template={node|short}')
-        # Look for the default hg path.  If SRVSRV_ROOT is set, we
+
+        rev = os.environ.get('MOZ_SOURCE_CHANGESET')
+        if not rev:
+            rev = read_output('hg', '-R', path,
+                              'parent', '--template={node|short}')
+
+        # Look for the default hg path. If MOZ_SOURCE_REPO is set, we
         # don't bother asking hg.
-        hg_root = os.environ.get("SRCSRV_ROOT")
+        hg_root = os.environ.get('MOZ_SOURCE_REPO')
         if hg_root:
             root = hg_root
         else:
@@ -158,7 +162,7 @@ class HGRepoInfo:
         if cleanroot is None:
             print >> sys.stderr, textwrap.dedent("""\
                 Could not determine repo info for %s.  This is either not a clone of the web-based
-                repository, or you have not specified SRCSRV_ROOT, or the clone is corrupt.""") % path
+                repository, or you have not specified MOZ_SOURCE_REPO, or the clone is corrupt.""") % path
             sys.exit(1)
         self.rev = rev
         self.root = root
@@ -205,7 +209,7 @@ class GitRepoInfo:
         if cleanroot is None:
             print >> sys.stderr, textwrap.dedent("""\
                 Could not determine repo info for %s (%s).  This is either not a clone of a web-based
-                repository, or you have not specified SRCSRV_ROOT, or the clone is corrupt.""") % (path, root)
+                repository, or you have not specified MOZ_SOURCE_REPO, or the clone is corrupt.""") % (path, root)
             sys.exit(1)
         self.rev = rev
         self.cleanroot = cleanroot
@@ -614,10 +618,17 @@ class Dumper:
 
         # tries to get the vcs root from the .mozconfig first - if it's not set
         # the tinderbox vcs path will be assigned further down
-        vcs_root = os.environ.get("SRCSRV_ROOT")
+        vcs_root = os.environ.get('MOZ_SOURCE_REPO')
         for arch_num, arch in enumerate(self.archs):
             self.files_record[files] = 0 # record that we submitted jobs for this tuple of files
             self.SubmitJob(files[-1], 'ProcessFilesWork', args=(files, arch_num, arch, vcs_root, after, after_arg), callback=self.ProcessFilesFinished)
+
+    def dump_syms_cmdline(self, file, arch, files):
+        '''
+        Get the commandline used to invoke dump_syms.
+        '''
+        # The Mac dumper overrides this.
+        return [self.dump_syms, file]
 
     def ProcessFilesWork(self, files, arch_num, arch, vcs_root, after, after_arg):
         t_start = time.time()
@@ -631,7 +642,7 @@ class Dumper:
         for file in files:
             # files is a tuple of files, containing fallbacks in case the first file doesn't process successfully
             try:
-                cmd = [self.dump_syms] + arch.split() + [file]
+                cmd = self.dump_syms_cmdline(file, arch, files)
                 self.output_pid(sys.stderr, ' '.join(cmd))
                 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                         stderr=open(os.devnull, 'wb'))
@@ -742,13 +753,32 @@ class Dumper_Win32(Dumper):
         result = file
 
         ctypes.windll.kernel32.SetErrorMode(ctypes.c_uint(1))
-        (path, filename) = os.path.split(file)
-        if os.path.isdir(path):
-            lc_filename = filename.lower()
-            for f in os.listdir(path):
-                if f.lower() == lc_filename:
-                    result = os.path.join(path, f)
-                    break
+        if not isinstance(file, unicode):
+            file = unicode(file, sys.getfilesystemencoding())
+        handle = ctypes.windll.kernel32.CreateFileW(file,
+                                                    # GENERIC_READ
+                                                    0x80000000,
+                                                    # FILE_SHARE_READ
+                                                    1,
+                                                    None,
+                                                    # OPEN_EXISTING
+                                                    3,
+                                                    0,
+                                                    None)
+        if handle != -1:
+            size = ctypes.windll.kernel32.GetFinalPathNameByHandleW(handle,
+                                                                    None,
+                                                                    0,
+                                                                    0)
+            buf = ctypes.create_unicode_buffer(size)
+            if ctypes.windll.kernel32.GetFinalPathNameByHandleW(handle,
+                                                                buf,
+                                                                size,
+                                                                0) > 0:
+                # The return value of GetFinalPathNameByHandleW uses the
+                # '\\?\' prefix.
+                result = buf.value.encode(sys.getfilesystemencoding())[4:]
+            ctypes.windll.kernel32.CloseHandle(handle)
 
         # Cache the corrected version to avoid future filesystem hits.
         self.fixedFilenameCaseCache[file] = result
@@ -759,8 +789,7 @@ class Dumper_Win32(Dumper):
             compressed_file = path[:-1] + '_'
             # ignore makecab's output
             success = subprocess.call(["makecab.exe", "/D",
-                                       "CompressionType=LZX", "/D",
-                                       "CompressionMemory=21",
+                                       "CompressionType=MSZIP",
                                        path, compressed_file],
                                       stdout=open(os.devnull, 'w'),
                                       stderr=subprocess.STDOUT)
@@ -907,6 +936,17 @@ class Dumper_Mac(Dumper):
         if result['status']:
             # kick off new jobs per-arch with our new list of files
             Dumper.ProcessFiles(self, result['files'], after=AfterMac, after_arg=result['files'][0])
+
+    def dump_syms_cmdline(self, file, arch, files):
+        '''
+        Get the commandline used to invoke dump_syms.
+        '''
+        # dump_syms wants the path to the original binary and the .dSYM
+        # in order to dump all the symbols.
+        if len(files) == 2 and file == files[0] and file.endswith('.dSYM'):
+            # This is the .dSYM bundle.
+            return [self.dump_syms] + arch.split() + ['-g', file, files[1]]
+        return Dumper.dump_syms_cmdline(self, file, arch, files)
 
     def ProcessFilesWorkMac(self, file):
         """dump_syms on Mac needs to be run on a dSYM bundle produced

@@ -2,15 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* eslint-env browser */
+/* global addMessageListener, sendAsyncMessage, content */
 "use strict";
-var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 const {require, loader} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const promise = require("promise");
-loader.lazyImporter(this, "Task", "resource://gre/modules/Task.jsm", "Task");
-const subScriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
-                          .getService(Ci.mozIJSSubScriptLoader);
-var EventUtils = {};
-subScriptLoader.loadSubScript("chrome://marionette/content/EventUtils.js", EventUtils);
+const { Task } = require("devtools/shared/task");
+
 loader.lazyGetter(this, "nsIProfilerModule", () => {
   return Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
 });
@@ -29,8 +28,9 @@ addMessageListener("devtools:test:reload", function ({ data }) {
 });
 
 addMessageListener("devtools:test:console", function ({ data }) {
-  let method = data.shift();
-  content.console[method].apply(content.console, data);
+  let { method, args, id } = data;
+  content.console[method].apply(content.console, args);
+  sendAsyncMessage("devtools:test:console:response", { id });
 });
 
 /**
@@ -82,8 +82,9 @@ function promiseXHR(data) {
 
 /**
  * Performs XMLHttpRequest request(s) in the context of the page. The data
- * parameter can be either a single object or an array of objects described below.
- * The requests will be performed one at a time in the order they appear in the data.
+ * parameter can be either a single object or an array of objects described
+ * below. The requests will be performed one at a time in the order they appear
+ * in the data.
  *
  * The objects should have following form (any of them can be omitted; defaults
  * shown below):
@@ -118,7 +119,8 @@ addMessageListener("devtools:test:xhr", Task.async(function* ({ data }) {
   sendAsyncMessage("devtools:test:xhr", responses);
 }));
 
-addMessageListener("devtools:test:profiler", function ({ data: { method, args, id }}) {
+addMessageListener("devtools:test:profiler", function ({ data }) {
+  let { method, args, id } = data;
   let result = nsIProfilerModule[method](...args);
   sendAsyncMessage("devtools:test:profiler:response", {
     data: result,
@@ -126,9 +128,7 @@ addMessageListener("devtools:test:profiler", function ({ data: { method, args, i
   });
 });
 
-
-// To eval in content, look at `evalInDebuggee` in the head.js of canvasdebugger
-// for an example.
+// To eval in content, look at `evalInDebuggee` in the shared-head.js.
 addMessageListener("devtools:test:eval", function ({ data }) {
   sendAsyncMessage("devtools:test:eval:response", {
     value: content.eval(data.script),
@@ -136,7 +136,7 @@ addMessageListener("devtools:test:eval", function ({ data }) {
   });
 });
 
-addEventListener("load", function() {
+addEventListener("load", function () {
   sendAsyncMessage("devtools:test:load");
 }, true);
 
@@ -148,7 +148,7 @@ addEventListener("load", function() {
  * - {String} propertyName The name of the property to set.
  * - {String} propertyValue The value for the property.
  */
-addMessageListener("devtools:test:setStyle", function(msg) {
+addMessageListener("devtools:test:setStyle", function (msg) {
   let {selector, propertyName, propertyValue} = msg.data;
   let node = superQuerySelector(selector);
   if (!node) {
@@ -168,7 +168,7 @@ addMessageListener("devtools:test:setStyle", function(msg) {
  * - {String} attributeName The name of the attribute to set.
  * - {String} attributeValue The value for the attribute.
  */
-addMessageListener("devtools:test:setAttribute", function(msg) {
+addMessageListener("devtools:test:setAttribute", function (msg) {
   let {selector, attributeName, attributeValue} = msg.data;
   let node = superQuerySelector(selector);
   if (!node) {
@@ -181,20 +181,6 @@ addMessageListener("devtools:test:setAttribute", function(msg) {
 });
 
 /**
- * Synthesize a key event for an element. This handler doesn't send a message
- * back. Consumers should listen to specific events on the inspector/highlighter
- * to know when the event got synthesized.
- * @param  {Object} msg The msg.data part expects the following properties:
- * - {String} key
- * - {Object} options
- */
-addMessageListener("Test:SynthesizeKey", function(msg) {
-  let {key, options} = msg.data;
-
-  EventUtils.synthesizeKey(key, options, content);
-});
-
-/**
  * Like document.querySelector but can go into iframes too.
  * ".container iframe || .sub-container div" will first try to find the node
  * matched by ".container iframe" in the root document, then try to get the
@@ -204,18 +190,17 @@ addMessageListener("Test:SynthesizeKey", function(msg) {
  * @param {String} superSelector.
  * @return {DOMNode} The node, or null if not found.
  */
-function superQuerySelector(superSelector, root=content.document) {
+function superQuerySelector(superSelector, root = content.document) {
   let frameIndex = superSelector.indexOf("||");
   if (frameIndex === -1) {
     return root.querySelector(superSelector);
-  } else {
-    let rootSelector = superSelector.substring(0, frameIndex).trim();
-    let childSelector = superSelector.substring(frameIndex+2).trim();
-    root = root.querySelector(rootSelector);
-    if (!root || !root.contentWindow) {
-      return null;
-    }
-
-    return superQuerySelector(childSelector, root.contentWindow.document);
   }
+  let rootSelector = superSelector.substring(0, frameIndex).trim();
+  let childSelector = superSelector.substring(frameIndex + 2).trim();
+  root = root.querySelector(rootSelector);
+  if (!root || !root.contentWindow) {
+    return null;
+  }
+
+  return superQuerySelector(childSelector, root.contentWindow.document);
 }

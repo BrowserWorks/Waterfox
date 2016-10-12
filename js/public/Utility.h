@@ -8,6 +8,7 @@
 #define js_Utility_h
 
 #include "mozilla/Assertions.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Compiler.h"
 #include "mozilla/Move.h"
@@ -33,22 +34,6 @@ namespace mozilla {}
 
 /* The private JS engine namespace. */
 namespace js {}
-
-/*
- * Patterns used by SpiderMonkey to overwrite unused memory. If you are
- * accessing an object with one of these pattern, you probably have a dangling
- * pointer.
- */
-#define JS_FRESH_NURSERY_PATTERN 0x2F
-#define JS_SWEPT_NURSERY_PATTERN 0x2B
-#define JS_ALLOCATED_NURSERY_PATTERN 0x2D
-#define JS_FRESH_TENURED_PATTERN 0x4F
-#define JS_MOVED_TENURED_PATTERN 0x49
-#define JS_SWEPT_TENURED_PATTERN 0x4B
-#define JS_ALLOCATED_TENURED_PATTERN 0x4D
-#define JS_EMPTY_STOREBUFFER_PATTERN 0x1B
-#define JS_SWEPT_CODE_PATTERN 0x3B
-#define JS_SWEPT_FRAME_PATTERN 0x5B
 
 #define JS_STATIC_ASSERT(cond)           static_assert(cond, "JS_STATIC_ASSERT")
 #define JS_STATIC_ASSERT_IF(cond, expr)  MOZ_STATIC_ASSERT_IF(cond, expr, "JS_STATIC_ASSERT_IF")
@@ -103,15 +88,6 @@ inline uint32_t GetThreadType(void) { return 0; }
 
 # if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
 
-/*
- * In order to test OOM conditions, when the testing function
- * oomAfterAllocations COUNT is passed, we fail continuously after the NUM'th
- * allocation from now.
- */
-extern JS_PUBLIC_DATA(uint32_t) OOM_maxAllocations; /* set in builtin/TestingFunctions.cpp */
-extern JS_PUBLIC_DATA(uint32_t) OOM_counter; /* data race, who cares. */
-extern JS_PUBLIC_DATA(bool) OOM_failAlways;
-
 #ifdef JS_OOM_BREAKPOINT
 static MOZ_NEVER_INLINE void js_failedAllocBreakpoint() { asm(""); }
 #define JS_OOM_CALL_BP_FUNC() js_failedAllocBreakpoint()
@@ -122,33 +98,52 @@ static MOZ_NEVER_INLINE void js_failedAllocBreakpoint() { asm(""); }
 namespace js {
 namespace oom {
 
-extern JS_PUBLIC_DATA(uint32_t) targetThread;
+/*
+ * Out of memory testing support.  We provide various testing functions to
+ * simulate OOM conditions and so we can test that they are handled correctly.
+ */
 
-static inline bool
+extern JS_PUBLIC_DATA(uint32_t) targetThread;
+extern JS_PUBLIC_DATA(uint64_t) maxAllocations;
+extern JS_PUBLIC_DATA(uint64_t) counter;
+extern JS_PUBLIC_DATA(bool) failAlways;
+
+extern void
+SimulateOOMAfter(uint64_t allocations, uint32_t thread, bool always);
+
+extern void
+ResetSimulatedOOM();
+
+inline bool
 IsThreadSimulatingOOM()
 {
     return js::oom::targetThread && js::oom::targetThread == js::oom::GetThreadType();
 }
 
-static inline bool
+inline bool
 IsSimulatedOOMAllocation()
 {
-    return IsThreadSimulatingOOM() && (OOM_counter == OOM_maxAllocations ||
-           (OOM_counter > OOM_maxAllocations && OOM_failAlways));
+    return IsThreadSimulatingOOM() &&
+           (counter == maxAllocations || (counter > maxAllocations && failAlways));
 }
 
-static inline bool
+inline bool
 ShouldFailWithOOM()
 {
     if (!IsThreadSimulatingOOM())
         return false;
 
-    OOM_counter++;
+    counter++;
     if (IsSimulatedOOMAllocation()) {
         JS_OOM_CALL_BP_FUNC();
         return true;
     }
     return false;
+}
+
+inline bool
+HadSimulatedOOM() {
+    return counter >= maxAllocations;
 }
 
 } /* namespace oom */
@@ -185,29 +180,41 @@ namespace js {
 struct MOZ_RAII AutoEnterOOMUnsafeRegion
 {
     MOZ_NORETURN MOZ_COLD void crash(const char* reason);
+    MOZ_NORETURN MOZ_COLD void crash(size_t size, const char* reason);
+
+    using AnnotateOOMAllocationSizeCallback = void(*)(size_t);
+    static AnnotateOOMAllocationSizeCallback annotateOOMSizeCallback;
+    static void setAnnotateOOMAllocationSizeCallback(AnnotateOOMAllocationSizeCallback callback) {
+        annotateOOMSizeCallback = callback;
+    }
 
 #if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
     AutoEnterOOMUnsafeRegion()
-      : oomEnabled_(oom::IsThreadSimulatingOOM() && OOM_maxAllocations != UINT32_MAX),
+      : oomEnabled_(oom::IsThreadSimulatingOOM() && oom::maxAllocations != UINT64_MAX),
         oomAfter_(0)
     {
         if (oomEnabled_) {
-            oomAfter_ = int64_t(OOM_maxAllocations) - OOM_counter;
-            OOM_maxAllocations = UINT32_MAX;
+            MOZ_ALWAYS_TRUE(owner_.compareExchange(nullptr, this));
+            oomAfter_ = int64_t(oom::maxAllocations) - int64_t(oom::counter);
+            oom::maxAllocations = UINT64_MAX;
         }
     }
 
     ~AutoEnterOOMUnsafeRegion() {
         if (oomEnabled_) {
-            MOZ_ASSERT(OOM_maxAllocations == UINT32_MAX);
-            int64_t maxAllocations = OOM_counter + oomAfter_;
-            MOZ_ASSERT(maxAllocations >= 0 && maxAllocations < UINT32_MAX,
+            MOZ_ASSERT(oom::maxAllocations == UINT64_MAX);
+            int64_t maxAllocations = int64_t(oom::counter) + oomAfter_;
+            MOZ_ASSERT(maxAllocations >= 0,
                        "alloc count + oom limit exceeds range, your oom limit is probably too large");
-            OOM_maxAllocations = uint32_t(maxAllocations);
+            oom::maxAllocations = uint64_t(maxAllocations);
+            MOZ_ALWAYS_TRUE(owner_.compareExchange(this, nullptr));
         }
     }
 
   private:
+    // Used to catch concurrent use from other threads.
+    static mozilla::Atomic<AutoEnterOOMUnsafeRegion*> owner_;
+
     bool oomEnabled_;
     int64_t oomAfter_;
 #endif
@@ -344,7 +351,7 @@ namespace js {
  * instances of type |T|.  Return false if the calculation overflowed.
  */
 template <typename T>
-MOZ_WARN_UNUSED_RESULT inline bool
+MOZ_MUST_USE inline bool
 CalculateAllocSize(size_t numElems, size_t* bytesOut)
 {
     *bytesOut = numElems * sizeof(T);
@@ -357,7 +364,7 @@ CalculateAllocSize(size_t numElems, size_t* bytesOut)
  * false if the calculation overflowed.
  */
 template <typename T, typename Extra>
-MOZ_WARN_UNUSED_RESULT inline bool
+MOZ_MUST_USE inline bool
 CalculateAllocSizeWithExtra(size_t numExtra, size_t* bytesOut)
 {
     *bytesOut = sizeof(T) + numExtra * sizeof(Extra);

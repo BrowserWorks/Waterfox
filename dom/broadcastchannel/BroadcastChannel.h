@@ -14,7 +14,7 @@
 #include "nsTArray.h"
 #include "mozilla/RefPtr.h"
 
-class nsPIDOMWindow;
+class nsPIDOMWindowInner;
 
 namespace mozilla {
 
@@ -74,18 +74,18 @@ public:
 
   virtual void AddEventListener(const nsAString& aType,
                                 EventListener* aCallback,
-                                bool aCapture,
+                                const AddEventListenerOptionsOrBoolean& aOptions,
                                 const Nullable<bool>& aWantsUntrusted,
                                 ErrorResult& aRv) override;
   virtual void RemoveEventListener(const nsAString& aType,
                                    EventListener* aCallback,
-                                   bool aCapture,
+                                   const EventListenerOptionsOrBoolean& aOptions,
                                    ErrorResult& aRv) override;
 
   void Shutdown();
 
 private:
-  BroadcastChannel(nsPIDOMWindow* aWindow,
+  BroadcastChannel(nsPIDOMWindowInner* aWindow,
                    const PrincipalInfo& aPrincipalInfo,
                    const nsACString& aOrigin,
                    const nsAString& aChannel,

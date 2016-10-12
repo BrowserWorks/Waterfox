@@ -19,6 +19,8 @@
 #include "mozilla/RefPtr.h"
 #include "nsBaseScreen.h"
 #include "nsBaseWidget.h"
+#include "nsCOMArray.h"
+#include "nsIKeyEventInPluginCallback.h"
 #include "nsIScreenManager.h"
 #include "nsThreadUtils.h"
 #include "mozilla/Attributes.h"
@@ -132,7 +134,6 @@ public:
                  LayoutDeviceIntPoint* aPoint = nullptr);
 
   NS_IMETHOD DispatchEvent(WidgetGUIEvent* aEvent, nsEventStatus& aStatus) override;
-  nsEventStatus DispatchAPZAwareEvent(WidgetInputEvent* aEvent) override;
   nsEventStatus DispatchInputEvent(WidgetInputEvent* aEvent) override;
   void SetConfirmedTargetAPZC(uint64_t aInputBlockId,
                               const nsTArray<ScrollableLayerGuid>& aTargets) const override;
@@ -241,11 +242,11 @@ public:
                                                     nsIObserver* aObserver) override;
   virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                               TouchPointerState aPointerState,
-                                              ScreenIntPoint aPointerScreenPoint,
+                                              LayoutDeviceIntPoint aPoint,
                                               double aPointerPressure,
                                               uint32_t aPointerOrientation,
                                               nsIObserver* aObserver) override;
-  virtual nsresult SynthesizeNativeTouchTap(ScreenIntPoint aPointerScreenPoint,
+  virtual nsresult SynthesizeNativeTouchTap(LayoutDeviceIntPoint aPoint,
                                             bool aLongTap,
                                             nsIObserver* aObserver) override;
   virtual nsresult ClearNativeTouchSequence(nsIObserver* aObserver) override;
@@ -253,15 +254,37 @@ public:
 
   virtual void StartAsyncScrollbarDrag(const AsyncDragMetrics& aDragMetrics) override;
 
-  virtual void SetCandidateWindowForPlugin(int32_t aX, int32_t aY) override;
+  virtual void SetCandidateWindowForPlugin(
+                 const CandidateWindowPosition& aPosition) override;
 
   virtual void ZoomToRect(const uint32_t& aPresShellId,
                           const FrameMetrics::ViewID& aViewId,
                           const CSSRect& aRect,
                           const uint32_t& aFlags) override;
+
+  virtual bool HasPendingInputEvent() override;
+
+  void HandledWindowedPluginKeyEvent(const NativeEventData& aKeyEventData,
+                                     bool aIsConsumed);
+  virtual nsresult OnWindowedPluginKeyEvent(
+                     const NativeEventData& aKeyEventData,
+                     nsIKeyEventInPluginCallback* aCallback) override;
+
+  virtual void LookUpDictionary(
+                 const nsAString& aText,
+                 const nsTArray<mozilla::FontRange>& aFontRangeArray,
+                 const bool aIsVertical,
+                 const LayoutDeviceIntPoint& aPoint) override;
+
 protected:
   virtual nsresult NotifyIMEInternal(
                      const IMENotification& aIMENotification) override;
+
+  // PuppetWidgets do not create compositors.
+  widget::CompositorWidgetProxy* NewCompositorWidgetProxy() override {
+    MOZ_ASSERT_UNREACHABLE("PuppetWidgets should not have widget proxies");
+    return nullptr;
+  }
 
 private:
   nsresult Paint();
@@ -285,7 +308,7 @@ private:
 
   nsIWidgetListener* GetCurrentWidgetListener();
 
-  class PaintTask : public nsRunnable {
+  class PaintTask : public Runnable {
   public:
     NS_DECL_NSIRUNNABLE
     explicit PaintTask(PuppetWidget* widget) : mWidget(widget) {}
@@ -344,6 +367,8 @@ private:
 
   nsCOMPtr<imgIContainer> mCustomCursor;
   uint32_t mCursorHotspotX, mCursorHotspotY;
+
+  nsCOMArray<nsIKeyEventInPluginCallback> mKeyEventInPluginCallbacks;
 
 protected:
   bool mEnabled;

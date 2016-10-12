@@ -17,7 +17,7 @@
 #include "mozilla/Logging.h"
 
 // NSPR_LOG_MODULES=UrlClassifierDbService:5
-extern PRLogModuleInfo *gUrlClassifierDbServiceLog;
+extern mozilla::LazyLogModule gUrlClassifierDbServiceLog;
 #define LOG(args) MOZ_LOG(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug, args)
 #define LOG_ENABLED() MOZ_LOG_TEST(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug)
 
@@ -692,7 +692,7 @@ Classifier::GetLookupCache(const nsACString& aTable)
     }
   }
 
-  LookupCache *cache = new LookupCache(aTable, mStoreDirectory);
+  UniquePtr<LookupCache> cache(new LookupCache(aTable, mStoreDirectory));
   nsresult rv = cache->Init();
   if (NS_FAILED(rv)) {
     return nullptr;
@@ -704,8 +704,8 @@ Classifier::GetLookupCache(const nsACString& aTable)
     }
     return nullptr;
   }
-  mLookupCaches.AppendElement(cache);
-  return cache;
+  mLookupCaches.AppendElement(cache.get());
+  return cache.release();
 }
 
 nsresult

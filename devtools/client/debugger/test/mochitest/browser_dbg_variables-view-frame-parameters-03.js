@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure that the variables view displays the right variables and
@@ -15,13 +17,17 @@ function test() {
   // Debug test slaves are a bit slow at this test.
   requestLongerTimeout(2);
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gVariables = gDebugger.DebuggerView.Variables;
 
-    waitForSourceAndCaretAndScopes(gPanel, ".html", 24)
+    waitForCaretAndScopes(gPanel, 24)
       .then(expandGlobalScope)
       .then(testGlobalScope)
       .then(expandWindowVariable)
@@ -143,7 +149,7 @@ function testWindowVariable() {
     "Should have no child non-enumerable properties for 'undefined'.");
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

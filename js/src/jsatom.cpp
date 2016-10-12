@@ -134,6 +134,12 @@ JSRuntime::initializeAtoms(JSContext* cx)
 #define COMMON_NAME_INFO(name, code, init, clasp) { js_##name##_str, sizeof(#name) - 1 },
         JS_FOR_EACH_PROTOTYPE(COMMON_NAME_INFO)
 #undef COMMON_NAME_INFO
+#define COMMON_NAME_INFO(name) { #name, sizeof(#name) - 1 },
+        JS_FOR_EACH_WELL_KNOWN_SYMBOL(COMMON_NAME_INFO)
+#undef COMMON_NAME_INFO
+#define COMMON_NAME_INFO(name) { "Symbol." #name, sizeof("Symbol." #name) - 1 },
+        JS_FOR_EACH_WELL_KNOWN_SYMBOL(COMMON_NAME_INFO)
+#undef COMMON_NAME_INFO
     };
 
     commonNames = cx->new_<JSAtomState>();
@@ -191,10 +197,10 @@ JSRuntime::finishAtoms()
 }
 
 void
-js::MarkAtoms(JSTracer* trc)
+js::MarkAtoms(JSTracer* trc, AutoLockForExclusiveAccess& lock)
 {
     JSRuntime* rt = trc->runtime();
-    for (AtomSet::Enum e(rt->atoms()); !e.empty(); e.popFront()) {
+    for (AtomSet::Enum e(rt->atoms(lock)); !e.empty(); e.popFront()) {
         const AtomStateEntry& entry = e.front();
         if (!entry.isPinned())
             continue;
@@ -290,7 +296,7 @@ AtomIsPinned(JSContext* cx, JSAtom* atom)
 
     AutoLockForExclusiveAccess lock(cx);
 
-    p = cx->runtime()->atoms().lookup(lookup);
+    p = cx->runtime()->atoms(lock).lookup(lookup);
     if (!p)
         return false;
 
@@ -321,7 +327,7 @@ AtomizeAndCopyChars(ExclusiveContext* cx, const CharT* tbchars, size_t length, P
 
     AutoLockForExclusiveAccess lock(cx);
 
-    AtomSet& atoms = cx->atoms();
+    AtomSet& atoms = cx->atoms(lock);
     AtomSet::AddPtr p = atoms.lookupForAdd(lookup);
     if (p) {
         JSAtom* atom = p->asPtr();
@@ -329,7 +335,7 @@ AtomizeAndCopyChars(ExclusiveContext* cx, const CharT* tbchars, size_t length, P
         return atom;
     }
 
-    AutoCompartment ac(cx, cx->atomsCompartment());
+    AutoCompartment ac(cx, cx->atomsCompartment(lock));
 
     JSFlatString* flat = NewStringCopyN<NoGC>(cx, tbchars, length);
     if (!flat) {
@@ -379,7 +385,7 @@ js::AtomizeString(ExclusiveContext* cx, JSString* str,
 
         AutoLockForExclusiveAccess lock(cx);
 
-        p = cx->atoms().lookup(lookup);
+        p = cx->atoms(lock).lookup(lookup);
         MOZ_ASSERT(p); /* Non-static atom must exist in atom state set. */
         MOZ_ASSERT(p->asPtr() == &atom);
         MOZ_ASSERT(pin == PinAtom);
@@ -437,7 +443,7 @@ js::AtomizeUTF8Chars(JSContext* cx, const char* utf8Chars, size_t utf8ByteLength
     UTF8Chars utf8(utf8Chars, utf8ByteLength);
 
     size_t length;
-    UniquePtr<char16_t> chars(JS::UTF8CharsToNewTwoByteCharsZ(cx, utf8, &length).get());
+    UniqueTwoByteChars chars(JS::UTF8CharsToNewTwoByteCharsZ(cx, utf8, &length).get());
     if (!chars)
         return nullptr;
 

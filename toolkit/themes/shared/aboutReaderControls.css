@@ -120,7 +120,7 @@
   padding: 0;
 }
 
-/*======= Font style popup =======*/
+/*======= Popup =======*/
 
 .dropdown-popup {
   min-width: 300px;
@@ -134,6 +134,10 @@
   border: 1px solid #b5b5b5;
   border-bottom-width: 0;
   box-shadow: 0 1px 12px #666;
+}
+
+.keep-open .dropdown-popup {
+  z-index: initial;
 }
 
 .dropdown-popup > hr {
@@ -154,9 +158,13 @@
   display: block;
 }
 
+/*======= Font style popup =======*/
+
 #font-type-buttons,
 #font-size-buttons,
-#color-scheme-buttons {
+#color-scheme-buttons,
+#content-width-buttons,
+#line-height-buttons {
   display: flex;
   flex-direction: row;
 }
@@ -176,13 +184,17 @@
 
 #font-type-buttons > button,
 #font-size-buttons > button,
-#color-scheme-buttons > button {
+#color-scheme-buttons > button,
+#content-width-buttons > button,
+#line-height-buttons > button {
   text-align: center;
   border: 0;
 }
 
 #font-type-buttons > button,
-#font-size-buttons > button {
+#font-size-buttons > button,
+#content-width-buttons > button,
+#line-height-buttons > button {
   width: 50%;
   background-color: transparent;
   border-left: 1px solid #B5B5B5;
@@ -200,7 +212,9 @@
 }
 
 #font-type-buttons > button:first-child,
-#font-size-buttons > button:first-child {
+#font-size-buttons > button:first-child,
+#content-width-buttons > button:first-child,
+#line-height-buttons > button:first-child {
   border-left: 0;
 }
 
@@ -211,7 +225,9 @@
 }
 
 #font-size-buttons > button,
-#color-scheme-buttons > button {
+#color-scheme-buttons > button,
+#content-width-buttons > button,
+#line-height-buttons > button {
   height: 60px;
 }
 
@@ -275,14 +291,20 @@
 
 .button:hover,
 #font-size-buttons > button:hover,
-#font-type-buttons > button:hover {
+#font-type-buttons > button:hover,
+#content-width-buttons > button:hover,
+#line-height-buttons > button:hover {
   background-color: #ebebeb;
 }
 
 .dropdown.open,
 .button:active,
 #font-size-buttons > button:active,
-#font-size-buttons > button.selected {
+#font-size-buttons > button.selected,
+#content-width-buttons > button:active,
+#content-width-buttons > button.selected,
+#line-height-buttons > button:active,
+#line-height-buttons > button.selected {
   background-color: #dadada;
 }
 
@@ -292,7 +314,11 @@
 }
 
 .minus-button,
-.plus-button {
+.plus-button,
+.content-width-minus-button,
+.content-width-plus-button,
+.line-height-minus-button,
+.line-height-plus-button {
   background-color: transparent;
   border: 0;
   background-size: 18px 18px;
@@ -300,37 +326,7 @@
   background-position: center;
 }
 
-.footer {
-  height: 64px;
-  background-color: #ebebeb;
-  position: absolute;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  padding: 12px 0;
-  box-sizing: border-box;
-  box-shadow: 0 3px 3px -3px rgba(0, 0, 0, 0.35) inset;
-}
-
-.remove-button {
-  background-image: url("chrome://global/skin/reader/RM-Delete-24x24.svg");
-  margin: 0 auto;
-  border: 1px solid #c1c1c1;
-  background-position: 10px 7px;
-  padding-left: 42px;
-  padding-right: 10px;
-  border-radius: 2px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  font-size: 18px;
-}
-
-
 /*======= Toolbar icons =======*/
-
-/* Android-only controls */
-.share-button {
-  display: none;
-}
 
 .close-button {
   background-image: url("chrome://global/skin/reader/RM-Close-24x24.svg#close");
@@ -356,21 +352,6 @@
   background-image: url("chrome://global/skin/reader/RM-Type-Controls-24x24.svg");
 }
 
-.toggle-button.on {
-  background-image: url("chrome://global/skin/reader/RM-Delete-24x24.svg");
-}
-
-.toggle-button {
-  background-image: url("chrome://global/skin/reader/RM-Add-24x24.svg");
-}
-
-.list-button {
-  background-image: url("chrome://global/skin/reader/RM-Reading-List-24x24.svg");
-}
-.list-button.on {
-  background-color: #d9d9d9;
-}
-
 .minus-button {
   background-image: url("chrome://global/skin/reader/RM-Minus-24x24.svg");
 }
@@ -379,11 +360,28 @@
   background-image: url("chrome://global/skin/reader/RM-Plus-24x24.svg");
 }
 
+.content-width-minus-button {
+  background-size: 42px 16px;
+  background-image: url("chrome://global/skin/reader/RM-Content-Width-Minus-42x16.svg");
+}
+
+.content-width-plus-button {
+  background-size: 44px 16px;
+  background-image: url("chrome://global/skin/reader/RM-Content-Width-Plus-44x16.svg");
+}
+
+.line-height-minus-button {
+  background-size: 34px 14px;
+  background-image: url("chrome://global/skin/reader/RM-Line-Height-Minus-38x14.svg");
+}
+
+.line-height-plus-button {
+  background-size: 34px 24px;
+  background-image: url("chrome://global/skin/reader/RM-Line-Height-Plus-38x24.svg");
+}
+
 @media print {
   .toolbar {
-    display: none !important;
-  }
-  .footer {
     display: none !important;
   }
 }

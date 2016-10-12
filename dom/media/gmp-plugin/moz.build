@@ -4,7 +4,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-DIST_INSTALL = False
+FINAL_TARGET = 'dist/bin/gmp-fake/1.0'
+
+FINAL_TARGET_FILES += [
+    'fake.info',
+    'fake.voucher',
+]
+
 SOURCES += [
         'gmp-fake.cpp',
         'gmp-test-decryptor.cpp',
@@ -24,6 +30,3 @@ USE_STATIC_LIBS = True
 NO_VISIBILITY_FLAGS = True
 # Don't use STL wrappers; this isn't Gecko code
 DISABLE_STL_WRAPPING = True
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

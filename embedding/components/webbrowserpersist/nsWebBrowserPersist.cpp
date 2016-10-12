@@ -672,7 +672,7 @@ nsWebBrowserPersist::SerializeNextFile()
         // Finish and clean things up.  Defer this because the caller
         // may have been expecting to use the listeners that that
         // method will clear.
-        NS_DispatchToCurrentThread(NS_NewRunnableMethod(this,
+        NS_DispatchToCurrentThread(NewRunnableMethod(this,
             &nsWebBrowserPersist::FinishDownload));
         return;
     }
@@ -784,7 +784,7 @@ nsWebBrowserPersist::OnWrite::OnFinish(nsIWebBrowserPersistDocument* aDoc,
             return NS_OK;
         }
     }
-    NS_DispatchToCurrentThread(NS_NewRunnableMethod(mParent,
+    NS_DispatchToCurrentThread(NewRunnableMethod(mParent,
         &nsWebBrowserPersist::SerializeNextFile));
     return NS_OK;
 }
@@ -1794,8 +1794,8 @@ nsWebBrowserPersist::FinishSaveDocumentInternal(nsIURI* aFile,
         typedef StoreCopyPassByRRef<decltype(toWalk)> WalkStorage;
         auto saveMethod = &nsWebBrowserPersist::SaveDocumentDeferred;
         nsCOMPtr<nsIRunnable> saveLater =
-            NS_NewRunnableMethodWithArg<WalkStorage>(this, saveMethod,
-                                                     mozilla::Move(toWalk));
+            NewRunnableMethod<WalkStorage>(this, saveMethod,
+                                           mozilla::Move(toWalk));
         NS_DispatchToCurrentThread(saveLater);
     } else {
         // Done walking DOMs; on to the serialization phase.
@@ -2124,7 +2124,7 @@ nsWebBrowserPersist::MakeFilenameFromURI(nsIURI *aURI, nsString &aFilename)
         url->GetFileName(nameFromURL);
         if (mPersistFlags & PERSIST_FLAGS_DONT_CHANGE_FILENAMES)
         {
-            fileName.AssignWithConversion(NS_UnescapeURL(nameFromURL).get());
+            fileName.AssignWithConversion(NS_UnescapeURL(nameFromURL).BeginReading());
             aFilename = fileName;
             return NS_OK;
         }
@@ -2360,6 +2360,9 @@ nsWebBrowserPersist::EndDownload(nsresult aResult)
         mPersistResult = aResult;
     }
 
+    // mCompleted needs to be set before issuing the stop notification.
+    // (Bug 1224437)
+    mCompleted = true;
     // State stop notification
     if (mProgressListener) {
         mProgressListener->OnStateChange(nullptr, nullptr,
@@ -2374,7 +2377,6 @@ nsWebBrowserPersist::EndDownload(nsresult aResult)
     }
 
     // Cleanup the channels
-    mCompleted = true;
     Cleanup();
 
     mProgressListener = nullptr;
@@ -2391,6 +2393,7 @@ nsWebBrowserPersist::FixRedirectedChannelEntry(nsIChannel *aNewChannel)
     // matching the one specified.
     nsCOMPtr<nsIURI> originalURI;
     aNewChannel->GetOriginalURI(getter_AddRefs(originalURI));
+    nsISupports* matchingKey = nullptr;
     for (auto iter = mOutputMap.Iter(); !iter.Done(); iter.Next()) {
         nsISupports* key = iter.Key();
         nsCOMPtr<nsIChannel> thisChannel = do_QueryInterface(key);
@@ -2402,21 +2405,25 @@ nsWebBrowserPersist::FixRedirectedChannelEntry(nsIChannel *aNewChannel)
         bool matchingURI = false;
         thisURI->Equals(originalURI, &matchingURI);
         if (matchingURI) {
-            // If a match is found, remove the data entry with the old channel
-            // key and re-add it with the new channel key.
-            nsAutoPtr<OutputData> outputData;
-            mOutputMap.RemoveAndForget(key, outputData);
-            NS_ENSURE_TRUE(outputData, NS_ERROR_FAILURE);
-
-            // Store data again with new channel unless told to ignore redirects
-            if (!(mPersistFlags & PERSIST_FLAGS_IGNORE_REDIRECTED_DATA)) {
-                nsCOMPtr<nsISupports> keyPtr = do_QueryInterface(aNewChannel);
-                mOutputMap.Put(keyPtr, outputData.forget());
-            }
-
+            matchingKey = key;
             break;
         }
     }
+
+    if (matchingKey) {
+        // If a match was found, remove the data entry with the old channel
+        // key and re-add it with the new channel key.
+        nsAutoPtr<OutputData> outputData;
+        mOutputMap.RemoveAndForget(matchingKey, outputData);
+        NS_ENSURE_TRUE(outputData, NS_ERROR_FAILURE);
+
+        // Store data again with new channel unless told to ignore redirects.
+        if (!(mPersistFlags & PERSIST_FLAGS_IGNORE_REDIRECTED_DATA)) {
+            nsCOMPtr<nsISupports> keyPtr = do_QueryInterface(aNewChannel);
+            mOutputMap.Put(keyPtr, outputData.forget());
+        }
+    }
+
     return NS_OK;
 }
 

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+<head>
+  <title>Test for FIDO Universal Second Factor No Token</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script src="u2futil.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1231681">Mozilla Bug 1231681</a>
+
+<div id="framediv">
+  <iframe id="testing_frame"></iframe>
+</div>
+
+<script class="testbody" type="text/javascript">
+
+SimpleTest.waitForExplicitFinish();
+
+SpecialPowers.pushPrefEnv({"set": [["security.webauth.u2f", true],
+                                   ["security.webauth.u2f_enable_softtoken", false],
+                                   ["security.webauth.u2f_enable_usbtoken", false]]},
+function() {
+  onmessage = function(event) {
+    //event.data is the response.errorCode
+    isnot(event.data, 0, "The registration should be rejected.");
+    SimpleTest.finish();
+  }
+
+  document.getElementById('testing_frame').src = 'frame_no_token.html';
+});
+
+</script>
+
+</body>
+</html>

@@ -45,6 +45,13 @@ js::jit::RD(Register r)
 }
 
 uint32_t
+js::jit::RZ(Register r)
+{
+    MOZ_ASSERT((r.code() & ~RegMask) == 0);
+    return r.code() << RZShift;
+}
+
+uint32_t
 js::jit::SA(uint32_t value)
 {
     MOZ_ASSERT(value < 32);
@@ -219,6 +226,12 @@ AssemblerMIPSShared::InvertCondition(DoubleCondition cond)
 BOffImm16::BOffImm16(InstImm inst)
   : data(inst.encode() & Imm16Mask)
 {
+}
+
+Instruction*
+BOffImm16::getDest(Instruction* src) const
+{
+    return &src[(((int32_t)data << 16) >> 16) + 1];
 }
 
 bool
@@ -820,6 +833,76 @@ AssemblerMIPSShared::as_sdr(Register rd, Register rs, int16_t off)
     return writeInst(InstImm(op_sdr, rs, rd, Imm16(off)).encode());
 }
 
+BufferOffset
+AssemblerMIPSShared::as_gslbx(Register rd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_ldc2, rs, rd, ri, Imm8(off), ff_gsxbx).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gssbx(Register rd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_sdc2, rs, rd, ri, Imm8(off), ff_gsxbx).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gslhx(Register rd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_ldc2, rs, rd, ri, Imm8(off), ff_gsxhx).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gsshx(Register rd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_sdc2, rs, rd, ri, Imm8(off), ff_gsxhx).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gslwx(Register rd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_ldc2, rs, rd, ri, Imm8(off), ff_gsxwx).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gsswx(Register rd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_sdc2, rs, rd, ri, Imm8(off), ff_gsxwx).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gsldx(Register rd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_ldc2, rs, rd, ri, Imm8(off), ff_gsxdx).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gssdx(Register rd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_sdc2, rs, rd, ri, Imm8(off), ff_gsxdx).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gslq(Register rh, Register rl, Register rs, int16_t off)
+{
+    MOZ_ASSERT(GSImm13::IsInRange(off));
+    return writeInst(InstGS(op_lwc2, rs, rl, rh, GSImm13(off), ff_gsxq).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gssq(Register rh, Register rl, Register rs, int16_t off)
+{
+    MOZ_ASSERT(GSImm13::IsInRange(off));
+    return writeInst(InstGS(op_swc2, rs, rl, rh, GSImm13(off), ff_gsxq).encode());
+}
+
 // Move from HI/LO register.
 BufferOffset
 AssemblerMIPSShared::as_mfhi(Register rd)
@@ -1017,6 +1100,104 @@ AssemblerMIPSShared::as_ss(FloatRegister fd, Register base, int32_t off)
 }
 
 BufferOffset
+AssemblerMIPSShared::as_gsldl(FloatRegister fd, Register base, int32_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_lwc2, base, fd, Imm8(off), ff_gsxdlc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gsldr(FloatRegister fd, Register base, int32_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_lwc2, base, fd, Imm8(off), ff_gsxdrc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gssdl(FloatRegister fd, Register base, int32_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_swc2, base, fd, Imm8(off), ff_gsxdlc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gssdr(FloatRegister fd, Register base, int32_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_swc2, base, fd, Imm8(off), ff_gsxdrc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gslsl(FloatRegister fd, Register base, int32_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_lwc2, base, fd, Imm8(off), ff_gsxwlc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gslsr(FloatRegister fd, Register base, int32_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_lwc2, base, fd, Imm8(off), ff_gsxwrc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gsssl(FloatRegister fd, Register base, int32_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_swc2, base, fd, Imm8(off), ff_gsxwlc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gsssr(FloatRegister fd, Register base, int32_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_swc2, base, fd, Imm8(off), ff_gsxwrc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gslsx(FloatRegister fd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_ldc2, rs, fd, ri, Imm8(off), ff_gsxwxc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gsssx(FloatRegister fd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_sdc2, rs, fd, ri, Imm8(off), ff_gsxwxc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gsldx(FloatRegister fd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_ldc2, rs, fd, ri, Imm8(off), ff_gsxdxc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gssdx(FloatRegister fd, Register rs, Register ri, int16_t off)
+{
+    MOZ_ASSERT(Imm8::IsInSignedRange(off));
+    return writeInst(InstGS(op_sdc2, rs, fd, ri, Imm8(off), ff_gsxdxc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gslq(FloatRegister rh, FloatRegister rl, Register rs, int16_t off)
+{
+    MOZ_ASSERT(GSImm13::IsInRange(off));
+    return writeInst(InstGS(op_lwc2, rs, rl, rh, GSImm13(off), ff_gsxqc1).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_gssq(FloatRegister rh, FloatRegister rl, Register rs, int16_t off)
+{
+    MOZ_ASSERT(GSImm13::IsInRange(off));
+    return writeInst(InstGS(op_swc2, rs, rl, rh, GSImm13(off), ff_gsxqc1).encode());
+}
+
+BufferOffset
 AssemblerMIPSShared::as_movs(FloatRegister fd, FloatRegister fs)
 {
     return writeInst(InstReg(op_cop1, rs_s, zero, fs, fd, ff_mov_fmt).encode());
@@ -1026,6 +1207,18 @@ BufferOffset
 AssemblerMIPSShared::as_movd(FloatRegister fd, FloatRegister fs)
 {
     return writeInst(InstReg(op_cop1, rs_d, zero, fs, fd, ff_mov_fmt).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_ctc1(Register rt, FPControl fc)
+{
+    return writeInst(InstReg(op_cop1, rs_ctc1, rt, FloatRegister(fc)).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_cfc1(Register rt, FPControl fc)
+{
+    return writeInst(InstReg(op_cop1, rs_cfc1, rt, FloatRegister(fc)).encode());
 }
 
 BufferOffset
@@ -1090,6 +1283,12 @@ AssemblerMIPSShared::as_truncws(FloatRegister fd, FloatRegister fs)
 }
 
 BufferOffset
+AssemblerMIPSShared::as_truncls(FloatRegister fd, FloatRegister fs)
+{
+    return writeInst(InstReg(op_cop1, rs_s, zero, fs, fd, ff_trunc_l_fmt).encode());
+}
+
+BufferOffset
 AssemblerMIPSShared::as_ceilwd(FloatRegister fd, FloatRegister fs)
 {
     return writeInst(InstReg(op_cop1, rs_d, zero, fs, fd, ff_ceil_w_fmt).encode());
@@ -1111,6 +1310,12 @@ BufferOffset
 AssemblerMIPSShared::as_truncwd(FloatRegister fd, FloatRegister fs)
 {
     return writeInst(InstReg(op_cop1, rs_d, zero, fs, fd, ff_trunc_w_fmt).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_truncld(FloatRegister fd, FloatRegister fs)
+{
+    return writeInst(InstReg(op_cop1, rs_d, zero, fs, fd, ff_trunc_l_fmt).encode());
 }
 
 BufferOffset
@@ -1297,6 +1502,36 @@ AssemblerMIPSShared::as_cule(FloatFormat fmt, FloatRegister fs, FloatRegister ft
     return writeInst(InstReg(op_cop1, rs, ft, fs, fcc << FccShift, ff_c_ule_fmt).encode());
 }
 
+// FP conditional move.
+BufferOffset
+AssemblerMIPSShared::as_movt(FloatFormat fmt, FloatRegister fd, FloatRegister fs, FPConditionBit fcc)
+{
+    RSField rs = fmt == DoubleFloat ? rs_d : rs_s;
+    Register rt = Register::FromCode(fcc << 2 | 1);
+    return writeInst(InstReg(op_cop1, rs, rt, fs, fd, ff_movf_fmt).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_movf(FloatFormat fmt, FloatRegister fd, FloatRegister fs, FPConditionBit fcc)
+{
+    RSField rs = fmt == DoubleFloat ? rs_d : rs_s;
+    Register rt = Register::FromCode(fcc << 2 | 0);
+    return writeInst(InstReg(op_cop1, rs, rt, fs, fd, ff_movf_fmt).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_movz(FloatFormat fmt, FloatRegister fd, FloatRegister fs, Register rt)
+{
+    RSField rs = fmt == DoubleFloat ? rs_d : rs_s;
+    return writeInst(InstReg(op_cop1, rs, rt, fs, fd, ff_movz_fmt).encode());
+}
+
+BufferOffset
+AssemblerMIPSShared::as_movn(FloatFormat fmt, FloatRegister fd, FloatRegister fs, Register rt)
+{
+    RSField rs = fmt == DoubleFloat ? rs_d : rs_s;
+    return writeInst(InstReg(op_cop1, rs, rt, fs, fd, ff_movn_fmt).encode());
+}
 
 void
 AssemblerMIPSShared::bind(Label* label, BufferOffset boff)
@@ -1324,6 +1559,26 @@ AssemblerMIPSShared::bind(Label* label, BufferOffset boff)
         } while (next != LabelBase::INVALID_OFFSET);
     }
     label->bind(dest.getOffset());
+}
+
+void
+AssemblerMIPSShared::bindLater(Label* label, wasm::JumpTarget target)
+{
+    if (label->used()) {
+        int32_t next;
+
+        BufferOffset b(label);
+        do {
+            Instruction* inst = editSrc(b);
+
+            append(target, b.getOffset());
+            next = inst[1].encode();
+            inst[1].makeNop();
+
+            b = BufferOffset(next);
+        } while (next != LabelBase::INVALID_OFFSET);
+    }
+    label->reset();
 }
 
 void
@@ -1360,28 +1615,6 @@ AssemblerMIPSShared::retarget(Label* label, Label* target)
         }
     }
     label->reset();
-}
-
-void
-AssemblerMIPSShared::retargetWithOffset(size_t baseOffset, const LabelBase* label, Label* target)
-{
-    if (!label->used())
-        return;
-
-    MOZ_ASSERT(!target->bound());
-    int32_t next;
-    BufferOffset labelBranchOffset(label->offset() + baseOffset);
-    do {
-        Instruction* inst = editSrc(labelBranchOffset);
-        int32_t prev = target->use(labelBranchOffset.getOffset());
-
-        MOZ_RELEASE_ASSERT(prev == Label::INVALID_OFFSET || unsigned(prev) < size());
-
-        next = inst[1].encode();
-        inst[1].setData(prev);
-
-        labelBranchOffset = BufferOffset(next + baseOffset);
-    } while (next != LabelBase::INVALID_OFFSET);
 }
 
 void dbg_break() {}

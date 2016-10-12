@@ -11,7 +11,6 @@
 #include "nsDOMNavigationTiming.h"
 #include "nsContentUtils.h"
 #include "nsIScriptSecurityManager.h"
-#include "nsGlobalWindow.h"
 #include "nsIDOMWindow.h"
 #include "nsILoadInfo.h"
 #include "nsIURI.h"
@@ -30,8 +29,6 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/TimeStamp.h"
-#include "SharedWorker.h"
-#include "ServiceWorker.h"
 #include "js/HeapAPI.h"
 #include "GeckoProfiler.h"
 #include "WorkerPrivate.h"
@@ -71,9 +68,11 @@ nsPerformanceTiming::nsPerformanceTiming(nsPerformance* aPerformance,
     mZeroTime = 0;
   }
 
-  // The aHttpChannel argument is null if this nsPerformanceTiming object
-  // is being used for the navigation timing (document) and has a non-null
-  // value for the resource timing (any resources within the page).
+  // The aHttpChannel argument is null if this nsPerformanceTiming object is
+  // being used for navigation timing (which is only relevant for documents).
+  // It has a non-null value if this nsPerformanceTiming object is being used
+  // for resource timing, which can include document loads, both toplevel and
+  // in subframes, and resources linked from a document.
   if (aHttpChannel) {
     mTimingAllowed = CheckAllowedOrigin(aHttpChannel, aChannel);
     bool redirectsPassCheck = false;
@@ -147,6 +146,14 @@ nsPerformanceTiming::CheckAllowedOrigin(nsIHttpChannel* aResourceChannel,
   if (!loadInfo) {
     return false;
   }
+
+  // TYPE_DOCUMENT loads have no loadingPrincipal.  And that's OK, because we
+  // never actually need to have a performance timing entry for TYPE_DOCUMENT
+  // loads.
+  if (loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_DOCUMENT) {
+    return false;
+  }
+
   nsCOMPtr<nsIPrincipal> principal = loadInfo->LoadingPrincipal();
 
   // Check if the resource is either same origin as the page that started
@@ -431,7 +438,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 NS_IMPL_ADDREF_INHERITED(nsPerformance, PerformanceBase)
 NS_IMPL_RELEASE_INHERITED(nsPerformance, PerformanceBase)
 
-nsPerformance::nsPerformance(nsPIDOMWindow* aWindow,
+nsPerformance::nsPerformance(nsPIDOMWindowInner* aWindow,
                              nsDOMNavigationTiming* aDOMTiming,
                              nsITimedChannel* aChannel,
                              nsPerformance* aParentPerformance)
@@ -776,9 +783,15 @@ nsPerformance::InsertUserEntry(PerformanceEntry* aEntry)
 
   nsAutoCString uri;
   uint64_t markCreationEpoch = 0;
+
   if (nsContentUtils::IsUserTimingLoggingEnabled() ||
       nsContentUtils::SendPerformanceTimingNotifications()) {
-    nsresult rv = GetOwner()->GetDocumentURI()->GetHost(uri);
+    nsresult rv = NS_ERROR_FAILURE;
+    nsCOMPtr<nsPIDOMWindowInner> owner = GetOwner();
+    if (owner && owner->GetDocumentURI()) {
+      rv = owner->GetDocumentURI()->GetHost(uri);
+    }
+
     if(NS_FAILED(rv)) {
       // If we have no URI, just put in "none".
       uri.AssignLiteral("none");
@@ -829,7 +842,7 @@ PerformanceBase::PerformanceBase()
   MOZ_ASSERT(!NS_IsMainThread());
 }
 
-PerformanceBase::PerformanceBase(nsPIDOMWindow* aWindow)
+PerformanceBase::PerformanceBase(nsPIDOMWindowInner* aWindow)
   : DOMEventTargetHelper(aWindow)
   , mResourceTimingBufferSize(kDefaultResourceTimingBufferSize)
   , mPendingNotificationObserversTask(false)
@@ -919,37 +932,6 @@ PerformanceBase::ClearResourceTimings()
 }
 
 DOMHighResTimeStamp
-PerformanceBase::TranslateTime(DOMHighResTimeStamp aTime,
-                               const WindowOrWorkerOrSharedWorkerOrServiceWorker& aTimeSource,
-                               ErrorResult& aRv)
-{
-  TimeStamp otherCreationTimeStamp;
-
-  if (aTimeSource.IsWindow()) {
-    RefPtr<nsPerformance> performance = aTimeSource.GetAsWindow().GetPerformance();
-    if (NS_WARN_IF(!performance)) {
-      aRv.Throw(NS_ERROR_FAILURE);
-    }
-    otherCreationTimeStamp = performance->CreationTimeStamp();
-  } else if (aTimeSource.IsWorker()) {
-    otherCreationTimeStamp = aTimeSource.GetAsWorker().CreationTimeStamp();
-  } else if (aTimeSource.IsSharedWorker()) {
-    SharedWorker& sharedWorker = aTimeSource.GetAsSharedWorker();
-    WorkerPrivate* workerPrivate = sharedWorker.GetWorkerPrivate();
-    otherCreationTimeStamp = workerPrivate->CreationTimeStamp();
-  } else if (aTimeSource.IsServiceWorker()) {
-    ServiceWorker& serviceWorker = aTimeSource.GetAsServiceWorker();
-    WorkerPrivate* workerPrivate = serviceWorker.GetWorkerPrivate();
-    otherCreationTimeStamp = workerPrivate->CreationTimeStamp();
-  } else {
-    MOZ_CRASH("This should not be possible.");
-  }
-
-  return RoundTime(
-    aTime + (otherCreationTimeStamp - CreationTimeStamp()).ToMilliseconds());
-}
-
-DOMHighResTimeStamp
 PerformanceBase::RoundTime(double aTime) const
 {
   // Round down to the nearest 5us, because if the timer is too accurate people
@@ -992,7 +974,7 @@ DOMHighResTimeStamp
 PerformanceBase::ResolveTimestampFromName(const nsAString& aName,
                                           ErrorResult& aRv)
 {
-  nsAutoTArray<RefPtr<PerformanceEntry>, 1> arr;
+  AutoTArray<RefPtr<PerformanceEntry>, 1> arr;
   DOMHighResTimeStamp ts;
   Optional<nsAString> typeParam;
   nsAutoString str;
@@ -1164,7 +1146,7 @@ PerformanceBase::CancelNotificationObservers()
   mPendingNotificationObserversTask = false;
 }
 
-class NotifyObserversTask final : public nsCancelableRunnable
+class NotifyObserversTask final : public CancelableRunnable
 {
 public:
   explicit NotifyObserversTask(PerformanceBase* aPerformance)
@@ -1180,7 +1162,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD Cancel() override
+  nsresult Cancel() override
   {
     mPerformance->CancelNotificationObservers();
     mPerformance = nullptr;

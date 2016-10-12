@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -12,7 +14,7 @@
 const URL = "data:text/html;charset=utf8,test page";
 const {Toolbox} = require("devtools/client/framework/toolbox");
 
-add_task(function*() {
+add_task(function* () {
   info("Create a test tab and open the toolbox");
   let tab = yield addTab(URL);
   let target = TargetFactory.forTab(tab);
@@ -51,14 +53,14 @@ add_task(function*() {
   yield minimize(toolbox);
   onMaximized = toolbox._host.once("maximized");
   let tabButton = toolbox.doc.querySelector("#toolbox-tab-inspector");
-  EventUtils.synthesizeMouseAtCenter(tabButton, {}, toolbox.doc.defaultView);
+  EventUtils.synthesizeMouseAtCenter(tabButton, {}, toolbox.win);
   yield onMaximized;
 
   info("Minimize again and click on the settings tab");
   yield minimize(toolbox);
   onMaximized = toolbox._host.once("maximized");
   let settingsButton = toolbox.doc.querySelector("#toolbox-tab-options");
-  EventUtils.synthesizeMouseAtCenter(settingsButton, {}, toolbox.doc.defaultView);
+  EventUtils.synthesizeMouseAtCenter(settingsButton, {}, toolbox.win);
   yield onMaximized;
 
   info("Switch to a different host");
@@ -74,7 +76,7 @@ add_task(function*() {
 function* minimize(toolbox) {
   let button = toolbox.doc.querySelector("#toolbox-dock-bottom-minimize");
   let onMinimized = toolbox._host.once("minimized");
-  EventUtils.synthesizeMouseAtCenter(button, {}, toolbox.doc.defaultView);
+  EventUtils.synthesizeMouseAtCenter(button, {}, toolbox.win);
   yield onMinimized;
 }
 
@@ -83,14 +85,14 @@ function* minimizeWithShortcut(toolbox) {
                        .getAttribute("key");
   let onMinimized = toolbox._host.once("minimized");
   EventUtils.synthesizeKey(key, {accelKey: true, shiftKey: true},
-                           toolbox.doc.defaultView);
+                           toolbox.win);
   yield onMinimized;
 }
 
 function* maximize(toolbox) {
   let button = toolbox.doc.querySelector("#toolbox-dock-bottom-minimize");
   let onMaximized = toolbox._host.once("maximized");
-  EventUtils.synthesizeMouseAtCenter(button, {}, toolbox.doc.defaultView);
+  EventUtils.synthesizeMouseAtCenter(button, {}, toolbox.win);
   yield onMaximized;
 }
 
@@ -99,6 +101,6 @@ function* maximizeWithShortcut(toolbox) {
                        .getAttribute("key");
   let onMaximized = toolbox._host.once("maximized");
   EventUtils.synthesizeKey(key, {accelKey: true, shiftKey: true},
-                           toolbox.doc.defaultView);
+                           toolbox.win);
   yield onMaximized;
 }

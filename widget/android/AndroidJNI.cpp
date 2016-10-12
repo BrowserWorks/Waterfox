@@ -63,29 +63,6 @@ Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoOfEvent(JNIEnv *jenv, jclass jc,
     nsAppShell::PostEvent(AndroidGeckoEvent::MakeFromJavaObject(jenv, event));
 }
 
-NS_EXPORT void JNICALL
-Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoObservers(JNIEnv *aEnv, jclass,
-                                                         jstring aTopic, jstring aData)
-{
-    if (!NS_IsMainThread()) {
-        jni::ThrowException(aEnv,
-            "java/lang/IllegalThreadStateException", "Not on Gecko main thread");
-        return;
-    }
-
-    nsCOMPtr<nsIObserverService> obsServ =
-        mozilla::services::GetObserverService();
-    if (!obsServ) {
-        jni::ThrowException(aEnv,
-            "java/lang/IllegalStateException", "No observer service");
-        return;
-    }
-
-    const nsJNICString topic(aTopic, aEnv);
-    const nsJNIString data(aData, aEnv);
-    obsServ->NotifyObservers(nullptr, topic.get(), data.get());
-}
-
 NS_EXPORT jlong JNICALL
 Java_org_mozilla_gecko_GeckoAppShell_runUiThreadCallback(JNIEnv* env, jclass)
 {
@@ -117,7 +94,7 @@ Java_org_mozilla_gecko_GeckoAppShell_notifyBatteryChange(JNIEnv* jenv, jclass,
                                                          jboolean aCharging,
                                                          jdouble aRemainingTime)
 {
-    class NotifyBatteryChangeRunnable : public nsRunnable {
+    class NotifyBatteryChangeRunnable : public Runnable {
     public:
       NotifyBatteryChangeRunnable(double aLevel, bool aCharging, double aRemainingTime)
         : mLevel(aLevel)
@@ -267,7 +244,7 @@ Java_org_mozilla_gecko_GeckoAppShell_removePresentationSurface(JNIEnv* jenv, jcl
 NS_EXPORT void JNICALL
 Java_org_mozilla_gecko_GeckoAppShell_onFullScreenPluginHidden(JNIEnv* jenv, jclass, jobject view)
 {
-  class ExitFullScreenRunnable : public nsRunnable {
+  class ExitFullScreenRunnable : public Runnable {
     public:
       ExitFullScreenRunnable(jobject view) : mView(view) {}
 

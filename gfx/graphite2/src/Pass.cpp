@@ -100,7 +100,9 @@ bool Pass::readPass(const byte * const pass_start, size_t pass_length, size_t su
     if (e.test(pass_length < 40, E_BADPASSLENGTH)) return face.error(e); 
     // Read in basic values
     const byte flags = be::read<byte>(p);
-    if (e.test((flags & 0x1f) && pt < PASS_TYPE_POSITIONING, E_BADCOLLISIONPASS))
+    if (e.test((flags & 0x1f) && 
+            (pt < PASS_TYPE_POSITIONING || !m_silf->aCollision() || !face.glyphs().hasBoxes() || !(m_silf->flags() & 0x20)),
+            E_BADCOLLISIONPASS))
         return face.error(e);
     m_numCollRuns = flags & 0x7;
     m_kernColls   = (flags >> 3) & 0x3;
@@ -229,14 +231,18 @@ bool Pass::readRules(const byte * rule_map, const size_t num_entries,
     // Allocate pools
     m_rules = new Rule [m_numRules];
     m_codes = new Code [m_numRules*2];
-    const size_t prog_pool_sz = vm::Machine::Code::estimateCodeDataOut(ac_end - ac_data + rc_end - rc_data);
+    int totalSlots = 0;
+    const uint16 *tsort = sort_key;
+    for (int i = 0; i < m_numRules; ++i)
+        totalSlots += be::peek<uint16>(--tsort);
+    const size_t prog_pool_sz = vm::Machine::Code::estimateCodeDataOut(ac_end - ac_data + rc_end - rc_data, 2 * m_numRules, totalSlots);
     m_progs = gralloc<byte>(prog_pool_sz);
     byte * prog_pool_free = m_progs,
          * prog_pool_end  = m_progs + prog_pool_sz;
     if (e.test(!(m_rules && m_codes && m_progs), E_OUTOFMEM)) return face.error(e);
 
     Rule * r = m_rules + m_numRules - 1;
-    for (size_t n = m_numRules; n; --n, --r, ac_end = ac_begin, rc_end = rc_begin)
+    for (size_t n = m_numRules; r >= m_rules; --n, --r, ac_end = ac_begin, rc_end = rc_begin)
     {
         face.error_context((face.error_context() & 0xFFFF00) + EC_ARULE + ((n - 1) << 24));
         r->preContext = *--precontext;
@@ -252,7 +258,7 @@ bool Pass::readRules(const byte * rule_map, const size_t num_entries,
 
         if (ac_begin > ac_end || ac_begin > ac_data_end || ac_end > ac_data_end
                 || rc_begin > rc_end || rc_begin > rc_data_end || rc_end > rc_data_end
-                || vm::Machine::Code::estimateCodeDataOut(ac_end - ac_begin + rc_end - rc_begin) > size_t(prog_pool_end - prog_pool_free))
+                || vm::Machine::Code::estimateCodeDataOut(ac_end - ac_begin + rc_end - rc_begin, 2, r->sort) > size_t(prog_pool_end - prog_pool_free))
             return false;
         r->action     = new (m_codes+n*2-2) vm::Machine::Code(false, ac_begin, ac_end, r->preContext, r->sort, *m_silf, face, pt, &prog_pool_free);
         r->constraint = new (m_codes+n*2-1) vm::Machine::Code(true,  rc_begin, rc_end, r->preContext, r->sort, *m_silf, face, pt, &prog_pool_free);
@@ -333,7 +339,7 @@ bool Pass::readStates(const byte * starts, const byte *states, const byte * o_ru
         *t = be::read<uint16>(states);
         if (e.test(*t >= m_numStates, E_BADSTATE))
         {
-            face.error_context((face.error_context() & 0xFFFF00) + EC_ATRANS + (((t - m_transitions) / m_numColumns) << 24));
+            face.error_context((face.error_context() & 0xFFFF00) + EC_ATRANS + (((t - m_transitions) / m_numColumns) << 8));
             return face.error(e);
         }
     }
@@ -354,7 +360,8 @@ bool Pass::readStates(const byte * starts, const byte *states, const byte * o_ru
         s->rules = begin;
         s->rules_end = (end - begin <= FiniteStateMachine::MAX_RULES)? end :
             begin + FiniteStateMachine::MAX_RULES;
-        qsort(begin, end - begin, sizeof(RuleEntry), &cmpRuleEntry);
+        if (begin)      // keep UBSan happy can't call qsort with null begin
+            qsort(begin, end - begin, sizeof(RuleEntry), &cmpRuleEntry);
     }
 
     return true;
@@ -408,6 +415,7 @@ bool Pass::runGraphite(vm::Machine & m, FiniteStateMachine & fsm, bool reverse) 
         do
         {
             findNDoRule(s, m, fsm);
+            if (m.status() != Machine::finished) return false;
             if (s && (s == m.slotMap().highwater() || m.slotMap().highpassed() || --lc == 0)) {
                 if (!lc)
                     s = m.slotMap().highwater();
@@ -451,9 +459,9 @@ bool Pass::runFSM(FiniteStateMachine& fsm, Slot * slot) const
     do
     {
         fsm.slots.pushSlot(slot);
-        if (--free_slots == 0
-         || slot->gid() >= m_numGlyphs
+        if (slot->gid() >= m_numGlyphs
          || m_cols[slot->gid()] == 0xffffU
+         || --free_slots == 0
          || state >= m_numTransition)
             return free_slots != 0;
 
@@ -498,7 +506,12 @@ void Pass::findNDoRule(Slot * & slot, Machine &m, FiniteStateMachine & fsm) cons
         // Search for the first rule which passes the constraint
         const RuleEntry *        r = fsm.rules.begin(),
                         * const re = fsm.rules.end();
-        while (r != re && !testConstraint(*r->rule, m)) ++r;
+        while (r != re && !testConstraint(*r->rule, m))
+        {
+            ++r;
+            if (m.status() != Machine::finished)
+                return;
+        }
 
 #if !defined GRAPHITE2_NTRACING
         if (fsm.dbgout)
@@ -533,6 +546,7 @@ void Pass::findNDoRule(Slot * & slot, Machine &m, FiniteStateMachine & fsm) cons
             if (r != re)
             {
                 const int adv = doAction(r->rule->action, slot, m);
+                if (m.status() != Machine::finished) return;
                 if (r->rule->action->deletes()) fsm.slots.collectGarbage(slot);
                 adjustSlot(adv, slot, fsm.slots);
                 return;
@@ -621,12 +635,15 @@ bool Pass::testPassConstraint(Machine & m) const
 bool Pass::testConstraint(const Rule & r, Machine & m) const
 {
     const uint16 curr_context = m.slotMap().context();
-    if (unsigned(r.sort - r.preContext) > m.slotMap().size() - curr_context
+    if (unsigned(r.sort + curr_context - r.preContext) > m.slotMap().size()
         || curr_context - r.preContext < 0) return false;
-    if (!*r.constraint) return true;
-    assert(r.constraint->constraint());
 
     vm::slotref * map = m.slotMap().begin() + curr_context - r.preContext;
+    if (map[r.sort - 1] == 0)
+        return false;
+
+    if (!*r.constraint) return true;
+    assert(r.constraint->constraint());
     for (int n = r.sort; n && map; --n, ++map)
     {
         if (!*map) continue;
@@ -643,7 +660,7 @@ void SlotMap::collectGarbage(Slot * &aSlot)
 {
     for(Slot **s = begin(), *const *const se = end() - 1; s != se; ++s) {
         Slot *& slot = *s;
-        if(slot->isDeleted() || slot->isCopied())
+        if(slot && (slot->isDeleted() || slot->isCopied()))
         {
             if (slot == aSlot)
                 aSlot = slot->prev() ? slot->prev() : slot->next();
@@ -844,7 +861,6 @@ bool Pass::collisionShift(Segment *seg, int dir, json * const dbgout) const
 
 bool Pass::collisionKern(Segment *seg, int dir, json * const dbgout) const
 {
-    KernCollider kerncoll(dbgout);
     Slot *start = seg->first();
     float ymin = 1e38f;
     float ymax = -1e38f;
@@ -867,7 +883,7 @@ bool Pass::collisionKern(Segment *seg, int dir, json * const dbgout) const
         ymin = min(y + bbox.bl.y, ymin);
         if (start && (c->flags() & (SlotCollision::COLL_KERN | SlotCollision::COLL_FIX))
                         == (SlotCollision::COLL_KERN | SlotCollision::COLL_FIX))
-            resolveKern(seg, s, start, kerncoll, dir, ymin, ymax, dbgout);
+            resolveKern(seg, s, start, dir, ymin, ymax, dbgout);
         if (c->flags() & SlotCollision::COLL_END)
             start = NULL;
         if (c->flags() & SlotCollision::COLL_START)
@@ -1006,7 +1022,7 @@ bool Pass::resolveCollisions(Segment *seg, Slot *slotFix, Slot *start,
     return true;
 }
 
-float Pass::resolveKern(Segment *seg, Slot *slotFix, GR_MAYBE_UNUSED Slot *start, KernCollider &coll, int dir,
+float Pass::resolveKern(Segment *seg, Slot *slotFix, GR_MAYBE_UNUSED Slot *start, int dir,
     float &ymin, float &ymax, json *const dbgout) const
 {
     Slot *nbor; // neighboring slot
@@ -1026,6 +1042,7 @@ float Pass::resolveKern(Segment *seg, Slot *slotFix, GR_MAYBE_UNUSED Slot *start
     }
     bool seenEnd = (cFix->flags() & SlotCollision::COLL_END) != 0;
     bool isInit = false;
+    KernCollider coll(dbgout);
 
     for (nbor = slotFix->next(); nbor; nbor = nbor->next())
     {

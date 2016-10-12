@@ -44,6 +44,11 @@ extern "C" {
 #endif
 #define CRLF "\r\n"
 
+#include "FakeIPC.h"
+#include "FakeIPC.cpp"
+
+#include "TestHarness.h"
+
 using namespace mozilla;
 
 namespace test {
@@ -82,6 +87,9 @@ class SdpTest : public ::testing::Test {
     }
 
     static void TearDownTestCase() {
+      if (gThread) {
+        gThread->Shutdown();
+      }
       gThread = nullptr;
     }
 
@@ -203,6 +211,16 @@ class SdpTest : public ::testing::Test {
                                  &inst_num), SDP_SUCCESS);
       EXPECT_EQ(sdp_attr_set_rtcp_fb_trr_int(sdp_ptr_, level, payload, inst_num,
                                              interval), SDP_SUCCESS);
+      return inst_num;
+    }
+
+    uint16_t AddNewRtcpFbRemb(int level,
+                              uint16_t payload = SDP_ALL_PAYLOADS) {
+      uint16_t inst_num = 0;
+      EXPECT_EQ(sdp_add_new_attr(sdp_ptr_, level, 0, SDP_ATTR_RTCP_FB,
+                                 &inst_num), SDP_SUCCESS);
+      EXPECT_EQ(sdp_attr_set_rtcp_fb_remb(sdp_ptr_, level, payload, inst_num
+                                          ), SDP_SUCCESS);
       return inst_num;
     }
 
@@ -347,6 +365,17 @@ TEST_F(SdpTest, parseRtcpFbNackFooBarBaz) {
             SDP_RTCP_FB_NACK_UNKNOWN);
 }
 
+TEST_F(SdpTest, parseRtcpFbRemb) {
+  ParseSdp(kVideoSdp + "a=rtcp-fb:120 goog-remb\r\n");
+  ASSERT_EQ(sdp_attr_get_rtcp_fb_remb_enabled(sdp_ptr_, 1, 120), true);
+}
+
+TEST_F(SdpTest, parseRtcpRbRembAllPt) {
+  ParseSdp(kVideoSdp + "a=rtcp-fb:* goog-remb\r\n");
+  ASSERT_EQ(sdp_attr_get_rtcp_fb_remb_enabled(sdp_ptr_, 1, SDP_ALL_PAYLOADS),
+                                              true);
+}
+
 TEST_F(SdpTest, parseRtcpFbTrrInt0) {
   ParseSdp(kVideoSdp + "a=rtcp-fb:120 trr-int 0\r\n");
   ASSERT_EQ(sdp_attr_get_rtcp_fb_trr_int(sdp_ptr_, 1, 120, 1), 0U);
@@ -430,6 +459,7 @@ TEST_F(SdpTest, parseRtcpFbKitchenSink) {
     "a=rtcp-fb:120 nack foo bar baz\r\n"
     "a=rtcp-fb:120 trr-int 0\r\n"
     "a=rtcp-fb:120 trr-int 123\r\n"
+    "a=rtcp-fb:120 goog-remb\r\n"
     "a=rtcp-fb:120 ccm fir\r\n"
     "a=rtcp-fb:120 ccm tmmbr\r\n"
     "a=rtcp-fb:120 ccm tmmbr smaxpr=456\r\n"
@@ -473,6 +503,9 @@ TEST_F(SdpTest, parseRtcpFbKitchenSink) {
   ASSERT_EQ(sdp_attr_get_rtcp_fb_trr_int(sdp_ptr_, 1, 120, 1), 0U);
   ASSERT_EQ(sdp_attr_get_rtcp_fb_trr_int(sdp_ptr_, 1, 120, 2), 123U);
   ASSERT_EQ(sdp_attr_get_rtcp_fb_trr_int(sdp_ptr_, 1, 120, 3), 0xFFFFFFFF);
+
+  ASSERT_EQ(sdp_attr_get_rtcp_fb_remb_enabled(sdp_ptr_, 1, 120), true);
+  ASSERT_EQ(sdp_attr_get_rtcp_fb_remb_enabled(sdp_ptr_, 2, 120), false);
 
   ASSERT_EQ(sdp_attr_get_rtcp_fb_ccm(sdp_ptr_, 1, 120, 1), SDP_RTCP_FB_CCM_FIR);
   ASSERT_EQ(sdp_attr_get_rtcp_fb_ccm(sdp_ptr_, 1, 120, 2),
@@ -667,6 +700,22 @@ TEST_F(SdpTest, addRtcpFbNackEcnAllPt) {
   AddNewRtcpFbNack(level, SDP_RTCP_FB_NACK_ECN);
   std::string body = SerializeSdp();
   ASSERT_NE(body.find("a=rtcp-fb:* nack ecn\r\n"), std::string::npos);
+}
+
+TEST_F(SdpTest, addRtcpFbRemb) {
+  InitLocalSdp();
+  int level = AddNewMedia(SDP_MEDIA_VIDEO);
+  AddNewRtcpFbRemb(level, 120);
+  std::string body = SerializeSdp();
+  ASSERT_NE(body.find("a=rtcp-fb:120 goog-remb\r\n"), std::string::npos);
+}
+
+TEST_F(SdpTest, addRtcpFbRembAllPt) {
+  InitLocalSdp();
+  int level = AddNewMedia(SDP_MEDIA_VIDEO);
+  AddNewRtcpFbRemb(level);
+  std::string body = SerializeSdp();
+  ASSERT_NE(body.find("a=rtcp-fb:* goog-remb\r\n"), std::string::npos);
 }
 
 TEST_F(SdpTest, addRtcpFbTrrInt) {
@@ -1041,12 +1090,18 @@ TEST_P(NewSdpTest, CheckGetBandwidth) {
            "s=SIP Call" CRLF
            "c=IN IP4 198.51.100.7" CRLF
            "b=CT:5000" CRLF
+           "b=FOOBAR:10" CRLF
+           "b=AS:4" CRLF
            "t=0 0" CRLF
            "m=video 56436 RTP/SAVPF 120" CRLF
            "a=rtpmap:120 VP8/90000" CRLF
            );
   ASSERT_EQ(5000U, mSdp->GetBandwidth("CT"))
-    << "Wrong bandwidth in session";
+    << "Wrong CT bandwidth in session";
+  ASSERT_EQ(0U, mSdp->GetBandwidth("FOOBAR"))
+    << "Wrong FOOBAR bandwidth in session";
+  ASSERT_EQ(4U, mSdp->GetBandwidth("AS"))
+    << "Wrong AS bandwidth in session";
 }
 
 TEST_P(NewSdpTest, CheckGetMediaSectionsCount) {
@@ -1115,6 +1170,12 @@ TEST_P(NewSdpTest, CheckMediaSectionGetBandwidth) {
     << "Wrong bandwidth in media section";
 }
 
+// Define a string that is 258 characters long. We use a long string here so
+// that we can test that we are able to parse and handle a string longer than
+// the default maximum length of 256 in sipcc.
+#define ID_A "1234567890abcdef"
+#define ID_B ID_A ID_A ID_A ID_A
+#define LONG_IDENTITY ID_B ID_B ID_B ID_B "xx"
 
 // SDP from a basic A/V apprtc call FFX/FFX
 const std::string kBasicAudioVideoOffer =
@@ -1130,7 +1191,7 @@ const std::string kBasicAudioVideoOffer =
 "a=msid-semantic:WMS stream streama" CRLF
 "a=msid-semantic:foo stream" CRLF
 "a=fingerprint:sha-256 DF:2E:AC:8A:FD:0A:8E:99:BF:5D:E8:3C:E7:FA:FB:08:3B:3C:54:1D:D7:D4:05:77:A0:72:9B:14:08:6D:0F:4C" CRLF
-"a=identity:blahblahblah foo;bar" CRLF
+"a=identity:" LONG_IDENTITY CRLF
 "a=group:BUNDLE first second" CRLF
 "a=group:BUNDLE third" CRLF
 "a=group:LS first third" CRLF
@@ -1138,6 +1199,7 @@ const std::string kBasicAudioVideoOffer =
 "c=IN IP4 0.0.0.0" CRLF
 "a=mid:first" CRLF
 "a=rtpmap:109 opus/48000/2" CRLF
+"a=fmtp:109 maxplaybackrate=32000;stereo=1" CRLF
 "a=ptime:20" CRLF
 "a=maxptime:20" CRLF
 "a=rtpmap:9 G722/8000" CRLF
@@ -1324,7 +1386,7 @@ TEST_P(NewSdpTest, CheckIdentity) {
   ASSERT_TRUE(mSdp->GetAttributeList().HasAttribute(
         SdpAttribute::kIdentityAttribute));
   auto identity = mSdp->GetAttributeList().GetIdentity();
-  ASSERT_EQ("blahblahblah", identity) << "Wrong identity assertion";
+  ASSERT_EQ(LONG_IDENTITY, identity) << "Wrong identity assertion";
 }
 
 TEST_P(NewSdpTest, CheckNumberOfMediaSections) {
@@ -1499,7 +1561,7 @@ const std::string kH264AudioVideoOffer =
 "a=rtpmap:0 PCMU/8000" CRLF
 "a=rtpmap:8 PCMA/8000" CRLF
 "a=rtpmap:101 telephone-event/8000" CRLF
-"a=fmtp:101 0-15" CRLF
+"a=fmtp:109 maxplaybackrate=32000;stereo=1" CRLF
 "a=ice-ufrag:00000000" CRLF
 "a=ice-pwd:0000000000000000000000000000000" CRLF
 "a=sendonly" CRLF
@@ -1554,8 +1616,13 @@ TEST_P(NewSdpTest, CheckFormatParameters) {
   auto audio_format_params =
       mSdp->GetMediaSection(0).GetAttributeList().GetFmtp().mFmtps;
   ASSERT_EQ(1U, audio_format_params.size());
-  ASSERT_EQ("101", audio_format_params[0].format);
-  ASSERT_EQ("0-15", audio_format_params[0].parameters_string);
+  ASSERT_EQ("109", audio_format_params[0].format);
+  ASSERT_TRUE(!!audio_format_params[0].parameters);
+  const SdpFmtpAttributeList::OpusParameters* opus_parameters =
+    static_cast<SdpFmtpAttributeList::OpusParameters*>(
+        audio_format_params[0].parameters.get());
+  ASSERT_EQ(32000U, opus_parameters->maxplaybackrate);
+  ASSERT_EQ(1U, opus_parameters->stereo);
 
   ASSERT_TRUE(mSdp->GetMediaSection(1).GetAttributeList().HasAttribute(
       SdpAttribute::kFmtpAttribute));
@@ -1893,6 +1960,7 @@ const std::string kBasicAudioVideoDataOffer =
 "a=rtcp-fb:120 ccm vbcm" CRLF
 "a=rtcp-fb:120 ccm foo" CRLF // Should be ignored
 "a=rtcp-fb:120 trr-int 10" CRLF
+"a=rtcp-fb:120 goog-remb" CRLF
 "a=rtcp-fb:120 foo" CRLF // Should be ignored
 "a=rtcp-fb:126 nack" CRLF
 "a=rtcp-fb:126 nack pli" CRLF
@@ -1987,7 +2055,7 @@ TEST_P(NewSdpTest, CheckRtcpFb) {
   auto& video_attrs = mSdp->GetMediaSection(1).GetAttributeList();
   ASSERT_TRUE(video_attrs.HasAttribute(SdpAttribute::kRtcpFbAttribute));
   auto& rtcpfbs = video_attrs.GetRtcpFb().mFeedbacks;
-  ASSERT_EQ(19U, rtcpfbs.size());
+  ASSERT_EQ(20U, rtcpfbs.size());
   CheckRtcpFb(rtcpfbs[0], "120", SdpRtcpFbAttributeList::kAck, "rpsi");
   CheckRtcpFb(rtcpfbs[1], "120", SdpRtcpFbAttributeList::kAck, "app", "foo");
   CheckRtcpFb(rtcpfbs[2], "120", SdpRtcpFbAttributeList::kNack, "");
@@ -2000,13 +2068,14 @@ TEST_P(NewSdpTest, CheckRtcpFb) {
   CheckRtcpFb(rtcpfbs[9], "120", SdpRtcpFbAttributeList::kCcm, "tstr");
   CheckRtcpFb(rtcpfbs[10], "120", SdpRtcpFbAttributeList::kCcm, "vbcm");
   CheckRtcpFb(rtcpfbs[11], "120", SdpRtcpFbAttributeList::kTrrInt, "10");
-  CheckRtcpFb(rtcpfbs[12], "126", SdpRtcpFbAttributeList::kNack, "");
-  CheckRtcpFb(rtcpfbs[13], "126", SdpRtcpFbAttributeList::kNack, "pli");
-  CheckRtcpFb(rtcpfbs[14], "126", SdpRtcpFbAttributeList::kCcm, "fir");
-  CheckRtcpFb(rtcpfbs[15], "97",  SdpRtcpFbAttributeList::kNack, "");
-  CheckRtcpFb(rtcpfbs[16], "97",  SdpRtcpFbAttributeList::kNack, "pli");
-  CheckRtcpFb(rtcpfbs[17], "97", SdpRtcpFbAttributeList::kCcm, "fir");
-  CheckRtcpFb(rtcpfbs[18], "*", SdpRtcpFbAttributeList::kCcm, "tmmbr");
+  CheckRtcpFb(rtcpfbs[12], "120", SdpRtcpFbAttributeList::kRemb, "");
+  CheckRtcpFb(rtcpfbs[13], "126", SdpRtcpFbAttributeList::kNack, "");
+  CheckRtcpFb(rtcpfbs[14], "126", SdpRtcpFbAttributeList::kNack, "pli");
+  CheckRtcpFb(rtcpfbs[15], "126", SdpRtcpFbAttributeList::kCcm, "fir");
+  CheckRtcpFb(rtcpfbs[16], "97",  SdpRtcpFbAttributeList::kNack, "");
+  CheckRtcpFb(rtcpfbs[17], "97",  SdpRtcpFbAttributeList::kNack, "pli");
+  CheckRtcpFb(rtcpfbs[18], "97", SdpRtcpFbAttributeList::kCcm, "fir");
+  CheckRtcpFb(rtcpfbs[19], "*", SdpRtcpFbAttributeList::kCcm, "tmmbr");
 }
 
 TEST_P(NewSdpTest, CheckRtcp) {
@@ -2822,16 +2891,16 @@ TEST(NewSdpTestNoFixture, CheckImageattrXYRangeParseInvalid)
 {
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[-1", 1);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[-", 1);
-  ParseInvalid<SdpImageattrAttributeList::XYRange>("[-x", 1);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[-v", 1);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:-1", 5);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:-1", 8);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,-1", 5);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,-]", 5);
-  ParseInvalid<SdpImageattrAttributeList::XYRange>("-x", 0);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("-v", 0);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("-1", 0);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("", 0);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[", 1);
-  ParseInvalid<SdpImageattrAttributeList::XYRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[v", 1);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[", 1);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[ 640", 1);
   // It looks like the overflow detection only happens once the whole number
@@ -2839,23 +2908,23 @@ TEST(NewSdpTestNoFixture, CheckImageattrXYRangeParseInvalid)
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[99999999999999999:", 18);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640", 4);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:", 5);
-  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:x", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:v", 5);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16", 7);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:", 8);
-  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:x", 8);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:v", 8);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:320]", 11);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:320", 11);
-  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:320x", 11);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:16:320v", 11);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:1024", 9);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:320]", 8);
-  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:1024x", 9);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640:1024v", 9);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,", 5);
-  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,x", 5);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,v", 5);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640]", 4);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640x", 4);
   ParseInvalid<SdpImageattrAttributeList::XYRange>("[640,]", 5);
   ParseInvalid<SdpImageattrAttributeList::XYRange>(" ", 0);
-  ParseInvalid<SdpImageattrAttributeList::XYRange>("x", 0);
+  ParseInvalid<SdpImageattrAttributeList::XYRange>("v", 0);
 }
 
 static SdpImageattrAttributeList::SRange
@@ -2905,31 +2974,31 @@ TEST(NewSdpTestNoFixture, CheckImageattrSRangeParseInvalid)
 {
   ParseInvalid<SdpImageattrAttributeList::SRange>("", 0);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[", 1);
-  ParseInvalid<SdpImageattrAttributeList::SRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[v", 1);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[-1", 1);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[", 1);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[-", 1);
-  ParseInvalid<SdpImageattrAttributeList::SRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[v", 1);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[ 0.2", 1);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[10.1-", 5);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.08-", 5);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2", 4);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-", 5);
-  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-x", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-v", 5);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2--1", 5);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-0.3", 8);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-0.1]", 8);
-  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-0.3x", 8);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2-0.3v", 8);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,", 5);
-  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,x", 5);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,v", 5);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,-1", 5);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2]", 4);
-  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2x", 4);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2v", 4);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,]", 5);
   ParseInvalid<SdpImageattrAttributeList::SRange>("[0.2,-]", 5);
   ParseInvalid<SdpImageattrAttributeList::SRange>(" ", 0);
-  ParseInvalid<SdpImageattrAttributeList::SRange>("x", 0);
-  ParseInvalid<SdpImageattrAttributeList::SRange>("-x", 0);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("v", 0);
+  ParseInvalid<SdpImageattrAttributeList::SRange>("-v", 0);
   ParseInvalid<SdpImageattrAttributeList::SRange>("-1", 0);
 }
 
@@ -2956,27 +3025,27 @@ TEST(NewSdpTestNoFixture, CheckImageattrPRangeParseInvalid)
 {
   ParseInvalid<SdpImageattrAttributeList::PRange>("", 0);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[", 1);
-  ParseInvalid<SdpImageattrAttributeList::PRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[v", 1);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[-1", 1);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[", 1);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[-", 1);
-  ParseInvalid<SdpImageattrAttributeList::PRange>("[x", 1);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[v", 1);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[ 0.2", 1);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[10.1-", 5);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[0.08-", 5);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2", 4);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-", 5);
-  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-x", 5);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-v", 5);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2--1", 5);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-0.3", 8);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-0.1]", 8);
-  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-0.3x", 8);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2-0.3v", 8);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2,", 4);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2:", 4);
   ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2]", 4);
-  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2x", 4);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("[0.2v", 4);
   ParseInvalid<SdpImageattrAttributeList::PRange>(" ", 0);
-  ParseInvalid<SdpImageattrAttributeList::PRange>("x", 0);
+  ParseInvalid<SdpImageattrAttributeList::PRange>("v", 0);
   ParseInvalid<SdpImageattrAttributeList::PRange>("-x", 0);
   ParseInvalid<SdpImageattrAttributeList::PRange>("-1", 0);
 }
@@ -3128,7 +3197,7 @@ TEST(NewSdpTestNoFixture, CheckImageattrSetParseInvalid)
   ParseInvalid<SdpImageattrAttributeList::Set>("[y=", 3);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=[", 4);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320", 6);
-  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320x", 6);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320v", 6);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,", 7);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,=", 8);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,x", 8);
@@ -3138,15 +3207,15 @@ TEST(NewSdpTestNoFixture, CheckImageattrSetParseInvalid)
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240x", 12);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,", 13);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=", 15);
-  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=x", 15);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=v", 15);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5", 18);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,", 19);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,]", 20);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,=]", 20);
-  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,sar=x]", 23);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,sar=v]", 23);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,q=0.5,q=0.4", 21);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,sar=", 17);
-  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,sar=x", 17);
+  ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,sar=v", 17);
   ParseInvalid<SdpImageattrAttributeList::Set>(
       "[x=320,y=240,sar=[0.5-0.6],sar=[0.7-0.8]", 31);
   ParseInvalid<SdpImageattrAttributeList::Set>("[x=320,y=240,par=", 17);
@@ -4228,6 +4297,8 @@ TEST(NewSdpTestNoFixture, CheckRidSerialize)
 } // End namespace test.
 
 int main(int argc, char **argv) {
+  ScopedXPCOM xpcom("sdp_unittests");
+
   test_utils = new MtransportTestUtils();
   NSS_NoDB_Init(nullptr);
   NSS_SetDomesticPolicy();

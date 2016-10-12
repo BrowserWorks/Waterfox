@@ -147,9 +147,9 @@ AudioNodeStream::SetStreamTimeParameter(uint32_t aIndex, AudioContext* aContext,
     uint32_t mIndex;
   };
 
-  GraphImpl()->AppendMessage(new Message(this, aIndex,
-                                         aContext->DestinationStream(),
-                                         aStreamTime));
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this, aIndex,
+                                                 aContext->DestinationStream(),
+                                                 aStreamTime));
 }
 
 void
@@ -178,7 +178,7 @@ AudioNodeStream::SetDoubleParameter(uint32_t aIndex, double aValue)
     uint32_t mIndex;
   };
 
-  GraphImpl()->AppendMessage(new Message(this, aIndex, aValue));
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this, aIndex, aValue));
 }
 
 void
@@ -199,7 +199,7 @@ AudioNodeStream::SetInt32Parameter(uint32_t aIndex, int32_t aValue)
     uint32_t mIndex;
   };
 
-  GraphImpl()->AppendMessage(new Message(this, aIndex, aValue));
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this, aIndex, aValue));
 }
 
 void
@@ -225,7 +225,7 @@ AudioNodeStream::SendTimelineEvent(uint32_t aIndex,
     TrackRate mSampleRate;
     uint32_t mIndex;
   };
-  GraphImpl()->AppendMessage(new Message(this, aIndex, aEvent));
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this, aIndex, aEvent));
 }
 
 void
@@ -246,7 +246,7 @@ AudioNodeStream::SetThreeDPointParameter(uint32_t aIndex, const ThreeDPoint& aVa
     uint32_t mIndex;
   };
 
-  GraphImpl()->AppendMessage(new Message(this, aIndex, aValue));
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this, aIndex, aValue));
 }
 
 void
@@ -267,7 +267,7 @@ AudioNodeStream::SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList>&& 
     RefPtr<ThreadSharedFloatArrayBufferList> mBuffer;
   };
 
-  GraphImpl()->AppendMessage(new Message(this, aBuffer));
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this, aBuffer));
 }
 
 void
@@ -289,7 +289,7 @@ AudioNodeStream::SetRawArrayData(nsTArray<float>& aData)
     nsTArray<float> mData;
   };
 
-  GraphImpl()->AppendMessage(new Message(this, aData));
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this, aData));
 }
 
 void
@@ -320,9 +320,9 @@ AudioNodeStream::SetChannelMixingParameters(uint32_t aNumberOfChannels,
     ChannelInterpretation mChannelInterpretation;
   };
 
-  GraphImpl()->AppendMessage(new Message(this, aNumberOfChannels,
-                                         aChannelCountMode,
-                                         aChannelInterpretation));
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this, aNumberOfChannels,
+                                                 aChannelCountMode,
+                                                 aChannelInterpretation));
 }
 
 void
@@ -341,7 +341,7 @@ AudioNodeStream::SetPassThrough(bool aPassThrough)
     bool mPassThrough;
   };
 
-  GraphImpl()->AppendMessage(new Message(this, aPassThrough));
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this, aPassThrough));
 }
 
 void
@@ -384,9 +384,9 @@ public:
   void Run() override
   {
     auto ns = static_cast<AudioNodeStream*>(mStream);
-    ns->mBufferStartTime -= mAdvance;
+    ns->mTracksStartTime -= mAdvance;
 
-    StreamBuffer::Track* track = ns->EnsureTrack(AUDIO_TRACK);
+    StreamTracks::Track* track = ns->EnsureTrack(AUDIO_TRACK);
     track->Get<AudioSegment>()->AppendNullData(mAdvance);
 
     ns->GraphImpl()->DecrementSuspendCount(mStream);
@@ -399,7 +399,7 @@ void
 AudioNodeStream::AdvanceAndResume(StreamTime aAdvance)
 {
   mMainThreadCurrentTime += aAdvance;
-  GraphImpl()->AppendMessage(new AdvanceAndResumeMessage(this, aAdvance));
+  GraphImpl()->AppendMessage(MakeUnique<AdvanceAndResumeMessage>(this, aAdvance));
 }
 
 void
@@ -408,7 +408,7 @@ AudioNodeStream::ObtainInputBlock(AudioBlock& aTmpChunk,
 {
   uint32_t inputCount = mInputs.Length();
   uint32_t outputChannelCount = 1;
-  nsAutoTArray<const AudioBlock*,250> inputChunks;
+  AutoTArray<const AudioBlock*,250> inputChunks;
   for (uint32_t i = 0; i < inputCount; ++i) {
     if (aPortIndex != mInputs[i]->InputNumber()) {
       // This input is connected to a different port
@@ -453,8 +453,10 @@ AudioNodeStream::ObtainInputBlock(AudioBlock& aTmpChunk,
   }
 
   aTmpChunk.AllocateChannels(outputChannelCount);
-  // The static storage here should be 1KB, so it's fine
-  nsAutoTArray<float, GUESS_AUDIO_CHANNELS*WEBAUDIO_BLOCK_SIZE> downmixBuffer;
+  // TODO: See Bug 1261168. Ideally we would use an aligned version of
+  // AutoTArray (of size GUESS_AUDIO_CHANNELS*WEBAUDIO_BLOCK_SIZE) here.
+  AlignedTArray<float, 16> downmixBuffer;
+  downmixBuffer.SetLength(GUESS_AUDIO_CHANNELS*WEBAUDIO_BLOCK_SIZE);
 
   for (uint32_t i = 0; i < inputChunkCount; ++i) {
     AccumulateInputChunk(i, *inputChunks[i], &aTmpChunk, &downmixBuffer);
@@ -465,9 +467,9 @@ void
 AudioNodeStream::AccumulateInputChunk(uint32_t aInputIndex,
                                       const AudioBlock& aChunk,
                                       AudioBlock* aBlock,
-                                      nsTArray<float>* aDownmixBuffer)
+                                      AlignedTArray<float, 16>* aDownmixBuffer)
 {
-  nsAutoTArray<const float*,GUESS_AUDIO_CHANNELS> channels;
+  AutoTArray<const float*,GUESS_AUDIO_CHANNELS> channels;
   UpMixDownMixChunk(&aChunk, aBlock->ChannelCount(), channels, *aDownmixBuffer);
 
   for (uint32_t c = 0; c < channels.Length(); ++c) {
@@ -491,7 +493,7 @@ void
 AudioNodeStream::UpMixDownMixChunk(const AudioBlock* aChunk,
                                    uint32_t aOutputChannelCount,
                                    nsTArray<const float*>& aOutputChannels,
-                                   nsTArray<float>& aDownmixBuffer)
+                                   AlignedTArray<float, 16>& aDownmixBuffer)
 {
   for (uint32_t i = 0; i < aChunk->ChannelCount(); i++) {
     aOutputChannels.AppendElement(static_cast<const float*>(aChunk->mChannelData[i]));
@@ -509,7 +511,7 @@ AudioNodeStream::UpMixDownMixChunk(const AudioBlock* aChunk,
     }
   } else if (aOutputChannels.Length() > aOutputChannelCount) {
     if (mChannelInterpretation == ChannelInterpretation::Speakers) {
-      nsAutoTArray<float*,GUESS_AUDIO_CHANNELS> outputChannels;
+      AutoTArray<float*,GUESS_AUDIO_CHANNELS> outputChannels;
       outputChannels.SetLength(aOutputChannelCount);
       aDownmixBuffer.SetLength(aOutputChannelCount * WEBAUDIO_BLOCK_SIZE);
       for (uint32_t j = 0; j < aOutputChannelCount; ++j) {
@@ -629,9 +631,9 @@ AudioNodeStream::ProduceOutputBeforeInput(GraphTime aFrom)
 void
 AudioNodeStream::AdvanceOutputSegment()
 {
-  StreamBuffer::Track* track = EnsureTrack(AUDIO_TRACK);
+  StreamTracks::Track* track = EnsureTrack(AUDIO_TRACK);
   // No more tracks will be coming
-  mBuffer.AdvanceKnownTracksTime(STREAM_TIME_MAX);
+  mTracks.AdvanceKnownTracksTime(STREAM_TIME_MAX);
 
   AudioSegment* segment = track->Get<AudioSegment>();
 
@@ -654,7 +656,7 @@ AudioNodeStream::AdvanceOutputSegment()
 void
 AudioNodeStream::FinishOutput()
 {
-  StreamBuffer::Track* track = EnsureTrack(AUDIO_TRACK);
+  StreamTracks::Track* track = EnsureTrack(AUDIO_TRACK);
   track->SetEnded();
 
   for (uint32_t j = 0; j < mListeners.Length(); ++j) {
@@ -731,7 +733,7 @@ AudioNodeStream::ScheduleCheckForInactive()
     return;
   }
 
-  nsAutoPtr<CheckForInactiveMessage> message(new CheckForInactiveMessage(this));
+  auto message = MakeUnique<CheckForInactiveMessage>(this);
   GraphImpl()->RunMessageAfterProcessing(Move(message));
 }
 

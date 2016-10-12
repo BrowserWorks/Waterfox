@@ -22,6 +22,7 @@ import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.db.BrowserContract.CommonColumns;
 import org.mozilla.gecko.db.BrowserContract.URLColumns;
+import org.mozilla.gecko.reader.SavedReaderViewHelper;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.NativeEventListener;
 import org.mozilla.gecko.util.NativeJSObject;
@@ -32,6 +33,7 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.MatrixCursor.RowBuilder;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -80,7 +82,7 @@ public class RecentTabsPanel extends HomeFragment
             Log.e(LOGTAG, "JSON error", e);
         }
 
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Session:RestoreRecentTabs", json.toString()));
+        GeckoAppShell.notifyObservers("Session:RestoreRecentTabs", json.toString());
     }
 
     private static final class ClosedTab {
@@ -164,7 +166,7 @@ public class RecentTabsPanel extends HomeFragment
         registerForContextMenu(mList);
 
         EventDispatcher.getInstance().registerGeckoThreadListener(this, "ClosedTabs:Data");
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("ClosedTabs:StartNotifications", null));
+        GeckoAppShell.notifyObservers("ClosedTabs:StartNotifications", null);
     }
 
     @Override
@@ -179,7 +181,7 @@ public class RecentTabsPanel extends HomeFragment
         mEmptyView = null;
 
         EventDispatcher.getInstance().unregisterGeckoThreadListener(this, "ClosedTabs:Data");
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("ClosedTabs:StopNotifications", null));
+        GeckoAppShell.notifyObservers("ClosedTabs:StopNotifications", null);
     }
 
     @Override
@@ -215,9 +217,33 @@ public class RecentTabsPanel extends HomeFragment
         }
     }
 
+    private void updateCursor(final boolean initialLoad) {
+        Thread updateCursorThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // We need to ensure that the session restore code has updated sessionstore.bak as necessary.
+                GeckoProfile.get(getContext()).waitForOldSessionDataProcessing();
+
+                ThreadUtils.postToUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Reload the cursor to show recently closed tabs.
+                        if (initialLoad) {
+                            getLoaderManager().initLoader(LOADER_ID_RECENT_TABS, null, mCursorLoaderCallbacks);
+                        } else {
+                            getLoaderManager().restartLoader(LOADER_ID_RECENT_TABS, null, mCursorLoaderCallbacks);
+                        }
+                    }
+                });
+            }
+        }, "RecentTabsCursorThread");
+
+        updateCursorThread.start();
+    }
+
     @Override
     protected void load() {
-        getLoaderManager().initLoader(LOADER_ID_RECENT_TABS, null, mCursorLoaderCallbacks);
+        updateCursor(true);
     }
 
     @Override
@@ -240,8 +266,7 @@ public class RecentTabsPanel extends HomeFragment
                 // The fragment might have been detached before this code
                 // runs in the UI thread.
                 if (getActivity() != null) {
-                    // Reload the cursor to show recently closed tabs.
-                    getLoaderManager().restartLoader(LOADER_ID_RECENT_TABS, null, mCursorLoaderCallbacks);
+                    updateCursor(false);
                 }
             }
         });
@@ -285,6 +310,15 @@ public class RecentTabsPanel extends HomeFragment
 
         @Override
         public Cursor loadCursor() {
+            // TwoLinePageRow requires the SavedReaderViewHelper to be initialised. Usually this is
+            // done as part of BrowserDatabaseHelper.onOpen(), however we don't actually access
+            // the DB when showing the Recent Tabs panel, hence it's possible that the SavedReaderViewHelper
+            // isn't loaded. Therefore we need to explicitly force loading here.
+            // Note: loadCursor is run on a background thread, hence it's safe to do this here.
+            // (loading time is a few ms, and hence shouldn't impact overall loading time for this
+            // panel in any significant way).
+            SavedReaderViewHelper.getSavedReaderViewHelper(getContext()).loadItems();
+
             final Context context = getContext();
 
             final MatrixCursor c = new MatrixCursor(new String[] { RecentTabs._ID,
@@ -409,21 +443,20 @@ public class RecentTabsPanel extends HomeFragment
          }
     }
 
-    private class CursorLoaderCallbacks extends TransitionAwareCursorLoaderCallbacks {
+    private class CursorLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             return new RecentTabsCursorLoader(getActivity(), mClosedTabs);
         }
 
         @Override
-        public void onLoadFinishedAfterTransitions(Loader<Cursor> loader, Cursor c) {
+        public void onLoadFinished(Loader<Cursor> loader, Cursor c) {
             mAdapter.swapCursor(c);
             updateUiFromCursor(c);
         }
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
-            super.onLoaderReset(loader);
             mAdapter.swapCursor(null);
         }
     }

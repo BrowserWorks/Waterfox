@@ -28,16 +28,17 @@ input {
   font-weight: bold;
   background-color: #f5f5f5;
   border-bottom: 2px solid;
-  -moz-border-bottom-colors: #ff9100 #f27900;
+  -moz-border-bottom-colors: #FF9500;
   display: flex;
   flex-direction: row;
   align-items: center;
+  height: 48px;
 }
 
 .header > div {
   flex: 1;
-  padding: 1em;
-  -moz-padding-start: 1.5em;
+  padding: 10px;
+  padding-inline-start: 16px;
 }
 
 #header-button {
@@ -75,7 +76,7 @@ input {
 }
 
 .inner {
-  -moz-margin-start: calc(var(--icon-size) + var(--icon-margin) * 2 - 1em);
+  margin-inline-start: calc(var(--icon-size) + var(--icon-margin) * 2 - 1em);
   padding: 1em;
 }
 
@@ -84,7 +85,7 @@ input {
   width: var(--icon-size);
   height: var(--icon-size);
   top: var(--icon-margin);
-  -moz-margin-start: var(--icon-margin);
+  margin-inline-start: var(--icon-margin);
   position: absolute;
   pointer-events: none;
 }

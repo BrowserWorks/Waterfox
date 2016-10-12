@@ -7,32 +7,48 @@
 
 #include "SkCodecPriv.h"
 #include "SkColorPriv.h"
+#include "SkOpts.h"
 #include "SkSwizzler.h"
 #include "SkTemplates.h"
 
-SkSwizzler::ResultAlpha SkSwizzler::GetResult(uint8_t zeroAlpha,
-                                              uint8_t maxAlpha) {
-    // In the transparent case, this returns 0x0000
-    // In the opaque case, this returns 0xFFFF
-    // If the row is neither transparent nor opaque, returns something else
-    return (((uint16_t) maxAlpha) << 8) | zeroAlpha;
+static void copy(void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+    memcpy(dst, src + offset, width * bpp);
 }
 
-// samples the row. Does not do anything else but sampling
-static SkSwizzler::ResultAlpha sample565(void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src,
-        int width, int bpp, int deltaSrc, int offset, const SkPMColor ctable[]){
-
+static void sample1(void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
     src += offset;
-    uint16_t* SK_RESTRICT dst = (uint16_t*) dstRow;
+    uint8_t* dst8 = (uint8_t*) dst;
     for (int x = 0; x < width; x++) {
-        dst[x] = src[1] << 8 | src[0];
+        dst8[x] = *src;
         src += deltaSrc;
     }
-    // 565 is always opaque
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
-// TODO (msarett): Investigate SIMD optimizations for swizzle routines.
+static void sample2(void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
+    src += offset;
+    uint16_t* dst16 = (uint16_t*) dst;
+    for (int x = 0; x < width; x++) {
+        dst16[x] = *((const uint16_t*) src);
+        src += deltaSrc;
+    }
+}
+
+static void sample4(void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
+    src += offset;
+    uint32_t* dst32 = (uint32_t*) dst;
+    for (int x = 0; x < width; x++) {
+        dst32[x] = *((const uint32_t*) src);
+        src += deltaSrc;
+    }
+}
 
 // kBit
 // These routines exclusively choose between white and black
@@ -42,7 +58,7 @@ static SkSwizzler::ResultAlpha sample565(void* SK_RESTRICT dstRow, const uint8_t
 
 
 // same as swizzle_bit_to_index and swizzle_bit_to_n32 except for value assigned to dst[x]
-static SkSwizzler::ResultAlpha swizzle_bit_to_grayscale(
+static void swizzle_bit_to_grayscale(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor* /*ctable*/) {
 
@@ -61,15 +77,13 @@ static SkSwizzler::ResultAlpha swizzle_bit_to_grayscale(
         currByte = *(src += bitOffset / 8);
         dst[x] = ((currByte >> (7-bitIndex)) & 1) ? GRAYSCALE_WHITE : GRAYSCALE_BLACK;
     }
-
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
 #undef GRAYSCALE_BLACK
 #undef GRAYSCALE_WHITE
 
 // same as swizzle_bit_to_grayscale and swizzle_bit_to_n32 except for value assigned to dst[x]
-static SkSwizzler::ResultAlpha swizzle_bit_to_index(
+static void swizzle_bit_to_index(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor* /*ctable*/) {
     uint8_t* SK_RESTRICT dst = (uint8_t*) dstRow;
@@ -87,12 +101,10 @@ static SkSwizzler::ResultAlpha swizzle_bit_to_index(
         currByte = *(src += bitOffset / 8);
         dst[x] = ((currByte >> (7-bitIndex)) & 1);
     }
-
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
 // same as swizzle_bit_to_grayscale and swizzle_bit_to_index except for value assigned to dst[x]
-static SkSwizzler::ResultAlpha swizzle_bit_to_n32(
+static void swizzle_bit_to_n32(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor* /*ctable*/) {
     SkPMColor* SK_RESTRICT dst = (SkPMColor*) dstRow;
@@ -110,14 +122,12 @@ static SkSwizzler::ResultAlpha swizzle_bit_to_n32(
         currByte = *(src += bitOffset / 8);
         dst[x] = ((currByte >> (7 - bitIndex)) & 1) ? SK_ColorWHITE : SK_ColorBLACK;
     }
-
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
 #define RGB565_BLACK 0
 #define RGB565_WHITE 0xFFFF
 
-static SkSwizzler::ResultAlpha swizzle_bit_to_565(
+static void swizzle_bit_to_565(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor* /*ctable*/) {
     uint16_t* SK_RESTRICT dst = (uint16_t*) dstRow;
@@ -135,8 +145,6 @@ static SkSwizzler::ResultAlpha swizzle_bit_to_565(
         currByte = *(src += bitOffset / 8);
         dst[x] = ((currByte >> (7 - bitIndex)) & 1) ? RGB565_WHITE : RGB565_BLACK;
     }
-
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
 #undef RGB565_BLACK
@@ -144,19 +152,17 @@ static SkSwizzler::ResultAlpha swizzle_bit_to_565(
 
 // kIndex1, kIndex2, kIndex4
 
-static SkSwizzler::ResultAlpha swizzle_small_index_to_index(
+static void swizzle_small_index_to_index(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
     uint8_t* dst = (uint8_t*) dstRow;
-    INIT_RESULT_ALPHA;
     src += offset / 8;
     int bitIndex = offset % 8;
     uint8_t currByte = *src;
     const uint8_t mask = (1 << bpp) - 1;
     uint8_t index = (currByte >> (8 - bpp - bitIndex)) & mask;
     dst[0] = index;
-    UPDATE_RESULT_ALPHA(ctable[index] >> SK_A32_SHIFT);
 
     for (int x = 1; x < dstWidth; x++) {
         int bitOffset = bitIndex + deltaSrc;
@@ -164,12 +170,10 @@ static SkSwizzler::ResultAlpha swizzle_small_index_to_index(
         currByte = *(src += bitOffset / 8);
         index = (currByte >> (8 - bpp - bitIndex)) & mask;
         dst[x] = index;
-        UPDATE_RESULT_ALPHA(ctable[index] >> SK_A32_SHIFT);
     }
-    return COMPUTE_RESULT_ALPHA;
 }
 
-static SkSwizzler::ResultAlpha swizzle_small_index_to_565(
+static void swizzle_small_index_to_565(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
@@ -188,22 +192,19 @@ static SkSwizzler::ResultAlpha swizzle_small_index_to_565(
         index = (currByte >> (8 - bpp - bitIndex)) & mask;
         dst[x] = SkPixel32ToPixel16(ctable[index]);
     }
-    return SkAlphaType::kOpaque_SkAlphaType;
 }
 
-static SkSwizzler::ResultAlpha swizzle_small_index_to_n32(
+static void swizzle_small_index_to_n32(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
     SkPMColor* dst = (SkPMColor*) dstRow;
-    INIT_RESULT_ALPHA;
     src += offset / 8;
     int bitIndex = offset % 8;
     uint8_t currByte = *src;
     const uint8_t mask = (1 << bpp) - 1;
     uint8_t index = (currByte >> (8 - bpp - bitIndex)) & mask;
     dst[0] = ctable[index];
-    UPDATE_RESULT_ALPHA(ctable[index] >> SK_A32_SHIFT);
 
     for (int x = 1; x < dstWidth; x++) {
         int bitOffset = bitIndex + deltaSrc;
@@ -211,92 +212,53 @@ static SkSwizzler::ResultAlpha swizzle_small_index_to_n32(
         currByte = *(src += bitOffset / 8);
         index = (currByte >> (8 - bpp - bitIndex)) & mask;
         dst[x] = ctable[index];
-        UPDATE_RESULT_ALPHA(ctable[index] >> SK_A32_SHIFT);
     }
-    return COMPUTE_RESULT_ALPHA;
 }
 
 // kIndex
 
-static SkSwizzler::ResultAlpha swizzle_index_to_index(
-        void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
-        int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
-
-    src += offset;
-    uint8_t* SK_RESTRICT dst = (uint8_t*) dstRow;
-    INIT_RESULT_ALPHA;
-    // TODO (msarett): Should we skip the loop here and guess that the row is opaque/not opaque?
-    //                 SkScaledBitmap sampler just guesses that it is opaque.  This is dangerous
-    //                 and probably wrong since gif and bmp (rarely) may have alpha.
-    if (1 == deltaSrc) {
-        memcpy(dst, src, dstWidth);
-        for (int x = 0; x < dstWidth; x++) {
-            UPDATE_RESULT_ALPHA(ctable[src[x]] >> SK_A32_SHIFT);
-        }
-    } else {
-        for (int x = 0; x < dstWidth; x++) {
-            dst[x] = *src;
-            UPDATE_RESULT_ALPHA(ctable[*src] >> SK_A32_SHIFT);
-            src += deltaSrc;
-        }
-    }
-    return COMPUTE_RESULT_ALPHA;
-}
-
-static SkSwizzler::ResultAlpha swizzle_index_to_n32(
+static void swizzle_index_to_n32(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
     src += offset;
     SkPMColor* SK_RESTRICT dst = (SkPMColor*)dstRow;
-    INIT_RESULT_ALPHA;
     for (int x = 0; x < dstWidth; x++) {
         SkPMColor c = ctable[*src];
-        UPDATE_RESULT_ALPHA(c >> SK_A32_SHIFT);
         dst[x] = c;
         src += deltaSrc;
     }
-    return COMPUTE_RESULT_ALPHA;
 }
 
-static SkSwizzler::ResultAlpha swizzle_index_to_n32_skipZ(
+static void swizzle_index_to_n32_skipZ(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
     src += offset;
     SkPMColor* SK_RESTRICT dst = (SkPMColor*)dstRow;
-    INIT_RESULT_ALPHA;
     for (int x = 0; x < dstWidth; x++) {
         SkPMColor c = ctable[*src];
-        UPDATE_RESULT_ALPHA(c >> SK_A32_SHIFT);
         if (c != 0) {
             dst[x] = c;
         }
         src += deltaSrc;
     }
-    return COMPUTE_RESULT_ALPHA;
 }
 
-static SkSwizzler::ResultAlpha swizzle_index_to_565(
+static void swizzle_index_to_565(
       void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
       int bytesPerPixel, int deltaSrc, int offset, const SkPMColor ctable[]) {
-    // FIXME: Support dithering? Requires knowing y, which I think is a bigger
-    // change.
     src += offset;
     uint16_t* SK_RESTRICT dst = (uint16_t*)dstRow;
     for (int x = 0; x < dstWidth; x++) {
         dst[x] = SkPixel32ToPixel16(ctable[*src]);
         src += deltaSrc;
     }
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
-
-
-#undef A32_MASK_IN_PLACE
 
 // kGray
 
-static SkSwizzler::ResultAlpha swizzle_gray_to_n32(
+static void swizzle_gray_to_n32(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
@@ -306,42 +268,89 @@ static SkSwizzler::ResultAlpha swizzle_gray_to_n32(
         dst[x] = SkPackARGB32NoCheck(0xFF, *src, *src, *src);
         src += deltaSrc;
     }
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
-static SkSwizzler::ResultAlpha swizzle_gray_to_gray(
-        void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
-        int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
+static void fast_swizzle_gray_to_n32(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
 
-    src += offset;
-    uint8_t* SK_RESTRICT dst = (uint8_t*) dstRow;
-    if (1 == deltaSrc) {
-        memcpy(dstRow, src, dstWidth);
-    } else {
-        for (int x = 0; x < dstWidth; x++) {
-            dst[x] = src[0];
-            src += deltaSrc;
-        }
-    }
-    return SkSwizzler::kOpaque_ResultAlpha;
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+    // Note that there is no need to distinguish between RGB and BGR.
+    // Each color channel will get the same value.
+    SkOpts::gray_to_RGB1((uint32_t*) dst, src + offset, width);
 }
 
-static SkSwizzler::ResultAlpha swizzle_gray_to_565(
+static void swizzle_gray_to_565(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bytesPerPixel, int deltaSrc, int offset, const SkPMColor ctable[]) {
-    // FIXME: Support dithering?
+
     src += offset;
     uint16_t* SK_RESTRICT dst = (uint16_t*)dstRow;
     for (int x = 0; x < dstWidth; x++) {
         dst[x] = SkPack888ToRGB16(src[0], src[0], src[0]);
         src += deltaSrc;
     }
-    return SkSwizzler::kOpaque_ResultAlpha;
+}
+
+// kGrayAlpha
+
+static void swizzle_grayalpha_to_n32_unpremul(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
+
+    src += offset;
+    SkPMColor* dst32 = (SkPMColor*) dst;
+    for (int x = 0; x < width; x++) {
+        dst32[x] = SkPackARGB32NoCheck(src[1], src[0], src[0], src[0]);
+        src += deltaSrc;
+    }
+}
+
+static void fast_swizzle_grayalpha_to_n32_unpremul(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
+
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+    // Note that there is no need to distinguish between RGB and BGR.
+    // Each color channel will get the same value.
+    SkOpts::grayA_to_RGBA((uint32_t*) dst, src + offset, width);
+}
+
+static void swizzle_grayalpha_to_n32_premul(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
+
+    src += offset;
+    SkPMColor* dst32 = (SkPMColor*) dst;
+    for (int x = 0; x < width; x++) {
+        uint8_t pmgray = SkMulDiv255Round(src[1], src[0]);
+        dst32[x] = SkPackARGB32NoCheck(src[1], pmgray, pmgray, pmgray);
+        src += deltaSrc;
+    }
+}
+
+static void fast_swizzle_grayalpha_to_n32_premul(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
+
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+    // Note that there is no need to distinguish between rgb and bgr.
+    // Each color channel will get the same value.
+    SkOpts::grayA_to_rgbA((uint32_t*) dst, src + offset, width);
 }
 
 // kBGRX
 
-static SkSwizzler::ResultAlpha swizzle_bgrx_to_n32(
+static void swizzle_bgrx_to_n32(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
@@ -351,133 +360,175 @@ static SkSwizzler::ResultAlpha swizzle_bgrx_to_n32(
         dst[x] = SkPackARGB32NoCheck(0xFF, src[2], src[1], src[0]);
         src += deltaSrc;
     }
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
-static SkSwizzler::ResultAlpha swizzle_bgrx_to_565(
+static void swizzle_bgrx_to_565(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
-    // FIXME: Support dithering?
+
     src += offset;
     uint16_t* SK_RESTRICT dst = (uint16_t*)dstRow;
     for (int x = 0; x < dstWidth; x++) {
         dst[x] = SkPack888ToRGB16(src[2], src[1], src[0]);
         src += deltaSrc;
     }
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
 // kBGRA
 
-static SkSwizzler::ResultAlpha swizzle_bgra_to_n32_unpremul(
+static void swizzle_bgra_to_n32_unpremul(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
     src += offset;
     SkPMColor* SK_RESTRICT dst = (SkPMColor*)dstRow;
-    INIT_RESULT_ALPHA;
     for (int x = 0; x < dstWidth; x++) {
         uint8_t alpha = src[3];
-        UPDATE_RESULT_ALPHA(alpha);
         dst[x] = SkPackARGB32NoCheck(alpha, src[2], src[1], src[0]);
         src += deltaSrc;
     }
-    return COMPUTE_RESULT_ALPHA;
 }
 
-static SkSwizzler::ResultAlpha swizzle_bgra_to_n32_premul(
-        void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
-        int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
+static void fast_swizzle_bgra_to_n32_unpremul(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
 
-    src += offset;
-    SkPMColor* SK_RESTRICT dst = (SkPMColor*)dstRow;
-    INIT_RESULT_ALPHA;
-    for (int x = 0; x < dstWidth; x++) {
-        uint8_t alpha = src[3];
-        UPDATE_RESULT_ALPHA(alpha);
-        dst[x] = SkPreMultiplyARGB(alpha, src[2], src[1], src[0]);
-        src += deltaSrc;
-    }
-    return COMPUTE_RESULT_ALPHA;
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+#ifdef SK_PMCOLOR_IS_RGBA
+    SkOpts::RGBA_to_BGRA((uint32_t*) dst, src + offset, width);
+#else
+    memcpy(dst, src + offset, width * bpp);
+#endif
 }
 
-// kRGBX
-static SkSwizzler::ResultAlpha swizzle_rgbx_to_n32(
+static void swizzle_bgra_to_n32_premul(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
     src += offset;
     SkPMColor* SK_RESTRICT dst = (SkPMColor*)dstRow;
     for (int x = 0; x < dstWidth; x++) {
-        dst[x] = SkPackARGB32(0xFF, src[0], src[1], src[2]);
+        uint8_t alpha = src[3];
+        dst[x] = SkPremultiplyARGBInline(alpha, src[2], src[1], src[0]);
         src += deltaSrc;
     }
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
-static SkSwizzler::ResultAlpha swizzle_rgbx_to_565(
+static void fast_swizzle_bgra_to_n32_premul(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
+
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+#ifdef SK_PMCOLOR_IS_RGBA
+    SkOpts::RGBA_to_bgrA((uint32_t*) dst, src + offset, width);
+#else
+    SkOpts::RGBA_to_rgbA((uint32_t*) dst, src + offset, width);
+#endif
+}
+
+// kRGB
+
+static void swizzle_rgb_to_n32(
+        void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
+        int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
+
+    src += offset;
+    SkPMColor* SK_RESTRICT dst = (SkPMColor*)dstRow;
+    for (int x = 0; x < dstWidth; x++) {
+        dst[x] = SkPackARGB32NoCheck(0xFF, src[0], src[1], src[2]);
+        src += deltaSrc;
+    }
+}
+
+static void fast_swizzle_rgb_to_n32(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc,
+        int offset, const SkPMColor ctable[]) {
+
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+#ifdef SK_PMCOLOR_IS_RGBA
+    SkOpts::RGB_to_RGB1((uint32_t*) dst, src + offset, width);
+#else
+    SkOpts::RGB_to_BGR1((uint32_t*) dst, src + offset, width);
+#endif
+}
+
+static void swizzle_rgb_to_565(
        void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
        int bytesPerPixel, int deltaSrc, int offset, const SkPMColor ctable[]) {
-    // FIXME: Support dithering?
+
     src += offset;
     uint16_t* SK_RESTRICT dst = (uint16_t*)dstRow;
     for (int x = 0; x < dstWidth; x++) {
         dst[x] = SkPack888ToRGB16(src[0], src[1], src[2]);
         src += deltaSrc;
     }
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
-
 // kRGBA
-static SkSwizzler::ResultAlpha swizzle_rgba_to_n32_premul(
+
+static void swizzle_rgba_to_n32_premul(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
     src += offset;
     SkPMColor* SK_RESTRICT dst = (SkPMColor*)dstRow;
-    INIT_RESULT_ALPHA;
     for (int x = 0; x < dstWidth; x++) {
         unsigned alpha = src[3];
-        UPDATE_RESULT_ALPHA(alpha);
-        dst[x] = SkPreMultiplyARGB(alpha, src[0], src[1], src[2]);
+        dst[x] = SkPremultiplyARGBInline(alpha, src[0], src[1], src[2]);
         src += deltaSrc;
     }
-    return COMPUTE_RESULT_ALPHA;
 }
 
-static SkSwizzler::ResultAlpha swizzle_rgba_to_n32_unpremul(
+static void fast_swizzle_rgba_to_n32_premul(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc,
+        int offset, const SkPMColor ctable[]) {
+
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+#ifdef SK_PMCOLOR_IS_RGBA
+    SkOpts::RGBA_to_rgbA((uint32_t*) dst, src + offset, width);
+#else
+    SkOpts::RGBA_to_bgrA((uint32_t*) dst, src + offset, width);
+#endif
+}
+
+static void swizzle_rgba_to_n32_unpremul(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
     src += offset;
     uint32_t* SK_RESTRICT dst = reinterpret_cast<uint32_t*>(dstRow);
-    INIT_RESULT_ALPHA;
     for (int x = 0; x < dstWidth; x++) {
         unsigned alpha = src[3];
-        UPDATE_RESULT_ALPHA(alpha);
         dst[x] = SkPackARGB32NoCheck(alpha, src[0], src[1], src[2]);
         src += deltaSrc;
     }
-    return COMPUTE_RESULT_ALPHA;
 }
 
-static SkSwizzler::ResultAlpha swizzle_rgba_to_n32_premul_skipZ(
-        void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
-        int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
+static void fast_swizzle_rgba_to_n32_unpremul(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
 
-    src += offset;
-    SkPMColor* SK_RESTRICT dst = (SkPMColor*)dstRow;
-    INIT_RESULT_ALPHA;
-    for (int x = 0; x < dstWidth; x++) {
-        unsigned alpha = src[3];
-        UPDATE_RESULT_ALPHA(alpha);
-        if (0 != alpha) {
-            dst[x] = SkPreMultiplyARGB(alpha, src[0], src[1], src[2]);
-        }
-        src += deltaSrc;
-    }
-    return COMPUTE_RESULT_ALPHA;
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+#ifdef SK_PMCOLOR_IS_RGBA
+    memcpy(dst, src + offset, width * bpp);
+#else
+    SkOpts::RGBA_to_BGRA((uint32_t*) dst, src + offset, width);
+#endif
 }
 
 // kCMYK
@@ -525,7 +576,7 @@ static SkSwizzler::ResultAlpha swizzle_rgba_to_n32_premul_skipZ(
 // R = C * K / 255
 // G = M * K / 255
 // B = Y * K / 255
-static SkSwizzler::ResultAlpha swizzle_cmyk_to_n32(
+static void swizzle_cmyk_to_n32(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
@@ -539,12 +590,24 @@ static SkSwizzler::ResultAlpha swizzle_cmyk_to_n32(
         dst[x] = SkPackARGB32NoCheck(0xFF, r, g, b);
         src += deltaSrc;
     }
-
-    // CMYK is always opaque
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
-static SkSwizzler::ResultAlpha swizzle_cmyk_to_565(
+static void fast_swizzle_cmyk_to_n32(
+        void* dst, const uint8_t* src, int width, int bpp, int deltaSrc, int offset,
+        const SkPMColor ctable[]) {
+
+    // This function must not be called if we are sampling.  If we are not
+    // sampling, deltaSrc should equal bpp.
+    SkASSERT(deltaSrc == bpp);
+
+#ifdef SK_PMCOLOR_IS_RGBA
+    SkOpts::inverted_CMYK_to_RGB1((uint32_t*) dst, src + offset, width);
+#else
+    SkOpts::inverted_CMYK_to_BGR1((uint32_t*) dst, src + offset, width);
+#endif
+}
+
+static void swizzle_cmyk_to_565(
         void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
         int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
 
@@ -558,38 +621,45 @@ static SkSwizzler::ResultAlpha swizzle_cmyk_to_565(
         dst[x] = SkPack888ToRGB16(r, g, b);
         src += deltaSrc;
     }
-
-    // CMYK is always opaque
-    return SkSwizzler::kOpaque_ResultAlpha;
 }
 
-/**
-    FIXME: This was my idea to cheat in order to continue taking advantage of skipping zeroes.
-    This would be fine for drawing normally, but not for drawing with transfer modes. Being
-    honest means we can draw correctly with transfer modes, with the cost of not being able
-    to take advantage of Android's free unwritten pages. Something to keep in mind when we
-    decide whether to switch to unpremul default.
-static bool swizzle_rgba_to_n32_unpremul_skipZ(void* SK_RESTRICT dstRow,
-                                               const uint8_t* SK_RESTRICT src,
-                                               int dstWidth, int bitsPerPixel, int offset,
-                                               const SkPMColor[]) {
-    src += offset;
-    SkPMColor* SK_RESTRICT dst = (SkPMColor*)dstRow;
-    unsigned alphaMask = 0xFF;
-    for (int x = 0; x < dstWidth; x++) {
-        unsigned alpha = src[3];
-        // NOTE: We cheat here. The caller requested unpremul and skip zeroes. It's possible
-        // the color components are not zero, but we skip them anyway, meaning they'll remain
-        // zero (implied by the request to skip zeroes).
-        if (0 != alpha) {
-            dst[x] = SkPackARGB32NoCheck(alpha, src[0], src[1], src[2]);
-        }
-        src += deltaSrc;
-        alphaMask &= alpha;
+template <SkSwizzler::RowProc proc>
+void SkSwizzler::SkipLeadingGrayAlphaZerosThen(
+        void* dst, const uint8_t* src, int width,
+        int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
+    SkASSERT(!ctable);
+
+    const uint16_t* src16 = (const uint16_t*) (src + offset);
+    uint32_t* dst32 = (uint32_t*) dst;
+
+    // This may miss opportunities to skip when the output is premultiplied,
+    // e.g. for a src pixel 0x00FF which is not zero but becomes zero after premultiplication.
+    while (width > 0 && *src16 == 0x0000) {
+        width--;
+        dst32++;
+        src16 += deltaSrc / 2;
     }
-    return alphaMask != 0xFF;
+    proc(dst32, (const uint8_t*)src16, width, bpp, deltaSrc, 0, ctable);
 }
-*/
+
+template <SkSwizzler::RowProc proc>
+void SkSwizzler::SkipLeading8888ZerosThen(
+        void* SK_RESTRICT dstRow, const uint8_t* SK_RESTRICT src, int dstWidth,
+        int bpp, int deltaSrc, int offset, const SkPMColor ctable[]) {
+    SkASSERT(!ctable);
+
+    auto src32 = (const uint32_t*)(src+offset);
+    auto dst32 = (uint32_t*)dstRow;
+
+    // This may miss opportunities to skip when the output is premultiplied,
+    // e.g. for a src pixel 0x00FFFFFF which is not zero but becomes zero after premultiplication.
+    while (dstWidth > 0 && *src32 == 0x00000000) {
+        dstWidth--;
+        dst32++;
+        src32 += deltaSrc/4;
+    }
+    proc(dst32, (const uint8_t*)src32, dstWidth, bpp, deltaSrc, 0, ctable);
+}
 
 SkSwizzler* SkSwizzler::CreateSwizzler(SkSwizzler::SrcConfig sc,
                                        const SkPMColor* ctable,
@@ -603,6 +673,7 @@ SkSwizzler* SkSwizzler::CreateSwizzler(SkSwizzler::SrcConfig sc,
             && nullptr == ctable) {
         return nullptr;
     }
+    RowProc fastProc = nullptr;
     RowProc proc = nullptr;
     SkCodec::ZeroInitialized zeroInit = options.fZeroInitialized;
     switch (sc) {
@@ -657,7 +728,8 @@ SkSwizzler* SkSwizzler::CreateSwizzler(SkSwizzler::SrcConfig sc,
                     proc = &swizzle_index_to_565;
                     break;
                 case kIndex_8_SkColorType:
-                    proc = &swizzle_index_to_index;
+                    proc = &sample1;
+                    fastProc = &copy;
                     break;
                 default:
                     break;
@@ -667,12 +739,42 @@ SkSwizzler* SkSwizzler::CreateSwizzler(SkSwizzler::SrcConfig sc,
             switch (dstInfo.colorType()) {
                 case kN32_SkColorType:
                     proc = &swizzle_gray_to_n32;
+                    fastProc = &fast_swizzle_gray_to_n32;
                     break;
                 case kGray_8_SkColorType:
-                    proc = &swizzle_gray_to_gray;
+                    proc = &sample1;
+                    fastProc = &copy;
                     break;
                 case kRGB_565_SkColorType:
                     proc = &swizzle_gray_to_565;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case kGrayAlpha:
+            switch (dstInfo.colorType()) {
+                case kN32_SkColorType:
+                    if (dstInfo.alphaType() == kUnpremul_SkAlphaType) {
+                        if (SkCodec::kYes_ZeroInitialized == zeroInit) {
+                            proc = &SkipLeadingGrayAlphaZerosThen
+                                    <swizzle_grayalpha_to_n32_unpremul>;
+                            fastProc = &SkipLeadingGrayAlphaZerosThen
+                                    <fast_swizzle_grayalpha_to_n32_unpremul>;
+                        } else {
+                            proc = &swizzle_grayalpha_to_n32_unpremul;
+                            fastProc = &fast_swizzle_grayalpha_to_n32_unpremul;
+                        }
+                    } else {
+                        if (SkCodec::kYes_ZeroInitialized == zeroInit) {
+                            proc = &SkipLeadingGrayAlphaZerosThen<swizzle_grayalpha_to_n32_premul>;
+                            fastProc = &SkipLeadingGrayAlphaZerosThen
+                                    <fast_swizzle_grayalpha_to_n32_premul>;
+                        } else {
+                            proc = &swizzle_grayalpha_to_n32_premul;
+                            fastProc = &fast_swizzle_grayalpha_to_n32_premul;
+                        }
+                    }
                     break;
                 default:
                     break;
@@ -694,44 +796,21 @@ SkSwizzler* SkSwizzler::CreateSwizzler(SkSwizzler::SrcConfig sc,
         case kBGRA:
             switch (dstInfo.colorType()) {
                 case kN32_SkColorType:
-                    switch (dstInfo.alphaType()) {
-                        case kUnpremul_SkAlphaType:
-                            proc = &swizzle_bgra_to_n32_unpremul;
-                            break;
-                        case kPremul_SkAlphaType:
-                            proc = &swizzle_bgra_to_n32_premul;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                default:
-                    break;
-            }
-            break;
-        case kRGBX:
-            // TODO: Support other swizzles.
-            switch (dstInfo.colorType()) {
-                case kN32_SkColorType:
-                    proc = &swizzle_rgbx_to_n32;
-                    break;
-                case kRGB_565_SkColorType:
-                    proc = &swizzle_rgbx_to_565;
-                default:
-                    break;
-            }
-            break;
-        case kRGBA:
-            switch (dstInfo.colorType()) {
-                case kN32_SkColorType:
                     if (dstInfo.alphaType() == kUnpremul_SkAlphaType) {
-                        // Respect zeroInit?
-                        proc = &swizzle_rgba_to_n32_unpremul;
+                        if (SkCodec::kYes_ZeroInitialized == zeroInit) {
+                            proc = &SkipLeading8888ZerosThen<swizzle_bgra_to_n32_unpremul>;
+                            fastProc = &SkipLeading8888ZerosThen<fast_swizzle_bgra_to_n32_unpremul>;
+                        } else {
+                            proc = &swizzle_bgra_to_n32_unpremul;
+                            fastProc = &fast_swizzle_bgra_to_n32_unpremul;
+                        }
                     } else {
                         if (SkCodec::kYes_ZeroInitialized == zeroInit) {
-                            proc = &swizzle_rgba_to_n32_premul_skipZ;
+                            proc = &SkipLeading8888ZerosThen<swizzle_bgra_to_n32_premul>;
+                            fastProc = &SkipLeading8888ZerosThen<fast_swizzle_bgra_to_n32_premul>;
                         } else {
-                            proc = &swizzle_rgba_to_n32_premul;
+                            proc = &swizzle_bgra_to_n32_premul;
+                            fastProc = &fast_swizzle_bgra_to_n32_premul;
                         }
                     }
                     break;
@@ -742,16 +821,36 @@ SkSwizzler* SkSwizzler::CreateSwizzler(SkSwizzler::SrcConfig sc,
         case kRGB:
             switch (dstInfo.colorType()) {
                 case kN32_SkColorType:
-                    proc = &swizzle_rgbx_to_n32;
+                    proc = &swizzle_rgb_to_n32;
+                    fastProc = &fast_swizzle_rgb_to_n32;
+                    break;
+                case kRGB_565_SkColorType:
+                    proc = &swizzle_rgb_to_565;
                     break;
                 default:
                     break;
             }
             break;
-        case kRGB_565:
+        case kRGBA:
             switch (dstInfo.colorType()) {
-                case kRGB_565_SkColorType:
-                    proc = &sample565;
+                case kN32_SkColorType:
+                    if (dstInfo.alphaType() == kUnpremul_SkAlphaType) {
+                        if (SkCodec::kYes_ZeroInitialized == zeroInit) {
+                            proc = &SkipLeading8888ZerosThen<swizzle_rgba_to_n32_unpremul>;
+                            fastProc = &SkipLeading8888ZerosThen<fast_swizzle_rgba_to_n32_unpremul>;
+                        } else {
+                            proc = &swizzle_rgba_to_n32_unpremul;
+                            fastProc = &fast_swizzle_rgba_to_n32_unpremul;
+                        }
+                    } else {
+                        if (SkCodec::kYes_ZeroInitialized == zeroInit) {
+                            proc = &SkipLeading8888ZerosThen<swizzle_rgba_to_n32_premul>;
+                            fastProc = &SkipLeading8888ZerosThen<fast_swizzle_rgba_to_n32_premul>;
+                        } else {
+                            proc = &swizzle_rgba_to_n32_premul;
+                            fastProc = &fast_swizzle_rgba_to_n32_premul;
+                        }
+                    }
                     break;
                 default:
                     break;
@@ -761,6 +860,7 @@ SkSwizzler* SkSwizzler::CreateSwizzler(SkSwizzler::SrcConfig sc,
             switch (dstInfo.colorType()) {
                 case kN32_SkColorType:
                     proc = &swizzle_cmyk_to_n32;
+                    fastProc = &fast_swizzle_cmyk_to_n32;
                     break;
                 case kRGB_565_SkColorType:
                     proc = &swizzle_cmyk_to_565;
@@ -769,17 +869,26 @@ SkSwizzler* SkSwizzler::CreateSwizzler(SkSwizzler::SrcConfig sc,
                     break;
             }
             break;
+        case kNoOp8:
+            proc = &sample1;
+            fastProc = &copy;
+            break;
+        case kNoOp16:
+            proc = sample2;
+            fastProc = &copy;
+            break;
+        case kNoOp32:
+            proc = &sample4;
+            fastProc = &copy;
+            break;
         default:
             break;
-    }
-    if (nullptr == proc) {
-        return nullptr;
     }
 
     // Store bpp in bytes if it is an even multiple, otherwise use bits
     int srcBPP = SkIsAlign8(BitsPerPixel(sc)) ? BytesPerPixel(sc) : BitsPerPixel(sc);
     int dstBPP = SkColorTypeBytesPerPixel(dstInfo.colorType());
-    
+
     int srcOffset = 0;
     int srcWidth = dstInfo.width();
     int dstOffset = 0;
@@ -796,12 +905,15 @@ SkSwizzler* SkSwizzler::CreateSwizzler(SkSwizzler::SrcConfig sc,
         srcWidth = frame->width();
     }
 
-    return new SkSwizzler(proc, ctable, srcOffset, srcWidth, dstOffset, dstWidth, srcBPP, dstBPP);
+    return new SkSwizzler(fastProc, proc, ctable, srcOffset, srcWidth, dstOffset, dstWidth,
+            srcBPP, dstBPP);
 }
 
-SkSwizzler::SkSwizzler(RowProc proc, const SkPMColor* ctable, int srcOffset, int srcWidth,
-        int dstOffset, int dstWidth, int srcBPP, int dstBPP)
-    : fRowProc(proc)
+SkSwizzler::SkSwizzler(RowProc fastProc, RowProc proc, const SkPMColor* ctable, int srcOffset,
+        int srcWidth, int dstOffset, int dstWidth, int srcBPP, int dstBPP)
+    : fFastProc(fastProc)
+    , fSlowProc(proc)
+    , fActualProc(fFastProc ? fFastProc : fSlowProc)
     , fColorTable(ctable)
     , fSrcOffset(srcOffset)
     , fDstOffset(dstOffset)
@@ -817,19 +929,28 @@ SkSwizzler::SkSwizzler(RowProc proc, const SkPMColor* ctable, int srcOffset, int
 {}
 
 int SkSwizzler::onSetSampleX(int sampleX) {
-    SkASSERT(sampleX > 0); // Surely there is an upper limit? Should there be
-                           // way to report failure?
+    SkASSERT(sampleX > 0);
+
     fSampleX = sampleX;
     fSrcOffsetUnits = (get_start_coord(sampleX) + fSrcOffset) * fSrcBPP;
     fDstOffsetBytes = (fDstOffset / sampleX) * fDstBPP;
     fSwizzleWidth = get_scaled_dimension(fSrcWidth, sampleX);
     fAllocatedWidth = get_scaled_dimension(fDstWidth, sampleX);
 
+    // The optimized swizzler functions do not support sampling.  Sampled swizzles
+    // are already fast because they skip pixels.  We haven't seen a situation
+    // where speeding up sampling has a significant impact on total decode time.
+    if (1 == fSampleX && fFastProc) {
+        fActualProc = fFastProc;
+    } else {
+        fActualProc = fSlowProc;
+    }
+
     return fAllocatedWidth;
 }
 
-SkSwizzler::ResultAlpha SkSwizzler::swizzle(void* dst, const uint8_t* SK_RESTRICT src) {
+void SkSwizzler::swizzle(void* dst, const uint8_t* SK_RESTRICT src) {
     SkASSERT(nullptr != dst && nullptr != src);
-    return fRowProc(SkTAddOffset<void>(dst, fDstOffsetBytes), src, fSwizzleWidth, fSrcBPP,
+    fActualProc(SkTAddOffset<void>(dst, fDstOffsetBytes), src, fSwizzleWidth, fSrcBPP,
             fSampleX * fSrcBPP, fSrcOffsetUnits, fColorTable);
 }

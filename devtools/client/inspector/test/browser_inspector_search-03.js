@@ -189,9 +189,25 @@ var TEST_DATA = [
     key: "p", suggestions: []
   },
   {
-    key: "]",
+    key: "]", suggestions: []
+  },
+  {
+    key: ".",
     suggestions: [
-      {label: "p[id*=p]"}
+      {label: "p[id*=p].c1"},
+      {label: "p[id*=p].c2"}
+    ]
+  },
+  {
+    key: "VK_BACK_SPACE",
+    suggestions: []
+  },
+  {
+    key: "#",
+    suggestions: [
+      {label: "p[id*=p]#p1"},
+      {label: "p[id*=p]#p2"},
+      {label: "p[id*=p]#p3"}
     ]
   }
 ];
@@ -213,10 +229,11 @@ add_task(function* () {
     info("Waiting for search query to complete");
     yield inspector.searchSuggestions._lastQuery;
 
-    info("Query completed. Performing checks for input '" + searchBox.value + "'");
+    info("Query completed. Performing checks for input '" +
+         searchBox.value + "'");
     let actualSuggestions = popup.getItems().reverse();
 
-    is(popup.isOpen ? actualSuggestions.length: 0, suggestions.length,
+    is(popup.isOpen ? actualSuggestions.length : 0, suggestions.length,
        "There are expected number of suggestions.");
 
     for (let i = 0; i < suggestions.length; i++) {

@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure that the message which breakpoint condition throws
@@ -9,7 +11,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_conditional-breakpoints.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
@@ -29,10 +35,10 @@ function test() {
 
       let thrownNode = attachment.view.container.querySelector(".dbg-breakpoint-condition-thrown-message");
       ok(thrownNode,
-         "The breakpoint item should contain a thrown message node.")
+         "The breakpoint item should contain a thrown message node.");
 
       ok(!attachment.view.container.classList.contains("dbg-breakpoint-condition-thrown"),
-         "The thrown message on line " + aCaretLine + " should be hidden when condition has not been evaluated.")
+         "The thrown message on line " + aCaretLine + " should be hidden when condition has not been evaluated.");
     }
 
     function resumeAndTestThrownMessage(line) {
@@ -45,7 +51,7 @@ function test() {
           { actor: gSources.values[0], line: line }
         );
         let attachment = gSources._getBreakpoint(bp).attachment;
-        ok(attachment.view.container.classList.contains('dbg-breakpoint-condition-thrown'),
+        ok(attachment.view.container.classList.contains("dbg-breakpoint-condition-thrown"),
            "Message on line " + line + " should be shown when condition throws.");
       });
     }
@@ -54,7 +60,7 @@ function test() {
       doResume(gPanel);
 
       return waitForCaretUpdated(gPanel, line).then(() => {
-        //test that the thrown message is correctly shown
+        // test that the thrown message is correctly shown
         let bp = gDebugger.queries.getBreakpoint(
           getState(),
           { actor: gSources.values[0], line: line }
@@ -65,8 +71,10 @@ function test() {
       });
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceAndCaretAndScopes(gPanel, ".html", 17);
+    Task.spawn(function* () {
+      let onCaretUpdated = waitForCaretAndScopes(gPanel, 17);
+      callInTab(gTab, "ermahgerd");
+      yield onCaretUpdated;
 
       yield actions.addBreakpoint({ actor: gSources.selectedValue, line: 18 }, " 1afff");
       // Close the popup because a SET_BREAKPOINT_CONDITION action is
@@ -88,14 +96,12 @@ function test() {
 
       yield actions.addBreakpoint({ actor: gSources.selectedValue, line: 22 }, "randomVar");
       gSources._hideConditionalPopup();
-      initialCheck(22)
+      initialCheck(22);
 
       yield resumeAndTestThrownMessage(18);
       yield resumeAndTestNoThrownMessage(19);
       yield resumeAndTestThrownMessage(22);
       resumeDebuggerThenCloseAndFinish(gPanel);
     });
-
-    callInTab(gTab, "ermahgerd");
   });
 }

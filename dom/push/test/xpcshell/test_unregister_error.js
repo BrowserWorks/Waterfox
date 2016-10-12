@@ -29,7 +29,6 @@ add_task(function* test_unregister_error() {
   let unregisterPromise = new Promise(resolve => unregisterDone = resolve);
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -65,6 +64,5 @@ add_task(function* test_unregister_error() {
   ok(!result, 'Deleted push record exists');
 
   // Make sure we send a request to the server.
-  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for unregister');
+  yield unregisterPromise;
 });

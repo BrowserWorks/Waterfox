@@ -32,7 +32,10 @@ const orientationTypes = new Set(['any', 'natural', 'landscape', 'portrait',
   'portrait-primary', 'portrait-secondary', 'landscape-primary',
   'landscape-secondary'
 ]);
+const textDirections = new Set(['ltr', 'rtl', 'auto']);
+
 Cu.import('resource://gre/modules/Console.jsm');
+Cu.import("resource://gre/modules/Services.jsm");
 // ValueExtractor is used by the various processors to get values
 // from the manifest and to report errors.
 Cu.import('resource://gre/modules/ValueExtractor.jsm');
@@ -49,6 +52,9 @@ this.ManifestProcessor = { // jshint ignore:line
   get orientationTypes() {
     return orientationTypes;
   },
+  get textDirections() {
+    return textDirections;
+  },
   // process() method processes JSON text into a clean manifest
   // that conforms with the W3C specification. Takes an object
   // expecting the following dictionary items:
@@ -60,6 +66,8 @@ this.ManifestProcessor = { // jshint ignore:line
     manifestURL: aManifestURL,
     docURL: aDocURL
   }) {
+    const domBundle = Services.strings.createBundle("chrome://global/locale/dom/dom.properties");
+
     const console = new ConsoleAPI({
       prefix: 'Web Manifest'
     });
@@ -70,13 +78,13 @@ this.ManifestProcessor = { // jshint ignore:line
       rawManifest = JSON.parse(jsonText);
     } catch (e) {}
     if (typeof rawManifest !== 'object' || rawManifest === null) {
-      let msg = 'Manifest needs to be an object.';
-      console.warn(msg);
+      console.warn(domBundle.GetStringFromName('ManifestShouldBeObject'));
       rawManifest = {};
     }
-    const extractor = new ValueExtractor(console);
+    const extractor = new ValueExtractor(console, domBundle);
     const imgObjProcessor = new ImageObjectProcessor(console, extractor);
     const processedManifest = {
+      'dir': processDirMember.call(this),
       'lang': processLangMember(),
       'start_url': processStartURLMember(),
       'display': processDisplayMember.call(this),
@@ -85,15 +93,27 @@ this.ManifestProcessor = { // jshint ignore:line
       'icons': imgObjProcessor.process(
         rawManifest, manifestURL, 'icons'
       ),
-      'splash_screens': imgObjProcessor.process(
-        rawManifest, manifestURL, 'splash_screens'
-      ),
       'short_name': processShortNameMember(),
       'theme_color': processThemeColorMember(),
       'background_color': processBackgroundColorMember(),
     };
     processedManifest.scope = processScopeMember();
     return processedManifest;
+
+    function processDirMember() {
+      const spec = {
+        objectName: 'manifest',
+        object: rawManifest,
+        property: 'dir',
+        expectedType: 'string',
+        trim: true,
+      };
+      const value = extractor.extractValue(spec);
+      if (this.textDirections.has(value)) {
+        return value;
+      }
+      return 'auto';
+    }
 
     function processNameMember() {
       const spec = {
@@ -126,11 +146,10 @@ this.ManifestProcessor = { // jshint ignore:line
         trim: true
       };
       const value = extractor.extractValue(spec);
-      if (this.orientationTypes.has(value)) {
-        return value;
+      if (value && typeof value === "string" && this.orientationTypes.has(value.toLowerCase())) {
+        return value.toLowerCase();
       }
-      // The spec special-cases orientation to return the empty string.
-      return '';
+      return undefined;
     }
 
     function processDisplayMember() {
@@ -142,8 +161,8 @@ this.ManifestProcessor = { // jshint ignore:line
         trim: true
       };
       const value = extractor.extractValue(spec);
-      if (displayModes.has(value)) {
-        return value;
+      if (value && typeof value === "string" && displayModes.has(value.toLowerCase())) {
+        return value.toLowerCase();
       }
       return this.defaultDisplayMode;
     }
@@ -165,21 +184,17 @@ this.ManifestProcessor = { // jshint ignore:line
       try {
         scopeURL = new URL(value, manifestURL);
       } catch (e) {
-        let msg = 'The URL of scope is invalid.';
-        console.warn(msg);
+        console.warn(domBundle.GetStringFromName('ManifestScopeURLInvalid'));
         return undefined;
       }
       if (scopeURL.origin !== docURL.origin) {
-        let msg = 'Scope needs to be same-origin as Document.';
-        console.warn(msg);
+        console.warn(domBundle.GetStringFromName('ManifestScopeNotSameOrigin'));
         return undefined;
       }
       // If start URL is not within scope of scope URL:
       let isSameOrigin = startURL && startURL.origin !== scopeURL.origin;
       if (isSameOrigin || !startURL.pathname.startsWith(scopeURL.pathname)) {
-        let msg =
-          'The start URL is outside the scope, so scope is invalid.';
-        console.warn(msg);
+        console.warn(domBundle.GetStringFromName('ManifestStartURLOutsideScope'));
         return undefined;
       }
       return scopeURL.href;
@@ -202,12 +217,11 @@ this.ManifestProcessor = { // jshint ignore:line
       try {
         potentialResult = new URL(value, manifestURL);
       } catch (e) {
-        console.warn('Invalid URL.');
+        console.warn(domBundle.GetStringFromName('ManifestStartURLInvalid'))
         return result;
       }
       if (potentialResult.origin !== docURL.origin) {
-        let msg = 'start_url must be same origin as document.';
-        console.warn(msg);
+        console.warn(domBundle.GetStringFromName('ManifestStartURLShouldBeSameOrigin'));
       } else {
         result = potentialResult.href;
       }

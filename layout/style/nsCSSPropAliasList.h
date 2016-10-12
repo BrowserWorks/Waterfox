@@ -35,6 +35,10 @@
 
  ******/
 
+CSS_PROP_ALIAS(word-wrap,
+               overflow_wrap,
+               WordWrap,
+               "")
 CSS_PROP_ALIAS(-moz-transform-origin,
                transform_origin,
                MozTransformOrigin,
@@ -179,6 +183,10 @@ CSS_PROP_ALIAS(-moz-hyphens,
                hyphens,
                MozHyphens,
                "")
+CSS_PROP_ALIAS(-moz-text-align-last,
+               text_align_last,
+               MozTextAlignLast,
+               "")
 
 #define WEBKIT_PREFIX_PREF "layout.css.prefixes.webkit"
 
@@ -296,10 +304,6 @@ CSS_PROP_ALIAS(-webkit-border-bottom-right-radius,
                WebkitBorderBottomRightRadius, // really no dom property
                WEBKIT_PREFIX_PREF)
 
-CSS_PROP_ALIAS(-webkit-appearance,
-               appearance,
-               WebkitAppearance,
-               WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-background-clip,
                background_clip,
                WebkitBackgroundClip,
@@ -327,22 +331,85 @@ CSS_PROP_ALIAS(-webkit-box-sizing,
                WebkitBoxSizing,
                WEBKIT_PREFIX_PREF)
 
-// Alias old flexbox properties to modern flexbox pseudo-equivalents:
+// Alias -webkit-box properties to their -moz-box equivalents.
+// (NOTE: Even though they're aliases, in practice these -webkit properties
+// will behave a bit differently from their -moz versions, if they're
+// accompanied by "display:-webkit-box", because we generate a different frame
+// for those two display values.)
 CSS_PROP_ALIAS(-webkit-box-flex,
-               flex_grow,
+               box_flex,
                WebkitBoxFlex,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-ordinal-group,
-               order,
+               box_ordinal_group,
                WebkitBoxOrdinalGroup,
                WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-box-orient,
+               box_orient,
+               WebkitBoxOrient,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-box-direction,
+               box_direction,
+               WebkitBoxDirection,
+               WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-align,
-               align_items,
+               box_align,
                WebkitBoxAlign,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-pack,
-               justify_content,
+               box_pack,
                WebkitBoxPack,
+               WEBKIT_PREFIX_PREF)
+
+// Alias -webkit-flex related properties to their unprefixed equivalents:
+// (Matching ordering at https://drafts.csswg.org/css-flexbox-1/#property-index )
+CSS_PROP_ALIAS(-webkit-flex-direction,
+               flex_direction,
+               WebkitFlexDirection,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-wrap,
+               flex_wrap,
+               WebkitFlexWrap,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-flow,
+               flex_flow,
+               WebkitFlexFlow,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-order,
+               order,
+               WebkitOrder,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex,
+               flex,
+               WebkitFlex,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-grow,
+               flex_grow,
+               WebkitFlexGrow,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-shrink,
+               flex_shrink,
+               WebkitFlexShrink,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-basis,
+               flex_basis,
+               WebkitFlexBasis,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-justify-content,
+               justify_content,
+               WebkitJustifyContent,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-align-items,
+               align_items,
+               WebkitAlignItems,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-align-self,
+               align_self,
+               WebkitAlignSelf,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-align-content,
+               align_content,
+               WebkitAlignContent,
                WEBKIT_PREFIX_PREF)
 
 CSS_PROP_ALIAS(-webkit-user-select,
@@ -350,4 +417,46 @@ CSS_PROP_ALIAS(-webkit-user-select,
                WebkitUserSelect,
                WEBKIT_PREFIX_PREF)
 
+#ifdef MOZ_ENABLE_MASK_AS_SHORTHAND
+CSS_PROP_ALIAS(-webkit-mask,
+               mask,
+               WebkitMask,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-clip,
+               mask_clip,
+               WebkitMaskClip,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-composite,
+               mask_composite,
+               WebkitMaskComposite,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-image,
+               mask_image,
+               WebkitMaskImage,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-origin,
+               mask_origin,
+               WebkitMaskOrigin,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-position,
+               mask_position,
+               WebkitMaskPosition,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-position-x,
+               mask_position_x,
+               WebkitMaskPositionX,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-position-y,
+               mask_position_y,
+               WebkitMaskPositionY,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-repeat,
+               mask_repeat,
+               WebkitMaskRepeat,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-size,
+               mask_size,
+               WebkitMaskSize,
+               WEBKIT_PREFIX_PREF)
+#endif
 #undef WEBKIT_PREFIX_PREF

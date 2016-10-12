@@ -1,36 +1,38 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
-const { Cu, Ci, Cc, CC } = require("chrome");
-const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+const { Ci, Cc, CC } = require("chrome");
+const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "dirService", function() {
-  return Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties);
+XPCOMUtils.defineLazyGetter(this, "dirService", function () {
+  return Cc["@mozilla.org/file/directory_service;1"]
+    .getService(Ci.nsIProperties);
 });
 
-XPCOMUtils.defineLazyGetter(this, "ZipWriter", function() {
+XPCOMUtils.defineLazyGetter(this, "ZipWriter", function () {
   return CC("@mozilla.org/zipwriter;1", "nsIZipWriter");
 });
 
-XPCOMUtils.defineLazyGetter(this, "LocalFile", function() {
+XPCOMUtils.defineLazyGetter(this, "LocalFile", function () {
   return new CC("@mozilla.org/file/local;1", "nsILocalFile", "initWithPath");
 });
 
-XPCOMUtils.defineLazyGetter(this, "getMostRecentBrowserWindow", function() {
+XPCOMUtils.defineLazyGetter(this, "getMostRecentBrowserWindow", function () {
   return require("sdk/window/utils").getMostRecentBrowserWindow;
 });
 
 const nsIFilePicker = Ci.nsIFilePicker;
 
 const OPEN_FLAGS = {
-  RDONLY: parseInt("0x01"),
-  WRONLY: parseInt("0x02"),
-  CREATE_FILE: parseInt("0x08"),
-  APPEND: parseInt("0x10"),
-  TRUNCATE: parseInt("0x20"),
-  EXCL: parseInt("0x80")
+  RDONLY: parseInt("0x01", 16),
+  WRONLY: parseInt("0x02", 16),
+  CREATE_FILE: parseInt("0x08", 16),
+  APPEND: parseInt("0x10", 16),
+  TRUNCATE: parseInt("0x20", 16),
+  EXCL: parseInt("0x80", 16)
 };
 
 /**
@@ -41,12 +43,13 @@ var HarUtils = {
    * Open File Save As dialog and let the user pick the proper file
    * location for generated HAR log.
    */
-  getTargetFile: function(fileName, jsonp, compress) {
+  getTargetFile: function (fileName, jsonp, compress) {
     let browser = getMostRecentBrowserWindow();
 
     let fp = Cc["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
     fp.init(browser, null, nsIFilePicker.modeSave);
-    fp.appendFilter("HTTP Archive Files", "*.har; *.harp; *.json; *.jsonp; *.zip");
+    fp.appendFilter(
+      "HTTP Archive Files", "*.har; *.harp; *.json; *.jsonp; *.zip");
     fp.appendFilters(nsIFilePicker.filterAll | nsIFilePicker.filterText);
     fp.filterIndex = 1;
 
@@ -60,13 +63,13 @@ var HarUtils = {
     return null;
   },
 
-  getHarFileName: function(defaultFileName, jsonp, compress) {
+  getHarFileName: function (defaultFileName, jsonp, compress) {
     let extension = jsonp ? ".harp" : ".har";
 
     // Read more about toLocaleFormat & format string.
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleFormat
-    var now = new Date();
-    var name = now.toLocaleFormat(defaultFileName);
+    let now = new Date();
+    let name = now.toLocaleFormat(defaultFileName);
     name = name.replace(/\:/gm, "-", "");
     name = name.replace(/\//gm, "_", "");
 
@@ -89,7 +92,7 @@ var HarUtils = {
    * @param {String} jsonString HAR data (JSON or JSONP)
    * @param {Boolean} compress The result file is zipped if set to true.
    */
-  saveToFile: function(file, jsonString, compress) {
+  saveToFile: function (file, jsonString, compress) {
     let openFlags = OPEN_FLAGS.WRONLY | OPEN_FLAGS.CREATE_FILE |
       OPEN_FLAGS.TRUNCATE;
 
@@ -106,8 +109,8 @@ var HarUtils = {
 
       // The entire jsonString can be huge so, write the data in chunks.
       let chunkLength = 1024 * 1024;
-      for (let i=0; i<=jsonString.length; i++) {
-        let data = jsonString.substr(i, chunkLength+1);
+      for (let i = 0; i <= jsonString.length; i++) {
+        let data = jsonString.substr(i, chunkLength + 1);
         if (data) {
           convertor.writeString(data);
         }
@@ -118,7 +121,7 @@ var HarUtils = {
       // this closes foStream
       convertor.close();
     } catch (err) {
-      Cu.reportError(err);
+      console.error(err);
       return false;
     }
 
@@ -136,8 +139,8 @@ var HarUtils = {
       file.moveTo(null, "temp" + (new Date()).getTime() + "temphar");
 
       // Create compressed file with the original file path name.
-      let zipFile = Cc["@mozilla.org/file/local;1"].
-        createInstance(Ci.nsILocalFile);
+      let zipFile = Cc["@mozilla.org/file/local;1"]
+        .createInstance(Ci.nsILocalFile);
       zipFile.initWithPath(originalFilePath);
 
       // The file within the zipped file doesn't use .zip extension.
@@ -156,7 +159,7 @@ var HarUtils = {
       file.remove(true);
       return true;
     } catch (err) {
-      Cu.reportError(err);
+      console.error(err);
 
       // Something went wrong (disk space?) rename the original file back.
       file.moveTo(null, originalFileName);
@@ -165,7 +168,7 @@ var HarUtils = {
     return false;
   },
 
-  getLocalDirectory: function(path) {
+  getLocalDirectory: function (path) {
     let dir;
 
     if (!path) {
@@ -179,7 +182,7 @@ var HarUtils = {
 
     return dir;
   },
-}
+};
 
 // Exports from this module
 exports.HarUtils = HarUtils;

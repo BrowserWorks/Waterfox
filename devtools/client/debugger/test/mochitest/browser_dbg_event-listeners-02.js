@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that the eventListeners request works when bound functions are used as
@@ -19,7 +21,7 @@ function test() {
 
   let transport = DebuggerServer.connectPipe();
   gClient = new DebuggerClient(transport);
-  gClient.connect((aType, aTraits) => {
+  gClient.connect().then(([aType, aTraits]) => {
     is(aType, "browser",
       "Root actor should identify itself as a browser.");
 
@@ -83,7 +85,7 @@ function testEventListeners(aThreadClient) {
       });
       return lDeferred.promise;
     })).then(listeners => {
-      is (listeners.length, 3, "Found three event listeners.");
+      is(listeners.length, 3, "Found three event listeners.");
       for (let l of listeners) {
         let node = l.node;
         ok(node, "There is a node property.");
@@ -122,6 +124,6 @@ function closeConnection() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gClient = null;
 });

@@ -18,7 +18,8 @@ class VideoTrack;
 class VideoTrackList : public MediaTrackList
 {
 public:
-  VideoTrackList(nsPIDOMWindow* aOwnerWindow, HTMLMediaElement* aMediaElement)
+  VideoTrackList(nsPIDOMWindowInner* aOwnerWindow,
+                 HTMLMediaElement* aMediaElement)
     : MediaTrackList(aOwnerWindow, aMediaElement)
     , mSelectedIndex(-1)
   {}
@@ -26,6 +27,8 @@ public:
   JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   VideoTrack* operator[](uint32_t aIndex);
+
+  void RemoveTrack(const RefPtr<MediaTrack>& aTrack) override;
 
   void EmptyTracks() override;
 

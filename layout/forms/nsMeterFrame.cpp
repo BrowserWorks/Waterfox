@@ -19,7 +19,10 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLMeterElement.h"
 #include "nsContentList.h"
+#include "nsCSSPseudoElements.h"
 #include "nsStyleSet.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 #include "nsThemeConstants.h"
 #include <algorithm>
 
@@ -56,6 +59,12 @@ nsMeterFrame::DestroyFrom(nsIFrame* aDestructRoot)
   nsContainerFrame::DestroyFrom(aDestructRoot);
 }
 
+nsIAtom*
+nsMeterFrame::GetType() const
+{
+  return nsGkAtoms::meterFrame;
+}
+
 nsresult
 nsMeterFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
@@ -66,7 +75,7 @@ nsMeterFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   mBarDiv = doc->CreateHTMLElement(nsGkAtoms::div);
 
   // Associate ::-moz-meter-bar pseudo-element to the anonymous child.
-  nsCSSPseudoElements::Type pseudoType = nsCSSPseudoElements::ePseudo_mozMeterBar;
+  CSSPseudoElementType pseudoType = CSSPseudoElementType::mozMeterBar;
   RefPtr<nsStyleContext> newStyleContext = PresContext()->StyleSet()->
     ResolvePseudoElementStyle(mContent->AsElement(), pseudoType,
                               StyleContext(), mBarDiv->AsElement());
@@ -221,10 +230,8 @@ nsMeterFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
                               const LogicalSize& aPadding,
                               bool aShrinkWrap)
 {
-  RefPtr<nsFontMetrics> fontMet;
-  NS_ENSURE_SUCCESS(nsLayoutUtils::GetFontMetricsForFrame(this,
-                                                          getter_AddRefs(fontMet)),
-                    LogicalSize(aWM));
+  RefPtr<nsFontMetrics> fontMet =
+    nsLayoutUtils::GetFontMetricsForFrame(this, 1.0f);
 
   const WritingMode wm = GetWritingMode();
   LogicalSize autoSize(wm);
@@ -242,9 +249,8 @@ nsMeterFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
 nscoord
 nsMeterFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 {
-  RefPtr<nsFontMetrics> fontMet;
-  NS_ENSURE_SUCCESS(
-      nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fontMet)), 0);
+  RefPtr<nsFontMetrics> fontMet =
+    nsLayoutUtils::GetFontMetricsForFrame(this, 1.0f);
 
   nscoord minISize = fontMet->Font().size; // 1em
 
@@ -275,15 +281,15 @@ nsMeterFrame::ShouldUseNativeStyle() const
          !PresContext()->HasAuthorSpecifiedRules(this,
                                                  NS_AUTHOR_SPECIFIED_BORDER | NS_AUTHOR_SPECIFIED_BACKGROUND) &&
          barFrame &&
-         barFrame->StyleDisplay()->mAppearance == NS_THEME_METERBAR_CHUNK &&
+         barFrame->StyleDisplay()->mAppearance == NS_THEME_METERCHUNK &&
          !PresContext()->HasAuthorSpecifiedRules(barFrame,
                                                  NS_AUTHOR_SPECIFIED_BORDER | NS_AUTHOR_SPECIFIED_BACKGROUND);
 }
 
 Element*
-nsMeterFrame::GetPseudoElement(nsCSSPseudoElements::Type aType)
+nsMeterFrame::GetPseudoElement(CSSPseudoElementType aType)
 {
-  if (aType == nsCSSPseudoElements::ePseudo_mozMeterBar) {
+  if (aType == CSSPseudoElementType::mozMeterBar) {
     return mBarDiv;
   }
 

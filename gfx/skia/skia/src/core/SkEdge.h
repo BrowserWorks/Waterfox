@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2006 The Android Open Source Project
  *
@@ -15,7 +14,7 @@
 #include "SkMath.h"
 
 // This correctly favors the lower-pixel when y0 is on a 1/2 pixel boundary
-#define SkEdge_Compute_DY(top, y0)  ((top << 6) + 32 - (y0))
+#define SkEdge_Compute_DY(top, y0)  (SkLeftShift(top, 6) + 32 - (y0))
 
 struct SkEdge {
     enum Type {

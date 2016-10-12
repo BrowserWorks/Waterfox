@@ -34,21 +34,30 @@ enum EModules {
   eDocLifeCycle = eDocLoad | eDocCreate | eDocDestroy,
 
   eEvents = 1 << 3,
-  ePlatforms = 1 << 4,
-  eStack = 1 << 5,
+  eEventTree = 1 << 4,
+  ePlatforms = 1 << 5,
   eText = 1 << 6,
   eTree = 1 << 7,
 
   eDOMEvents = 1 << 8,
   eFocus = 1 << 9,
   eSelection = 1 << 10,
-  eNotifications = eDOMEvents | eSelection | eFocus
+  eNotifications = eDOMEvents | eSelection | eFocus,
+
+  // extras
+  eStack = 1 << 11,
+  eVerbose = 1 << 12
 };
 
 /**
  * Return true if any of the given modules is logged.
  */
 bool IsEnabled(uint32_t aModules);
+
+/**
+ * Return true if all of the given modules are logged.
+ */
+bool IsEnabledAll(uint32_t aModules);
 
 /**
  * Return true if the given module is logged.
@@ -122,6 +131,15 @@ void SelChange(nsISelection* aSelection, DocAccessible* aDocument,
                int16_t aReason);
 
 /**
+ * Log the given accessible elements info.
+ */
+void TreeInfo(const char* aMsg, uint32_t aExtraFlags, ...);
+void TreeInfo(const char* aMsg, uint32_t aExtraFlags,
+              const char* aMsg1, Accessible* aAcc,
+              const char* aMsg2, nsINode* aNode);
+void TreeInfo(const char* aMsg, uint32_t aExtraFlags, Accessible* aParent);
+
+/**
  * Log the message ('title: text' format) on new line. Print the start and end
  * boundaries of the message body designated by '{' and '}' (2 spaces indent for
  * body).
@@ -164,6 +182,7 @@ void Document(DocAccessible* aDocument);
 /**
  * Log the accessible and its DOM node as a message entry.
  */
+void AccessibleInfo(const char* aDescr, Accessible* aAccessible);
 void AccessibleNNode(const char* aDescr, Accessible* aAccessible);
 void AccessibleNNode(const char* aDescr, nsINode* aNode);
 
@@ -189,7 +208,8 @@ void Enable(const nsAFlatCString& aModules);
  */
 void CheckEnv();
 
-} // namespace logs
+} // namespace logging
+
 } // namespace a11y
 } // namespace mozilla
 

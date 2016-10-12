@@ -74,12 +74,12 @@ public:
                                   mozIStorageConnection::TRANSACTION_IMMEDIATE);
 
       // Clean up orphaned Cache objects
-      nsAutoTArray<CacheId, 8> orphanedCacheIdList;
+      AutoTArray<CacheId, 8> orphanedCacheIdList;
       nsresult rv = db::FindOrphanedCacheIds(aConn, orphanedCacheIdList);
       if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
       for (uint32_t i = 0; i < orphanedCacheIdList.Length(); ++i) {
-        nsAutoTArray<nsID, 16> deletedBodyIdList;
+        AutoTArray<nsID, 16> deletedBodyIdList;
         rv = db::DeleteCacheId(aConn, orphanedCacheIdList[i], deletedBodyIdList);
         if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
@@ -88,7 +88,7 @@ public:
       }
 
       // Clean up orphaned body objects
-      nsAutoTArray<nsID, 64> knownBodyIdList;
+      AutoTArray<nsID, 64> knownBodyIdList;
       rv = db::GetKnownBodyIds(aConn, knownBodyIdList);
 
       rv = BodyDeleteOrphanedFiles(aDBDir, knownBodyIdList);
@@ -147,12 +147,12 @@ private:
   nsTArray<nsID> mDeletedBodyIdList;
 };
 
-bool IsHeadRequest(CacheRequest aRequest, CacheQueryParams aParams)
+bool IsHeadRequest(const CacheRequest& aRequest, const CacheQueryParams& aParams)
 {
   return !aParams.ignoreMethod() && aRequest.method().LowerCaseEqualsLiteral("head");
 }
 
-bool IsHeadRequest(CacheRequestOrVoid aRequest, CacheQueryParams aParams)
+bool IsHeadRequest(const CacheRequestOrVoid& aRequest, const CacheQueryParams& aParams)
 {
   if (aRequest.type() == CacheRequestOrVoid::TCacheRequest) {
     return !aParams.ignoreMethod() &&
@@ -912,10 +912,10 @@ private:
     // May be on any thread, including STS event target.  Non-owning runnable
     // here since we are guaranteed the Action will survive until
     // CompleteOnInitiatingThread is called.
-    nsCOMPtr<nsIRunnable> runnable = NS_NewNonOwningRunnableMethodWithArgs<nsresult>(
+    nsCOMPtr<nsIRunnable> runnable = NewNonOwningRunnableMethod<nsresult>(
       this, &CachePutAllAction::OnAsyncCopyComplete, aRv);
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      mTargetThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL)));
+    MOZ_ALWAYS_SUCCEEDS(
+      mTargetThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL));
   }
 
   void
@@ -1373,7 +1373,7 @@ Manager::Listener::OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
                                 const SavedResponse& aSavedResponse,
                                 StreamList* aStreamList)
 {
-  nsAutoTArray<SavedResponse, 1> responseList;
+  AutoTArray<SavedResponse, 1> responseList;
   responseList.AppendElement(aSavedResponse);
   OnOpComplete(Move(aRv), aResult, INVALID_CACHE_ID, responseList,
                nsTArray<SavedRequest>(), aStreamList);
@@ -1761,9 +1761,7 @@ Manager::~Manager()
 
   // Don't spin the event loop in the destructor waiting for the thread to
   // shutdown.  Defer this to the main thread, instead.
-  nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethod(ioThread, &nsIThread::Shutdown);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(NewRunnableMethod(ioThread, &nsIThread::Shutdown)));
 }
 
 void
@@ -1902,7 +1900,7 @@ Manager::NoteOrphanedBodyIdList(const nsTArray<nsID>& aDeletedBodyIdList)
 {
   NS_ASSERT_OWNINGTHREAD(Manager);
 
-  nsAutoTArray<nsID, 64> deleteNowList;
+  AutoTArray<nsID, 64> deleteNowList;
   deleteNowList.SetCapacity(aDeletedBodyIdList.Length());
 
   for (uint32_t i = 0; i < aDeletedBodyIdList.Length(); ++i) {

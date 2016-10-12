@@ -1058,12 +1058,16 @@ IonBuilder::startTrackingOptimizations()
             // OOMs are handled as if optimization tracking were turned off.
             if (!trackedOptimizationSites_.append(site))
                 site = nullptr;
-        } else {
+        } else if (site->hasOptimizations()) {
             // The same bytecode may be visited multiple times (see
             // restartLoop). Only the last time matters, so clear any previous
             // tracked optimizations.
             site->optimizations()->clear();
         }
+
+        // The case of !site->hasOptimizations() means we had an OOM when
+        // previously attempting to track optimizations. Leave
+        // site->optimizations_ nullptr to leave optimization tracking off.
 
         if (site)
             current->updateTrackedSite(site);
@@ -1090,7 +1094,7 @@ IonBuilder::trackTypeInfoUnchecked(TrackedTypeSite kind, JSObject* obj)
 {
     BytecodeSite* site = current->trackedSite();
     // OOMs are handled as if optimization tracking were turned off.
-    OptimizationTypeInfo typeInfo(alloc(), kind, MIRType_Object);
+    OptimizationTypeInfo typeInfo(alloc(), kind, MIRType::Object);
     if (!typeInfo.trackType(TypeSet::ObjectType(obj)))
         return;
     if (!site->optimizations()->trackTypeInfo(mozilla::Move(typeInfo)))

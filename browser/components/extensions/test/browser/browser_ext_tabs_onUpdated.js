@@ -23,9 +23,9 @@ add_task(function* () {
       let pageURL = "http://mochi.test:8888/browser/browser/components/extensions/test/browser/context_tabs_onUpdated_page.html";
 
       let expectedSequence = [
-        { status: "loading" },
-        { status: "loading", url: pageURL },
-        { status: "complete" },
+        {status: "loading"},
+        {status: "loading", url: pageURL},
+        {status: "complete"},
       ];
       let collectedSequence = [];
 
@@ -60,7 +60,7 @@ add_task(function* () {
         browser.test.notifyPass("tabs.onUpdated");
       });
 
-      browser.tabs.create({ url: pageURL });
+      browser.tabs.create({url: pageURL});
     },
     files: {
       "content-script.js": `
@@ -159,7 +159,7 @@ add_task(function* test_url() {
         browser.test.assertEq(tabId, tab.id, "Check tab id");
         browser.test.log("onUpdate: " + JSON.stringify(changeInfo));
         if ("url" in changeInfo) {
-          browser.test.assertEq("about:preferences", changeInfo.url,
+          browser.test.assertEq("about:blank", changeInfo.url,
                                 "Check changeInfo.url");
           browser.tabs.onUpdated.removeListener(onUpdated);
           // Remove created tab.
@@ -168,7 +168,7 @@ add_task(function* test_url() {
           return;
         }
       });
-      browser.tabs.update(tab.id, {url: "about:preferences"});
+      browser.tabs.update(tab.id, {url: "about:blank"});
     });
   });
 });

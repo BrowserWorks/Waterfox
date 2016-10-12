@@ -1,10 +1,14 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
-const {Cu} = require("chrome");
-Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
-const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
-const {DomNodePreview} = require(
-  "devtools/client/inspector/shared/dom-node-preview");
+const {Task} = require("devtools/shared/task");
+const EventEmitter = require("devtools/shared/event-emitter");
+const {DomNodePreview} = require("devtools/client/inspector/shared/dom-node-preview");
 
 // Map dom node fronts by animation fronts so we don't have to get them from the
 // walker every time the timeline is refreshed.
@@ -25,18 +29,18 @@ function AnimationTargetNode(inspector, options) {
 exports.AnimationTargetNode = AnimationTargetNode;
 
 AnimationTargetNode.prototype = {
-  init: function(containerEl) {
+  init: function (containerEl) {
     this.previewer.init(containerEl);
     this.isDestroyed = false;
   },
 
-  destroy: function() {
+  destroy: function () {
     this.previewer.destroy();
     this.inspector = null;
     this.isDestroyed = true;
   },
 
-  render: Task.async(function*(playerFront) {
+  render: Task.async(function* (playerFront) {
     // Get the nodeFront from the cache if it was stored previously.
     let nodeFront = nodeFronts.get(playerFront);
 

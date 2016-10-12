@@ -11,6 +11,7 @@
 #include "mozilla/dom/ipc/BlobChild.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/ipc/InputStreamUtils.h"
+#include "base/task.h"
 
 using namespace mozilla::ipc;
 using namespace mozilla::jsipc;
@@ -27,15 +28,14 @@ ContentBridgeChild::ContentBridgeChild(Transport* aTransport)
 
 ContentBridgeChild::~ContentBridgeChild()
 {
-  XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new DeleteTask<Transport>(mTransport));
+  RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(mTransport);
+  XRE_GetIOMessageLoop()->PostTask(task.forget());
 }
 
 void
 ContentBridgeChild::ActorDestroy(ActorDestroyReason aWhy)
 {
-  MessageLoop::current()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(this, &ContentBridgeChild::DeferredDestroy));
+  MessageLoop::current()->PostTask(NewRunnableMethod(this, &ContentBridgeChild::DeferredDestroy));
 }
 
 /*static*/ ContentBridgeChild*
@@ -60,11 +60,11 @@ ContentBridgeChild::DeferredDestroy()
 
 bool
 ContentBridgeChild::RecvAsyncMessage(const nsString& aMsg,
-                                     const ClonedMessageData& aData,
                                      InfallibleTArray<jsipc::CpowEntry>&& aCpows,
-                                     const IPC::Principal& aPrincipal)
+                                     const IPC::Principal& aPrincipal,
+                                     const ClonedMessageData& aData)
 {
-  return nsIContentChild::RecvAsyncMessage(aMsg, aData, Move(aCpows), aPrincipal);
+  return nsIContentChild::RecvAsyncMessage(aMsg, Move(aCpows), aPrincipal, aData);
 }
 
 PBlobChild*

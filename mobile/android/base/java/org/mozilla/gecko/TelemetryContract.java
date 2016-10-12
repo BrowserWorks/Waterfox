@@ -148,6 +148,9 @@ public interface TelemetryContract {
         // Action triggered from a dialog.
         DIALOG("dialog"),
 
+        // Action triggered from a doorhanger popup prompt.
+        DOORHANGER("doorhanger"),
+
         // Action triggered from a view grid item, like a thumbnail.
         GRID_ITEM("griditem"),
 
@@ -179,6 +182,9 @@ public interface TelemetryContract {
         // Action triggered from one of a series of views, such as ViewPager.
         PANEL("panel"),
 
+        // Action triggered by a background service / automatic system making a decision.
+        SERVICE("service"),
+
         // Action triggered from a settings screen.
         SETTINGS("settings"),
 
@@ -187,6 +193,9 @@ public interface TelemetryContract {
 
         // Action triggered from a suggestion provided to the user.
         SUGGESTION("suggestion"),
+
+        // Action triggered from an OS system action.
+        SYSTEM("system"),
 
         // Action triggered from a SuperToast.
         // Note: Only used in JavaScript for now, but here for completeness.

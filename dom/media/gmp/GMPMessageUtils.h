@@ -132,7 +132,7 @@ struct ParamTraits<GMPSimulcastStream>
     WriteParam(aMsg, aParam.mQPMax);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     if (ReadParam(aMsg, aIter, &(aResult->mWidth)) &&
         ReadParam(aMsg, aIter, &(aResult->mHeight)) &&
@@ -163,7 +163,7 @@ struct ParamTraits<GMPVideoCodec>
   {
     WriteParam(aMsg, aParam.mGMPApiVersion);
     WriteParam(aMsg, aParam.mCodecType);
-    WriteParam(aMsg, nsAutoCString(aParam.mPLName));
+    WriteParam(aMsg, static_cast<const nsCString&>(nsDependentCString(aParam.mPLName)));
     WriteParam(aMsg, aParam.mPLType);
     WriteParam(aMsg, aParam.mWidth);
     WriteParam(aMsg, aParam.mHeight);
@@ -181,7 +181,7 @@ struct ParamTraits<GMPVideoCodec>
     WriteParam(aMsg, aParam.mMode);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     // NOTE: make sure this matches any versions supported
     if (!ReadParam(aMsg, aIter, &(aResult->mGMPApiVersion)) ||

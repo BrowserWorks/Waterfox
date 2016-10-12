@@ -55,10 +55,10 @@ extern unsigned char * CBC_PadBuffer(PLArenaPool *arena, unsigned char *inbuf,
 
 /****************************************/
 /*
-** Power-Up selftests required for FIPS and invoked only
-** under PKCS #11 FIPS mode.
+** Power-Up selftests are required for FIPS.
 */
-extern CK_RV sftk_fipsPowerUpSelfTest( void ); 
+/* make sure Power-up selftests have been run. */
+extern CK_RV sftk_FIPSEntryOK( void ); 
 
 /*
 ** make known fixed PKCS #11 key types to their sizes in bytes
@@ -152,7 +152,7 @@ extern PRBool sftk_fatalError;
 
 #define FORK_ASSERT() \
     { \
-        char* forkAssert = getenv("NSS_STRICT_NOFORK"); \
+        char* forkAssert = PR_GetEnvSecure("NSS_STRICT_NOFORK"); \
         if ( (!forkAssert) || (0 == strcmp(forkAssert, "1")) ) { \
             PORT_Assert(0); \
         } \
@@ -239,7 +239,7 @@ extern PRBool sftkForkCheckDisabled;
 
 #define ENABLE_FORK_CHECK() \
     { \
-        char* doForkCheck = getenv("NSS_STRICT_NOFORK"); \
+        char* doForkCheck = PR_GetEnvSecure("NSS_STRICT_NOFORK"); \
         if ( doForkCheck && !strcmp(doForkCheck, "DISABLED") ) { \
             sftkForkCheckDisabled = PR_TRUE; \
         } \

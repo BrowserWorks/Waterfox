@@ -12,8 +12,9 @@ from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.checksums import parse_checksums_file
 from mozharness.mozilla.signing import SigningMixin
+from mozharness.mozilla.buildbot import BuildbotMixin
 
-class ChecksumsGenerator(BaseScript, VirtualenvMixin, SigningMixin, VCSMixin):
+class ChecksumsGenerator(BaseScript, VirtualenvMixin, SigningMixin, VCSMixin, BuildbotMixin):
     config_options = [
         [["--stage-product"], {
             "dest": "stage_product",
@@ -30,6 +31,10 @@ class ChecksumsGenerator(BaseScript, VirtualenvMixin, SigningMixin, VCSMixin):
         [["--bucket-name-prefix"], {
             "dest": "bucket_name_prefix",
             "help": "Prefix of bucket name, eg: net-mozaws-prod-delivery. This will be used to generate a full bucket name (such as net-mozaws-prod-delivery-{firefox,archive}.",
+        }],
+        [["--bucket-name-full"], {
+            "dest": "bucket_name_full",
+            "help": "Full bucket name, eg: net-mozaws-prod-delivery-firefox",
         }],
         [["-j", "--parallelization"], {
             "dest": "parallelization",
@@ -68,6 +73,7 @@ class ChecksumsGenerator(BaseScript, VirtualenvMixin, SigningMixin, VCSMixin):
                     "boto",
                 ],
                 "virtualenv_path": "venv",
+                'buildbot_json_path': 'buildprops.json',
             },
             all_actions=[
                 "create-virtualenv",
@@ -97,6 +103,19 @@ class ChecksumsGenerator(BaseScript, VirtualenvMixin, SigningMixin, VCSMixin):
     def _pre_config_lock(self, rw_config):
         super(ChecksumsGenerator, self)._pre_config_lock(rw_config)
 
+        # override properties from buildbot properties here as defined by
+        # taskcluster properties
+        self.read_buildbot_config()
+        if not self.buildbot_config:
+            self.warning("Skipping buildbot properties overrides")
+            return
+        # TODO: version should come from repo
+        props = self.buildbot_config["properties"]
+        for prop in ['version', 'build_number']:
+            if props.get(prop):
+                self.info("Overriding %s with %s" % (prop, props[prop]))
+                self.config[prop] = props.get(prop)
+
         # These defaults are set here rather in the config because default
         # lists cannot be completely overidden, only appended to.
         if not self.config.get("formats"):
@@ -104,16 +123,19 @@ class ChecksumsGenerator(BaseScript, VirtualenvMixin, SigningMixin, VCSMixin):
 
         if not self.config.get("includes"):
             self.config["includes"] = [
-                "^.*\.tar\.bz2$",
-                "^.*\.tar\.xz$",
-                "^.*\.dmg$",
-                "^.*\.bundle$",
-                "^.*\.mar$",
-                "^.*Setup.*\.exe$",
-                "^.*\.xpi$",
+                r"^.*\.tar\.bz2$",
+                r"^.*\.tar\.xz$",
+                r"^.*\.dmg$",
+                r"^.*\.bundle$",
+                r"^.*\.mar$",
+                r"^.*Setup.*\.exe$",
+                r"^.*\.xpi$",
             ]
 
     def _get_bucket_name(self):
+        if self.config.get('bucket_name_full'):
+            return self.config['bucket_name_full']
+
         suffix = "archive"
         # Firefox has a special bucket, per https://github.com/mozilla-services/product-delivery-tools/blob/master/bucketmap.go
         if self.config["stage_product"] == "firefox":
@@ -122,7 +144,7 @@ class ChecksumsGenerator(BaseScript, VirtualenvMixin, SigningMixin, VCSMixin):
         return "{}-{}".format(self.config["bucket_name_prefix"], suffix)
 
     def _get_file_prefix(self):
-        return "pub/{}/candidates/{}-candidates/build{}".format(
+        return "pub/{}/candidates/{}-candidates/build{}/".format(
             self.config["stage_product"], self.config["version"], self.config["build_number"]
         )
 
@@ -159,12 +181,22 @@ class ChecksumsGenerator(BaseScript, VirtualenvMixin, SigningMixin, VCSMixin):
 
         def find_checksums_files():
             self.info("Getting key names from bucket")
+            checksum_files = {"beets": [], "checksums": []}
             for key in bucket.list(prefix=self.file_prefix):
                 if key.key.endswith(".checksums"):
                     self.debug("Found checksums file: {}".format(key.key))
-                    yield key.key
+                    checksum_files["checksums"].append(key.key)
+                elif key.key.endswith(".beet"):
+                    self.debug("Found beet file: {}".format(key.key))
+                    checksum_files["beets"].append(key.key)
                 else:
                     self.debug("Ignoring non-checksums file: {}".format(key.key))
+            if checksum_files["beets"]:
+                self.log("Using beet format")
+                return checksum_files["beets"]
+            else:
+                self.log("Using checksums format")
+                return checksum_files["checksums"]
 
         pool = ThreadPool(self.config["parallelization"])
         pool.map(worker, find_checksums_files())
@@ -211,7 +243,14 @@ class ChecksumsGenerator(BaseScript, VirtualenvMixin, SigningMixin, VCSMixin):
                 self.fatal("Failed to sign {}".format(sums))
 
     def upload(self):
-        files = []
+        # we need to provide the public side of the gpg key so that people can
+        # verify the detached signatures
+        dirs = self.query_abs_dirs()
+        tools_dir = path.join(dirs["abs_work_dir"], "tools")
+        self.copyfile(os.path.join(tools_dir, 'scripts', 'release', 'KEY'),
+                      'KEY')
+        files = ['KEY']
+
         for fmt in self.config["formats"]:
             files.append(self._get_sums_filename(fmt))
             files.append("{}.asc".format(self._get_sums_filename(fmt)))

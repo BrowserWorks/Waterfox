@@ -6,21 +6,23 @@
  */
 
 #include "effects/GrConstColorProcessor.h"
+#include "GrInvariantOutput.h"
 #include "glsl/GrGLSLFragmentProcessor.h"
 #include "glsl/GrGLSLFragmentShaderBuilder.h"
-#include "glsl/GrGLSLProgramBuilder.h"
 #include "glsl/GrGLSLProgramDataManager.h"
+#include "glsl/GrGLSLUniformHandler.h"
 
 class GLConstColorProcessor : public GrGLSLFragmentProcessor {
 public:
     GLConstColorProcessor() : fPrevColor(GrColor_ILLEGAL) {}
 
     void emitCode(EmitArgs& args) override {
-        GrGLSLFragmentBuilder* fragBuilder = args.fFragBuilder;
+        GrGLSLFPFragmentBuilder* fragBuilder = args.fFragBuilder;
         const char* colorUni;
-        fColorUniform = args.fBuilder->addUniform(GrGLSLProgramBuilder::kFragment_Visibility,
-                                            kVec4f_GrSLType, kMedium_GrSLPrecision, "constantColor",
-                                            &colorUni);
+        fColorUniform = args.fUniformHandler->addUniform(kFragment_GrShaderFlag,
+                                                         kVec4f_GrSLType, kMedium_GrSLPrecision,
+                                                         "constantColor",
+                                                         &colorUni);
         GrConstColorProcessor::InputMode mode = args.fFp.cast<GrConstColorProcessor>().inputMode();
         if (!args.fInputColor) {
             mode = GrConstColorProcessor::kIgnore_InputMode;
@@ -61,7 +63,7 @@ protected:
 
 private:
     GrGLSLProgramDataManager::UniformHandle fColorUniform;
-    GrColor                               fPrevColor;
+    GrColor                                 fPrevColor;
 
     typedef GrGLSLFragmentProcessor INHERITED;
 };

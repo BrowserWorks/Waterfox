@@ -16,6 +16,7 @@
 #include "SkTime.h"
 
 class SkCanvas;
+class SkPixelSerializer;
 class SkWStream;
 
 /** SK_ScalarDefaultDPI is 72 DPI.
@@ -56,6 +57,24 @@ public:
      */
     static SkDocument* CreatePDF(SkWStream*,
                                  SkScalar dpi = SK_ScalarDefaultRasterDPI);
+
+    /**
+     *  @param jpegEncoder For PDF documents, if a jpegEncoder is set,
+     *         use it to encode SkImages and SkBitmaps as [JFIF]JPEGs.
+     *         This feature is deprecated and is only supplied for
+     *         backwards compatability.
+     *
+     *         The prefered method to create PDFs with JPEG images is
+     *         to use SkImage::NewFromEncoded() and not jpegEncoder.
+     *         Chromium uses NewFromEncoded.
+     *
+     *         If the encoder is unset, or if jpegEncoder->onEncode()
+     *         returns NULL, fall back on encoding images losslessly
+     *         with Deflate.
+     */
+    static SkDocument* CreatePDF(SkWStream*,
+                                 SkScalar dpi,
+                                 SkPixelSerializer* jpegEncoder);
 
     /**
      *  Create a PDF-backed document, writing the results into a file.
@@ -112,7 +131,7 @@ public:
      *  nullptr.  For example:
      *
      *  SkDocument* make_doc(SkWStream* output) {
-     *      SkTArray<SkDocument::Attribute> info;
+     *      std::vector<SkDocument::Attribute> info;
      *      info.emplace_back(SkString("Title"), SkString("..."));
      *      info.emplace_back(SkString("Author"), SkString("..."));
      *      info.emplace_back(SkString("Subject"), SkString("..."));
@@ -121,7 +140,7 @@ public:
      *      SkTime::DateTime now;
      *      SkTime::GetDateTime(&now);
      *      SkDocument* doc = SkDocument::CreatePDF(output);
-     *      doc->setMetadata(info, &now, &now);
+     *      doc->setMetadata(&info[0], (int)info.size(), &now, &now);
      *      return doc;
      *  }
      */
@@ -129,7 +148,8 @@ public:
         SkString fKey, fValue;
         Attribute(const SkString& k, const SkString& v) : fKey(k), fValue(v) {}
     };
-    virtual void setMetadata(const SkTArray<SkDocument::Attribute>&,
+    virtual void setMetadata(const SkDocument::Attribute[],
+                             int /* attributeCount */,
                              const SkTime::DateTime* /* creationDate */,
                              const SkTime::DateTime* /* modifiedDate */) {}
 

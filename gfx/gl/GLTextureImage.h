@@ -198,10 +198,14 @@ public:
     virtual bool InUpdate() const = 0;
     GLenum GetWrapMode() const { return mWrapMode; }
 
-    void SetFilter(gfx::Filter aFilter) { mFilter = aFilter; }
+    void SetSamplingFilter(gfx::SamplingFilter aSamplingFilter) {
+      mSamplingFilter = aSamplingFilter;
+    }
 
 protected:
     friend class GLContext;
+
+    void UpdateUploadSize(size_t amount);
 
     /**
      * After the ctor, the TextureImage is invalid.  Implementations
@@ -214,7 +218,9 @@ protected:
                  Flags aFlags = NoFlags);
 
     // Protected destructor, to discourage deletion outside of Release():
-    virtual ~TextureImage() {}
+    virtual ~TextureImage() {
+        UpdateUploadSize(0);
+    }
 
     virtual gfx::IntRect GetSrcTileRect();
 
@@ -222,8 +228,9 @@ protected:
     GLenum mWrapMode;
     ContentType mContentType;
     gfx::SurfaceFormat mTextureFormat;
-    gfx::Filter mFilter;
+    gfx::SamplingFilter mSamplingFilter;
     Flags mFlags;
+    size_t mUploadSize;
 };
 
 /**

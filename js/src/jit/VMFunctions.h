@@ -613,7 +613,6 @@ bool StringsEqual(JSContext* cx, HandleString left, HandleString right, bool* re
 bool ArrayPopDense(JSContext* cx, HandleObject obj, MutableHandleValue rval);
 bool ArrayPushDense(JSContext* cx, HandleObject obj, HandleValue v, uint32_t* length);
 bool ArrayShiftDense(JSContext* cx, HandleObject obj, MutableHandleValue rval);
-JSObject* ArrayConcatDense(JSContext* cx, HandleObject obj1, HandleObject obj2, HandleObject res);
 JSString* ArrayJoin(JSContext* cx, HandleObject array, HandleString sep);
 
 bool CharCodeAt(JSContext* cx, HandleString str, int32_t index, uint32_t* code);
@@ -640,6 +639,7 @@ bool CreateThis(JSContext* cx, HandleObject callee, HandleObject newTarget, Muta
 void GetDynamicName(JSContext* cx, JSObject* scopeChain, JSString* str, Value* vp);
 
 void PostWriteBarrier(JSRuntime* rt, JSObject* obj);
+void PostWriteElementBarrier(JSRuntime* rt, JSObject* obj, int32_t index);
 void PostGlobalWriteBarrier(JSRuntime* rt, JSObject* obj);
 
 uint32_t GetIndexFromString(JSString* str);
@@ -693,8 +693,6 @@ bool ArraySpliceDense(JSContext* cx, HandleObject obj, uint32_t start, uint32_t 
 
 bool Recompile(JSContext* cx);
 bool ForcedRecompile(JSContext* cx);
-JSString* RegExpReplace(JSContext* cx, HandleString string, HandleObject regexp,
-                        HandleString repl);
 JSString* StringReplace(JSContext* cx, HandleString string, HandleString pattern,
                         HandleString repl);
 
@@ -718,21 +716,22 @@ inline void*
 IonMarkFunction(MIRType type)
 {
     switch (type) {
-      case MIRType_Value:
+      case MIRType::Value:
         return JS_FUNC_TO_DATA_PTR(void*, MarkValueFromIon);
-      case MIRType_String:
+      case MIRType::String:
         return JS_FUNC_TO_DATA_PTR(void*, MarkStringFromIon);
-      case MIRType_Object:
+      case MIRType::Object:
         return JS_FUNC_TO_DATA_PTR(void*, MarkObjectFromIon);
-      case MIRType_Shape:
+      case MIRType::Shape:
         return JS_FUNC_TO_DATA_PTR(void*, MarkShapeFromIon);
-      case MIRType_ObjectGroup:
+      case MIRType::ObjectGroup:
         return JS_FUNC_TO_DATA_PTR(void*, MarkObjectGroupFromIon);
       default: MOZ_CRASH();
     }
 }
 
 bool ObjectIsCallable(JSObject* obj);
+bool ObjectIsConstructor(JSObject* obj);
 
 bool ThrowRuntimeLexicalError(JSContext* cx, unsigned errorNumber);
 bool BaselineThrowUninitializedThis(JSContext* cx, BaselineFrame* frame);

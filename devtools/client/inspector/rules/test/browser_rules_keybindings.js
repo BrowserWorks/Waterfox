@@ -7,7 +7,7 @@
 // Test that focus doesn't leave the style editor when adding a property
 // (bug 719916)
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8,<h1>Some header text</h1>");
   let {inspector, view} = yield openRuleView();
   yield selectNode("h1", inspector);
@@ -15,17 +15,13 @@ add_task(function*() {
   info("Getting the ruleclose brace element");
   let brace = view.styleDocument.querySelector(".ruleview-ruleclose");
 
-  info("Clicking on the brace element to focus the new property field");
-  let onFocus = once(brace.parentNode, "focus", true);
-  brace.click();
-  yield onFocus;
-
-  info("Entering a property name");
-  let editor = getCurrentInplaceEditor(view);
+  info("Focus the new property editable field to create a color property");
+  let ruleEditor = getRuleViewRuleEditor(view, 0);
+  let editor = yield focusNewRuleViewProperty(ruleEditor);
   editor.input.value = "color";
 
   info("Typing ENTER to focus the next field: property value");
-  onFocus = once(brace.parentNode, "focus", true);
+  let onFocus = once(brace.parentNode, "focus", true);
   // The rule view changes twice, once for the first field to loose focus
   // and a second time for the second field to gain focus
   let onRuleViewChanged = view.once("ruleview-changed").then(

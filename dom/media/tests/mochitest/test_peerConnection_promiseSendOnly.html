@@ -19,20 +19,11 @@
   pc1.onicecandidate = e => add(pc2, e.candidate, generateErrorCallback());
   pc2.onicecandidate = e => add(pc1, e.candidate, generateErrorCallback());
 
-  function mustThrowWith(msg, reason, f) {
-    try {
-      f();
-      ok(false, msg + " must throw");
-    } catch (e) {
-      is(e.name, reason, msg + " must throw: " + e.message);
-    }
-  };
-
   var v1, v2;
   var delivered = new Promise(resolve => pc2.ontrack = e => {
     // Test RTCTrackEvent here.
     ok(e.streams.length > 0, "has streams");
-    ok(e.streams[0].getTracks().some(track => track == e.track), "has track");
+    ok(e.streams[0].getTrackById(e.track.id), "has track");
     ok(pc2.getReceivers().some(receiver => receiver == e.receiver), "has receiver");
     if (e.streams[0].getTracks().length == 2) {
       // Test RTCTrackEvent required args here.

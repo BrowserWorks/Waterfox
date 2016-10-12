@@ -31,7 +31,7 @@ namespace WebCore {
   class PeriodicWave;
 } // namespace WebCore
 
-class nsPIDOMWindow;
+class nsPIDOMWindowInner;
 
 namespace mozilla {
 
@@ -68,6 +68,7 @@ class ScriptProcessorNode;
 class StereoPannerNode;
 class WaveShaperNode;
 class PeriodicWave;
+struct PeriodicWaveConstraints;
 class Promise;
 enum class OscillatorType : uint32_t;
 
@@ -91,7 +92,7 @@ private:
 
 /* This runnable allows the MSG to notify the main thread when audio is actually
  * flowing */
-class StateChangeTask final : public nsRunnable
+class StateChangeTask final : public Runnable
 {
 public:
   /* This constructor should be used when this event is sent from the main
@@ -116,7 +117,7 @@ enum class AudioContextOperation { Suspend, Resume, Close };
 class AudioContext final : public DOMEventTargetHelper,
                            public nsIMemoryReporter
 {
-  AudioContext(nsPIDOMWindow* aParentWindow,
+  AudioContext(nsPIDOMWindowInner* aParentWindow,
                bool aIsOffline,
                AudioChannel aChannel,
                uint32_t aNumberOfChannels = 0,
@@ -134,7 +135,7 @@ public:
                                            DOMEventTargetHelper)
   MOZ_DEFINE_MALLOC_SIZE_OF(MallocSizeOf)
 
-  nsPIDOMWindow* GetParentObject() const
+  nsPIDOMWindowInner* GetParentObject() const
   {
     return GetOwner();
   }
@@ -200,8 +201,7 @@ public:
   already_AddRefed<AudioBufferSourceNode> CreateBufferSource(ErrorResult& aRv);
 
   already_AddRefed<AudioBuffer>
-  CreateBuffer(JSContext* aJSContext, uint32_t aNumberOfChannels,
-               uint32_t aLength, float aSampleRate,
+  CreateBuffer(uint32_t aNumberOfChannels, uint32_t aLength, float aSampleRate,
                ErrorResult& aRv);
 
   already_AddRefed<MediaStreamAudioDestinationNode>
@@ -256,6 +256,7 @@ public:
 
   already_AddRefed<PeriodicWave>
   CreatePeriodicWave(const Float32Array& aRealData, const Float32Array& aImagData,
+                     const PeriodicWaveConstraints& aConstraints,
                      ErrorResult& aRv);
 
   already_AddRefed<Promise>
@@ -267,6 +268,7 @@ public:
   // OfflineAudioContext methods
   already_AddRefed<Promise> StartRendering(ErrorResult& aRv);
   IMPL_EVENT_HANDLER(complete)
+  unsigned long Length();
 
   bool IsOffline() const { return mIsOffline; }
 
@@ -312,6 +314,7 @@ public:
   IMPL_EVENT_HANDLER(mozinterruptend)
 
 private:
+  void DisconnectFromWindow();
   void RemoveFromDecodeQueue(WebAudioDecodeJob* aDecodeJob);
   void ShutdownDecoder();
 

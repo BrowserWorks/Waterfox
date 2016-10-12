@@ -51,10 +51,7 @@ public:
   virtual Accessible* CurrentItem() override;
   virtual void SetCurrentItem(Accessible* aItem) override;
 
-protected:
-
-  // Accessible
-  virtual void CacheChildren() override;
+  virtual bool IsAcceptableChild(nsIContent* aEl) const override;
 };
 
 /*
@@ -102,7 +99,7 @@ private:
 
     if (parent && parent->IsListControl()) {
       Accessible* combobox = parent->Parent();
-      return combobox && combobox->IsCombobox() ? combobox : mParent.get();
+      return combobox && combobox->IsCombobox() ? combobox : mParent;
     }
 
     return nullptr;
@@ -171,7 +168,6 @@ public:
   virtual void Value(nsString& aValue) override;
   virtual a11y::role NativeRole() override;
   virtual uint64_t NativeState() override;
-  virtual void InvalidateChildren() override;
   virtual bool RemoveChild(Accessible* aChild) override;
 
   // ActionAccessible
@@ -187,9 +183,6 @@ public:
   virtual void SetCurrentItem(Accessible* aItem) override;
 
 protected:
-  // Accessible
-  virtual void CacheChildren() override;
-
   /**
    * Return selected option.
    */

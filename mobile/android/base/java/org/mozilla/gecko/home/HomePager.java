@@ -49,6 +49,7 @@ public class HomePager extends ViewPager {
     private final ConfigLoaderCallbacks mConfigLoaderCallbacks;
 
     private String mInitialPanelId;
+    private Bundle mRestoreData;
 
     // Cached original ViewPager background.
     private final Drawable mOriginalBackground;
@@ -63,11 +64,12 @@ public class HomePager extends ViewPager {
     // Listens for when the current panel changes.
     private OnPanelChangeListener mPanelChangedListener;
 
+    private HomeFragment.PanelStateChangeListener mPanelStateChangeListener;
+
     // This is mostly used by UI tests to easily fetch
     // specific list views at runtime.
     public static final String LIST_TAG_HISTORY = "history";
     public static final String LIST_TAG_BOOKMARKS = "bookmarks";
-    public static final String LIST_TAG_READING_LIST = "reading_list";
     public static final String LIST_TAG_TOP_SITES = "top_sites";
     public static final String LIST_TAG_RECENT_TABS = "recent_tabs";
     public static final String LIST_TAG_BROWSER_SEARCH = "browser_search";
@@ -76,7 +78,12 @@ public class HomePager extends ViewPager {
     public interface OnUrlOpenListener {
         public enum Flags {
             ALLOW_SWITCH_TO_TAB,
-            OPEN_WITH_INTENT
+            OPEN_WITH_INTENT,
+            /**
+             * Ensure that the raw URL is opened. If not set, then the reader view version of the page
+             * might be opened if the URL is stored as an offline reader-view bookmark.
+             */
+            NO_READER_VIEW
         }
 
         public void onUrlOpen(String url, EnumSet<Flags> flags);
@@ -198,11 +205,12 @@ public class HomePager extends ViewPager {
      *
      * @param fm FragmentManager for the adapter
      */
-    public void load(LoaderManager lm, FragmentManager fm, String panelId, PropertyAnimator animator) {
+    public void load(LoaderManager lm, FragmentManager fm, String panelId, Bundle restoreData, PropertyAnimator animator) {
         mLoadState = LoadState.LOADING;
 
         mVisible = true;
         mInitialPanelId = panelId;
+        mRestoreData = restoreData;
 
         // Update the home banner message each time the HomePager is loaded.
         if (mHomeBanner != null) {
@@ -214,6 +222,7 @@ public class HomePager extends ViewPager {
 
         final HomeAdapter adapter = new HomeAdapter(mContext, fm);
         adapter.setOnAddPanelListener(mAddPanelListener);
+        adapter.setPanelStateChangeListener(mPanelStateChangeListener);
         adapter.setCanLoadHint(true);
         setAdapter(adapter);
 
@@ -282,6 +291,10 @@ public class HomePager extends ViewPager {
         }
     }
 
+    private void restorePanelData(int item, Bundle data) {
+        ((HomeAdapter) getAdapter()).setRestoreData(item, data);
+    }
+
     /**
      * Shows a home panel. If the given panelId is null,
      * the default panel will be shown. No action will be taken if:
@@ -293,7 +306,7 @@ public class HomePager extends ViewPager {
      *
      * @param panelId of the home panel to be shown.
      */
-    public void showPanel(String panelId) {
+    public void showPanel(String panelId, Bundle restoreData) {
         if (!mVisible) {
             return;
         }
@@ -301,6 +314,7 @@ public class HomePager extends ViewPager {
         switch (mLoadState) {
             case LOADING:
                 mInitialPanelId = panelId;
+                mRestoreData = restoreData;
                 break;
 
             case LOADED:
@@ -311,6 +325,9 @@ public class HomePager extends ViewPager {
 
                 if (position > -1) {
                     setCurrentItem(position);
+                    if (restoreData != null) {
+                        restorePanelData(position, restoreData);
+                    }
                 }
                 break;
 
@@ -421,6 +438,10 @@ public class HomePager extends ViewPager {
             final int itemPosition = (mInitialPanelId == null) ? -1 : adapter.getItemPosition(mInitialPanelId);
             if (itemPosition > -1) {
                 setCurrentItem(itemPosition, false);
+                if (mRestoreData != null) {
+                    restorePanelData(itemPosition, mRestoreData);
+                    mRestoreData = null; // Release data since it's no longer needed
+                }
                 mInitialPanelId = null;
             } else {
                 setCurrentItem(mDefaultPageIndex, false);
@@ -440,6 +461,15 @@ public class HomePager extends ViewPager {
 
     public void setOnPanelChangeListener(OnPanelChangeListener listener) {
        mPanelChangedListener = listener;
+    }
+
+    public void setPanelStateChangeListener(HomeFragment.PanelStateChangeListener listener) {
+        mPanelStateChangeListener = listener;
+
+        HomeAdapter adapter = (HomeAdapter) getAdapter();
+        if (adapter != null) {
+            adapter.setPanelStateChangeListener(listener);
+        }
     }
 
     /**
@@ -529,7 +559,6 @@ public class HomePager extends ViewPager {
             Telemetry.stopUISession(mCurrentPanelSession, mCurrentPanelSessionSuffix);
             mCurrentPanelSession = null;
             mCurrentPanelSessionSuffix = null;
-            Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, Experiments.BOOKMARKS_HISTORY_MENU);
         }
     }
 }

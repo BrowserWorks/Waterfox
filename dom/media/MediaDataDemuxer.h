@@ -70,6 +70,10 @@ public:
   // Returns true if the underlying resource allows seeking.
   virtual bool IsSeekable() const = 0;
 
+  // Returns true if the underlying resource can only seek within buffered
+  // ranges.
+  virtual bool IsSeekableOnlyInBufferedRanges() const { return false; }
+
   // Returns the media's crypto information, or nullptr if media isn't
   // encrypted.
   virtual UniquePtr<EncryptionInfo> GetCrypto()
@@ -196,6 +200,13 @@ public:
   }
 
   virtual media::TimeIntervals GetBuffered() = 0;
+
+  // By default, it is assumed that the entire resource can be evicted once
+  // all samples have been demuxed.
+  virtual int64_t GetEvictionOffset(const media::TimeUnit& aTime)
+  {
+    return INT64_MAX;
+  }
 
   // If the MediaTrackDemuxer and MediaDataDemuxer hold cross references.
   // BreakCycles must be overridden.

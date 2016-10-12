@@ -16,7 +16,6 @@
 #include "nsHTMLParts.h"
 #include "nsLineBox.h"
 #include "nsCSSPseudoElements.h"
-#include "nsStyleSet.h"
 #include "nsFloatManager.h"
 
 enum LineReflowStatus {
@@ -69,14 +68,12 @@ class nsBulletFrame;
  * prepended to the overflow lines.
  */
 
-typedef nsContainerFrame nsBlockFrameSuper;
-
 /*
  * Base class for block and inline frames.
  * The block frame has an additional child list, kAbsoluteList, which
  * contains the absolutely positioned frames.
- */ 
-class nsBlockFrame : public nsBlockFrameSuper
+ */
+class nsBlockFrame : public nsContainerFrame
 {
 public:
   NS_DECL_QUERYFRAME_TARGET(nsBlockFrame)
@@ -173,8 +170,9 @@ public:
   // to be before any line which does contain 'y'.
   nsLineBox* GetFirstLineContaining(nscoord y);
   // Set the line cursor to our first line. Only call this if you
-  // guarantee that the lines' combinedArea.ys and combinedArea.yMosts
-  // are non-decreasing.
+  // guarantee that either the lines' combinedArea.ys and combinedArea.
+  // yMosts are non-decreasing, or the line cursor is cleared before
+  // building the display list of this frame.
   void SetupLineCursor();
 
   virtual void ChildIsDirty(nsIFrame* aChild) override;
@@ -363,19 +361,13 @@ protected:
   virtual ~nsBlockFrame();
 
 #ifdef DEBUG
-  already_AddRefed<nsStyleContext> GetFirstLetterStyle(nsPresContext* aPresContext)
-  {
-    return aPresContext->StyleSet()->
-      ProbePseudoElementStyle(mContent->AsElement(),
-                              nsCSSPseudoElements::ePseudo_firstLetter,
-                              mStyleContext);
-  }
+  already_AddRefed<nsStyleContext> GetFirstLetterStyle(nsPresContext* aPresContext);
 #endif
 
-  NS_DECLARE_FRAME_PROPERTY(LineCursorProperty, nullptr)
+  NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(LineCursorProperty, nsLineBox)
   nsLineBox* GetLineCursor() {
     return (GetStateBits() & NS_BLOCK_HAS_LINE_CURSOR) ?
-      static_cast<nsLineBox*>(Properties().Get(LineCursorProperty())) : nullptr;
+      Properties().Get(LineCursorProperty()) : nullptr;
   }
 
   nsLineBox* NewLineBox(nsIFrame* aFrame, bool aIsBlock) {
@@ -454,6 +446,15 @@ protected:
    */
   bool IsVisualFormControl(nsPresContext* aPresContext);
 
+  /**
+   * Helper function to create bullet frame.
+   * @param aCreateBulletList true to create bullet list; otherwise number list.
+   * @param aListStylePositionInside true to put the list position inside;
+   * otherwise outside.
+   */
+  void CreateBulletFrameForListItem(bool aCreateBulletList,
+                                    bool aListStylePositionInside);
+
 public:
   /**
    * Does all the real work for removing aDeletedFrame
@@ -474,7 +475,9 @@ public:
   void ReparentFloats(nsIFrame* aFirstFrame, nsBlockFrame* aOldParent,
                       bool aReparentSiblings);
 
-  virtual bool UpdateOverflow() override;
+  virtual bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) override;
+
+  virtual void UnionChildOverflow(nsOverflowAreas& aOverflowAreas) override;
 
   /** Load all of aFrame's floats into the float manager iff aFrame is not a
    *  block formatting context. Handles all necessary float manager translations;

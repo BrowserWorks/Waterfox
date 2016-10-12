@@ -50,10 +50,16 @@ interface HTMLSelectElement : HTMLElement {
   readonly attribute ValidityState validity;
   readonly attribute DOMString validationMessage;
   boolean checkValidity();
+  boolean reportValidity();
   void setCustomValidity(DOMString error);
 
 // NYI:  readonly attribute NodeList labels;
 
   // https://www.w3.org/Bugs/Public/show_bug.cgi?id=20720
   void remove();
+};
+
+partial interface HTMLSelectElement {
+  [ChromeOnly]
+  attribute boolean openInParentProcess;
 };

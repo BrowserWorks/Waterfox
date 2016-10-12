@@ -85,6 +85,7 @@ struct SkQuadConstruct {    // The state of the quad stroke under construction.
     SkScalar fEndT;         //              "
     bool fStartSet;         // state to share common points across structs
     bool fEndSet;           //                     "
+    bool fOppositeTangents; // set if coincident tangents have opposite directions
 
     // return false if start and end are too close to have a unique middle
     bool init(SkScalar start, SkScalar end) {
@@ -126,7 +127,7 @@ public:
     SkPoint moveToPt() const { return fFirstPt; }
 
     void moveTo(const SkPoint&);
-    void lineTo(const SkPoint&);
+    void lineTo(const SkPoint&, const SkPath::Iter* iter = nullptr);
     void quadTo(const SkPoint&, const SkPoint&);
     void conicTo(const SkPoint&, const SkPoint&, SkScalar weight);
     void cubicTo(const SkPoint&, const SkPoint&, const SkPoint&);
@@ -139,6 +140,10 @@ public:
     }
 
     SkScalar getResScale() const { return fResScale; }
+
+    bool isZeroLength() const {
+        return fInner.isZeroLength() && fOuter.isZeroLength();
+    }
 
 private:
     SkScalar    fRadius;
@@ -187,6 +192,7 @@ private:
 
     int fRecursionDepth;            // track stack depth to abort if numerics run amok
     bool fFoundTangents;            // do less work until tangents meet (cubic)
+    bool fJoinCompleted;            // previous join was not degenerate
 
     void addDegenerateLine(const SkQuadConstruct* );
     static ReductionType CheckConicLinear(const SkConic& , SkPoint* reduction);
@@ -273,6 +279,7 @@ bool SkPathStroker::preJoinTo(const SkPoint& currPt, SkVector* normal,
 
 void SkPathStroker::postJoinTo(const SkPoint& currPt, const SkVector& normal,
                                const SkVector& unitNormal) {
+    fJoinCompleted = true;
     fPrevPt = currPt;
     fPrevUnitNormal = unitNormal;
     fPrevNormal = normal;
@@ -359,6 +366,7 @@ void SkPathStroker::moveTo(const SkPoint& pt) {
     }
     fSegmentCount = 0;
     fFirstPt = fPrevPt = pt;
+    fJoinCompleted = false;
 }
 
 void SkPathStroker::line_to(const SkPoint& currPt, const SkVector& normal) {
@@ -366,9 +374,44 @@ void SkPathStroker::line_to(const SkPoint& currPt, const SkVector& normal) {
     fInner.lineTo(currPt.fX - normal.fX, currPt.fY - normal.fY);
 }
 
-void SkPathStroker::lineTo(const SkPoint& currPt) {
-    if (SkStrokerPriv::CapFactory(SkPaint::kButt_Cap) == fCapper
-            && fPrevPt.equalsWithinTolerance(currPt, SK_ScalarNearlyZero * fInvResScale)) {
+static bool has_valid_tangent(const SkPath::Iter* iter) {
+    SkPath::Iter copy = *iter;
+    SkPath::Verb verb;
+    SkPoint pts[4];
+    while ((verb = copy.next(pts))) {
+        switch (verb) {
+            case SkPath::kMove_Verb:
+                return false;
+            case SkPath::kLine_Verb:
+                if (pts[0] == pts[1]) {
+                    continue;
+                }
+                return true;
+            case SkPath::kQuad_Verb:
+            case SkPath::kConic_Verb:
+                if (pts[0] == pts[1] && pts[0] == pts[2]) {
+                    continue;
+                }
+                return true;
+            case SkPath::kCubic_Verb:
+                if (pts[0] == pts[1] && pts[0] == pts[2] && pts[0] == pts[3]) {
+                    continue;
+                }
+                return true;
+            case SkPath::kClose_Verb:
+            case SkPath::kDone_Verb:
+                return false;
+        }
+    }
+    return false;
+}
+
+void SkPathStroker::lineTo(const SkPoint& currPt, const SkPath::Iter* iter) {
+    bool teenyLine = fPrevPt.equalsWithinTolerance(currPt, SK_ScalarNearlyZero * fInvResScale);
+    if (SkStrokerPriv::CapFactory(SkPaint::kButt_Cap) == fCapper && teenyLine) {
+        return;
+    }
+    if (teenyLine && (fJoinCompleted || (iter && has_valid_tangent(iter)))) {
         return;
     }
     SkVector    normal, unitNormal;
@@ -585,7 +628,7 @@ SkPathStroker::ReductionType SkPathStroker::CheckConicLinear(const SkConic& coni
     SkScalar xT = 0, yT = 0;
     (void) conic.findXExtrema(&xT);
     (void) conic.findYExtrema(&yT);
-    SkScalar t = SkTMax(xT, yT); 
+    SkScalar t = SkTMax(xT, yT);
     if (0 == t) {
         return kLine_ReductionType;
     }
@@ -819,8 +862,10 @@ SkPathStroker::ResultType SkPathStroker::intersectRay(SkQuadConstruct* quadPts,
      */
     SkScalar denom = aLen.cross(bLen);
     if (denom == 0 || !SkScalarIsFinite(denom)) {
+        quadPts->fOppositeTangents = aLen.dot(bLen) < 0;
         return STROKER_RESULT(kDegenerate_ResultType, depth, quadPts, "denom == 0");
     }
+    quadPts->fOppositeTangents = false;
     SkVector ab0 = start - end;
     SkScalar numerA = bLen.cross(ab0);
     SkScalar numerB = aLen.cross(ab0);
@@ -851,6 +896,7 @@ SkPathStroker::ResultType SkPathStroker::intersectRay(SkQuadConstruct* quadPts,
         return STROKER_RESULT(kQuad_ResultType, depth, quadPts,
                 "(numerA=%g >= 0) != (numerB=%g >= 0)", numerA, numerB);
     }
+    quadPts->fOppositeTangents = aLen.dot(bLen) < 0;
     // if the lines are parallel, straight line is good enough
     return STROKER_RESULT(kDegenerate_ResultType, depth, quadPts,
             "SkScalarNearlyZero(denom=%g)", denom);
@@ -1074,8 +1120,10 @@ bool SkPathStroker::cubicStroke(const SkPoint cubic[4], SkQuadConstruct* quadPts
             return true;
         }
         if (kDegenerate_ResultType == resultType) {
-            addDegenerateLine(quadPts);
-            return true;
+            if (!quadPts->fOppositeTangents) {
+              addDegenerateLine(quadPts);
+              return true;
+            }
         }
         if (kNormalError_ResultType == resultType) {
             return false;
@@ -1339,7 +1387,7 @@ void SkStroke::strokePath(const SkPath& src, SkPath* dst) const {
                 stroker.moveTo(pts[0]);
                 break;
             case SkPath::kLine_Verb:
-                stroker.lineTo(pts[1]);
+                stroker.lineTo(pts[1], &iter);
                 lastSegment = SkPath::kLine_Verb;
                 break;
             case SkPath::kQuad_Verb:
@@ -1356,13 +1404,22 @@ void SkStroke::strokePath(const SkPath& src, SkPath* dst) const {
                 lastSegment = SkPath::kCubic_Verb;
                 break;
             case SkPath::kClose_Verb:
-                if (stroker.hasOnlyMoveTo() && SkPaint::kButt_Cap != this->getCap()) {
+                if (SkPaint::kButt_Cap != this->getCap()) {
                     /* If the stroke consists of a moveTo followed by a close, treat it
                        as if it were followed by a zero-length line. Lines without length
                        can have square and round end caps. */
-                    stroker.lineTo(stroker.moveToPt());
-                    lastSegment = SkPath::kLine_Verb;
-                    break;
+                    if (stroker.hasOnlyMoveTo()) {
+                        stroker.lineTo(stroker.moveToPt());
+                        goto ZERO_LENGTH;
+                    }
+                    /* If the stroke consists of a moveTo followed by one or more zero-length
+                       verbs, then followed by a close, treat is as if it were followed by a
+                       zero-length line. Lines without length can have square & round end caps. */
+                    if (stroker.isZeroLength()) {
+                ZERO_LENGTH:
+                        lastSegment = SkPath::kLine_Verb;
+                        break;
+                    }
                 }
                 stroker.close(lastSegment == SkPath::kLine_Verb);
                 break;

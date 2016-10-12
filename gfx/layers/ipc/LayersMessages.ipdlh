@@ -7,7 +7,7 @@
 
 include LayersSurfaces;
 include protocol PCompositable;
-include protocol PCompositor;
+include protocol PCompositorBridge;
 include protocol PLayer;
 include protocol PImageContainer;
 include protocol PRenderFrame;
@@ -17,7 +17,7 @@ include "gfxipc/ShadowLayerUtils.h";
 include "mozilla/GfxMessageUtils.h";
 include "ImageLayers.h";
 
-using mozilla::gfx::Filter from "mozilla/gfx/2D.h";
+using mozilla::gfx::SamplingFilter from "mozilla/gfx/2D.h";
 using struct mozilla::gfx::Color from "mozilla/gfx/2D.h";
 using struct mozilla::gfx::Point3D from "mozilla/gfx/Point.h";
 using mozilla::gfx::IntPoint from "mozilla/gfx/Point.h";
@@ -41,10 +41,11 @@ using mozilla::layers::ScaleMode from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegions from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegionsOverride from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::DiagnosticTypes from "mozilla/layers/CompositorTypes.h";
-using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
+using struct mozilla::layers::ScrollMetadata from "FrameMetrics.h";
 using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::layers::FenceHandle from "mozilla/layers/FenceUtils.h";
 using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
+using mozilla::layers::MaybeLayerClip from "FrameMetrics.h";
 
 namespace mozilla {
 namespace layers {
@@ -93,6 +94,7 @@ struct StepFunction {
 };
 
 union TimingFunction {
+  null_t;
   CubicBezierFunction;
   StepFunction;
 };
@@ -194,11 +196,14 @@ struct Animation {
   // Values <= 0 mean the animation will not play (although events are still
   // dispatched on the main thread).
   float iterations;
+  float iterationStart;
   // This uses the NS_STYLE_ANIMATION_DIRECTION_* constants.
   int32_t direction;
   nsCSSProperty property;
   AnimationData data;
   float playbackRate;
+  // This is used in the transformed progress calculation.
+  TimingFunction easingFunction;
 };
 
 // Change a layer's attributes
@@ -214,11 +219,11 @@ struct CommonLayerAttributes {
   float opacity;
   bool useClipRect;
   ParentLayerIntRect clipRect;
+  MaybeLayerClip scrolledClip;
   bool isFixedPosition;
   uint64_t fixedPositionScrollContainerId;
   LayerPoint fixedPositionAnchor;
   int32_t fixedPositionSides;
-  bool isClipFixed;
   bool isStickyPosition;
   uint64_t stickyScrollContainerId;
   LayerRect stickyScrollRangeOuter;
@@ -226,6 +231,7 @@ struct CommonLayerAttributes {
   uint64_t scrollbarTargetContainerId;
   uint32_t scrollbarDirection;
   float scrollbarThumbRatio;
+  bool isScrollbarContainer;
   int8_t mixBlendMode;
   bool forceIsolatedGroup;
   nullable PLayer maskLayer;
@@ -233,7 +239,7 @@ struct CommonLayerAttributes {
   // Animated colors will only honored for ColorLayers.
   Animation[] animations;
   nsIntRegion invalidRegion;
-  FrameMetrics[] metrics;
+  ScrollMetadata[] scrollMetadata;
   nsCString displayListLog;
 };
 
@@ -249,16 +255,17 @@ struct ContainerLayerAttributes {
   bool scaleToResolution;
   EventRegionsOverride eventRegionsOverride;
   uint32_t hmdDeviceID;
+  int32_t inputFrameID;
 };
 struct ColorLayerAttributes     { LayerColor color; IntRect bounds; };
-struct CanvasLayerAttributes    { Filter filter; IntRect bounds; };
+struct CanvasLayerAttributes    { SamplingFilter samplingFilter; IntRect bounds; };
 struct RefLayerAttributes {
   int64_t id;
   // TODO: Once bug 1132895 is fixed we shouldn't need to propagate the override
   // explicitly here.
   EventRegionsOverride eventRegionsOverride;
 };
-struct ImageLayerAttributes     { Filter filter; IntSize scaleToSize; ScaleMode scaleMode; };
+struct ImageLayerAttributes     { SamplingFilter samplingFilter; IntSize scaleToSize; ScaleMode scaleMode; };
 
 union SpecificLayerAttributes {
   null_t;
@@ -305,9 +312,10 @@ struct ShmemSection {
   size_t size;
 };
 
-union TileLock {
+union ReadLockDescriptor {
   ShmemSection;
   uintptr_t;
+  null_t;
 };
 
 union MaybeTexture {
@@ -319,7 +327,9 @@ struct TexturedTileDescriptor {
   PTexture texture;
   MaybeTexture textureOnWhite;
   IntRect updateRect;
-  TileLock sharedLock;
+  ReadLockDescriptor sharedLock;
+  ReadLockDescriptor sharedLockOnWhite;
+  bool wasPlaceholder;
 };
 
 struct PlaceholderTileDescriptor {
@@ -342,21 +352,19 @@ struct SurfaceDescriptorTiles {
   float       resolution;
   float       frameXResolution;
   float       frameYResolution;
+  bool        isProgressive;
 };
 
 struct OpUseTiledLayerBuffer {
-  PCompositable compositable;
   SurfaceDescriptorTiles tileLayerDescriptor;
 };
 
 struct OpUseOverlaySource {
-  PCompositable compositable;
   OverlaySource overlay;
   IntRect picture;
 };
 
 struct OpPaintTextureRegion {
-  PCompositable compositable;
   ThebesBufferData bufferData;
   nsIntRegion updatedRegion;
 };
@@ -365,7 +373,6 @@ struct OpPaintTextureRegion {
  * Tells the CompositableHost to remove the corresponding TextureHost
  */
 struct OpRemoveTexture {
-  PCompositable compositable;
   PTexture texture;
 };
 
@@ -388,11 +395,13 @@ union MaybeFence {
 
 struct TimedTexture {
   PTexture texture;
+  ReadLockDescriptor sharedLock;
   MaybeFence fence;
   TimeStamp timeStamp;
   IntRect picture;
   uint32_t frameID;
   uint32_t producerID;
+  int32_t inputFrameID;
 };
 
 /**
@@ -406,14 +415,14 @@ struct TimedTexture {
  * The list must not be empty.
  */
 struct OpUseTexture {
-  PCompositable compositable;
   TimedTexture[] textures;
 };
 
 struct OpUseComponentAlphaTextures {
-  PCompositable compositable;
   PTexture textureOnBlack;
   PTexture textureOnWhite;
+  ReadLockDescriptor sharedLockBlack;
+  ReadLockDescriptor sharedLockWhite;
 };
 
 union MaybeRegion {
@@ -432,7 +441,7 @@ struct OpDeliverFenceToTracker {
   FenceHandle fence;
 };
 
-union CompositableOperation {
+union CompositableOperationDetail {
   OpPaintTextureRegion;
 
   OpUseTiledLayerBuffer;
@@ -445,7 +454,14 @@ union CompositableOperation {
   OpUseOverlaySource;
 };
 
+struct CompositableOperation {
+  PCompositable compositable;
+  CompositableOperationDetail detail;
+};
+
 // A unit of a changeset; a set of these comprise a changeset
+// If adding a new edit type that requires the hit testing tree to be updated,
+// set the updateHitTestingTree flag to true in RecvUpdate()
 union Edit {
   OpCreatePaintedLayer;
   OpCreateContainerLayer;
@@ -510,7 +526,7 @@ union AsyncParentMessageData {
 };
 
 union AsyncChildMessageData {
-  OpRemoveTextureAsync;
+  CompositableOperation;
 };
 
 } // namespace

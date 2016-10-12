@@ -125,7 +125,7 @@ Site.prototype = {
   _newTabString: function(str, substrArr) {
     let regExp = /%[0-9]\$S/g;
     let matches;
-    while (matches = regExp.exec(str)) {
+    while ((matches = regExp.exec(str))) {
       let match = matches[0];
       let index = match.charAt(1); // Get the digit in the regExp.
       str = str.replace(match, substrArr[index - 1]);
@@ -295,7 +295,11 @@ Site.prototype = {
   _speculativeConnect: function Site_speculativeConnect() {
     let sc = Services.io.QueryInterface(Ci.nsISpeculativeConnect);
     let uri = Services.io.newURI(this.url, null, null);
-    sc.speculativeConnect(uri, null);
+    try {
+      // This can throw for certain internal URLs, when they wind up in
+      // about:newtab. Be sure not to propagate the error.
+      sc.speculativeConnect(uri, null);
+    } catch (e) {}
   },
 
   /**

@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Check that faulty JS inside HTML can be separated and identified correctly.
@@ -11,15 +13,15 @@ function test() {
   let source = [
     "<!doctype html>",
     "<head>",
-      "<SCRIPT>",
-        "let a + 42;",
-      "</SCRIPT>",
-      "<script type='text/javascript'>",
-        "let b = 42;",
-      "</SCRIPT>",
-      "<script type='text/javascript;version=1.8'>",
-        "let c + 42;",
-      "</SCRIPT>",
+    "<SCRIPT>",
+    "let a + 42;",
+    "</SCRIPT>",
+    "<script type='text/javascript'>",
+    "let b = 42;",
+    "</SCRIPT>",
+    "<script type='text/javascript;version=1.8'>",
+    "let c + 42;",
+    "</SCRIPT>",
     "</head>"
   ].join("\n");
   let parser = new Parser();

@@ -3,44 +3,34 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const TEST_URI = "http://example.com/browser/dom/tests/browser/test_bug1004814.html";
+add_task(function*() {
+  yield BrowserTestUtils.withNewTab("about:blank", function*(aBrowser) {
+    let duration = yield ContentTask.spawn(aBrowser, null, function (opts) {
+      const TEST_URI = "http://example.com/browser/dom/tests/browser/test_bug1004814.html";
 
-function test() {
-  waitForExplicitFinish();
+      return new Promise(resolve => {
+        let ConsoleObserver = {
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
 
-  ConsoleObserver.init();
+          observe: function(aSubject, aTopic, aData) {
+            var obj = aSubject.wrappedJSObject;
+            if (obj.arguments.length != 1 || obj.arguments[0] != 'bug1004814' ||
+                obj.level != 'timeEnd') {
+              return;
+            }
 
-  var tab = gBrowser.addTab(TEST_URI);
-  gBrowser.selectedTab = tab;
+            Services.obs.removeObserver(this, "console-api-log-event");
+            resolve(obj.timer.duration);
+          }
+        };
 
-  registerCleanupFunction(function () {
-    gBrowser.removeTab(tab);
+        Services.obs.addObserver(ConsoleObserver, "console-api-log-event", false);
+
+        // Redirect the browser to the correct document to start the test
+        content.document.location = TEST_URI;
+      });
+    });
+
+    ok(duration > 0, "ConsoleEvent.timer.duration > 0: " + duration + " ~ 200ms");
   });
-}
-
-var ConsoleObserver = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
-
-  init: function() {
-    Services.obs.addObserver(this, "console-api-log-event", false);
-  },
-
-  destroy: function() {
-    Services.obs.removeObserver(this, "console-api-log-event");
-  },
-
-  observe: function(aSubject, aTopic, aData) {
-    var obj = aSubject.wrappedJSObject;
-    if (obj.arguments.length != 1 || obj.arguments[0] != 'bug1004814' ||
-        obj.level != 'timeEnd') {
-      return;
-    }
-
-    ok("timer" in obj, "ConsoleEvent contains 'timer' property");
-    ok("duration" in obj.timer, "ConsoleEvent.timer contains 'duration' property");
-    ok(obj.timer.duration > 0, "ConsoleEvent.timer.duration > 0: " + obj.timer.duration + " ~ 200ms");
-
-    this.destroy();
-    finish();
-  }
-};
+});

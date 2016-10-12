@@ -8,14 +8,12 @@
 #include "gfxFontUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "nsString.h"
-#include "nsAutoPtr.h"
 #include "nsClassHashtable.h"
 #include "nsBaseHashtable.h"
 #include "nsHashKeys.h"
 #include "gfxPattern.h"
 #include "mozilla/gfx/UserData.h"
 #include "nsRefreshDriver.h"
-#include "DrawMode.h"
 
 class nsIDocument;
 class nsIContentViewer;
@@ -50,6 +48,8 @@ public:
     ~gfxSVGGlyphsDocument();
 
     virtual void DidRefresh() override;
+
+    size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 private:
     nsresult ParseDocument(const uint8_t *aBuffer, uint32_t aBufLen);
@@ -116,11 +116,10 @@ public:
 
     /**
      * Render the SVG glyph for |aGlyphId|
-     * @param aDrawMode Whether to fill or stroke or both; see DrawMode
      * @param aContextPaint Information on text context paints.
      *   See |gfxTextContextPaint|.
      */
-    bool RenderGlyph(gfxContext *aContext, uint32_t aGlyphId, DrawMode aDrawMode,
+    bool RenderGlyph(gfxContext *aContext, uint32_t aGlyphId,
                      gfxTextContextPaint *aContextPaint);
 
     /**
@@ -130,6 +129,8 @@ public:
      */
     bool GetGlyphExtents(uint32_t aGlyphId, const gfxMatrix& aSVGToAppSpace,
                          gfxRect *aResult);
+
+    size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 private:
     Element *GetGlyphElement(uint32_t aGlyphId);

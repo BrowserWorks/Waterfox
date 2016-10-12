@@ -23,7 +23,7 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsPluginArray::nsPluginArray(nsPIDOMWindow* aWindow)
+nsPluginArray::nsPluginArray(nsPIDOMWindowInner* aWindow)
   : mWindow(aWindow)
 {
 }
@@ -42,7 +42,7 @@ nsPluginArray::~nsPluginArray()
 {
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 nsPluginArray::GetParentObject() const
 {
   MOZ_ASSERT(mWindow);
@@ -224,12 +224,6 @@ nsPluginArray::NamedGetter(const nsAString& aName, bool &aFound)
   return plugin;
 }
 
-bool
-nsPluginArray::NameIsEnumerable(const nsAString& aName)
-{
-  return true;
-}
-
 uint32_t
 nsPluginArray::Length()
 {
@@ -243,7 +237,7 @@ nsPluginArray::Length()
 }
 
 void
-nsPluginArray::GetSupportedNames(unsigned, nsTArray<nsString>& aRetval)
+nsPluginArray::GetSupportedNames(nsTArray<nsString>& aRetval)
 {
   aRetval.Clear();
 
@@ -324,7 +318,7 @@ NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsPluginElement, mWindow, mMimeTypes)
 
-nsPluginElement::nsPluginElement(nsPIDOMWindow* aWindow,
+nsPluginElement::nsPluginElement(nsPIDOMWindowInner* aWindow,
                                  nsIInternalPluginTag* aPluginTag)
   : mWindow(aWindow),
     mPluginTag(aPluginTag)
@@ -335,7 +329,7 @@ nsPluginElement::~nsPluginElement()
 {
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 nsPluginElement::GetParentObject() const
 {
   MOZ_ASSERT(mWindow);
@@ -419,12 +413,6 @@ nsPluginElement::NamedGetter(const nsAString& aName, bool &aFound)
   return nullptr;
 }
 
-bool
-nsPluginElement::NameIsEnumerable(const nsAString& aName)
-{
-  return true;
-}
-
 uint32_t
 nsPluginElement::Length()
 {
@@ -434,7 +422,7 @@ nsPluginElement::Length()
 }
 
 void
-nsPluginElement::GetSupportedNames(unsigned, nsTArray<nsString>& retval)
+nsPluginElement::GetSupportedNames(nsTArray<nsString>& retval)
 {
   EnsurePluginMimeTypes();
 

@@ -62,6 +62,7 @@ function editableTextTest(aID)
 
     function setTextContentsInvoke()
     {
+      dump(`\nsetTextContents '${aValue}'\n`);
       var acc = getAccessible(aID, nsIAccessibleEditableText);
       acc.setTextContents(aValue);
     }
@@ -87,6 +88,7 @@ function editableTextTest(aID)
 
     function insertTextInvoke()
     {
+      dump(`\ninsertText '${aStr}' at ${aPos} pos\n`);
       var acc = getAccessible(aID, nsIAccessibleEditableText);
       acc.insertText(aStr, aPos);
     }
@@ -294,6 +296,8 @@ function editableTextTest(aID)
       invoke: aInvokeFunc,
       finalCheck: function finalCheck()
       {
+        //dumpTree(aID, `'${aID}' tree:`);
+
         aChecker.check();
         et.unwrapNextTest(); // replace dummy invoker on real invoker object.
       },

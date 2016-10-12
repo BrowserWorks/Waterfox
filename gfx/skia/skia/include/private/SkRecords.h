@@ -8,14 +8,17 @@
 #ifndef SkRecords_DEFINED
 #define SkRecords_DEFINED
 
+#include "SkData.h"
 #include "SkCanvas.h"
 #include "SkDrawable.h"
+#include "SkImageFilter.h"
 #include "SkMatrix.h"
 #include "SkPath.h"
 #include "SkPicture.h"
 #include "SkRect.h"
 #include "SkRRect.h"
 #include "SkRSXform.h"
+#include "SkString.h"
 #include "SkTextBlob.h"
 
 namespace SkRecords {
@@ -63,10 +66,10 @@ namespace SkRecords {
     M(DrawTextOnPath)                                               \
     M(DrawRRect)                                                    \
     M(DrawRect)                                                     \
-    M(DrawSprite)                                                   \
     M(DrawTextBlob)                                                 \
     M(DrawAtlas)                                                    \
-    M(DrawVertices)
+    M(DrawVertices)                                                 \
+    M(DrawAnnotation)
 
 // Defines SkRecords::Type, an enum of all record types.
 #define ENUM(T) T##_Type,
@@ -198,7 +201,8 @@ RECORD(Save, 0);
 RECORD(SaveLayer, 0,
        Optional<SkRect> bounds;
        Optional<SkPaint> paint;
-       SkCanvas::SaveFlags flags);
+       RefBox<const SkImageFilter> backdrop;
+       SkCanvas::SaveLayerFlags saveLayerFlags);
 
 RECORD(SetMatrix, 0,
         TypedMatrix matrix);
@@ -315,11 +319,6 @@ RECORD(DrawRRect, kDraw_Tag,
 RECORD(DrawRect, kDraw_Tag,
         SkPaint paint;
         SkRect rect);
-RECORD(DrawSprite, kDraw_Tag|kHasImage_Tag,
-        Optional<SkPaint> paint;
-        ImmutableBitmap bitmap;
-        int left;
-        int top);
 RECORD(DrawText, kDraw_Tag|kHasText_Tag,
         SkPaint paint;
         PODArray<char> text;
@@ -362,7 +361,10 @@ RECORD(DrawVertices, kDraw_Tag,
         RefBox<SkXfermode> xmode;
         PODArray<uint16_t> indices;
         int indexCount);
-
+RECORD(DrawAnnotation, 0,
+       SkRect rect;
+       SkString key;
+       RefBox<SkData> value);
 #undef RECORD
 
 }  // namespace SkRecords

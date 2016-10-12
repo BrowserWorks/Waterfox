@@ -14,7 +14,6 @@ function run_test() {
 add_task(function* test_unregister_not_found() {
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
         onHello(request) {
@@ -31,7 +30,7 @@ add_task(function* test_unregister_not_found() {
   let result = yield PushService.unregister({
     scope: 'https://example.net/nonexistent',
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
   });
   ok(result === false, "unregister should resolve with false for nonexistent scope");
 });

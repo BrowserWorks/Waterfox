@@ -36,15 +36,12 @@ public:
   virtual Accessible* ChildAtPoint(int32_t aX, int32_t aY,
                                    EWhichChildAtPoint aWhichChild) override;
 
-  virtual void InvalidateChildren() override;
   virtual bool InsertChildAt(uint32_t aIdx, Accessible* aChild) override;
   virtual bool RemoveChild(Accessible* aAccessible) override;
+  virtual bool IsAcceptableChild(nsIContent* aEl) const override;
 
 protected:
   virtual ~OuterDocAccessible() override;
-
-  // Accessible
-  virtual void CacheChildren() override;
 };
 
 inline OuterDocAccessible*

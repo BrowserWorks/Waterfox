@@ -3,15 +3,14 @@
 
 "use strict";
 
-add_task(function*() {
-  SimpleTest.requestCompleteLog();
+add_task(function* () {
   let tab = yield addTab("data:text/html,mop");
 
   let {rdm, manager} = yield openRDM(tab, "menu");
   let container = gBrowser.getBrowserContainer();
   is(container.getAttribute("responsivemode"), "true",
      "Should be in responsive mode.");
-  is(document.getElementById("Tools:ResponsiveUI").getAttribute("checked"),
+  is(document.getElementById("menu_responsiveUI").getAttribute("checked"),
      "true", "Menu item should be checked");
 
   ok(rdm, "An instance of the RDM should be attached to the tab.");
@@ -25,9 +24,6 @@ add_task(function*() {
 
   let newWidth = (yield getSizing()).width;
   is(originalWidth, newWidth, "Floating scrollbars shouldn't change the width");
-
-  yield rdm._test_notifyOnResize();
-  yield waitForTick();
 
   yield testPresets(rdm, manager);
 
@@ -53,7 +49,10 @@ add_task(function*() {
 
   info("Restarting responsive mode");
   yield closeRDM(rdm);
+
+  let resized = waitForResizeTo(manager, widthBeforeClose, heightBeforeClose);
   ({rdm} = yield openRDM(tab, "keyboard"));
+  yield resized;
 
   let currentSize = yield getSizing();
   is(currentSize.width, widthBeforeClose, "width should be restored");
@@ -61,7 +60,7 @@ add_task(function*() {
 
   container = gBrowser.getBrowserContainer();
   is(container.getAttribute("responsivemode"), "true", "In responsive mode.");
-  is(document.getElementById("Tools:ResponsiveUI").getAttribute("checked"),
+  is(document.getElementById("menu_responsiveUI").getAttribute("checked"),
      "true", "menu item should be checked");
 
   let isWinXP = navigator.userAgent.indexOf("Windows NT 5.1") != -1;
@@ -70,7 +69,7 @@ add_task(function*() {
   }
 
   yield closeRDM(rdm);
-  is(document.getElementById("Tools:ResponsiveUI").getAttribute("checked"),
+  is(document.getElementById("menu_responsiveUI").getAttribute("checked"),
      "false", "menu item should be unchecked");
 });
 
@@ -80,9 +79,7 @@ function* testPresets(rdm, manager) {
   for (let c = rdm.menulist.firstChild.childNodes.length - 4; c >= 0; c--) {
     let item = rdm.menulist.firstChild.childNodes[c];
     let [width, height] = extractSizeFromString(item.getAttribute("label"));
-    let onContentResize = once(manager, "contentResize");
-    rdm.menulist.selectedIndex = c;
-    yield onContentResize;
+    yield setPresetIndex(rdm, manager, c);
 
     let {width: contentWidth, height: contentHeight} = yield getSizing();
     is(contentWidth, width, "preset" + c + ": the width should be changed");
@@ -91,8 +88,7 @@ function* testPresets(rdm, manager) {
 }
 
 function* testManualMouseResize(rdm, manager, pressedKey) {
-  rdm.setSize(100, 100);
-  yield once(manager, "contentResize");
+  yield setSize(rdm, manager, 100, 100);
 
   let {width: initialWidth, height: initialHeight} = yield getSizing();
   is(initialWidth, 100, "Width should be reset to 100");
@@ -171,8 +167,7 @@ function* testInvalidUserInput(rdm) {
 }
 
 function* testRotate(rdm, manager) {
-  rdm.setSize(100, 200);
-  yield once(manager, "contentResize");
+  yield setSize(rdm, manager, 100, 200);
 
   let {width: initialWidth, height: initialHeight} = yield getSizing();
   rdm.rotate();
@@ -231,7 +226,7 @@ function* testScreenshot(rdm) {
 
 function* getSizing() {
   let browser = gBrowser.selectedBrowser;
-  let sizing = yield ContentTask.spawn(browser, {}, function*() {
+  let sizing = yield ContentTask.spawn(browser, {}, function* () {
     return {
       width: content.innerWidth,
       height: content.innerHeight

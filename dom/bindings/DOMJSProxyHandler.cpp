@@ -162,7 +162,7 @@ bool
 BaseDOMProxyHandler::getOwnPropertyDescriptor(JSContext* cx,
                                               JS::Handle<JSObject*> proxy,
                                               JS::Handle<jsid> id,
-                                              MutableHandle<JSPropertyDescriptor> desc) const
+                                              MutableHandle<PropertyDescriptor> desc) const
 {
   return getOwnPropDescriptor(cx, proxy, id, /* ignoreNamedProps = */ false,
                               desc);
@@ -170,7 +170,7 @@ BaseDOMProxyHandler::getOwnPropertyDescriptor(JSContext* cx,
 
 bool
 DOMProxyHandler::defineProperty(JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id,
-                                Handle<JSPropertyDescriptor> desc,
+                                Handle<PropertyDescriptor> desc,
                                 JS::ObjectOpResult &result, bool *defined) const
 {
   if (desc.hasGetterObject() && desc.setter() == JS_StrictPropertyStub) {
@@ -210,7 +210,7 @@ DOMProxyHandler::set(JSContext *cx, Handle<JSObject*> proxy, Handle<jsid> id,
 
   // Make sure to ignore our named properties when checking for own
   // property descriptors for a set.
-  JS::Rooted<JSPropertyDescriptor> ownDesc(cx);
+  JS::Rooted<PropertyDescriptor> ownDesc(cx);
   if (!getOwnPropDescriptor(cx, proxy, id, /* ignoreNamedProps = */ true,
                             &ownDesc)) {
     return false;
@@ -252,63 +252,21 @@ BaseDOMProxyHandler::ownPropertyKeys(JSContext* cx,
 }
 
 bool
+BaseDOMProxyHandler::getPrototypeIfOrdinary(JSContext* cx, JS::Handle<JSObject*> proxy,
+                                            bool* isOrdinary,
+                                            JS::MutableHandle<JSObject*> proto) const
+{
+  *isOrdinary = true;
+  proto.set(GetStaticPrototype(proxy));
+  return true;
+}
+
+bool
 BaseDOMProxyHandler::getOwnEnumerablePropertyKeys(JSContext* cx,
                                                   JS::Handle<JSObject*> proxy,
                                                   JS::AutoIdVector& props) const
 {
   return ownPropNames(cx, proxy, JSITER_OWNONLY, props);
-}
-
-bool
-BaseDOMProxyHandler::enumerate(JSContext *cx, JS::Handle<JSObject*> proxy,
-                               JS::MutableHandle<JSObject*> objp) const
-{
-  return BaseProxyHandler::enumerate(cx, proxy, objp);
-}
-
-bool
-DOMProxyHandler::has(JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id, bool* bp) const
-{
-  if (!hasOwn(cx, proxy, id, bp)) {
-    return false;
-  }
-
-  if (*bp) {
-    // We have the property ourselves; no need to worry about our prototype
-    // chain.
-    return true;
-  }
-
-  // OK, now we have to look at the proto
-  JS::Rooted<JSObject*> proto(cx);
-  if (!js::GetObjectProto(cx, proxy, &proto)) {
-    return false;
-  }
-  if (!proto) {
-    return true;
-  }
-  bool protoHasProp;
-  bool ok = JS_HasPropertyById(cx, proto, id, &protoHasProp);
-  if (ok) {
-    *bp = protoHasProp;
-  }
-  return ok;
-}
-
-int32_t
-IdToInt32(JSContext* cx, JS::Handle<jsid> id)
-{
-  JS::Rooted<JS::Value> idval(cx);
-  double array_index;
-  int32_t i;
-  if (JSID_IS_SYMBOL(id) ||
-      !::JS_IdToValue(cx, id, &idval) ||
-      !JS::ToNumber(cx, idval, &array_index) ||
-      !::JS_DoubleIsInt32(array_index, &i)) {
-    return -1;
-  }
-
-  return i;
 }
 
 bool

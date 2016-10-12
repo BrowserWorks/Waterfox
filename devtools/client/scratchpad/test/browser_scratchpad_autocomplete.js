@@ -6,7 +6,7 @@
 // Test the completions using numbers.
 const source = "0x1.";
 const completions = ["toExponential", "toFixed", "toString"];
-Cu.import("resource://gre/modules/Task.jsm");
+const { Task } = require("devtools/shared/task");
 
 function test() {
   const options = { tabContent: "test scratchpad autocomplete" };
@@ -29,7 +29,7 @@ function* runTests([win, sp]) {
   const hints = editorWin.document.querySelector(".CodeMirror-hints");
 
   ok(hints,
-     "The hint container should exist.")
+     "The hint container should exist.");
   is(hints.childNodes.length, 3,
      "The hint container should have the completions.");
 

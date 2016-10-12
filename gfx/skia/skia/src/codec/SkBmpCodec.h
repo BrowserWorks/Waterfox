@@ -8,6 +8,7 @@
 #define SkBmpCodec_DEFINED
 
 #include "SkCodec.h"
+#include "SkColorSpace.h"
 #include "SkColorTable.h"
 #include "SkImageInfo.h"
 #include "SkStream.h"
@@ -20,11 +21,7 @@
  */
 class SkBmpCodec : public SkCodec {
 public:
-
-    /*
-     * Checks the start of the stream to see if the image is a bmp
-     */
-    static bool IsBmp(SkStream*);
+    static bool IsBmp(const void*, size_t);
 
     /*
      * Assumes IsBmp was called and returned true
@@ -81,15 +78,11 @@ protected:
     int32_t getDstRow(int32_t y, int32_t height) const;
 
     /*
-     * Compute the number of colors in the color table
-     */
-    uint32_t computeNumColors(uint32_t numColors);
-
-    /*
      * Accessors used by subclasses
      */
     uint16_t bitsPerPixel() const { return fBitsPerPixel; }
     SkScanlineOrder onGetScanlineOrder() const override { return fRowOrder; }
+    size_t srcRowBytes() const { return fSrcRowBytes; }
 
     /*
      * To be overriden by bmp subclasses, which provide unique implementations.
@@ -136,15 +129,18 @@ private:
     virtual int decodeRows(const SkImageInfo& dstInfo, void* dst, size_t dstRowBytes,
             const Options& opts) = 0;
 
+    virtual bool skipRows(int count);
+
     Result onStartScanlineDecode(const SkImageInfo& dstInfo, const SkCodec::Options&,
             SkPMColor inputColorPtr[], int* inputColorCount) override;
 
     int onGetScanlines(void* dst, int count, size_t rowBytes) override;
 
-    // TODO(msarett): Override default skipping with something more clever.
+    bool onSkipScanlines(int count) override;
 
     const uint16_t          fBitsPerPixel;
     const SkScanlineOrder   fRowOrder;
+    const size_t            fSrcRowBytes;
 
     typedef SkCodec INHERITED;
 };

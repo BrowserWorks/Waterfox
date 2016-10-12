@@ -18,6 +18,7 @@ interface nsIPushSubscription : nsISupports
   readonly attribute long long pushCount;
   readonly attribute long long lastPush;
   readonly attribute long quota;
+  readonly attribute bool isSystemSubscription;
 
   bool quotaApplies();
   bool isExpired();
@@ -73,6 +74,11 @@ interface nsIPushClearResultCallback : nsISupports
 [scriptable, uuid(678ef584-bf25-47aa-ac84-03efc0865b68)]
 interface nsIPushService : nsISupports
 {
+  /** Observer topic names, exported for convenience. */
+  readonly attribute DOMString pushTopic;
+  readonly attribute DOMString subscriptionChangeTopic;
+  readonly attribute DOMString subscriptionModifiedTopic;
+
   /**
    * Creates a push subscription for the given |scope| URL and |principal|.
    * If a subscription already exists for this |(scope, principal)| pair,
@@ -85,12 +91,22 @@ interface nsIPushService : nsISupports
    * an `nsIPushMessage` as the subject and the |scope| as the data.
    *
    * If the server drops a subscription, a `push-subscription-change` observer
-   * will be fired, with the subject set to `null` and the data set to |scope|.
-   * Servers may drop subscriptions at any time, so callers should recreate
-   * subscriptions if desired.
+   * will be fired, with the subject set to |principal| and the data set to
+   * |scope|. Servers may drop subscriptions at any time, so callers should
+   * recreate subscriptions if desired.
    */
   void subscribe(in DOMString scope, in nsIPrincipal principal,
                  in nsIPushSubscriptionCallback callback);
+
+  /**
+   * Creates a restricted push subscription with the given public |key|. The
+   * application server must use the corresponding private key to authenticate
+   * message delivery requests, as described in draft-thomson-webpush-vapid.
+   */
+  void subscribeWithKey(in DOMString scope, in nsIPrincipal principal,
+                        in uint32_t keyLength,
+                        [const, array, size_is(keyLength)] in uint8_t key,
+                        in nsIPushSubscriptionCallback callback);
 
   /**
    * Removes a push subscription for the given |scope|.

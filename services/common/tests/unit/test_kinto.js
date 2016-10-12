@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://services-common/moz-kinto-client.js")
+Cu.import("resource://services-common/kinto-offline-client.js");
 Cu.import("resource://testing-common/httpd.js");
 
 const BinaryInputStream = Components.Constructor("@mozilla.org/binaryinputstream;1",
@@ -307,17 +307,29 @@ add_task(function* test_kinto_sync(){
   // create an empty collection, sync to populate
   const collection = do_get_kinto_collection();
   try {
+    let result;
+
     yield collection.db.open();
-    yield collection.sync();
+    result = yield collection.sync();
+    do_check_true(result.ok);
 
     // our test data has a single record; it should be in the local collection
     let list = yield collection.list();
     do_check_eq(list.data.length, 1);
 
     // now sync again; we should now have 2 records
-    yield collection.sync();
+    result = yield collection.sync();
+    do_check_true(result.ok);
     list = yield collection.list();
     do_check_eq(list.data.length, 2);
+
+    // sync again; the second records should have been modified
+    const before = list.data[0].title;
+    result = yield collection.sync();
+    do_check_true(result.ok);
+    list = yield collection.list();
+    const after = list.data[0].title;
+    do_check_neq(before, after);
   } finally {
     yield collection.db.close();
   }
@@ -357,9 +369,9 @@ function getSampleResponse(req, port) {
         "Server: waitress"
       ],
       "status": {status: 200, statusText: "OK"},
-      "responseBody": JSON.stringify({"settings":{"cliquet.batch_max_requests":25}, "url":`http://localhost:${port}/v1/`, "documentation":"https://kinto.readthedocs.org/", "version":"1.5.1", "commit":"cbc6f58", "hello":"kinto"})
+      "responseBody": JSON.stringify({"settings":{"batch_max_requests":25}, "url":`http://localhost:${port}/v1/`, "documentation":"https://kinto.readthedocs.org/", "version":"1.5.1", "commit":"cbc6f58", "hello":"kinto"})
     },
-    "GET:/v1/buckets/default/collections/test_collection/records?": {
+    "GET:/v1/buckets/default/collections/test_collection/records?_sort=-last_modified": {
       "sampleHeaders": [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
@@ -370,7 +382,7 @@ function getSampleResponse(req, port) {
       "status": {status: 200, statusText: "OK"},
       "responseBody": JSON.stringify({"data":[{"last_modified":1445606341071, "done":false, "id":"68db8313-686e-4fff-835e-07d78ad6f2af", "title":"New test"}]})
     },
-    "GET:/v1/buckets/default/collections/test_collection/records?_since=1445606341071": {
+    "GET:/v1/buckets/default/collections/test_collection/records?_sort=-last_modified&_since=1445606341071": {
       "sampleHeaders": [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
@@ -380,6 +392,17 @@ function getSampleResponse(req, port) {
       ],
       "status": {status: 200, statusText: "OK"},
       "responseBody": JSON.stringify({"data":[{"last_modified":1445607941223, "done":false, "id":"901967b0-f729-4b30-8d8d-499cba7f4b1d", "title":"Another new test"}]})
+    },
+    "GET:/v1/buckets/default/collections/test_collection/records?_sort=-last_modified&_since=1445607941223": {
+      "sampleHeaders": [
+        "Access-Control-Allow-Origin: *",
+        "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
+        "Content-Type: application/json; charset=UTF-8",
+        "Server: waitress",
+        "Etag: \"1445607541265\""
+      ],
+      "status": {status: 200, statusText: "OK"},
+      "responseBody": JSON.stringify({"data":[{"last_modified":1445607541265, "done":false, "id":"901967b0-f729-4b30-8d8d-499cba7f4b1d", "title":"Modified title"}]})
     }
   };
   return responses[`${req.method}:${req.path}?${req.queryString}`] ||

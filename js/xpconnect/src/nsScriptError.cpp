@@ -21,6 +21,7 @@
 
 nsScriptErrorBase::nsScriptErrorBase()
     :  mMessage(),
+       mMessageName(),
        mSourceName(),
        mLineNumber(0),
        mSourceLine(),
@@ -47,7 +48,7 @@ nsScriptErrorBase::InitializeOnMainThread()
         nsGlobalWindow* window =
           nsGlobalWindow::GetInnerWindowWithId(mInnerWindowID);
         if (window) {
-            nsPIDOMWindow* outer = window->GetOuterWindow();
+            nsPIDOMWindowOuter* outer = window->GetOuterWindow();
             if (outer)
                 mOuterWindowID = outer->WindowID();
 
@@ -149,6 +150,18 @@ nsScriptErrorBase::GetStack(JS::MutableHandleValue aStack) {
 
 NS_IMETHODIMP
 nsScriptErrorBase::SetStack(JS::HandleValue aStack) {
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsScriptErrorBase::GetErrorMessageName(nsAString& aErrorMessageName) {
+    aErrorMessageName = mMessageName;
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsScriptErrorBase::SetErrorMessageName(const nsAString& aErrorMessageName) {
+    mMessageName = aErrorMessageName;
     return NS_OK;
 }
 

@@ -63,6 +63,10 @@
 #include "mozmemory.h"
 #endif
 
+#ifdef XP_WIN
+#include <windows.h>
+#endif
+
 using namespace mozilla;
 using namespace xpc;
 using namespace JS;
@@ -142,7 +146,7 @@ XPCJSRuntime::CustomContextCallback(JSContext* cx, unsigned operation)
     return true;
 }
 
-class AsyncFreeSnowWhite : public nsRunnable
+class AsyncFreeSnowWhite : public Runnable
 {
 public:
   NS_IMETHOD Run()
@@ -202,6 +206,7 @@ CompartmentPrivate::CompartmentPrivate(JSCompartment* c)
     , skipWriteToGlobalPrototype(false)
     , isWebExtensionContentScript(false)
     , waiveInterposition(false)
+    , allowCPOWs(false)
     , universalXPConnectEnabled(false)
     , forcePermissiveCOWs(false)
     , scriptability(c)
@@ -582,6 +587,29 @@ CompartmentDestroyedCallback(JSFreeOp* fop, JSCompartment* compartment)
     // cleanup for us), and null out the private (which may already be null).
     nsAutoPtr<CompartmentPrivate> priv(CompartmentPrivate::Get(compartment));
     JS_SetCompartmentPrivate(compartment, nullptr);
+}
+
+static size_t
+CompartmentSizeOfIncludingThisCallback(MallocSizeOf mallocSizeOf, JSCompartment* compartment)
+{
+    CompartmentPrivate* priv = CompartmentPrivate::Get(compartment);
+    return priv ? priv->SizeOfIncludingThis(mallocSizeOf) : 0;
+}
+
+/*
+ * Return true if there exists a non-system inner window which is a current
+ * inner window and whose reflector is gray.  We don't merge system
+ * compartments, so we don't use them to trigger merging CCs.
+ */
+bool XPCJSRuntime::UsefulToMergeZones() const
+{
+    MOZ_ASSERT(NS_IsMainThread());
+
+    // Turns out, actually making this return true often enough makes Windows
+    // mochitest-gl OOM a lot.  Need to figure out what's going on there; see
+    // bug 1277036.
+
+    return false;
 }
 
 void XPCJSRuntime::TraceNativeBlackRoots(JSTracer* trc)
@@ -1101,7 +1129,6 @@ class Watchdog
 #include "ipc/Nuwa.h"
 #endif
 
-#define PREF_MAX_SCRIPT_RUN_TIME_CHILD "dom.max_child_script_run_time"
 #define PREF_MAX_SCRIPT_RUN_TIME_CONTENT "dom.max_script_run_time"
 #define PREF_MAX_SCRIPT_RUN_TIME_CHROME "dom.max_chrome_script_run_time"
 
@@ -1124,7 +1151,6 @@ class WatchdogManager : public nsIObserver
         mozilla::Preferences::AddStrongObserver(this, "dom.use_watchdog");
         mozilla::Preferences::AddStrongObserver(this, PREF_MAX_SCRIPT_RUN_TIME_CONTENT);
         mozilla::Preferences::AddStrongObserver(this, PREF_MAX_SCRIPT_RUN_TIME_CHROME);
-        mozilla::Preferences::AddStrongObserver(this, PREF_MAX_SCRIPT_RUN_TIME_CHILD);
     }
 
   protected:
@@ -1138,7 +1164,6 @@ class WatchdogManager : public nsIObserver
         mozilla::Preferences::RemoveObserver(this, "dom.use_watchdog");
         mozilla::Preferences::RemoveObserver(this, PREF_MAX_SCRIPT_RUN_TIME_CONTENT);
         mozilla::Preferences::RemoveObserver(this, PREF_MAX_SCRIPT_RUN_TIME_CHROME);
-        mozilla::Preferences::RemoveObserver(this, PREF_MAX_SCRIPT_RUN_TIME_CHILD);
     }
 
   public:
@@ -1216,10 +1241,7 @@ class WatchdogManager : public nsIObserver
             int32_t chromeTime = Preferences::GetInt(PREF_MAX_SCRIPT_RUN_TIME_CHROME, 20);
             if (chromeTime <= 0)
                 chromeTime = INT32_MAX;
-            int32_t childTime = Preferences::GetInt(PREF_MAX_SCRIPT_RUN_TIME_CHILD, 3);
-            if (childTime <= 0)
-                childTime = INT32_MAX;
-            mWatchdog->SetMinScriptRunTimeSeconds(std::min(std::min(contentTime, chromeTime), childTime));
+            mWatchdog->SetMinScriptRunTimeSeconds(std::min(contentTime, chromeTime));
         }
     }
 
@@ -1335,27 +1357,6 @@ xpc::SimulateActivityCallback(bool aActive)
     XPCJSRuntime::ActivityCallback(XPCJSRuntime::Get(), aActive);
 }
 
-void
-XPCJSRuntime::EnvironmentPreparer::invoke(HandleObject scope, js::ScriptEnvironmentPreparer::Closure& closure)
-{
-    MOZ_ASSERT(NS_IsMainThread());
-    nsIGlobalObject* global = NativeGlobal(scope);
-
-    // Not much we can do if we simply don't have a usable global here...
-    NS_ENSURE_TRUE_VOID(global && global->GetGlobalJSObject());
-    AutoEntryScript aes(global, "JS-engine-initiated execution");
-    aes.TakeOwnershipOfErrorReporting();
-
-    MOZ_ASSERT(!JS_IsExceptionPending(aes.cx()));
-
-    DebugOnly<bool> ok = closure(aes.cx());
-
-    MOZ_ASSERT_IF(ok, !JS_IsExceptionPending(aes.cx()));
-
-    // The AutoEntryScript will check for JS_IsExceptionPending on the
-    // JSContext and report it as needed as it comes off the stack.
-}
-
 // static
 void
 XPCJSRuntime::ActivityCallback(void* arg, bool active)
@@ -1380,6 +1381,8 @@ XPCJSRuntime::InterruptCallback(JSContext* cx)
     if (self->mSlowScriptCheckpoint.IsNull()) {
         self->mSlowScriptCheckpoint = TimeStamp::NowLoRes();
         self->mSlowScriptSecondHalf = false;
+        self->mSlowScriptActualWait = mozilla::TimeDuration();
+        self->mTimeoutAccumulated = false;
         return true;
     }
 
@@ -1388,21 +1391,20 @@ XPCJSRuntime::InterruptCallback(JSContext* cx)
     if (!nsContentUtils::IsInitialized())
         return true;
 
-    bool contentProcess = XRE_IsContentProcess();
-
     // This is at least the second interrupt callback we've received since
     // returning to the event loop. See how long it's been, and what the limit
     // is.
     TimeDuration duration = TimeStamp::NowLoRes() - self->mSlowScriptCheckpoint;
     bool chrome = nsContentUtils::IsCallerChrome();
-    const char* prefName = contentProcess ? PREF_MAX_SCRIPT_RUN_TIME_CHILD
-                                 : chrome ? PREF_MAX_SCRIPT_RUN_TIME_CHROME
-                                          : PREF_MAX_SCRIPT_RUN_TIME_CONTENT;
+    const char* prefName = chrome ? PREF_MAX_SCRIPT_RUN_TIME_CHROME
+                                  : PREF_MAX_SCRIPT_RUN_TIME_CONTENT;
     int32_t limit = Preferences::GetInt(prefName, chrome ? 20 : 10);
 
     // If there's no limit, or we're within the limit, let it go.
     if (limit == 0 || duration.ToSeconds() < limit / 2.0)
         return true;
+
+    self->mSlowScriptActualWait += duration;
 
     // In order to guard against time changes or laptops going to sleep, we
     // don't trigger the slow script warning until (limit/2) seconds have
@@ -1445,14 +1447,24 @@ XPCJSRuntime::InterruptCallback(JSContext* cx)
     if (win->GetIsPrerendered()) {
         // We cannot display a dialog if the page is being prerendered, so
         // just kill the page.
-        mozilla::dom::HandlePrerenderingViolation(win);
+        mozilla::dom::HandlePrerenderingViolation(win->AsInner());
         return false;
+    }
+
+    // Accumulate slow script invokation delay.
+    if (!chrome && !self->mTimeoutAccumulated) {
+      uint32_t delay = uint32_t(self->mSlowScriptActualWait.ToMilliseconds() - (limit * 1000.0));
+      Telemetry::Accumulate(Telemetry::SLOW_SCRIPT_NOTIFY_DELAY, delay);
+      self->mTimeoutAccumulated = true;
     }
 
     // Show the prompt to the user, and kill if requested.
     nsGlobalWindow::SlowScriptResponse response = win->ShowSlowScriptDialog();
-    if (response == nsGlobalWindow::KillSlowScript)
+    if (response == nsGlobalWindow::KillSlowScript) {
+        if (Preferences::GetBool("dom.global_stop_script", true))
+            xpc::Scriptability::Get(global).Block();
         return false;
+    }
 
     // The user chose to continue the script. Reset the timer, and disable this
     // machinery with a pref of the user opted out of future slow-script dialogs.
@@ -1515,7 +1527,10 @@ XPCJSRuntime::SizeOfIncludingThis(MallocSizeOf mallocSizeOf)
 size_t
 CompartmentPrivate::SizeOfIncludingThis(MallocSizeOf mallocSizeOf)
 {
-    return mallocSizeOf(this) + mWrappedJSMap->SizeOfWrappedJS(mallocSizeOf);
+    size_t n = mallocSizeOf(this);
+    n += mWrappedJSMap->SizeOfIncludingThis(mallocSizeOf);
+    n += mWrappedJSMap->SizeOfWrappedJS(mallocSizeOf);
+    return n;
 }
 
 /***************************************************************************/
@@ -1552,6 +1567,7 @@ ReloadPrefsCallback(const char* pref, void* data)
     bool useBaseline = Preferences::GetBool(JS_OPTIONS_DOT_STR "baselinejit") && !safeMode;
     bool useIon = Preferences::GetBool(JS_OPTIONS_DOT_STR "ion") && !safeMode;
     bool useAsmJS = Preferences::GetBool(JS_OPTIONS_DOT_STR "asmjs") && !safeMode;
+    bool useWasm = Preferences::GetBool(JS_OPTIONS_DOT_STR "wasm") && !safeMode;
     bool throwOnAsmJSValidationFailure = Preferences::GetBool(JS_OPTIONS_DOT_STR
                                                               "throw_on_asmjs_validation_failure");
     bool useNativeRegExp = Preferences::GetBool(JS_OPTIONS_DOT_STR "native_regexp") && !safeMode;
@@ -1567,6 +1583,12 @@ ReloadPrefsCallback(const char* pref, void* data)
 
     bool useAsyncStack = Preferences::GetBool(JS_OPTIONS_DOT_STR "asyncstack");
 
+    bool throwOnDebuggeeWouldRun = Preferences::GetBool(JS_OPTIONS_DOT_STR
+                                                        "throw_on_debuggee_would_run");
+
+    bool dumpStackOnDebuggeeWouldRun = Preferences::GetBool(JS_OPTIONS_DOT_STR
+                                                            "dump_stack_on_debuggee_would_run");
+
     bool werror = Preferences::GetBool(JS_OPTIONS_DOT_STR "werror");
 
     bool extraWarnings = Preferences::GetBool(JS_OPTIONS_DOT_STR "strict");
@@ -1577,12 +1599,25 @@ ReloadPrefsCallback(const char* pref, void* data)
     sExtraWarningsForSystemJS = Preferences::GetBool(JS_OPTIONS_DOT_STR "strict.debug");
 #endif
 
+#ifdef JS_GC_ZEAL
+    int32_t zeal = Preferences::GetInt(JS_OPTIONS_DOT_STR "gczeal", -1);
+    int32_t zeal_frequency =
+        Preferences::GetInt(JS_OPTIONS_DOT_STR "gczeal.frequency",
+                            JS_DEFAULT_ZEAL_FREQ);
+    if (zeal >= 0) {
+        JS_SetGCZeal(rt, (uint8_t)zeal, zeal_frequency);
+    }
+#endif // JS_GC_ZEAL
+
     JS::RuntimeOptionsRef(rt).setBaseline(useBaseline)
                              .setIon(useIon)
                              .setAsmJS(useAsmJS)
+                             .setWasm(useWasm)
                              .setThrowOnAsmJSValidationFailure(throwOnAsmJSValidationFailure)
                              .setNativeRegExp(useNativeRegExp)
                              .setAsyncStack(useAsyncStack)
+                             .setThrowOnDebuggeeWouldRun(throwOnDebuggeeWouldRun)
+                             .setDumpStackOnDebuggeeWouldRun(dumpStackOnDebuggeeWouldRun)
                              .setWerror(werror)
                              .setExtraWarnings(extraWarnings);
 
@@ -1596,6 +1631,10 @@ ReloadPrefsCallback(const char* pref, void* data)
 
 XPCJSRuntime::~XPCJSRuntime()
 {
+    // Elsewhere we abort immediately if XPCJSRuntime initialization fails.
+    // Therefore the runtime must be non-null.
+    MOZ_ASSERT(MaybeRuntime());
+
     // This destructor runs before ~CycleCollectedJSRuntime, which does the
     // actual JS_DestroyRuntime() call. But destroying the runtime triggers
     // one final GC, which can call back into the runtime with various
@@ -2131,8 +2170,8 @@ ReportZoneStats(const JS::ZoneStats& zStats,
 
 static nsresult
 ReportClassStats(const ClassInfo& classInfo, const nsACString& path,
-                 nsIHandleReportCallback* cb, nsISupports* closure,
-                 size_t& gcTotal)
+                 const nsACString& shapesPath, nsIHandleReportCallback* cb,
+                 nsISupports* closure, size_t& gcTotal)
 {
     // We deliberately don't use ZCREPORT_BYTES, so that these per-class values
     // don't go into sundries.
@@ -2149,10 +2188,10 @@ ReportClassStats(const ClassInfo& classInfo, const nsACString& path,
             "Non-fixed object slots.");
     }
 
-    if (classInfo.objectsMallocHeapElementsNonAsmJS > 0) {
-        REPORT_BYTES(path + NS_LITERAL_CSTRING("objects/malloc-heap/elements/non-asm.js"),
-            KIND_HEAP, classInfo.objectsMallocHeapElementsNonAsmJS,
-            "Non-asm.js indexed elements.");
+    if (classInfo.objectsMallocHeapElementsNormal > 0) {
+        REPORT_BYTES(path + NS_LITERAL_CSTRING("objects/malloc-heap/elements/normal"),
+            KIND_HEAP, classInfo.objectsMallocHeapElementsNormal,
+            "Normal (non-asm.js) indexed elements.");
     }
 
     // asm.js arrays are heap-allocated on some platforms and
@@ -2175,10 +2214,18 @@ ReportClassStats(const ClassInfo& classInfo, const nsACString& path,
             "the GC heap.");
     }
 
-    if (classInfo.objectsNonHeapElementsMapped > 0) {
-        REPORT_BYTES(path + NS_LITERAL_CSTRING("objects/non-heap/elements/mapped"),
-            KIND_NONHEAP, classInfo.objectsNonHeapElementsMapped,
-            "Memory-mapped array buffer elements.");
+    if (classInfo.objectsNonHeapElementsNormal > 0) {
+        REPORT_BYTES(path + NS_LITERAL_CSTRING("objects/non-heap/elements/normal"),
+            KIND_NONHEAP, classInfo.objectsNonHeapElementsNormal,
+            "Memory-mapped non-shared array buffer elements.");
+    }
+
+    if (classInfo.objectsNonHeapElementsShared > 0) {
+        REPORT_BYTES(path + NS_LITERAL_CSTRING("objects/non-heap/elements/shared"),
+            KIND_NONHEAP, classInfo.objectsNonHeapElementsShared,
+            "Memory-mapped shared array buffer elements. These elements are "
+            "shared between one or more runtimes; the reported size is divided "
+            "by the buffer's refcount.");
     }
 
     if (classInfo.objectsNonHeapCodeAsmJS > 0) {
@@ -2194,37 +2241,37 @@ ReportClassStats(const ClassInfo& classInfo, const nsACString& path,
     }
 
     if (classInfo.shapesGCHeapTree > 0) {
-        REPORT_GC_BYTES(path + NS_LITERAL_CSTRING("shapes/gc-heap/tree"),
+        REPORT_GC_BYTES(shapesPath + NS_LITERAL_CSTRING("shapes/gc-heap/tree"),
             classInfo.shapesGCHeapTree,
         "Shapes in a property tree.");
     }
 
     if (classInfo.shapesGCHeapDict > 0) {
-        REPORT_GC_BYTES(path + NS_LITERAL_CSTRING("shapes/gc-heap/dict"),
+        REPORT_GC_BYTES(shapesPath + NS_LITERAL_CSTRING("shapes/gc-heap/dict"),
             classInfo.shapesGCHeapDict,
         "Shapes in dictionary mode.");
     }
 
     if (classInfo.shapesGCHeapBase > 0) {
-        REPORT_GC_BYTES(path + NS_LITERAL_CSTRING("shapes/gc-heap/base"),
+        REPORT_GC_BYTES(shapesPath + NS_LITERAL_CSTRING("shapes/gc-heap/base"),
             classInfo.shapesGCHeapBase,
             "Base shapes, which collate data common to many shapes.");
     }
 
     if (classInfo.shapesMallocHeapTreeTables > 0) {
-        REPORT_BYTES(path + NS_LITERAL_CSTRING("shapes/malloc-heap/tree-tables"),
+        REPORT_BYTES(shapesPath + NS_LITERAL_CSTRING("shapes/malloc-heap/tree-tables"),
             KIND_HEAP, classInfo.shapesMallocHeapTreeTables,
             "Property tables of shapes in a property tree.");
     }
 
     if (classInfo.shapesMallocHeapDictTables > 0) {
-        REPORT_BYTES(path + NS_LITERAL_CSTRING("shapes/malloc-heap/dict-tables"),
+        REPORT_BYTES(shapesPath + NS_LITERAL_CSTRING("shapes/malloc-heap/dict-tables"),
             KIND_HEAP, classInfo.shapesMallocHeapDictTables,
             "Property tables of shapes in dictionary mode.");
     }
 
     if (classInfo.shapesMallocHeapTreeKids > 0) {
-        REPORT_BYTES(path + NS_LITERAL_CSTRING("shapes/malloc-heap/tree-kids"),
+        REPORT_BYTES(shapesPath + NS_LITERAL_CSTRING("shapes/malloc-heap/tree-kids"),
             KIND_HEAP, classInfo.shapesMallocHeapTreeKids,
             "Kid hashes of shapes in a property tree.");
     }
@@ -2272,8 +2319,12 @@ ReportCompartmentStats(const JS::CompartmentStats& cStats,
                     ? NS_LITERAL_CSTRING("classes/")
                     : NS_LITERAL_CSTRING("classes/class(<non-notable classes>)/");
 
-    rv = ReportClassStats(cStats.classInfo, nonNotablePath, cb, closure,
-                          gcTotal);
+    // XXX: shapes need special treatment until bug 1265271 is fixed.
+    nsCString shapesPath = cJSPathPrefix;
+    shapesPath += NS_LITERAL_CSTRING("classes/");
+
+    rv = ReportClassStats(cStats.classInfo, nonNotablePath, shapesPath, cb,
+                          closure, gcTotal);
     NS_ENSURE_SUCCESS(rv, rv);
 
     for (size_t i = 0; i < cStats.notableClasses.length(); i++) {
@@ -2283,7 +2334,8 @@ ReportCompartmentStats(const JS::CompartmentStats& cStats,
         nsCString classPath = cJSPathPrefix +
             nsPrintfCString("classes/class(%s)/", classInfo.className_);
 
-        rv = ReportClassStats(classInfo, classPath, cb, closure, gcTotal);
+        rv = ReportClassStats(classInfo, classPath, shapesPath, cb, closure,
+                              gcTotal);
         NS_ENSURE_SUCCESS(rv, rv);
     }
 
@@ -2294,11 +2346,6 @@ ReportCompartmentStats(const JS::CompartmentStats& cStats,
         cStats.objectsPrivate,
         "Orphan DOM nodes, i.e. those that are only reachable from JavaScript "
         "objects.");
-
-    ZCREPORT_BYTES(cDOMPathPrefix + NS_LITERAL_CSTRING("private-data"),
-        extras.sizeOfXPCPrivate,
-        "Extra data attached to the compartment by XPConnect, including "\
-        "wrapped-js that is local to a single compartment.");
 
     ZCREPORT_GC_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("scripts/gc-heap"),
         cStats.scriptsGCHeap,
@@ -2369,6 +2416,19 @@ ReportCompartmentStats(const JS::CompartmentStats& cStats,
         cStats.savedStacksSet,
         "The saved stacks set.");
 
+    ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("non-syntactic-lexical-scopes-table"),
+        cStats.nonSyntacticLexicalScopesTable,
+        "The non-syntactic lexical scopes table.");
+
+    ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("jit-compartment"),
+        cStats.jitCompartment,
+        "The JIT compartment.");
+
+    ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("private-data"),
+        cStats.privateData,
+        "Extra data attached to the compartment by XPConnect, including "
+        "its wrapped-js.");
+
     if (sundriesGCHeap > 0) {
         // We deliberately don't use ZCREPORT_GC_BYTES here.
         REPORT_GC_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("sundries/gc-heap"),
@@ -2397,18 +2457,6 @@ ReportScriptSourceStats(const ScriptSourceInfo& scriptSourceInfo,
                         nsIHandleReportCallback* cb, nsISupports* closure,
                         size_t& rtTotal)
 {
-    if (scriptSourceInfo.compressed > 0) {
-        RREPORT_BYTES(path + NS_LITERAL_CSTRING("compressed"),
-            KIND_HEAP, scriptSourceInfo.compressed,
-            "Compressed JavaScript source code.");
-    }
-
-    if (scriptSourceInfo.uncompressed > 0) {
-        RREPORT_BYTES(path + NS_LITERAL_CSTRING("uncompressed"),
-            KIND_HEAP, scriptSourceInfo.uncompressed,
-            "Uncompressed JavaScript source code.");
-    }
-
     if (scriptSourceInfo.misc > 0) {
         RREPORT_BYTES(path + NS_LITERAL_CSTRING("misc"),
             KIND_HEAP, scriptSourceInfo.misc,
@@ -2466,11 +2514,6 @@ ReportJSRuntimeExplicitTreeStats(const JS::RuntimeStats& rtStats,
         KIND_HEAP, rtStats.runtime.contexts,
         "JSContext objects and structures that belong to them.");
 
-    RREPORT_BYTES(rtPath + NS_LITERAL_CSTRING("runtime/dtoa"),
-        KIND_HEAP, rtStats.runtime.dtoa,
-        "The DtoaState object, which is used for converting strings to "
-        "numbers and vice versa.");
-
     RREPORT_BYTES(rtPath + NS_LITERAL_CSTRING("runtime/temporary"),
         KIND_HEAP, rtStats.runtime.temporary,
         "Transient data (mostly parse nodes) held by the JSRuntime during "
@@ -2484,13 +2527,13 @@ ReportJSRuntimeExplicitTreeStats(const JS::RuntimeStats& rtStats,
         KIND_HEAP, rtStats.runtime.mathCache,
         "The math cache.");
 
+    RREPORT_BYTES(rtPath + NS_LITERAL_CSTRING("runtime/shared-immutable-strings-cache"),
+        KIND_HEAP, rtStats.runtime.sharedImmutableStringsCache,
+        "Immutable strings (such as JS scripts' source text) shared across all JSRuntimes.");
+
     RREPORT_BYTES(rtPath + NS_LITERAL_CSTRING("runtime/uncompressed-source-cache"),
         KIND_HEAP, rtStats.runtime.uncompressedSourceCache,
         "The uncompressed source code cache.");
-
-    RREPORT_BYTES(rtPath + NS_LITERAL_CSTRING("runtime/compressed-source-sets"),
-        KIND_HEAP, rtStats.runtime.compressedSourceSet,
-        "The table indexing compressed source code in the runtime.");
 
     RREPORT_BYTES(rtPath + NS_LITERAL_CSTRING("runtime/script-data"),
         KIND_HEAP, rtStats.runtime.scriptData,
@@ -2718,16 +2761,21 @@ class OrphanReporter : public JS::ObjectPrivateVisitor
         // https://bugzilla.mozilla.org/show_bug.cgi?id=773533#c11 explains
         // that we have to skip XBL elements because they violate certain
         // assumptions.  Yuk.
-        if (node && !node->IsInDoc() &&
+        if (node && !node->IsInUncomposedDoc() &&
             !(node->IsElement() && node->AsElement()->IsInNamespace(kNameSpaceID_XBL)))
         {
             // This is an orphan node.  If we haven't already handled the
             // sub-tree that this node belongs to, measure the sub-tree's size
             // and then record its root so we don't measure it again.
             nsCOMPtr<nsINode> orphanTree = node->SubtreeRoot();
-            if (!mAlreadyMeasuredOrphanTrees.Contains(orphanTree)) {
-                n += SizeOfTreeIncludingThis(orphanTree);
-                mAlreadyMeasuredOrphanTrees.PutEntry(orphanTree);
+            if (orphanTree &&
+                !mAlreadyMeasuredOrphanTrees.Contains(orphanTree)) {
+                // If PutEntry() fails we don't measure this tree, which could
+                // lead to under-measurement. But that's better than the
+                // alternatives, which are over-measurement or an OOM abort.
+                if (mAlreadyMeasuredOrphanTrees.PutEntry(orphanTree, fallible)) {
+                    n += SizeOfTreeIncludingThis(orphanTree);
+                }
             }
         }
         return n;
@@ -2784,7 +2832,7 @@ class XPCJSRuntimeStats : public JS::RuntimeStats
             // might crash.
             JSAutoCompartment ac(cx, global);
             nsISupports* native = xpc->GetNativeOfWrapper(cx, global);
-            if (nsCOMPtr<nsPIDOMWindow> piwindow = do_QueryInterface(native)) {
+            if (nsCOMPtr<nsPIDOMWindowInner> piwindow = do_QueryInterface(native)) {
                 // The global is a |window| object.  Use the path prefix that
                 // we should have already created for it.
                 if (mTopWindowPaths->Get(piwindow->WindowID(),
@@ -2815,7 +2863,6 @@ class XPCJSRuntimeStats : public JS::RuntimeStats
             // Note: cannot use amIAddonManager implementation at this point,
             // as it is a JS service and the JS heap is currently not idle.
             // Otherwise, we could have computed the add-on id at this point.
-            extras->sizeOfXPCPrivate = cp->SizeOfIncludingThis(mallocSizeOf_);
         }
 
         // Get the compartment's global.
@@ -2828,7 +2875,7 @@ class XPCJSRuntimeStats : public JS::RuntimeStats
             // might crash.
             JSAutoCompartment ac(cx, global);
             nsISupports* native = xpc->GetNativeOfWrapper(cx, global);
-            if (nsCOMPtr<nsPIDOMWindow> piwindow = do_QueryInterface(native)) {
+            if (nsCOMPtr<nsPIDOMWindowInner> piwindow = do_QueryInterface(native)) {
                 // The global is a |window| object.  Use the path prefix that
                 // we should have already created for it.
                 if (mWindowPaths->Get(piwindow->WindowID(),
@@ -3127,6 +3174,9 @@ AccumulateTelemetryCallback(int id, uint32_t sample, const char* key)
       case JS_TELEMETRY_GC_SWEEP_MS:
         Telemetry::Accumulate(Telemetry::GC_SWEEP_MS, sample);
         break;
+      case JS_TELEMETRY_GC_COMPACT_MS:
+        Telemetry::Accumulate(Telemetry::GC_COMPACT_MS, sample);
+        break;
       case JS_TELEMETRY_GC_MARK_ROOTS_MS:
         Telemetry::Accumulate(Telemetry::GC_MARK_ROOTS_MS, sample);
         break;
@@ -3174,6 +3224,10 @@ AccumulateTelemetryCallback(int id, uint32_t sample, const char* key)
         break;
       case JS_TELEMETRY_ADDON_EXCEPTIONS:
         Telemetry::Accumulate(Telemetry::JS_TELEMETRY_ADDON_EXCEPTIONS, nsDependentCString(key), sample);
+        break;
+      case JS_TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED:
+        MOZ_ASSERT(sample == 0 || sample == 1);
+        Telemetry::Accumulate(Telemetry::JS_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED, sample);
         break;
       default:
         MOZ_ASSERT_UNREACHABLE("Unexpected JS_TELEMETRY id");
@@ -3318,9 +3372,8 @@ static const JSWrapObjectCallbacks WrapObjectCallbacks = {
     xpc::WrapperFactory::PrepareForWrapping
 };
 
-XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
-   : CycleCollectedJSRuntime(nullptr, JS::DefaultHeapMaxBytes, JS::DefaultNurseryBytes),
-   mJSContextStack(new XPCJSContextStack(this)),
+XPCJSRuntime::XPCJSRuntime()
+ : mJSContextStack(new XPCJSContextStack(this)),
    mCallContext(nullptr),
    mAutoRoots(nullptr),
    mResolveName(JSID_VOID),
@@ -3341,17 +3394,66 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
    mWrappedJSRoots(nullptr),
    mObjectHolderRoots(nullptr),
    mWatchdogManager(new WatchdogManager(this)),
-   mUnprivilegedJunkScope(this->Runtime(), nullptr),
-   mPrivilegedJunkScope(this->Runtime(), nullptr),
-   mCompilationScope(this->Runtime(), nullptr),
    mAsyncSnowWhiteFreer(new AsyncFreeSnowWhite()),
-   mSlowScriptSecondHalf(false)
+   mSlowScriptSecondHalf(false),
+   mTimeoutAccumulated(false)
 {
-    // these jsids filled in later when we have a JSContext to work with.
-    mStrIDs[0] = JSID_VOID;
+}
+
+#ifdef XP_WIN
+static size_t
+GetWindowsStackSize()
+{
+    // First, get the stack base. Because the stack grows down, this is the top
+    // of the stack.
+    const uint8_t* stackTop;
+#ifdef _WIN64
+    PNT_TIB64 pTib = reinterpret_cast<PNT_TIB64>(NtCurrentTeb());
+    stackTop = reinterpret_cast<const uint8_t*>(pTib->StackBase);
+#else
+    PNT_TIB pTib = reinterpret_cast<PNT_TIB>(NtCurrentTeb());
+    stackTop = reinterpret_cast<const uint8_t*>(pTib->StackBase);
+#endif
+
+    // Now determine the stack bottom. Note that we can't use tib->StackLimit,
+    // because that's the size of the committed area and we're also interested
+    // in the reserved pages below that.
+    MEMORY_BASIC_INFORMATION mbi;
+    if (!VirtualQuery(&mbi, &mbi, sizeof(mbi)))
+        MOZ_CRASH("VirtualQuery failed");
+
+    const uint8_t* stackBottom = reinterpret_cast<const uint8_t*>(mbi.AllocationBase);
+
+    // Do some sanity checks.
+    size_t stackSize = size_t(stackTop - stackBottom);
+    MOZ_RELEASE_ASSERT(stackSize >= 1 * 1024 * 1024);
+    MOZ_RELEASE_ASSERT(stackSize <= 32 * 1024 * 1024);
+
+    // Subtract 40 KB (Win32) or 80 KB (Win64) to account for things like
+    // the guard page and large PGO stack frames.
+    return stackSize - 10 * sizeof(uintptr_t) * 1024;
+}
+#endif
+
+nsresult
+XPCJSRuntime::Initialize()
+{
+    nsresult rv = CycleCollectedJSRuntime::Initialize(nullptr,
+                                                      JS::DefaultHeapMaxBytes,
+                                                      JS::DefaultNurseryBytes);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
 
     MOZ_ASSERT(Runtime());
     JSRuntime* runtime = Runtime();
+
+    mUnprivilegedJunkScope.init(runtime, nullptr);
+    mPrivilegedJunkScope.init(runtime, nullptr);
+    mCompilationScope.init(runtime, nullptr);
+
+    // these jsids filled in later when we have a JSContext to work with.
+    mStrIDs[0] = JSID_VOID;
 
     auto rtPrivate = new PerThreadAtomCache();
     memset(rtPrivate, 0, sizeof(PerThreadAtomCache));
@@ -3415,9 +3517,9 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
     const size_t kStackQuota =  2 * kDefaultStackQuota;
     const size_t kTrustedScriptBuffer = 450 * 1024;
 #elif defined(XP_WIN)
-    // 1MB is the default stack size on Windows, so use 900k.
-    // Windows PGO stack frames have unfortunately gotten pretty large lately. :-(
-    const size_t kStackQuota = 900 * 1024;
+    // 1MB is the default stack size on Windows. We use the /STACK linker flag
+    // to request a larger stack, so we determine the stack size at runtime.
+    const size_t kStackQuota = GetWindowsStackSize();
     const size_t kTrustedScriptBuffer = (sizeof(size_t) == 8) ? 180 * 1024   //win64
                                                               : 120 * 1024;  //win32
     // The following two configurations are linux-only. Given the numbers above,
@@ -3442,8 +3544,8 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
                            kStackQuota - kSystemCodeBuffer,
                            kStackQuota - kSystemCodeBuffer - kTrustedScriptBuffer);
 
-    JS_SetErrorReporter(runtime, xpc::SystemErrorReporter);
     JS_SetDestroyCompartmentCallback(runtime, CompartmentDestroyedCallback);
+    JS_SetSizeOfIncludingThisCompartmentCallback(runtime, CompartmentSizeOfIncludingThisCallback);
     JS_SetCompartmentNameCallback(runtime, CompartmentNameCallback);
     mPrevGCSliceCallback = JS::SetGCSliceCallback(runtime, GCSliceCallback);
     JS_AddFinalizeCallback(runtime, FinalizeCallback, nullptr);
@@ -3456,10 +3558,13 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
         stack->sampleRuntime(runtime);
 #endif
     JS_SetAccumulateTelemetryCallback(runtime, AccumulateTelemetryCallback);
-    js::SetScriptEnvironmentPreparer(runtime, &mEnvironmentPreparer);
     js::SetActivityCallback(runtime, ActivityCallback, this);
     JS_SetInterruptCallback(runtime, InterruptCallback);
     js::SetWindowProxyClass(runtime, &OuterWindowProxyClass);
+#ifdef MOZ_CRASHREPORTER
+    js::AutoEnterOOMUnsafeRegion::setAnnotateOOMAllocationSizeCallback(
+            CrashReporter::AnnotateOOMAllocationSize);
+#endif
 
     // The JS engine needs to keep the source code around in order to implement
     // Function.prototype.toSource(). It'd be nice to not have to do this for
@@ -3498,18 +3603,23 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
     // Watch for the JS boolean options.
     ReloadPrefsCallback(nullptr, this);
     Preferences::RegisterCallback(ReloadPrefsCallback, JS_OPTIONS_DOT_STR, this);
+
+    return NS_OK;
 }
 
 // static
 XPCJSRuntime*
-XPCJSRuntime::newXPCJSRuntime(nsXPConnect* aXPConnect)
+XPCJSRuntime::newXPCJSRuntime()
 {
-    NS_PRECONDITION(aXPConnect,"bad param");
+    XPCJSRuntime* self = new XPCJSRuntime();
+    nsresult rv = self->Initialize();
+    if (NS_FAILED(rv)) {
+        NS_RUNTIMEABORT("new XPCJSRuntime failed to initialize.");
+        delete self;
+        return nullptr;
+    }
 
-    XPCJSRuntime* self = new XPCJSRuntime(aXPConnect);
-
-    if (self                                    &&
-        self->Runtime()                         &&
+    if (self->Runtime()                         &&
         self->GetMultiCompartmentWrappedJSMap() &&
         self->GetWrappedJSClassMap()            &&
         self->GetIID2NativeInterfaceMap()       &&
@@ -3618,18 +3728,15 @@ XPCJSRuntime::BeforeProcessTask(bool aMightBlock)
             // "while (condition) thread.processNextEvent(true)", in case the
             // condition is triggered here by a Promise "then" callback.
 
-            class DummyRunnable : public nsRunnable {
-            public:
-                NS_IMETHOD Run() { return NS_OK; }
-            };
-
-            NS_DispatchToMainThread(new DummyRunnable());
+            NS_DispatchToMainThread(new Runnable());
         }
     }
 
     // Start the slow script timer.
     mSlowScriptCheckpoint = mozilla::TimeStamp::NowLoRes();
     mSlowScriptSecondHalf = false;
+    mSlowScriptActualWait = mozilla::TimeDuration();
+    mTimeoutAccumulated = false;
 
     // As we may be entering a nested event loop, we need to
     // cancel any ongoing performance measurement.

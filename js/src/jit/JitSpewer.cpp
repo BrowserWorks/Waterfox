@@ -10,9 +10,20 @@
 
 #include "mozilla/Atomics.h"
 
+#if defined(XP_WIN)
+# include <windows.h>
+#else
+# include <unistd.h>
+#endif
+
+#include "jsprf.h"
+
 #include "jit/Ion.h"
 #include "jit/MIR.h"
 #include "jit/MIRGenerator.h"
+
+#include "threading/LockGuard.h"
+#include "threading/Mutex.h"
 
 #include "vm/HelperThreads.h"
 
@@ -32,7 +43,7 @@ using namespace js::jit;
 class IonSpewer
 {
   private:
-    PRLock* outputLock_;
+    Mutex outputLock_;
     Fprinter c1Output_;
     Fprinter jsonOutput_;
     bool firstFunction_;
@@ -65,23 +76,6 @@ class IonSpewer
     void beginFunction();
     void spewPass(GraphSpewer* gs);
     void endFunction(GraphSpewer* gs);
-
-    // Lock used to sequentialized asynchronous compilation output.
-    void lockOutput() {
-        PR_Lock(outputLock_);
-    }
-    void unlockOutput() {
-        PR_Unlock(outputLock_);
-    }
-};
-
-class MOZ_RAII AutoLockIonSpewerOutput
-{
-  private:
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-  public:
-    explicit AutoLockIonSpewerOutput(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM);
-    ~AutoLockIonSpewerOutput();
 };
 
 // IonSpewer singleton.
@@ -160,9 +154,6 @@ IonSpewer::release()
         c1Output_.finish();
     if (jsonOutput_.isInitialized())
         jsonOutput_.finish();
-    if (outputLock_)
-        PR_DestroyLock(outputLock_);
-    outputLock_ = nullptr;
     inited_ = false;
 }
 
@@ -172,10 +163,38 @@ IonSpewer::init()
     if (inited_)
         return true;
 
-    outputLock_ = PR_NewLock();
-    if (!outputLock_ ||
-        !c1Output_.init(JIT_SPEW_DIR "ion.cfg") ||
-        !jsonOutput_.init(JIT_SPEW_DIR "ion.json"))
+    const size_t bufferLength = 256;
+    char c1Buffer[bufferLength];
+    char jsonBuffer[bufferLength];
+    const char *c1Filename = JIT_SPEW_DIR "/ion.cfg";
+    const char *jsonFilename = JIT_SPEW_DIR "/ion.json";
+
+    const char* usePid = getenv("ION_SPEW_BY_PID");
+    if (usePid && *usePid != 0) {
+#if defined(XP_WIN)
+        size_t pid = GetCurrentProcessId();
+#else
+        size_t pid = getpid();
+#endif
+
+        size_t len;
+        len = JS_snprintf(jsonBuffer, bufferLength, JIT_SPEW_DIR "/ion%" PRIuSIZE ".json", pid);
+        if (bufferLength <= len) {
+            fprintf(stderr, "Warning: IonSpewer::init: Cannot serialize file name.");
+            return false;
+        }
+        jsonFilename = jsonBuffer;
+
+        len = JS_snprintf(c1Buffer, bufferLength, JIT_SPEW_DIR "/ion%" PRIuSIZE ".cfg", pid);
+        if (bufferLength <= len) {
+            fprintf(stderr, "Warning: IonSpewer::init: Cannot serialize file name.");
+            return false;
+        }
+        c1Filename = c1Buffer;
+    }
+
+    if (!c1Output_.init(c1Filename) ||
+        !jsonOutput_.init(jsonFilename))
     {
         release();
         return false;
@@ -188,17 +207,6 @@ IonSpewer::init()
     return true;
 }
 
-AutoLockIonSpewerOutput::AutoLockIonSpewerOutput(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM_IN_IMPL)
-{
-    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-    ionspewer.lockOutput();
-}
-
-AutoLockIonSpewerOutput::~AutoLockIonSpewerOutput()
-{
-    ionspewer.unlockOutput();
-}
-
 void
 IonSpewer::beginFunction()
 {
@@ -206,7 +214,7 @@ IonSpewer::beginFunction()
     // as this is useful in case of failure during the compilation. On the other
     // hand, it is recommended to disabled off main thread compilation.
     if (!getAsyncLogging() && !firstFunction_) {
-        AutoLockIonSpewerOutput outputLock;
+        LockGuard<Mutex> guard(outputLock_);
         jsonOutput_.put(","); // separate functions
     }
 }
@@ -215,7 +223,7 @@ void
 IonSpewer::spewPass(GraphSpewer* gs)
 {
     if (!getAsyncLogging()) {
-        AutoLockIonSpewerOutput outputLock;
+        LockGuard<Mutex> guard(outputLock_);
         gs->dump(c1Output_, jsonOutput_);
     }
 }
@@ -223,7 +231,7 @@ IonSpewer::spewPass(GraphSpewer* gs)
 void
 IonSpewer::endFunction(GraphSpewer* gs)
 {
-    AutoLockIonSpewerOutput outputLock;
+    LockGuard<Mutex> guard(outputLock_);
     if (getAsyncLogging() && !firstFunction_)
         jsonOutput_.put(","); // separate functions
 
@@ -404,6 +412,7 @@ jit::CheckLogging()
             "  prune      Prune unused branches\n"
             "  escape     Escape analysis\n"
             "  alias      Alias analysis\n"
+            "  alias-sum  Alias analysis: shows summaries for every block\n"
             "  gvn        Global Value Numbering\n"
             "  licm       Loop invariant code motion\n"
             "  sincos     Replace sin/cos by sincos\n"
@@ -448,6 +457,8 @@ jit::CheckLogging()
         EnableChannel(JitSpew_Escape);
     if (ContainsFlag(env, "alias"))
         EnableChannel(JitSpew_Alias);
+    if (ContainsFlag(env, "alias-sum"))
+        EnableChannel(JitSpew_AliasSummaries);
     if (ContainsFlag(env, "scripts"))
         EnableChannel(JitSpew_IonScripts);
     if (ContainsFlag(env, "mir"))

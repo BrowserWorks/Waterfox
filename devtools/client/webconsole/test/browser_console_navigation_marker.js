@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Check that the navigation marker shows on page reload - bug 793996.
 
@@ -39,7 +39,11 @@ function consoleOpened() {
   ok(hud, "Web Console opened");
 
   hud.jsterm.clearOutput();
-  content.console.log("foobarz1");
+
+  ContentTask.spawn(gBrowser.selectedBrowser, null, function* () {
+    content.console.log("foobarz1");
+  });
+
   return waitForMessages({
     webconsole: hud,
     messages: [{
@@ -51,7 +55,9 @@ function consoleOpened() {
 }
 
 function onReload() {
-  content.console.log("foobarz2");
+  ContentTask.spawn(gBrowser.selectedBrowser, null, function* () {
+    content.console.log("foobarz2");
+  });
 
   return waitForMessages({
     webconsole: hud,

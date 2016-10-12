@@ -7,39 +7,34 @@
 
 #include <time.h>
 
+#include "ScopedNSSTypes.h"
 #include "md4.h"
+#include "mozilla/Casting.h"
 #include "mozilla/CheckedInt.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/Likely.h"
+#include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Snprintf.h"
 #include "mozilla/Telemetry.h"
 #include "nsCOMPtr.h"
 #include "nsComponentManagerUtils.h"
-#include "nsICryptoHash.h"
 #include "nsICryptoHMAC.h"
+#include "nsICryptoHash.h"
 #include "nsIKeyModule.h"
 #include "nsKeyModule.h"
+#include "nsNSSShutDown.h"
 #include "nsNativeCharsetUtils.h"
 #include "nsNetCID.h"
-#include "nsNSSShutDown.h"
 #include "nsUnicharUtils.h"
 #include "pk11pub.h"
-#include "mozilla/Logging.h"
 #include "prsystem.h"
 
 static bool sNTLMv1Forced = false;
+static mozilla::LazyLogModule sNTLMLog("NTLM");
 
-static PRLogModuleInfo *
-GetNTLMLog()
-{
-  static PRLogModuleInfo *sNTLMLog;
-  if (!sNTLMLog)
-    sNTLMLog = PR_NewLogModule("NTLM");
-  return sNTLMLog;
-}
-
-#define LOG(x) MOZ_LOG(GetNTLMLog(), mozilla::LogLevel::Debug, x)
-#define LOG_ENABLED() MOZ_LOG_TEST(GetNTLMLog(), mozilla::LogLevel::Debug)
+#define LOG(x) MOZ_LOG(sNTLMLog, mozilla::LogLevel::Debug, x)
+#define LOG_ENABLED() MOZ_LOG_TEST(sNTLMLog, mozilla::LogLevel::Debug)
 
 static void des_makekey(const uint8_t *raw, uint8_t *key);
 static void des_encrypt(const uint8_t *key, const uint8_t *src, uint8_t *hash);
@@ -188,23 +183,23 @@ LogBuf(const char *tag, const uint8_t *buf, uint32_t bufLen)
     for (i=0; i<count; ++i)
     {
       int len = strlen(line);
-      PR_snprintf(line + len, sizeof(line) - len, "0x%02x ", int(buf[i]));
+      snprintf(line + len, sizeof(line) - len, "0x%02x ", int(buf[i]));
     }
     for (; i<8; ++i)
     {
       int len = strlen(line);
-      PR_snprintf(line + len, sizeof(line) - len, "     ");
+      snprintf(line + len, sizeof(line) - len, "     ");
     }
 
     int len = strlen(line);
-    PR_snprintf(line + len, sizeof(line) - len, "   ");
+    snprintf(line + len, sizeof(line) - len, "   ");
     for (i=0; i<count; ++i)
     {
       len = strlen(line);
       if (isprint(buf[i]))
-        PR_snprintf(line + len, sizeof(line) - len, "%c", buf[i]);
+        snprintf(line + len, sizeof(line) - len, "%c", buf[i]);
       else
-        PR_snprintf(line + len, sizeof(line) - len, ".");
+        snprintf(line + len, sizeof(line) - len, ".");
     }
     PR_LogPrint("%s\n", line);
 
@@ -457,7 +452,7 @@ ParseType2Msg(const void *inBuf, uint32_t inLen, Type2Msg *msg)
   if (inLen < NTLM_TYPE2_HEADER_LEN)
     return NS_ERROR_UNEXPECTED;
 
-  const uint8_t *cursor = reinterpret_cast<const uint8_t*>(inBuf);
+  auto cursor = static_cast<const uint8_t*>(inBuf);
 
   // verify NTLMSSP signature
   if (memcmp(cursor, NTLM_SIGNATURE, sizeof(NTLM_SIGNATURE)) != 0)
@@ -484,7 +479,7 @@ ParseType2Msg(const void *inBuf, uint32_t inLen, Type2Msg *msg)
   // integer overflow checking.
   if (MOZ_LIKELY(targetEnd.isValid() && targetEnd.value() <= inLen)) {
     msg->targetLen = targetLen;
-    msg->target = reinterpret_cast<const uint8_t*>(inBuf) + offset;
+    msg->target = static_cast<const uint8_t*>(inBuf) + offset;
   } else {
     // Do not error out, for (conservative) backward compatibility.
     msg->targetLen = 0;
@@ -499,8 +494,9 @@ ParseType2Msg(const void *inBuf, uint32_t inLen, Type2Msg *msg)
   cursor += sizeof(msg->challenge);
 
   LOG(("NTLM type 2 message:\n"));
-  LogBuf("target", reinterpret_cast<const uint8_t*> (msg->target), msg->targetLen);
-  LogBuf("flags", reinterpret_cast<const uint8_t*> (&msg->flags), 4);
+  LogBuf("target", msg->target, msg->targetLen);
+  LogBuf("flags",
+         mozilla::BitwiseCast<const uint8_t*, const uint32_t*>(&msg->flags), 4);
   LogFlags(msg->flags);
   LogBuf("challenge", msg->challenge, sizeof(msg->challenge));
 
@@ -520,7 +516,7 @@ ParseType2Msg(const void *inBuf, uint32_t inLen, Type2Msg *msg)
   // integer overflow checking.
   if (MOZ_LIKELY(targetInfoEnd.isValid() && targetInfoEnd.value() <= inLen)) {
     msg->targetInfoLen = targetInfoLen;
-    msg->targetInfo = reinterpret_cast<const uint8_t*>(inBuf) + offset;
+    msg->targetInfo = static_cast<const uint8_t*>(inBuf) + offset;
   } else {
     NS_ERROR("failed to get NTLMv2 target info");
     return NS_ERROR_UNEXPECTED;
@@ -578,7 +574,8 @@ GenerateType3Msg(const nsString &domain,
     ucsDomainBuf = domain;
     domainPtr = ucsDomainBuf.get();
     domainLen = ucsDomainBuf.Length() * 2;
-    WriteUnicodeLE((void *) domainPtr, reinterpret_cast<const char16_t*> (domainPtr),
+    WriteUnicodeLE(const_cast<void*>(domainPtr),
+                   static_cast<const char16_t*>(domainPtr),
                    ucsDomainBuf.Length());
 #else
     domainPtr = domain.get();
@@ -601,7 +598,8 @@ GenerateType3Msg(const nsString &domain,
     ucsUserBuf = username;
     userPtr = ucsUserBuf.get();
     userLen = ucsUserBuf.Length() * 2;
-    WriteUnicodeLE((void *) userPtr, reinterpret_cast<const char16_t*> (userPtr),
+    WriteUnicodeLE(const_cast<void*>(userPtr),
+                   static_cast<const char16_t*>(userPtr),
                    ucsUserBuf.Length());
 #else
     userPtr = username.get();
@@ -631,7 +629,8 @@ GenerateType3Msg(const nsString &domain,
     hostPtr = ucsHostBuf.get();
     hostLen = ucsHostBuf.Length() * 2;
 #ifdef IS_BIG_ENDIAN
-    WriteUnicodeLE((void *) hostPtr, reinterpret_cast<const char16_t*> (hostPtr),
+    WriteUnicodeLE(const_cast<void*>(hostPtr),
+                   static_cast<const char16_t*>(hostPtr),
                    ucsHostBuf.Length());
 #endif
   }
@@ -677,19 +676,22 @@ GenerateType3Msg(const nsString &domain,
     userUpperPtr = ucsUserUpperBuf.get();
     userUpperLen = ucsUserUpperBuf.Length() * 2;
 #ifdef IS_BIG_ENDIAN
-    WriteUnicodeLE((void *) userUpperPtr, reinterpret_cast<const char16_t*> (userUpperPtr),
+    WriteUnicodeLE(const_cast<void*>(userUpperPtr),
+                   static_cast<const char16_t*>(userUpperPtr),
                    ucsUserUpperBuf.Length());
 #endif
     ToUpperCase(domain, ucsDomainUpperBuf);
     domainUpperPtr = ucsDomainUpperBuf.get();
     domainUpperLen = ucsDomainUpperBuf.Length() * 2;
 #ifdef IS_BIG_ENDIAN
-    WriteUnicodeLE((void *) domainUpperPtr, reinterpret_cast<const char16_t*> (domainUpperPtr),
+    WriteUnicodeLE(const_cast<void*>(domainUpperPtr),
+                   static_cast<const char16_t*>(domainUpperPtr),
                    ucsDomainUpperBuf.Length());
 #endif
 
     NTLM_Hash(password, ntlmHash);
-    ntlmHashStr = nsAutoCString(reinterpret_cast<const char *>(ntlmHash), NTLM_HASH_LEN);
+    ntlmHashStr = nsAutoCString(
+      mozilla::BitwiseCast<const char*, const uint8_t*>(ntlmHash), NTLM_HASH_LEN);
 
     nsCOMPtr<nsIKeyObjectFactory> keyFactory =
         do_CreateInstance(NS_KEYMODULEOBJECTFACTORY_CONTRACTID, &rv);
@@ -718,11 +720,12 @@ GenerateType3Msg(const nsString &domain,
     if (NS_FAILED(rv)) {
       return rv;
     }
-    rv = hasher->Update(reinterpret_cast<const uint8_t*> (userUpperPtr), userUpperLen);
+    rv = hasher->Update(static_cast<const uint8_t*>(userUpperPtr), userUpperLen);
     if (NS_FAILED(rv)) {
       return rv;
     }
-    rv = hasher->Update(reinterpret_cast<const uint8_t*> (domainUpperPtr), domainUpperLen);
+    rv = hasher->Update(static_cast<const uint8_t*>(domainUpperPtr),
+                        domainUpperLen);
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -794,7 +797,7 @@ GenerateType3Msg(const nsString &domain,
     if (NS_FAILED(rv)) {
       return rv;
     }
-    rv = hasher->Update(reinterpret_cast<const uint8_t*> (msg.targetInfo), msg.targetInfoLen);
+    rv = hasher->Update(msg.targetInfo, msg.targetInfoLen);
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -817,7 +820,6 @@ GenerateType3Msg(const nsString &domain,
   } else if (msg.flags & NTLM_NegotiateNTLM2Key) {
     // compute NTLM2 session response
     nsCString sessionHashString;
-    const uint8_t *sessionHash;
 
     PK11_GenerateRandom(lmResp, NTLM_CHAL_LEN);
     memset(lmResp + NTLM_CHAL_LEN, 0, LM_RESP_LEN - NTLM_CHAL_LEN);
@@ -844,7 +846,8 @@ GenerateType3Msg(const nsString &domain,
       return rv;
     }
 
-    sessionHash = reinterpret_cast<const uint8_t*> (sessionHashString.get());
+    auto sessionHash = mozilla::BitwiseCast<const uint8_t*, const char*>(
+      sessionHashString.get());
 
     LogBuf("NTLM2 effective key: ", sessionHash, 8);
 
@@ -898,7 +901,7 @@ GenerateType3Msg(const nsString &domain,
     return NS_ERROR_UNEXPECTED;
   }
   cursor = WriteSecBuf(cursor, LM_RESP_LEN, offset.value());
-  memcpy((uint8_t *) *outBuf + offset.value(), lmResp, LM_RESP_LEN);
+  memcpy(static_cast<uint8_t*>(*outBuf) + offset.value(), lmResp, LM_RESP_LEN);
 
   // 20 : NTLM or NTLMv2 response sec buf
   offset += LM_RESP_LEN;
@@ -908,26 +911,30 @@ GenerateType3Msg(const nsString &domain,
   }
   cursor = WriteSecBuf(cursor, ntlmRespLen.value(), offset.value());
   if (ntlmv2) {
-    memcpy(reinterpret_cast<uint8_t*> (*outBuf) + offset.value(), ntlmv2Resp, NTLMv2_RESP_LEN);
+    memcpy(static_cast<uint8_t*>(*outBuf) + offset.value(), ntlmv2Resp,
+           NTLMv2_RESP_LEN);
     offset += NTLMv2_RESP_LEN;
     if (!offset.isValid()) {
       NS_ERROR("failed preparing to write NTLM response: integer overflow?!?");
       return NS_ERROR_UNEXPECTED;
     }
-    memcpy(reinterpret_cast<uint8_t*> (*outBuf) + offset.value(), ntlmv2_blob1, NTLMv2_BLOB1_LEN);
+    memcpy(static_cast<uint8_t*>(*outBuf) + offset.value(), ntlmv2_blob1,
+           NTLMv2_BLOB1_LEN);
     offset += NTLMv2_BLOB1_LEN;
     if (!offset.isValid()) {
       NS_ERROR("failed preparing to write NTLM response: integer overflow?!?");
       return NS_ERROR_UNEXPECTED;
     }
-    memcpy(reinterpret_cast<uint8_t*> (*outBuf) + offset.value(), msg.targetInfo, msg.targetInfoLen);
+    memcpy(static_cast<uint8_t*>(*outBuf) + offset.value(), msg.targetInfo,
+           msg.targetInfoLen);
   } else {
-    memcpy(reinterpret_cast<uint8_t*> (*outBuf) + offset.value(), ntlmResp, NTLM_RESP_LEN);
+    memcpy(static_cast<uint8_t*>(*outBuf) + offset.value(), ntlmResp,
+           NTLM_RESP_LEN);
   }
   // 28 : domain name sec buf
   offset = NTLM_TYPE3_HEADER_LEN;
   cursor = WriteSecBuf(cursor, domainLen, offset.value());
-  memcpy((uint8_t *) *outBuf + offset.value(), domainPtr, domainLen);
+  memcpy(static_cast<uint8_t*>(*outBuf) + offset.value(), domainPtr, domainLen);
 
   // 36 : user name sec buf
   offset += domainLen;
@@ -936,7 +943,7 @@ GenerateType3Msg(const nsString &domain,
     return NS_ERROR_UNEXPECTED;
   }
   cursor = WriteSecBuf(cursor, userLen, offset.value());
-  memcpy(reinterpret_cast<uint8_t*> (*outBuf) + offset.value(), userPtr, userLen);
+  memcpy(static_cast<uint8_t*>(*outBuf) + offset.value(), userPtr, userLen);
 
   // 44 : workstation (host) name sec buf
   offset += userLen;
@@ -945,7 +952,7 @@ GenerateType3Msg(const nsString &domain,
     return NS_ERROR_UNEXPECTED;
   }
   cursor = WriteSecBuf(cursor, hostLen, offset.value());
-  memcpy(reinterpret_cast<uint8_t*> (*outBuf) + offset.value(), hostPtr, hostLen);
+  memcpy(static_cast<uint8_t*>(*outBuf) + offset.value(), hostPtr, hostLen);
 
   // 52 : session key sec buf (not used)
   cursor = WriteSecBuf(cursor, 0, 0);
@@ -1109,14 +1116,13 @@ static void
 des_encrypt(const uint8_t *key, const uint8_t *src, uint8_t *hash)
 {
   CK_MECHANISM_TYPE cipherMech = CKM_DES_ECB;
-  PK11SlotInfo *slot = nullptr;
   PK11SymKey *symkey = nullptr;
   PK11Context *ctxt = nullptr;
   SECItem keyItem, *param = nullptr;
   SECStatus rv;
   unsigned int n;
-  
-  slot = PK11_GetBestSlot(cipherMech, nullptr);
+
+  mozilla::UniquePK11SlotInfo slot(PK11_GetBestSlot(cipherMech, nullptr));
   if (!slot)
   {
     NS_ERROR("no slot");
@@ -1125,7 +1131,7 @@ des_encrypt(const uint8_t *key, const uint8_t *src, uint8_t *hash)
 
   keyItem.data = (uint8_t *) key;
   keyItem.len = 8;
-  symkey = PK11_ImportSymKey(slot, cipherMech,
+  symkey = PK11_ImportSymKey(slot.get(), cipherMech,
                              PK11_OriginUnwrap, CKA_ENCRYPT,
                              &keyItem, nullptr);
   if (!symkey)
@@ -1168,6 +1174,4 @@ done:
     PK11_FreeSymKey(symkey);
   if (param)
     SECITEM_FreeItem(param, true);
-  if (slot)
-    PK11_FreeSlot(slot);
 }

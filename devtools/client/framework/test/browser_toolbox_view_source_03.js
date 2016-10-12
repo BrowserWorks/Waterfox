@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that Toolbox#viewSourceInStyleEditor works when style editor is not
@@ -9,7 +11,7 @@
 var URL = `${URL_ROOT}doc_viewsource.html`;
 var CSS_URL = `${URL_ROOT}doc_theme.css`;
 
-function *viewSource() {
+function* viewSource() {
   let toolbox = yield openNewTabAndToolbox(URL);
 
   let fileFound = yield toolbox.viewSourceInStyleEditor(CSS_URL, 2);
@@ -30,7 +32,7 @@ function *viewSource() {
   finish();
 }
 
-function test () {
+function test() {
   Task.spawn(viewSource).then(finish, (aError) => {
     ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
     finish();

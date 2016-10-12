@@ -6,6 +6,15 @@
 // constructors/destructors.
 var internalMarker = " *INTERNAL* ";
 
+if (! Set.prototype.hasOwnProperty("update")) {
+    Object.defineProperty(Set.prototype, "update", {
+        value: function (collection) {
+            for (let elt of collection)
+                this.add(elt);
+        }
+    });
+}
+
 function assert(x, msg)
 {
     if (x)
@@ -135,7 +144,7 @@ function readable(fullname)
 function xdbLibrary()
 {
     var lib = ctypes.open(os.getenv('XDB'));
-    return {
+    var api = {
         open: lib.declare("xdb_open", ctypes.default_abi, ctypes.void_t, ctypes.char.ptr),
         min_data_stream: lib.declare("xdb_min_data_stream", ctypes.default_abi, ctypes.int),
         max_data_stream: lib.declare("xdb_max_data_stream", ctypes.default_abi, ctypes.int),
@@ -143,6 +152,12 @@ function xdbLibrary()
         read_entry: lib.declare("xdb_read_entry", ctypes.default_abi, ctypes.char.ptr, ctypes.char.ptr),
         free_string: lib.declare("xdb_free", ctypes.default_abi, ctypes.void_t, ctypes.char.ptr)
     };
+    try {
+        api.lookup_key = lib.declare("xdb_lookup_key", ctypes.default_abi, ctypes.int, ctypes.char.ptr);
+    } catch (e) {
+        // lookup_key is for development use only and is not strictly necessary.
+    }
+    return api;
 }
 
 function cLibrary()
@@ -175,4 +190,22 @@ function* readFileLines_gen(filename)
         yield linebuf.readString();
     libc.fclose(fp);
     libc.free(ctypes.void_t.ptr(linebuf));
+}
+
+function addToKeyedList(collection, key, entry)
+{
+    if (!(key in collection))
+        collection[key] = [];
+    collection[key].push(entry);
+}
+
+function loadTypeInfo(filename)
+{
+    var info = {};
+    for (var line of readFileLines_gen(filename)) {
+        line = line.replace(/\n/, "");
+        let [property, name] = line.split("$$");
+        addToKeyedList(info, property, name);
+    }
+    return info;
 }

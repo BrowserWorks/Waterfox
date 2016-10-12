@@ -80,16 +80,24 @@ private:
   virtual ~CacheFileHandle();
 
   const SHA1Sum::Hash *mHash;
-  mozilla::Atomic<bool,ReleaseAcquire> mIsDoomed;
-  bool                 mPriority;
-  bool                 mClosed;
-  bool                 mSpecialFile;
-  bool                 mInvalid;
-  bool                 mFileExists; // This means that the file should exists,
-                                    // but it can be still deleted by OS/user
-                                    // and then a subsequent OpenNSPRFileDesc()
-                                    // will fail.
+  mozilla::Atomic<bool, ReleaseAcquire> mIsDoomed;
+  mozilla::Atomic<bool, ReleaseAcquire> mClosed;
+  bool const           mPriority : 1;
+  bool const           mSpecialFile : 1;
 
+  // These bit flags are all accessed only on the IO thread
+  bool                 mInvalid : 1;
+  bool                 mFileExists : 1; // This means that the file should exists,
+                                        // but it can be still deleted by OS/user
+                                        // and then a subsequent OpenNSPRFileDesc()
+                                        // will fail.
+
+  // Both initially false.  Can be raised to true only when this handle is to be doomed
+  // during the period when the pinning status is unknown.  After the pinning status
+  // determination we check these flags and possibly doom.
+  // These flags are only accessed on the IO thread.
+  bool                 mDoomWhenFoundPinned : 1;
+  bool                 mDoomWhenFoundNonPinned : 1;
   // For existing files this is always pre-set to UNKNOWN.  The status is udpated accordingly
   // after the matadata has been parsed.
   // For new files the flag is set according to which storage kind is opening
@@ -98,12 +106,6 @@ private:
   // and it stays unchanged afterwards.
   // This status is only accessed on the IO thread.
   PinningStatus        mPinning;
-  // Both initially false.  Can be raised to true only when this handle is to be doomed
-  // during the period when the pinning status is unknown.  After the pinning status
-  // determination we check these flags and possibly doom.
-  // These flags are only accessed on the IO thread.
-  bool                 mDoomWhenFoundPinned : 1;
-  bool                 mDoomWhenFoundNonPinned : 1;
 
   nsCOMPtr<nsIFile>    mFile;
   int64_t              mFileSize;
@@ -234,6 +236,8 @@ public:
   NS_IMETHOD OnFileDoomed(CacheFileHandle *aHandle, nsresult aResult) = 0;
   NS_IMETHOD OnEOFSet(CacheFileHandle *aHandle, nsresult aResult) = 0;
   NS_IMETHOD OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult) = 0;
+
+  virtual bool IsKilled() { return false; }
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(CacheFileIOListener, CACHEFILEIOLISTENER_IID)
@@ -314,7 +318,7 @@ public:
   static nsresult InitIndexEntry(CacheFileHandle *aHandle,
                                  uint32_t         aAppId,
                                  bool             aAnonymous,
-                                 bool             aInBrowser,
+                                 bool             aInIsolatedMozBrowser,
                                  bool             aPinning);
   static nsresult UpdateIndexEntry(CacheFileHandle *aHandle,
                                    const uint32_t  *aFrecency,
@@ -382,7 +386,7 @@ private:
   nsresult DoomFileInternal(CacheFileHandle *aHandle,
                             PinningDoomRestriction aPinningStatusRestriction = NO_RESTRICTION);
   nsresult DoomFileByKeyInternal(const SHA1Sum::Hash *aHash);
-  nsresult ReleaseNSPRHandleInternal(CacheFileHandle *aHandle,
+  nsresult MaybeReleaseNSPRHandleInternal(CacheFileHandle *aHandle,
                                      bool aIgnoreShutdownLag = false);
   nsresult TruncateSeekSetEOFInternal(CacheFileHandle *aHandle,
                                       int64_t aTruncatePos, int64_t aEOFPos);
@@ -430,20 +434,11 @@ private:
   // before we start an eviction loop.
   nsresult UpdateSmartCacheSize(int64_t aFreeSpace);
 
-  // May return true after shutdown only when time for flushing all data
-  // has already passed.
-  bool IsPastShutdownIOLag();
-
   // Memory reporting (private part)
   size_t SizeOfExcludingThisInternal(mozilla::MallocSizeOf mallocSizeOf) const;
 
   static CacheFileIOManager           *gInstance;
   TimeStamp                            mStartTime;
-  // Shutdown time stamp, accessed only on the I/O thread.  Used to bypass
-  // I/O after a certain time pass the shutdown has been demanded.
-  TimeStamp                            mShutdownDemandedTime;
-  // Set true on the main thread when cache shutdown is first demanded.
-  Atomic<bool, Relaxed>                mShutdownDemanded;
   // Set true on the IO thread, CLOSE level as part of the internal shutdown
   // procedure.
   bool                                 mShuttingDown;

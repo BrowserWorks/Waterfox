@@ -3,12 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { Cu, Ci, Cc } = require("chrome");
+const { Ci } = require("chrome");
 const { Class } = require("sdk/core/heritage");
-const { defer, resolve } = require("promise");
-const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
-
-Cu.import("resource://gre/modules/Task.jsm");
+const { resolve } = require("promise");
+const Services = require("Services");
+const { Task } = require("devtools/shared/task");
 
 loader.lazyRequireGetter(this, "HarCollector", "devtools/client/netmonitor/har/har-collector", true);
 loader.lazyRequireGetter(this, "HarExporter", "devtools/client/netmonitor/har/har-exporter", true);
@@ -18,9 +17,9 @@ const prefDomain = "devtools.netmonitor.har.";
 
 // Helper tracer. Should be generic sharable by other modules (bug 1171927)
 const trace = {
-  log: function(...args) {
+  log: function (...args) {
   }
-}
+};
 
 /**
  * This object is responsible for automated HAR export. It listens
@@ -39,7 +38,7 @@ const trace = {
 var HarAutomation = Class({
   // Initialization
 
-  initialize: function(toolbox) {
+  initialize: function (toolbox) {
     this.toolbox = toolbox;
 
     let target = toolbox.target;
@@ -48,7 +47,7 @@ var HarAutomation = Class({
     });
   },
 
-  destroy: function() {
+  destroy: function () {
     if (this.collector) {
       this.collector.stop();
     }
@@ -60,7 +59,7 @@ var HarAutomation = Class({
 
   // Automation
 
-  startMonitoring: function(client, tabGrip, callback) {
+  startMonitoring: function (client, tabGrip, callback) {
     if (!client) {
       return;
     }
@@ -77,11 +76,11 @@ var HarAutomation = Class({
     this.tabWatcher.connect();
   },
 
-  pageLoadBegin: function(aResponse) {
+  pageLoadBegin: function (response) {
     this.resetCollector();
   },
 
-  resetCollector: function() {
+  resetCollector: function () {
     if (this.collector) {
       this.collector.stop();
     }
@@ -106,8 +105,8 @@ var HarAutomation = Class({
    * The additional traffic can be exported by executing
    * triggerExport on this object.
    */
-  pageLoadDone: function(aResponse) {
-    trace.log("HarAutomation.pageLoadDone; ", aResponse);
+  pageLoadDone: function (response) {
+    trace.log("HarAutomation.pageLoadDone; ", response);
 
     if (this.collector) {
       this.collector.waitForHarLoad().then(collector => {
@@ -116,7 +115,7 @@ var HarAutomation = Class({
     }
   },
 
-  autoExport: function() {
+  autoExport: function () {
     let autoExport = Services.prefs.getBoolPref(prefDomain +
       "enableAutoExportToFile");
 
@@ -128,7 +127,7 @@ var HarAutomation = Class({
     // into a file and use all the default options.
     let data = {
       fileName: Services.prefs.getCharPref(prefDomain + "defaultFileName"),
-    }
+    };
 
     return this.executeExport(data);
   },
@@ -138,7 +137,7 @@ var HarAutomation = Class({
   /**
    * Export all what is currently collected.
    */
-  triggerExport: function(data) {
+  triggerExport: function (data) {
     if (!data.fileName) {
       data.fileName = Services.prefs.getCharPref(prefDomain +
         "defaultFileName");
@@ -150,7 +149,7 @@ var HarAutomation = Class({
   /**
    * Clear currently collected data.
    */
-  clear: function() {
+  clear: function () {
     this.resetCollector();
   },
 
@@ -160,7 +159,7 @@ var HarAutomation = Class({
    * Execute HAR export. This method fetches all data from the
    * Network panel (asynchronously) and saves it into a file.
    */
-  executeExport: function(data) {
+  executeExport: function (data) {
     let items = this.collector.getItems();
     let form = this.toolbox.target.form;
     let title = form.title || form.url;
@@ -169,7 +168,7 @@ var HarAutomation = Class({
       getString: this.getString.bind(this),
       view: this,
       items: items,
-    }
+    };
 
     options.defaultFileName = data.fileName;
     options.compress = data.compress;
@@ -198,39 +197,44 @@ var HarAutomation = Class({
   /**
    * Fetches the full text of a string.
    */
-  getString: function(aStringGrip) {
-    return this.webConsoleClient.getString(aStringGrip);
+  getString: function (stringGrip) {
+    return this.webConsoleClient.getString(stringGrip);
   },
 
   /**
    * Extracts any urlencoded form data sections (e.g. "?foo=bar&baz=42") from a
    * POST request.
    *
-   * @param object aHeaders
+   * @param object headers
    *        The "requestHeaders".
-   * @param object aUploadHeaders
+   * @param object uploadHeaders
    *        The "requestHeadersFromUploadStream".
-   * @param object aPostData
+   * @param object postData
    *        The "requestPostData".
    * @return array
    *        A promise that is resolved with the extracted form data.
    */
-  _getFormDataSections: Task.async(function*(aHeaders, aUploadHeaders, aPostData) {
+  _getFormDataSections: Task.async(function* (headers, uploadHeaders,
+                                              postData) {
     let formDataSections = [];
 
-    let { headers: requestHeaders } = aHeaders;
-    let { headers: payloadHeaders } = aUploadHeaders;
+    let { headers: requestHeaders } = headers;
+    let { headers: payloadHeaders } = uploadHeaders;
     let allHeaders = [...payloadHeaders, ...requestHeaders];
 
-    let contentTypeHeader = allHeaders.find(e => e.name.toLowerCase() == "content-type");
-    let contentTypeLongString = contentTypeHeader ? contentTypeHeader.value : "";
+    let contentTypeHeader = allHeaders.find(e => {
+      return e.name.toLowerCase() == "content-type";
+    });
+
+    let contentTypeLongString = contentTypeHeader ?
+      contentTypeHeader.value : "";
     let contentType = yield this.getString(contentTypeLongString);
 
     if (contentType.includes("x-www-form-urlencoded")) {
-      let postDataLongString = aPostData.postData.text;
-      let postData = yield this.getString(postDataLongString);
+      let postDataLongString = postData.postData.text;
+      let data = yield this.getString(postDataLongString);
 
-      for (let section of postData.split(/\r\n|\r|\n/)) {
+      for (let section of data.split(/\r\n|\r|\n/)) {
         // Before displaying it, make sure this section of the POST data
         // isn't a line containing upload stream headers.
         if (payloadHeaders.every(header => !section.startsWith(header.name))) {
@@ -255,12 +259,12 @@ function TabWatcher(toolbox, listener) {
 TabWatcher.prototype = {
   // Connection
 
-  connect: function() {
+  connect: function () {
     this.target.on("navigate", this.onTabNavigated);
     this.target.on("will-navigate", this.onTabNavigated);
   },
 
-  disconnect: function() {
+  disconnect: function () {
     if (!this.target) {
       return;
     }
@@ -279,14 +283,14 @@ TabWatcher.prototype = {
    * @param object aPacket
    *        Packet received from the server.
    */
-  onTabNavigated: function(aType, aPacket) {
-    switch (aType) {
+  onTabNavigated: function (type, packet) {
+    switch (type) {
       case "will-navigate": {
-        this.listener.pageLoadBegin(aPacket);
+        this.listener.pageLoadBegin(packet);
         break;
       }
       case "navigate": {
-        this.listener.pageLoadDone(aPacket);
+        this.listener.pageLoadDone(packet);
         break;
       }
     }

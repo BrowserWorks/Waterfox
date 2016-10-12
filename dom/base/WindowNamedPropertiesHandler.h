@@ -23,12 +23,12 @@ public:
   getOwnPropDescriptor(JSContext* aCx, JS::Handle<JSObject*> aProxy,
                        JS::Handle<jsid> aId,
                        bool /* unused */,
-                       JS::MutableHandle<JSPropertyDescriptor> aDesc)
+                       JS::MutableHandle<JS::PropertyDescriptor> aDesc)
                        const override;
   virtual bool
   defineProperty(JSContext* aCx, JS::Handle<JSObject*> aProxy,
                  JS::Handle<jsid> aId,
-                 JS::Handle<JSPropertyDescriptor> aDesc,
+                 JS::Handle<JS::PropertyDescriptor> aDesc,
                  JS::ObjectOpResult &result) const override;
   virtual bool
   ownPropNames(JSContext* aCx, JS::Handle<JSObject*> aProxy, unsigned flags,
@@ -36,6 +36,11 @@ public:
   virtual bool
   delete_(JSContext* aCx, JS::Handle<JSObject*> aProxy, JS::Handle<jsid> aId,
           JS::ObjectOpResult &aResult) const override;
+
+  // No need for getPrototypeIfOrdinary here: window named-properties objects
+  // have static prototypes, so the version inherited from BaseDOMProxyHandler
+  // will do the right thing.
+
   virtual bool
   preventExtensions(JSContext* aCx, JS::Handle<JSObject*> aProxy,
                     JS::ObjectOpResult& aResult) const override

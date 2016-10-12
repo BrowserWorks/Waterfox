@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -11,10 +13,10 @@ const TEST_URI = "http://example.com/";
 var good = true;
 var listener = {
   QueryInterface: XPCOMUtils.generateQI([ Ci.nsIObserver ]),
-  observe: function(subject) {
+  observe: function (subject) {
     if (subject instanceof Ci.nsIScriptError &&
         subject.category === "XPConnect JavaScript" &&
-        subject.sourceName.contains("webconsole")) {
+        subject.sourceName.includes("webconsole")) {
       good = false;
     }
   }

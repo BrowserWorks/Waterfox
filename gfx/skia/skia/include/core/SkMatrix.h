@@ -591,11 +591,16 @@ public:
         return GetMapPtsProc(this->getType());
     }
 
-    /** If the matrix can be stepped in X (not complex perspective)
-        then return true and if step[XY] is not null, return the step[XY] value.
-        If it cannot, return false and ignore step.
+    /** Returns true if the matrix can be stepped in X (not complex
+        perspective).
     */
-    bool fixedStepInX(SkScalar y, SkFixed* stepX, SkFixed* stepY) const;
+    bool isFixedStepInX() const;
+
+    /** If the matrix can be stepped in X (not complex perspective)
+        then return the step value.
+        If it cannot, behavior is undefined.
+    */
+    SkVector fixedStepInX(SkScalar y) const;
 
     /** Efficient comparison of two matrices. It distinguishes between zero and
      *  negative zero. It will return false when the sign of zero values is the
@@ -635,15 +640,17 @@ public:
 
     /**
      * Calculates the minimum scaling factor of the matrix as computed from the SVD of the upper
-     * left 2x2. If the matrix has perspective -1 is returned.
+     * left 2x2. If the max scale factor cannot be computed (for example overflow or perspective)
+     * -1 is returned.
      *
-     * @return minumum scale factor
+     * @return minimum scale factor
      */
     SkScalar getMinScale() const;
 
     /**
      * Calculates the maximum scaling factor of the matrix as computed from the SVD of the upper
-     * left 2x2. If the matrix has perspective -1 is returned.
+     * left 2x2. If the max scale factor cannot be computed (for example overflow or perspective)
+     * -1 is returned.
      *
      * @return maximum scale factor
      */
@@ -651,10 +658,10 @@ public:
 
     /**
      * Gets both the min and max scale factors. The min scale factor is scaleFactors[0] and the max
-     * is scaleFactors[1]. If the matrix has perspective false will be returned and scaleFactors
-     * will be unchanged.
+     * is scaleFactors[1]. If the min/max scale factors cannot be computed false is returned and the
+     * values of scaleFactors[] are undefined.
      */
-    bool getMinMaxScales(SkScalar scaleFactors[2]) const;
+    bool SK_WARN_UNUSED_RESULT getMinMaxScales(SkScalar scaleFactors[2]) const;
 
     /**
      *  Attempt to decompose this matrix into a scale-only component and whatever remains, where

@@ -35,7 +35,7 @@ namespace dom {
 
 namespace {
 
-class CallNuwaSpawn: public nsRunnable
+class CallNuwaSpawn: public Runnable
 {
 public:
   NS_IMETHOD Run()
@@ -94,7 +94,7 @@ NuwaFork()
   sNuwaForking = true;
 
   MessageLoop* ioloop = XRE_GetIOMessageLoop();
-  ioloop->PostTask(FROM_HERE, NewRunnableFunction(RunNuwaFork));
+  ioloop->PostTask(NewRunnableFunction(RunNuwaFork));
 }
 
 } // Anonymous namespace.
@@ -135,7 +135,7 @@ NuwaChild::RecvFork()
   nsCOMPtr<nsIRunnable> runnable =
     NS_NewRunnableFunction(&NuwaFork);
   MOZ_ASSERT(runnable);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
 
   return true;
 #else
@@ -185,7 +185,7 @@ GetProtoFdInfos(NuwaProtoFdInfo* aInfoList,
   *aInfoSize = i;
 }
 
-class RunAddNewIPCProcess : public nsRunnable
+class RunAddNewIPCProcess : public mozilla::Runnable
 {
 public:
   RunAddNewIPCProcess(pid_t aPid,

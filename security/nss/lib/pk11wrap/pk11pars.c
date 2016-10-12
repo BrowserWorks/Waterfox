@@ -354,6 +354,7 @@ static const oidValDef algOptList[] = {
     {CIPHER_NAME("CAMELLIA128-CBC"), SEC_OID_CAMELLIA_128_CBC, NSS_USE_ALG_IN_SSL},
     {CIPHER_NAME("CAMELLIA192-CBC"), SEC_OID_CAMELLIA_192_CBC, NSS_USE_ALG_IN_SSL},
     {CIPHER_NAME("CAMELLIA256-CBC"), SEC_OID_CAMELLIA_256_CBC, NSS_USE_ALG_IN_SSL},
+    {CIPHER_NAME("CHACHA20-POLY1305"), SEC_OID_CHACHA20_POLY1305, NSS_USE_ALG_IN_SSL},
     {CIPHER_NAME("SEED-CBC"), SEC_OID_SEED_CBC, NSS_USE_ALG_IN_SSL},
     {CIPHER_NAME("DES-EDE3-CBC"), SEC_OID_DES_EDE3_CBC, NSS_USE_ALG_IN_SSL},
     {CIPHER_NAME("DES-40-CBC"), SEC_OID_DES_40_CBC, NSS_USE_ALG_IN_SSL},
@@ -1086,7 +1087,7 @@ secmod_configIsDBM(char *configDir)
 	|| (strncmp(configDir, "extern:", 7) == 0)) {
 	return PR_FALSE;
     }
-    env = PR_GetEnv("NSS_DEFAULT_DB_TYPE");
+    env = PR_GetEnvSecure("NSS_DEFAULT_DB_TYPE");
     /* implicit dbm open */
     if ((env == NULL) || (strcmp(env,"dbm") == 0)) {
 	return PR_TRUE;

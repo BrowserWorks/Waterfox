@@ -41,6 +41,10 @@ using namespace sandbox::bpf_dsl;
 #define MADV_DONTDUMP 16
 #endif
 
+#ifndef PR_SET_PTRACER
+#define PR_SET_PTRACER 0x59616d61
+#endif
+
 // To avoid visual confusion between "ifdef ANDROID" and "ifndef ANDROID":
 #ifndef ANDROID
 #define DESKTOP
@@ -124,7 +128,8 @@ public:
     return Switch(op)
       .CASES((PR_GET_SECCOMP, // BroadcastSetThreadSandbox, etc.
               PR_SET_NAME,    // Thread creation
-              PR_SET_DUMPABLE), // Crash reporting
+              PR_SET_DUMPABLE, // Crash reporting
+              PR_SET_PTRACER), // Debug-mode crash handling
              Allow())
       .Default(InvalidSyscall());
   }
@@ -145,7 +150,15 @@ public:
     case __NR_clock_gettime: {
       Arg<clockid_t> clk_id(0);
       return If(clk_id == CLOCK_MONOTONIC, Allow())
+#ifdef CLOCK_MONOTONIC_COARSE
+        .ElseIf(clk_id == CLOCK_MONOTONIC_COARSE, Allow())
+#endif
+        .ElseIf(clk_id == CLOCK_PROCESS_CPUTIME_ID, Allow())
         .ElseIf(clk_id == CLOCK_REALTIME, Allow())
+#ifdef CLOCK_REALTIME_COARSE
+        .ElseIf(clk_id == CLOCK_REALTIME_COARSE, Allow())
+#endif
+        .ElseIf(clk_id == CLOCK_THREAD_CPUTIME_ID, Allow())
         .Else(InvalidSyscall());
     }
     case __NR_gettimeofday:
@@ -180,6 +193,7 @@ public:
     case __NR_write:
     case __NR_read:
     case __NR_writev: // see SandboxLogging.cpp
+    CASES_FOR_lseek:
       return Allow();
 
       // Memory mapping
@@ -428,6 +442,9 @@ public:
     case SYS_SEND:
     case SYS_SOCKET: // DANGEROUS
     case SYS_CONNECT: // DANGEROUS
+    case SYS_ACCEPT:
+    case SYS_BIND:
+    case SYS_LISTEN:
     case SYS_SETSOCKOPT:
     case SYS_GETSOCKNAME:
     case SYS_GETPEERNAME:
@@ -503,6 +520,9 @@ public:
     case __NR_symlink:
     case __NR_quotactl:
     case __NR_utimes:
+    case __NR_unlink:
+    case __NR_fchown:
+    case __NR_fchmod:
 #endif
       return Allow();
 
@@ -516,7 +536,6 @@ public:
       return Allow();
 
     CASES_FOR_getdents:
-    CASES_FOR_lseek:
     CASES_FOR_ftruncate:
     case __NR_writev:
     case __NR_pread64:
@@ -605,6 +624,7 @@ public:
     case __NR_eventfd2:
     case __NR_inotify_init1:
     case __NR_inotify_add_watch:
+    case __NR_inotify_rm_watch:
       return Allow();
 #endif
 
@@ -661,15 +681,15 @@ class GMPSandboxPolicy : public SandboxPolicyCommon {
       MOZ_CRASH("unexpected syscall number");
     }
 
+    if (strcmp(path, plugin->mPath) != 0) {
+      SANDBOX_LOG_ERROR("attempt to open file %s (flags=0%o) which is not the"
+                        " media plugin %s", path, flags, plugin->mPath);
+      return -EPERM;
+    }
     if ((flags & O_ACCMODE) != O_RDONLY) {
       SANDBOX_LOG_ERROR("non-read-only open of file %s attempted (flags=0%o)",
                         path, flags);
-      return -ENOSYS;
-    }
-    if (strcmp(path, plugin->mPath) != 0) {
-      SANDBOX_LOG_ERROR("attempt to open file %s which is not the media plugin"
-                        " %s", path, plugin->mPath);
-      return -ENOSYS;
+      return -EPERM;
     }
     int fd = plugin->mFd.exchange(-1);
     if (fd < 0) {
@@ -677,6 +697,23 @@ class GMPSandboxPolicy : public SandboxPolicyCommon {
       return -ENOSYS;
     }
     return fd;
+  }
+
+  static intptr_t SchedTrap(const sandbox::arch_seccomp_data& aArgs,
+                            void* aux)
+  {
+    const pid_t tid = syscall(__NR_gettid);
+    if (aArgs.args[0] == static_cast<uint64_t>(tid)) {
+      return syscall(aArgs.nr,
+                     0,
+                     aArgs.args[1],
+                     aArgs.args[2],
+                     aArgs.args[3],
+                     aArgs.args[4],
+                     aArgs.args[5]);
+    }
+    SANDBOX_LOG_ERROR("unsupported tid in SchedTrap");
+    return BlockedSyscallTrap(aArgs, nullptr);
   }
 
   SandboxOpenedFile* mPlugin;
@@ -709,6 +746,18 @@ public:
         .ElseIf(advice == MADV_DONTDUMP, Allow())
 #endif
         .Else(InvalidSyscall());
+    }
+    case __NR_brk:
+    CASES_FOR_geteuid:
+      return Allow();
+    case __NR_sched_getparam:
+    case __NR_sched_getscheduler:
+    case __NR_sched_get_priority_min:
+    case __NR_sched_get_priority_max:
+    case __NR_sched_setscheduler: {
+      Arg<pid_t> pid(0);
+      return If(pid == 0, Allow())
+        .Else(Trap(SchedTrap, nullptr));
     }
 
     default:

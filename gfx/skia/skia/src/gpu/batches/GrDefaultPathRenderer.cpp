@@ -11,15 +11,16 @@
 #include "GrBatchTest.h"
 #include "GrContext.h"
 #include "GrDefaultGeoProcFactory.h"
+#include "GrMesh.h"
 #include "GrPathUtils.h"
 #include "GrPipelineBuilder.h"
-#include "GrVertices.h"
 #include "SkGeometry.h"
 #include "SkString.h"
 #include "SkStrokeRec.h"
 #include "SkTLazy.h"
 #include "SkTraceEvent.h"
 
+#include "batches/GrRectBatchFactory.h"
 #include "batches/GrVertexBatch.h"
 
 GrDefaultPathRenderer::GrDefaultPathRenderer(bool separateStencilSupport,
@@ -227,13 +228,12 @@ public:
 
     const char* name() const override { return "DefaultPathBatch"; }
 
-    void computePipelineOptimizations(GrInitInvariantOutput* color, 
+    void computePipelineOptimizations(GrInitInvariantOutput* color,
                                       GrInitInvariantOutput* coverage,
                                       GrBatchToXPOverrides* overrides) const override {
         // When this is called on a batch, there is only one geometry bundle
         color->setKnownFourComponents(fGeoData[0].fColor);
         coverage->setKnownSingleComponent(this->coverage());
-        overrides->fUsePLSDstRead = false;
     }
 
 private:
@@ -269,8 +269,6 @@ private:
         size_t vertexStride = gp->getVertexStride();
         SkASSERT(vertexStride == sizeof(SkPoint));
 
-        target->initDraw(gp, this->pipeline());
-
         int instanceCount = fGeoData.count();
 
         // compute number of vertices
@@ -289,7 +287,7 @@ private:
         }
 
         if (maxVertices == 0 || maxVertices > ((int)SK_MaxU16 + 1)) {
-            SkDebugf("Cannot render path (%d)\n", maxVertices);
+            //SkDebugf("Cannot render path (%d)\n", maxVertices);
             return;
         }
 
@@ -313,7 +311,7 @@ private:
         }
 
         // allocate vertex / index buffers
-        const GrVertexBuffer* vertexBuffer;
+        const GrBuffer* vertexBuffer;
         int firstVertex;
 
         void* verts = target->makeVertexSpace(vertexStride, maxVertices,
@@ -324,7 +322,7 @@ private:
             return;
         }
 
-        const GrIndexBuffer* indexBuffer = nullptr;
+        const GrBuffer* indexBuffer = nullptr;
         int firstIndex = 0;
 
         void* indices = nullptr;
@@ -362,14 +360,14 @@ private:
             SkASSERT(vertexOffset <= maxVertices && indexOffset <= maxIndices);
         }
 
-        GrVertices vertices;
+        GrMesh mesh;
         if (isIndexed) {
-            vertices.initIndexed(primitiveType, vertexBuffer, indexBuffer, firstVertex, firstIndex,
-                                 vertexOffset, indexOffset);
+            mesh.initIndexed(primitiveType, vertexBuffer, indexBuffer, firstVertex, firstIndex,
+                             vertexOffset, indexOffset);
         } else {
-            vertices.init(primitiveType, vertexBuffer, firstVertex, vertexOffset);
+            mesh.init(primitiveType, vertexBuffer, firstVertex, vertexOffset);
         }
-        target->draw(vertices);
+        target->draw(gp, mesh);
 
         // put back reserves
         target->putBackIndices((size_t)(maxIndices - indexOffset));
@@ -697,7 +695,10 @@ bool GrDefaultPathRenderer::internalDrawPath(GrDrawTarget* target,
             }
             const SkMatrix& viewM = (reverse && viewMatrix.hasPerspective()) ? SkMatrix::I() :
                                                                                viewMatrix;
-            target->drawNonAARect(*pipelineBuilder, color, viewM, bounds, localMatrix);
+            SkAutoTUnref<GrDrawBatch> batch(
+                    GrRectBatchFactory::CreateNonAAFill(color, viewM, bounds, nullptr,
+                                                        &localMatrix));
+            target->drawBatch(*pipelineBuilder, batch);
         } else {
             if (passCount > 1) {
                 pipelineBuilder->setDisableColorXPFactory();
@@ -726,6 +727,7 @@ bool GrDefaultPathRenderer::onCanDrawPath(const CanDrawPathArgs& args) const {
 }
 
 bool GrDefaultPathRenderer::onDrawPath(const DrawPathArgs& args) {
+    GR_AUDIT_TRAIL_AUTO_FRAME(args.fTarget->getAuditTrail(), "GrDefaultPathRenderer::onDrawPath");
     return this->internalDrawPath(args.fTarget,
                                   args.fPipelineBuilder,
                                   args.fColor,
@@ -736,6 +738,7 @@ bool GrDefaultPathRenderer::onDrawPath(const DrawPathArgs& args) {
 }
 
 void GrDefaultPathRenderer::onStencilPath(const StencilPathArgs& args) {
+    GR_AUDIT_TRAIL_AUTO_FRAME(args.fTarget->getAuditTrail(),"GrDefaultPathRenderer::onStencilPath");
     SkASSERT(SkPath::kInverseEvenOdd_FillType != args.fPath->getFillType());
     SkASSERT(SkPath::kInverseWinding_FillType != args.fPath->getFillType());
     this->internalDrawPath(args.fTarget, args.fPipelineBuilder, GrColor_WHITE, *args.fViewMatrix,

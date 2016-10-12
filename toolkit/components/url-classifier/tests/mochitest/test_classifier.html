@@ -3,6 +3,7 @@
 <head>
   <title>Test the URI Classifier</title>
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="classifierHelper.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
 
@@ -13,68 +14,47 @@
 
 <script class="testbody" type="text/javascript">
 
-var Cc = SpecialPowers.Cc;
-var Ci = SpecialPowers.Ci;
 var firstLoad = true;
 
 // Add some URLs to the malware database.
-var testData = "malware.example.com/";
-var testUpdate =
-  "n:1000\ni:test-malware-simple\nad:1\n" +
-  "a:524:32:" + testData.length + "\n" +
-  testData;
-
-testData = "unwanted.example.com/";
-testUpdate +=
-  "n:1000\ni:test-unwanted-simple\nad:1\n" +
-  "a:524:32:" + testData.length + "\n" +
-  testData;
-
-var dbService = Cc["@mozilla.org/url-classifier/dbservice;1"]
-                .getService(Ci.nsIUrlClassifierDBService);
+var testData = [
+  { url: "malware.example.com/",
+    db: "test-malware-simple"
+  },
+  { url: "unwanted.example.com/",
+    db: "test-unwanted-simple"
+  }
+];
 
 function loadTestFrame() {
   document.getElementById("testFrame").src = "classifierFrame.html";
 }
 
-function doUpdate(update) {
-  var listener = {
-    QueryInterface: SpecialPowers.wrapCallback(function(iid)
-    {
-      if (iid.equals(Ci.nsISupports) ||
-          iid.equals(Ci.nsIUrlClassifierUpdateObserver))
-        return this;
+// Expected finish() call is in "classifierFrame.html".
+SimpleTest.waitForExplicitFinish();
 
-      throw Cr.NS_ERROR_NO_INTERFACE;
-    }),
-    updateUrlRequested: function(url) { },
-    streamFinished: function(status) { },
-    updateError: function(errorCode) {
-      ok(false, "Couldn't update classifier.");
-      // Abort test.
-      SimpleTest.finish();
-    },
-    updateSuccess: function(requestedTimeout) {
-      SpecialPowers.pushPrefEnv(
-        {"set" : [["browser.safebrowsing.malware.enabled", true]]},
-        loadTestFrame);
-    }
-  };
+function updateSuccess() {
+  SpecialPowers.pushPrefEnv(
+    {"set" : [["browser.safebrowsing.malware.enabled", true]]},
+    loadTestFrame);
+}
 
-  dbService.beginUpdate(listener, "test-malware-simple,test-unwanted-simple", "");
-  dbService.beginStream("", "");
-  dbService.updateStream(update);
-  dbService.finishStream();
-  dbService.finishUpdate();
+function updateError(errorCode) {
+  ok(false, "Couldn't update classifier. Error code: " + errorCode);
+  // Abort test.
+  SimpleTest.finish();
 }
 
 SpecialPowers.pushPrefEnv(
   {"set" : [["urlclassifier.malwareTable", "test-malware-simple,test-unwanted-simple"],
             ["urlclassifier.phishTable", "test-phish-simple"]]},
-  function() { doUpdate(testUpdate); });
-
-// Expected finish() call is in "classifierFrame.html".
-SimpleTest.waitForExplicitFinish();
+  function() {
+    classifierHelper.addUrlToDB(testData)
+      .then(updateSuccess)
+      .catch(err => {
+        updateError(err);
+      });
+  });
 
 </script>
 

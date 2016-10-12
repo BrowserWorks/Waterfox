@@ -14,6 +14,7 @@
 #include "nsIDOMWindow.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDOMDocument.h"
+#include "nsIScriptObjectPrincipal.h"
 #include "nsIServiceManager.h"
 #include "nsIServiceManager.h"
 #include "mozilla/Preferences.h"
@@ -136,6 +137,37 @@ NS_IMETHODIMP nsDeviceSensors::HasWindowListener(uint32_t aType, nsIDOMWindow *a
   return NS_OK;
 }
 
+class DeviceSensorTestEvent : public Runnable
+{
+public:
+  DeviceSensorTestEvent(nsDeviceSensors* aTarget,
+                        uint32_t aType)
+  : mTarget(aTarget)
+  , mType(aType)
+  {
+  }
+
+  NS_IMETHOD Run()
+  {
+    SensorData sensorData;
+    sensorData.sensor() = static_cast<SensorType>(mType);
+    sensorData.timestamp() = PR_Now();
+    sensorData.values().AppendElement(0.5f);
+    sensorData.values().AppendElement(0.5f);
+    sensorData.values().AppendElement(0.5f);
+    sensorData.values().AppendElement(0.5f);
+    sensorData.accuracy() = SENSOR_ACCURACY_UNRELIABLE;
+    mTarget->Notify(sensorData);
+    return NS_OK;
+  }
+
+private:
+  RefPtr<nsDeviceSensors> mTarget;
+  uint32_t mType;
+};
+
+static bool sTestSensorEvents = false;
+
 NS_IMETHODIMP nsDeviceSensors::AddWindowListener(uint32_t aType, nsIDOMWindow *aWindow)
 {
   if (!mEnabled)
@@ -149,6 +181,20 @@ NS_IMETHODIMP nsDeviceSensors::AddWindowListener(uint32_t aType, nsIDOMWindow *a
   }
 
   mWindowListeners[aType]->AppendElement(aWindow);
+
+  static bool sPrefCacheInitialized = false;
+  if (!sPrefCacheInitialized) {
+    sPrefCacheInitialized = true;
+    Preferences::AddBoolVarCache(&sTestSensorEvents,
+                                 "device.sensors.test.events",
+                                 false);
+  }
+
+  if (sTestSensorEvents) {
+    nsCOMPtr<nsIRunnable> event = new DeviceSensorTestEvent(this, aType);
+    NS_DispatchToCurrentThread(event);
+  }
+
   return NS_OK;
 }
 
@@ -174,7 +220,7 @@ NS_IMETHODIMP nsDeviceSensors::RemoveWindowAsListener(nsIDOMWindow *aWindow)
 }
 
 static bool
-WindowCannotReceiveSensorEvent (nsPIDOMWindow* aWindow)
+WindowCannotReceiveSensorEvent (nsPIDOMWindowInner* aWindow)
 {
   // Check to see if this window is in the background.  If
   // it is and it does not have the "background-sensors" permission,
@@ -183,10 +229,29 @@ WindowCannotReceiveSensorEvent (nsPIDOMWindow* aWindow)
     return true;
   }
 
-  if (aWindow->GetOuterWindow()->IsBackground()) {
+  bool disabled = aWindow->GetOuterWindow()->IsBackground() ||
+                  !aWindow->IsTopLevelWindowActive();
+  if (!disabled) {
+    nsCOMPtr<nsPIDOMWindowOuter> top = aWindow->GetScriptableTop();
+    nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(aWindow);
+    nsCOMPtr<nsIScriptObjectPrincipal> topSop = do_QueryInterface(top);
+    if (!sop || !topSop) {
+      return true;
+    }
+
+    nsIPrincipal* principal = sop->GetPrincipal();
+    nsIPrincipal* topPrincipal = topSop->GetPrincipal();
+    if (!principal || !topPrincipal) {
+      return true;
+    }
+
+    disabled = !principal->Subsumes(topPrincipal);
+  }
+
+  if (disabled) {
     nsCOMPtr<nsIPermissionManager> permMgr =
       services::GetPermissionManager();
-    NS_ENSURE_TRUE(permMgr, false);
+    NS_ENSURE_TRUE(permMgr, true);
     uint32_t permission = nsIPermissionManager::DENY_ACTION;
     permMgr->TestPermissionFromWindow(aWindow, "background-sensors", &permission);
     return permission != nsIPermissionManager::ALLOW_ACTION;
@@ -267,6 +332,7 @@ nsDeviceSensors::Notify(const mozilla::hal::SensorData& aSensorData)
   double y = len > 1 ? values[1] : 0.0;
   double z = len > 2 ? values[2] : 0.0;
   double w = len > 3 ? values[3] : 0.0;
+  PRTime timestamp = aSensorData.timestamp();
 
   nsCOMArray<nsIDOMWindow> windowListeners;
   for (uint32_t i = 0; i < mWindowListeners[type]->Length(); i++) {
@@ -276,7 +342,7 @@ nsDeviceSensors::Notify(const mozilla::hal::SensorData& aSensorData)
   for (uint32_t i = windowListeners.Count(); i > 0 ; ) {
     --i;
 
-    nsCOMPtr<nsPIDOMWindow> pwindow = do_QueryInterface(windowListeners[i]);
+    nsCOMPtr<nsPIDOMWindowInner> pwindow = do_QueryInterface(windowListeners[i]);
     if (WindowCannotReceiveSensorEvent(pwindow)) {
         continue;
     }
@@ -286,7 +352,7 @@ nsDeviceSensors::Notify(const mozilla::hal::SensorData& aSensorData)
       if (type == nsIDeviceSensorData::TYPE_ACCELERATION ||
         type == nsIDeviceSensorData::TYPE_LINEAR_ACCELERATION ||
         type == nsIDeviceSensorData::TYPE_GYROSCOPE) {
-        FireDOMMotionEvent(domDoc, target, type, x, y, z);
+        FireDOMMotionEvent(domDoc, target, type, timestamp, x, y, z);
       } else if (type == nsIDeviceSensorData::TYPE_ORIENTATION) {
         FireDOMOrientationEvent(target, x, y, z, Orientation::kAbsolute);
       } else if (type == nsIDeviceSensorData::TYPE_ROTATION_VECTOR) {
@@ -423,12 +489,17 @@ void
 nsDeviceSensors::FireDOMMotionEvent(nsIDOMDocument *domdoc,
                                     EventTarget* target,
                                     uint32_t type,
+                                    PRTime timestamp,
                                     double x,
                                     double y,
                                     double z)
 {
   // Attempt to coalesce events
-  bool fireEvent = TimeStamp::Now() > mLastDOMMotionEventTime + TimeDuration::FromMilliseconds(DEFAULT_SENSOR_POLL);
+  TimeDuration sensorPollDuration =
+    TimeDuration::FromMilliseconds(DEFAULT_SENSOR_POLL);
+  bool fireEvent =
+    (TimeStamp::Now() > mLastDOMMotionEventTime + sensorPollDuration) ||
+    sTestSensorEvents;
 
   switch (type) {
   case nsIDeviceSensorData::TYPE_LINEAR_ACCELERATION:
@@ -484,7 +555,8 @@ nsDeviceSensors::FireDOMMotionEvent(nsIDOMDocument *domdoc,
                             *mLastAcceleration,
                             *mLastAccelerationIncludingGravity,
                             *mLastRotationRate,
-                            Nullable<double>(DEFAULT_SENSOR_POLL));
+                            Nullable<double>(DEFAULT_SENSOR_POLL),
+                            Nullable<uint64_t>(timestamp));
 
   event->SetTrusted(true);
 

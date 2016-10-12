@@ -5,6 +5,7 @@ config = {
     #########################################################################
     ######## MACOSX CROSS GENERIC CONFIG KEYS/VAlUES
 
+    # note: overridden by MOZHARNESS_ACTIONS in TaskCluster tasks
     'default_actions': [
         'clobber',
         'clone-tools',
@@ -24,8 +25,6 @@ config = {
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
     'enable_signing': True,
-    'purge_skip': ['info', 'rel-*:10d', 'tb-rel-*:10d'],
-    'purge_basedirs':  [],
     'enable_ccache': True,
     'enable_check_test': False,
     'vcs_share_base': '/builds/hg-shared',
@@ -43,18 +42,11 @@ config = {
     'base_name': 'OS X 10.7 %(branch)s',
     'platform': 'macosx64',
     'stage_platform': 'macosx64',
-    'use_platform_in_symbols_extra_buildid': True,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
-        # SYMBOL_SERVER_HOST is dictated from build_pool_specifics.py
-        'SYMBOL_SERVER_HOST': '%(symbol_server_host)s',
-        'SYMBOL_SERVER_SSH_KEY': "/Users/cltbld/.ssh/ffxbld_rsa",
-        'SYMBOL_SERVER_USER': 'ffxbld',
-        'SYMBOL_SERVER_PATH': '/mnt/netapp/breakpad/symbols_ffx/',
-        'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'TINDERBOX_OUTPUT': '1',
         'TOOLTOOL_CACHE': '/builds/tooltool_cache',
         'TOOLTOOL_HOME': '/builds',
@@ -80,7 +72,6 @@ config = {
         'MINIDUMP_STACKWALK': '%(abs_tools_dir)s/breakpad/linux64/minidump_stackwalk',
         'MINIDUMP_SAVE_PATH': '%(base_work_dir)s/minidumps',
     },
-    'purge_minsize': 12,
     'src_mozconfig': 'browser/config/mozconfigs/macosx64/nightly',
     'tooltool_manifest_src': 'browser/config/tooltool-manifests/macosx64/cross-releng.manifest',
     #########################################################################

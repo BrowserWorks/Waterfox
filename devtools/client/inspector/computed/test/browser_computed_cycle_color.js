@@ -15,55 +15,56 @@ const TEST_URI = `
   <span id="matches" class="matches">Some styled text</span>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openComputedView();
   yield selectNode("#matches", inspector);
 
   info("Checking the property itself");
   let container = getComputedViewPropertyView(view, "color").valueNode;
-  checkColorCycling(container, inspector);
+  checkColorCycling(container, view);
 
   info("Checking matched selectors");
   container = yield getComputedViewMatchedRules(view, "color");
-  checkColorCycling(container, inspector);
+  yield checkColorCycling(container, view);
 });
 
-function checkColorCycling(container, inspector) {
-  let swatch = container.querySelector(".computedview-colorswatch");
+function* checkColorCycling(container, view) {
   let valueNode = container.querySelector(".computedview-color");
-  let win = inspector.sidebar.getWindowForTab("computedview");
+  let win = view.styleWindow;
 
   // "Authored" (default; currently the computed value)
   is(valueNode.textContent, "rgb(255, 0, 0)",
                             "Color displayed as an RGB value.");
 
-  // Hex
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
-  is(valueNode.textContent, "#f00", "Color displayed as a hex value.");
+  let tests = [{
+    value: "red",
+    comment: "Color displayed as a color name."
+  }, {
+    value: "#f00",
+    comment: "Color displayed as an authored value."
+  }, {
+    value: "hsl(0, 100%, 50%)",
+    comment: "Color displayed as an HSL value again."
+  }, {
+    value: "rgb(255, 0, 0)",
+    comment: "Color displayed as an RGB value again."
+  }];
 
-  // HSL
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
-  is(valueNode.textContent, "hsl(0, 100%, 50%)",
-                            "Color displayed as an HSL value.");
+  for (let test of tests) {
+    yield checkSwatchShiftClick(container, win, test.value, test.comment);
+  }
+}
 
-  // RGB
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
-  is(valueNode.textContent, "rgb(255, 0, 0)",
-                            "Color displayed as an RGB value.");
+function* checkSwatchShiftClick(container, win, expectedValue, comment) {
+  let swatch = container.querySelector(".computedview-colorswatch");
+  let valueNode = container.querySelector(".computedview-color");
 
-  // Color name
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
-  is(valueNode.textContent, "red",
-                            "Color displayed as a color name.");
-
-  // Back to "Authored"
-  EventUtils.synthesizeMouseAtCenter(swatch,
-                                     {type: "mousedown", shiftKey: true}, win);
-  is(valueNode.textContent, "rgb(255, 0, 0)",
-                            "Color displayed as an RGB value.");
+  let onUnitChange = swatch.once("unit-change");
+  EventUtils.synthesizeMouseAtCenter(swatch, {
+    type: "mousedown",
+    shiftKey: true
+  }, win);
+  yield onUnitChange;
+  is(valueNode.textContent, expectedValue, comment);
 }

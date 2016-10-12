@@ -13,6 +13,7 @@
 #include "mozilla/Monitor.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/UniquePtr.h"
+#include "nsContentUtils.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIStreamingProtocolService.h"
 #include "nsServiceManagerUtils.h"
@@ -524,8 +525,8 @@ void RtspMediaResource::SetSuspend(bool aIsSuspend)
   RTSPMLOG("SetSuspend %d",aIsSuspend);
 
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethodWithArg<bool>(this, &RtspMediaResource::NotifySuspend,
-                                      aIsSuspend);
+    NewRunnableMethod<bool>(this, &RtspMediaResource::NotifySuspend,
+                            aIsSuspend);
   NS_DispatchToMainThread(runnable);
 }
 

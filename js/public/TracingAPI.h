@@ -71,19 +71,37 @@ class JS_PUBLIC_API(JSTracer)
     bool isTenuringTracer() const { return tag_ == TracerKindTag::Tenuring; }
     bool isCallbackTracer() const { return tag_ == TracerKindTag::Callback; }
     inline JS::CallbackTracer* asCallbackTracer();
+#ifdef DEBUG
+    bool checkEdges() { return checkEdges_; }
+#endif
 
   protected:
     JSTracer(JSRuntime* rt, TracerKindTag tag,
              WeakMapTraceKind weakTraceKind = TraceWeakMapValues)
-      : runtime_(rt), weakMapAction_(weakTraceKind), tag_(tag)
+      : runtime_(rt)
+      , weakMapAction_(weakTraceKind)
+#ifdef DEBUG
+      , checkEdges_(true)
+#endif
+      , tag_(tag)
     {}
 
+#ifdef DEBUG
+    // Set whether to check edges are valid in debug builds.
+    void setCheckEdges(bool check) {
+        checkEdges_ = check;
+    }
+#endif
+
   private:
-    JSRuntime*          runtime_;
-    WeakMapTraceKind    weakMapAction_;
+    JSRuntime* runtime_;
+    WeakMapTraceKind weakMapAction_;
+#ifdef DEBUG
+    bool checkEdges_;
+#endif
 
   protected:
-    TracerKindTag       tag_;
+    TracerKindTag tag_;
 };
 
 namespace JS {
@@ -317,15 +335,19 @@ UnsafeTraceRoot(JSTracer* trc, T* edgep, const char* name);
 extern JS_PUBLIC_API(void)
 TraceChildren(JSTracer* trc, GCCellPtr thing);
 
-typedef js::HashSet<Zone*, js::DefaultHasher<Zone*>, js::SystemAllocPolicy> ZoneSet;
-} // namespace JS
+using ZoneSet = js::HashSet<Zone*, js::DefaultHasher<Zone*>, js::SystemAllocPolicy>;
+using CompartmentSet = js::HashSet<JSCompartment*, js::DefaultHasher<JSCompartment*>,
+                                   js::SystemAllocPolicy>;
 
 /**
- * Trace every value within |zones| that is wrapped by a cross-compartment
- * wrapper from a zone that is not an element of |zones|.
+ * Trace every value within |compartments| that is wrapped by a
+ * cross-compartment wrapper from a compartment that is not an element of
+ * |compartments|.
  */
 extern JS_PUBLIC_API(void)
-JS_TraceIncomingCCWs(JSTracer* trc, const JS::ZoneSet& zones);
+TraceIncomingCCWs(JSTracer* trc, const JS::CompartmentSet& compartments);
+
+} // namespace JS
 
 extern JS_PUBLIC_API(void)
 JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc,
@@ -343,75 +365,11 @@ extern JS_PUBLIC_API(void)
 UnsafeTraceManuallyBarrieredEdge(JSTracer* trc, T* edgep, const char* name);
 
 namespace gc {
+// Return true if the given edge is not live and is about to be swept.
 template <typename T>
 extern JS_PUBLIC_API(bool)
 EdgeNeedsSweep(JS::Heap<T>* edgep);
 } // namespace gc
-
-// Automates static dispatch for GC interaction with TraceableContainers.
-template <typename>
-struct DefaultGCPolicy;
-
-// This policy dispatches GC methods to a method on the type.
-template <typename T>
-struct StructGCPolicy {
-    static void trace(JSTracer* trc, T* t, const char* name) {
-        // This is the default GC policy for storing GC things in containers.
-        // If your build is failing here, it means you either need an
-        // implementation of DefaultGCPolicy<T> for your type or, if this is
-        // the right policy for you, your struct or container is missing a
-        // trace method.
-        t->trace(trc);
-    }
-
-    static bool needsSweep(T* t) {
-        return t->needsSweep();
-    }
-};
-
-// This policy ignores any GC interaction, e.g. for non-GC types.
-template <typename T>
-struct IgnoreGCPolicy {
-    static void trace(JSTracer* trc, T* t, const char* name) {}
-    static bool needsSweep(T* v) { return false; }
-};
-
-// The default policy when no other more specific policy fits (e.g. for a
-// direct GC pointer), is to assume a struct type that implements the needed
-// methods.
-template <typename T>
-struct DefaultGCPolicy : public StructGCPolicy<T> {};
-
-template <>
-struct DefaultGCPolicy<jsid>
-{
-    static void trace(JSTracer* trc, jsid* idp, const char* name) {
-        js::UnsafeTraceManuallyBarrieredEdge(trc, idp, name);
-    }
-};
-
-template <>
-struct DefaultGCPolicy<JS::Value>
-{
-    static void trace(JSTracer* trc, JS::Value* v, const char* name) {
-        js::UnsafeTraceManuallyBarrieredEdge(trc, v, name);
-    }
-};
-
-template <> struct DefaultGCPolicy<uint32_t> : public IgnoreGCPolicy<uint32_t> {};
-template <> struct DefaultGCPolicy<uint64_t> : public IgnoreGCPolicy<uint64_t> {};
-
-template <typename T>
-struct DefaultGCPolicy<JS::Heap<T>>
-{
-    static void trace(JSTracer* trc, JS::Heap<T>* thingp, const char* name) {
-        JS::TraceEdge(trc, thingp, name);
-    }
-    static bool needsSweep(JS::Heap<T>* thingp) {
-        return gc::EdgeNeedsSweep(thingp);
-    }
-};
-
 } // namespace js
 
 #endif /* js_TracingAPI_h */

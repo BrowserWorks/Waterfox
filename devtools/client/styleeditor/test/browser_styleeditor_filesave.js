@@ -8,9 +8,6 @@
 const TESTCASE_URI_HTML = TEST_BASE_HTTP + "simple.html";
 const TESTCASE_URI_CSS = TEST_BASE_HTTP + "simple.css";
 
-var Cc = Components.classes;
-var Ci = Components.interfaces;
-
 var tempScope = {};
 Components.utils.import("resource://gre/modules/FileUtils.jsm", tempScope);
 Components.utils.import("resource://gre/modules/NetUtil.jsm", tempScope);
@@ -42,7 +39,7 @@ add_task(function* () {
   info("Saving the changes.");
   dirty = editor.sourceEditor.once("dirty-change");
 
-  editor.saveToFile(null, function(file) {
+  editor.saveToFile(null, function (file) {
     ok(file, "file should get saved directly when using a file:// URI");
   });
 
@@ -91,7 +88,7 @@ function write(data, file, callback) {
   let istream = converter.convertToInputStream(data);
   let ostream = FileUtils.openSafeFileOutputStream(file);
 
-  NetUtil.asyncCopy(istream, ostream, function(status) {
+  NetUtil.asyncCopy(istream, ostream, function (status) {
     if (!Components.isSuccessCode(status)) {
       info("Couldn't write to " + file.path);
       return;

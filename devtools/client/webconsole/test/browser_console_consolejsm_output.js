@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Test that Console.jsm outputs messages to the Browser Console, bug 851231.
 
@@ -16,7 +16,7 @@ function onNewMessage(aEvent, aNewMessages) {
   }
 }
 
-add_task(function*() {
+add_task(function* () {
   let consoleStorage = Cc["@mozilla.org/consoleAPI-storage;1"];
   let storage = consoleStorage.getService(Ci.nsIConsoleAPIStorage);
   storage.clearEvents();

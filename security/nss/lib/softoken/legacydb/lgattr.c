@@ -136,7 +136,9 @@ lg_CopyAttribute(CK_ATTRIBUTE *attr, CK_ATTRIBUTE_TYPE type,
 	attr->ulValueLen = (CK_ULONG) -1;
 	return CKR_BUFFER_TOO_SMALL;
     }
-    PORT_Memcpy(attr->pValue,value,len);
+    if (value != NULL) {
+	PORT_Memcpy(attr->pValue,value,len);
+    }
     attr->ulValueLen = len;
     return CKR_OK;
 }
@@ -571,7 +573,7 @@ lg_FindECPublicKeyAttribute(NSSLOWKEYPublicKey *key, CK_ATTRIBUTE_TYPE type,
 					key->u.ec.ecParams.DEREncoding.data,
 					key->u.ec.ecParams.DEREncoding.len);
     case CKA_EC_POINT:
-	if (getenv("NSS_USE_DECODED_CKA_EC_POINT")) {
+	if (PR_GetEnvSecure("NSS_USE_DECODED_CKA_EC_POINT")) {
 	    return lg_CopyAttributeSigned(attribute, type,
 					key->u.ec.publicValue.data,
 					key->u.ec.publicValue.len);

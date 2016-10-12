@@ -30,8 +30,10 @@ flags:
     crashtest: /crashtest.*/
     crashtest-e10s: /crashtest-e10s.*/
     e10s: /.*e10s.*/
+    external-media-tests: /external-media-tests.*/
+    firefox-ui-functional: /firefox-ui-functional.*/
+    firefox-ui-functional-e10s: /firefox-ui-functional-e10s.*/
     gaia-js-integration: /.*gaia-js-integration.*/
-    gaia-ui-test: /.*gaia-ui-test.*/
     gtest: /gtest.*/
     jittest: /jittest.*/
     jittests: /jittest.*/
@@ -39,6 +41,7 @@ flags:
     jsreftest-e10s: /jsreftest-e10s.*/
     luciddream: /luciddream.*/
     marionette: /marionette.*/
+    marionette-e10s: /marionette-e10s.*/
     mochitest: /mochitest.*/
     mochitests: /mochitest.*/
     mochitest-e10s: /mochitest-e10s.*/
@@ -53,82 +56,73 @@ flags:
     mochitest-dt: /mochitest-devtools-chrome.*/
     mochitest-dt-e10s: /mochitest-devtools-chrome-e10s.*/
     mochitest-gl: /mochitest-webgl.*/
-    mochitest-push: /mochitest-push.*/
+    mochitest-gl-e10s: /mochitest-webgl-e10s.*/
+    mochitest-gpu: /mochitest-gpu.*/
+    mochitest-gpu-e10s: /mochitest-gpu-e10s.*/
+    mochitest-clipboard: /mochitest-clipboard.*/
+    mochitest-clipboard-e10s: /mochitest-clipboard-e10s.*/
+    mochitest-jetpack: /mochitest-jetpack.*/
+    mochitest-media: /mochitest-media.*/
+    mochitest-media-e10s: /mochitest-media-e10s.*/
+    mochitest-vg: /mochitest-valgrind.*/
     reftest: /(plain-)?reftest.*/
     reftest-no-accel: /(plain-)?reftest-no-accel.*/
     reftests: /(plain-)?reftest.*/
     reftests-e10s: /(plain-)?reftest-e10s.*/
+    reftest-no-accel-e10s: /(plain-)?reftest-no-accel-e10s.*/
     robocop: /robocop.*/
     web-platform-test: /web-platform-tests.*/
     web-platform-tests: /web-platform-tests.*/
     web-platform-tests-e10s: /web-platform-tests-e10s.*/
     web-platform-tests-reftests: /web-platform-tests-reftests.*/
+    web-platform-tests-reftests-e10s: /web-platform-tests-reftests-e10s.*/
     xpcshell: /xpcshell.*/
 
   builds:
-    - emulator
-    - emulator-jb
-    - emulator-kk
-    - emulator-x86-kk
-    - emulator-l
     - linux32_gecko  # b2g desktop linux 32 bit
     - linux64_gecko  # b2g desktop linux 64 bit
     - linux64-mulet  # Firefox desktop - b2g gecko linux 64 bit
+    - linux64-haz    # Firefox desktop browser, rooting hazard analysis
+    - linux64-shell-haz  # JS shell, rooting hazard analysis
+    - linux64-mulet-haz  # Firefox desktop - b2g gecko linux 64 bit, rooting hazard analysis
     - macosx64_gecko # b2g desktop osx 64 bit
     - win32_gecko    # b2g desktop win 32 bit
-    - flame-kk       # b2g flame kitkat
-    - flame-kk-eng   # b2g flame eng build
-    - flame-kk-spark-eng
-    - flame-kk-ota
-    - nexus-4
-    - nexus-4-eng
-    - nexus-4-kk
-    - nexus-4-kk-ota
-    - nexus-4-kk-eng
-    - nexus-5l
-    - nexus-5l-ota
     - nexus-5l-eng
-    - dolphin
-    - dolphin-eng
-    - dolphin-512
-    - dolphin-512-eng
     - aries
-    - aries-ota
     - aries-eng
-    - aries-dogfood
-    - aries-noril
     - android-api-15
+    - android-api-15-frontend
     - android-partner-sample1
-    - android-b2gdroid
     - linux
     - linux64
     - linux64-st-an
+    - linux64-artifact
+    - linux64-asan
+    - linux64-pgo
+    - linux64-valgrind
     - macosx64
     - macosx64-st-an
-    - eslint-gecko
 
   tests:
     - cppunit
     - crashtest
     - crashtest-e10s
-    - crashtest-ipc
+    - external-media-tests
+    - firefox-ui-functional
+    - firefox-ui-functional-e10s
     - gaia-build
     - gaia-build-unit
     - gaia-js-integration
     - gaia-linter
     - gaia-unit
     - gaia-unit-oop
-    - gaia-ui-test-sanity
-    - gaia-ui-test-functional
-    - gaia-ui-test-functional-dsds
-    - gaia-ui-test-unit
     - gtest
-    - jetpack
     - jittests
     - jsreftest
     - jsreftest-e10s
     - luciddream
     - marionette
+    - marionette-e10s
     - marionette-webapi
     - mochitest
     - mochitest-a11y
@@ -140,17 +134,21 @@ flags:
     - mochitest-e10s
     - mochitest-jetpack
     - mochitest-media
-    - mochitest-oop
-    - mochitest-push
+    - mochitest-media-e10s
     - mochitest-webgl
+    - mochitest-webgl-e10s
+    - mochitest-gpu
+    - mochitest-gpu-e10s
+    - mochitest-clipboard
+    - mochitest-clipboard-e10s
+    - mochitest-valgrind
     - mozmill
     - reftest
     - reftest-e10s
-    - reftest-ipc
     - reftest-no-accel
-    - reftest-sanity-oop
+    - reftest-no-accel-e10s
     - web-platform-tests
     - web-platform-tests-e10s
     - web-platform-tests-reftests
+    - web-platform-tests-reftests-e10s
     - xpcshell
-

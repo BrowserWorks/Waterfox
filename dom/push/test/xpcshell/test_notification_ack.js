@@ -46,7 +46,7 @@ add_task(function* test_notification_ack() {
   }
 
   let notifyCount = 0;
-  let notifyPromise = promiseObserverNotification('push-message', () =>
+  let notifyPromise = promiseObserverNotification(PushServiceComponent.pushTopic, () =>
     ++notifyCount == 3);
 
   let acks = 0;
@@ -54,7 +54,6 @@ add_task(function* test_notification_ack() {
   let ackPromise = new Promise(resolve => ackDone = resolve);
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -77,12 +76,13 @@ add_task(function* test_notification_ack() {
         onACK(request) {
           equal(request.messageType, 'ack', 'Should send acknowledgements');
           let updates = request.updates;
-          ok(Array.isArray(updates),
-            'Should send an array of acknowledged updates');
-          equal(updates.length, 1,
-            'Should send one acknowledged update per packet');
           switch (++acks) {
           case 1:
+            deepEqual([{
+              channelID: '21668e05-6da8-42c9-b8ab-9cc3f4d5630c',
+              version: 2,
+              code: 100,
+            }], updates, 'Wrong updates for acknowledgement 1');
             this.serverSendMsg(JSON.stringify({
               messageType: 'notification',
               updates: [{
@@ -98,14 +98,16 @@ add_task(function* test_notification_ack() {
           case 2:
             deepEqual([{
               channelID: '9a5ff87f-47c9-4215-b2b8-0bdd38b4b305',
-              version: 4
+              version: 4,
+              code: 100,
             }], updates, 'Wrong updates for acknowledgement 2');
             break;
 
           case 3:
             deepEqual([{
               channelID: '5477bfda-22db-45d4-9614-fee369630260',
-              version: 6
+              version: 6,
+              code: 100,
             }], updates, 'Wrong updates for acknowledgement 3');
             ackDone();
             break;
@@ -118,8 +120,6 @@ add_task(function* test_notification_ack() {
     }
   });
 
-  yield waitForPromise(notifyPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for notifications');
-  yield waitForPromise(ackPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for multiple acknowledgements');
+  yield notifyPromise;
+  yield ackPromise;
 });

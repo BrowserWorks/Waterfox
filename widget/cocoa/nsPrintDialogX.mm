@@ -38,7 +38,7 @@ nsPrintDialogServiceX::Init()
 }
 
 NS_IMETHODIMP
-nsPrintDialogServiceX::Show(nsIDOMWindow *aParent, nsIPrintSettings *aSettings,
+nsPrintDialogServiceX::Show(nsPIDOMWindowOuter *aParent, nsIPrintSettings *aSettings,
                             nsIWebBrowserPrint *aWebBrowserPrint)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
@@ -103,7 +103,7 @@ nsPrintDialogServiceX::Show(nsIDOMWindow *aParent, nsIPrintSettings *aSettings,
   [NSPrintOperation setCurrentOperation:nil];
   [tmpView release];
 
-  if (button != NSOKButton)
+  if (button != NSFileHandlingPanelOKButton)
     return NS_ERROR_ABORT;
 
   // Export settings.
@@ -131,7 +131,7 @@ nsPrintDialogServiceX::Show(nsIDOMWindow *aParent, nsIPrintSettings *aSettings,
 }
 
 NS_IMETHODIMP
-nsPrintDialogServiceX::ShowPageSetup(nsIDOMWindow *aParent,
+nsPrintDialogServiceX::ShowPageSetup(nsPIDOMWindowOuter *aParent,
                                      nsIPrintSettings *aNSSettings)
 {
   NS_PRECONDITION(aParent, "aParent must not be null");
@@ -148,7 +148,7 @@ nsPrintDialogServiceX::ShowPageSetup(nsIDOMWindow *aParent,
   int button = [pageLayout runModalWithPrintInfo:printInfo];
   nsCocoaUtils::CleanUpAfterNativeAppModalDialog();
 
-  return button == NSOKButton ? NS_OK : NS_ERROR_ABORT;
+  return button == NSFileHandlingPanelOKButton ? NS_OK : NS_ERROR_ABORT;
 }
 
 // Accessory view

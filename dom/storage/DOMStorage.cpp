@@ -40,7 +40,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(DOMStorage)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
 NS_INTERFACE_MAP_END
 
-DOMStorage::DOMStorage(nsIDOMWindow* aWindow,
+DOMStorage::DOMStorage(nsPIDOMWindowInner* aWindow,
                        DOMStorageManager* aManager,
                        DOMStorageCache* aCache,
                        const nsAString& aDocumentURI,
@@ -176,7 +176,7 @@ DOMStorage::Clear(ErrorResult& aRv)
 
 namespace {
 
-class StorageNotifierRunnable : public nsRunnable
+class StorageNotifierRunnable : public Runnable
 {
 public:
   StorageNotifierRunnable(nsISupports* aSubject, const char16_t* aType)
@@ -235,7 +235,7 @@ static const char kStorageEnabled[] = "dom.storage.enabled";
 
 // static, public
 bool
-DOMStorage::CanUseStorage(nsPIDOMWindow* aWindow, DOMStorage* aStorage)
+DOMStorage::CanUseStorage(nsPIDOMWindowInner* aWindow, DOMStorage* aStorage)
 {
   // This method is responsible for correct setting of mIsSessionOnly.
   // It doesn't work with mIsPrivate flag at all, since it is checked
@@ -296,7 +296,7 @@ DOMStorage::CanAccess(nsIPrincipal* aPrincipal)
 }
 
 void
-DOMStorage::GetSupportedNames(unsigned, nsTArray<nsString>& aKeys)
+DOMStorage::GetSupportedNames(nsTArray<nsString>& aKeys)
 {
   if (!CanUseStorage(nullptr, this)) {
     // return just an empty array

@@ -8,6 +8,9 @@
 
 var TabsInTitlebar = {
   init: function () {
+    if (this._initialized) {
+      return;
+    }
     this._readPref();
     Services.prefs.addObserver(this._prefName, this, false);
 
@@ -35,7 +38,15 @@ var TabsInTitlebar = {
     };
     CustomizableUI.addListener(this);
 
+    addEventListener("resolutionchange", this, false);
+
     this._initialized = true;
+    if (this._updateOnInit) {
+      // We don't need to call this with 'true', even if original calls
+      // (before init()) did, because this will be the first call and so
+      // we will update anyway.
+      this._update();
+    }
   },
 
   allowedBy: function (condition, allow) {
@@ -65,6 +76,12 @@ var TabsInTitlebar = {
       this._readPref();
   },
 
+  handleEvent: function (aEvent) {
+    if (aEvent.type == "resolutionchange" && aEvent.target == window) {
+      this._update(true);
+    }
+  },
+
   _onMenuMutate: function (aMutations) {
     for (let mutation of aMutations) {
       if (mutation.attributeName == "inactive" ||
@@ -76,6 +93,7 @@ var TabsInTitlebar = {
   },
 
   _initialized: false,
+  _updateOnInit: false,
   _disallowed: {},
   _prefName: "browser.tabs.drawInTitlebar",
   _lastSizeMode: null,
@@ -90,8 +108,15 @@ var TabsInTitlebar = {
     let rect = ele => ele.getBoundingClientRect();
     let verticalMargins = cstyle => parseFloat(cstyle.marginBottom) + parseFloat(cstyle.marginTop);
 
-    if (!this._initialized || window.fullScreen)
+    if (window.fullScreen)
       return;
+
+    // In some edgecases it is possible for this to fire before we've initialized.
+    // Don't run now, but don't forget to run it when we do initialize.
+    if (!this._initialized) {
+      this._updateOnInit = true;
+      return;
+    }
 
     let allowed = true;
 
@@ -202,9 +227,10 @@ var TabsInTitlebar = {
         titlebarContent.style.removeProperty("margin-bottom");
       }
 
-      // Then we bring up the titlebar by the same amount, but we add any negative margin:
-      titlebar.style.marginBottom = "-" + titlebarContentHeight + "px";
-
+      // Then add a negative margin to the titlebar, so that the following elements
+      // will overlap it by the lesser of the titlebar height or the tabstrip+menu.
+      let minTitlebarOrTabsHeight = Math.min(titlebarContentHeight, tabAndMenuHeight);
+      titlebar.style.marginBottom = "-" + minTitlebarOrTabsHeight + "px";
 
       // Finally, size the placeholders:
       if (AppConstants.platform == "macosx") {
@@ -212,21 +238,6 @@ var TabsInTitlebar = {
       }
       this._sizePlaceholder("caption-buttons", captionButtonsBoxWidth);
 
-      if (!this._draghandles) {
-        this._draghandles = {};
-        let tmp = {};
-        Components.utils.import("resource://gre/modules/WindowDraggingUtils.jsm", tmp);
-
-        let mouseDownCheck = function () {
-          return !this._dragBindingAlive && TabsInTitlebar.enabled;
-        };
-
-        this._draghandles.tabsToolbar = new tmp.WindowDraggingElement(tabsToolbar);
-        this._draghandles.tabsToolbar.mouseDownCheck = mouseDownCheck;
-
-        this._draghandles.navToolbox = new tmp.WindowDraggingElement(gNavToolbox);
-        this._draghandles.navToolbox.mouseDownCheck = mouseDownCheck;
-      }
     } else {
       document.documentElement.removeAttribute("tabsintitlebar");
       updateTitlebarDisplay();
@@ -256,6 +267,7 @@ var TabsInTitlebar = {
 
   uninit: function () {
     this._initialized = false;
+    removeEventListener("resolutionchange", this);
     Services.prefs.removeObserver(this._prefName, this);
     this._menuObserver.disconnect();
     CustomizableUI.removeListener(this);

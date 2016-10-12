@@ -1,4 +1,5 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -33,7 +34,7 @@ var gHud = undefined, gContentBrowser;
 var gCurrentTest;
 
 function test() {
-  registerCleanupFunction(function() {
+  registerCleanupFunction(function () {
     gHud = gContentBrowser = null;
   });
 
@@ -56,11 +57,11 @@ function runTestLoop(theHud) {
   gContentBrowser.addEventListener("load", onLoad, true);
   if (gCurrentTest.pref) {
     SpecialPowers.pushPrefEnv({"set": gCurrentTest.pref},
-      function() {
-        content.location = gCurrentTest.url;
+      function () {
+        BrowserTestUtils.loadURI(gBrowser.selectedBrowser, gCurrentTest.url);
       });
   } else {
-    content.location = gCurrentTest.url;
+    BrowserTestUtils.loadURI(gBrowser.selectedBrowser, gCurrentTest.url);
   }
 }
 
@@ -68,21 +69,21 @@ function onLoad() {
   gContentBrowser.removeEventListener("load", onLoad, true);
 
   waitForSuccess({
-      name: gCurrentTest.name,
-      validator: function() {
-        if (gHud.outputNode.textContent.indexOf(TRIGGER_MSG) >= 0) {
-          for (let warning of gCurrentTest.warning) {
-            if (gHud.outputNode.textContent.indexOf(warning) < 0) {
-              return false;
-            }
+    name: gCurrentTest.name,
+    validator: function () {
+      if (gHud.outputNode.textContent.indexOf(TRIGGER_MSG) >= 0) {
+        for (let warning of gCurrentTest.warning) {
+          if (gHud.outputNode.textContent.indexOf(warning) < 0) {
+            return false;
           }
-          for (let nowarning of gCurrentTest.nowarning) {
-            if (gHud.outputNode.textContent.indexOf(nowarning) >= 0) {
-              return false;
-            }
-          }
-          return true;
         }
+        for (let nowarning of gCurrentTest.nowarning) {
+          if (gHud.outputNode.textContent.indexOf(nowarning) >= 0) {
+            return false;
+          }
+        }
+        return true;
       }
-    }).then(runTestLoop);
+    }
+  }).then(runTestLoop);
 }

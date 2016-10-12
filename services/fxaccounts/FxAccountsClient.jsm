@@ -92,7 +92,7 @@ this.FxAccountsClient.prototype = {
     return Credentials.setup(email, password).then((creds) => {
       let data = {
         authPW: CommonUtils.bytesAsHex(creds.authPW),
-        email: creds.emailUTF8,
+        email: email,
       };
       let keys = getKeys ? "?keys=true" : "";
 
@@ -206,8 +206,13 @@ this.FxAccountsClient.prototype = {
    *        The current session token encoded in hex
    * @return Promise
    */
-  recoveryEmailStatus: function (sessionTokenHex) {
-    return this._request("/recovery_email/status", "GET",
+  recoveryEmailStatus: function (sessionTokenHex, options = {}) {
+    let path = "/recovery_email/status";
+    if (options.reason) {
+      path += "?reason=" + encodeURIComponent(options.reason);
+    }
+
+    return this._request(path, "GET",
       deriveHawkCredentials(sessionTokenHex, "sessionToken"));
   },
 
@@ -358,6 +363,14 @@ this.FxAccountsClient.prototype = {
    *         Device name
    * @param  type
    *         Device type (mobile|desktop)
+   * @param  [options]
+   *         Extra device options
+   * @param  [options.pushCallback]
+   *         `pushCallback` push endpoint callback
+   * @param  [options.pushPublicKey]
+   *         `pushPublicKey` push public key (URLSafe Base64 string)
+   * @param  [options.pushAuthKey]
+   *         `pushAuthKey` push auth secret (URLSafe Base64 string)
    * @return Promise
    *         Resolves to an object:
    *         {
@@ -367,11 +380,19 @@ this.FxAccountsClient.prototype = {
    *           type: Type of device (mobile|desktop)
    *         }
    */
-  registerDevice(sessionTokenHex, name, type) {
+  registerDevice(sessionTokenHex, name, type, options = {}) {
     let path = "/account/device";
 
     let creds = deriveHawkCredentials(sessionTokenHex, "sessionToken");
     let body = { name, type };
+
+    if (options.pushCallback) {
+      body.pushCallback = options.pushCallback;
+    }
+    if (options.pushPublicKey && options.pushAuthKey) {
+      body.pushPublicKey = options.pushPublicKey;
+      body.pushAuthKey = options.pushAuthKey;
+    }
 
     return this._request(path, "POST", creds, body);
   },
@@ -386,6 +407,14 @@ this.FxAccountsClient.prototype = {
    *         Device identifier
    * @param  name
    *         Device name
+   * @param  [options]
+   *         Extra device options
+   * @param  [options.pushCallback]
+   *         `pushCallback` push endpoint callback
+   * @param  [options.pushPublicKey]
+   *         `pushPublicKey` push public key (URLSafe Base64 string)
+   * @param  [options.pushAuthKey]
+   *         `pushAuthKey` push auth secret (URLSafe Base64 string)
    * @return Promise
    *         Resolves to an object:
    *         {
@@ -393,11 +422,18 @@ this.FxAccountsClient.prototype = {
    *           name: Device name
    *         }
    */
-  updateDevice(sessionTokenHex, id, name) {
+  updateDevice(sessionTokenHex, id, name, options = {}) {
     let path = "/account/device";
 
     let creds = deriveHawkCredentials(sessionTokenHex, "sessionToken");
     let body = { id, name };
+    if (options.pushCallback) {
+      body.pushCallback = options.pushCallback;
+    }
+    if (options.pushPublicKey && options.pushAuthKey) {
+      body.pushPublicKey = options.pushPublicKey;
+      body.pushAuthKey = options.pushAuthKey;
+    }
 
     return this._request(path, "POST", creds, body);
   },
@@ -419,7 +455,7 @@ this.FxAccountsClient.prototype = {
    *         Resolves to an empty object:
    *         {}
    */
-  signOutAndDestroyDevice(sessionTokenHex, id, options={}) {
+  signOutAndDestroyDevice(sessionTokenHex, id, options = {}) {
     let path = "/account/device/destroy";
 
     if (options.service) {
@@ -518,12 +554,6 @@ this.FxAccountsClient.prototype = {
             this,
             "fxaBackoffTimer"
            );
-        }
-        if (isInvalidTokenError(error)) {
-          // Use the endpoint path as the key, ignoring query params and
-          // fragments.
-          Services.telemetry.getKeyedHistogramById(
-            "FXA_HAWK_ERRORS").add(path.replace(/[?#].*/, ''));
         }
         deferred.reject(error);
       }

@@ -13,6 +13,7 @@
 #include "nsIAtom.h"
 #include "nsWrapperCache.h"
 #include "nsJSUtils.h"
+#include "nsQueryObject.h"
 #include "WrapperFactory.h"
 
 #include "nsWrapperCacheInlines.h"
@@ -25,6 +26,7 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/PrimitiveConversions.h"
+#include "mozilla/dom/Promise.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 
 using namespace xpc;
@@ -691,7 +693,7 @@ XPCConvert::JSData2Native(void* d, HandleValue s,
                     *pErr = NS_ERROR_XPC_BAD_CONVERT_JS_NULL_REF;
                 return false;
             }
-            nsCOMPtr<nsIAtom> atom = NS_NewAtom(autoStr);
+            nsCOMPtr<nsIAtom> atom = NS_Atomize(autoStr);
             atom.forget((nsISupports**)d);
             return true;
         }
@@ -791,6 +793,21 @@ XPCConvert::NativeInterface2JSObject(MutableHandleValue d,
             return false;
         return CreateHolderIfNeeded(flat, d, dest);
     }
+
+#ifdef SPIDERMONKEY_PROMISE
+    if (iid->Equals(NS_GET_IID(nsISupports))) {
+        // Check for a Promise being returned via nsISupports.  In that
+        // situation, we want to dig out its underlying JS object and return
+        // that.
+        RefPtr<Promise> promise = do_QueryObject(aHelper.Object());
+        if (promise) {
+            flat = promise->PromiseObj();
+            if (!JS_WrapObject(cx, &flat))
+                return false;
+            return CreateHolderIfNeeded(flat, d, dest);
+        }
+    }
+#endif // SPIDERMONKEY_PROMISE
 
     // Don't double wrap CPOWs. This is a temporary measure for compatibility
     // with objects that don't provide necessary QIs (such as objects under
@@ -923,8 +940,34 @@ XPCConvert::JSObject2NativeInterface(void** dest, HandleObject src,
 
         // Deal with slim wrappers here.
         if (GetISupportsFromJSObject(inner ? inner : src, &iface)) {
-            return iface && NS_SUCCEEDED(iface->QueryInterface(*iid, dest));
+            if (iface && NS_SUCCEEDED(iface->QueryInterface(*iid, dest))) {
+                return true;
+            }
+
+            // If that failed, and iid is for mozIDOMWindowProxy, we actually
+            // want the outer!
+            if (iid->Equals(NS_GET_IID(mozIDOMWindowProxy))) {
+                if (nsCOMPtr<mozIDOMWindow> inner = do_QueryInterface(iface)) {
+                    iface = nsPIDOMWindowInner::From(inner)->GetOuterWindow();
+                    return NS_SUCCEEDED(iface->QueryInterface(*iid, dest));
+                }
+            }
+
+            return false;
         }
+
+#ifdef SPIDERMONKEY_PROMISE
+        // Deal with Promises being passed as nsISupports.  In that situation we
+        // want to create a dom::Promise and use that.
+        if (iid->Equals(NS_GET_IID(nsISupports))) {
+            RootedObject innerObj(cx, inner);
+            if (IsPromiseObject(innerObj)) {
+                nsIGlobalObject* glob = NativeGlobal(innerObj);
+                RefPtr<Promise> p = Promise::CreateFromExisting(glob, innerObj);
+                return p && NS_SUCCEEDED(p->QueryInterface(*iid, dest));
+            }
+        }
+#endif // SPIDERMONKEY_PROMISE
     }
 
     RefPtr<nsXPCWrappedJS> wrapper;
@@ -1040,10 +1083,7 @@ XPCConvert::JSValToXPCException(MutableHandleValue s,
         JSObject* unwrapped = js::CheckedUnwrap(obj, /* stopAtWindowProxy = */ false);
         if (!unwrapped)
             return NS_ERROR_XPC_SECURITY_MANAGER_VETO;
-        XPCWrappedNative* wrapper = IS_WN_REFLECTOR(unwrapped) ? XPCWrappedNative::Get(unwrapped)
-                                                               : nullptr;
-        if (wrapper) {
-            nsISupports* supports = wrapper->GetIdentityObject();
+        if (nsISupports* supports = UnwrapReflectorToISupports(unwrapped)) {
             nsCOMPtr<nsIException> iface = do_QueryInterface(supports);
             if (iface) {
                 // just pass through the exception (with extra ref and all)
@@ -1070,29 +1110,6 @@ XPCConvert::JSValToXPCException(MutableHandleValue s,
                 return JSErrorToXPCException(message.ptr(), ifaceName,
                                              methodName, report, exceptn);
             }
-
-
-            bool found;
-
-            // heuristic to see if it might be usable as an xpcexception
-            if (!JS_HasProperty(cx, obj, "message", &found))
-                return NS_ERROR_FAILURE;
-
-            if (found && !JS_HasProperty(cx, obj, "result", &found))
-                return NS_ERROR_FAILURE;
-
-            if (found) {
-                // lets try to build a wrapper around the JSObject
-                nsXPCWrappedJS* jswrapper;
-                nsresult rv =
-                    nsXPCWrappedJS::GetNewOrUsed(obj, NS_GET_IID(nsIException), &jswrapper);
-                if (NS_FAILED(rv))
-                    return rv;
-
-                *exceptn = static_cast<nsIException*>(jswrapper->GetXPTCStub());
-                return NS_OK;
-            }
-
 
             // XXX we should do a check against 'js_ErrorClass' here and
             // do the right thing - even though it has no JSErrorReport,
@@ -1206,16 +1223,15 @@ XPCConvert::JSErrorToXPCException(const char* message,
             bestMessage.AssignLiteral("JavaScript Error");
         }
 
-        const char16_t* uclinebuf =
-            static_cast<const char16_t*>(report->uclinebuf);
+        const char16_t* linebuf = report->linebuf();
 
         data = new nsScriptError();
         data->InitWithWindowID(
             bestMessage,
             NS_ConvertASCIItoUTF16(report->filename),
-            uclinebuf ? nsDependentString(uclinebuf) : EmptyString(),
+            linebuf ? nsDependentString(linebuf, report->linebufLength()) : EmptyString(),
             report->lineno,
-            report->uctokenptr - report->uclinebuf, report->flags,
+            report->tokenOffset(), report->flags,
             NS_LITERAL_CSTRING("XPConnect JavaScript"),
             nsJSUtils::GetCurrentlyRunningCodeInnerWindowID(cx));
     }

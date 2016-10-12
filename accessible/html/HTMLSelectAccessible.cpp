@@ -114,34 +114,11 @@ HTMLSelectListAccessible::SetCurrentItem(Accessible* aItem)
                                true);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// HTMLSelectListAccessible: Accessible protected
-
-void
-HTMLSelectListAccessible::CacheChildren()
+bool
+HTMLSelectListAccessible::IsAcceptableChild(nsIContent* aEl) const
 {
-  // Cache accessibles for <optgroup> and <option> DOM decendents as children,
-  // as well as the accessibles for them. Avoid whitespace text nodes. We want
-  // to count all the <optgroup>s and <option>s as children because we want
-  // a flat tree under the Select List.
-  for (nsIContent* childContent = mContent->GetFirstChild(); childContent;
-       childContent = childContent->GetNextSibling()) {
-    if (!childContent->IsHTMLElement()) {
-      continue;
-    }
-
-    if (childContent->IsAnyOfHTMLElements(nsGkAtoms::option,
-                                          nsGkAtoms::optgroup)) {
-
-      // Get an accessible for option or optgroup and cache it.
-      RefPtr<Accessible> accessible =
-        GetAccService()->GetOrCreateAccessible(childContent, this);
-      if (accessible)
-        AppendChild(accessible);
-    }
-  }
+  return aEl->IsAnyOfHTMLElements(nsGkAtoms::option, nsGkAtoms::optgroup);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // HTMLSelectOptionAccessible
@@ -360,6 +337,17 @@ HTMLComboboxAccessible::
 {
   mType = eHTMLComboboxType;
   mGenericTypes |= eCombobox;
+  mStateFlags |= eNoKidsFromDOM;
+
+  nsIComboboxControlFrame* comboFrame = do_QueryFrame(GetFrame());
+  if (comboFrame) {
+    nsIFrame* listFrame = comboFrame->GetDropDown();
+    if (listFrame) {
+      mListAccessible = new HTMLComboboxListAccessible(mParent, mContent, mDoc);
+      Document()->BindToDocument(mListAccessible, nullptr);
+      AppendChild(mListAccessible);
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -369,15 +357,6 @@ role
 HTMLComboboxAccessible::NativeRole()
 {
   return roles::COMBOBOX;
-}
-
-void
-HTMLComboboxAccessible::InvalidateChildren()
-{
-  AccessibleWrap::InvalidateChildren();
-
-  if (mListAccessible)
-    mListAccessible->InvalidateChildren();
 }
 
 bool
@@ -392,35 +371,13 @@ HTMLComboboxAccessible::RemoveChild(Accessible* aChild)
 }
 
 void
-HTMLComboboxAccessible::CacheChildren()
-{
-  nsIComboboxControlFrame* comboFrame = do_QueryFrame(GetFrame());
-  if (!comboFrame)
-    return;
-
-  nsIFrame* listFrame = comboFrame->GetDropDown();
-  if (!listFrame)
-    return;
-
-  if (!mListAccessible) {
-    mListAccessible = new HTMLComboboxListAccessible(mParent, mContent, mDoc);
-
-    // Initialize and put into cache.
-    Document()->BindToDocument(mListAccessible, nullptr);
-  }
-
-  if (AppendChild(mListAccessible)) {
-    // Cache combobox option accessibles so that we build complete accessible
-    // tree for combobox.
-    mListAccessible->EnsureChildren();
-  }
-}
-
-void
 HTMLComboboxAccessible::Shutdown()
 {
   MOZ_ASSERT(mDoc->IsDefunct() || !mListAccessible);
-  mListAccessible = nullptr;
+  if (mListAccessible) {
+    mListAccessible->Shutdown();
+    mListAccessible = nullptr;
+  }
 
   AccessibleWrap::Shutdown();
 }

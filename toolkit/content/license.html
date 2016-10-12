@@ -100,11 +100,16 @@
       <li><a href="about:license#halloc">halloc License</a></li>
       <li><a href="about:license#harfbuzz">HarfBuzz License</a></li>
       <li><a href="about:license#icu">ICU License</a></li>
+      <li><a href="about:license#immutable">Immutable.js License</a></li>
       <li><a href="about:license#jpnic">Japan Network Information Center License</a></li>
       <li><a href="about:license#jemalloc">jemalloc License</a></li>
       <li><a href="about:license#jquery">jQuery License</a></li>
+      <li><a href="about:license#k_exp">k_exp License</a></li>
       <li><a href="about:license#khronos">Khronos group License</a></li>
       <li><a href="about:license#kiss_fft">Kiss FFT License</a></li>
+#ifdef MOZ_USE_LIBCXX
+      <li><a href="about:license#libc++">libc++ License</a></li>
+#endif
       <li><a href="about:license#libcubeb">libcubeb License</a></li>
       <li><a href="about:license#libevent">libevent License</a></li>
       <li><a href="about:license#libffi">libffi License</a></li>
@@ -114,6 +119,7 @@
       <li><a href="about:license#libyuv">libyuv License</a></li>
       <li><a href="about:license#hunspell-lt">Lithuanian Spellchecking Dictionary License</a></li>
       <li><a href="about:license#lodash">Lodash License</a></li>
+      <li><a href="about:license#microformatsshiv">MIT license — microformat-shiv</a></li>
       <li><a href="about:license#myspell">MySpell License</a></li>
       <li><a href="about:license#nicer">nICEr License</a></li>
       <li><a href="about:license#nrappkit">nrappkit License</a></li>
@@ -133,6 +139,7 @@
       <li><a href="about:license#redux">Redux License</a></li>
       <li><a href="about:license#hunspell-ru">Russian Spellchecking Dictionary License</a></li>
       <li><a href="about:license#sctp">SCTP Licenses</a></li>
+      <li><a href="about:license#simple-react-slideshow">Simple React Slideshow License</a></li>
       <li><a href="about:license#skia">Skia License</a></li>
       <li><a href="about:license#snappy">Snappy License</a></li>
 #ifdef USE_STLPORT
@@ -2556,7 +2563,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <h1><a id="backbone"></a>Backbone License</h1>
 
     <p>This license applies to the file
-    <span class="path">browser/components/loop/content/shared/libs/backbone-*.js</span>.</p>
+    <span class="path">browser/extensions/loop/content/shared/libs/backbone-*.js</span>.</p>
 
 <pre>
 Copyright (c) 2010-2014 Jeremy Ashkenas, DocumentCloud
@@ -2725,7 +2732,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <h1><a id="classnames"></a>classnames License</h1>
 
     <p>This license applies to the file <span class="path">
-      browser/components/loop/content/shared/libs/classnames-*.js</span>.
+      browser/extensions/loop/content/shared/libs/classnames-*.js</span>.
     </p>
 
 <pre>
@@ -3442,19 +3449,50 @@ Except as contained in this notice, the name of a copyright holder shall
 not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization of the
 copyright holder.
-
 All trademarks and registered trademarks mentioned herein are the property
 of their respective owners.
 </pre>
+    <hr>
+    <h1><a id="immutable"></a>Immutable.js License</h1>
 
+<pre>
+BSD License
+
+For Immutable JS software
+
+Copyright (c) 2014-2015, Facebook, Inc. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+ * Neither the name Facebook nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific
+   prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</pre>
 
     <hr>
 
     <h1><a id="jpnic"></a>Japan Network Information Center License</h1>
-
     <p>This license applies to certain files in the
     directory <span class="path">netwerk/dns/</span>.</p>
-
 <pre>
 Copyright (c) 2001,2002 Japan Network Information Center.
 All rights reserved.
@@ -3570,6 +3608,40 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     <hr>
 
+    <h1><a id="k_exp"></a>k_exp License</h1>
+
+    <p>This license applies to the file
+    <span class="path">modules/fdlibm/src/k_exp.cpp</span>.
+    </p>
+
+<pre>
+Copyright (c) 2011 David Schultz &lt;das@FreeBSD.ORG&gt;
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+</pre>
+
+    <hr>
+
     <h1><a id="khronos"></a>Khronos group License</h1>
 
     <p>This license applies to the following files:</p>
@@ -3582,24 +3654,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 <pre>
 Copyright 2005-2008 The Khronos Group Inc. All Rights Reserved.
 
-These materials are protected by copyright laws and contain material 
-proprietary to the Khronos Group, Inc.  You may use these materials 
-for implementing Khronos specifications, without altering or removing 
+These materials are protected by copyright laws and contain material
+proprietary to the Khronos Group, Inc.  You may use these materials
+for implementing Khronos specifications, without altering or removing
 any trademark, copyright or other notice from the specification.
 
-Khronos Group makes no, and expressly disclaims any, representations 
-or warranties, express or implied, regarding these materials, including, 
-without limitation, any implied warranties of merchantability or fitness 
-for a particular purpose or non-infringement of any intellectual property. 
-Khronos Group makes no, and expressly disclaims any, warranties, express 
-or implied, regarding the correctness, accuracy, completeness, timeliness, 
-and reliability of these materials. 
+Khronos Group makes no, and expressly disclaims any, representations
+or warranties, express or implied, regarding these materials, including,
+without limitation, any implied warranties of merchantability or fitness
+for a particular purpose or non-infringement of any intellectual property.
+Khronos Group makes no, and expressly disclaims any, warranties, express
+or implied, regarding the correctness, accuracy, completeness, timeliness,
+and reliability of these materials.
 
-Under no circumstances will the Khronos Group, or any of its Promoters, 
-Contributors or Members or their respective partners, officers, directors, 
-employees, agents or representatives be liable for any damages, whether 
-direct, indirect, special or consequential damages for lost revenues, 
-lost profits, or otherwise, arising from or in connection with these 
+Under no circumstances will the Khronos Group, or any of its Promoters,
+Contributors or Members or their respective partners, officers, directors,
+employees, agents or representatives be liable for any damages, whether
+direct, indirect, special or consequential damages for lost revenues,
+lost profits, or otherwise, arising from or in connection with these
 materials.
 
 Khronos and OpenMAX are trademarks of the Khronos Group Inc.
@@ -3642,6 +3714,38 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 </pre>
 
     <hr>
+
+#ifdef MOZ_USE_LIBCXX
+    <h1><a id="libc++"></a>libc++ License</h1>
+
+    <p class="correctme">This license applies to the copy of libc++ obtained
+    from the Android NDK.</p>
+
+<pre>
+Copyright (c) 2009-2014 by the contributors listed in the libc++ CREDITS.TXT
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</pre>
+
+    <hr>
+
+#endif
 
     <h1><a id="libcubeb"></a>libcubeb License</h1>
 
@@ -3906,7 +4010,7 @@ SUCH DAMAGE.
     <h1><a id="lodash"></a>Lodash License</h1>
 
     <p>This license applies to the file
-    <span class="path">browser/components/loop/content/shared/libs/lodash-*.js</span>.</p>
+    <span class="path">browser/extensions/loop/content/shared/libs/lodash-*.js</span>.</p>
 
 <pre>
 Copyright 2012-2014 The Dojo Foundation &lt;http://dojofoundation.org/&gt;
@@ -3931,6 +4035,37 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</pre>
+
+
+    <hr>
+
+    <h1><a id="microformatsshiv"></a>MIT license — microformat-shiv</h1>
+
+    <p>This license applies to some files in the directory
+    <span class="path">toolkit/components/microformats</span>.</p>
+
+<pre>
+MIT license — microformat-shiv
+
+Copyright (c) 2012-2013 Glenn Jones
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 </pre>
 
 
@@ -4061,7 +4196,7 @@ POSSIBILITY OF SUCH DAMAGE.
     <h1><a id="opentok"></a>OpenTok License</h1>
 
     <p>This license applies to the file
-    <span class="path">browser/components/loop/content/shared/libs/sdk.js</span>
+    <span class="path">browser/extensions/loop/content/shared/libs/sdk.js</span>
     and a couple of others nearby.</p>
 
 <pre>
@@ -4708,6 +4843,45 @@ THE POSSIBILITY OF SUCH DAMAGE.
 
     <hr>
 
+    <h1><a id="simple-react-slideshow"></a>Simple React Slideshow License</h1>
+
+    <p>This license applies to the following files:</p>
+    <ul>
+      <li class="path">
+        browser/extensions/loop/chrome/content/panels/vendor/simpleSlideshow.css
+      </li>
+      <li class="path">
+        browser/extensions/loop/chrome/content/panels/vendor/simpleSlideshow.jsx
+      </li>
+    </ul>
+
+<pre>
+Copyright (c) 2015 Piotr
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+</pre>
+
+    <hr>
+
     <h1><a id="skia"></a>Skia License</h1>
 
     <p>This license applies to certain files in the directory
@@ -5026,7 +5200,7 @@ SUCH DAMAGE.
 
     <ul>
       <li class="path">
-        browser/components/loop/content/shared/js/urlRegExps.js
+        browser/extensions/loop/content/shared/js/urlRegExps.js
       </li>
     </ul>
 

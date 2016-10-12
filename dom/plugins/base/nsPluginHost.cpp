@@ -73,7 +73,7 @@
 #include "nsIDOMWindow.h"
 
 #include "nsNetCID.h"
-#include "prprf.h"
+#include "mozilla/Snprintf.h"
 #include "nsThreadUtils.h"
 #include "nsIInputStreamTee.h"
 #include "nsQueryObject.h"
@@ -137,6 +137,7 @@ using mozilla::dom::FakePluginTagInit;
 #define kPluginTmpDirName NS_LITERAL_CSTRING("plugtmp")
 
 static const char *kPrefWhitelist = "plugin.allowed_types";
+static const char *kPrefLoadInParentPrefix = "plugin.load_in_parent_process.";
 static const char *kPrefDisableFullPage = "plugin.disable_full_page_plugin_for_types";
 static const char *kPrefJavaMIME = "plugin.java.mime";
 
@@ -639,15 +640,19 @@ nsresult nsPluginHost::FindProxyForURL(const char* url, char* *result)
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsIIOService> ioService = do_GetService(NS_IOSERVICE_CONTRACTID, &res);
-  if (NS_FAILED(res) || !ioService)
-    return res;
-
   // make a temporary channel from the argument url
+  nsCOMPtr<nsIURI> uri;
+  res = NS_NewURI(getter_AddRefs(uri), nsDependentCString(url));
+  NS_ENSURE_SUCCESS(res, res);
+
+  nsCOMPtr<nsIPrincipal> nullPrincipal = nsNullPrincipal::Create();
+  // The following channel is never openend, so it does not matter what
+  // securityFlags we pass; let's follow the principle of least privilege.
   nsCOMPtr<nsIChannel> tempChannel;
-  res = ioService->NewChannel(nsDependentCString(url), nullptr, nullptr, getter_AddRefs(tempChannel));
-  if (NS_FAILED(res))
-    return res;
+  res = NS_NewChannel(getter_AddRefs(tempChannel), uri, nullPrincipal,
+                      nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_IS_BLOCKED,
+                      nsIContentPolicy::TYPE_OTHER);
+  NS_ENSURE_SUCCESS(res, res);
 
   nsCOMPtr<nsIProxyInfo> pi;
 
@@ -1398,7 +1403,7 @@ nsPluginHost::GetPluginForContentProcess(uint32_t aPluginId, nsNPAPIPlugin** aPl
   return NS_ERROR_FAILURE;
 }
 
-class nsPluginUnloadRunnable : public nsRunnable
+class nsPluginUnloadRunnable : public Runnable
 {
 public:
   explicit nsPluginUnloadRunnable(uint32_t aPluginId) : mPluginId(aPluginId) {}
@@ -1849,12 +1854,14 @@ nsPluginHost::GetSpecialType(const nsACString & aMIMEType)
   }
 
   if (aMIMEType.LowerCaseEqualsASCII("application/x-shockwave-flash") ||
-      aMIMEType.LowerCaseEqualsASCII("application/futuresplash")) {
+      aMIMEType.LowerCaseEqualsASCII("application/futuresplash") ||
+      aMIMEType.LowerCaseEqualsASCII("application/x-shockwave-flash-test")) {
     return eSpecialType_Flash;
   }
 
   if (aMIMEType.LowerCaseEqualsASCII("application/x-silverlight") ||
-      aMIMEType.LowerCaseEqualsASCII("application/x-silverlight-2")) {
+      aMIMEType.LowerCaseEqualsASCII("application/x-silverlight-2") ||
+      aMIMEType.LowerCaseEqualsASCII("application/x-silverlight-test")) {
     return eSpecialType_Silverlight;
   }
 
@@ -2110,7 +2117,7 @@ nsresult nsPluginHost::ScanPluginsDirectory(nsIFile *pluginsDir,
   if (NS_FAILED(rv))
     return rv;
 
-  nsAutoTArray<nsCOMPtr<nsIFile>, 6> pluginFiles;
+  AutoTArray<nsCOMPtr<nsIFile>, 6> pluginFiles;
 
   bool hasMore;
   while (NS_SUCCEEDED(iter->HasMoreElements(&hasMore)) && hasMore) {
@@ -2457,8 +2464,10 @@ nsPluginHost::FindPluginsInContent(bool aCreatePluginList, bool* aPluginsChanged
                                                tag.isJavaPlugin(),
                                                tag.isFlashPlugin(),
                                                tag.supportsAsyncInit(),
+                                               tag.supportsAsyncRender(),
                                                tag.lastModifiedTime(),
-                                               tag.isFromExtension());
+                                               tag.isFromExtension(),
+                                               tag.sandboxLevel());
       AddPluginTag(pluginTag);
     }
   }
@@ -2696,10 +2705,12 @@ nsPluginHost::FindPluginsForContent(uint32_t aPluginEpoch,
                                       tag->mIsJavaPlugin,
                                       tag->mIsFlashPlugin,
                                       tag->mSupportsAsyncInit,
+                                      tag->mSupportsAsyncRender,
                                       tag->FileName(),
                                       tag->Version(),
                                       tag->mLastModifiedTime,
-                                      tag->IsFromExtension()));
+                                      tag->IsFromExtension(),
+                                      tag->mSandboxLevel));
   }
   return NS_OK;
 }
@@ -2760,6 +2771,14 @@ nsPluginHost::IsTypeWhitelisted(const char *aMimeType)
   }
   nsDependentCString wrap(aMimeType);
   return IsTypeInList(wrap, whitelist);
+}
+
+/* static */ bool
+nsPluginHost::ShouldLoadTypeInParent(const nsACString& aMimeType)
+{
+  nsCString prefName(kPrefLoadInParentPrefix);
+  prefName += aMimeType;
+  return Preferences::GetBool(prefName.get(), false);
 }
 
 void
@@ -3361,7 +3380,8 @@ nsresult nsPluginHost::NewPluginURLStream(const nsString& aURL,
   // in case aURL is relative
   RefPtr<nsPluginInstanceOwner> owner = aInstance->GetOwner();
   if (owner) {
-    rv = NS_MakeAbsoluteURI(absUrl, aURL, nsCOMPtr<nsIURI>(owner->GetBaseURI()));
+    nsCOMPtr<nsIURI> baseURI = owner->GetBaseURI();
+    rv = NS_MakeAbsoluteURI(absUrl, aURL, baseURI);
   }
 
   if (absUrl.IsEmpty())
@@ -3399,7 +3419,8 @@ nsresult nsPluginHost::NewPluginURLStream(const nsString& aURL,
                      nsIContentPolicy::TYPE_OBJECT_SUBREQUEST,
                      nullptr,  // aLoadGroup
                      listenerPeer,
-                     nsIRequest::LOAD_NORMAL | nsIChannel::LOAD_CLASSIFY_URI);
+                     nsIRequest::LOAD_NORMAL | nsIChannel::LOAD_CLASSIFY_URI |
+                     nsIChannel::LOAD_BYPASS_SERVICE_WORKER);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (doc) {
@@ -3657,7 +3678,7 @@ nsPluginHost::ParsePostBufferToFixHeaders(const char *inPostData, uint32_t inPos
   const char CRLFCRLF[] = {CR,LF,CR,LF,'\0'}; // C string"\r\n\r\n"
   const char ContentLenHeader[] = "Content-length";
 
-  nsAutoTArray<const char*, 8> singleLF;
+  AutoTArray<const char*, 8> singleLF;
   const char *pSCntlh = 0;// pointer to start of ContentLenHeader in inPostData
   const char *pSod = 0;   // pointer to start of data in inPostData
   const char *pEoh = 0;   // pointer to end of headers in inPostData
@@ -3772,8 +3793,8 @@ nsPluginHost::ParsePostBufferToFixHeaders(const char *inPostData, uint32_t inPos
     newBufferLen = dataLen + l;
     if (!(*outPostData = p = (char*)moz_xmalloc(newBufferLen)))
       return NS_ERROR_OUT_OF_MEMORY;
-    headersLen = PR_snprintf(p, l,"%s: %ld%s", ContentLenHeader, dataLen, CRLFCRLF);
-    if (headersLen == l) { // if PR_snprintf has ate all extra space consider this as an error
+    headersLen = snprintf(p, l,"%s: %u%s", ContentLenHeader, dataLen, CRLFCRLF);
+    if (headersLen == l) { // if snprintf has ate all extra space consider this as an error
       free(p);
       *outPostData = 0;
       return NS_ERROR_FAILURE;
@@ -4161,7 +4182,7 @@ nsPluginHost::DestroyRunningInstances(nsPluginTag* aPluginTag)
 
 // Runnable that does an async destroy of a plugin.
 
-class nsPluginDestroyRunnable : public nsRunnable,
+class nsPluginDestroyRunnable : public Runnable,
                                 public PRCList
 {
 public:

@@ -8,6 +8,7 @@
 #include "SkAndroidCodec.h"
 #include "SkCodec.h"
 #include "SkCodecPriv.h"
+#include "SkRawAdapterCodec.h"
 #include "SkSampledCodec.h"
 #include "SkWebpAdapterCodec.h"
 
@@ -16,8 +17,9 @@ static bool is_valid_sample_size(int sampleSize) {
     return sampleSize > 0;
 }
 
-SkAndroidCodec::SkAndroidCodec(const SkImageInfo& info)
-    : fInfo(info)
+SkAndroidCodec::SkAndroidCodec(SkCodec* codec)
+    : fInfo(codec->getInfo())
+    , fCodec(codec)
 {}
 
 SkAndroidCodec* SkAndroidCodec::NewFromStream(SkStream* stream, SkPngChunkReader* chunkReader) {
@@ -27,18 +29,28 @@ SkAndroidCodec* SkAndroidCodec::NewFromStream(SkStream* stream, SkPngChunkReader
     }
 
     switch (codec->getEncodedFormat()) {
-        case kWEBP_SkEncodedFormat:
-            return new SkWebpAdapterCodec((SkWebpCodec*) codec.detach());
+#ifdef SK_CODEC_DECODES_PNG
         case kPNG_SkEncodedFormat:
+        case kICO_SkEncodedFormat:
+#endif
+#ifdef SK_CODEC_DECODES_JPEG
         case kJPEG_SkEncodedFormat:
-        case kWBMP_SkEncodedFormat:
-        case kBMP_SkEncodedFormat:
+#endif
+#ifdef SK_CODEC_DECODES_GIF
         case kGIF_SkEncodedFormat:
-            return new SkSampledCodec(codec.detach());
+#endif
+        case kBMP_SkEncodedFormat:
+        case kWBMP_SkEncodedFormat:
+            return new SkSampledCodec(codec.release());
+#ifdef SK_CODEC_DECODES_WEBP
+        case kWEBP_SkEncodedFormat:
+            return new SkWebpAdapterCodec((SkWebpCodec*) codec.release());
+#endif
+#ifdef SK_CODEC_DECODES_RAW
+        case kDNG_SkEncodedFormat:
+            return new SkRawAdapterCodec((SkRawCodec*)codec.release());
+#endif
         default:
-            // FIXME: SkSampledCodec is temporarily disabled for other formats
-            // while focusing on the formats that are supported by
-            // BitmapRegionDecoder.
             return nullptr;
     }
 }
@@ -49,6 +61,59 @@ SkAndroidCodec* SkAndroidCodec::NewFromData(SkData* data, SkPngChunkReader* chun
     }
 
     return NewFromStream(new SkMemoryStream(data), chunkReader);
+}
+
+SkColorType SkAndroidCodec::computeOutputColorType(SkColorType requestedColorType) {
+    // The legacy GIF and WBMP decoders always decode to kIndex_8_SkColorType.
+    // We will maintain this behavior.
+    SkEncodedFormat format = this->getEncodedFormat();
+    if (kGIF_SkEncodedFormat == format || kWBMP_SkEncodedFormat == format) {
+        return kIndex_8_SkColorType;
+    }
+
+    SkColorType suggestedColorType = this->getInfo().colorType();
+    switch (requestedColorType) {
+        case kARGB_4444_SkColorType:
+        case kN32_SkColorType:
+            return kN32_SkColorType;
+        case kIndex_8_SkColorType:
+            if (kIndex_8_SkColorType == suggestedColorType) {
+                return kIndex_8_SkColorType;
+            }
+            break;
+        case kAlpha_8_SkColorType:
+            // Fall through to kGray_8.  Before kGray_8_SkColorType existed,
+            // we allowed clients to request kAlpha_8 when they wanted a
+            // grayscale decode.
+        case kGray_8_SkColorType:
+            if (kGray_8_SkColorType == suggestedColorType) {
+                return kGray_8_SkColorType;
+            }
+            break;
+        case kRGB_565_SkColorType:
+            if (kOpaque_SkAlphaType == this->getInfo().alphaType()) {
+                return kRGB_565_SkColorType;
+            }
+            break;
+        default:
+            break;
+    }
+
+    // Android has limited support for kGray_8 (using kAlpha_8).  We will not
+    // use kGray_8 for Android unless they specifically ask for it.
+    if (kGray_8_SkColorType == suggestedColorType) {
+        return kN32_SkColorType;
+    }
+
+    // This may be kN32_SkColorType or kIndex_8_SkColorType.
+    return suggestedColorType;
+}
+
+SkAlphaType SkAndroidCodec::computeOutputAlphaType(bool requestedUnpremul) {
+    if (kOpaque_SkAlphaType == this->getInfo().alphaType()) {
+        return kOpaque_SkAlphaType;
+    }
+    return requestedUnpremul ? kUnpremul_SkAlphaType : kPremul_SkAlphaType;
 }
 
 SkISize SkAndroidCodec::getSampledDimensions(int sampleSize) const {

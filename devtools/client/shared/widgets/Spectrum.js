@@ -14,7 +14,8 @@ const EventEmitter = require("devtools/shared/event-emitter");
  * const {Spectrum} = require("devtools/client/shared/widgets/Spectrum");
  * let s = new Spectrum(containerElement, [255, 126, 255, 1]);
  * s.on("changed", (event, rgba, color) => {
- *   console.log("rgba(" + rgba[0] + ", " + rgba[1] + ", " + rgba[2] + ", " + rgba[3] + ")");
+ *   console.log("rgba(" + rgba[0] + ", " + rgba[1] + ", " + rgba[2] + ", " +
+ *     rgba[3] + ")");
  * });
  * s.show();
  * s.destroy();
@@ -31,32 +32,32 @@ const EventEmitter = require("devtools/shared/event-emitter");
 function Spectrum(parentEl, rgb) {
   EventEmitter.decorate(this);
 
-  this.element = parentEl.ownerDocument.createElement('div');
+  this.element = parentEl.ownerDocument.createElement("div");
   this.parentEl = parentEl;
 
   this.element.className = "spectrum-container";
-  this.element.innerHTML = [
-    "<div class='spectrum-top'>",
-      "<div class='spectrum-fill'></div>",
-      "<div class='spectrum-top-inner'>",
-        "<div class='spectrum-color spectrum-box'>",
-          "<div class='spectrum-sat'>",
-            "<div class='spectrum-val'>",
-              "<div class='spectrum-dragger'></div>",
-            "</div>",
-          "</div>",
-        "</div>",
-        "<div class='spectrum-hue spectrum-box'>",
-          "<div class='spectrum-slider spectrum-slider-control'></div>",
-        "</div>",
-      "</div>",
-    "</div>",
-    "<div class='spectrum-alpha spectrum-checker spectrum-box'>",
-      "<div class='spectrum-alpha-inner'>",
-        "<div class='spectrum-alpha-handle spectrum-slider-control'></div>",
-      "</div>",
-    "</div>",
-  ].join("");
+  this.element.innerHTML = `
+    <div class="spectrum-top">
+      <div class="spectrum-fill"></div>
+      <div class="spectrum-top-inner">
+        <div class="spectrum-color spectrum-box">
+          <div class="spectrum-sat">
+            <div class="spectrum-val">
+              <div class="spectrum-dragger"></div>
+            </div>
+          </div>
+        </div>
+        <div class="spectrum-hue spectrum-box">
+          <div class="spectrum-slider spectrum-slider-control"></div>
+        </div>
+      </div>
+    </div>
+    <div class="spectrum-alpha spectrum-checker spectrum-box">
+      <div class="spectrum-alpha-inner">
+        <div class="spectrum-alpha-handle spectrum-slider-control"></div>
+      </div>
+    </div>
+  `;
 
   this.onElementClick = this.onElementClick.bind(this);
   this.element.addEventListener("click", this.onElementClick, false);
@@ -84,7 +85,7 @@ function Spectrum(parentEl, rgb) {
 
 module.exports.Spectrum = Spectrum;
 
-Spectrum.hsvToRgb = function(h, s, v, a) {
+Spectrum.hsvToRgb = function (h, s, v, a) {
   let r, g, b;
 
   let i = Math.floor(h * 6);
@@ -93,19 +94,19 @@ Spectrum.hsvToRgb = function(h, s, v, a) {
   let q = v * (1 - f * s);
   let t = v * (1 - (1 - f) * s);
 
-  switch(i % 6) {
-    case 0: r = v, g = t, b = p; break;
-    case 1: r = q, g = v, b = p; break;
-    case 2: r = p, g = v, b = t; break;
-    case 3: r = p, g = q, b = v; break;
-    case 4: r = t, g = p, b = v; break;
-    case 5: r = v, g = p, b = q; break;
+  switch (i % 6) {
+    case 0: r = v; g = t; b = p; break;
+    case 1: r = q; g = v; b = p; break;
+    case 2: r = p; g = v; b = t; break;
+    case 3: r = p; g = q; b = v; break;
+    case 4: r = t; g = p; b = v; break;
+    case 5: r = v; g = p; b = q; break;
   }
 
   return [r * 255, g * 255, b * 255, a];
 };
 
-Spectrum.rgbToHsv = function(r, g, b, a) {
+Spectrum.rgbToHsv = function (r, g, b, a) {
   r = r / 255;
   g = g / 255;
   b = b / 255;
@@ -116,11 +117,11 @@ Spectrum.rgbToHsv = function(r, g, b, a) {
   let d = max - min;
   s = max == 0 ? 0 : d / max;
 
-  if(max == min) {
-    h = 0; // achromatic
-  }
-  else {
-    switch(max) {
+  if (max == min) {
+    // achromatic
+    h = 0;
+  } else {
+    switch (max) {
       case r: h = (g - b) / d + (g < b ? 6 : 0); break;
       case g: h = (b - r) / d + 2; break;
       case b: h = (r - g) / d + 4; break;
@@ -130,7 +131,7 @@ Spectrum.rgbToHsv = function(r, g, b, a) {
   return [h, s, v, a];
 };
 
-Spectrum.getOffset = function(el) {
+Spectrum.getOffset = function (el) {
   let curleft = 0, curtop = 0;
   if (el.offsetParent) {
     while (el) {
@@ -145,10 +146,10 @@ Spectrum.getOffset = function(el) {
   };
 };
 
-Spectrum.draggable = function(element, onmove, onstart, onstop) {
-  onmove = onmove || function() {};
-  onstart = onstart || function() {};
-  onstop = onstop || function() {};
+Spectrum.draggable = function (element, onmove, onstart, onstop) {
+  onmove = onmove || function () {};
+  onstart = onstart || function () {};
+  onstop = onstop || function () {};
 
   let doc = element.ownerDocument;
   let dragging = false;
@@ -165,7 +166,8 @@ Spectrum.draggable = function(element, onmove, onstart, onstop) {
     if (dragging) {
       if (e.buttons === 0) {
         // The button is no longer pressed but we did not get a mouseup event.
-        return stop();
+        stop();
+        return;
       }
       let pageX = e.pageX;
       let pageY = e.pageY;
@@ -220,8 +222,10 @@ Spectrum.prototype = {
   },
 
   get rgb() {
-    let rgb = Spectrum.hsvToRgb(this.hsv[0], this.hsv[1], this.hsv[2], this.hsv[3]);
-    return [Math.round(rgb[0]), Math.round(rgb[1]), Math.round(rgb[2]), Math.round(rgb[3]*100)/100];
+    let rgb = Spectrum.hsvToRgb(this.hsv[0], this.hsv[1], this.hsv[2],
+      this.hsv[3]);
+    return [Math.round(rgb[0]), Math.round(rgb[1]), Math.round(rgb[2]),
+      Math.round(rgb[3] * 100) / 100];
   },
 
   get rgbNoSatVal() {
@@ -231,11 +235,12 @@ Spectrum.prototype = {
 
   get rgbCssString() {
     let rgb = this.rgb;
-    return "rgba(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ", " + rgb[3] + ")";
+    return "rgba(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ", " +
+      rgb[3] + ")";
   },
 
-  show: function() {
-    this.element.classList.add('spectrum-show');
+  show: function () {
+    this.element.classList.add("spectrum-show");
 
     this.slideHeight = this.slider.offsetHeight;
     this.dragWidth = this.dragger.offsetWidth;
@@ -248,37 +253,39 @@ Spectrum.prototype = {
     this.updateUI();
   },
 
-  onElementClick: function(e) {
+  onElementClick: function (e) {
     e.stopPropagation();
   },
 
-  onSliderMove: function(dragX, dragY) {
+  onSliderMove: function (dragX, dragY) {
     this.hsv[0] = (dragY / this.slideHeight);
     this.updateUI();
     this.onChange();
   },
 
-  onDraggerMove: function(dragX, dragY) {
+  onDraggerMove: function (dragX, dragY) {
     this.hsv[1] = dragX / this.dragWidth;
     this.hsv[2] = (this.dragHeight - dragY) / this.dragHeight;
     this.updateUI();
     this.onChange();
   },
 
-  onAlphaSliderMove: function(dragX, dragY) {
+  onAlphaSliderMove: function (dragX, dragY) {
     this.hsv[3] = dragX / this.alphaSliderWidth;
     this.updateUI();
     this.onChange();
   },
 
-  onChange: function() {
+  onChange: function () {
     this.emit("changed", this.rgb, this.rgbCssString);
   },
 
-  updateHelperLocations: function() {
-    // If the UI hasn't been shown yet then none of the dimensions will be correct
-    if (!this.element.classList.contains('spectrum-show'))
+  updateHelperLocations: function () {
+    // If the UI hasn't been shown yet then none of the dimensions will be
+    // correct
+    if (!this.element.classList.contains("spectrum-show")) {
       return;
+    }
 
     let h = this.hsv[0];
     let s = this.hsv[1];
@@ -287,7 +294,7 @@ Spectrum.prototype = {
     // Placing the color dragger
     let dragX = s * this.dragWidth;
     let dragY = this.dragHeight - (v * this.dragHeight);
-    let helperDim = this.dragHelperHeight/2;
+    let helperDim = this.dragHelperHeight / 2;
 
     dragX = Math.max(
       -helperDim,
@@ -302,32 +309,34 @@ Spectrum.prototype = {
     this.dragHelper.style.left = dragX + "px";
 
     // Placing the hue slider
-    let slideY = (h * this.slideHeight) - this.slideHelperHeight/2;
+    let slideY = (h * this.slideHeight) - this.slideHelperHeight / 2;
     this.slideHelper.style.top = slideY + "px";
 
     // Placing the alpha slider
-    let alphaSliderX = (this.hsv[3] * this.alphaSliderWidth) - (this.alphaSliderHelperWidth / 2);
+    let alphaSliderX = (this.hsv[3] * this.alphaSliderWidth) -
+      (this.alphaSliderHelperWidth / 2);
     this.alphaSliderHelper.style.left = alphaSliderX + "px";
   },
 
-  updateUI: function() {
+  updateUI: function () {
     this.updateHelperLocations();
 
     let rgb = this.rgb;
     let rgbNoSatVal = this.rgbNoSatVal;
 
-    let flatColor = "rgb(" + rgbNoSatVal[0] + ", " + rgbNoSatVal[1] + ", " + rgbNoSatVal[2] + ")";
-    let fullColor = "rgba(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ", " + rgb[3] + ")";
+    let flatColor = "rgb(" + rgbNoSatVal[0] + ", " + rgbNoSatVal[1] + ", " +
+      rgbNoSatVal[2] + ")";
 
     this.dragger.style.backgroundColor = flatColor;
 
-    var rgbNoAlpha = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
-    var rgbAlpha0 = "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ", 0)";
-    var alphaGradient = "linear-gradient(to right, " + rgbAlpha0 + ", " + rgbNoAlpha + ")";
+    let rgbNoAlpha = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
+    let rgbAlpha0 = "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ", 0)";
+    let alphaGradient = "linear-gradient(to right, " + rgbAlpha0 + ", " +
+      rgbNoAlpha + ")";
     this.alphaSliderInner.style.background = alphaGradient;
   },
 
-  destroy: function() {
+  destroy: function () {
     this.element.removeEventListener("click", this.onElementClick, false);
 
     this.parentEl.removeChild(this.element);

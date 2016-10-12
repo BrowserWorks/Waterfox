@@ -14,6 +14,11 @@
 #include "mozilla/net/DNS.h"
 #include "TimingStruct.h"
 
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#include "nsPrintfCString.h"
+#endif
+
 namespace IPC {
 
 // nsIPermissionManager utilities
@@ -49,7 +54,7 @@ struct ParamTraits<Permission>
     WriteParam(aMsg, aParam.expireTime);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, Permission* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, Permission* aResult)
   {
     return ReadParam(aMsg, aIter, &aResult->origin) &&
            ReadParam(aMsg, aIter, &aResult->type) &&
@@ -96,21 +101,24 @@ struct ParamTraits<mozilla::net::NetAddr>
                       "https://bugzilla.mozilla.org/show_bug.cgi?id=661158");
       aMsg->WriteBytes(aParam.local.path, sizeof(aParam.local.path));
 #endif
+    } else {
+#ifdef MOZ_CRASHREPORTER
+      if (XRE_IsParentProcess()) {
+        nsPrintfCString msg("%d", aParam.raw.family);
+        CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("Unknown NetAddr socket family"), msg);
+      }
+#endif
+      NS_RUNTIMEABORT("Unknown socket family");
     }
-
-    /* If we get here without hitting any of the cases above, there's not much
-     * we can do but let the deserializer fail when it gets this message */
   }
 
-  static bool Read(const Message* aMsg, void** aIter, mozilla::net::NetAddr* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, mozilla::net::NetAddr* aResult)
   {
     if (!ReadParam(aMsg, aIter, &aResult->raw.family))
       return false;
 
     if (aResult->raw.family == AF_UNSPEC) {
-      return aMsg->ReadBytes(aIter,
-                             reinterpret_cast<const char**>(&aResult->raw.data),
-                             sizeof(aResult->raw.data));
+      return aMsg->ReadBytesInto(aIter, &aResult->raw.data, sizeof(aResult->raw.data));
     } else if (aResult->raw.family == AF_INET) {
       return ReadParam(aMsg, aIter, &aResult->inet.port) &&
              ReadParam(aMsg, aIter, &aResult->inet.ip);
@@ -122,9 +130,7 @@ struct ParamTraits<mozilla::net::NetAddr>
              ReadParam(aMsg, aIter, &aResult->inet6.scope_id);
 #if defined(XP_UNIX)
     } else if (aResult->raw.family == AF_LOCAL) {
-      return aMsg->ReadBytes(aIter,
-                             reinterpret_cast<const char**>(&aResult->local.path),
-                             sizeof(aResult->local.path));
+      return aMsg->ReadBytesInto(aIter, &aResult->local.path, sizeof(aResult->local.path));
 #endif
     }
 
@@ -153,9 +159,12 @@ struct ParamTraits<mozilla::net::ResourceTimingStruct>
     WriteParam(aMsg, aParam.transferSize);
     WriteParam(aMsg, aParam.encodedBodySize);
     WriteParam(aMsg, aParam.protocolVersion);
+
+    WriteParam(aMsg, aParam.cacheReadStart);
+    WriteParam(aMsg, aParam.cacheReadEnd);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, mozilla::net::ResourceTimingStruct* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, mozilla::net::ResourceTimingStruct* aResult)
   {
     return ReadParam(aMsg, aIter, &aResult->domainLookupStart) &&
            ReadParam(aMsg, aIter, &aResult->domainLookupEnd) &&
@@ -169,7 +178,9 @@ struct ParamTraits<mozilla::net::ResourceTimingStruct>
            ReadParam(aMsg, aIter, &aResult->redirectEnd) &&
            ReadParam(aMsg, aIter, &aResult->transferSize) &&
            ReadParam(aMsg, aIter, &aResult->encodedBodySize) &&
-           ReadParam(aMsg, aIter, &aResult->protocolVersion);
+           ReadParam(aMsg, aIter, &aResult->protocolVersion) &&
+           ReadParam(aMsg, aIter, &aResult->cacheReadStart) &&
+           ReadParam(aMsg, aIter, &aResult->cacheReadEnd);
   }
 };
 

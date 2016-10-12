@@ -55,7 +55,6 @@ UNIFIED_SOURCES += [
     'DecodePool.cpp',
     'Decoder.cpp',
     'DecoderFactory.cpp',
-    'Deinterlacer.cpp',
     'DynamicImage.cpp',
     'FrameAnimator.cpp',
     'FrozenImage.cpp',
@@ -72,6 +71,7 @@ UNIFIED_SOURCES += [
     'ShutdownTracker.cpp',
     'SourceBuffer.cpp',
     'SurfaceCache.cpp',
+    'SurfacePipe.cpp',
     'SVGDocumentWrapper.cpp',
     'VectorImage.cpp',
 ]
@@ -112,3 +112,5 @@ CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
 
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

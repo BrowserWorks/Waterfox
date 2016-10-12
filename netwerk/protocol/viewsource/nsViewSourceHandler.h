@@ -10,8 +10,10 @@
 #include "nsNetUtil.h"
 #include "mozilla/Attributes.h"
 
-class nsINode;
-class nsIPrincipal;
+class nsILoadInfo;
+
+namespace mozilla {
+namespace net {
 
 class nsViewSourceHandler final : public nsIProtocolHandler
 {
@@ -26,11 +28,7 @@ public:
     nsresult NewSrcdocChannel(nsIURI *aURI,
                               nsIURI *aBaseURI,
                               const nsAString &aSrcdoc,
-                              nsINode *aLoadingNode,
-                              nsIPrincipal *aLoadingPrincipal,
-                              nsIPrincipal *aTriggeringPrincipal,
-                              nsSecurityFlags aSecurityFlags,
-                              nsContentPolicyType aContentPolicyType,
+                              nsILoadInfo *aLoadInfo,
                               nsIChannel** outChannel);
 
     static nsViewSourceHandler* GetInstance();
@@ -40,5 +38,8 @@ private:
 
     static nsViewSourceHandler* gInstance;
 };
+
+} // namespace net
+} // namespace mozilla
 
 #endif /* !defined( nsViewSourceHandler_h___ ) */

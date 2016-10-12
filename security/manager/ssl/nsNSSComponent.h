@@ -7,24 +7,30 @@
 #ifndef _nsNSSComponent_h_
 #define _nsNSSComponent_h_
 
+#include "ScopedNSSTypes.h"
+#include "SharedCertVerifier.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
-#include "nsIEntropyCollector.h"
-#include "nsIStringBundle.h"
 #include "nsIObserver.h"
+#include "nsIStringBundle.h"
 #include "nsNSSCallbacks.h"
-#include "SharedCertVerifier.h"
 #include "prerror.h"
 #include "sslt.h"
 
+#ifdef XP_WIN
+#include "windows.h" // this needs to be before the following includes
+#include "wincrypt.h"
+#endif // XP_WIN
+
 class nsIDOMWindow;
 class nsIPrompt;
+class nsIX509CertList;
 class SmartCardThreadList;
 
 namespace mozilla { namespace psm {
 
-MOZ_WARN_UNUSED_RESULT
+MOZ_MUST_USE
   ::already_AddRefed<mozilla::psm::SharedCertVerifier>
   GetDefaultCertVerifier();
 
@@ -82,6 +88,16 @@ public:
 
   NS_IMETHOD IsNSSInitialized(bool* initialized) = 0;
 
+#ifdef DEBUG
+  NS_IMETHOD IsCertTestBuiltInRoot(CERTCertificate* cert, bool& result) = 0;
+#endif
+
+  NS_IMETHOD IsCertContentSigningRoot(CERTCertificate* cert, bool& result) = 0;
+
+#ifdef XP_WIN
+  NS_IMETHOD GetEnterpriseRoots(nsIX509CertList** enterpriseRoots) = 0;
+#endif
+
   virtual ::already_AddRefed<mozilla::psm::SharedCertVerifier>
     GetDefaultCertVerifier() = 0;
 };
@@ -92,8 +108,7 @@ class nsNSSShutDownList;
 class nsCertVerificationThread;
 
 // Implementation of the PSM component interface.
-class nsNSSComponent final : public nsIEntropyCollector
-                           , public nsINSSComponent
+class nsNSSComponent final : public nsINSSComponent
                            , public nsIObserver
 {
 public:
@@ -102,7 +117,6 @@ public:
   nsNSSComponent();
 
   NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_NSIENTROPYCOLLECTOR
   NS_DECL_NSIOBSERVER
 
   nsresult Init();
@@ -131,6 +145,16 @@ public:
 #endif
 
   NS_IMETHOD IsNSSInitialized(bool* initialized) override;
+
+#ifdef DEBUG
+  NS_IMETHOD IsCertTestBuiltInRoot(CERTCertificate* cert, bool& result) override;
+#endif
+
+  NS_IMETHOD IsCertContentSigningRoot(CERTCertificate* cert, bool& result) override;
+
+#ifdef XP_WIN
+  NS_IMETHOD GetEnterpriseRoots(nsIX509CertList** enterpriseRoots) override;
+#endif
 
   ::already_AddRefed<mozilla::psm::SharedCertVerifier>
     GetDefaultCertVerifier() override;
@@ -162,16 +186,34 @@ private:
 
   void DoProfileBeforeChange();
 
+  void MaybeEnableFamilySafetyCompatibility();
+  void MaybeImportEnterpriseRoots();
+#ifdef XP_WIN
+  nsresult MaybeImportFamilySafetyRoot(PCCERT_CONTEXT certificate,
+                                       bool& wasFamilySafetyRoot);
+  nsresult LoadFamilySafetyRoot();
+  void UnloadFamilySafetyRoot();
+
+  void UnloadEnterpriseRoots();
+
+  mozilla::UniqueCERTCertificate mFamilySafetyRoot;
+  mozilla::UniqueCERTCertList mEnterpriseRoots;
+#endif // XP_WIN
+
   mozilla::Mutex mutex;
 
   nsCOMPtr<nsIStringBundle> mPIPNSSBundle;
   nsCOMPtr<nsIStringBundle> mNSSErrorsBundle;
   bool mNSSInitialized;
   static int mInstanceCount;
-  nsNSSShutDownList* mShutdownObjectList;
 #ifndef MOZ_NO_SMART_CARDS
   SmartCardThreadList* mThreadList;
 #endif
+
+#ifdef DEBUG
+  nsAutoString mTestBuiltInRootHash;
+#endif
+  nsString mContentSigningRootHash;
 
   void deleteBackgroundThreads();
   void createBackgroundThreads();

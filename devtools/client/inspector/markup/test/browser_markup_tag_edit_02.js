@@ -6,14 +6,15 @@
 
 // Tests that an existing attribute can be modified
 
-const TEST_URL = "data:text/html,<div id='test-div'>Test modifying my ID attribute</div>";
+const TEST_URL = `data:text/html,
+                  <div id='test-div'>Test modifying my ID attribute</div>`;
 
-add_task(function*() {
+add_task(function* () {
   info("Opening the inspector on the test page");
   let {inspector, testActor} = yield openInspectorForURL(TEST_URL);
 
   info("Selecting the test node");
-  yield selectNode("#test-div", inspector);
+  yield focusNode("#test-div", inspector);
 
   info("Verify attributes, only ID should be there for now");
   yield assertAttributes("#test-div", {

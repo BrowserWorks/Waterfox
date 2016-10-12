@@ -12,9 +12,12 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseWorkerProxy.h"
 #include "mozilla/UniquePtr.h"
+#include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
 #include "WorkerPrivate.h"
+#include "WorkerScope.h"
 
+using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::dom::workers;
 
@@ -63,13 +66,13 @@ public:
     }
 
     // Release the reference on the worker thread.
-    mPromiseProxy->CleanUp(aCx);
+    mPromiseProxy->CleanUp();
 
     return true;
   }
 };
 
-class ClientFocusRunnable final : public nsRunnable
+class ClientFocusRunnable final : public Runnable
 {
   uint64_t mWindowId;
   RefPtr<PromiseWorkerProxy> mPromiseProxy;
@@ -92,10 +95,7 @@ public:
     if (window) {
       nsCOMPtr<nsIDocument> doc = window->GetDocument();
       if (doc) {
-        nsContentUtils::DispatchChromeEvent(doc,
-                                            window->GetOuterWindow(),
-                                            NS_LITERAL_STRING("DOMServiceWorkerFocusClient"),
-                                            true, true);
+        nsContentUtils::DispatchFocusChromeEvent(window->GetOuterWindow());
         clientInfo.reset(new ServiceWorkerClientInfo(doc));
       }
     }
@@ -118,9 +118,7 @@ private:
       new ResolveOrRejectPromiseRunnable(mPromiseProxy->GetWorkerPrivate(),
                                          mPromiseProxy, Move(aClientInfo));
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    resolveRunnable->Dispatch(jsapi.cx());
+    resolveRunnable->Dispatch();
   }
 };
 
@@ -147,7 +145,7 @@ ServiceWorkerWindowClient::Focus(ErrorResult& aRv) const
     if (promiseProxy) {
       RefPtr<ClientFocusRunnable> r = new ClientFocusRunnable(mWindowId,
                                                                 promiseProxy);
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(r)));
+      MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
     } else {
       promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
     }

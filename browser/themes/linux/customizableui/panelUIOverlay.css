@@ -12,13 +12,17 @@
   -moz-appearance: none !important; /* important, to override toolkit rule */
 }
 
-#BMB_bookmarksPopup menupopup[placespopup=true] {
+#BMB_bookmarksPopup menupopup {
+  -moz-appearance: none;
+  background: var(--panel-arrowcontent-background);
+  color: var(--panel-arrowcontent-color);
+  border: var(--panel-arrowcontent-border);
   margin-top: -6px;
-  padding-top: 2px;
+  padding-top: 1px;
 }
 
 /* Add some space at the top because there are no headers: */
-#BMB_bookmarksPopup menupopup[placespopup=true] > hbox > .popup-internal-box > .arrowscrollbox-scrollbox > .scrollbox-innerbox  {
+#BMB_bookmarksPopup menupopup > hbox > .popup-internal-box > .arrowscrollbox-scrollbox > .scrollbox-innerbox  {
   padding-top: 4px;
 }
 
@@ -30,19 +34,19 @@
 .widget-overflow-list .toolbarbutton-1 > .toolbarbutton-menubutton-button {
   -moz-appearance: none;
   border: 0;
-  -moz-margin-start: 3px;
+  margin-inline-start: 3px;
 }
 
 .widget-overflow-list .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
-  -moz-margin-start: 0;
+  margin-inline-start: 0;
 }
 
 .subviewbutton > .toolbarbutton-text {
-  -moz-padding-start: 16px;
+  padding-inline-start: 16px;
 }
 
 .subviewbutton:-moz-any([image],[targetURI],.cui-withicon, .restoreallitem, .bookmark-item) > .toolbarbutton-text {
-  -moz-padding-start: 0;
+  padding-inline-start: 0;
 }
 
 /* subviewbutton entries for social sidebars have images that come from external
@@ -78,7 +82,7 @@ menu.subviewbutton > .menu-right:-moz-locale-dir(rtl) {
 }
 
 .subviewbutton > .toolbarbutton-icon {
-  -moz-margin-end: 5px !important;
+  margin-inline-end: 5px !important;
 }
 
 .subviewbutton > .menu-right,

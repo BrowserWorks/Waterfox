@@ -247,7 +247,7 @@ CRITICAL_SECTION gDbgHelpCS;
 static void
 PrintError(const char* aPrefix)
 {
-  LPVOID lpMsgBuf;
+  LPSTR lpMsgBuf;
   DWORD lastErr = GetLastError();
   FormatMessageA(
     FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -817,7 +817,7 @@ MozDescribeCodeAddress(void* aPC, MozCodeAddressDetails* aDetails)
   modInfoRes = SymGetModuleInfoEspecial64(myProcess, addr, &modInfo, &lineInfo);
 
   if (modInfoRes) {
-    strncpy(aDetails->library, modInfo.ModuleName,
+    strncpy(aDetails->library, modInfo.LoadedImageName,
                 sizeof(aDetails->library));
     aDetails->library[mozilla::ArrayLength(aDetails->library) - 1] = '\0';
     aDetails->loffset = (char*)aPC - (char*)modInfo.BaseOfImage;

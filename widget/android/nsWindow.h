@@ -25,15 +25,14 @@ namespace mozilla {
     class WidgetTouchEvent;
 
     namespace layers {
-        class CompositorParent;
-        class CompositorChild;
+        class CompositorBridgeParent;
+        class CompositorBridgeChild;
         class LayerManager;
         class APZCTreeManager;
     }
 }
 
-class nsWindow :
-    public nsBaseWidget
+class nsWindow : public nsBaseWidget
 {
 private:
     virtual ~nsWindow();
@@ -48,6 +47,13 @@ public:
     static void InitNatives();
 
 private:
+    // An Event subclass that guards against stale events.
+    template<typename Lambda,
+             bool IsStatic = Lambda::isStatic,
+             typename InstanceType = typename Lambda::ThisArgType,
+             class Impl = typename Lambda::TargetClass>
+    class WindowEvent;
+
     class GeckoViewSupport;
     // Object that implements native GeckoView calls and associated states.
     // nullptr for nsWindows that were not opened from GeckoView.
@@ -64,7 +70,6 @@ private:
 
 public:
     static void OnGlobalAndroidEvent(mozilla::AndroidGeckoEvent *ae);
-    static mozilla::gfx::IntSize GetAndroidScreenBounds();
     static nsWindow* TopWindow();
 
     bool OnContextmenuEvent(mozilla::AndroidGeckoEvent *ae);
@@ -77,6 +82,10 @@ public:
 
     void InitEvent(mozilla::WidgetGUIEvent& event,
                    LayoutDeviceIntPoint* aPoint = 0);
+
+    void UpdateOverscrollVelocity(const float aX, const float aY);
+    void UpdateOverscrollOffset(const float aX, const float aY);
+    void SetScrollingRootContent(const bool isRootContent);
 
     //
     // nsIWidget
@@ -156,18 +165,17 @@ public:
     NS_IMETHOD_(InputContext) GetInputContext() override;
     virtual nsIMEUpdatePreference GetIMEUpdatePreference() override;
 
-    LayerManager* GetLayerManager (PLayerTransactionChild* aShadowManager = nullptr,
-                                   LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
-                                   LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT,
-                                   bool* aAllowRetaining = nullptr) override;
+    void SetSelectionDragState(bool aState);
+    LayerManager* GetLayerManager(PLayerTransactionChild* aShadowManager = nullptr,
+                                  LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
+                                  LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT,
+                                  bool* aAllowRetaining = nullptr) override;
 
     NS_IMETHOD ReparentNativeWidget(nsIWidget* aNewParent) override;
 
     virtual bool NeedsPaint() override;
     virtual void DrawWindowUnderlay(LayerManagerComposite* aManager, LayoutDeviceIntRect aRect) override;
     virtual void DrawWindowOverlay(LayerManagerComposite* aManager, LayoutDeviceIntRect aRect) override;
-
-    virtual mozilla::layers::CompositorParent* NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight) override;
 
     static bool IsCompositionPaused();
     static void InvalidateAndScheduleComposite();
@@ -182,6 +190,21 @@ public:
     void UpdateZoomConstraints(const uint32_t& aPresShellId,
                                const FrameMetrics::ViewID& aViewId,
                                const mozilla::Maybe<ZoomConstraints>& aConstraints) override;
+
+    nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
+                                        TouchPointerState aPointerState,
+                                        LayoutDeviceIntPoint aPoint,
+                                        double aPointerPressure,
+                                        uint32_t aPointerOrientation,
+                                        nsIObserver* aObserver) override;
+    nsresult SynthesizeNativeMouseEvent(LayoutDeviceIntPoint aPoint,
+                                        uint32_t aNativeMessage,
+                                        uint32_t aModifierFlags,
+                                        nsIObserver* aObserver) override;
+    nsresult SynthesizeNativeMouseMove(LayoutDeviceIntPoint aPoint,
+                                       nsIObserver* aObserver) override;
+
+    CompositorBridgeParent* GetCompositorBridgeParent() const;
 
 protected:
     void BringToFront();
@@ -214,6 +237,10 @@ protected:
 
     virtual nsresult NotifyIMEInternal(
                          const IMENotification& aIMENotification) override;
+
+    bool UseExternalCompositingSurface() const override {
+      return true;
+    }
 
     static void DumpWindows();
     static void DumpWindows(const nsTArray<nsWindow*>& wins, int indent = 0);

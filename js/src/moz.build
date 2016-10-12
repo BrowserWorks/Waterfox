@@ -33,7 +33,7 @@ with Files('jit/**'):
 for gcfile in ['jsgc*', 'devtools/rootAnalysis', 'devtools/gc-ubench', 'devtools/gctrace']:
     with Files(gcfile):
         BUG_COMPONENT = component_gc
-for header in ('GCAPI.h', 'HeapAPI.h', 'RootingAPI.h', 'SliceBudget.h', 'TraceKind.h', 'TracingAPI.h', 'WeakMapPtr.h'):
+for header in ('GCAnnotations.h', 'GCAPI.h', 'HeapAPI.h', 'RootingAPI.h', 'SliceBudget.h', 'SweepingAPI.h', 'TraceKind.h', 'TracingAPI.h', 'WeakMapPtr.h'):
     with Files('../public/' + header):
         BUG_COMPONENT = component_gc
 
@@ -53,7 +53,6 @@ with Files('../public/TrackedOptimizationInfo.h'):
 if CONFIG['JS_BUNDLED_EDITLINE']:
     DIRS += ['editline']
 
-# editline needs to get built before the shell
 if not CONFIG['JS_DISABLE_SHELL']:
     DIRS += ['shell']
 
@@ -78,10 +77,16 @@ CONFIGURE_DEFINE_FILES += [
     'js-config.h',
 ]
 
+if CONFIG['HAVE_DTRACE']:
+    GENERATED_FILES += ['javascript-trace.h']
+
+    EXPORTS += ['!javascript-trace.h']
+
 # Changes to internal header files, used externally, massively slow down
 # browser builds.  Don't add new files here unless you know what you're
 # doing!
 EXPORTS += [
+    '!js-config.h',
     'js.msg',
     'jsalloc.h',
     'jsapi.h',
@@ -109,8 +114,11 @@ EXPORTS.js += [
     '../public/Conversions.h',
     '../public/Date.h',
     '../public/Debug.h',
+    '../public/GCAnnotations.h',
     '../public/GCAPI.h',
     '../public/GCHashTable.h',
+    '../public/GCPolicyAPI.h',
+    '../public/GCVariant.h',
     '../public/GCVector.h',
     '../public/HashTable.h',
     '../public/HeapAPI.h',
@@ -126,6 +134,7 @@ EXPORTS.js += [
     '../public/RootingAPI.h',
     '../public/SliceBudget.h',
     '../public/StructuredClone.h',
+    '../public/SweepingAPI.h',
     '../public/TraceKind.h',
     '../public/TracingAPI.h',
     '../public/TrackedOptimizationInfo.h',
@@ -135,6 +144,7 @@ EXPORTS.js += [
     '../public/UbiNodeCensus.h',
     '../public/UbiNodeDominatorTree.h',
     '../public/UbiNodePostOrder.h',
+    '../public/UbiNodeShortestPaths.h',
     '../public/UniquePtr.h',
     '../public/Utility.h',
     '../public/Value.h',
@@ -144,12 +154,19 @@ EXPORTS.js += [
 
 UNIFIED_SOURCES += [
     'asmjs/AsmJS.cpp',
+    'asmjs/Wasm.cpp',
+    'asmjs/WasmBinary.cpp',
+    'asmjs/WasmBinaryIterator.cpp',
+    'asmjs/WasmBinaryToAST.cpp',
+    'asmjs/WasmBinaryToExperimentalText.cpp',
+    'asmjs/WasmBinaryToText.cpp',
     'asmjs/WasmFrameIterator.cpp',
     'asmjs/WasmGenerator.cpp',
     'asmjs/WasmIonCompile.cpp',
     'asmjs/WasmModule.cpp',
     'asmjs/WasmSignalHandlers.cpp',
     'asmjs/WasmStubs.cpp',
+    'asmjs/WasmTextToBinary.cpp',
     'asmjs/WasmTypes.cpp',
     'builtin/AtomicsObject.cpp',
     'builtin/Eval.cpp',
@@ -158,6 +175,7 @@ UNIFIED_SOURCES += [
     'builtin/ModuleObject.cpp',
     'builtin/Object.cpp',
     'builtin/Profilers.cpp',
+    'builtin/Promise.cpp',
     'builtin/Reflect.cpp',
     'builtin/ReflectParse.cpp',
     'builtin/SIMD.cpp',
@@ -196,10 +214,12 @@ UNIFIED_SOURCES += [
     'irregexp/RegExpParser.cpp',
     'irregexp/RegExpStack.cpp',
     'jit/AliasAnalysis.cpp',
+    'jit/AliasAnalysisShared.cpp',
     'jit/AlignmentMaskAnalysis.cpp',
     'jit/BacktrackingAllocator.cpp',
     'jit/Bailouts.cpp',
     'jit/BaselineBailouts.cpp',
+    'jit/BaselineCacheIR.cpp',
     'jit/BaselineCompiler.cpp',
     'jit/BaselineDebugModeOSR.cpp',
     'jit/BaselineFrame.cpp',
@@ -210,6 +230,7 @@ UNIFIED_SOURCES += [
     'jit/BitSet.cpp',
     'jit/BytecodeAnalysis.cpp',
     'jit/C1Spewer.cpp',
+    'jit/CacheIR.cpp',
     'jit/CodeGenerator.cpp',
     'jit/CompileWrappers.cpp',
     'jit/Disassembler.cpp',
@@ -217,6 +238,7 @@ UNIFIED_SOURCES += [
     'jit/EdgeCaseAnalysis.cpp',
     'jit/EffectiveAddressAnalysis.cpp',
     'jit/ExecutableAllocator.cpp',
+    'jit/FlowAliasAnalysis.cpp',
     'jit/InstructionReordering.cpp',
     'jit/Ion.cpp',
     'jit/IonAnalysis.cpp',
@@ -229,6 +251,7 @@ UNIFIED_SOURCES += [
     'jit/JitSpewer.cpp',
     'jit/JSONSpewer.cpp',
     'jit/LICM.cpp',
+    'jit/Linker.cpp',
     'jit/LIR.cpp',
     'jit/LoopUnroller.cpp',
     'jit/Lowering.cpp',
@@ -282,11 +305,9 @@ UNIFIED_SOURCES += [
     'proxy/BaseProxyHandler.cpp',
     'proxy/CrossCompartmentWrapper.cpp',
     'proxy/DeadObjectProxy.cpp',
-    'proxy/DirectProxyHandler.cpp',
     'proxy/OpaqueCrossCompartmentWrapper.cpp',
     'proxy/Proxy.cpp',
-    'proxy/ScriptedDirectProxyHandler.cpp',
-    'proxy/ScriptedIndirectProxyHandler.cpp',
+    'proxy/ScriptedProxyHandler.cpp',
     'proxy/SecurityWrapper.cpp',
     'proxy/Wrapper.cpp',
     'vm/ArgumentsObject.cpp',
@@ -323,6 +344,7 @@ UNIFIED_SOURCES += [
     'vm/SelfHosting.cpp',
     'vm/Shape.cpp',
     'vm/SharedArrayObject.cpp',
+    'vm/SharedImmutableStringsCache.cpp',
     'vm/SPSProfiler.cpp',
     'vm/Stack.cpp',
     'vm/Stopwatch.cpp',
@@ -336,6 +358,7 @@ UNIFIED_SOURCES += [
     'vm/TypeInference.cpp',
     'vm/UbiNode.cpp',
     'vm/UbiNodeCensus.cpp',
+    'vm/UbiNodeShortestPaths.cpp',
     'vm/UnboxedObject.cpp',
     'vm/Unicode.cpp',
     'vm/Value.cpp',
@@ -537,12 +560,18 @@ elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
 if CONFIG['OS_ARCH'] == 'WINNT':
     SOURCES += [
         'jit/ExecutableAllocatorWin.cpp',
+        'threading/windows/ConditionVariable.cpp',
+        'threading/windows/Mutex.cpp',
+        'threading/windows/Thread.cpp',
     ]
     # _CRT_RAND_S must be #defined before #including stdlib.h to get rand_s()
     DEFINES['_CRT_RAND_S'] = True
 else:
     SOURCES += [
         'jit/ExecutableAllocatorPosix.cpp',
+        'threading/posix/ConditionVariable.cpp',
+        'threading/posix/Mutex.cpp',
+        'threading/posix/Thread.cpp',
     ]
 
 if CONFIG['JS_HAS_CTYPES']:
@@ -550,7 +579,7 @@ if CONFIG['JS_HAS_CTYPES']:
         'ctypes/CTypes.cpp',
         'ctypes/Library.cpp',
     ]
-    if not CONFIG['MOZ_NATIVE_FFI']:
+    if not CONFIG['MOZ_SYSTEM_FFI']:
         LOCAL_INCLUDES += [
             '!ctypes/libffi/include',
         ]
@@ -573,6 +602,13 @@ else:
 HostSimplePrograms([
     'host_jskwgen',
 ])
+
+GENERATED_FILES += ['jsautokw.h']
+jsautokw = GENERATED_FILES['jsautokw.h']
+jsautokw.script = 'jsautokw.py'
+jsautokw.inputs += [
+    '!host_jskwgen%s' % CONFIG['HOST_BIN_SUFFIX'],
+]
 
 # JavaScript must be built shared, even for static builds, as it is used by
 # other modules which are always built shared. Failure to do so results in
@@ -598,21 +634,23 @@ if CONFIG['JS_HAS_CTYPES']:
     ]
 
 if CONFIG['ENABLE_INTL_API']:
-    USE_LIBS += [
-        'icu',
-    ]
+    if not CONFIG['MOZ_ICU_DATA_ARCHIVE']:
+        USE_LIBS += [
+            'icu',
+        ]
+    else:
+        # Linking 'icu' will pull in the stubdata library,
+        # which the shell doesn't want, so link the other bits.
+        USE_LIBS += [
+            'icui18n',
+            'icuuc',
+        ]
 
 USE_LIBS += [
+    'fdlibm',
     'nspr',
     'zlib',
 ]
-
-if CONFIG['MOZ_ETW']:
-    GENERATED_FILES = [
-        'ETWProvider.h',
-    ]
-    # This will get the ETW provider resources into the library mozjs.dll
-    RESFILE = 'ETWProvider.res'
 
 if CONFIG['NIGHTLY_BUILD']:
     DEFINES['ENABLE_BINARYDATA'] = True
@@ -652,7 +690,12 @@ if CONFIG['_MSC_VER']:
     CXXFLAGS += ['-wd4661']
     CXXFLAGS += ['-we4067', '-we4258', '-we4275']
     CXXFLAGS += ['-wd4146'] # FIXME: unary minus operator applied to unsigned type (bug 1229189)
-    CXXFLAGS += ['-wd4273'] # FIXME: inconsistent dll linkage (bug 1229666)
+
+    # This is intended as a temporary hack to support building with VS2015.
+    # 'noexcept' used with no exception handling mode specified;
+    # termination on exception is not guaranteed. Specify /EHsc
+    CXXFLAGS += ['-wd4577']
+    CXXFLAGS += ['-wd4312']
 
 if CONFIG['OS_ARCH'] not in ('WINNT', 'HP-UX'):
     OS_LIBS += [
@@ -676,6 +719,8 @@ if CONFIG['OS_ARCH'] == 'SunOS':
         'nsl',
         'socket',
     ]
+
+OS_LIBS += CONFIG['REALTIME_LIBS']
 
 CFLAGS += CONFIG['MOZ_ICU_CFLAGS']
 CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']
@@ -709,6 +754,8 @@ selfhosted.inputs = [
     'builtin/Object.js',
     'builtin/Reflect.js',
     'builtin/RegExp.js',
+    'builtin/RegExpGlobalReplaceOpt.h.js',
+    'builtin/RegExpLocalReplaceOpt.h.js',
     'builtin/String.js',
     'builtin/Set.js',
     'builtin/Sorting.js',
@@ -717,12 +764,18 @@ selfhosted.inputs = [
     'builtin/WeakSet.js'
 ]
 
+if CONFIG['SPIDERMONKEY_PROMISE']:
+    selfhosted.inputs += ['builtin/Promise.js']
+
 if CONFIG['JS_HAS_CTYPES']:
-    if CONFIG['MOZ_NATIVE_FFI']:
+    if CONFIG['MOZ_SYSTEM_FFI']:
         CXXFLAGS += CONFIG['MOZ_FFI_CFLAGS']
     else:
         # Windows needs this to be linked with a static library.
         DEFINES['FFI_BUILDING'] = True
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-shadow']
 
 # Suppress warnings in third-party code.
 if CONFIG['CLANG_CXX']:

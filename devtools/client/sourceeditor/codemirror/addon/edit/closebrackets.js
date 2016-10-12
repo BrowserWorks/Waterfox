@@ -63,7 +63,7 @@
     }
     for (var i = ranges.length - 1; i >= 0; i--) {
       var cur = ranges[i].head;
-      cm.replaceRange("", Pos(cur.line, cur.ch - 1), Pos(cur.line, cur.ch + 1));
+      cm.replaceRange("", Pos(cur.line, cur.ch - 1), Pos(cur.line, cur.ch + 1), "+delete");
     }
   }
 
@@ -109,7 +109,7 @@
     var ranges = cm.listSelections();
     var opening = pos % 2 == 0;
 
-    var type, next;
+    var type;
     for (var i = 0; i < ranges.length; i++) {
       var range = ranges[i], cur = range.head, curType;
       var next = cm.getRange(cur, Pos(cur.line, cur.ch + 1));

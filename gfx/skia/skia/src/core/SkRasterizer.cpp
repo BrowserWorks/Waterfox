@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2006 The Android Open Source Project
  *
@@ -23,7 +22,6 @@ bool SkRasterizer::rasterize(const SkPath& fillPath, const SkMatrix& matrix,
 
         srcM.fFormat = SkMask::kA8_Format;
         srcM.fBounds.set(0, 0, 1, 1);
-        srcM.fImage = nullptr;
         if (!filter->filterMask(&dstM, srcM, matrix, &margin)) {
             return false;
         }

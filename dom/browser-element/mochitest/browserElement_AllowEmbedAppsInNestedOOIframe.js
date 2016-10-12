@@ -10,8 +10,6 @@ SimpleTest.waitForExplicitFinish();
 browserElementTestHelpers.setEnabledPref(true);
 browserElementTestHelpers.addPermission();
 
-SpecialPowers.setAllAppsLaunchable(true);
-
 function runTest() {
   var iframe = document.createElement('iframe');
   iframe.setAttribute('mozbrowser', 'true');
@@ -23,7 +21,7 @@ function runTest() {
   document.body.appendChild(iframe);
 
   var context = {url: 'http://example.org',
-                 originAttributes: {inBrowser: true}};
+                 originAttributes: {inIsolatedMozBrowser: true}};
   SpecialPowers.pushPermissions([
     {type: 'browser', allow: 1, context: context},
     {type: 'embed-apps', allow: 1, context: context}

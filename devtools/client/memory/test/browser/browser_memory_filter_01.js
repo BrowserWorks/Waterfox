@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-// Sanity test that we can show allocation stack breakdowns in the tree.
+// Sanity test that we can show allocation stack displays in the tree.
 
 "use strict";
 
@@ -9,8 +9,9 @@ const {
   dominatorTreeState,
   snapshotState,
   viewState,
+  censusState,
 } = require("devtools/client/memory/constants");
-const { changeViewAndRefresh } = require("devtools/client/memory/actions/view");
+const { changeViewAndRefresh, changeView } = require("devtools/client/memory/actions/view");
 
 const TEST_URL = "http://example.com/browser/devtools/client/memory/test/browser/doc_steady_allocation.html";
 
@@ -21,23 +22,30 @@ this.test = makeMemoryTest(TEST_URL, function* ({ tab, panel }) {
   const { getState, dispatch } = store;
   const doc = panel.panelWin.document;
 
-  ok(!getState().inverted, "not inverted by default");
-  const invertCheckbox = doc.getElementById("invert-tree-checkbox");
-  EventUtils.synthesizeMouseAtCenter(invertCheckbox, {}, panel.panelWin);
-  yield waitUntilState(store, state => state.inverted === true);
+  dispatch(changeView(viewState.CENSUS));
 
   const takeSnapshotButton = doc.getElementById("take-snapshot");
   EventUtils.synthesizeMouseAtCenter(takeSnapshotButton, {}, panel.panelWin);
-  yield waitUntilSnapshotState(store, [snapshotState.SAVED_CENSUS]);
+
+  yield waitUntilState(store, state =>
+    state.snapshots.length === 1 &&
+    state.snapshots[0].census &&
+    state.snapshots[0].census.state === censusState.SAVING);
 
   let filterInput = doc.getElementById("filter");
   EventUtils.synthesizeMouseAtCenter(filterInput, {}, panel.panelWin);
   EventUtils.sendString("js::Shape", panel.panelWin);
 
-  yield waitUntilSnapshotState(store, [snapshotState.SAVING_CENSUS]);
+  yield waitUntilState(store, state =>
+    state.snapshots.length === 1 &&
+    state.snapshots[0].census &&
+    state.snapshots[0].census.state === censusState.SAVING);
   ok(true, "adding a filter string should trigger census recompute");
 
-  yield waitUntilSnapshotState(store, [snapshotState.SAVED_CENSUS]);
+  yield waitUntilState(store, state =>
+    state.snapshots.length === 1 &&
+    state.snapshots[0].census &&
+    state.snapshots[0].census.state === censusState.SAVED);
 
   let nameElem = doc.querySelector(".heap-tree-item-field.heap-tree-item-name");
   ok(nameElem, "Should get a tree item row with a name");
@@ -57,7 +65,10 @@ this.test = makeMemoryTest(TEST_URL, function* ({ tab, panel }) {
   dispatch(changeViewAndRefresh(viewState.CENSUS, heapWorker));
   ok(true, "change view back to census");
 
-  yield waitUntilSnapshotState(store, [snapshotState.SAVED_CENSUS]);
+  yield waitUntilState(store, state =>
+    state.snapshots.length === 1 &&
+    state.snapshots[0].census &&
+    state.snapshots[0].census.state === censusState.SAVED);
 
   nameElem = doc.querySelector(".heap-tree-item-field.heap-tree-item-name");
   filterInput = doc.getElementById("filter");

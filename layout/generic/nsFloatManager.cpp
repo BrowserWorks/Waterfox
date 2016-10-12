@@ -115,7 +115,7 @@ void nsFloatManager::Shutdown()
 }
 
 #define CHECK_BLOCK_DIR(aWM) \
-  NS_ASSERTION(aWM.GetBlockDir() == mWritingMode.value.GetBlockDir(), \
+  NS_ASSERTION((aWM).GetBlockDir() == mWritingMode.GetBlockDir(), \
   "incompatible writing modes")
 
 nsFlowAreaRect
@@ -323,7 +323,7 @@ nsFloatManager::CalculateRegionFor(WritingMode          aWM,
   return region;
 }
 
-NS_DECLARE_FRAME_PROPERTY(FloatRegionProperty, DeleteValue<nsMargin>)
+NS_DECLARE_FRAME_PROPERTY_DELETABLE(FloatRegionProperty, nsMargin)
 
 LogicalRect
 nsFloatManager::GetRegionFor(WritingMode aWM, nsIFrame* aFloat,

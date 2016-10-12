@@ -29,7 +29,7 @@ function AutoCompleteInput(aSearches) {
 }
 
 AutoCompleteInput.prototype = {
-  constructor: AutoCompleteInput, 
+  constructor: AutoCompleteInput,
 
   searches: null,
 
@@ -37,7 +37,7 @@ AutoCompleteInput.prototype = {
   timeout: 10,
   searchParam: "",
   textValue: "",
-  disableAutoComplete: false,  
+  disableAutoComplete: false,
   completeDefaultIndex: false,
 
   get searchCount() {
@@ -90,7 +90,7 @@ function continue_test()
 
   // Make an AutoCompleteInput that uses our searches
   // and confirms results on search complete
-  var input = new AutoCompleteInput(["history"]);
+  var input = new AutoCompleteInput(["unifiedcomplete"]);
 
   controller.input = input;
 

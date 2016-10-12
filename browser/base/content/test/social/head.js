@@ -4,55 +4,32 @@
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "Promise",
-  "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
   "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
 
-function waitForCondition(condition, nextTest, errorMsg, numTries = 30) {
-  var tries = 0;
-  var interval = setInterval(function() {
-    if (tries >= numTries) {
-      ok(false, errorMsg);
-      moveOn();
-    }
-    var conditionPassed;
-    try {
-      conditionPassed = condition();
-    } catch (e) {
-      ok(false, e + "\n" + e.stack);
-      conditionPassed = false;
-    }
-    if (conditionPassed) {
-      moveOn();
-    }
-    tries++;
-  }, 100);
-  var moveOn = function() { clearInterval(interval); nextTest(); };
-}
-
 
 function promiseObserverNotified(aTopic) {
-  let deferred = Promise.defer();
-  Services.obs.addObserver(function onNotification(aSubject, aTopic, aData) {
-    Services.obs.removeObserver(onNotification, aTopic);
-      deferred.resolve({subject: aSubject, data: aData});
+  return new Promise(resolve => {
+    Services.obs.addObserver(function onNotification(aSubject, aTopic, aData) {
+      dump("notification promised "+aTopic);
+      Services.obs.removeObserver(onNotification, aTopic);
+      TestUtils.executeSoon(() => resolve({subject: aSubject, data: aData}));
     }, aTopic, false);
-  return deferred.promise;
+  });
 }
 
 // Check that a specified (string) URL hasn't been "remembered" (ie, is not
 // in history, will not appear in about:newtab or auto-complete, etc.)
 function promiseSocialUrlNotRemembered(url) {
-  let deferred = Promise.defer();
-  let uri = Services.io.newURI(url, null, null);
-  PlacesUtils.asyncHistory.isURIVisited(uri, function(aURI, aIsVisited) {
-    ok(!aIsVisited, "social URL " + url + " should not be in global history");
-    deferred.resolve();
+  return new Promise(resolve => {
+    let uri = Services.io.newURI(url, null, null);
+    PlacesUtils.asyncHistory.isURIVisited(uri, function(aURI, aIsVisited) {
+      ok(!aIsVisited, "social URL " + url + " should not be in global history");
+      resolve();
+    });
   });
-  return deferred.promise;
 }
 
 var gURLsNotRemembered = [];
@@ -89,7 +66,7 @@ function runSocialTestWithProvider(manifest, callback, finishcallback) {
     SessionStore.setWindowValue(window, "socialSidebar", "");
     for (let i = 0; i < manifests.length; i++) {
       let m = manifests[i];
-      for (let what of ['sidebarURL', 'workerURL', 'iconURL', 'shareURL', 'markURL']) {
+      for (let what of ['sidebarURL', 'iconURL', 'shareURL', 'markURL']) {
         if (m[what]) {
           yield promiseSocialUrlNotRemembered(m[what]);
         }
@@ -154,11 +131,11 @@ function runSocialTestWithProvider(manifest, callback, finishcallback) {
         registerCleanupFunction(function () {
           finishSocialTest(true);
         });
-        waitForCondition(() => provider.enabled,
-                         function() {
+        BrowserTestUtils.waitForCondition(() => provider.enabled,
+                                          "providers added and enabled").then(() => {
           info("provider has been enabled");
           callback(finishSocialTest);
-        }, "providers added and enabled");
+        });
       }
     });
   });
@@ -194,8 +171,7 @@ function runSocialTests(tests, cbPreTest, cbPostTest, cbFinish) {
       return;
     }
     let [name, func] = result.value;
-    // We run on a timeout as the frameworker also makes use of timeouts, so
-    // this helps keep the debug messages sane.
+    // We run on a timeout to help keep the debug messages sane.
     executeSoon(function() {
       function cleanupAndRunNextTest() {
         info("sub-test " + name + " complete");
@@ -308,39 +284,6 @@ function waitForNotification(topic, cb) {
   Services.obs.addObserver(observer, topic, false);
 }
 
-// blocklist testing
-function updateBlocklist(aCallback) {
-  var blocklistNotifier = Cc["@mozilla.org/extensions/blocklist;1"]
-                          .getService(Ci.nsITimerCallback);
-  var observer = function() {
-    Services.obs.removeObserver(observer, "blocklist-updated");
-    if (aCallback)
-      executeSoon(aCallback);
-  };
-  Services.obs.addObserver(observer, "blocklist-updated", false);
-  blocklistNotifier.notify(null);
-}
-
-var _originalTestBlocklistURL = null;
-function setAndUpdateBlocklist(aURL, aCallback) {
-  if (!_originalTestBlocklistURL)
-    _originalTestBlocklistURL = Services.prefs.getCharPref("extensions.blocklist.url");
-  Services.prefs.setCharPref("extensions.blocklist.url", aURL);
-  updateBlocklist(aCallback);
-}
-
-function resetBlocklist(aCallback) {
-  // XXX - this has "forked" from the head.js helpers in our parent directory :(
-  // But let's reuse their blockNoPlugins.xml.  Later, we should arrange to
-  // use their head.js helpers directly
-  let noBlockedURL = "http://example.com/browser/browser/base/content/test/plugins/blockNoPlugins.xml";
-  setAndUpdateBlocklist(noBlockedURL, function() {
-    Services.prefs.setCharPref("extensions.blocklist.url", _originalTestBlocklistURL);
-    if (aCallback)
-      aCallback();
-  });
-}
-
 function setManifestPref(name, manifest) {
   let string = Cc["@mozilla.org/supports-string;1"].
                createInstance(Ci.nsISupportsString);
@@ -376,61 +319,24 @@ function resetBuiltinManifestPref(name) {
      Services.prefs.PREF_INVALID, "default manifest removed");
 }
 
-function addTab(url, callback) {
-  let tab = gBrowser.selectedTab = gBrowser.addTab(url, {skipAnimation: true});
-  tab.linkedBrowser.addEventListener("load", function tabLoad(event) {
-    tab.linkedBrowser.removeEventListener("load", tabLoad, true);
-    executeSoon(function() {callback(tab)});
-  }, true);
-}
-
-function selectBrowserTab(tab, callback) {
-  if (gBrowser.selectedTab == tab) {
-    executeSoon(function() {callback(tab)});
-    return;
-  }
-  gBrowser.tabContainer.addEventListener("TabSelect", function onTabSelect() {
-    gBrowser.tabContainer.removeEventListener("TabSelect", onTabSelect, false);
-    is(gBrowser.selectedTab, tab, "browser tab is selected");
-    executeSoon(function() {callback(tab)});
-  });
-  gBrowser.selectedTab = tab;
-}
-
 function ensureEventFired(elem, event) {
-  let deferred = Promise.defer();
-  elem.addEventListener(event, function handler() {
-    elem.removeEventListener(event, handler, true);
-    deferred.resolve()
-  }, true);
-  return deferred.promise;
+  return BrowserTestUtils.waitForEvent(elem, event, true);
 }
 
-function loadIntoTab(tab, url, callback) {
-  tab.linkedBrowser.addEventListener("load", function tabLoad(event) {
-    tab.linkedBrowser.removeEventListener("load", tabLoad, true);
-    executeSoon(function() {callback(tab)});
-  }, true);
-  tab.linkedBrowser.loadURI(url);
-}
-
-function ensureBrowserTabClosed(tab) {
-  let promise = ensureEventFired(gBrowser.tabContainer, "TabClose");
-  gBrowser.removeTab(tab, {skipPermitUnload: true});
-  return promise;
-}
-
-function ensureFrameLoaded(frame) {
-  let deferred = Promise.defer();
-  if (frame.contentDocument && frame.contentDocument.readyState == "complete") {
-    deferred.resolve();
-  } else {
-    frame.addEventListener("load", function handler() {
-      frame.removeEventListener("load", handler, true);
-      deferred.resolve()
-    }, true);
-  }
-  return deferred.promise;
+function ensureFrameLoaded(frame, uri) {
+  return new Promise(resolve => {
+    if (frame.contentDocument && frame.contentDocument.readyState == "complete" &&
+        (!uri || frame.contentDocument.location.href == uri)) {
+      resolve();
+    } else {
+      frame.addEventListener("load", function handler() {
+        if (uri && frame.contentDocument.location.href != uri)
+          return;
+        frame.removeEventListener("load", handler, true);
+        resolve()
+      }, true);
+    }
+  });
 }
 
 // chat test help functions
@@ -441,9 +347,6 @@ function get3ChatsForCollapsing(mode, cb) {
   // ensure a second can be created fully visible but a third can not - then
   // create the other 2.  first will will be collapsed, second fully visible
   // and the third also visible and the "selected" one.
-  // To make our life easier we don't go via the worker and ports so we get
-  // more control over creation *and* to make the code much simpler.  We
-  // assume the worker/port stuff is individually tested above.
   let chatbar = getChatBar();
   let chatWidth = undefined;
   let num = 0;
@@ -497,13 +400,18 @@ function makeChat(mode, uniqueid, cb) {
   }
   // Note that we use promiseChatLoaded instead of the callback to ensure the
   // content has started loading.
-  let chatbox = getChatBar().openChat(provider.origin, provider.name,
-                                      chatUrl + "?id=" + uniqueid, mode);
+  let chatbox = getChatBar().openChat({
+    origin: provider.origin,
+    title: provider.name,url: chatUrl + "?id=" + uniqueid,
+    mode: mode
+  });
   chatbox.promiseChatLoaded.then(
     () => {
     info("chat window has opened");
-    chatbox.contentDocument.title = uniqueid;
-    cb();
+    chatbox.content.messageManager.sendAsyncMessage("Social:SetDocumentTitle", {
+      title: uniqueid
+    });
+    cb(chatbox);
   });
 }
 
@@ -625,25 +533,30 @@ function getPopupWidth() {
   return popup.parentNode.getBoundingClientRect().width + margins;
 }
 
-function promiseCloseChat(chat) {
-  let deferred = Promise.defer();
-  let parent = chat.parentNode;
+function promiseNodeRemoved(aNode) {
+  return new Promise(resolve => {
+    let parent = aNode.parentNode;
 
-  let observer = new MutationObserver(function onMutatations(mutations) {
-    for (let mutation of mutations) {
-      for (let i = 0; i < mutation.removedNodes.length; i++) {
-        let node = mutation.removedNodes.item(i);
-        if (node != chat) {
-          continue;
+    let observer = new MutationObserver(function onMutatations(mutations) {
+      for (let mutation of mutations) {
+        for (let i = 0; i < mutation.removedNodes.length; i++) {
+          let node = mutation.removedNodes.item(i);
+          if (node != aNode) {
+            continue;
+          }
+          observer.disconnect();
+          resolve();
         }
-        observer.disconnect();
-        deferred.resolve();
       }
-    }
+    });
+    observer.observe(parent, {childList: true});
   });
-  observer.observe(parent, {childList: true});
+}
+
+function promiseCloseChat(chat) {
+  let promise = promiseNodeRemoved(chat);
   chat.close();
-  return deferred.promise;
+  return promise;
 }
 
 function closeAllChats() {
@@ -653,6 +566,15 @@ function closeAllChats() {
   }
 }
 
+function openChatViaUser() {
+  let sidebarDoc = document.getElementById("social-sidebar-browser").contentDocument;
+  let button = sidebarDoc.getElementById("chat-opener");
+  // Note we must use synthesizeMouseAtCenter() rather than calling
+  // .click() directly as this causes nsIDOMWindowUtils.isHandlingUserInput
+  // to be true.
+  EventUtils.synthesizeMouseAtCenter(button, {}, sidebarDoc.defaultView);
+}
+
 
 // Support for going on and offline.
 // (via browser/base/content/test/browser_bookmark_titles.js)
@@ -660,29 +582,29 @@ var origProxyType = Services.prefs.getIntPref('network.proxy.type');
 
 function toggleOfflineStatus(goOffline) {
   // Bug 968887 fix.  when going on/offline, wait for notification before continuing
-  let deferred = Promise.defer();
-  if (!goOffline) {
-    Services.prefs.setIntPref('network.proxy.type', origProxyType);
-  }
-  if (goOffline != Services.io.offline) {
-    info("initial offline state " + Services.io.offline);
-    let expect = !Services.io.offline;
-    Services.obs.addObserver(function offlineChange(subject, topic, data) {
-      Services.obs.removeObserver(offlineChange, "network:offline-status-changed");
-      info("offline state changed to " + Services.io.offline);
-      is(expect, Services.io.offline, "network:offline-status-changed successful toggle");
-      deferred.resolve();
-    }, "network:offline-status-changed", false);
-    BrowserOffline.toggleOfflineStatus();
-  } else {
-    deferred.resolve();
-  }
-  if (goOffline) {
-    Services.prefs.setIntPref('network.proxy.type', 0);
-    // LOAD_FLAGS_BYPASS_CACHE isn't good enough. So clear the cache.
-    Services.cache2.clear();
-  }
-  return deferred.promise;
+  return new Promise(resolve => {
+    if (!goOffline) {
+      Services.prefs.setIntPref('network.proxy.type', origProxyType);
+    }
+    if (goOffline != Services.io.offline) {
+      info("initial offline state " + Services.io.offline);
+      let expect = !Services.io.offline;
+      Services.obs.addObserver(function offlineChange(subject, topic, data) {
+        Services.obs.removeObserver(offlineChange, "network:offline-status-changed");
+        info("offline state changed to " + Services.io.offline);
+        is(expect, Services.io.offline, "network:offline-status-changed successful toggle");
+        resolve();
+      }, "network:offline-status-changed", false);
+      BrowserOffline.toggleOfflineStatus();
+    } else {
+      resolve();
+    }
+    if (goOffline) {
+      Services.prefs.setIntPref('network.proxy.type', 0);
+      // LOAD_FLAGS_BYPASS_CACHE isn't good enough. So clear the cache.
+      Services.cache2.clear();
+    }
+  });
 }
 
 function goOffline() {

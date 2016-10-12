@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2006-2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -14,8 +16,6 @@
 #include "base/lock.h"
 #include "base/message_pump.h"
 #include "base/observer_list.h"
-#include "base/task.h"
-#include "base/timer.h"
 
 #if defined(OS_WIN)
 // We need this to declare base::MessagePumpWin::Dispatcher, which we should
@@ -26,6 +26,9 @@
 #endif
 
 #include "nsAutoPtr.h"
+#include "nsThreadUtils.h"
+
+class nsIThread;
 
 namespace mozilla {
 namespace ipc {
@@ -109,57 +112,15 @@ public:
   // NOTE: These methods may be called on any thread.  The Task will be invoked
   // on the thread that executes MessageLoop::Run().
 
-  B2G_ACL_EXPORT void PostTask(
-      const tracked_objects::Location& from_here, Task* task);
+  void PostTask(already_AddRefed<mozilla::Runnable> task);
 
-  void PostDelayedTask(
-      const tracked_objects::Location& from_here, Task* task, int delay_ms);
-
-  void PostNonNestableTask(
-      const tracked_objects::Location& from_here, Task* task);
-
-  void PostNonNestableDelayedTask(
-      const tracked_objects::Location& from_here, Task* task, int delay_ms);
+  void PostDelayedTask(already_AddRefed<mozilla::Runnable> task, int delay_ms);
 
   // PostIdleTask is not thread safe and should be called on this thread
-  void PostIdleTask(
-      const tracked_objects::Location& from_here, Task* task);
-
-  // A variant on PostTask that deletes the given object.  This is useful
-  // if the object needs to live until the next run of the MessageLoop (for
-  // example, deleting a RenderProcessHost from within an IPC callback is not
-  // good).
-  //
-  // NOTE: This method may be called on any thread.  The object will be deleted
-  // on the thread that executes MessageLoop::Run().  If this is not the same
-  // as the thread that calls PostDelayedTask(FROM_HERE, ), then T MUST inherit
-  // from RefCountedThreadSafe<T>!
-  template <class T>
-  void DeleteSoon(const tracked_objects::Location& from_here, T* object) {
-    PostNonNestableTask(from_here, new DeleteTask<T>(object));
-  }
-
-  // A variant on PostTask that releases the given reference counted object
-  // (by calling its Release method).  This is useful if the object needs to
-  // live until the next run of the MessageLoop, or if the object needs to be
-  // released on a particular thread.
-  //
-  // NOTE: This method may be called on any thread.  The object will be
-  // released (and thus possibly deleted) on the thread that executes
-  // MessageLoop::Run().  If this is not the same as the thread that calls
-  // PostDelayedTask(FROM_HERE, ), then T MUST inherit from
-  // RefCountedThreadSafe<T>!
-  template <class T>
-  void ReleaseSoon(const tracked_objects::Location& from_here, T* object) {
-    PostNonNestableTask(from_here, new ReleaseTask<T>(object));
-  }
+  void PostIdleTask(already_AddRefed<mozilla::Runnable> task);
 
   // Run the message loop.
   void Run();
-
-  // Process all pending tasks, windows messages, etc., but don't wait/sleep.
-  // Return as soon as all items that can be run are taken care of.
-  void RunAllPending();
 
   // Signals the Run method to return after it is done processing all pending
   // messages.  This method may only be called on the same thread that called
@@ -174,10 +135,11 @@ public:
 
   // Invokes Quit on the current MessageLoop when run.  Useful to schedule an
   // arbitrary MessageLoop to Quit.
-  class QuitTask : public Task {
+  class QuitTask : public mozilla::Runnable {
    public:
-    virtual void Run() override {
+    NS_IMETHOD Run() override {
       MessageLoop::current()->Quit();
+      return NS_OK;
     }
   };
 
@@ -199,7 +161,7 @@ public:
   //   This type of ML is used in Mozilla child processes which initialize
   //   XPCOM and use the gecko event loop.
   //
-  // TYPE_MOZILLA_UI
+  // TYPE_MOZILLA_PARENT
   //   This type of ML is used in Mozilla parent processes which initialize
   //   XPCOM and use the gecko event loop.
   //
@@ -216,14 +178,14 @@ public:
     TYPE_UI,
     TYPE_IO,
     TYPE_MOZILLA_CHILD,
-    TYPE_MOZILLA_UI,
+    TYPE_MOZILLA_PARENT,
     TYPE_MOZILLA_NONMAINTHREAD,
     TYPE_MOZILLA_NONMAINUITHREAD
   };
 
   // Normally, it is not necessary to instantiate a MessageLoop.  Instead, it
   // is typical to make use of the current thread's MessageLoop instance.
-  explicit MessageLoop(Type type = TYPE_DEFAULT);
+  explicit MessageLoop(Type type = TYPE_DEFAULT, nsIThread* aThread = nullptr);
   ~MessageLoop();
 
   // Returns the type passed to the constructor.
@@ -319,13 +281,36 @@ public:
 
   // This structure is copied around by value.
   struct PendingTask {
-    Task* task;                        // The task to run.
+    RefPtr<mozilla::Runnable> task;    // The task to run.
     base::TimeTicks delayed_run_time;  // The time when the task should be run.
     int sequence_num;                  // Secondary sort key for run time.
     bool nestable;                     // OK to dispatch from a nested loop.
 
-    PendingTask(Task* aTask, bool aNestable)
+    PendingTask(already_AddRefed<mozilla::Runnable> aTask, bool aNestable)
         : task(aTask), sequence_num(0), nestable(aNestable) {
+    }
+
+    PendingTask(PendingTask&& aOther)
+        : task(aOther.task.forget()),
+          delayed_run_time(aOther.delayed_run_time),
+          sequence_num(aOther.sequence_num),
+          nestable(aOther.nestable) {
+    }
+
+    // std::priority_queue<T>::top is dumb, so we have to have this.
+    PendingTask(const PendingTask& aOther)
+        : task(aOther.task),
+          delayed_run_time(aOther.delayed_run_time),
+          sequence_num(aOther.sequence_num),
+          nestable(aOther.nestable) {
+    }
+    PendingTask& operator=(const PendingTask& aOther)
+    {
+      task = aOther.task;
+      delayed_run_time = aOther.delayed_run_time;
+      sequence_num = aOther.sequence_num;
+      nestable = aOther.nestable;
+      return *this;
     }
 
     // Used to support sorting.
@@ -369,14 +354,14 @@ public:
   // appended to the list work_queue_.  Such re-entrancy generally happens when
   // an unrequested message pump (typical of a native dialog) is executing in
   // the context of a task.
-  bool QueueOrRunTask(Task* new_task);
+  bool QueueOrRunTask(already_AddRefed<mozilla::Runnable> new_task);
 
   // Runs the specified task and deletes it.
-  void RunTask(Task* task);
+  void RunTask(already_AddRefed<mozilla::Runnable> task);
 
   // Calls RunTask or queues the pending_task on the deferred task list if it
   // cannot be run right now.  Returns true if the task was run.
-  bool DeferOrRunPendingTask(const PendingTask& pending_task);
+  bool DeferOrRunPendingTask(PendingTask&& pending_task);
 
   // Adds the pending task to delayed_work_queue_.
   void AddToDelayedWorkQueue(const PendingTask& pending_task);
@@ -392,8 +377,7 @@ public:
   bool DeletePendingTasks();
 
   // Post a task to our incomming queue.
-  void PostTask_Helper(const tracked_objects::Location& from_here, Task* task,
-                       int delay_ms, bool nestable);
+  void PostTask_Helper(already_AddRefed<mozilla::Runnable> task, int delay_ms);
 
   // base::MessagePump::Delegate methods:
   virtual bool DoWork() override;
@@ -473,7 +457,7 @@ class MessageLoopForUI : public MessageLoop {
       return NULL;
     Type type = loop->type();
     DCHECK(type == MessageLoop::TYPE_UI ||
-           type == MessageLoop::TYPE_MOZILLA_UI ||
+           type == MessageLoop::TYPE_MOZILLA_PARENT ||
            type == MessageLoop::TYPE_MOZILLA_CHILD);
     return static_cast<MessageLoopForUI*>(loop);
   }

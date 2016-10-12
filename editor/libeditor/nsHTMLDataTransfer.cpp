@@ -19,6 +19,7 @@
 #include "nsCRT.h"
 #include "nsCRTGlue.h"
 #include "nsComponentManagerUtils.h"
+#include "nsIScriptError.h"
 #include "nsContentUtils.h"
 #include "nsDebug.h"
 #include "nsDependentSubstring.h"
@@ -52,6 +53,7 @@
 #include "nsIEditor.h"
 #include "nsIEditorIMESupport.h"
 #include "nsIEditorMailSupport.h"
+#include "nsIEditorUtils.h"
 #include "nsIFile.h"
 #include "nsIInputStream.h"
 #include "nsIMIMEService.h"
@@ -344,8 +346,7 @@ nsHTMLEditor::DoInsertHTMLWithContext(const nsAString & aInputString,
 
     if (aClearStyle) {
       // pasting does not inherit local inline styles
-      nsCOMPtr<nsIDOMNode> tmpNode =
-        do_QueryInterface(selection->GetAnchorNode());
+      nsCOMPtr<nsINode> tmpNode = selection->GetAnchorNode();
       int32_t tmpOffset = static_cast<int32_t>(selection->AnchorOffset());
       rv = ClearStyle(address_of(tmpNode), &tmpOffset, nullptr, nullptr);
       NS_ENSURE_SUCCESS(rv, rv);
@@ -382,8 +383,8 @@ nsHTMLEditor::DoInsertHTMLWithContext(const nsAString & aInputString,
     NS_ENSURE_TRUE(parentNode, NS_ERROR_FAILURE);
 
     // Adjust position based on the first node we are going to insert.
-    NormalizeEOLInsertPosition(GetAsDOMNode(nodeList[0]),
-                               address_of(parentNode), &offsetOfNewNode);
+    NormalizeEOLInsertPosition(nodeList[0], address_of(parentNode),
+                               &offsetOfNewNode);
 
     // if there are any invisible br's after our insertion point, remove them.
     // this is because if there is a br at end of what we paste, it will make
@@ -457,7 +458,9 @@ nsHTMLEditor::DoInsertHTMLWithContext(const nsAString & aInputString,
     nsCOMPtr<nsIDOMNode> parentBlock, lastInsertNode, insertedContextParent;
     int32_t listCount = nodeList.Length();
     int32_t j;
-    if (IsBlockNode(parentNode))
+    nsCOMPtr<nsINode> parentNodeNode = do_QueryInterface(parentNode);
+    NS_ENSURE_STATE(parentNodeNode || !parentNode);
+    if (IsBlockNode(parentNodeNode))
       parentBlock = parentNode;
     else
       parentBlock = GetBlockNodeParent(parentNode);
@@ -1009,6 +1012,106 @@ nsHTMLEditor::ParseCFHTML(nsCString & aCfhtml, char16_t **aStuffToPaste, char16_
   return NS_OK;
 }
 
+namespace {
+
+nsresult
+ImgFromData(const nsACString& aType, const nsACString& aData, nsString& aOutput)
+{
+  nsAutoCString data64;
+  nsresult rv = Base64Encode(aData, data64);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  aOutput.AssignLiteral("<IMG src=\"data:");
+  AppendUTF8toUTF16(aType, aOutput);
+  aOutput.AppendLiteral(";base64,");
+  AppendUTF8toUTF16(data64, aOutput);
+  aOutput.AppendLiteral("\" alt=\"\" >");
+  return NS_OK;
+}
+
+class BlobReader final : public nsIEditorBlobListener
+{
+public:
+  BlobReader(BlobImpl* aBlob, nsHTMLEditor* aEditor,
+             bool aIsSafe, nsIDOMDocument *aSourceDoc,
+             nsIDOMNode *aDestinationNode, int32_t aDestOffset,
+             bool aDoDeleteSelection);
+
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIEDITORBLOBLISTENER
+
+private:
+  ~BlobReader()
+  {
+  }
+
+  RefPtr<BlobImpl> mBlob;
+  RefPtr<nsHTMLEditor> mEditor;
+  bool mIsSafe;
+  nsCOMPtr<nsIDOMDocument> mSourceDoc;
+  nsCOMPtr<nsIDOMNode> mDestinationNode;
+  int32_t mDestOffset;
+  bool mDoDeleteSelection;
+};
+
+NS_IMPL_ISUPPORTS(BlobReader, nsIEditorBlobListener)
+
+BlobReader::BlobReader(BlobImpl* aBlob, nsHTMLEditor* aEditor,
+                       bool aIsSafe, nsIDOMDocument *aSourceDoc,
+                       nsIDOMNode *aDestinationNode, int32_t aDestOffset,
+                       bool aDoDeleteSelection)
+  : mBlob(aBlob)
+  , mEditor(aEditor)
+  , mIsSafe(aIsSafe)
+  , mSourceDoc(aSourceDoc)
+  , mDestinationNode(aDestinationNode)
+  , mDestOffset(aDestOffset)
+  , mDoDeleteSelection(aDoDeleteSelection)
+{
+  MOZ_ASSERT(mBlob);
+  MOZ_ASSERT(mEditor);
+  MOZ_ASSERT(mDestinationNode);
+}
+
+NS_IMETHODIMP
+BlobReader::OnResult(const nsACString& aResult)
+{
+  nsString blobType;
+  mBlob->GetType(blobType);
+
+  NS_ConvertUTF16toUTF8 type(blobType);
+  nsAutoString stuffToPaste;
+  nsresult rv = ImgFromData(type, aResult, stuffToPaste);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsAutoEditBatch beginBatching(mEditor);
+  rv = mEditor->DoInsertHTMLWithContext(stuffToPaste, EmptyString(), EmptyString(),
+                                        NS_LITERAL_STRING(kFileMime),
+                                        mSourceDoc,
+                                        mDestinationNode, mDestOffset,
+                                        mDoDeleteSelection,
+                                        mIsSafe, false);
+  return rv;
+}
+
+NS_IMETHODIMP
+BlobReader::OnError(const nsAString& aError)
+{
+  nsCOMPtr<nsINode> destNode = do_QueryInterface(mDestinationNode);
+
+  nsString error;
+  error.AssignLiteral("Dropping a file into a contenteditable element failed: ");
+  error.Append(aError);
+
+  nsContentUtils::ReportToConsoleNonLocalized(error,
+                                              nsIScriptError::warningFlag,
+                                              NS_LITERAL_CSTRING("Editor"),
+                                              destNode->OwnerDoc());
+  return NS_OK;
+}
+
+} // anonymous namespace
+
 nsresult nsHTMLEditor::InsertObject(const char* aType, nsISupports* aObject, bool aIsSafe,
                                     nsIDOMDocument *aSourceDoc,
                                     nsIDOMNode *aDestinationNode,
@@ -1016,6 +1119,23 @@ nsresult nsHTMLEditor::InsertObject(const char* aType, nsISupports* aObject, boo
                                     bool aDoDeleteSelection)
 {
   nsresult rv;
+
+  if (nsCOMPtr<BlobImpl> blob = do_QueryInterface(aObject)) {
+    RefPtr<BlobReader> br = new BlobReader(blob, this, aIsSafe, aSourceDoc,
+                                           aDestinationNode, aDestOffset,
+                                           aDoDeleteSelection);
+    nsCOMPtr<nsIEditorUtils> utils =
+      do_GetService("@mozilla.org/editor-utils;1");
+    NS_ENSURE_TRUE(utils, NS_ERROR_FAILURE);
+
+    nsCOMPtr<nsINode> node = do_QueryInterface(aDestinationNode);
+    MOZ_ASSERT(node);
+
+    nsCOMPtr<nsIDOMBlob> domBlob = Blob::Create(node->GetOwnerGlobal(), blob);
+    MOZ_ASSERT(domBlob);
+
+    return utils->SlurpBlob(domBlob, node->OwnerDoc()->GetWindow(), br);
+  }
 
   nsAutoCString type(aType);
 
@@ -1064,16 +1184,10 @@ nsresult nsHTMLEditor::InsertObject(const char* aType, nsISupports* aObject, boo
       NS_ENSURE_SUCCESS(rv, rv);
     }
 
-    nsAutoCString data64;
-    rv = Base64Encode(imageData, data64);
+    nsAutoString stuffToPaste;
+    rv = ImgFromData(type, imageData, stuffToPaste);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsAutoString stuffToPaste;
-    stuffToPaste.AssignLiteral("<IMG src=\"data:");
-    AppendUTF8toUTF16(type, stuffToPaste);
-    stuffToPaste.AppendLiteral(";base64,");
-    AppendUTF8toUTF16(data64, stuffToPaste);
-    stuffToPaste.AppendLiteral("\" alt=\"\" >");
     nsAutoEditBatch beginBatching(this);
     rv = DoInsertHTMLWithContext(stuffToPaste, EmptyString(), EmptyString(),
                                  NS_LITERAL_STRING(kFileMime),
@@ -1658,9 +1772,6 @@ NS_IMETHODIMP nsHTMLEditor::PasteAsPlaintextQuotation(int32_t aSelectionType)
 NS_IMETHODIMP
 nsHTMLEditor::InsertTextWithQuotations(const nsAString &aStringToInsert)
 {
-  if (mWrapToWindow)
-    return InsertText(aStringToInsert);
-
   // The whole operation should be undoable in one transaction:
   BeginTransaction();
 
@@ -1761,9 +1872,6 @@ nsHTMLEditor::InsertAsPlaintextQuotation(const nsAString & aQuotedText,
                                          bool aAddCites,
                                          nsIDOMNode **aNodeInserted)
 {
-  if (mWrapToWindow)
-    return nsPlaintextEditor::InsertAsQuotation(aQuotedText, aNodeInserted);
-
   // get selection
   RefPtr<Selection> selection = GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NULL_POINTER);
@@ -1782,7 +1890,7 @@ nsHTMLEditor::InsertAsPlaintextQuotation(const nsAString & aQuotedText,
     return NS_OK; // rules canceled the operation
   }
 
-  // Wrap the inserted quote in a <span> so it won't be wrapped:
+  // Wrap the inserted quote in a <span> so we can distinguish it.
   nsCOMPtr<Element> newNode =
     DeleteSelectionAndCreateElement(*nsGkAtoms::span);
 
@@ -1792,12 +1900,11 @@ nsHTMLEditor::InsertAsPlaintextQuotation(const nsAString & aQuotedText,
   // but we'll fall through and try to insert the text anyway.
   if (newNode) {
     // Add an attribute on the pre node so we'll know it's a quotation.
-    // Do this after the insertion, so that
     newNode->SetAttr(kNameSpaceID_None, nsGkAtoms::mozquote,
                      NS_LITERAL_STRING("true"), true);
-    // turn off wrapping on spans
+    // Allow wrapping on spans so long lines get wrapped to the screen.
     newNode->SetAttr(kNameSpaceID_None, nsGkAtoms::style,
-                     NS_LITERAL_STRING("white-space: pre;"), true);
+                     NS_LITERAL_STRING("white-space: pre-wrap;"), true);
 
     // and set the selection inside it:
     selection->Collapse(newNode, 0);
@@ -2297,22 +2404,26 @@ nsHTMLEditor::ReplaceOrphanedStructure(StartOrEnd aStartOrEnd,
   }
 
   // If we found substructure, paste it instead of its descendants.
-  // Postprocess list to remove any descendants of this node so that we don't
-  // insert them twice.
-  while (aNodeArray.Length()) {
-    int32_t idx = aStartOrEnd == StartOrEnd::start ? 0
-                                                   : aNodeArray.Length() - 1;
+  // Only replace with the substructure if all the nodes in the list are
+  // descendants.
+  bool shouldReplaceNodes = true;
+  for (uint32_t i = 0; i < aNodeArray.Length(); i++) {
+    uint32_t idx = aStartOrEnd == StartOrEnd::start ?
+      i : (aNodeArray.Length() - i - 1);
     OwningNonNull<nsINode> endpoint = aNodeArray[idx];
     if (!nsEditorUtils::IsDescendantOf(endpoint, replaceNode)) {
+      shouldReplaceNodes = false;
       break;
     }
-    aNodeArray.RemoveElementAt(idx);
   }
 
-  // Now replace the removed nodes with the structural parent
-  if (aStartOrEnd == StartOrEnd::end) {
-    aNodeArray.AppendElement(*replaceNode);
-  } else {
-    aNodeArray.InsertElementAt(0, *replaceNode);
+  if (shouldReplaceNodes) {
+    // Now replace the removed nodes with the structural parent
+    aNodeArray.Clear();
+    if (aStartOrEnd == StartOrEnd::end) {
+      aNodeArray.AppendElement(*replaceNode);
+    } else {
+      aNodeArray.InsertElementAt(0, *replaceNode);
+    }
   }
 }

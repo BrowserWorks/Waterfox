@@ -19,7 +19,6 @@ add_task(function* test_register_case() {
 
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -43,15 +42,11 @@ add_task(function* test_register_case() {
     }
   });
 
-  let newRecord = yield waitForPromise(
-    PushService.register({
-      scope: 'https://example.net/case',
-      originAttributes: ChromeUtils.originAttributesToSuffix(
-        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
-    }),
-    DEFAULT_TIMEOUT,
-    'Mixed-case register response timed out'
-  );
+  let newRecord = yield PushService.register({
+    scope: 'https://example.net/case',
+    originAttributes: ChromeUtils.originAttributesToSuffix(
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
+  });
   equal(newRecord.endpoint, 'https://example.com/update/case',
     'Wrong push endpoint in registration record');
 

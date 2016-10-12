@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure that the variables view correctly filters nodes by value.
@@ -14,7 +16,11 @@ function test() {
   // Debug test slaves are quite slow at this test.
   requestLongerTimeout(4);
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -26,8 +32,7 @@ function test() {
     // The first 'with' scope should be expanded by default, but the
     // variables haven't been fetched yet. This is how 'with' scopes work.
     promise.all([
-      waitForSourceAndCaret(gPanel, ".html", 22),
-      waitForDebuggerEvents(gPanel, gDebugger.EVENTS.FETCHED_SCOPES),
+      waitForCaretAndScopes(gPanel, 22),
       waitForDebuggerEvents(gPanel, gDebugger.EVENTS.FETCHED_VARIABLES)
     ]).then(prepareVariablesAndProperties)
       .then(testVariablesAndPropertiesFiltering)
@@ -235,7 +240,7 @@ function prepareVariablesAndProperties() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

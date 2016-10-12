@@ -29,7 +29,8 @@ public:
                    nsPresContext* aPresContext,
                    WidgetEvent* aEvent,
                    EventMessage aEventMessage,
-                   nsInvalidateRequestList* aInvalidateRequests);
+                   nsInvalidateRequestList* aInvalidateRequests,
+                   uint64_t aTransactionId);
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -42,7 +43,7 @@ public:
     return Event::DuplicatePrivateData();
   }
   NS_IMETHOD_(void) Serialize(IPC::Message* aMsg, bool aSerializeInterfaceType) override;
-  NS_IMETHOD_(bool) Deserialize(const IPC::Message* aMsg, void** aIter) override;
+  NS_IMETHOD_(bool) Deserialize(const IPC::Message* aMsg, PickleIterator* aIter) override;
 
   virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
@@ -55,6 +56,8 @@ public:
 
   already_AddRefed<PaintRequestList> PaintRequests();
 
+  uint64_t TransactionId();
+
 protected:
   ~NotifyPaintEvent() {}
 
@@ -62,6 +65,7 @@ private:
   nsRegion GetRegion();
 
   nsTArray<nsInvalidateRequestList::Request> mInvalidateRequests;
+  uint64_t mTransactionId;
 };
 
 } // namespace dom
@@ -75,6 +79,7 @@ NS_NewDOMNotifyPaintEvent(mozilla::dom::EventTarget* aOwner,
                           mozilla::EventMessage aEventMessage =
                             mozilla::eVoidEvent,
                           nsInvalidateRequestList* aInvalidateRequests =
-                            nullptr);
+                            nullptr,
+                          uint64_t aTransactionId = 0);
 
 #endif // mozilla_dom_NotifyPaintEvent_h_

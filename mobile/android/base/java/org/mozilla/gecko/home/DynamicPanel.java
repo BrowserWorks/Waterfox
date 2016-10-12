@@ -191,7 +191,7 @@ public class DynamicPanel extends HomeFragment {
             }
         };
 
-        switch(mPanelConfig.getLayoutType()) {
+        switch (mPanelConfig.getLayoutType()) {
             case FRAME:
                 final PanelDatasetHandler datasetHandler = new PanelDatasetHandler();
                 mPanelLayout = new FramePanelLayout(getActivity(), mPanelConfig, datasetHandler,
@@ -215,7 +215,7 @@ public class DynamicPanel extends HomeFragment {
     }
 
     private void setUIMode(UIMode mode) {
-        switch(mode) {
+        switch (mode) {
             case PANEL:
                 if (mPanelAuthLayout != null) {
                     mPanelAuthLayout.setVisibility(View.GONE);
@@ -345,7 +345,7 @@ public class DynamicPanel extends HomeFragment {
     /**
      * LoaderCallbacks implementation that interacts with the LoaderManager.
      */
-    private class PanelLoaderCallbacks extends TransitionAwareCursorLoaderCallbacks {
+    private class PanelLoaderCallbacks implements LoaderManager.LoaderCallbacks<Cursor> {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             final DatasetRequest request = (DatasetRequest) args.getParcelable(DATASET_REQUEST);
@@ -355,7 +355,7 @@ public class DynamicPanel extends HomeFragment {
         }
 
         @Override
-        public void onLoadFinishedAfterTransitions(Loader<Cursor> loader, Cursor cursor) {
+        public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
             final DatasetRequest request = getRequestFromLoader(loader);
             Log.d(LOGTAG, "Finished loader for request: " + request);
 
@@ -366,8 +366,6 @@ public class DynamicPanel extends HomeFragment {
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
-            super.onLoaderReset(loader);
-
             final DatasetRequest request = getRequestFromLoader(loader);
             Log.d(LOGTAG, "Resetting loader for request: " + request);
 

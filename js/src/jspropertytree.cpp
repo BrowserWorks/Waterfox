@@ -14,6 +14,7 @@
 
 #include "vm/Shape.h"
 
+#include "vm/NativeObject-inl.h"
 #include "vm/Shape-inl.h"
 
 using namespace js;
@@ -164,7 +165,7 @@ PropertyTree::getChild(ExclusiveContext* cx, Shape* parentArg, Handle<StackShape
             TraceManuallyBarrieredEdge(zone->barrierTracer(), &tmp, "read barrier");
             MOZ_ASSERT(tmp == existingShape);
         } else if (zone->isGCSweeping() && !existingShape->isMarked() &&
-                   !existingShape->arenaHeader()->allocatedDuringIncremental)
+                   !existingShape->arena()->allocatedDuringIncremental)
         {
             /*
              * The shape we've found is unreachable and due to be finalized, so
@@ -226,33 +227,42 @@ Shape::fixupDictionaryShapeAfterMovingGC()
     if (!listp)
         return;
 
-    // Get a fake cell pointer to use for the calls below. This might not point
-    // to the beginning of a cell, but will point into the right arena and will
-    // have the right alignment.
-    Cell* cell = reinterpret_cast<Cell*>(uintptr_t(listp) & ~CellMask);
-
     // It's possible that this shape is unreachable and that listp points to the
     // location of a dead object in the nursery, in which case we should never
     // touch it again.
-    if (IsInsideNursery(cell)) {
+    if (IsInsideNursery(reinterpret_cast<Cell*>(listp))) {
         listp = nullptr;
         return;
     }
 
+    // The listp field either points to the parent field of the next shape in
+    // the list if there is one.  Otherwise if this shape is the last in the
+    // list then it points to the shape_ field of the object the list is for.
+    // We can tell which it is because the base shape is owned if this is the
+    // last property and not otherwise.
+    bool listpPointsIntoShape = !MaybeForwarded(base())->isOwned();
+
+#ifdef DEBUG
+    // Check that we got this right by interrogating the arena.
+    // We use a fake cell pointer for this: it might not point to the beginning
+    // of a cell, but will point into the right arena and will have the right
+    // alignment.
+    Cell* cell = reinterpret_cast<Cell*>(uintptr_t(listp) & ~CellMask);
     AllocKind kind = TenuredCell::fromPointer(cell)->getAllocKind();
-    MOZ_ASSERT(kind == AllocKind::SHAPE ||
-               kind == AllocKind::ACCESSOR_SHAPE ||
-               IsObjectAllocKind(kind));
-    if (kind == AllocKind::SHAPE || kind == AllocKind::ACCESSOR_SHAPE) {
+    MOZ_ASSERT_IF(listpPointsIntoShape, IsShapeAllocKind(kind));
+    MOZ_ASSERT_IF(!listpPointsIntoShape, IsObjectAllocKind(kind));
+#endif
+
+    if (listpPointsIntoShape) {
         // listp points to the parent field of the next shape.
-        Shape* next = reinterpret_cast<Shape*>(uintptr_t(listp) -
-                                                offsetof(Shape, parent));
-        listp = &gc::MaybeForwarded(next)->parent;
+        Shape* next = reinterpret_cast<Shape*>(uintptr_t(listp) - offsetof(Shape, parent));
+        if (gc::IsForwarded(next))
+            listp = &gc::Forwarded(next)->parent;
     } else {
         // listp points to the shape_ field of an object.
-        JSObject* last = reinterpret_cast<JSObject*>(uintptr_t(listp) -
-                                                      JSObject::offsetOfShape());
-        listp = &gc::MaybeForwarded(last)->as<NativeObject>().shape_;
+        JSObject* last = reinterpret_cast<JSObject*>(uintptr_t(listp) - JSObject::offsetOfShape());
+        if (gc::IsForwarded(last))
+            listp = &gc::Forwarded(last)->as<NativeObject>().shape_;
     }
 }
 

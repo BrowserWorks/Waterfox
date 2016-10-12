@@ -34,19 +34,13 @@
 typedef mozilla::net::LoadContextInfo LoadContextInfo;
 
 // Must release mChannel on the main thread
-class nsWyciwygAsyncEvent : public nsRunnable {
+class nsWyciwygAsyncEvent : public mozilla::Runnable {
 public:
   explicit nsWyciwygAsyncEvent(nsWyciwygChannel *aChannel) : mChannel(aChannel) {}
 
   ~nsWyciwygAsyncEvent()
   {
-    nsCOMPtr<nsIThread> thread = do_GetMainThread();
-    NS_WARN_IF_FALSE(thread, "Couldn't get the main thread!");
-    if (thread) {
-      nsIWyciwygChannel *chan = static_cast<nsIWyciwygChannel *>(mChannel);
-      mozilla::Unused << mChannel.forget();
-      NS_ProxyRelease(thread, chan);
-    }
+    NS_ReleaseOnMainThread(mChannel.forget());
   }
 protected:
   RefPtr<nsWyciwygChannel> mChannel;
@@ -109,12 +103,7 @@ nsWyciwygChannel::nsWyciwygChannel()
 nsWyciwygChannel::~nsWyciwygChannel() 
 {
   if (mLoadInfo) {
-    nsCOMPtr<nsIThread> mainThread;
-    NS_GetMainThread(getter_AddRefs(mainThread));
-
-    nsILoadInfo *forgetableLoadInfo;
-    mLoadInfo.forget(&forgetableLoadInfo);
-    NS_ProxyRelease(mainThread, forgetableLoadInfo, false);
+    NS_ReleaseOnMainThread(mLoadInfo.forget(), false);
   }
 }
 
@@ -711,7 +700,7 @@ nsWyciwygChannel::OnCacheEntryAvailable(nsICacheEntry *aCacheEntry,
     if (!aNew) {
       // Since OnCacheEntryAvailable can be called directly from AsyncOpen
       // we must dispatch.
-      NS_DispatchToCurrentThread(NS_NewRunnableMethod(
+      NS_DispatchToCurrentThread(mozilla::NewRunnableMethod(
         this, &nsWyciwygChannel::NotifyListener));
     }
   }

@@ -261,6 +261,51 @@ this.PlacesUtils = {
   },
 
   /**
+   * Is a string a valid GUID?
+   *
+   * @param guid: (String)
+   * @return (Boolean)
+   */
+  isValidGuid(guid) {
+    return (/^[a-zA-Z0-9\-_]{12}$/.test(guid));
+  },
+
+  /**
+   * Converts a string or n URL object to an nsIURI.
+   *
+   * @param url (URL) or (String)
+   *        the URL to convert.
+   * @return nsIURI for the given URL.
+   */
+  toURI(url) {
+    url = (url instanceof URL) ? url.href : url;
+
+    return NetUtil.newURI(url);
+  },
+
+  /**
+   * Convert a Date object to a PRTime (microseconds).
+   *
+   * @param date
+   *        the Date object to convert.
+   * @return microseconds from the epoch.
+   */
+  toPRTime(date) {
+    return date * 1000;
+  },
+
+  /**
+   * Convert a PRTime to a Date object.
+   *
+   * @param time
+   *        microseconds from the epoch.
+   * @return a Date object.
+   */
+  toDate(time) {
+    return new Date(parseInt(time / 1000));
+  },
+
+  /**
    * Wraps a string in a nsISupportsString wrapper.
    * @param   aString
    *          The string to wrap.
@@ -698,16 +743,16 @@ this.PlacesUtils = {
       case this.TYPE_X_MOZ_PLACE_CONTAINER:
         nodes = JSON.parse("[" + blob + "]");
         break;
-      case this.TYPE_X_MOZ_URL:
-        var parts = blob.split("\n");
+      case this.TYPE_X_MOZ_URL: {
+        let parts = blob.split("\n");
         // data in this type has 2 parts per entry, so if there are fewer
         // than 2 parts left, the blob is malformed and we should stop
         // but drag and drop of files from the shell has parts.length = 1
         if (parts.length != 1 && parts.length % 2)
           break;
-        for (var i = 0; i < parts.length; i=i+2) {
-          var uriString = parts[i];
-          var titleString = "";
+        for (let i = 0; i < parts.length; i=i+2) {
+          let uriString = parts[i];
+          let titleString = "";
           if (parts.length > i+1)
             titleString = parts[i+1];
           else {
@@ -726,10 +771,11 @@ this.PlacesUtils = {
           }
         }
         break;
-      case this.TYPE_UNICODE:
-        var parts = blob.split("\n");
-        for (var i = 0; i < parts.length; i++) {
-          var uriString = parts[i];
+      }
+      case this.TYPE_UNICODE: {
+        let parts = blob.split("\n");
+        for (let i = 0; i < parts.length; i++) {
+          let uriString = parts[i];
           // text/uri-list is converted to TYPE_UNICODE but it could contain
           // comments line prepended by #, we should skip them
           if (uriString.substr(0, 1) == '\x23')
@@ -741,6 +787,7 @@ this.PlacesUtils = {
                          type: this.TYPE_X_MOZ_URL });
         }
         break;
+      }
       default:
         throw Cr.NS_ERROR_INVALID_ARG;
     }
@@ -1383,19 +1430,28 @@ this.PlacesUtils = {
   },
 
   /**
-   * Gets the shared Sqlite.jsm readonly connection to the Places database.
-   * This is intended to be used mostly internally, and by other Places modules.
-   * Outside the Places component, it should be used only as a last resort.
+   * Gets a shared Sqlite.jsm readonly connection to the Places database,
+   * usable only for SELECT queries.
+   *
+   * This is intended to be used mostly internally, components outside of
+   * Places should, when possible, use API calls and file bugs to get proper
+   * APIs, where they are missing.
    * Keep in mind the Places DB schema is by no means frozen or even stable.
    * Your custom queries can - and will - break overtime.
+   *
+   * Example:
+   * let db = yield PlacesUtils.promiseDBConnection();
+   * let rows = yield db.executeCached(sql, params);
    */
   promiseDBConnection: () => gAsyncDBConnPromised,
 
   /**
-   * Perform a read/write operation on the Places database.
+   * Performs a read/write operation on the Places database through a Sqlite.jsm
+   * wrapped connection to the Places database.
    *
-   * Gets a Sqlite.jsm wrapped connection to the Places database.
-   * This is intended to be used mostly internally, and by other Places modules.
+   * This is intended to be used only by Places itself, always use APIs if you
+   * need to modify the Places database. Use promiseDBConnection if you need to
+   * SELECT from the database and there's no covering API.
    * Keep in mind the Places DB schema is by no means frozen or even stable.
    * Your custom queries can - and will - break overtime.
    *
@@ -1454,7 +1510,7 @@ this.PlacesUtils = {
       yield conn.executeCached(QUERY_STR, { url: spec }, aRow => {
         if (abort)
           throw StopIteration;
-        itemIds.push(aRow.getResultByIndex(0));  
+        itemIds.push(aRow.getResultByIndex(0));
       });
       if (!abort)
         aCallback(itemIds, aURI);
@@ -1729,7 +1785,7 @@ this.PlacesUtils = {
    *  - guid (string): the item's GUID (same as aItemGuid for the top item).
    *  - [deprecated] id (number): the item's id. This is only if
    *    aOptions.includeItemIds is set.
-   *  - type (number):  the item's type.  @see PlacesUtils.TYPE_X_*
+   *  - type (string):  the item's type.  @see PlacesUtils.TYPE_X_*
    *  - title (string): the item's title. If it has no title, this property
    *    isn't set.
    *  - dateAdded (number, microseconds from the epoch): the date-added value of
@@ -1738,6 +1794,7 @@ this.PlacesUtils = {
    *    value of the item.
    *  - annos (see getAnnotationsForItem): the item's annotations.  This is not
    *    set if there are no annotations set for the item).
+   *  - index: the item's index under it's parent.
    *
    * The root object (i.e. the one for aItemGuid) also has the following
    * properties set:
@@ -2621,8 +2678,8 @@ BaseTransaction.prototype = {
 
 
 /**
- * Transaction for performing several Places Transactions in a single batch. 
- * 
+ * Transaction for performing several Places Transactions in a single batch.
+ *
  * @param aName
  *        title of the aggregate transactions
  * @param aTransactions
@@ -2730,7 +2787,7 @@ PlacesCreateFolderTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
   doTransaction: function CFTXN_doTransaction()
-  { 
+  {
     this.item.id = PlacesUtils.bookmarks.createFolder(this.item.parentId,
                                                       this.item.title,
                                                       this.item.index);
@@ -2825,7 +2882,7 @@ PlacesCreateBookmarkTransaction.prototype = {
     }
     if (this.item.annotations && this.item.annotations.length > 0)
       PlacesUtils.setAnnotationsForItem(this.item.id, this.item.annotations);
- 
+
     if (this.childTransactions && this.childTransactions.length > 0) {
       // Set the new item id into child transactions.
       for (let i = 0; i < this.childTransactions.length; ++i) {
@@ -3278,7 +3335,7 @@ PlacesEditBookmarkURITransaction.prototype = {
   undoTransaction: function EBUTXN_undoTransaction()
   {
     PlacesUtils.bookmarks.changeBookmarkURI(this.item.id, this.item.uri);
-    // move tags from new URI to old URI 
+    // move tags from new URI to old URI
     if (this.item.tags.length > 0) {
       // only untag the new URI if this is the only bookmark
       if (PlacesUtils.getBookmarksForURI(this.new.uri, {}).length == 0)
@@ -3497,7 +3554,7 @@ PlacesEditBookmarkPostDataTransaction.prototype = {
  * @param aItemId
  *        id of the item to edit
  * @param aNewDateAdded
- *        new date added for the item 
+ *        new date added for the item
  *
  * @return nsITransaction object
  */
@@ -3536,7 +3593,7 @@ PlacesEditItemDateAddedTransaction.prototype = {
  * @param aItemId
  *        id of the item to edit
  * @param aNewLastModified
- *        new last modified date for the item 
+ *        new last modified date for the item
  *
  * @return nsITransaction object
  */
@@ -3584,7 +3641,7 @@ PlacesEditItemLastModifiedTransaction.prototype = {
 this.PlacesSortFolderByNameTransaction =
  function PlacesSortFolderByNameTransaction(aFolderId)
 {
-  this.item = new TransactionItemCache();  
+  this.item = new TransactionItemCache();
   this.item.id = aFolderId;
 }
 
@@ -3600,7 +3657,7 @@ PlacesSortFolderByNameTransaction.prototype = {
     let count = contents.childCount;
 
     // sort between separators
-    let newOrder = []; 
+    let newOrder = [];
     let preSep = []; // temporary array for sorting each group of items
     let sortingMethod =
       function (a, b) {

@@ -113,7 +113,9 @@ EXPORTS.mozilla.layers += [
     'apz/util/ChromeProcessController.h',
     'apz/util/DoubleTapToZoom.h',
     'apz/util/InputAPZContext.h',
+    'apz/util/ScrollInputMethods.h',
     'apz/util/ScrollLinkedEffectDetector.h',
+    'apz/util/TouchActionHelper.h',
     'AsyncCanvasRenderer.h',
     'AtomicRefCountedWithFinalize.h',
     'AxisPhysicsModel.h',
@@ -150,12 +152,14 @@ EXPORTS.mozilla.layers += [
     'D3D9SurfaceImage.h',
     'Effects.h',
     'ImageDataSerializer.h',
+    'ipc/APZChild.h',
     'ipc/AsyncTransactionTracker.h',
     'ipc/CompositableForwarder.h',
     'ipc/CompositableTransactionParent.h',
-    'ipc/CompositorChild.h',
+    'ipc/CompositorBridgeChild.h',
+    'ipc/CompositorBridgeParent.h',
     'ipc/CompositorLRU.h',
-    'ipc/CompositorParent.h',
+    'ipc/CompositorThread.h',
     'ipc/FenceUtils.h',
     'ipc/GonkNativeHandle.h',
     'ipc/GonkNativeHandleUtils.h',
@@ -163,8 +167,10 @@ EXPORTS.mozilla.layers += [
     'ipc/ImageBridgeParent.h',
     'ipc/ImageContainerParent.h',
     'ipc/ISurfaceAllocator.h',
+    'ipc/LayerAnimationUtils.h',
     'ipc/LayerTransactionChild.h',
     'ipc/LayerTransactionParent.h',
+    'ipc/RemoteContentController.h',
     'ipc/ShadowLayerChild.h',
     'ipc/ShadowLayers.h',
     'ipc/ShadowLayersManager.h',
@@ -250,11 +256,17 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'ipc/ShadowLayerUtilsGralloc.cpp',
     ]
 
+if CONFIG['MOZ_ANDROID_APZ']:
+    UNIFIED_SOURCES += [
+        'apz/src/AndroidAPZ.cpp',
+    ]
+
 UNIFIED_SOURCES += [
     'apz/src/APZCTreeManager.cpp',
     'apz/src/AsyncPanZoomController.cpp',
     'apz/src/Axis.cpp',
     'apz/src/CheckerboardEvent.cpp',
+    'apz/src/DragTracker.cpp',
     'apz/src/GestureEventListener.cpp',
     'apz/src/HitTestingTreeNode.cpp',
     'apz/src/InputBlockState.cpp',
@@ -273,6 +285,7 @@ UNIFIED_SOURCES += [
     'apz/util/DoubleTapToZoom.cpp',
     'apz/util/InputAPZContext.cpp',
     'apz/util/ScrollLinkedEffectDetector.cpp',
+    'apz/util/TouchActionHelper.cpp',
     'AsyncCanvasRenderer.cpp',
     'AxisPhysicsModel.cpp',
     'AxisPhysicsMSDModel.cpp',
@@ -326,19 +339,23 @@ UNIFIED_SOURCES += [
     'GLImages.cpp',
     'ImageDataSerializer.cpp',
     'ImageLayers.cpp',
+    'ipc/APZChild.cpp',
     'ipc/AsyncTransactionTracker.cpp',
     'ipc/CompositableTransactionParent.cpp',
     'ipc/CompositorBench.cpp',
-    'ipc/CompositorChild.cpp',
+    'ipc/CompositorBridgeChild.cpp',
+    'ipc/CompositorBridgeParent.cpp',
     'ipc/CompositorLRU.cpp',
-    'ipc/CompositorParent.cpp',
+    'ipc/CompositorThread.cpp',
     'ipc/FenceUtils.cpp',
     'ipc/ImageBridgeChild.cpp',
     'ipc/ImageBridgeParent.cpp',
     'ipc/ImageContainerParent.cpp',
     'ipc/ISurfaceAllocator.cpp',
+    'ipc/LayerAnimationUtils.cpp',
     'ipc/LayerTransactionChild.cpp',
     'ipc/LayerTransactionParent.cpp',
+    'ipc/RemoteContentController.cpp',
     'ipc/ShadowLayerChild.cpp',
     'ipc/ShadowLayerParent.cpp',
     'ipc/ShadowLayers.cpp',
@@ -394,8 +411,9 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
 IPDL_SOURCES = [
     'ipc/LayersMessages.ipdlh',
     'ipc/LayersSurfaces.ipdlh',
+    'ipc/PAPZ.ipdl',
     'ipc/PCompositable.ipdl',
-    'ipc/PCompositor.ipdl',
+    'ipc/PCompositorBridge.ipdl',
     'ipc/PImageBridge.ipdl',
     'ipc/PImageContainer.ipdl',
     'ipc/PLayer.ipdl',
@@ -410,6 +428,7 @@ LOCAL_INCLUDES += [
     '/docshell/base',  # for nsDocShell.h
     '/layout/base',    # for TouchManager.h
     '/layout/generic', # for nsTextFrame.h
+    '/media/libyuv/include', # for libyuv.h
 ]
 
 FINAL_LIBRARY = 'xul'
@@ -446,3 +465,6 @@ CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

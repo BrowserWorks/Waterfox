@@ -8,6 +8,12 @@
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 const APK_MIME_TYPE = "application/vnd.android.package-archive";
+
+const OMA_DOWNLOAD_DESCRIPTOR_MIME_TYPE = "application/vnd.oma.dd+xml";
+const OMA_DRM_MESSAGE_MIME = "application/vnd.oma.drm.message";
+const OMA_DRM_CONTENT_MIME = "application/vnd.oma.drm.content";
+const OMA_DRM_RIGHTS_MIME = "application/vnd.oma.drm.rights+wbxml";
+
 const PREF_BD_USEDOWNLOADDIR = "browser.download.useDownloadDir";
 const URI_GENERIC_ICON_DOWNLOAD = "drawable://alert_download";
 
@@ -15,14 +21,17 @@ Cu.import("resource://gre/modules/Downloads.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/HelperApps.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "RuntimePermissions", "resource://gre/modules/RuntimePermissions.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
 
 // -----------------------------------------------------------------------
 // HelperApp Launcher Dialog
 // -----------------------------------------------------------------------
-
-XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "ContentAreaUtils", function() {
   let ContentAreaUtils = {};
@@ -61,13 +70,11 @@ HelperAppLauncherDialog.prototype = {
 
     // For all other URIs, try to resolve them to an inner URI, and check that.
     if (!alreadyResolved) {
-      let ioSvc = Cc["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
-      let innerURI = ioSvc.newChannelFromURI2(url,
-                                              null,      // aLoadingNode
-                                              Services.scriptSecurityManager.getSystemPrincipal(),
-                                              null,      // aTriggeringPrincipal
-                                              Ci.nsILoadInfo.SEC_NORMAL,
-                                              Ci.nsIContentPolicy.TYPE_OTHER).URI;
+      let innerURI = NetUtil.newChannel({
+        uri: url,
+        loadUsingSystemPrincipal: true
+      }).URI;
+
       if (!url.equals(innerURI)) {
         return this._canDownload(innerURI, true);
       }
@@ -85,25 +92,52 @@ HelperAppLauncherDialog.prototype = {
     let mimeType = this._getMimeTypeFromLauncher(launcher);
 
     // Straight equality: nsIMIMEInfo normalizes.
-    return APK_MIME_TYPE == mimeType;
+    return APK_MIME_TYPE == mimeType || OMA_DOWNLOAD_DESCRIPTOR_MIME_TYPE == mimeType;
+  },
+
+  /**
+   * Returns true if `launcher` represents a download for which we wish to
+   * offer a "Save to disk" option.
+   */
+  _shouldAddSaveToDiskIntent: function(launcher) {
+      let mimeType = this._getMimeTypeFromLauncher(launcher);
+
+      // We can't handle OMA downloads. So don't even try. (Bug 1219078)
+      return mimeType != OMA_DOWNLOAD_DESCRIPTOR_MIME_TYPE;
+  },
+
+  /**
+   * Returns true if `launcher`represents a download that should not be handled by Firefox
+   * or a third-party app and instead be forwarded to Android's download manager.
+   */
+  _shouldForwardToAndroidDownloadManager: function(aLauncher) {
+    let forwardDownload = Services.prefs.getBoolPref('browser.download.forward_oma_android_download_manager');
+    if (!forwardDownload) {
+      return false;
+    }
+
+    let mimeType = aLauncher.MIMEInfo.MIMEType;
+    if (!mimeType) {
+      mimeType = ContentAreaUtils.getMIMETypeForURI(aLauncher.source) || "";
+    }
+
+    return [
+      OMA_DOWNLOAD_DESCRIPTOR_MIME_TYPE,
+      OMA_DRM_MESSAGE_MIME,
+      OMA_DRM_CONTENT_MIME,
+      OMA_DRM_RIGHTS_MIME
+    ].indexOf(mimeType) != -1;
   },
 
   show: function hald_show(aLauncher, aContext, aReason) {
     if (!this._canDownload(aLauncher.source)) {
+      this._refuseDownload(aLauncher);
+      return;
+    }
+
+    if (this._shouldForwardToAndroidDownloadManager(aLauncher)) {
+      this._downloadWithAndroidDownloadManager(aLauncher);
       aLauncher.cancel(Cr.NS_BINDING_ABORTED);
-
-      let win = this.getNativeWindow();
-      if (!win) {
-        // Oops.
-        Services.console.logStringMessage("Refusing download, but can't show a toast.");
-        return;
-      }
-
-      Services.console.logStringMessage("Refusing download of non-downloadable file.");
-      let bundle = Services.strings.createBundle("chrome://browser/locale/handling.properties");
-      let failedText = bundle.GetStringFromName("download.blocked");
-      win.toast.show(failedText, "long");
-
       return;
     }
 
@@ -114,19 +148,27 @@ HelperAppLauncherDialog.prototype = {
       mimeType: aLauncher.MIMEInfo.MIMEType,
     });
 
-    // Add a fake intent for save to disk at the top of the list.
-    apps.unshift({
-      name: bundle.GetStringFromName("helperapps.saveToDisk"),
-      packageName: "org.mozilla.gecko.Download",
-      iconUri: "drawable://icon",
-      selected: true, // Default to download for files
-      launch: function() {
-        // Reset the preferredAction here.
-        aLauncher.MIMEInfo.preferredAction = Ci.nsIMIMEInfo.saveToDisk;
-        aLauncher.saveToDisk(null, false);
-        return true;
-      }
-    });
+    if (this._shouldAddSaveToDiskIntent(aLauncher)) {
+      // Add a fake intent for save to disk at the top of the list.
+      apps.unshift({
+        name: bundle.GetStringFromName("helperapps.saveToDisk"),
+        packageName: "org.mozilla.gecko.Download",
+        iconUri: "drawable://icon",
+        selected: true, // Default to download for files
+        launch: function() {
+          // Reset the preferredAction here.
+          aLauncher.MIMEInfo.preferredAction = Ci.nsIMIMEInfo.saveToDisk;
+          aLauncher.saveToDisk(null, false);
+          return true;
+        }
+      });
+    }
+
+    // We do not handle this download and there are no apps that want to do it
+    if (apps.length === 0) {
+      this._refuseDownload(aLauncher);
+      return;
+    }
 
     let callback = function(app) {
       aLauncher.MIMEInfo.preferredAction = Ci.nsIMIMEInfo.useHelperApp;
@@ -164,7 +206,9 @@ HelperAppLauncherDialog.prototype = {
       buttons: [
         bundle.GetStringFromName("helperapps.alwaysUse"),
         bundle.GetStringFromName("helperapps.useJustOnce")
-      ]
+      ],
+      // Tapping an app twice should choose "Just once".
+      doubleTapButton: 1
     }, (data) => {
       if (data.button < 0) {
         return;
@@ -175,6 +219,31 @@ HelperAppLauncherDialog.prototype = {
       if (data.button === 0) {
         this._setPreferredApp(aLauncher, apps[data.icongrid0]);
       }
+    });
+  },
+
+  _refuseDownload: function(aLauncher) {
+    aLauncher.cancel(Cr.NS_BINDING_ABORTED);
+
+    Services.console.logStringMessage("Refusing download of non-downloadable file.");
+
+    let bundle = Services.strings.createBundle("chrome://browser/locale/handling.properties");
+    let failedText = bundle.GetStringFromName("download.blocked");
+
+    Snackbars.show(failedText, Snackbars.LENGTH_LONG);
+  },
+
+  _downloadWithAndroidDownloadManager(aLauncher) {
+    let mimeType = aLauncher.MIMEInfo.MIMEType;
+    if (!mimeType) {
+      mimeType = ContentAreaUtils.getMIMETypeForURI(aLauncher.source) || "";
+    }
+
+    Messaging.sendRequest({
+      'type': 'Download:AndroidDownloadManager',
+      'uri': aLauncher.source.spec,
+      'mimeType': mimeType,
+      'filename': aLauncher.suggestedFileName
     });
   },
 
@@ -218,9 +287,15 @@ HelperAppLauncherDialog.prototype = {
     Task.spawn(function* () {
       let file = null;
       try {
-        let preferredDir = yield Downloads.getPreferredDownloadsDirectory();
-        file = this.validateLeafName(new FileUtils.File(preferredDir),
-                                     aDefaultFile, aSuggestedFileExt);
+        let hasPermission = yield RuntimePermissions.waitForPermissions(RuntimePermissions.WRITE_EXTERNAL_STORAGE);
+        if (hasPermission) {
+          // If we do have the STORAGE permission then pick the public downloads directory as destination
+          // for this file. Without the permission saveDestinationAvailable(null) will be called which
+          // will effectively cancel the download.
+          let preferredDir = yield Downloads.getPreferredDownloadsDirectory();
+          file = this.validateLeafName(new FileUtils.File(preferredDir),
+                                       aDefaultFile, aSuggestedFileExt);
+        }
       } finally {
         // The file argument will be null in case any exception occurred.
         aLauncher.saveDestinationAvailable(file);
@@ -266,7 +341,7 @@ HelperAppLauncherDialog.prototype = {
           aLocalFile.leafName = aLocalFile.leafName.replace(/^(.*\()\d+\)/, "$1" + (collisionCount+1) + ")");
         }
       }
-      aLocalFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0600);
+      aLocalFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0o600);
     }
     catch (e) {
       dump("*** exception in validateLeafName: " + e + "\n");
@@ -277,7 +352,7 @@ HelperAppLauncherDialog.prototype = {
       if (aLocalFile.leafName == "" || aLocalFile.isDirectory()) {
         aLocalFile.append("unnamed");
         if (aLocalFile.exists())
-          aLocalFile.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0600);
+          aLocalFile.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0o600);
       }
     }
   },

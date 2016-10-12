@@ -22,19 +22,17 @@ config = {
     "python": "python",
 
     "exes": {
-        'hgtool.py': '%(abs_tools_dir)s/buildfarm/utils/hgtool.py',
         'gittool.py': '%(abs_tools_dir)s/buildfarm/utils/gittool.py',
         'tooltool.py': '/tools/tooltool.py',
         "virtualenv": [PYTHON_DIR + "/bin/python", "/tools/misc-python/virtualenv.py"],
     },
 
-    "purge_minsize": 18,
     "force_clobber": True,
     'vcs_share_base': HG_SHARE_BASE_DIR,
 
     "repos": [{
         "repo": "https://hg.mozilla.org/build/tools",
-        "revision": "default",
+        "branch": "default",
         "dest": "tools"
     }],
 
@@ -83,6 +81,8 @@ config = {
     ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
+        ('/home/cltbld/.hgrc', '/builds/.hgrc'),
+        ('/builds/relengapi.tok', '/builds/relengapi.tok'),
         ("/tools/tooltool.py", "/tools/tooltool.py"),
         ('/usr/local/lib/hgext', '/usr/local/lib/hgext'),
     ],

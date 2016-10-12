@@ -35,7 +35,6 @@
 #include "nsTArray.h"
 #include "prsystem.h"
 #include "ShutdownTracker.h"
-#include "SVGImageContext.h"
 
 using std::max;
 using std::min;
@@ -181,7 +180,7 @@ public:
 
   bool IsDecoded() const
   {
-    return !IsPlaceholder() && mSurface->IsImageComplete();
+    return !IsPlaceholder() && mSurface->IsFinished();
   }
 
   // A helper type used by SurfaceCacheImpl::CollectSizeOfSurfaces.
@@ -226,6 +225,11 @@ private:
   const ImageKey     mImageKey;
   const SurfaceKey   mSurfaceKey;
 };
+
+static int64_t
+AreaOfIntSize(const IntSize& aSize) {
+  return static_cast<int64_t>(aSize.width) * static_cast<int64_t>(aSize.height);
+}
 
 /**
  * An ImageSurfaceCache is a per-image surface cache. For correctness we must be
@@ -275,11 +279,11 @@ public:
   }
 
   Pair<already_AddRefed<CachedSurface>, MatchType>
-  LookupBestMatch(const SurfaceKey& aSurfaceKey)
+  LookupBestMatch(const SurfaceKey& aIdealKey)
   {
     // Try for an exact match first.
     RefPtr<CachedSurface> exactMatch;
-    mSurfaces.Get(aSurfaceKey, getter_AddRefs(exactMatch));
+    mSurfaces.Get(aIdealKey, getter_AddRefs(exactMatch));
     if (exactMatch && exactMatch->IsDecoded()) {
       return MakePair(exactMatch.forget(), MatchType::EXACT);
     }
@@ -287,26 +291,26 @@ public:
     // There's no perfect match, so find the best match we can.
     RefPtr<CachedSurface> bestMatch;
     for (auto iter = ConstIter(); !iter.Done(); iter.Next()) {
-      CachedSurface* surface = iter.UserData();
-      const SurfaceKey& idealKey = aSurfaceKey;
+      CachedSurface* current = iter.UserData();
+      const SurfaceKey& currentKey = current->GetSurfaceKey();
 
       // We never match a placeholder.
-      if (surface->IsPlaceholder()) {
+      if (current->IsPlaceholder()) {
         continue;
       }
       // Matching the animation time and SVG context is required.
-      if (aSurfaceKey.AnimationTime() != idealKey.AnimationTime() ||
-          aSurfaceKey.SVGContext() != idealKey.SVGContext()) {
+      if (currentKey.AnimationTime() != aIdealKey.AnimationTime() ||
+          currentKey.SVGContext() != aIdealKey.SVGContext()) {
         continue;
       }
       // Matching the flags is required.
-      if (aSurfaceKey.Flags() != idealKey.Flags()) {
+      if (currentKey.Flags() != aIdealKey.Flags()) {
         continue;
       }
       // Anything is better than nothing! (Within the constraints we just
       // checked, of course.)
       if (!bestMatch) {
-        bestMatch = surface;
+        bestMatch = current;
         continue;
       }
 
@@ -314,11 +318,11 @@ public:
 
       // Always prefer completely decoded surfaces.
       bool bestMatchIsDecoded = bestMatch->IsDecoded();
-      if (bestMatchIsDecoded && !surface->IsDecoded()) {
+      if (bestMatchIsDecoded && !current->IsDecoded()) {
         continue;
       }
-      if (!bestMatchIsDecoded && surface->IsDecoded()) {
-        bestMatch = surface;
+      if (!bestMatchIsDecoded && current->IsDecoded()) {
+        bestMatch = current;
         continue;
       }
 
@@ -327,21 +331,20 @@ public:
       // Compare sizes. We use an area-based heuristic here instead of computing a
       // truly optimal answer, since it seems very unlikely to make a difference
       // for realistic sizes.
-      int64_t idealArea = idealKey.Size().width * idealKey.Size().height;
-      int64_t surfaceArea = aSurfaceKey.Size().width * aSurfaceKey.Size().height;
-      int64_t bestMatchArea =
-        bestMatchKey.Size().width * bestMatchKey.Size().height;
+      int64_t idealArea = AreaOfIntSize(aIdealKey.Size());
+      int64_t currentArea = AreaOfIntSize(currentKey.Size());
+      int64_t bestMatchArea = AreaOfIntSize(bestMatchKey.Size());
 
       // If the best match is smaller than the ideal size, prefer bigger sizes.
       if (bestMatchArea < idealArea) {
-        if (surfaceArea > bestMatchArea) {
-          bestMatch = surface;
+        if (currentArea > bestMatchArea) {
+          bestMatch = current;
         }
         continue;
       }
       // Other, prefer sizes closer to the ideal size, but still not smaller.
-      if (idealArea <= surfaceArea && surfaceArea < bestMatchArea) {
-        bestMatch = surface;
+      if (idealArea <= currentArea && currentArea < bestMatchArea) {
+        bestMatch = current;
         continue;
       }
       // This surface isn't an improvement over the current best match.
@@ -1033,7 +1036,8 @@ SurfaceCache::Insert(imgFrame*         aSurface,
 
   // Refuse null surfaces.
   if (!aSurface) {
-    MOZ_CRASH("Don't pass null surfaces to SurfaceCache::Insert");
+    gfxDevCrash(LogReason::InvalidCacheSurface) << "Null surface in SurfaceCache::Insert";
+    return InsertOutcome::FAILURE;
   }
 
   MutexAutoLock lock(sInstance->GetMutex());

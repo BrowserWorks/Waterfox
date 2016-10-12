@@ -8,6 +8,7 @@
 #ifndef mozilla_net_FTPChannelChild_h
 #define mozilla_net_FTPChannelChild_h
 
+#include "mozilla/UniquePtr.h"
 #include "mozilla/net/PFTPChannelChild.h"
 #include "mozilla/net/ChannelEventQueue.h"
 #include "nsBaseChannel.h"
@@ -85,7 +86,9 @@ protected:
                            const nsCString& data,
                            const uint64_t& offset,
                            const uint32_t& count) override;
-  bool RecvOnStopRequest(const nsresult& channelStatus) override;
+  bool RecvOnStopRequest(const nsresult& channelStatus,
+                         const nsCString &aErrorMsg,
+                         const bool &aUseUTF8) override;
   bool RecvFailedAsyncOpen(const nsresult& statusCode) override;
   bool RecvFlushedForDiversion() override;
   bool RecvDivertMessages() override;
@@ -105,7 +108,9 @@ protected:
                          const uint64_t& offset,
                          const uint32_t& count);
   void MaybeDivertOnStop(const nsresult& statusCode);
-  void DoOnStopRequest(const nsresult& statusCode);
+  void DoOnStopRequest(const nsresult& statusCode,
+                       const nsCString &aErrorMsg,
+                       bool aUseUTF8);
   void DoFailedAsyncOpen(const nsresult& statusCode);
   void DoDeleteSelf();
 
@@ -126,7 +131,7 @@ private:
   // If nsUnknownDecoder is involved we queue onDataAvailable (and possibly
   // OnStopRequest) so that we can divert them if needed when the listener's
   // OnStartRequest is finally called
-  nsTArray<nsAutoPtr<ChannelEvent>> mUnknownDecoderEventQ;
+  nsTArray<UniquePtr<ChannelEvent>> mUnknownDecoderEventQ;
   bool mUnknownDecoderInvolved;
 
   bool mCanceled;

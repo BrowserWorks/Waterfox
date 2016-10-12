@@ -23,7 +23,10 @@ import os
 import sys
 import weakref
 
-from mozbuild.util import ReadOnlyDict
+from mozbuild.util import (
+    exec_,
+    ReadOnlyDict,
+)
 from .context import Context
 from mozpack.files import FileFinder
 
@@ -174,11 +177,7 @@ class Sandbox(dict):
             old_source = self._current_source
             self._current_source = source
             try:
-                # Ideally, we'd use exec(code, self), but that yield the
-                # following error:
-                # SyntaxError: unqualified exec is not allowed in function
-                # 'execute' it is a nested function.
-                exec code in self
+                exec_(code, self)
             finally:
                 self._current_source = old_source
 
@@ -285,6 +284,10 @@ class Sandbox(dict):
             # in the dict, when doing +=, which is permitted.
             if key in self._context and self._context[key] is not value:
                 raise KeyError('global_ns', 'reassign', key)
+
+            if (key not in self._context and isinstance(value, (list, dict))
+               and not value):
+                raise KeyError('Variable %s assigned an empty value.' % key)
 
             self._context[key] = value
         else:

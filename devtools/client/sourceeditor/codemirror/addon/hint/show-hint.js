@@ -108,24 +108,22 @@
     },
 
     update: function(first) {
-      if (this.tick == null) return;
-      if (!this.options.hint.async) {
-        this.finishUpdate(this.options.hint(this.cm, this.options), first);
-      } else {
-        var myTick = ++this.tick, self = this;
-        this.options.hint(this.cm, function(data) {
-          if (self.tick == myTick) self.finishUpdate(data, first);
-        }, this.options);
-      }
+      if (this.tick == null) return
+      var self = this, myTick = ++this.tick
+      fetchHints(this.options.hint, this.cm, this.options, function(data) {
+        if (self.tick == myTick) self.finishUpdate(data, first)
+      })
     },
 
     finishUpdate: function(data, first) {
       if (this.data) CodeMirror.signal(this.data, "update");
-      if (data && this.data && CodeMirror.cmpPos(data.from, this.data.from)) data = null;
-      this.data = data;
 
       var picked = (this.widget && this.widget.picked) || (first && this.options.completeSingle);
       if (this.widget) this.widget.close();
+
+      if (data && this.data && isNewCompletion(this.data, data)) return;
+      this.data = data;
+
       if (data && data.list.length) {
         if (picked && data.list.length == 1) {
           this.pick(data, 0);
@@ -136,6 +134,11 @@
       }
     }
   };
+
+  function isNewCompletion(old, nw) {
+    var moved = CodeMirror.cmpPos(nw.from, old.from)
+    return moved > 0 && old.to.ch - old.from.ch != nw.to.ch - nw.from.ch
+  }
 
   function parseOptions(cm, pos, options) {
     var editor = cm.options.hintOptions;
@@ -355,40 +358,31 @@
     return result
   }
 
+  function fetchHints(hint, cm, options, callback) {
+    if (hint.async) {
+      hint(cm, callback, options)
+    } else {
+      var result = hint(cm, options)
+      if (result && result.then) result.then(callback)
+      else callback(result)
+    }
+  }
+
   function resolveAutoHints(cm, pos) {
     var helpers = cm.getHelpers(pos, "hint"), words
     if (helpers.length) {
-      var async = false, resolved
-      for (var i = 0; i < helpers.length; i++) if (helpers[i].async) async = true
-      if (async) {
-        resolved = function(cm, callback, options) {
-          var app = applicableHelpers(cm, helpers)
-          function run(i, result) {
-            if (i == app.length) return callback(null)
-            var helper = app[i]
-            if (helper.async) {
-              helper(cm, function(result) {
-                if (result) callback(result)
-                else run(i + 1)
-              }, options)
-            } else {
-              var result = helper(cm, options)
-              if (result) callback(result)
-              else run(i + 1)
-            }
-          }
-          run(0)
+      var resolved = function(cm, callback, options) {
+        var app = applicableHelpers(cm, helpers);
+        function run(i) {
+          if (i == app.length) return callback(null)
+          fetchHints(app[i], cm, options, function(result) {
+            if (result && result.list.length > 0) callback(result)
+            else run(i + 1)
+          })
         }
-        resolved.async = true
-      } else {
-        resolved = function(cm, options) {
-          var app = applicableHelpers(cm, helpers)
-          for (var i = 0; i < app.length; i++) {
-            var cur = app[i](cm, options)
-            if (cur && cur.list.length) return cur
-          }
-        }
+        run(0)
       }
+      resolved.async = true
       resolved.supportsSelection = true
       return resolved
     } else if (words = cm.getHelper(cm.getCursor(), "hintWords")) {

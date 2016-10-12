@@ -193,6 +193,79 @@ add_test(function test_properties() {
   }
 });
 
+add_test(function test_full_sync() {
+  _("Ensure that Clients engine fetches all records for each sync.");
+
+  let now = Date.now() / 1000;
+  let contents = {
+    meta: {global: {engines: {clients: {version: engine.version,
+                                        syncID: engine.syncID}}}},
+    clients: {},
+    crypto: {}
+  };
+  let server = serverForUsers({"foo": "password"}, contents);
+  let user   = server.user("foo");
+
+  new SyncTestingInfrastructure(server.server);
+  generateNewKeys(Service.collectionKeys);
+
+  let activeID = Utils.makeGUID();
+  server.insertWBO("foo", "clients", new ServerWBO(activeID, encryptPayload({
+    id: activeID,
+    name: "Active client",
+    type: "desktop",
+    commands: [],
+    version: "48",
+    protocols: ["1.5"],
+  }), now - 10));
+
+  let deletedID = Utils.makeGUID();
+  server.insertWBO("foo", "clients", new ServerWBO(deletedID, encryptPayload({
+    id: deletedID,
+    name: "Client to delete",
+    type: "desktop",
+    commands: [],
+    version: "48",
+    protocols: ["1.5"],
+  }), now - 10));
+
+  try {
+    let store = engine._store;
+
+    _("First sync. 2 records downloaded; our record uploaded.");
+    strictEqual(engine.lastRecordUpload, 0);
+    engine._sync();
+    ok(engine.lastRecordUpload > 0);
+    deepEqual(user.collection("clients").keys().sort(),
+              [activeID, deletedID, engine.localID].sort(),
+              "Our record should be uploaded on first sync");
+    deepEqual(Object.keys(store.getAllIDs()).sort(),
+              [activeID, deletedID, engine.localID].sort(),
+              "Other clients should be downloaded on first sync");
+
+    _("Delete a record, then sync again");
+    let collection = server.getCollection("foo", "clients");
+    collection.remove(deletedID);
+    // Simulate a timestamp update in info/collections.
+    engine.lastModified = now;
+    engine._sync();
+
+    _("Record should be updated");
+    deepEqual(Object.keys(store.getAllIDs()).sort(),
+              [activeID, engine.localID].sort(),
+              "Deleted client should be removed on next sync");
+  } finally {
+    Svc.Prefs.resetBranch("");
+    Service.recordManager.clearCache();
+
+    try {
+      server.deleteCollections("foo");
+    } finally {
+      server.stop(run_next_test);
+    }
+  }
+});
+
 add_test(function test_sync() {
   _("Ensure that Clients engine uploads a new client record once a week.");
 
@@ -422,6 +495,11 @@ add_test(function test_process_incoming_commands() {
 
   var handler = function() {
     Svc.Obs.remove(ev, handler);
+
+    Svc.Prefs.resetBranch("");
+    Service.recordManager.clearCache();
+    engine._resetClient();
+
     run_next_test();
   };
 
@@ -429,6 +507,152 @@ add_test(function test_process_incoming_commands() {
 
   // logout command causes processIncomingCommands to return explicit false.
   do_check_false(engine.processIncomingCommands());
+});
+
+add_test(function test_filter_duplicate_names() {
+  _("Ensure that we exclude clients with identical names that haven't synced in a week.");
+
+  let now = Date.now() / 1000;
+  let contents = {
+    meta: {global: {engines: {clients: {version: engine.version,
+                                        syncID: engine.syncID}}}},
+    clients: {},
+    crypto: {}
+  };
+  let server = serverForUsers({"foo": "password"}, contents);
+  let user   = server.user("foo");
+
+  new SyncTestingInfrastructure(server.server);
+  generateNewKeys(Service.collectionKeys);
+
+  // Synced recently.
+  let recentID = Utils.makeGUID();
+  server.insertWBO("foo", "clients", new ServerWBO(recentID, encryptPayload({
+    id: recentID,
+    name: "My Phone",
+    type: "mobile",
+    commands: [],
+    version: "48",
+    protocols: ["1.5"],
+  }), now - 10));
+
+  // Dupe of our client, synced more than 1 week ago.
+  let dupeID = Utils.makeGUID();
+  server.insertWBO("foo", "clients", new ServerWBO(dupeID, encryptPayload({
+    id: dupeID,
+    name: engine.localName,
+    type: "desktop",
+    commands: [],
+    version: "48",
+    protocols: ["1.5"],
+  }), now - 604810));
+
+  // Synced more than 1 week ago, but not a dupe.
+  let oldID = Utils.makeGUID();
+  server.insertWBO("foo", "clients", new ServerWBO(oldID, encryptPayload({
+    id: oldID,
+    name: "My old desktop",
+    type: "desktop",
+    commands: [],
+    version: "48",
+    protocols: ["1.5"],
+  }), now - 604820));
+
+  try {
+    let store = engine._store;
+
+    _("First sync");
+    strictEqual(engine.lastRecordUpload, 0);
+    engine._sync();
+    ok(engine.lastRecordUpload > 0);
+    deepEqual(user.collection("clients").keys().sort(),
+              [recentID, dupeID, oldID, engine.localID].sort(),
+              "Our record should be uploaded on first sync");
+
+    deepEqual(Object.keys(store.getAllIDs()).sort(),
+              [recentID, dupeID, oldID, engine.localID].sort(),
+              "Duplicate ID should remain in getAllIDs");
+    ok(engine._store.itemExists(dupeID), "Dupe ID should be considered as existing for Sync methods.");
+
+    // dupe desktop should not appear in .deviceTypes.
+    equal(engine.deviceTypes.get("desktop"), 2);
+    equal(engine.deviceTypes.get("mobile"), 1);
+
+    // dupe desktop should not appear in stats
+    deepEqual(engine.stats, {
+      hasMobile: 1,
+      names: [engine.localName, "My Phone", "My old desktop"],
+      numClients: 3,
+    });
+
+    // Check that a subsequent Sync doesn't report anything as being processed.
+    let counts;
+    Svc.Obs.add("weave:engine:sync:applied", function observe(subject, data) {
+      Svc.Obs.remove("weave:engine:sync:applied", observe);
+      counts = subject;
+    });
+
+    engine._sync();
+    equal(counts.applied, 0); // We didn't report applying any records.
+    equal(counts.reconciled, 4); // We reported reconcilliation for all records
+    equal(counts.succeeded, 0);
+    equal(counts.failed, 0);
+    equal(counts.newFailed, 0);
+
+    _("Broadcast logout to all clients");
+    engine.sendCommand("logout", []);
+    engine._sync();
+
+    let collection = server.getCollection("foo", "clients");
+    let recentPayload = JSON.parse(JSON.parse(collection.payload(recentID)).ciphertext);
+    deepEqual(recentPayload.commands, [{ command: "logout", args: [] }],
+              "Should send commands to the recent client");
+
+    let oldPayload = JSON.parse(JSON.parse(collection.payload(oldID)).ciphertext);
+    deepEqual(oldPayload.commands, [{ command: "logout", args: [] }],
+              "Should send commands to the week-old client");
+
+    let dupePayload = JSON.parse(JSON.parse(collection.payload(dupeID)).ciphertext);
+    deepEqual(dupePayload.commands, [],
+              "Should not send commands to the dupe client");
+
+    _("Update the dupe client's modified time");
+    server.insertWBO("foo", "clients", new ServerWBO(dupeID, encryptPayload({
+      id: dupeID,
+      name: engine.localName,
+      type: "desktop",
+      commands: [],
+      version: "48",
+      protocols: ["1.5"],
+    }), now - 10));
+
+    _("Second sync.");
+    engine._sync();
+
+    deepEqual(Object.keys(store.getAllIDs()).sort(),
+              [recentID, oldID, dupeID, engine.localID].sort(),
+              "Stale client synced, so it should no longer be marked as a dupe");
+
+    // Recently synced dupe desktop should appear in .deviceTypes.
+    equal(engine.deviceTypes.get("desktop"), 3);
+
+    // Recently synced dupe desktop should now appear in stats
+    deepEqual(engine.stats, {
+      hasMobile: 1,
+      names: [engine.localName, "My Phone", engine.localName, "My old desktop"],
+      numClients: 4,
+    });
+
+  } finally {
+    Svc.Prefs.resetBranch("");
+    Service.recordManager.clearCache();
+
+    try {
+      server.deleteCollections("foo");
+    } finally {
+      server.stop(run_next_test);
+    }
+  }
 });
 
 add_test(function test_command_sync() {
@@ -454,18 +678,29 @@ add_test(function test_command_sync() {
   }
 
   _("Create remote client record");
-  let rec = new ClientsRec("clients", remoteId);
-  engine._store.create(rec);
-  let remoteRecord = engine._store.createRecord(remoteId, "clients");
-  engine.sendCommand("wipeAll", []);
-
-  let clientRecord = engine._store._remoteClients[remoteId];
-  do_check_neq(clientRecord, undefined);
-  do_check_eq(clientRecord.commands.length, 1);
+  server.insertWBO("foo", "clients", new ServerWBO(remoteId, encryptPayload({
+    id: remoteId,
+    name: "Remote client",
+    type: "desktop",
+    commands: [],
+    version: "48",
+    protocols: ["1.5"],
+  }), Date.now() / 1000));
 
   try {
     _("Syncing.");
     engine._sync();
+
+    _("Checking remote record was downloaded.");
+    let clientRecord = engine._store._remoteClients[remoteId];
+    do_check_neq(clientRecord, undefined);
+    do_check_eq(clientRecord.commands.length, 0);
+
+    _("Send a command to the remote client.");
+    engine.sendCommand("wipeAll", []);
+    do_check_eq(clientRecord.commands.length, 1);
+    engine._sync();
+
     _("Checking record was uploaded.");
     do_check_neq(clientWBO(engine.localID).payload, undefined);
     do_check_true(engine.lastRecordUpload > 0);
@@ -487,7 +722,13 @@ add_test(function test_command_sync() {
   } finally {
     Svc.Prefs.resetBranch("");
     Service.recordManager.clearCache();
-    server.stop(run_next_test);
+
+    try {
+      let collection = server.getCollection("foo", "clients");
+      collection.remove(remoteId);
+    } finally {
+      server.stop(run_next_test);
+    }
   }
 });
 
@@ -537,6 +778,10 @@ add_test(function test_send_uri_to_client_for_display() {
 
   do_check_eq(error.message.indexOf("Unknown remote client ID: "), 0);
 
+  Svc.Prefs.resetBranch("");
+  Service.recordManager.clearCache();
+  engine._resetClient();
+
   run_next_test();
 });
 
@@ -575,6 +820,10 @@ add_test(function test_receive_display_uri() {
   Svc.Obs.add(ev, handler);
 
   do_check_true(engine.processIncomingCommands());
+
+  Svc.Prefs.resetBranch("");
+  Service.recordManager.clearCache();
+  engine._resetClient();
 });
 
 add_test(function test_optional_client_fields() {
@@ -600,7 +849,215 @@ add_test(function test_optional_client_fields() {
   // We don't currently populate device or formfactor.
   // See Bug 1100722, Bug 1100723.
 
+  engine._resetClient();
   run_next_test();
+});
+
+add_test(function test_merge_commands() {
+  _("Verifies local commands for remote clients are merged with the server's");
+
+  let now = Date.now() / 1000;
+  let contents = {
+    meta: {global: {engines: {clients: {version: engine.version,
+                                        syncID: engine.syncID}}}},
+    clients: {},
+    crypto: {}
+  };
+  let server = serverForUsers({"foo": "password"}, contents);
+  let user   = server.user("foo");
+
+  new SyncTestingInfrastructure(server.server);
+  generateNewKeys(Service.collectionKeys);
+
+  let desktopID = Utils.makeGUID();
+  server.insertWBO("foo", "clients", new ServerWBO(desktopID, encryptPayload({
+    id: desktopID,
+    name: "Desktop client",
+    type: "desktop",
+    commands: [{
+      command: "displayURI",
+      args: ["https://example.com", engine.localID, "Yak Herders Anonymous"],
+    }],
+    version: "48",
+    protocols: ["1.5"],
+  }), now - 10));
+
+  let mobileID = Utils.makeGUID();
+  server.insertWBO("foo", "clients", new ServerWBO(mobileID, encryptPayload({
+    id: mobileID,
+    name: "Mobile client",
+    type: "mobile",
+    commands: [{
+      command: "logout",
+      args: [],
+    }],
+    version: "48",
+    protocols: ["1.5"],
+  }), now - 10));
+
+  try {
+    let store = engine._store;
+
+    _("First sync. 2 records downloaded.");
+    strictEqual(engine.lastRecordUpload, 0);
+    engine._sync();
+
+    _("Broadcast logout to all clients");
+    engine.sendCommand("logout", []);
+    engine._sync();
+
+    let collection = server.getCollection("foo", "clients");
+    let desktopPayload = JSON.parse(JSON.parse(collection.payload(desktopID)).ciphertext);
+    deepEqual(desktopPayload.commands, [{
+      command: "displayURI",
+      args: ["https://example.com", engine.localID, "Yak Herders Anonymous"],
+    }, {
+      command: "logout",
+      args: [],
+    }], "Should send the logout command to the desktop client");
+
+    let mobilePayload = JSON.parse(JSON.parse(collection.payload(mobileID)).ciphertext);
+    deepEqual(mobilePayload.commands, [{ command: "logout", args: [] }],
+      "Should not send a duplicate logout to the mobile client");
+  } finally {
+    Svc.Prefs.resetBranch("");
+    Service.recordManager.clearCache();
+    engine._resetClient();
+
+    try {
+      server.deleteCollections("foo");
+    } finally {
+      server.stop(run_next_test);
+    }
+  }
+});
+
+add_test(function test_deleted_commands() {
+  _("Verifies commands for a deleted client are discarded");
+
+  let now = Date.now() / 1000;
+  let contents = {
+    meta: {global: {engines: {clients: {version: engine.version,
+                                        syncID: engine.syncID}}}},
+    clients: {},
+    crypto: {}
+  };
+  let server = serverForUsers({"foo": "password"}, contents);
+  let user   = server.user("foo");
+
+  new SyncTestingInfrastructure(server.server);
+  generateNewKeys(Service.collectionKeys);
+
+  let activeID = Utils.makeGUID();
+  server.insertWBO("foo", "clients", new ServerWBO(activeID, encryptPayload({
+    id: activeID,
+    name: "Active client",
+    type: "desktop",
+    commands: [],
+    version: "48",
+    protocols: ["1.5"],
+  }), now - 10));
+
+  let deletedID = Utils.makeGUID();
+  server.insertWBO("foo", "clients", new ServerWBO(deletedID, encryptPayload({
+    id: deletedID,
+    name: "Client to delete",
+    type: "desktop",
+    commands: [],
+    version: "48",
+    protocols: ["1.5"],
+  }), now - 10));
+
+  try {
+    let store = engine._store;
+
+    _("First sync. 2 records downloaded.");
+    engine._sync();
+
+    _("Delete a record on the server.");
+    let collection = server.getCollection("foo", "clients");
+    collection.remove(deletedID);
+
+    _("Broadcast a command to all clients");
+    engine.sendCommand("logout", []);
+    engine._sync();
+
+    deepEqual(collection.keys().sort(), [activeID, engine.localID].sort(),
+      "Should not reupload deleted clients");
+
+    let activePayload = JSON.parse(JSON.parse(collection.payload(activeID)).ciphertext);
+    deepEqual(activePayload.commands, [{ command: "logout", args: [] }],
+      "Should send the command to the active client");
+  } finally {
+    Svc.Prefs.resetBranch("");
+    Service.recordManager.clearCache();
+    engine._resetClient();
+
+    try {
+      server.deleteCollections("foo");
+    } finally {
+      server.stop(run_next_test);
+    }
+  }
+});
+
+add_test(function test_send_uri_ack() {
+  _("Ensure a sent URI is deleted when the client syncs");
+
+  let now = Date.now() / 1000;
+  let contents = {
+    meta: {global: {engines: {clients: {version: engine.version,
+                                        syncID: engine.syncID}}}},
+    clients: {},
+    crypto: {}
+  };
+  let server = serverForUsers({"foo": "password"}, contents);
+  let user   = server.user("foo");
+
+  new SyncTestingInfrastructure(server.server);
+  generateNewKeys(Service.collectionKeys);
+
+  try {
+    let fakeSenderID = Utils.makeGUID();
+
+    _("Initial sync for empty clients collection");
+    engine._sync();
+    let collection = server.getCollection("foo", "clients");
+    let ourPayload = JSON.parse(JSON.parse(collection.payload(engine.localID)).ciphertext);
+    ok(ourPayload, "Should upload our client record");
+
+    _("Send a URL to the device on the server");
+    ourPayload.commands = [{
+      command: "displayURI",
+      args: ["https://example.com", fakeSenderID, "Yak Herders Anonymous"],
+    }];
+    server.insertWBO("foo", "clients", new ServerWBO(engine.localID, encryptPayload(ourPayload), now));
+
+    _("Sync again");
+    engine._sync();
+    deepEqual(engine.localCommands, [{
+      command: "displayURI",
+      args: ["https://example.com", fakeSenderID, "Yak Herders Anonymous"],
+    }], "Should receive incoming URI");
+    ok(engine.processIncomingCommands(), "Should process incoming commands");
+    ok(!engine.localCommands, "Should clear commands after processing");
+
+    _("Check that the command was removed on the server");
+    engine._sync();
+    ourPayload = JSON.parse(JSON.parse(collection.payload(engine.localID)).ciphertext);
+    ok(ourPayload, "Should upload the synced client record");
+    ok(!ourPayload.commands, "Should not reupload cleared commands");
+  } finally {
+    Svc.Prefs.resetBranch("");
+    Service.recordManager.clearCache();
+    engine._resetClient();
+
+    try {
+      server.deleteCollections("foo");
+    } finally {
+      server.stop(run_next_test);
+    }
+  }
 });
 
 function run_test() {

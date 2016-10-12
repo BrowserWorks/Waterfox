@@ -41,6 +41,13 @@ public:
     virtual SkImageInfo imageInfo() const;
 
     /**
+     *  Return SurfaceProps for this device.
+     */
+    const SkSurfaceProps& surfaceProps() const {
+        return fSurfaceProps;
+    }
+
+    /**
      *  Return the bounds of the device in the coordinate space of the root
      *  canvas. The root device will have its top-left at 0,0, but other devices
      *  such as those associated with saveLayer may have a non-zero origin.
@@ -252,6 +259,8 @@ protected:
     virtual void drawAtlas(const SkDraw&, const SkImage* atlas, const SkRSXform[], const SkRect[],
                            const SkColor[], int count, SkXfermode::Mode, const SkPaint&);
 
+    virtual void drawAnnotation(const SkDraw&, const SkRect&, const char[], SkData*) {}
+
     /** The SkDevice passed will be an SkDevice which was returned by a call to
         onCreateDevice on this device with kNeverTile_TileExpectation.
      */
@@ -294,7 +303,7 @@ protected:
     }
 
 protected:
-    virtual SkSurface* newSurface(const SkImageInfo&, const SkSurfaceProps&) { return NULL; }
+    virtual sk_sp<SkSurface> makeSurface(const SkImageInfo&, const SkSurfaceProps&);
     virtual bool onPeekPixels(SkPixmap*) { return false; }
 
     /**
@@ -315,10 +324,6 @@ protected:
 
     virtual bool onAccessPixels(SkPixmap*) { return false; }
 
-    const SkSurfaceProps& surfaceProps() const {
-        return fSurfaceProps;
-    }
-
     /**
      *  PRIVATE / EXPERIMENTAL -- do not call
      *  This entry point gives the backend an opportunity to take over the rendering
@@ -333,16 +338,26 @@ protected:
                                           const SkPaint*);
 
     struct CreateInfo {
-        static SkPixelGeometry AdjustGeometry(const SkImageInfo&, TileUsage, SkPixelGeometry);
+        static SkPixelGeometry AdjustGeometry(const SkImageInfo&, TileUsage, SkPixelGeometry,
+                                              bool preserveLCDText);
 
         // The constructor may change the pixel geometry based on other parameters.
         CreateInfo(const SkImageInfo& info,
                    TileUsage tileUsage,
-                   SkPixelGeometry geo,
-                   bool forImageFilter = false)
+                   SkPixelGeometry geo)
             : fInfo(info)
             , fTileUsage(tileUsage)
-            , fPixelGeometry(AdjustGeometry(info, tileUsage, geo))
+            , fPixelGeometry(AdjustGeometry(info, tileUsage, geo, false))
+            , fForImageFilter(false) {}
+
+        CreateInfo(const SkImageInfo& info,
+                   TileUsage tileUsage,
+                   SkPixelGeometry geo,
+                   bool preserveLCDText,
+                   bool forImageFilter)
+            : fInfo(info)
+            , fTileUsage(tileUsage)
+            , fPixelGeometry(AdjustGeometry(info, tileUsage, geo, preserveLCDText))
             , fForImageFilter(forImageFilter) {}
 
         const SkImageInfo       fInfo;
@@ -366,6 +381,12 @@ protected:
         return NULL;
     }
 
+    /**
+     *  Calls through to drawSprite, processing the imagefilter.
+     */
+    virtual void drawSpriteWithFilter(const SkDraw&, const SkBitmap&,
+                                      int x, int y, const SkPaint&);
+
 private:
     friend class SkCanvas;
     friend struct DeviceCM; //for setMatrixClip
@@ -374,7 +395,6 @@ private:
     friend class SkDeviceFilteredPaint;
     friend class SkImageFilter::DeviceProxy;
     friend class SkNoPixelsBitmapDevice;
-
     friend class SkSurface_Raster;
 
     // used to change the backend's pixels (and possibly config/rowbytes)

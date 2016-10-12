@@ -1,5 +1,8 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 // Test that the sidebar widget auto-registers existing tabs.
@@ -7,7 +10,6 @@
 const {ToolSidebar} = require("devtools/client/framework/sidebar");
 
 const testToolURL = "data:text/xml;charset=utf8,<?xml version='1.0'?>" +
-                "<?xml-stylesheet href='chrome://devtools/skin/common.css' type='text/css'?>" +
                 "<window xmlns='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'>" +
                 "<hbox flex='1'><description flex='1'>test tool</description>" +
                 "<splitter class='devtools-side-splitter'/>" +
@@ -32,7 +34,7 @@ const testToolDefinition = {
   }
 };
 
-add_task(function*() {
+add_task(function* () {
   let tab = yield addTab("about:blank");
 
   let target = TargetFactory.forTab(tab);
@@ -45,7 +47,7 @@ add_task(function*() {
 
   info("Creating the sidebar widget");
   let sidebar = new ToolSidebar(tabbox, toolPanel, "bug1101569");
-  
+
   info("Checking that existing tabs have been registered");
   ok(sidebar.getTab("tab1"), "Existing tab 1 was found");
   ok(sidebar.getTab("tab2"), "Existing tab 2 was found");

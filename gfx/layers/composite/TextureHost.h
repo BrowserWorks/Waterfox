@@ -41,9 +41,13 @@ namespace layers {
 class BufferDescriptor;
 class Compositor;
 class CompositableParentManager;
+class ReadLockDescriptor;
+class CompositorBridgeParent;
 class SurfaceDescriptor;
+class HostIPCAllocator;
 class ISurfaceAllocator;
 class TextureHostOGL;
+class TextureReadLock;
 class TextureSourceOGL;
 class TextureSourceD3D9;
 class TextureSourceD3D11;
@@ -88,6 +92,8 @@ public:
 
   virtual ~TextureSource();
 
+  virtual const char* Name() const = 0;
+
   /**
    * Should be overridden in order to deallocate the data that is associated
    * with the rendering backend, such as GL textures.
@@ -109,7 +115,10 @@ public:
   /**
    * Cast to a TextureSource for for each backend..
    */
-  virtual TextureSourceOGL* AsSourceOGL() { return nullptr; }
+  virtual TextureSourceOGL* AsSourceOGL() {
+    gfxCriticalNote << "Failed to cast " << Name() << " into a TextureSourceOGL";
+    return nullptr;
+  }
   virtual TextureSourceD3D9* AsSourceD3D9() { return nullptr; }
   virtual TextureSourceD3D11* AsSourceD3D11() { return nullptr; }
   virtual TextureSourceBasic* AsSourceBasic() { return nullptr; }
@@ -159,10 +168,33 @@ protected:
   int mCompositableCount;
 };
 
-/**
- * equivalent of a RefPtr<TextureSource>, that calls AddCompositableRef and
- * ReleaseCompositableRef in addition to the usual AddRef and Release.
- */
+/// Equivalent of a RefPtr<TextureSource>, that calls AddCompositableRef and
+/// ReleaseCompositableRef in addition to the usual AddRef and Release.
+///
+/// The semantoics of these CompositableTextureRefs are important because they
+/// are used both as a synchronization/safety mechanism, and as an optimization
+/// mechanism. They are also tricky and subtle because we use them in a very
+/// implicit way (assigning to a CompositableTextureRef is less visible than
+/// explicitly calling a method or whatnot).
+/// It is Therefore important to be careful about the way we use this tool.
+///
+/// CompositableTextureRef is a mechanism that lets us count how many compositables
+/// are using a given texture (for TextureSource and TextureHost).
+/// We use it to run specific code when a texture is not used anymore, and also
+/// we trigger fast paths on some operations when we can see that the texture's
+/// CompositableTextureRef counter is equal to 1 (the texture is not shared
+/// between compositables).
+/// This means that it is important to observe the following rules:
+/// * CompositableHosts that receive UseTexture and similar messages *must* store
+/// all of the TextureHosts they receive in CompositableTextureRef slots for as
+/// long as they may be using them.
+/// * CompositableHosts must store each texture in a *single* CompositableTextureRef
+/// slot to ensure that the counter properly reflects how many compositables are
+/// using the texture.
+/// If a compositable needs to hold two references to a given texture (for example
+/// to have a pointer to the current texture in a list of textures that may be
+/// used), it can hold its extra references with RefPtr or whichever pointer type
+/// makes sense.
 template<typename T>
 class CompositableTextureRef {
 public:
@@ -230,8 +262,11 @@ class DataTextureSource : public TextureSource
 {
 public:
   DataTextureSource()
-    : mUpdateSerial(0)
+    : mOwner(0)
+    , mUpdateSerial(0)
   {}
+
+  virtual const char* Name() const override { return "DataTextureSource"; }
 
   virtual DataTextureSource* AsDataTextureSource() override { return this; }
 
@@ -273,7 +308,23 @@ public:
   virtual already_AddRefed<gfx::DataSourceSurface> ReadBack() { return nullptr; };
 #endif
 
+  void SetOwner(TextureHost* aOwner)
+  {
+    auto newOwner = (uintptr_t)aOwner;
+    if (newOwner != mOwner) {
+      mOwner = newOwner;
+      SetUpdateSerial(0);
+    }
+  }
+
+  bool IsOwnedBy(TextureHost* aOwner) const { return mOwner == (uintptr_t)aOwner; }
+
+  bool HasOwner() const { return !IsOwnedBy(nullptr); }
+
 private:
+  // We store mOwner as an integer rather than as a pointer to make it clear
+  // it is not intended to be dereferenced.
+  uintptr_t mOwner;
   uint32_t mUpdateSerial;
 };
 
@@ -359,6 +410,11 @@ public:
    * format and produce 3 "alpha" textures sources.
    */
   virtual gfx::SurfaceFormat GetFormat() const = 0;
+  /**
+   * Return the format used for reading the texture.
+   * Apple's YCBCR_422 is R8G8B8X8.
+   */
+  virtual gfx::SurfaceFormat GetReadFormat() const { return GetFormat(); }
 
   /**
    * Called during the transaction. The TextureSource may or may not be composited.
@@ -377,7 +433,7 @@ public:
   /**
    * Called when another TextureHost will take over.
    */
-  virtual void UnbindTextureSource() {}
+  virtual void UnbindTextureSource();
 
   /**
    * Is called before compositing if the shared data has changed since last
@@ -452,7 +508,7 @@ public:
    * are for use with the managing IPDL protocols only (so that they can
    * implement AllocPTextureParent and DeallocPTextureParent).
    */
-  static PTextureParent* CreateIPDLActor(CompositableParentManager* aManager,
+  static PTextureParent* CreateIPDLActor(HostIPCAllocator* aAllocator,
                                          const SurfaceDescriptor& aSharedData,
                                          LayersBackend aLayersBackend,
                                          TextureFlags aFlags);
@@ -504,7 +560,7 @@ public:
    * in-memory buffer. The consequence of this is that locking the
    * TextureHost does not contend with locking the texture on the client side.
    */
-  virtual bool HasInternalBuffer() const { return false; }
+  virtual bool HasIntermediateBuffer() const { return false; }
 
   void AddCompositableRef() { ++mCompositableCount; }
 
@@ -539,7 +595,20 @@ public:
 
   virtual void WaitAcquireFenceHandleSyncComplete() {};
 
+  virtual bool NeedsFenceHandle() { return false; }
+
+  virtual FenceHandle GetCompositorReleaseFence() { return FenceHandle(); }
+
+  void DeserializeReadLock(const ReadLockDescriptor& aDesc,
+                           ISurfaceAllocator* aAllocator);
+
+  TextureReadLock* GetReadLock() { return mReadLock; }
+
+  virtual Compositor* GetCompositor() = 0;
+
 protected:
+  void ReadUnlock();
+
   FenceHandle mReleaseFenceHandle;
 
   FenceHandle mAcquireFenceHandle;
@@ -549,9 +618,11 @@ protected:
   virtual void UpdatedInternal(const nsIntRegion *Region) {}
 
   PTextureParent* mActor;
+  RefPtr<TextureReadLock> mReadLock;
   TextureFlags mFlags;
   int mCompositableCount;
 
+  friend class Compositor;
   friend class TextureParent;
 };
 
@@ -583,11 +654,17 @@ public:
 
   virtual void Unlock() override;
 
+  virtual void PrepareTextureSource(CompositableTextureSourceRef& aTexture) override;
+
   virtual bool BindTextureSource(CompositableTextureSourceRef& aTexture) override;
+
+  virtual void UnbindTextureSource() override;
 
   virtual void DeallocateDeviceData() override;
 
   virtual void SetCompositor(Compositor* aCompositor) override;
+
+  virtual Compositor* GetCompositor() override { return mCompositor; }
 
   /**
    * Return the format that is exposed to the compositor when calling
@@ -602,11 +679,12 @@ public:
 
   virtual already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override;
 
-  virtual bool HasInternalBuffer() const override { return true; }
+  virtual bool HasIntermediateBuffer() const override { return mHasIntermediateBuffer; }
 
 protected:
   bool Upload(nsIntRegion *aRegion = nullptr);
   bool MaybeUpload(nsIntRegion *aRegion = nullptr);
+  bool EnsureWrappingTextureSource();
 
   virtual void UpdatedInternal(const nsIntRegion* aRegion = nullptr) override;
 
@@ -619,6 +697,7 @@ protected:
   uint32_t mUpdateSerial;
   bool mLocked;
   bool mNeedsFullUpdate;
+  bool mHasIntermediateBuffer;
 };
 
 /**
@@ -723,6 +802,8 @@ public:
     , mHasComplexProjection(false)
   {}
   virtual ~CompositingRenderTarget() {}
+
+  virtual const char* Name() const override { return "CompositingRenderTarget"; }
 
 #ifdef MOZ_DUMP_PAINTING
   virtual already_AddRefed<gfx::DataSourceSurface> Dump(Compositor* aCompositor) { return nullptr; }

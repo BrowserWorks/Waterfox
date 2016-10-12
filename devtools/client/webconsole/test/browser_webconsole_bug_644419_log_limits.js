@@ -1,8 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Tests that the Web Console limits the number of lines displayed according to
 // the limit set for each category.
@@ -34,7 +33,7 @@ add_task(function* () {
     expectUncaughtException();
   }
 
-  content.location = TEST_URI;
+  BrowserTestUtils.loadURI(gBrowser.selectedBrowser, TEST_URI);
   yield loaded;
 
   yield testWebDevLimits();
@@ -225,9 +224,9 @@ function testCssLimits2() {
       severity: SEVERITY_WARNING,
     }],
   }).then(() => {
-    testLogEntry(outputNode, "Unknown property '-moz-foobar0'",
+    testLogEntry(outputNode, "Unknown property \u2018-moz-foobar0\u2019",
                  "first message is pruned", false, true);
-    findLogEntry("Unknown property '-moz-foobar1'");
+    findLogEntry("Unknown property \u2018-moz-foobar1\u2019");
     // Check if the sentinel entry is still there.
     findLogEntry("testing CSS limits");
 

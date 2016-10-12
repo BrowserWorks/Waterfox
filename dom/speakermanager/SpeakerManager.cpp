@@ -101,11 +101,11 @@ SpeakerManager::DispatchSimpleEvent(const nsAString& aStr)
 }
 
 void
-SpeakerManager::Init(nsPIDOMWindow* aWindow)
+SpeakerManager::Init(nsPIDOMWindowInner* aWindow)
 {
   BindToOwner(aWindow);
 
-  nsCOMPtr<nsIDocShell> docshell = do_GetInterface(GetOwner());
+  nsCOMPtr<nsIDocShell> docshell = GetOwner()->GetDocShell();
   NS_ENSURE_TRUE_VOID(docshell);
   docshell->GetIsActive(&mVisible);
 
@@ -118,7 +118,7 @@ SpeakerManager::Init(nsPIDOMWindow* aWindow)
                                  /* wantsUntrusted = */ false);
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 SpeakerManager::GetParentObject() const
 {
   return GetOwner();
@@ -133,7 +133,7 @@ SpeakerManager::Constructor(const GlobalObject& aGlobal, ErrorResult& aRv)
     return nullptr;
   }
 
-  nsCOMPtr<nsPIDOMWindow> ownerWindow = do_QueryInterface(aGlobal.GetAsSupports());
+  nsCOMPtr<nsPIDOMWindowInner> ownerWindow = do_QueryInterface(aGlobal.GetAsSupports());
   if (!ownerWindow) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;

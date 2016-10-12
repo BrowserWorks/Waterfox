@@ -11,7 +11,7 @@
 
 class nsIInterfaceRequestor;
 class nsITransport;
-class nsISchedulingContext;
+class nsIRequestContext;
 
 namespace mozilla { namespace net {
 
@@ -75,6 +75,20 @@ public:
     // called to write response data to the transaction.
     virtual nsresult WriteSegments(nsAHttpSegmentWriter *writer,
                                    uint32_t count, uint32_t *countWritten) = 0;
+
+    // These versions of the functions allow the overloader to specify whether or
+    // not it is safe to call *Segments() in a loop while they return OK.
+    // The callee should turn again to false if it is not, otherwise leave untouched
+    virtual nsresult ReadSegmentsAgain(nsAHttpSegmentReader *reader,
+                                       uint32_t count, uint32_t *countRead, bool *again)
+    {
+        return ReadSegments(reader, count, countRead);
+    }
+    virtual nsresult WriteSegmentsAgain(nsAHttpSegmentWriter *writer,
+                                   uint32_t count, uint32_t *countWritten, bool *again)
+    {
+        return WriteSegments(writer, count, countWritten);
+    }
 
     // called to close the transaction
     virtual void Close(nsresult reason) = 0;
@@ -144,8 +158,8 @@ public:
     // other types
     virtual SpdyConnectTransaction *QuerySpdyConnectTransaction() { return nullptr; }
 
-    // return the scheduling context associated with the transaction
-    virtual nsISchedulingContext *SchedulingContext() { return nullptr; }
+    // return the request context associated with the transaction
+    virtual nsIRequestContext *RequestContext() { return nullptr; }
 
     // return the connection information associated with the transaction
     virtual nsHttpConnectionInfo *ConnectionInfo() = 0;

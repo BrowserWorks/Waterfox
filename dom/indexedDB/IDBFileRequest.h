@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_indexeddb_idbfilerequest_h__
-#define mozilla_dom_indexeddb_idbfilerequest_h__
+#ifndef mozilla_dom_idbfilerequest_h__
+#define mozilla_dom_idbfilerequest_h__
 
 #include "DOMRequest.h"
 #include "js/TypeDecls.h"
@@ -15,14 +15,13 @@
 #include "nsCycleCollectionParticipant.h"
 
 template <class> struct already_AddRefed;
-class nsPIDOMWindow;
+class nsPIDOMWindowInner;
 
 namespace mozilla {
 
 class EventChainPreVisitor;
 
 namespace dom {
-namespace indexedDB {
 
 class IDBFileHandle;
 
@@ -35,7 +34,7 @@ class IDBFileRequest final : public DOMRequest,
 
 public:
   static already_AddRefed<IDBFileRequest>
-  Create(nsPIDOMWindow* aOwner, IDBFileHandle* aFileHandle,
+  Create(nsPIDOMWindowInner* aOwner, IDBFileHandle* aFileHandle,
          bool aWrapAsDOMRequest);
 
   // WebIDL
@@ -80,7 +79,7 @@ public:
   SetError(nsresult aError) override;
 
 private:
-  IDBFileRequest(nsPIDOMWindow* aWindow,
+  IDBFileRequest(nsPIDOMWindowInner* aWindow,
                  IDBFileHandle* aFileHandle,
                  bool aWrapAsDOMRequest);
 
@@ -90,8 +89,7 @@ private:
   FireProgressEvent(uint64_t aLoaded, uint64_t aTotal);
 };
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla
 
-#endif // mozilla_dom_indexeddb_idbfilerequest_h__
+#endif // mozilla_dom_idbfilerequest_h__

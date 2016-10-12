@@ -1,0 +1,76 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>PageAction Test</title>
+  <script src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+  <script src="chrome://mochikit/content/tests/SimpleTest/SpawnTask.js"></script>
+  <script src="chrome://mochikit/content/tests/SimpleTest/ExtensionTestUtils.js"></script>
+  <script type="text/javascript" src="head.js"></script>
+  <link rel="stylesheet" href="chrome://mochikit/contents/tests/SimpleTest/test.css"/>
+</head>
+<body>
+
+<script type="text/javascript">
+"use strict";
+
+function backgroundScript() {
+  browser.test.assertTrue("pageAction" in browser, "Namespace 'pageAction' exists in browser");
+  browser.test.assertTrue("show" in browser.pageAction, "API method 'show' exists in browser.pageAction");
+
+  // TODO: Use the Tabs API to obtain the tab ids for showing pageActions.
+  let tabId = 1;
+  browser.test.onMessage.addListener(msg => {
+    if (msg === "pageAction-show") {
+      browser.pageAction.show(tabId);
+      browser.test.sendMessage("page-action-shown");
+    } else if (msg === "pageAction-hide") {
+      browser.pageAction.hide(tabId);
+      browser.test.sendMessage("page-action-hidden");
+    }
+  });
+
+  browser.pageAction.onClicked.addListener(tab => {
+    // TODO: Make sure we get the correct tab once basic tabs support is added.
+    browser.test.sendMessage("page-action-clicked");
+  });
+
+  browser.test.sendMessage("ready");
+}
+
+add_task(function* test_contentscript() {
+  let extension = ExtensionTestUtils.loadExtension({
+    background: "(" + backgroundScript.toString() + ")()",
+    manifest: {
+      "name": "PageAction Extension",
+      "page_action": {
+        "default_title": "Page Action",
+      },
+    },
+  });
+
+  yield extension.startup();
+  yield extension.awaitMessage("ready");
+
+  extension.sendMessage("pageAction-show");
+  yield extension.awaitMessage("page-action-shown");
+  ok(isPageActionShown(extension.id), "The PageAction should be shown");
+
+  extension.sendMessage("pageAction-hide");
+  yield extension.awaitMessage("page-action-hidden");
+  ok(!isPageActionShown(extension.id), "The PageAction should be hidden");
+
+  extension.sendMessage("pageAction-show");
+  yield extension.awaitMessage("page-action-shown");
+  ok(isPageActionShown(extension.id), "The PageAction should be shown");
+
+  clickPageAction(extension.id);
+  yield extension.awaitMessage("page-action-clicked");
+  ok(isPageActionShown(extension.id), "The PageAction should still be shown after being clicked");
+
+  yield extension.unload();
+  ok(!isPageActionShown(extension.id), "The PageAction should be removed after unload");
+});
+</script>
+
+</body>
+</html>

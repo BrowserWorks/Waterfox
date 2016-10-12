@@ -6,7 +6,6 @@
 package org.mozilla.gecko.gfx;
 
 import org.json.JSONObject;
-import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
@@ -58,7 +57,7 @@ class JavaPanZoomController
     private static final double AXIS_BREAKOUT_ANGLE = Math.PI / 8.0;
 
     // The distance the user has to pan before we consider breaking out of a locked axis
-    public static final float AXIS_BREAKOUT_THRESHOLD = 1/32f * GeckoAppShell.getDpi();
+    public static final float AXIS_BREAKOUT_THRESHOLD = 1 / 32f * GeckoAppShell.getDpi();
 
     // The maximum amount we allow you to zoom into a page
     private static final float MAX_ZOOM = 4.0f;
@@ -135,6 +134,8 @@ class JavaPanZoomController
     // Handler to be notified when overscroll occurs
     private Overscroll mOverscroll;
 
+    private final PrefsHelper.PrefHandler mPrefsObserver;
+
     public JavaPanZoomController(PanZoomTarget target, View view, EventDispatcher eventDispatcher) {
         mTarget = target;
         mSubscroller = new SubdocumentScrollHelper(eventDispatcher);
@@ -158,7 +159,7 @@ class JavaPanZoomController
         String[] prefs = { "ui.scrolling.axis_lock_mode",
                            "ui.scrolling.negate_wheel_scroll",
                            "ui.scrolling.gamepad_dead_zone" };
-        PrefsHelper.getPrefs(prefs, new PrefsHelper.PrefHandlerBase() {
+        mPrefsObserver = new PrefsHelper.PrefHandlerBase() {
             @Override public void prefValue(String pref, String value) {
                 if (pref.equals("ui.scrolling.axis_lock_mode")) {
                     if (value.equals("standard")) {
@@ -182,13 +183,8 @@ class JavaPanZoomController
                     mNegateWheelScroll = value;
                 }
             }
-
-            @Override
-            public boolean isObserver() {
-                return true;
-            }
-
-        });
+        };
+        PrefsHelper.addObserver(prefs, mPrefsObserver);
 
         Axis.initPrefs();
 
@@ -202,6 +198,7 @@ class JavaPanZoomController
 
     @Override
     public void destroy() {
+        PrefsHelper.removeObserver(mPrefsObserver);
         mEventDispatcher.unregisterGeckoThreadListener(this,
             MESSAGE_ZOOM_RECT,
             MESSAGE_ZOOM_PAGE,
@@ -213,13 +210,13 @@ class JavaPanZoomController
     private final static float easeOut(float t) {
         // ease-out approx.
         // -(t-1)^2+1
-        t = t-1;
-        return -t*t+1;
+        t = t - 1;
+        return -t * t + 1;
     }
 
     private void setState(PanZoomState state) {
         if (state != mState) {
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("PanZoom:StateChange", state.toString()));
+            GeckoAppShell.notifyObservers("PanZoom:StateChange", state.toString());
             mState = state;
 
             // Let the target know we've finished with it (for now)
@@ -269,9 +266,9 @@ class JavaPanZoomController
                 float newHeight = viewableRect.height() * cssPageRect.width() / viewableRect.width();
                 float dh = viewableRect.height() - newHeight; // increase in the height
                 final RectF r = new RectF(0.0f,
-                                    y + dh/2,
+                                    y + dh / 2,
                                     cssPageRect.width(),
-                                    y + dh/2 + newHeight);
+                                    y + dh / 2 + newHeight);
                 if (message.optBoolean("animate", true)) {
                     mTarget.post(new Runnable() {
                         @Override
@@ -307,10 +304,6 @@ class JavaPanZoomController
     /** This function MUST be called on the UI thread */
     @Override
     public boolean onKeyEvent(KeyEvent event) {
-        if (Versions.preHCMR1) {
-            return false;
-        }
-
         if ((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD
             && event.getAction() == KeyEvent.ACTION_DOWN) {
 
@@ -324,13 +317,12 @@ class JavaPanZoomController
         return false;
     }
 
+    // Ignore MontionEvent velocity. Needed for C++APZ
+    public void onMotionEventVelocity(final long aEventTime, final float aSpeedY) {}
+
     /** This function MUST be called on the UI thread */
     @Override
     public boolean onMotionEvent(MotionEvent event) {
-        if (Versions.preHCMR1) {
-            return false;
-        }
-
         switch (event.getSource() & InputDevice.SOURCE_CLASS_MASK) {
         case InputDevice.SOURCE_CLASS_POINTER:
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
@@ -1171,7 +1163,11 @@ class JavaPanZoomController
         mLastZoomFocus = new PointF(detector.getFocusX(), detector.getFocusY());
         cancelTouch();
 
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createNativeGestureEvent(GeckoEvent.ACTION_MAGNIFY_START, mLastZoomFocus, getMetrics().zoomFactor));
+        final GeckoEvent event = GeckoEvent.createNativeGestureEvent(
+                GeckoEvent.ACTION_MAGNIFY_START, mLastZoomFocus, getMetrics().zoomFactor);
+        if (event != null) {
+            GeckoAppShell.sendEventToGecko(event);
+        }
 
         return true;
     }
@@ -1204,8 +1200,11 @@ class JavaPanZoomController
             mTarget.setViewportMetrics(target);
         }
 
-        GeckoEvent event = GeckoEvent.createNativeGestureEvent(GeckoEvent.ACTION_MAGNIFY, mLastZoomFocus, getMetrics().zoomFactor);
-        GeckoAppShell.sendEventToGecko(event);
+        final GeckoEvent event = GeckoEvent.createNativeGestureEvent(
+                GeckoEvent.ACTION_MAGNIFY, mLastZoomFocus, getMetrics().zoomFactor);
+        if (event != null) {
+            GeckoAppShell.sendEventToGecko(event);
+        }
 
         return true;
     }
@@ -1326,7 +1325,7 @@ class JavaPanZoomController
             return;
         }
 
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent(event, json));
+        GeckoAppShell.notifyObservers(event, json);
     }
 
     @Override
@@ -1392,8 +1391,7 @@ class JavaPanZoomController
     }
 
     private void cancelTouch() {
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Gesture:CancelTouch", "");
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Gesture:CancelTouch", "");
     }
 
     /**
@@ -1466,5 +1464,10 @@ class JavaPanZoomController
     @Override
     public void setOverscrollHandler(final Overscroll handler) {
         mOverscroll = handler;
+    }
+
+    @Override
+    public ImmutableViewportMetrics adjustScrollForSurfaceShift(ImmutableViewportMetrics aMetrics, PointF aShift) {
+        return aMetrics.offsetViewportByAndClamp(aShift.x, aShift.y);
     }
 }

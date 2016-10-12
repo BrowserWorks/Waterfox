@@ -61,6 +61,7 @@ var COLUMN_TYPES = {
 
   JET_coltypUnsignedLong: 14, /* 4-byte unsigned integer */
   JET_coltypLongLong:     15, /* 8-byte signed integer */
+  JET_coltypGUID:         16, /* 16-byte globally unique identifier */
 };
 
 // Not very efficient, but only used for error messages
@@ -102,6 +103,9 @@ let gOpenDBs = new Map();
 
 // Track open libraries
 let gLibs = {};
+this.ESE = ESE; // Required for tests.
+this.KERNEL = KERNEL; // ditto
+this.gLibs = gLibs; // ditto
 
 function convertESEError(errorCode) {
   switch (errorCode) {
@@ -234,7 +238,7 @@ function loadLibraries() {
 }
 
 function ESEDB(rootPath, dbPath, logPath) {
-  log.error("Created db");
+  log.info("Created db");
   this.rootPath = rootPath;
   this.dbPath = dbPath;
   this.logPath = logPath;
@@ -284,7 +288,10 @@ ESEDB.prototype = {
       ESE.SetSystemParameterW(this._instanceId.address(), 0,
                               2 /* JET_paramLogFilePath*/, 0, this.logPath);
 
+      // Shouldn't try to call JetTerm if the following call fails.
+      this._instanceCreated = false;
       ESE.Init(this._instanceId.address());
+      this._instanceCreated = true;
       this._sessionId = new ESE.JET_SESID();
       ESE.BeginSessionW(this._instanceId, this._sessionId.address(), null,
                         null);
@@ -311,7 +318,7 @@ ESEDB.prototype = {
 
   checkForColumn(tableName, columnName) {
     if (!this._opened) {
-      throw "The database was closed!";
+      throw new Error("The database was closed!");
     }
 
     let columnInfo;
@@ -323,9 +330,33 @@ ESEDB.prototype = {
     return columnInfo[0];
   },
 
+  tableExists(tableName) {
+    if (!this._opened) {
+      throw new Error("The database was closed!");
+    }
+
+    let tableId = new ESE.JET_TABLEID();
+    let rv = ESE.ManualOpenTableW(this._sessionId, this._dbId, tableName, null,
+                                  0, 4 /* JET_bitTableReadOnly */,
+                                  tableId.address());
+    if (rv == -1305 /* JET_errObjectNotFound */) {
+      return false;
+    }
+    if (rv < 0) {
+      log.error("Got error " + rv + " calling OpenTableW");
+      throw new Error(convertESEError(rv));
+    }
+
+    if (rv > 0) {
+      log.error("Got warning " + rv + " calling OpenTableW");
+    }
+    ESE.FailSafeCloseTable(this._sessionId, tableId);
+    return true;
+  },
+
   tableItems: function*(tableName, columns) {
     if (!this._opened) {
-      throw "The database was closed!";
+      throw new Error("The database was closed!");
     }
 
     let tableOpened = false;
@@ -386,8 +417,11 @@ ESEDB.prototype = {
       buffer = new ctypes.uint8_t();
     } else if (column.type == "date") {
       buffer = new KERNEL.FILETIME();
+    } else if (column.type == "guid") {
+      let byteArray = ctypes.ArrayType(ctypes.uint8_t);
+      buffer = new byteArray(column.dbSize);
     } else {
-      throw "Unknown type " + column.type;
+      throw new Error("Unknown type " + column.type);
     }
     return [buffer, buffer.constructor.size];
   },
@@ -399,7 +433,7 @@ ESEDB.prototype = {
         buffer = null;
       } else {
         Cu.reportError("Unexpected JET error: " + err + ";" + " retrieving value for column " + column.name);
-        throw this.convertError(err);
+        throw new Error(convertESEError(err));
       }
     }
     if (column.type == "string") {
@@ -407,6 +441,22 @@ ESEDB.prototype = {
     }
     if (column.type == "boolean") {
       return buffer ? (255 == buffer.value) : false;
+    }
+    if (column.type == "guid") {
+      if (buffer.length != 16) {
+        Cu.reportError("Buffer size for guid field " + column.id + " should have been 16!");
+        return "";
+      }
+      let rv = "{";
+      for (let i = 0; i < 16; i++) {
+        if (i == 4 || i == 6 || i == 8 || i == 10) {
+          rv += "-";
+        }
+        let byteValue = buffer.addressOfElement(i).contents;
+        // Ensure there's a leading 0
+        rv += ("0" + byteValue.toString(16)).substr(-2);
+      }
+      return rv + "}";
     }
     if (column.type == "date") {
       if (!buffer) {
@@ -428,6 +478,7 @@ ESEDB.prototype = {
                                  systemTime.wSecond,
                                  systemTime.wMilliseconds));
     }
+    return undefined;
   },
 
   _getColumnInfo(tableName, columns) {
@@ -456,6 +507,11 @@ ESEDB.prototype = {
         if (dbType != COLUMN_TYPES.JET_coltypLongLong) {
           throw new Error("Invalid column type for column " + column.name +
                           "; expected long long type, got type " + getColTypeName(dbType));
+        }
+      } else if (column.type == "guid") {
+        if (dbType != COLUMN_TYPES.JET_coltypGUID) {
+          throw new Error("Invalid column type for column " + column.name +
+                          "; expected guid type, got type " + getColTypeName(dbType));
         }
       } else if (column.type) {
         throw new Error("Unknown column type " + column.type + " requested for column " +

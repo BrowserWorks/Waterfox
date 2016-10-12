@@ -95,18 +95,20 @@ static SkBitmapProcState::MatrixProc ClampX_ClampY_Procs[] = {
 };
 
 #define MAKENAME(suffix)        RepeatX_RepeatY ## suffix
-#define TILEX_PROCF(fx, max)    SK_USHIFT16(((fx) & 0xFFFF) * ((max) + 1))
-#define TILEY_PROCF(fy, max)    SK_USHIFT16(((fy) & 0xFFFF) * ((max) + 1))
-#define TILEX_LOW_BITS(fx, max) ((((fx) & 0xFFFF) * ((max) + 1) >> 12) & 0xF)
-#define TILEY_LOW_BITS(fy, max) ((((fy) & 0xFFFF) * ((max) + 1) >> 12) & 0xF)
+#define TILEX_PROCF(fx, max)    SK_USHIFT16((unsigned)((fx) & 0xFFFF) * ((max) + 1))
+#define TILEY_PROCF(fy, max)    SK_USHIFT16((unsigned)((fy) & 0xFFFF) * ((max) + 1))
+#define TILEX_LOW_BITS(fx, max) (((unsigned)((fx) & 0xFFFF) * ((max) + 1) >> 12) & 0xF)
+#define TILEY_LOW_BITS(fy, max) (((unsigned)((fy) & 0xFFFF) * ((max) + 1) >> 12) & 0xF)
 #include "SkBitmapProcState_matrix.h"
 
 struct RepeatTileProcs {
     static unsigned X(const SkBitmapProcState&, SkFixed fx, int max) {
-        return SK_USHIFT16(((fx) & 0xFFFF) * ((max) + 1));
+        SkASSERT(max < 65535);
+        return SK_USHIFT16((unsigned)((fx) & 0xFFFF) * ((max) + 1));
     }
     static unsigned Y(const SkBitmapProcState&, SkFixed fy, int max) {
-        return SK_USHIFT16(((fy) & 0xFFFF) * ((max) + 1));
+        SkASSERT(max < 65535);
+        return SK_USHIFT16((unsigned)((fy) & 0xFFFF) * ((max) + 1));
     }
 };
 
@@ -169,21 +171,11 @@ static inline U16CPU fixed_repeat(SkFixed x) {
     return x & 0xFFFF;
 }
 
-// Visual Studio 2010 (MSC_VER=1600) optimizes bit-shift code incorrectly.
-// See http://code.google.com/p/skia/issues/detail?id=472
-#if defined(_MSC_VER) && (_MSC_VER >= 1600)
-#pragma optimize("", off)
-#endif
-
 static inline U16CPU fixed_mirror(SkFixed x) {
-    SkFixed s = x << 15 >> 31;
+    SkFixed s = SkLeftShift(x, 15) >> 31;
     // s is FFFFFFFF if we're on an odd interval, or 0 if an even interval
     return (x ^ s) & 0xFFFF;
 }
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1600)
-#pragma optimize("", on)
-#endif
 
 static SkBitmapProcState::FixedTileProc choose_tile_proc(unsigned m) {
     if (SkShader::kClamp_TileMode == m) {
@@ -326,14 +318,11 @@ static void fill_sequential(uint16_t xptr[], int start, int count) {
 
 static int nofilter_trans_preamble(const SkBitmapProcState& s, uint32_t** xy,
                                    int x, int y) {
-    SkPoint pt;
-    s.fInvProc(s.fInvMatrix, SkIntToScalar(x) + SK_ScalarHalf,
-               SkIntToScalar(y) + SK_ScalarHalf, &pt);
-    **xy = s.fIntTileProcY(SkScalarToFixed(pt.fY) >> 16,
-                           s.fPixmap.height());
+    const SkBitmapProcStateAutoMapper mapper(s, x, y);
+    **xy = s.fIntTileProcY(mapper.intY(), s.fPixmap.height());
     *xy += 1;   // bump the ptr
     // return our starting X position
-    return SkScalarToFixed(pt.fX) >> 16;
+    return mapper.intX();
 }
 
 static void clampx_nofilter_trans(const SkBitmapProcState& s,
@@ -486,7 +475,7 @@ static void mirrorx_nofilter_trans(const SkBitmapProcState& s,
 SkBitmapProcState::MatrixProc SkBitmapProcState::chooseMatrixProc(bool trivial_matrix) {
 //    test_int_tileprocs();
     // check for our special case when there is no scale/affine/perspective
-    if (trivial_matrix && kNone_SkFilterQuality == fFilterLevel) {
+    if (trivial_matrix && kNone_SkFilterQuality == fFilterQuality) {
         fIntTileProcY = choose_int_tile_proc(fTileModeY);
         switch (fTileModeX) {
             case SkShader::kClamp_TileMode:
@@ -499,7 +488,7 @@ SkBitmapProcState::MatrixProc SkBitmapProcState::chooseMatrixProc(bool trivial_m
     }
 
     int index = 0;
-    if (fFilterLevel != kNone_SkFilterQuality) {
+    if (fFilterQuality != kNone_SkFilterQuality) {
         index = 1;
     }
     if (fInvType & SkMatrix::kPerspective_Mask) {

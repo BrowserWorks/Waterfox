@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2006-2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -107,7 +109,8 @@ class ThreadLocalBoolean {
   }
 
   void Set(bool val) {
-    tlp_.Set(reinterpret_cast<void*>(val ? 1 : 0));
+    uintptr_t intVal = val ? 1 : 0;
+    tlp_.Set(reinterpret_cast<void*>(intVal));
   }
 
  private:

@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
+"use strict";
 
 const { assert } = require("devtools/shared/DevToolsUtils");
 const { DOM: dom, createClass, PropTypes } = require("devtools/client/shared/vendor/react");
@@ -8,32 +9,39 @@ const { L10N } = require("../utils");
 const models = require("../models");
 const { viewState } = require("../constants");
 
-const Toolbar = module.exports = createClass({
+module.exports = createClass({
   displayName: "Toolbar",
+
   propTypes: {
-    breakdowns: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string.isRequired,
+    censusDisplays: PropTypes.arrayOf(PropTypes.shape({
       displayName: PropTypes.string.isRequired,
     })).isRequired,
+    censusDisplay: PropTypes.shape({
+      displayName: PropTypes.string.isRequired,
+    }).isRequired,
     onTakeSnapshotClick: PropTypes.func.isRequired,
     onImportClick: PropTypes.func.isRequired,
     onClearSnapshotsClick: PropTypes.func.isRequired,
-    onBreakdownChange: PropTypes.func.isRequired,
+    onCensusDisplayChange: PropTypes.func.isRequired,
     onToggleRecordAllocationStacks: PropTypes.func.isRequired,
     allocations: models.allocations,
-    onToggleInverted: PropTypes.func.isRequired,
-    inverted: PropTypes.bool.isRequired,
     filterString: PropTypes.string,
     setFilterString: PropTypes.func.isRequired,
     diffing: models.diffingModel,
     onToggleDiffing: PropTypes.func.isRequired,
-    view: PropTypes.string.isRequired,
+    view: models.view.isRequired,
     onViewChange: PropTypes.func.isRequired,
-    dominatorTreeBreakdowns: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string.isRequired,
+    labelDisplays: PropTypes.arrayOf(PropTypes.shape({
       displayName: PropTypes.string.isRequired,
     })).isRequired,
-    onDominatorTreeBreakdownChange: PropTypes.func.isRequired,
+    labelDisplay: PropTypes.shape({
+      displayName: PropTypes.string.isRequired,
+    }).isRequired,
+    onLabelDisplayChange: PropTypes.func.isRequired,
+    treeMapDisplays: PropTypes.arrayOf(PropTypes.shape({
+      displayName: PropTypes.string.isRequired,
+    })).isRequired,
+    onTreeMapDisplayChange: PropTypes.func.isRequired,
     snapshots: PropTypes.arrayOf(models.snapshot).isRequired,
   },
 
@@ -42,14 +50,16 @@ const Toolbar = module.exports = createClass({
       onTakeSnapshotClick,
       onImportClick,
       onClearSnapshotsClick,
-      onBreakdownChange,
-      breakdowns,
-      dominatorTreeBreakdowns,
-      onDominatorTreeBreakdownChange,
+      onCensusDisplayChange,
+      censusDisplays,
+      censusDisplay,
+      labelDisplays,
+      labelDisplay,
+      onLabelDisplayChange,
+      treeMapDisplays,
+      onTreeMapDisplayChange,
       onToggleRecordAllocationStacks,
       allocations,
-      onToggleInverted,
-      inverted,
       filterString,
       setFilterString,
       snapshots,
@@ -60,40 +70,38 @@ const Toolbar = module.exports = createClass({
     } = this.props;
 
     let viewToolbarOptions;
-    if (view == viewState.CENSUS || view === viewState.DIFFING) {
+    if (view.state == viewState.CENSUS || view.state === viewState.DIFFING) {
       viewToolbarOptions = dom.div(
         {
           className: "toolbar-group"
         },
 
         dom.label(
-          { className: "breakdown-by" },
-          L10N.getStr("toolbar.breakdownBy"),
+          {
+            className: "display-by",
+            title: L10N.getStr("toolbar.displayBy.tooltip"),
+          },
+          L10N.getStr("toolbar.displayBy"),
           dom.select(
             {
-              id: "select-breakdown",
-              className: "select-breakdown",
-              onChange: e => onBreakdownChange(e.target.value),
+              id: "select-display",
+              className: "select-display",
+              onChange: e => {
+                const newDisplay =
+                  censusDisplays.find(b => b.displayName === e.target.value);
+                onCensusDisplayChange(newDisplay);
+              },
+              value: censusDisplay.displayName,
             },
-            breakdowns.map(({ name, displayName }) => dom.option(
+            censusDisplays.map(({ tooltip, displayName }) => dom.option(
               {
-                key: name,
-                value: name
+                key: `display-${displayName}`,
+                value: displayName,
+                title: tooltip,
               },
               displayName
             ))
           )
-        ),
-
-        dom.label(
-          {},
-          dom.input({
-            id: "invert-tree-checkbox",
-            type: "checkbox",
-            checked: inverted,
-            onChange: onToggleInverted,
-          }),
-          L10N.getStr("checkbox.invertTree")
         ),
 
         dom.div({ id: "toolbar-spacer", className: "spacer" }),
@@ -103,12 +111,52 @@ const Toolbar = module.exports = createClass({
           type: "search",
           className: "devtools-searchinput",
           placeholder: L10N.getStr("filter.placeholder"),
+          title: L10N.getStr("filter.tooltip"),
           onChange: event => setFilterString(event.target.value),
-          value: !!filterString ? filterString : undefined,
+          value: filterString || undefined,
         })
       );
+    } else if (view.state == viewState.TREE_MAP) {
+      assert(treeMapDisplays.length >= 1,
+       "Should always have at least one tree map display");
+
+      // Only show the dropdown if there are multiple display options
+      viewToolbarOptions = treeMapDisplays.length > 1
+        ? dom.div(
+          {
+            className: "toolbar-group"
+          },
+
+            dom.label(
+              {
+                className: "display-by",
+                title: L10N.getStr("toolbar.displayBy.tooltip"),
+              },
+              L10N.getStr("toolbar.displayBy"),
+              dom.select(
+                {
+                  id: "select-tree-map-display",
+                  onChange: e => {
+                    const newDisplay =
+                      treeMapDisplays.find(b => b.displayName === e.target.value);
+                    onTreeMapDisplayChange(newDisplay);
+                  },
+                },
+                treeMapDisplays.map(({ tooltip, displayName }) => dom.option(
+                  {
+                    key: `tree-map-display-${displayName}`,
+                    value: displayName,
+                    title: tooltip,
+                  },
+                  displayName
+                ))
+              )
+            )
+          )
+        : null;
     } else {
-      assert(view === viewState.DOMINATOR_TREE);
+      assert(view.state === viewState.DOMINATOR_TREE ||
+             view.state === viewState.INDIVIDUALS);
 
       viewToolbarOptions = dom.div(
         {
@@ -116,17 +164,26 @@ const Toolbar = module.exports = createClass({
         },
 
         dom.label(
-          { className: "label-by" },
+          {
+            className: "label-by",
+            title: L10N.getStr("toolbar.labelBy.tooltip"),
+          },
           L10N.getStr("toolbar.labelBy"),
           dom.select(
             {
-              id: "select-dominator-tree-breakdown",
-              onChange: e => onDominatorTreeBreakdownChange(e.target.value),
+              id: "select-label-display",
+              onChange: e => {
+                const newDisplay =
+                  labelDisplays.find(b => b.displayName === e.target.value);
+                onLabelDisplayChange(newDisplay);
+              },
+              value: labelDisplay.displayName,
             },
-            dominatorTreeBreakdowns.map(({ name, displayName }) => dom.option(
+            labelDisplays.map(({ tooltip, displayName }) => dom.option(
               {
-                key: name,
-                value: name
+                key: `label-display-${displayName}`,
+                value: displayName,
+                title: tooltip,
               },
               displayName
             ))
@@ -136,20 +193,40 @@ const Toolbar = module.exports = createClass({
     }
 
     let viewSelect;
-    if (view !== viewState.DIFFING) {
+    if (view.state !== viewState.DIFFING && view.state !== viewState.INDIVIDUALS) {
       viewSelect = dom.label(
-        {},
+        {
+          title: L10N.getStr("toolbar.view.tooltip"),
+        },
         L10N.getStr("toolbar.view"),
         dom.select(
           {
             id: "select-view",
             onChange: e => onViewChange(e.target.value),
-            defaultValue: viewState.CENSUS,
+            defaultValue: view,
+            value: view.state,
           },
-          dom.option({ value: viewState.CENSUS },
-                     L10N.getStr("toolbar.view.census")),
-          dom.option({ value: viewState.DOMINATOR_TREE },
-                     L10N.getStr("toolbar.view.dominators"))
+          dom.option(
+            {
+              value: viewState.TREE_MAP,
+              title: L10N.getStr("toolbar.view.treemap.tooltip"),
+            },
+            L10N.getStr("toolbar.view.treemap")
+          ),
+          dom.option(
+            {
+              value: viewState.CENSUS,
+              title: L10N.getStr("toolbar.view.census.tooltip"),
+            },
+            L10N.getStr("toolbar.view.census")
+          ),
+          dom.option(
+            {
+              value: viewState.DOMINATOR_TREE,
+              title: L10N.getStr("toolbar.view.dominators.tooltip"),
+            },
+            L10N.getStr("toolbar.view.dominators")
+          )
         )
       );
     }
@@ -166,6 +243,13 @@ const Toolbar = module.exports = createClass({
           },
 
           dom.button({
+            id: "clear-snapshots",
+            className: "clear-snapshots devtools-button",
+            onClick: onClearSnapshotsClick,
+            title: L10N.getStr("clear-snapshots.tooltip")
+          }),
+
+          dom.button({
             id: "take-snapshot",
             className: "take-snapshot devtools-button",
             onClick: onTakeSnapshotClick,
@@ -179,8 +263,7 @@ const Toolbar = module.exports = createClass({
               disabled: snapshots.length < 2,
               onClick: onToggleDiffing,
               title: L10N.getStr("diff-snapshots.tooltip"),
-            },
-            L10N.getStr("diff-snapshots")
+            }
           ),
 
           dom.button(
@@ -192,19 +275,14 @@ const Toolbar = module.exports = createClass({
               "data-text-only": true,
             },
             L10N.getStr("import-snapshot")
-          ),
-
-          dom.button({
-            id: "clear-snapshots",
-            className: "devtools-toolbarbutton clear-snapshots devtools-button",
-            onClick: onClearSnapshotsClick,
-            title: L10N.getStr("clear-snapshots"),
-            "data-text-only": true,
-          }, L10N.getStr("clear-snapshots"))
+          )
         ),
 
         dom.label(
-          {},
+          {
+            id: "record-allocation-stacks-label",
+            title: L10N.getStr("checkbox.recordAllocationStacks.tooltip"),
+          },
           dom.input({
             id: "record-allocation-stacks-checkbox",
             type: "checkbox",

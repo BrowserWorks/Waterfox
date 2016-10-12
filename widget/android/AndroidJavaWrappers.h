@@ -428,7 +428,6 @@ private:
 
     void Init(JNIEnv *jenv, jobject jobj);
     void Init(int aType);
-    void Init(AndroidGeckoEvent *aResizeEvent);
 
 public:
     static void InitGeckoEventClass(JNIEnv *jEnv);
@@ -442,20 +441,6 @@ public:
     static AndroidGeckoEvent* MakeFromJavaObject(JNIEnv *jenv, jobject jobj) {
         AndroidGeckoEvent *event = new AndroidGeckoEvent();
         event->Init(jenv, jobj);
-        return event;
-    }
-
-    static AndroidGeckoEvent* CopyResizeEvent(AndroidGeckoEvent *aResizeEvent) {
-        AndroidGeckoEvent *event = new AndroidGeckoEvent();
-        event->Init(aResizeEvent);
-        return event;
-    }
-
-    static AndroidGeckoEvent* MakeBroadcastEvent(const nsCString& topic, const nsCString& data) {
-        AndroidGeckoEvent* event = new AndroidGeckoEvent();
-        event->Init(BROADCAST);
-        CopyUTF8toUTF16(topic, event->mCharacters);
-        CopyUTF8toUTF16(data, event->mCharactersExtra);
         return event;
     }
 
@@ -486,7 +471,6 @@ public:
 
     int Action() { return mAction; }
     int Type() { return mType; }
-    bool AckNeeded() { return mAckNeeded; }
     int64_t Time() { return mTime; }
     const nsTArray<nsIntPoint>& Points() { return mPoints; }
     const nsTArray<int>& PointIndicies() { return mPointIndicies; }
@@ -499,9 +483,9 @@ public:
     double Z() { return mZ; }
     double W() { return mW; }
     const nsIntRect& Rect() { return mRect; }
-    nsAString& Characters() { return mCharacters; }
-    nsAString& CharactersExtra() { return mCharactersExtra; }
-    nsAString& Data() { return mData; }
+    nsString& Characters() { return mCharacters; }
+    nsString& CharactersExtra() { return mCharactersExtra; }
+    nsString& Data() { return mData; }
     int MetaState() { return mMetaState; }
     Modifiers DOMModifiers() const;
     bool IsAltPressed() const { return (mMetaState & AMETA_ALT_MASK) != 0; }
@@ -539,7 +523,6 @@ public:
 protected:
     int mAction;
     int mType;
-    bool mAckNeeded;
     int64_t mTime;
     nsTArray<nsIntPoint> mPoints;
     nsTArray<nsIntPoint> mPointRadii;
@@ -596,7 +579,6 @@ protected:
     static jclass jGeckoEventClass;
     static jfieldID jActionField;
     static jfieldID jTypeField;
-    static jfieldID jAckNeededField;
     static jfieldID jTimeField;
     static jfieldID jPoints;
     static jfieldID jPointIndicies;
@@ -643,14 +625,9 @@ public:
         MOTION_EVENT = 2,
         SENSOR_EVENT = 3,
         LOCATION_EVENT = 5,
-        SIZE_CHANGED = 8,
-        APP_BACKGROUNDING = 9,
-        APP_FOREGROUNDING = 10,
         LOAD_URI = 12,
         NOOP = 15,
-        FORCED_RESIZE = 16, // used internally in nsAppShell/nsWindow
         APZ_INPUT_EVENT = 17, // used internally in AndroidJNI/nsAppShell/nsWindow
-        BROADCAST = 19,
         VIEWPORT = 20,
         VISITED = 21,
         NETWORK_CHANGED = 22,

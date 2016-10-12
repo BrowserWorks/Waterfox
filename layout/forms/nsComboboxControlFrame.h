@@ -163,6 +163,17 @@ public:
   virtual int32_t UpdateRecentIndex(int32_t aIndex) override;
   virtual void OnContentReset() override;
 
+
+  bool IsOpenInParentProcess() override
+  {
+    return mIsOpenInParentProcess;
+  }
+
+  void SetOpenInParentProcess(bool aVal) override
+  {
+    mIsOpenInParentProcess = aVal;
+  }
+
   // nsISelectControlFrame
   NS_IMETHOD AddOption(int32_t index) override;
   NS_IMETHOD RemoveOption(int32_t index) override;
@@ -204,6 +215,9 @@ public:
   //nsIStatefulFrame
   NS_IMETHOD SaveState(nsPresState** aState) override;
   NS_IMETHOD RestoreState(nsPresState* aState) override;
+  NS_IMETHOD GenerateStateKey(nsIContent* aContent,
+                              nsIDocument* aDocument,
+                              nsACString& aKey) override;
 
   static bool ToolkitHasNativePopup();
 
@@ -230,7 +244,7 @@ protected:
   nscoord GetIntrinsicISize(nsRenderingContext* aRenderingContext,
                             nsLayoutUtils::IntrinsicISizeType aType);
 
-  class RedisplayTextEvent : public nsRunnable {
+  class RedisplayTextEvent : public mozilla::Runnable {
   public:
     NS_DECL_NSIRUNNABLE
     explicit RedisplayTextEvent(nsComboboxControlFrame *c) : mControlFrame(c) {}
@@ -299,6 +313,8 @@ protected:
   bool                  mInRedisplayText;
   // Acting on ShowDropDown(true) is delayed until we're focused.
   bool                  mDelayedShowDropDown;
+
+  bool                  mIsOpenInParentProcess;
 
   // static class data member for Bug 32920
   // only one control can be focused at a time

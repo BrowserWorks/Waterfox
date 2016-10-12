@@ -9,7 +9,8 @@
 #include "FrameMetrics.h"               // for FrameMetrics, etc
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for IntSize, etc
-#include "mozilla/gfx/Types.h"          // for Filter, SurfaceFormat
+#include "mozilla/gfx/TiledRegion.h"    // for TiledRegion
+#include "mozilla/gfx/Types.h"          // for SamplingFilter, SurfaceFormat
 #include "mozilla/layers/CompositorTypes.h"  // for TextureFlags
 #include "nsAString.h"
 #include "nsPrintfCString.h"            // for nsPrintfCString
@@ -98,14 +99,11 @@ void
 AppendToString(std::stringstream& aStream, const mozilla::gfx::IntRegionTyped<units>& r,
                const char* pfx="", const char* sfx="")
 {
-  typedef mozilla::gfx::IntRegionTyped<units> RegionType;
-
   aStream << pfx;
 
-  typename RegionType::RectIterator it(r);
   aStream << "< ";
-  while (const typename RegionType::RectType* sr = it.Next()) {
-    AppendToString(aStream, *sr);
+  for (auto iter = r.RectIter(); !iter.Done(); iter.Next()) {
+    AppendToString(aStream, iter.Get());
     aStream << "; ";
   }
   aStream << ">";
@@ -113,8 +111,24 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::IntRegionTyped<un
   aStream << sfx;
 }
 
+template <typename T>
+void
+AppendToString(std::stringstream& aStream, const mozilla::gfx::TiledRegion<T>& r,
+               const char* pfx="", const char* sfx="")
+{
+  aStream << pfx;
+  AppendToString(aStream, r.GetRegion());
+  aStream << " (bounds=";
+  AppendToString(aStream, r.GetBounds());
+  aStream << ", covers=" << r.CoversBounds() << ")" << sfx;
+}
+
 void
 AppendToString(std::stringstream& aStream, const EventRegions& e,
+               const char* pfx="", const char* sfx="");
+
+void
+AppendToString(std::stringstream& aStream, const ScrollMetadata& m,
                const char* pfx="", const char* sfx="");
 
 void
@@ -211,7 +225,8 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::Matrix5x4& m,
                const char* pfx="", const char* sfx="");
 
 void
-AppendToString(std::stringstream& aStream, const mozilla::gfx::Filter filter,
+AppendToString(std::stringstream& aStream,
+               const mozilla::gfx::SamplingFilter samplingFilter,
                const char* pfx="", const char* sfx="");
 
 void

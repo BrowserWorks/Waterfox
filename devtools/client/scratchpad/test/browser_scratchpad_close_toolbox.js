@@ -4,7 +4,7 @@
 // Test that closing the toolbox after having opened a scratchpad leaves the
 // latter in a functioning state.
 
-var {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
+var {Task} = require("devtools/shared/task");
 var {TargetFactory} = require("devtools/client/framework/target");
 
 function test() {
@@ -20,7 +20,7 @@ function* runTests([win, sp]) {
   // Use the scratchpad before opening the toolbox.
   const source = "window.foobar = 7;";
   sp.setText(source);
-  let [,,result] = yield sp.display();
+  let [,, result] = yield sp.display();
   is(result, 7, "Display produced the expected output.");
 
   // Now open the toolbox and close it again.
@@ -32,7 +32,7 @@ function* runTests([win, sp]) {
 
   // Now see if using the scratcphad works as expected.
   sp.setText(source);
-  let [,,result2] = yield sp.display();
+  let [,, result2] = yield sp.display();
   is(result2, 7,
      "Display produced the expected output after the toolbox was gone.");
 }

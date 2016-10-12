@@ -796,7 +796,11 @@ alsa_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name,
 
   assert(ctx && stream);
 
-  assert(!input_stream_params && "not supported.");
+  if (input_stream_params) {
+    /* Capture support not yet implemented. */
+    return CUBEB_ERROR_NOT_SUPPORTED;
+  }
+
   if (input_device || output_device) {
     /* Device selection not yet implemented. */
     return CUBEB_ERROR_DEVICE_UNAVAILABLE;
@@ -1138,5 +1142,6 @@ static struct cubeb_ops const alsa_ops = {
   .stream_set_panning = NULL,
   .stream_get_current_device = NULL,
   .stream_device_destroy = NULL,
-  .stream_register_device_changed_callback = NULL
+  .stream_register_device_changed_callback = NULL,
+  .register_device_collection_changed = NULL
 };

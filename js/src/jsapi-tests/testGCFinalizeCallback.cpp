@@ -25,6 +25,10 @@ BEGIN_TEST(testGCFinalizeCallback)
     FinalizeCalls = 0;
     JS::PrepareForFullGC(rt);
     JS::StartIncrementalGC(rt, GC_NORMAL, JS::gcreason::API, 1000000);
+    while (rt->gc.isIncrementalGCInProgress()) {
+        JS::PrepareForFullGC(rt);
+        JS::IncrementalGCSlice(rt, JS::gcreason::API, 1000000);
+    }
     CHECK(!rt->gc.isIncrementalGCInProgress());
     CHECK(rt->gc.isFullGc());
     CHECK(checkMultipleGroups());
@@ -62,6 +66,10 @@ BEGIN_TEST(testGCFinalizeCallback)
     FinalizeCalls = 0;
     JS::PrepareZoneForGC(global1->zone());
     JS::StartIncrementalGC(rt, GC_NORMAL, JS::gcreason::API, 1000000);
+    while (rt->gc.isIncrementalGCInProgress()) {
+        JS::PrepareZoneForGC(global1->zone());
+        JS::IncrementalGCSlice(rt, JS::gcreason::API, 1000000);
+    }
     CHECK(!rt->gc.isIncrementalGCInProgress());
     CHECK(!rt->gc.isFullGc());
     CHECK(checkSingleGroup());
@@ -74,6 +82,12 @@ BEGIN_TEST(testGCFinalizeCallback)
     JS::PrepareZoneForGC(global2->zone());
     JS::PrepareZoneForGC(global3->zone());
     JS::StartIncrementalGC(rt, GC_NORMAL, JS::gcreason::API, 1000000);
+    while (rt->gc.isIncrementalGCInProgress()) {
+        JS::PrepareZoneForGC(global1->zone());
+        JS::PrepareZoneForGC(global2->zone());
+        JS::PrepareZoneForGC(global3->zone());
+        JS::IncrementalGCSlice(rt, JS::gcreason::API, 1000000);
+    }
     CHECK(!rt->gc.isIncrementalGCInProgress());
     CHECK(!rt->gc.isFullGc());
     CHECK(checkMultipleGroups());
@@ -85,7 +99,7 @@ BEGIN_TEST(testGCFinalizeCallback)
     /* Full GC with reset due to new compartment, becoming compartment GC. */
 
     FinalizeCalls = 0;
-    JS_SetGCZeal(cx, 9, 1000000);
+    JS_SetGCZeal(rt, 9, 1000000);
     JS::PrepareForFullGC(rt);
     js::SliceBudget budget(js::WorkBudget(1));
     rt->gc.startDebugGC(GC_NORMAL, budget);
@@ -95,6 +109,8 @@ BEGIN_TEST(testGCFinalizeCallback)
     JS::RootedObject global4(cx, createTestGlobal());
     budget = js::SliceBudget(js::WorkBudget(1));
     rt->gc.debugGCSlice(budget);
+    while (rt->gc.isIncrementalGCInProgress())
+        rt->gc.debugGCSlice(budget);
     CHECK(!rt->gc.isIncrementalGCInProgress());
     CHECK(!rt->gc.isFullGc());
     CHECK(checkMultipleGroups());
@@ -104,7 +120,7 @@ BEGIN_TEST(testGCFinalizeCallback)
         CHECK(!IsCompartmentGCBuffer[i]);
     CHECK(IsCompartmentGCBuffer[FinalizeCalls - 1]);
 
-    JS_SetGCZeal(cx, 0, 0);
+    JS_SetGCZeal(rt, 0, 0);
 
 #endif
 

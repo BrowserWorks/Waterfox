@@ -1,20 +1,30 @@
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
 const TEST_URI = "data:text/html;charset=utf8,<p>test Scratchpad panel " +
                  "linking</p>";
 
-var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-var { Tools } = require("devtools/client/main");
+var { Tools } = require("devtools/client/definitions");
 var { isTargetSupported } = Tools.scratchpad;
 
-Tools.scratchpad.isTargetSupported = () => true;
+function pushPrefEnv() {
+  let deferred = promise.defer();
+  let options = {"set":
+      [["devtools.scratchpad.enabled", true]
+  ]};
+  SpecialPowers.pushPrefEnv(options, deferred.resolve);
+  return deferred.promise;
+}
 
-add_task(function*() {
+add_task(function* () {
   waitForExplicitFinish();
+
+  yield pushPrefEnv();
+
   yield loadTab(TEST_URI);
 
   info("Opening toolbox with Scratchpad panel");
@@ -47,7 +57,7 @@ add_task(function*() {
 
   let [matched] = [...messages[0].matched];
   ok(matched, "Found logged message from Scratchpad");
-  let anchor = matched.querySelector("a.message-location");
+  let anchor = matched.querySelector(".message-location .frame-link-filename");
 
   toolbox.on("scratchpad-selected", function selected() {
     toolbox.off("scratchpad-selected", selected);

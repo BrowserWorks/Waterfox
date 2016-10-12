@@ -22,7 +22,7 @@ const TEST_URI = `
   <p>Testing the selector highlighter</p>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
 
@@ -31,12 +31,12 @@ add_task(function*() {
     isShown: false,
     nodeFront: null,
     options: null,
-    show: function(nodeFront, options) {
+    show: function (nodeFront, options) {
       this.nodeFront = nodeFront;
       this.options = options;
       this.isShown = true;
     },
-    hide: function() {
+    hide: function () {
       this.nodeFront = null;
       this.options = null;
       this.isShown = false;

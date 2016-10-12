@@ -27,8 +27,8 @@
 class nsAsyncInstantiateEvent;
 class nsStopPluginRunnable;
 class AutoSetInstantiatingToFalse;
-class nsPluginFrame;
 class nsFrameLoader;
+class nsPluginFrame;
 class nsXULElement;
 class nsPluginInstanceOwner;
 
@@ -36,6 +36,7 @@ namespace mozilla {
 namespace dom {
 template<typename T> class Sequence;
 struct MozPluginParameter;
+class HTMLIFrameElement;
 } // namespace dom
 } // namespace mozilla
 
@@ -168,7 +169,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     // Helper for WebIDL NeedResolve
     bool DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
                    JS::Handle<jsid> aId,
-                   JS::MutableHandle<JSPropertyDescriptor> aDesc);
+                   JS::MutableHandle<JS::PropertyDescriptor> aDesc);
     // The return value is whether DoResolve might end up resolving the given
     // id.  If in doubt, return true.
     static bool MayResolve(jsid aId);
@@ -207,7 +208,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     {
       return mURI;
     }
-  
+
     /**
      * The default state that this plugin would be without manual activation.
      * @returns PLUGIN_ACTIVE if the default state would be active.
@@ -222,7 +223,13 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     {
       return !!mInstanceOwner;
     }
-    void SwapFrameLoaders(nsXULElement& aOtherOwner, mozilla::ErrorResult& aRv)
+    void SwapFrameLoaders(mozilla::dom::HTMLIFrameElement& aOtherLoaderOwner,
+                          mozilla::ErrorResult& aRv)
+    {
+      aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
+    }
+    void SwapFrameLoaders(nsXULElement& aOtherLoaderOwner,
+                          mozilla::ErrorResult& aRv)
     {
       aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
     }
@@ -241,6 +248,11 @@ class nsObjectLoadingContent : public nsImageLoadingContent
       }
 
       return runID;
+    }
+
+    bool IsRewrittenYoutubeEmbed() const
+    {
+      return mRewrittenYoutubeEmbed;
     }
 
   protected:
@@ -400,11 +412,11 @@ class nsObjectLoadingContent : public nsImageLoadingContent
      *                          object (codebase attribute)
      * - mType                : The type the object is determined to be based
      *                          on the above
-     * 
+     *
      * NOTE The class assumes that mType is the currently loaded type at various
      *      points, so the caller of this function must take the appropriate
      *      actions to ensure this
-     * 
+     *
      * NOTE This function does not perform security checks, only determining the
      *      requested type and parameters of the object.
      *
@@ -432,6 +444,11 @@ class nsObjectLoadingContent : public nsImageLoadingContent
      * Closes and releases references to mChannel and, if opened, mFinalListener
      */
     nsresult CloseChannel();
+
+    /**
+     * If this object should be tested against blocking list.
+     */
+    bool ShouldBlockContent();
 
     /**
      * If this object is allowed to play plugin content, or if it would display
@@ -506,7 +523,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent
      * Returns a ObjectType value corresponding to the type of content we would
      * support the given MIME type as, taking capabilities and plugin state
      * into account
-     * 
+     *
      * NOTE this does not consider whether the content would be suppressed by
      *      click-to-play or other content policy checks
      */
@@ -538,7 +555,9 @@ class nsObjectLoadingContent : public nsImageLoadingContent
      * our type to eType_Document so that we render similarly to an iframe
      * embed.
      */
-    bool ShouldRewriteYoutubeEmbed(nsIURI* uri);
+    void MaybeRewriteYoutubeEmbed(nsIURI* aURI,
+                                  nsIURI* aBaseURI,
+                                  nsIURI** aRewrittenURI);
 
     // Helper class for SetupProtoChain
     class SetupProtoChainRunner final : public nsIRunnable
@@ -616,7 +635,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     FallbackType                mFallbackType : 8;
 
     uint32_t                    mRunID;
-    bool                        mHasRunID;
+    bool                        mHasRunID : 1;
 
     // If true, we have opened a channel as the listener and it has reached
     // OnStartRequest. Does not get set for channels that are passed directly to
@@ -636,6 +655,9 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     // activated by PlayPlugin(). (see ShouldPlay())
     bool                        mActivated : 1;
 
+    // Whether content blocking is enabled or not for this object.
+    bool                        mContentBlockingDisabled : 1;
+
     // Protects DoStopPlugin from reentry (bug 724781).
     bool                        mIsStopping : 1;
 
@@ -645,6 +667,12 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     // For plugin stand-in types (click-to-play) tracks
     // whether content js has tried to access the plugin script object.
     bool                        mScriptRequested : 1;
+
+    // True if object represents an object/embed tag pointing to a flash embed
+    // for a youtube video. When possible (see IsRewritableYoutubeEmbed function
+    // comments for details), we change these to try to load HTML5 versions of
+    // videos.
+    bool                        mRewrittenYoutubeEmbed : 1;
 
     nsWeakFrame                 mPrintFrame;
 

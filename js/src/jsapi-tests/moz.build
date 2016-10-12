@@ -13,6 +13,7 @@ UNIFIED_SOURCES += [
     'testArrayBuffer.cpp',
     'testArrayBufferView.cpp',
     'testBug604087.cpp',
+    'testCallArgs.cpp',
     'testCallNonGenericMethodOnProxy.cpp',
     'testChromeBuffer.cpp',
     'testClassGetter.cpp',
@@ -24,10 +25,12 @@ UNIFIED_SOURCES += [
     'testDefineGetterSetterNonEnumerable.cpp',
     'testDefineProperty.cpp',
     'testDefinePropertyIgnoredAttributes.cpp',
+    'testDeflateStringToUTF8Buffer.cpp',
     'testDifferentNewTargetInvokeConstructor.cpp',
     'testEnclosingFunction.cpp',
     'testErrorCopying.cpp',
     'testException.cpp',
+    'testExternalArrayBuffer.cpp',
     'testExternalStrings.cpp',
     'testFindSCCs.cpp',
     'testForceLexicalInitialization.cpp',
@@ -45,6 +48,7 @@ UNIFIED_SOURCES += [
     'testGCOutOfMemory.cpp',
     'testGCStoreBufferRemoval.cpp',
     'testGCUniqueId.cpp',
+    'testGCWeakCache.cpp',
     'testGCWeakRef.cpp',
     'testGetPropertyDescriptor.cpp',
     'testHashTable.cpp',
@@ -54,6 +58,7 @@ UNIFIED_SOURCES += [
     'testIntString.cpp',
     'testIntTypesABI.cpp',
     'testIsInsideNursery.cpp',
+    'testIteratorObject.cpp',
     'testJSEvaluateScript.cpp',
     'testLookup.cpp',
     'testLooselyEqual.cpp',
@@ -67,6 +72,7 @@ UNIFIED_SOURCES += [
     'testParseJSON.cpp',
     'testPersistentRooted.cpp',
     'testPreserveJitCode.cpp',
+    'testPrivateGCThingValue.cpp',
     'testProfileStrings.cpp',
     'testPropCache.cpp',
     'testRegExp.cpp',
@@ -78,14 +84,20 @@ UNIFIED_SOURCES += [
     'testScriptObject.cpp',
     'testSetProperty.cpp',
     'testSetPropertyIgnoringNamedGetter.cpp',
+    'testSharedImmutableStringsCache.cpp',
     'testSourcePolicy.cpp',
     'testStringBuffer.cpp',
     'testStructuredClone.cpp',
     'testSymbol.cpp',
+    'testThreadingConditionVariable.cpp',
+    'testThreadingExclusiveData.cpp',
+    'testThreadingMutex.cpp',
+    'testThreadingThread.cpp',
     'testToIntWidth.cpp',
     'testTypedArrays.cpp',
     'testUbiNode.cpp',
     'testUncaughtError.cpp',
+    'testUncaughtSymbol.cpp',
     'testUTF8.cpp',
     'testWasmLEB128.cpp',
     'testWeakMap.cpp',
@@ -109,6 +121,11 @@ if CONFIG['ENABLE_ION']:
         'testJitRValueAlloc.cpp',
     ]
 
+if CONFIG['SPIDERMONKEY_PROMISE']:
+    UNIFIED_SOURCES += [
+        'testPromise.cpp',
+    ]
+
 DEFINES['EXPORT_JS_API'] = True
 
 LOCAL_INCLUDES += [
@@ -116,8 +133,23 @@ LOCAL_INCLUDES += [
     '..',
 ]
 
+if CONFIG['ENABLE_INTL_API'] and CONFIG['MOZ_ICU_DATA_ARCHIVE']:
+    # The ICU libraries linked into libmozjs will not include the ICU data,
+    # so link it directly.
+    USE_LIBS += ['icudata']
+
 USE_LIBS += [
     'static:js',
 ]
 
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-shadow']
+
+# This is intended as a temporary workaround to enable VS2015.
+if CONFIG['_MSC_VER']:
+    CXXFLAGS += ['-wd4312']
+
+DEFINES['topsrcdir'] = '%s/js/src' % TOPSRCDIR
+OBJDIR_PP_FILES.js.src['jsapi-tests'] += ['jsapi-tests-gdb.py.in']

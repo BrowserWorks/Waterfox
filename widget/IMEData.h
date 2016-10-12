@@ -163,7 +163,12 @@ struct IMEState final
      * directly. Because we don't process some native events, but they may
      * be needed by the plug-in.
      */
-    PLUGIN
+    PLUGIN,
+    /**
+     * 'Unknown' is useful when you cache this enum.  So, this shouldn't be
+     * used with nsIWidget::SetInputContext().
+     */
+    UNKNOWN
   };
   Enabled mEnabled;
 
@@ -393,6 +398,18 @@ struct InputContextAction final
             (mCause == CAUSE_MOUSE || mCause == CAUSE_TOUCH));
   }
 
+  static bool IsUserAction(Cause aCause)
+  {
+    switch (aCause) {
+      case CAUSE_KEY:
+      case CAUSE_MOUSE:
+      case CAUSE_TOUCH:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   InputContextAction()
     : mCause(CAUSE_UNKNOWN)
     , mFocusChange(FOCUS_NOT_CHANGED)
@@ -424,8 +441,18 @@ enum IMEMessage : IMEMessageType
   NOTIFY_IME_OF_SELECTION_CHANGE,
   // Text in the focused editable content is changed
   NOTIFY_IME_OF_TEXT_CHANGE,
-  // Composition string has been updated
-  NOTIFY_IME_OF_COMPOSITION_UPDATE,
+  // Notified when a dispatched composition event is handled by the
+  // contents.  This must be notified after the other notifications.
+  // Note that if a remote process has focus, this is notified only once when
+  // all dispatched events are handled completely.  So, the receiver shouldn't
+  // count number of received this notification for comparing with the number
+  // of dispatched events.
+  // NOTE: If a composition event causes moving focus from the focused editor,
+  //       this notification may not be notified as usual.  Even in such case,
+  //       NOTIFY_IME_OF_BLUR is always sent.  So, notification listeners
+  //       should tread the blur notification as including this if there is
+  //       pending composition events.
+  NOTIFY_IME_OF_COMPOSITION_EVENT_HANDLED,
   // Position or size of focused element may be changed.
   NOTIFY_IME_OF_POSITION_CHANGE,
   // Mouse button event is fired on a character in focused editor
@@ -437,6 +464,9 @@ enum IMEMessage : IMEMessageType
   // (some platforms may not support)
   REQUEST_TO_CANCEL_COMPOSITION
 };
+
+// FYI: Implemented in nsBaseWidget.cpp
+const char* ToChar(IMEMessage aIMEMessage);
 
 struct IMENotification final
 {
@@ -543,7 +573,7 @@ struct IMENotification final
         mTextChangeData += aNotification.mTextChangeData;
         break;
       case NOTIFY_IME_OF_POSITION_CHANGE:
-      case NOTIFY_IME_OF_COMPOSITION_UPDATE:
+      case NOTIFY_IME_OF_COMPOSITION_EVENT_HANDLED:
         MOZ_ASSERT(aNotification.mMessage == mMessage);
         break;
       default:
@@ -725,8 +755,20 @@ struct IMENotification final
     // mStartOffset if just removed.  The vlaue is offset in the new content.
     uint32_t mAddedEndOffset;
 
-    bool mCausedByComposition;
-    bool mOccurredDuringComposition;
+    // Note that TextChangeDataBase may be the result of merging two or more
+    // changes especially in e10s mode.
+
+    // mCausedOnlyByComposition is true only when *all* merged changes are
+    // caused by composition.
+    bool mCausedOnlyByComposition;
+    // mIncludingChangesDuringComposition is true if at least one change which
+    // is not caused by composition occurred during the last composition.
+    // Note that if after the last composition is finished and there are some
+    // changes not caused by composition, this is set to false.
+    bool mIncludingChangesDuringComposition;
+    // mIncludingChangesWithoutComposition is true if there is at least one
+    // change which did occur when there wasn't a composition ongoing.
+    bool mIncludingChangesWithoutComposition;
 
     uint32_t OldLength() const
     {
@@ -797,8 +839,11 @@ struct IMENotification final
       mStartOffset = aStartOffset;
       mRemovedEndOffset = aRemovedEndOffset;
       mAddedEndOffset = aAddedEndOffset;
-      mCausedByComposition = aCausedByComposition;
-      mOccurredDuringComposition = aOccurredDuringComposition;
+      mCausedOnlyByComposition = aCausedByComposition;
+      mIncludingChangesDuringComposition =
+        !aCausedByComposition && aOccurredDuringComposition;
+      mIncludingChangesWithoutComposition =
+        !aCausedByComposition && !aOccurredDuringComposition;
     }
   };
 
@@ -842,30 +887,18 @@ struct IMENotification final
     MOZ_RELEASE_ASSERT(mMessage == NOTIFY_IME_OF_TEXT_CHANGE);
     mTextChangeData = aTextChangeData;
   }
+};
 
-  bool IsCausedByComposition() const
-  {
-    switch (mMessage) {
-      case NOTIFY_IME_OF_SELECTION_CHANGE:
-        return mSelectionChangeData.mCausedByComposition;
-      case NOTIFY_IME_OF_TEXT_CHANGE:
-        return mTextChangeData.mCausedByComposition;
-      default:
-        return false;
-    }
-  }
-
-  bool OccurredDuringComposition() const
-  {
-    switch (mMessage) {
-      case NOTIFY_IME_OF_SELECTION_CHANGE:
-        return mSelectionChangeData.mOccurredDuringComposition;
-      case NOTIFY_IME_OF_TEXT_CHANGE:
-        return mTextChangeData.mOccurredDuringComposition;
-      default:
-        return false;
-    }
-  }
+struct CandidateWindowPosition
+{
+  // Upper left corner of the candidate window if mExcludeRect is false.
+  // Otherwise, the position currently interested.  E.g., caret position.
+  LayoutDeviceIntPoint mPoint;
+  // Rect which shouldn't be overlapped with the candidate window.
+  // This is valid only when mExcludeRect is true.
+  LayoutDeviceIntRect mRect;
+  // See explanation of mPoint and mRect.
+  bool mExcludeRect;
 };
 
 } // namespace widget

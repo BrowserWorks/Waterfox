@@ -3,6 +3,8 @@
 
 // Test getDisplayString.
 
+Cu.import("resource://testing-common/PromiseTestUtils.jsm", this);
+
 var gDebuggee;
 var gClient;
 var gThreadClient;
@@ -16,8 +18,8 @@ function run_test()
   }.toString());
 
   gClient = new DebuggerClient(DebuggerServer.connectPipe());
-  gClient.connect(function() {
-    attachTestTabAndResume(gClient, "test-grips", function(aResponse, aTabClient, aThreadClient) {
+  gClient.connect().then(function () {
+    attachTestTabAndResume(gClient, "test-grips", function (aResponse, aTabClient, aThreadClient) {
       gThreadClient = aThreadClient;
       test_display_string();
     });
@@ -61,7 +63,7 @@ function test_display_string()
       output: "[object Object],[object Object]"
     },
     {
-      input: "(" + function() {
+      input: "(" + function () {
         const arr = [1];
         arr.push(arr);
         return arr;
@@ -89,7 +91,7 @@ function test_display_string()
       output: "ReferenceError"
     },
     {
-      input: "(" + function() {
+      input: "(" + function () {
         const err = new Error("bar");
         err.name = "foo";
         return err;
@@ -125,6 +127,7 @@ function test_display_string()
       output: "Promise (fulfilled: 5)"
     },
     {
+      // This rejection is left uncaught, see expectUncaughtRejection below.
       input: "Promise.reject(new Error())",
       output: "Promise (rejected: Error)"
     },
@@ -134,17 +137,19 @@ function test_display_string()
     }
   ];
 
-  gThreadClient.addOneTimeListener("paused", function(aEvent, aPacket) {
+  PromiseTestUtils.expectUncaughtRejection(/Error/);
+
+  gThreadClient.addOneTimeListener("paused", function (aEvent, aPacket) {
     const args = aPacket.frame.arguments;
 
     (function loop() {
       const objClient = gThreadClient.pauseGrip(args.pop());
-      objClient.getDisplayString(function({ displayString }) {
+      objClient.getDisplayString(function ({ displayString }) {
         do_check_eq(displayString, testCases.pop().output);
         if (args.length) {
           loop();
         } else {
-          gThreadClient.resume(function() {
+          gThreadClient.resume(function () {
             finishClient(gClient);
           });
         }

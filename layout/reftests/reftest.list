@@ -118,6 +118,9 @@ include text-overflow/reftest.list
 # css selectors
 include css-selectors/reftest.list
 
+# css sizing
+include css-sizing/reftest.list
+
 # css transitions
 include css-transitions/reftest.list
 
@@ -153,6 +156,9 @@ include counter-style/reftest.list
 
 # datalist
 include datalist/reftest.list
+
+# details and summary
+include details-summary/reftest.list
 
 # dom/
 include dom/reftest.list
@@ -256,6 +262,9 @@ skip-if(!B2G&&browserIsRemote) include ogg-video/reftest.list
 # webm-video/
 skip-if(!B2G&&browserIsRemote) include webm-video/reftest.list
 
+# mp4-video/
+skip-if(!B2G&&browserIsRemote) include mp4-video/reftest.list
+
 # parser/
 include ../../parser/htmlparser/tests/reftest/reftest.list
 
@@ -318,6 +327,9 @@ include ../tables/reftests/reftest.list
 # text/
 include text/reftest.list
 
+# text-stroke
+include text-stroke/reftest.list
+
 # text-decoration/
 include text-decoration/reftest.list
 
@@ -348,6 +360,9 @@ include transform-3d/reftest.list
 include unicode/reftest.list
 
 include view-source/reftest.list
+
+# web-animations
+include web-animations/reftest.list
 
 # webcomponents/
 include webcomponents/reftest.list
@@ -384,7 +399,6 @@ include z-index/reftest.list
 
 # reftest(s) to verify content bugfixes
 include ../../dom/html/reftests/reftest.list
-include ../../dom/imptests/reftest.list
 
 # editor/
 include ../../editor/reftests/reftest.list

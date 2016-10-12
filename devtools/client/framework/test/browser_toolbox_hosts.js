@@ -1,6 +1,7 @@
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -118,14 +119,14 @@ function* testPreviousHost() {
   yield toolbox.switchToPreviousHost();
   checkHostType(toolbox, BOTTOM, WINDOW);
 
-  info("Forcing the previous host to match the current (bottom)")
+  info("Forcing the previous host to match the current (bottom)");
   Services.prefs.setCharPref("devtools.toolbox.previousHost", BOTTOM);
 
   info("Switching from bottom to side (since previous=current=bottom");
   yield toolbox.switchToPreviousHost();
   checkHostType(toolbox, SIDE, BOTTOM);
 
-  info("Forcing the previous host to match the current (side)")
+  info("Forcing the previous host to match the current (side)");
   Services.prefs.setCharPref("devtools.toolbox.previousHost", SIDE);
   info("Switching from side to bottom (since previous=current=side");
   yield toolbox.switchToPreviousHost();

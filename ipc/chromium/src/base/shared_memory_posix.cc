@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2006-2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -26,33 +28,22 @@ SharedMemory::SharedMemory()
       max_size_(0) {
 }
 
-SharedMemory::SharedMemory(SharedMemoryHandle handle, bool read_only)
-    : mapped_file_(handle.fd),
-      inode_(0),
-      memory_(NULL),
-      read_only_(read_only),
-      max_size_(0) {
-  struct stat st;
-  if (fstat(handle.fd, &st) == 0) {
-    // If fstat fails, then the file descriptor is invalid and we'll learn this
-    // fact when Map() fails.
-    inode_ = st.st_ino;
-  }
-}
-
-SharedMemory::SharedMemory(SharedMemoryHandle handle, bool read_only,
-                           ProcessHandle process)
-    : mapped_file_(handle.fd),
-      memory_(NULL),
-      read_only_(read_only),
-      max_size_(0) {
-  // We don't handle this case yet (note the ignored parameter); let's die if
-  // someone comes calling.
-  NOTREACHED();
-}
-
 SharedMemory::~SharedMemory() {
   Close();
+}
+
+bool SharedMemory::SetHandle(SharedMemoryHandle handle, bool read_only) {
+  DCHECK(mapped_file_ == -1);
+
+  struct stat st;
+  if (fstat(handle.fd, &st) < 0) {
+    return false;
+  }
+
+  mapped_file_ = handle.fd;
+  inode_ = st.st_ino;
+  read_only_ = read_only;
+  return true;
 }
 
 // static
@@ -268,10 +259,12 @@ bool SharedMemory::ShareToProcessCommon(ProcessId processId,
 }
 
 
-void SharedMemory::Close() {
-  Unmap();
+void SharedMemory::Close(bool unmap_view) {
+  if (unmap_view) {
+    Unmap();
+  }
 
-  if (mapped_file_ > 0) {
+  if (mapped_file_ >= 0) {
     close(mapped_file_);
     mapped_file_ = -1;
   }

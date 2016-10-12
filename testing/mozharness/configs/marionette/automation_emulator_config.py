@@ -1,4 +1,6 @@
 # This is a template config file for marionette production.
+# TODO: This could be removed after B2G ICS emulator buildbot builds is turned
+#       off, Bug 1209180.
 import os
 
 
@@ -6,7 +8,6 @@ HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 config = {
     # marionette options
-    "test_type": "b2g",
     "emulator": "arm",
     "tooltool_cache": "/builds/tooltool_cache",
     "test_manifest": "unit-tests.ini",
@@ -32,7 +33,7 @@ config = {
         'download-and-extract',
         'create-virtualenv',
         'install',
-        'run-marionette',
+        'run-tests',
     ],
     "download_symbols": "ondemand",
     "download_minidump_stackwalk": True,
@@ -45,12 +46,11 @@ config = {
             "options": [
                 "--restart",
                 "--timeout=%(timeout)s",
-                "--type=%(type)s",
                 "--testvars=%(testvars)s",
                 "--profile=%(profile)s",
                 "--symbols-path=%(symbols_path)s",
                 "--gecko-log=%(gecko_log)s",
-                "--xml-output=%(xml_output)s",
+                "--log-xunit=%(xml_output)s",
                 "--html-output=%(html_output)s",
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
@@ -66,11 +66,10 @@ config = {
             "options": [
                 "--restart",
                 "--timeout=%(timeout)s",
-                "--type=%(type)s",
                 "--testvars=%(testvars)s",
                 "--profile=%(profile)s",
                 "--symbols-path=%(symbols_path)s",
-                "--xml-output=%(xml_output)s",
+                "--log-xunit=%(xml_output)s",
                 "--html-output=%(html_output)s",
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
@@ -83,7 +82,6 @@ config = {
         },
         "marionette_desktop": {
             "options": [
-                "--type=%(type)s",
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
                 "--binary=%(binary)s",
@@ -95,7 +93,6 @@ config = {
         },
         "marionette_emulator": {
             "options": [
-                "--type=%(type)s",
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
                 "--logcat-dir=%(logcat_dir)s",
@@ -113,7 +110,6 @@ config = {
         },
         "webapi_emulator": {
             "options": [
-                "--type=%(type)s",
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
                 "--symbols-path=%(symbols_path)s",

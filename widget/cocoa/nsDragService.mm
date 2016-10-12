@@ -49,6 +49,7 @@ NSString* const kCorePboardType_url  = @"CorePasteboardFlavorType 0x75726C20"; /
 NSString* const kCorePboardType_urld = @"CorePasteboardFlavorType 0x75726C64"; // 'urld'  desc
 NSString* const kCorePboardType_urln = @"CorePasteboardFlavorType 0x75726C6E"; // 'urln'  title
 NSString* const kUTTypeURLName = @"public.url-name";
+NSString* const kCustomTypesPboardType = @"org.mozilla.custom-clipdata";
 
 nsDragService::nsDragService()
 {
@@ -110,7 +111,8 @@ static nsresult SetUpDragClipboard(nsISupportsArray* aTransferableArray)
         [dragPBoard setString:(nsClipboard::WrapHtmlForSystemPasteboard(currentValue))
                       forType:currentKey];
       }
-      else if (currentKey == NSTIFFPboardType) {
+      else if (currentKey == NSTIFFPboardType ||
+               currentKey == kCustomTypesPboardType) {
         [dragPBoard setData:currentValue forType:currentKey];
       }
       else if (currentKey == NSFilesPromisePboardType ||
@@ -133,8 +135,8 @@ nsDragService::ConstructDragImage(nsIDOMNode* aDOMNode,
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
 
   NSPoint screenPoint =
-    [[gLastDragView window] convertBaseToScreen:
-      [gLastDragMouseDownEvent locationInWindow]];
+    nsCocoaUtils::ConvertPointToScreen([gLastDragView window],
+                                       [gLastDragMouseDownEvent locationInWindow]);
   // Y coordinates are bottom to top, so reverse this
   screenPoint.y = nsCocoaUtils::FlippedScreenY(screenPoint.y);
 
@@ -345,7 +347,7 @@ nsDragService::InvokeDragSessionImpl(nsISupportsArray* aTransferableArray,
   NSPoint point = nsCocoaUtils::DevPixelsToCocoaPoints(pt, scaleFactor);
   point.y = nsCocoaUtils::FlippedScreenY(point.y);
 
-  point = [[gLastDragView window] convertScreenToBase: point];
+  point = nsCocoaUtils::ConvertPointFromScreen([gLastDragView window], point);
   NSPoint localPoint = [gLastDragView convertPoint:point fromView:nil];
  
   // Save the transferables away in case a promised file callback is invoked.
@@ -472,6 +474,31 @@ nsDragService::GetData(nsITransferable* aTransferable, uint32_t aItemIndex)
 
       aTransferable->SetTransferData(flavorStr, file, dataLength);
       
+      break;
+    }
+    else if (flavorStr.EqualsLiteral(kCustomTypesMime)) {
+      NSString* availableType = [item availableTypeFromArray:[NSArray arrayWithObject:kCustomTypesPboardType]];
+      if (!availableType || !IsValidType(availableType, false)) {
+          continue;
+      }
+      NSData *pasteboardData = [item dataForType:availableType];
+      if (!pasteboardData) {
+        continue;
+      }
+
+      unsigned int dataLength = [pasteboardData length];
+      void* clipboardDataPtr = malloc(dataLength);
+      if (!clipboardDataPtr) {
+        return NS_ERROR_OUT_OF_MEMORY;
+      }
+      [pasteboardData getBytes:clipboardDataPtr];
+
+      nsCOMPtr<nsISupports> genericDataWrapper;
+      nsPrimitiveHelpers::CreatePrimitiveForData(flavorStr, clipboardDataPtr, dataLength,
+                                                 getter_AddRefs(genericDataWrapper));
+
+      aTransferable->SetTransferData(flavorStr, genericDataWrapper, sizeof(nsIInputStream*));
+      free(clipboardDataPtr);
       break;
     }
 
@@ -610,7 +637,10 @@ nsDragService::IsDataFlavorSupported(const char *aDataFlavor, bool *_retval)
     type = (const NSString*)kUTTypeURLName;
   } else if (dataFlavor.EqualsLiteral(kRTFMime)) {
     type = (const NSString*)kUTTypeRTF;
+  } else if (dataFlavor.EqualsLiteral(kCustomTypesMime)) {
+    type = (const NSString*)kCustomTypesPboardType;
   }
+
   NSString* availableType = [globalDragPboard availableTypeFromArray:[NSArray arrayWithObjects:(id)type, nil]];
   if (availableType && IsValidType(availableType, allowFileURL)) {
     *_retval = true;

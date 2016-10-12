@@ -83,8 +83,10 @@ private:
   RefPtr<FetchDriverObserver> mObserver;
   nsCOMPtr<nsIDocument> mDocument;
 
-  DebugOnly<bool> mResponseAvailableCalled;
-  DebugOnly<bool> mFetchCalled;
+#ifdef DEBUG
+  bool mResponseAvailableCalled;
+  bool mFetchCalled;
+#endif
 
   FetchDriver() = delete;
   FetchDriver(const FetchDriver&) = delete;
@@ -94,13 +96,12 @@ private:
   nsresult ContinueFetch();
   nsresult HttpFetch();
   // Returns the filtered response sent to the observer.
-  // Callers who don't have access to a channel can pass null for aFinalURI.
   already_AddRefed<InternalResponse>
-  BeginAndGetFilteredResponse(InternalResponse* aResponse, nsIURI* aFinalURI,
+  BeginAndGetFilteredResponse(InternalResponse* aResponse,
                               bool aFoundOpaqueRedirect);
   // Utility since not all cases need to do any post processing of the filtered
   // response.
-  nsresult FailWithNetworkError();
+  void FailWithNetworkError();
 
   void SetRequestHeaders(nsIHttpChannel* aChannel) const;
 };

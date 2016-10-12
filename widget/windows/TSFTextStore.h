@@ -6,7 +6,7 @@
 #ifndef TSFTextStore_h_
 #define TSFTextStore_h_
 
-#include "nsAutoPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsIWidget.h"
@@ -14,6 +14,7 @@
 #include "WinUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/TextEventDispatcher.h"
 #include "mozilla/TextRange.h"
 #include "mozilla/WindowsVersion.h"
 
@@ -115,9 +116,11 @@ public:
   static void     CommitComposition(bool aDiscard)
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    if (sEnabledTextStore) {
-      sEnabledTextStore->CommitCompositionInternal(aDiscard);
+    if (!sEnabledTextStore) {
+      return;
     }
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
+    textStore->CommitCompositionInternal(aDiscard);
   }
 
   static void SetInputContext(nsWindowBase* aWidget,
@@ -130,36 +133,51 @@ public:
   static nsresult OnTextChange(const IMENotification& aIMENotification)
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnTextChangeInternal(aIMENotification) : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
+    return textStore->OnTextChangeInternal(aIMENotification);
   }
 
   static nsresult OnSelectionChange(const IMENotification& aIMENotification)
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnSelectionChangeInternal(aIMENotification) : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
+    return textStore->OnSelectionChangeInternal(aIMENotification);
   }
 
   static nsresult OnLayoutChange()
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnLayoutChangeInternal() : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
+    return textStore->OnLayoutChangeInternal();
   }
 
   static nsresult OnUpdateComposition()
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnUpdateCompositionInternal() : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
+    return textStore->OnUpdateCompositionInternal();
   }
 
   static nsresult OnMouseButtonEvent(const IMENotification& aIMENotification)
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnMouseButtonEventInternal(aIMENotification) : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
+    return textStore->OnMouseButtonEventInternal(aIMENotification);
   }
 
   static nsIMEUpdatePreference GetIMEUpdatePreference();
@@ -228,7 +246,7 @@ protected:
   static void MarkContextAsKeyboardDisabled(ITfContext* aContext);
   static void MarkContextAsEmpty(ITfContext* aContext);
 
-  bool     Init(nsWindowBase* aWidget);
+  bool     Init(nsWindowBase* aWidget, const InputContext& aContext);
   bool     Destroy();
 
   bool     IsReadLock(DWORD aLock) const
@@ -302,7 +320,8 @@ protected:
   HRESULT  HandleRequestAttrs(DWORD aFlags,
                               ULONG aFilterCount,
                               const TS_ATTRID* aFilterAttrs);
-  void     SetInputScope(const nsString& aHTMLInputType);
+  void     SetInputScope(const nsString& aHTMLInputType,
+                         const nsString& aHTMLInputInputmode);
 
   // Creates native caret over our caret.  This method only works on desktop
   // application.  Otherwise, this does nothing.
@@ -312,6 +331,8 @@ protected:
 
   // Holds the pointer to our current win32 widget
   RefPtr<nsWindowBase>       mWidget;
+  // mDispatcher is a helper class to dispatch composition events.
+  RefPtr<TextEventDispatcher> mDispatcher;
   // Document manager for the currently focused editor
   RefPtr<ITfDocumentMgr>     mDocumentMgr;
   // Edit cookie associated with the current editing context
@@ -397,17 +418,23 @@ protected:
       mACP.style.fInterimChar = FALSE;
     }
 
-    void SetSelection(uint32_t aStart,
+    bool SetSelection(uint32_t aStart,
                       uint32_t aLength,
                       bool aReversed,
                       WritingMode aWritingMode)
     {
+      bool changed = mDirty ||
+                     mACP.acpStart != static_cast<LONG>(aStart) ||
+                     mACP.acpEnd != static_cast<LONG>(aStart + aLength);
+
       mDirty = false;
       mACP.acpStart = static_cast<LONG>(aStart);
       mACP.acpEnd = static_cast<LONG>(aStart + aLength);
       mACP.style.ase = aReversed ? TS_AE_START : TS_AE_END;
       mACP.style.fInterimChar = FALSE;
       mWritingMode = aWritingMode;
+
+      return changed;
     }
 
     bool IsCollapsed() const
@@ -852,6 +879,12 @@ protected:
   // For preventing it to be called, we should put off notifying TSF of
   // anything until layout information becomes available.
   bool                         mDeferNotifyingTSF;
+  // While the document is locked, committing composition always fails since
+  // TSF needs another document lock for modifying the composition, selection
+  // and etc.  So, committing composition should be performed after the
+  // document is unlocked.
+  bool                         mDeferCommittingComposition;
+  bool                         mDeferCancellingComposition;
   // Immediately after a call of Destroy(), mDestroyed becomes true.  If this
   // is true, the instance shouldn't grant any requests from the TIP anymore.
   bool                         mDestroyed;

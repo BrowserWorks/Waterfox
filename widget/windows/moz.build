@@ -14,6 +14,10 @@ EXPORTS += [
 
 EXPORTS.mozilla.widget += [
     'AudioSession.h',
+    'WinCompositorWidgetProxy.h',
+    'WinMessages.h',
+    'WinModifierKeyState.h',
+    'WinNativeEventData.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -51,9 +55,11 @@ UNIFIED_SOURCES += [
     'TaskbarTabPreview.cpp',
     'TaskbarWindowPreview.cpp',
     'WidgetTraceEvent.cpp',
+    'WinCompositorWidgetProxy.cpp',
     'WindowHook.cpp',
     'WinIMEHandler.cpp',
     'WinTaskbar.cpp',
+    'WinTextEventDispatcherListener.cpp',
     'WinUtils.cpp',
 ]
 
@@ -105,3 +111,7 @@ for var in ('MOZ_ENABLE_D3D10_LAYER'):
 RESFILE = 'widget.res'
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
+
+OS_LIBS += [
+    'rpcrt4',
+]

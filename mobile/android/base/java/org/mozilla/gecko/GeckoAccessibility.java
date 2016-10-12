@@ -5,10 +5,6 @@
 
 package org.mozilla.gecko;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,8 +13,6 @@ import org.mozilla.gecko.gfx.LayerView;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.util.UIAsyncTask;
 
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -48,14 +42,6 @@ public class GeckoAccessibility {
     private static final int BRAILLE_CLICK_BASE_INDEX = -275000000;
     private static SelfBrailleClient sSelfBrailleClient;
 
-    private static final HashSet<String> sServiceWhitelist =
-        new HashSet<String>(Arrays.asList(new String[] {
-                    "com.google.android.marvin.talkback.TalkBackService", // Google Talkback screen reader
-                    "com.mot.readout.ScreenReader", // Motorola screen reader
-                    "info.spielproject.spiel.SpielService", // Spiel screen reader
-                    "es.codefactory.android.app.ma.MAAccessibilityService" // Codefactory Mobile Accessibility screen reader
-                }));
-
     public static void updateAccessibilitySettings (final Context context) {
         new UIAsyncTask.WithoutParams<Void>(ThreadUtils.getBackgroundHandler()) {
                 @Override
@@ -64,19 +50,9 @@ public class GeckoAccessibility {
                     sEnabled = false;
                     AccessibilityManager accessibilityManager =
                         (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
-                    if (accessibilityManager.isEnabled()) {
-                        ActivityManager activityManager =
-                            (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-                        List<RunningServiceInfo> runningServices = activityManager.getRunningServices(Integer.MAX_VALUE);
-
-                        for (RunningServiceInfo runningServiceInfo : runningServices) {
-                            sEnabled = sServiceWhitelist.contains(runningServiceInfo.service.getClassName());
-                            if (sEnabled)
-                                break;
-                        }
-                        if (Versions.feature16Plus && sEnabled && sSelfBrailleClient == null) {
-                            sSelfBrailleClient = new SelfBrailleClient(GeckoAppShell.getContext(), false);
-                        }
+                    sEnabled = accessibilityManager.isEnabled() && accessibilityManager.isTouchExplorationEnabled();
+                    if (Versions.feature16Plus && sEnabled && sSelfBrailleClient == null) {
+                        sSelfBrailleClient = new SelfBrailleClient(GeckoAppShell.getContext(), false);
                     }
 
                     try {
@@ -85,22 +61,17 @@ public class GeckoAccessibility {
                         Log.e(LOGTAG, "Error building JSON arguments for Accessibility:Settings:", ex);
                     }
 
-                    GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:Settings",
-                                                                                   ret.toString()));
+                    GeckoAppShell.notifyObservers("Accessibility:Settings", ret.toString());
                     return null;
                 }
 
                 @Override
                 public void onPostExecute(Void args) {
-                    boolean isGeckoApp = false;
-                    try {
-                        isGeckoApp = context instanceof GeckoApp;
-                    } catch (NoClassDefFoundError ex) {}
-                    if (isGeckoApp) {
-                        // Disable the dynamic toolbar when enabling accessibility.
-                        // These features tend not to interact well.
-                        ((GeckoApp) context).setAccessibilityEnabled(sEnabled);
+                    final GeckoAppShell.GeckoInterface geckoInterface = GeckoAppShell.getGeckoInterface();
+                    if (geckoInterface == null) {
+                        return;
                     }
+                    geckoInterface.setAccessibilityEnabled(sEnabled);
                 }
             }.execute();
     }
@@ -209,8 +180,8 @@ public class GeckoAccessibility {
                 for (int i = 1; i < textArray.length(); i++) {
                     sb.append(" ").append(textArray.optString(i));
                 }
+                sVirtualCursorNode.setText(sb.toString());
             }
-            sVirtualCursorNode.setText(sb.toString());
             sVirtualCursorNode.setContentDescription(message.optString("description"));
 
             JSONObject bounds = message.optJSONObject("bounds");
@@ -273,14 +244,21 @@ public class GeckoAccessibility {
         }
     }
 
-    public static void setAccessibilityStateChangeListener(final Context context) {
-        // The state change listener is only supported on API14+
-        if (Versions.feature14Plus) {
-            AccessibilityManager accessibilityManager =
-                (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
-            accessibilityManager.addAccessibilityStateChangeListener(new AccessibilityManager.AccessibilityStateChangeListener() {
+    public static void setAccessibilityManagerListeners(final Context context) {
+        AccessibilityManager accessibilityManager =
+            (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
+
+        accessibilityManager.addAccessibilityStateChangeListener(new AccessibilityManager.AccessibilityStateChangeListener() {
+            @Override
+            public void onAccessibilityStateChanged(boolean enabled) {
+                updateAccessibilitySettings(context);
+            }
+        });
+
+        if (Versions.feature19Plus) {
+            accessibilityManager.addTouchExplorationStateChangeListener(new AccessibilityManager.TouchExplorationStateChangeListener() {
                 @Override
-                public void onAccessibilityStateChanged(boolean enabled) {
+                public void onTouchExplorationStateChanged(boolean enabled) {
                     updateAccessibilitySettings(context);
                 }
             });
@@ -289,8 +267,7 @@ public class GeckoAccessibility {
 
     public static void onLayerViewFocusChanged(LayerView layerview, boolean gainFocus) {
         if (sEnabled)
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:Focus",
-                                                                           gainFocus ? "true" : "false"));
+            GeckoAppShell.notifyObservers("Accessibility:Focus", gainFocus ? "true" : "false");
     }
 
     public static class GeckoAccessibilityDelegate extends View.AccessibilityDelegate {
@@ -352,41 +329,34 @@ public class GeckoAccessibility {
                                 if (virtualViewId == VIRTUAL_CURSOR_POSITION && sHoverEnter != null) {
                                     GeckoAccessibility.sendAccessibilityEvent(sHoverEnter, AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED);
                                 } else {
-                                    GeckoAppShell.
-                                      sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:Focus", "true"));
+                                    GeckoAppShell.notifyObservers("Accessibility:Focus", "true");
                                 }
                                 return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_CLICK && virtualViewId == VIRTUAL_CURSOR_POSITION) {
-                                GeckoAppShell.
-                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:ActivateObject", null));
+                                GeckoAppShell.notifyObservers("Accessibility:ActivateObject", null);
                                 return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_LONG_CLICK && virtualViewId == VIRTUAL_CURSOR_POSITION) {
-                                GeckoAppShell.
-                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:LongPress", null));
+                                GeckoAppShell.notifyObservers("Accessibility:LongPress", null);
                                 return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD && virtualViewId == VIRTUAL_CURSOR_POSITION) {
-                                GeckoAppShell.
-                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:ScrollForward", null));
+                                GeckoAppShell.notifyObservers("Accessibility:ScrollForward", null);
                                 return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD && virtualViewId == VIRTUAL_CURSOR_POSITION) {
-                                GeckoAppShell.
-                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:ScrollBackward", null));
+                                GeckoAppShell.notifyObservers("Accessibility:ScrollBackward", null);
                                 return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_NEXT_HTML_ELEMENT && virtualViewId == VIRTUAL_CURSOR_POSITION) {
                                 String traversalRule = "";
                                 if (arguments != null) {
                                     traversalRule = arguments.getString(AccessibilityNodeInfo.ACTION_ARGUMENT_HTML_ELEMENT_STRING);
                                 }
-                                GeckoAppShell.
-                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:NextObject", traversalRule));
+                                GeckoAppShell.notifyObservers("Accessibility:NextObject", traversalRule);
                                 return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_PREVIOUS_HTML_ELEMENT && virtualViewId == VIRTUAL_CURSOR_POSITION) {
                                 String traversalRule = "";
                                 if (arguments != null) {
                                     traversalRule = arguments.getString(AccessibilityNodeInfo.ACTION_ARGUMENT_HTML_ELEMENT_STRING);
                                 }
-                                GeckoAppShell.
-                                    sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:PreviousObject", traversalRule));
+                                GeckoAppShell.notifyObservers("Accessibility:PreviousObject", traversalRule);
                                 return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY &&
                                        virtualViewId == VIRTUAL_CURSOR_POSITION) {
@@ -406,8 +376,7 @@ public class GeckoAccessibility {
                                     } catch (JSONException e) {
                                         return true;
                                     }
-                                    GeckoAppShell.
-                                        sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:ActivateObject", activationData.toString()));
+                                    GeckoAppShell.notifyObservers("Accessibility:ActivateObject", activationData.toString());
                                 } else if (granularity > 0) {
                                     JSONObject movementData = new JSONObject();
                                     try {
@@ -416,8 +385,7 @@ public class GeckoAccessibility {
                                     } catch (JSONException e) {
                                         return true;
                                     }
-                                    GeckoAppShell.
-                                        sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:MoveByGranularity", movementData.toString()));
+                                    GeckoAppShell.notifyObservers("Accessibility:MoveByGranularity", movementData.toString());
                                 }
                                 return true;
                             } else if (action == AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY &&
@@ -431,8 +399,7 @@ public class GeckoAccessibility {
                                     return true;
                                 }
                                 if (granularity > 0) {
-                                    GeckoAppShell.
-                                      sendEventToGecko(GeckoEvent.createBroadcastEvent("Accessibility:MoveByGranularity", movementData.toString()));
+                                    GeckoAppShell.notifyObservers("Accessibility:MoveByGranularity", movementData.toString());
                                 }
                                 return true;
                             }

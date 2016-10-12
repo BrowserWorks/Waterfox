@@ -58,7 +58,7 @@ public:
   ProxyAccessible* NextSibling() const
   {
     size_t idx = IndexInParent();
-    return idx < Parent()->mChildren.Length() ? Parent()->mChildren[idx + 1]
+    return idx + 1 < Parent()->mChildren.Length() ? Parent()->mChildren[idx + 1]
     : nullptr;
   }
 
@@ -90,6 +90,17 @@ public:
    * Get the role of the accessible we're proxying.
    */
   role Role() const { return mRole; }
+
+  /**
+   * Return true if this is an embedded object.
+   */
+  bool IsEmbeddedObject() const
+  {
+    role role = Role();
+    return role != roles::TEXT_LEAF &&
+           role != roles::WHITESPACE &&
+           role != roles::STATICTEXT;
+  }
 
   /*
    * Return the states for the proxied accessible.
@@ -364,6 +375,12 @@ public:
                int32_t* aWidth, int32_t* aHeight);
 
   /**
+   * Return the id of the dom node this accessible represents.  Note this
+   * should probably only be used for testing.
+   */
+  void DOMNodeID(nsString& aID);
+
+  /**
    * Allow the platform to store a pointers worth of data on us.
    */
   uintptr_t GetWrapper() const { return mWrapper; }
@@ -408,14 +425,14 @@ private:
 enum Interfaces
 {
   HYPERTEXT = 1,
-  HYPERLINK = 2,
-  IMAGE = 4,
-  VALUE = 8,
-  TABLE = 16,
-  TABLECELL = 32,
-  DOCUMENT = 64,
-  SELECTION = 128,
-  ACTION = 256,
+  HYPERLINK = 1 << 1,
+  IMAGE = 1 << 2,
+  VALUE = 1 << 3,
+  TABLE = 1 << 4,
+  TABLECELL = 1 << 5,
+  DOCUMENT = 1 << 6,
+  SELECTION = 1 << 7,
+  ACTION = 1 << 8,
 };
 
 }

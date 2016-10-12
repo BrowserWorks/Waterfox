@@ -4,7 +4,10 @@
 
 "use strict";
 
-// XXX Some helper API could go to testing/mochitest/tests/SimpleTest/AsyncContentUtils.js
+/* globals Services, sendAsyncMessage, addMessageListener */
+
+// XXX Some helper API could go to:
+// testing/mochitest/tests/SimpleTest/AsyncContentUtils.js
 // (or at least to share test API in devtools)
 
 // Set up a dummy environment so that EventUtils works. We need to be careful to
@@ -13,8 +16,8 @@
 let EventUtils = {};
 EventUtils.window = content;
 EventUtils.parent = EventUtils.window;
-EventUtils._EU_Ci = Components.interfaces;
-EventUtils._EU_Cc = Components.classes;
+EventUtils._EU_Ci = Components.interfaces; // eslint-disable-line
+EventUtils._EU_Cc = Components.classes; // eslint-disable-line
 EventUtils.navigator = content.navigator;
 EventUtils.KeyboardEvent = content.KeyboardEvent;
 
@@ -31,20 +34,20 @@ content.addEventListener("JSONViewInitialized", () => {
   sendAsyncMessage("Test:JsonView:JSONViewInitialized");
 }, false);
 
-addMessageListener("Test:JsonView:GetElementCount", function(msg) {
+addMessageListener("Test:JsonView:GetElementCount", function (msg) {
   let {selector} = msg.data;
   let nodeList = content.document.querySelectorAll(selector);
   sendAsyncMessage(msg.name, {count: nodeList.length});
 });
 
-addMessageListener("Test:JsonView:GetElementText", function(msg) {
+addMessageListener("Test:JsonView:GetElementText", function (msg) {
   let {selector} = msg.data;
   let element = content.document.querySelector(selector);
   let text = element ? element.textContent : null;
   sendAsyncMessage(msg.name, {text: text});
 });
 
-addMessageListener("Test:JsonView:FocusElement", function(msg) {
+addMessageListener("Test:JsonView:FocusElement", function (msg) {
   let {selector} = msg.data;
   let element = content.document.querySelector(selector);
   if (element) {
@@ -53,7 +56,7 @@ addMessageListener("Test:JsonView:FocusElement", function(msg) {
   sendAsyncMessage(msg.name);
 });
 
-addMessageListener("Test:JsonView:SendString", function(msg) {
+addMessageListener("Test:JsonView:SendString", function (msg) {
   let {selector, str} = msg.data;
   if (selector) {
     let element = content.document.querySelector(selector);
@@ -67,9 +70,9 @@ addMessageListener("Test:JsonView:SendString", function(msg) {
   sendAsyncMessage(msg.name);
 });
 
-addMessageListener("Test:JsonView:WaitForFilter", function(msg) {
+addMessageListener("Test:JsonView:WaitForFilter", function (msg) {
   let firstRow = content.document.querySelector(
-    ".jsonPanelBox .domTable .memberRow");
+    ".jsonPanelBox .treeTable .treeRow");
 
   // Check if the filter is already set.
   if (firstRow.classList.contains("hidden")) {
@@ -78,7 +81,7 @@ addMessageListener("Test:JsonView:WaitForFilter", function(msg) {
   }
 
   // Wait till the first row has 'hidden' class set.
-  var observer = new content.MutationObserver(function(mutations) {
+  let observer = new content.MutationObserver(function (mutations) {
     for (let i = 0; i < mutations.length; i++) {
       let mutation = mutations[i];
       if (mutation.attributeName == "class") {

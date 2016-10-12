@@ -28,7 +28,6 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'content_html'
 
 EXPORTS += [
-    'HTMLPropertiesCollection.h',
     'nsFormSubmission.h',
     'nsGenericHTMLElement.h',
     'nsHTMLDNSPrefetch.h',
@@ -56,8 +55,8 @@ EXPORTS.mozilla.dom += [
     'HTMLContentElement.h',
     'HTMLDataElement.h',
     'HTMLDataListElement.h',
+    'HTMLDetailsElement.h',
     'HTMLDivElement.h',
-    'HTMLExtAppElement.h',
     'HTMLFieldSetElement.h',
     'HTMLFontElement.h',
     'HTMLFormControlsCollection.h',
@@ -98,6 +97,7 @@ EXPORTS.mozilla.dom += [
     'HTMLSourceElement.h',
     'HTMLSpanElement.h',
     'HTMLStyleElement.h',
+    'HTMLSummaryElement.h',
     'HTMLTableCaptionElement.h',
     'HTMLTableCellElement.h',
     'HTMLTableColElement.h',
@@ -133,9 +133,9 @@ UNIFIED_SOURCES += [
     'HTMLContentElement.cpp',
     'HTMLDataElement.cpp',
     'HTMLDataListElement.cpp',
+    'HTMLDetailsElement.cpp',
     'HTMLDivElement.cpp',
     'HTMLElement.cpp',
-    'HTMLExtAppElement.cpp',
     'HTMLFieldSetElement.cpp',
     'HTMLFontElement.cpp',
     'HTMLFormControlsCollection.cpp',
@@ -167,7 +167,6 @@ UNIFIED_SOURCES += [
     'HTMLPictureElement.cpp',
     'HTMLPreElement.cpp',
     'HTMLProgressElement.cpp',
-    'HTMLPropertiesCollection.cpp',
     'HTMLScriptElement.cpp',
     'HTMLSelectElement.cpp',
     'HTMLShadowElement.cpp',
@@ -177,6 +176,7 @@ UNIFIED_SOURCES += [
     'HTMLSourceElement.cpp',
     'HTMLSpanElement.cpp',
     'HTMLStyleElement.cpp',
+    'HTMLSummaryElement.cpp',
     'HTMLTableCaptionElement.cpp',
     'HTMLTableCellElement.cpp',
     'HTMLTableColElement.cpp',
@@ -244,3 +244,6 @@ LOCAL_INCLUDES += [
 ]
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

@@ -10,23 +10,27 @@
    We are copy/pasting variables from light-theme and dark-theme,
    since they aren't loaded in this context (within browser.css). */
 :root[devtoolstheme="light"] #developer-toolbar {
-  --gcli-background-color: #ebeced; /* --theme-tab-toolbar-background */
-  --gcli-input-background: #f0f1f2; /* --theme-toolbar-background */
-  --gcli-input-focused-background: #f7f7f7; /* --theme-sidebar-background */
-  --gcli-input-color: #18191a; /* --theme-body-color */
-  --gcli-border-color: #aaaaaa; /* --theme-splitter-color */
+  --gcli-background-color: #fcfcfc; /* --theme-tab-toolbar-background */
+  --gcli-input-background: #fcfcfc; /* --theme-toolbar-background */
+  --gcli-input-focused-background: #ffffff; /* --theme-sidebar-background */
+  --gcli-input-color: #393f4c; /* --theme-body-color */
+  --gcli-border-color: #dde1e4; /* --theme-splitter-color */
   --selection-background: #4c9ed9; /* --theme-selection-background */
   --selection-color: #f5f7fa; /* --theme-selection-color */
+  --command-line-image: url(chrome://devtools/skin/images/commandline-icon.svg#light-theme); /* --theme-command-line-image */
+  --command-line-image-focus: url(chrome://devtools/skin/images/commandline-icon.svg#light-theme-focus); /* --theme-command-line-image-focus */
 }
 
 :root[devtoolstheme="dark"] #developer-toolbar {
-  --gcli-background-color: #343c45; /* --theme-toolbar-background */
-  --gcli-input-background: rgba(37, 44, 51, .6); /* --theme-tab-toolbar-background */
-  --gcli-input-focused-background: #252c33; /* --theme-tab-toolbar-background */
+  --gcli-background-color: #272b35; /* --theme-toolbar-background */
+  --gcli-input-background: #272b35; /* --theme-tab-toolbar-background */
+  --gcli-input-focused-background: #272b35; /* --theme-tab-toolbar-background */
   --gcli-input-color: #b6babf; /* --theme-body-color-alt */
-  --gcli-border-color: black; /* --theme-splitter-color */
-  --selection-background: #1d4f73; /* --theme-selection-background */
+  --gcli-border-color: #454d5d; /* --theme-splitter-color */
+  --selection-background: #5675b9; /* --theme-selection-background */
   --selection-color: #f5f7fa; /* --theme-selection-color */
+  --command-line-image: url(chrome://devtools/skin/images/commandline-icon.svg#dark-theme); /* --theme-command-line-image */
+  --command-line-image-focus: url(chrome://devtools/skin/images/commandline-icon.svg#dark-theme-focus); /* --theme-command-line-image-focus */
 }
 
 #developer-toolbar {
@@ -40,7 +44,7 @@
 #developer-toolbar > toolbarbutton {
   -moz-appearance: none;
   border: none;
-  background: transparent;
+  background-color: transparent;
   margin: 0;
   padding: 0 10px;
   width: 32px;
@@ -50,15 +54,19 @@
   margin: auto 10px;
 }
 
-:root[devtoolstheme="light"] #developer-toolbar > toolbarbutton:not([checked=true]) > image,
+:root[devtoolstheme="light"] #developer-toolbar > .developer-toolbar-button:not([checked=true]) > image,
 :root[devtoolstheme="light"] .gclitoolbar-input-node:not([focused=true])::before  {
   filter: invert(1);
 }
 
-.developer-toolbar-button > .toolbarbutton-icon,
-#developer-toolbar-closebutton > .toolbarbutton-icon {
+.developer-toolbar-button > .toolbarbutton-icon {
   width: 16px;
   height: 16px;
+}
+
+/* The toolkit close button is low contrast in the dark theme so invert it. */
+:root[devtoolstheme="dark"] #developer-toolbar > .close-icon:not(:hover) > image {
+  filter: invert(1);
 }
 
 #developer-toolbar-toolbox-button {
@@ -99,40 +107,6 @@
   #developer-toolbar-toolbox-button[checked=true] {
     -moz-image-region: rect(0px, 128px, 32px, 96px);
   }
-}
-
-#developer-toolbar-closebutton {
-  list-style-image: url("chrome://devtools/skin/images/close.png");
-  -moz-appearance: none;
-  border: none;
-  margin: 0 4px;
-  min-width: 16px;
-  width: 16px;
-  opacity: 0.6;
-}
-
-@media (min-resolution: 1.1dppx) {
-  #developer-toolbar-closebutton {
-    list-style-image: url("chrome://devtools/skin/images/close@2x.png");
-  }
-}
-
-#developer-toolbar-closebutton > .toolbarbutton-icon {
-  /* XXX Buttons have padding in widget/ that we don't want here but can't override with good CSS, so we must
-     use evil CSS to give the impression of smaller content */
-  margin: -4px;
-}
-
-#developer-toolbar-closebutton > .toolbarbutton-text {
-  display: none;
-}
-
-#developer-toolbar-closebutton:hover {
-  opacity: 0.8;
-}
-
-#developer-toolbar-closebutton:hover:active {
-  opacity: 1;
 }
 
 /* GCLI */
@@ -190,19 +164,11 @@ html|*#gcli-output-frame {
   width: 16px;
   height: 16px;
   margin: 0 2px;
-  background-image: url("chrome://devtools/skin/images/commandline-icon.png");
-  background-position: 0 center;
-  background-size: 32px 16px;
+  background-image: var(--command-line-image);
 }
 
 .gclitoolbar-input-node[focused="true"]::before {
-  background-position: -16px center;
-}
-
-@media (min-resolution: 1.1dppx) {
-  .gclitoolbar-input-node::before {
-    background-image: url("chrome://devtools/skin/images/commandline-icon@2x.png");
-  }
+  background-image: var(--command-line-image-focus);
 }
 
 .gclitoolbar-input-node > .textbox-input-box > html|*.textbox-input::-moz-selection {

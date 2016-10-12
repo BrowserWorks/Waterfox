@@ -28,7 +28,7 @@
 
 #define JS_ARRAYBUFFER_FLAGS_SLOT            3
 
-#define JS_ARRAYBUFFER_NEUTERED_FLAG 0x4
+#define JS_ARRAYBUFFER_DETACHED_FLAG 0x4
 
 ///////////////////////////////////////////////////////////////////////////
 // Slots for typed prototypes
@@ -90,7 +90,9 @@
 #define JS_SCALARTYPEREPR_FLOAT64       7
 #define JS_SCALARTYPEREPR_UINT8_CLAMPED 8
 #define JS_SCALARTYPEREPR_FLOAT32X4     10
-#define JS_SCALARTYPEREPR_INT32X4       11
+#define JS_SCALARTYPEREPR_INT8X16       11
+#define JS_SCALARTYPEREPR_INT16X8       12
+#define JS_SCALARTYPEREPR_INT32X4       13
 
 // These constants are for use exclusively in JS code. In C++ code,
 // prefer ReferenceTypeRepresentation::TYPE_ANY etc, which allows

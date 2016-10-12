@@ -140,7 +140,7 @@ AudioTrackEncoder::InterleaveTrackData(AudioChunk& aChunk,
 {
   switch(aChunk.mBufferFormat) {
     case AUDIO_FORMAT_S16: {
-      nsAutoTArray<const int16_t*, 2> array;
+      AutoTArray<const int16_t*, 2> array;
       array.SetLength(aOutputChannels);
       for (uint32_t i = 0; i < array.Length(); i++) {
         array[i] = static_cast<const int16_t*>(aChunk.mChannelData[i]);
@@ -149,7 +149,7 @@ AudioTrackEncoder::InterleaveTrackData(AudioChunk& aChunk,
       break;
     }
     case AUDIO_FORMAT_FLOAT32: {
-      nsAutoTArray<const float*, 2> array;
+      AutoTArray<const float*, 2> array;
       array.SetLength(aOutputChannels);
       for (uint32_t i = 0; i < array.Length(); i++) {
         array[i] = static_cast<const float*>(aChunk.mChannelData[i]);
@@ -249,11 +249,30 @@ VideoTrackEncoder::AppendVideoSegment(const VideoSegment& aSegment)
   VideoSegment::ChunkIterator iter(const_cast<VideoSegment&>(aSegment));
   while (!iter.IsEnded()) {
     VideoChunk chunk = *iter;
-    RefPtr<layers::Image> image = chunk.mFrame.GetImage();
-    mRawSegment.AppendFrame(image.forget(),
-                            chunk.GetDuration(),
-                            chunk.mFrame.GetIntrinsicSize(),
-                            chunk.mFrame.GetForceBlack());
+    mTotalFrameDuration += chunk.GetDuration();
+    mLastFrameDuration += chunk.GetDuration();
+    // Send only the unique video frames for encoding.
+    // Or if we got the same video chunks more than 1 seconds,
+    // force to send into encoder.
+    if ((mLastFrame != chunk.mFrame) ||
+        (mLastFrameDuration >= mTrackRate)) {
+      RefPtr<layers::Image> image = chunk.mFrame.GetImage();
+      // Because we may get chunks with a null image (due to input blocking),
+      // accumulate duration and give it to the next frame that arrives.
+      // Canonically incorrect - the duration should go to the previous frame
+      // - but that would require delaying until the next frame arrives.
+      // Best would be to do like OMXEncoder and pass an effective timestamp
+      // in with each frame.
+      if (image) {
+        mRawSegment.AppendFrame(image.forget(),
+                                mLastFrameDuration,
+                                chunk.mFrame.GetIntrinsicSize(),
+                                PRINCIPAL_HANDLE_NONE,
+                                chunk.mFrame.GetForceBlack());
+        mLastFrameDuration = 0;
+      }
+    }
+    mLastFrame.TakeFrom(&chunk.mFrame);
     iter.Next();
   }
 

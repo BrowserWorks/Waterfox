@@ -82,7 +82,7 @@ gfxGDIFont::ShapeText(DrawTarget     *aDrawTarget,
                       const char16_t *aText,
                       uint32_t        aOffset,
                       uint32_t        aLength,
-                      int32_t         aScript,
+                      Script          aScript,
                       bool            aVertical,
                       gfxShapedText  *aShapedText)
 {
@@ -469,7 +469,7 @@ gfxGDIFont::GetGlyph(uint32_t aUnicode, uint32_t aVarSelector)
     }
 
     if (!mGlyphIDs) {
-        mGlyphIDs = new nsDataHashtable<nsUint32HashKey,uint32_t>(64);
+        mGlyphIDs = MakeUnique<nsDataHashtable<nsUint32HashKey,uint32_t>>(64);
     }
 
     uint32_t gid;
@@ -506,7 +506,7 @@ int32_t
 gfxGDIFont::GetGlyphWidth(DrawTarget& aDrawTarget, uint16_t aGID)
 {
     if (!mGlyphWidths) {
-        mGlyphWidths = new nsDataHashtable<nsUint32HashKey,int32_t>(128);
+        mGlyphWidths = MakeUnique<nsDataHashtable<nsUint32HashKey,int32_t>>(128);
     }
 
     int32_t width;

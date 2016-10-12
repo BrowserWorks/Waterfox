@@ -1,3 +1,5 @@
+"use strict";
+
 function check_ip(s, v, ip) {
   let sslStatus = new FakeSSLStatus();
   ok(!s.isSecureHost(Ci.nsISiteSecurityService.HEADER_HSTS, ip, 0));
@@ -17,7 +19,7 @@ function check_ip(s, v, ip) {
   let parsedMaxAge = {};
   let parsedIncludeSubdomains = {};
   s.processHeader(Ci.nsISiteSecurityService.HEADER_HSTS, uri,
-                  "max-age=1000;includeSubdomains", sslStatus , 0,
+                  "max-age=1000;includeSubdomains", sslStatus, 0,
                   parsedMaxAge, parsedIncludeSubdomains);
 
   /* Test that processHeader will ignore headers for an uri, if the uri

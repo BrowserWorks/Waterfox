@@ -12,8 +12,6 @@ function test()
   gBrowser.selectedBrowser.addEventListener("load", function onTabLoad() {
     gBrowser.selectedBrowser.removeEventListener("load", onTabLoad, true);
 
-    ok(window.Scratchpad, "Scratchpad variable exists");
-
     openScratchpad(runTest);
   }, true);
 }
@@ -42,11 +40,11 @@ function runTest()
     altKey: modifiers.match("alt"),
     metaKey: modifiers.match("meta"),
     accelKey: modifiers.match("accel")
-  }
+  };
 
   info("check that the MDN page is opened on \"F1\"");
   let linkClicked = false;
-  sp.openDocumentationPage = function(event) { linkClicked = true; };
+  sp.openDocumentationPage = function (event) { linkClicked = true; };
 
   EventUtils.synthesizeKey(key, aEvent, gScratchpadWindow);
 

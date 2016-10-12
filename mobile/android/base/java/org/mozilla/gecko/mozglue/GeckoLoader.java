@@ -16,7 +16,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
@@ -24,7 +23,6 @@ import android.util.Log;
 import org.mozilla.gecko.annotation.JNITarget;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.mozglue.ContextUtils.SafeIntent;
 
 public final class GeckoLoader {
     private static final String LOGTAG = "GeckoLoader";
@@ -71,7 +69,7 @@ public final class GeckoLoader {
                 pluginSearchPath.append(pluginDirs[i]);
                 pluginSearchPath.append(":");
             }
-            putenv("MOZ_PLUGIN_PATH="+pluginSearchPath);
+            putenv("MOZ_PLUGIN_PATH=" + pluginSearchPath);
 
             File pluginDataDir = context.getDir("plugins", 0);
             putenv("ANDROID_PLUGIN_DATADIR=" + pluginDataDir.getPath());

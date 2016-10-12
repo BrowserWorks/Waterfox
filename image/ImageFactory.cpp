@@ -106,7 +106,6 @@ template <typename T>
 static already_AddRefed<Image>
 BadImage(const char* aMessage, RefPtr<T>& aImage)
 {
-  NS_WARNING(aMessage);
   aImage->SetHasError();
   return aImage.forget();
 }

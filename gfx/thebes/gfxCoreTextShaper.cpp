@@ -109,9 +109,10 @@ gfxCoreTextShaper::~gfxCoreTextShaper()
 }
 
 static bool
-IsBuggyIndicScript(int32_t aScript)
+IsBuggyIndicScript(unicode::Script aScript)
 {
-    return aScript == MOZ_SCRIPT_BENGALI || aScript == MOZ_SCRIPT_KANNADA;
+    return aScript == unicode::Script::BENGALI ||
+           aScript == unicode::Script::KANNADA;
 }
 
 bool
@@ -119,7 +120,7 @@ gfxCoreTextShaper::ShapeText(DrawTarget      *aDrawTarget,
                              const char16_t *aText,
                              uint32_t         aOffset,
                              uint32_t         aLength,
-                             int32_t          aScript,
+                             Script           aScript,
                              bool             aVertical,
                              gfxShapedText   *aShapedText)
 {
@@ -349,10 +350,10 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
     // Testing indicates that CTRunGetGlyphsPtr (almost?) always succeeds,
     // and so allocating a new array and copying data with CTRunGetGlyphs
     // will be extremely rare.
-    // If this were not the case, we could use an nsAutoTArray<> to
+    // If this were not the case, we could use an AutoTArray<> to
     // try and avoid the heap allocation for small runs.
     // It's possible that some future change to CoreText will mean that
-    // CTRunGetGlyphsPtr fails more often; if this happens, nsAutoTArray<>
+    // CTRunGetGlyphsPtr fails more often; if this happens, AutoTArray<>
     // may become an attractive option.
     glyphs = ::CTRunGetGlyphsPtr(aCTRun);
     if (!glyphs) {
@@ -390,7 +391,7 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
     double runWidth = ::CTRunGetTypographicBounds(aCTRun, ::CFRangeMake(0, 0),
                                                   nullptr, nullptr, nullptr);
 
-    nsAutoTArray<gfxShapedText::DetailedGlyph,1> detailedGlyphs;
+    AutoTArray<gfxShapedText::DetailedGlyph,1> detailedGlyphs;
     gfxShapedText::CompressedGlyph *charGlyphs =
         aShapedText->GetCharacterGlyphs() + aOffset;
 
@@ -405,7 +406,7 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
     // The charToGlyph array is indexed by char position within the stringRange of the glyph run.
 
     static const int32_t NO_GLYPH = -1;
-    AutoFallibleTArray<int32_t,SMALL_GLYPH_RUN> charToGlyphArray;
+    AutoTArray<int32_t,SMALL_GLYPH_RUN> charToGlyphArray;
     if (!charToGlyphArray.SetLength(stringRange.length, fallible)) {
         return NS_ERROR_OUT_OF_MEMORY;
     }

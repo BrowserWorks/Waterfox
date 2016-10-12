@@ -28,9 +28,9 @@ public:
   void DeferredDestroy();
 
   virtual bool RecvAsyncMessage(const nsString& aMsg,
-                                const ClonedMessageData& aData,
                                 InfallibleTArray<jsipc::CpowEntry>&& aCpows,
-                                const IPC::Principal& aPrincipal) override;
+                                const IPC::Principal& aPrincipal,
+                                const ClonedMessageData& aData) override;
 
   virtual PBlobChild*
   SendPBlobConstructor(PBlobChild* actor,
@@ -45,6 +45,8 @@ public:
                                        const ContentParentId& aCpID,
                                        const bool& aIsForApp,
                                        const bool& aIsForBrowser) override;
+
+  FORWARD_SHMEM_ALLOCATOR_TO(PContentBridgeChild)
 
 protected:
   virtual ~ContentBridgeChild();

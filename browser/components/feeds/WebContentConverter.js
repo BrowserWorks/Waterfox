@@ -149,18 +149,22 @@ const Utils = {
 
     // For security reasons we reject non-http(s) urls (see bug 354316),
     // we may need to revise this once we support more content types
-    // XXX this should be a "security exception" according to spec, but that
-    // isn't defined yet.
-    if (uri.scheme != "http" && uri.scheme != "https")
-      throw("Permission denied to add " + uri.spec + " as a content or protocol handler");
+    if (uri.scheme != "http" && uri.scheme != "https") {
+      throw this.getSecurityError(
+        "Permission denied to add " + uri.spec + " as a content or protocol handler",
+        aContentWindow);
+    }
 
     // We also reject handlers registered from a different host (see bug 402287)
     // The pref allows us to test the feature
     let pb = Services.prefs;
-    if ((!pb.prefHasUserValue(PREF_ALLOW_DIFFERENT_HOST) ||
-         !pb.getBoolPref(PREF_ALLOW_DIFFERENT_HOST)) &&
-        aContentWindow.location.hostname != uri.host)
-      throw("Permission denied to add " + uri.spec + " as a content or protocol handler");
+    if (!pb.getBoolPref(PREF_ALLOW_DIFFERENT_HOST) &&
+        (!["http:", "https:"].includes(aContentWindow.location.protocol) ||
+         aContentWindow.location.hostname != uri.host)) {
+      throw this.getSecurityError(
+        "Permission denied to add " + uri.spec + " as a content or protocol handler",
+        aContentWindow);
+    }
 
     // If the uri doesn't contain '%s', it won't be a good handler
     if (uri.spec.indexOf("%s") < 0)
@@ -170,15 +174,15 @@ const Utils = {
   },
 
   // NB: Throws if aProtocol is not allowed.
-  checkProtocolHandlerAllowed(aProtocol, aURIString) {
+  checkProtocolHandlerAllowed(aProtocol, aURIString, aWindowOrNull) {
     // First, check to make sure this isn't already handled internally (we don't
     // want to let them take over, say "chrome").
     let handler = Services.io.getProtocolHandler(aProtocol);
     if (!(handler instanceof Ci.nsIExternalProtocolHandler)) {
       // This is handled internally, so we don't want them to register
-      // XXX this should be a "security exception" according to spec, but that
-      // isn't defined yet.
-      throw(`Permission denied to add ${aURIString} as a protocol handler`);
+      throw this.getSecurityError(
+        `Permission denied to add ${aURIString} as a protocol handler`,
+        aWindowOrNull);
     }
 
     // check if it is in the black list
@@ -191,9 +195,21 @@ const Utils = {
       allowed = pb.getBoolPref(PREF_HANDLER_EXTERNAL_PREFIX + "-default");
     }
     if (!allowed) {
-      // XXX this should be a "security exception" according to spec
-      throw(`Not allowed to register a protocol handler for ${aProtocol}`);
+      throw this.getSecurityError(
+        `Not allowed to register a protocol handler for ${aProtocol}`,
+        aWindowOrNull);
     }
+  },
+
+  // Return a SecurityError exception from the given Window if one is given.  If
+  // none is given, just return the given error string, for lack of anything
+  // better.
+  getSecurityError(errorString, aWindowOrNull) {
+    if (!aWindowOrNull) {
+      return errorString;
+    }
+
+    return new aWindowOrNull.DOMException(errorString, "SecurityError");
   },
 
   /**
@@ -403,7 +419,8 @@ WebContentConverterRegistrar.prototype = {
       return;
     }
 
-    Utils.checkProtocolHandlerAllowed(aProtocol, aURIString);
+    Utils.checkProtocolHandlerAllowed(aProtocol, aURIString,
+                                      haveWindow ? aBrowserOrWindow : null);
 
     // Now Ask the user and provide the proper callback
     let message = this._getFormattedString("addProtocolHandler",
@@ -413,7 +430,7 @@ WebContentConverterRegistrar.prototype = {
     let notificationValue = "Protocol Registration: " + aProtocol;
     let addButton = {
       label: this._getString("addProtocolHandlerAddButton"),
-      accessKey: this._getString("addHandlerAddButtonAccesskey"),
+      accessKey: this._getString("addProtocolHandlerAddButtonAccesskey"),
       protocolInfo: { protocol: aProtocol, uri: uri.spec, name: aTitle },
 
       callback(aNotification, aButtonInfo) {
@@ -458,26 +475,33 @@ WebContentConverterRegistrar.prototype = {
   registerContentHandler(aContentType, aURIString, aTitle, aWindowOrBrowser) {
     LOG("registerContentHandler(" + aContentType + "," + aURIString + "," + aTitle + ")");
 
+    // Make sure to do our URL checks up front, before our content type check,
+    // just like the WebContentConverterRegistrarContent does.
+    let haveWindow = aWindowOrBrowser &&
+                     (aWindowOrBrowser instanceof Ci.nsIDOMWindow);
+    let uri;
+    if (haveWindow) {
+      uri = Utils.checkAndGetURI(aURIString, aWindowOrBrowser);
+    } else if (aWindowOrBrowser) {
+      // uri was vetted in the content process.
+      uri = Utils.makeURI(aURIString, null);
+    }
+
     // We only support feed types at present.
-    // XXX this should be a "security exception" according to spec, but that
-    // isn't defined yet.
     let contentType = Utils.resolveContentType(aContentType);
-    if (contentType != TYPE_MAYBE_FEED)
+    // XXX We should be throwing a Utils.getSecurityError() here in at least
+    // some cases.  See bug 1266492.
+    if (contentType != TYPE_MAYBE_FEED) {
       return;
+    }
 
     if (aWindowOrBrowser) {
-      let haveWindow = (aWindowOrBrowser instanceof Ci.nsIDOMWindow);
-      let uri;
       let notificationBox;
       if (haveWindow) {
-        uri = Utils.checkAndGetURI(aURIString, aWindowOrBrowser);
-
         let browserWindow = this._getBrowserWindowForContentWindow(aWindowOrBrowser);
         let browserElement = this._getBrowserForContentWindow(browserWindow, aWindowOrBrowser);
         notificationBox = browserElement.getTabBrowser().getNotificationBox(browserElement);
       } else {
-        // uri was vetted in the content process.
-        uri = Utils.makeURI(aURIString, null);
         notificationBox = aWindowOrBrowser.getTabBrowser()
                                           .getNotificationBox(aWindowOrBrowser);
       }
@@ -794,7 +818,7 @@ WebContentConverterRegistrar.prototype = {
 
 
     // now register them
-    for (num of nums) {
+    for (let num of nums) {
       let branch = ps.getBranch(PREF_CONTENTHANDLERS_BRANCH + num + ".");
       try {
         this._registerContentHandlerHavingBranch(branch);
@@ -900,28 +924,6 @@ WebContentConverterRegistrarContent.prototype = {
         // do nothing, the next branch might have values
       }
     }
-
-    // We need to do this _after_ registering all of the available handlers,
-    // so that getWebContentHandlerByURI can return successfully.
-    let autoBranch;
-    try {
-      autoBranch = ps.getBranch(PREF_CONTENTHANDLERS_AUTO);
-    } catch (e) {
-      // No auto branch yet, that's fine
-      //LOG("WCCR.init: There is no auto branch, benign");
-    }
-
-    if (autoBranch) {
-      for (let type of autoBranch.getChildList("")) {
-        let uri = autoBranch.getCharPref(type);
-        if (uri) {
-          let handler = this.getWebContentHandlerByURI(type, uri);
-          if (handler) {
-            this._setAutoHandler(type, handler);
-          }
-        }
-      }
-    }
   },
 
   _typeIsRegistered(contentType, uri) {
@@ -1013,6 +1015,8 @@ WebContentConverterRegistrarContent.prototype = {
                                          .messageManager;
 
     let uri = Utils.checkAndGetURI(aURIString, aBrowserOrWindow);
+    // XXX We should be throwing a Utils.getSecurityError() here in at least
+    // some cases.  See bug 1266492.
     if (Utils.resolveContentType(aContentType) != TYPE_MAYBE_FEED) {
       return;
     }
@@ -1033,7 +1037,7 @@ WebContentConverterRegistrarContent.prototype = {
                                          .messageManager;
 
     let uri = Utils.checkAndGetURI(aURIString, aBrowserOrWindow);
-    Utils.checkProtocolHandlerAllowed(aProtocol, aURIString);
+    Utils.checkProtocolHandlerAllowed(aProtocol, aURIString, aBrowserOrWindow);
 
     messageManager.sendAsyncMessage("WCCR:registerProtocolHandler",
                                     { protocol: aProtocol,

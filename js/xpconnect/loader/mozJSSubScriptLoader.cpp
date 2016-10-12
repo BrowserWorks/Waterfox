@@ -591,8 +591,6 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
     if (targetObj != result_obj)
         principal = GetObjectPrincipal(targetObj);
 
-    JSAutoCompartment ac(cx, targetObj);
-
     /* load up the url.  From here on, failures are reflected as ``custom''
      * js exceptions */
     nsCOMPtr<nsIURI> uri;
@@ -600,11 +598,13 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
     nsAutoCString scheme;
 
     // Figure out who's calling us
-    JS::UniqueChars filename;
+    JS::AutoFilename filename;
     if (!JS::DescribeScriptedCaller(cx, &filename)) {
         // No scripted frame means we don't know who's calling, bail.
         return NS_ERROR_FAILURE;
     }
+
+    JSAutoCompartment ac(cx, targetObj);
 
     // Suppress caching if we're compiling as content.
     StartupCache* cache = (principal == mSystemPrincipal)
@@ -656,8 +656,13 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
 
     RootedFunction function(cx);
     RootedScript script(cx);
-    if (cache && !options.ignoreCache)
+    if (cache && !options.ignoreCache) {
         rv = ReadCachedScript(cache, cachePath, cx, mSystemPrincipal, &script);
+        if (NS_FAILED(rv)) {
+            // ReadCachedScript may have set a pending exception.
+            JS_ClearPendingException(cx);
+        }
+    }
 
     // If we are doing an async load, trigger it and bail out.
     if (!script && options.async) {
@@ -721,7 +726,7 @@ private:
 
 NS_IMPL_ISUPPORTS(ScriptPrecompiler, nsIIncrementalStreamLoaderObserver);
 
-class NotifyPrecompilationCompleteRunnable : public nsRunnable
+class NotifyPrecompilationCompleteRunnable : public Runnable
 {
 public:
     NS_DECL_NSIRUNNABLE

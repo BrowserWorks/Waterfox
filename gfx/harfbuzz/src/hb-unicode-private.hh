@@ -224,7 +224,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
     switch (u)
     {
       /* All GC=Zs chars that can use a fallback. */
-      default:	    return NOT_SPACE;	/* Shouldn't happen. */
+      default:	    return NOT_SPACE;	/* U+1680 OGHAM SPACE MARK */
       case 0x0020u: return SPACE;	/* U+0020 SPACE */
       case 0x00A0u: return SPACE;	/* U+00A0 NO-BREAK SPACE */
       case 0x2000u: return SPACE_EM_2;	/* U+2000 EN QUAD */
@@ -357,9 +357,10 @@ extern HB_INTERNAL const hb_unicode_funcs_t _hb_unicode_funcs_nil;
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_ENCLOSING_MARK) | \
 	  FLAG (HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK)))
 
-#define HB_UNICODE_GENERAL_CATEGORY_IS_NON_ENCLOSING_MARK(gen_cat) \
+#define HB_UNICODE_GENERAL_CATEGORY_IS_NON_ENCLOSING_MARK_OR_MODIFIER_SYMBOL(gen_cat) \
 	(FLAG_SAFE (gen_cat) & \
 	 (FLAG (HB_UNICODE_GENERAL_CATEGORY_SPACING_MARK) | \
-	  FLAG (HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK)))
+	  FLAG (HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK) | \
+	  FLAG (HB_UNICODE_GENERAL_CATEGORY_MODIFIER_SYMBOL)))
 
 #endif /* HB_UNICODE_PRIVATE_HH */

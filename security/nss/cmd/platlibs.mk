@@ -89,7 +89,6 @@ NSS_LIBS_1 = \
 	$(DIST)/lib/$(LIB_PREFIX)smime.$(LIB_SUFFIX) \
 	$(DIST)/lib/$(LIB_PREFIX)ssl.$(LIB_SUFFIX) \
 	$(DIST)/lib/$(LIB_PREFIX)nss.$(LIB_SUFFIX) \
-	$(DIST)/lib/$(LIB_PREFIX)ssl.$(LIB_SUFFIX) \
 	$(NULL)
 NSS_LIBS_2 = \
 	$(DIST)/lib/$(LIB_PREFIX)pkcs12.$(LIB_SUFFIX) \
@@ -119,7 +118,6 @@ NSS_LIBS_1 = \
 	$(DIST)/lib/$(LIB_PREFIX)smime.$(LIB_SUFFIX) \
 	$(DIST)/lib/$(LIB_PREFIX)ssl.$(LIB_SUFFIX) \
 	$(DIST)/lib/$(LIB_PREFIX)nss.$(LIB_SUFFIX) \
-	$(DIST)/lib/$(LIB_PREFIX)ssl.$(LIB_SUFFIX) \
 	$(NULL)
 SECTOOL_LIB = \
 	$(DIST)/lib/$(LIB_PREFIX)sectool.$(LIB_SUFFIX) \
@@ -257,13 +255,6 @@ endif # USE_STATIC_LIBS
 ifdef NSS_USE_SYSTEM_FREEBL
 FREEBL_LIBS = $(FREEBL_LIB_DIR)/$(LIB_PREFIX)freebl.$(LIB_SUFFIX)
 EXTRA_LIBS += $(FREEBL_LIBS)
-endif
-
-# If a platform has a system zlib, set USE_SYSTEM_ZLIB to 1 and
-# ZLIB_LIBS to the linker command-line arguments for the system zlib
-# (for example, -lz) in the platform's config file in coreconf.
-ifndef USE_SYSTEM_ZLIB
-ZLIB_LIBS = $(DIST)/lib/$(LIB_PREFIX)zlib.$(LIB_SUFFIX)
 endif
 
 JAR_LIBS = $(DIST)/lib/$(LIB_PREFIX)jar.$(LIB_SUFFIX)

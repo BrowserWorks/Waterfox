@@ -109,13 +109,6 @@
   ")" \
 )
 
-#define CREATE_MOZ_BOOKMARKS_ROOTS NS_LITERAL_CSTRING( \
-  "CREATE TABLE moz_bookmarks_roots (" \
-    "  root_name VARCHAR(16) UNIQUE" \
-    ", folder_id INTEGER" \
-  ")" \
-)
-
 #define CREATE_MOZ_KEYWORDS NS_LITERAL_CSTRING( \
   "CREATE TABLE moz_keywords (" \
     "  id INTEGER PRIMARY KEY AUTOINCREMENT" \
@@ -142,6 +135,17 @@
     "  url TEXT PRIMARY KEY" \
     ", open_count INTEGER" \
   ")" \
+)
+
+// This table is used, along with moz_places_afterdelete_trigger, to update
+// hosts after places removals. During a DELETE FROM moz_places, hosts are
+// accumulated into this table, then a DELETE FROM moz_updatehosts_temp will
+// take care of updating the moz_hosts table for every modified host.
+// See CREATE_PLACES_AFTERDELETE_TRIGGER in nsPlacestriggers.h for details.
+#define CREATE_UPDATEHOSTS_TEMP NS_LITERAL_CSTRING( \
+  "CREATE TEMP TABLE moz_updatehosts_temp (" \
+    "  host TEXT PRIMARY KEY " \
+  ") WITHOUT ROWID " \
 )
 
 #endif // __nsPlacesTables_h__

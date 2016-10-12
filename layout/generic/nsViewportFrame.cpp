@@ -36,7 +36,7 @@ ViewportFrame::Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
                     nsIFrame*         aPrevInFlow)
 {
-  Super::Init(aContent, aParent, aPrevInFlow);
+  nsContainerFrame::Init(aContent, aParent, aPrevInFlow);
 
   nsIFrame* parent = nsLayoutUtils::GetCrossDocParentFrame(this);
   if (parent) {
@@ -99,10 +99,15 @@ BuildDisplayListForTopLayerFrame(nsDisplayListBuilder* aBuilder,
                                  nsDisplayList* aList)
 {
   nsRect dirty;
+  DisplayListClipState::AutoClipMultiple clipState(aBuilder);
   nsDisplayListBuilder::OutOfFlowDisplayData*
     savedOutOfFlowData = nsDisplayListBuilder::GetOutOfFlowData(aFrame);
   if (savedOutOfFlowData) {
     dirty = savedOutOfFlowData->mDirtyRect;
+    clipState.SetClipForContainingBlockDescendants(
+      &savedOutOfFlowData->mContainingBlockClip);
+    clipState.SetScrollClipForContainingBlockDescendants(
+      aBuilder, savedOutOfFlowData->mContainingBlockScrollClip);
   }
   nsDisplayList list;
   aFrame->BuildDisplayListForStackingContext(aBuilder, dirty, &list);
@@ -140,7 +145,14 @@ ViewportFrame::BuildDisplayListForTopLayer(nsDisplayListBuilder* aBuilder,
                    "should always be out-of-flow if in the top layer");
         continue;
       }
-      MOZ_ASSERT(frame->GetParent() == this);
+      if (nsIFrame* backdropPh =
+          frame->GetChildList(kBackdropList).FirstChild()) {
+        MOZ_ASSERT(backdropPh->GetType() == nsGkAtoms::placeholderFrame);
+        nsIFrame* backdropFrame =
+          static_cast<nsPlaceholderFrame*>(backdropPh)->GetOutOfFlowFrame();
+        MOZ_ASSERT(backdropFrame);
+        BuildDisplayListForTopLayerFrame(aBuilder, backdropFrame, aList);
+      }
       BuildDisplayListForTopLayerFrame(aBuilder, frame, aList);
     }
   }
@@ -156,14 +168,6 @@ ViewportFrame::BuildDisplayListForTopLayer(nsDisplayListBuilder* aBuilder,
 }
 
 #ifdef DEBUG
-void
-ViewportFrame::SetInitialChildList(ChildListID     aListID,
-                                   nsFrameList&    aChildList)
-{
-  nsFrame::VerifyDirtyBitSet(aChildList);
-  nsContainerFrame::SetInitialChildList(aListID, aChildList);
-}
-
 void
 ViewportFrame::AppendFrames(ChildListID     aListID,
                             nsFrameList&    aFrameList)
@@ -226,13 +230,14 @@ ViewportFrame::AdjustReflowStateForScrollbars(nsHTMLReflowState* aReflowState) c
   nsIScrollableFrame* scrollingFrame = do_QueryFrame(kidFrame);
 
   if (scrollingFrame) {
-    nsMargin scrollbars = scrollingFrame->GetActualScrollbarSizes();
-    aReflowState->SetComputedWidth(aReflowState->ComputedWidth() -
-                                   scrollbars.LeftRight());
-    aReflowState->AvailableWidth() -= scrollbars.LeftRight();
-    aReflowState->SetComputedHeightWithoutResettingResizeFlags(
-      aReflowState->ComputedHeight() - scrollbars.TopBottom());
-    return nsPoint(scrollbars.left, scrollbars.top);
+    WritingMode wm = aReflowState->GetWritingMode();
+    LogicalMargin scrollbars(wm, scrollingFrame->GetActualScrollbarSizes());
+    aReflowState->SetComputedISize(aReflowState->ComputedISize() -
+                                   scrollbars.IStartEnd(wm));
+    aReflowState->AvailableISize() -= scrollbars.IStartEnd(wm);
+    aReflowState->SetComputedBSizeWithoutResettingResizeFlags(
+      aReflowState->ComputedBSize() - scrollbars.BStartEnd(wm));
+    return nsPoint(scrollbars.Left(wm), scrollbars.Top(wm));
   }
   return nsPoint(0, 0);
 }
@@ -294,7 +299,7 @@ ViewportFrame::Reflow(nsPresContext*           aPresContext,
     // Deal with a non-incremental reflow or an incremental reflow
     // targeted at our one-and-only principal child frame.
     if (aReflowState.ShouldReflowAllKids() ||
-        aReflowState.IsVResize() ||
+        aReflowState.IsBResize() ||
         NS_SUBTREE_DIRTY(mFrames.FirstChild())) {
       // Reflow our one-and-only principal child frame
       nsIFrame*           kidFrame = mFrames.FirstChild();
@@ -385,7 +390,7 @@ ViewportFrame::Reflow(nsPresContext*           aPresContext,
 }
 
 bool
-ViewportFrame::UpdateOverflow()
+ViewportFrame::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas)
 {
   nsIScrollableFrame* rootScrollFrame =
     PresContext()->PresShell()->GetRootScrollFrameAsScrollable();
@@ -393,7 +398,7 @@ ViewportFrame::UpdateOverflow()
     return false;
   }
 
-  return nsFrame::UpdateOverflow();
+  return nsContainerFrame::ComputeCustomOverflow(aOverflowAreas);
 }
 
 nsIAtom*

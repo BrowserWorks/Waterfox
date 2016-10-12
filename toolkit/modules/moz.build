@@ -9,18 +9,26 @@ BROWSER_CHROME_MANIFESTS += ['tests/browser/browser.ini']
 MOCHITEST_MANIFESTS += ['tests/mochitest/mochitest.ini']
 MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
 
+TESTING_JS_MODULES += [
+    'tests/PromiseTestUtils.jsm',
+    'tests/xpcshell/TestIntegration.jsm',
+]
+
 SPHINX_TREES['toolkit_modules'] = 'docs'
 
 EXTRA_JS_MODULES += [
     'addons/MatchPattern.jsm',
     'addons/WebNavigation.jsm',
     'addons/WebNavigationContent.js',
+    'addons/WebNavigationFrames.jsm',
     'addons/WebRequest.jsm',
     'addons/WebRequestCommon.jsm',
     'addons/WebRequestContent.js',
+    'AsyncPrefs.jsm',
     'Battery.jsm',
     'BinarySearch.jsm',
     'BrowserUtils.jsm',
+    'CanonicalJSON.jsm',
     'CertUtils.jsm',
     'CharsetMenu.jsm',
     'ClientID.jsm',
@@ -36,6 +44,7 @@ EXTRA_JS_MODULES += [
     'Http.jsm',
     'InlineSpellChecker.jsm',
     'InlineSpellCheckerContent.jsm',
+    'Integration.jsm',
     'LoadContextInfo.jsm',
     'Locale.jsm',
     'Log.jsm',
@@ -59,6 +68,7 @@ EXTRA_JS_MODULES += [
     'RemoteSecurityUI.jsm',
     'RemoteWebProgress.jsm',
     'ResetProfile.jsm',
+    'secondscreen/PresentationApp.jsm',
     'secondscreen/RokuApp.jsm',
     'secondscreen/SimpleServiceDiscovery.jsm',
     'SelectContentHelper.jsm',
@@ -80,6 +90,7 @@ EXTRA_JS_MODULES += [
     'WindowDraggingUtils.jsm',
     'ZipUtils.jsm',
 ]
+EXTRA_JS_MODULES.third_party.jsesc += ['third_party/jsesc/jsesc.js']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'cocoa'):
     DEFINES['CAN_DRAW_IN_TITLEBAR'] = 1
@@ -94,6 +105,10 @@ EXTRA_PP_JS_MODULES += [
 if 'Android' != CONFIG['OS_TARGET']:
     EXTRA_JS_MODULES += [
         'LightweightThemeConsumer.jsm',
+    ]
+
+    DIRS += [
+        'subprocess',
     ]
 else:
     DEFINES['ANDROID'] = True
@@ -112,12 +127,15 @@ for var in ('ANDROID_PACKAGE_NAME',
             'MOZ_WIDGET_TOOLKIT',
             'DLL_PREFIX',
             'DLL_SUFFIX',
-            'DEBUG_JS_MODULES',
-            'SOURCE_REV_URL'):
+            'DEBUG_JS_MODULES'):
             DEFINES[var] = CONFIG[var]
 
 for var in ('MOZ_TOOLKIT_SEARCH',
-            'MOZ_REQUIRE_SIGNING',
-            'MOZ_UPDATER'):
+            'MOZ_SYSTEM_NSS',
+            'MOZ_UPDATER',
+            'MOZ_SWITCHBOARD',
+            'MOZ_SERVICES_CLOUDSYNC'):
     if CONFIG[var]:
         DEFINES[var] = True
+
+DEFINES['TOPOBJDIR'] = TOPOBJDIR

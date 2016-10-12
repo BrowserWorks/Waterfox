@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test that black boxed frames are compressed into a single frame on the stack
@@ -7,20 +9,23 @@
  */
 
 const TAB_URL = EXAMPLE_URL + "doc_blackboxing.html";
-const BLACKBOXME_URL = EXAMPLE_URL + "code_blackboxing_blackboxme.js"
+const BLACKBOXME_URL = EXAMPLE_URL + "code_blackboxing_blackboxme.js";
 
 var gTab, gPanel, gDebugger;
 var gFrames;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: BLACKBOXME_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gFrames = gDebugger.DebuggerView.StackFrames;
 
-    waitForSourceShown(gPanel, BLACKBOXME_URL)
-      .then(testBlackBoxSource)
+    testBlackBoxSource()
       .then(testBlackBoxStack)
       .then(() => resumeDebuggerThenCloseAndFinish(gPanel))
       .then(null, aError => {
@@ -47,7 +52,7 @@ function testBlackBoxStack() {
   return finished;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

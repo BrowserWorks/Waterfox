@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<resources>
+
+    <style name="UrlBar.ImageButton" parent="UrlBar.ImageButtonBase">
+        <item name="android:layout_width">@dimen/tablet_browser_toolbar_menu_item_width</item>
+    </style>
+
+    <!-- If this style wasn't actually shared outside the
+         url bar, this name could be improved (bug 1197424). -->
+    <style name="UrlBar.ImageButton.BrowserToolbarColors">
+        <item name="drawableTintList">@color/action_bar_menu_item_colors</item>
+    </style>
+
+    <style name="UrlBar.Button.Container">
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:layout_marginBottom">6dp</item>
+        <!-- Start with forward hidden -->
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="TabsLayout" parent="TabsLayoutBase">
+         <item name="android:scrollbars">vertical</item>
+    </style>
+
+    <style name="TabsItem">
+         <item name="android:nextFocusDown">@+id/close</item>
+    </style>
+
+    <style name="TabsItemClose">
+         <item name="android:nextFocusUp">@+id/info</item>
+    </style>
+
+    <style name="Toast" parent="ToastBase">
+        <item name="android:layout_width">400dp</item>
+
+        <!-- Same as pre-19 Toast style, but with no left and right margins.
+             They're removed since large tablets are never going to be only 400dp wide. -->
+    </style>
+
+    <style name="Widget.MenuItemActionBar">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/browser_toolbar_action_bar_button</item>
+        <item name="drawableTintList">@color/action_bar_menu_item_colors</item>
+        <item name="android:scaleType">center</item>
+
+        <!-- layout_width/height doesn't work here, likely because it's only
+             added programmatically, so we use padding for the width instead.
+             layout_height is set to MATCH_PARENT programmatically in
+             org.mozilla.gecko.toolbar.BrowserToolbarTabletBase.addActionItem(View) -->
+
+        <item name="android:paddingLeft">@dimen/tablet_browser_toolbar_menu_item_padding_horizontal</item>
+        <item name="android:paddingRight">@dimen/tablet_browser_toolbar_menu_item_padding_horizontal</item>
+    </style>
+
+    <style name="Widget.BookmarksListView" parent="Widget.HomeListView">
+        <item name="android:scrollbarStyle">outsideOverlay</item>
+    </style>
+
+    <style name="Widget.TopSitesGridView" parent="Widget.GridView">
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:paddingRight">5dp</item>
+        <item name="android:paddingBottom">30dp</item>
+        <item name="android:horizontalSpacing">10dp</item>
+        <item name="android:verticalSpacing">10dp</item>
+    </style>
+
+    <style name="Widget.TopSitesListView" parent="Widget.BookmarksListView">
+        <item name="android:paddingTop">30dp</item>
+        <item name="android:paddingLeft">32dp</item>
+        <item name="android:paddingRight">32dp</item>
+        <item name="android:clipToPadding">false</item>
+        <item name="topDivider">false</item>
+    </style>
+
+    <style name="Widget.HomeBanner">
+        <item name="android:paddingLeft">32dp</item>
+        <item name="android:paddingRight">32dp</item>
+    </style>
+
+    <style name="TextAppearance.UrlBar.Title" parent="TextAppearance.Medium">
+        <item name="android:textSize">16sp</item>
+    </style>
+
+</resources>

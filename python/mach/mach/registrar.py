@@ -91,15 +91,23 @@ class MachRegistrar(object):
 
         result = result or 0
         assert isinstance(result, (int, long))
+
+        if context:
+            postrun = getattr(context, 'post_dispatch_handler', None)
+            if postrun:
+                postrun(context, handler, args=kwargs)
+
         return result
 
-    def dispatch(self, name, context=None, argv=None, **kwargs):
+    def dispatch(self, name, context=None, argv=None, subcommand=None, **kwargs):
         """Dispatch/run a command.
 
         Commands can use this to call other commands.
         """
-        # TODO handler.subcommand_handlers are ignored
         handler = self.command_handlers[name]
+
+        if subcommand:
+            handler = handler.subcommand_handlers[subcommand]
 
         if handler.parser:
             parser = handler.parser
@@ -113,7 +121,6 @@ class MachRegistrar(object):
             parser._defaults = old_defaults
 
         return self._run_command_handler(handler, context=context, **kwargs)
-
 
 
 Registrar = MachRegistrar()

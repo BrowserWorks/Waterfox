@@ -15,6 +15,7 @@
 namespace IPC {
 class Message;
 }
+class PickleIterator;
 
 namespace mozilla {
 namespace dom {
@@ -30,16 +31,24 @@ public:
   }
 
   static already_AddRefed<SharedJSAllocatedData>
-  CreateFromExternalData(const void* aData, size_t aDataLength)
+  AllocateForExternalData(size_t aDataLength)
   {
     uint64_t* data = Allocate64bitSafely(aDataLength);
     if (!data) {
       return nullptr;
     }
 
-    memcpy(data, aData, aDataLength);
     RefPtr<SharedJSAllocatedData> sharedData =
       new SharedJSAllocatedData(data, aDataLength);
+    return sharedData.forget();
+  }
+
+  static already_AddRefed<SharedJSAllocatedData>
+  CreateFromExternalData(const void* aData, size_t aDataLength)
+  {
+    RefPtr<SharedJSAllocatedData> sharedData =
+      AllocateForExternalData(aDataLength);
+    memcpy(sharedData->Data(), aData, aDataLength);
     return sharedData.forget();
   }
 
@@ -70,7 +79,7 @@ class StructuredCloneData : public StructuredCloneHolder
 public:
   StructuredCloneData()
     : StructuredCloneHolder(StructuredCloneHolder::CloningSupported,
-                            StructuredCloneHolder::TransferringNotSupported,
+                            StructuredCloneHolder::TransferringSupported,
                             StructuredCloneHolder::DifferentProcess)
     , mExternalData(nullptr)
     , mExternalDataLength(0)
@@ -106,6 +115,11 @@ public:
              JS::Handle<JS::Value> aValue,
              ErrorResult &aRv);
 
+  void Write(JSContext* aCx,
+             JS::Handle<JS::Value> aValue,
+             JS::Handle<JS::Value> aTransfers,
+             ErrorResult &aRv);
+
   void UseExternalData(uint64_t* aData, size_t aDataLength)
   {
     MOZ_ASSERT(!Data());
@@ -132,7 +146,7 @@ public:
 
   // For IPC serialization
   void WriteIPCParams(IPC::Message* aMessage) const;
-  bool ReadIPCParams(const IPC::Message* aMessage, void** aIter);
+  bool ReadIPCParams(const IPC::Message* aMessage, PickleIterator* aIter);
 
 private:
   uint64_t* MOZ_NON_OWNING_REF mExternalData;

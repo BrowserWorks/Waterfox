@@ -8,13 +8,16 @@
 #define mozilla_layers_OverscrollHandoffChain_h
 
 #include <vector>
-#include "nsAutoPtr.h"
+#include "mozilla/RefPtr.h"   // for RefPtr
 #include "nsISupportsImpl.h"  // for NS_INLINE_DECL_THREADSAFE_REFCOUNTING
 #include "APZUtils.h"         // for CancelAnimationFlags
 #include "Layers.h"           // for Layer::ScrollDirection
 #include "Units.h"            // for ScreenPoint
 
 namespace mozilla {
+
+class InputData;
+
 namespace layers {
 
 class AsyncPanZoomController;

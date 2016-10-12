@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 @import url(variables.css);
+@import url(common.css);
 @import url(toolbars.css);
 
 body {
@@ -66,9 +67,9 @@ body {
 }
 
 .theme-gutter {
-  background-color: hsl(0,0%,90%);
+  background-color: var(--theme-tab-toolbar-background);
   color: var(--theme-content-color3);
-  border-color: hsl(0,0%,65%);
+  border-color: var(--theme-splitter-color);
 }
 
 .theme-separator { /* grey */
@@ -89,7 +90,7 @@ body {
 .variable-or-property .token-number,
 .variable-or-property[return] > .title > .name,
 .variable-or-property[scope] > .title > .name {
-  color: var(--theme-highlight-green);
+  color: var(--theme-highlight-purple);
 }
 
 .CodeMirror-Tern-completion-number:before {
@@ -99,11 +100,13 @@ body {
 .theme-fg-color2,
 .cm-s-mozilla .cm-attribute,
 .cm-s-mozilla .cm-builtin,
-.cm-s-mozilla .cm-def,
 .cm-s-mozilla .cm-property,
-.cm-s-mozilla .cm-qualifier,
 .variables-view-variable > .title > .name {
-  color: var(--theme-highlight-blue);
+  color: var(--theme-highlight-red);
+}
+
+.cm-s-mozilla .cm-def {
+  color: var(--theme-body-color);
 }
 
 .CodeMirror-Tern-completion-object:before {
@@ -115,8 +118,9 @@ body {
 .cm-s-mozilla .cm-tag,
 .cm-s-mozilla .cm-header,
 .cm-s-mozilla .cm-bracket,
+.cm-s-mozilla .cm-qualifier,
 .variables-view-property > .title > .name {
-  color: var(--theme-highlight-bluegrey);
+  color: var(--theme-highlight-blue);
 }
 
 .CodeMirror-Tern-completion-array:before {
@@ -129,7 +133,7 @@ body {
 
 .theme-fg-color5,
 .cm-s-mozilla .cm-keyword {
-  color: var(--theme-highlight-lightorange);
+  color: var(--theme-highlight-red);
 }
 
 .theme-fg-color6,
@@ -137,7 +141,7 @@ body {
 .cm-s-mozilla .cm-string-2,
 .variable-or-property .token-string,
 .CodeMirror-Tern-farg {
-  color: var(--theme-highlight-orange);
+  color: var(--theme-highlight-purple);
 }
 
 .CodeMirror-Tern-completion-string:before,
@@ -172,7 +176,7 @@ body {
 .devtools-sidebar-tabs tabs,
 .devtools-sidebar-alltabs,
 .cm-s-mozilla .CodeMirror-dialog { /* General toolbar styling */
-  color: var(--theme-body-color-alt);
+  color: var(--theme-body-color);
   background-color: var(--theme-toolbar-background);
   border-color: var(--theme-splitter-color);
 }
@@ -226,20 +230,12 @@ div.CodeMirror div.error-line {
   background: rgba(255,0,0,0.2);
 }
 
-/* Highlight for a line that represents a stack frame's location. */
-div.CodeMirror div.debug-line {
-  background: rgba(0,128,255,0.1);
-  box-shadow:
-    0 1px 0 0 rgba(0,128,255,0.4),
-    0 -1px 0 0 rgba(0,128,255,0.4);
-}
-
 /* Generic highlighted text */
 div.CodeMirror span.marked-text {
   background: rgba(255,255,0,0.2);
   border: 1px dashed rgba(192,192,0,0.6);
-  -moz-margin-start: -1px;
-  -moz-margin-end: -1px;
+  margin-inline-start: -1px;
+  margin-inline-end: -1px;
 }
 
 /* Highlight for evaluating current statement. */
@@ -335,23 +331,35 @@ div.CodeMirror span.eval-text {
   --arrow-margin: -7px;
 }
 
-.theme-tooltip-panel .panel-arrow[side="top"] {
+.theme-tooltip-panel .panel-arrow[side="top"],
+.theme-tooltip-panel .panel-arrow[side="bottom"] {
   list-style-image: url("chrome://devtools/skin/tooltip/arrow-vertical-light.png");
+  /* !important is needed to override the popup.css rules in toolkit/themes */
+  width: 39px !important;
+  height: 16px !important;
+}
+
+.theme-tooltip-panel .panel-arrow[side="left"],
+.theme-tooltip-panel .panel-arrow[side="right"] {
+  list-style-image: url("chrome://devtools/skin/tooltip/arrow-horizontal-light.png");
+  /* !important is needed to override the popup.css rules in toolkit/themes */
+  width: 16px !important;
+  height: 39px !important;
+}
+
+.theme-tooltip-panel .panel-arrow[side="top"] {
   margin-bottom: var(--arrow-margin);
 }
 
 .theme-tooltip-panel .panel-arrow[side="bottom"] {
-  list-style-image: url("chrome://devtools/skin/tooltip/arrow-vertical-light.png");
   margin-top: var(--arrow-margin);
 }
 
 .theme-tooltip-panel .panel-arrow[side="left"] {
-  list-style-image: url("chrome://devtools/skin/tooltip/arrow-horizontal-light.png");
   margin-right: var(--arrow-margin);
 }
 
 .theme-tooltip-panel .panel-arrow[side="right"] {
-  list-style-image: url("chrome://devtools/skin/tooltip/arrow-horizontal-light.png");
   margin-left: var(--arrow-margin);
 }
 

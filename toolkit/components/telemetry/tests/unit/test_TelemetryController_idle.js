@@ -20,6 +20,9 @@ function run_test() {
   do_test_pending();
   do_get_profile();
 
+  // Make sure we don't generate unexpected pings due to pref changes.
+  setEmptyPrefWatchlist();
+
   Services.prefs.setBoolPref(PREF_TELEMETRY_ENABLED, true);
   Services.prefs.setBoolPref(PREF_FHR_UPLOAD_ENABLED, true);
 
@@ -42,7 +45,7 @@ add_task(function* testSendPendingOnIdleDaily() {
   yield TelemetryStorage.savePing(PENDING_PING, true);
 
   // Telemetry will not send this ping at startup, because it's not overdue.
-  yield TelemetryController.setup();
+  yield TelemetryController.testSetup();
   TelemetrySend.setServer("http://localhost:" + gHttpServer.identity.primaryPort);
 
   let pendingPromise = new Promise(resolve =>

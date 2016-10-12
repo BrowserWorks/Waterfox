@@ -79,6 +79,8 @@ public class ToolbarEditLayout extends ThemedLinearLayout {
 
     @Override
     public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
         if (HardwareUtils.isTablet()) {
             mSearchIcon.setVisibility(View.VISIBLE);
         }
@@ -148,10 +150,10 @@ public class ToolbarEditLayout extends ThemedLinearLayout {
         final int searchDrawableId = R.drawable.search_icon_active;
         final Drawable searchDrawable;
         if (!isActive) {
-            searchDrawable = DrawableUtil.tintDrawable(getContext(), searchDrawableId, R.color.placeholder_grey);
+            searchDrawable = DrawableUtil.tintDrawableWithColorRes(getContext(), searchDrawableId, R.color.placeholder_grey);
         } else {
             if (isPrivateMode()) {
-                searchDrawable = DrawableUtil.tintDrawable(getContext(), searchDrawableId, R.color.tabs_tray_icon_grey);
+                searchDrawable = DrawableUtil.tintDrawableWithColorRes(getContext(), searchDrawableId, R.color.tabs_tray_icon_grey);
             } else {
                 searchDrawable = getResources().getDrawable(searchDrawableId);
             }

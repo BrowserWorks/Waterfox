@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2006 The Android Open Source Project
  *
@@ -26,7 +25,7 @@
 static inline SkFixed SkFDot6ToFixedDiv2(SkFDot6 value) {
     // we want to return SkFDot6ToFixed(value >> 1), but we don't want to throw
     // away data in value, so just perform a modify up-shift
-    return value << (16 - 6 - 1);
+    return SkLeftShift(value, 16 - 6 - 1);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -214,8 +213,8 @@ int SkQuadraticEdge::setQuadratic(const SkPoint pts[3], int shift)
 
     // compute number of steps needed (1 << shift)
     {
-        SkFDot6 dx = ((x1 << 1) - x0 - x2) >> 2;
-        SkFDot6 dy = ((y1 << 1) - y0 - y2) >> 2;
+        SkFDot6 dx = (SkLeftShift(x1, 1) - x0 - x2) >> 2;
+        SkFDot6 dy = (SkLeftShift(y1, 1) - y0 - y2) >> 2;
         shift = diff_to_shift(dx, dy);
         SkASSERT(shift >= 0);
     }
@@ -312,8 +311,8 @@ int SkQuadraticEdge::updateQuadratic()
 /////////////////////////////////////////////////////////////////////////
 
 static inline int SkFDot6UpShift(SkFDot6 x, int upShift) {
-    SkASSERT((x << upShift >> upShift) == x);
-    return x << upShift;
+    SkASSERT((SkLeftShift(x, upShift) >> upShift) == x);
+    return SkLeftShift(x, upShift);
 }
 
 /*  f(1/3) = (8a + 12b + 6c + d) / 27
@@ -326,8 +325,9 @@ static inline int SkFDot6UpShift(SkFDot6 x, int upShift) {
 */
 static SkFDot6 cubic_delta_from_line(SkFDot6 a, SkFDot6 b, SkFDot6 c, SkFDot6 d)
 {
-    SkFDot6 oneThird = ((a << 3) - ((b << 4) - b) + 6*c + d) * 19 >> 9;
-    SkFDot6 twoThird = (a + 6*b - ((c << 4) - c) + (d << 3)) * 19 >> 9;
+    // since our parameters may be negative, we don't use << to avoid ASAN warnings
+    SkFDot6 oneThird = (a*8 - b*15 + 6*c + d) * 19 >> 9;
+    SkFDot6 twoThird = (a + 6*b - c*15 + d*8) * 19 >> 9;
 
     return SkMax32(SkAbs32(oneThird), SkAbs32(twoThird));
 }
@@ -403,7 +403,7 @@ int SkCubicEdge::setCubic(const SkPoint pts[4], int shift) {
     }
 
     fWinding    = SkToS8(winding);
-    fCurveCount = SkToS8(-1 << shift);
+    fCurveCount = SkToS8(SkLeftShift(-1, shift));
     fCurveShift = SkToU8(shift);
     fCubicDShift = SkToU8(downShift);
 

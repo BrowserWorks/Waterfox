@@ -127,7 +127,21 @@ NS_IMETHODIMP nsPrefBranch::GetPrefType(const char *aPrefName, int32_t *_retval)
 {
   NS_ENSURE_ARG(aPrefName);
   const char *pref = getPrefName(aPrefName);
-  *_retval = PREF_GetPrefType(pref);
+  switch (PREF_GetPrefType(pref)) {
+    case PrefType::String:
+      *_retval = PREF_STRING;
+      break;
+    case PrefType::Int:
+      *_retval = PREF_INT;
+      break;
+    case PrefType::Bool:
+      *_retval = PREF_BOOL;
+        break;
+    case PrefType::Invalid:
+    default:
+      *_retval = PREF_INVALID;
+      break;
+  }
   return NS_OK;
 }
 
@@ -378,7 +392,10 @@ nsresult nsPrefBranch::CheckSanityOfStringLength(const char* aPrefName, const ui
   if (NS_FAILED(rv)) {
     return rv;
   }
-  nsAutoCString message(nsPrintfCString("Warning: attempting to write %d bytes to preference %s. This is bad for general performance and memory usage. Such an amount of data should rather be written to an external file.",
+  nsAutoCString message(nsPrintfCString("Warning: attempting to write %d bytes to preference %s. This is bad "
+                                        "for general performance and memory usage. Such an amount of data "
+                                        "should rather be written to an external file. This preference will "
+                                        "not be sent to any content processes.",
                                         aLength,
                                         getPrefName(aPrefName)));
   rv = console->LogStringMessage(NS_ConvertUTF8toUTF16(message).get());
@@ -388,6 +405,17 @@ nsresult nsPrefBranch::CheckSanityOfStringLength(const char* aPrefName, const ui
   return NS_OK;
 }
 
+/*static*/
+void nsPrefBranch::ReportToConsole(const nsAString& aMessage)
+{
+  nsresult rv;
+  nsCOMPtr<nsIConsoleService> console = do_GetService("@mozilla.org/consoleservice;1", &rv);
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  nsAutoString message(aMessage);
+  console->LogStringMessage(message.get());
+}
 
 NS_IMETHODIMP nsPrefBranch::SetComplexValue(const char *aPrefName, const nsIID & aType, nsISupports *aValue)
 {
@@ -546,7 +574,7 @@ NS_IMETHODIMP nsPrefBranch::GetChildList(const char *aStartingAt, uint32_t *aCou
   char            **outArray;
   int32_t         numPrefs;
   int32_t         dwIndex;
-  nsAutoTArray<nsCString, 32> prefArray;
+  AutoTArray<nsCString, 32> prefArray;
 
   NS_ENSURE_ARG(aStartingAt);
   NS_ENSURE_ARG_POINTER(aCount);
@@ -697,6 +725,15 @@ void nsPrefBranch::NotifyObserver(const char *newpref, void *data)
   observer->Observe(static_cast<nsIPrefBranch *>(pCallback->GetPrefBranch()),
                     NS_PREFBRANCH_PREFCHANGE_TOPIC_ID,
                     NS_ConvertASCIItoUTF16(suffix).get());
+}
+
+size_t
+nsPrefBranch::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
+{
+  size_t n = aMallocSizeOf(this);
+  n += mPrefRoot.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+  n += mObservers.ShallowSizeOfExcludingThis(aMallocSizeOf);
+  return n;
 }
 
 void nsPrefBranch::freeObserverList(void)

@@ -1,15 +1,15 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Test support methods on Target, such as `hasActor`, `getActorDescription`,
 // `actorHasMethod` and `getTrait`.
 
-var { Task } =
-  Cu.import("resource://gre/modules/Task.jsm", {});
 var { WebAudioFront } =
-  require("devtools/server/actors/webaudio");
+  require("devtools/shared/fronts/webaudio");
 
-function* testTarget (client, target) {
+function* testTarget(client, target) {
   yield target.makeRemote();
 
   is(target.hasActor("timeline"), true, "target.hasActor() true when actor exists.");
@@ -65,7 +65,7 @@ function test() {
   });
 }
 
-function close (target, client) {
+function close(target, client) {
   target.on("close", () => {
     ok(true, "Target was closed");
     finish();

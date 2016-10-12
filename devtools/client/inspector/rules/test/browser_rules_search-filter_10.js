@@ -20,20 +20,22 @@ const TEST_URI = `
 
 const TEST_DATA = [
   {
-    desc: "Tests that the search filter works properly for a single rule selector",
+    desc: "Tests that the search filter works properly for a single rule " +
+          "selector",
     search: "#test",
     selectorText: "#testid",
     index: 0
   },
   {
-    desc: "Tests that the search filter works properly for multiple rule selectors",
+    desc: "Tests that the search filter works properly for multiple rule " +
+          "selectors",
     search: "body",
     selectorText: "html, body, div",
     index: 2
   }
 ];
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode("#testid", inspector);

@@ -1,7 +1,7 @@
 /* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
-
+/* import-globals-from helper_events_test_runner.js */
 "use strict";
 
 // Test that markup view event bubbles show the correct event info for jQuery
@@ -12,6 +12,7 @@ const TEST_URL = URL_ROOT + "doc_markup_events_jquery.html?" + TEST_LIB;
 
 loadHelperScript("helper_events_test_runner.js");
 
+/*eslint-disable */
 const TEST_DATA = [
   {
     selector: "html",
@@ -22,8 +23,7 @@ const TEST_DATA = [
         attributes: [
           "jQuery"
         ],
-        handler: "// Handle when the DOM is ready\n" +
-                 "ready: function() {\n" +
+        handler: "ready: function() {\n" +
                  "  // Make sure that the DOM is not already loaded\n" +
                  "  if (!jQuery.isReady) {\n" +
                  "    // Remember that the DOM is ready\n" +
@@ -230,5 +230,8 @@ const TEST_DATA = [
     ]
   },
 ];
+/*eslint-enable */
 
-add_task(runEventPopupTests);
+add_task(function* () {
+  yield runEventPopupTests(TEST_URL, TEST_DATA);
+});

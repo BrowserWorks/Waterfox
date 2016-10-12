@@ -78,11 +78,11 @@ function test() {
       testStatus();
 
       teardown(aMonitor).then(finish);
-    })
+    });
 
     function testStatus() {
-      let summary = $("#requests-menu-network-summary-label");
-      let value = summary.getAttribute("value");
+      let summary = $("#requests-menu-network-summary-button");
+      let value = summary.getAttribute("label");
       info("Current summary: " + value);
 
       let visibleItems = RequestsMenu.visibleItems;
@@ -108,7 +108,7 @@ function test() {
         .replace("#1", visibleRequestsCount)
         .replace("#2", L10N.numberWithDecimals((totalBytes || 0) / 1024, 2))
         .replace("#3", L10N.numberWithDecimals((totalMillis || 0) / 1000, 2))
-      , "The current summary text is incorrect.")
+      , "The current summary text is incorrect.");
     }
 
     aDebuggee.performRequests('{ "getMedia": true, "getFlash": true }');

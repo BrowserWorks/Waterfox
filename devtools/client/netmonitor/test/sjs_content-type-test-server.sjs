@@ -78,7 +78,7 @@ function handleRequest(request, response) {
         break;
       }
       case "html": {
-        let content = params.filter((s) => s.includes("res="))[0].split("=")[1];
+        let content = (params.filter((s) => s.includes("res="))[0] || "").split("=")[1];
         response.setStatusLine(request.httpVersion, status, "OK");
         response.setHeader("Content-Type", "text/html; charset=utf-8", false);
         setCacheHeaders();
@@ -120,7 +120,7 @@ function handleRequest(request, response) {
         break;
       }
       case "jsonp": {
-        let fun = params.filter((s) => s.includes("jsonp="))[0].split("=")[1];
+        let fun = (params.filter((s) => s.includes("jsonp="))[0] || "").split("=")[1];
         response.setStatusLine(request.httpVersion, status, "OK");
         response.setHeader("Content-Type", "text/json; charset=utf-8", false);
         setCacheHeaders();
@@ -129,7 +129,7 @@ function handleRequest(request, response) {
         break;
       }
       case "jsonp2": {
-        let fun = params.filter((s) => s.includes("jsonp="))[0].split("=")[1];
+        let fun = (params.filter((s) => s.includes("jsonp="))[0] || "").split("=")[1];
         response.setStatusLine(request.httpVersion, status, "OK");
         response.setHeader("Content-Type", "text/json; charset=utf-8", false);
         setCacheHeaders();
@@ -205,6 +205,14 @@ function handleRequest(request, response) {
         response.finish();
         break;
       }
+      case "ws": {
+        response.setStatusLine(request.httpVersion, 101, "Switching Protocols");
+        response.setHeader("Connection", "upgrade", false);
+        response.setHeader("Upgrade", "websocket", false);
+        setCacheHeaders();
+        response.finish();
+        break;
+      }
       case "gzip": {
         // Note: we're doing a double gzip encoding to test multiple
         // converters in network monitor.
@@ -222,6 +230,23 @@ function handleRequest(request, response) {
         };
         let data = new Array(1000).join("Hello gzip!");
         doubleGzipCompressString(data, observer);
+        break;
+      }
+      case "hls-m3u8": {
+        response.setStatusLine(request.httpVersion, status, "OK");
+        response.setHeader("Content-Type", "application/x-mpegurl", false);
+        setCacheHeaders();
+        response.write("#EXTM3U\n");
+        response.finish();
+        break;
+      }
+      case "mpeg-dash": {
+        response.setStatusLine(request.httpVersion, status, "OK");
+        response.setHeader("Content-Type", "video/vnd.mpeg.dash.mpd", false);
+        setCacheHeaders();
+        response.write('<?xml version="1.0" encoding="UTF-8"?>\n');
+        response.write('<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></MPD>\n');
+        response.finish();
         break;
       }
       default: {

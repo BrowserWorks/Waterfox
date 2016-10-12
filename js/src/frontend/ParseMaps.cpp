@@ -109,8 +109,20 @@ AtomDecls<ParseHandler>::addShadow(JSAtom* atom, typename ParseHandler::Definiti
     return p.value().pushFront<ParseHandler>(cx, alloc, defn);
 }
 
+template <typename ParseHandler>
+bool
+AtomDecls<ParseHandler>::addShadowedForAnnexB(JSAtom* atom,
+                                              typename ParseHandler::DefinitionNode defn)
+{
+    AtomDefnListAddPtr p = map->lookupForAdd(atom);
+    if (!p)
+        return map->add(p, atom, DefinitionList(ParseHandler::definitionToBits(defn)));
+
+    return p.value().appendBack<ParseHandler>(cx, alloc, defn);
+}
+
 void
-frontend::InitAtomMap(frontend::AtomIndexMap* indices, HeapPtrAtom* atoms)
+frontend::InitAtomMap(frontend::AtomIndexMap* indices, GCPtrAtom* atoms)
 {
     if (indices->isMap()) {
         typedef AtomIndexMap::WordMap WordMap;

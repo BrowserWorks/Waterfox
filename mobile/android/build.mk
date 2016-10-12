@@ -11,8 +11,6 @@ package:
 	@$(MAKE) -C mobile/android/installer
 
 ifeq ($(OS_TARGET),Android)
-sdk_level=$(shell $(ADB) shell getprop ro.build.version.sdk)
-permissions-required=$(shell if [ $(sdk_level) -gt 22 ] ; then echo yes ; else echo no ; fi)
 ifneq ($(MOZ_ANDROID_INSTALL_TARGET),)
 ANDROID_SERIAL = $(MOZ_ANDROID_INSTALL_TARGET)
 endif
@@ -20,28 +18,26 @@ ifneq ($(ANDROID_SERIAL),)
 export ANDROID_SERIAL
 else
 # Determine if there's more than one device connected
-android_devices=$(filter device,$(shell $(ADB) devices))
-ifeq ($(android_devices),)
-install::
+android_devices=$(words $(filter device,$(shell $(ADB) devices)))
+define no_device
 	@echo 'No devices are connected.  Connect a device or start an emulator.'
 	@exit 1
-else
-ifneq ($(android_devices),device)
-install::
+endef
+define multiple_devices
 	@echo 'Multiple devices are connected. Define ANDROID_SERIAL to specify the install target.'
 	$(ADB) devices
 	@exit 1
-endif
-endif
+endef
+
+install::
+	@# Use foreach to avoid running adb multiple times here
+	$(foreach val,$(android_devices),\
+		$(if $(filter 0,$(val)),$(no_device),\
+			$(if $(filter-out 1,$(val)),$(multiple_devices))))
 endif
 
 install::
-ifeq ($(permissions-required),yes)
-
-	$(ADB) install -r -g $(DIST)/$(PKG_PATH)$(PKG_BASENAME).apk
-else
 	$(ADB) install -r $(DIST)/$(PKG_PATH)$(PKG_BASENAME).apk
-endif
 else
 	@echo 'Mobile can't be installed directly.'
 	@exit 1

@@ -74,20 +74,6 @@ AsyncResource.prototype = {
    */
   authenticator: null,
 
-  // The string to use as the base User-Agent in Sync requests.
-  // These strings will look something like
-  //
-  //   Firefox/4.0 FxSync/1.8.0.20100101.mobile
-  //
-  // or
-  //
-  //   Firefox Aurora/5.0a1 FxSync/1.9.0.20110409.desktop
-  //
-  _userAgent:
-    Services.appinfo.name + "/" + Services.appinfo.version +  // Product.
-    " FxSync/" + WEAVE_VERSION + "." +                        // Sync.
-    Services.appinfo.appBuildID + ".",                        // Build.
-
   // Wait 5 minutes before killing a request.
   ABORT_TIMEOUT: 300000,
 
@@ -161,8 +147,7 @@ AsyncResource.prototype = {
 
     // Compose a UA string fragment from the various available identifiers.
     if (Svc.Prefs.get("sendVersionInfo", true)) {
-      let ua = this._userAgent + Svc.Prefs.get("client.type", "desktop");
-      channel.setRequestHeader("user-agent", ua, false);
+      channel.setRequestHeader("user-agent", Utils.userAgent, false);
     }
 
     let headers = this.headers;
@@ -396,7 +381,10 @@ Resource.prototype = {
     try {
       this._doRequest(action, data, callback);
       return Async.waitForSyncCallback(cb);
-    } catch (ex if !Async.isShutdownException(ex)) {
+    } catch (ex) {
+      if (Async.isShutdownException(ex)) {
+        throw ex;
+      }
       // Combine the channel stack with this request stack.  Need to create
       // a new error object for that.
       let error = Error(ex.message);
@@ -549,7 +537,10 @@ ChannelListener.prototype = {
 
     try {
       this._onProgress();
-    } catch (ex if !Async.isShutdownException(ex)) {
+    } catch (ex) {
+      if (Async.isShutdownException(ex)) {
+        throw ex;
+      }
       this._log.warn("Got exception calling onProgress handler during fetch of "
                      + req.URI.spec, ex);
       this._log.trace("Rethrowing; expect a failure code from the HTTP channel.");

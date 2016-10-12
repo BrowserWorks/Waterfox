@@ -1,0 +1,57 @@
+[
+{
+"versions": [
+  "Android SDK 6.0 / API 23",
+  "Android tools r24.4",
+  "Android build tools 23.0.3",
+  "Android Support Repository (Support Library 23.0.1)",
+  "Google Support Repository (Google Play Services 8.1.0)"
+],
+"size": 573952124,
+"visibility": "internal",
+"digest": "1d495d7a7386af3f27b14982e0ff7b0963fd1a63a08040b9b1db0e94c9681fa3704c195ba8be23b5f73e15101b2b767293bc8f96e0584e17867ef13b074e5038",
+"algorithm": "sha512",
+"filename": "android-sdk-linux.tar.xz",
+"unpack": true
+},
+{
+"size": 167175,
+"visibility": "public",
+"digest": "0b71a936edf5bd70cf274aaa5d7abc8f77fe8e7b5593a208f805cc9436fac646b9c4f0b43c2b10de63ff3da671497d35536077ecbc72dba7f8159a38b580f831",
+"algorithm": "sha512",
+"filename": "sccache.tar.bz2",
+"unpack": true
+},
+{
+"size": 30899096,
+"visibility": "public",
+"digest": "ac9f5f95d11580d3dbeff87e80a585fe4d324b270dabb91b1165686acab47d99fa6651074ab0be09420239a5d6af38bb2c539506962a7b44e0ed4d080bba2953",
+"algorithm": "sha512",
+"filename": "java_home-1.7.0-openjdk-1.7.0.85.x86_64.tar.xz",
+"unpack": true
+},
+{
+"algorithm": "sha512",
+"visibility": "public",
+"filename": "jcentral.tar.xz",
+"unpack": true,
+"digest": "43754910576cf6173f0dcb215ec7988f2a30dbfe32050f53ac7a9088b8b878c3ead80e02afc1dc31e229386116c82e88a403a309e5b5695f0b74f5defb13dec7",
+"size": 42832932
+},
+{
+"algorithm": "sha512",
+"visibility": "public",
+"filename": "gradle.tar.xz",
+"unpack": true,
+"digest": "5ebf4c34e43faba54d189156a1d590f1e99775d1004f18cb7619d9975a5c2bd252021e470abd82bceb28580c1a22dd5501320062a0d83b5588b84633ac30c494",
+"size": 51936348
+},
+{
+"algorithm": "sha512",
+"visibility": "public",
+"filename": "dotgradle.tar.xz",
+"unpack": true,
+"digest": "9f082ccd71ad18991eb71fcad355c6990f50a72a09ab9b79696521485656083a72faf5a8d4714de9c4b901ee2319b6786a51964846bb7075061642a8505501c2",
+"size": 512
+}
+]

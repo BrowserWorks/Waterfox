@@ -1,6 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -20,7 +21,7 @@ function consoleOpened(HUD) {
 
   let jsterm = HUD.jsterm;
   let popup = jsterm.autocompletePopup;
-  let onShown = function() {
+  let onShown = function () {
     ok(false, "popup shown");
   };
 
@@ -44,7 +45,7 @@ function consoleOpened(HUD) {
   is(jsterm.lastInputValue, "window.foobarBug660806.location",
      "lastInputValue is correct, again");
 
-  executeSoon(function() {
+  executeSoon(function () {
     ok(!popup.isOpen, "popup is not open");
     popup._panel.removeEventListener("popupshown", onShown, false);
     executeSoon(deferred.resolve);

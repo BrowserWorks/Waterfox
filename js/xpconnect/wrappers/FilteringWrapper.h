@@ -12,8 +12,6 @@
 #include "jswrapper.h"
 #include "js/CallNonGenericMethod.h"
 
-struct JSPropertyDescriptor;
-
 namespace JS {
 template <typename T>
 class AutoVectorRooter;
@@ -32,13 +30,13 @@ class FilteringWrapper : public Base {
 
     virtual bool getOwnPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                           JS::Handle<jsid> id,
-                                          JS::MutableHandle<JSPropertyDescriptor> desc) const override;
+                                          JS::MutableHandle<JS::PropertyDescriptor> desc) const override;
     virtual bool ownPropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                  JS::AutoIdVector& props) const override;
 
     virtual bool getPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                        JS::Handle<jsid> id,
-                                       JS::MutableHandle<JSPropertyDescriptor> desc) const override;
+                                       JS::MutableHandle<JS::PropertyDescriptor> desc) const override;
     virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                               JS::AutoIdVector& props) const override;
     virtual bool enumerate(JSContext* cx, JS::Handle<JSObject*> wrapper,
@@ -65,14 +63,16 @@ class FilteringWrapper : public Base {
  */
 class CrossOriginXrayWrapper : public SecurityXrayDOM {
   public:
-    explicit CrossOriginXrayWrapper(unsigned flags);
+    MOZ_CONSTEXPR explicit CrossOriginXrayWrapper(unsigned flags) :
+      SecurityXrayDOM(flags) {}
+
 
     virtual bool getOwnPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                           JS::Handle<jsid> id,
-                                          JS::MutableHandle<JSPropertyDescriptor> desc) const override;
+                                          JS::MutableHandle<JS::PropertyDescriptor> desc) const override;
     virtual bool defineProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                 JS::Handle<jsid> id,
-                                JS::Handle<JSPropertyDescriptor> desc,
+                                JS::Handle<JS::PropertyDescriptor> desc,
                                 JS::ObjectOpResult& result) const override;
     virtual bool ownPropertyKeys(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                  JS::AutoIdVector& props) const override;
@@ -81,7 +81,7 @@ class CrossOriginXrayWrapper : public SecurityXrayDOM {
 
     virtual bool getPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                        JS::Handle<jsid> id,
-                                       JS::MutableHandle<JSPropertyDescriptor> desc) const override;
+                                       JS::MutableHandle<JS::PropertyDescriptor> desc) const override;
 };
 
 } // namespace xpc

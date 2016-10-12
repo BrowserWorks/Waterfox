@@ -11,6 +11,7 @@ http://creativecommons.org/licenses/publicdomain/
   <title>Test for Bug 1185544</title>
   <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript" src="/tests/dom/push/test/test_utils.js"></script>
   <script type="text/javascript" src="/tests/dom/push/test/webpush.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
   <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
@@ -24,26 +25,25 @@ http://creativecommons.org/licenses/publicdomain/
 </pre>
 
 <script class="testbody" type="text/javascript">
+  var userAgentID = "ac44402c-85fc-41e4-a0d0-483316d15351";
+  var channelID = null;
 
-  SimpleTest.registerCleanupFunction(() =>
-    new Promise(resolve => SpecialPowers.popPermissions(resolve))
-  );
+  var mockSocket = new MockWebSocket();
+  mockSocket.onRegister = function(request) {
+    channelID = request.channelID;
+    this.serverSendMsg(JSON.stringify({
+      messageType: "register",
+      uaid: userAgentID,
+      channelID,
+      status: 200,
+      pushEndpoint: "https://example.com/endpoint/1"
+    }));
+  };
 
   var registration;
   add_task(function* start() {
-    yield new Promise(resolve => {
-      SpecialPowers.pushPermissions([
-        { type: "desktop-notification", allow: true, context: document },
-        ], resolve);
-    });
-    yield new Promise(resolve => {
-      SpecialPowers.pushPrefEnv({"set": [
-        ["dom.push.enabled", true],
-        ["dom.serviceWorkers.exemptFromPerDomainMax", true],
-        ["dom.serviceWorkers.enabled", true],
-        ["dom.serviceWorkers.testing.enabled", true]
-        ]}, resolve);
-    });
+    yield setupPrefsAndMockSocket(mockSocket);
+    yield setPushPermission(true);
 
     var url = "worker.js" + "?" + (Math.random());
     registration = yield navigator.serviceWorker.register(url, {scope: "."});
@@ -51,31 +51,13 @@ http://creativecommons.org/licenses/publicdomain/
 
   var controlledFrame;
   add_task(function* createControlledIFrame() {
-    yield new Promise(function(res, rej) {
-      var iframe = document.createElement('iframe');
-      iframe.id = "controlledFrame";
-      iframe.src = "http://mochi.test:8888/tests/dom/push/test/frame.html";
-
-      iframe.onload = () => res();
-      controlledFrame = iframe;
-      document.body.appendChild(iframe);
-    });
+    controlledFrame = yield injectControlledFrame();
   });
 
   var pushSubscription;
   add_task(function* subscribe() {
     pushSubscription = yield registration.pushManager.subscribe();
   });
-
-  function sendRequestToWorker(request) {
-    return new Promise((resolve, reject) => {
-      var channel = new MessageChannel();
-      channel.port1.onmessage = e => {
-        (e.data.error ? reject : resolve)(e.data);
-      };
-      registration.active.postMessage(request, [channel.port2]);
-    });
-  }
 
   function base64UrlDecode(s) {
     s = s.replace(/-/g, '+').replace(/_/g, '/');
@@ -121,14 +103,14 @@ http://creativecommons.org/licenses/publicdomain/
   add_task(function* comparePublicKey() {
     var data = yield sendRequestToWorker({ type: "publicKey" });
     var p256dhKey = new Uint8Array(pushSubscription.getKey("p256dh"));
-    ok(p256dhKey.length > 0, "Missing key share");
+    is(p256dhKey.length, 65, "Key share should be 65 octets");
     isDeeply(
       p256dhKey,
       new Uint8Array(data.p256dh),
       "Mismatched key share"
     );
     var authSecret = new Uint8Array(pushSubscription.getKey("auth"));
-    ok(authSecret.length > 0, "Missing auth secret");
+    ok(authSecret.length, 16, "Auth secret should be 16 octets");
     isDeeply(
       authSecret,
       new Uint8Array(data.auth),
@@ -136,10 +118,28 @@ http://creativecommons.org/licenses/publicdomain/
     );
   });
 
+  var version = 0;
+  function sendEncryptedMsg(pushSubscription, message) {
+    return webPushEncrypt(pushSubscription, message)
+      .then((encryptedData) => {
+        mockSocket.serverSendMsg(JSON.stringify({
+          messageType: 'notification',
+          version: version++,
+          channelID: channelID,
+          data: encryptedData.data,
+          headers: {
+            encryption: encryptedData.encryption,
+            encryption_key: encryptedData.encryption_key,
+            encoding: encryptedData.encoding
+          }
+        }));
+      });
+  }
+
   function waitForMessage(pushSubscription, message) {
     return Promise.all([
-      controlledFrame.contentWindow.waitOnPushMessage(pushSubscription),
-      webpush(pushSubscription, message),
+      controlledFrame.waitOnWorkerMessage("finished"),
+      sendEncryptedMsg(pushSubscription, message),
     ]).then(([message]) => message);
   }
 
@@ -190,25 +190,21 @@ http://creativecommons.org/licenses/publicdomain/
       reader.readAsText(message.data.blob);
     });
     is(text, "Hi! \ud83d\udc40", "Wrong blob data for message with emoji");
-    is(text, "Hi! \ud83d\udc40", "Wrong blob data for message with emoji");
 
+    var finishedPromise = controlledFrame.waitOnWorkerMessage("finished");
     // Send a blank message.
-    var [message] = yield Promise.all([
-      controlledFrame.contentWindow.waitOnPushMessage(pushSubscription),
-      fetch("http://mochi.test:8888/tests/dom/push/test/push-server.sjs", {
-        method: "PUT",
-        headers: {
-          "X-Push-Method": "POST",
-          "X-Push-Server": pushSubscription.endpoint,
-        },
-      }),
-    ]);
+    mockSocket.serverSendMsg(JSON.stringify({
+      messageType: "notification",
+      version: "vDummy",
+      channelID: channelID
+    }));
+
+    var message = yield finishedPromise;
     ok(!message.data, "Should exclude data for blank messages");
   });
 
   add_task(function* unsubscribe() {
-    controlledFrame.parentNode.removeChild(controlledFrame);
-    controlledFrame = null;
+    controlledFrame.remove();
     yield pushSubscription.unsubscribe();
   });
 

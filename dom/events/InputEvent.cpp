@@ -25,7 +25,7 @@ InputEvent::InputEvent(EventTarget* aOwner,
     mEventIsInternal = false;
   } else {
     mEventIsInternal = true;
-    mEvent->time = PR_Now();
+    mEvent->mTime = PR_Now();
   }
 }
 
@@ -50,8 +50,9 @@ InputEvent::Constructor(const GlobalObject& aGlobal,
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
   RefPtr<InputEvent> e = new InputEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);
-  aRv = e->InitUIEvent(aType, aParam.mBubbles, aParam.mCancelable,
-                       aParam.mView, aParam.mDetail);
+  auto* view = aParam.mView ? aParam.mView->AsInner() : nullptr;
+  e->InitUIEvent(aType, aParam.mBubbles, aParam.mCancelable, view,
+                 aParam.mDetail);
   InternalEditorInputEvent* internalEvent = e->mEvent->AsEditorInputEvent();
   internalEvent->mIsComposing = aParam.mIsComposing;
   e->SetTrusted(trusted);

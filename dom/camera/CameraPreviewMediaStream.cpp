@@ -29,7 +29,7 @@ FakeMediaStreamGraph::DispatchToMainThreadAfterStreamStateUpdate(already_AddRefe
 }
 
 CameraPreviewMediaStream::CameraPreviewMediaStream(DOMMediaStream* aWrapper)
-  : MediaStream(aWrapper)
+  : ProcessedMediaStream(aWrapper)
   , mMutex("mozilla::camera::CameraPreviewMediaStream")
   , mInvalidatePending(0)
   , mDiscardedFrames(0)
@@ -131,6 +131,13 @@ CameraPreviewMediaStream::Invalidate()
 }
 
 void
+CameraPreviewMediaStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
+                                       uint32_t aFlags)
+{
+  return;
+}
+
+void
 CameraPreviewMediaStream::RateLimit(bool aLimit)
 {
   mRateLimit = aLimit;
@@ -164,9 +171,7 @@ CameraPreviewMediaStream::SetCurrentFrame(const gfx::IntSize& aIntrinsicSize, Im
     ++mInvalidatePending;
   }
 
-  nsCOMPtr<nsIRunnable> event =
-    NS_NewRunnableMethod(this, &CameraPreviewMediaStream::Invalidate);
-  NS_DispatchToMainThread(event);
+  NS_DispatchToMainThread(NewRunnableMethod(this, &CameraPreviewMediaStream::Invalidate));
 }
 
 void
@@ -177,9 +182,7 @@ CameraPreviewMediaStream::ClearCurrentFrame()
   for (nsTArray<RefPtr<VideoFrameContainer> >::size_type i = 0; i < mVideoOutputs.Length(); ++i) {
     VideoFrameContainer* output = mVideoOutputs[i];
     output->ClearCurrentFrame();
-    nsCOMPtr<nsIRunnable> event =
-      NS_NewRunnableMethod(output, &VideoFrameContainer::Invalidate);
-    NS_DispatchToMainThread(event);
+    NS_DispatchToMainThread(NewRunnableMethod(output, &VideoFrameContainer::Invalidate));
   }
 }
 

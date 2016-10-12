@@ -20,7 +20,10 @@
 #include "nsContentUtils.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsContentList.h"
+#include "nsCSSPseudoElements.h"
 #include "nsStyleSet.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 #include "nsIDOMMutationEvent.h"
 #include "nsThreadUtils.h"
 #include "mozilla/FloatingPoint.h"
@@ -297,7 +300,7 @@ nsNumberControlFrame::GetTextFieldFrame()
   return do_QueryFrame(GetAnonTextControl()->GetPrimaryFrame());
 }
 
-class FocusTextField : public nsRunnable
+class FocusTextField : public Runnable
 {
 public:
   FocusTextField(nsIContent* aNumber, nsIContent* aTextField)
@@ -323,7 +326,7 @@ nsresult
 nsNumberControlFrame::MakeAnonymousElement(Element** aResult,
                                            nsTArray<ContentInfo>& aElements,
                                            nsIAtom* aTagName,
-                                           nsCSSPseudoElements::Type aPseudoType,
+                                           CSSPseudoElementType aPseudoType,
                                            nsStyleContext* aParentContext)
 {
   // Get the NodeInfoManager and tag necessary to create the anonymous divs.
@@ -334,7 +337,7 @@ nsNumberControlFrame::MakeAnonymousElement(Element** aResult,
   // non-pseudo-element anonymous children, then we'll need to add a branch
   // that calls ResolveStyleFor((*aResult)->AsElement(), aParentContext)") to
   // set newStyleContext.
-  NS_ASSERTION(aPseudoType != nsCSSPseudoElements::ePseudo_NotPseudoElement,
+  NS_ASSERTION(aPseudoType != CSSPseudoElementType::NotPseudo,
                "Expecting anonymous children to all be pseudo-elements");
   // Associate the pseudo-element with the anonymous child
   RefPtr<nsStyleContext> newStyleContext =
@@ -347,8 +350,8 @@ nsNumberControlFrame::MakeAnonymousElement(Element** aResult,
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  if (aPseudoType == nsCSSPseudoElements::ePseudo_mozNumberSpinDown ||
-      aPseudoType == nsCSSPseudoElements::ePseudo_mozNumberSpinUp) {
+  if (aPseudoType == CSSPseudoElementType::mozNumberSpinDown ||
+      aPseudoType == CSSPseudoElementType::mozNumberSpinUp) {
     resultElement->SetAttr(kNameSpaceID_None, nsGkAtoms::role,
                            NS_LITERAL_STRING("button"), false);
   }
@@ -380,7 +383,7 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   rv = MakeAnonymousElement(getter_AddRefs(mOuterWrapper),
                             aElements,
                             nsGkAtoms::div,
-                            nsCSSPseudoElements::ePseudo_mozNumberWrapper,
+                            CSSPseudoElementType::mozNumberWrapper,
                             mStyleContext);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -390,7 +393,7 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   rv = MakeAnonymousElement(getter_AddRefs(mTextField),
                             outerWrapperCI.mChildren,
                             nsGkAtoms::input,
-                            nsCSSPseudoElements::ePseudo_mozNumberText,
+                            CSSPseudoElementType::mozNumberText,
                             outerWrapperCI.mStyleContext);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -438,7 +441,7 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   rv = MakeAnonymousElement(getter_AddRefs(mSpinBox),
                             outerWrapperCI.mChildren,
                             nsGkAtoms::div,
-                            nsCSSPseudoElements::ePseudo_mozNumberSpinBox,
+                            CSSPseudoElementType::mozNumberSpinBox,
                             outerWrapperCI.mStyleContext);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -448,7 +451,7 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   rv = MakeAnonymousElement(getter_AddRefs(mSpinUp),
                             spinBoxCI.mChildren,
                             nsGkAtoms::div,
-                            nsCSSPseudoElements::ePseudo_mozNumberSpinUp,
+                            CSSPseudoElementType::mozNumberSpinUp,
                             spinBoxCI.mStyleContext);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -456,7 +459,7 @@ nsNumberControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   rv = MakeAnonymousElement(getter_AddRefs(mSpinDown),
                             spinBoxCI.mChildren,
                             nsGkAtoms::div,
-                            nsCSSPseudoElements::ePseudo_mozNumberSpinDown,
+                            CSSPseudoElementType::mozNumberSpinDown,
                             spinBoxCI.mStyleContext);
 
   SyncDisabledState();
@@ -606,19 +609,19 @@ nsNumberControlFrame::GetSpinButtonForPointerEvent(WidgetGUIEvent* aEvent) const
     // we don't have a spinner
     return eSpinButtonNone;
   }
-  if (aEvent->originalTarget == mSpinUp) {
+  if (aEvent->mOriginalTarget == mSpinUp) {
     return eSpinButtonUp;
   }
-  if (aEvent->originalTarget == mSpinDown) {
+  if (aEvent->mOriginalTarget == mSpinDown) {
     return eSpinButtonDown;
   }
-  if (aEvent->originalTarget == mSpinBox) {
+  if (aEvent->mOriginalTarget == mSpinBox) {
     // In the case that the up/down buttons are hidden (display:none) we use
     // just the spin box element, spinning up if the pointer is over the top
     // half of the element, or down if it's over the bottom half. This is
     // important to handle since this is the state things are in for the
     // default UA style sheet. See the comment in forms.css for why.
-    LayoutDeviceIntPoint absPoint = aEvent->refPoint;
+    LayoutDeviceIntPoint absPoint = aEvent->mRefPoint;
     nsPoint point =
       nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent,
                        absPoint, mSpinBox->GetPrimaryFrame());
@@ -675,7 +678,7 @@ nsNumberControlFrame::IsFocused() const
 void
 nsNumberControlFrame::HandleFocusEvent(WidgetEvent* aEvent)
 {
-  if (aEvent->originalTarget != mTextField) {
+  if (aEvent->mOriginalTarget != mTextField) {
     // Move focus to our text field
     HTMLInputElement::FromContent(mTextField)->Focus();
   }
@@ -702,11 +705,11 @@ nsNumberControlFrame::ShouldUseNativeStyleForSpinner() const
   nsIFrame* spinDownFrame = mSpinDown->GetPrimaryFrame();
 
   return spinUpFrame &&
-    spinUpFrame->StyleDisplay()->mAppearance == NS_THEME_SPINNER_UP_BUTTON &&
+    spinUpFrame->StyleDisplay()->mAppearance == NS_THEME_SPINNER_UPBUTTON &&
     !PresContext()->HasAuthorSpecifiedRules(spinUpFrame,
                                             STYLES_DISABLING_NATIVE_THEMING) &&
     spinDownFrame &&
-    spinDownFrame->StyleDisplay()->mAppearance == NS_THEME_SPINNER_DOWN_BUTTON &&
+    spinDownFrame->StyleDisplay()->mAppearance == NS_THEME_SPINNER_DOWNBUTTON &&
     !PresContext()->HasAuthorSpecifiedRules(spinDownFrame,
                                             STYLES_DISABLING_NATIVE_THEMING);
 }
@@ -824,27 +827,27 @@ nsNumberControlFrame::AnonTextControlIsEmpty()
 }
 
 Element*
-nsNumberControlFrame::GetPseudoElement(nsCSSPseudoElements::Type aType)
+nsNumberControlFrame::GetPseudoElement(CSSPseudoElementType aType)
 {
-  if (aType == nsCSSPseudoElements::ePseudo_mozNumberWrapper) {
+  if (aType == CSSPseudoElementType::mozNumberWrapper) {
     return mOuterWrapper;
   }
 
-  if (aType == nsCSSPseudoElements::ePseudo_mozNumberText) {
+  if (aType == CSSPseudoElementType::mozNumberText) {
     return mTextField;
   }
 
-  if (aType == nsCSSPseudoElements::ePseudo_mozNumberSpinBox) {
+  if (aType == CSSPseudoElementType::mozNumberSpinBox) {
     // Might be null.
     return mSpinBox;
   }
 
-  if (aType == nsCSSPseudoElements::ePseudo_mozNumberSpinUp) {
+  if (aType == CSSPseudoElementType::mozNumberSpinUp) {
     // Might be null.
     return mSpinUp;
   }
 
-  if (aType == nsCSSPseudoElements::ePseudo_mozNumberSpinDown) {
+  if (aType == CSSPseudoElementType::mozNumberSpinDown) {
     // Might be null.
     return mSpinDown;
   }

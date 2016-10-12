@@ -73,6 +73,7 @@ protected:
                                         int32_t *aStatus, 
                                         nsAString & aSuggestedDriverVersion, 
                                         const nsTArray<GfxDriverInfo>& aDriverInfo,
+                                        nsACString &aFailureId,
                                         OperatingSystem* aOS = nullptr) override;
   virtual const nsTArray<GfxDriverInfo>& GetGfxDriverInfo() override;
 
@@ -92,6 +93,7 @@ private:
   nsString mModel, mHardware, mManufacturer, mProduct;
   nsCString mOSVersion;
   uint32_t mOSVersionInteger;
+  int32_t mSDKVersion;
 };
 
 } // namespace widget

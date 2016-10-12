@@ -24,7 +24,7 @@ TexturedEffect::PrintInfo(std::stringstream& aStream, const char* aPrefix)
     aStream << " [not-premultiplied]";
   }
 
-  AppendToString(aStream, mFilter, " [filter=", "]");
+  AppendToString(aStream, mSamplingFilter, " [filter=", "]");
 }
 
 void
@@ -34,10 +34,6 @@ EffectMask::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   aStream << nsPrintfCString("EffectMask (0x%p)", this).get();
   AppendToString(aStream, mSize, " [size=", "]");
   AppendToString(aStream, mMaskTransform, " [mask-transform=", "]");
-
-  if (mIs3D) {
-    aStream << " [is-3d]";
-  }
 }
 
 void

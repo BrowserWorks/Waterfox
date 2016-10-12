@@ -1,10 +1,13 @@
-FROM          taskcluster/centos6-build-upd:0.1.3.20160122142300
+FROM          taskcluster/centos6-build-upd:0.1.6.20160329195300
 MAINTAINER    Dustin J. Mitchell <dustin@mozilla.com>
 
 # Add build scripts; these are the entry points from the taskcluster worker, and
 # operate on environment variables
 ADD             bin /home/worker/bin
 RUN             chmod +x /home/worker/bin/*
+
+# Add configuration
+COPY            dot-config                    /home/worker/.config
 
 # Generate machine uuid file
 RUN dbus-uuidgen --ensure=/var/lib/dbus/machine-id

@@ -5,6 +5,7 @@
 
 package org.mozilla.gecko.util;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.SysInfo;
 
 import android.content.Context;
@@ -16,14 +17,6 @@ import android.view.ViewConfiguration;
 
 public final class HardwareUtils {
     private static final String LOGTAG = "GeckoHardwareUtils";
-
-    // Minimum memory threshold for a device to be considered
-    // a low memory platform (see isLowMemoryPlatform). This value
-    // has be in sync with Gecko's equivalent threshold (defined in
-    // xpcom/base/nsMemoryImpl.cpp) and should only be used in cases
-    // where we can't depend on Gecko to be up and running e.g. show/hide
-    // reading list capabilities in HomePager.
-    private static final int LOW_MEMORY_THRESHOLD_MB = 384;
 
     private static final boolean IS_AMAZON_DEVICE = Build.MANUFACTURER.equalsIgnoreCase("Amazon");
     public static final boolean IS_KINDLE_DEVICE = IS_AMAZON_DEVICE &&
@@ -85,16 +78,32 @@ public final class HardwareUtils {
         return SysInfo.getMemSize();
     }
 
-    public static boolean isLowMemoryPlatform() {
-        final int memSize = getMemSize();
-
-        // Fallback to false if we fail to read meminfo
-        // for some reason.
-        if (memSize == 0) {
-            Log.w(LOGTAG, "Could not compute system memory. Falling back to isLowMemoryPlatform = false.");
+    /**
+     * @return false if the current system is not supported (e.g. APK/system ABI mismatch).
+     */
+    public static boolean isSupportedSystem() {
+        if (Build.VERSION.SDK_INT < AppConstants.Versions.MIN_SDK_VERSION ||
+            Build.VERSION.SDK_INT > AppConstants.Versions.MAX_SDK_VERSION) {
             return false;
         }
 
-        return memSize < LOW_MEMORY_THRESHOLD_MB;
+        // See http://developer.android.com/ndk/guides/abis.html
+        boolean isSystemARM = Build.CPU_ABI != null && Build.CPU_ABI.startsWith("arm");
+        boolean isSystemX86 = Build.CPU_ABI != null && Build.CPU_ABI.startsWith("x86");
+
+        boolean isAppARM = AppConstants.ANDROID_CPU_ARCH.startsWith("arm");
+        boolean isAppX86 = AppConstants.ANDROID_CPU_ARCH.startsWith("x86");
+
+        // Only reject known incompatible ABIs. Better safe than sorry.
+        if ((isSystemX86 && isAppARM) || (isSystemARM && isAppX86)) {
+            return false;
+        }
+
+        if ((isSystemX86 && isAppX86) || (isSystemARM && isAppARM)) {
+            return true;
+        }
+
+        Log.w(LOGTAG, "Unknown app/system ABI combination: " + AppConstants.MOZ_APP_ABI + " / " + Build.CPU_ABI);
+        return true;
     }
 }

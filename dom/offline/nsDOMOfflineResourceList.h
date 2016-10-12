@@ -53,14 +53,14 @@ public:
   nsDOMOfflineResourceList(nsIURI* aManifestURI,
                            nsIURI* aDocumentURI,
                            nsIPrincipal* aLoadingPrincipal,
-                           nsPIDOMWindow* aWindow);
+                           nsPIDOMWindowInner* aWindow);
 
   void FirePendingEvents();
   void Disconnect();
 
   nsresult Init();
 
-  nsPIDOMWindow* GetParentObject() const
+  nsPIDOMWindowInner* GetParentObject() const
   {
     return GetOwner();
   }
@@ -116,7 +116,7 @@ public:
   }
   uint32_t Length()
   {
-    ErrorResult rv;
+    mozilla::IgnoredErrorResult rv;
     uint32_t length = GetMozLength(rv);
     return rv.Failed() ? 0 : length;
   }

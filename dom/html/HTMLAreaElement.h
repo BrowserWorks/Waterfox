@@ -131,7 +131,7 @@ public:
   }
   void GetReferrerPolicy(nsAString& aReferrer)
   {
-    GetHTMLAttr(nsGkAtoms::referrerpolicy, aReferrer);
+    GetEnumAttr(nsGkAtoms::referrerpolicy, EmptyCString().get(), aReferrer);
   }
 
   // The Link::GetOrigin is OK for us
@@ -185,8 +185,6 @@ protected:
 
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  virtual void GetItemValueText(DOMString& text) override;
-  virtual void SetItemValueText(const nsAString& text) override;
   RefPtr<nsDOMTokenList > mRelList;
 };
 

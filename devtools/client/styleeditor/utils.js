@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {Cc, Ci, Cu, Cr} = require("chrome");
+"use strict";
 
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://devtools/shared/event-emitter.js");
+const Services = require("Services");
+const EventEmitter = require("devtools/shared/event-emitter");
 
 exports.PREF_ORIG_SOURCES = "devtools.styleeditor.source-maps-enabled";
 
@@ -26,15 +26,15 @@ function PrefObserver(branchName) {
 exports.PrefObserver = PrefObserver;
 
 PrefObserver.prototype = {
-  observe: function(subject, topic, data) {
+  observe: function (subject, topic, data) {
     if (topic == "nsPref:changed") {
       this.emit(this.branchName + data);
     }
   },
 
-  destroy: function() {
+  destroy: function () {
     if (this.branch) {
-      this.branch.removeObserver('', this);
+      this.branch.removeObserver("", this);
     }
   }
 };

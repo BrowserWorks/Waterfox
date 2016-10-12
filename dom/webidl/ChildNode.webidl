@@ -9,10 +9,13 @@
 
 [NoInterfaceObject]
 interface ChildNode {
-// Not implemented yet:
-//  void before((Node or DOMString)... nodes);
-//  void after((Node or DOMString)... nodes);
-//  void replace((Node or DOMString)... nodes);
+  [Throws, Unscopable]
+  void before((Node or DOMString)... nodes);
+  [Throws, Unscopable]
+  void after((Node or DOMString)... nodes);
+  [Throws, Unscopable]
+  void replaceWith((Node or DOMString)... nodes);
+  [Unscopable]
   void remove();
 };
 

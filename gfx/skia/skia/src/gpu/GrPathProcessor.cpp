@@ -11,7 +11,7 @@
 #include "glsl/GrGLSLCaps.h"
 #include "glsl/GrGLSLFragmentShaderBuilder.h"
 #include "glsl/GrGLSLProcessorTypes.h"
-#include "glsl/GrGLSLProgramBuilder.h"
+#include "glsl/GrGLSLUniformHandler.h"
 #include "glsl/GrGLSLVarying.h"
 
 class GrGLPathProcessor : public GrGLSLPrimitiveProcessor {
@@ -22,13 +22,17 @@ public:
                        const GrGLSLCaps&,
                        GrProcessorKeyBuilder* b) {
         b->add32(SkToInt(pathProc.overrides().readsColor()) |
-                 SkToInt(pathProc.overrides().readsCoverage()) << 16);
+                 (SkToInt(pathProc.overrides().readsCoverage()) << 1) |
+                 (SkToInt(pathProc.viewMatrix().hasPerspective()) << 2));
     }
 
     void emitCode(EmitArgs& args) override {
-        GrGLSLGPBuilder* pb = args.fPB;
-        GrGLSLFragmentBuilder* fragBuilder = args.fFragBuilder;
+        GrGLSLPPFragmentBuilder* fragBuilder = args.fFragBuilder;
         const GrPathProcessor& pathProc = args.fGP.cast<GrPathProcessor>();
+
+        if (!pathProc.viewMatrix().hasPerspective()) {
+            args.fVaryingHandler->setNoPerspective();
+        }
 
         // emit transforms
         this->emitTransforms(args.fVaryingHandler, args.fTransformsIn, args.fTransformsOut);
@@ -36,11 +40,11 @@ public:
         // Setup uniform color
         if (pathProc.overrides().readsColor()) {
             const char* stagedLocalVarName;
-            fColorUniform = pb->addUniform(GrGLSLProgramBuilder::kFragment_Visibility,
-                                           kVec4f_GrSLType,
-                                           kDefault_GrSLPrecision,
-                                           "Color",
-                                           &stagedLocalVarName);
+            fColorUniform = args.fUniformHandler->addUniform(kFragment_GrShaderFlag,
+                                                             kVec4f_GrSLType,
+                                                             kDefault_GrSLPrecision,
+                                                             "Color",
+                                                             &stagedLocalVarName);
             fragBuilder->codeAppendf("%s = %s;", args.fOutputColor, stagedLocalVarName);
         }
 
@@ -72,8 +76,7 @@ public:
                                                                    &v).toIndex();
                 fInstalledTransforms[i][t].fType = varyingType;
 
-                SkNEW_APPEND_TO_TARRAY(&(*tout)[i], GrGLSLTransformedCoords,
-                                       (SkString(v.fsIn()), varyingType));
+                (*tout)[i].emplace_back(SkString(v.fsIn()), varyingType);
             }
         }
     }
@@ -123,8 +126,7 @@ GrPathProcessor::GrPathProcessor(GrColor color,
                                  const GrXPOverridesForBatch& overrides,
                                  const SkMatrix& viewMatrix,
                                  const SkMatrix& localMatrix)
-    : INHERITED(true)
-    , fColor(color)
+    : fColor(color)
     , fViewMatrix(viewMatrix)
     , fLocalMatrix(localMatrix)
     , fOverrides(overrides) {

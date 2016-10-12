@@ -11,7 +11,9 @@
 #include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "mozilla/layers/ShadowLayerUtilsGralloc.h"
+#include "mozilla/layers/SharedBufferManagerChild.h"
 #include "gfx2DGlue.h"
+#include "gfxPrefs.h" // for gfxPrefs
 #include "SharedSurfaceGralloc.h"
 
 #if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
@@ -108,11 +110,11 @@ GrallocTextureData::~GrallocTextureData()
 }
 
 void
-GrallocTextureData::Deallocate(ISurfaceAllocator* aAllocator)
+GrallocTextureData::Deallocate(ClientIPCAllocator* aAllocator)
 {
   MOZ_ASSERT(aAllocator);
-  if (aAllocator) {
-    aAllocator->DeallocGrallocBuffer(&mGrallocHandle);
+  if (aAllocator && aAllocator->IPCOpen()) {
+    SharedBufferManagerChild::GetSingleton()->DeallocGrallocBuffer(mGrallocHandle);
   }
 
   mGrallocHandle = null_t();
@@ -120,15 +122,26 @@ GrallocTextureData::Deallocate(ISurfaceAllocator* aAllocator)
 }
 
 void
-GrallocTextureData::Forget(ISurfaceAllocator* aAllocator)
+GrallocTextureData::Forget(ClientIPCAllocator* aAllocator)
 {
   MOZ_ASSERT(aAllocator);
-  if (aAllocator) {
-    aAllocator->DropGrallocBuffer(&mGrallocHandle);
+  if (aAllocator && aAllocator->IPCOpen()) {
+    SharedBufferManagerChild::GetSingleton()->DropGrallocBuffer(mGrallocHandle);
   }
 
   mGrallocHandle = null_t();
   mGraphicBuffer = nullptr;
+}
+
+void
+GrallocTextureData::FillInfo(TextureData::Info& aInfo) const
+{
+  aInfo.size = mSize;
+  aInfo.format = mFormat;
+  aInfo.hasIntermediateBuffer = false;
+  aInfo.hasSynchronization = true;
+  aInfo.supportsMoz2D = true;
+  aInfo.canExposeMappedData = true;
 }
 
 bool
@@ -277,12 +290,12 @@ GrallocTextureData::UpdateFromSurface(gfx::SourceSurface* aSurface)
 GrallocTextureData*
 GrallocTextureData::Create(gfx::IntSize aSize, AndroidFormat aAndroidFormat,
                            gfx::BackendType aMoz2dBackend, uint32_t aUsage,
-                           ISurfaceAllocator* aAllocator)
+                           ClientIPCAllocator* aAllocator)
 {
-  if (!aAllocator) {
+  if (!aAllocator || !aAllocator->IPCOpen()) {
     return nullptr;
   }
-  int32_t maxSize = aAllocator->GetMaxTextureSize();
+  int32_t maxSize = aAllocator->AsClientAllocator()->GetMaxTextureSize();
   if (aSize.width > maxSize || aSize.height > maxSize) {
     return nullptr;
   }
@@ -312,7 +325,7 @@ GrallocTextureData::Create(gfx::IntSize aSize, AndroidFormat aAndroidFormat,
   }
 
   MaybeMagicGrallocBufferHandle handle;
-  if (!aAllocator->AllocGrallocBuffer(aSize, aAndroidFormat, aUsage, &handle)) {
+  if (!SharedBufferManagerChild::GetSingleton()->AllocGrallocBuffer(aSize, aAndroidFormat, aUsage, &handle)) {
     return nullptr;
   }
 
@@ -332,7 +345,7 @@ GrallocTextureData::Create(gfx::IntSize aSize, AndroidFormat aAndroidFormat,
 GrallocTextureData*
 GrallocTextureData::CreateForDrawing(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
                                      gfx::BackendType aMoz2dBackend,
-                                     ISurfaceAllocator* aAllocator)
+                                     ClientIPCAllocator* aAllocator)
 {
   if (DisableGralloc(aFormat, aSize)) {
     return nullptr;
@@ -384,7 +397,7 @@ GrallocTextureData::GetTextureFlags() const
 // static
 GrallocTextureData*
 GrallocTextureData::CreateForYCbCr(gfx::IntSize aYSize, gfx::IntSize aCbCrSize,
-                                   ISurfaceAllocator* aAllocator)
+                                   ClientIPCAllocator* aAllocator)
 {
   MOZ_ASSERT(aYSize.width == aCbCrSize.width * 2);
   MOZ_ASSERT(aYSize.height == aCbCrSize.height * 2);
@@ -397,7 +410,7 @@ GrallocTextureData::CreateForYCbCr(gfx::IntSize aYSize, gfx::IntSize aCbCrSize,
 // static
 GrallocTextureData*
 GrallocTextureData::CreateForGLRendering(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
-                                         ISurfaceAllocator* aAllocator)
+                                         ClientIPCAllocator* aAllocator)
 {
   if (aFormat == gfx::SurfaceFormat::YUV) {
     return nullptr;
@@ -433,7 +446,7 @@ GrallocTextureData::TextureClientFromSharedSurface(gl::SharedSurface* abstractSu
 }
 
 TextureData*
-GrallocTextureData::CreateSimilar(ISurfaceAllocator* aAllocator,
+GrallocTextureData::CreateSimilar(ClientIPCAllocator* aAllocator,
                                   TextureFlags aFlags,
                                   TextureAllocationFlags aAllocFlags) const
 {

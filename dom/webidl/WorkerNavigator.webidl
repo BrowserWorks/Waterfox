@@ -10,4 +10,4 @@ interface WorkerNavigator {
 WorkerNavigator implements NavigatorID;
 WorkerNavigator implements NavigatorLanguage;
 WorkerNavigator implements NavigatorOnLine;
-WorkerNavigator implements NavigatorDataStore;
+WorkerNavigator implements NavigatorConcurrentHardware;

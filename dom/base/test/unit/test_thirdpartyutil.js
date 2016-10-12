@@ -11,6 +11,14 @@ var Cu = Components.utils;
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+var prefs = Cc["@mozilla.org/preferences-service;1"].
+              getService(Ci.nsIPrefBranch);
+
+// Since this test creates a TYPE_DOCUMENT channel via javascript, it will
+// end up using the wrong LoadInfo constructor. Setting this pref will disable
+// the ContentPolicyType assertion in the constructor.
+prefs.setBoolPref("network.loadinfo.skip_type_assertion", true);
+
 var NS_ERROR_INVALID_ARG = Components.results.NS_ERROR_INVALID_ARG;
 
 function do_check_throws(f, result, stack)
@@ -41,8 +49,9 @@ function run_test() {
   let spec2 = "http://bar.com/bar.html";
   let uri1 = NetUtil.newURI(spec1);
   let uri2 = NetUtil.newURI(spec2);
-  let channel1 = NetUtil.newChannel({uri: uri1, loadUsingSystemPrincipal: true});
-  let channel2 = NetUtil.newChannel({uri: uri2, loadUsingSystemPrincipal: true});
+  const contentPolicyType = Ci.nsIContentPolicy.TYPE_DOCUMENT;
+  let channel1 = NetUtil.newChannel({uri: uri1, loadUsingSystemPrincipal: true, contentPolicyType});
+  let channel2 = NetUtil.newChannel({uri: uri2, loadUsingSystemPrincipal: true, contentPolicyType});
 
   // Create some file:// URIs.
   let filespec1 = "file://foo.txt";
@@ -70,12 +79,12 @@ function run_test() {
   // hierarchy. We leave that to mochitests.
 
   // Test isThirdPartyChannel. As above, we can't test the bits that require
-  // a load context or window heirarchy. Because of that, the code assumes
-  // that these are all third-party loads.
+  // a load context or window heirarchy. Because of bug 1259873, we assume
+  // that these are not third-party.
   do_check_throws(function() { util.isThirdPartyChannel(null); },
     NS_ERROR_INVALID_ARG);
-  do_check_true(util.isThirdPartyChannel(channel1));
-  do_check_true(util.isThirdPartyChannel(channel1, uri1));
+  do_check_false(util.isThirdPartyChannel(channel1));
+  do_check_false(util.isThirdPartyChannel(channel1, uri1));
   do_check_true(util.isThirdPartyChannel(channel1, uri2));
 
   let httpchannel1 = channel1.QueryInterface(Ci.nsIHttpChannelInternal);

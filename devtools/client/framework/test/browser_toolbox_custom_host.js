@@ -1,6 +1,7 @@
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 function test() {
   let {Toolbox} = require("devtools/client/framework/toolbox");
@@ -37,7 +38,7 @@ function test() {
 
   function testCustomHost(t) {
     toolbox = t;
-    is(toolbox.doc.defaultView.top, window, "Toolbox is included in browser.xul");
+    is(toolbox.win.top, window, "Toolbox is included in browser.xul");
     is(toolbox.doc, iframe.contentDocument, "Toolbox is in the custom iframe");
     executeSoon(() => gBrowser.removeCurrentTab());
   }

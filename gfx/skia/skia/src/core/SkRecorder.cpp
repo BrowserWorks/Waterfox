@@ -11,6 +11,7 @@
 #include "SkPicture.h"
 #include "SkPictureUtils.h"
 #include "SkRecorder.h"
+#include "SkSurface.h"
 
 //#define WRAP_BITMAP_AS_IMAGE
 
@@ -27,7 +28,7 @@ SkBigPicture::SnapshotArray* SkDrawableList::newDrawableSnapshot() {
     for (int i = 0; i < count; ++i) {
         pics[i] = fArray[i]->newPictureSnapshot();
     }
-    return new SkBigPicture::SnapshotArray(pics.detach(), count);
+    return new SkBigPicture::SnapshotArray(pics.release(), count);
 }
 
 void SkDrawableList::append(SkDrawable* drawable) {
@@ -240,10 +241,6 @@ void SkRecorder::onDrawImageNine(const SkImage* image, const SkIRect& center,
     APPEND(DrawImageNine, this->copy(paint), image, center, dst);
 }
 
-void SkRecorder::onDrawSprite(const SkBitmap& bitmap, int left, int top, const SkPaint* paint) {
-    APPEND(DrawSprite, this->copy(paint), bitmap, left, top);
-}
-
 void SkRecorder::onDrawText(const void* text, size_t byteLength,
                             SkScalar x, SkScalar y, const SkPaint& paint) {
     APPEND(DrawText,
@@ -336,14 +333,17 @@ void SkRecorder::onDrawAtlas(const SkImage* atlas, const SkRSXform xform[], cons
            this->copy(cull));
 }
 
+void SkRecorder::onDrawAnnotation(const SkRect& rect, const char key[], SkData* value) {
+    APPEND(DrawAnnotation, rect, SkString(key), value);
+}
+
 void SkRecorder::willSave() {
     APPEND(Save);
 }
 
-SkCanvas::SaveLayerStrategy SkRecorder::willSaveLayer(const SkRect* bounds,
-                                                      const SkPaint* paint,
-                                                      SkCanvas::SaveFlags flags) {
-    APPEND(SaveLayer, this->copy(bounds), this->copy(paint), flags);
+SkCanvas::SaveLayerStrategy SkRecorder::getSaveLayerStrategy(const SaveLayerRec& rec) {
+    APPEND(SaveLayer,
+           this->copy(rec.fBounds), this->copy(rec.fPaint), rec.fBackdrop, rec.fSaveLayerFlags);
     return SkCanvas::kNoLayer_SaveLayerStrategy;
 }
 
@@ -382,3 +382,6 @@ void SkRecorder::onClipRegion(const SkRegion& deviceRgn, SkRegion::Op op) {
     APPEND(ClipRegion, this->devBounds(), deviceRgn, op);
 }
 
+sk_sp<SkSurface> SkRecorder::onNewSurface(const SkImageInfo&, const SkSurfaceProps&) {
+    return nullptr;
+}

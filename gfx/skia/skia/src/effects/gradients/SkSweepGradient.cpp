@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2012 Google Inc.
  *
@@ -30,14 +29,14 @@ SkShader::GradientType SkSweepGradient::asAGradient(GradientInfo* info) const {
     return kSweep_GradientType;
 }
 
-SkFlattenable* SkSweepGradient::CreateProc(SkReadBuffer& buffer) {
+sk_sp<SkFlattenable> SkSweepGradient::CreateProc(SkReadBuffer& buffer) {
     DescriptorScope desc;
     if (!desc.unflatten(buffer)) {
         return nullptr;
     }
     const SkPoint center = buffer.readPoint();
-    return SkGradientShader::CreateSweep(center.x(), center.y(), desc.fColors, desc.fPos,
-                                         desc.fCount, desc.fGradFlags, desc.fLocalMatrix);
+    return SkGradientShader::MakeSweep(center.x(), center.y(), desc.fColors, desc.fPos,
+                                       desc.fCount, desc.fGradFlags, desc.fLocalMatrix);
 }
 
 void SkSweepGradient::flatten(SkWriteBuffer& buffer) const {
@@ -45,7 +44,7 @@ void SkSweepGradient::flatten(SkWriteBuffer& buffer) const {
     buffer.writePoint(fCenter);
 }
 
-size_t SkSweepGradient::contextSize() const {
+size_t SkSweepGradient::onContextSize(const ContextRec&) const {
     return sizeof(SweepGradientContext);
 }
 
@@ -63,6 +62,9 @@ static unsigned SkATan2_255(float y, float x) {
     static const float g255Over2PI = 40.584510488433314f;
 
     float result = sk_float_atan2(y, x);
+    if (!SkScalarIsFinite(result)) {
+        return 0;
+    }
     if (result < 0) {
         result += 2 * SK_ScalarPI;
     }
@@ -89,11 +91,9 @@ void SkSweepGradient::SweepGradientContext::shadeSpan(int x, int y, SkPMColor* S
         SkScalar dy, fy = srcPt.fY;
 
         if (fDstToIndexClass == kFixedStepInX_MatrixClass) {
-            SkFixed storage[2];
-            (void)matrix.fixedStepInX(SkIntToScalar(y) + SK_ScalarHalf,
-                                      &storage[0], &storage[1]);
-            dx = SkFixedToScalar(storage[0]);
-            dy = SkFixedToScalar(storage[1]);
+            const auto step = matrix.fixedStepInX(SkIntToScalar(y) + SK_ScalarHalf);
+            dx = step.fX;
+            dy = step.fY;
         } else {
             SkASSERT(fDstToIndexClass == kLinear_MatrixClass);
             dx = matrix.getScaleX();
@@ -116,59 +116,14 @@ void SkSweepGradient::SweepGradientContext::shadeSpan(int x, int y, SkPMColor* S
     }
 }
 
-void SkSweepGradient::SweepGradientContext::shadeSpan16(int x, int y, uint16_t* SK_RESTRICT dstC,
-                                                        int count) {
-    SkMatrix::MapXYProc proc = fDstToIndexProc;
-    const SkMatrix&     matrix = fDstToIndex;
-    const uint16_t* SK_RESTRICT cache = fCache->getCache16();
-    int                 toggle = init_dither_toggle16(x, y);
-    SkPoint             srcPt;
-
-    if (fDstToIndexClass != kPerspective_MatrixClass) {
-        proc(matrix, SkIntToScalar(x) + SK_ScalarHalf,
-                     SkIntToScalar(y) + SK_ScalarHalf, &srcPt);
-        SkScalar dx, fx = srcPt.fX;
-        SkScalar dy, fy = srcPt.fY;
-
-        if (fDstToIndexClass == kFixedStepInX_MatrixClass) {
-            SkFixed storage[2];
-            (void)matrix.fixedStepInX(SkIntToScalar(y) + SK_ScalarHalf,
-                                      &storage[0], &storage[1]);
-            dx = SkFixedToScalar(storage[0]);
-            dy = SkFixedToScalar(storage[1]);
-        } else {
-            SkASSERT(fDstToIndexClass == kLinear_MatrixClass);
-            dx = matrix.getScaleX();
-            dy = matrix.getSkewY();
-        }
-
-        for (; count > 0; --count) {
-            int index = SkATan2_255(fy, fx) >> (8 - kCache16Bits);
-            *dstC++ = cache[toggle + index];
-            toggle = next_dither_toggle16(toggle);
-            fx += dx;
-            fy += dy;
-        }
-    } else {  // perspective case
-        for (int stop = x + count; x < stop; x++) {
-            proc(matrix, SkIntToScalar(x) + SK_ScalarHalf,
-                         SkIntToScalar(y) + SK_ScalarHalf, &srcPt);
-
-            int index = SkATan2_255(srcPt.fY, srcPt.fX);
-            index >>= (8 - kCache16Bits);
-            *dstC++ = cache[toggle + index];
-            toggle = next_dither_toggle16(toggle);
-        }
-    }
-}
-
 /////////////////////////////////////////////////////////////////////
 
 #if SK_SUPPORT_GPU
 
 #include "SkGr.h"
 #include "gl/GrGLContext.h"
-#include "gl/builders/GrGLProgramBuilder.h"
+#include "glsl/GrGLSLCaps.h"
+#include "glsl/GrGLSLFragmentShaderBuilder.h"
 
 class GrGLSweepGradient : public GrGLGradientEffect {
 public:
@@ -234,8 +189,8 @@ const GrFragmentProcessor* GrSweepGradient::TestCreate(GrProcessorTestData* d) {
     SkScalar* stops = stopsArray;
     SkShader::TileMode tmIgnored;
     int colorCount = RandomGradientParams(d->fRandom, colors, &stops, &tmIgnored);
-    SkAutoTUnref<SkShader> shader(SkGradientShader::CreateSweep(center.fX, center.fY,
-                                                                colors, stops, colorCount));
+    sk_sp<SkShader> shader(SkGradientShader::MakeSweep(center.fX, center.fY,  colors, stops,
+                                                       colorCount));
     const GrFragmentProcessor* fp = shader->asFragmentProcessor(d->fContext,
                                                                 GrTest::TestMatrix(d->fRandom),
                                                                 NULL, kNone_SkFilterQuality);
@@ -247,7 +202,7 @@ const GrFragmentProcessor* GrSweepGradient::TestCreate(GrProcessorTestData* d) {
 
 void GrGLSweepGradient::emitCode(EmitArgs& args) {
     const GrSweepGradient& ge = args.fFp.cast<GrSweepGradient>();
-    this->emitUniforms(args.fBuilder, ge);
+    this->emitUniforms(args.fUniformHandler, ge);
     SkString coords2D = args.fFragBuilder->ensureFSCoords2D(args.fCoords, 0);
     SkString t;
     // 0.1591549430918 is 1/(2*pi), used since atan returns values [-pi, pi]
@@ -260,8 +215,8 @@ void GrGLSweepGradient::emitCode(EmitArgs& args) {
         t.printf("atan(- %s.y, - %s.x) * 0.1591549430918 + 0.5",
                  coords2D.c_str(), coords2D.c_str());
     }
-    this->emitColor(args.fBuilder,
-                    args.fFragBuilder,
+    this->emitColor(args.fFragBuilder,
+                    args.fUniformHandler,
                     args.fGLSLCaps,
                     ge, t.c_str(),
                     args.fOutputColor,

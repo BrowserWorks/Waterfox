@@ -122,7 +122,7 @@ enum {
 , NS_FOLDER_VALUE_CUSTOM = 2
 };
 
-PRLogModuleInfo* nsExternalHelperAppService::mLog = nullptr;
+LazyLogModule nsExternalHelperAppService::mLog("HelperAppService");
 
 // Using level 3 here because the OSHelperAppServices use a log level
 // of LogLevel::Debug (4), and we want less detailed output here
@@ -376,16 +376,20 @@ static nsresult GetDownloadDirectory(nsIFile **_directory,
   }
   dir = dsf->mFile;
 #elif defined(ANDROID)
-  // On mobile devices, we are avoiding exposing users to the file
-  // system, and don't save downloads to temp directories
+  // We ask Java for the temporary download directory. The directory will be
+  // different depending on whether we have the permission to write to the
+  // public download directory or not.
+  // In the case where we do not have the permission we will start the
+  // download to the app cache directory and later move it to the final
+  // destination after prompting for the permission.
+  auto downloadDir = widget::DownloadsIntegration::GetTemporaryDownloadDirectory();
 
-  // On Android we only return something if we have and SD-card
-  char* downloadDir = getenv("DOWNLOADS_DIRECTORY");
   nsresult rv;
   if (downloadDir) {
     nsCOMPtr<nsIFile> ldir;
-    rv = NS_NewNativeLocalFile(nsDependentCString(downloadDir),
+    rv = NS_NewNativeLocalFile(downloadDir->ToCString(),
                                true, getter_AddRefs(ldir));
+
     NS_ENSURE_SUCCESS(rv, rv);
     dir = do_QueryInterface(ldir);
 
@@ -493,7 +497,7 @@ struct nsDefaultMimeTypeEntry {
  * Default extension->mimetype mappings. These are not overridable.
  * If you add types here, make sure they are lowercase, or you'll regret it.
  */
-static nsDefaultMimeTypeEntry defaultMimeEntries [] = 
+static const nsDefaultMimeTypeEntry defaultMimeEntries[] =
 {
   // The following are those extensions that we're asked about during startup,
   // sorted by order used
@@ -553,7 +557,7 @@ struct nsExtraMimeTypeEntry {
  * overridden by user helper app prefs.
  * If you add types here, make sure they are lowercase, or you'll regret it.
  */
-static nsExtraMimeTypeEntry extraMimeEntries [] =
+static const nsExtraMimeTypeEntry extraMimeEntries[] =
 {
 #if defined(XP_MACOSX) // don't define .bin on the mac...use internet config to look that up...
   { APPLICATION_OCTET_STREAM, "exe,com", "Binary File" },
@@ -630,7 +634,7 @@ static nsExtraMimeTypeEntry extraMimeEntries [] =
  * File extensions for which decoding should be disabled.
  * NOTE: These MUST be lower-case and ASCII.
  */
-static nsDefaultMimeTypeEntry nonDecodableExtensions [] = {
+static const nsDefaultMimeTypeEntry nonDecodableExtensions[] = {
   { APPLICATION_GZIP, "gz" }, 
   { APPLICATION_GZIP, "tgz" },
   { APPLICATION_ZIP, "zip" },
@@ -657,12 +661,6 @@ nsresult nsExternalHelperAppService::Init()
   if (!obs)
     return NS_ERROR_FAILURE;
 
-  if (!mLog) {
-    mLog = PR_NewLogModule("HelperAppService");
-    if (!mLog)
-      return NS_ERROR_OUT_OF_MEMORY;
-  }
-
   nsresult rv = obs->AddObserver(this, "profile-before-change", true);
   NS_ENSURE_SUCCESS(rv, rv);
   return obs->AddObserver(this, "last-pb-context-exited", true);
@@ -681,7 +679,7 @@ nsExternalHelperAppService::DoContentContentProcessHelper(const nsACString& aMim
                                                           nsIInterfaceRequestor *aWindowContext,
                                                           nsIStreamListener ** aStreamListener)
 {
-  nsCOMPtr<nsIDOMWindow> window = do_GetInterface(aContentContext);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_GetInterface(aContentContext);
   NS_ENSURE_STATE(window);
 
   // We need to get a hold of a ContentChild so that we can begin forwarding
@@ -1571,6 +1569,13 @@ nsExternalAppHandler::MaybeApplyDecodingForExtension(nsIRequest *aRequest)
   // Turn off content encoding conversions if needed
   bool applyConversion = true;
 
+  // First, check to see if conversion is already disabled.  If so, we
+  // have nothing to do here.
+  encChannel->GetApplyConversion(&applyConversion);
+  if (!applyConversion) {
+    return;
+  }
+
   nsCOMPtr<nsIURL> sourceURL(do_QueryInterface(mSourceUrl));
   if (sourceURL)
   {
@@ -1931,7 +1936,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
                 // If we didn't have a prompter we will try and get a window
                 // instead, get it's docshell and use it to alert the user.
                 if (!prompter) {
-                  nsCOMPtr<nsPIDOMWindow> window(do_GetInterface(GetDialogParent()));
+                  nsCOMPtr<nsPIDOMWindowOuter> window(do_GetInterface(GetDialogParent()));
                   if (!window || !window->GetDocShell()) {
                     return;
                   }
@@ -2556,13 +2561,13 @@ bool nsExternalAppHandler::GetNeverAskFlagFromPref(const char * prefName, const 
 
 nsresult nsExternalAppHandler::MaybeCloseWindow()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_GetInterface(mContentContext);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_GetInterface(mContentContext);
   NS_ENSURE_STATE(window);
 
   if (mShouldCloseWindow) {
     // Reset the window context to the opener window so that the dependent
     // dialogs have a parent
-    nsCOMPtr<nsPIDOMWindow> opener = window->GetOpener();
+    nsCOMPtr<nsPIDOMWindowOuter> opener = window->GetOpener();
 
     if (opener && !opener->Closed()) {
       mContentContext = do_GetInterface(opener);
@@ -2588,8 +2593,7 @@ nsExternalAppHandler::Notify(nsITimer* timer)
 {
   NS_ASSERTION(mWindowToClose, "No window to close after timer fired");
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(mWindowToClose);
-  window->Close();
+  mWindowToClose->Close();
   mWindowToClose = nullptr;
   mTimer = nullptr;
 

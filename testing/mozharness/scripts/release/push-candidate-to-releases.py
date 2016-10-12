@@ -3,10 +3,12 @@ import os
 import re
 import sys
 
+
 sys.path.insert(1, os.path.dirname(os.path.dirname(sys.path[0])))
 
 from mozharness.base.python import VirtualenvMixin, virtualenv_config_options
 from mozharness.base.script import BaseScript
+from mozharness.mozilla.aws import pop_aws_auth_from_env
 
 
 class ReleasePusher(BaseScript, VirtualenvMixin):
@@ -33,9 +35,26 @@ class ReleasePusher(BaseScript, VirtualenvMixin):
         }],
         [["--exclude"], {
             "dest": "excludes",
-            "default": [],
+            "default": [
+                r"^.*tests.*$",
+                r"^.*crashreporter.*$",
+                r"^.*[^k]\.zip(\.asc)?$",
+                r"^.*\.log$",
+                r"^.*\.txt$",
+                r"^.*/partner-repacks.*$",
+                r"^.*.checksums(\.asc)?$",
+                r"^.*/logs/.*$",
+                r"^.*/jsshell.*$",
+                r"^.*json$",
+                r"^.*/host.*$",
+                r"^.*/mar-tools/.*$",
+                r"^.*robocop.apk$",
+                r"^.*contrib.*",
+                r"^.*/beetmover-checksums/.*$",
+            ],
             "action": "append",
-            "help": "List of patterns to exclude from copy. See script source for default.",
+            "help": "List of patterns to exclude from copy. The list can be "
+                    "extended by passing multiple --exclude arguments.",
         }],
         [["-j", "--parallelization"], {
             "dest": "parallelization",
@@ -45,7 +64,7 @@ class ReleasePusher(BaseScript, VirtualenvMixin):
         }],
     ] + virtualenv_config_options
 
-    def __init__(self):
+    def __init__(self, aws_creds):
         BaseScript.__init__(self,
             config_options=self.config_options,
             require_config_file=False,
@@ -68,33 +87,20 @@ class ReleasePusher(BaseScript, VirtualenvMixin):
             ],
         )
 
-        # set the env var for boto to read our special config file
-        # rather than anything else we have at ~/.boto
-        os.environ["BOTO_CONFIG"] = os.path.abspath(self.config["credentials"])
+        # validate aws credentials
+        if not (all(aws_creds) or self.config.get('credentials')):
+            self.fatal("aws creds not defined. please add them to your config or env.")
+        if any(aws_creds) and self.config.get('credentials'):
+            self.fatal("aws creds found in env and self.config. please declare in one place only.")
 
-    def _pre_config_lock(self, rw_config):
-        super(ReleasePusher, self)._pre_config_lock(rw_config)
-
-        # This default is set here rather in the config because default
-        # lists cannot be completely overidden, only appended to.
-        if not self.config.get("excludes"):
-            self.config["excludes"] = [
-                r"^.*tests.*$",
-                r"^.*crashreporter.*$",
-                r"^.*\.zip(\.asc)?$",
-                r"^.*\.log$",
-                r"^.*\.txt$",
-                r"^.*/partner-repacks.*$",
-                r"^.*.checksums(\.asc)?$",
-                r"^.*/logs/.*$",
-                r"^.*/jsshell.*$",
-                r"^.*json$",
-                r"^.*/host.*$",
-                r"^.*/mar-tools/.*$",
-                r"^.*gecko-unsigned-unaligned.apk$",
-                r"^.*robocop.apk$",
-                r"^.*contrib.*"
-            ]
+        # set aws credentials
+        if all(aws_creds):
+            self.aws_key_id, self.aws_secret_key = aws_creds
+        else:  # use
+            self.aws_key_id, self.aws_secret_key = None, None
+            # set the env var for boto to read our special config file
+            # rather than anything else we have at ~/.boto
+            os.environ["BOTO_CONFIG"] = os.path.abspath(self.config["credentials"])
 
     def _get_candidates_prefix(self):
         return "pub/{}/candidates/{}-candidates/build{}/".format(
@@ -128,7 +134,8 @@ class ReleasePusher(BaseScript, VirtualenvMixin):
         logging.getLogger('boto').setLevel(logging.INFO)
 
         self.info("Connecting to S3")
-        conn = S3Connection()
+        conn = S3Connection(aws_access_key_id=self.aws_key_id,
+                            aws_secret_access_key=self.aws_secret_key)
         self.info("Getting bucket {}".format(self.config["bucket_name"]))
         bucket = conn.get_bucket(self.config["bucket_name"])
 
@@ -136,18 +143,39 @@ class ReleasePusher(BaseScript, VirtualenvMixin):
         self.info("Checking destination {} is empty".format(self._get_releases_prefix()))
         keys = [k for k in bucket.list(prefix=self._get_releases_prefix())]
         if keys:
-            self.fatal("Destination already exists with %s keys, aborting" %
-                       len(keys))
+            self.warning("Destination already exists with %s keys" % len(keys))
 
         def worker(item):
             source, destination = item
 
-            self.info("Copying {} to {}".format(source, destination))
-            return retry(bucket.copy_key,
-                         args=(destination,
-                               self.config["bucket_name"],
-                               source),
-                         sleeptime=5, max_sleeptime=60,
+            def copy_key():
+                source_key = bucket.get_key(source)
+                dest_key = bucket.get_key(destination)
+                # According to http://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html
+                # S3 key MD5 is represented as ETag, except when objects are
+                # uploaded using multipart method. In this case objects's ETag
+                # is constructed using its MD5, minus symbol, and number of
+                # part. See http://stackoverflow.com/questions/12186993/what-is-the-algorithm-to-compute-the-amazon-s3-etag-for-a-file-larger-than-5gb#answer-19896823
+                source_md5 = source_key.etag.split("-")[0]
+                if dest_key:
+                    dest_md5 = dest_key.etag.split("-")[0]
+                else:
+                    dest_md5 = None
+
+                if not dest_key:
+                    self.info("Copying {} to {}".format(source, destination))
+                    bucket.copy_key(destination, self.config["bucket_name"],
+                                    source)
+                elif source_md5 == dest_md5:
+                    self.warning(
+                        "{} already exists with the same content ({}), skipping copy".format(
+                            destination, dest_md5))
+                else:
+                    self.fatal(
+                        "{} already exists with the different content (src ETag: {}, dest ETag: {}), aborting".format(
+                            destination, source_key.etag, dest_key.etag))
+
+            return retry(copy_key, sleeptime=5, max_sleeptime=60,
                          retry_exceptions=(S3CopyError, S3ResponseError))
 
         def find_release_files():
@@ -167,5 +195,5 @@ class ReleasePusher(BaseScript, VirtualenvMixin):
         pool.map(worker, find_release_files())
 
 if __name__ == "__main__":
-    myScript = ReleasePusher()
+    myScript = ReleasePusher(pop_aws_auth_from_env())
     myScript.run_and_exit()

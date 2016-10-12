@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Whitelisting this test.
 // As part of bug 1077403, the leaking uncaught rejection should be fixed.
@@ -16,11 +16,6 @@ thisTestLeaksUncaughtRejectionsAndShouldBeFixed("null");
 const TEST_URI = "data:text/html;charset=utf8,test for console output - 01";
 
 var {DebuggerServer} = require("devtools/server/main");
-
-var LONG_STRING_LENGTH = DebuggerServer.LONG_STRING_LENGTH;
-var LONG_STRING_INITIAL_LENGTH = DebuggerServer.LONG_STRING_INITIAL_LENGTH;
-DebuggerServer.LONG_STRING_LENGTH = 100;
-DebuggerServer.LONG_STRING_INITIAL_LENGTH = 50;
 
 var longString = (new Array(DebuggerServer.LONG_STRING_LENGTH + 4)).join("a");
 var initialString = longString.substring(0, DebuggerServer.LONG_STRING_INITIAL_LENGTH);
@@ -114,12 +109,7 @@ longString = initialString = null;
 function test() {
   requestLongerTimeout(2);
 
-  registerCleanupFunction(() => {
-    DebuggerServer.LONG_STRING_LENGTH = LONG_STRING_LENGTH;
-    DebuggerServer.LONG_STRING_INITIAL_LENGTH = LONG_STRING_INITIAL_LENGTH;
-  });
-
-  Task.spawn(function*() {
+  Task.spawn(function* () {
     let {tab} = yield loadTab(TEST_URI);
     let hud = yield openConsole(tab);
     return checkOutputForInputs(hud, inputTests);

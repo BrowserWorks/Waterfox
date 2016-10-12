@@ -25,9 +25,6 @@
         <!-- Style for MenuItemActionBar when shown in SecondaryActionBar -->
         <attr name="menuItemSecondaryActionBarStyle" format="reference"/>
 
-        <!-- Style for MenuItemSwitcherLayout's ShareActionButton -->
-        <attr name="menuItemShareActionButtonStyle" format="reference"/>
-
         <!-- Default style for the BookmarksListView -->
         <attr name="bookmarksListViewStyle" format="reference" />
 
@@ -136,15 +133,6 @@
         <attr name="fadeBackgroundColor" format="dimension"/>
     </declare-styleable>
 
-    <declare-styleable name="BookmarkFolderView">
-        <attr name="state_open" format="boolean"/>
-    </declare-styleable>
-
-    <declare-styleable name="GeckoView">
-        <attr name="url" format="string"/>
-        <attr name="doinit" format="boolean"/>
-    </declare-styleable>
-
     <declare-styleable name="IconTabWidget">
         <attr name="android:layout"/>
 
@@ -180,10 +168,6 @@
 
     <declare-styleable name="EllipsisTextView">
         <attr name="ellipsizeAtLine" format="integer"/>
-    </declare-styleable>
-
-    <declare-styleable name="FloatingHintEditText">
-        <attr name="floatingHintEditTextStyle" format="reference" />
     </declare-styleable>
 
     <declare-styleable name="FaviconView">

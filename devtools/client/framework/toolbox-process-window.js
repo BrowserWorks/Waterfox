@@ -1,24 +1,29 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-var { gDevTools } = Cu.import("resource://devtools/client/framework/gDevTools.jsm", {});
-var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
+var { loader, require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
+// Require this module to setup core modules
+loader.require("devtools/client/framework/devtools-browser");
+
+var { gDevTools } = require("devtools/client/framework/devtools");
 var { TargetFactory } = require("devtools/client/framework/target");
 var { Toolbox } = require("devtools/client/framework/toolbox");
-var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+var Services = require("Services");
 var { DebuggerClient } = require("devtools/shared/client/main");
-var { ViewHelpers } =
-  Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm", {});
-var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+var { PrefsHelper } = require("devtools/client/shared/prefs");
+var { Task } = require("devtools/shared/task");
 
 /**
  * Shortcuts for accessing various debugger preferences.
  */
-var Prefs = new ViewHelpers.Prefs("devtools.debugger", {
+var Prefs = new PrefsHelper("devtools.debugger", {
   chromeDebuggingHost: ["Char", "chrome-debugging-host"],
   chromeDebuggingPort: ["Int", "chrome-debugging-port"]
 });
@@ -33,7 +38,7 @@ var connect = Task.async(function*() {
     port: Prefs.chromeDebuggingPort
   });
   gClient = new DebuggerClient(transport);
-  gClient.connect(() => {
+  gClient.connect().then(() => {
     let addonID = getParameterByName("addonID");
 
     if (addonID) {
@@ -55,6 +60,10 @@ function setPrefDefaults() {
   Services.prefs.setBoolPref("devtools.performance.ui.show-platform-data", true);
   Services.prefs.setBoolPref("devtools.inspector.showAllAnonymousContent", true);
   Services.prefs.setBoolPref("browser.dom.window.dump.enabled", true);
+  Services.prefs.setBoolPref("devtools.command-button-noautohide.enabled", true);
+  Services.prefs.setBoolPref("devtools.scratchpad.enabled", true);
+  // Bug 1225160 - Using source maps with browser debugging can lead to a crash
+  Services.prefs.setBoolPref("devtools.debugger.source-maps-enabled", false);
 }
 
 window.addEventListener("load", function() {
@@ -66,7 +75,7 @@ window.addEventListener("load", function() {
     let errorMessage = document.getElementById("error-message");
     errorMessage.value = e;
     errorMessageContainer.hidden = false;
-    Cu.reportError(e);
+    console.error(e);
   });
 });
 
@@ -105,9 +114,27 @@ function openToolbox({ form, chrome, isTabActor }) {
 }
 
 function onNewToolbox(toolbox) {
-   gToolbox = toolbox;
-   bindToolboxHandlers();
-   raise();
+  gToolbox = toolbox;
+  bindToolboxHandlers();
+  raise();
+  let env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
+  let testScript = env.get("MOZ_TOOLBOX_TEST_SCRIPT");
+  if (testScript) {
+    // Only allow executing random chrome scripts when a special
+    // test-only pref is set
+    let prefName = "devtools.browser-toolbox.allow-unsafe-script";
+    if (Services.prefs.getPrefType(prefName) == Services.prefs.PREF_BOOL &&
+        Services.prefs.getBoolPref(prefName) === true) {
+      evaluateTestScript(testScript, toolbox);
+    }
+  }
+}
+
+function evaluateTestScript(script, toolbox) {
+  let sandbox = Cu.Sandbox(window);
+  sandbox.window = window;
+  sandbox.toolbox = toolbox;
+  Cu.evalInSandbox(script, sandbox);
 }
 
 function bindToolboxHandlers() {
@@ -163,7 +190,7 @@ function onMessage(event) {
         setTitle(json.data.value);
         break;
     }
-  } catch(e) { Cu.reportError(e); }
+  } catch(e) { console.error(e); }
 }
 
 window.addEventListener("message", onMessage);

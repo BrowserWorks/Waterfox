@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure that the variables view displays the right variables and
@@ -15,13 +17,17 @@ function test() {
   // Debug test slaves are a bit slow at this test.
   requestLongerTimeout(2);
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gVariables = gDebugger.DebuggerView.Variables;
 
-    waitForSourceAndCaretAndScopes(gPanel, ".html", 24)
+    waitForCaretAndScopes(gPanel, 24)
       .then(testScopeVariables)
       .then(testArgumentsProperties)
       .then(testSimpleObject)
@@ -518,7 +524,7 @@ function testGetterSetterObject() {
     is(propNonEnums[0].querySelector(".name").getAttribute("value"), "get",
       "Should have the right property name for 'get'.");
     is(propNonEnums[0].querySelector(".value").getAttribute("value"),
-      "test/myVar.prop()",
+      "get prop()",
       "Should have the right property value for 'get'.");
     ok(propNonEnums[0].querySelector(".value").className.includes("token-other"),
       "Should have the right token class for 'get'.");
@@ -526,7 +532,7 @@ function testGetterSetterObject() {
     is(propNonEnums[1].querySelector(".name").getAttribute("value"), "set",
       "Should have the right property name for 'set'.");
     is(propNonEnums[1].querySelector(".value").getAttribute("value"),
-      "test/myVar.prop(val)",
+      "set prop(val)",
       "Should have the right property value for 'set'.");
     ok(propNonEnums[1].querySelector(".value").className.includes("token-other"),
       "Should have the right token class for 'set'.");
@@ -538,7 +544,7 @@ function testGetterSetterObject() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

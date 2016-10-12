@@ -81,7 +81,7 @@ public:
 
   // Inserted child content gets its frames parented by our child block
   virtual nsContainerFrame* GetContentInsertionFrame() override {
-    return GetFirstPrincipalChild()->GetContentInsertionFrame();
+    return PrincipalChildList().FirstChild()->GetContentInsertionFrame();
   }
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
@@ -92,6 +92,12 @@ public:
 
 protected:
   virtual bool IsInput() { return false; }
+
+  // Indicates whether we should clip our children's painting to our
+  // border-box (either because of "overflow" or because of legacy reasons
+  // about how <input>-flavored buttons work).
+  bool ShouldClipPaintingToBorderBox();
+
   // Reflows the button's sole child frame, and computes the desired size
   // of the button itself from the results.
   void ReflowButtonContents(nsPresContext* aPresContext,

@@ -68,7 +68,7 @@ var PROFILER_DATA = (function () {
   return data;
 })();
 
-var test = Task.async(function*() {
+var test = Task.async(function* () {
   let { target, panel, toolbox } = yield initPerformance(SIMPLE_URL);
   let { $, EVENTS, PerformanceController, DetailsView, OverviewView, JsCallTreeView } = panel.panelWin;
 
@@ -93,8 +93,8 @@ var test = Task.async(function*() {
 
   // Import recording.
 
-  let calltreeRendered = once(OverviewView, EVENTS.FRAMERATE_GRAPH_RENDERED);
-  let fpsRendered = once(JsCallTreeView, EVENTS.JS_CALL_TREE_RENDERED);
+  let calltreeRendered = once(OverviewView, EVENTS.UI_FRAMERATE_GRAPH_RENDERED);
+  let fpsRendered = once(JsCallTreeView, EVENTS.UI_JS_CALL_TREE_RENDERED);
   let imported = once(PerformanceController, EVENTS.RECORDING_IMPORTED);
   yield PerformanceController.importRecording("", file);
 
@@ -138,7 +138,7 @@ var test = Task.async(function*() {
       is(importedData.configuration[field], expected[field], `${field} successfully converted in legacy import.`);
     } else if (field === "profile") {
       is(importedData.profile.toSource(), expected.profile,
-        `profiler data's samples successfully converted in legacy import.`);
+        "profiler data's samples successfully converted in legacy import.");
       is(importedData.profile.meta.version, 3, "Updated meta version to 3.");
     } else {
       let data = importedData[field];

@@ -48,13 +48,13 @@ public:
     size_t approxBytesUsedBySubPictures() const { return fApproxBytesUsedBySubPictures; }
 
     SkDrawableList* getDrawableList() const { return fDrawableList.get(); }
-    SkDrawableList* detachDrawableList() { return fDrawableList.detach(); }
+    SkDrawableList* detachDrawableList() { return fDrawableList.release(); }
 
     // Make SkRecorder forget entirely about its SkRecord*; all calls to SkRecorder will fail.
     void forgetRecord();
 
     void willSave() override;
-    SaveLayerStrategy willSaveLayer(const SkRect*, const SkPaint*, SkCanvas::SaveFlags) override;
+    SaveLayerStrategy getSaveLayerStrategy(const SaveLayerRec&) override;
     void willRestore() override {}
     void didRestore() override;
 
@@ -106,7 +106,6 @@ public:
                          const SkPaint*) override;
     void onDrawBitmapNine(const SkBitmap&, const SkIRect& center, const SkRect& dst,
                           const SkPaint*) override;
-    void onDrawSprite(const SkBitmap&, int left, int top, const SkPaint*) override;
     void onDrawVertices(VertexMode vmode, int vertexCount,
                         const SkPoint vertices[], const SkPoint texs[],
                         const SkColor colors[], SkXfermode* xmode,
@@ -121,8 +120,9 @@ public:
     void onClipRegion(const SkRegion& deviceRgn, SkRegion::Op op) override;
 
     void onDrawPicture(const SkPicture*, const SkMatrix*, const SkPaint*) override;
+    void onDrawAnnotation(const SkRect&, const char[], SkData*) override;
 
-    SkSurface* onNewSurface(const SkImageInfo&, const SkSurfaceProps&) override { return nullptr; }
+    sk_sp<SkSurface> onNewSurface(const SkImageInfo&, const SkSurfaceProps&) override;
 
     void flushMiniRecorder();
 

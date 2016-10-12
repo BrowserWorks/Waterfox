@@ -106,6 +106,10 @@ AppsService.prototype = {
     return DOMApplicationRegistry.getWebAppsBasePath();
   },
 
+  areAnyAppsInstalled: function() {
+    return DOMApplicationRegistry.areAnyAppsInstalled();
+  },
+
   getAppInfo: function getAppInfo(aAppId) {
     debug("getAppInfo()");
     return DOMApplicationRegistry.getAppInfo(aAppId);
@@ -164,10 +168,6 @@ AppsService.prototype = {
     }
 
     return UserCustomizations.isFromExtension(aURI);
-  },
-
-  updateDataStoreEntriesFromLocalId: function(aLocalId) {
-    return DOMApplicationRegistry.updateDataStoreEntriesFromLocalId(aLocalId);
   },
 
   classID : APPS_SERVICE_CID,

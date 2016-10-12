@@ -11,6 +11,7 @@ const Cr = Components.results;
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/AddonManager.jsm");
+/*globals AddonManagerPrivate*/
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
@@ -428,7 +429,8 @@ AddonSearchResult.prototype = {
   toJSON: function() {
     let json = {};
 
-    for (let [property, value] of Iterator(this)) {
+    for (let property of Object.keys(this)) {
+      let value = this[property];
       if (property.startsWith("_") ||
           typeof(value) === "function")
         continue;
@@ -451,7 +453,8 @@ AddonSearchResult.prototype = {
       }
     }
 
-    for (let [property, value] of Iterator(this._unsupportedProperties)) {
+    for (let property of Object.keys(this._unsupportedProperties)) {
+      let value = this._unsupportedProperties[property];
       if (!property.startsWith("_"))
         json[property] = value;
     }
@@ -629,7 +632,8 @@ this.AddonRepository = {
     // Completely remove cache if caching is not enabled
     if (!this.cacheEnabled) {
       logger.debug("Clearing cache because it is disabled");
-      return this._clearCache();
+      yield this._clearCache();
+      return;
     }
 
     let ids = allAddons.map(a => a.id);
@@ -641,7 +645,8 @@ this.AddonRepository = {
     // Completely remove cache if there are no add-ons to cache
     if (addonsToCache.length == 0) {
       logger.debug("Clearing cache because 0 add-ons were requested");
-      return this._clearCache();
+      yield this._clearCache();
+      return;
     }
 
     yield new Promise((resolve, reject) =>
@@ -1833,7 +1838,7 @@ var AddonDatabase = {
 
     let addon = new AddonSearchResult(id);
 
-    for (let [expectedProperty,] of Iterator(AddonSearchResult.prototype)) {
+    for (let expectedProperty of Object.keys(AddonSearchResult.prototype)) {
       if (!(expectedProperty in aObj) ||
           typeof(aObj[expectedProperty]) === "function")
         continue;
@@ -1881,8 +1886,8 @@ var AddonDatabase = {
 
           case "icons":
             if (!addon.icons) addon.icons = {};
-            for (let [size, url] of Iterator(aObj.icons)) {
-              addon.icons[size] = url;
+            for (let size of Object.keys(aObj.icons)) {
+              addon.icons[size] = aObj.icons[size];
             }
             break;
 

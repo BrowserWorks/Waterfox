@@ -68,10 +68,10 @@ BEGIN_TEST(testJitGVN_FixupOSROnlyLoop)
     exit->add(u);
     exit->end(MReturn::New(func.alloc, u));
 
-    innerHeader->addPredecessorWithoutPhis(innerBackedge);
-    outerHeader->addPredecessorWithoutPhis(outerBackedge);
-    exit->addPredecessorWithoutPhis(entry);
-    merge->addPredecessorWithoutPhis(osrEntry);
+    MOZ_ALWAYS_TRUE(innerHeader->addPredecessorWithoutPhis(innerBackedge));
+    MOZ_ALWAYS_TRUE(outerHeader->addPredecessorWithoutPhis(outerBackedge));
+    MOZ_ALWAYS_TRUE(exit->addPredecessorWithoutPhis(entry));
+    MOZ_ALWAYS_TRUE(merge->addPredecessorWithoutPhis(osrEntry));
 
     outerHeader->setLoopHeader(outerBackedge);
     innerHeader->setLoopHeader(innerBackedge);
@@ -160,11 +160,11 @@ BEGIN_TEST(testJitGVN_FixupOSROnlyLoopNested)
     exit->add(u);
     exit->end(MReturn::New(func.alloc, u));
 
-    innerHeader->addPredecessorWithoutPhis(innerBackedge);
-    middleHeader->addPredecessorWithoutPhis(middleBackedge);
-    outerHeader->addPredecessorWithoutPhis(outerBackedge);
-    exit->addPredecessorWithoutPhis(entry);
-    merge->addPredecessorWithoutPhis(osrEntry);
+    MOZ_ALWAYS_TRUE(innerHeader->addPredecessorWithoutPhis(innerBackedge));
+    MOZ_ALWAYS_TRUE(middleHeader->addPredecessorWithoutPhis(middleBackedge));
+    MOZ_ALWAYS_TRUE(outerHeader->addPredecessorWithoutPhis(outerBackedge));
+    MOZ_ALWAYS_TRUE(exit->addPredecessorWithoutPhis(entry));
+    MOZ_ALWAYS_TRUE(merge->addPredecessorWithoutPhis(osrEntry));
 
     outerHeader->setLoopHeader(outerBackedge);
     middleHeader->setLoopHeader(middleBackedge);
@@ -231,10 +231,10 @@ BEGIN_TEST(testJitGVN_PinnedPhis)
     MConstant* z1 = MConstant::New(func.alloc, Int32Value(1));
     MConstant* z2 = MConstant::New(func.alloc, Int32Value(2));
     MConstant* z3 = MConstant::New(func.alloc, Int32Value(2));
-    phi0->addInputSlow(z0);
-    phi1->addInputSlow(z1);
-    phi2->addInputSlow(z2);
-    phi3->addInputSlow(z3);
+    MOZ_RELEASE_ASSERT(phi0->addInputSlow(z0));
+    MOZ_RELEASE_ASSERT(phi1->addInputSlow(z1));
+    MOZ_RELEASE_ASSERT(phi2->addInputSlow(z2));
+    MOZ_RELEASE_ASSERT(phi3->addInputSlow(z3));
     entry->add(z0);
     entry->add(z1);
     entry->add(z2);
@@ -259,18 +259,18 @@ BEGIN_TEST(testJitGVN_PinnedPhis)
     MConstant* z5 = MConstant::New(func.alloc, Int32Value(4));
     MInstruction* z6 = MAdd::New(func.alloc, phi2, phi3);
     MConstant* z7 = MConstant::New(func.alloc, Int32Value(6));
-    phi0->addInputSlow(z4);
-    phi1->addInputSlow(z5);
-    phi2->addInputSlow(z6);
-    phi3->addInputSlow(z7);
+    MOZ_RELEASE_ASSERT(phi0->addInputSlow(z4));
+    MOZ_RELEASE_ASSERT(phi1->addInputSlow(z5));
+    MOZ_RELEASE_ASSERT(phi2->addInputSlow(z6));
+    MOZ_RELEASE_ASSERT(phi3->addInputSlow(z7));
     exit->add(z4);
     exit->add(z5);
     exit->add(z6);
     exit->add(z7);
     exit->end(MGoto::New(func.alloc, outerHeader));
 
-    innerHeader->addPredecessorWithoutPhis(innerBackedge);
-    outerHeader->addPredecessorWithoutPhis(exit);
+    MOZ_ALWAYS_TRUE(innerHeader->addPredecessorWithoutPhis(innerBackedge));
+    MOZ_ALWAYS_TRUE(outerHeader->addPredecessorWithoutPhis(exit));
 
     outerHeader->setLoopHeader(exit);
     innerHeader->setLoopHeader(innerBackedge);

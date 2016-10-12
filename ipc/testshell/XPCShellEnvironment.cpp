@@ -46,6 +46,8 @@ using mozilla::ipc::XPCShellEnvironment;
 using mozilla::ipc::TestShellChild;
 using mozilla::ipc::TestShellParent;
 using mozilla::AutoSafeJSContext;
+using mozilla::dom::AutoJSAPI;
+using mozilla::dom::AutoEntryScript;
 using namespace JS;
 
 namespace {
@@ -73,8 +75,11 @@ private:
 inline XPCShellEnvironment*
 Environment(Handle<JSObject*> global)
 {
-    AutoSafeJSContext cx;
-    JSAutoCompartment ac(cx, global);
+    AutoJSAPI jsapi;
+    if (!jsapi.Init(global)) {
+        return nullptr;
+    }
+    JSContext* cx = jsapi.cx();
     Rooted<Value> v(cx);
     if (!JS_GetProperty(cx, global, "__XPCShellEnvironment", &v) ||
         !v.get().isDouble())
@@ -254,7 +259,7 @@ GCZeal(JSContext *cx, unsigned argc, JS::Value *vp)
   if (!ToUint32(cx, args.get(0), &zeal))
     return false;
 
-  JS_SetGCZeal(cx, uint8_t(zeal), JS_DEFAULT_ZEAL_FREQ);
+  JS_SetGCZeal(JS_GetRuntime(cx), uint8_t(zeal), JS_DEFAULT_ZEAL_FREQ);
   return true;
 }
 #endif
@@ -451,10 +456,14 @@ XPCShellEnvironment::XPCShellEnvironment()
 
 XPCShellEnvironment::~XPCShellEnvironment()
 {
+    if (GetGlobalObject()) {
+        AutoJSAPI jsapi;
+        if (!jsapi.Init(GetGlobalObject())) {
+            return;
+        }
+        JSContext* cx = jsapi.cx();
+        Rooted<JSObject*> global(cx, GetGlobalObject());
 
-    AutoSafeJSContext cx;
-    Rooted<JSObject*> global(cx, GetGlobalObject());
-    if (global) {
         {
             JSAutoCompartment ac(cx, global);
             JS_SetAllNonReservedSlotsToUndefined(cx, global);
@@ -568,9 +577,9 @@ bool
 XPCShellEnvironment::EvaluateString(const nsString& aString,
                                     nsString* aResult)
 {
-  AutoSafeJSContext cx;
-  JS::Rooted<JSObject*> global(cx, GetGlobalObject());
-  JSAutoCompartment ac(cx, global);
+  AutoEntryScript aes(GetGlobalObject(),
+                      "ipc XPCShellEnvironment::EvaluateString");
+  JSContext* cx = aes.cx();
 
   JS::CompileOptions options(cx);
   options.setFileAndLine("typein", 0);

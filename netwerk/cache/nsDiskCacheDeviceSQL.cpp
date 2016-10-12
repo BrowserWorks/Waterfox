@@ -1,4 +1,4 @@
-/* -*- Mode: C++; indent-tab-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim:set ts=2 sw=2 sts=2 et cin: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -246,7 +246,7 @@ nsOfflineCacheEvictionFunction::Apply()
   Reset();
 }
 
-class nsOfflineCacheDiscardCache : public nsRunnable
+class nsOfflineCacheDiscardCache : public Runnable
 {
 public:
   nsOfflineCacheDiscardCache(nsOfflineCacheDevice *device,
@@ -868,7 +868,7 @@ nsApplicationCache::GetUsage(uint32_t *usage)
  * nsCloseDBEvent
  *****************************************************************************/
 
-class nsCloseDBEvent : public nsRunnable {
+class nsCloseDBEvent : public Runnable {
 public:
   explicit nsCloseDBEvent(mozIStorageConnection *aDB)
   {
@@ -2404,7 +2404,7 @@ nsOfflineCacheDevice::Evict(nsILoadContextInfo *aInfo)
 
   mozilla::OriginAttributes const *oa = aInfo->OriginAttributesPtr();
 
-  if (oa->mAppId == NECKO_NO_APP_ID && oa->mInBrowser == false) {
+  if (oa->mAppId == NECKO_NO_APP_ID && oa->mInIsolatedMozBrowser == false) {
     nsCOMPtr<nsICacheService> serv = do_GetService(kCacheServiceCID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 

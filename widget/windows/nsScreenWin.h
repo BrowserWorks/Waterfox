@@ -33,11 +33,11 @@ public:
   NS_IMETHOD GetPixelDepth(int32_t* aPixelDepth);
   NS_IMETHOD GetColorDepth(int32_t* aColorDepth);
 
-  NS_IMETHOD GetContentsScaleFactor(double *aContentsScaleFactor) override;
+  NS_IMETHOD GetContentsScaleFactor(double* aContentsScaleFactor) override;
+
+  NS_IMETHOD GetDefaultCSSScaleFactor(double* aScaleFactor) override;
 
 private:
-  double GetDPIScale();
-
   HMONITOR mScreen;
   uint32_t mId;
 };

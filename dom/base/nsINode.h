@@ -51,6 +51,7 @@ class nsIURI;
 class nsNodeSupportsWeakRefTearoff;
 class nsNodeWeakReference;
 class nsDOMMutationObserver;
+struct ServoNodeData;
 
 namespace mozilla {
 class EventListenerManager;
@@ -75,6 +76,8 @@ class DOMRectReadOnly;
 class Element;
 class EventHandlerNonNull;
 template<typename T> class Optional;
+class OwningNodeOrString;
+template<typename> class Sequence;
 class Text;
 class TextOrElementOrDocument;
 struct DOMPointInit;
@@ -267,8 +270,12 @@ public:
   typedef mozilla::dom::DOMPointInit DOMPointInit;
   typedef mozilla::dom::DOMQuad DOMQuad;
   typedef mozilla::dom::DOMRectReadOnly DOMRectReadOnly;
+  typedef mozilla::dom::OwningNodeOrString OwningNodeOrString;
   typedef mozilla::dom::TextOrElementOrDocument TextOrElementOrDocument;
   typedef mozilla::ErrorResult ErrorResult;
+
+  template<class T>
+  using Sequence = mozilla::dom::Sequence<T>;
 
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_INODE_IID)
 
@@ -313,14 +320,17 @@ public:
 
 #ifdef MOZILLA_INTERNAL_API
   explicit nsINode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
-  : mNodeInfo(aNodeInfo),
-    mParent(nullptr),
-    mBoolFlags(0),
-    mNextSibling(nullptr),
-    mPreviousSibling(nullptr),
-    mFirstChild(nullptr),
-    mSubtreeRoot(this),
-    mSlots(nullptr)
+  : mNodeInfo(aNodeInfo)
+  , mParent(nullptr)
+  , mBoolFlags(0)
+  , mNextSibling(nullptr)
+  , mPreviousSibling(nullptr)
+  , mFirstChild(nullptr)
+  , mSubtreeRoot(this)
+  , mSlots(nullptr)
+#ifdef MOZ_STYLO
+  , mServoNodeData(nullptr)
+#endif
   {
   }
 #endif
@@ -482,7 +492,7 @@ public:
    *
    * https://dom.spec.whatwg.org/#dom-node-ownerdocument
    *
-   * For all other cases GetOwnerDoc and GetOwnerDocument behave identically.
+   * For all other cases OwnerDoc and GetOwnerDocument behave identically.
    */
   nsIDocument *OwnerDoc() const
   {
@@ -506,14 +516,6 @@ public:
   }
 
   /**
-   * @deprecated
-   */
-  bool IsInDoc() const
-  {
-    return IsInUncomposedDoc();
-  }
-
-  /**
    * Get the document that this content is currently in, if any. This will be
    * null if the content has no ancestor that is a document.
    *
@@ -526,14 +528,6 @@ public:
   }
 
   /**
-   * @deprecated
-   */
-  nsIDocument *GetCurrentDoc() const
-  {
-    return GetUncomposedDoc();
-  }
-
-  /**
    * This method returns the owner doc if the node is in the
    * composed document (as defined in the Shadow DOM spec), otherwise
    * it returns null.
@@ -542,14 +536,6 @@ public:
   {
     return IsInShadowTree() ?
       GetComposedDocInternal() : GetUncomposedDoc();
-  }
-
-  /**
-   * @deprecated
-   */
-  nsIDocument* GetCrossShadowCurrentDoc() const
-  {
-    return GetComposedDoc();
   }
 
   /**
@@ -721,7 +707,7 @@ public:
   {
     return InsertChildAt(aKid, GetChildCount(), aNotify);
   }
-  
+
   /**
    * Remove a child from this node.  This method handles calling UnbindFromTree
    * on the child appropriately.
@@ -884,7 +870,7 @@ public:
   virtual void* UnsetProperty(uint16_t aCategory,
                               nsIAtom *aPropertyName,
                               nsresult *aStatus = nullptr);
-  
+
   bool HasProperties() const
   {
     return HasFlag(NODE_HAS_PROPERTIES);
@@ -916,7 +902,7 @@ public:
   {
     return mParent;
   }
-  
+
   /**
    * Get the parent nsINode for this node if it is an Element.
    * @return the parent node
@@ -939,6 +925,11 @@ public:
    */
   nsINode* SubtreeRoot() const;
 
+  nsINode* RootNode() const
+  {
+    return SubtreeRoot();
+  }
+
   /**
    * See nsIDOMEventTarget
    */
@@ -953,14 +944,14 @@ public:
   using nsIDOMEventTarget::AddEventListener;
   virtual void AddEventListener(const nsAString& aType,
                                 mozilla::dom::EventListener* aListener,
-                                bool aUseCapture,
+                                const mozilla::dom::AddEventListenerOptionsOrBoolean& aOptions,
                                 const mozilla::dom::Nullable<bool>& aWantsUntrusted,
                                 mozilla::ErrorResult& aRv) override;
   using nsIDOMEventTarget::AddSystemEventListener;
 
   virtual bool HasApzAwareListeners() const override;
 
-  virtual nsIDOMWindow* GetOwnerGlobalForBindings() override;
+  virtual nsPIDOMWindowOuter* GetOwnerGlobalForBindings() override;
   virtual nsIGlobalObject* GetOwnerGlobal() const override;
 
   /**
@@ -1246,7 +1237,7 @@ protected:
     }
     return nullptr;
   }
-  
+
 public:
   void GetTextContent(nsAString& aTextContent,
                       mozilla::ErrorResult& aError)
@@ -1301,7 +1292,7 @@ public:
   nsresult GetUserData(const nsAString& aKey, nsIVariant** aResult)
   {
     NS_IF_ADDREF(*aResult = GetUserData(aKey));
-  
+
     return NS_OK;
   }
 
@@ -1462,7 +1453,7 @@ private:
     NodeIsCCMarkedRoot,
     // Maybe set if this node is in black subtree.
     NodeIsCCBlackTree,
-    // Maybe set if the node is a root of a subtree 
+    // Maybe set if the node is a root of a subtree
     // which needs to be kept in the purple buffer.
     NodeIsPurpleRoot,
     // Set if the node has an explicit base URI stored
@@ -1615,8 +1606,11 @@ public:
                "ClearHasTextNodeDirectionalityMap on non-text node");
     ClearBoolFlag(NodeHasTextNodeDirectionalityMap);
   }
-  bool HasTextNodeDirectionalityMap() const
-    { return GetBoolFlag(NodeHasTextNodeDirectionalityMap); }
+  bool HasTextNodeDirectionalityMap() const {
+    MOZ_ASSERT(NodeType() == nsIDOMNode::TEXT_NODE,
+               "HasTextNodeDirectionalityMap on non-text node");
+    return GetBoolFlag(NodeHasTextNodeDirectionalityMap);
+  }
 
   void SetHasDirAuto() { SetBoolFlag(NodeHasDirAuto); }
   void ClearHasDirAuto() { ClearBoolFlag(NodeHasDirAuto); }
@@ -1685,7 +1679,7 @@ protected:
   void SetSubtreeRootPointer(nsINode* aSubtreeRoot)
   {
     NS_ASSERTION(aSubtreeRoot, "aSubtreeRoot can never be null!");
-    NS_ASSERTION(!(IsNodeOfType(eCONTENT) && IsInDoc()) &&
+    NS_ASSERTION(!(IsNodeOfType(eCONTENT) && IsInUncomposedDoc()) &&
                  !IsInShadowTree(), "Shouldn't be here!");
     mSubtreeRoot = aSubtreeRoot;
   }
@@ -1761,6 +1755,7 @@ public:
   }
   nsINode* RemoveChild(nsINode& aChild, mozilla::ErrorResult& aError);
   already_AddRefed<nsINode> CloneNode(bool aDeep, mozilla::ErrorResult& aError);
+  bool IsSameNode(nsINode* aNode);
   bool IsEqualNode(nsINode* aNode);
   void GetNamespaceURI(nsAString& aNamespaceURI) const
   {
@@ -1806,6 +1801,11 @@ public:
   // ChildNode methods
   mozilla::dom::Element* GetPreviousElementSibling() const;
   mozilla::dom::Element* GetNextElementSibling() const;
+
+  void Before(const Sequence<OwningNodeOrString>& aNodes, ErrorResult& aRv);
+  void After(const Sequence<OwningNodeOrString>& aNodes, ErrorResult& aRv);
+  void ReplaceWith(const Sequence<OwningNodeOrString>& aNodes,
+                   ErrorResult& aRv);
   /**
    * Remove this node from its parent, if any.
    */
@@ -1814,6 +1814,9 @@ public:
   // ParentNode methods
   mozilla::dom::Element* GetFirstElementChild() const;
   mozilla::dom::Element* GetLastElementChild() const;
+
+  void Prepend(const Sequence<OwningNodeOrString>& aNodes, ErrorResult& aRv);
+  void Append(const Sequence<OwningNodeOrString>& aNodes, ErrorResult& aRv);
 
   void GetBoxQuads(const BoxQuadOptions& aOptions,
                    nsTArray<RefPtr<DOMQuad> >& aResult,
@@ -1971,6 +1974,23 @@ public:
 #undef TOUCH_EVENT
 #undef EVENT
 
+  ServoNodeData* GetServoNodeData() {
+#ifdef MOZ_STYLO
+    return mServoNodeData;
+#else
+    MOZ_CRASH("Accessing servo node data in non-stylo build");
+#endif
+  }
+
+  void SetServoNodeData(ServoNodeData* aData) {
+#ifdef MOZ_STYLO
+  MOZ_ASSERT(!mServoNodeData);
+  mServoNodeData = aData;
+#else
+    MOZ_CRASH("Setting servo node data in non-stylo build");
+#endif
+  }
+
 protected:
   static bool Traverse(nsINode *tmp, nsCycleCollectionTraversalCallback &cb);
   static void Unlink(nsINode *tmp);
@@ -2008,6 +2028,11 @@ protected:
 
   // Storage for more members that are usually not needed; allocated lazily.
   nsSlots* mSlots;
+
+#ifdef MOZ_STYLO
+  // Layout data managed by Servo.
+  ServoNodeData* mServoNodeData;
+#endif
 };
 
 inline nsIDOMNode* GetAsDOMNode(nsINode* aNode)

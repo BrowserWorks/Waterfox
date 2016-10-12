@@ -7,6 +7,7 @@
 #include "DaemonSocket.h"
 #include "mozilla/ipc/DaemonSocketConsumer.h"
 #include "mozilla/ipc/DaemonSocketPDU.h"
+#include "mozilla/UniquePtr.h"
 #include "nsISupportsImpl.h" // for MOZ_COUNT_CTOR, MOZ_COUNT_DTOR
 
 #ifdef CHROMIUM_LOG
@@ -62,7 +63,7 @@ public:
 private:
   DaemonSocket* mConnection;
   DaemonSocketIOConsumer* mConsumer;
-  nsAutoPtr<DaemonSocketPDU> mPDU;
+  UniquePtr<DaemonSocketPDU> mPDU;
   bool mShuttingDownOnIOThread;
 };
 
@@ -103,7 +104,7 @@ DaemonSocketIO::QueryReceiveBuffer(UnixSocketIOBuffer** aBuffer)
 
   if (!mPDU) {
     /* There's only one PDU for receiving. We reuse it every time. */
-    mPDU = new DaemonSocketPDU(DaemonSocketPDU::MAX_PAYLOAD_LENGTH);
+    mPDU = MakeUnique<DaemonSocketPDU>(DaemonSocketPDU::PDU_MAX_PAYLOAD_LENGTH);
   }
   *aBuffer = mPDU.get();
 
@@ -217,8 +218,8 @@ DaemonSocket::SendSocketData(UnixSocketIOBuffer* aBuffer)
   MOZ_ASSERT(mIO->IsConsumerThread());
 
   mIO->GetIOLoop()->PostTask(
-    FROM_HERE,
-    new SocketIOSendTask<DaemonSocketIO, UnixSocketIOBuffer>(mIO, aBuffer));
+    MakeAndAddRef<SocketIOSendTask<DaemonSocketIO, UnixSocketIOBuffer>>(
+      mIO, aBuffer));
 }
 
 // |SocketBase|
@@ -234,7 +235,7 @@ DaemonSocket::Close()
   MOZ_ASSERT(mIO->IsConsumerThread());
 
   mIO->ShutdownOnConsumerThread();
-  mIO->GetIOLoop()->PostTask(FROM_HERE, new SocketIOShutdownTask(mIO));
+  mIO->GetIOLoop()->PostTask(MakeAndAddRef<SocketIOShutdownTask>(mIO));
   mIO = nullptr;
 
   NotifyDisconnect();

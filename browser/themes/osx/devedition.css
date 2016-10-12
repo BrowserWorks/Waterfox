@@ -4,6 +4,10 @@
 
 %include ../shared/devedition.inc.css
 
+:root {
+  --forwardbutton-width: 32px;
+}
+
 /* Use only 1px separator between nav toolbox and page content */
 #navigator-toolbox::after {
   background: linear-gradient(to top, var(--chrome-navigator-toolbox-separator-color), var(--chrome-navigator-toolbox-separator-color) 1px, transparent 1px);
@@ -40,7 +44,7 @@
 }
 
 #forward-button {
-  -moz-border-start: none !important;
+  border-inline-start: none !important;
   /* browser.css and friends set up the width of the button to be 32px.
    * They then set margin-left to -2px to ensure the button is not too wide
    * compared to the back button, and set padding-left to center the icon
@@ -116,4 +120,10 @@
   .tab-close-button[visuallyselected=true]:not(:hover) {
     -moz-image-region: rect(0, 128px, 32px, 96px);
   }
+}
+
+.ac-type-icon {
+  /* Left-align the type icon in awesomebar popup results with the icon in the
+     urlbar. */
+  margin-inline-start: 14px;
 }

@@ -10,7 +10,7 @@
  * nsWindow - Native window management and event handling.
  */
 
-#include "nsAutoPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsBaseWidget.h"
 #include "nsWindowBase.h"
 #include "nsdefs.h"
@@ -58,6 +58,7 @@ namespace mozilla {
 namespace widget {
 class NativeKey;
 struct MSGResult;
+class WinCompositorWidgetProxy;
 } // namespace widget
 } // namespacw mozilla;
 
@@ -85,6 +86,7 @@ public:
   // nsWindowBase
   virtual void InitEvent(mozilla::WidgetGUIEvent& aEvent,
                          LayoutDeviceIntPoint* aPoint = nullptr) override;
+  virtual WidgetEventTime CurrentMessageWidgetEventTime() const override;
   virtual bool DispatchWindowEvent(mozilla::WidgetGUIEvent* aEvent) override;
   virtual bool DispatchKeyboardEvent(mozilla::WidgetKeyboardEvent* aEvent) override;
   virtual bool DispatchWheelEvent(mozilla::WidgetWheelEvent* aEvent) override;
@@ -172,11 +174,6 @@ public:
                                           LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT,
                                           bool* aAllowRetaining = nullptr) override;
   NS_IMETHOD              OnDefaultButtonLoaded(const LayoutDeviceIntRect& aButtonRect) override;
-  NS_IMETHOD              OverrideSystemMouseScrollSpeed(double aOriginalDeltaX,
-                                                         double aOriginalDeltaY,
-                                                         double& aOverriddenDeltaX,
-                                                         double& aOverriddenDeltaY) override;
-
   virtual nsresult        SynthesizeNativeKeyEvent(int32_t aNativeKeyboardLayout,
                                                    int32_t aNativeKeyCode,
                                                    uint32_t aModifierFlags,
@@ -203,6 +200,8 @@ public:
   NS_IMETHOD_(void)       SetInputContext(const InputContext& aContext,
                                           const InputContextAction& aAction) override;
   NS_IMETHOD_(InputContext) GetInputContext() override;
+  NS_IMETHOD_(TextEventDispatcherListener*)
+    GetNativeTextEventDispatcherListener() override;
 #ifdef MOZ_XUL
   virtual void            SetTransparencyMode(nsTransparencyMode aMode) override;
   virtual nsTransparencyMode GetTransparencyMode() override;
@@ -212,8 +211,6 @@ public:
   NS_IMETHOD              GetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
   NS_IMETHOD              SetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
   void                    SetDrawsInTitlebar(bool aState) override;
-  already_AddRefed<mozilla::gfx::DrawTarget> StartRemoteDrawing() override;
-  virtual void            EndRemoteDrawing() override;
   virtual void            UpdateWindowDraggingRegion(const LayoutDeviceIntRegion& aRegion) override;
 
   virtual void            UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries) override;
@@ -265,7 +262,7 @@ public:
   virtual bool            AutoErase(HDC dc);
   bool ComputeShouldAccelerate() override;
 
-  static void             ClearCompositor(nsWindow* aWindow);
+  void                    ForcePresent();
 
   /**
    * AssociateDefaultIMC() associates or disassociates the default IMC for
@@ -305,14 +302,18 @@ public:
   bool IsPopup();
   virtual bool ShouldUseOffMainThreadCompositing() override;
 
-  bool CaptureWidgetOnScreen(RefPtr<mozilla::gfx::DrawTarget> aDT) override;
-
   const IMEContext& DefaultIMC() const { return mDefaultIMC; }
 
-  virtual void SetCandidateWindowForPlugin(int32_t aX,
-                                           int32_t aY) override;
+  virtual void SetCandidateWindowForPlugin(
+                 const mozilla::widget::CandidateWindowPosition&
+                   aPosition) override;
   virtual void DefaultProcOfPluginEvent(
                  const mozilla::WidgetPluginEvent& aEvent) override;
+  virtual nsresult OnWindowedPluginKeyEvent(
+                     const mozilla::NativeEventData& aKeyEventData,
+                     nsIKeyEventInPluginCallback* aCallback) override;
+
+  mozilla::widget::CompositorWidgetProxy* NewCompositorWidgetProxy() override;
 
 protected:
   virtual ~nsWindow();
@@ -320,12 +321,17 @@ protected:
   virtual void WindowUsesOMTC() override;
   virtual void RegisterTouchWindow() override;
 
-  virtual nsresult NotifyIMEInternal(
-                     const IMENotification& aIMENotification) override;
-
   // A magic number to identify the FAKETRACKPOINTSCROLLABLE window created
   // when the trackpoint hack is enabled.
   enum { eFakeTrackPointScrollableID = 0x46545053 };
+
+  // Used for displayport suppression during window resize
+  enum ResizeState {
+    NOT_RESIZING,
+    IN_SIZEMOVE,
+    RESIZING,
+    MOVING
+  };
 
   /**
    * Callbacks
@@ -402,8 +408,9 @@ protected:
   static bool             ConvertStatus(nsEventStatus aStatus);
   static void             PostSleepWakeNotification(const bool aIsSleepMode);
   int32_t                 ClientMarginHitTestPoint(int32_t mx, int32_t my);
-  TimeStamp               GetMessageTimeStamp(LONG aEventTime);
+  TimeStamp               GetMessageTimeStamp(LONG aEventTime) const;
   static void             UpdateFirstEventTime(DWORD aEventTime);
+  void                    FinishLiveResizing(ResizeState aNewState);
 
   /**
    * Event handlers
@@ -461,10 +468,6 @@ protected:
 private:
   void                    SetWindowTranslucencyInner(nsTransparencyMode aMode);
   nsTransparencyMode      GetWindowTranslucencyInner() const { return mTransparencyMode; }
-  void                    ResizeTranslucentWindow(int32_t aNewWidth, int32_t aNewHeight, bool force = false);
-  nsresult                UpdateTranslucentWindow();
-  void                    ClearTranslucentWindow();
-  void                    SetupTranslucentWindowMemoryBitmap(nsTransparencyMode aMode);
   void                    UpdateGlass();
 protected:
 #endif // MOZ_XUL
@@ -484,9 +487,8 @@ protected:
   static void             ActivateOtherWindowHelper(HWND aWnd);
   void                    ClearCachedResources();
   nsIWidgetListener*      GetPaintListener();
-  static bool             IsRenderMode(gfxWindowsPlatform::RenderMode aMode);
-  virtual bool            PreRender(LayerManagerComposite*) override;
-  virtual void            PostRender(LayerManagerComposite*) override;
+
+  mozilla::widget::WinCompositorWidgetProxy* GetCompositorWidgetProxy();
 
 protected:
   nsCOMPtr<nsIWidget>   mParent;
@@ -583,23 +585,13 @@ protected:
 
   // Graphics
   HDC                   mPaintDC; // only set during painting
-  HDC                   mCompositeDC; // only set during StartRemoteDrawing
 
   LayoutDeviceIntRect   mLastPaintBounds;
 
-  // Used for displayport suppression during window resize
-  enum ResizeState {
-    NOT_RESIZING,
-    IN_SIZEMOVE,
-    RESIZING,
-  };
   ResizeState mResizeState;
 
   // Transparency
 #ifdef MOZ_XUL
-  // Use layered windows to support full 256 level alpha translucency
-  RefPtr<gfxASurface> mTransparentSurface;
-  HDC                   mMemoryDC;
   nsTransparencyMode    mTransparencyMode;
   nsIntRegion           mPossiblyTransparentRegion;
   MARGINS               mGlassMargins;
@@ -632,8 +624,6 @@ protected:
 
   static bool sNeedsToInitMouseWheelSettings;
   static void InitMouseWheelScrollData();
-
-  CRITICAL_SECTION mPresentLock;
 
   double mSizeConstraintsScale; // scale in effect when setting constraints
 };

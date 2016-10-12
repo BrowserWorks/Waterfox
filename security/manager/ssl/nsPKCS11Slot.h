@@ -4,17 +4,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __NS_PKCS11SLOT_H__
-#define __NS_PKCS11SLOT_H__
+#ifndef nsPKCS11Slot_h
+#define nsPKCS11Slot_h
 
-#include "nsISupports.h"
-#include "nsIPKCS11Slot.h"
+#include "ScopedNSSTypes.h"
+#include "nsICryptoFIPSInfo.h"
 #include "nsIPKCS11Module.h"
 #include "nsIPKCS11ModuleDB.h"
-#include "nsICryptoFIPSInfo.h"
+#include "nsIPKCS11Slot.h"
+#include "nsISupports.h"
+#include "nsNSSShutDown.h"
 #include "nsString.h"
 #include "pk11func.h"
-#include "nsNSSShutDown.h"
 
 class nsPKCS11Slot : public nsIPKCS11Slot,
                      public nsNSSShutDownObject
@@ -23,20 +24,19 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIPKCS11SLOT
 
-  explicit nsPKCS11Slot(PK11SlotInfo *slot);
+  explicit nsPKCS11Slot(PK11SlotInfo* slot);
 
 protected:
   virtual ~nsPKCS11Slot();
 
 private:
-
-  PK11SlotInfo *mSlot;
+  mozilla::UniquePK11SlotInfo mSlot;
   nsString mSlotDesc, mSlotManID, mSlotHWVersion, mSlotFWVersion;
   int mSeries;
 
   virtual void virtualDestroyNSSReference() override;
   void destructorSafeDestroyNSSReference();
-  void refreshSlotInfo();
+  nsresult refreshSlotInfo(const nsNSSShutDownPreventionLock& proofOfLock);
 };
 
 class nsPKCS11Module : public nsIPKCS11Module,
@@ -46,20 +46,21 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIPKCS11MODULE
 
-  explicit nsPKCS11Module(SECMODModule *module);
+  explicit nsPKCS11Module(SECMODModule* module);
 
 protected:
   virtual ~nsPKCS11Module();
 
 private:
-  SECMODModule *mModule;
+  mozilla::UniqueSECMODModule mModule;
 
   virtual void virtualDestroyNSSReference() override;
   void destructorSafeDestroyNSSReference();
 };
 
-class nsPKCS11ModuleDB : public nsIPKCS11ModuleDB,
-                         public nsICryptoFIPSInfo
+class nsPKCS11ModuleDB : public nsIPKCS11ModuleDB
+                       , public nsICryptoFIPSInfo
+                       , public nsNSSShutDownObject
 {
 public:
   NS_DECL_ISUPPORTS
@@ -70,11 +71,32 @@ public:
 
 protected:
   virtual ~nsPKCS11ModuleDB();
-  /* additional members */
+
+  // Nothing to release.
+  virtual void virtualDestroyNSSReference() override {}
 };
 
 #define NS_PKCS11MODULEDB_CID \
 { 0xff9fbcd7, 0x9517, 0x4334, \
   { 0xb9, 0x7a, 0xce, 0xed, 0x78, 0x90, 0x99, 0x74 }}
 
-#endif
+class MOZ_RAII AutoSECMODListReadLock final
+{
+public:
+  AutoSECMODListReadLock()
+    : mLock(SECMOD_GetDefaultModuleListLock())
+  {
+    MOZ_ASSERT(mLock, "Should have the default SECMOD lock");
+    SECMOD_GetReadLock(mLock);
+  }
+
+  ~AutoSECMODListReadLock()
+  {
+    SECMOD_ReleaseReadLock(mLock);
+  }
+
+private:
+  SECMODListLock* mLock;
+};
+
+#endif // nsPKCS11Slot_h

@@ -16,6 +16,24 @@
 #include "SkTDArray.h"
 #include "SkTypes.h"
 
+// matches old SkCanvas::SaveFlags
+enum LegacySaveFlags {
+    kHasAlphaLayer_LegacySaveFlags    = 0x04,
+    kClipToLayer_LegacySaveFlags      = 0x10,
+};
+
+SkCanvas::SaveLayerFlags SkCanvas::LegacySaveFlagsToSaveLayerFlags(uint32_t flags) {
+    uint32_t layerFlags = 0;
+
+    if (0 == (flags & kClipToLayer_LegacySaveFlags)) {
+        layerFlags |= SkCanvas::kDontClipToLayer_PrivateSaveLayerFlag;
+    }
+    if (0 == (flags & kHasAlphaLayer_LegacySaveFlags)) {
+        layerFlags |= kIsOpaque_SaveLayerFlag;
+    }
+    return layerFlags;
+}
+
 /*
  * Read the next op code and chunk size from 'reader'. The returned size
  * is the entire size of the chunk (including the opcode). Thus, the
@@ -157,6 +175,11 @@ void SkPicturePlayback::handleOp(SkReader32* reader,
             canvas->concat(matrix);
             break;
         }
+        case DRAW_ANNOTATION: {
+            const SkRect& rect = reader->skipT<SkRect>();
+            const char* key = reader->readString();
+            canvas->drawAnnotation(rect, key, reader->readData().get());
+        } break;
         case DRAW_ATLAS: {
             const SkPaint* paint = fPictureData->getPaint(reader);
             const SkImage* atlas = fPictureData->getImage(reader);
@@ -284,15 +307,15 @@ void SkPicturePlayback::handleOp(SkReader32* reader,
                 texCoords = (const SkPoint*)reader->skip(SkPatchUtils::kNumCorners *
                                                          sizeof(SkPoint));
             }
-            SkAutoTUnref<SkXfermode> xfer;
+            sk_sp<SkXfermode> xfer;
             if (flag & DRAW_VERTICES_HAS_XFER) {
                 int mode = reader->readInt();
                 if (mode < 0 || mode > SkXfermode::kLastMode) {
                     mode = SkXfermode::kModulate_Mode;
                 }
-                xfer.reset(SkXfermode::Create((SkXfermode::Mode)mode));
+                xfer = SkXfermode::Make((SkXfermode::Mode)mode);
             }
-            canvas->drawPatch(cubics, colors, texCoords, xfer, paint);
+            canvas->drawPatch(cubics, colors, texCoords, std::move(xfer), paint);
         } break;
         case DRAW_PATH: {
             const SkPaint& paint = *fPictureData->getPaint(reader);
@@ -368,11 +391,11 @@ void SkPicturePlayback::handleOp(SkReader32* reader,
             canvas->drawRRect(rrect, paint);
         } break;
         case DRAW_SPRITE: {
-            const SkPaint* paint = fPictureData->getPaint(reader);
-            const SkBitmap bitmap = shallow_copy(fPictureData->getBitmap(reader));
-            int left = reader->readInt();
-            int top = reader->readInt();
-            canvas->drawSprite(bitmap, left, top, paint);
+            /* const SkPaint* paint = */ fPictureData->getPaint(reader);
+            /* const SkBitmap bitmap = */ shallow_copy(fPictureData->getBitmap(reader));
+            /* int left = */ reader->readInt();
+            /* int top = */ reader->readInt();
+            // drawSprite removed dec-2015
         } break;
         case DRAW_TEXT: {
             const SkPaint& paint = *fPictureData->getPaint(reader);
@@ -412,7 +435,7 @@ void SkPicturePlayback::handleOp(SkReader32* reader,
             canvas->drawTextOnPath(text.text(), text.length(), path, &matrix, paint);
         } break;
         case DRAW_VERTICES: {
-            SkAutoTUnref<SkXfermode> xfer;
+            sk_sp<SkXfermode> xfer;
             const SkPaint& paint = *fPictureData->getPaint(reader);
             DrawVertexFlags flags = (DrawVertexFlags)reader->readInt();
             SkCanvas::VertexMode vmode = (SkCanvas::VertexMode)reader->readInt();
@@ -437,7 +460,7 @@ void SkPicturePlayback::handleOp(SkReader32* reader,
                 if (mode < 0 || mode > SkXfermode::kLastMode) {
                     mode = SkXfermode::kModulate_Mode;
                 }
-                xfer.reset(SkXfermode::Create((SkXfermode::Mode)mode));
+                xfer = SkXfermode::Make((SkXfermode::Mode)mode);
             }
             canvas->drawVertices(vmode, vCount, verts, texs, colors, xfer, indices, iCount, paint);
         } break;
@@ -455,10 +478,34 @@ void SkPicturePlayback::handleOp(SkReader32* reader,
             }
             canvas->save();
             break;
-        case SAVE_LAYER: {
+        case SAVE_LAYER_SAVEFLAGS_DEPRECATED: {
             const SkRect* boundsPtr = get_rect_ptr(reader);
             const SkPaint* paint = fPictureData->getPaint(reader);
-            canvas->saveLayer(boundsPtr, paint, (SkCanvas::SaveFlags) reader->readInt());
+            auto flags = SkCanvas::LegacySaveFlagsToSaveLayerFlags(reader->readInt());
+            canvas->saveLayer(SkCanvas::SaveLayerRec(boundsPtr, paint, flags));
+        } break;
+        case SAVE_LAYER_SAVELAYERFLAGS_DEPRECATED_JAN_2016: {
+            const SkRect* boundsPtr = get_rect_ptr(reader);
+            const SkPaint* paint = fPictureData->getPaint(reader);
+            canvas->saveLayer(SkCanvas::SaveLayerRec(boundsPtr, paint, reader->readInt()));
+        } break;
+        case SAVE_LAYER_SAVELAYERREC: {
+            SkCanvas::SaveLayerRec rec(nullptr, nullptr, nullptr, 0);
+            const uint32_t flatFlags = reader->readInt();
+            if (flatFlags & SAVELAYERREC_HAS_BOUNDS) {
+                rec.fBounds = &reader->skipT<SkRect>();
+            }
+            if (flatFlags & SAVELAYERREC_HAS_PAINT) {
+                rec.fPaint = fPictureData->getPaint(reader);
+            }
+            if (flatFlags & SAVELAYERREC_HAS_BACKDROP) {
+                const SkPaint* paint = fPictureData->getPaint(reader);
+                rec.fBackdrop = paint->getImageFilter();
+            }
+            if (flatFlags & SAVELAYERREC_HAS_FLAGS) {
+                rec.fSaveLayerFlags = reader->readInt();
+            }
+            canvas->saveLayer(rec);
         } break;
         case SCALE: {
             SkScalar sx = reader->readScalar();
@@ -485,4 +532,3 @@ void SkPicturePlayback::handleOp(SkReader32* reader,
             SkASSERTF(false, "Unknown draw type: %d", op);
     }
 }
-

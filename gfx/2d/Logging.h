@@ -96,8 +96,7 @@ public:
 /// In the event of a crash, the crash report is annotated with first and
 /// the last few of these errors, under the key GraphicsCriticalError.
 /// The total number of errors stored in the crash report is controlled
-/// by preference gfx.logging.crash.length (default is six, so by default,
-/// the first as well as the last five would show up in the crash log.)
+/// by preference gfx.logging.crash.length.
 ///
 /// On platforms that support MOZ_LOGGING, the story is slightly more involved.
 /// In that case, unless gfx.logging.level is set to 4 or higher, the output
@@ -131,6 +130,18 @@ enum class LogReason : int {
   GlyphAllocFailedCG,
   InvalidRect,
   CannotDraw3D, // 20
+  IncompatibleBasicTexturedEffect,
+  InvalidFont,
+  PAllocTextureBackendMismatch,
+  GetFontFileDataFailed,
+  MessageChannelCloseFailure,
+  MessageChannelInvalidHandle,
+  TextureAliveAfterShutdown,
+  InvalidContext,
+  InvalidCommandList,
+  AsyncTransactionTimeout, // 30
+  TextureCreation,
+  InvalidCacheSurface,
   // End
   MustBeLessThanThis = 101,
 };
@@ -211,6 +222,7 @@ public:
   virtual ~LogForwarder() {}
   virtual void Log(const std::string &aString) = 0;
   virtual void CrashAction(LogReason aReason) = 0;
+  virtual bool UpdateStringsVector(const std::string& aString) = 0;
 
   // Provide a copy of the logs to the caller.
   virtual LoggingRecord LoggingRecordCopy() = 0;
@@ -543,6 +555,7 @@ typedef Log<LOG_CRITICAL, CriticalLogger> CriticalLog;
 // while the critical error is
 // gfxCriticalError() << "Something to report and assert";
 #define gfxCriticalNote gfxCriticalError(gfxCriticalError::DefaultOptions(false))
+#define gfxCriticalNoteOnce static gfxCriticalError GFX_LOGGING_GLUE(sOnceAtLine,__LINE__) = gfxCriticalNote
 
 // The "once" versions will only trigger the first time through. You can do this:
 // gfxCriticalErrorOnce() << "This message only shows up once;

@@ -370,6 +370,11 @@ static const struct mechanismList mechanisms[] = {
      {CKM_SEED_MAC,		{16, 16, CKF_SN_VR},		PR_TRUE},
      {CKM_SEED_MAC_GENERAL,	{16, 16, CKF_SN_VR},		PR_TRUE},
      {CKM_SEED_CBC_PAD,		{16, 16, CKF_EN_DE_WR_UN},	PR_TRUE},
+#ifndef NSS_DISABLE_CHACHAPOLY
+     /* ------------------------- ChaCha20 Operations ---------------------- */
+     {CKM_NSS_CHACHA20_KEY_GEN,	{32, 32, CKF_GENERATE},		PR_TRUE},
+     {CKM_NSS_CHACHA20_POLY1305,{32, 32, CKF_EN_DE},		PR_TRUE},
+#endif /* NSS_DISABLE_CHACHAPOLY */
      /* ------------------------- Hashing Operations ----------------------- */
      {CKM_MD2,			{0,   0, CKF_DIGEST},		PR_FALSE},
      {CKM_MD2_HMAC,		{1, 128, CKF_SN_VR},		PR_TRUE},
@@ -2208,8 +2213,6 @@ sftk_IsWeakKey(unsigned char *key,CK_KEY_TYPE key_type)
 /* return the function list */
 CK_RV NSC_GetFunctionList(CK_FUNCTION_LIST_PTR *pFunctionList)
 {
-    CHECK_FORK();
-
     *pFunctionList = (CK_FUNCTION_LIST_PTR) &sftk_funcList;
     return CKR_OK;
 }
@@ -2217,8 +2220,6 @@ CK_RV NSC_GetFunctionList(CK_FUNCTION_LIST_PTR *pFunctionList)
 /* return the function list */
 CK_RV C_GetFunctionList(CK_FUNCTION_LIST_PTR *pFunctionList)
 {
-    CHECK_FORK();
-
     return NSC_GetFunctionList(pFunctionList);
 }
 
@@ -2281,7 +2282,7 @@ static CK_SLOT_ID_PTR nscSlotList[2] = {NULL, NULL};
 static CK_ULONG nscSlotListSize[2] = {0, 0};
 static PLHashTable *nscSlotHashTable[2] = {NULL, NULL};
 
-static int
+static unsigned int
 sftk_GetModuleIndex(CK_SLOT_ID slotID)
 {
     if ((slotID == FIPS_SLOT_ID) || (slotID >= SFTK_MIN_FIPS_USER_SLOT_ID)) {
@@ -2325,7 +2326,7 @@ static CK_RV
 sftk_RegisterSlot(SFTKSlot *slot, int moduleIndex)
 {
     PLHashEntry *entry;
-    int index;
+    unsigned int index;
 
     index = sftk_GetModuleIndex(slot->slotID);
 
@@ -2452,7 +2453,12 @@ SFTK_SlotReInit(SFTKSlot *slot, char *configdir, char *updatedir,
 	if ((slot->minimumPinLen == 0) && (params->pwRequired)) {
 	    slot->minimumPinLen = 1;
 	}
-	if ((moduleIndex == NSC_FIPS_MODULE) &&
+	/* Make sure the pin len is set to the Minimum allowed value for fips
+  	 * when in FIPS mode. NOTE: we don't set it if the database has not
+  	 * been initialized yet so that we can init into level1 mode if needed
+  	 */
+	if ((sftkdb_HasPasswordSet(slot->keyDB) == SECSuccess) && 
+		(moduleIndex == NSC_FIPS_MODULE) &&
 		(slot->minimumPinLen < FIPS_MIN_PIN)) {
 	    slot->minimumPinLen = FIPS_MIN_PIN;
 	}
@@ -3585,6 +3591,14 @@ CK_RV NSC_InitPIN(CK_SESSION_HANDLE hSession,
     /* Now update our local copy of the pin */
     if (rv == SECSuccess) {
 	if (ulPinLen == 0) slot->needLogin = PR_FALSE;
+	/* database has been initialized, now force min password in FIPS
+  	 * mode. NOTE: if we are in level1, we may not have a password, but
+  	 * forcing it now will prevent an insufficient password from being set.
+  	 */
+	if ((sftk_GetModuleIndex(slot->slotID) == NSC_FIPS_MODULE) &&
+		(slot->minimumPinLen < FIPS_MIN_PIN)) {
+	    slot->minimumPinLen = FIPS_MIN_PIN;
+	}
 	return CKR_OK;
     }
     crv = CKR_PIN_INCORRECT;

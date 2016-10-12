@@ -51,7 +51,7 @@ public:
                                const nsIntSize& aSize,
                                const ImageRegion& aRegion,
                                uint32_t aWhichFrame,
-                               gfx::Filter aFilter,
+                               gfx::SamplingFilter aSamplingFilter,
                                const Maybe<SVGImageContext>& aSVGContext,
                                uint32_t aFlags) override;
   NS_IMETHOD RequestDiscard() override;
@@ -60,11 +60,12 @@ public:
     override;
   nsIntSize OptimalImageSizeForDest(const gfxSize& aDest,
                                     uint32_t aWhichFrame,
-                                    gfx::Filter aFilter,
+                                    gfx::SamplingFilter aSamplingFilter,
                                     uint32_t aFlags) override;
 
 protected:
-  ClippedImage(Image* aImage, nsIntRect aClip);
+  ClippedImage(Image* aImage, nsIntRect aClip,
+               const Maybe<nsSize>& aSVGViewportSize);
 
   virtual ~ClippedImage();
 
@@ -79,16 +80,17 @@ private:
                             const nsIntSize& aSize,
                             const ImageRegion& aRegion,
                             uint32_t aWhichFrame,
-                            gfx::Filter aFilter,
+                            gfx::SamplingFilter aSamplingFilter,
                             const Maybe<SVGImageContext>& aSVGContext,
                             uint32_t aFlags);
 
   // If we are forced to draw a temporary surface, we cache it here.
   UniquePtr<ClippedImageCachedSurface> mCachedSurface;
 
-  nsIntRect   mClip;              // The region to clip to.
-  Maybe<bool> mShouldClip;        // Memoized ShouldClip() if present.
-
+  nsIntRect        mClip;            // The region to clip to.
+  Maybe<bool>      mShouldClip;      // Memoized ShouldClip() if present.
+  Maybe<nsIntSize> mSVGViewportSize; // If we're clipping a VectorImage, this
+                                     // is the size of viewport of that image.
   friend class DrawSingleTileCallback;
   friend class ImageOps;
 };

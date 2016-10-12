@@ -1,8 +1,3 @@
-/* Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ */
-
-Cu.import("resource://testing-common/LoginTestUtils.jsm", this);
-
 /**
  * All these tests require the experimental login fill UI to be enabled. We also
  * disable autofill for login forms for easier testing of manual fill.
@@ -67,18 +62,13 @@ add_task(function* test_fill() {
     document.getElementById("login-fill-use").click();
     yield promiseHidden;
 
-    let result = yield ContentTask.spawn(browser, null, function* () {
+    yield ContentTask.spawn(browser, null, function* () {
       let doc = content.document;
-      return {
-        username: doc.getElementById("form-basic-username").value,
-        password: doc.getElementById("form-basic-password").value,
-      }
+      Assert.equal(doc.getElementById("form-basic-username").value, "username",
+        "result.username === \"username\"");
+      Assert.equal(doc.getElementById("form-basic-password").value, "password",
+        "result.password === \"password\"");
     });
-
-    Assert.equal(result.username, "username",
-                 'result.username === "username"');
-    Assert.equal(result.password, "password",
-                 'result.password === "password"');
   });
 
   Services.logins.removeAllLogins();

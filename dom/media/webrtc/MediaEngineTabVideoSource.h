@@ -7,6 +7,7 @@
 #include "ImageContainer.h"
 #include "nsITimer.h"
 #include "mozilla/Monitor.h"
+#include "mozilla/UniquePtr.h"
 #include "nsITabSource.h"
 
 namespace mozilla {
@@ -23,11 +24,12 @@ class MediaEngineTabVideoSource : public MediaEngineVideoSource, nsIDOMEventList
     void GetUUID(nsACString_internal&) override;
     nsresult Allocate(const dom::MediaTrackConstraints &,
                       const mozilla::MediaEnginePrefs&,
-                      const nsString& aDeviceId) override;
+                      const nsString& aDeviceId,
+                      const nsACString& aOrigin) override;
     nsresult Deallocate() override;
-    nsresult Start(mozilla::SourceMediaStream*, mozilla::TrackID) override;
+    nsresult Start(mozilla::SourceMediaStream*, mozilla::TrackID, const mozilla::PrincipalHandle&) override;
     void SetDirectListeners(bool aHasDirectListeners) override {};
-    void NotifyPull(mozilla::MediaStreamGraph*, mozilla::SourceMediaStream*, mozilla::TrackID, mozilla::StreamTime) override;
+    void NotifyPull(mozilla::MediaStreamGraph*, mozilla::SourceMediaStream*, mozilla::TrackID, mozilla::StreamTime, const mozilla::PrincipalHandle& aPrincipalHandle) override;
     nsresult Stop(mozilla::SourceMediaStream*, mozilla::TrackID) override;
     nsresult Restart(const dom::MediaTrackConstraints& aConstraints,
                      const mozilla::MediaEnginePrefs& aPrefs,
@@ -43,28 +45,28 @@ class MediaEngineTabVideoSource : public MediaEngineVideoSource, nsIDOMEventList
       return 0;
     }
 
-    nsresult TakePhoto(PhotoCallback* aCallback) override
+    nsresult TakePhoto(MediaEnginePhotoCallback* aCallback) override
     {
       return NS_ERROR_NOT_IMPLEMENTED;
     }
 
     void Draw();
 
-    class StartRunnable : public nsRunnable {
+    class StartRunnable : public Runnable {
     public:
       explicit StartRunnable(MediaEngineTabVideoSource *videoSource) : mVideoSource(videoSource) {}
       NS_IMETHOD Run();
       RefPtr<MediaEngineTabVideoSource> mVideoSource;
     };
 
-    class StopRunnable : public nsRunnable {
+    class StopRunnable : public Runnable {
     public:
       explicit StopRunnable(MediaEngineTabVideoSource *videoSource) : mVideoSource(videoSource) {}
       NS_IMETHOD Run();
       RefPtr<MediaEngineTabVideoSource> mVideoSource;
     };
 
-    class InitRunnable : public nsRunnable {
+    class InitRunnable : public Runnable {
     public:
       explicit InitRunnable(MediaEngineTabVideoSource *videoSource) : mVideoSource(videoSource) {}
       NS_IMETHOD Run();
@@ -84,9 +86,11 @@ private:
     int32_t mViewportWidth;
     int32_t mViewportHeight;
     int32_t mTimePerFrame;
-    ScopedFreePtr<unsigned char> mData;
+    UniquePtr<unsigned char[]> mData;
     size_t mDataSize;
-    nsCOMPtr<nsIDOMWindow> mWindow;
+    nsCOMPtr<nsPIDOMWindowOuter> mWindow;
+    // If this is set, we will run despite mWindow == nullptr.
+    bool mBlackedoutWindow;
     RefPtr<layers::SourceSurfaceImage> mImage;
     nsCOMPtr<nsITimer> mTimer;
     Monitor mMonitor;

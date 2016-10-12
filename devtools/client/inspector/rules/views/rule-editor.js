@@ -5,6 +5,7 @@
 "use strict";
 
 const {Ci} = require("chrome");
+const {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
 const {CssLogic} = require("devtools/shared/inspector/css-logic");
 const {ELEMENT_STYLE} = require("devtools/server/actors/styles");
 const {PREF_ORIG_SOURCES} = require("devtools/client/styleeditor/utils");
@@ -24,9 +25,12 @@ const {
   SELECTOR_ATTRIBUTE,
   SELECTOR_ELEMENT,
   SELECTOR_PSEUDO_CLASS
-} = require("devtools/client/shared/css-parsing-utils");
+} = require("devtools/shared/css-parsing-utils");
+const promise = require("promise");
+const Services = require("Services");
+const EventEmitter = require("devtools/shared/event-emitter");
 
-XPCOMUtils.defineLazyGetter(this, "_strings", function() {
+XPCOMUtils.defineLazyGetter(this, "_strings", function () {
   return Services.strings.createBundle(
     "chrome://devtools-shared/locale/styleinspector.properties");
 });
@@ -40,12 +44,20 @@ const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
  *     for its TextProperties.
  *   Manages creation of new text properties.
  *
+ * One step of a RuleEditor's instantiation is figuring out what's the original
+ * source link to the parent stylesheet (in case of source maps). This step is
+ * asynchronous and is triggered as soon as the RuleEditor is instantiated (see
+ * updateSourceLink). If you need to know when the RuleEditor is done with this,
+ * you need to listen to the source-link-updated event.
+ *
  * @param {CssRuleView} ruleView
  *        The CssRuleView containg the document holding this rule editor.
  * @param {Rule} rule
  *        The Rule object we're editing.
  */
 function RuleEditor(ruleView, rule) {
+  EventEmitter.decorate(this);
+
   this.ruleView = ruleView;
   this.doc = this.ruleView.styleDocument;
   this.rule = rule;
@@ -66,7 +78,7 @@ function RuleEditor(ruleView, rule) {
 }
 
 RuleEditor.prototype = {
-  destroy: function() {
+  destroy: function () {
     this.rule.domRule.off("location-changed");
   },
 
@@ -82,7 +94,7 @@ RuleEditor.prototype = {
     return trait && !this.rule.elementStyle.element.isAnonymous;
   },
 
-  _create: function() {
+  _create: function () {
     this.element = this.doc.createElementNS(HTML_NS, "div");
     this.element.className = "ruleview-rule theme-separator";
     this.element.setAttribute("uneditable", !this.isEditable);
@@ -97,7 +109,7 @@ RuleEditor.prototype = {
     this.source = createChild(this.element, "div", {
       class: "ruleview-rule-source theme-link"
     });
-    this.source.addEventListener("click", function() {
+    this.source.addEventListener("click", function () {
       if (this.source.hasAttribute("unselectable")) {
         return;
       }
@@ -167,11 +179,22 @@ RuleEditor.prototype = {
     });
 
     if (this.isEditable) {
+      // A newProperty editor should only be created when no editor was
+      // previously displayed. Since the editors are cleared on blur,
+      // check this.ruleview.isEditing on mousedown
+      this._ruleViewIsEditing = false;
+
+      code.addEventListener("mousedown", () => {
+        this._ruleViewIsEditing = this.ruleView.isEditing;
+      });
+
       code.addEventListener("click", () => {
         let selection = this.doc.defaultView.getSelection();
-        if (selection.isCollapsed) {
+        if (selection.isCollapsed && !this._ruleViewIsEditing) {
           this.newProperty();
         }
+        // Cleanup the _ruleViewIsEditing flag
+        this._ruleViewIsEditing = false;
       }, false);
 
       this.element.addEventListener("mousedown", () => {
@@ -189,11 +212,11 @@ RuleEditor.prototype = {
    * Event handler called when a property changes on the
    * StyleRuleActor.
    */
-  _locationChanged: function() {
+  _locationChanged: function () {
     this.updateSourceLink();
   },
 
-  updateSourceLink: function() {
+  updateSourceLink: function () {
     let sourceLabel = this.element.querySelector(".ruleview-rule-source-label");
     let title = this.rule.title;
     let sourceHref = (this.rule.sheet && this.rule.sheet.href) ?
@@ -224,17 +247,28 @@ RuleEditor.prototype = {
     let showOrig = Services.prefs.getBoolPref(PREF_ORIG_SOURCES);
     if (showOrig && !this.rule.isSystem &&
         this.rule.domRule.type !== ELEMENT_STYLE) {
+      // Only get the original source link if the right pref is set, if the rule
+      // isn't a system rule and if it isn't an inline rule.
       this.rule.getOriginalSourceStrings().then((strings) => {
         sourceLabel.setAttribute("value", strings.short);
         sourceLabel.setAttribute("tooltiptext", strings.full);
-      }, console.error);
+      }, e => console.error(e)).then(() => {
+        this.emit("source-link-updated");
+      });
+    } else {
+      // If we're not getting the original source link, then we can emit the
+      // event immediately (but still asynchronously to give consumers a chance
+      // to register it after having instantiated the RuleEditor).
+      promise.resolve().then(() => {
+        this.emit("source-link-updated");
+      });
     }
   },
 
   /**
    * Update the rule editor with the contents of the rule.
    */
-  populate: function() {
+  populate: function () {
     // Clear out existing viewers.
     while (this.selectorText.hasChildNodes()) {
       this.selectorText.removeChild(this.selectorText.lastChild);
@@ -310,13 +344,16 @@ RuleEditor.prototype = {
    *        Property value.
    * @param {String} priority
    *        Property priority.
+   * @param {Boolean} enabled
+   *        True if the property should be enabled.
    * @param {TextProperty} siblingProp
    *        Optional, property next to which the new property will be added.
    * @return {TextProperty}
    *        The new property
    */
-  addProperty: function(name, value, priority, siblingProp) {
-    let prop = this.rule.createProperty(name, value, priority, siblingProp);
+  addProperty: function (name, value, priority, enabled, siblingProp) {
+    let prop = this.rule.createProperty(name, value, priority, enabled,
+      siblingProp);
     let index = this.rule.textProps.indexOf(prop);
     let editor = new TextPropertyEditor(this, prop);
 
@@ -346,14 +383,17 @@ RuleEditor.prototype = {
    * @param {TextProperty} siblingProp
    *        Optional, the property next to which all new props should be added.
    */
-  addProperties: function(properties, siblingProp) {
+  addProperties: function (properties, siblingProp) {
     if (!properties || !properties.length) {
       return;
     }
 
     let lastProp = siblingProp;
     for (let p of properties) {
-      lastProp = this.addProperty(p.name, p.value, p.priority, lastProp);
+      let isCommented = Boolean(p.commentOffsets);
+      let enabled = !isCommented;
+      lastProp = this.addProperty(p.name, p.value, p.priority, enabled,
+        lastProp);
     }
 
     // Either focus on the last value if incomplete, or start a new one.
@@ -369,7 +409,7 @@ RuleEditor.prototype = {
    * name is given, we'll create a real TextProperty and add it to the
    * rule.
    */
-  newProperty: function() {
+  newProperty: function () {
     // If we're already creating a new property, ignore this.
     if (!this.closeBrace.hasAttribute("tabindex")) {
       return;
@@ -402,7 +442,7 @@ RuleEditor.prototype = {
 
     // Auto-close the input if multiple rules get pasted into new property.
     this.editor.input.addEventListener("paste",
-      blurOnMultipleProperties, false);
+      blurOnMultipleProperties(this.rule.cssProperties), false);
   },
 
   /**
@@ -413,7 +453,7 @@ RuleEditor.prototype = {
    * @param {Boolean} commit
    *        True if the value should be committed.
    */
-  _onNewProperty: function(value, commit) {
+  _onNewProperty: function (value, commit) {
     if (!value || !commit) {
       return;
     }
@@ -422,7 +462,8 @@ RuleEditor.prototype = {
     // case, we're creating a new declaration, it doesn't make sense to accept
     // these entries
     this.multipleAddedProperties =
-      parseDeclarations(value).filter(d => d.name);
+      parseDeclarations(this.rule.cssProperties.isKnown, value, true)
+      .filter(d => d.name);
 
     // Blur the editor field now and deal with adding declarations later when
     // the field gets destroyed (see _newPropertyDestroy)
@@ -435,7 +476,7 @@ RuleEditor.prototype = {
    * added, since we want to wait until after the inplace editor `destroy`
    * event has been fired to keep consistent UI state.
    */
-  _newPropertyDestroy: function() {
+  _newPropertyDestroy: function () {
     // We're done, make the close brace focusable again.
     this.closeBrace.setAttribute("tabindex", "0");
 
@@ -463,7 +504,7 @@ RuleEditor.prototype = {
    * @param {Number} direction
    *        The move focus direction number.
    */
-  _onSelectorDone: function(value, commit, direction) {
+  _onSelectorDone: function (value, commit, direction) {
     if (!commit || this.isEditing || value === "" ||
         value === this.rule.selectorText) {
       return;
@@ -527,7 +568,7 @@ RuleEditor.prototype = {
    * @param {Number} direction
    *        The move focus direction number.
    */
-  _moveSelectorFocus: function(direction) {
+  _moveSelectorFocus: function (direction) {
     if (!direction || direction === Ci.nsIFocusManager.MOVEFOCUS_BACKWARD) {
       return;
     }

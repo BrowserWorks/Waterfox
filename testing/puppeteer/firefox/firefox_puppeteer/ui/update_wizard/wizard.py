@@ -5,6 +5,7 @@
 from marionette_driver import By, Wait
 
 from firefox_puppeteer.ui_base_lib import UIBaseLib
+from firefox_puppeteer.ui.deck import Panel
 
 
 class Wizard(UIBaseLib):
@@ -12,7 +13,9 @@ class Wizard(UIBaseLib):
     def __init__(self, *args, **kwargs):
         UIBaseLib.__init__(self, *args, **kwargs)
 
-        Wait(self.marionette).until(lambda _: self.selected_panel)
+        Wait(self.marionette).until(
+            lambda _: self.selected_panel,
+            message='No panel has been selected by default.')
 
     def _create_panel_for_id(self, panel_id):
         """Creates an instance of :class:`Panel` for the specified panel id.
@@ -29,15 +32,16 @@ class Wizard(UIBaseLib):
                    'errorextra': ErrorExtraPanel,
                    'finished': FinishedPanel,
                    'finishedBackground': FinishedBackgroundPanel,
-                   'incompatibleCheck': IncompatibleCheckPanel,
-                   'incompatibleList': IncompatibleListPanel,
                    'installed': InstalledPanel,
-                   'license': LicensePanel,
                    'manualUpdate': ManualUpdatePanel,
                    'noupdatesfound': NoUpdatesFoundPanel,
                    'pluginupdatesfound': PluginUpdatesFoundPanel,
                    'updatesfoundbasic': UpdatesFoundBasicPanel,
                    'updatesfoundbillboard': UpdatesFoundBillboardPanel,
+
+                   # TODO: Remove once we no longer support version Firefox 45.0ESR
+                   'incompatibleCheck': IncompatibleCheckPanel,
+                   'incompatibleList': IncompatibleListPanel,
                    }
 
         panel = self.element.find_element(By.ID, panel_id)
@@ -164,14 +168,6 @@ class Wizard(UIBaseLib):
         return self._create_panel_for_id('installed')
 
     @property
-    def license(self):
-        """The license panel.
-
-        :returns: :class:`LicensePanel` instance.
-        """
-        return self._create_panel_for_id('license')
-
-    @property
     def manual_update(self):
         """The manual update panel.
 
@@ -249,15 +245,6 @@ class Wizard(UIBaseLib):
         return self._create_panel_for_id(self.element.get_attribute('currentpageid'))
 
 
-class Panel(UIBaseLib):
-
-    def __eq__(self, other):
-        return self.element.get_attribute('id') == other.element.get_attribute('id')
-
-    def __ne__(self, other):
-        return self.element.get_attribute('id') != other.element.get_attribute('id')
-
-
 class CheckingPanel(Panel):
 
     @property
@@ -320,10 +307,6 @@ class IncompatibleListPanel(Panel):
 
 
 class InstalledPanel(Panel):
-    pass
-
-
-class LicensePanel(Panel):
     pass
 
 

@@ -17,7 +17,7 @@
 class nsIWidget;
 
 class AsyncColorChooser :
-  public nsRunnable
+  public mozilla::Runnable
 {
 public:
   AsyncColorChooser(COLORREF aInitialColor,
@@ -47,7 +47,7 @@ public:
 
   NS_DECL_ISUPPORTS
 
-  NS_IMETHOD Init(nsIDOMWindow* parent, const nsAString& title,
+  NS_IMETHOD Init(mozIDOMWindowProxy* parent, const nsAString& title,
                   const nsAString& aInitialColor);
   NS_IMETHOD Open(nsIColorPickerShownCallback* aCallback);
 

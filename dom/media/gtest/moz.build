@@ -11,6 +11,7 @@ UNIFIED_SOURCES += [
     'TestGMPRemoveAndDelete.cpp',
     'TestGMPUtils.cpp',
     'TestIntervalSet.cpp',
+    'TestMediaDataDecoder.cpp',
     'TestMediaEventSource.cpp',
     'TestMediaFormatReader.cpp',
     'TestMozPromise.cpp',
@@ -19,6 +20,7 @@ UNIFIED_SOURCES += [
     # 'TestMP4Reader.cpp', disabled so we can turn check tests back on (bug 1175752)
     'TestTrackEncoder.cpp',
     'TestVideoSegment.cpp',
+    'TestVideoUtils.cpp',
     'TestVPXDecoding.cpp',
     'TestWebMBuffered.cpp',
 ]
@@ -31,7 +33,6 @@ if CONFIG['MOZ_EME']:
 if CONFIG['MOZ_WEBM_ENCODER']:
     UNIFIED_SOURCES += [
         'TestVideoTrackEncoder.cpp',
-        'TestVorbisTrackEncoder.cpp',
         'TestWebMWriter.cpp',
     ]
 
@@ -43,12 +44,15 @@ if CONFIG['MOZ_RUST']:
 TEST_HARNESS_FILES.gtest += [
     '../test/gizmo-frag.mp4',
     '../test/gizmo.mp4',
+    '../test/vp9cake.webm',
     'dash_dashinit.mp4',
     'id3v2header.mp3',
     'mediasource_test.mp4',
     'noise.mp3',
     'noise_vbr.mp3',
     'short-zero-in-moov.mp4',
+    'short-zero-inband.mov',
+    'small-shot-false-positive.mp3',
     'small-shot.mp3',
     'test.webm',
     'test_case_1224361.vp8.ivf',
@@ -69,3 +73,10 @@ LOCAL_INCLUDES += [
 ]
 
 FINAL_LIBRARY = 'xul-gtest'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']
+
+USE_LIBS += [
+   'rlz',
+]

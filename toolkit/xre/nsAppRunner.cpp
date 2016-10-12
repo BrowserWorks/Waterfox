@@ -66,9 +66,9 @@
 #include "nsIDOMWindow.h"
 #include "mozilla/ModuleUtils.h"
 #include "nsIIOService2.h"
-#include "nsILocaleService.h"
 #include "nsIObserverService.h"
 #include "nsINativeAppSupport.h"
+#include "nsIPlatformInfo.h"
 #include "nsIProcess.h"
 #include "nsIProfileUnlocker.h"
 #include "nsIPromptService.h"
@@ -91,7 +91,6 @@
 #include "nsIDocShell.h"
 #include "nsAppShellCID.h"
 #include "mozilla/scache/StartupCache.h"
-#include "nsIGfxInfo.h"
 #include "gfxPrefs.h"
 
 #include "base/histogram.h"
@@ -105,14 +104,15 @@
 #include <math.h>
 #include "cairo/cairo-features.h"
 #include "mozilla/WindowsVersion.h"
+#include "mozilla/widget/AudioSession.h"
 
 #ifndef PROCESS_DEP_ENABLE
 #define PROCESS_DEP_ENABLE 0x1
 #endif
-
-#if defined(MOZ_CONTENT_SANDBOX)
-#include "nsIUUIDGenerator.h"
 #endif
+
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+#include "nsIUUIDGenerator.h"
 #endif
 
 #ifdef ACCESSIBILITY
@@ -160,6 +160,7 @@
 #include "nsThreadUtils.h"
 #include <comdef.h>
 #include <wbemidl.h>
+#include "WinUtils.h"
 #endif
 
 #ifdef XP_MACOSX
@@ -199,9 +200,7 @@
 #endif
 
 #include "base/command_line.h"
-#ifdef MOZ_ENABLE_TESTS
 #include "GTestRunner.h"
-#endif
 
 #ifdef MOZ_B2G_LOADER
 #include "ProcessUtils.h"
@@ -211,8 +210,12 @@
 #include "AndroidBridge.h"
 #endif
 
-#if defined(MOZ_SANDBOX) && defined(XP_LINUX) && !defined(ANDROID)
+#if defined(MOZ_SANDBOX)
+#if defined(XP_LINUX) && !defined(ANDROID)
 #include "mozilla/SandboxInfo.h"
+#elif defined(XP_WIN)
+#include "SandboxBroker.h"
+#endif
 #endif
 
 extern uint32_t gRestartMode;
@@ -225,7 +228,7 @@ int    gArgc;
 char **gArgv;
 
 static const char gToolkitVersion[] = NS_STRINGIFY(GRE_MILESTONE);
-static const char gToolkitBuildID[] = NS_STRINGIFY(GRE_BUILDID);
+static const char gToolkitBuildID[] = NS_STRINGIFY(MOZ_BUILDID);
 
 static nsIProfileLock* gProfileLock;
 
@@ -233,6 +236,8 @@ int    gRestartArgc;
 char **gRestartArgv;
 
 bool gIsGtest = false;
+
+nsString gAbsoluteArgv0Path;
 
 #ifdef MOZ_WIDGET_QT
 static int    gQtOnlyArgc;
@@ -254,6 +259,12 @@ static char **gQtOnlyArgv;
 #include <fontconfig/fontconfig.h>
 #endif
 #include "BinaryPath.h"
+#ifndef MOZ_BUILDID
+// See comment in Makefile.in why we want to avoid including buildid.h.
+// Still include it when MOZ_BUILDID is not set, which can happen with some
+// build backends.
+#include "buildid.h"
+#endif
 
 #ifdef MOZ_LINKER
 extern "C" MFBT_API bool IsSignalHandlingBroken();
@@ -599,42 +610,58 @@ CanShowProfileManager()
   return true;
 }
 
-#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
 static already_AddRefed<nsIFile>
-GetAndCleanLowIntegrityTemp(const nsAString& aTempDirSuffix)
+GetAndCleanTempDir()
 {
-  // Get the base low integrity Mozilla temp directory.
-  nsCOMPtr<nsIFile> lowIntegrityTemp;
-  nsresult rv = NS_GetSpecialDirectory(NS_WIN_LOW_INTEGRITY_TEMP_BASE,
-                                       getter_AddRefs(lowIntegrityTemp));
+  // Get the directory within which we'll place the
+  // sandbox-writable temp directory
+  nsCOMPtr<nsIFile> tempDir;
+  nsresult rv = NS_GetSpecialDirectory(NS_APP_CONTENT_PROCESS_TEMP_DIR,
+                                       getter_AddRefs(tempDir));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return nullptr;
   }
 
-  // Append our profile specific temp name.
-  rv = lowIntegrityTemp->Append(NS_LITERAL_STRING("Temp-") + aTempDirSuffix);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  // Don't return an error if the directory doesn't exist.
+  // Windows Remove() returns NS_ERROR_FILE_NOT_FOUND while
+  // OS X returns NS_ERROR_FILE_TARGET_DOES_NOT_EXIST.
+  rv = tempDir->Remove(/* aRecursive */ true);
+  if (NS_FAILED(rv) && rv != NS_ERROR_FILE_NOT_FOUND &&
+      rv != NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) {
+    NS_WARNING("Failed to delete temp directory.");
     return nullptr;
   }
 
-  rv = lowIntegrityTemp->Remove(/* aRecursive */ true);
-  if (NS_FAILED(rv) && rv != NS_ERROR_FILE_NOT_FOUND) {
-    NS_WARNING("Failed to delete low integrity temp directory.");
-    return nullptr;
-  }
-
-  return lowIntegrityTemp.forget();
+  return tempDir.forget();
 }
 
 static void
 SetUpSandboxEnvironment()
 {
-  // A low integrity temp only currently makes sense for Vista and later, e10s
-  // and sandbox pref level >= 1.
-  if (!IsVistaOrLater() || !BrowserTabsRemoteAutostart() ||
-      Preferences::GetInt("security.sandbox.content.level") < 1) {
+  // Setup a sandbox-writable temp directory. i.e., a directory
+  // that is writable by a sandboxed content process. This
+  // only applies when e10s is enabled, depending on the platform
+  // and setting of security.sandbox.content.level.
+  if (!BrowserTabsRemoteAutostart()) {
     return;
   }
+
+#if defined(XP_WIN)
+  // For Windows, the temp dir only makes sense for Vista and later
+  // with a sandbox pref level >= 1
+  if (!IsVistaOrLater() ||
+      (Preferences::GetInt("security.sandbox.content.level") < 1)) {
+    return;
+  }
+#endif
+
+#if defined(XP_MACOSX)
+  // For OSX, we just require sandbox pref level >= 1.
+  if (Preferences::GetInt("security.sandbox.content.level") < 1) {
+    return;
+  }
+#endif
 
   // Get (and create if blank) temp directory suffix pref.
   nsresult rv;
@@ -675,86 +702,32 @@ SetUpSandboxEnvironment()
     }
   }
 
-  // Get (and clean up if still there) the low integrity Mozilla temp directory.
-  nsCOMPtr<nsIFile> lowIntegrityTemp = GetAndCleanLowIntegrityTemp(tempDirSuffix);
-  if (!lowIntegrityTemp) {
-    NS_WARNING("Failed to get or clean low integrity Mozilla temp directory.");
+  // Get (and clean up if still there) the sandbox-writable temp directory.
+  nsCOMPtr<nsIFile> tempDir = GetAndCleanTempDir();
+  if (!tempDir) {
+    NS_WARNING("Failed to get or clean sandboxed temp directory.");
     return;
   }
 
-  rv = lowIntegrityTemp->Create(nsIFile::DIRECTORY_TYPE, 0700);
+  rv = tempDir->Create(nsIFile::DIRECTORY_TYPE, 0700);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
 }
-
-#if defined(NIGHTLY_BUILD)
-static void
-CleanUpOldSandboxEnvironment()
-{
-  // Temporary code to clean up the old low integrity temp directories.
-  // The removal of this is tracked by bug 1165818.
-  nsCOMPtr<nsIFile> lowIntegrityMozilla;
-  nsresult rv = NS_GetSpecialDirectory(NS_WIN_LOW_INTEGRITY_TEMP_BASE,
-                              getter_AddRefs(lowIntegrityMozilla));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return;
-  }
-
-  nsCOMPtr<nsISimpleEnumerator> iter;
-  rv = lowIntegrityMozilla->GetDirectoryEntries(getter_AddRefs(iter));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return;
-  }
-
-  bool more;
-  nsCOMPtr<nsISupports> elem;
-  while (NS_SUCCEEDED(iter->HasMoreElements(&more)) && more) {
-    rv = iter->GetNext(getter_AddRefs(elem));
-    if (NS_FAILED(rv)) {
-      break;
-    }
-
-    nsCOMPtr<nsIFile> file = do_QueryInterface(elem);
-    if (!file) {
-      continue;
-    }
-
-    nsAutoString leafName;
-    rv = file->GetLeafName(leafName);
-    if (NS_FAILED(rv)) {
-      continue;
-    }
-
-    if (leafName.Find(NS_LITERAL_STRING("MozTemp-{")) == 0) {
-      file->Remove(/* aRecursive */ true);
-    }
-  }
-}
-#endif
 
 static void
 CleanUpSandboxEnvironment()
 {
-  // We can't have created a low integrity temp before Vista.
+#if defined(XP_WIN)
+  // We can't have created the temp directory before Vista.
   if (!IsVistaOrLater()) {
     return;
   }
-
-#if defined(NIGHTLY_BUILD)
-  CleanUpOldSandboxEnvironment();
 #endif
 
-  // Get temp directory suffix pref.
-  nsAdoptingString tempDirSuffix =
-    Preferences::GetString("security.sandbox.content.tempDirSuffix");
-  if (tempDirSuffix.IsEmpty()) {
-    return;
-  }
-
-  // Get and remove the low integrity Mozilla temp directory.
+  // Get and remove the sandbox-writable temp directory.
   // This function already warns if the deletion fails.
-  nsCOMPtr<nsIFile> lowIntegrityTemp = GetAndCleanLowIntegrityTemp(tempDirSuffix);
+  nsCOMPtr<nsIFile> tempDir = GetAndCleanTempDir();
 }
 #endif
 
@@ -779,6 +752,7 @@ class nsXULAppInfo : public nsIXULAppInfo,
 public:
   MOZ_CONSTEXPR nsXULAppInfo() {}
   NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_NSIPLATFORMINFO
   NS_DECL_NSIXULAPPINFO
   NS_DECL_NSIXULRUNTIME
   NS_DECL_NSIOBSERVER
@@ -802,7 +776,8 @@ NS_INTERFACE_MAP_BEGIN(nsXULAppInfo)
   NS_INTERFACE_MAP_ENTRY(nsICrashReporter)
   NS_INTERFACE_MAP_ENTRY(nsIFinishDumpingCallback)
 #endif
-  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIXULAppInfo, gAppData || 
+  NS_INTERFACE_MAP_ENTRY(nsIPlatformInfo)
+  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIXULAppInfo, gAppData ||
                                      XRE_IsContentProcess())
 NS_INTERFACE_MAP_END
 
@@ -998,6 +973,9 @@ static bool gBrowserTabsRemoteAutostart = false;
 static uint64_t gBrowserTabsRemoteStatus = 0;
 static bool gBrowserTabsRemoteAutostartInitialized = false;
 
+static bool gMultiprocessBlockPolicyInitialized = false;
+static uint32_t gMultiprocessBlockPolicy = 0;
+
 NS_IMETHODIMP
 nsXULAppInfo::Observe(nsISupports *aSubject, const char *aTopic, const char16_t *aData) {
   if (!nsCRT::strcmp(aTopic, "getE10SBlocked")) {
@@ -1016,6 +994,13 @@ NS_IMETHODIMP
 nsXULAppInfo::GetBrowserTabsRemoteAutostart(bool* aResult)
 {
   *aResult = BrowserTabsRemoteAutostart();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXULAppInfo::GetMultiprocessBlockPolicy(uint32_t* aResult)
+{
+  *aResult = MultiprocessBlockPolicy();
   return NS_OK;
 }
 
@@ -1376,12 +1361,10 @@ nsXULAppInfo::SaveMemoryReport()
     return NS_ERROR_NOT_INITIALIZED;
   }
   nsCOMPtr<nsIFile> file;
-  nsresult rv = NS_GetSpecialDirectory(NS_APP_PROFILE_DIR_STARTUP,
-                                       getter_AddRefs(file));
+  nsresult rv = CrashReporter::GetDefaultMemoryReportFile(getter_AddRefs(file));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
-  file->AppendNative(NS_LITERAL_CSTRING("memory-report.json.gz"));
 
   nsString path;
   file->GetPath(path);
@@ -1396,6 +1379,13 @@ nsXULAppInfo::SaveMemoryReport()
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXULAppInfo::SetTelemetrySessionId(const nsACString& id)
+{
+  CrashReporter::SetTelemetrySessionId(id);
   return NS_OK;
 }
 
@@ -2168,7 +2158,7 @@ ShowProfileManager(nsIToolkitProfileService* aProfileSvc,
         (do_GetService(NS_APPSTARTUP_CONTRACTID));
       NS_ENSURE_TRUE(appStartup, NS_ERROR_FAILURE);
 
-      nsCOMPtr<nsIDOMWindow> newWindow;
+      nsCOMPtr<mozIDOMWindowProxy> newWindow;
       rv = windowWatcher->OpenWindow(nullptr,
                                      kProfileManagerURL,
                                      "_blank",
@@ -2218,28 +2208,6 @@ ShowProfileManager(nsIToolkitProfileService* aProfileSvc,
   return LaunchChild(aNative);
 }
 
-static nsresult
-GetCurrentProfileIsDefault(nsIToolkitProfileService* aProfileSvc,
-                           nsIFile* aCurrentProfileRoot, bool *aResult)
-{
-  nsresult rv;
-  // Check that the profile to reset is the default since reset and the associated migration are
-  // only supported in that case.
-  nsCOMPtr<nsIToolkitProfile> selectedProfile;
-  nsCOMPtr<nsIFile> selectedProfileRoot;
-  rv = aProfileSvc->GetSelectedProfile(getter_AddRefs(selectedProfile));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = selectedProfile->GetRootDir(getter_AddRefs(selectedProfileRoot));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  bool currentIsSelected;
-  rv = aCurrentProfileRoot->Equals(selectedProfileRoot, &currentIsSelected);
-
-  *aResult = currentIsSelected;
-  return rv;
-}
-
 /**
  * Set the currently running profile as the default/selected one.
  *
@@ -2266,11 +2234,8 @@ SetCurrentProfileAsDefault(nsIToolkitProfileService* aProfileSvc,
     nsCOMPtr<nsIFile> profileRoot;
     profile->GetRootDir(getter_AddRefs(profileRoot));
     profileRoot->Equals(aCurrentProfileRoot, &foundMatchingProfile);
-    if (foundMatchingProfile && profile) {
-      rv = aProfileSvc->SetSelectedProfile(profile);
-      if (NS_SUCCEEDED(rv))
-        rv = aProfileSvc->Flush();
-      return rv;
+    if (foundMatchingProfile) {
+      return aProfileSvc->SetSelectedProfile(profile);
     }
     rv = profiles->GetNext(getter_AddRefs(supports));
   }
@@ -2279,6 +2244,7 @@ SetCurrentProfileAsDefault(nsIToolkitProfileService* aProfileSvc,
 
 static bool gDoMigration = false;
 static bool gDoProfileReset = false;
+static nsAutoCString gResetOldProfileName;
 
 // Pick a profile. We need to end up with a profile lock.
 //
@@ -2341,8 +2307,12 @@ SelectProfile(nsIProfileLock* *aResult, nsIToolkitProfileService* aProfileSvc, n
     }
 
     arg = PR_GetEnv("XRE_PROFILE_NAME");
-    if (arg && *arg && aProfileName)
+    if (arg && *arg && aProfileName) {
       aProfileName->Assign(nsDependentCString(arg));
+      if (gDoProfileReset) {
+        gResetOldProfileName.Assign(*aProfileName);
+      }
+    }
 
     // Clear out flags that we handled (or should have handled!) last startup.
     const char *dummy;
@@ -2351,17 +2321,6 @@ SelectProfile(nsIProfileLock* *aResult, nsIToolkitProfileService* aProfileSvc, n
     CheckArg("profilemanager");
 
     if (gDoProfileReset) {
-      // Check that the profile to reset is the default since reset and migration are only
-      // supported in that case.
-      bool currentIsSelected;
-      rv = GetCurrentProfileIsDefault(aProfileSvc, lf, &currentIsSelected);
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      if (!currentIsSelected) {
-        NS_WARNING("Profile reset is only supported for the default profile.");
-        gDoProfileReset = gDoMigration = false;
-      }
-
       // If we're resetting a profile, create a new one and use it to startup.
       nsCOMPtr<nsIToolkitProfile> newProfile;
       rv = CreateResetProfile(aProfileSvc, getter_AddRefs(newProfile));
@@ -2394,7 +2353,7 @@ SelectProfile(nsIProfileLock* *aResult, nsIToolkitProfileService* aProfileSvc, n
   }
   if (ar) {
     if (gDoProfileReset) {
-      NS_WARNING("Profile reset is only supported for the default profile.");
+      NS_WARNING("Profile reset is not supported in conjunction with --profile.");
       gDoProfileReset = false;
     }
 
@@ -2499,8 +2458,30 @@ SelectProfile(nsIProfileLock* *aResult, nsIToolkitProfileService* aProfileSvc, n
                                       getter_AddRefs(profile));
     if (NS_SUCCEEDED(rv)) {
       if (gDoProfileReset) {
-        NS_WARNING("Profile reset is only supported for the default profile.");
-        gDoProfileReset = false;
+        {
+          // Check that the source profile is not in use by temporarily acquiring its lock.
+          nsIProfileLock* tempProfileLock;
+          nsCOMPtr<nsIProfileUnlocker> unlocker;
+          rv = profile->Lock(getter_AddRefs(unlocker), &tempProfileLock);
+          if (NS_FAILED(rv))
+            return ProfileLockedDialog(profile, unlocker, aNative, &tempProfileLock);
+        }
+
+        nsCOMPtr<nsIToolkitProfile> newProfile;
+        rv = CreateResetProfile(aProfileSvc, getter_AddRefs(newProfile));
+        if (NS_FAILED(rv)) {
+          NS_WARNING("Failed to create a profile to reset to.");
+          gDoProfileReset = false;
+        } else {
+          nsresult gotName = profile->GetName(gResetOldProfileName);
+          if (NS_SUCCEEDED(gotName)) {
+            profile = newProfile;
+          } else {
+            NS_WARNING("Failed to get the name of the profile we're resetting, so aborting reset.");
+            gResetOldProfileName.Truncate(0);
+            gDoProfileReset = false;
+          }
+        }
       }
 
       nsCOMPtr<nsIProfileUnlocker> unlocker;
@@ -2596,10 +2577,19 @@ SelectProfile(nsIProfileLock* *aResult, nsIToolkitProfileService* aProfileSvc, n
 
         nsCOMPtr<nsIToolkitProfile> newProfile;
         rv = CreateResetProfile(aProfileSvc, getter_AddRefs(newProfile));
-        if (NS_SUCCEEDED(rv))
-          profile = newProfile;
-        else
+        if (NS_FAILED(rv)) {
+          NS_WARNING("Failed to create a profile to reset to.");
           gDoProfileReset = false;
+        } else {
+          nsresult gotName = profile->GetName(gResetOldProfileName);
+          if (NS_SUCCEEDED(gotName)) {
+            profile = newProfile;
+          } else {
+            NS_WARNING("Failed to get the name of the profile we're resetting, so aborting reset.");
+            gResetOldProfileName.Truncate(0);
+            gDoProfileReset = false;
+          }
+        }
       }
 
       // If you close Firefox and very quickly reopen it, the old Firefox may
@@ -3340,6 +3330,15 @@ XREMain::XRE_mainInit(bool* aExitFlag)
                                        IsSignalHandlingBroken() ? NS_LITERAL_CSTRING("1")
                                                                 : NS_LITERAL_CSTRING("0"));
 #endif
+
+#ifdef XP_WIN
+    nsAutoString appInitDLLs;
+    if (widget::WinUtils::GetAppInitDLLs(appInitDLLs)) {
+      CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("AppInitDLLs"),
+                                         NS_ConvertUTF16toUTF8(appInitDLLs));
+    }
+#endif
+
     CrashReporter::SetRestartArgs(gArgc, gArgv);
 
     // annotate other data (user id etc)
@@ -3371,7 +3370,31 @@ XREMain::XRE_mainInit(bool* aExitFlag)
   }
 #endif
 
+#if defined(MOZ_SANDBOX) && defined(XP_WIN)
+  if (mAppData->sandboxBrokerServices) {
+    SandboxBroker::Initialize(mAppData->sandboxBrokerServices);
+    Telemetry::Accumulate(Telemetry::SANDBOX_BROKER_INITIALIZED, true);
+  } else {
+    Telemetry::Accumulate(Telemetry::SANDBOX_BROKER_INITIALIZED, false);
+#if defined(MOZ_CONTENT_SANDBOX)
+    // If we're sandboxing content and we fail to initialize, then crashing here
+    // seems like the sensible option.
+    if (BrowserTabsRemoteAutostart()) {
+      MOZ_CRASH("Failed to initialize broker services, can't continue.");
+    }
+#endif
+    // Otherwise just warn for the moment, as most things will work.
+    NS_WARNING("Failed to initialize broker services, sandboxed processes will "
+               "fail to start.");
+  }
+#endif
+
 #ifdef XP_MACOSX
+  // Set up ability to respond to system (Apple) events. This must occur before
+  // ProcessUpdates to ensure that links clicked in external applications aren't
+  // lost when updates are pending.
+  SetupMacApplicationDelegate();
+
   if (EnvHasValue("MOZ_LAUNCHED_CHILD")) {
     // This is needed, on relaunch, to force the OS to use the "Cocoa Dock
     // API".  Otherwise the call to ReceiveNextEvent() below will make it
@@ -4153,13 +4176,27 @@ XREMain::XRE_mainRun()
   }
 
   {
-    nsCOMPtr<nsIToolkitProfile> selectedProfile;
+    nsCOMPtr<nsIToolkitProfile> profileBeingReset;
+    bool profileWasSelected = false;
     if (gDoProfileReset) {
-      // At this point we can be sure that profile reset is happening on the default profile.
-      rv = mProfileSvc->GetSelectedProfile(getter_AddRefs(selectedProfile));
-      if (NS_FAILED(rv)) {
+      if (gResetOldProfileName.IsEmpty()) {
+        NS_WARNING("Not resetting profile as the profile has no name.");
         gDoProfileReset = false;
-        return NS_ERROR_FAILURE;
+      } else {
+        rv = mProfileSvc->GetProfileByName(gResetOldProfileName,
+                                           getter_AddRefs(profileBeingReset));
+        if (NS_FAILED(rv)) {
+          gDoProfileReset = false;
+          return NS_ERROR_FAILURE;
+        }
+
+        nsCOMPtr<nsIToolkitProfile> defaultProfile;
+        // This can fail if there is no default profile.
+        // That shouldn't stop reset from proceeding.
+        nsresult gotSelected = mProfileSvc->GetSelectedProfile(getter_AddRefs(defaultProfile));
+        if (NS_SUCCEEDED(gotSelected)) {
+          profileWasSelected = defaultProfile == profileBeingReset;
+        }
       }
     }
 
@@ -4174,17 +4211,24 @@ XREMain::XRE_mainRun()
           // reset the profile.
           aKey = MOZ_APP_NAME;
         }
-        pm->Migrate(&mDirProvider, aKey);
+        pm->Migrate(&mDirProvider, aKey, gResetOldProfileName);
       }
     }
 
     if (gDoProfileReset) {
-      nsresult backupCreated = ProfileResetCleanup(selectedProfile);
+      nsresult backupCreated = ProfileResetCleanup(profileBeingReset);
       if (NS_FAILED(backupCreated)) NS_WARNING("Could not cleanup the profile that was reset");
 
-      // Set the new profile as the default after we're done cleaning up the old default.
-      rv = SetCurrentProfileAsDefault(mProfileSvc, mProfD);
-      if (NS_FAILED(rv)) NS_WARNING("Could not set current profile as the default");
+      // Set the new profile as the default after we're done cleaning up the old profile,
+      // iff that profile was already the default
+      if (profileWasSelected) {
+        // this is actually "broken" - see bug 1122124
+        rv = SetCurrentProfileAsDefault(mProfileSvc, mProfD);
+        if (NS_FAILED(rv)) NS_WARNING("Could not set current profile as the default");
+      }
+      // Need to write out the fact that the profile has been removed and potentially
+      // that the selected/default profile changed.
+      mProfileSvc->Flush();
     }
   }
 
@@ -4267,10 +4311,6 @@ XREMain::XRE_mainRun()
 #endif
 
 #ifdef XP_MACOSX
-    // Set up ability to respond to system (Apple) events. This must be
-    // done before setting up the command line service.
-    SetupMacApplicationDelegate();
-
     // we re-initialize the command-line service and do appleevents munging
     // after we are sure that we're not restarting
     cmdLine = do_CreateInstance("@mozilla.org/toolkit/command-line;1");
@@ -4319,7 +4359,12 @@ XREMain::XRE_mainRun()
   }
 #endif /* MOZ_INSTRUMENT_EVENT_LOOP */
 
-#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+#if defined(MOZ_SANDBOX) && defined(XP_LINUX) && !defined(ANDROID)
+  // If we're on Linux, we now have information about the OS capabilities
+  // available to us.
+  SandboxInfo::SubmitTelemetry();
+#endif
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
   SetUpSandboxEnvironment();
 #endif
 
@@ -4331,7 +4376,7 @@ XREMain::XRE_mainRun()
     }
   }
 
-#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
   CleanUpSandboxEnvironment();
 #endif
 
@@ -4393,6 +4438,13 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   // used throughout this file
   gAppData = mAppData;
 
+  nsCOMPtr<nsIFile> binFile;
+  rv = XRE_GetBinaryPath(argv[0], getter_AddRefs(binFile));
+  NS_ENSURE_SUCCESS(rv, 1);
+
+  rv = binFile->GetPath(gAbsoluteArgv0Path);
+  NS_ENSURE_SUCCESS(rv, 1);
+
   mozilla::IOInterposerInit ioInterposerGuard;
 
 #if MOZ_WIDGET_GTK == 2
@@ -4427,6 +4479,8 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   mozilla::ShutdownEventTracing();
 #endif
 
+  gAbsoluteArgv0Path.Truncate();
+
   // Check for an application initiated restart.  This is one that
   // corresponds to nsIAppStartup.quit(eRestart)
   if (rv == NS_SUCCESS_RESTART_APP
@@ -4448,6 +4502,10 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   }
 
   mScopedXPCOM = nullptr;
+
+#if defined(XP_WIN)
+  mozilla::widget::StopAudioSession();
+#endif
 
   // unlock the profile after ScopedXPCOMStartup object (xpcom) 
   // has gone out of scope.  see bug #386739 for more details
@@ -4638,36 +4696,54 @@ enum {
   kE10sDisabledByUser = 2,
   // kE10sDisabledInSafeMode = 3, was removed in bug 1172491.
   kE10sDisabledForAccessibility = 4,
-  kE10sDisabledForMacGfx = 5,
+  // kE10sDisabledForMacGfx = 5, was removed in bug 1068674.
   kE10sDisabledForBidi = 6,
   kE10sDisabledForAddons = 7,
+  kE10sForceDisabled = 8,
+  kE10sDisabledForXPAcceleration = 9,
+  kE10sDisabledForOperatingSystem = 10,
 };
 
-#ifdef XP_WIN
 const char* kAccessibilityLastRunDatePref = "accessibility.lastLoadDate";
 const char* kAccessibilityLoadedLastSessionPref = "accessibility.loadedInLastSession";
-#endif // XP_WIN
-const char* kForceEnableE10sPref = "browser.tabs.remote.force-enable";
 
-#ifdef XP_WIN
 static inline uint32_t
 PRTimeToSeconds(PRTime t_usec)
 {
   PRTime usec_per_sec = PR_USEC_PER_SEC;
   return uint32_t(t_usec /= usec_per_sec);
 }
-#endif // XP_WIN
 
-bool
-mozilla::BrowserTabsRemoteAutostart()
-{
-  if (gBrowserTabsRemoteAutostartInitialized) {
-    return gBrowserTabsRemoteAutostart;
+const char* kForceEnableE10sPref = "browser.tabs.remote.force-enable";
+const char* kForceDisableE10sPref = "browser.tabs.remote.force-disable";
+
+
+uint32_t
+MultiprocessBlockPolicy() {
+  if (gMultiprocessBlockPolicyInitialized) {
+    return gMultiprocessBlockPolicy;
   }
-  gBrowserTabsRemoteAutostartInitialized = true;
+  gMultiprocessBlockPolicyInitialized = true;
+
+  /**
+   * Avoids enabling e10s if there are add-ons installed.
+   */
+  bool addonsCanDisable = Preferences::GetBool("extensions.e10sBlocksEnabling", false);
+  bool disabledByAddons = Preferences::GetBool("extensions.e10sBlockedByAddons", false);
+
+#ifdef MOZ_CRASHREPORTER
+  CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("AddonsShouldHaveBlockedE10s"),
+                                     disabledByAddons ? NS_LITERAL_CSTRING("1")
+                                                      : NS_LITERAL_CSTRING("0"));
+#endif
+
+  if (addonsCanDisable && disabledByAddons) {
+    gMultiprocessBlockPolicy = kE10sDisabledForAddons;
+    return gMultiprocessBlockPolicy;
+  }
 
   bool disabledForA11y = false;
-#ifdef XP_WIN
+
   /**
    * Avoids enabling e10s if accessibility has recently loaded. Performs the
    * following checks:
@@ -4694,6 +4770,46 @@ mozilla::BrowserTabsRemoteAutostart()
       disabledForA11y = true;
     }
   }
+
+  if (disabledForA11y) {
+    gMultiprocessBlockPolicy = kE10sDisabledForAccessibility;
+    return gMultiprocessBlockPolicy;
+  }
+
+  /**
+   * Avoids enabling e10s for Windows XP users on the release channel.
+   */
+#if defined(XP_WIN)
+  if (Preferences::GetDefaultCString("app.update.channel").EqualsLiteral("release") &&
+      !IsVistaOrLater()) {
+    gMultiprocessBlockPolicy = kE10sDisabledForOperatingSystem;
+    return gMultiprocessBlockPolicy;
+  }
+#endif
+
+  /**
+   * Avoids enabling e10s for OS X 10.6 - 10.8 users (<= Mountain Lion) as these
+   * versions will be unsupported soon.
+   */
+#if defined(XP_MACOSX)
+  if (!nsCocoaFeatures::OnMavericksOrLater()) {
+    gMultiprocessBlockPolicy = kE10sDisabledForOperatingSystem;
+    return gMultiprocessBlockPolicy;
+  }
+#endif
+
+#if defined(XP_WIN)
+  /**
+   * We block on Windows XP if layers acceleration is requested. This is due to
+   * bug 1237769 where D3D9 and e10s behave badly together on XP.
+   */
+  bool layersAccelerationRequested = !Preferences::GetBool("layers.acceleration.disabled") ||
+                                      Preferences::GetBool("layers.acceleration.force-enabled");
+
+  if (layersAccelerationRequested && !IsVistaOrLater()) {
+    gMultiprocessBlockPolicy = kE10sDisabledForXPAcceleration;
+    return gMultiprocessBlockPolicy;
+  }
 #endif // XP_WIN
 
   /**
@@ -4701,31 +4817,39 @@ mozilla::BrowserTabsRemoteAutostart()
    * which currently doesn't work well with e10s.
    */
   bool disabledForBidi = false;
-  do { // to allow 'break' to abort this block if a call fails
-    nsresult rv;
-    nsCOMPtr<nsILocaleService> ls =
-      do_GetService(NS_LOCALESERVICE_CONTRACTID, &rv);
-    if (NS_FAILED(rv))
-      break;
 
-    nsCOMPtr<nsILocale> appLocale;
-    rv = ls->GetApplicationLocale(getter_AddRefs(appLocale));
-    if (NS_FAILED(rv))
-      break;
+  nsCOMPtr<nsIXULChromeRegistry> registry =
+   mozilla::services::GetXULChromeRegistryService();
+  if (registry) {
+     registry->IsLocaleRTL(NS_LITERAL_CSTRING("global"), &disabledForBidi);
+  }
 
-    nsString localeStr;
-    rv = appLocale->
-      GetCategory(NS_LITERAL_STRING(NSILOCALE_MESSAGE), localeStr);
-    if (NS_FAILED(rv))
-      break;
+  if (disabledForBidi) {
+    gMultiprocessBlockPolicy = kE10sDisabledForBidi;
+    return gMultiprocessBlockPolicy;
+  }
 
-    if (localeStr.EqualsLiteral("ar") ||
-        localeStr.EqualsLiteral("fa") ||
-        localeStr.EqualsLiteral("he") ||
-        localeStr.EqualsLiteral("ur")) {
-      disabledForBidi = true;
-    }
-  } while (0);
+  /*
+   * None of the blocking policies matched, so e10s is allowed to run.
+   * Cache the information and return 0, indicating success.
+   */
+  gMultiprocessBlockPolicy = 0;
+  return 0;
+}
+
+bool
+mozilla::BrowserTabsRemoteAutostart()
+{
+  if (gBrowserTabsRemoteAutostartInitialized) {
+    return gBrowserTabsRemoteAutostart;
+  }
+  gBrowserTabsRemoteAutostartInitialized = true;
+
+  // If we're in the content process, we are running E10S.
+  if (XRE_IsContentProcess()) {
+    gBrowserTabsRemoteAutostart = true;
+    return gBrowserTabsRemoteAutostart;
+  }
 
   bool optInPref = Preferences::GetBool("browser.tabs.remote.autostart", false);
   bool trialPref = Preferences::GetBool("browser.tabs.remote.autostart.2", false);
@@ -4739,73 +4863,14 @@ mozilla::BrowserTabsRemoteAutostart()
     status = kE10sDisabledByUser;
   }
 
-#ifdef E10S_TESTING_ONLY
-  bool e10sAllowed = true;
-#else
-  // When running tests with 'layers.offmainthreadcomposition.testing.enabled', e10s must be
-  // allowed because these tests must be allowed to run remotely.
-  // We are also allowing e10s to be enabled on Beta (which doesn't have E10S_TESTING_ONLY defined.
-  bool e10sAllowed = !Preferences::GetDefaultCString("app.update.channel").EqualsLiteral("release") ||
-                     gfxPrefs::GetSingleton().LayersOffMainThreadCompositionTestingEnabled();
-#endif
-
-  bool addonsCanDisable = Preferences::GetBool("extensions.e10sBlocksEnabling", false);
-  bool disabledByAddons = Preferences::GetBool("extensions.e10sBlockedByAddons", false);
-
-#ifdef MOZ_CRASHREPORTER
-  CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("AddonsShouldHaveBlockedE10s"),
-                                     disabledByAddons ? NS_LITERAL_CSTRING("1")
-                                                      : NS_LITERAL_CSTRING("0"));
-#endif
-
-  if (e10sAllowed && prefEnabled) {
-    if (disabledForA11y) {
-      status = kE10sDisabledForAccessibility;
-    } else if (disabledForBidi) {
-      status = kE10sDisabledForBidi;
-    } else if (addonsCanDisable && disabledByAddons) {
-      status = kE10sDisabledForAddons;
+  if (prefEnabled) {
+    uint32_t blockPolicy = MultiprocessBlockPolicy();
+    if (blockPolicy != 0) {
+      status = blockPolicy;
     } else {
       gBrowserTabsRemoteAutostart = true;
     }
   }
-
-#if defined(XP_MACOSX)
-  // If for any reason we suspect acceleration will be disabled, disabled
-  // e10s auto start on mac.
-  if (gBrowserTabsRemoteAutostart) {
-    // Check prefs
-    bool accelDisabled = gfxPrefs::GetSingleton().LayersAccelerationDisabled() &&
-                         !gfxPrefs::LayersAccelerationForceEnabled();
-
-    accelDisabled = accelDisabled || !nsCocoaFeatures::AccelerateByDefault();
-
-    // Check for blocked drivers
-    if (!accelDisabled) {
-      nsCOMPtr<nsIGfxInfo> gfxInfo = services::GetGfxInfo();
-      if (gfxInfo) {
-        int32_t status;
-        if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_OPENGL_LAYERS, &status)) &&
-            status != nsIGfxInfo::FEATURE_STATUS_OK) {
-          accelDisabled = true;
-        }
-      }
-    }
-
-    // Check env flags
-    if (accelDisabled) {
-      const char *acceleratedEnv = PR_GetEnv("MOZ_ACCELERATED");
-      if (acceleratedEnv && (*acceleratedEnv != '0')) {
-        accelDisabled = false;
-      }
-    }
-
-    if (accelDisabled) {
-      gBrowserTabsRemoteAutostart = false;
-      status = kE10sDisabledForMacGfx;
-    }
-  }
-#endif // defined(XP_MACOSX)
 
   // Uber override pref for manual testing purposes
   if (Preferences::GetBool(kForceEnableE10sPref, false)) {
@@ -4814,13 +4879,16 @@ mozilla::BrowserTabsRemoteAutostart()
     status = kE10sEnabledByUser;
   }
 
+  // Uber override pref for emergency blocking
+  if (gBrowserTabsRemoteAutostart &&
+      Preferences::GetBool(kForceDisableE10sPref, false)) {
+    gBrowserTabsRemoteAutostart = false;
+    status = kE10sForceDisabled;
+  }
+
   gBrowserTabsRemoteStatus = status;
 
   mozilla::Telemetry::Accumulate(mozilla::Telemetry::E10S_STATUS, status);
-  if (Preferences::GetBool("browser.enabledE10SFromPrompt", false)) {
-    mozilla::Telemetry::Accumulate(mozilla::Telemetry::E10S_STILL_ACCEPTED_FROM_PROMPT,
-                                    gBrowserTabsRemoteAutostart);
-  }
   if (prefEnabled) {
     mozilla::Telemetry::Accumulate(mozilla::Telemetry::E10S_BLOCKED_FROM_RUNNING,
                                     !gBrowserTabsRemoteAutostart);

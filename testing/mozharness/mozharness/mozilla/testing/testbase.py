@@ -12,6 +12,7 @@ import pprint
 import re
 import urllib2
 import json
+import socket
 
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import FATAL, WARNING
@@ -164,17 +165,49 @@ class TestingMixin(VirtualenvMixin, BuildbotMixin, ResourceMonitoringMixin,
 
         return '%s/%s' % (base_url, file_name)
 
+    def query_prefixed_build_dir_url(self, suffix):
+        """Resolve a file name prefixed with platform and build details to a potential url
+        in the build upload directory where that file can be found.
+        """
+        if self.test_packages_url:
+            reference_suffixes = ['.test_packages.json']
+            reference_url = self.test_packages_url
+        elif self.installer_url:
+            reference_suffixes = INSTALLER_SUFFIXES
+            reference_url = self.installer_url
+        else:
+            self.fatal("Can't figure out build directory urls without an installer_url "
+                       "or test_packages_url!")
+
+        url = None
+        for reference_suffix in reference_suffixes:
+            if reference_url.endswith(reference_suffix):
+                url = reference_url[:-len(reference_suffix)] + suffix
+                break
+
+        return url
+
     def query_symbols_url(self):
         if self.symbols_url:
             return self.symbols_url
-        if not self.installer_url:
-            self.fatal("Can't figure out symbols_url without an installer_url!")
-        for suffix in INSTALLER_SUFFIXES:
-            if self.installer_url.endswith(suffix):
-                self.symbols_url = self.installer_url[:-len(suffix)] + '.crashreporter-symbols.zip'
-                return self.symbols_url
-        else:
-            self.fatal("Can't figure out symbols_url from installer_url %s!" % self.installer_url)
+
+        elif self.installer_url:
+            symbols_url = self.query_prefixed_build_dir_url('.crashreporter-symbols.zip')
+
+            # Check if the URL exists. If not, use none to allow mozcrash to auto-check for symbols
+            try:
+                if symbols_url:
+                    self._urlopen(symbols_url, timeout=120)
+                    self.symbols_url = symbols_url
+            except (urllib2.URLError, socket.error, socket.timeout):
+                self.exception("Can't figure out symbols_url from installer_url: %s!" % self.installer_url, level=WARNING)
+
+        # If no symbols URL can be determined let minidump_stackwalk query the symbols.
+        # As of now this only works for Nightly and release builds.
+        if not self.symbols_url:
+            self.warning("No symbols_url found. Let minidump_stackwalk query for symbols.")
+
+        return self.symbols_url
 
     def _pre_config_lock(self, rw_config):
         for i, (target_file, target_dict) in enumerate(rw_config.all_cfg_files_and_dicts):
@@ -403,8 +436,10 @@ You can set this by:
         aliases = {
             'robocop': 'mochitest',
             'mochitest-chrome': 'mochitest',
+            'mochitest-media': 'mochitest',
+            'mochitest-plain-clipboard': 'mochitest',
+            'mochitest-plain-gpu': 'mochitest',
             'mochitest-gl': 'mochitest',
-            'webapprt': 'mochitest',
             'jsreftest': 'reftest',
             'crashtest': 'reftest',
             'reftest-debug': 'reftest',
@@ -523,7 +558,7 @@ You can set this by:
                 # where the packages manifest is located. This is the case when the
                 # test package manifest isn't set as a buildbot property, which is true
                 # for some self-serve jobs and platforms using parse_make_upload.
-                self.test_packages_url = self.query_build_dir_url('test_packages.json')
+                self.test_packages_url = self.query_prefixed_build_dir_url('.test_packages.json')
 
             suite_categories = suite_categories or ['common']
             self._download_test_packages(suite_categories, target_unzip_dirs)

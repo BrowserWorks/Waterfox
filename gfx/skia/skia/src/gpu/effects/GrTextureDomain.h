@@ -16,6 +16,7 @@ class GrGLProgramBuilder;
 class GrGLSLShaderBuilder;
 class GrInvariantOutput;
 class GrGLSLTextureSampler;
+class GrGLSLUniformHandler;
 struct SkRect;
 
 /**
@@ -114,6 +115,7 @@ public:
          *                          expression before being written to outColor.
          */
         void sampleTexture(GrGLSLShaderBuilder* builder,
+                           GrGLSLUniformHandler* uniformHandler,
                            const GrGLSLCaps* glslCaps,
                            const GrTextureDomain& textureDomain,
                            const char* outColor,
@@ -177,7 +179,7 @@ public:
 
     SkString dumpInfo() const override {
         SkString str;
-        str.appendf("Domain: [L: %.2f, T: %.2f, R: %.2f, B: %.2f] ", 
+        str.appendf("Domain: [L: %.2f, T: %.2f, R: %.2f, B: %.2f] ",
                     fTextureDomain.domain().fLeft, fTextureDomain.domain().fTop,
                     fTextureDomain.domain().fRight, fTextureDomain.domain().fBottom);
         str.append(INHERITED::dumpInfo());

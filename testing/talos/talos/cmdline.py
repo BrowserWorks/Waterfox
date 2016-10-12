@@ -67,8 +67,9 @@ def create_parser(mach_interface=False):
             help="List of tests to run, separated by ':' (ex. damp:cart)")
     add_arg('--suite',
             help="Suite to use (instead of --activeTests)")
-    add_arg('--e10s', action='store_true',
-            help="enable e10s")
+    add_arg('--disable-e10s', dest='e10s',
+            action='store_false', default=True,
+            help="disable e10s")
     add_arg('--noChrome', action='store_true',
             help="do not run tests as chrome")
     add_arg('--rss', action='store_true',
@@ -86,7 +87,8 @@ def create_parser(mach_interface=False):
     add_arg('--spsProfileEntries', dest="sps_profile_entries", type=int,
             help="How many samples to take with the profiler")
     add_arg('--extension', dest='extensions', action='append',
-            default=['${talos}/talos-powers', '${talos}/pageloader'],
+            default=['${talos}/talos-powers/talos-powers-signed.xpi',
+                     '${talos}/pageloader/pageloader-signed.xpi'],
             help="Extension to install while running")
     add_arg('--fast', action='store_true',
             help="Run tp tests as tp_fast")
@@ -111,8 +113,6 @@ def create_parser(mach_interface=False):
         add_arg('--develop', action='store_true', default=False,
                 help="useful for running tests on a developer machine."
                      " Doesn't upload to the graph servers.")
-    add_arg('--responsiveness', action='store_true',
-            help="turn on responsiveness collection")
     add_arg("--cycles", type=int,
             help="number of browser cycles to run")
     add_arg("--tpmanifest",
@@ -135,6 +135,10 @@ def create_parser(mach_interface=False):
             help='Specify the url for the repository we are testing. '
                  'This will use the value found in application.ini if'
                  ' it is not specified.')
+    add_arg('--framework',
+            help='Will post to the specified framework for Perfherder. '
+                 'Default "talos".  Used primarily for experiments on '
+                 'new platforms')
     add_arg('--print-tests', action=_ListTests,
             help="print available tests")
     add_arg('--print-suites', action=_ListSuite,

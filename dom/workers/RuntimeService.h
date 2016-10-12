@@ -17,7 +17,7 @@
 #include "nsTArray.h"
 
 class nsITimer;
-class nsPIDOMWindow;
+class nsPIDOMWindowInner;
 
 BEGIN_WORKERS_NAMESPACE
 
@@ -84,7 +84,7 @@ class RuntimeService final : public nsIObserver
   nsTArray<IdleThreadInfo> mIdleThreadArray;
 
   // *Not* protected by mMutex.
-  nsClassHashtable<nsPtrHashKey<nsPIDOMWindow>,
+  nsClassHashtable<nsPtrHashKey<nsPIDOMWindowInner>,
                    nsTArray<WorkerPrivate*> > mWindowMap;
 
   // Only used on the main thread.
@@ -124,29 +124,29 @@ public:
   GetService();
 
   bool
-  RegisterWorker(JSContext* aCx, WorkerPrivate* aWorkerPrivate);
+  RegisterWorker(WorkerPrivate* aWorkerPrivate);
 
   void
-  UnregisterWorker(JSContext* aCx, WorkerPrivate* aWorkerPrivate);
+  UnregisterWorker(WorkerPrivate* aWorkerPrivate);
 
   void
   RemoveSharedWorker(WorkerDomainInfo* aDomainInfo,
                      WorkerPrivate* aWorkerPrivate);
 
   void
-  CancelWorkersForWindow(nsPIDOMWindow* aWindow);
+  CancelWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
   void
-  FreezeWorkersForWindow(nsPIDOMWindow* aWindow);
+  FreezeWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
   void
-  ThawWorkersForWindow(nsPIDOMWindow* aWindow);
+  ThawWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
   void
-  SuspendWorkersForWindow(nsPIDOMWindow* aWindow);
+  SuspendWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
   void
-  ResumeWorkersForWindow(nsPIDOMWindow* aWindow);
+  ResumeWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
   nsresult
   CreateSharedWorker(const GlobalObject& aGlobal,
@@ -249,6 +249,11 @@ public:
   void
   SendOfflineStatusChangeEventToAllWorkers(bool aIsOffline);
 
+  void
+  MemoryPressureAllWorkers();
+
+  uint32_t ClampedHardwareConcurrency() const;
+
 private:
   RuntimeService();
   ~RuntimeService();
@@ -266,11 +271,11 @@ private:
   AddAllTopLevelWorkersToArray(nsTArray<WorkerPrivate*>& aWorkers);
 
   void
-  GetWorkersForWindow(nsPIDOMWindow* aWindow,
+  GetWorkersForWindow(nsPIDOMWindowInner* aWindow,
                       nsTArray<WorkerPrivate*>& aWorkers);
 
   bool
-  ScheduleWorker(JSContext* aCx, WorkerPrivate* aWorkerPrivate);
+  ScheduleWorker(WorkerPrivate* aWorkerPrivate);
 
   static void
   ShutdownIdleThreads(nsITimer* aTimer, void* aClosure);

@@ -216,8 +216,8 @@ private:
     mResult = aResult;
 
     mState = STATE_COMPLETING;
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      mInitiatingThread->Dispatch(this, nsIThread::DISPATCH_NORMAL)));
+    MOZ_ALWAYS_SUCCEEDS(
+      mInitiatingThread->Dispatch(this, nsIThread::DISPATCH_NORMAL));
   }
 
   void Clear()
@@ -377,6 +377,7 @@ Context::QuotaInitRunnable::Run()
       RefPtr<ManagerId> managerId = mManager->GetManagerId();
       nsCOMPtr<nsIPrincipal> principal = managerId->Principal();
       nsresult rv = QuotaManager::GetInfoFromPrincipal(principal,
+                                                       &mQuotaInfo.mSuffix,
                                                        &mQuotaInfo.mGroup,
                                                        &mQuotaInfo.mOrigin,
                                                        &mQuotaInfo.mIsApp);
@@ -386,8 +387,8 @@ Context::QuotaInitRunnable::Run()
       }
 
       mState = STATE_CREATE_QUOTA_MANAGER;
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-        mInitiatingThread->Dispatch(this, nsIThread::DISPATCH_NORMAL)));
+      MOZ_ALWAYS_SUCCEEDS(
+        mInitiatingThread->Dispatch(this, nsIThread::DISPATCH_NORMAL));
       break;
     }
     // ----------------------------------
@@ -435,6 +436,7 @@ Context::QuotaInitRunnable::Run()
       QuotaManager* qm = QuotaManager::Get();
       MOZ_ASSERT(qm);
       nsresult rv = qm->EnsureOriginIsInitialized(PERSISTENCE_TYPE_DEFAULT,
+                                                  mQuotaInfo.mSuffix,
                                                   mQuotaInfo.mGroup,
                                                   mQuotaInfo.mOrigin,
                                                   mQuotaInfo.mIsApp,
@@ -446,8 +448,8 @@ Context::QuotaInitRunnable::Run()
 
       mState = STATE_RUN_ON_TARGET;
 
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-        mTarget->Dispatch(this, nsIThread::DISPATCH_NORMAL)));
+      MOZ_ALWAYS_SUCCEEDS(
+        mTarget->Dispatch(this, nsIThread::DISPATCH_NORMAL));
       break;
     }
     // -------------------
@@ -468,7 +470,7 @@ Context::QuotaInitRunnable::Run()
       // the marker file.  If it wasn't opened successfully, then no need to
       // create a marker file anyway.
       if (NS_SUCCEEDED(resolver->Result())) {
-        MOZ_ALWAYS_TRUE(NS_SUCCEEDED(CreateMarkerFile(mQuotaInfo)));
+        MOZ_ALWAYS_SUCCEEDS(CreateMarkerFile(mQuotaInfo));
       }
 
       break;
@@ -579,8 +581,8 @@ public:
 
     // Otherwise we are in an asynchronous resolve.  And must perform a thread
     // bounce to run on the target thread again.
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      mTarget->Dispatch(this, nsIThread::DISPATCH_NORMAL)));
+    MOZ_ALWAYS_SUCCEEDS(
+      mTarget->Dispatch(this, nsIThread::DISPATCH_NORMAL));
   }
 
 private:
@@ -704,8 +706,8 @@ Context::ActionRunnable::Run()
       mState = STATE_COMPLETING;
       // Shutdown must be delayed until all Contexts are destroyed.  Crash
       // for this invariant violation.
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-        mInitiatingThread->Dispatch(this, nsIThread::DISPATCH_NORMAL)));
+      MOZ_ALWAYS_SUCCEEDS(
+        mInitiatingThread->Dispatch(this, nsIThread::DISPATCH_NORMAL));
       break;
     }
     // -------------------
@@ -740,9 +742,9 @@ Context::ThreadsafeHandle::AllowToClose()
   // Dispatch is guaranteed to succeed here because we block shutdown until
   // all Contexts have been destroyed.
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethod(this, &ThreadsafeHandle::AllowToCloseOnOwningThread);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-    mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL)));
+    NewRunnableMethod(this, &ThreadsafeHandle::AllowToCloseOnOwningThread);
+  MOZ_ALWAYS_SUCCEEDS(
+    mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL));
 }
 
 void
@@ -756,9 +758,9 @@ Context::ThreadsafeHandle::InvalidateAndAllowToClose()
   // Dispatch is guaranteed to succeed here because we block shutdown until
   // all Contexts have been destroyed.
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethod(this, &ThreadsafeHandle::InvalidateAndAllowToCloseOnOwningThread);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-    mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL)));
+    NewRunnableMethod(this, &ThreadsafeHandle::InvalidateAndAllowToCloseOnOwningThread);
+  MOZ_ALWAYS_SUCCEEDS(
+    mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL));
 }
 
 Context::ThreadsafeHandle::ThreadsafeHandle(Context* aContext)
@@ -780,10 +782,7 @@ Context::ThreadsafeHandle::~ThreadsafeHandle()
 
   // Dispatch is guaranteed to succeed here because we block shutdown until
   // all Contexts have been destroyed.
-  nsCOMPtr<nsIRunnable> runnable =
-    NS_NewNonOwningRunnableMethod(mStrongRef.forget().take(), &Context::Release);
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-    mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL)));
+  NS_ProxyRelease(mOwningThread, mStrongRef.forget());
 }
 
 void
@@ -965,7 +964,7 @@ Context::~Context()
   mManager->RemoveContext(this);
 
   if (mQuotaInfo.mDir && !mOrphanedData) {
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(DeleteMarkerFile(mQuotaInfo)));
+    MOZ_ALWAYS_SUCCEEDS(DeleteMarkerFile(mQuotaInfo));
   }
 
   if (mNextContext) {

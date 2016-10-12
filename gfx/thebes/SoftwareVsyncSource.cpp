@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 2 -*-
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -9,6 +9,8 @@
 #include "gfxPlatform.h"
 #include "nsThreadUtils.h"
 
+using namespace mozilla;
+
 SoftwareVsyncSource::SoftwareVsyncSource()
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -18,13 +20,11 @@ SoftwareVsyncSource::SoftwareVsyncSource()
 SoftwareVsyncSource::~SoftwareVsyncSource()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  mGlobalDisplay->Shutdown();
   mGlobalDisplay = nullptr;
 }
 
 SoftwareDisplay::SoftwareDisplay()
-  : mCurrentVsyncTask(nullptr)
-  , mVsyncEnabled(false)
+  : mVsyncEnabled(false)
 {
   // Mimic 60 fps
   MOZ_ASSERT(NS_IsMainThread());
@@ -46,7 +46,7 @@ SoftwareDisplay::EnableVsync()
     }
     mVsyncEnabled = true;
 
-    mVsyncThread->message_loop()->PostTask(FROM_HERE,
+    mVsyncThread->message_loop()->PostTask(
       NewRunnableMethod(this, &SoftwareDisplay::EnableVsync));
     return;
   }
@@ -65,7 +65,7 @@ SoftwareDisplay::DisableVsync()
     }
     mVsyncEnabled = false;
 
-    mVsyncThread->message_loop()->PostTask(FROM_HERE,
+    mVsyncThread->message_loop()->PostTask(
       NewRunnableMethod(this, &SoftwareDisplay::DisableVsync));
     return;
   }
@@ -129,13 +129,15 @@ SoftwareDisplay::ScheduleNextVsync(mozilla::TimeStamp aVsyncTimestamp)
     nextVsync = mozilla::TimeStamp::Now();
   }
 
-  mCurrentVsyncTask = NewRunnableMethod(this,
-      &SoftwareDisplay::NotifyVsync,
-      nextVsync);
+  mCurrentVsyncTask =
+    NewCancelableRunnableMethod<mozilla::TimeStamp>(this,
+                                                    &SoftwareDisplay::NotifyVsync,
+                                                    nextVsync);
 
-  mVsyncThread->message_loop()->PostDelayedTask(FROM_HERE,
-      mCurrentVsyncTask,
-      delay.ToMilliseconds());
+  RefPtr<Runnable> addrefedTask = mCurrentVsyncTask;
+  mVsyncThread->message_loop()->PostDelayedTask(
+    addrefedTask.forget(),
+    delay.ToMilliseconds());
 }
 
 void

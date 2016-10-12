@@ -7,54 +7,54 @@
 #ifndef GCHashTable_h
 #define GCHashTable_h
 
+#include "js/GCPolicyAPI.h"
 #include "js/HashTable.h"
 #include "js/RootingAPI.h"
+#include "js/SweepingAPI.h"
 #include "js/TracingAPI.h"
 
-namespace js {
+namespace JS {
 
 // Define a reasonable default GC policy for GC-aware Maps.
 template <typename Key, typename Value>
-struct DefaultMapGCPolicy {
-    using KeyPolicy = DefaultGCPolicy<Key>;
-    using ValuePolicy = DefaultGCPolicy<Value>;
-
+struct DefaultMapSweepPolicy {
     static bool needsSweep(Key* key, Value* value) {
-        return KeyPolicy::needsSweep(key) || ValuePolicy::needsSweep(value);
+        return GCPolicy<Key>::needsSweep(key) || GCPolicy<Value>::needsSweep(value);
     }
 };
 
 // A GCHashMap is a GC-aware HashMap, meaning that it has additional trace and
 // sweep methods that know how to visit all keys and values in the table.
 // HashMaps that contain GC pointers will generally want to use this GCHashMap
-// specialization in lieu of HashMap, either because those pointers must be
-// traced to be kept alive -- in which case, KeyPolicy and/or ValuePolicy
-// should do the appropriate tracing -- or because those pointers are weak and
-// must be swept during a GC -- in which case needsSweep should be set
-// appropriately.
+// specialization instead of HashMap, because this conveniently supports tracing
+// keys and values, and cleaning up weak entries.
 //
-// Most types of GC pointers as keys and values can be traced with no extra
-// infrastructure. For structs, the DefaultGCPolicy<T> will call a trace()
-// method on the struct. For other structs and non-gc-pointer members, ensure
-// that there is a specialization of DefaultGCPolicy<T> with an appropriate
-// trace() static method available to handle the custom type. Generic helpers
-// can be found in js/public/TracingAPI.h.
+// GCHashMap::trace applies GCPolicy<T>::trace to each entry's key and value.
+// Most types of GC pointers already have appropriate specializations of
+// GCPolicy, so they should just work as keys and values. Any struct type with a
+// default constructor and trace and sweep functions should work as well. If you
+// need to define your own GCPolicy specialization, generic helpers can be found
+// in js/public/TracingAPI.h.
 //
-// Note that this HashMap only knows *how* to trace and sweep (and the tracing
-// can handle keys that move), but it does not itself cause tracing or sweeping
-// to be invoked. For tracing, it must be used with Rooted or PersistentRooted,
-// or barriered and traced manually. For sweeping, currently it requires an
-// explicit call to <map>.sweep().
+// The MapSweepPolicy template parameter controls how the table drops entries
+// when swept. GCHashMap::sweep applies MapSweepPolicy::needsSweep to each table
+// entry; if it returns true, the entry is dropped. The default MapSweepPolicy
+// drops the entry if either the key or value is about to be finalized,
+// according to its GCPolicy<T>::needsSweep method. (This default is almost
+// always fine: it's hard to imagine keeping such an entry around anyway.)
 //
+// Note that this HashMap only knows *how* to trace and sweep, but it does not
+// itself cause tracing or sweeping to be invoked. For tracing, it must be used
+// with Rooted or PersistentRooted, or barriered and traced manually. For
+// sweeping, currently it requires an explicit call to <map>.sweep().
 template <typename Key,
           typename Value,
-          typename HashPolicy = DefaultHasher<Key>,
-          typename AllocPolicy = TempAllocPolicy,
-          typename GCPolicy = DefaultMapGCPolicy<Key, Value>>
-class GCHashMap : public HashMap<Key, Value, HashPolicy, AllocPolicy>,
-                  public JS::Traceable
+          typename HashPolicy = js::DefaultHasher<Key>,
+          typename AllocPolicy = js::TempAllocPolicy,
+          typename MapSweepPolicy = DefaultMapSweepPolicy<Key, Value>>
+class GCHashMap : public js::HashMap<Key, Value, HashPolicy, AllocPolicy>
 {
-    using Base = HashMap<Key, Value, HashPolicy, AllocPolicy>;
+    using Base = js::HashMap<Key, Value, HashPolicy, AllocPolicy>;
 
   public:
     explicit GCHashMap(AllocPolicy a = AllocPolicy()) : Base(a)  {}
@@ -64,8 +64,8 @@ class GCHashMap : public HashMap<Key, Value, HashPolicy, AllocPolicy>,
         if (!this->initialized())
             return;
         for (typename Base::Enum e(*this); !e.empty(); e.popFront()) {
-            GCPolicy::ValuePolicy::trace(trc, &e.front().value(), "hashmap value");
-            GCPolicy::KeyPolicy::trace(trc, &e.front().mutableKey(), "hashmap key");
+            GCPolicy<Value>::trace(trc, &e.front().value(), "hashmap value");
+            GCPolicy<Key>::trace(trc, &e.front().mutableKey(), "hashmap key");
         }
     }
 
@@ -74,7 +74,7 @@ class GCHashMap : public HashMap<Key, Value, HashPolicy, AllocPolicy>,
             return;
 
         for (typename Base::Enum e(*this); !e.empty(); e.popFront()) {
-            if (GCPolicy::needsSweep(&e.front().mutableKey(), &e.front().value()))
+            if (MapSweepPolicy::needsSweep(&e.front().mutableKey(), &e.front().value()))
                 e.removeFront();
         }
     }
@@ -92,15 +92,23 @@ class GCHashMap : public HashMap<Key, Value, HashPolicy, AllocPolicy>,
     GCHashMap& operator=(const GCHashMap& hm) = delete;
 };
 
+} // namespace JS
+
+namespace js {
+
 // HashMap that supports rekeying.
+//
+// If your keys are pointers to something like JSObject that can be tenured or
+// compacted, prefer to use GCHashMap with MovableCellHasher, which takes
+// advantage of the Zone's stable id table to make rekeying unnecessary.
 template <typename Key,
           typename Value,
           typename HashPolicy = DefaultHasher<Key>,
           typename AllocPolicy = TempAllocPolicy,
-          typename GCPolicy = DefaultMapGCPolicy<Key, Value>>
-class GCRekeyableHashMap : public GCHashMap<Key, Value, HashPolicy, AllocPolicy, GCPolicy>
+          typename MapSweepPolicy = JS::DefaultMapSweepPolicy<Key, Value>>
+class GCRekeyableHashMap : public JS::GCHashMap<Key, Value, HashPolicy, AllocPolicy, MapSweepPolicy>
 {
-    using Base = GCHashMap<Key, Value, HashPolicy, AllocPolicy>;
+    using Base = JS::GCHashMap<Key, Value, HashPolicy, AllocPolicy>;
 
   public:
     explicit GCRekeyableHashMap(AllocPolicy a = AllocPolicy()) : Base(a)  {}
@@ -111,7 +119,7 @@ class GCRekeyableHashMap : public GCHashMap<Key, Value, HashPolicy, AllocPolicy,
 
         for (typename Base::Enum e(*this); !e.empty(); e.popFront()) {
             Key key(e.front().key());
-            if (GCPolicy::needsSweep(&key, &e.front().value()))
+            if (MapSweepPolicy::needsSweep(&key, &e.front().value()))
                 e.removeFront();
             else if (!HashPolicy::match(key, e.front().key()))
                 e.rekeyFront(key);
@@ -129,16 +137,16 @@ class GCRekeyableHashMap : public GCHashMap<Key, Value, HashPolicy, AllocPolicy,
 template <typename Outer, typename... Args>
 class GCHashMapOperations
 {
-    using Map = GCHashMap<Args...>;
+    using Map = JS::GCHashMap<Args...>;
     using Lookup = typename Map::Lookup;
-    using Ptr = typename Map::Ptr;
-    using AddPtr = typename Map::AddPtr;
-    using Range = typename Map::Range;
-    using Enum = typename Map::Enum;
 
     const Map& map() const { return static_cast<const Outer*>(this)->get(); }
 
   public:
+    using AddPtr = typename Map::AddPtr;
+    using Ptr = typename Map::Ptr;
+    using Range = typename Map::Range;
+
     bool initialized() const                   { return map().initialized(); }
     Ptr lookup(const Lookup& l) const          { return map().lookup(l); }
     AddPtr lookupForAdd(const Lookup& l) const { return map().lookupForAdd(l); }
@@ -146,24 +154,30 @@ class GCHashMapOperations
     bool empty() const                         { return map().empty(); }
     uint32_t count() const                     { return map().count(); }
     size_t capacity() const                    { return map().capacity(); }
-    uint32_t generation() const                { return map().generation(); }
     bool has(const Lookup& l) const            { return map().lookup(l).found(); }
+    size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
+        return map().sizeOfExcludingThis(mallocSizeOf);
+    }
+    size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
+        return mallocSizeOf(this) + map().sizeOfExcludingThis(mallocSizeOf);
+    }
 };
 
 template <typename Outer, typename... Args>
 class MutableGCHashMapOperations
   : public GCHashMapOperations<Outer, Args...>
 {
-    using Map = GCHashMap<Args...>;
+    using Map = JS::GCHashMap<Args...>;
     using Lookup = typename Map::Lookup;
-    using Ptr = typename Map::Ptr;
-    using AddPtr = typename Map::AddPtr;
-    using Range = typename Map::Range;
-    using Enum = typename Map::Enum;
 
     Map& map() { return static_cast<Outer*>(this)->get(); }
 
   public:
+    using AddPtr = typename Map::AddPtr;
+    struct Enum : public Map::Enum { explicit Enum(Outer& o) : Map::Enum(o.map()) {} };
+    using Ptr = typename Map::Ptr;
+    using Range = typename Map::Range;
+
     bool init(uint32_t len = 16) { return map().init(len); }
     void clear()                 { map().clear(); }
     void finish()                { map().finish(); }
@@ -198,19 +212,28 @@ class MutableGCHashMapOperations
 };
 
 template <typename A, typename B, typename C, typename D, typename E>
-class RootedBase<GCHashMap<A,B,C,D,E>>
-  : public MutableGCHashMapOperations<JS::Rooted<GCHashMap<A,B,C,D,E>>, A,B,C,D,E>
+class RootedBase<JS::GCHashMap<A,B,C,D,E>>
+  : public MutableGCHashMapOperations<JS::Rooted<JS::GCHashMap<A,B,C,D,E>>, A,B,C,D,E>
 {};
 
 template <typename A, typename B, typename C, typename D, typename E>
-class MutableHandleBase<GCHashMap<A,B,C,D,E>>
-  : public MutableGCHashMapOperations<JS::MutableHandle<GCHashMap<A,B,C,D,E>>, A,B,C,D,E>
+class MutableHandleBase<JS::GCHashMap<A,B,C,D,E>>
+  : public MutableGCHashMapOperations<JS::MutableHandle<JS::GCHashMap<A,B,C,D,E>>, A,B,C,D,E>
 {};
 
 template <typename A, typename B, typename C, typename D, typename E>
-class HandleBase<GCHashMap<A,B,C,D,E>>
-  : public GCHashMapOperations<JS::Handle<GCHashMap<A,B,C,D,E>>, A,B,C,D,E>
+class HandleBase<JS::GCHashMap<A,B,C,D,E>>
+  : public GCHashMapOperations<JS::Handle<JS::GCHashMap<A,B,C,D,E>>, A,B,C,D,E>
 {};
+
+template <typename A, typename B, typename C, typename D, typename E>
+class WeakCacheBase<JS::GCHashMap<A,B,C,D,E>>
+  : public MutableGCHashMapOperations<JS::WeakCache<JS::GCHashMap<A,B,C,D,E>>, A,B,C,D,E>
+{};
+
+} // namespace js
+
+namespace JS {
 
 // A GCHashSet is a HashSet with an additional trace method that knows
 // be traced to be kept alive will generally want to use this GCHashSet
@@ -218,21 +241,19 @@ class HandleBase<GCHashMap<A,B,C,D,E>>
 //
 // Most types of GC pointers can be traced with no extra infrastructure. For
 // structs and non-gc-pointer members, ensure that there is a specialization of
-// DefaultGCPolicy<T> with an appropriate trace method available to handle the
-// custom type. Generic helpers can be found in js/public/TracingAPI.h.
+// GCPolicy<T> with an appropriate trace method available to handle the custom
+// type. Generic helpers can be found in js/public/TracingAPI.h.
 //
 // Note that although this HashSet's trace will deal correctly with moved
 // elements, it does not itself know when to barrier or trace elements. To
 // function properly it must either be used with Rooted or barriered and traced
 // manually.
 template <typename T,
-          typename HashPolicy = DefaultHasher<T>,
-          typename AllocPolicy = TempAllocPolicy,
-          typename GCPolicy = DefaultGCPolicy<T>>
-class GCHashSet : public HashSet<T, HashPolicy, AllocPolicy>,
-                  public JS::Traceable
+          typename HashPolicy = js::DefaultHasher<T>,
+          typename AllocPolicy = js::TempAllocPolicy>
+class GCHashSet : public js::HashSet<T, HashPolicy, AllocPolicy>
 {
-    using Base = HashSet<T, HashPolicy, AllocPolicy>;
+    using Base = js::HashSet<T, HashPolicy, AllocPolicy>;
 
   public:
     explicit GCHashSet(AllocPolicy a = AllocPolicy()) : Base(a)  {}
@@ -242,14 +263,14 @@ class GCHashSet : public HashSet<T, HashPolicy, AllocPolicy>,
         if (!this->initialized())
             return;
         for (typename Base::Enum e(*this); !e.empty(); e.popFront())
-            GCPolicy::trace(trc, &e.mutableFront(), "hashset element");
+            GCPolicy<T>::trace(trc, &e.mutableFront(), "hashset element");
     }
 
     void sweep() {
         if (!this->initialized())
             return;
         for (typename Base::Enum e(*this); !e.empty(); e.popFront()) {
-            if (GCPolicy::needsSweep(&e.mutableFront()))
+            if (GCPolicy<T>::needsSweep(&e.mutableFront()))
                 e.removeFront();
         }
     }
@@ -267,19 +288,24 @@ class GCHashSet : public HashSet<T, HashPolicy, AllocPolicy>,
     GCHashSet& operator=(const GCHashSet& hs) = delete;
 };
 
+} // namespace JS
+
+namespace js {
+
 template <typename Outer, typename... Args>
 class GCHashSetOperations
 {
-    using Set = GCHashSet<Args...>;
+    using Set = JS::GCHashSet<Args...>;
     using Lookup = typename Set::Lookup;
-    using Ptr = typename Set::Ptr;
-    using AddPtr = typename Set::AddPtr;
-    using Range = typename Set::Range;
-    using Enum = typename Set::Enum;
 
-    const Set& set() const { return static_cast<const Outer*>(this)->extract(); }
+    const Set& set() const { return static_cast<const Outer*>(this)->get(); }
 
   public:
+    using AddPtr = typename Set::AddPtr;
+    using Entry = typename Set::Entry;
+    using Ptr = typename Set::Ptr;
+    using Range = typename Set::Range;
+
     bool initialized() const                   { return set().initialized(); }
     Ptr lookup(const Lookup& l) const          { return set().lookup(l); }
     AddPtr lookupForAdd(const Lookup& l) const { return set().lookupForAdd(l); }
@@ -287,27 +313,35 @@ class GCHashSetOperations
     bool empty() const                         { return set().empty(); }
     uint32_t count() const                     { return set().count(); }
     size_t capacity() const                    { return set().capacity(); }
-    uint32_t generation() const                { return set().generation(); }
     bool has(const Lookup& l) const            { return set().lookup(l).found(); }
+    size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
+        return set().sizeOfExcludingThis(mallocSizeOf);
+    }
+    size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
+        return mallocSizeOf(this) + set().sizeOfExcludingThis(mallocSizeOf);
+    }
 };
 
 template <typename Outer, typename... Args>
 class MutableGCHashSetOperations
   : public GCHashSetOperations<Outer, Args...>
 {
-    using Set = GCHashSet<Args...>;
+    using Set = JS::GCHashSet<Args...>;
     using Lookup = typename Set::Lookup;
-    using Ptr = typename Set::Ptr;
-    using AddPtr = typename Set::AddPtr;
-    using Range = typename Set::Range;
-    using Enum = typename Set::Enum;
 
-    Set& set() { return static_cast<Outer*>(this)->extract(); }
+    Set& set() { return static_cast<Outer*>(this)->get(); }
 
   public:
+    using AddPtr = typename Set::AddPtr;
+    using Entry = typename Set::Entry;
+    struct Enum : public Set::Enum { explicit Enum(Outer& o) : Set::Enum(o.set()) {} };
+    using Ptr = typename Set::Ptr;
+    using Range = typename Set::Range;
+
     bool init(uint32_t len = 16) { return set().init(len); }
     void clear()                 { set().clear(); }
     void finish()                { set().finish(); }
+    void remove(Ptr p)           { set().remove(p); }
     void remove(const Lookup& l) { set().remove(l); }
 
     template<typename TInput>
@@ -336,41 +370,28 @@ class MutableGCHashSetOperations
     }
 };
 
-template <typename T, typename HP, typename AP, typename GP>
-class RootedBase<GCHashSet<T, HP, AP, GP>>
-  : public MutableGCHashSetOperations<JS::Rooted<GCHashSet<T, HP, AP, GP>>, T, HP, AP, GP>
+template <typename T, typename HP, typename AP>
+class RootedBase<JS::GCHashSet<T, HP, AP>>
+  : public MutableGCHashSetOperations<JS::Rooted<JS::GCHashSet<T, HP, AP>>, T, HP, AP>
 {
-    using Set = GCHashSet<T, HP, AP, GP>;
-
-    friend class GCHashSetOperations<JS::Rooted<Set>, T, HP, AP, GP>;
-    const Set& extract() const { return *static_cast<const JS::Rooted<Set>*>(this)->address(); }
-
-    friend class MutableGCHashSetOperations<JS::Rooted<Set>, T, HP, AP, GP>;
-    Set& extract() { return *static_cast<JS::Rooted<Set>*>(this)->address(); }
 };
 
-template <typename T, typename HP, typename AP, typename GP>
-class MutableHandleBase<GCHashSet<T, HP, AP, GP>>
-  : public MutableGCHashSetOperations<JS::MutableHandle<GCHashSet<T, HP, AP, GP>>, T, HP, AP, GP>
+template <typename T, typename HP, typename AP>
+class MutableHandleBase<JS::GCHashSet<T, HP, AP>>
+  : public MutableGCHashSetOperations<JS::MutableHandle<JS::GCHashSet<T, HP, AP>>, T, HP, AP>
 {
-    using Set = GCHashSet<T, HP, AP, GP>;
-
-    friend class GCHashSetOperations<JS::MutableHandle<Set>, T, HP, AP, GP>;
-    const Set& extract() const {
-        return *static_cast<const JS::MutableHandle<Set>*>(this)->address();
-    }
-
-    friend class MutableGCHashSetOperations<JS::MutableHandle<Set>, T, HP, AP, GP>;
-    Set& extract() { return *static_cast<JS::MutableHandle<Set>*>(this)->address(); }
 };
 
-template <typename T, typename HP, typename AP, typename GP>
-class HandleBase<GCHashSet<T, HP, AP, GP>>
-  : public GCHashSetOperations<JS::Handle<GCHashSet<T, HP, AP, GP>>, T, HP, AP, GP>
+template <typename T, typename HP, typename AP>
+class HandleBase<JS::GCHashSet<T, HP, AP>>
+  : public GCHashSetOperations<JS::Handle<JS::GCHashSet<T, HP, AP>>, T, HP, AP>
 {
-    using Set = GCHashSet<T, HP, AP, GP>;
-    friend class GCHashSetOperations<JS::Handle<Set>, T, HP, AP, GP>;
-    const Set& extract() const { return *static_cast<const JS::Handle<Set>*>(this)->address(); }
+};
+
+template <typename T, typename HP, typename AP>
+class WeakCacheBase<JS::GCHashSet<T, HP, AP>>
+  : public MutableGCHashSetOperations<JS::WeakCache<JS::GCHashSet<T, HP, AP>>, T, HP, AP>
+{
 };
 
 } /* namespace js */

@@ -17,6 +17,8 @@ namespace mozilla {
 namespace dom {
 namespace cache {
 
+using mozilla::ipc::PBackgroundChild;
+
 namespace {
 
 void
@@ -194,10 +196,10 @@ CacheOpChild::AssertOwningThread() const
 }
 #endif
 
-CachePushStreamChild*
-CacheOpChild::CreatePushStream(nsIAsyncInputStream* aStream)
+PBackgroundChild*
+CacheOpChild::GetIPCManager()
 {
-  MOZ_CRASH("CacheOpChild should never create a push stream actor!");
+  MOZ_CRASH("CacheOpChild does not implement TypeUtils::GetIPCManager()");
 }
 
 void
@@ -219,7 +221,7 @@ CacheOpChild::HandleResponse(const CacheResponseOrVoid& aResponseOrVoid)
 void
 CacheOpChild::HandleResponseList(const nsTArray<CacheResponse>& aResponseList)
 {
-  nsAutoTArray<RefPtr<Response>, 256> responses;
+  AutoTArray<RefPtr<Response>, 256> responses;
   responses.SetCapacity(aResponseList.Length());
 
   for (uint32_t i = 0; i < aResponseList.Length(); ++i) {
@@ -233,7 +235,7 @@ CacheOpChild::HandleResponseList(const nsTArray<CacheResponse>& aResponseList)
 void
 CacheOpChild::HandleRequestList(const nsTArray<CacheRequest>& aRequestList)
 {
-  nsAutoTArray<RefPtr<Request>, 256> requests;
+  AutoTArray<RefPtr<Request>, 256> requests;
   requests.SetCapacity(aRequestList.Length());
 
   for (uint32_t i = 0; i < aRequestList.Length(); ++i) {

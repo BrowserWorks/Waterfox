@@ -173,9 +173,13 @@ add_task(function* test_signUp() {
   let errorMessage = JSON.stringify({code: 400, errno: 101, error: "account exists"});
   let created = false;
 
+  // Note these strings must be unicode and not already utf-8 encoded.
+  let unicodeUsername = "andr\xe9@example.org"; // 'andré@example.org'
+  let unicodePassword = "p\xe4ssw\xf6rd"; // 'pässwörd'
   let server = httpd_setup({
     "/account/create": function(request, response) {
       let body = CommonUtils.readBytesFromInputStream(request.bodyInputStream);
+      body = CommonUtils.decodeUTF8(body);
       let jsonBody = JSON.parse(body);
 
       // https://github.com/mozilla/fxa-auth-server/wiki/onepw-protocol#wiki-test-vectors
@@ -187,7 +191,7 @@ add_task(function* test_signUp() {
         return;
       }
 
-      if (jsonBody.email == "andré@example.org") {
+      if (jsonBody.email == unicodeUsername) {
         do_check_eq("", request._queryString);
         do_check_eq(jsonBody.authPW, "247b675ffb4c46310bc87e26d712153abe5e1c90ef00a4784594f97ef54f2375");
 
@@ -207,12 +211,15 @@ add_task(function* test_signUp() {
                                         creationMessage_withKey.length);
         return;
       }
+      // just throwing here doesn't make any log noise, so have an assertion
+      // fail instead.
+      do_check_true(false, "unexpected email: " + jsonBody.email);
     },
   });
 
   // Try to create an account without retrieving optional keys.
   let client = new FxAccountsClient(server.baseURI);
-  let result = yield client.signUp('andré@example.org', 'pässwörd');
+  let result = yield client.signUp(unicodeUsername, unicodePassword);
   do_check_eq("uid", result.uid);
   do_check_eq("sessionToken", result.sessionToken);
   do_check_eq(undefined, result.keyFetchToken);
@@ -229,7 +236,7 @@ add_task(function* test_signUp() {
 
   // Try to create an existing account.  Triggers error path.
   try {
-    result = yield client.signUp('andré@example.org', 'pässwörd');
+    result = yield client.signUp(unicodeUsername, unicodePassword);
     do_throw("Expected to catch an exception");
   } catch(expectedError) {
     do_check_eq(101, expectedError.errno);
@@ -258,12 +265,15 @@ add_task(function* test_signIn() {
     email: "you@example.com"
   });
 
+  // Note this strings must be unicode and not already utf-8 encoded.
+  let unicodeUsername = "m\xe9@example.com" // 'mé@example.com'
   let server = httpd_setup({
     "/account/login": function(request, response) {
       let body = CommonUtils.readBytesFromInputStream(request.bodyInputStream);
+      body = CommonUtils.decodeUTF8(body);
       let jsonBody = JSON.parse(body);
 
-      if (jsonBody.email == "mé@example.com") {
+      if (jsonBody.email == unicodeUsername) {
         do_check_eq("", request._queryString);
         do_check_eq(jsonBody.authPW, "08b9d111196b8408e8ed92439da49206c8ecfbf343df0ae1ecefcd1e0174a8b6");
         response.setStatusLine(request.httpVersion, 200, "OK");
@@ -298,7 +308,7 @@ add_task(function* test_signIn() {
 
   // Login without retrieving optional keys
   let client = new FxAccountsClient(server.baseURI);
-  let result = yield client.signIn('mé@example.com', 'bigsecret');
+  let result = yield client.signIn(unicodeUsername, 'bigsecret');
   do_check_eq(FAKE_SESSION_TOKEN, result.sessionToken);
   do_check_eq(result.unwrapBKey,
               "c076ec3f4af123a615157154c6e1d0d6293e514fd7b0221e32d50517ecf002b8");
@@ -374,6 +384,7 @@ add_task(function* test_recoveryEmailStatus() {
   let server = httpd_setup({
     "/recovery_email/status": function(request, response) {
       do_check_true(request.hasHeader("Authorization"));
+      do_check_eq("", request._queryString);
 
       if (tries === 0) {
         tries += 1;
@@ -401,6 +412,28 @@ add_task(function* test_recoveryEmailStatus() {
     do_check_eq(102, expectedError.errno);
   }
 
+  yield deferredStop(server);
+});
+
+add_task(function* test_recoveryEmailStatusWithReason() {
+  let emailStatus = JSON.stringify({verified: true});
+  let server = httpd_setup({
+    "/recovery_email/status": function(request, response) {
+      do_check_true(request.hasHeader("Authorization"));
+      // if there is a query string then it will have a reason
+      do_check_eq("reason=push", request._queryString);
+
+      response.setStatusLine(request.httpVersion, 200, "OK");
+      response.bodyOutputStream.write(emailStatus, emailStatus.length);
+      return;
+    },
+  });
+
+  let client = new FxAccountsClient(server.baseURI);
+  let result = yield client.recoveryEmailStatus(FAKE_SESSION_TOKEN, {
+    reason: "push",
+  });
+  do_check_eq(result.verified, true);
   yield deferredStop(server);
 });
 
@@ -793,8 +826,6 @@ add_task(function* test_getDeviceList() {
 });
 
 add_task(function* test_client_metrics() {
-  Services.telemetry.getKeyedHistogramById("FXA_HAWK_ERRORS").clear();
-
   function writeResp(response, msg) {
     if (typeof msg === "object") {
       msg = JSON.stringify(msg);
@@ -823,11 +854,6 @@ add_task(function* test_client_metrics() {
   }), function(err) {
     return err.errno == 111;
   });
-
-  let histogram = Services.telemetry.getKeyedHistogramById("FXA_HAWK_ERRORS");
-  let snapshot = histogram.snapshot("/session/destroy");
-  do_check_eq(snapshot.sum, 1, "Should report Hawk authentication errors");
-  histogram.clear();
 
   yield deferredStop(server);
 });

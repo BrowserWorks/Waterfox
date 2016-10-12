@@ -6,7 +6,8 @@
 (?i)(^|/)TAGS$
 (^|/)ID$
 (^|/)\.DS_Store$
-.*\.egg-info
+\.pdb
+\.egg-info
 
 # Vim swap files.
 ^\.sw.$
@@ -19,10 +20,11 @@
 ^\.mozconfig
 ^mozconfig*
 ^configure$
+^old-configure$
 ^config\.cache$
 ^config\.log$
 ^\.clang_complete
-^mach.ini$
+^\.?machrc$
 
 # Empty marker file that's generated when we check out NSS
 ^security/manager/\.nss\.checkout$
@@ -37,9 +39,11 @@ _OPT\.OBJ/
 
 # SpiderMonkey configury
 ^js/src/configure$
+^js/src/old-configure$
 ^js/src/autom4te.cache$
 # SpiderMonkey test result logs
 ^js/src/tests/results-.*\.(html|txt)$
+^js/src/devtools/rootAnalysis/t/out
 
 # Java HTML5 parser classes
 ^parser/html/java/(html|java)parser/
@@ -83,16 +87,6 @@ GRTAGS
 GSYMS
 GPATH
 
-# Various items for Loop
-^browser/components/loop/standalone/content/config\.js$
-^browser/extensions/loop/.*/node_modules/
-^browser/extensions/loop/.*\.module-cache
-^browser/extensions/loop/test/coverage/desktop
-^browser/extensions/loop/test/coverage/shared_standalone
-^browser/extensions/loop/test/visual-regression/diff
-^browser/extensions/loop/test/visual-regression/new
-^browser/extensions/loop/test/visual-regression/refs
-
 # Git clone directory for updating web-platform-tests
 ^testing/web-platform/sync/
 
@@ -104,14 +98,17 @@ GPATH
 ^embedding/ios/GeckoEmbed/GeckoEmbed.xcodeproj/xcuserdata
 
 # Ignore mozharness execution files
-^testing/mozharness/logs/
+^testing/mozharness/.tox/
 ^testing/mozharness/build/
+^testing/mozharness/logs/
+^testing/mozharness/.coverage
+^testing/mozharness/nosetests.xml
 
 # Ignore tox generated dir
 .tox/
 
-# Ignore node_modules from eslint-plugin-mozilla
-^testing/eslint-plugin-mozilla/node_modules/
+# Ignore node_modules
+^testing/eslint/node_modules/
 
 # Ignore talos virtualenv and tp5n files.
 # The tp5n set is supposed to be decompressed at
@@ -123,4 +120,9 @@ GPATH
 ^testing/talos/bin/
 ^testing/talos/include/
 ^testing/talos/lib/
-^testing/talos/talos/page_load_test/tp5n/
+^testing/talos/talos/tests/tp5n.zip
+^testing/talos/talos/tests/tp5n
+^testing/talos/talos/tests/devtools/damp.manifest.develop
+
+# Ignore files created when running a reftest.
+^lextab.py$

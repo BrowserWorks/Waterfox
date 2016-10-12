@@ -133,12 +133,12 @@ nsTableCellFrame::NotifyPercentBSize(const nsHTMLReflowState& aReflowState)
 
     if (nsTableFrame::AncestorsHaveStyleBSize(*cellRS) ||
         (GetTableFrame()->GetEffectiveRowSpan(*this) == 1 &&
-         cellRS->parentReflowState->frame->
+         cellRS->mParentReflowState->frame->
            HasAnyStateBits(NS_ROW_HAS_CELL_WITH_STYLE_BSIZE))) {
 
-      for (const nsHTMLReflowState *rs = aReflowState.parentReflowState;
+      for (const nsHTMLReflowState *rs = aReflowState.mParentReflowState;
            rs != cellRS;
-           rs = rs->parentReflowState) {
+           rs = rs->mParentReflowState) {
         rs->frame->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_BSIZE);
       }
 
@@ -151,7 +151,7 @@ nsTableCellFrame::NotifyPercentBSize(const nsHTMLReflowState& aReflowState)
 bool
 nsTableCellFrame::NeedsToObserve(const nsHTMLReflowState& aReflowState)
 {
-  const nsHTMLReflowState *rs = aReflowState.parentReflowState;
+  const nsHTMLReflowState *rs = aReflowState.mParentReflowState;
   if (!rs)
     return false;
   if (rs->frame == this) {
@@ -160,7 +160,7 @@ nsTableCellFrame::NeedsToObserve(const nsHTMLReflowState& aReflowState)
     // propagated to its kids.
     return true;
   }
-  rs = rs->parentReflowState;
+  rs = rs->mParentReflowState;
   if (!rs) {
     return false;
   }
@@ -372,8 +372,12 @@ nsTableCellFrame::PaintBackground(nsRenderingContext& aRenderingContext,
                                   uint32_t             aFlags)
 {
   nsRect rect(aPt, GetSize());
-  return nsCSSRendering::PaintBackground(PresContext(), aRenderingContext, this,
-                                         aDirtyRect, rect, aFlags);
+  nsCSSRendering::PaintBGParams params =
+    nsCSSRendering::PaintBGParams::ForAllLayers(*PresContext(),
+                                                aRenderingContext,
+                                                aDirtyRect, rect,
+                                                this, aFlags);
+  return nsCSSRendering::PaintBackground(params);
 }
 
 // Called by nsTablePainter
@@ -489,8 +493,7 @@ nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     if (StyleVisibility()->IsVisible() &&
         (NS_STYLE_TABLE_EMPTY_CELLS_HIDE != emptyCellStyle)) {
       // display outset box-shadows if we need to.
-      const nsStyleBorder* borderStyle = StyleBorder();
-      bool hasBoxShadow = !!borderStyle->mBoxShadow;
+      bool hasBoxShadow = !!StyleEffects()->mBoxShadow;
       if (hasBoxShadow) {
         aLists.BorderBackground()->AppendNewToTop(
           new (aBuilder) nsDisplayBoxShadowOuter(aBuilder, this));
@@ -505,10 +508,10 @@ nsTableCellFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
           // The cell background was not painted by the nsTablePainter,
           // so we need to do it. We have special background processing here
           // so we need to duplicate some code from nsFrame::DisplayBorderBackgroundOutline
-          nsDisplayTableItem* item =
-            new (aBuilder) nsDisplayTableCellBackground(aBuilder, this);
-          aLists.BorderBackground()->AppendNewToTop(item);
-          item->UpdateForFrameBackground(this);
+          nsDisplayBackgroundImage::AppendBackgroundItemsToTop(aBuilder,
+              this,
+              GetRectRelativeToSelf(),
+              aLists.BorderBackground());
         } else {
           // The nsTablePainter will paint our background. Make sure it
           // knows if we're background-attachment:fixed.
@@ -661,15 +664,13 @@ void nsTableCellFrame::BlockDirAlignChild(WritingMode aWM, nscoord aMaxAscent)
 }
 
 bool
-nsTableCellFrame::UpdateOverflow()
+nsTableCellFrame::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas)
 {
   nsRect bounds(nsPoint(0,0), GetSize());
   bounds.Inflate(GetBorderOverflow());
-  nsOverflowAreas overflowAreas(bounds, bounds);
 
-  nsLayoutUtils::UnionChildOverflow(this, overflowAreas);
-
-  return FinishAndStoreOverflow(overflowAreas, GetSize());
+  aOverflowAreas.UnionAllWith(bounds);
+  return nsContainerFrame::ComputeCustomOverflow(aOverflowAreas);
 }
 
 // Per CSS 2.1, we map 'sub', 'super', 'text-top', 'text-bottom',
@@ -677,7 +678,7 @@ nsTableCellFrame::UpdateOverflow()
 uint8_t
 nsTableCellFrame::GetVerticalAlign() const
 {
-  const nsStyleCoord& verticalAlign = StyleTextReset()->mVerticalAlign;
+  const nsStyleCoord& verticalAlign = StyleDisplay()->mVerticalAlign;
   if (verticalAlign.GetUnit() == eStyleUnit_Enumerated) {
     uint8_t value = verticalAlign.GetIntValue();
     if (value == NS_STYLE_VERTICAL_ALIGN_TOP ||
@@ -699,8 +700,7 @@ nsTableCellFrame::CellHasVisibleContent(nscoord       height,
     return true;
   if (tableFrame->IsBorderCollapse())
     return true;
-  nsIFrame* innerFrame = kidFrame->GetFirstPrincipalChild();
-  while(innerFrame) {
+  for (nsIFrame* innerFrame : kidFrame->PrincipalChildList()) {
     nsIAtom* frameType = innerFrame->GetType();
     if (nsGkAtoms::textFrame == frameType) {
        nsTextFrame* textFrame = static_cast<nsTextFrame*>(innerFrame);
@@ -715,8 +715,7 @@ nsTableCellFrame::CellHasVisibleContent(nscoord       height,
       if (floatFrame)
         return true;
     }
-    innerFrame = innerFrame->GetNextSibling();
-  }	
+  }
   return false;
 }
 
@@ -1223,11 +1222,13 @@ nsBCTableCellFrame::PaintBackground(nsRenderingContext& aRenderingContext,
     myBorder.SetBorderWidth(side, borderWidth.Side(side));
   }
 
-  nsRect rect(aPt, GetSize());
   // bypassing nsCSSRendering::PaintBackground is safe because this kind
   // of frame cannot be used for the root element
-  return nsCSSRendering::PaintBackgroundWithSC(PresContext(), aRenderingContext,
-                                               this, aDirtyRect, rect,
-                                               StyleContext(), myBorder,
-                                               aFlags, nullptr);
+  nsRect rect(aPt, GetSize());
+  nsCSSRendering::PaintBGParams params =
+    nsCSSRendering::PaintBGParams::ForAllLayers(*PresContext(),
+                                                aRenderingContext, aDirtyRect,
+                                                rect, this,
+                                                aFlags);
+  return nsCSSRendering::PaintBackgroundWithSC(params, StyleContext(), myBorder);
 }

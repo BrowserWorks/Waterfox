@@ -90,9 +90,10 @@ public:
   IMPL_EVENT_HANDLER(devicepaired);
   IMPL_EVENT_HANDLER(deviceunpaired);
   IMPL_EVENT_HANDLER(pairingaborted);
-  // HFP/A2DP/AVRCP
+  // HFP/A2DP/AVRCP/HID
   IMPL_EVENT_HANDLER(a2dpstatuschanged);
   IMPL_EVENT_HANDLER(hfpstatuschanged);
+  IMPL_EVENT_HANDLER(hidstatuschanged);
   IMPL_EVENT_HANDLER(scostatuschanged);
   IMPL_EVENT_HANDLER(requestmediaplaystatus);
   // PBAP
@@ -181,10 +182,10 @@ public:
    * Others
    ***************************************************************************/
   static already_AddRefed<BluetoothAdapter>
-    Create(nsPIDOMWindow* aOwner, const BluetoothValue& aValue);
+    Create(nsPIDOMWindowInner* aOwner, const BluetoothValue& aValue);
 
   void Notify(const BluetoothSignal& aParam); // BluetoothSignalObserver
-  nsPIDOMWindow* GetParentObject() const
+  nsPIDOMWindowInner* GetParentObject() const
   {
      return GetOwner();
   }
@@ -220,10 +221,10 @@ public:
    *
    * @param aScanUuid [in] The UUID of the LE scan task.
    */
-  void RemoveLeScanHandle(const nsAString& aScanUuid);
+  void RemoveLeScanHandle(const BluetoothUuid& aScanUuid);
 
 private:
-  BluetoothAdapter(nsPIDOMWindow* aOwner, const BluetoothValue& aValue);
+  BluetoothAdapter(nsPIDOMWindowInner* aOwner, const BluetoothValue& aValue);
   ~BluetoothAdapter();
 
   /**

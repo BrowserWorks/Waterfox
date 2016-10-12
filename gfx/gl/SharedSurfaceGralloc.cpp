@@ -35,7 +35,7 @@ using namespace mozilla::layers;
 using namespace android;
 
 SurfaceFactory_Gralloc::SurfaceFactory_Gralloc(GLContext* prodGL, const SurfaceCaps& caps,
-                                               const RefPtr<layers::ISurfaceAllocator>& allocator,
+                                               const RefPtr<layers::ClientIPCAllocator>& allocator,
                                                const layers::TextureFlags& flags)
     : SurfaceFactory(SharedSurfaceType::Gralloc, prodGL, caps, allocator, flags)
 {
@@ -48,7 +48,7 @@ SharedSurface_Gralloc::Create(GLContext* prodGL,
                               const gfx::IntSize& size,
                               bool hasAlpha,
                               layers::TextureFlags flags,
-                              ISurfaceAllocator* allocator)
+                              ClientIPCAllocator* allocator)
 {
     GLLibraryEGL* egl = &sEGLLibrary;
     MOZ_ASSERT(egl);
@@ -118,7 +118,7 @@ SharedSurface_Gralloc::SharedSurface_Gralloc(GLContext* prodGL,
                                              const gfx::IntSize& size,
                                              bool hasAlpha,
                                              GLLibraryEGL* egl,
-                                             layers::ISurfaceAllocator* allocator,
+                                             layers::ClientIPCAllocator* allocator,
                                              layers::TextureClient* textureClient,
                                              GLuint prodTex)
     : SharedSurface(SharedSurfaceType::Gralloc,
@@ -135,7 +135,6 @@ SharedSurface_Gralloc::SharedSurface_Gralloc(GLContext* prodGL,
 {
 }
 
-
 bool
 SharedSurface_Gralloc::HasExtensions(GLLibraryEGL* egl, GLContext* gl)
 {
@@ -145,10 +144,11 @@ SharedSurface_Gralloc::HasExtensions(GLLibraryEGL* egl, GLContext* gl)
 
 SharedSurface_Gralloc::~SharedSurface_Gralloc()
 {
-
     DEBUG_PRINT("[SharedSurface_Gralloc %p] destroyed\n", this);
 
-    mGL->MakeCurrent();
+    if (!mGL->MakeCurrent())
+        return;
+
     mGL->fDeleteTextures(1, &mProdTex);
 
     if (mSync) {

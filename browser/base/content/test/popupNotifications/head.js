@@ -8,12 +8,18 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
 
 function whenDelayedStartupFinished(aWindow, aCallback) {
-  Services.obs.addObserver(function observer(aSubject, aTopic) {
-    if (aWindow == aSubject) {
-      Services.obs.removeObserver(observer, aTopic);
-      executeSoon(aCallback);
-    }
-  }, "browser-delayed-startup-finished", false);
+  return new Promise(resolve => {
+    info("Waiting for delayed startup to finish");
+    Services.obs.addObserver(function observer(aSubject, aTopic) {
+      if (aWindow == aSubject) {
+        Services.obs.removeObserver(observer, aTopic);
+        if (aCallback) {
+          executeSoon(aCallback);
+        }
+        resolve();
+      }
+    }, "browser-delayed-startup-finished", false);
+  });
 }
 
 /**
@@ -196,7 +202,7 @@ function checkPopup(popup, notifyObj) {
                                                      "popup-notification-icon");
   if (notifyObj.id == "geolocation") {
     isnot(icon.boxObject.width, 0, "icon for geo displayed");
-    is(popup.anchorNode.className, "notification-anchor-icon",
+    ok(popup.anchorNode.classList.contains("notification-anchor-icon"),
        "notification anchored to icon");
   }
   is(notification.getAttribute("label"), notifyObj.message, "message matches");

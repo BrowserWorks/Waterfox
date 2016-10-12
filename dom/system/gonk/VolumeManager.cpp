@@ -13,6 +13,7 @@
 #include "nsXULAppAPI.h"
 
 #include "base/message_loop.h"
+#include "base/task.h"
 #include "mozilla/Scoped.h"
 #include "mozilla/StaticPtr.h"
 
@@ -528,8 +529,7 @@ VolumeManager::Start()
   if (!sVolumeManager->OpenSocket()) {
     // Socket open failed, try again in a second.
     MessageLoopForIO::current()->
-      PostDelayedTask(FROM_HERE,
-                      NewRunnableFunction(VolumeManager::Start),
+      PostDelayedTask(NewRunnableFunction(VolumeManager::Start),
                       1000);
   }
 }
@@ -575,7 +575,6 @@ void
 InitVolumeManager()
 {
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(InitVolumeManagerIOThread));
 }
 
@@ -585,7 +584,6 @@ ShutdownVolumeManager()
   ShutdownVolumeServiceTest();
 
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(ShutdownVolumeManagerIOThread));
 }
 

@@ -17,15 +17,19 @@ var WindowsRegistry = {
    *        The registry path to the key.
    * @param aKey
    *        The key name.
+   * @param [aRegistryNode=0]
+   *        Optionally set to nsIWindowsRegKey.WOW64_64 (or nsIWindowsRegKey.WOW64_32)
+   *        to access a 64-bit (32-bit) key from either a 32-bit or 64-bit application.
    * @return The key value or undefined if it doesn't exist.  If the key is
    *         a REG_MULTI_SZ, an array is returned.
    */
-  readRegKey: function(aRoot, aPath, aKey) {
+  readRegKey: function(aRoot, aPath, aKey, aRegistryNode=0) {
     const kRegMultiSz = 7;
+    const kMode = Ci.nsIWindowsRegKey.ACCESS_READ | aRegistryNode;
     let registry = Cc["@mozilla.org/windows-registry-key;1"].
                    createInstance(Ci.nsIWindowsRegKey);
     try {
-      registry.open(aRoot, aPath, Ci.nsIWindowsRegKey.ACCESS_READ);
+      registry.open(aRoot, aPath, kMode);
       if (registry.hasValue(aKey)) {
         let type = registry.getValueType(aKey);
         switch (type) {
@@ -47,4 +51,40 @@ var WindowsRegistry = {
     }
     return undefined;
   },
+
+  /**
+   * Safely removes a key from the registry.
+   *
+   * @param aRoot
+   *        The root registry to use.
+   * @param aPath
+   *        The registry path to the key.
+   * @param aKey
+   *        The key name.
+   * @param [aRegistryNode=0]
+   *        Optionally set to nsIWindowsRegKey.WOW64_64 (or nsIWindowsRegKey.WOW64_32)
+   *        to access a 64-bit (32-bit) key from either a 32-bit or 64-bit application.
+   * @return True if the key was removed or never existed, false otherwise.
+   */
+  removeRegKey: function(aRoot, aPath, aKey, aRegistryNode=0) {
+    let registry = Cc["@mozilla.org/windows-registry-key;1"].
+                   createInstance(Ci.nsIWindowsRegKey);
+    let result = false;
+    try {
+      let mode = Ci.nsIWindowsRegKey.ACCESS_QUERY_VALUE |
+                 Ci.nsIWindowsRegKey.ACCESS_SET_VALUE |
+                 aRegistryNode;
+      registry.open(aRoot, aPath, mode);
+      if (registry.hasValue(aKey)) {
+        registry.removeValue(aKey);
+        result = !registry.hasValue(aKey);
+      } else {
+        result = true;
+      }
+    } catch (ex) {
+    } finally {
+      registry.close();
+      return result;
+    }
+  }
 };

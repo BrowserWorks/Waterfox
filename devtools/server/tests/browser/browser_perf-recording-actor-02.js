@@ -10,8 +10,9 @@ var config = { bufferSize: BUFFER_SIZE };
 
 const { PerformanceFront } = require("devtools/server/actors/performance");
 
-add_task(function*() {
-  let doc = yield addTab(MAIN_DOMAIN + "doc_perf.html");
+add_task(function* () {
+  let browser = yield addTab(MAIN_DOMAIN + "doc_perf.html");
+  let doc = browser.contentDocument;
 
   initDebuggerServer();
   let client = new DebuggerClient(DebuggerServer.connectPipe());
@@ -25,8 +26,8 @@ add_task(function*() {
   is(stats.totalSize, BUFFER_SIZE, `profiler-status event has totalSize: ${stats.totalSize}`);
   ok(stats.position < BUFFER_SIZE, `profiler-status event has position: ${stats.position}`);
   ok(stats.generation >= 0, `profiler-status event has generation: ${stats.generation}`);
-  ok(stats.isActive, `profiler-status event is isActive`);
-  is(typeof stats.currentTime, "number", `profiler-status event has currentTime`);
+  ok(stats.isActive, "profiler-status event is isActive");
+  is(typeof stats.currentTime, "number", "profiler-status event has currentTime");
 
   // Halt once more for a buffer status to ensure we're beyond 0
   yield once(front, "profiler-status");

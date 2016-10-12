@@ -30,11 +30,6 @@ SingleTiledContentClient::ClearCachedResources()
 void
 SingleTiledContentClient::UpdatedBuffer(TiledBufferType aType)
 {
-  // Take a ReadLock on behalf of the TiledContentHost. This
-  // reference will be adopted when the descriptor is opened in
-  // TiledLayerBufferComposite.
-  mTiledBuffer->ReadLock();
-
   mForwarder->UseTiledLayerBuffer(this, mTiledBuffer->GetSurfaceDescriptorTiles());
   mTiledBuffer->ClearPaintedRegion();
 }
@@ -46,26 +41,14 @@ SingleTiledContentClient::ClientSupportsLayerSize(const gfx::IntSize& aSize, Cli
   return aSize.width <= maxTextureSize && aSize.height <= maxTextureSize;
 }
 
-bool
-SingleTiledContentClient::SupportsLayerSize(const gfx::IntSize& aSize, ClientLayerManager* aManager) const
-{
-  return ClientSupportsLayerSize(aSize, aManager);
-}
-
 ClientSingleTiledLayerBuffer::ClientSingleTiledLayerBuffer(ClientTiledPaintedLayer* aPaintedLayer,
                                                            CompositableClient* aCompositableClient,
                                                            ClientLayerManager* aManager)
   : ClientTiledLayerBuffer(aPaintedLayer, aCompositableClient)
   , mManager(aManager)
+  , mWasLastPaintProgressive(false)
   , mFormat(gfx::SurfaceFormat::UNKNOWN)
 {
-}
-
-void
-ClientSingleTiledLayerBuffer::ReadLock() {
-  if (!mTile.IsPlaceholderTile()) {
-    mTile.ReadLock();
-  }
 }
 
 void
@@ -102,7 +85,8 @@ ClientSingleTiledLayerBuffer::GetSurfaceDescriptorTiles()
                                 0, 0, 1, 1,
                                 1.0,
                                 mFrameResolution.xScale,
-                                mFrameResolution.yScale);
+                                mFrameResolution.yScale,
+                                mWasLastPaintProgressive);
 }
 
 already_AddRefed<TextureClient>
@@ -119,8 +103,11 @@ ClientSingleTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
                                           const nsIntRegion& aPaintRegion,
                                           const nsIntRegion& aDirtyRegion,
                                           LayerManager::DrawPaintedLayerCallback aCallback,
-                                          void* aCallbackData)
+                                          void* aCallbackData,
+                                          bool aIsProgressive)
 {
+  mWasLastPaintProgressive = aIsProgressive;
+
   // Compare layer valid region size to current backbuffer size, discard if not matching.
   gfx::IntSize size = aNewValidRegion.GetBounds().Size();
   gfx::IntPoint origin = aNewValidRegion.GetBounds().TopLeft();
@@ -172,16 +159,15 @@ ClientSingleTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
   }
 
   if (mode != SurfaceMode::SURFACE_OPAQUE) {
-    nsIntRegionRectIterator iter(tileDirtyRegion);
-    const gfx::IntRect *iterRect;
-    while ((iterRect = iter.Next())) {
+    for (auto iter = tileDirtyRegion.RectIter(); !iter.Done(); iter.Next()) {
+      const gfx::IntRect& rect = iter.Get();
       if (dtOnWhite) {
-        dt->FillRect(gfx::Rect(iterRect->x, iterRect->y, iterRect->width, iterRect->height),
+        dt->FillRect(gfx::Rect(rect.x, rect.y, rect.width, rect.height),
                      gfx::ColorPattern(gfx::Color(0.0, 0.0, 0.0, 1.0)));
-        dtOnWhite->FillRect(gfx::Rect(iterRect->x, iterRect->y, iterRect->width, iterRect->height),
+        dtOnWhite->FillRect(gfx::Rect(rect.x, rect.y, rect.width, rect.height),
                             gfx::ColorPattern(gfx::Color(1.0, 1.0, 1.0, 1.0)));
       } else {
-        dt->ClearRect(gfx::Rect(iterRect->x, iterRect->y, iterRect->width, iterRect->height));
+        dt->ClearRect(gfx::Rect(rect.x, rect.y, rect.width, rect.height));
       }
     }
   }
@@ -192,7 +178,11 @@ ClientSingleTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
   }
 
   {
-    RefPtr<gfxContext> ctx = new gfxContext(dt);
+    RefPtr<gfxContext> ctx = gfxContext::ForDrawTarget(dt);
+    if (!ctx) {
+      gfxDevCrash(gfx::LogReason::InvalidContext) << "SingleTiledContextClient context problem " << gfx::hexa(dt);
+      return;
+    }
     ctx->SetMatrix(ctx->CurrentMatrix().Translate(-mTilingOrigin.x, -mTilingOrigin.y));
 
     aCallback(mPaintedLayer, ctx, paintRegion, paintRegion, DrawRegionClip::DRAW, nsIntRegion(), aCallbackData);
@@ -210,7 +200,7 @@ ClientSingleTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
   mTile.Flip();
   UnlockTile(mTile);
 
-  if (backBuffer->HasInternalBuffer()) {
+  if (backBuffer->HasIntermediateBuffer()) {
     // If our new buffer has an internal buffer, we don't want to keep another
     // TextureClient around unnecessarily, so discard the back-buffer.
     mTile.DiscardBackBuffer();

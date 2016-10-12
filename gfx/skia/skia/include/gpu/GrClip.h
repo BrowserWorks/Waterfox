@@ -85,7 +85,7 @@ public:
                 return this->irect() == other.irect();
                 break;
         }
-
+        SkFAIL("This should not occur\n");
         return false;
     }
 
@@ -112,6 +112,13 @@ public:
                 fOrigin.setZero();
             }
         }
+    }
+
+    void setIRect(const SkIRect& irect) {
+        this->reset();
+        fClipType = kIRect_ClipType;
+        fOrigin.setZero();
+        fClip.fIRect = irect;
     }
 
     const SkIRect& irect() const {

@@ -7,8 +7,6 @@
 // Tests that the rule view selector text is highlighted correctly according
 // to the components of the selector.
 
-const SEARCH = "00F";
-
 const TEST_URI = [
   "<style type='text/css'>",
   "  h1 {}",
@@ -111,7 +109,7 @@ const TEST_DATA = [
   },
 ];
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
 

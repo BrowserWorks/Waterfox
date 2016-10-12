@@ -393,24 +393,14 @@ NS_IMPL_ISUPPORTS_INHERITED0(HTMLTableAccessible, Accessible)
 ////////////////////////////////////////////////////////////////////////////////
 // HTMLTableAccessible: Accessible
 
-void
-HTMLTableAccessible::CacheChildren()
+bool
+HTMLTableAccessible::InsertChildAt(uint32_t aIndex, Accessible* aChild)
 {
   // Move caption accessible so that it's the first child. Check for the first
   // caption only, because nsAccessibilityService ensures we don't create
   // accessibles for the other captions, since only the first is actually
   // visible.
-  TreeWalker walker(this, mContent);
-
-  Accessible* child = nullptr;
-  while ((child = walker.NextChild())) {
-    if (child->Role() == roles::CAPTION) {
-      InsertChildAt(0, child);
-      while ((child = walker.NextChild()) && AppendChild(child));
-      break;
-    }
-    AppendChild(child);
-  }
+  return Accessible::InsertChildAt(aChild->IsHTMLCaption() ? 0 : aIndex, aChild);
 }
 
 role
@@ -922,7 +912,7 @@ HTMLTableAccessible::HasDescendant(const nsAString& aTagName, bool aAllowEmpty)
   // performance problems only. Note, currently 'aAllowEmpty' flag is used for
   // caption element only. On another hand we create accessible object for
   // the first entry of caption element (see
-  // HTMLTableAccessible::CacheChildren).
+  // HTMLTableAccessible::InsertChildAt).
   return !!elements->Item(1);
 }
 
@@ -1066,7 +1056,7 @@ HTMLTableAccessible::IsProbablyLayoutTable()
     RETURN_LAYOUT_ANSWER(false, "table's first cell has no frame!");
 
   nsMargin border;
-  cellFrame->GetBorder(border);
+  cellFrame->GetXULBorder(border);
   if (border.top && border.bottom && border.left && border.right) {
     RETURN_LAYOUT_ANSWER(false, "Has nonzero border-width on table cell");
   }

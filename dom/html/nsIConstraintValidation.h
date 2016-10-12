@@ -64,8 +64,8 @@ public:
     VALIDITY_STATE_CUSTOM_ERROR     = 0x1 <<  9,
   };
 
-  void SetValidityState(ValidityStateType mState,
-                        bool mValue);
+  void SetValidityState(ValidityStateType aState,
+                        bool aValue);
 
   // Web IDL binding methods
   bool WillValidate() const {
@@ -73,6 +73,7 @@ public:
   }
   mozilla::dom::ValidityState* Validity();
   bool CheckValidity();
+  bool ReportValidity();
 
 protected:
 
@@ -83,9 +84,10 @@ protected:
   nsresult CheckValidity(bool* aValidity);
   void     SetCustomValidity(const nsAString& aError);
 
-  bool GetValidityState(ValidityStateType mState) const {
-         return mValidityBitField & mState;
-       }
+  bool GetValidityState(ValidityStateType aState) const
+  {
+    return mValidityBitField & aState;
+  }
 
   void SetBarredFromConstraintValidation(bool aBarred);
 

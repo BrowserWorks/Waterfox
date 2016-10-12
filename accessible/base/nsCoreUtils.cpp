@@ -16,11 +16,13 @@
 #include "nsIBoxObject.h"
 #include "nsIDOMXULElement.h"
 #include "nsIDocShell.h"
+#include "nsIObserverService.h"
 #include "nsIPresShell.h"
 #include "nsPresContext.h"
 #include "nsIScrollableFrame.h"
 #include "nsISelectionPrivate.h"
 #include "nsISelectionController.h"
+#include "nsISimpleEnumerator.h"
 #include "mozilla/dom/TouchEvent.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStateManager.h"
@@ -76,7 +78,7 @@ nsCoreUtils::DispatchClickEvent(nsITreeBoxObject *aTreeBoxObj,
     return;
 
   nsCOMPtr<nsIContent> tcContent(do_QueryInterface(tcElm));
-  nsIDocument *document = tcContent->GetCurrentDoc();
+  nsIDocument *document = tcContent->GetUncomposedDoc();
   if (!document)
     return;
 
@@ -111,7 +113,7 @@ nsCoreUtils::DispatchClickEvent(nsITreeBoxObject *aTreeBoxObj,
 
   nsPoint offset;
   nsIWidget *rootWidget =
-    rootFrame->GetViewExternal()->GetNearestWidget(&offset);
+    rootFrame->GetView()->GetNearestWidget(&offset);
 
   RefPtr<nsPresContext> presContext = presShell->GetPresContext();
 
@@ -136,11 +138,11 @@ nsCoreUtils::DispatchMouseEvent(EventMessage aMessage, int32_t aX, int32_t aY,
   WidgetMouseEvent event(true, aMessage, aRootWidget,
                          WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
 
-  event.refPoint = LayoutDeviceIntPoint(aX, aY);
+  event.mRefPoint = LayoutDeviceIntPoint(aX, aY);
 
-  event.clickCount = 1;
+  event.mClickCount = 1;
   event.button = WidgetMouseEvent::eLeftButton;
-  event.time = PR_IntervalNow();
+  event.mTime = PR_IntervalNow();
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
 
   nsEventStatus status = nsEventStatus_eIgnore;
@@ -157,13 +159,13 @@ nsCoreUtils::DispatchTouchEvent(EventMessage aMessage, int32_t aX, int32_t aY,
 
   WidgetTouchEvent event(true, aMessage, aRootWidget);
 
-  event.time = PR_IntervalNow();
+  event.mTime = PR_IntervalNow();
 
   // XXX: Touch has an identifier of -1 to hint that it is synthesized.
   RefPtr<dom::Touch> t = new dom::Touch(-1, LayoutDeviceIntPoint(aX, aY),
                                         LayoutDeviceIntPoint(1, 1), 0.0f, 1.0f);
   t->SetTarget(aContent);
-  event.touches.AppendElement(t);
+  event.mTouches.AppendElement(t);
   nsEventStatus status = nsEventStatus_eIgnore;
   aPresShell->HandleEventWithTarget(&event, aFrame, aContent, &status);
 }
@@ -219,28 +221,6 @@ nsCoreUtils::GetDOMNodeFromDOMPoint(nsINode *aNode, uint32_t aOffset)
   }
 
   return aNode;
-}
-
-nsIContent*
-nsCoreUtils::GetRoleContent(nsINode *aNode)
-{
-  nsCOMPtr<nsIContent> content(do_QueryInterface(aNode));
-  if (!content) {
-    nsCOMPtr<nsIDocument> doc(do_QueryInterface(aNode));
-    if (doc) {
-      nsCOMPtr<nsIDOMHTMLDocument> htmlDoc(do_QueryInterface(aNode));
-      if (htmlDoc) {
-        nsCOMPtr<nsIDOMHTMLElement> bodyElement;
-        htmlDoc->GetBody(getter_AddRefs(bodyElement));
-        content = do_QueryInterface(bodyElement);
-      }
-      else {
-        return doc->GetDocumentElement();
-      }
-    }
-  }
-
-  return content;
 }
 
 bool
@@ -657,4 +637,42 @@ nsCoreUtils::IsWhitespaceString(const nsSubstring& aString)
     ++iterBegin;
 
   return iterBegin == iterEnd;
+}
+
+bool
+nsCoreUtils::AccEventObserversExist()
+{
+  nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
+  NS_ENSURE_TRUE(obsService, false);
+
+  nsCOMPtr<nsISimpleEnumerator> observers;
+  obsService->EnumerateObservers(NS_ACCESSIBLE_EVENT_TOPIC,
+                                 getter_AddRefs(observers));
+  NS_ENSURE_TRUE(observers, false);
+
+  bool hasObservers = false;
+  observers->HasMoreElements(&hasObservers);
+
+  return hasObservers;
+}
+
+void
+nsCoreUtils::DispatchAccEvent(RefPtr<nsIAccessibleEvent> event)
+{
+  nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
+  NS_ENSURE_TRUE_VOID(obsService);
+
+  obsService->NotifyObservers(event, NS_ACCESSIBLE_EVENT_TOPIC, nullptr);
+}
+
+void
+nsCoreUtils::XBLBindingRole(const nsIContent* aEl, nsAString& aRole)
+{
+  for (const nsXBLBinding* binding = aEl->GetXBLBinding(); binding;
+       binding = binding->GetBaseBinding()) {
+    nsIContent* bindingElm = binding->PrototypeBinding()->GetBindingElement();
+    bindingElm->GetAttr(kNameSpaceID_None, nsGkAtoms::role, aRole);
+    if (!aRole.IsEmpty())
+      break;
+  }
 }

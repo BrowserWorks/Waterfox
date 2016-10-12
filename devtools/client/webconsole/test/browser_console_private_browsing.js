@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Bug 874061: test for how the browser and web consoles display messages coming
 // from private windows. See bug for description of expected behavior.
@@ -38,7 +38,9 @@ function test() {
     ConsoleAPIStorage.clearEvents();
 
     // Add a non-private message to the browser console.
-    content.console.log("bug874061-not-private");
+    ContentTask.spawn(gBrowser.selectedBrowser, null, function* () {
+      content.console.log("bug874061-not-private");
+    });
 
     nonPrivateMessage = {
       name: "console message from a non-private window",
@@ -49,7 +51,7 @@ function test() {
 
     privateWindow = OpenBrowserWindow({ private: true });
     ok(privateWindow, "new private window");
-    ok(PrivateBrowsingUtils.isWindowPrivate(privateWindow), "window is private");
+    ok(PrivateBrowsingUtils.isWindowPrivate(privateWindow), "window's private");
 
     whenDelayedStartupFinished(privateWindow, onPrivateWindowReady);
   }
@@ -75,8 +77,8 @@ function test() {
     EventUtils.synthesizeMouse(button, 2, 2, {}, privateContent);
   }
 
-  function consoleOpened(aHud) {
-    hud = aHud;
+  function consoleOpened(injectedHud) {
+    hud = injectedHud;
     ok(hud, "web console opened");
 
     addMessages();
@@ -111,8 +113,8 @@ function test() {
     });
   }
 
-  function consoleReopened(aHud) {
-    hud = aHud;
+  function consoleReopened(injectedHud) {
+    hud = injectedHud;
     ok(hud, "web console reopened");
 
     // Make sure that cached messages are displayed in the web console, even
@@ -127,7 +129,7 @@ function test() {
     info("testBrowserConsole()");
     closeConsole(privateTab).then(() => {
       info("web console closed");
-      privateWindow.HUDService.toggleBrowserConsole().then(onBrowserConsoleOpen);
+      HUDService.toggleBrowserConsole().then(onBrowserConsoleOpen);
     });
   }
 
@@ -139,8 +141,8 @@ function test() {
     is(text.indexOf("bug 874061"), -1, "no console message displayed");
   }
 
-  function onBrowserConsoleOpen(aHud) {
-    hud = aHud;
+  function onBrowserConsoleOpen(injectedHud) {
+    hud = injectedHud;
     ok(hud, "browser console opened");
 
     checkNoPrivateMessages();
@@ -156,14 +158,14 @@ function test() {
   }
 
   function testPrivateWindowClose() {
-    info("close the private window and check if the private messages are removed");
+    info("close the private window and check if private messages are removed");
     hud.jsterm.once("private-messages-cleared", () => {
       isnot(hud.outputNode.textContent.indexOf("bug874061-not-private"), -1,
             "non-private messages are still shown after private window closed");
       checkNoPrivateMessages();
 
       info("close the browser console");
-      privateWindow.HUDService.toggleBrowserConsole().then(() => {
+      HUDService.toggleBrowserConsole().then(() => {
         info("reopen the browser console");
         executeSoon(() =>
           HUDService.toggleBrowserConsole().then(onBrowserConsoleReopen));
@@ -172,8 +174,8 @@ function test() {
     privateWindow.BrowserTryToCloseWindow();
   }
 
-  function onBrowserConsoleReopen(aHud) {
-    hud = aHud;
+  function onBrowserConsoleReopen(injectedHud) {
+    hud = injectedHud;
     ok(hud, "browser console reopened");
 
     // Make sure that the non-private message is still shown after reopen.

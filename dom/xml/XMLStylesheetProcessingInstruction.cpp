@@ -63,7 +63,7 @@ XMLStylesheetProcessingInstruction::BindToTree(nsIDocument* aDocument,
 
   void (XMLStylesheetProcessingInstruction::*update)() =
     &XMLStylesheetProcessingInstruction::UpdateStyleSheetInternal;
-  nsContentUtils::AddScriptRunner(NS_NewRunnableMethod(this, update));
+  nsContentUtils::AddScriptRunner(NewRunnableMethod(this, update));
 
   return rv;  
 }
@@ -71,7 +71,7 @@ XMLStylesheetProcessingInstruction::BindToTree(nsIDocument* aDocument,
 void
 XMLStylesheetProcessingInstruction::UnbindFromTree(bool aDeep, bool aNullParent)
 {
-  nsCOMPtr<nsIDocument> oldDoc = GetCurrentDoc();
+  nsCOMPtr<nsIDocument> oldDoc = GetUncomposedDoc();
 
   ProcessingInstruction::UnbindFromTree(aDeep, aNullParent);
   UpdateStyleSheetInternal(oldDoc, nullptr);

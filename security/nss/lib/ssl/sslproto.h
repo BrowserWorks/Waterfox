@@ -1,6 +1,6 @@
 /*
  * Various and sundry protocol constants. DON'T CHANGE THESE. These values
- * are mostly defined by the SSL2, SSL3, or TLS protocol specifications.
+ * are mostly defined by the SSL3 or TLS protocol specifications.
  * Cipher kinds and ciphersuites are part of the public API.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -9,6 +9,8 @@
 
 #ifndef __sslproto_h_
 #define __sslproto_h_
+
+/* clang-format off */
 
 /* All versions less than 3_0 are treated as SSL version 2 */
 #define SSL_LIBRARY_VERSION_2                   0x0002
@@ -31,28 +33,6 @@
 #define SSL_LIBRARY_VERSION_DTLS_1_2_WIRE       ((~0x0102) & 0xffff)
 #define SSL_LIBRARY_VERSION_DTLS_1_3_WIRE       ((~0x0103) & 0xffff)
 
-/* Header lengths of some of the messages */
-#define SSL_HL_ERROR_HBYTES                     3
-#define SSL_HL_CLIENT_HELLO_HBYTES              9
-#define SSL_HL_CLIENT_MASTER_KEY_HBYTES         10
-#define SSL_HL_CLIENT_FINISHED_HBYTES           1
-#define SSL_HL_SERVER_HELLO_HBYTES              11
-#define SSL_HL_SERVER_VERIFY_HBYTES             1
-#define SSL_HL_SERVER_FINISHED_HBYTES           1
-#define SSL_HL_REQUEST_CERTIFICATE_HBYTES       2
-#define SSL_HL_CLIENT_CERTIFICATE_HBYTES        6
-
-/* Security handshake protocol codes */
-#define SSL_MT_ERROR                            0
-#define SSL_MT_CLIENT_HELLO                     1
-#define SSL_MT_CLIENT_MASTER_KEY                2
-#define SSL_MT_CLIENT_FINISHED                  3
-#define SSL_MT_SERVER_HELLO                     4
-#define SSL_MT_SERVER_VERIFY                    5
-#define SSL_MT_SERVER_FINISHED                  6
-#define SSL_MT_REQUEST_CERTIFICATE              7
-#define SSL_MT_CLIENT_CERTIFICATE               8
-
 /* Certificate types */
 #define SSL_CT_X509_CERTIFICATE                 0x01
 #if 0 /* XXX Not implemented yet */
@@ -65,27 +45,6 @@
 #define SSL_PE_NO_CERTIFICATE                   0x0002
 #define SSL_PE_BAD_CERTIFICATE                  0x0004
 #define SSL_PE_UNSUPPORTED_CERTIFICATE_TYPE     0x0006
-
-/* Cypher kinds (not the spec version!) */
-#define SSL_CK_RC4_128_WITH_MD5                 0x01
-#define SSL_CK_RC4_128_EXPORT40_WITH_MD5        0x02
-#define SSL_CK_RC2_128_CBC_WITH_MD5             0x03
-#define SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5    0x04
-#define SSL_CK_IDEA_128_CBC_WITH_MD5            0x05
-#define SSL_CK_DES_64_CBC_WITH_MD5              0x06
-#define SSL_CK_DES_192_EDE3_CBC_WITH_MD5        0x07
-
-/* Cipher enables.  These are used only for SSL_EnableCipher
- * These values define the SSL2 suites, and do not colide with the
- * SSL3 Cipher suites defined below.
- */
-#define SSL_EN_RC4_128_WITH_MD5                 0xFF01
-#define SSL_EN_RC4_128_EXPORT40_WITH_MD5        0xFF02
-#define SSL_EN_RC2_128_CBC_WITH_MD5             0xFF03
-#define SSL_EN_RC2_128_CBC_EXPORT40_WITH_MD5    0xFF04
-#define SSL_EN_IDEA_128_CBC_WITH_MD5            0xFF05
-#define SSL_EN_DES_64_CBC_WITH_MD5              0xFF06
-#define SSL_EN_DES_192_EDE3_CBC_WITH_MD5        0xFF07
 
 /* Deprecated SSL 3.0 & libssl names replaced by IANA-registered TLS names. */
 #ifndef SSL_DISABLE_DEPRECATED_CIPHER_SUITE_NAMES
@@ -205,8 +164,11 @@
 #define TLS_RSA_WITH_SEED_CBC_SHA               0x0096
 
 #define TLS_RSA_WITH_AES_128_GCM_SHA256         0x009C
+#define TLS_RSA_WITH_AES_256_GCM_SHA384         0x009D
 #define TLS_DHE_RSA_WITH_AES_128_GCM_SHA256     0x009E
+#define TLS_DHE_RSA_WITH_AES_256_GCM_SHA384     0x009F
 #define TLS_DHE_DSS_WITH_AES_128_GCM_SHA256     0x00A2
+#define TLS_DHE_DSS_WITH_AES_256_GCM_SHA384     0x00A3
 
 /* TLS "Signaling Cipher Suite Value" (SCSV). May be requested by client.
  * Must NEVER be chosen by server.  SSL 3.0 server acknowledges by sending
@@ -253,12 +215,30 @@
 #define TLS_ECDH_anon_WITH_AES_256_CBC_SHA      0xC019
 
 #define TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 0xC023
+#define TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384 0xC024
 #define TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256   0xC027
+#define TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384   0xC028
 
 #define TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 0xC02B
+#define TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 0xC02C
 #define TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256  0xC02D
 #define TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256   0xC02F
+#define TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384   0xC030
 #define TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256    0xC031
+
+/* draft-ietf-tls-chacha20-poly1305-04 */
+#define TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   0xCCA8
+#define TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 0xCCA9
+#define TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256     0xCCAA
+#define TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256   0xCCAC
+#define TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256     0xCCAD
+
+/* PSK suites are for resumption only */
+/* Experimental PSK support for [draft-mattsson-tls-ecdhe-psk-aead] */
+#define TLS_ECDHE_PSK_WITH_AES_128_GCM_SHA256   0xD001
+#define TLS_ECDHE_PSK_WITH_AES_256_GCM_SHA384   0xD002
+#define TLS_DHE_PSK_WITH_AES_128_GCM_SHA256     0x00AA /* RFC 5487 */
+#define TLS_DHE_PSK_WITH_AES_256_GCM_SHA384     0x00AB /* RFC 5487 */
 
 /* Netscape "experimental" cipher suites. */
 #define SSL_RSA_OLDFIPS_WITH_3DES_EDE_CBC_SHA   0xffe0
@@ -274,5 +254,41 @@
 #define SRTP_AES128_CM_HMAC_SHA1_32             0x0002
 #define SRTP_NULL_HMAC_SHA1_80                  0x0005
 #define SRTP_NULL_HMAC_SHA1_32                  0x0006
+
+/* DO NOT USE. (deprecated, will be removed) */
+#define SSL_HL_ERROR_HBYTES                     3
+#define SSL_HL_CLIENT_HELLO_HBYTES              9
+#define SSL_HL_CLIENT_MASTER_KEY_HBYTES         10
+#define SSL_HL_CLIENT_FINISHED_HBYTES           1
+#define SSL_HL_SERVER_HELLO_HBYTES              11
+#define SSL_HL_SERVER_VERIFY_HBYTES             1
+#define SSL_HL_SERVER_FINISHED_HBYTES           1
+#define SSL_HL_REQUEST_CERTIFICATE_HBYTES       2
+#define SSL_HL_CLIENT_CERTIFICATE_HBYTES        6
+#define SSL_MT_ERROR                            0
+#define SSL_MT_CLIENT_HELLO                     1
+#define SSL_MT_CLIENT_MASTER_KEY                2
+#define SSL_MT_CLIENT_FINISHED                  3
+#define SSL_MT_SERVER_HELLO                     4
+#define SSL_MT_SERVER_VERIFY                    5
+#define SSL_MT_SERVER_FINISHED                  6
+#define SSL_MT_REQUEST_CERTIFICATE              7
+#define SSL_MT_CLIENT_CERTIFICATE               8
+#define SSL_CK_RC4_128_WITH_MD5                 0x01
+#define SSL_CK_RC4_128_EXPORT40_WITH_MD5        0x02
+#define SSL_CK_RC2_128_CBC_WITH_MD5             0x03
+#define SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5    0x04
+#define SSL_CK_IDEA_128_CBC_WITH_MD5            0x05
+#define SSL_CK_DES_64_CBC_WITH_MD5              0x06
+#define SSL_CK_DES_192_EDE3_CBC_WITH_MD5        0x07
+#define SSL_EN_RC4_128_WITH_MD5                 0xFF01
+#define SSL_EN_RC4_128_EXPORT40_WITH_MD5        0xFF02
+#define SSL_EN_RC2_128_CBC_WITH_MD5             0xFF03
+#define SSL_EN_RC2_128_CBC_EXPORT40_WITH_MD5    0xFF04
+#define SSL_EN_IDEA_128_CBC_WITH_MD5            0xFF05
+#define SSL_EN_DES_64_CBC_WITH_MD5              0xFF06
+#define SSL_EN_DES_192_EDE3_CBC_WITH_MD5        0xFF07
+
+/* clang-format on */
 
 #endif /* __sslproto_h_ */

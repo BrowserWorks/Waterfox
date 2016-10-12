@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test if 'break on next' functionality works from executions
@@ -12,7 +14,11 @@ function test() {
   let gTab, gPanel, gDebugger;
   let gSources, gBreakpoints, gTarget, gResumeButton, gResumeKey, gThreadClient;
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-eval.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -22,12 +28,11 @@ function test() {
     gResumeButton = gDebugger.document.getElementById("resume");
     gResumeKey = gDebugger.document.getElementById("resumeKey");
 
-    waitForSourceShown(gPanel, "-eval.js")
-      .then(testConsole)
+    testConsole()
       .then(() => closeDebuggerAndFinish(gPanel));
   });
 
-  let testConsole = Task.async(function*() {
+  let testConsole = Task.async(function* () {
     info("Starting testConsole");
 
     let oncePaused = gTarget.once("thread-paused");

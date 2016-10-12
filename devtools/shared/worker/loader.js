@@ -42,7 +42,7 @@ this.EXPORTED_SYMBOLS = ["WorkerDebuggerLoader", "worker"];
  */
 function resolveId(id, baseId) {
   return baseId + "/../" + id;
-};
+}
 
 /**
  * Convert the given absolute id to a normalized id.
@@ -62,27 +62,27 @@ function normalizeId(id) {
   let stack = [];
   path.split("/").forEach(function (component) {
     switch (component) {
-    case "":
-    case ".":
-      break;
-    case "..":
-      if (stack.length === 0) {
-        if (root !== undefined) {
-          throw new Error("Can't normalize absolute id '" + id + "'!");
+      case "":
+      case ".":
+        break;
+      case "..":
+        if (stack.length === 0) {
+          if (root !== undefined) {
+            throw new Error("Can't normalize absolute id '" + id + "'!");
+          } else {
+            stack.push("..");
+          }
         } else {
-          stack.push("..");
+          if (stack[stack.length - 1] == "..") {
+            stack.push("..");
+          } else {
+            stack.pop();
+          }
         }
-      } else {
-        if (stack[stack.length - 1] == "..") {
-          stack.push("..");
-        } else {
-          stack.pop();
-        }
-      }
-      break;
-    default:
-      stack.push(component);
-      break;
+        break;
+      default:
+        stack.push(component);
+        break;
     }
   });
 
@@ -118,7 +118,7 @@ function createModule(id) {
       writable: true
     }
   });
-};
+}
 
 /**
  * Create a CommonJS loader with the following options:
@@ -208,7 +208,7 @@ function WorkerDebuggerLoader(options) {
     if (typeof module.exports === "object" && module.exports !== null) {
       Object.freeze(module.exports);
     }
-  };
+  }
 
   /**
    * Create a require function for the given module. If no module is given,
@@ -366,6 +366,7 @@ var loader = {
 
 var {
   Debugger,
+  URL,
   createSandbox,
   dump,
   rpc,
@@ -384,7 +385,7 @@ var {
       utils: Cu
     } = Components;
 
-    let principal = CC('@mozilla.org/systemprincipal;1', 'nsIPrincipal')();
+    let principal = CC("@mozilla.org/systemprincipal;1", "nsIPrincipal")();
 
     // To ensure that the this passed to addDebuggerToGlobal is a global, the
     // Debugger object needs to be defined in a sandbox.
@@ -396,7 +397,7 @@ var {
     );
     let Debugger = sandbox.Debugger;
 
-    let createSandbox = function(name, prototype) {
+    let createSandbox = function (name, prototype) {
       return Cu.Sandbox(principal, {
         invisibleToDebugger: true,
         sandboxName: name,
@@ -408,7 +409,7 @@ var {
 
     let rpc = undefined;
 
-    let subScriptLoader = Cc['@mozilla.org/moz/jssubscript-loader;1'].
+    let subScriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"].
                  getService(Ci.mozIJSSubScriptLoader);
 
     let loadSubScript = function (url, sandbox) {
@@ -421,13 +422,14 @@ var {
 
     let setImmediate = function (callback) {
       Timer.setTimeout(callback, 0);
-    }
+    };
 
     let xpcInspector = Cc["@mozilla.org/jsinspector;1"].
                        getService(Ci.nsIJSInspector);
 
     return {
       Debugger,
+      URL: this.URL,
       createSandbox,
       dump: this.dump,
       rpc,
@@ -465,6 +467,7 @@ var {
 
     return {
       Debugger: this.Debugger,
+      URL: this.URL,
       createSandbox: this.createSandbox,
       dump: this.dump,
       rpc: this.rpc,
@@ -487,7 +490,8 @@ this.worker = new WorkerDebuggerLoader({
     "loader": loader,
     "reportError": reportError,
     "rpc": rpc,
-    "setImmediate": setImmediate
+    "setImmediate": setImmediate,
+    "URL": URL,
   },
   loadSubScript: loadSubScript,
   modules: {

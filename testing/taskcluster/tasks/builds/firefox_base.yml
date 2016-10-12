@@ -3,12 +3,16 @@ $inherits:
   variables:
     build_product: 'firefox'
 task:
+  scopes:
+    - "secrets:get:project/releng/gecko/build/level-{{level}}/*"
   extra:
     locations:
       mozharness: 'public/build/mozharness.zip'
-      test_packages: 'public/build/test_packages.json'
+      test_packages: 'public/build/target.test_packages.json'
   payload:
     image:
       type: 'task-image'
       path: 'public/image.tar'
       taskId: '{{#task_id_for_image}}desktop-build{{/task_id_for_image}}'
+    features:
+      taskclusterProxy: true

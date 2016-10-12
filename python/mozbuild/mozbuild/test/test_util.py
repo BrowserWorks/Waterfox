@@ -30,6 +30,9 @@ from mozbuild.util import (
     resolve_target_to_make,
     MozbuildDeletionError,
     HierarchicalStringList,
+    EnumString,
+    EnumStringComparisonError,
+    ListWithAction,
     StrictOrderingOnAppendList,
     StrictOrderingOnAppendListWithFlagsFactory,
     TypedList,
@@ -410,6 +413,70 @@ class TestStrictOrderingOnAppendList(unittest.TestCase):
             l2 += list(l)
         # Adding a StrictOrderingOnAppendList to another shouldn't throw
         l2 += l
+
+
+class TestListWithAction(unittest.TestCase):
+    def setUp(self):
+        self.action = lambda a: (a, id(a))
+
+    def assertSameList(self, expected, actual):
+        self.assertEqual(len(expected), len(actual))
+        for idx, item in enumerate(actual):
+            self.assertEqual(item, expected[idx])
+
+    def test_init(self):
+        l = ListWithAction(action=self.action)
+        self.assertEqual(len(l), 0)
+        original = ['a', 'b', 'c']
+        l = ListWithAction(['a', 'b', 'c'], action=self.action)
+        expected = map(self.action, original)
+        self.assertSameList(expected, l)
+
+        with self.assertRaises(ValueError):
+            ListWithAction('abc', action=self.action)
+
+        with self.assertRaises(ValueError):
+            ListWithAction()
+
+    def test_extend(self):
+        l = ListWithAction(action=self.action)
+        original = ['a', 'b']
+        l.extend(original)
+        expected = map(self.action, original)
+        self.assertSameList(expected, l)
+
+        with self.assertRaises(ValueError):
+            l.extend('ab')
+
+    def test_slicing(self):
+        l = ListWithAction(action=self.action)
+        original = ['a', 'b']
+        l[:] = original
+        expected = map(self.action, original)
+        self.assertSameList(expected, l)
+
+        with self.assertRaises(ValueError):
+            l[:] = 'ab'
+
+    def test_add(self):
+        l = ListWithAction(action=self.action)
+        original = ['a', 'b']
+        l2 = l + original
+        expected = map(self.action, original)
+        self.assertSameList(expected, l2)
+
+        with self.assertRaises(ValueError):
+            l + 'abc'
+
+    def test_iadd(self):
+        l = ListWithAction(action=self.action)
+        original = ['a', 'b']
+        l += original
+        expected = map(self.action, original)
+        self.assertSameList(expected, l)
+
+        with self.assertRaises(ValueError):
+            l += 'abc'
 
 
 class TestStrictOrderingOnAppendListWithFlagsFactory(unittest.TestCase):
@@ -796,6 +863,29 @@ class TestMisc(unittest.TestCase):
             'before abc between a b c after'
         )
 
+class TestEnumString(unittest.TestCase):
+    def test_string(self):
+        CompilerType = EnumString.subclass('msvc', 'gcc', 'clang', 'clang-cl')
+
+        type = CompilerType('msvc')
+        self.assertEquals(type, 'msvc')
+        self.assertNotEquals(type, 'gcc')
+        self.assertNotEquals(type, 'clang')
+        self.assertNotEquals(type, 'clang-cl')
+        self.assertIn(type, ('msvc', 'clang-cl'))
+        self.assertNotIn(type, ('gcc', 'clang'))
+
+        with self.assertRaises(EnumStringComparisonError):
+            self.assertEquals(type, 'foo')
+
+        with self.assertRaises(EnumStringComparisonError):
+            self.assertNotEquals(type, 'foo')
+
+        with self.assertRaises(EnumStringComparisonError):
+            self.assertIn(type, ('foo', 'gcc'))
+
+        with self.assertRaises(ValueError):
+            type = CompilerType('foo')
 
 if __name__ == '__main__':
     main()

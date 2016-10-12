@@ -50,7 +50,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=435442
     25% { margin-top: 100px }
   }
   @keyframes kf4 {
-    to, from { display: inline; margin-top: 37px }
+    to, from { border-collapse: collapse; margin-top: 37px }
   }
   @keyframes kf_cascade1 {
     from { padding-top: 50px }
@@ -566,23 +566,23 @@ done_div();
 // we still override the value when two consecutive keyframes have
 // the same value.
 new_div("animation: kf4 ease 10s");
-is(cs.display, "block",
+is(cs.borderCollapse, "separate",
    "non-animatable properties should be ignored (linear, 0s)");
 is(cs.marginTop, "37px",
    "animatable properties should still apply (linear, 0s)");
 advance_clock(1000);
-is(cs.display, "block",
+is(cs.borderCollapse, "separate",
    "non-animatable properties should be ignored (linear, 1s)");
 is(cs.marginTop, "37px",
    "animatable properties should still apply (linear, 1s)");
 done_div();
 new_div("animation: kf4 step-start 10s");
-is(cs.display, "block",
+is(cs.borderCollapse, "separate",
    "non-animatable properties should be ignored (step-start, 0s)");
 is(cs.marginTop, "37px",
    "animatable properties should still apply (step-start, 0s)");
 advance_clock(1000);
-is(cs.display, "block",
+is(cs.borderCollapse, "separate",
    "non-animatable properties should be ignored (step-start, 1s)");
 is(cs.marginTop, "37px",
    "animatable properties should still apply (step-start, 1s)");
@@ -1189,9 +1189,14 @@ done_div();
 // in the fourth iteration
 new_div("animation: anim2 1s -3.6s ease-in 5 alternate forwards");
 listen(); // rely on no flush having happened yet
+cs.animationName; // flush styles so animation is created
+advance_clock(0); // complete pending animation start
 is_approx(px_to_num(cs.marginRight), 100 * gTF.ease_in(0.4), 0.01,
           "large negative delay test at 0ms");
 check_events([{ type: 'animationstart', target: div,
+                animationName: 'anim2', elapsedTime: 3.6,
+                pseudoElement: "" },
+              { type: 'animationiteration', target: div,
                 animationName: 'anim2', elapsedTime: 3.6,
                 pseudoElement: "" }],
              "right after start in large negative delay test");
@@ -1568,7 +1573,8 @@ done_div();
 
 new_div("animation: anim2 1s -2s");
 listen();
-advance_clock(0);
+cs.animationName; // build animation
+advance_clock(0); // finish pending
 check_events([{ type: 'animationstart', target: div,
                 animationName: 'anim2', elapsedTime: 1,
                 pseudoElement: "" },
@@ -1733,7 +1739,8 @@ done_div();
 new_div("margin-right: 200px;"
         + " animation: anim2 0s -1s both reverse 12.7 linear");
 listen();
-advance_clock(0);
+cs.animationName; // build animation
+advance_clock(0); // finish pending
 is(cs.getPropertyValue("margin-right"), "30px",
    "margin-right during forwards fill of reversed and repeated " +
    "zero-duration animation with negative delay");

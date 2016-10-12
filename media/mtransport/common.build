@@ -9,13 +9,14 @@ mtransport_lcppsrcs = [
     'nr_socket_prsock.cpp',
     'nr_timer.cpp',
     'nricectx.cpp',
+    'nricectxhandler.cpp',
     'nricemediastream.cpp',
     'nriceresolver.cpp',
     'nriceresolverfake.cpp',
     'nrinterfaceprioritizer.cpp',
     'rlogringbuffer.cpp',
     'simpletokenbucket.cpp',
-    'stun_udp_socket_filter.cpp',
+    'stun_socket_filter.cpp',
     'test_nr_socket.cpp',
     'transportflow.cpp',
     'transportlayer.cpp',
@@ -89,3 +90,6 @@ DEFINES['R_DEFINED_INT4'] = 'int32_t'
 DEFINES['R_DEFINED_UINT4'] = 'uint32_t'
 DEFINES['R_DEFINED_INT8'] = 'int64_t'
 DEFINES['R_DEFINED_UINT8'] = 'uint64_t'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

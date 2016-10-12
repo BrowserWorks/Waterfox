@@ -15,8 +15,9 @@
     "global": true,
     "Extension": true,
     "ExtensionManagement": true,
-    "ExtensionPage": true,
+    "ExtensionContext": true,
     "GlobalManager": true,
+    "openOptionsPage": true,
     "runSafe": true,
     "runSafeSync": true,
     "runSafeSyncWithoutClone": true,
@@ -29,8 +30,6 @@
   "rules": {
     // Rules from the mozilla plugin
     "mozilla/balanced-listeners": 2,
-    "mozilla/components-imports": 1,
-    "mozilla/import-headjs-globals": 1,
     "mozilla/mark-test-function-used": 1,
     "mozilla/no-aArgs": 1,
     "mozilla/no-cpows-in-tests": 1,
@@ -45,9 +44,18 @@
     // Always require spacing around a single line block
     "block-spacing": 1,
 
+    // Forbid spaces inside the square brackets of array literals.
+    "array-bracket-spacing": [2, "never"],
+
+    // Forbid spaces inside the curly brackets of object literals.
+    "object-curly-spacing": [2, "never"],
+
+    // No space padding in parentheses
+    "space-in-parens": [2, "never"],
+
     // Enforce one true brace style (opening brace on the same line) and avoid
     // start and end braces on the same line.
-    "brace-style": [2, "1tbs", { "allowSingleLine": true }],
+    "brace-style": [2, "1tbs", {"allowSingleLine": true}],
 
     // No space before always a space after a comma
     "comma-spacing": [2, {"before": false, "after": true}],
@@ -62,7 +70,7 @@
     "consistent-return": 0,
 
     // Require braces around blocks that start a new line
-    "curly": [2, "multi-line"],
+    "curly": [2, "all"],
 
     // Always require a trailing EOL
     "eol-last": 2,
@@ -71,10 +79,13 @@
     "generator-star-spacing": [2, {"before": false, "after": true}],
 
     // Two space indent
-    "indent": [2, 2, { "SwitchCase": 1 }],
+    "indent": [2, 2, {"SwitchCase": 1}],
 
     // Space after colon not before in property declarations
-    "key-spacing": [2, { "beforeColon": false, "afterColon": true, "mode": "minimum" }],
+    "key-spacing": [2, {"beforeColon": false, "afterColon": true, "mode": "minimum"}],
+
+    // Require spaces before and after finally, catch, etc.
+    "keyword-spacing": 2,
 
     // Unix linebreaks
     "linebreak-style": [2, "unix"],
@@ -93,9 +104,6 @@
 
     // No duplicate cases in switch statements
     "no-duplicate-case": 2,
-
-    // No labels
-    // "no-labels": 2,
 
     // If an if block ends with a return no need for an else block
     // "no-else-return": 2,
@@ -166,20 +174,11 @@
     // No unnecessary comparisons
     "no-self-compare": 2,
 
-    // No declaring variables from an outer scope
-    "no-shadow": 1,
-
-    // No declaring variables that hide things like arguments
-    "no-shadow-restricted-names": 2,
-
     // No spaces between function name and parentheses
     "no-spaced-func": 1,
 
     // No trailing whitespace
     "no-trailing-spaces": 2,
-
-    // No using undeclared variables
-    "no-undef": 2,
 
     // Error on newline where a semicolon is needed
     "no-unexpected-multiline": 2,
@@ -191,7 +190,7 @@
     "no-unused-expressions": 2,
 
     // No declaring variables that are never used
-    "no-unused-vars": [2, { "args": "none", "varsIgnorePattern": "^(Cc|Ci|Cr|Cu|EXPORTED_SYMBOLS)$" }],
+    "no-unused-vars": [2, {"args": "none", "varsIgnorePattern": "^(Cc|Ci|Cr|Cu|EXPORTED_SYMBOLS)$"}],
 
     // No using variables before defined
     "no-use-before-define": 2,
@@ -202,30 +201,17 @@
     // Always require semicolon at end of statement
     "semi": [2, "always"],
 
-    // Require space after keywords
-    "space-after-keywords": 2,
-
     // Require space before blocks
     "space-before-blocks": 2,
 
     // Never use spaces before function parentheses
-    "space-before-function-paren": [2, { "anonymous": "never", "named": "never" }],
-
-    // Require spaces before finally, catch, etc.
-    "space-before-keywords": [2, "always"],
-
-    // No space padding in parentheses
-    "space-in-parens": [2, "never"],
+    "space-before-function-paren": [2, {"anonymous": "never", "named": "never"}],
 
     // Require spaces around operators, except for a|0.
     "space-infix-ops": [2, {"int32Hint": true}],
 
-
-    // Require spaces after return, throw and case
-    "space-return-throw-case": 2,
-
     // ++ and -- should not need spacing
-    "space-unary-ops": [1, { "nonwords": false }],
+    "space-unary-ops": [1, {"nonwords": false}],
 
     // No comparisons to NaN
     "use-isnan": 2,
@@ -239,7 +225,7 @@
 
     // Allow trailing commas for easy list extension.  Having them does not
     // impair readability, but also not required either.
-    "comma-dangle": [1, "always-multiline"],
+    "comma-dangle": [2, "always-multiline"],
 
     // Warn about cyclomatic complexity in functions.
     "complexity": 1,
@@ -253,7 +239,7 @@
     "default-case": 0,
 
     // Enforce dots on the next line with property name.
-    "dot-location": [1, "property"],
+    "dot-location": [2, "property"],
 
     // Encourage the use of dot notation whenever possible.
     "dot-notation": 2,
@@ -329,9 +315,6 @@
     // Allow division operators explicitly at beginning of regular expression.
     "no-div-regex": 0,
 
-    // Disallow use of labels for anything other then loops and switches.
-    "no-empty-label": 2,
-
     // Disallow use of eval(). We have other APIs to evaluate code in content.
     "no-eval": 2,
 
@@ -352,6 +335,9 @@
 
     // Allow comments inline after code.
     "no-inline-comments": 0,
+
+    // Disallow use of labels for anything other then loops and switches.
+    "no-labels": [2, { "allowLoop": true }],
 
     // Disallow use of multiline strings (use template strings instead).
     "no-multi-str": 1,
@@ -442,7 +428,7 @@
     "quote-props": 0,
 
     // Double quotes should be used.
-    "quotes": [1, "double", "avoid-escape"],
+    "quotes": [1, "double", {"avoidEscape": true, "allowTemplateLiterals": true}],
 
     // Require use of the second argument for parseInt().
     "radix": 2,
@@ -453,9 +439,6 @@
     // Don't require to sort variables within the same declaration block.
     // Anyway, one-var is disabled.
     "sort-vars": 0,
-
-    // Require a space after keywords.
-    "space-after-keywords": [1, "always"],
 
     // Require a space immediately following the // in a line comment.
     "spaced-comment": [2, "always"],
@@ -490,9 +473,6 @@
 
     // Disallow labels that share a name with a variable
     "no-label-var": 2,
-
-    // Disallow negation of the left operand of an in expression
-    "no-negated-in-lhs": 2,
 
     // Disallow creating new instances of String, Number, and Boolean
     "no-new-wrappers": 2,

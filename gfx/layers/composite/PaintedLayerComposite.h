@@ -73,6 +73,8 @@ public:
     Mutated();
   }
 
+  const virtual gfx::TiledIntRegion& GetInvalidRegion() override;
+
   MOZ_LAYER_DECL_NAME("PaintedLayerComposite", TYPE_PAINTED)
 
 protected:
@@ -80,7 +82,7 @@ protected:
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) override;
 
 private:
-  gfx::Filter GetEffectFilter() { return gfx::Filter::LINEAR; }
+  gfx::SamplingFilter GetSamplingFilter() { return gfx::SamplingFilter::LINEAR; }
 
 private:
   RefPtr<ContentHost> mBuffer;

@@ -1,10 +1,13 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 // This is testing the aboutCertError page (Bug 1207107).
 
 const GOOD_PAGE = "https://example.com/";
 const BAD_CERT = "https://expired.example.com/";
+const UNKNOWN_ISSUER = "https://self-signed.example.com ";
 const BAD_STS_CERT = "https://badchain.include-subdomains.pinning.example.com:443";
 const {TabStateFlusher} = Cu.import("resource:///modules/sessionstore/TabStateFlusher.jsm", {});
 const ss = Cc["@mozilla.org/browser/sessionstore;1"].getService(Ci.nsISessionStore);
@@ -44,7 +47,7 @@ add_task(function* checkReturnToAboutHome() {
   is(browser.webNavigation.canGoForward, false, "!webNavigation.canGoForward");
   is(gBrowser.currentURI.spec, "about:home", "Went back");
 
-  gBrowser.removeCurrentTab();
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });
 
 add_task(function* checkReturnToPreviousPage() {
@@ -79,7 +82,7 @@ add_task(function* checkReturnToPreviousPage() {
   is(browser.webNavigation.canGoForward, true, "webNavigation.canGoForward");
   is(gBrowser.currentURI.spec, GOOD_PAGE, "Went back");
 
-  gBrowser.removeCurrentTab();
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });
 
 add_task(function* checkBadStsCert() {
@@ -99,7 +102,106 @@ add_task(function* checkBadStsCert() {
   });
   ok(exceptionButtonHidden, "Exception button is hidden");
 
-  gBrowser.removeCurrentTab();
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+});
+
+const PREF_BLOCKLIST_CLOCK_SKEW_SECONDS = "services.blocklist.clock_skew_seconds";
+
+add_task(function* checkWrongSystemTimeWarning() {
+  function* setUpPage() {
+    let browser;
+    let certErrorLoaded;
+    let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, () => {
+      gBrowser.selectedTab = gBrowser.addTab(BAD_CERT);
+      browser = gBrowser.selectedBrowser;
+      certErrorLoaded = waitForCertErrorLoad(browser);
+    }, false);
+
+    info("Loading and waiting for the cert error");
+    yield certErrorLoaded;
+
+    return yield ContentTask.spawn(browser, null, function* () {
+      let doc = content.document;
+      let div = doc.getElementById("wrongSystemTimePanel");
+      let systemDateDiv = doc.getElementById("wrongSystemTime_systemDate");
+      let actualDateDiv = doc.getElementById("wrongSystemTime_actualDate");
+
+      return {
+        divDisplay: content.getComputedStyle(div).display,
+        text: div.textContent,
+        systemDate: systemDateDiv.textContent,
+        actualDate: actualDateDiv.textContent
+      };
+    });
+  }
+
+  let formatter = new Intl.DateTimeFormat();
+
+  // pretend we have a positively skewed (ahead) system time
+  let serverDate = new Date("2015/10/27");
+  let serverDateFmt = formatter.format(serverDate);
+  let localDateFmt = formatter.format(new Date());
+
+  let skew = Math.floor((Date.now() - serverDate.getTime()) / 1000);
+  yield new Promise(r => SpecialPowers.pushPrefEnv({set:
+    [[PREF_BLOCKLIST_CLOCK_SKEW_SECONDS, skew]]}, r));
+
+  info("Loading a bad cert page with a skewed clock");
+  let message = yield Task.spawn(setUpPage);
+
+  isnot(message.divDisplay, "none", "Wrong time message information is visible");
+  ok(message.text.includes("because your clock appears to show the wrong time"),
+     "Correct error message found");
+  ok(message.text.includes("expired.example.com"), "URL found in error message");
+  ok(message.systemDate.includes(localDateFmt), "correct local date displayed");
+  ok(message.actualDate.includes(serverDateFmt), "correct server date displayed");
+
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+
+  // pretend we have a negatively skewed (behind) system time
+  serverDate = new Date();
+  serverDate.setYear(serverDate.getFullYear() + 1);
+  serverDateFmt = formatter.format(serverDate);
+
+  skew = Math.floor((Date.now() - serverDate.getTime()) / 1000);
+  yield new Promise(r => SpecialPowers.pushPrefEnv({set:
+    [[PREF_BLOCKLIST_CLOCK_SKEW_SECONDS, skew]]}, r));
+
+  info("Loading a bad cert page with a skewed clock");
+  message = yield Task.spawn(setUpPage);
+
+  isnot(message.divDisplay, "none", "Wrong time message information is visible");
+  ok(message.text.includes("because your clock appears to show the wrong time"),
+     "Correct error message found");
+  ok(message.text.includes("expired.example.com"), "URL found in error message");
+  ok(message.systemDate.includes(localDateFmt), "correct local date displayed");
+  ok(message.actualDate.includes(serverDateFmt), "correct server date displayed");
+
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+
+  // pretend we only have a slightly skewed system time, four hours
+  skew = 60 * 60 * 4;
+  yield new Promise(r => SpecialPowers.pushPrefEnv({set:
+    [[PREF_BLOCKLIST_CLOCK_SKEW_SECONDS, skew]]}, r));
+
+  info("Loading a bad cert page with an only slightly skewed clock");
+  message = yield Task.spawn(setUpPage);
+
+  is(message.divDisplay, "none", "Wrong time message information is not visible");
+
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+
+  // now pretend we have no skewed system time
+  skew = 0;
+  yield new Promise(r => SpecialPowers.pushPrefEnv({set:
+    [[PREF_BLOCKLIST_CLOCK_SKEW_SECONDS, skew]]}, r));
+
+  info("Loading a bad cert page with no skewed clock");
+  message = yield Task.spawn(setUpPage);
+
+  is(message.divDisplay, "none", "Wrong time message information is not visible");
+
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });
 
 add_task(function* checkAdvancedDetails() {
@@ -143,23 +245,23 @@ add_task(function* checkAdvancedDetails() {
                                 .QueryInterface(Ci.nsISerializable);
     let serializedSecurityInfo = serhelper.serializeToString(serializable);
     return {
-      divDisplay: div.style.display,
+      divDisplay: content.getComputedStyle(div).display,
       text: text.textContent,
       securityInfoAsString: serializedSecurityInfo
     };
   });
-  is(message.divDisplay, "block", "Debug information is visible");
-  ok(message.text.contains(BAD_CERT), "Correct URL found");
-  ok(message.text.contains("Certificate has expired"),
+  isnot(message.divDisplay, "none", "Debug information is visible");
+  ok(message.text.includes(BAD_CERT), "Correct URL found");
+  ok(message.text.includes("Certificate has expired"),
      "Correct error message found");
-  ok(message.text.contains("HTTP Strict Transport Security: false"),
+  ok(message.text.includes("HTTP Strict Transport Security: false"),
      "Correct HSTS value found");
-  ok(message.text.contains("HTTP Public Key Pinning: false"),
+  ok(message.text.includes("HTTP Public Key Pinning: false"),
      "Correct HPKP value found");
   let certChain = getCertChain(message.securityInfoAsString);
-  ok(message.text.contains(certChain), "Found certificate chain");
+  ok(message.text.includes(certChain), "Found certificate chain");
 
-  gBrowser.removeCurrentTab();
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });
 
 add_task(function* checkAdvancedDetailsForHSTS() {
@@ -215,23 +317,45 @@ add_task(function* checkAdvancedDetailsForHSTS() {
                                 .QueryInterface(Ci.nsISerializable);
     let serializedSecurityInfo = serhelper.serializeToString(serializable);
     return {
-      divDisplay: div.style.display,
+      divDisplay: content.getComputedStyle(div).display,
       text: text.textContent,
       securityInfoAsString: serializedSecurityInfo
     };
   });
-  is(message.divDisplay, "block", "Debug information is visible");
-  ok(message.text.contains(badStsUri.spec), "Correct URL found");
-  ok(message.text.contains("requested domain name does not match the server's certificate"),
+  isnot(message.divDisplay, "none", "Debug information is visible");
+  ok(message.text.includes(badStsUri.spec), "Correct URL found");
+  ok(message.text.includes("requested domain name does not match the server\u2019s certificate"),
      "Correct error message found");
-  ok(message.text.contains("HTTP Strict Transport Security: false"),
+  ok(message.text.includes("HTTP Strict Transport Security: false"),
      "Correct HSTS value found");
-  ok(message.text.contains("HTTP Public Key Pinning: true"),
+  ok(message.text.includes("HTTP Public Key Pinning: true"),
      "Correct HPKP value found");
   let certChain = getCertChain(message.securityInfoAsString);
-  ok(message.text.contains(certChain), "Found certificate chain");
+  ok(message.text.includes(certChain), "Found certificate chain");
 
-  gBrowser.removeCurrentTab();
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
+});
+
+add_task(function* checkUnknownIssuerLearnMoreLink() {
+  info("Loading a cert error for self-signed pages and checking the correct link is shown");
+  let browser;
+  let certErrorLoaded;
+  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, () => {
+    gBrowser.selectedTab = gBrowser.addTab(UNKNOWN_ISSUER);
+    browser = gBrowser.selectedBrowser;
+    certErrorLoaded = waitForCertErrorLoad(browser);
+  }, false);
+
+  info("Loading and waiting for the cert error");
+  yield certErrorLoaded;
+
+  let href = yield ContentTask.spawn(browser, null, function* () {
+    let learnMoreLink = content.document.getElementById("learnMoreLink");
+    return learnMoreLink.href;
+  });
+  is(href, "https://support.mozilla.org/kb/troubleshoot-SEC_ERROR_UNKNOWN_ISSUER");
+
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });
 
 function waitForCertErrorLoad(browser) {

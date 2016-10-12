@@ -22,6 +22,7 @@
 #include "mozilla/net/DNSRequestParent.h"
 #include "mozilla/net/RemoteOpenFileParent.h"
 #include "mozilla/net/ChannelDiverterParent.h"
+#include "mozilla/net/IPCTransportProvider.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/TabContext.h"
 #include "mozilla/dom/TabParent.h"
@@ -94,6 +95,7 @@ NeckoParent::NeckoParent()
 
 NeckoParent::~NeckoParent()
 {
+  gNeckoParent = nullptr;
   if (mObserver) {
     mObserver->RemoveObserver();
   }
@@ -127,24 +129,16 @@ NeckoParent::GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
     TabContext tabContext = contextArray[i];
     uint32_t appId = tabContext.OwnOrContainingAppId();
     bool inBrowserElement = aSerialized.IsNotNull() ?
-                              aSerialized.mOriginAttributes.mInBrowser :
-                              tabContext.IsBrowserElement();
+                              aSerialized.mOriginAttributes.mInIsolatedMozBrowser :
+                              tabContext.IsIsolatedMozBrowserElement();
 
     if (appId == NECKO_UNKNOWN_APP_ID) {
       continue;
     }
     // We may get appID=NO_APP if child frame is neither a browser nor an app
-    if (appId == NECKO_NO_APP_ID) {
-      if (tabContext.HasOwnApp()) {
-        continue;
-      }
-      if (UsingNeckoIPCSecurity() && tabContext.IsBrowserElement()) {
-        // <iframe mozbrowser> which doesn't have an <iframe mozapp> above it.
-        // This is not supported now, and we'll need to do a code audit to make
-        // sure we can handle it (i.e don't short-circuit using separate
-        // namespace if just appID==0)
-        continue;
-      }
+    if (appId == NECKO_NO_APP_ID && tabContext.HasOwnApp()) {
+      // NECKO_NO_APP_ID but also is an app?  Weird, skip.
+      continue;
     }
 
     if (!aSerialized.mOriginAttributes.mSignedPkg.IsEmpty() &&
@@ -156,7 +150,7 @@ NeckoParent::GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
     }
     aAttrs = DocShellOriginAttributes();
     aAttrs.mAppId = appId;
-    aAttrs.mInBrowser = inBrowserElement;
+    aAttrs.mInIsolatedMozBrowser = inBrowserElement;
     aAttrs.mSignedPkg = aSerialized.mOriginAttributes.mSignedPkg;
     aAttrs.mUserContextId = aSerialized.mOriginAttributes.mUserContextId;
 
@@ -791,6 +785,21 @@ NeckoParent::DeallocPChannelDiverterParent(PChannelDiverterParent* parent)
   return true;
 }
 
+PTransportProviderParent*
+NeckoParent::AllocPTransportProviderParent()
+{
+  RefPtr<TransportProviderParent> res = new TransportProviderParent();
+  return res.forget().take();
+}
+
+bool
+NeckoParent::DeallocPTransportProviderParent(PTransportProviderParent* aActor)
+{
+  RefPtr<TransportProviderParent> provider =
+    dont_AddRef(static_cast<TransportProviderParent*>(aActor));
+  return true;
+}
+
 void
 NeckoParent::CloneManagees(ProtocolBase* aSource,
                          mozilla::ipc::ProtocolCloneContext* aCtx)
@@ -1006,21 +1015,32 @@ NeckoParent::OfflineNotification(nsISupports *aSubject)
 
   }
 
+  // XPCShells don't have any TabParents
+  // Just send the ipdl message to the child process.
+  if (!UsingNeckoIPCSecurity()) {
+    bool offline = false;
+    gIOService->IsAppOffline(targetAppId, &offline);
+    if (!SendAppOfflineStatus(targetAppId, offline)) {
+      printf_stderr("NeckoParent: "
+                    "SendAppOfflineStatus failed for targetAppId: %u\n", targetAppId);
+    }
+  }
+
   return NS_OK;
 }
 
 bool
-NeckoParent::RecvRemoveSchedulingContext(const nsCString& scid)
+NeckoParent::RecvRemoveRequestContext(const nsCString& rcid)
 {
-  nsCOMPtr<nsISchedulingContextService> scsvc =
-    do_GetService("@mozilla.org/network/scheduling-context-service;1");
-  if (!scsvc) {
+  nsCOMPtr<nsIRequestContextService> rcsvc =
+    do_GetService("@mozilla.org/network/request-context-service;1");
+  if (!rcsvc) {
     return true;
   }
 
   nsID id;
-  id.Parse(scid.BeginReading());
-  scsvc->RemoveSchedulingContext(id);
+  id.Parse(rcid.BeginReading());
+  rcsvc->RemoveRequestContext(id);
 
   return true;
 }

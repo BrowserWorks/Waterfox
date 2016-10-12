@@ -12,15 +12,14 @@
 #define nsCSSFrameConstructor_h___
 
 #include "mozilla/Attributes.h"
+#include "mozilla/RestyleManagerHandle.h"
 
 #include "nsCOMPtr.h"
 #include "nsILayoutHistoryState.h"
 #include "nsQuoteList.h"
 #include "nsCounterManager.h"
-#include "nsCSSPseudoElements.h"
 #include "nsIAnonymousContentCreator.h"
 #include "nsFrameManager.h"
-#include "nsIDocument.h"
 #include "ScrollbarStyles.h"
 
 struct nsFrameItems;
@@ -31,6 +30,7 @@ struct nsGenConInitializer;
 class nsContainerFrame;
 class nsFirstLineFrame;
 class nsICSSAnonBoxPseudo;
+class nsIDocument;
 class nsPageContentFrame;
 struct PendingBinding;
 class nsGenericDOMDataNode;
@@ -38,8 +38,6 @@ class nsGenericDOMDataNode;
 class nsFrameConstructorState;
 
 namespace mozilla {
-
-class RestyleManager;
 
 namespace dom {
 
@@ -51,6 +49,7 @@ class FlattenedChildIterator;
 class nsCSSFrameConstructor : public nsFrameManager
 {
 public:
+  typedef mozilla::CSSPseudoElementType CSSPseudoElementType;
   typedef mozilla::dom::Element Element;
 
   friend class mozilla::RestyleManager;
@@ -70,7 +69,7 @@ private:
   nsCSSFrameConstructor& operator=(const nsCSSFrameConstructor& aCopy) = delete;
 
 public:
-  mozilla::RestyleManager* RestyleManager() const
+  mozilla::RestyleManagerHandle RestyleManager() const
     { return mPresShell->GetPresContext()->RestyleManager(); }
 
   nsIFrame* ConstructRootFrame();
@@ -452,7 +451,7 @@ private:
                                   nsContainerFrame*          aFrame,
                                   nsIContent*                aContent,
                                   nsStyleContext*            aStyleContext,
-                                  nsCSSPseudoElements::Type  aPseudoElement,
+                                  CSSPseudoElementType       aPseudoElement,
                                   FrameConstructionItemList& aItems);
 
   // This method can change aFrameList: it can chop off the beginning and put
@@ -926,13 +925,15 @@ private:
       // Return whether the iterator is done after doing that.
       // The iterator must not be done when this is called.
       inline bool SkipItemsThatNeedAnonFlexOrGridItem(
-        const nsFrameConstructorState& aState, nsIAtom* aContainerType);
+        const nsFrameConstructorState& aState, nsIAtom* aContainerType,
+        bool aIsWebkitBox);
 
       // Skip to the first frame that is a non-replaced inline or is
       // positioned.  Return whether the iterator is done after doing that.
       // The iterator must not be done when this is called.
       inline bool SkipItemsThatDontNeedAnonFlexOrGridItem(
-        const nsFrameConstructorState& aState, nsIAtom* aContainerType);
+        const nsFrameConstructorState& aState, nsIAtom* aContainerType,
+        bool aIsWebkitBox);
 
       // Skip over all items that do not want a ruby parent.  Return whether
       // the iterator is done after doing that.  The iterator must not be done
@@ -1068,9 +1069,13 @@ private:
     }
 
     // Indicates whether (when in a flex or grid container) this item needs
-    // to be wrapped in an anonymous block.
+    // to be wrapped in an anonymous block.  (Note that we implement
+    // -webkit-box/-webkit-inline-box using our standard flexbox frame class,
+    // but we use different rules for what gets wrapped. The aIsWebkitBox
+    // parameter here tells us whether to use those different rules.)
     bool NeedsAnonFlexOrGridItem(const nsFrameConstructorState& aState,
-                                 nsIAtom* aContainerType);
+                                 nsIAtom* aContainerType,
+                                 bool aIsWebkitBox);
 
     // Don't call this unless the frametree really depends on the answer!
     // Especially so for generated content, where we don't want to reframe
@@ -1270,10 +1275,15 @@ protected:
   static nsIFrame* CreatePlaceholderFrameFor(nsIPresShell*     aPresShell,
                                              nsIContent*       aContent,
                                              nsIFrame*         aFrame,
-                                             nsStyleContext*   aStyleContext,
+                                             nsStyleContext*   aParentStyle,
                                              nsContainerFrame* aParentFrame,
                                              nsIFrame*         aPrevInFlow,
                                              nsFrameState      aTypeBit);
+
+  static nsIFrame* CreateBackdropFrameFor(nsIPresShell* aPresShell,
+                                          nsIContent* aContent,
+                                          nsIFrame* aFrame,
+                                          nsContainerFrame* aParentFrame);
 
 private:
   // ConstructSelectFrame puts the new frame in aFrameItems and
@@ -1291,6 +1301,14 @@ private:
                                    nsContainerFrame*        aParentFrame,
                                    const nsStyleDisplay*    aStyleDisplay,
                                    nsFrameItems&            aFrameItems);
+
+  // ConstructDetailsFrame puts the new frame in aFrameItems and
+  // handles the kids of the details.
+  nsIFrame* ConstructDetailsFrame(nsFrameConstructorState& aState,
+                                  FrameConstructionItem& aItem,
+                                  nsContainerFrame* aParentFrame,
+                                  const nsStyleDisplay* aStyleDisplay,
+                                  nsFrameItems& aFrameItems);
 
   // aParentFrame might be null.  If it is, that means it was an
   // inline frame.

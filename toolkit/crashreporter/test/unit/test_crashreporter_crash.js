@@ -1,10 +1,5 @@
 function run_test()
 {
-  if (!("@mozilla.org/toolkit/crash-reporter;1" in Components.classes)) {
-    dump("INFO | test_crashreporter.js | Can't test crashreporter in a non-libxul build.\n");
-    return;
-  }
-
   var is_win7_or_newer = false;
   var is_windows = false;
   var ph = Components.classes["@mozilla.org/network/protocol;1?name=http"]
@@ -42,10 +37,15 @@ function run_test()
              crashReporter.annotateCrashReport("\u2665", "\u{1F4A9}");
              crashReporter.appendAppNotesToCrashReport("Junk");
              crashReporter.appendAppNotesToCrashReport("MoreJunk");
+             // TelemetrySession setup will trigger the session annotation
+             let scope = {};
+             Components.utils.import("resource://gre/modules/TelemetryController.jsm", scope);
+             scope.TelemetryController.testSetup();
            },
            function(mdump, extra) {
              do_check_eq(extra.TestKey, "TestValue");
              do_check_eq(extra["\u2665"], "\u{1F4A9}");
              do_check_eq(extra.Notes, "JunkMoreJunk");
+             do_check_true(!("TelemetrySessionId" in extra));
            });
 }

@@ -8,28 +8,175 @@
 #define mozilla_layers_TreeTraversal_h
 
 #include <queue>
-#include <stack>
 
 namespace mozilla {
 namespace layers {
 
 
 /*
- * Returned by |aAction| in ForEachNode. If the action returns
- * TraversalFlag::Skip, the node's children are not added to the traverrsal
- * stack. Otherwise, a return value of TraversalFlag::Continue indicates that
- * ForEachNode should traverse each of the node's children.
+ * Returned by |aPostAction| and |aPreAction| in ForEachNode, indicates
+ * the behavior to follow either action:
+ *
+ * TraversalFlag::Skip - the node's children are not traversed. If this
+ * flag is returned by |aPreAction|, |aPostAction| is skipped for the
+ * current node, as well.
+ * TraversalFlag::Continue - traversal continues normally.
+ * TraversalFlag::Abort - traversal stops immediately.
  */
-enum class TraversalFlag { Skip, Continue };
+enum class TraversalFlag { Skip, Continue, Abort };
+
+/*
+ * Iterator types to be specified in traversal function calls:
+ *
+ * ForwardIterator - for nodes using GetFirstChild() and GetNextSibling()
+ * ReverseIterator - for nodes using GetLastChild() and GetPrevSibling()
+ */
+class ForwardIterator
+{
+  public:
+    template <typename Node>
+    static Node* NextSibling(Node* n) {
+      return n->GetNextSibling();
+    }
+    template <typename Node>
+    static Node* FirstChild(Node* n) {
+      return n->GetFirstChild();
+    }
+};
+class ReverseIterator
+{
+  public:
+    template <typename Node>
+    static Node* NextSibling(Node* n) {
+      return n->GetPrevSibling();
+    }
+    template <typename Node>
+    static Node* FirstChild(Node* n) {
+      return n->GetLastChild();
+    }
+};
+
+/*
+ * Do a depth-first traversal of the tree rooted at |aRoot|, performing
+ * |aPreAction| before traversal of children and |aPostAction| after.
+ *
+ * Returns true if traversal aborted, false if continued normally. If
+ * TraversalFlag::Skip is returned in |aPreAction|, then |aPostAction|
+ * is not performed.
+ *
+ * |Iterator| should have static methods named NextSibling() and FirstChild()
+ * that accept an argument of type Node*. For convenience, classes
+ * |ForwardIterator| and |ReverseIterator| are provided which implement these
+ * methods as GetNextSibling()/GetFirstChild() and GetPrevSibling()/GetLastChild(),
+ * respectively.
+ */
+template <typename Iterator, typename Node, typename PreAction, typename PostAction>
+static auto ForEachNode(Node* aRoot, const PreAction& aPreAction, const PostAction& aPostAction) ->
+typename EnableIf<IsSame<decltype(aPreAction(aRoot)), TraversalFlag>::value &&
+                  IsSame<decltype(aPostAction(aRoot)),TraversalFlag>::value, bool>::Type
+{
+  if (!aRoot) {
+    return false;
+  }
+
+  TraversalFlag result = aPreAction(aRoot);
+
+  if (result == TraversalFlag::Abort) {
+    return true;
+  }
+
+  if (result == TraversalFlag::Continue) {
+    for (Node* child = Iterator::FirstChild(aRoot);
+         child;
+         child = Iterator::NextSibling(child)) {
+      bool abort = ForEachNode<Iterator>(child, aPreAction, aPostAction);
+      if (abort) {
+        return true;
+      }
+    }
+
+    result = aPostAction(aRoot);
+
+    if (result == TraversalFlag::Abort) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/*
+ * Do a depth-first traversal of the tree rooted at |aRoot|, performing
+ * |aPreAction| before traversal of children and |aPostAction| after.
+ */
+template <typename Iterator, typename Node, typename PreAction, typename PostAction>
+static auto ForEachNode(Node* aRoot, const PreAction& aPreAction, const PostAction& aPostAction) ->
+typename EnableIf<IsSame<decltype(aPreAction(aRoot)), void>::value &&
+                  IsSame<decltype(aPostAction(aRoot)),void>::value, void>::Type
+{
+  if (!aRoot) {
+    return;
+  }
+
+  aPreAction(aRoot);
+
+  for (Node* child = Iterator::FirstChild(aRoot);
+       child;
+       child = Iterator::NextSibling(child)) {
+    ForEachNode<Iterator>(child, aPreAction, aPostAction);
+  }
+
+  aPostAction(aRoot);
+}
+
+/*
+ * ForEachNode pre-order traversal, using TraversalFlag.
+ */
+template <typename Iterator, typename Node, typename PreAction>
+auto ForEachNode(Node* aRoot, const PreAction& aPreAction) ->
+typename EnableIf<IsSame<decltype(aPreAction(aRoot)), TraversalFlag>::value, bool>::Type
+{
+  return ForEachNode<Iterator>(aRoot, aPreAction, [](Node* aNode){ return TraversalFlag::Continue; });
+}
+
+/*
+ * ForEachNode pre-order, not using TraversalFlag.
+ */
+template <typename Iterator, typename Node, typename PreAction>
+auto ForEachNode(Node* aRoot, const PreAction& aPreAction) ->
+typename EnableIf<IsSame<decltype(aPreAction(aRoot)), void>::value, void>::Type
+{
+  ForEachNode<Iterator>(aRoot, aPreAction, [](Node* aNode){});
+}
+
+/*
+ * ForEachNode post-order traversal, using TraversalFlag.
+ */
+template <typename Iterator, typename Node, typename PostAction>
+auto ForEachNodePostOrder(Node* aRoot, const PostAction& aPostAction) ->
+typename EnableIf<IsSame<decltype(aPostAction(aRoot)), TraversalFlag>::value, bool>::Type
+{
+  return ForEachNode<Iterator>(aRoot, [](Node* aNode){ return TraversalFlag::Continue; }, aPostAction);
+}
+
+/*
+ * ForEachNode post-order, not using TraversalFlag.
+ */
+template <typename Iterator, typename Node, typename PostAction>
+auto ForEachNodePostOrder(Node* aRoot, const PostAction& aPostAction) ->
+typename EnableIf<IsSame<decltype(aPostAction(aRoot)), void>::value, void>::Type
+{
+  ForEachNode<Iterator>(aRoot, [](Node* aNode){}, aPostAction);
+}
 
 /*
  * Do a breadth-first search of the tree rooted at |aRoot|, and return the
  * first visited node that satisfies |aCondition|, or nullptr if no such node
  * was found.
  *
- * |Node| should have methods GetLastChild() and GetPrevSibling().
+ * See ForEachNode() for the requirements on |Iterator| and |Node|
  */
-template <typename Node, typename Condition>
+template <typename Iterator, typename Node, typename Condition>
 Node* BreadthFirstSearch(Node* aRoot, const Condition& aCondition)
 {
   if (!aRoot) {
@@ -46,9 +193,9 @@ Node* BreadthFirstSearch(Node* aRoot, const Condition& aCondition)
       return node;
     }
 
-    for (Node* child = node->GetLastChild();
+    for (Node* child = Iterator::FirstChild(node);
          child;
-         child = child->GetPrevSibling()) {
+         child = Iterator::NextSibling(child)) {
       queue.push(child);
     }
   }
@@ -57,97 +204,53 @@ Node* BreadthFirstSearch(Node* aRoot, const Condition& aCondition)
 }
 
 /*
- * Do a depth-first search of the tree rooted at |aRoot|, and return the
- * first visited node that satisfies |aCondition|, or nullptr if no such node
- * was found.
+ * Do a pre-order, depth-first search of the tree rooted at |aRoot|, and
+ * return the first visited node that satisfies |aCondition|, or nullptr
+ * if no such node was found.
  *
- * |Node| should have methods GetLastChild() and GetPrevSibling().
+ * See ForEachNode() for the requirements on |Iterator| and |Node|
  */
-template <typename Node, typename Condition>
+template <typename Iterator, typename Node, typename Condition>
 Node* DepthFirstSearch(Node* aRoot, const Condition& aCondition)
 {
-  if (!aRoot) {
-    return nullptr;
-  }
+  Node* result = nullptr;
 
-  std::stack<Node*> stack;
-  stack.push(aRoot);
-  while (!stack.empty()) {
-    Node* node = stack.top();
-    stack.pop();
+  ForEachNode<Iterator>(aRoot,
+      [&aCondition, &result](Node* aNode)
+      {
+        if (aCondition(aNode)) {
+          result = aNode;
+          return TraversalFlag::Abort;
+        }
 
-    if (aCondition(node)) {
-        return node;
-    }
+        return TraversalFlag::Continue;
+      });
 
-    for (Node* child = node->GetLastChild();
-         child;
-         child = child->GetPrevSibling()) {
-      stack.push(child);
-    }
-  }
-
-  return nullptr;
+  return result;
 }
 
 /*
- * Do a depth-first traversal of the tree rooted at |aRoot|, performing
- * |aAction| for each node.  |aAction| can return a TraversalFlag to determine
- * whether or not to omit the children of a particular node.
+ * Perform a post-order, depth-first search starting at aRoot.
  *
- * If |aAction| does not return a TraversalFlag, it must return nothing.  There
- * is no ForEachNode instance handling types other than void or TraversalFlag.
+ * See ForEachNode() for the requirements on |Iterator| and |Node|
  */
-template <typename Node, typename Action>
-auto ForEachNode(Node* aRoot, const Action& aAction) ->
-typename EnableIf<IsSame<decltype(aAction(aRoot)), TraversalFlag>::value, void>::Type
+template <typename Iterator, typename Node, typename Condition>
+Node* DepthFirstSearchPostOrder(Node* aRoot, const Condition& aCondition)
 {
-  if (!aRoot) {
-    return;
-  }
+  Node* result = nullptr;
 
-  std::stack<Node*> stack;
-  stack.push(aRoot);
+  ForEachNodePostOrder<Iterator>(aRoot,
+      [&aCondition, &result](Node* aNode)
+      {
+        if (aCondition(aNode)) {
+          result = aNode;
+          return TraversalFlag::Abort;
+        }
 
-  while (!stack.empty()) {
-    Node* node = stack.top();
-    stack.pop();
+        return TraversalFlag::Continue;
+      });
 
-    TraversalFlag result = aAction(node);
-
-    if (result == TraversalFlag::Continue) {
-      for (Node* child = node->GetLastChild();
-           child;
-           child = child->GetPrevSibling()) {
-        stack.push(child);
-      }
-    }
-  }
-}
-
-template <typename Node, typename Action>
-auto ForEachNode(Node* aRoot, const Action& aAction) ->
-typename EnableIf<IsSame<decltype(aAction(aRoot)), void>::value, void>::Type
-{
-  if (!aRoot) {
-    return;
-  }
-
-  std::stack<Node*> stack;
-  stack.push(aRoot);
-
-  while (!stack.empty()) {
-    Node* node = stack.top();
-    stack.pop();
-
-    aAction(node);
-
-    for (Node* child = node->GetLastChild();
-         child;
-         child = child->GetPrevSibling()) {
-      stack.push(child);
-    }
-  }
+  return result;
 }
 
 }

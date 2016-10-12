@@ -32,11 +32,11 @@ function run_test() {
   stack5 = saveStack(1);
 
   const REPORT = new Map([
-    [stack1,    { bytes: 10, count: 1 }],
-    [stack2,    { bytes: 20, count: 2 }],
-    [stack3,    { bytes: 30, count: 3 }],
-    [stack4,    { bytes: 40, count: 4 }],
-    [stack5,    { bytes: 50, count: 5 }],
+    [stack1, { bytes: 10, count: 1 }],
+    [stack2, { bytes: 20, count: 2 }],
+    [stack3, { bytes: 30, count: 3 }],
+    [stack4, { bytes: 40, count: 4 }],
+    [stack5, { bytes: 50, count: 5 }],
     ["noStack", { bytes: 60, count: 6 }],
   ]);
 
@@ -70,6 +70,7 @@ function run_test() {
                 children: undefined,
                 id: 7,
                 parent: 5,
+                reportLeafIndex: 3,
               },
               {
                 name: stack2,
@@ -80,10 +81,12 @@ function run_test() {
                 children: undefined,
                 id: 6,
                 parent: 5,
+                reportLeafIndex: 2,
               }
             ],
             id: 5,
             parent: 2,
+            reportLeafIndex: undefined,
           },
           {
             name: stack4,
@@ -94,6 +97,7 @@ function run_test() {
             children: undefined,
             id: 8,
             parent: 2,
+            reportLeafIndex: 4,
           },
           {
             name: stack1.parent,
@@ -111,14 +115,17 @@ function run_test() {
                 children: undefined,
                 id: 4,
                 parent: 3,
+                reportLeafIndex: 1,
               },
             ],
             id: 3,
             parent: 2,
+            reportLeafIndex: undefined,
           },
         ],
         id: 2,
         parent: 1,
+        reportLeafIndex: undefined,
       },
       {
         name: "noStack",
@@ -129,6 +136,7 @@ function run_test() {
         children: undefined,
         id: 10,
         parent: 1,
+        reportLeafIndex: 6,
       },
       {
         name: stack5,
@@ -139,10 +147,12 @@ function run_test() {
         children: undefined,
         id: 9,
         parent: 1,
+        reportLeafIndex: 5
       },
     ],
     id: 1,
     parent: undefined,
+    reportLeafIndex: undefined,
   };
 
   compareCensusViewData(BREAKDOWN, REPORT, EXPECTED);

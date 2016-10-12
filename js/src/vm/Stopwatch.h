@@ -85,6 +85,7 @@ struct PerformanceMonitoring {
       , isMonitoringCPOW_(false)
       , iteration_(0)
       , startedAtIteration_(0)
+      , highestTimestampCounter_(0)
     { }
 
     /**
@@ -212,6 +213,13 @@ struct PerformanceMonitoring {
     uint64_t totalCPOWTime;
 
     /**
+     * A variant of RDTSC artificially made monotonic.
+     *
+     * Always return 0 on platforms that do not support RDTSC.
+     */
+    uint64_t monotonicReadTimestampCounter();
+
+    /**
      * Data extracted by the AutoStopwatch to determine how often
      * we reschedule the process to a different CPU during the
      * execution of JS.
@@ -285,6 +293,12 @@ struct PerformanceMonitoring {
      * Groups used in the current iteration.
      */
     GroupVector recentGroups_;
+
+    /**
+     * The highest value of the timestamp counter encountered
+     * during this iteration.
+     */
+    uint64_t highestTimestampCounter_;
 };
 
 #if WINVER >= 0x0600
@@ -300,11 +314,9 @@ struct cpuid_t {
           number_(0)
     { }
 };
-#elif defined(__linux__)
-    typedef int cpuid_t;
 #else
     typedef struct {} cpuid_t;
-#endif // defined(WINVER >= 0x0600) || defined(__linux__)
+#endif // defined(WINVER >= 0x0600)
 
 /**
  * RAII class to start/stop measuring performance when
@@ -377,7 +389,7 @@ class AutoStopwatch final {
 
     // Return the value of the Timestamp Counter, as provided by the CPU.
     // 0 on platforms for which we do not have access to a Timestamp Counter.
-    uint64_t inline getCycles() const;
+    uint64_t inline getCycles(JSRuntime*) const;
 
 
     // Return the identifier of the current CPU, on platforms for which we have

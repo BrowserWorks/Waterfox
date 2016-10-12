@@ -12,12 +12,17 @@
 // function"; for now, we just use "object".
 callback PromiseInit = void (object resolve, object reject);
 
+callback PromiseJobCallback = void();
+
 [TreatNonCallableAsNull]
 callback AnyCallback = any (any value);
 
-// REMOVE THE RELEVANT ENTRY FROM test_interfaces.html WHEN THIS IS IMPLEMENTED IN JS.
+// When using SpiderMonkey promises, we don't want to define all this stuff;
+// just define a tiny interface to make codegen of Promise arguments and return
+// values work.
+#ifndef SPIDERMONKEY_PROMISE
 [Constructor(PromiseInit init),
- Exposed=(Window,Worker,System)]
+ Exposed=(Window,Worker,WorkerDebugger,System)]
 // Need to escape "Promise" so it's treated as an identifier.
 interface _Promise {
   // Have to use "any" (or "object", but "any" is simpler) as the type to
@@ -56,3 +61,17 @@ interface _Promise {
   [NewObject, Throws]
   static any race(optional any iterable);
 };
+#else // SPIDERMONKEY_PROMISE
+[NoInterfaceObject,
+ Exposed=(Window,Worker,WorkerDebugger,System)]
+// Need to escape "Promise" so it's treated as an identifier.
+interface _Promise {
+};
+
+// Hack to allow us to have JS owning and properly tracing/CCing/etc a
+// PromiseNativeHandler.
+[NoInterfaceObject,
+ Exposed=(Window,Worker,System)]
+interface PromiseNativeHandler {
+};
+#endif // SPIDERMONKEY_PROMISE

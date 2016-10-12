@@ -8,6 +8,7 @@ let {
   snapshotState: states,
   dominatorTreeState,
   viewState,
+  treeMapState,
 } = require("devtools/client/memory/constants");
 let {
   takeSnapshotAndCensus,
@@ -20,7 +21,7 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function *() {
+add_task(function* () {
   let front = new StubbedMemoryFront();
   let heapWorker = new HeapAnalysesClient();
   yield front.attach();
@@ -29,8 +30,8 @@ add_task(function *() {
 
   dispatch(takeSnapshotAndCensus(front, heapWorker));
   dispatch(takeSnapshotAndCensus(front, heapWorker));
-  yield waitUntilSnapshotState(store, [states.SAVED_CENSUS,
-                                       states.SAVED_CENSUS]);
+  yield waitUntilCensusState(store, s => s.treeMap, [treeMapState.SAVED,
+                                                    treeMapState.SAVED]);
 
   ok(getState().snapshots[1].selected, "The second snapshot is selected");
 

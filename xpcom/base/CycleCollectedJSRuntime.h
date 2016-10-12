@@ -14,11 +14,13 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/SegmentedVector.h"
 #include "jsapi.h"
+#include "jsfriendapi.h"
 
 #include "nsCycleCollectionParticipant.h"
 #include "nsDataHashtable.h"
 #include "nsHashKeys.h"
 #include "nsTArray.h"
+#include "nsTHashtable.h"
 
 class nsCycleCollectionNoteRootCallback;
 class nsIException;
@@ -57,6 +59,8 @@ public:
 
   NS_IMETHOD Traverse(void* aPtr, nsCycleCollectionTraversalCallback& aCb)
     override;
+
+  NS_DECL_CYCLE_COLLECTION_CLASS_NAME_METHOD(JSGCThingParticipant)
 };
 
 class JSZoneParticipant : public nsCycleCollectionParticipant
@@ -88,6 +92,8 @@ public:
 
   NS_IMETHOD Traverse(void* aPtr, nsCycleCollectionTraversalCallback& aCb)
     override;
+
+  NS_DECL_CYCLE_COLLECTION_CLASS_NAME_METHOD(JSZoneParticipant)
 };
 
 class IncrementalFinalizeRunnable;
@@ -134,10 +140,12 @@ class CycleCollectedJSRuntime
   friend class JSZoneParticipant;
   friend class IncrementalFinalizeRunnable;
 protected:
-  CycleCollectedJSRuntime(JSRuntime* aParentRuntime,
-                          uint32_t aMaxBytes,
-                          uint32_t aMaxNurseryBytes);
+  CycleCollectedJSRuntime();
   virtual ~CycleCollectedJSRuntime();
+
+  nsresult Initialize(JSRuntime* aParentRuntime,
+                      uint32_t aMaxBytes,
+                      uint32_t aMaxNurseryBytes);
 
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
   void UnmarkSkippableJSHolders();
@@ -153,6 +161,9 @@ protected:
   {
     return true; // Don't block context creation.
   }
+
+  std::queue<nsCOMPtr<nsIRunnable>> mPromiseMicroTaskQueue;
+  std::queue<nsCOMPtr<nsIRunnable>> mDebuggerPromiseMicroTaskQueue;
 
 private:
   void
@@ -210,12 +221,18 @@ private:
   static void LargeAllocationFailureCallback(void* aData);
   static bool ContextCallback(JSContext* aCx, unsigned aOperation,
                               void* aData);
+  static bool EnqueuePromiseJobCallback(JSContext* aCx,
+                                        JS::HandleObject aJob,
+                                        JS::HandleObject aAllocationSite,
+                                        void* aData);
 
   virtual void TraceNativeBlackRoots(JSTracer* aTracer) { };
   void TraceNativeGrayRoots(JSTracer* aTracer);
 
   void AfterProcessMicrotask(uint32_t aRecursionDepth);
+public:
   void ProcessStableStateQueue();
+private:
   void ProcessMetastableStateQueue(uint32_t aRecursionDepth);
 
 public:
@@ -276,12 +293,13 @@ public:
   void SetPendingException(nsIException* aException);
 
   std::queue<nsCOMPtr<nsIRunnable>>& GetPromiseMicroTaskQueue();
+  std::queue<nsCOMPtr<nsIRunnable>>& GetDebuggerPromiseMicroTaskQueue();
 
   nsCycleCollectionParticipant* GCThingParticipant();
   nsCycleCollectionParticipant* ZoneParticipant();
 
   nsresult TraverseRoots(nsCycleCollectionNoteRootCallback& aCb);
-  bool UsefulToMergeZones() const;
+  virtual bool UsefulToMergeZones() const;
   void FixWeakMappingGrayBits() const;
   bool AreGCGrayBitsValid() const;
   void GarbageCollect(uint32_t aReason) const;
@@ -308,6 +326,10 @@ public:
     return mJSRuntime;
   }
 
+protected:
+  JSRuntime* MaybeRuntime() const { return mJSRuntime; }
+
+public:
   // nsThread entrypoints
   virtual void BeforeProcessTask(bool aMightBlock) { };
   virtual void AfterProcessTask(uint32_t aRecursionDepth);
@@ -326,6 +348,21 @@ public:
   // Get the current thread's CycleCollectedJSRuntime.  Returns null if there
   // isn't one.
   static CycleCollectedJSRuntime* Get();
+
+  // Add aZone to the set of zones waiting for a GC.
+  void AddZoneWaitingForGC(JS::Zone* aZone)
+  {
+    mZonesWaitingForGC.PutEntry(aZone);
+  }
+
+  // Prepare any zones for GC that have been passed to AddZoneWaitingForGC()
+  // since the last GC or since the last call to PrepareWaitingZonesForGC(),
+  // whichever was most recent. If there were no such zones, prepare for a
+  // full GC.
+  void PrepareWaitingZonesForGC();
+
+  // Queue an async microtask to the current main or worker thread.
+  virtual void DispatchToMicroTask(nsIRunnable* aRunnable);
 
   // Storage for watching rejected promises waiting for some client to
   // consume their rejection.
@@ -357,8 +394,6 @@ private:
   nsCOMPtr<nsIException> mPendingException;
   nsThread* mOwningThread; // Manual refcounting to avoid include hell.
 
-  std::queue<nsCOMPtr<nsIRunnable>> mPromiseMicroTaskQueue;
-
   struct RunInMetastableStateData
   {
     nsCOMPtr<nsIRunnable> mRunnable;
@@ -379,6 +414,13 @@ private:
   SegmentedVector<JS::PersistentRooted<JSObject*>, kSegmentSize,
                   InfallibleAllocPolicy>
     mPreservedNurseryObjects;
+
+  nsTHashtable<nsPtrHashKey<JS::Zone>> mZonesWaitingForGC;
+
+  struct EnvironmentPreparer : public js::ScriptEnvironmentPreparer {
+    void invoke(JS::HandleObject scope, Closure& closure) override;
+  };
+  EnvironmentPreparer mEnvironmentPreparer;
 };
 
 void TraceScriptHolder(nsISupports* aHolder, JSTracer* aTracer);
@@ -388,6 +430,9 @@ inline bool AddToCCKind(JS::TraceKind aKind)
 {
   return aKind == JS::TraceKind::Object || aKind == JS::TraceKind::Script;
 }
+
+bool
+GetBuildId(JS::BuildIdCharVector* aBuildID);
 
 } // namespace mozilla
 

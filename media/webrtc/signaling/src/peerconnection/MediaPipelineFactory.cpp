@@ -9,6 +9,7 @@
 #include "PeerConnectionImpl.h"
 #include "PeerConnectionMedia.h"
 #include "MediaPipelineFactory.h"
+#include "MediaPipelineFilter.h"
 #include "transportflow.h"
 #include "transportlayer.h"
 #include "transportlayerdtls.h"
@@ -72,8 +73,10 @@ JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
                                   desc.mName,
                                   desc.mClock,
                                   desc.mPacketSize,
-                                  desc.mChannels,
-                                  desc.mBitrate);
+                                  desc.mForceMono ? 1 : desc.mChannels,
+                                  desc.mBitrate,
+                                  desc.mFECEnabled);
+  (*aConfig)->mMaxPlaybackRate = desc.mMaxPlaybackRate;
 
   return NS_OK;
 }
@@ -124,10 +127,10 @@ JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
     return NS_ERROR_INVALID_ARG;
   }
 
-  ScopedDeletePtr<VideoCodecConfigH264> h264Config;
+  UniquePtr<VideoCodecConfigH264> h264Config;
 
   if (desc.mName == "H264") {
-    h264Config = new VideoCodecConfigH264;
+    h264Config = MakeUnique<VideoCodecConfigH264>();
     size_t spropSize = sizeof(h264Config->sprop_parameter_sets);
     strncpy(h264Config->sprop_parameter_sets,
             desc.mSpropParameterSets.c_str(),
@@ -140,11 +143,12 @@ JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
 
   VideoCodecConfig* configRaw;
   configRaw = new VideoCodecConfig(
-      pt, desc.mName, desc.mConstraints, h264Config);
+      pt, desc.mName, desc.mConstraints, h264Config.get());
 
   configRaw->mAckFbTypes = desc.mAckFbTypes;
   configRaw->mNackFbTypes = desc.mNackFbTypes;
   configRaw->mCcmFbTypes = desc.mCcmFbTypes;
+  configRaw->mRembFbSet = desc.RtcpFbRembIsSet();
 
   *aConfig = configRaw;
   return NS_OK;
@@ -187,8 +191,9 @@ FinalizeTransportFlow_s(RefPtr<PeerConnectionMedia> aPCMedia,
 {
   TransportLayerIce* ice =
       static_cast<TransportLayerIce*>(aLayerList->values.front());
-  ice->SetParameters(
-      aPCMedia->ice_ctx(), aPCMedia->ice_media_stream(aLevel), aIsRtcp ? 2 : 1);
+  ice->SetParameters(aPCMedia->ice_ctx(),
+                     aPCMedia->ice_media_stream(aLevel),
+                     aIsRtcp ? 2 : 1);
   nsAutoPtr<std::queue<TransportLayer*> > layerQueue(
       new std::queue<TransportLayer*>);
   for (auto i = aLayerList->values.begin(); i != aLayerList->values.end();
@@ -197,6 +202,19 @@ FinalizeTransportFlow_s(RefPtr<PeerConnectionMedia> aPCMedia,
   }
   aLayerList->values.clear();
   (void)aFlow->PushLayers(layerQueue); // TODO(bug 854518): Process errors.
+}
+
+static void
+AddNewIceStreamForRestart_s(RefPtr<PeerConnectionMedia> aPCMedia,
+                            RefPtr<TransportFlow> aFlow,
+                            size_t aLevel,
+                            bool aIsRtcp)
+{
+  TransportLayerIce* ice =
+      static_cast<TransportLayerIce*>(aFlow->GetLayer("ice"));
+  ice->SetParameters(aPCMedia->ice_ctx(),
+                     aPCMedia->ice_media_stream(aLevel),
+                     aIsRtcp ? 2 : 1);
 }
 
 nsresult
@@ -211,6 +229,21 @@ MediaPipelineFactory::CreateOrGetTransportFlow(
 
   flow = mPCMedia->GetTransportFlow(aLevel, aIsRtcp);
   if (flow) {
+    if (mPCMedia->IsIceRestarting()) {
+      MOZ_MTLOG(ML_INFO, "Flow[" << flow->id() << "]: "
+                                 << "detected ICE restart - level: "
+                                 << aLevel << " rtcp: " << aIsRtcp);
+
+      rv = mPCMedia->GetSTSThread()->Dispatch(
+          WrapRunnableNM(AddNewIceStreamForRestart_s,
+                         mPCMedia, flow, aLevel, aIsRtcp),
+          NS_DISPATCH_NORMAL);
+      if (NS_FAILED(rv)) {
+        MOZ_MTLOG(ML_ERROR, "Failed to dispatch AddNewIceStreamForRestart_s");
+        return rv;
+      }
+    }
+
     *aFlowOutparam = flow;
     return NS_OK;
   }
@@ -429,6 +462,22 @@ MediaPipelineFactory::CreateOrUpdateMediaPipeline(
     return NS_OK;
   }
 
+  if (aTrack.GetActive()) {
+    if (receiving) {
+      auto error = conduit->StartReceiving();
+      if (error) {
+        MOZ_MTLOG(ML_ERROR, "StartReceiving failed: " << error);
+        return NS_ERROR_FAILURE;
+      }
+    } else {
+      auto error = conduit->StartTransmitting();
+      if (error) {
+        MOZ_MTLOG(ML_ERROR, "StartTransmitting failed: " << error);
+        return NS_ERROR_FAILURE;
+      }
+    }
+  }
+
   RefPtr<MediaPipeline> pipeline =
     stream->GetPipelineByTrackId_m(aTrack.GetTrackId());
 
@@ -437,11 +486,15 @@ MediaPipelineFactory::CreateOrUpdateMediaPipeline(
                           " has moved from level " << pipeline->level() <<
                           " to level " << level <<
                           ". This requires re-creating the MediaPipeline.");
+    RefPtr<dom::MediaStreamTrack> domTrack =
+      stream->GetTrackById(aTrack.GetTrackId());
+    MOZ_ASSERT(domTrack, "MediaPipeline existed for a track, but no MediaStreamTrack");
+
     // Since we do not support changing the conduit on a pre-existing
     // MediaPipeline
     pipeline = nullptr;
     stream->RemoveTrack(aTrack.GetTrackId());
-    stream->AddTrack(aTrack.GetTrackId());
+    stream->AddTrack(aTrack.GetTrackId(), domTrack);
   }
 
   if (pipeline) {
@@ -489,9 +542,7 @@ MediaPipelineFactory::CreateMediaPipelineReceiving(
   RefPtr<MediaPipelineReceive> pipeline;
 
   TrackID numericTrackId = stream->GetNumericTrackId(aTrack.GetTrackId());
-  MOZ_ASSERT(numericTrackId != TRACK_INVALID);
-
-  bool queue_track = stream->ShouldQueueTracks();
+  MOZ_ASSERT(IsTrackIDExplicit(numericTrackId));
 
   MOZ_MTLOG(ML_DEBUG, __FUNCTION__ << ": Creating pipeline for "
             << numericTrackId << " -> " << aTrack.GetTrackId());
@@ -501,29 +552,27 @@ MediaPipelineFactory::CreateMediaPipelineReceiving(
         mPC->GetHandle(),
         mPC->GetMainThread().get(),
         mPC->GetSTSThread(),
-        stream->GetMediaStream()->GetInputStream(),
+        stream->GetMediaStream()->GetInputStream()->AsSourceStream(),
         aTrack.GetTrackId(),
         numericTrackId,
         aLevel,
         static_cast<AudioSessionConduit*>(aConduit.get()), // Ugly downcast.
         aRtpFlow,
         aRtcpFlow,
-        aFilter,
-        queue_track);
+        aFilter);
   } else if (aTrack.GetMediaType() == SdpMediaSection::kVideo) {
     pipeline = new MediaPipelineReceiveVideo(
         mPC->GetHandle(),
         mPC->GetMainThread().get(),
         mPC->GetSTSThread(),
-        stream->GetMediaStream()->GetInputStream(),
+        stream->GetMediaStream()->GetInputStream()->AsSourceStream(),
         aTrack.GetTrackId(),
         numericTrackId,
         aLevel,
         static_cast<VideoSessionConduit*>(aConduit.get()), // Ugly downcast.
         aRtpFlow,
         aRtcpFlow,
-        aFilter,
-        queue_track);
+        aFilter);
   } else {
     MOZ_ASSERT(false);
     MOZ_MTLOG(ML_ERROR, "Invalid media type in CreateMediaPipelineReceiving");
@@ -565,15 +614,18 @@ MediaPipelineFactory::CreateMediaPipelineSending(
   RefPtr<LocalSourceStreamInfo> stream =
       mPCMedia->GetLocalStreamById(aTrack.GetStreamId());
 
+  dom::MediaStreamTrack* track =
+    stream->GetTrackById(aTrack.GetTrackId());
+  MOZ_ASSERT(track);
+
   // Now we have all the pieces, create the pipeline
   RefPtr<MediaPipelineTransmit> pipeline = new MediaPipelineTransmit(
       mPC->GetHandle(),
       mPC->GetMainThread().get(),
       mPC->GetSTSThread(),
-      stream->GetMediaStream(),
+      track,
       aTrack.GetTrackId(),
       aLevel,
-      aTrack.GetMediaType() == SdpMediaSection::kVideo,
       aConduit,
       aRtpFlow,
       aRtcpFlow,
@@ -583,7 +635,8 @@ MediaPipelineFactory::CreateMediaPipelineSending(
   // implement checking for peerIdentity (where failure == black/silence)
   nsIDocument* doc = mPC->GetWindow()->GetExtantDoc();
   if (doc) {
-    pipeline->UpdateSinkIdentity_m(doc->NodePrincipal(),
+    pipeline->UpdateSinkIdentity_m(track,
+                                   doc->NodePrincipal(),
                                    mPC->GetPeerIdentity());
   } else {
     MOZ_MTLOG(ML_ERROR, "Cannot initialize pipeline without attached doc");
@@ -747,6 +800,15 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
   }
 
   if (receiving) {
+    if (!aTrackPair.mSending) {
+      // No send track, but we still need to configure an SSRC for receiver
+      // reports.
+      if (!conduit->SetLocalSSRC(aTrackPair.mRecvonlySsrc)) {
+        MOZ_MTLOG(ML_ERROR, "SetLocalSSRC failed");
+        return NS_ERROR_FAILURE;
+      }
+    }
+
     // Prune out stuff we cannot actually do. We should work to eliminate the
     // need for this.
     bool configuredH264 = false;
@@ -776,15 +838,6 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
     if (error) {
       MOZ_MTLOG(ML_ERROR, "ConfigureRecvMediaCodecs failed: " << error);
       return NS_ERROR_FAILURE;
-    }
-
-    if (!aTrackPair.mSending) {
-      // No send track, but we still need to configure an SSRC for receiver
-      // reports.
-      if (!conduit->SetLocalSSRC(aTrackPair.mRecvonlySsrc)) {
-        MOZ_MTLOG(ML_ERROR, "SetLocalSSRC failed");
-        return NS_ERROR_FAILURE;
-      }
     }
   } else {
     // For now we only expect to have one ssrc per local track.
@@ -828,30 +881,21 @@ MediaPipelineFactory::ConfigureVideoCodecMode(const JsepTrack& aTrack,
 {
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
   RefPtr<LocalSourceStreamInfo> stream =
-    mPCMedia->GetLocalStreamById(aTrack.GetStreamId());
+    mPCMedia->GetLocalStreamByTrackId(aTrack.GetTrackId());
 
   //get video track
+  RefPtr<mozilla::dom::MediaStreamTrack> track =
+    stream->GetTrackById(aTrack.GetTrackId());
+
   RefPtr<mozilla::dom::VideoStreamTrack> videotrack =
-    stream->GetVideoTrackByTrackId(aTrack.GetTrackId());
+    track->AsVideoStreamTrack();
 
   if (!videotrack) {
     MOZ_MTLOG(ML_ERROR, "video track not available");
     return NS_ERROR_FAILURE;
   }
 
-  //get video source type
-  RefPtr<DOMMediaStream> mediastream =
-    mPCMedia->GetLocalStreamById(aTrack.GetStreamId())->GetMediaStream();
-
-  DOMLocalMediaStream* domLocalStream = mediastream->AsDOMLocalMediaStream();
-  if (!domLocalStream) {
-    return NS_OK;
-  }
-
-  MediaEngineSource *engine =
-    domLocalStream->GetMediaEngine(videotrack->GetTrackID());
-
-  dom::MediaSourceEnum source = engine->GetMediaSource();
+  dom::MediaSourceEnum source = videotrack->GetSource().GetMediaSource();
   webrtc::VideoCodecMode mode = webrtc::kRealtimeVideo;
   switch (source) {
     case dom::MediaSourceEnum::Browser:
@@ -897,7 +941,8 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
          nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
          if (gfxInfo) {
            int32_t status;
-           if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION_ENCODE, &status))) {
+           nsCString discardFailureId;
+           if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION_ENCODE, discardFailureId, &status))) {
              if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
                NS_WARNING("VP8 encoder hardware is not whitelisted: disabling.\n");
              } else {
@@ -905,9 +950,8 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
                encoder = MediaCodecVideoCodec::CreateEncoder(MediaCodecVideoCodec::CodecType::CODEC_VP8);
                if (encoder) {
                  return aConduit.SetExternalSendCodec(aConfig, encoder);
-               } else {
-                 return kMediaConduitNoError;
                }
+               return kMediaConduitNoError;
              }
            }
          }
@@ -922,7 +966,8 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
          nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
          if (gfxInfo) {
            int32_t status;
-           if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION_DECODE, &status))) {
+           nsCString discardFailureId;
+           if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION_DECODE, discardFailureId, &status))) {
              if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
                NS_WARNING("VP8 decoder hardware is not whitelisted: disabling.\n");
              } else {
@@ -930,9 +975,8 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
                decoder = MediaCodecVideoCodec::CreateDecoder(MediaCodecVideoCodec::CodecType::CODEC_VP8);
                if (decoder) {
                  return aConduit.SetExternalRecvCodec(aConfig, decoder);
-               } else {
-                 return kMediaConduitNoError;
                }
+               return kMediaConduitNoError;
              }
            }
          }
@@ -940,9 +984,11 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
      }
 #endif
      return kMediaConduitNoError;
-  } else if (aConfig->mName == "VP9") {
+  }
+  if (aConfig->mName == "VP9") {
     return kMediaConduitNoError;
-  } else if (aConfig->mName == "H264") {
+  }
+  if (aConfig->mName == "H264") {
     if (aConduit.CodecPluginID() != 0) {
       return kMediaConduitNoError;
     }
@@ -952,37 +998,30 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
 #ifdef MOZ_WEBRTC_OMX
       encoder =
           OMXVideoCodec::CreateEncoder(OMXVideoCodec::CodecType::CODEC_H264);
-#elif !defined(MOZILLA_XPCOMRT_API)
+#else
       encoder = GmpVideoCodec::CreateEncoder();
 #endif
       if (encoder) {
         return aConduit.SetExternalSendCodec(aConfig, encoder);
-      } else {
-        return kMediaConduitInvalidSendCodec;
       }
-    } else {
-      VideoDecoder* decoder = nullptr;
-#ifdef MOZ_WEBRTC_OMX
-      decoder =
-          OMXVideoCodec::CreateDecoder(OMXVideoCodec::CodecType::CODEC_H264);
-#elif !defined(MOZILLA_XPCOMRT_API)
-      decoder = GmpVideoCodec::CreateDecoder();
-#endif
-      if (decoder) {
-        return aConduit.SetExternalRecvCodec(aConfig, decoder);
-      } else {
-        return kMediaConduitInvalidReceiveCodec;
-      }
+      return kMediaConduitInvalidSendCodec;
     }
-    NS_NOTREACHED("Shouldn't get here!");
-  } else {
-    MOZ_MTLOG(ML_ERROR,
-              "Invalid video codec configured: " << aConfig->mName.c_str());
-    return aIsSend ? kMediaConduitInvalidSendCodec
-                   : kMediaConduitInvalidReceiveCodec;
+    VideoDecoder* decoder = nullptr;
+#ifdef MOZ_WEBRTC_OMX
+    decoder =
+      OMXVideoCodec::CreateDecoder(OMXVideoCodec::CodecType::CODEC_H264);
+#else
+    decoder = GmpVideoCodec::CreateDecoder();
+#endif
+    if (decoder) {
+      return aConduit.SetExternalRecvCodec(aConfig, decoder);
+    }
+    return kMediaConduitInvalidReceiveCodec;
   }
-
-  NS_NOTREACHED("Shouldn't get here!");
+  MOZ_MTLOG(ML_ERROR,
+            "Invalid video codec configured: " << aConfig->mName.c_str());
+  return aIsSend ? kMediaConduitInvalidSendCodec
+                 : kMediaConduitInvalidReceiveCodec;
 }
 
 } // namespace mozilla

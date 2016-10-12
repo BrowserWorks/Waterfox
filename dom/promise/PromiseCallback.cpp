@@ -15,6 +15,8 @@
 namespace mozilla {
 namespace dom {
 
+#ifndef SPIDERMONKEY_PROMISE
+
 NS_IMPL_CYCLE_COLLECTING_ADDREF(PromiseCallback)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(PromiseCallback)
 
@@ -339,6 +341,11 @@ WrapperPromiseCallback::Call(JSContext* aCx,
 
   // PromiseReactionTask step 7
   if (rv.Failed()) {
+    if (rv.IsUncatchableException()) {
+      // We have nothing to resolve/reject the promise with.
+      return rv.StealNSResult();
+    }
+
     JS::Rooted<JS::Value> value(aCx);
     { // Scope for JSAutoCompartment
       // Convert the ErrorResult to a JS exception object that we can reject
@@ -565,6 +572,8 @@ PromiseCallback::Factory(Promise* aNextPromise, JS::Handle<JSObject*> aGlobal,
   MOZ_ASSERT(false, "This should not happen");
   return nullptr;
 }
+
+#endif // SPIDERMONKEY_PROMISE
 
 } // namespace dom
 } // namespace mozilla

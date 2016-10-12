@@ -6,10 +6,18 @@
 
 #include "vm/TraceLoggingGraph.h"
 
-#include "mozilla/Endian.h"
+#ifdef XP_WIN
+#include <process.h>
+#define getpid _getpid
+#else
+#include <unistd.h>
+#endif
+
+#include "mozilla/EndianUtils.h"
 
 #include "jsstr.h"
 
+#include "threading/LockGuard.h"
 #include "vm/TraceLogging.h"
 
 #ifndef TRACE_LOG_DIR
@@ -24,36 +32,25 @@ using mozilla::NativeEndian;
 
 TraceLoggerGraphState* traceLoggerGraphState = nullptr;
 
-class MOZ_RAII AutoTraceLoggerGraphStateLock
-{
-  TraceLoggerGraphState* graph;
-
-  public:
-    explicit AutoTraceLoggerGraphStateLock(TraceLoggerGraphState* graph MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : graph(graph)
-    {
-        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-        PR_Lock(graph->lock);
-    }
-    ~AutoTraceLoggerGraphStateLock() {
-        PR_Unlock(graph->lock);
-    }
-  private:
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-};
-
 bool
 TraceLoggerGraphState::init()
 {
-    lock = PR_NewLock();
-    if (!lock)
-        return false;
+    pid_ = (uint32_t) getpid();
 
-    out = fopen(TRACE_LOG_DIR "tl-data.json", "w");
+    char filename[sizeof TRACE_LOG_DIR "tl-data.4294967295.json"];
+    sprintf(filename, TRACE_LOG_DIR "tl-data.%u.json", pid_);
+    out = fopen(filename, "w");
     if (!out)
         return false;
 
     fprintf(out, "[");
+
+    // Write the last tl-data.*.json file to tl-data.json.
+    // In most cases that is the wanted file.
+    if (FILE* last = fopen(TRACE_LOG_DIR "tl-data.json", "w")) {
+        fprintf(last, "\"tl-data.%u.json\"", pid_);
+        fclose(last);
+    }
 
 #ifdef DEBUG
     initialized = true;
@@ -69,11 +66,6 @@ TraceLoggerGraphState::~TraceLoggerGraphState()
         out = nullptr;
     }
 
-    if (lock) {
-        PR_DestroyLock(lock);
-        lock = nullptr;
-    }
-
 #ifdef DEBUG
     initialized = false;
 #endif
@@ -82,7 +74,7 @@ TraceLoggerGraphState::~TraceLoggerGraphState()
 uint32_t
 TraceLoggerGraphState::nextLoggerId()
 {
-    AutoTraceLoggerGraphStateLock lock(this);
+    js::LockGuard<js::Mutex> guard(lock);
 
     MOZ_ASSERT(initialized);
 
@@ -99,9 +91,9 @@ TraceLoggerGraphState::nextLoggerId()
         }
     }
 
-    int written = fprintf(out, "{\"tree\":\"tl-tree.%d.tl\", \"events\":\"tl-event.%d.tl\", "
-                               "\"dict\":\"tl-dict.%d.json\", \"treeFormat\":\"64,64,31,1,32\"}",
-                          numLoggers, numLoggers, numLoggers);
+    int written = fprintf(out, "{\"tree\":\"tl-tree.%u.%d.tl\", \"events\":\"tl-event.%u.%d.tl\", "
+                               "\"dict\":\"tl-dict.%u.%d.json\", \"treeFormat\":\"64,64,31,1,32\"}",
+                          pid_, numLoggers, pid_, numLoggers, pid_, numLoggers);
     if (written < 0) {
         fprintf(stderr, "TraceLogging: Error while writing.\n");
         return uint32_t(-1);
@@ -160,16 +152,18 @@ TraceLoggerGraph::init(uint64_t startTimestamp)
         return false;
     }
 
-    char dictFilename[sizeof TRACE_LOG_DIR "tl-dict.100.json"];
-    sprintf(dictFilename, TRACE_LOG_DIR "tl-dict.%d.json", loggerId);
+    uint32_t pid = traceLoggerGraphState->pid();
+
+    char dictFilename[sizeof TRACE_LOG_DIR "tl-dict.4294967295.100.json"];
+    sprintf(dictFilename, TRACE_LOG_DIR "tl-dict.%u.%d.json", pid, loggerId);
     dictFile = fopen(dictFilename, "w");
     if (!dictFile) {
         failed = true;
         return false;
     }
 
-    char treeFilename[sizeof TRACE_LOG_DIR "tl-tree.100.tl"];
-    sprintf(treeFilename, TRACE_LOG_DIR "tl-tree.%d.tl", loggerId);
+    char treeFilename[sizeof TRACE_LOG_DIR "tl-tree.4294967295.100.tl"];
+    sprintf(treeFilename, TRACE_LOG_DIR "tl-tree.%u.%d.tl", pid, loggerId);
     treeFile = fopen(treeFilename, "w+b");
     if (!treeFile) {
         fclose(dictFile);
@@ -178,8 +172,8 @@ TraceLoggerGraph::init(uint64_t startTimestamp)
         return false;
     }
 
-    char eventFilename[sizeof TRACE_LOG_DIR "tl-event.100.tl"];
-    sprintf(eventFilename, TRACE_LOG_DIR "tl-event.%d.tl", loggerId);
+    char eventFilename[sizeof TRACE_LOG_DIR "tl-event.4294967295.100.tl"];
+    sprintf(eventFilename, TRACE_LOG_DIR "tl-event.%u.%d.tl", pid, loggerId);
     eventFile = fopen(eventFilename, "wb");
     if (!eventFile) {
         fclose(dictFile);
@@ -580,8 +574,10 @@ TraceLoggerGraph::addTextId(uint32_t id, const char* text)
         return;
 
     // Assume ids are given in order. Which is currently true.
+#ifdef DEBUG
     MOZ_ASSERT(id == nextTextId);
     nextTextId++;
+#endif
 
     if (id > 0) {
         int written = fprintf(dictFile, ",\n");
@@ -594,3 +590,5 @@ TraceLoggerGraph::addTextId(uint32_t id, const char* text)
     if (!js::FileEscapedString(dictFile, text, strlen(text), '"'))
         failed = true;
 }
+
+#undef getpid

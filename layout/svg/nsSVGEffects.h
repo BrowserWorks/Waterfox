@@ -43,7 +43,8 @@ class nsSVGFilterChainObserver;
  * constructor and destructor, which should call StartListening and
  * StopListening, respectively.
  */
-class nsSVGRenderingObserver : public nsStubMutationObserver {
+class nsSVGRenderingObserver : public nsStubMutationObserver
+{
 
 protected:
   virtual ~nsSVGRenderingObserver()
@@ -108,7 +109,8 @@ protected:
  * object derived from nsSVGIDRenderingObserver to manage the relationship. The
  * property object is attached to the referencing frame.
  */
-class nsSVGIDRenderingObserver : public nsSVGRenderingObserver {
+class nsSVGIDRenderingObserver : public nsSVGRenderingObserver
+{
 public:
   typedef mozilla::dom::Element Element;
   nsSVGIDRenderingObserver(nsIURI* aURI, nsIContent* aObservingContent,
@@ -121,7 +123,8 @@ protected:
   // This is called when the referenced resource changes.
   virtual void DoUpdate() override;
 
-  class SourceReference : public nsReferencedElement {
+  class SourceReference : public nsReferencedElement
+  {
   public:
     explicit SourceReference(nsSVGIDRenderingObserver* aContainer) : mContainer(aContainer) {}
   protected:
@@ -169,7 +172,8 @@ private:
   nsIPresShell *mFramePresShell;
 };
 
-class nsSVGRenderingObserverProperty : public nsSVGIDRenderingObserver {
+class nsSVGRenderingObserverProperty : public nsSVGIDRenderingObserver
+{
 public:
   NS_DECL_ISUPPORTS
 
@@ -199,8 +203,9 @@ protected:
  *
  * The nsSVGFilterChainObserver class manages a list of nsSVGFilterReferences.
  */
-class nsSVGFilterReference final :
-  public nsSVGIDRenderingObserver, public nsISVGFilterReference {
+class nsSVGFilterReference final : public nsSVGIDRenderingObserver
+                                 , public nsISVGFilterReference
+{
 public:
   nsSVGFilterReference(nsIURI* aURI,
                        nsIContent* aObservingContent,
@@ -246,7 +251,8 @@ private:
  * "blur(10px)" don't reference filter elements, so they don't need an
  * nsSVGFilterReference. The style system invalidates changes to CSS filters.
  */
-class nsSVGFilterChainObserver : public nsISupports {
+class nsSVGFilterChainObserver : public nsISupports
+{
 public:
   nsSVGFilterChainObserver(const nsTArray<nsStyleFilter>& aFilters,
                            nsIContent* aFilteredElement);
@@ -265,10 +271,19 @@ protected:
   virtual void DoUpdate() = 0;
 
 private:
+
+  void DetachReferences()
+  {
+    for (uint32_t i = 0; i < mReferences.Length(); i++) {
+      mReferences[i]->DetachFromChainObserver();
+    }
+  }
+
   nsTArray<RefPtr<nsSVGFilterReference>> mReferences;
 };
 
-class nsSVGFilterProperty : public nsSVGFilterChainObserver {
+class nsSVGFilterProperty : public nsSVGFilterChainObserver
+{
 public:
   nsSVGFilterProperty(const nsTArray<nsStyleFilter> &aFilters,
                       nsIFrame *aFilteredFrame)
@@ -284,7 +299,8 @@ protected:
   nsSVGFrameReferenceFromProperty mFrameReference;
 };
 
-class nsSVGMarkerProperty : public nsSVGRenderingObserverProperty {
+class nsSVGMarkerProperty final: public nsSVGRenderingObserverProperty
+{
 public:
   nsSVGMarkerProperty(nsIURI *aURI, nsIFrame *aFrame, bool aReferenceImage)
     : nsSVGRenderingObserverProperty(aURI, aFrame, aReferenceImage) {}
@@ -293,7 +309,8 @@ protected:
   virtual void DoUpdate() override;
 };
 
-class nsSVGTextPathProperty : public nsSVGRenderingObserverProperty {
+class nsSVGTextPathProperty final : public nsSVGRenderingObserverProperty
+{
 public:
   nsSVGTextPathProperty(nsIURI *aURI, nsIFrame *aFrame, bool aReferenceImage)
     : nsSVGRenderingObserverProperty(aURI, aFrame, aReferenceImage)
@@ -313,13 +330,32 @@ private:
   bool mValid;
 };
 
-class nsSVGPaintingProperty : public nsSVGRenderingObserverProperty {
+class nsSVGPaintingProperty final : public nsSVGRenderingObserverProperty
+{
 public:
   nsSVGPaintingProperty(nsIURI *aURI, nsIFrame *aFrame, bool aReferenceImage)
     : nsSVGRenderingObserverProperty(aURI, aFrame, aReferenceImage) {}
 
 protected:
   virtual void DoUpdate() override;
+};
+
+class nsSVGMaskProperty final : public nsISupports
+{
+public:
+  explicit nsSVGMaskProperty(nsIFrame* aFrame);
+
+  // nsISupports
+  NS_DECL_ISUPPORTS
+
+  const nsTArray<RefPtr<nsSVGPaintingProperty>>& GetProps() const
+  {
+    return mProperties;
+  }
+
+private:
+  virtual ~nsSVGMaskProperty() {}
+  nsTArray<RefPtr<nsSVGPaintingProperty>> mProperties;
 };
 
 /**
@@ -338,7 +374,8 @@ protected:
  * via nsSVGContainerFrame::RemoveFrame, since only frames in the frame
  * tree should be referenced.
  */
-class nsSVGRenderingObserverList {
+class nsSVGRenderingObserverList
+{
 public:
   nsSVGRenderingObserverList()
     : mObservers(4)
@@ -384,47 +421,51 @@ private:
   nsTHashtable<nsPtrHashKey<nsSVGRenderingObserver> > mObservers;
 };
 
-class nsSVGEffects {
+class nsSVGEffects
+{
 public:
   typedef mozilla::dom::Element Element;
-  typedef mozilla::FramePropertyDescriptor FramePropertyDescriptor;
   typedef nsInterfaceHashtable<nsURIHashKey, nsIMutationObserver>
     URIObserverHashtable;
 
-  static void DestroyFilterProperty(void* aPropertyValue)
-  {
-    auto* prop = static_cast<nsSVGFilterProperty*>(aPropertyValue);
+  using ObserverPropertyDescriptor =
+    const mozilla::FramePropertyDescriptor<nsISupports>*;
+  using URIObserverHashtablePropertyDescriptor =
+    const mozilla::FramePropertyDescriptor<URIObserverHashtable>*;
 
+  static void DestroyFilterProperty(nsSVGFilterProperty* aProp)
+  {
     // nsSVGFilterProperty is cycle-collected, so dropping the last reference
     // doesn't necessarily destroy it. We need to tell it that the frame
     // has now become invalid.
-    prop->DetachFromFrame();
+    aProp->DetachFromFrame();
 
-    prop->Release();
+    aProp->Release();
   }
 
-  NS_DECLARE_FRAME_PROPERTY(FilterProperty, DestroyFilterProperty)
-  NS_DECLARE_FRAME_PROPERTY(MaskProperty, ReleaseValue<nsISupports>)
-  NS_DECLARE_FRAME_PROPERTY(ClipPathProperty, ReleaseValue<nsISupports>)
-  NS_DECLARE_FRAME_PROPERTY(MarkerBeginProperty, ReleaseValue<nsISupports>)
-  NS_DECLARE_FRAME_PROPERTY(MarkerMiddleProperty, ReleaseValue<nsISupports>)
-  NS_DECLARE_FRAME_PROPERTY(MarkerEndProperty, ReleaseValue<nsISupports>)
-  NS_DECLARE_FRAME_PROPERTY(FillProperty, ReleaseValue<nsISupports>)
-  NS_DECLARE_FRAME_PROPERTY(StrokeProperty, ReleaseValue<nsISupports>)
-  NS_DECLARE_FRAME_PROPERTY(HrefProperty, ReleaseValue<nsISupports>)
-  NS_DECLARE_FRAME_PROPERTY(BackgroundImageProperty,
-                            DeleteValue<URIObserverHashtable>)
+  NS_DECLARE_FRAME_PROPERTY_WITH_DTOR(FilterProperty, nsSVGFilterProperty,
+                                      DestroyFilterProperty)
+  NS_DECLARE_FRAME_PROPERTY_RELEASABLE(MaskProperty, nsSVGMaskProperty)
+  NS_DECLARE_FRAME_PROPERTY_RELEASABLE(ClipPathProperty, nsISupports)
+  NS_DECLARE_FRAME_PROPERTY_RELEASABLE(MarkerBeginProperty, nsISupports)
+  NS_DECLARE_FRAME_PROPERTY_RELEASABLE(MarkerMiddleProperty, nsISupports)
+  NS_DECLARE_FRAME_PROPERTY_RELEASABLE(MarkerEndProperty, nsISupports)
+  NS_DECLARE_FRAME_PROPERTY_RELEASABLE(FillProperty, nsISupports)
+  NS_DECLARE_FRAME_PROPERTY_RELEASABLE(StrokeProperty, nsISupports)
+  NS_DECLARE_FRAME_PROPERTY_RELEASABLE(HrefProperty, nsISupports)
+  NS_DECLARE_FRAME_PROPERTY_DELETABLE(BackgroundImageProperty,
+                                      URIObserverHashtable)
 
   /**
    * Get the paint server for a aTargetFrame.
    */
   static nsSVGPaintServerFrame *GetPaintServer(nsIFrame *aTargetFrame,
                                                const nsStyleSVGPaint *aPaint,
-                                               const FramePropertyDescriptor *aProperty);
+                                               ObserverPropertyDescriptor aProperty);
 
   struct EffectProperties {
     nsSVGFilterProperty*   mFilter;
-    nsSVGPaintingProperty* mMask;
+    nsSVGMaskProperty*     mMask;
     nsSVGPaintingProperty* mClipPath;
 
     /**
@@ -435,12 +476,17 @@ public:
      */
     nsSVGClipPathFrame *GetClipPathFrame(bool *aOK);
     /**
-     * @return the mask frame, or null if there is no mask frame
+     * @return the first mask frame, or null if there is no mask frame
      * @param aOK if a mask was specified and the designated element
      * exists but is an element of the wrong type, *aOK is set to false.
      * Otherwise *aOK is untouched.
      */
-    nsSVGMaskFrame *GetMaskFrame(bool *aOK);
+    nsSVGMaskFrame *GetFirstMaskFrame(bool *aOK = nullptr);
+
+    /**
+     * @return an array which contains all SVG mask frames.
+     */
+    nsTArray<nsSVGMaskFrame*> GetMaskFrames();
 
     bool HasValidFilter() {
       return mFilter && mFilter->ReferencesValidResources();
@@ -523,26 +569,26 @@ public:
    */
   static nsSVGMarkerProperty *
   GetMarkerProperty(nsIURI *aURI, nsIFrame *aFrame,
-                    const FramePropertyDescriptor *aProperty);
+                    ObserverPropertyDescriptor aProperty);
   /**
    * Get an nsSVGTextPathProperty for the frame, creating a fresh one if necessary
    */
   static nsSVGTextPathProperty *
   GetTextPathProperty(nsIURI *aURI, nsIFrame *aFrame,
-                      const FramePropertyDescriptor *aProperty);
+                      ObserverPropertyDescriptor aProperty);
   /**
    * Get an nsSVGPaintingProperty for the frame, creating a fresh one if necessary
    */
   static nsSVGPaintingProperty *
   GetPaintingProperty(nsIURI *aURI, nsIFrame *aFrame,
-                      const FramePropertyDescriptor *aProperty);
+                      ObserverPropertyDescriptor aProperty);
   /**
    * Get an nsSVGPaintingProperty for the frame for that URI, creating a fresh
    * one if necessary
    */
   static nsSVGPaintingProperty *
   GetPaintingPropertyForURI(nsIURI *aURI, nsIFrame *aFrame,
-                            const FramePropertyDescriptor *aProp);
+                            URIObserverHashtablePropertyDescriptor aProp);
 };
 
 #endif /*NSSVGEFFECTS_H_*/

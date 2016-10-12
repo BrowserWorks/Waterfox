@@ -11,21 +11,21 @@ requestLongerTimeout(2);
 // Also check that negative delays do not overflow the UI, and are shown like
 // positive delays.
 
-add_task(function*() {
-  yield addTab(TEST_URL_ROOT + "doc_simple_animation.html");
+add_task(function* () {
+  yield addTab(URL_ROOT + "doc_simple_animation.html");
   let {inspector, panel} = yield openAnimationInspector();
 
   info("Selecting a delayed animated node");
-  yield selectNode(".delayed", inspector);
+  yield selectNodeAndWaitForAnimations(".delayed", inspector);
   let timelineEl = panel.animationsTimelineComponent.rootWrapperEl;
   checkDelayAndName(timelineEl, true);
 
   info("Selecting a no-delay animated node");
-  yield selectNode(".animated", inspector);
+  yield selectNodeAndWaitForAnimations(".animated", inspector);
   checkDelayAndName(timelineEl, false);
 
   info("Selecting a negative-delay animated node");
-  yield selectNode(".negative-delay", inspector);
+  yield selectNodeAndWaitForAnimations(".negative-delay", inspector);
   checkDelayAndName(timelineEl, true);
 });
 

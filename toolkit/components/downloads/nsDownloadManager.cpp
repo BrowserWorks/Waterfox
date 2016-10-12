@@ -272,7 +272,7 @@ nsDownloadManager::RemoveDownloadsForURI(mozIStorageStatement* aStatement, nsIUR
   NS_ENSURE_SUCCESS(rv, rv);
 
   bool hasMore = false;
-  nsAutoTArray<nsCString, 4> downloads;
+  AutoTArray<nsCString, 4> downloads;
   // Get all the downloads that match the provided URI
   while (NS_SUCCEEDED(aStatement->ExecuteStep(&hasMore)) &&
          hasMore) {
@@ -1709,7 +1709,7 @@ nsDownloadManager::GetDownload(uint32_t aID, nsIDownload **aDownloadItem)
 }
 
 namespace {
-class AsyncResult : public nsRunnable
+class AsyncResult : public Runnable
 {
 public:
   AsyncResult(nsresult aStatus, nsIDownload* aResult,
@@ -2573,7 +2573,7 @@ nsDownloadManager::ConfirmCancelDownloads(int32_t aCount,
 
   // Get Download Manager window, to be parent of alert.
   nsCOMPtr<nsIWindowMediator> wm = do_GetService(NS_WINDOWMEDIATOR_CONTRACTID);
-  nsCOMPtr<nsIDOMWindow> dmWindow;
+  nsCOMPtr<mozIDOMWindowProxy> dmWindow;
   if (wm) {
     wm->GetMostRecentWindow(MOZ_UTF16("Download:Manager"),
                             getter_AddRefs(dmWindow));
@@ -3762,7 +3762,7 @@ nsDownload::FailDownload(nsresult aStatus, const char16_t *aMessage)
   nsCOMPtr<nsIWindowMediator> wm =
     do_GetService(NS_WINDOWMEDIATOR_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
-  nsCOMPtr<nsIDOMWindow> dmWindow;
+  nsCOMPtr<mozIDOMWindowProxy> dmWindow;
   rv = wm->GetMostRecentWindow(MOZ_UTF16("Download:Manager"),
                                getter_AddRefs(dmWindow));
   NS_ENSURE_SUCCESS(rv, rv);

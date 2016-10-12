@@ -193,8 +193,14 @@ class OSXBootstrapper(BaseBootstrapper):
     def install_mobile_android_packages(self):
         getattr(self, 'ensure_%s_mobile_android_packages' % self.package_manager)()
 
+    def install_mobile_android_artifact_mode_packages(self):
+        getattr(self, 'ensure_%s_mobile_android_packages' % self.package_manager)(artifact_mode=True)
+
     def suggest_mobile_android_mozconfig(self):
         getattr(self, 'suggest_%s_mobile_android_mozconfig' % self.package_manager)()
+
+    def suggest_mobile_android_artifact_mode_mozconfig(self):
+        getattr(self, 'suggest_%s_mobile_android_mozconfig' % self.package_manager)(artifact_mode=True)
 
     def ensure_xcode(self):
         if self.os_version < StrictVersion('10.7'):
@@ -309,7 +315,8 @@ class OSXBootstrapper(BaseBootstrapper):
             ('git', 'git'),
             ('autoconf213', HOMEBREW_AUTOCONF213),
             ('gnu-tar', 'gnu-tar'),
-            ('watchman', 'watchman',)
+            ('watchman', 'watchman',),
+            ('terminal-notifier', 'terminal-notifier')
         ]
         self._ensure_homebrew_packages(packages)
 
@@ -326,10 +333,10 @@ class OSXBootstrapper(BaseBootstrapper):
             subprocess.check_call([self.brew, '-v', 'install', 'llvm',
                                    '--with-clang', '--all-targets'])
 
-    def ensure_homebrew_mobile_android_packages(self):
+    def ensure_homebrew_mobile_android_packages(self, artifact_mode=False):
         # Multi-part process:
         # 1. System packages.
-        # 2. Android SDK and NDK.
+        # 2. Android SDK. Android NDK only if we are not in artifact mode.
         # 3. Android packages.
 
         import android
@@ -350,10 +357,10 @@ class OSXBootstrapper(BaseBootstrapper):
 
         # 2. The user may have an external Android SDK (in which case we save
         # them a lengthy download), or they may have already completed the
-        # download. We unpack to ~/.mozbuild/{android-sdk-linux, android-ndk-r10e}.
+        # download. We unpack to ~/.mozbuild/{android-sdk-linux, android-ndk-r11b}.
         mozbuild_path = os.environ.get('MOZBUILD_STATE_PATH', os.path.expanduser(os.path.join('~', '.mozbuild')))
         self.sdk_path = os.environ.get('ANDROID_SDK_HOME', os.path.join(mozbuild_path, 'android-sdk-macosx'))
-        self.ndk_path = os.environ.get('ANDROID_NDK_HOME', os.path.join(mozbuild_path, 'android-ndk-r10e'))
+        self.ndk_path = os.environ.get('ANDROID_NDK_HOME', os.path.join(mozbuild_path, 'android-ndk-r11b'))
         self.sdk_url = 'https://dl.google.com/android/android-sdk_r24.0.1-macosx.zip'
         is_64bits = sys.maxsize > 2**32
         if is_64bits:
@@ -363,17 +370,19 @@ class OSXBootstrapper(BaseBootstrapper):
 
         android.ensure_android_sdk_and_ndk(path=mozbuild_path,
                                            sdk_path=self.sdk_path, sdk_url=self.sdk_url,
-                                           ndk_path=self.ndk_path, ndk_url=self.ndk_url)
+                                           ndk_path=self.ndk_path, ndk_url=self.ndk_url,
+                                           artifact_mode=artifact_mode)
 
         # 3. We expect the |android| tool to at
         # ~/.mozbuild/android-sdk-macosx/tools/android.
         android_tool = os.path.join(self.sdk_path, 'tools', 'android')
         android.ensure_android_packages(android_tool=android_tool)
 
-    def suggest_homebrew_mobile_android_mozconfig(self):
+    def suggest_homebrew_mobile_android_mozconfig(self, artifact_mode=False):
         import android
         android.suggest_mozconfig(sdk_path=self.sdk_path,
-                                  ndk_path=self.ndk_path)
+                                  ndk_path=self.ndk_path,
+                                  artifact_mode=artifact_mode)
 
     def _ensure_macports_packages(self, packages):
         self.port = self.which('port')
@@ -410,10 +419,10 @@ class OSXBootstrapper(BaseBootstrapper):
             self.run_as_root([self.port, '-v', 'install', MACPORTS_CLANG_PACKAGE])
             self.run_as_root([self.port, 'select', '--set', 'clang', 'mp-' + MACPORTS_CLANG_PACKAGE])
 
-    def ensure_macports_mobile_android_packages(self):
+    def ensure_macports_mobile_android_packages(self, artifact_mode=False):
         # Multi-part process:
         # 1. System packages.
-        # 2. Android SDK and NDK.
+        # 2. Android SDK. Android NDK only if we are not in artifact mode.
         # 3. Android packages.
 
         import android
@@ -430,10 +439,10 @@ class OSXBootstrapper(BaseBootstrapper):
 
         # 2. The user may have an external Android SDK (in which case we save
         # them a lengthy download), or they may have already completed the
-        # download. We unpack to ~/.mozbuild/{android-sdk-linux, android-ndk-r10e}.
+        # download. We unpack to ~/.mozbuild/{android-sdk-linux, android-ndk-r11b}.
         mozbuild_path = os.environ.get('MOZBUILD_STATE_PATH', os.path.expanduser(os.path.join('~', '.mozbuild')))
         self.sdk_path = os.environ.get('ANDROID_SDK_HOME', os.path.join(mozbuild_path, 'android-sdk-macosx'))
-        self.ndk_path = os.environ.get('ANDROID_NDK_HOME', os.path.join(mozbuild_path, 'android-ndk-r10e'))
+        self.ndk_path = os.environ.get('ANDROID_NDK_HOME', os.path.join(mozbuild_path, 'android-ndk-r11b'))
         self.sdk_url = 'https://dl.google.com/android/android-sdk_r24.0.1-macosx.zip'
         is_64bits = sys.maxsize > 2**32
         if is_64bits:
@@ -443,17 +452,19 @@ class OSXBootstrapper(BaseBootstrapper):
 
         android.ensure_android_sdk_and_ndk(path=mozbuild_path,
                                            sdk_path=self.sdk_path, sdk_url=self.sdk_url,
-                                           ndk_path=self.ndk_path, ndk_url=self.ndk_url)
+                                           ndk_path=self.ndk_path, ndk_url=self.ndk_url,
+                                           artifact_mode=artifact_mode)
 
         # 3. We expect the |android| tool to at
         # ~/.mozbuild/android-sdk-macosx/tools/android.
         android_tool = os.path.join(self.sdk_path, 'tools', 'android')
         android.ensure_android_packages(android_tool=android_tool)
 
-    def suggest_macports_mobile_android_mozconfig(self):
+    def suggest_macports_mobile_android_mozconfig(self, artifact_mode=False):
         import android
         android.suggest_mozconfig(sdk_path=self.sdk_path,
-                                  ndk_path=self.ndk_path)
+                                  ndk_path=self.ndk_path,
+                                  artifact_mode=artifact_mode)
 
     def ensure_package_manager(self):
         '''

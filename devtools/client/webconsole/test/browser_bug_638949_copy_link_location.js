@@ -1,7 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Test for the "Copy link location" context menu item shown when you right
 // click network requests in the output.
@@ -47,8 +47,6 @@ add_task(function* () {
 
   // Test that the "Copy Link Location" menu item is hidden for non-network
   // messages.
-  message.scrollIntoView();
-
   yield waitForContextMenu(menu, message, () => {
     let isHidden = menu.querySelector(CONTEXT_MENU_ID).hidden;
     ok(isHidden, CONTEXT_MENU_ID + " is hidden");
@@ -95,8 +93,6 @@ add_task(function* () {
 
   // Test that the "Copy Link Location" menu item is visible for network-related
   // messages.
-  message.scrollIntoView();
-
   yield waitForContextMenu(menu, message, () => {
     let isVisible = !menu.querySelector(CONTEXT_MENU_ID).hidden;
     ok(isVisible, CONTEXT_MENU_ID + " is visible");

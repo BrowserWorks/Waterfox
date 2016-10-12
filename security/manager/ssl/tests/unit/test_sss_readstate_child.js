@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+"use strict";
 
 // The purpose of this test is to create a site security service state file
 // and see that the site security service reads it properly. We also verify
@@ -34,7 +35,7 @@ function run_test() {
   outputStream.close();
   Services.obs.addObserver(start_test_in_child, "data-storage-ready", false);
   do_test_pending();
-  var SSService = Cc["@mozilla.org/ssservice;1"]
+  let SSService = Cc["@mozilla.org/ssservice;1"]
                     .getService(Ci.nsISiteSecurityService);
   notEqual(SSService, null);
 }

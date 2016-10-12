@@ -69,6 +69,12 @@ public class ReferrerReceiver extends BroadcastReceiver {
 
         if (TextUtils.equals(referrer.campaign, DISTRIBUTION_UTM_CAMPAIGN)) {
             Distribution.onReceivedReferrer(context, referrer);
+            // We want Adjust information for OTA distributions as well
+            try {
+                AdjustConstants.getAdjustHelper().onReceive(context, intent);
+            } catch (Exception e) {
+                Log.e(LOGTAG, "Got exception in Adjust's onReceive for distribution.", e);
+            }
         } else {
             Log.d(LOGTAG, "Not downloading distribution: non-matching campaign.");
             // If this is a Mozilla campaign, pass the campaign along to Gecko.
@@ -94,8 +100,7 @@ public class ReferrerReceiver extends BroadcastReceiver {
             String payload = data.toString();
 
             // Try to make sure the prefs are written as a group.
-            final GeckoEvent event = GeckoEvent.createBroadcastEvent("Campaign:Set", payload);
-            GeckoAppShell.sendEventToGecko(event);
+            GeckoAppShell.notifyObservers("Campaign:Set", payload);
         } catch (JSONException e) {
             Log.e(LOGTAG, "Error propagating campaign identifier.", e);
         }

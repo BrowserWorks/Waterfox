@@ -10,22 +10,68 @@
 #include "jsobj.h"
 
 #include "gc/Barrier.h"
+#include "gc/Zone.h"
+
+#include "vm/Runtime-inl.h"
 
 namespace js {
 
 /* static */ void
-InternalGCMethods<TaggedProto>::preBarrier(TaggedProto& proto)
+InternalBarrierMethods<TaggedProto>::preBarrier(TaggedProto& proto)
 {
-    InternalGCMethods<JSObject*>::preBarrier(proto.toObjectOrNull());
+    InternalBarrierMethods<JSObject*>::preBarrier(proto.toObjectOrNull());
 }
 
 /* static */ void
-InternalGCMethods<TaggedProto>::postBarrier(TaggedProto* vp, TaggedProto prev, TaggedProto next)
+InternalBarrierMethods<TaggedProto>::postBarrier(TaggedProto* vp, TaggedProto prev,
+                                                 TaggedProto next)
 {
     JSObject* prevObj = prev.isObject() ? prev.toObject() : nullptr;
     JSObject* nextObj = next.isObject() ? next.toObject() : nullptr;
-    InternalGCMethods<JSObject*>::postBarrier(reinterpret_cast<JSObject**>(vp), prevObj,
-                                              nextObj);
+    InternalBarrierMethods<JSObject*>::postBarrier(reinterpret_cast<JSObject**>(vp), prevObj,
+                                                   nextObj);
+}
+
+/* static */ void
+InternalBarrierMethods<TaggedProto>::readBarrier(const TaggedProto& proto)
+{
+    InternalBarrierMethods<JSObject*>::readBarrier(proto.toObjectOrNull());
 }
 
 } // namespace js
+
+js::HashNumber
+js::TaggedProto::hashCode() const
+{
+    return Zone::UniqueIdToHash(uniqueId());
+}
+
+bool
+js::TaggedProto::hasUniqueId() const
+{
+    if (!isObject())
+        return true;
+    JSObject* obj = toObject();
+    return obj->zone()->hasUniqueId(obj);
+}
+
+bool
+js::TaggedProto::ensureUniqueId() const
+{
+    if (!isObject())
+        return true;
+    uint64_t unusedId;
+    JSObject* obj = toObject();
+    return obj->zone()->getUniqueId(obj, &unusedId);
+}
+
+uint64_t
+js::TaggedProto::uniqueId() const
+{
+    if (isDynamic())
+        return uint64_t(1);
+    JSObject* obj = toObjectOrNull();
+    if (!obj)
+        return uint64_t(0);
+    return obj->zone()->getUniqueIdInfallible(obj);
+}

@@ -245,22 +245,11 @@ this.BrowserIDManager.prototype = {
           Services.obs.notifyObservers(null, "weave:service:setup-complete", null);
           Weave.Utils.nextTick(Weave.Service.sync, Weave.Service);
         }
-      }).catch(err => {
-        let authErr = err; // note that we must reject with this error and not a
-                           // subsequent one
+      }).catch(authErr => {
         // report what failed...
         this._log.error("Background fetch for key bundle failed", authErr);
-        // check if the account still exists
-        this._fxaService.accountStatus().then(exists => {
-          if (!exists) {
-            return fxAccounts.signOut(true);
-          }
-        }).catch(err => {
-          this._log.error("Error while trying to determine FXA existence", err);
-        }).then(() => {
-          this._shouldHaveSyncKeyBundle = true; // but we probably don't have one...
-          this.whenReadyToAuthenticate.reject(authErr)
-        });
+        this._shouldHaveSyncKeyBundle = true; // but we probably don't have one...
+        this.whenReadyToAuthenticate.reject(authErr);
       });
       // and we are done - the fetch continues on in the background...
     }).catch(err => {
@@ -404,6 +393,9 @@ this.BrowserIDManager.prototype = {
   resetCredentials: function() {
     this.resetSyncKey();
     this._token = null;
+    // The cluster URL comes from the token, so resetting it to empty will
+    // force Sync to not accidentally use a value from an earlier token.
+    Weave.Service.clusterURL = null;
   },
 
   /**
@@ -496,7 +488,6 @@ this.BrowserIDManager.prototype = {
           result = STATUS_OK;
         } else {
           result = LOGIN_FAILED_LOGIN_REJECTED;
-          Services.telemetry.getHistogramById("WEAVE_HAS_NO_KEYS_WHEN_UNLOCKED").add(1);
         }
         log.debug("unlockAndVerifyAuthState re-fetched credentials and is returning", result);
         return result;
@@ -578,7 +569,7 @@ this.BrowserIDManager.prototype = {
       );
     }
 
-    let getToken = (tokenServerURI, assertion) => {
+    let getToken = assertion => {
       log.debug("Getting a token");
       let deferred = Promise.defer();
       let cb = function (err, token) {
@@ -606,7 +597,18 @@ this.BrowserIDManager.prototype = {
     return fxa.whenVerified(this._signedInUser)
       .then(() => maybeFetchKeys())
       .then(() => getAssertion())
-      .then(assertion => getToken(tokenServerURI, assertion))
+      .then(assertion => getToken(assertion))
+      .catch(err => {
+        // If we get a 401 fetching the token it may be that our certificate
+        // needs to be regenerated.
+        if (!err.response || err.response.status !== 401) {
+          return Promise.reject(err);
+        }
+        log.warn("Token server returned 401, refreshing certificate and retrying token fetch");
+        return fxa.invalidateCertificate()
+          .then(() => getAssertion())
+          .then(assertion => getToken(assertion))
+      })
       .then(token => {
         // TODO: Make it be only 80% of the duration, so refresh the token
         // before it actually expires. This is to avoid sync storage errors
@@ -627,6 +629,9 @@ this.BrowserIDManager.prototype = {
         // A hawkclient error.
         } else if (err.code && err.code === 401) {
           err = new AuthenticationError(err);
+        // An FxAccounts.jsm error.
+        } else if (err.message == fxAccountsCommon.ERROR_AUTH_ERROR) {
+          err = new AuthenticationError(err);
         }
 
         // TODO: write tests to make sure that different auth error cases are handled here
@@ -636,7 +641,6 @@ this.BrowserIDManager.prototype = {
           this._log.error("Authentication error in _fetchTokenForUser", err);
           // set it to the "fatal" LOGIN_FAILED_LOGIN_REJECTED reason.
           this._authFailureReason = LOGIN_FAILED_LOGIN_REJECTED;
-          Services.telemetry.getHistogramById("WEAVE_FXA_KEY_FETCH_AUTH_ERRORS").add(1);
         } else {
           this._log.error("Non-authentication error in _fetchTokenForUser", err);
           // for now assume it is just a transient network related problem
@@ -694,7 +698,10 @@ this.BrowserIDManager.prototype = {
     // expected.
     try {
       cb.wait();
-    } catch (ex if !Async.isShutdownException(ex)) {
+    } catch (ex) {
+      if (Async.isShutdownException(ex)) {
+        throw ex;
+      }
       this._log.error("Failed to fetch a token for authentication", ex);
       return null;
     }

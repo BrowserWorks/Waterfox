@@ -9,7 +9,7 @@
 
 const TEST_URI = "<h1 style='color: red'>Header</h1>";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {toolbox, inspector, view} = yield openRuleView();
 
@@ -21,9 +21,9 @@ function* runAutocompletionTest(toolbox, inspector, view) {
   info("Selecting the test node");
   yield selectNode("h1", inspector);
 
-  info("Focusing the css property editable field");
-  let brace = view.styleDocument.querySelector(".ruleview-ruleclose");
-  let editor = yield focusEditableField(view, brace);
+  info("Focusing the new property editable field");
+  let ruleEditor = getRuleViewRuleEditor(view, 0);
+  let editor = yield focusNewRuleViewProperty(ruleEditor);
 
   info("Sending \"background\" to the editable field");
   for (let key of "background") {

@@ -162,6 +162,7 @@ GrallocTextureHostBasic::BindTextureSource(CompositableTextureSourceRef& aTextur
 void
 GrallocTextureHostBasic::UnbindTextureSource()
 {
+  TextureHost::UnbindTextureSource();
   ClearTextureSource();
 }
 
@@ -180,7 +181,11 @@ GrallocTextureHostBasic::ClearTextureSource()
 void
 GrallocTextureHostBasic::SetCompositor(Compositor* aCompositor)
 {
-  BasicCompositor* compositor = static_cast<BasicCompositor*>(aCompositor);
+  BasicCompositor* compositor = AssertBasicCompositor(aCompositor);
+  if (!compositor) {
+    return;
+  }
+
   mCompositor = compositor;
   if (mTextureSource) {
     mTextureSource->SetCompositor(compositor);

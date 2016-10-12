@@ -24,6 +24,7 @@ EXPORTS.mozilla = [
     'Attributes.h',
     'BinarySearch.h',
     'BloomFilter.h',
+    'BufferList.h',
     'Casting.h',
     'ChaosMode.h',
     'Char16.h',
@@ -34,7 +35,7 @@ EXPORTS.mozilla = [
     'decimal/Decimal.h',
     'double-conversion/double-conversion.h',
     'double-conversion/utils.h',
-    'Endian.h',
+    'EndianUtils.h',
     'EnumeratedArray.h',
     'EnumeratedRange.h',
     'EnumSet.h',
@@ -59,8 +60,10 @@ EXPORTS.mozilla = [
     'MemoryChecking.h',
     'MemoryReporting.h',
     'Move.h',
+    'NotNull.h',
     'NullPtr.h',
     'NumericLimits.h',
+    'Opaque.h',
     'Pair.h',
     'PodOperations.h',
     'Poison.h',
@@ -73,6 +76,7 @@ EXPORTS.mozilla = [
     'RefPtr.h',
     'ReverseIterator.h',
     'RollingMean.h',
+    'Saturate.h',
     'Scoped.h',
     'ScopeExit.h',
     'SegmentedVector.h',
@@ -121,6 +125,7 @@ DISABLE_STL_WRAPPING = True
 
 if CONFIG['GNU_CXX']:
     SOURCES['/mfbt/Compression.cpp'].flags += ['-Wno-unused-function']
+    CXXFLAGS += ['-Wno-error=shadow']
 
 if CONFIG['CLANG_CXX']:
     # Suppress warnings from third-party V8 Decimal code.

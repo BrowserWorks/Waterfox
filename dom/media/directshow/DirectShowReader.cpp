@@ -17,24 +17,24 @@ using namespace mozilla::media;
 
 namespace mozilla {
 
-LogModule*
-GetDirectShowLog() {
-  static LazyLogModule log("DirectShowDecoder");
-  return log;
-}
+// Windows XP's MP3 decoder filter. This is available on XP only, on Vista
+// and later we can use the DMO Wrapper filter and MP3 decoder DMO.
+const GUID DirectShowReader::CLSID_MPEG_LAYER_3_DECODER_FILTER =
+{ 0x38BE3000, 0xDBF4, 0x11D0, {0x86, 0x0E, 0x00, 0xA0, 0x24, 0xCF, 0xEF, 0x6D} };
 
-#define LOG(...) MOZ_LOG(GetDirectShowLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+
+static LazyLogModule gDirectShowLog("DirectShowDecoder");
+#define LOG(...) MOZ_LOG(gDirectShowLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 DirectShowReader::DirectShowReader(AbstractMediaDecoder* aDecoder)
   : MediaDecoderReader(aDecoder),
     mMP3FrameParser(aDecoder->GetResource()->GetLength()),
-#ifdef DEBUG
+#ifdef DIRECTSHOW_REGISTER_GRAPH
     mRotRegister(0),
 #endif
     mNumChannels(0),
     mAudioRate(0),
-    mBytesPerSample(0),
-    mDuration(0)
+    mBytesPerSample(0)
 {
   MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
   MOZ_COUNT_CTOR(DirectShowReader);
@@ -44,7 +44,7 @@ DirectShowReader::~DirectShowReader()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
   MOZ_COUNT_DTOR(DirectShowReader);
-#ifdef DEBUG
+#ifdef DIRECTSHOW_REGISTER_GRAPH
   if (mRotRegister) {
     RemoveGraphFromRunningObjectTable(mRotRegister);
   }
@@ -79,11 +79,6 @@ ParseMP3Headers(MP3FrameParser *aParser, MediaResource *aResource)
   return aParser->IsMP3() ? NS_OK : NS_ERROR_FAILURE;
 }
 
-// Windows XP's MP3 decoder filter. This is available on XP only, on Vista
-// and later we can use the DMO Wrapper filter and MP3 decoder DMO.
-static const GUID CLSID_MPEG_LAYER_3_DECODER_FILTER =
-{ 0x38BE3000, 0xDBF4, 0x11D0, {0x86, 0x0E, 0x00, 0xA0, 0x24, 0xCF, 0xEF, 0x6D} };
-
 nsresult
 DirectShowReader::ReadMetadata(MediaInfo* aInfo,
                                MetadataTags** aTags)
@@ -104,11 +99,7 @@ DirectShowReader::ReadMetadata(MediaInfo* aInfo,
   rv = ParseMP3Headers(&mMP3FrameParser, mDecoder->GetResource());
   NS_ENSURE_SUCCESS(rv, rv);
 
-  #ifdef DEBUG
-  // Add the graph to the Running Object Table so that we can connect
-  // to this graph with GraphEdit/GraphStudio. Note: on Vista and up you must
-  // also regsvr32 proppage.dll from the Windows SDK.
-  // See: http://msdn.microsoft.com/en-us/library/ms787252(VS.85).aspx
+  #ifdef DIRECTSHOW_REGISTER_GRAPH
   hr = AddGraphToRunningObjectTable(mGraph, &mRotRegister);
   NS_ENSURE_TRUE(SUCCEEDED(hr), NS_ERROR_FAILURE);
   #endif
@@ -329,13 +320,13 @@ DirectShowReader::DecodeVideoFrame(bool &aKeyframeSkip,
 }
 
 RefPtr<MediaDecoderReader::SeekPromise>
-DirectShowReader::Seek(int64_t aTargetUs, int64_t aEndTime)
+DirectShowReader::Seek(SeekTarget aTarget, int64_t aEndTime)
 {
-  nsresult res = SeekInternal(aTargetUs);
+  nsresult res = SeekInternal(aTarget.GetTime().ToMicroseconds());
   if (NS_FAILED(res)) {
     return SeekPromise::CreateAndReject(res, __func__);
   } else {
-    return SeekPromise::CreateAndResolve(aTargetUs, __func__);
+    return SeekPromise::CreateAndResolve(aTarget.GetTime(), __func__);
   }
 }
 
@@ -364,45 +355,6 @@ DirectShowReader::SeekInternal(int64_t aTargetUs)
   NS_ENSURE_TRUE(SUCCEEDED(hr), NS_ERROR_FAILURE);
 
   return NS_OK;
-}
-
-void
-DirectShowReader::NotifyDataArrivedInternal()
-{
-  MOZ_ASSERT(OnTaskQueue());
-  if (!mMP3FrameParser.NeedsData()) {
-    return;
-  }
-
-  AutoPinned<MediaResource> resource(mDecoder->GetResource());
-  MediaByteRangeSet byteRanges;
-  nsresult rv = resource->GetCachedRanges(byteRanges);
-
-  if (NS_FAILED(rv)) {
-    return;
-  }
-
-  if (byteRanges == mLastCachedRanges) {
-    return;
-  }
-  MediaByteRangeSet intervals = byteRanges - mLastCachedRanges;
-  mLastCachedRanges = byteRanges;
-
-  for (const auto& interval : intervals) {
-    RefPtr<MediaByteBuffer> bytes =
-      resource->MediaReadAt(interval.mStart, interval.Length());
-    NS_ENSURE_TRUE_VOID(bytes);
-    mMP3FrameParser.Parse(bytes->Elements(), interval.Length(), interval.mStart);
-    if (!mMP3FrameParser.IsMP3()) {
-      return;
-    }
-  }
-  int64_t duration = mMP3FrameParser.GetDuration();
-  if (duration != mDuration) {
-    MOZ_ASSERT(mDecoder);
-    mDuration = duration;
-    mDecoder->DispatchUpdateEstimatedMediaDuration(mDuration);
-  }
 }
 
 } // namespace mozilla

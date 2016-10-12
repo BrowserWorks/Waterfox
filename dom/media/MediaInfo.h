@@ -14,7 +14,7 @@
 #include "nsTArray.h"
 #include "ImageTypes.h"
 #include "MediaData.h"
-#include "StreamBuffer.h" // for TrackID
+#include "StreamTracks.h" // for TrackID
 #include "TimeUnits.h"
 
 namespace mozilla {
@@ -33,6 +33,9 @@ public:
   nsCString mKey;
   nsCString mValue;
 };
+
+  // Maximum channel number we can currently handle (7.1)
+#define MAX_AUDIO_CHANNELS 8
 
 class TrackInfo {
 public:
@@ -174,6 +177,12 @@ private:
 // Stores info relevant to presenting media frames.
 class VideoInfo : public TrackInfo {
 public:
+  enum Rotation {
+    kDegree_0 = 0,
+    kDegree_90 = 90,
+    kDegree_180 = 180,
+    kDegree_270 = 270,
+  };
   VideoInfo()
     : VideoInfo(-1, -1)
   {
@@ -184,9 +193,11 @@ public:
                 EmptyString(), EmptyString(), true, 2)
     , mDisplay(nsIntSize(aWidth, aHeight))
     , mStereoMode(StereoMode::MONO)
-    , mImage(nsIntRect(0, 0, aWidth, aHeight))
+    , mImage(nsIntSize(aWidth, aHeight))
     , mCodecSpecificConfig(new MediaByteBuffer)
     , mExtraData(new MediaByteBuffer)
+    , mRotation(kDegree_0)
+    , mImageRect(nsIntRect(0, 0, aWidth, aHeight))
   {
   }
 
@@ -197,6 +208,8 @@ public:
     , mImage(aOther.mImage)
     , mCodecSpecificConfig(aOther.mCodecSpecificConfig)
     , mExtraData(aOther.mExtraData)
+    , mRotation(aOther.mRotation)
+    , mImageRect(aOther.mImageRect)
   {
   }
 
@@ -220,6 +233,55 @@ public:
     return MakeUnique<VideoInfo>(*this);
   }
 
+  nsIntRect ImageRect() const
+  {
+    if (mImageRect.width < 0 || mImageRect.height < 0) {
+      return nsIntRect(0, 0, mImage.width, mImage.height);
+    }
+    return mImageRect;
+  }
+
+  void SetImageRect(const nsIntRect& aRect)
+  {
+    mImageRect = aRect;
+  }
+
+  // Returned the crop rectangle scaled to aWidth/aHeight size relative to
+  // mImage size.
+  // If aWidth and aHeight are identical to the original mImage.width/mImage.height
+  // then the scaling ratio will be 1.
+  // This is used for when the frame size is different from what the container
+  // reports. This is legal in WebM, and we will preserve the ratio of the crop
+  // rectangle as it was reported relative to the picture size reported by the
+  // container.
+  nsIntRect ScaledImageRect(int64_t aWidth, int64_t aHeight) const
+  {
+    if (aWidth == mImage.width && aHeight == mImage.height) {
+      return ImageRect();
+    }
+    nsIntRect imageRect = ImageRect();
+    imageRect.x = (imageRect.x * aWidth) / mImage.width;
+    imageRect.y = (imageRect.y * aHeight) / mImage.height;
+    imageRect.width = (aWidth * imageRect.width) / mImage.width;
+    imageRect.height = (aHeight * imageRect.height) / mImage.height;
+    return imageRect;
+  }
+
+  Rotation ToSupportedRotation(int32_t aDegree)
+  {
+    switch (aDegree) {
+      case 90:
+        return kDegree_90;
+      case 180:
+        return kDegree_180;
+      case 270:
+        return kDegree_270;
+      default:
+        NS_WARN_IF_FALSE(aDegree == 0, "Invalid rotation degree, ignored");
+        return kDegree_0;
+    }
+  }
+
   // Size in pixels at which the video is rendered. This is after it has
   // been scaled by its aspect ratio.
   nsIntSize mDisplay;
@@ -227,10 +289,20 @@ public:
   // Indicates the frame layout for single track stereo videos.
   StereoMode mStereoMode;
 
-  // Visible area of the decoded video's image.
-  nsIntRect mImage;
+  // Size of the decoded video's image.
+  nsIntSize mImage;
+
   RefPtr<MediaByteBuffer> mCodecSpecificConfig;
   RefPtr<MediaByteBuffer> mExtraData;
+
+  // Describing how many degrees video frames should be rotated in clock-wise to
+  // get correct view.
+  Rotation mRotation;
+
+private:
+  // mImage may be cropped; currently only used with the WebM container.
+  // A negative width or height indicate that no cropping is to occur.
+  nsIntRect mImageRect;
 };
 
 class AudioInfo : public TrackInfo {
@@ -260,9 +332,12 @@ public:
   {
   }
 
+  static const uint32_t MAX_RATE = 640000;
+
   bool IsValid() const override
   {
-    return mChannels > 0 && mRate > 0;
+    return mChannels > 0 && mChannels <= MAX_AUDIO_CHANNELS
+           && mRate > 0 && mRate <= MAX_RATE;
   }
 
   AudioInfo* GetAsAudioInfo() override
@@ -417,6 +492,9 @@ public:
   // True if the media is seekable (i.e. supports random access).
   bool mMediaSeekable = true;
 
+  // True if the media is only seekable within its buffered ranges.
+  bool mMediaSeekableOnlyInBufferedRanges = false;
+
   EncryptionInfo mCrypto;
 };
 
@@ -469,6 +547,170 @@ private:
 
 public:
   const nsCString& mMimeType;
+};
+
+class AudioConfig {
+public:
+  enum Channel {
+    CHANNEL_INVALID = -1,
+    CHANNEL_MONO = 0,
+    CHANNEL_LEFT,
+    CHANNEL_RIGHT,
+    CHANNEL_CENTER,
+    CHANNEL_LS,
+    CHANNEL_RS,
+    CHANNEL_RLS,
+    CHANNEL_RCENTER,
+    CHANNEL_RRS,
+    CHANNEL_LFE,
+  };
+
+  class ChannelLayout {
+  public:
+    ChannelLayout()
+      : mChannelMap(0)
+      , mValid(false)
+    {}
+    explicit ChannelLayout(uint32_t aChannels)
+      : ChannelLayout(aChannels, SMPTEDefault(aChannels))
+    {}
+    ChannelLayout(uint32_t aChannels, const Channel* aConfig)
+      : ChannelLayout()
+    {
+      if (!aConfig) {
+        mValid = false;
+        return;
+      }
+      mChannels.AppendElements(aConfig, aChannels);
+      UpdateChannelMap();
+    }
+    bool operator==(const ChannelLayout& aOther) const
+    {
+      return mChannels == aOther.mChannels;
+    }
+    bool operator!=(const ChannelLayout& aOther) const
+    {
+      return mChannels != aOther.mChannels;
+    }
+    const Channel& operator[](uint32_t aIndex) const
+    {
+      return mChannels[aIndex];
+    }
+    uint32_t Count() const
+    {
+      return mChannels.Length();
+    }
+    uint32_t Map() const
+    {
+      return mChannelMap;
+    }
+    // Calculate the mapping table from the current layout to aOther such that
+    // one can easily go from one layout to the other by doing:
+    // out[channel] = in[map[channel]].
+    // Returns true if the reordering is possible or false otherwise.
+    // If true, then aMap, if set, will be updated to contain the mapping table
+    // allowing conversion from the current layout to aOther.
+    // If aMap is nullptr, then MappingTable can be used to simply determine if
+    // the current layout can be easily reordered to aOther.
+    // aMap must be an array of size MAX_AUDIO_CHANNELS.
+    bool MappingTable(const ChannelLayout& aOther, uint8_t* aMap = nullptr) const;
+    bool IsValid() const {
+      return mValid;
+    }
+    bool HasChannel(Channel aChannel) const
+    {
+      return mChannelMap & (1 << aChannel);
+    }
+  private:
+    void UpdateChannelMap();
+    const Channel* SMPTEDefault(uint32_t aChannels) const;
+    AutoTArray<Channel, MAX_AUDIO_CHANNELS> mChannels;
+    uint32_t mChannelMap;
+    bool mValid;
+  };
+
+  enum SampleFormat {
+    FORMAT_NONE = 0,
+    FORMAT_U8,
+    FORMAT_S16,
+    FORMAT_S24LSB,
+    FORMAT_S24,
+    FORMAT_S32,
+    FORMAT_FLT,
+#if defined(MOZ_SAMPLE_TYPE_FLOAT32)
+    FORMAT_DEFAULT = FORMAT_FLT
+#elif defined(MOZ_SAMPLE_TYPE_S16)
+    FORMAT_DEFAULT = FORMAT_S16
+#else
+#error "Not supported audio type"
+#endif
+  };
+
+  AudioConfig(const ChannelLayout& aChannelLayout, uint32_t aRate,
+              AudioConfig::SampleFormat aFormat = FORMAT_DEFAULT,
+              bool aInterleaved = true);
+  // Will create a channel configuration from default SMPTE ordering.
+  AudioConfig(uint32_t aChannels, uint32_t aRate,
+              AudioConfig::SampleFormat aFormat = FORMAT_DEFAULT,
+              bool aInterleaved = true);
+
+  const ChannelLayout& Layout() const
+  {
+    return mChannelLayout;
+  }
+  uint32_t Channels() const
+  {
+    if (!mChannelLayout.IsValid()) {
+      return mChannels;
+    }
+    return mChannelLayout.Count();
+  }
+  uint32_t Rate() const
+  {
+    return mRate;
+  }
+  SampleFormat Format() const
+  {
+    return mFormat;
+  }
+  bool Interleaved() const
+  {
+    return mInterleaved;
+  }
+  bool operator==(const AudioConfig& aOther) const
+  {
+    return mChannelLayout == aOther.mChannelLayout &&
+      mRate == aOther.mRate && mFormat == aOther.mFormat &&
+      mInterleaved == aOther.mInterleaved;
+  }
+  bool operator!=(const AudioConfig& aOther) const
+  {
+    return !(*this == aOther);
+  }
+
+  bool IsValid() const
+  {
+    return mChannelLayout.IsValid() && Format() != FORMAT_NONE && Rate() > 0;
+  }
+
+  static const char* FormatToString(SampleFormat aFormat);
+  static uint32_t SampleSize(SampleFormat aFormat);
+  static uint32_t FormatToBits(SampleFormat aFormat);
+
+private:
+  // Channels configuration.
+  ChannelLayout mChannelLayout;
+
+  // Channel count.
+  uint32_t mChannels;
+
+  // Sample rate.
+  uint32_t mRate;
+
+  // Sample format.
+  SampleFormat mFormat;
+
+  bool mInterleaved;
 };
 
 } // namespace mozilla

@@ -35,6 +35,7 @@
 #ifdef XP_MACOSX
 ; Mac bundle stuff
 @APPNAME@/Contents/Info.plist
+@APPNAME@/Contents/Library/LaunchServices
 @APPNAME@/Contents/PkgInfo
 @RESPATH@/firefox.icns
 @RESPATH@/document.icns
@@ -68,7 +69,7 @@
 #ifdef MOZ_DMD
 @BINPATH@/@DLL_PREFIX@dmd@DLL_SUFFIX@
 #endif
-#ifndef MOZ_NATIVE_NSPR
+#ifndef MOZ_SYSTEM_NSPR
 #ifndef MOZ_FOLD_LIBS
 @BINPATH@/@DLL_PREFIX@nspr4@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@plc4@DLL_SUFFIX@
@@ -91,30 +92,14 @@
 #if MOZ_PACKAGE_MSVC_DLLS
 @BINPATH@/@MSVC_C_RUNTIME_DLL@
 @BINPATH@/@MSVC_CXX_RUNTIME_DLL@
-#ifdef MSVC_APPCRT_DLL
-@BINPATH@/@MSVC_APPCRT_DLL@
 #endif
-#ifdef MSVC_DESKTOPCRT_DLL
-@BINPATH@/@MSVC_DESKTOPCRT_DLL@
-#endif
+#if MOZ_PACKAGE_WIN_UCRT_DLLS
+@BINPATH@/api-ms-win-*.dll
+@BINPATH@/ucrtbase.dll
 #endif
 #endif
-#ifndef MOZ_NATIVE_ICU
-#ifdef MOZ_SHARED_ICU
-#ifdef XP_WIN
-@BINPATH@/icudt@MOZ_ICU_DBG_SUFFIX@@MOZ_ICU_VERSION@.dll
-@BINPATH@/icuin@MOZ_ICU_DBG_SUFFIX@@MOZ_ICU_VERSION@.dll
-@BINPATH@/icuuc@MOZ_ICU_DBG_SUFFIX@@MOZ_ICU_VERSION@.dll
-#elif defined(XP_MACOSX)
-@BINPATH@/libicudata.@MOZ_ICU_VERSION@.dylib
-@BINPATH@/libicui18n.@MOZ_ICU_VERSION@.dylib
-@BINPATH@/libicuuc.@MOZ_ICU_VERSION@.dylib
-#elif defined(XP_UNIX)
-@BINPATH@/libicudata.so.@MOZ_ICU_VERSION@
-@BINPATH@/libicui18n.so.@MOZ_ICU_VERSION@
-@BINPATH@/libicuuc.so.@MOZ_ICU_VERSION@
-#endif
-#endif
+#ifdef MOZ_ICU_DATA_ARCHIVE
+@RESPATH@/@ICU_DATA_FILE@
 #endif
 #ifdef MOZ_GTK3
 @BINPATH@/@DLL_PREFIX@mozgtk@DLL_SUFFIX@
@@ -134,7 +119,7 @@
 @RESPATH@/update-settings.ini
 #endif
 @RESPATH@/platform.ini
-#ifndef MOZ_NATIVE_SQLITE
+#ifndef MOZ_SYSTEM_SQLITE
 #ifndef MOZ_FOLD_LIBS
 @BINPATH@/@DLL_PREFIX@mozsqlite3@DLL_SUFFIX@
 #endif
@@ -148,6 +133,13 @@
 #ifdef XP_UNIX
 #ifndef XP_MACOSX
 @RESPATH@/run-mozilla.sh
+#endif
+#endif
+#ifdef XP_WIN
+#ifdef _AMD64_
+@BINPATH@/@DLL_PREFIX@qipcap64@DLL_SUFFIX@
+#else
+@BINPATH@/@DLL_PREFIX@qipcap@DLL_SUFFIX@
 #endif
 #endif
 
@@ -180,7 +172,6 @@
 #endif
 @RESPATH@/components/content_xslt.xpt
 @RESPATH@/components/cookie.xpt
-@RESPATH@/browser/components/devtools_security.xpt
 @RESPATH@/components/directory.xpt
 @RESPATH@/components/docshell.xpt
 @RESPATH@/components/dom.xpt
@@ -248,7 +239,6 @@
 @RESPATH@/components/filepicker.xpt
 #endif
 @RESPATH@/components/find.xpt
-@RESPATH@/browser/components/fuel.xpt
 @RESPATH@/components/gfx.xpt
 @RESPATH@/components/html5.xpt
 @RESPATH@/components/htmlparser.xpt
@@ -320,9 +310,8 @@
 @RESPATH@/components/toolkit_finalizationwitness.xpt
 @RESPATH@/components/toolkit_formautofill.xpt
 @RESPATH@/components/toolkit_osfile.xpt
-#ifdef NIGHTLY_BUILD
+@RESPATH@/components/toolkit_securityreporter.xpt
 @RESPATH@/components/toolkit_perfmonitoring.xpt
-#endif
 @RESPATH@/components/toolkit_xulstore.xpt
 @RESPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -373,16 +362,14 @@
 @RESPATH@/browser/components/BrowserFeeds.manifest
 @RESPATH@/browser/components/FeedConverter.js
 @RESPATH@/browser/components/FeedWriter.js
-@RESPATH@/browser/components/fuelApplication.manifest
-@RESPATH@/browser/components/fuelApplication.js
 @RESPATH@/browser/components/WebContentConverter.js
 @RESPATH@/browser/components/BrowserComponents.manifest
 @RESPATH@/browser/components/nsBrowserContentHandler.js
 @RESPATH@/browser/components/nsBrowserGlue.js
 @RESPATH@/browser/components/nsSetDefaultBrowser.manifest
 @RESPATH@/browser/components/nsSetDefaultBrowser.js
-@RESPATH@/browser/components/devtools-clhandler.manifest
-@RESPATH@/browser/components/devtools-clhandler.js
+@RESPATH@/browser/components/devtools-startup.manifest
+@RESPATH@/browser/components/devtools-startup.js
 @RESPATH@/browser/components/webideCli.js
 @RESPATH@/browser/components/webideComponents.manifest
 @RESPATH@/browser/components/Experiments.manifest
@@ -407,6 +394,8 @@
 @RESPATH@/components/nsLoginManagerPrompter.js
 @RESPATH@/components/storage-json.js
 @RESPATH@/components/crypto-SDR.js
+@RESPATH@/components/TooltipTextProvider.js
+@RESPATH@/components/TooltipTextProvider.manifest
 @RESPATH@/components/jsconsole-clhandler.manifest
 @RESPATH@/components/jsconsole-clhandler.js
 @RESPATH@/components/webvtt.xpt
@@ -424,6 +413,7 @@
 @RESPATH@/components/addonManager.js
 @RESPATH@/components/amContentHandler.js
 @RESPATH@/components/amInstallTrigger.js
+@RESPATH@/components/amWebAPI.js
 @RESPATH@/components/amWebInstallListener.js
 @RESPATH@/components/nsBlocklistService.js
 @RESPATH@/components/nsBlocklistServiceContent.js
@@ -454,9 +444,6 @@
 @RESPATH@/components/toolkitplaces.manifest
 @RESPATH@/components/nsLivemarkService.js
 @RESPATH@/components/nsTaggingService.js
-@RESPATH@/components/nsPlacesAutoComplete.manifest
-@RESPATH@/components/nsPlacesAutoComplete.js
-@RESPATH@/components/UnifiedComplete.manifest
 @RESPATH@/components/UnifiedComplete.js
 @RESPATH@/components/nsPlacesExpiration.js
 @RESPATH@/components/PlacesCategoriesStarter.js
@@ -507,6 +494,8 @@
 #endif
 @RESPATH@/components/SyncComponents.manifest
 @RESPATH@/components/Weave.js
+@RESPATH@/components/FxAccountsComponents.manifest
+@RESPATH@/components/FxAccountsPush.js
 @RESPATH@/components/CaptivePortalDetectComponents.manifest
 @RESPATH@/components/captivedetect.js
 @RESPATH@/components/servicesComponents.manifest
@@ -527,10 +516,6 @@
 @RESPATH@/components/recording-cmdline.manifest
 @RESPATH@/components/htmlMenuBuilder.js
 @RESPATH@/components/htmlMenuBuilder.manifest
-
-@RESPATH@/components/RequestSync.manifest
-@RESPATH@/components/RequestSyncManager.js
-@RESPATH@/components/RequestSyncScheduler.js
 
 @RESPATH@/components/PermissionSettings.js
 @RESPATH@/components/PermissionSettings.manifest
@@ -554,13 +539,6 @@
 
 @RESPATH@/components/TVSimulatorService.js
 @RESPATH@/components/TVSimulatorService.manifest
-
-#ifndef RELEASE_BUILD
-@RESPATH@/components/InterAppComm.manifest
-@RESPATH@/components/InterAppCommService.js
-@RESPATH@/components/InterAppConnection.js
-@RESPATH@/components/InterAppMessagePort.js
-#endif
 
 #ifdef MOZ_ACTIVITIES
 @RESPATH@/components/SystemMessageCache.js
@@ -599,7 +577,9 @@
 @RESPATH@/components/PresentationDeviceInfoManager.manifest
 @RESPATH@/components/PresentationDeviceInfoManager.js
 @RESPATH@/components/BuiltinProviders.manifest
-@RESPATH@/components/TCPPresentationServer.js
+@RESPATH@/components/PresentationControlService.js
+@RESPATH@/components/PresentationDataChannelSessionTransport.js
+@RESPATH@/components/PresentationDataChannelSessionTransport.manifest
 
 ; InputMethod API
 @RESPATH@/components/MozKeyboard.js
@@ -632,6 +612,10 @@
 @RESPATH@/components/PrivateBrowsing.manifest
 @RESPATH@/components/PrivateBrowsingTrackingProtectionWhitelist.js
 
+; Security Reports
+@RESPATH@/components/SecurityReporter.manifest
+@RESPATH@/components/SecurityReporter.js
+
 ; Signed Packaged Content
 @RESPATH@/components/InstallPackagedWebapp.manifest
 @RESPATH@/components/InstallPackagedWebapp.js
@@ -656,10 +640,6 @@
 @RESPATH@/browser/chrome/browser.manifest
 @RESPATH@/browser/chrome/pdfjs.manifest
 @RESPATH@/browser/chrome/pdfjs/*
-#ifdef NIGHTLY_BUILD
-@RESPATH@/browser/chrome/shumway.manifest
-@RESPATH@/browser/chrome/shumway/*
-#endif
 @RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/chrome.manifest
 @RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/icon.png
 @RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/install.rdf
@@ -710,9 +690,6 @@
 @RESPATH@/defaults/pref/channel-prefs.js
 
 ; Services (gre) prefs
-#ifdef MOZ_SERVICES_NOTIFICATIONS
-@RESPATH@/defaults/pref/services-notifications.js
-#endif
 @RESPATH@/defaults/pref/services-sync.js
 
 ; [Layout Engine Resources]
@@ -741,18 +718,6 @@
 @RESPATH@/res/table-remove-row-active.gif
 @RESPATH@/res/table-remove-row-hover.gif
 @RESPATH@/res/table-remove-row.gif
-@RESPATH@/res/accessiblecaret.png
-@RESPATH@/res/accessiblecaret@1.5x.png
-@RESPATH@/res/accessiblecaret@2.25x.png
-@RESPATH@/res/accessiblecaret@2x.png
-@RESPATH@/res/accessiblecaret_tilt_left.png
-@RESPATH@/res/accessiblecaret_tilt_left@1.5x.png
-@RESPATH@/res/accessiblecaret_tilt_left@2.25x.png
-@RESPATH@/res/accessiblecaret_tilt_left@2x.png
-@RESPATH@/res/accessiblecaret_tilt_right.png
-@RESPATH@/res/accessiblecaret_tilt_right@1.5x.png
-@RESPATH@/res/accessiblecaret_tilt_right@2.25x.png
-@RESPATH@/res/accessiblecaret_tilt_right@2x.png
 @RESPATH@/res/grabber.gif
 #ifdef XP_MACOSX
 @RESPATH@/res/cursors/*
@@ -780,8 +745,12 @@
 ; NSS libraries are signed in the staging directory,
 ; meaning their .chk files are created there directly.
 ;
-#ifndef MOZ_NATIVE_NSS
+#ifndef MOZ_SYSTEM_NSS
+#if defined(XP_LINUX) && !defined(ANDROID)
+@BINPATH@/@DLL_PREFIX@freeblpriv3@DLL_SUFFIX@
+#else
 @BINPATH@/@DLL_PREFIX@freebl3@DLL_SUFFIX@
+#endif
 @BINPATH@/@DLL_PREFIX@nss3@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@nssckbi@DLL_SUFFIX@
 #ifndef NSS_DISABLE_DBM
@@ -802,7 +771,6 @@
 ; For process sandboxing
 #if defined(MOZ_SANDBOX)
 #if defined(XP_WIN)
-@BINPATH@/@DLL_PREFIX@sandboxbroker@DLL_SUFFIX@
 #if defined(WOW_HELPER)
 @BINPATH@/wow_helper.exe
 #endif
@@ -853,35 +821,6 @@ bin/libfreebl_32int64_3.so
 @BINPATH@/breakpadinjector.dll
 #endif
 #endif
-
-#ifdef MOZ_WEBAPP_RUNTIME
-[WebappRuntime]
-#ifdef XP_WIN
-@BINPATH@/webapp-uninstaller@BIN_SUFFIX@
-#endif
-@RESPATH@/webapprt-stub@BIN_SUFFIX@
-@RESPATH@/webapprt/webapprt.ini
-@RESPATH@/webapprt/chrome.manifest
-@RESPATH@/webapprt/chrome/webapprt@JAREXT@
-@RESPATH@/webapprt/chrome/webapprt.manifest
-@RESPATH@/webapprt/chrome/@AB_CD@@JAREXT@
-@RESPATH@/webapprt/chrome/@AB_CD@.manifest
-@RESPATH@/webapprt/components/CommandLineHandler.js
-@RESPATH@/webapprt/components/ContentPermission.js
-@RESPATH@/webapprt/components/DirectoryProvider.js
-@RESPATH@/webapprt/components/PaymentUIGlue.js
-@RESPATH@/webapprt/components/components.manifest
-@RESPATH@/webapprt/defaults/preferences/prefs.js
-@RESPATH@/webapprt/modules/DownloadView.jsm
-@RESPATH@/webapprt/modules/Startup.jsm
-@RESPATH@/webapprt/modules/WebappRT.jsm
-@RESPATH@/webapprt/modules/WebappManager.jsm
-@RESPATH@/webapprt/modules/WebRTCHandler.jsm
-#endif
-
-@RESPATH@/components/DataStore.manifest
-@RESPATH@/components/DataStoreImpl.js
-@RESPATH@/components/dom_datastore.xpt
 
 @RESPATH@/components/dom_audiochannel.xpt
 

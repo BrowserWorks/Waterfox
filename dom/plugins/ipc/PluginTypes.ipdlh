@@ -17,10 +17,12 @@ struct PluginTag
   bool isJavaPlugin;
   bool isFlashPlugin;
   bool supportsAsyncInit;
+  bool supportsAsyncRender; // flash specific
   nsCString filename;
   nsCString version;
   int64_t lastModifiedTime;
   bool isFromExtension;
+  int32_t sandboxLevel;
 };
 
 union PluginIdentifier

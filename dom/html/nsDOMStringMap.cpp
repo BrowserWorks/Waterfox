@@ -38,7 +38,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(nsDOMStringMap)
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
   if (tmp->PreservingWrapper()) {
-    NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mExpandoAndGeneration.expando);
+    NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mExpandoAndGeneration.expando)
   }
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
@@ -89,12 +89,6 @@ nsDOMStringMap::NamedGetter(const nsAString& aProp, bool& found,
   found = mElement->GetAttr(attr, aResult);
 }
 
-bool
-nsDOMStringMap::NameIsEnumerable(const nsAString& aName)
-{
-  return true;
-}
-
 void
 nsDOMStringMap::NamedSetter(const nsAString& aProp,
                             const nsAString& aValue,
@@ -112,7 +106,7 @@ nsDOMStringMap::NamedSetter(const nsAString& aProp,
     return;
   }
 
-  nsCOMPtr<nsIAtom> attrAtom = do_GetAtom(attr);
+  nsCOMPtr<nsIAtom> attrAtom = NS_Atomize(attr);
   MOZ_ASSERT(attrAtom, "Should be infallible");
 
   res = mElement->SetAttr(kNameSpaceID_None, attrAtom, aValue, true);
@@ -136,7 +130,7 @@ nsDOMStringMap::NamedDeleter(const nsAString& aProp, bool& found)
     return;
   }
 
-  nsCOMPtr<nsIAtom> attrAtom = do_GetAtom(attr);
+  nsCOMPtr<nsIAtom> attrAtom = NS_Atomize(attr);
   MOZ_ASSERT(attrAtom, "Should be infallible");
 
   found = mElement->HasAttr(kNameSpaceID_None, attrAtom);
@@ -149,7 +143,7 @@ nsDOMStringMap::NamedDeleter(const nsAString& aProp, bool& found)
 }
 
 void
-nsDOMStringMap::GetSupportedNames(unsigned, nsTArray<nsString>& aNames)
+nsDOMStringMap::GetSupportedNames(nsTArray<nsString>& aNames)
 {
   uint32_t attrCount = mElement->GetAttrCount();
 

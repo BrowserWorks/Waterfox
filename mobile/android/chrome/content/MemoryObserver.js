@@ -20,11 +20,13 @@ var MemoryObserver = {
 
   handleLowMemory: function() {
     // do things to reduce memory usage here
-    let tabs = BrowserApp.tabs;
-    let selected = BrowserApp.selectedTab;
-    for (let i = 0; i < tabs.length; i++) {
-      if (tabs[i] != selected) {
-        this.zombify(tabs[i]);
+    if (!Services.prefs.getBoolPref("browser.tabs.disableBackgroundZombification")) {
+      let tabs = BrowserApp.tabs;
+      let selected = BrowserApp.selectedTab;
+      for (let i = 0; i < tabs.length; i++) {
+        if (tabs[i] != selected && !tabs[i].playingAudio) {
+          this.zombify(tabs[i]);
+        }
       }
     }
 
@@ -35,13 +37,21 @@ var MemoryObserver = {
     defaults.setIntPref("image.mem.max_decoded_image_kb", 0);
 
     // Stop using the bfcache
-    defaults.setIntPref("browser.sessionhistory.max_total_viewers", 0);
+    if (!Services.prefs.getBoolPref("browser.sessionhistory.bfcacheIgnoreMemoryPressure")) {
+      defaults.setIntPref("browser.sessionhistory.max_total_viewers", 0);
+    }
   },
 
   zombify: function(tab) {
     let browser = tab.browser;
     let data = browser.__SS_data;
     let extra = browser.__SS_extdata;
+
+    // Notify any interested parties (e.g. the session store)
+    // that the original tab object is going to be destroyed
+    let evt = document.createEvent("UIEvents");
+    evt.initUIEvent("TabPreZombify", true, false, window, null);
+    browser.dispatchEvent(evt);
 
     // We need this data to correctly create and position the new browser
     // If this browser is already a zombie, fallback to the session data
@@ -58,6 +68,11 @@ var MemoryObserver = {
     browser.__SS_extdata = extra;
     browser.__SS_restore = true;
     browser.setAttribute("pending", "true");
+
+    // Notify the session store to reattach its listeners to the new tab object
+    evt = document.createEvent("UIEvents");
+    evt.initUIEvent("TabPostZombify", true, false, window, null);
+    browser.dispatchEvent(evt);
   },
 
   gc: function() {

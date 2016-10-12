@@ -49,7 +49,7 @@ interface nsIJSRAIIHelper;
 interface nsIContentPermissionRequest;
 interface nsIObserver;
 
-[scriptable, uuid(ca6a458c-82e7-4979-886e-6d214eac6f0b)]
+[scriptable, uuid(46b44e33-13c2-4eb3-bf80-76a4e0857ccc)]
 interface nsIDOMWindowUtils : nsISupports {
 
   /**
@@ -107,6 +107,11 @@ interface nsIDOMWindowUtils : nsISupports {
   void updateLayerTree();
 
   /**
+   * Get the last used layer transaction id for this window's refresh driver.
+   */
+  readonly attribute unsigned long long lastTransactionId;
+
+  /**
    * Information retrieved from the <meta name="viewport"> tag.
    * See nsContentUtils::GetViewportInfo for more information.
    */
@@ -115,6 +120,11 @@ interface nsIDOMWindowUtils : nsISupports {
                        out double aMinZoom, out double aMaxZoom,
                        out uint32_t aWidth, out uint32_t aHeight,
                        out boolean aAutoSize);
+
+  /**
+   * Information about the window size in device pixels.
+   */
+  void getContentViewerSize(out uint32_t aDisplayWidth, out uint32_t aDisplayHeight);
 
   /**
    * For any scrollable element, this allows you to override the
@@ -216,6 +226,18 @@ interface nsIDOMWindowUtils : nsISupports {
    * The caller of this method must have chrome privileges.
    */
   void setResolutionAndScaleTo(in float aResolution);
+
+  /**
+   * Set a resolution on the presShell which is the "restored" from history.
+   * The display dimensions are compared to their current values and used
+   * to scale the resolution value if necessary, e.g. if the device was
+   * rotated between saving and restoring of the session data.
+   * This resolution should be used when painting for the first time. Calling
+   * this too late may have no effect.
+   */
+  void setRestoreResolution(in float aResolution,
+                            in uint32_t aDisplayWidth,
+                            in uint32_t aDisplayHeight);
 
   /**
    * Whether the resolution has been set by the user.
@@ -1334,11 +1356,12 @@ interface nsIDOMWindowUtils : nsISupports {
   readonly attribute boolean layerManagerRemote;
 
   /**
-   * True if we can initialize a hardware-backed h264 decoder for a simple
-   * test video, does not mean that all h264 video decoding will be done
+   * Returns a Promise that will be resolved with a string once the capabilities
+   * of the h264 decoder have been determined.
+   * Success does not mean that all h264 video decoding will be done
    * in hardware.
    */
-  readonly attribute AString supportsHardwareH264Decoding;
+  readonly attribute jsval supportsHardwareH264Decoding;
 
   /**
    * Record (and return) frame-intervals for frames which were presented
@@ -1485,13 +1508,6 @@ interface nsIDOMWindowUtils : nsISupports {
    * Get the type of the currently focused html input, if any.
    */
   readonly attribute string focusedInputType;
-
-  /**
-   * Given a view ID from the compositor process, retrieve the element
-   * associated with a view. For scrollpanes for documents, the root
-   * element of the document is returned.
-   */
-  nsIDOMElement findElementWithViewId(in nsViewID aId);
 
   /**
    * Find the view ID for a given element. This is the reverse of
@@ -1752,6 +1768,12 @@ interface nsIDOMWindowUtils : nsISupports {
   void postRestyleSelfEvent(in nsIDOMElement aElement);
 
   /**
+   * Used to pause or resume all media in this window. Use-cases are audio
+   * competing, remote media control and to prevent auto-playing media.
+   */
+  attribute uint32_t mediaSuspend;
+
+  /**
    * With this it's possible to mute all the MediaElements in this window.
    * We have audioMuted and audioVolume to preserve the volume across
    * mute/umute.
@@ -1775,6 +1797,17 @@ interface nsIDOMWindowUtils : nsISupports {
    * e10s support properly.
    */
   void askPermission(in nsIContentPermissionRequest aRequest);
+
+  /**
+   * Number of elements restyled for the curent document.
+   *
+   * Note that during a restyle operation we may restyle an element more
+   * than once (e.g., for an inline that contains blocks).  This also
+   * counts restyling of pseudo-elements and anonymous boxes.
+   *
+   * May throw NS_ERROR_NOT_AVAILABLE.
+   */
+  readonly attribute unsigned long long elementsRestyled;
 
   /**
    * Number of frames constructed (excluding breaking) for the curent
@@ -1848,6 +1881,20 @@ interface nsIDOMWindowUtils : nsISupports {
   void forceUseCounterFlush(in nsIDOMNode aNode);
 
   void setNextPaintSyncId(in long aSyncId);
+
+  /**
+   * Enable or disable displayport suppression. This is intended to be used by
+   * testing code, to provide more deterministic behaviour over the displayport
+   * suppression during tests. Note that this updates a flag, so whatever value
+   * was last provided is what will be used.
+   */
+  void respectDisplayPortSuppression(in boolean aEnabled);
+
+  /**
+   * Set a flag that forces the next reflow interrupt check to return true. This
+   * can be used by tests to force execution of the interrupted reflow codepaths.
+   */
+  void forceReflowInterrupt();
 };
 
 [scriptable, uuid(c694e359-7227-4392-a138-33c0cc1f15a6)]

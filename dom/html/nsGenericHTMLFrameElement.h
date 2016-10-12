@@ -74,7 +74,14 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsGenericHTMLFrameElement,
                                            nsGenericHTMLElement)
 
-  void SwapFrameLoaders(nsXULElement& aOtherOwner, mozilla::ErrorResult& aError);
+  void SwapFrameLoaders(mozilla::dom::HTMLIFrameElement& aOtherLoaderOwner,
+                        mozilla::ErrorResult& aError);
+
+  void SwapFrameLoaders(nsXULElement& aOtherLoaderOwner,
+                        mozilla::ErrorResult& aError);
+
+  void SwapFrameLoaders(RefPtr<nsFrameLoader>& aOtherLoader,
+                        mozilla::ErrorResult& rv);
 
   static bool BrowserFramesEnabled();
 
@@ -97,8 +104,7 @@ protected:
   nsresult LoadSrc();
   nsIDocument* GetContentDocument();
   nsresult GetContentDocument(nsIDOMDocument** aContentDocument);
-  already_AddRefed<nsPIDOMWindow> GetContentWindow();
-  nsresult GetContentWindow(nsIDOMWindow** aContentWindow);
+  already_AddRefed<nsPIDOMWindowOuter> GetContentWindow();
 
   RefPtr<nsFrameLoader> mFrameLoader;
 

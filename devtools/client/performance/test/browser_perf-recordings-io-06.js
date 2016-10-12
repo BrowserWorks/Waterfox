@@ -83,7 +83,7 @@ var PROFILER_DATA = (function () {
   return data;
 })();
 
-var test = Task.async(function*() {
+var test = Task.async(function* () {
   let { target, panel, toolbox } = yield initPerformance(SIMPLE_URL);
   let { $, EVENTS, PerformanceController, DetailsView, JsCallTreeView } = panel.panelWin;
 
@@ -101,7 +101,7 @@ var test = Task.async(function*() {
 
   // Import recording.
 
-  let calltreeRendered = once(JsCallTreeView, EVENTS.JS_CALL_TREE_RENDERED);
+  let calltreeRendered = once(JsCallTreeView, EVENTS.UI_JS_CALL_TREE_RENDERED);
   let imported = once(PerformanceController, EVENTS.RECORDING_IMPORTED);
   yield PerformanceController.importRecording("", file);
 

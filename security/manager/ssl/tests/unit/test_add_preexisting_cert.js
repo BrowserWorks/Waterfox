@@ -17,15 +17,12 @@ function load_cert(cert, trust) {
   addCertFromFile(certDB, file, trust);
 }
 
-function getDERString(cert)
-{
-  var length = {};
-  var cert_der = cert.getRawDER(length);
-  var cert_der_string = '';
-  for (var i = 0; i < cert_der.length; i++) {
-    cert_der_string += String.fromCharCode(cert_der[i]);
+function getDERString(cert) {
+  let derString = "";
+  for (let rawByte of cert.getRawDER({})) {
+    derString += String.fromCharCode(rawByte);
   }
-  return cert_der_string;
+  return derString;
 }
 
 function run_test() {
@@ -39,7 +36,7 @@ function run_test() {
   // Change the already existing intermediate certificate's trust using
   // addCertFromBase64(). We use findCertByNickname first to ensure that the
   // certificate already exists.
-  let int_cert = certDB.findCertByNickname(null, "int-limited-depth");
+  let int_cert = certDB.findCertByNickname("int-limited-depth");
   notEqual(int_cert, null, "Intermediate cert should be in the cert DB");
   let base64_cert = btoa(getDERString(int_cert));
   certDB.addCertFromBase64(base64_cert, "p,p,p", "ignored_argument");

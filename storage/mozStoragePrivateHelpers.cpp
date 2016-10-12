@@ -24,7 +24,7 @@
 #include "mozIStorageBindingParams.h"
 
 #include "mozilla/Logging.h"
-extern PRLogModuleInfo* gStorageLog;
+extern mozilla::LazyLogModule gStorageLog;
 
 namespace mozilla {
 namespace storage {
@@ -248,7 +248,7 @@ convertVariantToStorageVariant(nsIVariant* aVariant)
 }
 
 namespace {
-class CallbackEvent : public nsRunnable
+class CallbackEvent : public Runnable
 {
 public:
   explicit CallbackEvent(mozIStorageCompletionCallback *aCallback)

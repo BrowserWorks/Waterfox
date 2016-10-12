@@ -14,6 +14,7 @@
 #include "mozilla/a11y/Platform.h"
 #include "RelationType.h"
 #include "mozilla/a11y/Role.h"
+#include "xpcAccessibleDocument.h"
 
 namespace mozilla {
 namespace a11y {
@@ -23,6 +24,11 @@ ProxyAccessible::Shutdown()
 {
   MOZ_DIAGNOSTIC_ASSERT(!IsDoc());
   NS_ASSERTION(!mOuterDoc, "Why do we still have a child doc?");
+  xpcAccessibleDocument* xpcDoc =
+    GetAccService()->GetCachedXPCDocument(Document());
+  if (xpcDoc) {
+    xpcDoc->NotifyOfShutdown(this);
+  }
 
   // XXX Ideally  this wouldn't be necessary, but it seems OuterDoc accessibles
   // can be destroyed before the doc they own.
@@ -772,7 +778,7 @@ ProxyAccessible::TableSelectedRowCount()
 void
 ProxyAccessible::TableSelectedCells(nsTArray<ProxyAccessible*>* aCellIDs)
 {
-  nsAutoTArray<uint64_t, 30> cellIDs;
+  AutoTArray<uint64_t, 30> cellIDs;
   Unused << mDoc->SendTableSelectedCells(mID, &cellIDs);
   aCellIDs->SetCapacity(cellIDs.Length());
   for (uint32_t i = 0; i < cellIDs.Length(); ++i) {
@@ -851,7 +857,7 @@ ProxyAccessible::AtkTableRowHeader(int32_t aRow)
 void
 ProxyAccessible::SelectedItems(nsTArray<ProxyAccessible*>* aSelectedItems)
 {
-  nsAutoTArray<uint64_t, 10> itemIDs;
+  AutoTArray<uint64_t, 10> itemIDs;
   Unused << mDoc->SendSelectedItems(mID, &itemIDs);
   aSelectedItems->SetCapacity(itemIDs.Length());
   for (size_t i = 0; i < itemIDs.Length(); ++i) {
@@ -1029,34 +1035,50 @@ ProxyAccessible::TakeFocus()
 uint32_t
 ProxyAccessible::EmbeddedChildCount() const
 {
-  uint32_t count;
-  Unused << mDoc->SendEmbeddedChildCount(mID, &count);
+  size_t count = 0, kids = mChildren.Length();
+  for (size_t i = 0; i < kids; i++) {
+    if (mChildren[i]->IsEmbeddedObject()) {
+      count++;
+    }
+  }
+
   return count;
 }
 
 int32_t
 ProxyAccessible::IndexOfEmbeddedChild(const ProxyAccessible* aChild)
 {
-  uint64_t childID = aChild->mID;
-  uint32_t childIdx;
-  Unused << mDoc->SendIndexOfEmbeddedChild(mID, childID, &childIdx);
-  return childIdx;
+  size_t index = 0, kids = mChildren.Length();
+  for (size_t i = 0; i < kids; i++) {
+    if (mChildren[i]->IsEmbeddedObject()) {
+      if (mChildren[i] == aChild) {
+        return index;
+      }
+
+      index++;
+    }
+  }
+
+  return -1;
 }
 
 ProxyAccessible*
 ProxyAccessible::EmbeddedChildAt(size_t aChildIdx)
 {
-  // For an outer doc the only child is a document, which is of course an
-  // embedded child.  Further asking the child process for the id of the child
-  // document won't work because the id of the child doc will be 0, which we
-  // would interpret as being our parent document.
-  if (mOuterDoc) {
-    return ChildAt(aChildIdx);
+  size_t index = 0, kids = mChildren.Length();
+  for (size_t i = 0; i < kids; i++) {
+    if (!mChildren[i]->IsEmbeddedObject()) {
+      continue;
+    }
+
+    if (index == aChildIdx) {
+      return mChildren[i];
+    }
+
+    index++;
   }
 
-  uint64_t childID;
-  Unused << mDoc->SendEmbeddedChildAt(mID, aChildIdx, &childID);
-  return mDoc->GetAccessible(childID);
+  return nullptr;
 }
 
 ProxyAccessible*
@@ -1145,6 +1167,12 @@ ProxyAccessible::Extents(bool aNeedsScreenCoords, int32_t* aX, int32_t* aY,
                         int32_t* aWidth, int32_t* aHeight)
 {
   Unused << mDoc->SendExtents(mID, aNeedsScreenCoords, aX, aY, aWidth, aHeight);
+}
+
+void
+ProxyAccessible::DOMNodeID(nsString& aID)
+{
+  Unused << mDoc->SendDOMNodeID(mID, &aID);
 }
 
 Accessible*

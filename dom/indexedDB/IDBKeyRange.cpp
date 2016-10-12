@@ -14,15 +14,15 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
+
+using namespace mozilla::dom::indexedDB;
 
 namespace {
 
 nsresult
 GetKeyFromJSVal(JSContext* aCx,
                 JS::Handle<JS::Value> aVal,
-                Key& aKey,
-                bool aAllowUnset = false)
+                Key& aKey)
 {
   nsresult rv = aKey.SetFromJSVal(aCx, aVal);
   if (NS_FAILED(rv)) {
@@ -30,7 +30,7 @@ GetKeyFromJSVal(JSContext* aCx,
     return rv;
   }
 
-  if (aKey.IsUnset() && !aAllowUnset) {
+  if (aKey.IsUnset()) {
     return NS_ERROR_DOM_INDEXEDDB_DATA_ERR;
   }
 
@@ -98,6 +98,8 @@ IDBKeyRange::FromJSVal(JSContext* aCx,
                        JS::Handle<JS::Value> aVal,
                        IDBKeyRange** aKeyRange)
 {
+  MOZ_ASSERT_IF(!aCx, aVal.isUndefined());
+
   RefPtr<IDBKeyRange> keyRange;
 
   if (aVal.isNullOrUndefined()) {
@@ -241,8 +243,8 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(IDBKeyRange)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(IDBKeyRange)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedLowerVal)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedUpperVal)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedLowerVal)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedUpperVal)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(IDBKeyRange)
@@ -331,6 +333,54 @@ IDBKeyRange::GetUpper(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
 
   JS::ExposeValueToActiveJS(mCachedUpperVal);
   aResult.set(mCachedUpperVal);
+}
+
+bool
+IDBKeyRange::Includes(JSContext* aCx,
+                      JS::Handle<JS::Value> aValue,
+                      ErrorResult& aRv) const
+{
+  Key key;
+  aRv = GetKeyFromJSVal(aCx, aValue, key);
+  if (aRv.Failed()) {
+    return false;
+  }
+
+  MOZ_ASSERT(!(Lower().IsUnset() && Upper().IsUnset()));
+  MOZ_ASSERT_IF(IsOnly(),
+    !Lower().IsUnset() && !LowerOpen() &&
+    Lower() == Upper() && LowerOpen() == UpperOpen());
+
+  if (!Lower().IsUnset()) {
+    switch (Key::CompareKeys(Lower(), key)) {
+    case 1:
+      return false;
+    case 0:
+      // Identical keys.
+      return !LowerOpen();
+    case -1:
+      if (IsOnly()) {
+        return false;
+      }
+      break;
+    default:
+      MOZ_CRASH();
+    }
+  }
+
+  if (!Upper().IsUnset()) {
+    switch (Key::CompareKeys(key, Upper())) {
+    case 1:
+      return false;
+    case 0:
+      // Identical keys.
+      return !UpperOpen();
+    case -1:
+      break;
+    }
+  }
+
+  return true;
 }
 
 // static
@@ -447,6 +497,5 @@ IDBLocaleAwareKeyRange::Bound(const GlobalObject& aGlobal,
   return keyRange.forget();
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

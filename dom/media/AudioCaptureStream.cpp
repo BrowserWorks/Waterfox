@@ -30,7 +30,7 @@ namespace mozilla
 static const uint32_t MONO = 1;
 
 AudioCaptureStream::AudioCaptureStream(DOMMediaStream* aWrapper, TrackID aTrackId)
-  : ProcessedMediaStream(aWrapper), mTrackId(aTrackId), mTrackCreated(false)
+  : ProcessedMediaStream(aWrapper), mTrackId(aTrackId), mStarted(false), mTrackCreated(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_COUNT_CTOR(AudioCaptureStream);
@@ -44,11 +44,34 @@ AudioCaptureStream::~AudioCaptureStream()
 }
 
 void
+AudioCaptureStream::Start()
+{
+  class Message : public ControlMessage {
+  public:
+    explicit Message(AudioCaptureStream* aStream)
+      : ControlMessage(aStream), mStream(aStream) {}
+
+    virtual void Run()
+    {
+      mStream->mStarted = true;
+    }
+
+  protected:
+    AudioCaptureStream* mStream;
+  };
+  GraphImpl()->AppendMessage(MakeUnique<Message>(this));
+}
+
+void
 AudioCaptureStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
                                  uint32_t aFlags)
 {
+  if (!mStarted) {
+    return;
+  }
+
   uint32_t inputCount = mInputs.Length();
-  StreamBuffer::Track* track = EnsureTrack(mTrackId);
+  StreamTracks::Track* track = EnsureTrack(mTrackId);
   // Notify the DOM everything is in order.
   if (!mTrackCreated) {
     for (uint32_t i = 0; i < mListeners.Length(); i++) {
@@ -61,11 +84,15 @@ AudioCaptureStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
     mTrackCreated = true;
   }
 
+  if (IsFinishedOnGraphThread()) {
+    return;
+  }
+
   // If the captured stream is connected back to a object on the page (be it an
   // HTMLMediaElement with a stream as source, or an AudioContext), a cycle
   // situation occur. This can work if it's an AudioContext with at least one
   // DelayNode, but the MSG will mute the whole cycle otherwise.
-  if (mFinished || InMutedCycle() || inputCount == 0) {
+  if (InMutedCycle() || inputCount == 0) {
     track->Get<AudioSegment>()->AppendNullData(aTo - aFrom);
   } else {
     // We mix down all the tracks of all inputs, to a stereo track. Everything
@@ -74,7 +101,7 @@ AudioCaptureStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
     AudioSegment output;
     for (uint32_t i = 0; i < inputCount; i++) {
       MediaStream* s = mInputs[i]->GetSource();
-      StreamBuffer::TrackIter tracks(s->GetStreamBuffer(), MediaSegment::AUDIO);
+      StreamTracks::TrackIter tracks(s->GetStreamTracks(), MediaSegment::AUDIO);
       while (!tracks.IsEnded()) {
         AudioSegment* inputSegment = tracks->Get<AudioSegment>();
         StreamTime inputStart = s->GraphTimeToStreamTimeWithBlocking(aFrom);
@@ -94,7 +121,7 @@ AudioCaptureStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
   }
 
   // Regardless of the status of the input tracks, we go foward.
-  mBuffer.AdvanceKnownTracksTime(GraphTimeToStreamTimeWithBlocking((aTo)));
+  mTracks.AdvanceKnownTracksTime(GraphTimeToStreamTimeWithBlocking((aTo)));
 }
 
 void
@@ -102,8 +129,8 @@ AudioCaptureStream::MixerCallback(AudioDataValue* aMixedBuffer,
                                   AudioSampleFormat aFormat, uint32_t aChannels,
                                   uint32_t aFrames, uint32_t aSampleRate)
 {
-  nsAutoTArray<nsTArray<AudioDataValue>, MONO> output;
-  nsAutoTArray<const AudioDataValue*, MONO> bufferPtrs;
+  AutoTArray<nsTArray<AudioDataValue>, MONO> output;
+  AutoTArray<const AudioDataValue*, MONO> bufferPtrs;
   output.SetLength(MONO);
   bufferPtrs.SetLength(MONO);
 

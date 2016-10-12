@@ -25,7 +25,6 @@ DEFAULTS = dict(
     # base data for all tests
     basetest=dict(
         cycles=1,
-        test_name_extension='',
         profile_path='${talos}/base_profile',
         responsiveness=False,
         e10s=False,
@@ -84,15 +83,12 @@ DEFAULTS = dict(
         'extensions.checkCompatibility': False,
         'extensions.enabledScopes': 5,
         'extensions.update.notifyUser': False,
-        'xpinstall.signatures.required': False,
         'hangmonitor.timeout': 0,
         'network.proxy.http': 'localhost',
         'network.proxy.http_port': 80,
         'network.proxy.type': 1,
         'security.enable_java': False,
         'security.fileuri.strict_origin_policy': False,
-        'toolkit.telemetry.prompted': 999,
-        'toolkit.telemetry.notifiedOptOut': 999,
         'dom.send_after_paint_to_content': True,
         'security.turn_off_all_security_so_that_viruses_can_'
         'take_over_this_computer': True,
@@ -112,6 +108,10 @@ DEFAULTS = dict(
             'http://127.0.0.1/trackingprotection/tour',
         'browser.safebrowsing.enabled': False,
         'browser.safebrowsing.malware.enabled': False,
+        'browser.safebrowsing.forbiddenURIs.enabled': False,
+        'browser.safebrowsing.blockedURIs.enabled': False,
+        'privacy.trackingprotection.enabled': False,
+        'privacy.trackingprotection.pbmode.enabled': False,
         'browser.search.isUS': True,
         'browser.search.countryCode': 'US',
         'browser.selfsupport.url':
@@ -169,12 +169,6 @@ DEFAULTS = dict(
         'experiments.manifest.uri':
             'https://127.0.0.1/experiments-dummy/manifest',
         'network.http.speculative-parallel-limit': 0,
-        'browser.displayedE10SPrompt': 9999,
-        'browser.displayedE10SPrompt.1': 9999,
-        'browser.displayedE10SPrompt.2': 9999,
-        'browser.displayedE10SPrompt.3': 9999,
-        'browser.displayedE10SPrompt.4': 9999,
-        'browser.displayedE10SPrompt.5': 9999,
         'app.update.badge': False,
         'lightweightThemes.selectedThemeID': "",
         'devtools.webide.widget.enabled': False,
@@ -191,7 +185,6 @@ DEFAULTS = dict(
 # keys to generated self.config that are global overrides to tests
 GLOBAL_OVERRIDES = (
     'cycles',
-    'responsiveness',
     'sps_profile',
     'sps_profile_interval',
     'sps_profile_entries',
@@ -270,6 +263,7 @@ def update_prefs(config):
     # if e10s is enabled, set prefs accordingly
     if config['e10s']:
         config['preferences']['browser.tabs.remote.autostart'] = True
+        config['preferences']['extensions.e10sBlocksEnabling'] = False
     else:
         config['preferences']['browser.tabs.remote.autostart'] = False
         config['preferences']['browser.tabs.remote.autostart.1'] = False
@@ -355,10 +349,6 @@ def build_manifest(config, manifestName):
 def get_test(config, global_overrides, counters, test_instance):
     mozAfterPaint = getattr(test_instance, 'tpmozafterpaint', None)
 
-    # add test_name_extension to config
-    if mozAfterPaint:
-        test_instance.test_name_extension = '_paint'
-
     test_instance.update(**global_overrides)
 
     # update original value of mozAfterPaint, this could be 'false',
@@ -417,10 +407,10 @@ def get_browser_config(config):
                 'develop': False,
                 'e10s': False,
                 'process': '',
+                'framework': 'talos',
                 'repository': None,
                 'sourcestamp': None,
                 'symbols_path': None,
-                'test_name_extension': '',
                 'test_timeout': 1200,
                 'xperf_path': None,
                 'error_filename': None,

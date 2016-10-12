@@ -12,6 +12,7 @@ DIRS += [
     'aboutcache',
     'aboutcheckerboard',
     'aboutmemory',
+    'aboutperformance',
     'addoncompat',
     'alerts',
     'apppicker',
@@ -39,6 +40,7 @@ DIRS += [
     'parentalcontrols',
     'passwordmgr',
     'perf',
+    'perfmonitoring',
     'places',
     'privatebrowsing',
     'processsingleton',
@@ -48,12 +50,14 @@ DIRS += [
     'reader',
     'remotebrowserutils',
     'reflect',
+    'securityreporter',
     'sqlite',
     'startup',
     'statusfilter',
     'telemetry',
     'thumbnails',
     'timermanager',
+    'tooltiptext',
     'typeaheadfind',
     'utils',
     'urlformatter',
@@ -63,7 +67,7 @@ DIRS += [
 ]
 
 if CONFIG['MOZ_BUILD_APP'] != 'mobile/android':
-    DIRS += ['viewsource'];
+    DIRS += ['narrate', 'viewsource'];
 
     if CONFIG['NS_PRINTING']:
         DIRS += ['printing']
@@ -96,12 +100,6 @@ DIRS += ['captivedetect']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] != "gonk" and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
     DIRS += ['terminator']
-
-if CONFIG['NIGHTLY_BUILD']: # Bug 1136927 - Performance Monitoring is not ready for prime-time yet
-    DIRS += [
-      'aboutperformance',
-      'perfmonitoring',
-    ]
 
 DIRS += ['build']
 

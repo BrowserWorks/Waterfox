@@ -3,6 +3,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /* import-globals-from animation-controller.js */
 /* globals document */
 
@@ -21,7 +22,7 @@ var AnimationsPanel = {
   UI_UPDATED_EVENT: "ui-updated",
   PANEL_INITIALIZED: "panel-initialized",
 
-  initialize: Task.async(function*() {
+  initialize: Task.async(function* () {
     if (AnimationsController.destroyed) {
       console.warn("Could not initialize the animation-panel, controller " +
                    "was destroyed");
@@ -42,6 +43,9 @@ var AnimationsPanel = {
     this.timelineCurrentTimeEl = $("#timeline-current-time");
     this.rateSelectorEl = $("#timeline-rate");
 
+    this.rewindTimelineButtonEl.setAttribute("title",
+      L10N.getStr("timeline.rewindButtonTooltip"));
+
     // If the server doesn't support toggling all animations at once, hide the
     // whole global toolbar.
     if (!AnimationsController.traits.hasToggleAll) {
@@ -49,16 +53,17 @@ var AnimationsPanel = {
     }
 
     // Binding functions that need to be called in scope.
-    for (let functionName of ["onPickerStarted", "onPickerStopped",
-      "refreshAnimationsUI", "toggleAll", "onTabNavigated",
-      "onTimelineDataChanged", "playPauseTimeline", "rewindTimeline",
-      "onRateChanged"]) {
+    for (let functionName of ["onKeyDown", "onPickerStarted",
+      "onPickerStopped", "refreshAnimationsUI", "onToggleAllClicked",
+      "onTabNavigated", "onTimelineDataChanged", "onTimelinePlayClicked",
+      "onTimelineRewindClicked", "onRateChanged"]) {
       this[functionName] = this[functionName].bind(this);
     }
     let hUtils = gToolbox.highlighterUtils;
     this.togglePicker = hUtils.togglePicker.bind(hUtils);
 
-    this.animationsTimelineComponent = new AnimationsTimeline(gInspector);
+    this.animationsTimelineComponent = new AnimationsTimeline(gInspector,
+      AnimationsController.traits);
     this.animationsTimelineComponent.init(this.playersEl);
 
     if (AnimationsController.traits.hasSetPlaybackRate) {
@@ -74,7 +79,7 @@ var AnimationsPanel = {
     this.emit(this.PANEL_INITIALIZED);
   }),
 
-  destroy: Task.async(function*() {
+  destroy: Task.async(function* () {
     if (!this.initialized) {
       return;
     }
@@ -103,7 +108,7 @@ var AnimationsPanel = {
     this.destroyed.resolve();
   }),
 
-  startListeners: function() {
+  startListeners: function () {
     AnimationsController.on(AnimationsController.PLAYERS_UPDATED_EVENT,
       this.refreshAnimationsUI);
 
@@ -111,9 +116,13 @@ var AnimationsPanel = {
     gToolbox.on("picker-started", this.onPickerStarted);
     gToolbox.on("picker-stopped", this.onPickerStopped);
 
-    this.toggleAllButtonEl.addEventListener("click", this.toggleAll);
-    this.playTimelineButtonEl.addEventListener("click", this.playPauseTimeline);
-    this.rewindTimelineButtonEl.addEventListener("click", this.rewindTimeline);
+    this.toggleAllButtonEl.addEventListener("click", this.onToggleAllClicked);
+    this.playTimelineButtonEl.addEventListener(
+      "click", this.onTimelinePlayClicked);
+    this.rewindTimelineButtonEl.addEventListener(
+      "click", this.onTimelineRewindClicked);
+
+    document.addEventListener("keydown", this.onKeyDown, false);
 
     gToolbox.target.on("navigate", this.onTabNavigated);
 
@@ -125,7 +134,7 @@ var AnimationsPanel = {
     }
   },
 
-  stopListeners: function() {
+  stopListeners: function () {
     AnimationsController.off(AnimationsController.PLAYERS_UPDATED_EVENT,
       this.refreshAnimationsUI);
 
@@ -133,9 +142,14 @@ var AnimationsPanel = {
     gToolbox.off("picker-started", this.onPickerStarted);
     gToolbox.off("picker-stopped", this.onPickerStopped);
 
-    this.toggleAllButtonEl.removeEventListener("click", this.toggleAll);
-    this.playTimelineButtonEl.removeEventListener("click", this.playPauseTimeline);
-    this.rewindTimelineButtonEl.removeEventListener("click", this.rewindTimeline);
+    this.toggleAllButtonEl.removeEventListener("click",
+      this.onToggleAllClicked);
+    this.playTimelineButtonEl.removeEventListener("click",
+      this.onTimelinePlayClicked);
+    this.rewindTimelineButtonEl.removeEventListener("click",
+      this.onTimelineRewindClicked);
+
+    document.removeEventListener("keydown", this.onKeyDown, false);
 
     gToolbox.target.off("navigate", this.onTabNavigated);
 
@@ -147,28 +161,58 @@ var AnimationsPanel = {
     }
   },
 
-  togglePlayers: function(isVisible) {
+  onKeyDown: function (event) {
+    let keyEvent = Ci.nsIDOMKeyEvent;
+
+    // If the space key is pressed, it should toggle the play state of
+    // the animations displayed in the panel, or of all the animations on
+    // the page if the selected node does not have any animation on it.
+    if (event.keyCode === keyEvent.DOM_VK_SPACE) {
+      if (AnimationsController.animationPlayers.length > 0) {
+        this.playPauseTimeline().catch(ex => console.error(ex));
+      } else {
+        this.toggleAll().catch(ex => console.error(ex));
+      }
+      event.preventDefault();
+    }
+  },
+
+  togglePlayers: function (isVisible) {
     if (isVisible) {
       document.body.removeAttribute("empty");
       document.body.setAttribute("timeline", "true");
     } else {
       document.body.setAttribute("empty", "true");
       document.body.removeAttribute("timeline");
+      $("#error-type").textContent =
+        L10N.getStr("panel.invalidElementSelected");
     }
   },
 
-  onPickerStarted: function() {
+  onPickerStarted: function () {
     this.pickerButtonEl.setAttribute("checked", "true");
   },
 
-  onPickerStopped: function() {
+  onPickerStopped: function () {
     this.pickerButtonEl.removeAttribute("checked");
   },
 
-  toggleAll: Task.async(function*() {
+  onToggleAllClicked: function () {
+    this.toggleAll().catch(ex => console.error(ex));
+  },
+
+  /**
+   * Toggle (pause/play) all animations in the current target
+   * and update the UI the toggleAll button.
+   */
+  toggleAll: Task.async(function* () {
     this.toggleAllButtonEl.classList.toggle("paused");
     yield AnimationsController.toggleAll();
   }),
+
+  onTimelinePlayClicked: function () {
+    this.playPauseTimeline().catch(ex => console.error(ex));
+  },
 
   /**
    * Depending on the state of the timeline either pause or play the animations
@@ -176,42 +220,57 @@ var AnimationsPanel = {
    * If the animations are finished, this will play them from the start again.
    * If the animations are playing, this will pause them.
    * If the animations are paused, this will resume them.
+   *
+   * @return {Promise} Resolves when the playState is changed and the UI
+   * is refreshed
    */
-  playPauseTimeline: function() {
-    AnimationsController.toggleCurrentAnimations(this.timelineData.isMoving)
-                        .then(() => this.refreshAnimationsStateAndUI())
-                        .catch(e => console.error(e));
+  playPauseTimeline: function () {
+    return AnimationsController
+      .toggleCurrentAnimations(this.timelineData.isMoving)
+      .then(() => this.refreshAnimationsStateAndUI());
+  },
+
+  onTimelineRewindClicked: function () {
+    this.rewindTimeline().catch(ex => console.error(ex));
   },
 
   /**
    * Reset the startTime of all current animations shown in the timeline and
    * pause them.
+   *
+   * @return {Promise} Resolves when currentTime is set and the UI is refreshed
    */
-  rewindTimeline: function() {
-    AnimationsController.setCurrentTimeAll(0, true)
-                        .then(() => this.refreshAnimationsStateAndUI())
-                        .catch(e => console.error(e));
+  rewindTimeline: function () {
+    return AnimationsController
+      .setCurrentTimeAll(0, true)
+      .then(() => this.refreshAnimationsStateAndUI());
   },
 
   /**
    * Set the playback rate of all current animations shown in the timeline to
    * the value of this.rateSelectorEl.
    */
-  onRateChanged: function(e, rate) {
+  onRateChanged: function (e, rate) {
     AnimationsController.setPlaybackRateAll(rate)
                         .then(() => this.refreshAnimationsStateAndUI())
-                        .catch(e => console.error(e));
+                        .catch(ex => console.error(ex));
   },
 
-  onTabNavigated: function() {
+  onTabNavigated: function () {
     this.toggleAllButtonEl.classList.remove("paused");
   },
 
-  onTimelineDataChanged: function(e, data) {
+  onTimelineDataChanged: function (e, data) {
     this.timelineData = data;
     let {isMoving, isUserDrag, time} = data;
 
     this.playTimelineButtonEl.classList.toggle("paused", !isMoving);
+
+    let l10nPlayProperty = isMoving ? "timeline.resumedButtonTooltip" :
+                                      "timeline.pausedButtonTooltip";
+
+    this.playTimelineButtonEl.setAttribute("title",
+      L10N.getStr(l10nPlayProperty));
 
     // If the timeline data changed as a result of the user dragging the
     // scrubber, then pause all animations and set their currentTimes.
@@ -221,18 +280,17 @@ var AnimationsPanel = {
       this.setCurrentTimeAllPromise =
         AnimationsController.setCurrentTimeAll(time, true)
                             .catch(error => console.error(error))
-                            .then(() => this.setCurrentTimeAllPromise = null);
+                            .then(() => {
+                              this.setCurrentTimeAllPromise = null;
+                            });
     }
 
     this.displayTimelineCurrentTime();
   },
 
-  displayTimelineCurrentTime: function() {
-    let {isMoving, isPaused, time} = this.timelineData;
-
-    if (isMoving || isPaused) {
-      this.timelineCurrentTimeEl.textContent = formatStopwatchTime(time);
-    }
+  displayTimelineCurrentTime: function () {
+    let {time} = this.timelineData;
+    this.timelineCurrentTimeEl.textContent = formatStopwatchTime(time);
   },
 
   /**
@@ -240,7 +298,7 @@ var AnimationsPanel = {
    * useful after the playState or currentTime has been changed and in case the
    * animations aren't auto-refreshing), and then refresh the UI.
    */
-  refreshAnimationsStateAndUI: Task.async(function*() {
+  refreshAnimationsStateAndUI: Task.async(function* () {
     for (let player of AnimationsController.animationPlayers) {
       yield player.refreshState();
     }
@@ -251,9 +309,7 @@ var AnimationsPanel = {
    * Refresh the list of animations UI. This will empty the panel and re-render
    * the various components again.
    */
-  refreshAnimationsUI: Task.async(function*() {
-    let done = gInspector.updating("animationspanel");
-
+  refreshAnimationsUI: Task.async(function* () {
     // Empty the whole panel first.
     this.togglePlayers(true);
 
@@ -272,12 +328,10 @@ var AnimationsPanel = {
     if (!AnimationsController.animationPlayers.length) {
       this.togglePlayers(false);
       this.emit(this.UI_UPDATED_EVENT);
-      done();
       return;
     }
 
     this.emit(this.UI_UPDATED_EVENT);
-    done();
   })
 };
 

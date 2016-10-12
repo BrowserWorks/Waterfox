@@ -578,14 +578,21 @@ CompileError::throwError(JSContext* cx)
     // as the non-top-level "load", "eval", or "compile" native function
     // returns false, the top-level reporter will eventually receive the
     // uncaught exception report.
-    if (!ErrorToException(cx, message, &report, nullptr, nullptr))
-        CallErrorReporter(cx, message, &report);
+    if (ErrorToException(cx, message, &report, nullptr, nullptr))
+        return;
+
+    // Like ReportError, don't call the error reporter if the embedding is
+    // responsible for handling exceptions. In this case the error reporter
+    // must only be used for warnings.
+    if (cx->options().autoJSAPIOwnsErrorReporting() && !JSREPORT_IS_WARNING(report.flags))
+        return;
+
+    CallErrorReporter(cx, message, &report);
 }
 
 CompileError::~CompileError()
 {
-    js_free((void*)report.uclinebuf);
-    js_free((void*)report.linebuf);
+    js_free((void*)report.linebuf());
     js_free((void*)report.ucmessage);
     js_free(message);
     message = nullptr;
@@ -637,7 +644,6 @@ TokenStream::reportCompileErrorNumberVA(uint32_t offset, unsigned flags, unsigne
     bool callerFilename = false;
     if (offset != NoOffset && !err.report.filename && cx->isJSContext()) {
         NonBuiltinFrameIter iter(cx->asJSContext(),
-                                 FrameIter::ALL_CONTEXTS, FrameIter::GO_THROUGH_SAVED,
                                  FrameIter::FOLLOW_DEBUGGER_EVAL_PREV_LINK,
                                  cx->compartment()->principals());
         if (!iter.done() && iter.filename()) {
@@ -691,22 +697,17 @@ TokenStream::reportCompileErrorNumberVA(uint32_t offset, unsigned flags, unsigne
         // Create the windowed strings.
         StringBuffer windowBuf(cx);
         if (!windowBuf.append(userbuf.rawCharPtrAt(windowStart), windowLength) ||
-            !windowBuf.append((char16_t)0))
+            !windowBuf.append('\0'))
+        {
+            return false;
+        }
+
+        // The window into the offending source line, without final \n.
+        UniqueTwoByteChars linebuf(windowBuf.stealChars());
+        if (!linebuf)
             return false;
 
-        // Unicode and char versions of the window into the offending source
-        // line, without final \n.
-        err.report.uclinebuf = windowBuf.stealChars();
-        if (!err.report.uclinebuf)
-            return false;
-
-        mozilla::Range<const char16_t> tbchars(err.report.uclinebuf, windowLength);
-        err.report.linebuf = JS::LossyTwoByteCharsToNewLatin1CharsZ(cx, tbchars).c_str();
-        if (!err.report.linebuf)
-            return false;
-
-        err.report.tokenptr = err.report.linebuf + (offset - windowStart);
-        err.report.uctokenptr = err.report.uclinebuf + (offset - windowStart);
+        err.report.initLinebuf(linebuf.release(), windowLength, offset - windowStart);
     }
 
     if (cx->isJSContext())
@@ -1833,7 +1834,7 @@ TokenStream::getStringOrTemplateToken(int untilChar, Token** tp)
             if (c == '\r') {
                 c = '\n';
                 if (userbuf.peekRawChar() == '\n')
-                    skipChars(1);
+                    skipCharsIgnoreEOL(1);
             }
             updateLineInfoForEOL();
             updateFlagsForEOL();

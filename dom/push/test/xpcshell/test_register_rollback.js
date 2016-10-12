@@ -29,7 +29,6 @@ add_task(function* test_register_rollback() {
   PushServiceWebSocket._generateID = () => channelID;
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db: makeStub(db, {
       put(prev, record) {
         return Promise.reject('universe has imploded');
@@ -59,6 +58,7 @@ add_task(function* test_register_rollback() {
         },
         onUnregister(request) {
           equal(request.channelID, channelID, 'Unregister: wrong channel ID');
+          equal(request.code, 200, 'Expected manual unregister reason');
           this.serverSendMsg(JSON.stringify({
             messageType: 'unregister',
             status: 200,
@@ -75,14 +75,13 @@ add_task(function* test_register_rollback() {
     PushService.register({
       scope: 'https://example.com/storage-error',
       originAttributes: ChromeUtils.originAttributesToSuffix(
-        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
     }),
     'Expected error for unregister database failure'
   );
 
   // Should send an out-of-band unregister request.
-  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
-    'Unregister request timed out');
+  yield unregisterPromise;
   equal(handshakes, 1, 'Wrong handshake count');
   equal(registers, 1, 'Wrong register count');
 });

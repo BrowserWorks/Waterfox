@@ -21,14 +21,22 @@
 #include "nsStringGlue.h"
 #include "nsTArray.h"
 #include "mozilla/dom/JSSlots.h"
+#include "mozilla/fallible.h"
 #include "nsMathUtils.h"
 #include "nsStringBuffer.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/Preferences.h"
 
 class nsGlobalWindow;
 class nsIPrincipal;
 class nsScriptNameSpaceManager;
 class nsIMemoryReporterCallback;
+
+namespace mozilla {
+namespace dom {
+class Exception;
+}
+}
 
 typedef void (* xpcGCCallback)(JSGCStatus status);
 
@@ -306,14 +314,22 @@ inline bool StringToJsval(JSContext* cx, nsAString& str, JS::MutableHandleValue 
 inline bool
 NonVoidStringToJsval(JSContext* cx, const nsAString& str, JS::MutableHandleValue rval)
 {
-    nsString mutableCopy(str);
+    nsString mutableCopy;
+    if (!mutableCopy.Assign(str, mozilla::fallible)) {
+        JS_ReportOutOfMemory(cx);
+        return false;
+    }
     return NonVoidStringToJsval(cx, mutableCopy, rval);
 }
 
 inline bool
 StringToJsval(JSContext* cx, const nsAString& str, JS::MutableHandleValue rval)
 {
-    nsString mutableCopy(str);
+    nsString mutableCopy;
+    if (!mutableCopy.Assign(str, mozilla::fallible)) {
+        JS_ReportOutOfMemory(cx);
+        return false;
+    }
     return StringToJsval(cx, mutableCopy, rval);
 }
 
@@ -368,8 +384,7 @@ void SetLocationForGlobal(JSObject* global, nsIURI* locationURI);
 // of JS::ZoneStats.
 class ZoneStatsExtras {
 public:
-    ZoneStatsExtras()
-    {}
+    ZoneStatsExtras() {}
 
     nsCString pathPrefix;
 
@@ -382,14 +397,11 @@ private:
 // of JS::CompartmentStats.
 class CompartmentStatsExtras {
 public:
-    CompartmentStatsExtras()
-      : sizeOfXPCPrivate(0)
-    {}
+    CompartmentStatsExtras() {}
 
     nsCString jsPathPrefix;
     nsCString domPathPrefix;
     nsCOMPtr<nsIURI> location;
-    size_t sizeOfXPCPrivate;
 
 private:
     CompartmentStatsExtras(const CompartmentStatsExtras& other) = delete;
@@ -477,13 +489,6 @@ AddonWindowOrNull(JSObject* aObj);
 nsGlobalWindow*
 CurrentWindowOrNull(JSContext* cx);
 
-// Error reporter used when there is no associated DOM window on to which to
-// report errors and warnings.
-//
-// Note - This is temporarily implemented in nsJSEnvironment.cpp.
-void
-SystemErrorReporter(JSContext* cx, const char* message, JSErrorReport* rep);
-
 void
 SimulateActivityCallback(bool aActive);
 
@@ -514,12 +519,26 @@ class ErrorReport {
 
     void Init(JSErrorReport* aReport, const char* aFallbackMessage,
               bool aIsChrome, uint64_t aWindowID);
+    void Init(JSContext* aCx, mozilla::dom::Exception* aException,
+              bool aIsChrome, uint64_t aWindowID);
+    // Log the error report to the console.  Which console will depend on the
+    // window id it was initialized with.
     void LogToConsole();
+    // Log to console, using the given stack object (which should be a stack of
+    // the sort that JS::CaptureCurrentStack produces).  aStack is allowed to be
+    // null.
     void LogToConsoleWithStack(JS::HandleObject aStack);
+
+    // Produce an error event message string from the given JSErrorReport.  Note
+    // that this may produce an empty string if aReport doesn't have a
+    // message attached.
+    static void ErrorReportToMessageString(JSErrorReport* aReport,
+                                           nsAString& aString);
 
   public:
 
     nsCString mCategory;
+    nsString mErrorMsgName;
     nsString mErrorMsg;
     nsString mFileName;
     nsString mSourceLine;
@@ -534,8 +553,23 @@ class ErrorReport {
 };
 
 void
-DispatchScriptErrorEvent(nsPIDOMWindow* win, JSRuntime* rt, xpc::ErrorReport* xpcReport,
+DispatchScriptErrorEvent(nsPIDOMWindowInner* win, JSRuntime* rt, xpc::ErrorReport* xpcReport,
                          JS::Handle<JS::Value> exception);
+
+// Get a stack of the sort that can be passed to
+// xpc::ErrorReport::LogToConsoleWithStack from the given exception value.  Can
+// return null if the exception value doesn't have an associated stack.  The
+// returned stack, if any, may also not be in the same compartment as
+// exceptionValue.
+//
+// The "win" argument passed in here should be the same as the window whose
+// WindowID() is used to initialize the xpc::ErrorReport.  This may be null, of
+// course.  If it's not null, this function may return a null stack object if
+// the window is far enough gone, because in those cases we don't want to have
+// the stack in the console message keeping the window alive.
+JSObject*
+FindExceptionStackForConsoleReport(nsPIDOMWindowInner* win,
+                                   JS::HandleValue exceptionValue);
 
 // Return a name for the compartment.
 // This function makes reasonable efforts to make this name both mostly human-readable
@@ -549,29 +583,21 @@ GetJSRuntime();
 void AddGCCallback(xpcGCCallback cb);
 void RemoveGCCallback(xpcGCCallback cb);
 
+inline bool
+IsInAutomation()
+{
+    const char* prefName =
+      "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer";
+    char *s;
+    return mozilla::Preferences::GetBool(prefName) &&
+        (s = getenv("MOZ_DISABLE_NONLOCAL_CONNECTIONS")) &&
+        !!strncmp(s, "0", 1);
+}
+
 } // namespace xpc
 
 namespace mozilla {
 namespace dom {
-
-typedef JSObject*
-(*DefineInterface)(JSContext* cx, JS::Handle<JSObject*> global,
-                   JS::Handle<jsid> id, bool defineOnGlobal);
-
-typedef JSObject*
-(*ConstructNavigatorProperty)(JSContext* cx, JS::Handle<JSObject*> naviObj);
-
-// Check whether a constructor should be enabled for the given object.
-// Note that the object should NOT be an Xray, since Xrays will end up
-// defining constructors on the underlying object.
-// This is a typedef for the function type itself, not the function
-// pointer, so it's more obvious that pointers to a ConstructorEnabled
-// can be null.
-typedef bool
-(ConstructorEnabled)(JSContext* cx, JS::Handle<JSObject*> obj);
-
-void
-Register(nsScriptNameSpaceManager* aNameSpaceManager);
 
 /**
  * A test for whether WebIDL methods that should only be visible to

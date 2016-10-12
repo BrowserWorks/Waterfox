@@ -9,12 +9,24 @@ XPCSHELL_NAME = "xpcshell"
 EXE_SUFFIX = ""
 DISABLE_SCREEN_SAVER = True
 ADJUST_MOUSE_AND_SCREEN = False
+
+# Note: keep these Valgrind .sup file names consistent with those
+# in testing/mochitest/mochitest_options.py.
+VALGRIND_SUPP_DIR = os.path.join(os.getcwd(), "build/tests/mochitest")
+VALGRIND_SUPP_CROSS_ARCH = os.path.join(VALGRIND_SUPP_DIR,
+                                        "cross-architecture.sup")
+VALGRIND_SUPP_ARCH = None
+
 if platform.architecture()[0] == "64bit":
     TOOLTOOL_MANIFEST_PATH = "config/tooltool-manifests/linux64/releng.manifest"
     MINIDUMP_STACKWALK_PATH = "linux64-minidump_stackwalk"
+    VALGRIND_SUPP_ARCH = os.path.join(VALGRIND_SUPP_DIR,
+                                      "x86_64-redhat-linux-gnu.sup")
 else:
     TOOLTOOL_MANIFEST_PATH = "config/tooltool-manifests/linux32/releng.manifest"
     MINIDUMP_STACKWALK_PATH = "linux32-minidump_stackwalk"
+    VALGRIND_SUPP_ARCH = os.path.join(VALGRIND_SUPP_DIR,
+                                      "i386-redhat-linux-gnu.sup")
 
 #####
 config = {
@@ -36,7 +48,6 @@ config = {
     "exe_suffix": EXE_SUFFIX,
     "run_file_names": {
         "mochitest": "runtests.py",
-        "webapprt": "runtests.py",
         "reftest": "runreftest.py",
         "xpcshell": "runxpcshelltests.py",
         "cppunittest": "runcppunittests.py",
@@ -56,7 +67,6 @@ config = {
     ],
     "specific_tests_zip_dirs": {
         "mochitest": ["mochitest/*"],
-        "webapprt": ["mochitest/*"],
         "reftest": ["reftest/*", "jsreftest/*"],
         "xpcshell": ["xpcshell/*"],
         "cppunittest": ["cppunittest/*"],
@@ -80,10 +90,12 @@ config = {
                 "--no-slow",
                 "--no-progress",
                 "--format=automation",
-                "--jitflags=all"
+                "--jitflags=all",
+                "--timeout=970" # Keep in sync with run_timeout below.
             ],
             "run_filename": "jit_test.py",
-            "testsdir": "jit-test/jit-test"
+            "testsdir": "jit-test/jit-test",
+            "run_timeout": 1000 # Keep in sync with --timeout above.
         },
         "luciddream-emulator": {
             "options": [
@@ -119,6 +131,7 @@ config = {
                 "--log-errorsummary=%(error_summary_file)s",
                 "--use-test-media-devices",
                 "--screenshot-on-fail",
+                "--cleanup-crashes",
             ],
             "run_filename": "runtests.py",
             "testsdir": "mochitest"
@@ -135,6 +148,7 @@ config = {
             "options": [
                 "--binary=%(binary_path)s",
                 "--testing-modules-dir=test/modules",
+                "--plugins-path=%(test_plugin_path)s",
                 "--symbols-path=%(symbols_path)s"
             ],
             "run_filename": "runtestlist.py",
@@ -145,24 +159,13 @@ config = {
                 "--appname=%(binary_path)s",
                 "--utility-path=tests/bin",
                 "--extra-profile-file=tests/bin/plugins",
-                "--symbols-path=%(symbols_path)s"
+                "--symbols-path=%(symbols_path)s",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
+                "--cleanup-crashes",
             ],
             "run_filename": "runreftest.py",
             "testsdir": "reftest"
-        },
-        "webapprt": {
-            "options": [
-                "--app=%(app_path)s",
-                "--utility-path=tests/bin",
-                "--extra-profile-file=tests/bin/plugins",
-                "--symbols-path=%(symbols_path)s",
-                "--certificate-path=tests/certs",
-                "--console-level=INFO",
-                "--testing-modules-dir=tests/modules",
-                "--quiet"
-            ],
-            "run_filename": "runtests.py",
-            "testsdir": "mochitest"
         },
         "xpcshell": {
             "options": [
@@ -188,26 +191,33 @@ config = {
     },
     # local mochi suites
     "all_mochitest_suites": {
+        "valgrind-plain": ["--valgrind=/usr/bin/valgrind",
+                           "--valgrind-supp-files=" + VALGRIND_SUPP_ARCH +
+                               "," + VALGRIND_SUPP_CROSS_ARCH,
+                           "--timeout=900", "--max-timeouts=50"],
         "plain": [],
+        "plain-gpu": ["--subsuite=gpu"],
+        "plain-clipboard": ["--subsuite=clipboard"],
         "plain-chunked": ["--chunk-by-dir=4"],
-        "mochitest-push": ["--subsuite=push"],
+        "mochitest-media": ["--subsuite=media"],
         "chrome": ["--chrome"],
+        "chrome-gpu": ["--chrome", "--subsuite=gpu"],
+        "chrome-clipboard": ["--chrome", "--subsuite=clipboard"],
         "chrome-chunked": ["--chrome", "--chunk-by-dir=4"],
         "browser-chrome": ["--browser-chrome"],
+        "browser-chrome-gpu": ["--browser-chrome", "--subsuite=gpu"],
+        "browser-chrome-clipboard": ["--browser-chrome", "--subsuite=clipboard"],
         "browser-chrome-chunked": ["--browser-chrome", "--chunk-by-runtime"],
         "browser-chrome-addons": ["--browser-chrome", "--chunk-by-runtime", "--tag=addons"],
-        "browser-chrome-coverage": ["--timeout=1200"],
+        "browser-chrome-coverage": ["--browser-chrome", "--chunk-by-runtime", "--timeout=1200"],
+        "browser-chrome-screenshots": ["--browser-chrome", "--subsuite=screenshots"],
         "mochitest-gl": ["--subsuite=webgl"],
         "mochitest-devtools-chrome": ["--browser-chrome", "--subsuite=devtools"],
         "mochitest-devtools-chrome-chunked": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-runtime"],
         "jetpack-package": ["--jetpack-package"],
+        "jetpack-package-clipboard": ["--jetpack-package", "--subsuite=clipboard"],
         "jetpack-addon": ["--jetpack-addon"],
         "a11y": ["--a11y"],
-    },
-    # local webapprt suites
-    "all_webapprt_suites": {
-        "chrome": ["--webapprt-chrome", "--browser-arg=-test-mode"],
-        "content": ["--webapprt-content"]
     },
     # local reftest suites
     "all_reftest_suites": {
@@ -232,7 +242,7 @@ config = {
             "options": ["--suite=reftest",
                         "--setpref=browser.tabs.remote=true",
                         "--setpref=browser.tabs.remote.autostart=true",
-                        "--setpref=layers.offmainthreadcomposition.testing.enabled=true",
+                        "--setpref=extensions.e10sBlocksEnabling=false",
                         "--setpref=layers.async-pan-zoom.enabled=true"],
             "tests": ["tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list"]
         },
@@ -248,7 +258,7 @@ config = {
             "options": ["--suite=crashtest",
                         "--setpref=browser.tabs.remote=true",
                         "--setpref=browser.tabs.remote.autostart=true",
-                        "--setpref=layers.offmainthreadcomposition.testing.enabled=true",
+                        "--setpref=extensions.e10sBlocksEnabling=false",
                         "--setpref=layers.async-pan-zoom.enabled=true"],
             "tests": ["tests/reftest/tests/testing/crashtest/crashtests.list"]
         },
@@ -256,13 +266,13 @@ config = {
     "all_xpcshell_suites": {
         "xpcshell": {
             "options": ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
-                        "--manifest=tests/xpcshell/tests/all-test-dirs.list"],
+                        "--manifest=tests/xpcshell/tests/xpcshell.ini"],
             "tests": []
         },
         "xpcshell-addons": {
             "options": ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
                         "--tag=addons",
-                        "--manifest=tests/xpcshell/tests/all-test-dirs.list"],
+                        "--manifest=tests/xpcshell/tests/xpcshell.ini"],
             "tests": []
         },
     },

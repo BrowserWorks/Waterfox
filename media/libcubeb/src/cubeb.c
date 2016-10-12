@@ -384,7 +384,7 @@ int cubeb_stream_device_destroy(cubeb_stream * stream,
 int cubeb_stream_register_device_changed_callback(cubeb_stream * stream,
                                                   cubeb_device_changed_callback device_changed_callback)
 {
-  if (!stream || !device_changed_callback) {
+  if (!stream) {
     return CUBEB_ERROR_INVALID_PARAMETER;
   }
 
@@ -425,6 +425,10 @@ int cubeb_device_collection_destroy(cubeb_device_collection * collection)
 
 int cubeb_device_info_destroy(cubeb_device_info * info)
 {
+  if (info == NULL) {
+    return CUBEB_ERROR_INVALID_PARAMETER;
+  }
+
   free(info->device_id);
   free(info->friendly_name);
   free(info->group_id);
@@ -439,8 +443,13 @@ int cubeb_register_device_collection_changed(cubeb * context,
                                              cubeb_device_collection_changed_callback callback,
                                              void * user_ptr)
 {
-  if ((devtype & (CUBEB_DEVICE_TYPE_INPUT | CUBEB_DEVICE_TYPE_OUTPUT)) == 0)
+  if (context == NULL || (devtype & (CUBEB_DEVICE_TYPE_INPUT | CUBEB_DEVICE_TYPE_OUTPUT)) == 0)
     return CUBEB_ERROR_INVALID_PARAMETER;
-  return CUBEB_ERROR_NOT_SUPPORTED;
+
+  if (!context->ops->register_device_collection_changed) {
+    return CUBEB_ERROR_NOT_SUPPORTED;
+  }
+
+  return context->ops->register_device_collection_changed(context, devtype, callback, user_ptr);
 }
 

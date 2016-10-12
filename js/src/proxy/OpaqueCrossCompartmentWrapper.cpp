@@ -22,7 +22,7 @@ OpaqueCrossCompartmentWrapper::getOwnPropertyDescriptor(JSContext* cx,
 
 bool
 OpaqueCrossCompartmentWrapper::defineProperty(JSContext* cx, HandleObject wrapper, HandleId id,
-                                              Handle<JSPropertyDescriptor> desc,
+                                              Handle<PropertyDescriptor> desc,
                                               ObjectOpResult& result) const
 {
     return result.succeed();
@@ -62,6 +62,15 @@ OpaqueCrossCompartmentWrapper::setPrototype(JSContext* cx, HandleObject proxy, H
                                             ObjectOpResult& result) const
 {
     return result.succeed();
+}
+
+bool
+OpaqueCrossCompartmentWrapper::getPrototypeIfOrdinary(JSContext* cx, HandleObject proxy,
+                                                      bool* isOrdinary,
+                                                      MutableHandleObject protop) const
+{
+    *isOrdinary = false;
+    return true;
 }
 
 bool
@@ -131,7 +140,7 @@ bool
 OpaqueCrossCompartmentWrapper::getPropertyDescriptor(JSContext* cx,
                                                      HandleObject wrapper,
                                                      HandleId id,
-                                                     MutableHandle<JSPropertyDescriptor> desc) const
+                                                     MutableHandle<PropertyDescriptor> desc) const
 {
     return BaseProxyHandler::getPropertyDescriptor(cx, wrapper, id, desc);
 }

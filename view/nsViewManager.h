@@ -89,7 +89,8 @@ public:
    * @param aWidth of window in twips
    * @param aHeight of window in twips
    */
-  void SetWindowDimensions(nscoord aWidth, nscoord aHeight);
+  void SetWindowDimensions(nscoord aWidth, nscoord aHeight,
+                           bool aDelayResize = false);
 
   /**
    * Do any resizes that are pending.
@@ -361,6 +362,7 @@ private:
   LayoutDeviceIntRect ViewToWidget(nsView* aView, const nsRect& aRect) const;
 
   void DoSetWindowDimensions(nscoord aWidth, nscoord aHeight);
+  bool ShouldDelayResize() const;
 
   bool IsPainting() const {
     return RootViewManager()->mPainting;

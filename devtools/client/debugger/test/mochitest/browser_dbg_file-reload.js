@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that source contents are invalidated when the target navigates.
@@ -9,22 +11,25 @@ const TAB_URL = EXAMPLE_URL + "doc_random-javascript.html";
 const JS_URL = EXAMPLE_URL + "sjs_random-javascript.sjs";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: JS_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gPanel = aPanel;
     const gDebugger = aPanel.panelWin;
     const gEditor = gDebugger.DebuggerView.editor;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
-    const constants = gDebugger.require('./content/constants');
+    const queries = gDebugger.require("./content/queries");
+    const constants = gDebugger.require("./content/constants");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, JS_URL);
+    Task.spawn(function* () {
       let source = queries.getSelectedSource(getState());
 
       is(queries.getSourceCount(getState()), 1,
-        "There should be one source displayed in the view.")
+        "There should be one source displayed in the view.");
       is(source.url, JS_URL,
         "The correct source is currently selected in the view.");
       ok(gEditor.getText().includes("bacon"),
@@ -41,7 +46,7 @@ function test() {
       yield reloadActiveTab(aPanel, gDebugger.EVENTS.SOURCE_SHOWN);
 
       is(queries.getSourceCount(getState()), 1,
-        "There should be one source displayed in the view.")
+        "There should be one source displayed in the view.");
       is(source.url, JS_URL,
         "The correct source is currently selected in the view.");
       ok(gEditor.getText().includes("bacon"),

@@ -8,10 +8,22 @@ var Cu = Components.utils;
 var Cr = Components.results;
 var CC = Components.Constructor;
 
+// Populate AppInfo before anything (like the shared loader) accesses
+// System.appinfo, which is a lazy getter.
+const _appInfo = {};
+Cu.import("resource://testing-common/AppInfo.jsm", _appInfo);
+_appInfo.updateAppInfo({
+  ID: "devtools@tests.mozilla.org",
+  name: "devtools-tests",
+  version: "1",
+  platformVersion: "42",
+  crashReporter: true,
+});
+
 const { require, loader } = Cu.import("resource://devtools/shared/Loader.jsm", {});
-const { worker } = Cu.import("resource://devtools/shared/worker/loader.js", {})
+const { worker } = Cu.import("resource://devtools/shared/worker/loader.js", {});
 const promise = require("promise");
-const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+const { Task } = require("devtools/shared/task");
 
 const Services = require("Services");
 // Always log packets when running tests. runxpcshelltests.py will throw
@@ -31,8 +43,23 @@ const { addDebuggerToGlobal } = Cu.import("resource://gre/modules/jsdebugger.jsm
 const systemPrincipal = Cc["@mozilla.org/systemprincipal;1"].createInstance(Ci.nsIPrincipal);
 
 var loadSubScript = Cc[
-  '@mozilla.org/moz/jssubscript-loader;1'
+  "@mozilla.org/moz/jssubscript-loader;1"
 ].getService(Ci.mozIJSSubScriptLoader).loadSubScript;
+
+/**
+ * Initializes any test that needs to work with add-ons.
+ */
+function startupAddonsManager() {
+  // Create a directory for extensions.
+  const profileDir = do_get_profile().clone();
+  profileDir.append("extensions");
+
+  const internalManager = Cc["@mozilla.org/addons/integration;1"]
+    .getService(Ci.nsIObserver)
+    .QueryInterface(Ci.nsITimerCallback);
+
+  internalManager.observe(null, "addons-startup", null);
+}
 
 /**
  * Create a `run_test` function that runs the given generator in a task after
@@ -69,7 +96,7 @@ function makeMemoryActorTest(testGeneratorFunction) {
             yield memoryFront.attach();
             yield* testGeneratorFunction(client, memoryFront);
             yield memoryFront.detach();
-          } catch(err) {
+          } catch (err) {
             DevToolsUtils.reportException("makeMemoryActorTest", err);
             ok(false, "Got an error: " + err);
           }
@@ -108,7 +135,7 @@ function makeFullRuntimeMemoryActorTest(testGeneratorFunction) {
             yield memoryFront.attach();
             yield* testGeneratorFunction(client, memoryFront);
             yield memoryFront.detach();
-          } catch(err) {
+          } catch (err) {
             DevToolsUtils.reportException("makeMemoryActorTest", err);
             ok(false, "Got an error: " + err);
           }
@@ -130,11 +157,7 @@ function createTestGlobal(name) {
 
 function connect(client) {
   dump("Connecting client.\n");
-  return new Promise(function (resolve) {
-    client.connect(function () {
-      resolve();
-    });
-  });
+  return client.connect();
 }
 
 function close(client) {
@@ -228,8 +251,8 @@ tryImport("resource://gre/modules/Console.jsm");
 function testExceptionHook(ex) {
   try {
     do_report_unexpected_exception(ex);
-  } catch(ex) {
-    return {throw: ex}
+  } catch (ex) {
+    return {throw: ex};
   }
   return undefined;
 }
@@ -372,10 +395,13 @@ function attachTestThread(aClient, aTitle, aCallback) {
 // thread, and then resume it. Pass |aCallback| the thread's response to
 // the 'resume' packet, a TabClient for the tab, and a ThreadClient for the
 // thread.
-function attachTestTabAndResume(aClient, aTitle, aCallback) {
-  attachTestThread(aClient, aTitle, function(aResponse, aTabClient, aThreadClient) {
-    aThreadClient.resume(function (aResponse) {
-      aCallback(aResponse, aTabClient, aThreadClient);
+function attachTestTabAndResume(aClient, aTitle, aCallback = () => {}) {
+  return new Promise((resolve, reject) => {
+    attachTestThread(aClient, aTitle, function (aResponse, aTabClient, aThreadClient) {
+      aThreadClient.resume(function (aResponse) {
+        aCallback(aResponse, aTabClient, aThreadClient);
+        resolve([aResponse, aTabClient, aThreadClient]);
+      });
     });
   });
 }
@@ -406,7 +432,7 @@ function startTestDebuggerServer(title, server = DebuggerServer) {
 
 function finishClient(aClient)
 {
-  aClient.close(function() {
+  aClient.close(function () {
     DebuggerServer.destroy();
     do_test_finished();
   });
@@ -423,11 +449,11 @@ function get_chrome_actors(callback)
   DebuggerServer.allowChromeProcess = true;
 
   let client = new DebuggerClient(DebuggerServer.connectPipe());
-  client.connect(() => {
-    client.getProcess().then(response => {
+  client.connect()
+    .then(() => client.getProcess())
+    .then(response => {
       callback(client, response.form);
     });
-  });
 }
 
 function getChromeActors(client, server = DebuggerServer) {
@@ -438,7 +464,7 @@ function getChromeActors(client, server = DebuggerServer) {
 /**
  * Takes a relative file path and returns the absolute file url for it.
  */
-function getFileUrl(aName, aAllowMissing=false) {
+function getFileUrl(aName, aAllowMissing = false) {
   let file = do_get_file(aName, aAllowMissing);
   return Services.io.newFileURI(file).spec;
 }
@@ -447,7 +473,7 @@ function getFileUrl(aName, aAllowMissing=false) {
  * Returns the full path of the file with the specified name in a
  * platform-independent and URL-like form.
  */
-function getFilePath(aName, aAllowMissing=false, aUsePlatformPathSeparator=false)
+function getFilePath(aName, aAllowMissing = false, aUsePlatformPathSeparator = false)
 {
   let file = do_get_file(aName, aAllowMissing);
   let path = Services.io.newFileURI(file).spec;
@@ -514,7 +540,7 @@ function TracingTransport(childTransport) {
 
 TracingTransport.prototype = {
   // Remove actor names
-  normalize: function(packet) {
+  normalize: function (packet) {
     return JSON.parse(JSON.stringify(packet, (key, value) => {
       if (key === "to" || key === "from" || key === "actor") {
         return "<actorid>";
@@ -522,37 +548,37 @@ TracingTransport.prototype = {
       return value;
     }));
   },
-  send: function(packet) {
+  send: function (packet) {
     this.packets.push({
       type: "sent",
       packet: this.normalize(packet)
     });
     return this.child.send(packet);
   },
-  close: function() {
+  close: function () {
     return this.child.close();
   },
-  ready: function() {
+  ready: function () {
     return this.child.ready();
   },
-  onPacket: function(packet) {
+  onPacket: function (packet) {
     this.packets.push({
       type: "received",
       packet: this.normalize(packet)
     });
     this.hooks.onPacket(packet);
   },
-  onClosed: function() {
+  onClosed: function () {
     this.hooks.onClosed();
   },
 
-  expectSend: function(expected) {
+  expectSend: function (expected) {
     let packet = this.packets[this.checkIndex++];
     do_check_eq(packet.type, "sent");
     deepEqual(packet.packet, this.normalize(expected));
   },
 
-  expectReceive: function(expected) {
+  expectReceive: function (expected) {
     let packet = this.packets[this.checkIndex++];
     do_check_eq(packet.type, "received");
     deepEqual(packet.packet, this.normalize(expected));
@@ -560,7 +586,7 @@ TracingTransport.prototype = {
 
   // Write your tests, call dumpLog at the end, inspect the output,
   // then sprinkle the calls through the right places in your test.
-  dumpLog: function() {
+  dumpLog: function () {
     for (let entry of this.packets) {
       if (entry.type === "sent") {
         dumpn("trace.expectSend(" + entry.packet + ");");
@@ -573,7 +599,7 @@ TracingTransport.prototype = {
 
 function StubTransport() { }
 StubTransport.prototype.ready = function () {};
-StubTransport.prototype.send  = function () {};
+StubTransport.prototype.send = function () {};
 StubTransport.prototype.close = function () {};
 
 function executeSoon(aFunc) {
@@ -620,7 +646,7 @@ var do_check_matches = function (pattern, value) {
 // destructuring objects with methods that take callbacks.
 const Async = target => new Proxy(target, Async);
 Async.get = (target, name) =>
-  typeof(target[name]) === "function" ? asyncall.bind(null, target[name], target) :
+  typeof (target[name]) === "function" ? asyncall.bind(null, target[name], target) :
   target[name];
 
 // Calls async function that takes callback and errorback and returns
@@ -725,6 +751,20 @@ function stepIn(client, threadClient) {
 }
 
 /**
+ * Resume JS execution for a step over and wait for the pause after the step
+ * has been taken.
+ *
+ * @param DebuggerClient client
+ * @param ThreadClient threadClient
+ * @returns Promise
+ */
+function stepOver(client, threadClient) {
+  dumpn("Stepping over.");
+  return threadClient.stepOver()
+    .then(() => waitForPause(client));
+}
+
+/**
  * Get the list of `count` frames currently on stack, starting at the index
  * `first` for the specified thread.
  *
@@ -782,7 +822,7 @@ function getSourceContent(sourceClient) {
 function getSource(threadClient, url) {
   let deferred = promise.defer();
   threadClient.getSources((res) => {
-    let source = res.sources.filter(function(s) {
+    let source = res.sources.filter(function (s) {
       return s.url === url;
     });
     if (source.length) {

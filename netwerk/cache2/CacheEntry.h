@@ -54,18 +54,21 @@ public:
   NS_DECL_NSICACHEENTRY
   NS_DECL_NSIRUNNABLE
 
-  CacheEntry(const nsACString& aStorageID, nsIURI* aURI, const nsACString& aEnhanceID,
+  CacheEntry(const nsACString& aStorageID, const nsACString& aURI, const nsACString& aEnhanceID,
              bool aUseDisk, bool aSkipSizeCheck, bool aPin);
 
   void AsyncOpen(nsICacheEntryOpenCallback* aCallback, uint32_t aFlags);
 
   CacheEntryHandle* NewHandle();
+  // For a new and recreated entry w/o a callback, we need to wrap it
+  // with a handle to detect writing consumer is gone.
+  CacheEntryHandle* NewWriteHandle();
 
 public:
   uint32_t GetMetadataMemoryConsumption();
   nsCString const &GetStorageID() const { return mStorageID; }
   nsCString const &GetEnhanceID() const { return mEnhanceID; }
-  nsIURI* GetURI() const { return mURI; }
+  nsCString const &GetURI() const { return mURI; }
   // Accessible at any time
   bool IsUsingDisk() const { return mUseDisk; }
   bool IsReferenced() const;
@@ -178,7 +181,7 @@ private:
 
   // Since OnCacheEntryAvailable must be invoked on the main thread
   // we need a runnable for it...
-  class AvailableCallbackRunnable : public nsRunnable
+  class AvailableCallbackRunnable : public Runnable
   {
   public:
     AvailableCallbackRunnable(CacheEntry* aEntry,
@@ -200,7 +203,7 @@ private:
 
   // Since OnCacheEntryDoomed must be invoked on the main thread
   // we need a runnable for it...
-  class DoomCallbackRunnable : public nsRunnable
+  class DoomCallbackRunnable : public Runnable
   {
   public:
     DoomCallbackRunnable(CacheEntry* aEntry, nsresult aRv)
@@ -240,9 +243,6 @@ private:
 
   nsresult OpenOutputStreamInternal(int64_t offset, nsIOutputStream * *_retval);
 
-  // When this entry is new and recreated w/o a callback, we need to wrap it
-  // with a handle to detect writing consumer is gone.
-  CacheEntryHandle* NewWriteHandle();
   void OnHandleClosed(CacheEntryHandle const* aHandle);
 
 private:
@@ -266,6 +266,9 @@ private:
 
   // Called only from DoomAlreadyRemoved()
   void DoomFile();
+  // When this entry is doomed the first time, this method removes
+  // any force-valid timing info for this entry.
+  void RemoveForcedValidity();
 
   already_AddRefed<CacheEntryHandle> ReopenTruncated(bool aMemoryOnly,
                                                      nsICacheEntryOpenCallback* aCallback);
@@ -285,7 +288,7 @@ private:
   // When mFileStatus is read and found success it is ensured there is mFile and
   // that it is after a successful call to Init().
   ::mozilla::Atomic<nsresult, ::mozilla::ReleaseAcquire> mFileStatus;
-  nsCOMPtr<nsIURI> mURI;
+  nsCString mURI;
   nsCString mEnhanceID;
   nsCString mStorageID;
 
@@ -372,7 +375,6 @@ private:
   int64_t mPredictedDataSize;
   mozilla::TimeStamp mLoadStart;
   uint32_t mUseCount;
-  nsCOMPtr<nsIThread> mReleaseThread;
 };
 
 
@@ -390,7 +392,7 @@ private:
 };
 
 
-class CacheOutputCloseListener final : public nsRunnable
+class CacheOutputCloseListener final : public Runnable
 {
 public:
   void OnOutputClosed();

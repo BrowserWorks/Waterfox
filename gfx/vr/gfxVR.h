@@ -29,6 +29,7 @@ enum class VRHMDType : uint16_t {
   Oculus,
   Cardboard,
   Oculus050,
+  OSVR,
   NumHMDTypes
 };
 
@@ -161,6 +162,7 @@ struct VRDeviceInfo
 
 struct VRHMDSensorState {
   double timestamp;
+  int32_t inputFrameID;
   VRStateValidFlags flags;
   float orientation[4];
   float position[3];
@@ -235,7 +237,6 @@ public:
     RefPtr<layers::Compositor> compositor;
     IntSize size;
     nsTArray<RefPtr<layers::CompositingRenderTarget>> renderTargets;
-    int32_t currentRenderTarget;
 
     virtual already_AddRefed<layers::CompositingRenderTarget> GetNextRenderTarget() = 0;
   protected:
@@ -244,7 +245,7 @@ public:
 
   virtual already_AddRefed<RenderTargetSet> CreateRenderTargetSet(layers::Compositor *aCompositor, const IntSize& aSize) = 0;
   virtual void DestroyRenderTargetSet(RenderTargetSet *aRTSet) = 0;
-  virtual void SubmitFrame(RenderTargetSet *aRTSet) = 0;
+  virtual void SubmitFrame(RenderTargetSet *aRTSet, int32_t aInputFrameID) = 0;
 protected:
   VRHMDRenderingSupport() { }
 };
@@ -263,7 +264,8 @@ public:
 
   virtual bool KeepSensorTracking() = 0;
   virtual void NotifyVsync(const TimeStamp& aVsyncTimestamp) = 0;
-  virtual VRHMDSensorState GetSensorState(double timeOffset = 0.0) = 0;
+  virtual VRHMDSensorState GetSensorState() = 0;
+  virtual VRHMDSensorState GetImmediateSensorState() = 0;
 
   virtual void ZeroSensor() = 0;
 

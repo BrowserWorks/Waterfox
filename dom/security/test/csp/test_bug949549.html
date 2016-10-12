@@ -17,7 +17,7 @@
   const csp = SpecialPowers.Cc["@mozilla.org/cspcontext;1"]
               .createInstance(SpecialPowers.Ci.nsIContentSecurityPolicy);
 
-  const gManifestURL = "http://www.example.com/chrome/dom/tests/mochitest/webapps/apps/basic.webapp";
+  const gManifestURL = "http://www.example.com/chrome/dom/apps/tests/apps/basic.webapp";
 
   SimpleTest.waitForExplicitFinish();
   var app;
@@ -26,7 +26,6 @@
   function setupTest() {
     // We have to install an app in order for the app URL to be valid
     // (otherwise we get a "DummyChannel" that throws NS_NOT_IMPLEMENTED)
-    SpecialPowers.setAllAppsLaunchable(true);
     SpecialPowers.addPermission("webapps-manage", true, document);
     SpecialPowers.autoConfirmAppInstall(function () {
       let req = navigator.mozApps.install(gManifestURL);
@@ -42,7 +41,7 @@
       var secMan = SpecialPowers.Cc["@mozilla.org/scriptsecuritymanager;1"]
                    .getService(SpecialPowers.Ci.nsIScriptSecurityManager);
       var manifestURI = SpecialPowers.Services.io.newURI(gManifestURL, null, null);
-      principal = secMan.getSimpleCodebasePrincipal(manifestURI);
+      principal = secMan.createCodebasePrincipal(manifestURI, {});
       csp.setRequestContext(null, principal);
       ok(true, "setRequestContext hasn't thown");
     } catch(e) {

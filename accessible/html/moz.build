@@ -24,7 +24,7 @@ LOCAL_INCLUDES += [
     '/layout/xul',
 ]
 
-if CONFIG['MOZ_ENABLE_GTK']:
+if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
     LOCAL_INCLUDES += [
         '/accessible/atk',
     ]
@@ -43,3 +43,6 @@ else:
     ]
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

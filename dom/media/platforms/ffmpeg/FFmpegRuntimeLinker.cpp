@@ -48,7 +48,6 @@ FFmpegRuntimeLinker::Init()
   if (sLinkStatus) {
     return sLinkStatus == LinkStatus_SUCCEEDED;
   }
-  MOZ_ASSERT(NS_IsMainThread());
 
   for (size_t i = 0; i < ArrayLength(sLibs); i++) {
     const char* lib = sLibs[i];
@@ -67,7 +66,7 @@ FFmpegRuntimeLinker::Init()
 
   FFMPEG_LOG("H264/AAC codecs unsupported without [");
   for (size_t i = 0; i < ArrayLength(sLibs); i++) {
-    FFMPEG_LOG("%s %s", i ? "," : "", sLibs[i]);
+    FFMPEG_LOG("%s %s", i ? "," : " ", sLibs[i]);
   }
   FFMPEG_LOG(" ]\n");
 

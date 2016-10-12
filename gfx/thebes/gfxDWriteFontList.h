@@ -175,7 +175,7 @@ protected:
     friend class gfxDWriteFontList;
 
     virtual nsresult CopyFontTable(uint32_t aTableTag,
-                                   FallibleTArray<uint8_t>& aBuffer) override;
+                                   nsTArray<uint8_t>& aBuffer) override;
 
     virtual gfxFont *CreateFontInstance(const gfxFontStyle *aFontStyle,
                                         bool aNeedsBold);
@@ -378,9 +378,10 @@ public:
     IDWriteGdiInterop *GetGDIInterop() { return mGDIInterop; }
     bool UseGDIFontTableAccess() { return mGDIFontTableAccess; }
 
-    gfxFontFamily* FindFamily(const nsAString& aFamily,
-                              gfxFontStyle* aStyle = nullptr,
-                              gfxFloat aDevToCssSize = 1.0) override;
+    bool FindAndAddFamilies(const nsAString& aFamily,
+                            nsTArray<gfxFontFamily*>* aOutput,
+                            gfxFontStyle* aStyle = nullptr,
+                            gfxFloat aDevToCssSize = 1.0) override;
 
     gfxFloat GetForceGDIClassicMaxFontSize() { return mForceGDIClassicMaxFontSize; }
 
@@ -398,7 +399,7 @@ private:
 
     // search fonts system-wide for a given character, null otherwise
     virtual gfxFontEntry* GlobalFontFallback(const uint32_t aCh,
-                                             int32_t aRunScript,
+                                             Script aRunScript,
                                              const gfxFontStyle* aMatchStyle,
                                              uint32_t& aCmapCount,
                                              gfxFontFamily** aMatchedFamily);

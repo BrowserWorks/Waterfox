@@ -20,9 +20,7 @@ XPCSHELL_TESTS_MANIFESTS += [
 if CONFIG['ENABLE_INTL_API']:
     MOCHITEST_MANIFESTS += ['test/mochitest-intl-api.ini']
 
-EXPORTS.mozilla.dom.indexedDB += [
-    'ActorsParent.h',
-    'FileSnapshot.h',
+EXPORTS.mozilla.dom += [
     'IDBCursor.h',
     'IDBDatabase.h',
     'IDBEvents.h',
@@ -38,6 +36,11 @@ EXPORTS.mozilla.dom.indexedDB += [
     'IDBWrapperCache.h',
     'IndexedDatabase.h',
     'IndexedDatabaseManager.h',
+]
+
+EXPORTS.mozilla.dom.indexedDB += [
+    'ActorsParent.h',
+    'FileSnapshot.h',
     'Key.h',
     'KeyPath.h',
     'SerializationHelpers.h',
@@ -64,6 +67,7 @@ UNIFIED_SOURCES += [
     'KeyPath.cpp',
     'PermissionRequestBase.cpp',
     'ReportInternalError.cpp',
+    'ScriptErrorHelper.cpp',
 ]
 
 SOURCES += [
@@ -94,6 +98,11 @@ if CONFIG['GNU_CC']:
     # Suppress gcc warning about a comparison being always false due to the
     # range of the data type
     SOURCES['Key.cpp'].flags += ['-Wno-error=type-limits']
+    CXXFLAGS += ['-Wno-error=shadow']
+
+if CONFIG['_MSC_VER']:
+    # This is intended as a temporary hack to support building with VS2015.
+    CXXFLAGS += ['-wd4577']
 
 LOCAL_INCLUDES += [
     '/db/sqlite3/src',

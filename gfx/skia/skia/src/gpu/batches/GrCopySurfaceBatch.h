@@ -17,6 +17,16 @@ class GrCopySurfaceBatch final : public GrBatch {
 public:
     DEFINE_BATCH_CLASS_ID
 
+    /** This should not really be exposed as Create() will apply this clipping, but there is
+     *  currently a workaround in GrContext::copySurface() for non-render target dsts that relies
+     *  on it. */
+    static bool ClipSrcRectAndDstPoint(const GrSurface* dst,
+                                       const GrSurface* src,
+                                       const SkIRect& srcRect,
+                                       const SkIPoint& dstPoint,
+                                       SkIRect* clippedSrcRect,
+                                       SkIPoint* clippedDstPoint);
+
     static GrBatch* Create(GrSurface* dst, GrSurface* src, const SkIRect& srcRect,
                            const SkIPoint& dstPoint);
 
@@ -26,6 +36,7 @@ public:
         GrRenderTarget* rt = fDst.get()->asRenderTarget();
         return rt ? rt->getUniqueID() : 0;
     }
+    GrRenderTarget* renderTarget() const override { return fDst.get()->asRenderTarget(); }
 
     SkString dumpInfo() const override {
         SkString string;

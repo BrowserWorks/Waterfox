@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-/*global ThreadSafeChromeUtils*/
+/* global ThreadSafeChromeUtils*/
 
 // This is a worker which reads offline heap snapshots into memory and performs
 // heavyweight analyses on them without blocking the main thread. A
@@ -19,9 +19,26 @@ const CensusUtils = require("resource://devtools/shared/heapsnapshot/CensusUtils
 const DEFAULT_START_INDEX = 0;
 const DEFAULT_MAX_COUNT = 50;
 
-// The set of HeapSnapshot instances this worker has read into memory. Keyed by
-// snapshot file path.
+/**
+ * The set of HeapSnapshot instances this worker has read into memory. Keyed by
+ * snapshot file path.
+ */
 const snapshots = Object.create(null);
+
+/**
+ * The set of `DominatorTree`s that have been computed, mapped by their id (aka
+ * the index into this array).
+ *
+ * @see /dom/webidl/DominatorTree.webidl
+ */
+const dominatorTrees = [];
+
+/**
+ * The i^th HeapSnapshot in this array is the snapshot used to generate the i^th
+ * dominator tree in `dominatorTrees` above. This lets us map from a dominator
+ * tree id to the snapshot it came from.
+ */
+const dominatorTreeSnapshots = [];
 
 /**
  * @see HeapAnalysesClient.prototype.readHeapSnapshot
@@ -58,17 +75,62 @@ workerHelper.createTask(self, "takeCensus", ({ snapshotFilePath, censusOptions, 
     throw new Error(`No known heap snapshot for '${snapshotFilePath}'`);
   }
 
-  const report = snapshots[snapshotFilePath].takeCensus(censusOptions);
+  let report = snapshots[snapshotFilePath].takeCensus(censusOptions);
+  let parentMap;
 
   if (requestOptions.asTreeNode || requestOptions.asInvertedTreeNode) {
     const opts = { filter: requestOptions.filter || null };
     if (requestOptions.asInvertedTreeNode) {
       opts.invert = true;
     }
-    return censusReportToCensusTreeNode(censusOptions.breakdown, report, opts);
+    report = censusReportToCensusTreeNode(censusOptions.breakdown, report, opts);
+    parentMap = CensusUtils.createParentMap(report);
   }
 
-  return report;
+  return { report, parentMap };
+});
+
+/**
+ * @see HeapAnalysesClient.prototype.getCensusIndividuals
+ */
+workerHelper.createTask(self, "getCensusIndividuals", request => {
+  const {
+    dominatorTreeId,
+    indices,
+    censusBreakdown,
+    labelBreakdown,
+    maxRetainingPaths,
+    maxIndividuals,
+  } = request;
+
+  const dominatorTree = dominatorTrees[dominatorTreeId];
+  if (!dominatorTree) {
+    throw new Error(
+      `There does not exist a DominatorTree with the id ${dominatorTreeId}`);
+  }
+
+  const snapshot = dominatorTreeSnapshots[dominatorTreeId];
+  const nodeIds = CensusUtils.getCensusIndividuals(indices, censusBreakdown, snapshot);
+
+  const nodes = nodeIds
+    .sort((a, b) => dominatorTree.getRetainedSize(b) - dominatorTree.getRetainedSize(a))
+    .slice(0, maxIndividuals)
+    .map(id => {
+      const { label, shallowSize } =
+        DominatorTreeNode.getLabelAndShallowSize(id, snapshot, labelBreakdown);
+      const retainedSize = dominatorTree.getRetainedSize(id);
+      const node = new DominatorTreeNode(id, label, shallowSize, retainedSize);
+      node.moreChildrenAvailable = false;
+      return node;
+    });
+
+  DominatorTreeNode.attachShortestPaths(snapshot,
+                                        labelBreakdown,
+                                        dominatorTree.root,
+                                        nodes,
+                                        maxRetainingPaths);
+
+  return { nodes };
 });
 
 /**
@@ -92,17 +154,19 @@ workerHelper.createTask(self, "takeCensusDiff", request => {
 
   const first = snapshots[firstSnapshotFilePath].takeCensus(censusOptions);
   const second = snapshots[secondSnapshotFilePath].takeCensus(censusOptions);
-  const delta = CensusUtils.diff(censusOptions.breakdown, first, second);
+  let delta = CensusUtils.diff(censusOptions.breakdown, first, second);
+  let parentMap;
 
   if (requestOptions.asTreeNode || requestOptions.asInvertedTreeNode) {
     const opts = { filter: requestOptions.filter || null };
     if (requestOptions.asInvertedTreeNode) {
       opts.invert = true;
     }
-    return censusReportToCensusTreeNode(censusOptions.breakdown, delta, opts);
+    delta = censusReportToCensusTreeNode(censusOptions.breakdown, delta, opts);
+    parentMap = CensusUtils.createParentMap(delta);
   }
 
-  return delta;
+  return { delta, parentMap };
 });
 
 /**
@@ -114,21 +178,6 @@ workerHelper.createTask(self, "getCreationTime", snapshotFilePath => {
   }
   return snapshots[snapshotFilePath].creationTime;
 });
-
-/**
- * The set of `DominatorTree`s that have been computed, mapped by their id (aka
- * the index into this array).
- *
- * @see /dom/webidl/DominatorTree.webidl
- */
-const dominatorTrees = [];
-
-/**
- * The i^th HeapSnapshot in this array is the snapshot used to generate the i^th
- * dominator tree in `dominatorTrees` above. This lets us map from a dominator
- * tree id to the snapshot it came from.
- */
-const dominatorTreeSnapshots = [];
 
 /**
  * @see HeapAnalysesClient.prototype.computeDominatorTree
@@ -153,7 +202,8 @@ workerHelper.createTask(self, "getDominatorTree", request => {
     dominatorTreeId,
     breakdown,
     maxDepth,
-    maxSiblings
+    maxSiblings,
+    maxRetainingPaths,
   } = request;
 
   if (!(0 <= dominatorTreeId && dominatorTreeId < dominatorTrees.length)) {
@@ -164,11 +214,29 @@ workerHelper.createTask(self, "getDominatorTree", request => {
   const dominatorTree = dominatorTrees[dominatorTreeId];
   const snapshot = dominatorTreeSnapshots[dominatorTreeId];
 
-  return DominatorTreeNode.partialTraversal(dominatorTree,
-                                            snapshot,
-                                            breakdown,
-                                            maxDepth,
-                                            maxSiblings);
+  const tree = DominatorTreeNode.partialTraversal(dominatorTree,
+                                                  snapshot,
+                                                  breakdown,
+                                                  maxDepth,
+                                                  maxSiblings);
+
+  const nodes = [];
+  (function getNodes(node) {
+    nodes.push(node);
+    if (node.children) {
+      for (let i = 0, length = node.children.length; i < length; i++) {
+        getNodes(node.children[i]);
+      }
+    }
+  }(tree));
+
+  DominatorTreeNode.attachShortestPaths(snapshot,
+                                        breakdown,
+                                        dominatorTree.root,
+                                        nodes,
+                                        maxRetainingPaths);
+
+  return tree;
 });
 
 /**
@@ -180,7 +248,8 @@ workerHelper.createTask(self, "getImmediatelyDominated", request => {
     nodeId,
     breakdown,
     startIndex,
-    maxCount
+    maxCount,
+    maxRetainingPaths,
   } = request;
 
   if (!(0 <= dominatorTreeId && dominatorTreeId < dominatorTrees.length)) {
@@ -223,6 +292,12 @@ workerHelper.createTask(self, "getImmediatelyDominated", request => {
   path.reverse();
 
   const moreChildrenAvailable = childIds.length > end;
+
+  DominatorTreeNode.attachShortestPaths(snapshot,
+                                        breakdown,
+                                        dominatorTree.root,
+                                        nodes,
+                                        maxRetainingPaths);
 
   return { nodes, moreChildrenAvailable, path };
 });

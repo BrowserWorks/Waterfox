@@ -75,7 +75,7 @@ ClientPaintedLayer::PaintThebes()
   // from RGB to RGBA, because we might need to repaint with
   // subpixel AA)
   state.mRegionToInvalidate.And(state.mRegionToInvalidate,
-                                GetEffectiveVisibleRegion().ToUnknownRegion());
+                                GetLocalVisibleRegion().ToUnknownRegion());
 
   bool didUpdate = false;
   RotatedContentBuffer::DrawIterator iter;
@@ -89,7 +89,8 @@ ClientPaintedLayer::PaintThebes()
     
     SetAntialiasingFlags(this, target);
 
-    RefPtr<gfxContext> ctx = gfxContext::ContextForDrawTarget(target);
+    RefPtr<gfxContext> ctx = gfxContext::ForDrawTargetWithTransform(target);
+    MOZ_ASSERT(ctx); // already checked the target above
 
     ClientManager()->GetPaintedLayerCallback()(this,
                                               ctx,
@@ -159,13 +160,7 @@ already_AddRefed<PaintedLayer>
 ClientLayerManager::CreatePaintedLayerWithHint(PaintedLayerCreationHint aHint)
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  if (gfxPrefs::LayersTilesEnabled()
-#ifndef MOZ_X11
-      && (AsShadowForwarder()->GetCompositorBackendType() == LayersBackend::LAYERS_OPENGL ||
-          AsShadowForwarder()->GetCompositorBackendType() == LayersBackend::LAYERS_D3D9 ||
-          AsShadowForwarder()->GetCompositorBackendType() == LayersBackend::LAYERS_D3D11)
-#endif
-  ) {
+  if (gfxPrefs::LayersTilesEnabled()) {
     RefPtr<ClientTiledPaintedLayer> layer = new ClientTiledPaintedLayer(this, aHint);
     CREATE_SHADOW(Painted);
     return layer.forget();

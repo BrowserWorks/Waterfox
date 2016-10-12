@@ -10,6 +10,7 @@
 #include "nsAutoPtr.h"
 #include "nsThreadUtils.h"
 #include "nsIAsyncShutdown.h"
+#include "mozilla/UniquePtr.h"
 #include "base/task.h"
 
 namespace mozilla {
@@ -81,8 +82,8 @@ public:
     class Functors : public FunctorsBase
     {
     public:
-      Functors(OnSuccessType&& aOnSuccess, OnFailureType&& aOnFailure)
-        : mOnSuccess(Move(aOnSuccess)), mOnFailure(Move(aOnFailure)) {}
+      Functors(OnSuccessType&& aOnSuccessRef, OnFailureType&& aOnFailureRef)
+        : mOnSuccess(Move(aOnSuccessRef)), mOnFailure(Move(aOnFailureRef)) {}
 
       void Succeed(ValueType& result)
       {
@@ -96,8 +97,8 @@ public:
       OnSuccessType mOnSuccess;
       OnFailureType mOnFailure;
     };
-    mFunctors = new Functors(Forward<OnSuccessType>(aOnSuccess),
-                             Forward<OnFailureType>(aOnFailure));
+    mFunctors = MakeUnique<Functors>(Forward<OnSuccessType>(aOnSuccess),
+                                     Forward<OnFailureType>(aOnFailure));
     if (mDone) {
       if (!mRejected) {
         mFunctors->Succeed(mValue);
@@ -142,17 +143,17 @@ private:
   bool mDone;
   bool mRejected;
   ErrorType mError;
-  ScopedDeletePtr<FunctorsBase> mFunctors;
+  UniquePtr<FunctorsBase> mFunctors;
 };
 
-/* media::NewRunnableFrom() - Create an nsRunnable from a lambda.
+/* media::NewRunnableFrom() - Create a Runnable from a lambda.
  * media::NewTaskFrom()     - Create a Task from a lambda.
  *
- * Passing variables (closures) to an async function is clunky with nsRunnable:
+ * Passing variables (closures) to an async function is clunky with Runnable:
  *
  *   void Foo()
  *   {
- *     class FooRunnable : public nsRunnable
+ *     class FooRunnable : public Runnable
  *     {
  *     public:
  *       FooRunnable(const Bar &aBar) : mBar(aBar) {}
@@ -185,7 +186,7 @@ private:
  */
 
 template<typename OnRunType>
-class LambdaRunnable : public nsRunnable
+class LambdaRunnable : public Runnable
 {
 public:
   explicit LambdaRunnable(OnRunType&& aOnRun) : mOnRun(Move(aOnRun)) {}
@@ -199,31 +200,36 @@ private:
 };
 
 template<typename OnRunType>
-LambdaRunnable<OnRunType>*
+already_AddRefed<LambdaRunnable<OnRunType>>
 NewRunnableFrom(OnRunType&& aOnRun)
 {
-  return new LambdaRunnable<OnRunType>(Forward<OnRunType>(aOnRun));
+  typedef LambdaRunnable<OnRunType> LambdaType;
+  RefPtr<LambdaType> lambda = new LambdaType(Forward<OnRunType>(aOnRun));
+  return lambda.forget();
 }
 
 template<typename OnRunType>
-class LambdaTask : public Task
+class LambdaTask : public Runnable
 {
 public:
   explicit LambdaTask(OnRunType&& aOnRun) : mOnRun(Move(aOnRun)) {}
 private:
-  void
-  Run()
+  NS_IMETHOD
+  Run() override
   {
-    return mOnRun();
+    mOnRun();
+    return NS_OK;
   }
   OnRunType mOnRun;
 };
 
 template<typename OnRunType>
-LambdaTask<OnRunType>*
+already_AddRefed<LambdaTask<OnRunType>>
 NewTaskFrom(OnRunType&& aOnRun)
 {
-  return new LambdaTask<OnRunType>(Forward<OnRunType>(aOnRun));
+  typedef LambdaTask<OnRunType> LambdaType;
+  RefPtr<LambdaType> lambda = new LambdaType(Forward<OnRunType>(aOnRun));
+  return lambda.forget();
 }
 
 /* media::CoatCheck - There and back again. Park an object in exchange for an id.
@@ -321,7 +327,7 @@ private:
     static uint32_t counter = 0;
     return ++counter;
   };
-  nsAutoTArray<Element, 3> mElements;
+  AutoTArray<Element, 3> mElements;
 };
 
 /* media::Refcountable - Add threadsafe ref-counting to something that isn't.
@@ -337,7 +343,7 @@ private:
  * (or owning smart-pointers to such objects) refcountable.
  *
  * Technical limitation: A template specialization is needed for types that take
- * a constructor. Please add below (ScopedDeletePtr covers a lot of ground though).
+ * a constructor. Please add below (UniquePtr covers a lot of ground though).
  */
 
 template<typename T>
@@ -350,13 +356,13 @@ private:
 };
 
 template<typename T>
-class Refcountable<ScopedDeletePtr<T>> : public ScopedDeletePtr<T>
+class Refcountable<UniquePtr<T>> : public UniquePtr<T>
 {
 public:
-  explicit Refcountable<ScopedDeletePtr<T>>(T* aPtr) : ScopedDeletePtr<T>(aPtr) {}
+  explicit Refcountable<UniquePtr<T>>(T* aPtr) : UniquePtr<T>(aPtr) {}
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Refcountable<T>)
 private:
-  ~Refcountable<ScopedDeletePtr<T>>() {}
+  ~Refcountable<UniquePtr<T>>() {}
 };
 
 /* media::ShutdownBlocker - Async shutdown helper.

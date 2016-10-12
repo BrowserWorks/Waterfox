@@ -26,15 +26,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.zip.GZIPInputStream;
-
-import ch.boye.httpclientandroidlib.HttpEntity;
-import ch.boye.httpclientandroidlib.HttpResponse;
-import ch.boye.httpclientandroidlib.HttpStatus;
-import ch.boye.httpclientandroidlib.client.HttpClient;
-import ch.boye.httpclientandroidlib.client.methods.HttpGet;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpRequestRetryHandler;
-import ch.boye.httpclientandroidlib.impl.client.HttpClientBuilder;
 
 /**
  * Download content that has been scheduled during "study" or "verify".
@@ -43,7 +38,8 @@ public class DownloadAction extends BaseAction {
     private static final String LOGTAG = "DLCDownloadAction";
 
     private static final String CACHE_DIRECTORY = "downloadContent";
-    private static final String CDN_BASE_URL = "https://mobile.cdn.mozilla.net/";
+
+    private static final String CDN_BASE_URL = "https://fennec-catalog.cdn.mozilla.net/";
 
     public interface Callback {
         void onContentDownloaded(DownloadContent content);
@@ -70,8 +66,6 @@ public class DownloadAction extends BaseAction {
             return;
         }
 
-        final HttpClient client = buildHttpClient();
-
         for (DownloadContent content : catalog.getScheduledDownloads()) {
             Log.d(LOGTAG, "Downloading: " + content);
 
@@ -96,7 +90,7 @@ public class DownloadAction extends BaseAction {
                 final String url = createDownloadURL(content);
 
                 if (!temporaryFile.exists() || temporaryFile.length() < content.getSize()) {
-                    download(client, url, temporaryFile);
+                    download(url, temporaryFile);
                 }
 
                 if (!verify(temporaryFile, content.getDownloadChecksum())) {
@@ -146,22 +140,23 @@ public class DownloadAction extends BaseAction {
         Log.v(LOGTAG, "Done");
     }
 
-    protected void download(HttpClient client, String source, File temporaryFile)
+    protected void download(String source, File temporaryFile)
             throws RecoverableDownloadContentException, UnrecoverableDownloadContentException {
         InputStream inputStream = null;
         OutputStream outputStream = null;
 
-        final HttpGet request = new HttpGet(source);
-
-        final long offset = temporaryFile.exists() ? temporaryFile.length() : 0;
-        if (offset > 0) {
-            request.setHeader("Range", "bytes=" + offset + "-");
-        }
+        HttpURLConnection connection = null;
 
         try {
-            final HttpResponse response = client.execute(request);
-            final int status = response.getStatusLine().getStatusCode();
-            if (status != HttpStatus.SC_OK && status != HttpStatus.SC_PARTIAL_CONTENT) {
+            connection = buildHttpURLConnection(source);
+
+            final long offset = temporaryFile.exists() ? temporaryFile.length() : 0;
+            if (offset > 0) {
+                connection.setRequestProperty("Range", "bytes=" + offset + "-");
+            }
+
+            final int status = connection.getResponseCode();
+            if (status != HttpURLConnection.HTTP_OK && status != HttpURLConnection.HTTP_PARTIAL) {
                 // We are trying to be smart and only retry if this is an error that might resolve in the future.
                 // TODO: This is guesstimating at best. We want to implement failure counters (Bug 1215106).
                 if (status >= 500) {
@@ -172,6 +167,7 @@ public class DownloadAction extends BaseAction {
                     // Unrecoverable: Client errors 4xx - Unlikely that this version of the client will ever succeed.
                     throw new UnrecoverableDownloadContentException("(Unrecoverable) Download failed. Status code: " + status);
                 } else {
+                    // HttpsUrlConnection: -1 (No valid response code)
                     // Informational 1xx: They have no meaning to us.
                     // Successful 2xx: We don't know how to handle anything but 200.
                     // Redirection 3xx: HttpClient should have followed redirects if possible. We should not see those errors here.
@@ -179,14 +175,8 @@ public class DownloadAction extends BaseAction {
                 }
             }
 
-            final HttpEntity entity = response.getEntity();
-            if (entity == null) {
-                // Recoverable: Should not happen for a valid asset
-                throw new RecoverableDownloadContentException(RecoverableDownloadContentException.SERVER, "Null entity");
-            }
-
-            inputStream = new BufferedInputStream(entity.getContent());
-            outputStream = openFile(temporaryFile, status == HttpStatus.SC_PARTIAL_CONTENT);
+            inputStream = new BufferedInputStream(connection.getInputStream());
+            outputStream = openFile(temporaryFile, status == HttpURLConnection.HTTP_PARTIAL);
 
             IOUtils.copy(inputStream, outputStream);
 
@@ -198,6 +188,10 @@ public class DownloadAction extends BaseAction {
         } finally {
             IOUtils.safeStreamClose(inputStream);
             IOUtils.safeStreamClose(outputStream);
+
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
     }
 
@@ -258,17 +252,9 @@ public class DownloadAction extends BaseAction {
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE));
     }
 
-    protected HttpClient buildHttpClient() {
-        // TODO: Implement proxy support (Bug 1209496)
-        return HttpClientBuilder.create()
-                .setUserAgent(HardwareUtils.isTablet() ?
-                        AppConstants.USER_AGENT_FENNEC_TABLET :
-                        AppConstants.USER_AGENT_FENNEC_MOBILE)
-                .setRetryHandler(new DefaultHttpRequestRetryHandler())
-                .build();
-    }
-
     protected String createDownloadURL(DownloadContent content) {
+        final String location = content.getLocation();
+
         return CDN_BASE_URL + content.getLocation();
     }
 

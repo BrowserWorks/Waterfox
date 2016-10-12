@@ -6,7 +6,6 @@
 #ifndef GFX_FONT_INFO_LOADER_H
 #define GFX_FONT_INFO_LOADER_H
 
-#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsIObserver.h"
 #include "nsITimer.h"
@@ -15,6 +14,7 @@
 #include "nsString.h"
 #include "gfxFont.h"
 #include "nsIRunnable.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/TimeStamp.h"
 #include "nsISupportsImpl.h"
 
@@ -52,6 +52,7 @@ public:
     FontInfoData(bool aLoadOtherNames,
                  bool aLoadFaceNames,
                  bool aLoadCmaps) :
+        mCanceled(false),
         mLoadOtherNames(aLoadOtherNames),
         mLoadFaceNames(aLoadFaceNames),
         mLoadCmaps(aLoadCmaps)
@@ -114,6 +115,10 @@ public:
     }
 
     nsTArray<nsString> mFontFamiliesToLoad;
+
+    // currently non-issue but beware,
+    // this is also set during cleanup after finishing
+    mozilla::Atomic<bool> mCanceled;
 
     // time spent on the loader thread
     mozilla::TimeDuration mLoadTime;

@@ -8,6 +8,7 @@
 #include "nsContentPolicyUtils.h"
 #include "nsIDOMElement.h"
 #include "nsIStreamConverterService.h"
+#include "nsIStreamLoader.h"
 #include "nsIHttpChannel.h"
 #include "nsIHttpChannelInternal.h"
 #include "nsIFileChannel.h"
@@ -34,7 +35,7 @@
 #include "nsDataHashtable.h"
 #include "nsNullPrincipal.h"
 
-#define MAGIC_REQUEST_CONTEXT 0x01020304
+#define BYTERANGE_REQUEST_CONTEXT 0x01020304
 
 // nsPluginByteRangeStreamListener
 
@@ -55,7 +56,7 @@ private:
 
   nsCOMPtr<nsIStreamListener> mStreamConverter;
   nsWeakPtr mWeakPtrPluginStreamListenerPeer;
-  bool mRemoveMagicNumber;
+  bool mRemoveByteRangeRequest;
 };
 
 NS_IMPL_ISUPPORTS(nsPluginByteRangeStreamListener,
@@ -66,7 +67,7 @@ NS_IMPL_ISUPPORTS(nsPluginByteRangeStreamListener,
 nsPluginByteRangeStreamListener::nsPluginByteRangeStreamListener(nsIWeakReference* aWeakPtr)
 {
   mWeakPtrPluginStreamListenerPeer = aWeakPtr;
-  mRemoveMagicNumber = false;
+  mRemoveByteRangeRequest = false;
 }
 
 nsPluginByteRangeStreamListener::~nsPluginByteRangeStreamListener()
@@ -103,7 +104,10 @@ nsPluginByteRangeStreamListener::OnStartRequest(nsIRequest *request, nsISupports
   nsPluginStreamListenerPeer *pslp =
     static_cast<nsPluginStreamListenerPeer*>(finalStreamListener.get());
 
-  NS_ASSERTION(pslp->mRequests.IndexOfObject(GetBaseRequest(request)) != -1,
+#ifdef DEBUG
+  nsCOMPtr<nsIRequest> baseRequest = GetBaseRequest(request);
+#endif
+  NS_ASSERTION(pslp->mRequests.IndexOfObject(baseRequest) != -1,
                "Untracked byte-range request?");
 
   nsCOMPtr<nsIStreamConverterService> serv = do_GetService(NS_STREAMCONVERTERSERVICE_CONTRACTID, &rv);
@@ -149,7 +153,7 @@ nsPluginByteRangeStreamListener::OnStartRequest(nsIRequest *request, nsISupports
   // if server cannot continue with byte range (206 status) and sending us whole object (200 status)
   // reset this seekable stream & try serve it to plugin instance as a file
   mStreamConverter = finalStreamListener;
-  mRemoveMagicNumber = true;
+  mRemoveByteRangeRequest = true;
 
   rv = pslp->ServeStreamAsFile(request, ctxt);
   return rv;
@@ -173,15 +177,15 @@ nsPluginByteRangeStreamListener::OnStopRequest(nsIRequest *request, nsISupports 
     NS_ERROR("OnStopRequest received for untracked byte-range request!");
   }
 
-  if (mRemoveMagicNumber) {
-    // remove magic number from container
+  if (mRemoveByteRangeRequest) {
+    // remove byte range request from container
     nsCOMPtr<nsISupportsPRUint32> container = do_QueryInterface(ctxt);
     if (container) {
-      uint32_t magicNumber = 0;
-      container->GetData(&magicNumber);
-      if (magicNumber == MAGIC_REQUEST_CONTEXT) {
+      uint32_t byteRangeRequest = 0;
+      container->GetData(&byteRangeRequest);
+      if (byteRangeRequest == BYTERANGE_REQUEST_CONTEXT) {
         // to allow properly finish nsPluginStreamListenerPeer->OnStopRequest()
-        // set it to something that is not the magic number.
+        // set it to something that is not the byte range request.
         container->SetData(0);
       }
     } else {
@@ -430,7 +434,8 @@ nsPluginStreamListenerPeer::OnStartRequest(nsIRequest *request,
   PROFILER_LABEL("nsPluginStreamListenerPeer", "OnStartRequest",
     js::ProfileEntry::Category::OTHER);
 
-  if (mRequests.IndexOfObject(GetBaseRequest(request)) == -1) {
+  nsCOMPtr<nsIRequest> baseRequest = GetBaseRequest(request);
+  if (mRequests.IndexOfObject(baseRequest) == -1) {
     NS_ASSERTION(mRequests.Count() == 0,
                  "Only our initial stream should be unknown!");
     TrackRequest(request);
@@ -660,6 +665,63 @@ nsPluginStreamListenerPeer::MakeByteRangeString(NPByteRange* aRangeList, nsACStr
   return;
 }
 
+// XXX: Converting the channel within nsPluginStreamListenerPeer
+// to use asyncOpen2() and do not want to touch the fragile logic
+// of byte range requests. Hence we just introduce this lightweight
+// wrapper to proxy the context.
+class PluginContextProxy final : public nsIStreamListener
+{
+public:
+  NS_DECL_ISUPPORTS
+
+  PluginContextProxy(nsIStreamListener *aListener, nsISupports* aContext)
+    : mListener(aListener)
+    , mContext(aContext)
+  {
+    MOZ_ASSERT(aListener);
+    MOZ_ASSERT(aContext);
+  }
+
+  NS_IMETHOD
+  OnDataAvailable(nsIRequest* aRequest,
+                  nsISupports* aContext,
+                  nsIInputStream *aIStream,
+                  uint64_t aSourceOffset,
+                  uint32_t aLength) override
+  {
+    // Proxy OnDataAvailable using the internal context
+    return mListener->OnDataAvailable(aRequest,
+                                      mContext,
+                                      aIStream,
+                                      aSourceOffset,
+                                      aLength);
+  }
+
+  NS_IMETHOD
+  OnStartRequest(nsIRequest* aRequest, nsISupports* aContext) override
+  {
+    // Proxy OnStartRequest using the internal context
+    return mListener->OnStartRequest(aRequest, mContext);
+  }
+
+  NS_IMETHOD
+  OnStopRequest(nsIRequest* aRequest, nsISupports* aContext,
+                nsresult aStatusCode) override
+  {
+    // Proxy OnStopRequest using the inernal context
+    return mListener->OnStopRequest(aRequest,
+                                    mContext,
+                                    aStatusCode);
+  }
+
+private:
+  ~PluginContextProxy() {}
+  nsCOMPtr<nsIStreamListener> mListener;
+  nsCOMPtr<nsISupports> mContext;
+};
+
+NS_IMPL_ISUPPORTS(PluginContextProxy, nsIStreamListener)
+
 nsresult
 nsPluginStreamListenerPeer::RequestRead(NPByteRange* rangeList)
 {
@@ -692,24 +754,23 @@ nsPluginStreamListenerPeer::RequestRead(NPByteRange* rangeList)
     rv = NS_NewChannel(getter_AddRefs(channel),
                        mURL,
                        requestingNode,
-                       nsILoadInfo::SEC_NORMAL,
+                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                        nsIContentPolicy::TYPE_OTHER,
                        loadGroup,
-                       callbacks);
+                       callbacks,
+                       nsIChannel::LOAD_BYPASS_SERVICE_WORKER);
   }
   else {
-    // in this else branch we really don't know where the load is coming
-    // from and in fact should use something better than just using
-    // a nullPrincipal as the loadingPrincipal.
-    nsCOMPtr<nsIPrincipal> principal = nsNullPrincipal::Create();
-    NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
+    // In this else branch we really don't know where the load is coming
+    // from. Let's fall back to using the SystemPrincipal for such Plugins.
     rv = NS_NewChannel(getter_AddRefs(channel),
                        mURL,
-                       principal,
-                       nsILoadInfo::SEC_NORMAL,
+                       nsContentUtils::GetSystemPrincipal(),
+                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                        nsIContentPolicy::TYPE_OTHER,
                        loadGroup,
-                       callbacks);
+                       callbacks,
+                       nsIChannel::LOAD_BYPASS_SERVICE_WORKER);
   }
 
   if (NS_FAILED(rv))
@@ -741,16 +802,16 @@ nsPluginStreamListenerPeer::RequestRead(NPByteRange* rangeList)
   mPendingRequests += numRequests;
 
   nsCOMPtr<nsISupportsPRUint32> container = do_CreateInstance(NS_SUPPORTS_PRUINT32_CONTRACTID, &rv);
-  if (NS_FAILED(rv))
-    return rv;
-  rv = container->SetData(MAGIC_REQUEST_CONTEXT);
-  if (NS_FAILED(rv))
-    return rv;
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = container->SetData(BYTERANGE_REQUEST_CONTEXT);
+  NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = channel->AsyncOpen(converter, container);
-  if (NS_SUCCEEDED(rv))
-    TrackRequest(channel);
-  return rv;
+  RefPtr<PluginContextProxy> pluginContextProxy =
+    new PluginContextProxy(converter, container);
+  rv = channel->AsyncOpen2(pluginContextProxy);
+  NS_ENSURE_SUCCESS(rv, rv);
+  TrackRequest(channel);
+  return NS_OK;
 }
 
 nsresult
@@ -831,7 +892,8 @@ NS_IMETHODIMP nsPluginStreamListenerPeer::OnDataAvailable(nsIRequest *request,
                                                           uint64_t sourceOffset,
                                                           uint32_t aLength)
 {
-  if (mRequests.IndexOfObject(GetBaseRequest(request)) == -1) {
+  nsCOMPtr<nsIRequest> baseRequest = GetBaseRequest(request);
+  if (mRequests.IndexOfObject(baseRequest) == -1) {
     MOZ_ASSERT(false, "Received OnDataAvailable for untracked request.");
     return NS_ERROR_UNEXPECTED;
   }
@@ -840,12 +902,12 @@ NS_IMETHODIMP nsPluginStreamListenerPeer::OnDataAvailable(nsIRequest *request,
     return NS_ERROR_FAILURE;
 
   if (mAbort) {
-    uint32_t magicNumber = 0;  // set it to something that is not the magic number.
+    uint32_t byteRangeRequest = 0;  // set it to something that is not the byte range request.
     nsCOMPtr<nsISupportsPRUint32> container = do_QueryInterface(aContext);
     if (container)
-      container->GetData(&magicNumber);
+      container->GetData(&byteRangeRequest);
 
-    if (magicNumber != MAGIC_REQUEST_CONTEXT) {
+    if (byteRangeRequest != BYTERANGE_REQUEST_CONTEXT) {
       // this is not one of our range requests
       mAbort = false;
       return NS_BINDING_ABORTED;
@@ -978,9 +1040,9 @@ NS_IMETHODIMP nsPluginStreamListenerPeer::OnStopRequest(nsIRequest *request,
   // we keep our connections around...
   nsCOMPtr<nsISupportsPRUint32> container = do_QueryInterface(aContext);
   if (container) {
-    uint32_t magicNumber = 0;  // set it to something that is not the magic number.
-    container->GetData(&magicNumber);
-    if (magicNumber == MAGIC_REQUEST_CONTEXT) {
+    uint32_t byteRangeRequest = 0;  // something other than the byte range request.
+    container->GetData(&byteRangeRequest);
+    if (byteRangeRequest == BYTERANGE_REQUEST_CONTEXT) {
       // this is one of our range requests
       return NS_OK;
     }
@@ -1236,8 +1298,7 @@ nsPluginStreamListenerPeer::GetInterfaceGlobal(const nsIID& aIID, void** result)
     nsCOMPtr<nsIDocument> doc;
     nsresult rv = owner->GetDocument(getter_AddRefs(doc));
     if (NS_SUCCEEDED(rv) && doc) {
-      nsPIDOMWindow *window = doc->GetWindow();
-      if (window) {
+      if  (nsPIDOMWindowOuter *window = doc->GetWindow()) {
         nsCOMPtr<nsIWebNavigation> webNav = do_GetInterface(window);
         nsCOMPtr<nsIInterfaceRequestor> ir = do_QueryInterface(webNav);
         return ir->GetInterface(aIID, result);

@@ -11,18 +11,18 @@
 #include "mozilla/dom/ServiceWorkerBinding.h"
 #include "mozilla/dom/ServiceWorkerCommon.h"
 #include "mozilla/dom/workers/bindings/WorkerFeature.h"
+#include "nsContentUtils.h" // Required for nsContentUtils::PushEnabled
 
 // Support for Notification API extension.
 #include "mozilla/dom/NotificationBinding.h"
 
-class nsPIDOMWindow;
+class nsPIDOMWindowInner;
 
 namespace mozilla {
 namespace dom {
 
 class Promise;
 class PushManager;
-class WorkerPushManager;
 class WorkerListener;
 
 namespace workers {
@@ -35,21 +35,6 @@ ServiceWorkerRegistrationVisible(JSContext* aCx, JSObject* aObj);
 
 bool
 ServiceWorkerNotificationAPIVisible(JSContext* aCx, JSObject* aObj);
-
-// This class exists solely so that we can satisfy some WebIDL Func= attribute
-// constraints. Func= converts the function name to a header file to include, in
-// this case "ServiceWorkerRegistration.h".
-class ServiceWorkerRegistration final
-{
-public:
-  // Something that we can feed into the Func webidl property to ensure that
-  // SetScope is never exposed to the user.
-  static bool
-  WebPushMethodHider(JSContext* unusedContext, JSObject* unusedObject) {
-    return false;
-  }
-
-};
 
 // Used by ServiceWorkerManager to notify ServiceWorkerRegistrations of
 // updatefound event and invalidating ServiceWorker instances.
@@ -79,7 +64,7 @@ public:
 
   IMPL_EVENT_HANDLER(updatefound)
 
-  ServiceWorkerRegistrationBase(nsPIDOMWindow* aWindow,
+  ServiceWorkerRegistrationBase(nsPIDOMWindowInner* aWindow,
                                 const nsAString& aScope);
 
   JSObject*
@@ -104,6 +89,7 @@ protected:
 class ServiceWorkerRegistrationMainThread final : public ServiceWorkerRegistrationBase,
                                                   public ServiceWorkerRegistrationListener
 {
+  friend nsPIDOMWindowInner;
 public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ServiceWorkerRegistrationMainThread,
@@ -138,7 +124,7 @@ public:
   GetActive() override;
 
   already_AddRefed<PushManager>
-  GetPushManager(ErrorResult& aRv);
+  GetPushManager(JSContext* aCx, ErrorResult& aRv);
 
   // DOMEventTargethelper
   void DisconnectFromOwner() override
@@ -164,8 +150,7 @@ public:
   }
 
 private:
-  friend nsPIDOMWindow;
-  ServiceWorkerRegistrationMainThread(nsPIDOMWindow* aWindow,
+  ServiceWorkerRegistrationMainThread(nsPIDOMWindowInner* aWindow,
                                       const nsAString& aScope);
   ~ServiceWorkerRegistrationMainThread();
 
@@ -239,9 +224,9 @@ public:
   }
 
   bool
-  Notify(JSContext* aCx, workers::Status aStatus) override;
+  Notify(workers::Status aStatus) override;
 
-  already_AddRefed<WorkerPushManager>
+  already_AddRefed<PushManager>
   GetPushManager(ErrorResult& aRv);
 
 private:
@@ -263,7 +248,7 @@ private:
   RefPtr<WorkerListener> mListener;
 
 #ifndef MOZ_SIMPLEPUSH
-  RefPtr<WorkerPushManager> mPushManager;
+  RefPtr<PushManager> mPushManager;
 #endif
 };
 

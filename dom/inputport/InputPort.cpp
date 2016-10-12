@@ -24,7 +24,7 @@ NS_IMPL_RELEASE_INHERITED(InputPort, DOMEventTargetHelper)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(InputPort)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
-InputPort::InputPort(nsPIDOMWindow* aWindow)
+InputPort::InputPort(nsPIDOMWindowInner* aWindow)
   : DOMEventTargetHelper(aWindow)
   , mIsConnected(false)
 {
@@ -64,7 +64,7 @@ InputPort::Init(nsIInputPortData* aData, nsIInputPortListener* aListener, ErrorR
   MediaStreamGraph* graph =
     MediaStreamGraph::GetInstance(MediaStreamGraph::SYSTEM_THREAD_DRIVER,
                                   AudioChannel::Normal);
-  mStream = DOMMediaStream::CreateSourceStream(GetOwner(), graph);
+  mStream = DOMMediaStream::CreateSourceStreamAsInput(GetOwner(), graph);
 }
 
 void

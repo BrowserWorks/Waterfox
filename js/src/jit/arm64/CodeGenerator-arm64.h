@@ -28,18 +28,6 @@ class CodeGeneratorARM64 : public CodeGeneratorShared
   protected:
     NonAssertingLabel deoptLabel_;
 
-    // FIXME: VIXL Operand does not match the platform-agnostic Operand,
-    // which is just a union of possible arguments.
-    inline Operand ToOperand(const LAllocation& a) {
-        MOZ_CRASH("ToOperand");
-    }
-    inline Operand ToOperand(const LAllocation* a) {
-        return ToOperand(*a);
-    }
-    inline Operand ToOperand(const LDefinition* def) {
-        return ToOperand(def->output());
-    }
-
     MoveOperand toMoveOperand(const LAllocation a) const;
 
     void bailoutIf(Assembler::Condition condition, LSnapshot* snapshot);
@@ -163,6 +151,7 @@ class CodeGeneratorARM64 : public CodeGeneratorShared
     virtual void visitTruncateFToInt32(LTruncateFToInt32* ins);
 
     virtual void visitClzI(LClzI* lir);
+    virtual void visitCtzI(LCtzI* lir);
     // Out of line visitors.
     void visitOutOfLineBailout(OutOfLineBailout* ool);
     void visitOutOfLineTableSwitch(OutOfLineTableSwitch* ool);
@@ -236,15 +225,15 @@ class CodeGeneratorARM64 : public CodeGeneratorShared
   public:
     // Unimplemented SIMD instructions.
     void visitSimdSplatX4(LSimdSplatX4* lir) { MOZ_CRASH("NYI"); }
-    void visitInt32x4(LInt32x4* ins) { MOZ_CRASH("NYI"); }
-    void visitFloat32x4(LFloat32x4* ins) { MOZ_CRASH("NYI"); }
+    void visitSimd128Int(LSimd128Int* ins) { MOZ_CRASH("NYI"); }
+    void visitSimd128Float(LSimd128Float* ins) { MOZ_CRASH("NYI"); }
     void visitSimdExtractElementI(LSimdExtractElementI* ins) { MOZ_CRASH("NYI"); }
     void visitSimdExtractElementF(LSimdExtractElementF* ins) { MOZ_CRASH("NYI"); }
     void visitSimdBinaryCompIx4(LSimdBinaryCompIx4* lir) { MOZ_CRASH("NYI"); }
     void visitSimdBinaryCompFx4(LSimdBinaryCompFx4* lir) { MOZ_CRASH("NYI"); }
     void visitSimdBinaryArithIx4(LSimdBinaryArithIx4* lir) { MOZ_CRASH("NYI"); }
     void visitSimdBinaryArithFx4(LSimdBinaryArithFx4* lir) { MOZ_CRASH("NYI"); }
-    void visitSimdBinaryBitwiseX4(LSimdBinaryBitwiseX4* lir) { MOZ_CRASH("NYI"); }
+    void visitSimdBinaryBitwise(LSimdBinaryBitwise* lir) { MOZ_CRASH("NYI"); }
 };
 
 typedef CodeGeneratorARM64 CodeGeneratorSpecific;

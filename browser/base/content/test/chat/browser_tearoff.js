@@ -2,47 +2,48 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Components.utils.import("resource://gre/modules/Promise.jsm", this);
-
 var chatbar = document.getElementById("pinnedchats");
 
 function promiseNewWindowLoaded() {
-  let deferred = Promise.defer();
-  Services.wm.addListener({
-    onWindowTitleChange: function() {},
-    onCloseWindow: function(xulwindow) {},
-    onOpenWindow: function(xulwindow) {
-      var domwindow = xulwindow.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-                            .getInterface(Components.interfaces.nsIDOMWindow);
-      Services.wm.removeListener(this);
-      // wait for load to ensure the window is ready for us to test
-      domwindow.addEventListener("load", function _load(event) {
-        let doc = domwindow.document;
-        if (event.target != doc)
+  return new Promise(resolve => {
+    Services.wm.addListener({
+      onWindowTitleChange: function() {},
+      onCloseWindow: function(xulwindow) {},
+      onOpenWindow: function(xulwindow) {
+        var domwindow = xulwindow.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                              .getInterface(Components.interfaces.nsIDOMWindow);
+        Services.wm.removeListener(this);
+        // wait for load to ensure the window is ready for us to test
+        domwindow.addEventListener("load", function _load(event) {
+          let doc = domwindow.document;
+          if (event.target != doc)
             return;
-        domwindow.removeEventListener("load", _load);
-        deferred.resolve(domwindow);
-      });
-    },
+          domwindow.removeEventListener("load", _load);
+          resolve(domwindow);
+        });
+      },
+    });
   });
-  return deferred.promise;
 }
 
 add_chat_task(function* testTearoffChat() {
   let chatbox = yield promiseOpenChat("http://example.com");
   Assert.equal(numChatsInWindow(window), 1, "should be 1 chat open");
 
-  let chatDoc = chatbox.contentDocument;
-  let chatTitle = chatDoc.title;
+  let chatTitle = yield ContentTask.spawn(chatbox.content, null, function* () {
+    let chatDoc = content.document;
+
+    // Mutate the chat document a bit before we tear it off.
+    let div = chatDoc.createElement("div");
+    div.setAttribute("id", "testdiv");
+    div.setAttribute("test", "1");
+    chatDoc.body.appendChild(div);
+
+    return chatDoc.title;
+  });
 
   Assert.equal(chatbox.getAttribute("label"), chatTitle,
                "the new chatbox should show the title of the chat window");
-
-  // mutate the chat document a bit before we tear it off.
-  let div = chatDoc.createElement("div");
-  div.setAttribute("id", "testdiv");
-  div.setAttribute("test", "1");
-  chatDoc.body.appendChild(div);
 
   // chatbox is open, lets detach. The new chat window will be caught in
   // the window watcher below
@@ -61,9 +62,11 @@ add_chat_task(function* testTearoffChat() {
   chatbox = domwindow.document.getElementById("chatter")
   Assert.equal(chatbox.getAttribute("label"), chatTitle, "window should have same title as chat");
 
-  div = chatbox.contentDocument.getElementById("testdiv");
-  Assert.equal(div.getAttribute("test"), "1", "docshell should have been swapped");
-  div.setAttribute("test", "2");
+  yield ContentTask.spawn(chatbox.content, null, function* () {
+    let div = content.document.getElementById("testdiv");
+    Assert.equal(div.getAttribute("test"), "1", "docshell should have been swapped");
+    div.setAttribute("test", "2");
+  });
 
   // swap the window back to the chatbar
   promise = promiseOneEvent(domwindow, "unload");
@@ -77,8 +80,10 @@ add_chat_task(function* testTearoffChat() {
   Assert.equal(chatbox.getAttribute("label"), chatTitle,
                "the new chatbox should show the title of the chat window again");
 
-  div = chatbox.contentDocument.getElementById("testdiv");
-  Assert.equal(div.getAttribute("test"), "2", "docshell should have been swapped");
+  yield ContentTask.spawn(chatbox.content, null, function* () {
+    let div = content.document.getElementById("testdiv");
+    Assert.equal(div.getAttribute("test"), "2", "docshell should have been swapped");
+  });
 });
 
 // Similar test but with 2 chats.

@@ -58,7 +58,6 @@ var modules = {
   reader: {
     uri: "chrome://global/content/reader/aboutReader.html",
     privileged: false,
-    dontLink: true,
     hide: true
   },
   feedback: {
@@ -85,12 +84,6 @@ if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
     privileged: true
   };
 }
-if (AppConstants.MOZ_DEVICES) {
-  modules['devices'] = {
-    uri: "chrome://browser/content/aboutDevices.xhtml",
-    privileged: true
-  };
-}
 
 function AboutRedirector() {}
 AboutRedirector.prototype = {
@@ -108,8 +101,6 @@ AboutRedirector.prototype = {
     let moduleInfo = this._getModuleInfo(aURI);
     if (moduleInfo.hide)
       flags = Ci.nsIAboutModule.HIDE_FROM_ABOUTABOUT;
-    if (moduleInfo.dontLink)
-      flags = flags | Ci.nsIAboutModule.MAKE_UNLINKABLE;
 
     return flags | Ci.nsIAboutModule.ALLOW_SCRIPT;
   },

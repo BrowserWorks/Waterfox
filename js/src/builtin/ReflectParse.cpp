@@ -305,30 +305,27 @@ class NodeBuilder
     }
 
   private:
-    template <size_t N>
-    bool callbackHelper(HandleValue fun, AutoValueArray<N>& args, size_t i,
+    bool callbackHelper(HandleValue fun, const InvokeArgs& args, size_t i,
                         TokenPos* pos, MutableHandleValue dst)
     {
         // The end of the implementation of callback(). All arguments except
-        // loc have already been stored in range [0, i) or args.
-        MOZ_ASSERT(i == N - 1);
+        // loc have already been stored in range [0, i).
         if (saveLoc) {
-            RootedValue loc(cx);
-            if (!newNodeLoc(pos, &loc))
+            if (!newNodeLoc(pos, args[i]))
                 return false;
-            args[i++].set(loc);
         }
-        return Invoke(cx, userv, fun, N, args.begin(), dst);
+
+        return js::Call(cx, fun, userv, args, dst);
     }
 
     // Helper function for callback(). Note that all Arguments must be types
-    // that convert to HandleValue, so this is not really as template-y as it
-    // seems, just variadic.
-    template <size_t N, typename... Arguments>
-    bool callbackHelper(HandleValue fun, AutoValueArray<N>& args, size_t i,
+    // that convert to HandleValue, so this isn't as template-y as it seems,
+    // just variadic.
+    template <typename... Arguments>
+    bool callbackHelper(HandleValue fun, const InvokeArgs& args, size_t i,
                         HandleValue head, Arguments&&... tail)
     {
-        // Recursive loop to store the arguments in the array. This eventually
+        // Recursive loop to store the arguments into args. This eventually
         // bottoms out in a call to the non-template callbackHelper() above.
         args[i].set(head);
         return callbackHelper(fun, args, i + 1, Forward<Arguments>(tail)...);
@@ -340,8 +337,11 @@ class NodeBuilder
     //                   MutableHandleValue dst);
     template <typename... Arguments>
     bool callback(HandleValue fun, Arguments&&... args) {
-        AutoValueArray<sizeof...(args) - 1> argv(cx);
-        return callbackHelper(fun, argv, 0, Forward<Arguments>(args)...);
+        InvokeArgs iargs(cx);
+        if (!iargs.init(sizeof...(args) - 2 + size_t(saveLoc)))
+            return false;
+
+        return callbackHelper(fun, iargs, 0, Forward<Arguments>(args)...);
     }
 
     // WARNING: Returning a Handle is non-standard, but it works in this case
@@ -1829,6 +1829,7 @@ class ASTSerializer
   public:
     ASTSerializer(JSContext* c, bool l, char const* src, uint32_t ln)
         : cx(c)
+        , parser(nullptr)
         , builder(c, l, src)
 #ifdef DEBUG
         , lineno(ln)
@@ -3470,7 +3471,7 @@ ASTSerializer::function(ParseNode* pn, ASTType type, MutableHandleValue dst)
 #endif
 
     RootedValue id(cx);
-    RootedAtom funcAtom(cx, func->atom());
+    RootedAtom funcAtom(cx, func->name());
     if (!optIdentifier(funcAtom, nullptr, &id))
         return false;
 
@@ -3747,6 +3748,9 @@ reflect_parse(JSContext* cx, uint32_t argc, Value* vp)
         if (!pn)
             return false;
     } else {
+        if (!GlobalObject::ensureModulePrototypesCreated(cx, cx->global()))
+            return false;
+
         Rooted<ModuleObject*> module(cx, ModuleObject::create(cx, nullptr));
         if (!module)
             return false;

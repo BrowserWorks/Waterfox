@@ -43,12 +43,13 @@ public:
   bool HasRegisteredID() { return mStreamID != 0; }
 
   nsAHttpTransaction *Transaction() { return mTransaction; }
-  virtual nsISchedulingContext *SchedulingContext()
+  virtual nsIRequestContext *RequestContext()
   {
-    return mTransaction ? mTransaction->SchedulingContext() : nullptr;
+    return mTransaction ? mTransaction->RequestContext() : nullptr;
   }
 
   void Close(nsresult reason);
+  void SetResponseIsComplete();
 
   void SetRecvdFin(bool aStatus) { mRecvdFin = aStatus ? 1 : 0; }
   bool RecvdFin() { return mRecvdFin; }
@@ -88,6 +89,7 @@ public:
   int64_t  LocalWindow()  { return mLocalWindow; }
 
   bool     BlockedOnRwin() { return mBlockedOnRwin; }
+  bool     ChannelPipeFull();
 
   // A pull stream has an implicit sink, a pushed stream has a sink
   // once it is matched to a pull stream.
@@ -143,10 +145,6 @@ protected:
 
 private:
   friend class nsAutoPtr<SpdyStream31>;
-
-  static PLDHashOperator hdrHashEnumerate(const nsACString &,
-                                          nsAutoPtr<nsCString> &,
-                                          void *);
 
   nsresult ParseHttpRequestHeaders(const char *, uint32_t, uint32_t *);
   nsresult GenerateSynFrame();

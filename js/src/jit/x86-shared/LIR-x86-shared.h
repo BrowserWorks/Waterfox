@@ -161,6 +161,12 @@ class LUDivOrMod : public LBinaryMath<1>
             return mir_->toMod()->canBeDivideByZero();
         return mir_->toDiv()->canBeDivideByZero();
     }
+
+    bool trapOnError() const {
+        if (mir_->isMod())
+            return mir_->toMod()->trapOnError();
+        return mir_->toDiv()->trapOnError();
+    }
 };
 
 class LUDivOrModConstant : public LInstructionHelper<1, 1, 1>
@@ -191,6 +197,11 @@ class LUDivOrModConstant : public LInstructionHelper<1, 1, 1>
         if (mir_->isMod())
             return mir_->toMod()->canBeNegativeDividend();
         return mir_->toDiv()->canBeNegativeDividend();
+    }
+    bool trapOnError() const {
+        if (mir_->isMod())
+            return mir_->toMod()->trapOnError();
+        return mir_->toDiv()->trapOnError();
     }
 };
 
@@ -254,9 +265,11 @@ class LTableSwitchV : public LInstructionHelper<0, BOX_PIECES, 3>
   public:
     LIR_HEADER(TableSwitchV)
 
-    LTableSwitchV(const LDefinition& inputCopy, const LDefinition& floatCopy,
-                  const LDefinition& jumpTablePointer, MTableSwitch* ins)
+    LTableSwitchV(const LBoxAllocation& input, const LDefinition& inputCopy,
+                  const LDefinition& floatCopy, const LDefinition& jumpTablePointer,
+                  MTableSwitch* ins)
     {
+        setBoxOperand(InputValue, input);
         setTemp(0, inputCopy);
         setTemp(1, floatCopy);
         setTemp(2, jumpTablePointer);

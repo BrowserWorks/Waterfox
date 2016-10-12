@@ -33,17 +33,18 @@ void
 TextTrackCue::SetDefaultCueSettings()
 {
   mPosition = 50;
-  mPositionAlign = AlignSetting::Middle;
+  mPositionAlign = PositionAlignSetting::Center;
   mSize = 100;
   mPauseOnExit = false;
   mSnapToLines = true;
   mLineIsAutoKeyword = true;
   mAlign = AlignSetting::Middle;
-  mLineAlign = AlignSetting::Start;
+  mLineAlign = LineAlignSetting::Start;
   mVertical = DirectionSetting::_empty;
+  mActive = false;
 }
 
-TextTrackCue::TextTrackCue(nsPIDOMWindow* aOwnerWindow,
+TextTrackCue::TextTrackCue(nsPIDOMWindowInner* aOwnerWindow,
                            double aStartTime,
                            double aEndTime,
                            const nsAString& aText,
@@ -61,7 +62,7 @@ TextTrackCue::TextTrackCue(nsPIDOMWindow* aOwnerWindow,
   }
 }
 
-TextTrackCue::TextTrackCue(nsPIDOMWindow* aOwnerWindow,
+TextTrackCue::TextTrackCue(nsPIDOMWindowInner* aOwnerWindow,
                            double aStartTime,
                            double aEndTime,
                            const nsAString& aText,
@@ -91,7 +92,7 @@ TextTrackCue::~TextTrackCue()
 nsresult
 TextTrackCue::StashDocument()
 {
-  nsPIDOMWindow* window = GetOwner();
+  nsPIDOMWindowInner* window = GetOwner();
   if (!window) {
     return NS_ERROR_NO_INTERFACE;
   }
@@ -122,7 +123,7 @@ TextTrackCue::GetCueAsHTML()
     ClearOnShutdown(&sParserWrapper);
   }
 
-  nsPIDOMWindow* window = mDocument->GetWindow();
+  nsPIDOMWindowInner* window = mDocument->GetInnerWindow();
   if (!window) {
     return mDocument->CreateDocumentFragment();
   }
@@ -166,6 +167,20 @@ TextTrackCue::SetRegion(TextTrackRegion* aRegion)
   }
   mRegion = aRegion;
   mReset = true;
+}
+
+PositionAlignSetting
+TextTrackCue::ComputedPositionAlign()
+{
+  // See spec https://w3c.github.io/webvtt/#cue-computed-position-alignment
+  if (mPositionAlign != PositionAlignSetting::Auto) {
+    return mPositionAlign;
+  } else if (mAlign == AlignSetting::Left) {
+    return PositionAlignSetting::Line_left;
+  } else if (mAlign == AlignSetting::Right) {
+    return PositionAlignSetting::Line_right;
+  }
+  return PositionAlignSetting::Center;
 }
 
 } // namespace dom

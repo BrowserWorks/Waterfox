@@ -52,6 +52,12 @@ class CallOnServerClose;
 class CallAcknowledge;
 class WebSocketEventService;
 
+extern nsresult
+CalculateWebSocketHashedSecret(const nsACString& aKey, nsACString& aHash);
+extern void
+ProcessServerWebSocketExtensions(const nsACString& aExtensions,
+                                 nsACString& aNegotiatedExtensions);
+
 // Used to enforce "1 connecting websocket per host" rule, and reconnect delays
 enum wsConnectingState {
   NOT_CONNECTING = 0,     // Not yet (or no longer) trying to open connection
@@ -300,7 +306,7 @@ private:
   Atomic<uint64_t, Relaxed>       mCountRecv;
   Atomic<uint64_t, Relaxed>       mCountSent;
   uint32_t                        mAppId;
-  bool                            mIsInBrowser;
+  bool                            mIsInIsolatedMozBrowser;
 #ifdef MOZ_WIDGET_GONK
   nsMainThreadPtrHandle<nsINetworkInfo> mActiveNetworkInfo;
 #endif

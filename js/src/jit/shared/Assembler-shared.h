@@ -18,7 +18,8 @@
 #include "jit/RegisterSets.h"
 #include "vm/HelperThreads.h"
 
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64) || \
+    defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
 // Push return addresses callee-side.
 # define JS_USE_LINK_REGISTER
 #endif
@@ -132,6 +133,17 @@ struct Imm64
 
     explicit Imm64(uint64_t value) : value(value)
     { }
+
+    Imm32 low() const {
+        return Imm32(int32_t(value));
+    }
+
+    Imm32 hi() const {
+        return Imm32(int32_t(value >> 32));
+    }
+
+    inline Imm32 firstHalf() const;
+    inline Imm32 secondHalf() const;
 };
 
 #ifdef DEBUG
@@ -545,7 +557,7 @@ class CodeLocationJump
         raw_ = nullptr;
         setUninitialized();
 #ifdef JS_SMALL_BRANCH
-        jumpTableEntry_ = (uint8_t*) 0xdeadab1e;
+        jumpTableEntry_ = (uint8_t*) uintptr_t(0xdeadab1e);
 #endif
     }
     CodeLocationJump(JitCode* code, CodeOffsetJump base) {
@@ -690,24 +702,11 @@ struct AsmJSAbsoluteAddress
     wasm::SymbolicAddress target;
 };
 
-// Represents a call from an asm.js function to another asm.js function,
-// represented by the index of the callee in the Module Validator
-struct AsmJSInternalCallee
-{
-    uint32_t index;
-
-    // Provide a default constructor for embedding it in unions
-    AsmJSInternalCallee() = default;
-
-    explicit AsmJSInternalCallee(uint32_t calleeIndex)
-      : index(calleeIndex)
-    {}
-};
-
 // The base class of all Assemblers for all archs.
 class AssemblerShared
 {
     wasm::CallSiteAndTargetVector callsites_;
+    wasm::JumpSiteArray jumpsites_;
     wasm::HeapAccessVector heapAccesses_;
     Vector<AsmJSGlobalAccess, 0, SystemAllocPolicy> asmJSGlobalAccesses_;
     Vector<AsmJSAbsoluteAddress, 0, SystemAllocPolicy> asmJSAbsoluteAddresses_;
@@ -740,15 +739,21 @@ class AssemblerShared
         return embedsNurseryPointers_;
     }
 
-    void append(const wasm::CallSiteDesc& desc, CodeOffset label, size_t framePushed,
+    void append(const wasm::CallSiteDesc& desc, CodeOffset retAddr, size_t framePushed,
                 uint32_t targetIndex = wasm::CallSiteAndTarget::NOT_INTERNAL)
     {
         // framePushed does not include sizeof(AsmJSFrame), so add it in here (see
         // CallSite::stackDepth).
-        wasm::CallSite callsite(desc, label.offset(), framePushed + sizeof(AsmJSFrame));
+        wasm::CallSite callsite(desc, retAddr.offset(), framePushed + sizeof(AsmJSFrame));
         enoughMemory_ &= callsites_.append(wasm::CallSiteAndTarget(callsite, targetIndex));
     }
     wasm::CallSiteAndTargetVector& callSites() { return callsites_; }
+
+    void append(wasm::JumpTarget target, uint32_t offset) {
+        enoughMemory_ &= jumpsites_[target].append(offset);
+    }
+    const wasm::JumpSiteArray& jumpSites() { return jumpsites_; }
+    void clearJumpSites() { for (auto& v : jumpsites_) v.clear(); }
 
     void append(wasm::HeapAccess access) { enoughMemory_ &= heapAccesses_.append(access); }
     wasm::HeapAccessVector&& extractHeapAccesses() { return Move(heapAccesses_); }
@@ -780,6 +785,14 @@ class AssemblerShared
         enoughMemory_ &= callsites_.appendAll(other.callsites_);
         for (; i < callsites_.length(); i++)
             callsites_[i].offsetReturnAddressBy(delta);
+
+        for (wasm::JumpTarget target : mozilla::MakeEnumeratedRange(wasm::JumpTarget::Limit)) {
+            wasm::Uint32Vector& offsets = jumpsites_[target];
+            i = offsets.length();
+            enoughMemory_ &= offsets.appendAll(other.jumpsites_[target]);
+            for (; i < offsets.length(); i++)
+                offsets[i] += delta;
+        }
 
         i = heapAccesses_.length();
         enoughMemory_ &= heapAccesses_.appendAll(other.heapAccesses_);

@@ -151,6 +151,7 @@ this.TabCrashHandler = {
       return
 
     if (!message.data.sendReport) {
+      Services.telemetry.getHistogramById("FX_CONTENT_CRASH_NOT_SUBMITTED").add(1);
       this.prefs.setBoolPref("sendReport", false);
       return;
     }
@@ -163,13 +164,31 @@ this.TabCrashHandler = {
       URL,
     } = message.data;
 
+    let extraExtraKeyVals = {
+      "Comments": comments,
+      "Email": email,
+      "URL": URL,
+    };
+
+    // For the entries in extraExtraKeyVals, we only want to submit the
+    // extra data values where they are not the empty string.
+    for (let key in extraExtraKeyVals) {
+      let val = extraExtraKeyVals[key].trim();
+      if (!val) {
+        delete extraExtraKeyVals[key];
+      }
+    }
+
+    // URL is special, since it's already been written to extra data by
+    // default. In order to make sure we don't send it, we overwrite it
+    // with the empty string.
+    if (!includeURL) {
+      extraExtraKeyVals["URL"] = "";
+    }
+
     CrashSubmit.submit(dumpID, {
       recordSubmission: true,
-      extraExtraKeyVals: {
-        Comments: comments,
-        Email: email,
-        URL: URL,
-      },
+      extraExtraKeyVals,
     }).then(null, Cu.reportError);
 
     this.prefs.setBoolPref("sendReport", true);
@@ -228,7 +247,13 @@ this.TabCrashHandler = {
 
     let dumpID = this.getDumpID(browser);
     if (!dumpID) {
-      message.target.sendAsyncMessge("SetCrashReportAvailable", {
+      // Make sure to only count once even if there are multiple windows
+      // that will all show about:tabcrashed.
+      if (this._crashedTabCount == 1) {
+        Services.telemetry.getHistogramById("FX_CONTENT_CRASH_DUMP_UNAVAILABLE").add(1);
+      }
+
+      message.target.sendAsyncMessage("SetCrashReportAvailable", {
         hasReport: false,
       });
       return;
@@ -243,10 +268,16 @@ this.TabCrashHandler = {
       data.email = this.prefs.getCharPref("email", "");
     }
 
+    // Make sure to only count once even if there are multiple windows
+    // that will all show about:tabcrashed.
+    if (this._crashedTabCount == 1) {
+      Services.telemetry.getHistogramById("FX_CONTENT_CRASH_PRESENTED").add(1);
+    }
+
     message.target.sendAsyncMessage("SetCrashReportAvailable", data);
   },
 
-  onAboutTabCrashedUnload: function() {
+  onAboutTabCrashedUnload(message) {
     if (!this._crashedTabCount) {
       Cu.reportError("Can not decrement crashed tab count to below 0");
       return;
@@ -260,7 +291,16 @@ this.TabCrashHandler = {
     this.pageListener.sendAsyncMessage("UpdateCount", {
       count: this._crashedTabCount,
     });
-  },
+
+    let browser = message.target.browser;
+    let childID = this.browserMap.get(browser.permanentKey);
+
+    // Make sure to only count once even if there are multiple windows
+    // that will all show about:tabcrashed.
+    if (this._crashedTabCount == 0 && childID) {
+      Services.telemetry.getHistogramById("FX_CONTENT_CRASH_NOT_SUBMITTED").add(1);
+    }
+},
 
   /**
    * For some <xul:browser>, return a crash report dump ID for that browser

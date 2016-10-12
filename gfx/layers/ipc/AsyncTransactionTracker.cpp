@@ -34,15 +34,20 @@ AsyncTransactionWaiter::WaitComplete()
   if (mWaitCount > 0) {
     printf_stderr("Timeout of waiting transaction complete.");
   }
+
+  if (count == maxCount) {
+    gfxDevCrash(LogReason::AsyncTransactionTimeout) << "Bug 1244883: AsyncTransactionWaiter timed out.";
+  }
 }
 
-uint64_t AsyncTransactionTracker::sSerialCounter(0);
-Mutex* AsyncTransactionTracker::sLock = nullptr;
+Atomic<uint64_t> AsyncTransactionTracker::sSerialCounter(0);
 
 AsyncTransactionTracker::AsyncTransactionTracker(AsyncTransactionWaiter* aWaiter)
     : mSerial(GetNextSerial())
     , mWaiter(aWaiter)
+#ifdef DEBUG
     , mCompleted(false)
+#endif
 {
   if (mWaiter) {
     mWaiter->IncrementWaitCount();
@@ -57,7 +62,9 @@ void
 AsyncTransactionTracker::NotifyComplete()
 {
   MOZ_ASSERT(!mCompleted);
+#ifdef DEBUG
   mCompleted = true;
+#endif
   Complete();
   if (mWaiter) {
     mWaiter->DecrementWaitCount();
@@ -68,14 +75,16 @@ void
 AsyncTransactionTracker::NotifyCancel()
 {
   MOZ_ASSERT(!mCompleted);
+#ifdef DEBUG
   mCompleted = true;
+#endif
   Cancel();
   if (mWaiter) {
     mWaiter->DecrementWaitCount();
   }
 }
 
-uint64_t AsyncTransactionTrackersHolder::sSerialCounter(0);
+Atomic<uint64_t> AsyncTransactionTrackersHolder::sSerialCounter(0);
 Mutex* AsyncTransactionTrackersHolder::sHolderLock = nullptr;
 
 std::map<uint64_t, AsyncTransactionTrackersHolder*> AsyncTransactionTrackersHolder::sTrackersHolders;

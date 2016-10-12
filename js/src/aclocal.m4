@@ -8,7 +8,6 @@ builtin(include, ../../build/autoconf/acwinpaths.m4)dnl
 builtin(include, ../../build/autoconf/hooks.m4)dnl
 builtin(include, ../../build/autoconf/config.status.m4)dnl
 builtin(include, ../../build/autoconf/toolchain.m4)dnl
-builtin(include, ../../build/autoconf/wrapper.m4)dnl
 builtin(include, ../../build/autoconf/pkg.m4)dnl
 builtin(include, ../../build/autoconf/nspr.m4)dnl
 builtin(include, ../../build/autoconf/nspr-build.m4)dnl
@@ -25,7 +24,6 @@ builtin(include, ../../build/autoconf/arch.m4)dnl
 builtin(include, ../../build/autoconf/android.m4)dnl
 builtin(include, ../../build/autoconf/zlib.m4)dnl
 builtin(include, ../../build/autoconf/linux.m4)dnl
-builtin(include, ../../build/autoconf/python-virtualenv.m4)dnl
 builtin(include, ../../build/autoconf/winsdk.m4)dnl
 builtin(include, ../../build/autoconf/icu.m4)dnl
 builtin(include, ../../build/autoconf/ffi.m4)dnl
@@ -45,3 +43,8 @@ __MOZ_AC_INIT_PREPARE($1)
 ])
 
 MOZ_PROG_CHECKMSYS()
+dnl This won't actually read the mozconfig, but data that configure.py
+dnl will have placed for us to read. Configure.py takes care of not reading
+dnl the mozconfig where appropriate but can still give us some variables
+dnl to read.
+MOZ_READ_MOZCONFIG(.)

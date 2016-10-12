@@ -143,11 +143,10 @@ function testCompositor(win, ctx) {
 }
 
 var listener = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
-
   win: null,
   utils: null,
   canvas: null,
+  ctx: null,
   mm: null,
 
   messages: [
@@ -219,6 +218,7 @@ var listener = {
     this.win = null;
     this.utils = null;
     this.canvas = null;
+    this.ctx = null;
 
     if (this.mm) {
       // We don't have a MessageManager if onWindowLoaded never fired.
@@ -228,7 +228,7 @@ var listener = {
 
       this.mm = null;
     }
-  
+
     // Remove the annotation after we've cleaned everything up, to catch any
     // incidental crashes from having performed the sanity test.
     annotateCrashReport(false);
@@ -245,7 +245,7 @@ SanityTest.prototype = {
     // Only test gfx features if firefox has updated, or if the user has a new
     // gpu or drivers.
     var appInfo = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
-    var xulVersion = appInfo.version;
+    var buildId = Services.appinfo.platformBuildID;
     var gfxinfo = Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo);
 
     if (Preferences.get(RUNNING_PREF, false)) {
@@ -270,7 +270,7 @@ SanityTest.prototype = {
     // TODO: Handle dual GPU setups
     if (checkPref(DRIVER_PREF, gfxinfo.adapterDriverVersion, REASON_DRIVER_CHANGED) &&
         checkPref(DEVICE_PREF, gfxinfo.adapterDeviceID, REASON_DEVICE_CHANGED) &&
-        checkPref(VERSION_PREF, xulVersion, REASON_FIREFOX_CHANGED))
+        checkPref(VERSION_PREF, buildId, REASON_FIREFOX_CHANGED))
     {
       return false;
     }
@@ -280,7 +280,7 @@ SanityTest.prototype = {
     Preferences.set(DISABLE_VIDEO_PREF, false);
     Preferences.set(DRIVER_PREF, gfxinfo.adapterDriverVersion);
     Preferences.set(DEVICE_PREF, gfxinfo.adapterDeviceID);
-    Preferences.set(VERSION_PREF, xulVersion);
+    Preferences.set(VERSION_PREF, buildId);
 
     // Update the prefs so that this test doesn't run again until the next update.
     Preferences.set(RUNNING_PREF, true);
@@ -290,6 +290,12 @@ SanityTest.prototype = {
 
   observe: function(subject, topic, data) {
     if (topic != "profile-after-change") return;
+
+    // profile-after-change fires only at startup, so we won't need
+    // to use the listener again.
+    let tester = listener;
+    listener = null;
+
     if (!this.shouldRunTest()) return;
 
     annotateCrashReport(true);
@@ -304,7 +310,7 @@ SanityTest.prototype = {
     // There's no clean way to have an invisible window and ensure it's always painted.
     // Instead, move the window far offscreen so it doesn't show up during launch.
     sanityTest.moveTo(100000000,1000000000);
-    listener.scheduleTest(sanityTest);
+    tester.scheduleTest(sanityTest);
   },
 };
 

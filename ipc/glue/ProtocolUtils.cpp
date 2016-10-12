@@ -1,11 +1,14 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: sw=2 ts=8 et :
- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "base/process_util.h"
+
+#ifdef OS_POSIX
+#include <errno.h>
+#endif
 
 #include "mozilla/ipc/MessageChannel.h"
 #include "mozilla/ipc/ProtocolUtils.h"
@@ -17,6 +20,13 @@
 #include "mozilla/sandboxTarget.h"
 #endif
 
+#if defined(MOZ_CRASHREPORTER) && defined(XP_WIN)
+#include "aclapi.h"
+#include "sddl.h"
+
+#include "mozilla/TypeTraits.h"
+#endif
+
 using namespace IPC;
 
 using base::GetCurrentProcId;
@@ -24,6 +34,17 @@ using base::ProcessHandle;
 using base::ProcessId;
 
 namespace mozilla {
+
+#if defined(MOZ_CRASHREPORTER) && defined(XP_WIN)
+// Generate RAII classes for LPTSTR and PSECURITY_DESCRIPTOR.
+MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedLPTStr, \
+                                          RemovePointer<LPTSTR>::Type, \
+                                          ::LocalFree)
+MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedPSecurityDescriptor, \
+                                          RemovePointer<PSECURITY_DESCRIPTOR>::Type, \
+                                          ::LocalFree)
+#endif
+
 namespace ipc {
 
 ProtocolCloneContext::ProtocolCloneContext()
@@ -168,7 +189,7 @@ public:
                    ProcessId* aOtherProcess,
                    ProtocolId* aProtocol)
   {
-    void* iter = nullptr;
+    PickleIterator iter(aMsg);
     if (!IPC::ReadParam(&aMsg, &iter, aDescriptor) ||
         !IPC::ReadParam(&aMsg, &iter, aOtherProcess) ||
         !IPC::ReadParam(&aMsg, &iter, reinterpret_cast<uint32_t*>(aProtocol))) {
@@ -284,8 +305,15 @@ bool DuplicateHandle(HANDLE aSourceHandle,
 #endif
 
   // Finally, see if we already have access to the process.
-  ScopedProcessHandle targetProcess;
-  if (!base::OpenProcessHandle(aTargetProcessId, &targetProcess.rwget())) {
+  ScopedProcessHandle targetProcess(OpenProcess(PROCESS_DUP_HANDLE,
+                                                FALSE,
+                                                aTargetProcessId));
+  if (!targetProcess) {
+#ifdef MOZ_CRASH_REPORTER
+    CrashReporter::AnnotateCrashReport(
+      NS_LITERAL_CSTRING("IPCTransportFailureReason"),
+      NS_LITERAL_CSTRING("Failed to open target process."));
+#endif
     return false;
   }
 
@@ -294,6 +322,42 @@ bool DuplicateHandle(HANDLE aSourceHandle,
                               aDesiredAccess, FALSE, aOptions);
 }
 #endif
+
+#ifdef MOZ_CRASHREPORTER
+void
+AnnotateSystemError()
+{
+  int64_t error = 0;
+#if defined(XP_WIN)
+  error = ::GetLastError();
+#elif defined(OS_POSIX)
+  error = errno;
+#endif
+  if (error) {
+    CrashReporter::AnnotateCrashReport(
+      NS_LITERAL_CSTRING("IPCSystemError"),
+      nsPrintfCString("%lld", error));
+  }
+}
+#endif
+
+void
+LogMessageForProtocol(const char* aTopLevelProtocol, base::ProcessId aOtherPid,
+                      const char* aContextDescription,
+                      const char* aMessageDescription,
+                      MessageDirection aDirection)
+{
+  nsPrintfCString logMessage("[time: %" PRId64 "][%d%s%d] [%s] %s %s\n",
+                             PR_Now(), base::GetCurrentProcId(),
+                             aDirection == MessageDirection::eReceiving ? "<-" : "->",
+                             aOtherPid, aTopLevelProtocol,
+                             aContextDescription,
+                             aMessageDescription);
+#ifdef ANDROID
+  __android_log_write(ANDROID_LOG_INFO, "GeckoIPC", logMessage.get());
+#endif
+  fputs(logMessage.get(), stderr);
+}
 
 void
 ProtocolErrorBreakpoint(const char* aMsg)
@@ -305,8 +369,7 @@ ProtocolErrorBreakpoint(const char* aMsg)
 }
 
 void
-FatalError(const char* aProtocolName, const char* aMsg,
-           ProcessId aOtherPid, bool aIsParent)
+FatalError(const char* aProtocolName, const char* aMsg, bool aIsParent)
 {
   ProtocolErrorBreakpoint(aMsg);
 
@@ -325,12 +388,61 @@ FatalError(const char* aProtocolName, const char* aMsg,
                                        nsDependentCString(aProtocolName));
     CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("IPCFatalErrorMsg"),
                                        nsDependentCString(aMsg));
+    AnnotateSystemError();
 #endif
     MOZ_CRASH("IPC FatalError in the parent process!");
   } else {
     formattedMessage.AppendLiteral("\". abort()ing as a result.");
     NS_RUNTIMEABORT(formattedMessage.get());
   }
+}
+
+void
+LogicError(const char* aMsg)
+{
+  NS_RUNTIMEABORT(aMsg);
+}
+
+void
+ActorIdReadError(const char* aActorDescription)
+{
+  nsPrintfCString message("Error deserializing id for %s", aActorDescription);
+  NS_RUNTIMEABORT(message.get());
+}
+
+void
+BadActorIdError(const char* aActorDescription)
+{
+  nsPrintfCString message("bad id for %s", aActorDescription);
+  ProtocolErrorBreakpoint(message.get());
+}
+
+void
+ActorLookupError(const char* aActorDescription)
+{
+  nsPrintfCString message("could not lookup id for %s", aActorDescription);
+  ProtocolErrorBreakpoint(message.get());
+}
+
+void
+MismatchedActorTypeError(const char* aActorDescription)
+{
+  nsPrintfCString message("actor that should be of type %s has different type",
+                          aActorDescription);
+  ProtocolErrorBreakpoint(message.get());
+}
+
+void
+UnionTypeReadError(const char* aUnionName)
+{
+  nsPrintfCString message("error deserializing type of union %s", aUnionName);
+  NS_RUNTIMEABORT(message.get());
+}
+
+void ArrayLengthReadError(const char* aElementName)
+{
+  nsPrintfCString message("error deserializing length of %s[]", aElementName);
+  NS_RUNTIMEABORT(message.get());
 }
 
 } // namespace ipc

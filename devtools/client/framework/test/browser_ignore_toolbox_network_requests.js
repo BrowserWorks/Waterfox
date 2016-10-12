@@ -1,11 +1,14 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 // Test that network requests originating from the toolbox don't get recorded in
 // the network panel.
 
-add_task(function*() {
+add_task(function* () {
   // TODO: This test tries to verify the normal behavior of the netmonitor and
   // therefore needs to avoid the explicit check for tests. Bug 1167188 will
   // allow us to remove this workaround.

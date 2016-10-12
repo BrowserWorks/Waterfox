@@ -31,6 +31,12 @@ public:
     init(aValue);
   }
 
+  template<class U>
+  MOZ_IMPLICIT OwningNonNull(const OwningNonNull<U>& aValue)
+  {
+    init(aValue);
+  }
+
   // This is no worse than get() in terms of const handling.
   operator T&() const
   {
@@ -71,8 +77,17 @@ public:
     return *this;
   }
 
+  template<class U>
   OwningNonNull<T>&
-  operator=(already_AddRefed<T>&& aValue)
+  operator=(already_AddRefed<U>&& aValue)
+  {
+    init(aValue);
+    return *this;
+  }
+
+  template<class U>
+  OwningNonNull<T>&
+  operator=(const OwningNonNull<U>& aValue)
   {
     init(aValue);
     return *this;
@@ -89,6 +104,16 @@ public:
     return mPtr.forget();
   }
 
+  template<class U>
+  void
+  forget(U** aOther)
+  {
+#ifdef DEBUG
+    mInited = false;
+#endif
+    mPtr.forget(aOther);
+  }
+
   // Make us work with smart pointer helpers that expect a get().
   T* get() const
   {
@@ -101,6 +126,18 @@ public:
   void swap(U& aOther)
   {
     mPtr.swap(aOther);
+#ifdef DEBUG
+    mInited = mPtr;
+#endif
+  }
+
+  // We have some consumers who want to check whether we're inited in non-debug
+  // builds as well.  Luckily, we have the invariant that we're inited precisely
+  // when mPtr is non-null.
+  bool isInitialized() const
+  {
+    MOZ_ASSERT(!!mPtr == mInited, "mInited out of sync with mPtr?");
+    return mPtr;
   }
 
 protected:

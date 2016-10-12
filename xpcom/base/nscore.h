@@ -121,12 +121,6 @@
 
 #endif
 
-#ifdef MOZ_WIDGET_GONK
-#define B2G_ACL_EXPORT NS_EXPORT
-#else
-#define B2G_ACL_EXPORT
-#endif
-
 /**
  * Macro for creating typedefs for pointer-to-member types which are
  * declared with stdcall.  It is important to use this for any type which is
@@ -248,7 +242,7 @@
 #ifdef NS_NO_VTABLE
 #undef NS_NO_VTABLE
 #endif
-#if defined(_MSC_VER) && !defined(__clang__)
+#if defined(_MSC_VER)
 #define NS_NO_VTABLE __declspec(novtable)
 #else
 #define NS_NO_VTABLE

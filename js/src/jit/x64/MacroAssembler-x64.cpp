@@ -49,29 +49,25 @@ MacroAssemblerX64::loadConstantFloat32(float f, FloatRegister dest)
 }
 
 void
-MacroAssemblerX64::loadConstantInt32x4(const SimdConstant& v, FloatRegister dest)
+MacroAssemblerX64::loadConstantSimd128Int(const SimdConstant& v, FloatRegister dest)
 {
-    MOZ_ASSERT(v.type() == SimdConstant::Int32x4);
-    if (maybeInlineInt32x4(v, dest))
+    if (maybeInlineSimd128Int(v, dest))
         return;
     SimdData* val = getSimdData(v);
     if (!val)
         return;
-    MOZ_ASSERT(val->type() == SimdConstant::Int32x4);
     JmpSrc j = masm.vmovdqa_ripr(dest.encoding());
     propagateOOM(val->uses.append(CodeOffset(j.offset())));
 }
 
 void
-MacroAssemblerX64::loadConstantFloat32x4(const SimdConstant&v, FloatRegister dest)
+MacroAssemblerX64::loadConstantSimd128Float(const SimdConstant&v, FloatRegister dest)
 {
-    MOZ_ASSERT(v.type() == SimdConstant::Float32x4);
-    if (maybeInlineFloat32x4(v, dest))
+    if (maybeInlineSimd128Float(v, dest))
         return;
     SimdData* val = getSimdData(v);
     if (!val)
         return;
-    MOZ_ASSERT(val->type() == SimdConstant::Float32x4);
     JmpSrc j = masm.vmovaps_ripr(dest.encoding());
     propagateOOM(val->uses.append(CodeOffset(j.offset())));
 }
@@ -110,24 +106,30 @@ MacroAssemblerX64::finish()
         masm.haltingAlign(SimdMemoryAlignment);
     for (const SimdData& v : simds_) {
         bindOffsets(v.uses);
-        switch(v.type()) {
-          case SimdConstant::Int32x4:   masm.int32x4Constant(v.value.asInt32x4());     break;
-          case SimdConstant::Float32x4: masm.float32x4Constant(v.value.asFloat32x4()); break;
-          default: MOZ_CRASH("unexpected SimdConstant type");
-        }
+        masm.simd128Constant(v.value.bytes());
     }
 
     MacroAssemblerX86Shared::finish();
 }
 
+
 void
-MacroAssemblerX64::branchPrivatePtr(Condition cond, Address lhs, Register ptr, Label* label)
+MacroAssemblerX64::boxValue(JSValueType type, Register src, Register dest)
 {
-    ScratchRegisterScope scratch(asMasm());
-    if (ptr != scratch)
-        movePtr(ptr, scratch);
-    asMasm().rshiftPtr(Imm32(1), scratch);
-    branchPtr(cond, lhs, scratch, label);
+    MOZ_ASSERT(src != dest);
+
+    JSValueShiftedTag tag = (JSValueShiftedTag)JSVAL_TYPE_TO_SHIFTED_TAG(type);
+#ifdef DEBUG
+    if (type == JSVAL_TYPE_INT32 || type == JSVAL_TYPE_BOOLEAN) {
+        Label upper32BitsZeroed;
+        movePtr(ImmWord(UINT32_MAX), dest);
+        asMasm().branchPtr(Assembler::BelowOrEqual, src, dest, &upper32BitsZeroed);
+        breakpoint();
+        bind(&upper32BitsZeroed);
+    }
+#endif
+    mov(ImmShiftedTag(tag), dest);
+    orq(src, dest);
 }
 
 void
@@ -149,11 +151,11 @@ MacroAssemblerX64::handleFailureWithHandlerTail(void* handler)
     Label bailout;
 
     loadPtr(Address(rsp, offsetof(ResumeFromException, kind)), rax);
-    branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_ENTRY_FRAME), &entryFrame);
-    branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_CATCH), &catch_);
-    branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_FINALLY), &finally);
-    branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_FORCED_RETURN), &return_);
-    branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
+    asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_ENTRY_FRAME), &entryFrame);
+    asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_CATCH), &catch_);
+    asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_FINALLY), &finally);
+    asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_FORCED_RETURN), &return_);
+    asMasm().branch32(Assembler::Equal, rax, Imm32(ResumeFromException::RESUME_BAILOUT), &bailout);
 
     breakpoint(); // Invalid kind.
 
@@ -200,7 +202,7 @@ MacroAssemblerX64::handleFailureWithHandlerTail(void* handler)
     {
         Label skipProfilingInstrumentation;
         AbsoluteAddress addressOfEnabled(GetJitContext()->runtime->spsProfiler().addressOfEnabled());
-        branch32(Assembler::Equal, addressOfEnabled, Imm32(0), &skipProfilingInstrumentation);
+        asMasm().branch32(Assembler::Equal, addressOfEnabled, Imm32(0), &skipProfilingInstrumentation);
         profilerExitFrame();
         bind(&skipProfilingInstrumentation);
     }
@@ -213,83 +215,6 @@ MacroAssemblerX64::handleFailureWithHandlerTail(void* handler)
     loadPtr(Address(esp, offsetof(ResumeFromException, bailoutInfo)), r9);
     mov(ImmWord(BAILOUT_RETURN_OK), rax);
     jmp(Operand(rsp, offsetof(ResumeFromException, target)));
-}
-
-template <typename T>
-void
-MacroAssemblerX64::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest,
-                                     MIRType slotType)
-{
-    if (valueType == MIRType_Double) {
-        storeDouble(value.reg().typedReg().fpu(), dest);
-        return;
-    }
-
-    // For known integers and booleans, we can just store the unboxed value if
-    // the slot has the same type.
-    if ((valueType == MIRType_Int32 || valueType == MIRType_Boolean) && slotType == valueType) {
-        if (value.constant()) {
-            Value val = value.value();
-            if (valueType == MIRType_Int32)
-                store32(Imm32(val.toInt32()), dest);
-            else
-                store32(Imm32(val.toBoolean() ? 1 : 0), dest);
-        } else {
-            store32(value.reg().typedReg().gpr(), dest);
-        }
-        return;
-    }
-
-    if (value.constant())
-        storeValue(value.value(), dest);
-    else
-        storeValue(ValueTypeFromMIRType(valueType), value.reg().typedReg().gpr(), dest);
-}
-
-template void
-MacroAssemblerX64::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const Address& dest,
-                                     MIRType slotType);
-
-template void
-MacroAssemblerX64::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const BaseIndex& dest,
-                                     MIRType slotType);
-
-void
-MacroAssemblerX64::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp, Label* label)
-{
-    ScratchRegisterScope scratch(asMasm());
-
-    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-    MOZ_ASSERT(ptr != temp);
-    MOZ_ASSERT(ptr != scratch);
-
-    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
-    movePtr(ImmWord(-ptrdiff_t(nursery.start())), scratch);
-    asMasm().addPtr(ptr, scratch);
-    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
-              scratch, Imm32(nursery.nurserySize()), label);
-}
-
-void
-MacroAssemblerX64::branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp,
-                                              Label* label)
-{
-    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-
-    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
-
-    // Avoid creating a bogus ObjectValue below.
-    if (!nursery.exists())
-        return;
-
-    // 'Value' representing the start of the nursery tagged as a JSObject
-    Value start = ObjectValue(*reinterpret_cast<JSObject*>(nursery.start()));
-
-    ScratchRegisterScope scratch(asMasm());
-    movePtr(ImmWord(-ptrdiff_t(start.asRawBits())), scratch);
-    asMasm().addPtr(value.valueReg(), scratch);
-    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
-              scratch, Imm32(nursery.nurserySize()), label);
 }
 
 void
@@ -423,7 +348,8 @@ MacroAssembler::callWithABINoProfiler(Register fun, MoveOp::Type result)
     if (IsIntArgReg(fun)) {
         // Callee register may be clobbered for an argument. Move the callee to
         // r10, a volatile, non-argument register.
-        moveResolver_.addMove(MoveOperand(fun), MoveOperand(r10), MoveOp::GENERAL);
+        propagateOOM(moveResolver_.addMove(MoveOperand(fun), MoveOperand(r10),
+                                           MoveOp::GENERAL));
         fun = r10;
     }
 
@@ -442,7 +368,8 @@ MacroAssembler::callWithABINoProfiler(const Address& fun, MoveOp::Type result)
     if (IsIntArgReg(safeFun.base)) {
         // Callee register may be clobbered for an argument. Move the callee to
         // r10, a volatile, non-argument register.
-        moveResolver_.addMove(MoveOperand(fun.base), MoveOperand(r10), MoveOp::GENERAL);
+        propagateOOM(moveResolver_.addMove(MoveOperand(fun.base), MoveOperand(r10),
+                                           MoveOp::GENERAL));
         safeFun.base = r10;
     }
 
@@ -454,4 +381,111 @@ MacroAssembler::callWithABINoProfiler(const Address& fun, MoveOp::Type result)
     callWithABIPost(stackAdjust, result);
 }
 
+// ===============================================================
+// Branch functions
+
+void
+MacroAssembler::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp, Label* label)
+{
+    ScratchRegisterScope scratch(*this);
+
+    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+    MOZ_ASSERT(ptr != temp);
+    MOZ_ASSERT(ptr != scratch);
+
+    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
+    movePtr(ImmWord(-ptrdiff_t(nursery.start())), scratch);
+    addPtr(ptr, scratch);
+    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
+              scratch, Imm32(nursery.nurserySize()), label);
+}
+
+void
+MacroAssembler::branchValueIsNurseryObject(Condition cond, const Address& address, Register temp,
+                                           Label* label)
+{
+    branchValueIsNurseryObjectImpl(cond, address, temp, label);
+}
+
+void
+MacroAssembler::branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp,
+                                           Label* label)
+{
+    branchValueIsNurseryObjectImpl(cond, value.valueReg(), temp, label);
+}
+
+template <typename T>
+void
+MacroAssembler::branchValueIsNurseryObjectImpl(Condition cond, const T& value, Register temp,
+                                               Label* label)
+{
+    MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
+
+    const Nursery& nursery = GetJitContext()->runtime->gcNursery();
+
+    // Avoid creating a bogus ObjectValue below.
+    if (!nursery.exists())
+        return;
+
+    // 'Value' representing the start of the nursery tagged as a JSObject
+    Value start = ObjectValue(*reinterpret_cast<JSObject*>(nursery.start()));
+
+    ScratchRegisterScope scratch(*this);
+    movePtr(ImmWord(-ptrdiff_t(start.asRawBits())), scratch);
+    addPtr(value, scratch);
+    branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
+              scratch, Imm32(nursery.nurserySize()), label);
+}
+
+void
+MacroAssembler::branchTestValue(Condition cond, const ValueOperand& lhs,
+                                const Value& rhs, Label* label)
+{
+    MOZ_ASSERT(cond == Equal || cond == NotEqual);
+    ScratchRegisterScope scratch(*this);
+    MOZ_ASSERT(lhs.valueReg() != scratch);
+    moveValue(rhs, scratch);
+    cmpPtr(lhs.valueReg(), scratch);
+    j(cond, label);
+}
+
+// ========================================================================
+// Memory access primitives.
+template <typename T>
+void
+MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest,
+                                  MIRType slotType)
+{
+    if (valueType == MIRType::Double) {
+        storeDouble(value.reg().typedReg().fpu(), dest);
+        return;
+    }
+
+    // For known integers and booleans, we can just store the unboxed value if
+    // the slot has the same type.
+    if ((valueType == MIRType::Int32 || valueType == MIRType::Boolean) && slotType == valueType) {
+        if (value.constant()) {
+            Value val = value.value();
+            if (valueType == MIRType::Int32)
+                store32(Imm32(val.toInt32()), dest);
+            else
+                store32(Imm32(val.toBoolean() ? 1 : 0), dest);
+        } else {
+            store32(value.reg().typedReg().gpr(), dest);
+        }
+        return;
+    }
+
+    if (value.constant())
+        storeValue(value.value(), dest);
+    else
+        storeValue(ValueTypeFromMIRType(valueType), value.reg().typedReg().gpr(), dest);
+}
+
+template void
+MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const Address& dest,
+                                  MIRType slotType);
+template void
+MacroAssembler::storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const BaseIndex& dest,
+                                  MIRType slotType);
 //}}} check_macroassembler_style

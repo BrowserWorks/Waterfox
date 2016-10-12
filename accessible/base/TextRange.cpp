@@ -24,7 +24,7 @@ TextPoint::operator <(const TextPoint& aPoint) const
   // Build the chain of parents
   Accessible* p1 = mContainer;
   Accessible* p2 = aPoint.mContainer;
-  nsAutoTArray<Accessible*, 30> parents1, parents2;
+  AutoTArray<Accessible*, 30> parents1, parents2;
   do {
     parents1.AppendElement(p1);
     p1 = p1->Parent();
@@ -66,8 +66,9 @@ TextRange::EmbeddedChildren(nsTArray<Accessible*>* aChildren) const
     int32_t endIdx = mStartContainer->GetChildIndexAtOffset(mEndOffset);
     for (int32_t idx = startIdx; idx <= endIdx; idx++) {
       Accessible* child = mStartContainer->GetChildAt(idx);
-      if (nsAccUtils::IsEmbeddedObject(child))
+      if (!child->IsText()) {
         aChildren->AppendElement(child);
+      }
     }
     return;
   }
@@ -76,7 +77,7 @@ TextRange::EmbeddedChildren(nsTArray<Accessible*>* aChildren) const
   Accessible* p2 = mEndContainer->GetChildAtOffset(mEndOffset);
 
   uint32_t pos1 = 0, pos2 = 0;
-  nsAutoTArray<Accessible*, 30> parents1, parents2;
+  AutoTArray<Accessible*, 30> parents1, parents2;
   Accessible* container =
     CommonParent(p1, p2, &parents1, &pos1, &parents2, &pos2);
 
@@ -87,8 +88,9 @@ TextRange::EmbeddedChildren(nsTArray<Accessible*>* aChildren) const
     uint32_t childCount = parent->ChildCount();
     for (uint32_t childIdx = child->IndexInParent(); childIdx < childCount; childIdx++) {
       Accessible* next = parent->GetChildAt(childIdx);
-      if (nsAccUtils::IsEmbeddedObject(next))
+      if (!next->IsText()) {
         aChildren->AppendElement(next);
+      }
     }
   }
 
@@ -97,8 +99,9 @@ TextRange::EmbeddedChildren(nsTArray<Accessible*>* aChildren) const
   int32_t childIdx = parents1[pos1 - 1]->IndexInParent() + 1;
   for (; childIdx < endIdx; childIdx++) {
     Accessible* next = container->GetChildAt(childIdx);
-    if (nsAccUtils::IsEmbeddedObject(next))
+    if (!next->IsText()) {
       aChildren->AppendElement(next);
+    }
   }
 
   // Traverse down from the container to end point.
@@ -108,8 +111,9 @@ TextRange::EmbeddedChildren(nsTArray<Accessible*>* aChildren) const
     int32_t endIdx = child->IndexInParent();
     for (int32_t childIdx = 0; childIdx < endIdx; childIdx++) {
       Accessible* next = parent->GetChildAt(childIdx);
-      if (nsAccUtils::IsEmbeddedObject(next))
+      if (!next->IsText()) {
         aChildren->AppendElement(next);
+      }
     }
   }
 }
@@ -146,7 +150,7 @@ bool
 TextRange::Crop(Accessible* aContainer)
 {
   uint32_t boundaryPos = 0, containerPos = 0;
-  nsAutoTArray<Accessible*, 30> boundaryParents, containerParents;
+  AutoTArray<Accessible*, 30> boundaryParents, containerParents;
 
   // Crop the start boundary.
   Accessible* container = nullptr;

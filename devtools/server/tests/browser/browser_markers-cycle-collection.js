@@ -8,11 +8,12 @@
 
 const { PerformanceFront } = require("devtools/server/actors/performance");
 
-add_task(function*() {
+add_task(function* () {
   // This test runs very slowly on linux32 debug EC2 instances.
   requestLongerTimeout(2);
 
-  let doc = yield addTab(MAIN_DOMAIN + "doc_force_cc.html");
+  let browser = yield addTab(MAIN_DOMAIN + "doc_force_cc.html");
+  let doc = browser.contentDocument;
 
   initDebuggerServer();
   let client = new DebuggerClient(DebuggerServer.connectPipe());
@@ -21,7 +22,7 @@ add_task(function*() {
   yield front.connect();
   let rec = yield front.startRecording({ withMarkers: true });
 
-  let markers = yield waitForMarkerType(front, ["nsCycleCollector::Collect", "nsCycleCollector::ForgetSkippable"])
+  let markers = yield waitForMarkerType(front, ["nsCycleCollector::Collect", "nsCycleCollector::ForgetSkippable"]);
   yield front.stopRecording(rec);
 
   ok(markers.some(m => m.name === "nsCycleCollector::Collect"), "got some nsCycleCollector::Collect markers");

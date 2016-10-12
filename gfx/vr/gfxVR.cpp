@@ -17,6 +17,7 @@
 #endif
 #if defined(XP_WIN) || defined(XP_MACOSX) || defined(XP_LINUX)
 #include "gfxVROculus050.h"
+#include "gfxVROSVR.h"
 #endif
 #include "gfxVRCardboard.h"
 
@@ -53,7 +54,6 @@ VRHMDManager::AllocateDeviceID()
 }
 
 VRHMDRenderingSupport::RenderTargetSet::RenderTargetSet()
-  : currentRenderTarget(0)
 {
 }
 

@@ -531,6 +531,7 @@ this.CrashManager.prototype = Object.freeze({
           // If we have a saved environment, use it. Otherwise report
           // the current environment.
           let crashEnvironment = null;
+          let sessionId = null;
           let reportMeta = Cu.cloneInto(metadata, myScope);
           if ('TelemetryEnvironment' in reportMeta) {
             try {
@@ -540,10 +541,15 @@ this.CrashManager.prototype = Object.freeze({
             }
             delete reportMeta.TelemetryEnvironment;
           }
+          if ('TelemetrySessionId' in reportMeta) {
+            sessionId = reportMeta.TelemetrySessionId;
+            delete reportMeta.TelemetrySessionId;
+          }
           TelemetryController.submitExternalPing("crash",
             {
               version: 1,
               crashDate: date.toISOString().slice(0, 10), // YYYY-MM-DD
+              sessionId: sessionId,
               metadata: reportMeta,
               hasCrashEnvironment: (crashEnvironment !== null),
             },
@@ -606,12 +612,12 @@ this.CrashManager.prototype = Object.freeze({
       try {
         yield it.forEach((entry, index, it) => {
           if (entry.isDir) {
-            return;
+            return undefined;
           }
 
           let match = re.exec(entry.name);
           if (!match) {
-            return;
+            return undefined;
           }
 
           return OS.File.stat(entry.path).then((info) => {
@@ -826,7 +832,7 @@ CrashStore.prototype = Object.freeze({
 
           // If we have an OOM size, count the crash as an OOM in addition to
           // being a main process crash.
-          if (denormalized.metadata && 
+          if (denormalized.metadata &&
               denormalized.metadata.OOMAllocationSize) {
             let oomKey = key + "-oom";
             actualCounts.set(oomKey, (actualCounts.get(oomKey) || 0) + 1);

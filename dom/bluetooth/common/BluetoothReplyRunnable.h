@@ -7,10 +7,11 @@
 #ifndef mozilla_dom_bluetooth_BluetoothReplyRunnable_h
 #define mozilla_dom_bluetooth_BluetoothReplyRunnable_h
 
-#include "mozilla/Attributes.h"
 #include "BluetoothCommon.h"
-#include "nsThreadUtils.h"
 #include "js/Value.h"
+#include "mozilla/Attributes.h"
+#include "mozilla/UniquePtr.h"
+#include "nsThreadUtils.h"
 
 class nsIDOMDOMRequest;
 
@@ -24,7 +25,7 @@ BEGIN_BLUETOOTH_NAMESPACE
 
 class BluetoothReply;
 
-class BluetoothReplyRunnable : public nsRunnable
+class BluetoothReplyRunnable : public Runnable
 {
 public:
   NS_DECL_NSIRUNNABLE
@@ -48,14 +49,19 @@ protected:
 
   virtual bool ParseSuccessfulReply(JS::MutableHandle<JS::Value> aValue) = 0;
 
+  virtual nsresult FireErrorString();
+
   // This is an autoptr so we don't have to bring the ipdl include into the
   // header. We assume we'll only be running this once and it should die on
   // scope out of Run() anyways.
-  nsAutoPtr<BluetoothReply> mReply;
+  UniquePtr<BluetoothReply> mReply;
+
+  RefPtr<Promise> mPromise;
 
 private:
+  virtual void ParseErrorStatus();
+
   nsresult FireReplySuccess(JS::Handle<JS::Value> aVal);
-  nsresult FireErrorString();
 
   virtual void OnSuccessFired();
   virtual void OnErrorFired();
@@ -69,7 +75,6 @@ private:
    * TODO: remove mDOMRequest once all methods adopt Promise.
    */
   nsCOMPtr<nsIDOMDOMRequest> mDOMRequest;
-  RefPtr<Promise> mPromise;
 
   BluetoothStatus mErrorStatus;
   nsString mErrorString;
@@ -91,7 +96,7 @@ protected:
   }
 };
 
-class BluetoothReplyTaskQueue : public nsRunnable
+class BluetoothReplyTaskQueue : public Runnable
 {
 public:
   NS_DECL_NSIRUNNABLE

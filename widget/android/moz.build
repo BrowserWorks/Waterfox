@@ -40,7 +40,6 @@ UNIFIED_SOURCES += [
     'nsClipboard.cpp',
     'nsDeviceContextAndroid.cpp',
     'nsIdleServiceAndroid.cpp',
-    'nsIMEPicker.cpp',
     'nsLookAndFeel.cpp',
     'nsPrintOptionsAndroid.cpp',
     'nsScreenManagerAndroid.cpp',
@@ -61,5 +60,7 @@ LOCAL_INCLUDES += [
     '/widget',
     '/widget/android/android',
 ]
+
+CXXFLAGS += ['-Wno-error=shadow']
 
 #DEFINES['DEBUG_WIDGETS'] = True

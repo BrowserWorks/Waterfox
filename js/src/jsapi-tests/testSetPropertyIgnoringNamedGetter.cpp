@@ -11,18 +11,19 @@
 using namespace js;
 using namespace JS;
 
-class CustomProxyHandler : public DirectProxyHandler {
+class CustomProxyHandler : public Wrapper
+{
   public:
-    CustomProxyHandler() : DirectProxyHandler(nullptr) {}
+    CustomProxyHandler() : Wrapper(0) {}
 
     bool getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                               MutableHandle<JSPropertyDescriptor> desc) const override
+                               MutableHandle<PropertyDescriptor> desc) const override
     {
         return impl(cx, proxy, id, desc, false);
     }
 
     bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                  MutableHandle<JSPropertyDescriptor> desc) const override
+                                  MutableHandle<PropertyDescriptor> desc) const override
     {
         return impl(cx, proxy, id, desc, true);
     }
@@ -30,15 +31,15 @@ class CustomProxyHandler : public DirectProxyHandler {
     bool set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v, HandleValue receiver,
              ObjectOpResult& result) const override
     {
-        Rooted<JSPropertyDescriptor> desc(cx);
-        if (!DirectProxyHandler::getPropertyDescriptor(cx, proxy, id, &desc))
+        Rooted<PropertyDescriptor> desc(cx);
+        if (!Wrapper::getPropertyDescriptor(cx, proxy, id, &desc))
             return false;
         return SetPropertyIgnoringNamedGetter(cx, proxy, id, v, receiver, desc, result);
     }
 
   private:
     bool impl(JSContext* cx, HandleObject proxy, HandleId id,
-              MutableHandle<JSPropertyDescriptor> desc, bool ownOnly) const
+              MutableHandle<PropertyDescriptor> desc, bool ownOnly) const
     {
         if (JSID_IS_STRING(id)) {
             bool match;
@@ -53,8 +54,8 @@ class CustomProxyHandler : public DirectProxyHandler {
         }
 
         if (ownOnly)
-            return DirectProxyHandler::getOwnPropertyDescriptor(cx, proxy, id, desc);
-        return DirectProxyHandler::getPropertyDescriptor(cx, proxy, id, desc);
+            return Wrapper::getOwnPropertyDescriptor(cx, proxy, id, desc);
+        return Wrapper::getPropertyDescriptor(cx, proxy, id, desc);
     }
 
 };

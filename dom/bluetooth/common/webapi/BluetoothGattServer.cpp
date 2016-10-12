@@ -51,7 +51,7 @@ NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 NS_IMPL_ADDREF_INHERITED(BluetoothGattServer, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(BluetoothGattServer, DOMEventTargetHelper)
 
-BluetoothGattServer::BluetoothGattServer(nsPIDOMWindow* aOwner)
+BluetoothGattServer::BluetoothGattServer(nsPIDOMWindowInner* aOwner)
   : mOwner(aOwner)
   , mServerIf(0)
   , mValid(true)
@@ -897,9 +897,9 @@ private:
   {
     mService->AssignAppUuid(mServer->mAppUuid);
 
-    RefPtr<nsRunnable> runnable = new AddServiceTaskQueue(mServer,
-                                                            mService,
-                                                            mPromise);
+    RefPtr<Runnable> runnable = new AddServiceTaskQueue(mServer,
+                                                          mService,
+                                                          mPromise);
     nsresult rv = NS_DispatchToMainThread(runnable.forget());
 
     if (NS_WARN_IF(NS_FAILED(rv))) {

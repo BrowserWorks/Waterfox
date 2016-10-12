@@ -17,7 +17,6 @@
 #include "nsIDocShell.h"
 #include "nsIDOMDocument.h"
 #include "nsIScriptGlobalObject.h"
-#include "nsIScriptSecurityManager.h"
 #include "nsIWebShellServices.h"
 #include "nsContentUtils.h"
 #include "mozAutoDocUpdate.h"
@@ -33,6 +32,7 @@
 #include "mozilla/Preferences.h"
 #include "nsIHTMLDocument.h"
 #include "nsIViewSourceChannel.h"
+#include "xpcpublic.h"
 
 using namespace mozilla;
 
@@ -45,7 +45,7 @@ NS_IMPL_ADDREF_INHERITED(nsHtml5TreeOpExecutor, nsContentSink)
 
 NS_IMPL_RELEASE_INHERITED(nsHtml5TreeOpExecutor, nsContentSink)
 
-class nsHtml5ExecutorReflusher : public nsRunnable
+class nsHtml5ExecutorReflusher : public Runnable
 {
   private:
     RefPtr<nsHtml5TreeOpExecutor> mExecutor;
@@ -233,11 +233,8 @@ nsHtml5TreeOpExecutor::MarkAsBroken(nsresult aReason)
   // works out so that we get to terminate and clean up the parser from
   // a safer point.
   if (mParser) { // can mParser ever be null here?
-    nsCOMPtr<nsIRunnable> terminator =
-      NS_NewRunnableMethod(GetParser(), &nsHtml5Parser::Terminate);
-    if (NS_FAILED(NS_DispatchToMainThread(terminator))) {
-      NS_WARNING("failed to dispatch executor flush event");
-    }
+    MOZ_ALWAYS_SUCCEEDS(
+      NS_DispatchToMainThread(NewRunnableMethod(GetParser(), &nsHtml5Parser::Terminate)));
   }
   return aReason;
 }
@@ -584,6 +581,9 @@ nsHtml5TreeOpExecutor::FlushDocumentWrite()
 bool
 nsHtml5TreeOpExecutor::IsScriptEnabled()
 {
+  // Note that if we have no document or no docshell or no global or whatnot we
+  // want to claim script _is_ enabled, so we don't parse the contents of
+  // <noscript> tags!
   if (!mDocument || !mDocShell)
     return true;
   nsCOMPtr<nsIScriptGlobalObject> globalObject = do_QueryInterface(mDocument->GetInnerWindow());
@@ -591,11 +591,9 @@ nsHtml5TreeOpExecutor::IsScriptEnabled()
   // GlobalObject set yet
   if (!globalObject) {
     globalObject = mDocShell->GetScriptGlobalObject();
-    NS_ENSURE_TRUE(globalObject, true);
   }
   NS_ENSURE_TRUE(globalObject && globalObject->GetGlobalJSObject(), true);
-  return nsContentUtils::GetSecurityManager()->
-           ScriptAllowed(globalObject->GetGlobalJSObject());
+  return xpc::Scriptability::Get(globalObject->GetGlobalJSObject()).Allowed();
 }
 
 void

@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -58,6 +60,10 @@ function unregister(swr) {
   return executeInContent("devtools:sw-test:unregister");
 }
 
+function registerAndUnregisterInFrame() {
+  return executeInContent("devtools:sw-test:iframe:register-and-unregister");
+}
+
 function testRegisterFails(data) {
   is(data.success, false, "Register should fail with security error");
   return promise.resolve();
@@ -105,12 +111,14 @@ function start() {
     .then(register)
     .then(testRegisterSuccesses)
     .then(unregister)
+    .then(registerAndUnregisterInFrame)
+    .then(testRegisterSuccesses)
     // Workers should be turned back off when we closes the toolbox
     .then(toolbox.destroy.bind(toolbox))
     .then(reload)
     .then(register)
     .then(testRegisterFails)
-    .catch(function(e) {
+    .catch(function (e) {
       ok(false, "Some test failed with error " + e);
     }).then(finishUp);
 }

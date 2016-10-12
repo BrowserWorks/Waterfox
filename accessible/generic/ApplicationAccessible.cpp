@@ -15,7 +15,6 @@
 
 #include "nsIComponentManager.h"
 #include "nsIDOMDocument.h"
-#include "nsIDOMWindow.h"
 #include "nsIWindowMediator.h"
 #include "nsServiceManagerUtils.h"
 #include "mozilla/Services.h"
@@ -28,6 +27,7 @@ ApplicationAccessible::ApplicationAccessible() :
 {
   mType = eApplicationType;
   mAppInfo = do_GetService("@mozilla.org/xre/app-info;1");
+  MOZ_ASSERT(mAppInfo, "no application info");
 }
 
 NS_IMPL_ISUPPORTS_INHERITED0(ApplicationAccessible, Accessible)
@@ -150,29 +150,15 @@ ApplicationAccessible::NativeState()
   return 0;
 }
 
-void
-ApplicationAccessible::InvalidateChildren()
-{
-  // Do nothing because application children are kept updated by AppendChild()
-  // and RemoveChild() method calls.
-}
-
 KeyBinding
 ApplicationAccessible::AccessKey() const
 {
   return KeyBinding();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Accessible protected methods
-
 void
-ApplicationAccessible::CacheChildren()
+ApplicationAccessible::Init()
 {
-  // CacheChildren is called only once for application accessible when its
-  // children are requested because empty InvalidateChldren() prevents its
-  // repeated calls.
-
   // Basically children are kept updated by Append/RemoveChild method calls.
   // However if there are open windows before accessibility was started
   // then we need to make sure root accessibles for open windows are created so
@@ -193,7 +179,7 @@ ApplicationAccessible::CacheChildren()
   while (hasMore) {
     nsCOMPtr<nsISupports> window;
     windowEnumerator->GetNext(getter_AddRefs(window));
-    nsCOMPtr<nsPIDOMWindow> DOMWindow = do_QueryInterface(window);
+    nsCOMPtr<nsPIDOMWindowOuter> DOMWindow = do_QueryInterface(window);
     if (DOMWindow) {
       nsCOMPtr<nsIDocument> docNode = DOMWindow->GetDoc();
       if (docNode) {

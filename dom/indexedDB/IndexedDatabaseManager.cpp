@@ -22,7 +22,6 @@
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
-#include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/ErrorEvent.h"
 #include "mozilla/dom/ErrorEventBinding.h"
@@ -42,6 +41,7 @@
 #include "IDBKeyRange.h"
 #include "IDBRequest.h"
 #include "ProfilerHelpers.h"
+#include "ScriptErrorHelper.h"
 #include "WorkerScope.h"
 #include "WorkerPrivate.h"
 
@@ -122,6 +122,10 @@ private:
   nsTArray<RefPtr<FileManager> > mTemporaryStorageFileManagers;
   nsTArray<RefPtr<FileManager> > mDefaultStorageFileManagers;
 };
+
+} // namespace indexedDB
+
+using namespace mozilla::dom::indexedDB;
 
 namespace {
 
@@ -390,7 +394,7 @@ IndexedDatabaseManager::Init()
   }
 
   if (mLocale.IsEmpty()) {
-    mLocale.AssignLiteral("en-US");
+    mLocale.AssignLiteral("en_US");
   }
 #endif
 
@@ -456,7 +460,7 @@ IndexedDatabaseManager::CommonPostHandleEvent(EventChainPostVisitor& aVisitor,
   }
 
   nsString type;
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(internalEvent->GetType(type)));
+  MOZ_ALWAYS_SUCCEEDS(internalEvent->GetType(type));
 
   MOZ_ASSERT(nsDependentString(kErrorEventType).EqualsLiteral("error"));
   if (!type.EqualsLiteral("error")) {
@@ -481,8 +485,7 @@ IndexedDatabaseManager::CommonPostHandleEvent(EventChainPostVisitor& aVisitor,
     error->GetName(errorName);
   }
 
-  ThreadsafeAutoJSContext cx;
-  RootedDictionary<ErrorEventInit> init(cx);
+  RootedDictionary<ErrorEventInit> init(nsContentUtils::RootingCxForThread());
   request->GetCallerLocation(init.mFilename, &init.mLineno, &init.mColno);
 
   init.mMessage = errorName;
@@ -536,53 +539,22 @@ IndexedDatabaseManager::CommonPostHandleEvent(EventChainPostVisitor& aVisitor,
     return NS_OK;
   }
 
-  nsAutoCString category;
-  if (aFactory->IsChrome()) {
-    category.AssignLiteral("chrome ");
-  } else {
-    category.AssignLiteral("content ");
-  }
-  category.AppendLiteral("javascript");
-
   // Log the error to the error console.
-  nsCOMPtr<nsIConsoleService> consoleService =
-    do_GetService(NS_CONSOLESERVICE_CONTRACTID);
-  MOZ_ASSERT(consoleService);
-
-  nsCOMPtr<nsIScriptError> scriptError =
-    do_CreateInstance(NS_SCRIPTERROR_CONTRACTID);
-  MOZ_ASSERT(consoleService);
-
-  if (uint64_t innerWindowID = aFactory->InnerWindowID()) {
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      scriptError->InitWithWindowID(errorName,
-                                    init.mFilename,
-                                    /* aSourceLine */ EmptyString(),
-                                    init.mLineno,
-                                    init.mColno,
-                                    nsIScriptError::errorFlag,
-                                    category,
-                                    innerWindowID)));
-  } else {
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      scriptError->Init(errorName,
-                        init.mFilename,
-                        /* aSourceLine */ EmptyString(),
-                        init.mLineno,
-                        init.mColno,
-                        nsIScriptError::errorFlag,
-                        category.get())));
-  }
-
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(consoleService->LogMessage(scriptError)));
+  ScriptErrorHelper::Dump(errorName,
+                          init.mFilename,
+                          init.mLineno,
+                          init.mColno,
+                          nsIScriptError::errorFlag,
+                          aFactory->IsChrome(),
+                          aFactory->InnerWindowID());
 
   return NS_OK;
 }
 
 // static
 bool
-IndexedDatabaseManager::DefineIndexedDB(JSContext* aCx,
-                                        JS::Handle<JSObject*> aGlobal)
+IndexedDatabaseManager::ResolveSandboxBinding(JSContext* aCx,
+                                              JS::Handle<JSObject*> aGlobal)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL,
@@ -610,6 +582,18 @@ IndexedDatabaseManager::DefineIndexedDB(JSContext* aCx,
   {
     return false;
   }
+
+  return true;
+}
+
+// static
+bool
+IndexedDatabaseManager::DefineIndexedDB(JSContext* aCx,
+                                        JS::Handle<JSObject*> aGlobal)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL,
+             "Passed object is not a global object!");
 
   RefPtr<IDBFactory> factory;
   if (NS_FAILED(IDBFactory::CreateForMainThreadJS(aCx,
@@ -717,6 +701,30 @@ IndexedDatabaseManager::ExperimentalFeaturesEnabled()
   }
 
   return gExperimentalFeaturesEnabled;
+}
+
+// static
+bool
+IndexedDatabaseManager::ExperimentalFeaturesEnabled(JSContext* aCx, JSObject* aGlobal)
+{
+  // If, in the child process, properties of the global object are enumerated
+  // before the chrome registry (and thus the value of |intl.accept_languages|)
+  // is ready, calling IndexedDatabaseManager::Init will permanently break
+  // that preference. We can retrieve gExperimentalFeaturesEnabled without
+  // actually going through IndexedDatabaseManager.
+  // See Bug 1198093 comment 14 for detailed explanation.
+  if (IsNonExposedGlobal(aCx, js::GetGlobalForObjectCrossCompartment(aGlobal),
+                         GlobalNames::BackstagePass)) {
+    MOZ_ASSERT(NS_IsMainThread());
+    static bool featureRetrieved = false;
+    if (!featureRetrieved) {
+      gExperimentalFeaturesEnabled = Preferences::GetBool(kPrefExperimental);
+      featureRetrieved = true;
+    }
+    return gExperimentalFeaturesEnabled;
+  }
+
+  return ExperimentalFeaturesEnabled();
 }
 
 // static
@@ -934,12 +942,12 @@ IndexedDatabaseManager::FlushPendingFileDeletions()
       return rv;
     }
   } else {
-    ContentChild* contentChild = ContentChild::GetSingleton();
-    if (NS_WARN_IF(!contentChild)) {
+    PBackgroundChild* bgActor = BackgroundChild::GetForCurrentThread();
+    if (NS_WARN_IF(!bgActor)) {
       return NS_ERROR_FAILURE;
     }
 
-    if (!contentChild->SendFlushPendingFileDeletions()) {
+    if (!bgActor->SendFlushPendingFileDeletions()) {
       return NS_ERROR_FAILURE;
     }
   }
@@ -1174,8 +1182,7 @@ DeleteFilesRunnable::Dispatch()
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mState == State_Initial);
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-    mBackgroundThread->Dispatch(this, NS_DISPATCH_NORMAL)));
+  MOZ_ALWAYS_SUCCEEDS(mBackgroundThread->Dispatch(this, NS_DISPATCH_NORMAL));
 }
 
 NS_IMPL_ISUPPORTS(DeleteFilesRunnable, nsIRunnable)
@@ -1340,8 +1347,7 @@ DeleteFilesRunnable::Finish()
   // thread.
   mState = State_UnblockingOpen;
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-    mBackgroundThread->Dispatch(this, NS_DISPATCH_NORMAL)));
+  MOZ_ALWAYS_SUCCEEDS(mBackgroundThread->Dispatch(this, NS_DISPATCH_NORMAL));
 }
 
 void
@@ -1355,6 +1361,5 @@ DeleteFilesRunnable::UnblockOpen()
   mState = State_Completed;
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

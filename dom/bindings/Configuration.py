@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from WebIDL import IDLInterface, IDLExternalInterface, IDLImplementsStatement
+from WebIDL import IDLImplementsStatement
 import os
 from collections import defaultdict
 
@@ -53,7 +53,7 @@ class Configuration:
 
             assert not thing.isType()
 
-            if not thing.isInterface():
+            if not thing.isInterface() and not thing.isNamespace():
                 continue
             iface = thing
             self.interfaces[iface.identifier.name] = iface
@@ -150,7 +150,15 @@ class Configuration:
             if t.isUnion():
                 filenamesForUnion = self.filenamesPerUnion[t.name]
                 if t.filename() not in filenamesForUnion:
-                    if len(filenamesForUnion) == 0:
+                    # We have a to be a bit careful: some of our built-in
+                    # typedefs are for unions, and those unions end up with
+                    # "<unknown>" as the filename.  If that happens, we don't
+                    # want to try associating this union with one particular
+                    # filename, since there isn't one to associate it with,
+                    # really.
+                    if t.filename() == "<unknown>":
+                        uniqueFilenameForUnion = None
+                    elif len(filenamesForUnion) == 0:
                         # This is the first file that we found a union with this
                         # name in, record the union as part of the file.
                         uniqueFilenameForUnion = t.filename()
@@ -217,9 +225,11 @@ class Configuration:
             elif key == 'isJSImplemented':
                 getter = lambda x: x.interface.isJSImplemented()
             elif key == 'isNavigatorProperty':
-                getter = lambda x: x.interface.getNavigatorProperty() is not None
+                getter = lambda x: x.interface.isNavigatorProperty()
             elif key == 'isExposedInAnyWorker':
                 getter = lambda x: x.interface.isExposedInAnyWorker()
+            elif key == 'isExposedInWorkerDebugger':
+                getter = lambda x: x.interface.isExposedInWorkerDebugger()
             elif key == 'isExposedInSystemGlobals':
                 getter = lambda x: x.interface.isExposedInSystemGlobals()
             elif key == 'isExposedInWindow':
@@ -423,6 +433,7 @@ class Descriptor(DescriptorProvider):
         # them as having a concrete descendant.
         self.concrete = (not self.interface.isExternal() and
                          not self.interface.isCallback() and
+                         not self.interface.isNamespace() and
                          desc.get('concrete', True))
         self.hasUnforgeableMembers = (self.concrete and
                                       any(MemberIsUnforgeable(m, self) for m in
@@ -505,7 +516,8 @@ class Descriptor(DescriptorProvider):
 
             self.proxy = (self.supportsIndexedProperties() or
                           (self.supportsNamedProperties() and
-                           not self.hasNamedPropertiesObject))
+                           not self.hasNamedPropertiesObject) or
+                          self.hasNonOrdinaryGetPrototypeOf())
 
             if self.proxy:
                 if (not self.operations['IndexedGetter'] and
@@ -532,6 +544,13 @@ class Descriptor(DescriptorProvider):
         self.wrapperCache = (not self.interface.isCallback() and
                              not self.interface.isIteratorInterface() and
                              desc.get('wrapperCache', True))
+        # Nasty temporary hack for supporting both DOM and SpiderMonkey promises
+        # without too much pain
+        if self.interface.identifier.name == "Promise":
+            assert self.wrapperCache
+            # But really, we're only wrappercached if we have an interface
+            # object (that is, when we're not using SpiderMonkey promises).
+            self.wrapperCache = self.interface.hasInterfaceObject()
 
         def make_name(name):
             return name + "_workers" if self.workers else name
@@ -567,6 +586,13 @@ class Descriptor(DescriptorProvider):
         else:
             for attribute in ['implicitJSContext']:
                 addExtendedAttribute(attribute, desc.get(attribute, {}))
+
+        if self.interface.identifier.name == 'Navigator':
+            for m in self.interface.members:
+                if m.isAttr() and m.navigatorObjectGetter:
+                    # These getters call ConstructNavigatorObject to construct
+                    # the value, and ConstructNavigatorObject needs a JSContext.
+                    self.extendedAttributes['all'].setdefault(m.identifier.name, []).append('implicitJSContext')
 
         self._binaryNames = desc.get('binaryNames', {})
         self._binaryNames.setdefault('__legacycaller', 'LegacyCall')
@@ -620,13 +646,10 @@ class Descriptor(DescriptorProvider):
                 if (self.interface.getExtendedAttribute("CheckAnyPermissions") or
                     self.interface.getExtendedAttribute("CheckAllPermissions") or
                     self.interface.getExtendedAttribute("AvailableIn") == "PrivilegedApps"):
-                    if self.interface.getNavigatorProperty():
-                        self.featureDetectibleThings.add("Navigator.%s" % self.interface.getNavigatorProperty())
-                    else:
-                        iface = self.interface.identifier.name
-                        self.featureDetectibleThings.add(iface)
-                        for m in self.interface.members:
-                            self.featureDetectibleThings.add("%s.%s" % (iface, m.identifier.name))
+                    iface = self.interface.identifier.name
+                    self.featureDetectibleThings.add(iface)
+                    for m in self.interface.members:
+                        self.featureDetectibleThings.add("%s.%s" % (iface, m.identifier.name))
 
                 for m in self.interface.members:
                     if (m.getExtendedAttribute("CheckAnyPermissions") or
@@ -726,6 +749,9 @@ class Descriptor(DescriptorProvider):
     def supportsNamedProperties(self):
         return self.operations['NamedGetter'] is not None
 
+    def hasNonOrdinaryGetPrototypeOf(self):
+        return self.interface.getExtendedAttribute("NonOrdinaryGetPrototypeOf")
+
     def needsConstructHookHolder(self):
         assert self.interface.hasInterfaceObject()
         return False
@@ -745,6 +771,10 @@ class Descriptor(DescriptorProvider):
                 self.interface.parent)
 
     def hasThreadChecks(self):
+        # isExposedConditionally does not necessarily imply thread checks
+        # (since at least [SecureContext] is independent of them), but we're
+        # only used to decide whether to include nsThreadUtils.h, so we don't
+        # worry about that.
         return ((self.isExposedConditionally() and
                  not self.interface.isExposedInWindow()) or
                 self.interface.isExposedInSomeButNotAllWorkers())
@@ -784,6 +814,28 @@ class Descriptor(DescriptorProvider):
         """
         return (self.interface.getExtendedAttribute("Global") or
                 self.interface.getExtendedAttribute("PrimaryGlobal"))
+
+    @property
+    def namedPropertiesEnumerable(self):
+        """
+        Returns whether this interface should have enumerable named properties
+        """
+        assert self.proxy
+        assert self.supportsNamedProperties()
+        iface = self.interface
+        while iface:
+            if iface.getExtendedAttribute("LegacyUnenumerableNamedProperties"):
+                return False
+            iface = iface.parent
+        return True
+
+    @property
+    def registersGlobalNamesOnWindow(self):
+        return (not self.interface.isExternal() and
+                self.interface.hasInterfaceObject() and
+                not self.workers and
+                self.interface.isExposedInWindow() and
+                self.register)
 
 
 # Some utility methods
@@ -893,8 +945,5 @@ def getAllTypes(descriptors, dictionaries, callbacks):
 def iteratorNativeType(descriptor):
     assert descriptor.interface.isIterable()
     iterableDecl = descriptor.interface.maplikeOrSetlikeOrIterable
-    if iterableDecl.valueType is None:
-        iterClass = "OneTypeIterableIterator"
-    else:
-        iterClass = "TwoTypeIterableIterator"
-    return "mozilla::dom::%s<%s>" % (iterClass, descriptor.nativeType)
+    assert iterableDecl.isPairIterator()
+    return "mozilla::dom::IterableIterator<%s>" % descriptor.nativeType

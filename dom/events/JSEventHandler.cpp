@@ -143,7 +143,7 @@ JSEventHandler::HandleEvent(nsIDOMEvent* aEvent)
     ErrorEvent* scriptEvent = aEvent->InternalDOMEvent()->AsErrorEvent();
     if (scriptEvent) {
       scriptEvent->GetMessage(errorMsg);
-      msgOrEvent.SetAsString().Rebind(errorMsg.Data(), errorMsg.Length());
+      msgOrEvent.SetAsString().ShareOrDependUpon(errorMsg);
 
       scriptEvent->GetFilename(file);
       fileName = &file;
@@ -154,9 +154,8 @@ JSEventHandler::HandleEvent(nsIDOMEvent* aEvent)
       columnNumber.Construct();
       columnNumber.Value() = scriptEvent->Colno();
 
-      ThreadsafeAutoJSContext cx;
-      error.Construct(cx);
-      scriptEvent->GetError(cx, &error.Value());
+      error.Construct(nsContentUtils::RootingCxForThread());
+      scriptEvent->GetError(&error.Value());
     } else {
       msgOrEvent.SetAsEvent() = aEvent->InternalDOMEvent();
     }

@@ -33,7 +33,7 @@ LOCAL_INCLUDES += [
     '/accessible/generic',
 ]
 
-if CONFIG['MOZ_ENABLE_GTK']:
+if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
     LOCAL_INCLUDES += [
         '/accessible/atk',
     ]
@@ -64,3 +64,8 @@ xpc_acc_events_cpp.script = 'AccEventGen.py:gen_cpp_file'
 xpc_acc_events_cpp.inputs += ['AccEvents.conf']
 
 FINAL_LIBRARY = 'xul'
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

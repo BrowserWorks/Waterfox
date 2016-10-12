@@ -8,6 +8,7 @@
 <head>
 <title>InstallTrigger tests</title>
 <script type="text/javascript">
+/*globals InstallTrigger*/
 function installCallback(url, status) {
   document.location = "#foo";
 
@@ -19,7 +20,7 @@ function installCallback(url, status) {
 function startInstall() {
   InstallTrigger.install({
     "Unsigned XPI": {
-      URL: "unsigned.xpi",
+      URL: "amosigned.xpi",
       IconURL: "icon.png",
       toString: function() { return this.URL; }
     }

@@ -9,7 +9,6 @@
 #include "gfxFont.h"
 #include "gfxFontFamilyList.h"
 #include "nsRefPtrHashtable.h"
-#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsIURI.h"
 #include "nsIPrincipal.h"
@@ -101,6 +100,8 @@ public:
           mPrivate(false), mIsBuffer(false)
     { }
     virtual ~gfxUserFontData() { }
+
+    size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
     nsTArray<uint8_t> mMetadata;  // woff metadata block (compressed), if any
     nsCOMPtr<nsIURI>  mURI;       // URI of the source, if it was url()
@@ -262,6 +263,10 @@ public:
                                    nsIPrincipal** aPrincipal,
                                    bool* aBypassCache) = 0;
 
+    // check whether content policies allow the given URI to load.
+    virtual bool IsFontLoadAllowed(nsIURI* aFontLocation,
+                                   nsIPrincipal* aPrincipal) = 0;
+
     // initialize the process that loads external font data, which upon
     // completion will call FontDataDownloadComplete method
     virtual nsresult StartLoad(gfxUserFontEntry* aUserFontEntry,
@@ -316,6 +321,17 @@ public:
 
         // Clear everything so that we don't leak URIs and Principals.
         static void Shutdown();
+
+        // Memory-reporting support.
+        class MemoryReporter final : public nsIMemoryReporter
+        {
+        private:
+            ~MemoryReporter() { }
+
+        public:
+            NS_DECL_ISUPPORTS
+            NS_DECL_NSIMEMORYREPORTER
+        };
 
 #ifdef DEBUG_USERFONT_CACHE
         // dump contents
@@ -432,6 +448,10 @@ public:
             bool IsPersistent() const { return mPersistence == kPersistent; }
             bool IsPrivate() const { return mPrivate; }
 
+            nsresult ReportMemory(nsIMemoryReporterCallback* aCb,
+                                  nsISupports* aClosure,
+                                  bool aAnonymize);
+
 #ifdef DEBUG_USERFONT_CACHE
             void Dump();
 #endif
@@ -525,6 +545,9 @@ protected:
 
     // true when local names have been looked up, false otherwise
     bool mLocalRulesUsed;
+
+    // true when rules using local names need to be redone
+    bool mRebuildLocalRules;
 
     // performance stats
     uint32_t mDownloadCount;

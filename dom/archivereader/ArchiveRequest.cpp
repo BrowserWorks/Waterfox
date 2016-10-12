@@ -18,7 +18,7 @@ USING_ARCHIVEREADER_NAMESPACE
 /**
  * Class used to make asynchronous the ArchiveRequest.
  */
-class ArchiveRequestEvent : public nsRunnable
+class ArchiveRequestEvent : public Runnable
 {
 public:
   NS_DECL_NSIRUNNABLE
@@ -49,7 +49,7 @@ ArchiveRequestEvent::Run()
 
 // ArchiveRequest
 
-ArchiveRequest::ArchiveRequest(nsPIDOMWindow* aWindow,
+ArchiveRequest::ArchiveRequest(nsPIDOMWindowInner* aWindow,
                                ArchiveReader* aReader)
 : DOMRequest(aWindow),
   mArchiveReader(aReader)
@@ -257,7 +257,7 @@ ArchiveRequest::GetFilesResult(JSContext* aCx,
 
 // static
 already_AddRefed<ArchiveRequest>
-ArchiveRequest::Create(nsPIDOMWindow* aOwner,
+ArchiveRequest::Create(nsPIDOMWindowInner* aOwner,
                        ArchiveReader* aReader)
 {
   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");

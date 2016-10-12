@@ -90,7 +90,7 @@ private:
       break;
     case 'b':
       // Leaving to be able to read and understand oldformatted entries
-      originAttribs.mInBrowser = true;
+      originAttribs.mInIsolatedMozBrowser = true;
       break;
     case 'a':
       isAnonymous = true;
@@ -506,6 +506,17 @@ DetailedCacheHitTelemetry::AddRecord(ERecType aType, TimeStamp aLoadStart)
       sHRStats[i].Reset();
     }
   }
+}
+
+void
+FreeBuffer(void *aBuf) {
+#ifndef NS_FREE_PERMANENT_DATA
+  if (CacheObserver::ShuttingDown()) {
+    return;
+  }
+#endif
+
+  free(aBuf);
 }
 
 } // namespace CacheFileUtils

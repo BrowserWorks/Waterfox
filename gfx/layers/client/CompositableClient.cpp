@@ -62,12 +62,12 @@ RemoveTextureFromCompositableTracker::ReleaseTextureClient()
 {
   if (mTextureClient &&
       mTextureClient->GetAllocator() &&
-      !mTextureClient->GetAllocator()->IsImageBridgeChild())
+      !mTextureClient->GetAllocator()->UsesImageBridge())
   {
-    TextureClientReleaseTask* task = new TextureClientReleaseTask(mTextureClient);
-    RefPtr<ISurfaceAllocator> allocator = mTextureClient->GetAllocator();
+    RefPtr<TextureClientReleaseTask> task = new TextureClientReleaseTask(mTextureClient);
+    RefPtr<ClientIPCAllocator> allocator = mTextureClient->GetAllocator();
     mTextureClient = nullptr;
-    allocator->GetMessageLoop()->PostTask(FROM_HERE, task);
+    allocator->AsClientAllocator()->GetMessageLoop()->PostTask(task.forget());
   } else {
     mTextureClient = nullptr;
   }
@@ -243,7 +243,15 @@ void
 CompositableClient::ClearCachedResources()
 {
   if (mTextureClientRecycler) {
-    mTextureClientRecycler = nullptr;
+    mTextureClientRecycler->ShrinkToMinimumSize();
+  }
+}
+
+void
+CompositableClient::HandleMemoryPressure()
+{
+  if (mTextureClientRecycler) {
+    mTextureClientRecycler->ShrinkToMinimumSize();
   }
 }
 
@@ -290,23 +298,10 @@ CompositableClient::DumpTextureClient(std::stringstream& aStream,
 
 AutoRemoveTexture::~AutoRemoveTexture()
 {
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
   if (mCompositable && mTexture && mCompositable->IsConnected()) {
-    // remove old buffer from CompositableHost
-    RefPtr<AsyncTransactionWaiter> waiter = new AsyncTransactionWaiter();
-    RefPtr<AsyncTransactionTracker> tracker =
-        new RemoveTextureFromCompositableTracker(waiter);
-    // Hold TextureClient until transaction complete.
-    tracker->SetTextureClient(mTexture);
-    mTexture->SetRemoveFromCompositableWaiter(waiter);
-    // RemoveTextureFromCompositableAsync() expects CompositorChild's presence.
-    mCompositable->GetForwarder()->RemoveTextureFromCompositableAsync(tracker, mCompositable, mTexture);
-  }
-#else
-  if (mCompositable && mTexture) {
+    mTexture->RemoveFromCompositable(mCompositable);
     mCompositable->RemoveTexture(mTexture);
   }
-#endif
 }
 
 } // namespace layers

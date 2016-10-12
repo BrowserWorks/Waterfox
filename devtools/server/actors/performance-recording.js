@@ -5,7 +5,7 @@
 "use strict";
 
 const { Cu } = require("chrome");
-const protocol = require("devtools/server/protocol");
+const protocol = require("devtools/shared/protocol");
 const { custom, method, RetVal, Arg, Option, types, preEvent } = protocol;
 const { actorBridge } = require("devtools/server/actors/common");
 
@@ -27,7 +27,7 @@ loader.lazyRequireGetter(this, "PerformanceRecordingCommon",
 var PerformanceRecordingActor = exports.PerformanceRecordingActor = protocol.ActorClass(merge({
   typeName: "performance-recording",
 
-  form: function(detail) {
+  form: function (detail) {
     if (detail === "actorid") {
       return this.actorID;
     }
@@ -73,7 +73,6 @@ var PerformanceRecordingActor = exports.PerformanceRecordingActor = protocol.Act
       withTicks: options.withTicks || false,
       withMemory: options.withMemory || false,
       withAllocations: options.withAllocations || false,
-      withJITOptimizations: options.withJITOptimizations || false,
       allocationsSampleProbability: options.allocationsSampleProbability || 0,
       allocationsMaxLogLength: options.allocationsMaxLogLength || 0,
       bufferSize: options.bufferSize || 0,
@@ -109,7 +108,7 @@ var PerformanceRecordingActor = exports.PerformanceRecordingActor = protocol.Act
     }
   },
 
-  destroy: function() {
+  destroy: function () {
     protocol.Actor.prototype.destroy.call(this);
   },
 
@@ -147,7 +146,7 @@ var PerformanceRecordingActor = exports.PerformanceRecordingActor = protocol.Act
         this._completed = true;
         break;
       }
-    };
+    }
   },
 
 }, PerformanceRecordingCommon));
@@ -158,7 +157,7 @@ var PerformanceRecordingActor = exports.PerformanceRecordingActor = protocol.Act
  */
 var PerformanceRecordingFront = exports.PerformanceRecordingFront = protocol.FrontClass(PerformanceRecordingActor, merge({
 
-  form: function(form, detail) {
+  form: function (form, detail) {
     if (detail === "actorid") {
       this.actorID = form;
       return;

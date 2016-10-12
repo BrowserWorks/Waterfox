@@ -9,6 +9,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://testing-common/AddonManagerTesting.jsm");
 Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://testing-common/MockRegistrar.jsm", this);
+Cu.import("resource://gre/modules/FileUtils.jsm");
 
 // Lazy load |LightweightThemeManager|, we won't be using it on Gonk.
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
@@ -66,6 +67,9 @@ const PERSONA_NAME = "Test Theme";
 const PERSONA_DESCRIPTION = "A nice theme/persona description.";
 
 const PLUGIN_UPDATED_TOPIC     = "plugins-list-updated";
+
+// system add-ons are enabled at startup, so record date when the test starts
+const SYSTEM_ADDON_INSTALL_DATE = Date.now();
 
 /**
  * Used to mock plugin tags in our fake plugin host.
@@ -213,7 +217,7 @@ function createMockAddonProvider(aName) {
   };
 
   return mockProvider;
-};
+}
 
 /**
  * Used to spoof the Persona Id.
@@ -306,7 +310,7 @@ function checkBuildSection(data) {
   const expectedInfo = {
     applicationId: APP_ID,
     applicationName: APP_NAME,
-    buildId: "2007010101",
+    buildId: gAppInfo.appBuildID,
     version: APP_VERSION,
     vendor: "Mozilla",
     platformVersion: PLATFORM_VERSION,
@@ -337,8 +341,8 @@ function checkSettingsSection(data) {
   const EXPECTED_FIELDS_TYPES = {
     blocklistEnabled: "boolean",
     e10sEnabled: "boolean",
+    e10sCohort: "string",
     telemetryEnabled: "boolean",
-    isInOptoutSample: "boolean",
     locale: "string",
     update: "object",
     userPrefs: "object",
@@ -407,7 +411,7 @@ function checkPartnerSection(data, isInitial) {
   if (isInitial) {
     Assert.equal(data.partner.partnerNames.length, 0);
   } else {
-    Assert.ok(data.partner.partnerNames.indexOf(PARTNER_NAME) >= 0);
+    Assert.ok(data.partner.partnerNames.includes(PARTNER_NAME));
   }
 }
 
@@ -507,6 +511,16 @@ function checkSystemSection(data) {
               "ServicePackMajor must be a number.");
     Assert.ok(Number.isFinite(osData["servicePackMinor"]),
               "ServicePackMinor must be a number.");
+    if ("windowsBuildNumber" in osData) {
+      // This might not be available on all Windows platforms.
+      Assert.ok(Number.isFinite(osData["windowsBuildNumber"]),
+                "windowsBuildNumber must be a number.");
+    }
+    if ("windowsUBR" in osData) {
+      // This might not be available on all Windows platforms.
+      Assert.ok((osData["windowsUBR"] === null) || Number.isFinite(osData["windowsUBR"]),
+                "windowsUBR must be null or a number.");
+    }
   } else if (gIsAndroid || gIsGonk) {
     Assert.ok(checkNullOrString(osData.kernelVersion));
   }
@@ -567,11 +581,18 @@ function checkSystemSection(data) {
 
     let features = gfxInfo.getFeatures();
     Assert.equal(features.compositor, gfxData.features.compositor);
+    Assert.equal(features.opengl, gfxData.features.opengl);
+    Assert.equal(features.webgl, gfxData.features.webgl);
   }
   catch (e) {}
 }
 
 function checkActiveAddon(data){
+  let signedState = mozinfo.addon_signing ? "number" : "undefined";
+  // system add-ons have an undefined signState
+  if (data.isSystem)
+    signedState = "undefined";
+
   const EXPECTED_ADDON_FIELDS_TYPES = {
     blocklisted: "boolean",
     name: "string",
@@ -584,7 +605,8 @@ function checkActiveAddon(data){
     hasBinaryComponents: "boolean",
     installDay: "number",
     updateDay: "number",
-    signedState: mozinfo.addon_signing ? "number" : "undefined",
+    signedState: signedState,
+    isSystem: "boolean",
   };
 
   for (let f in EXPECTED_ADDON_FIELDS_TYPES) {
@@ -716,6 +738,13 @@ function run_test() {
   do_test_pending();
   spoofGfxAdapter();
   do_get_profile();
+
+  // The system add-on must be installed before AddonManager is started.
+  const distroDir = FileUtils.getDir("ProfD", ["sysfeatures", "app0"], true);
+  do_get_file("system.xpi").copyTo(distroDir, "tel-system-xpi@tests.mozilla.org.xpi");
+  let system_addon = FileUtils.File(distroDir.path);
+  system_addon.append("tel-system-xpi@tests.mozilla.org.xpi");
+  system_addon.lastModifiedTime = SYSTEM_ADDON_INSTALL_DATE;
   loadAddonManager(APP_ID, APP_NAME, APP_VERSION, PLATFORM_VERSION);
 
   // Spoof the persona ID, but not on Gonk.
@@ -787,7 +816,7 @@ add_task(function* test_prefWatchPolicies() {
   Preferences.set(PREF_TEST_5, expectedValue);
 
   // Set the Environment preferences to watch.
-  TelemetryEnvironment._watchPreferences(PREFS_TO_WATCH);
+  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
   let deferred = PromiseUtils.defer();
 
   // Check that the pref values are missing or present as expected
@@ -835,7 +864,7 @@ add_task(function* test_prefWatch_prefReset() {
   fakeNow(gNow);
 
   // Set the Environment preferences to watch.
-  TelemetryEnvironment._watchPreferences(PREFS_TO_WATCH);
+  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
   let deferred = PromiseUtils.defer();
   TelemetryEnvironment.registerChangeListener("testWatchPrefs_reset", deferred.resolve);
 
@@ -1016,7 +1045,25 @@ add_task(function* test_addonsAndPlugins() {
     hasBinaryComponents: false,
     installDay: ADDON_INSTALL_DATE,
     updateDay: ADDON_INSTALL_DATE,
-    signedState: mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_MISSING : AddonManager.SIGNEDSTATE_NOT_REQUIRED,
+    signedState: mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_SIGNED : AddonManager.SIGNEDSTATE_NOT_REQUIRED,
+    isSystem: false,
+  };
+  const SYSTEM_ADDON_ID = "tel-system-xpi@tests.mozilla.org";
+  const EXPECTED_SYSTEM_ADDON_DATA = {
+    blocklisted: false,
+    description: "A system addon which is shipped with Firefox.",
+    name: "XPI Telemetry System Add-on Test",
+    userDisabled: false,
+    appDisabled: false,
+    version: "1.0",
+    scope: 1,
+    type: "extension",
+    foreignInstall: false,
+    hasBinaryComponents: false,
+    installDay: truncateToDays(SYSTEM_ADDON_INSTALL_DATE),
+    updateDay: truncateToDays(SYSTEM_ADDON_INSTALL_DATE),
+    signedState: undefined,
+    isSystem: true,
   };
 
   const EXPECTED_PLUGIN_DATA = {
@@ -1039,6 +1086,13 @@ add_task(function* test_addonsAndPlugins() {
   let targetAddon = data.addons.activeAddons[ADDON_ID];
   for (let f in EXPECTED_ADDON_DATA) {
     Assert.equal(targetAddon[f], EXPECTED_ADDON_DATA[f], f + " must have the correct value.");
+  }
+
+  // Check system add-on data.
+  Assert.ok(SYSTEM_ADDON_ID in data.addons.activeAddons, "We must have one active system addon.");
+  let targetSystemAddon = data.addons.activeAddons[SYSTEM_ADDON_ID];
+  for (let f in EXPECTED_SYSTEM_ADDON_DATA) {
+    Assert.equal(targetSystemAddon[f], EXPECTED_SYSTEM_ADDON_DATA[f], f + " must have the correct value.");
   }
 
   // Check theme data.
@@ -1238,7 +1292,7 @@ add_task(function* test_changeThrottling() {
   fakeNow(gNow);
 
   // Set the Environment preferences to watch.
-  TelemetryEnvironment._watchPreferences(PREFS_TO_WATCH);
+  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
   let deferred = PromiseUtils.defer();
   let changeCount = 0;
   TelemetryEnvironment.registerChangeListener("testWatchPrefs_throttling", () => {
@@ -1294,6 +1348,7 @@ add_task(function* test_defaultSearchEngine() {
   let expectedSearchEngineData = {
     name: "telemetrySearchIdentifier",
     loadPath: "jar:[other]/searchTest.jar!testsearchplugin/telemetrySearchIdentifier.xml",
+    origin: "default",
     submissionURL: "http://ar.wikipedia.org/wiki/%D8%AE%D8%A7%D8%B5:%D8%A8%D8%AD%D8%AB?search=&sourceid=Mozilla-search"
   };
   Assert.deepEqual(data.settings.defaultSearchEngineData, expectedSearchEngineData);
@@ -1334,10 +1389,56 @@ add_task(function* test_defaultSearchEngine() {
 
   const EXPECTED_SEARCH_ENGINE_DATA = {
     name: "telemetry_default",
-    loadPath: null
+    loadPath: "[other]addEngineWithDetails",
+    origin: "verified"
   };
   Assert.deepEqual(data.settings.defaultSearchEngineData, EXPECTED_SEARCH_ENGINE_DATA);
   TelemetryEnvironment.unregisterChangeListener("testWatch_SearchDefault");
+
+  // Cleanly install an engine from an xml file, and check if origin is
+  // recorded as "verified".
+  gNow = fakeNow(futureDate(gNow, 10 * MILLISECONDS_PER_MINUTE));
+  let promise = new Promise(resolve => {
+    TelemetryEnvironment.registerChangeListener("testWatch_SearchDefault", resolve);
+  });
+  let engine = yield new Promise((resolve, reject) => {
+    Services.obs.addObserver(function obs(subject, topic, data) {
+      try {
+        let engine = subject.QueryInterface(Ci.nsISearchEngine);
+        do_print("Observed " + data + " for " + engine.name);
+        if (data != "engine-added" || engine.name != "engine-telemetry") {
+          return;
+        }
+
+        Services.obs.removeObserver(obs, "browser-search-engine-modified");
+        resolve(engine);
+      } catch (ex) {
+        reject(ex);
+      }
+    }, "browser-search-engine-modified", false);
+    Services.search.addEngine("file://" + do_get_cwd().path + "/engine.xml",
+                              null, null, false);
+  });
+  Services.search.defaultEngine = engine;
+  yield promise;
+  TelemetryEnvironment.unregisterChangeListener("testWatch_SearchDefault");
+  data = TelemetryEnvironment.currentEnvironment;
+  checkEnvironmentData(data);
+  Assert.deepEqual(data.settings.defaultSearchEngineData,
+                   {"name":"engine-telemetry","loadPath":"[other]/engine.xml","origin":"verified"});
+
+  // Now break this engine's load path hash.
+  gNow = fakeNow(futureDate(gNow, 10 * MILLISECONDS_PER_MINUTE));
+  promise = new Promise(resolve => {
+    TelemetryEnvironment.registerChangeListener("testWatch_SearchDefault", resolve);
+  });
+  engine.wrappedJSObject.setAttr("loadPathHash", "broken");
+  Services.obs.notifyObservers(null, "browser-search-engine-modified", "engine-current");
+  yield promise;
+  TelemetryEnvironment.unregisterChangeListener("testWatch_SearchDefault");
+  data = TelemetryEnvironment.currentEnvironment;
+  Assert.equal(data.settings.defaultSearchEngineData.origin, "invalid");
+  Services.search.removeEngine(engine);
 
   // Define and reset the test preference.
   const PREF_TEST = "toolkit.telemetry.test.pref1";
@@ -1349,7 +1450,7 @@ add_task(function* test_defaultSearchEngine() {
   // Set the clock in the future so our changes don't get throttled.
   gNow = fakeNow(futureDate(gNow, 10 * MILLISECONDS_PER_MINUTE));
   // Watch the test preference.
-  TelemetryEnvironment._watchPreferences(PREFS_TO_WATCH);
+  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
   deferred = PromiseUtils.defer();
   TelemetryEnvironment.registerChangeListener("testSearchEngine_pref", deferred.resolve);
   // Trigger an environment change.
@@ -1370,6 +1471,31 @@ add_task(function* test_defaultSearchEngine() {
   Services.obs.notifyObservers(null, "browser-search-service", "init-complete");
   data = TelemetryEnvironment.currentEnvironment;
   Assert.equal(data.settings.searchCohort, "testcohort");
+});
+
+add_task(function* test_environmentShutdown() {
+  // Define and reset the test preference.
+  const PREF_TEST = "toolkit.telemetry.test.pref1";
+  const PREFS_TO_WATCH = new Map([
+    [PREF_TEST, {what: TelemetryEnvironment.RECORD_PREF_STATE}],
+  ]);
+  Preferences.reset(PREF_TEST);
+  gNow = futureDate(gNow, 10 * MILLISECONDS_PER_MINUTE);
+  fakeNow(gNow);
+
+  // Set up the preferences and listener, then the trigger shutdown
+  TelemetryEnvironment.testWatchPreferences(PREFS_TO_WATCH);
+  TelemetryEnvironment.registerChangeListener("test_environmentShutdownChange", () => {
+  // Register a new change listener that asserts if change is propogated
+    Assert.ok(false, "No change should be propagated after shutdown.");
+  });
+  TelemetryEnvironment.shutdown();
+
+  // Flipping  the test preference after shutdown should not trigger the listener
+  Preferences.set(PREF_TEST, 1);
+
+  // Unregister the listener.
+  TelemetryEnvironment.unregisterChangeListener("test_environmentShutdownChange");
 });
 
 add_task(function*() {

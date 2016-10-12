@@ -140,7 +140,8 @@ public:
         stack_underflow,
         stack_not_empty,
         stack_overflow,
-        slot_offset_out_bounds
+        slot_offset_out_bounds,
+        died_early
     };
 
     Machine(SlotMap &) throw();
@@ -183,7 +184,7 @@ inline Machine::status_t Machine::status() const throw()
     return _status;
 }
 
-inline void Machine::check_final_stack(const int32 * const sp)
+inline void Machine::check_final_stack(const stack_t * const sp)
 {
     stack_t const * const base  = _stack + STACK_GUARD,
                   * const limit = base + STACK_MAX;

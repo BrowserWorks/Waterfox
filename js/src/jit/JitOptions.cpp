@@ -56,6 +56,7 @@ T overrideDefault(const char* param, T dflt) {
     }
     return dflt;
 }
+
 #define SET_DEFAULT(var, dflt) var = overrideDefault("JIT_OPTION_" #var, dflt)
 DefaultJitOptions::DefaultJitOptions()
 {
@@ -86,6 +87,9 @@ DefaultJitOptions::DefaultJitOptions()
     // Toggles whether Edge Case Analysis is gobally disabled.
     SET_DEFAULT(disableEdgeCaseAnalysis, false);
 
+    // Toggles whether to use flow sensitive Alias Analysis.
+    SET_DEFAULT(disableFlowAA, true);
+
     // Toggle whether global value numbering is globally disabled.
     SET_DEFAULT(disableGvn, false);
 
@@ -107,11 +111,14 @@ DefaultJitOptions::DefaultJitOptions()
     // Toggles whether Range Analysis is globally disabled.
     SET_DEFAULT(disableRangeAnalysis, false);
 
+    // Toggles wheter Recover instructions is globally disabled.
+    SET_DEFAULT(disableRecoverIns, false);
+
     // Toggle whether eager scalar replacement is globally disabled.
     SET_DEFAULT(disableScalarReplacement, false);
 
     // Toggles whether shared stubs are used in Ionmonkey.
-    SET_DEFAULT(disableSharedStubs, true);
+    SET_DEFAULT(disableSharedStubs, false);
 
     // Toggles whether sincos optimization is globally disabled.
     // See bug984018: The MacOS is the only one that has the sincos fast.
@@ -159,7 +166,11 @@ DefaultJitOptions::DefaultJitOptions()
     SET_DEFAULT(osrPcMismatchesBeforeRecompile, 6000);
 
     // The bytecode length limit for small function.
-    SET_DEFAULT(smallFunctionMaxBytecodeLength_, 120);
+    SET_DEFAULT(smallFunctionMaxBytecodeLength_, 130);
+
+    // An artificial testing limit for the maximum supported offset of
+    // pc-relative jump and call instructions.
+    SET_DEFAULT(jumpThreshold, UINT32_MAX);
 
     // Force how many invocation or loop iterations are needed before compiling
     // a function with the highest ionmonkey optimization level.
@@ -173,6 +184,17 @@ DefaultJitOptions::DefaultJitOptions()
             Warn(forcedDefaultIonWarmUpThresholdEnv, env);
     }
 
+    // Same but for compiling small functions.
+    const char* forcedDefaultIonSmallFunctionWarmUpThresholdEnv =
+        "JIT_OPTION_forcedDefaultIonSmallFunctionWarmUpThreshold";
+    if (const char* env = getenv(forcedDefaultIonSmallFunctionWarmUpThresholdEnv)) {
+        Maybe<int> value = ParseInt(env);
+        if (value.isSome())
+            forcedDefaultIonSmallFunctionWarmUpThreshold.emplace(value.ref());
+        else
+            Warn(forcedDefaultIonSmallFunctionWarmUpThresholdEnv, env);
+    }
+
     // Force the used register allocator instead of letting the optimization
     // pass decide.
     const char* forcedRegisterAllocatorEnv = "JIT_OPTION_forcedRegisterAllocator";
@@ -184,6 +206,9 @@ DefaultJitOptions::DefaultJitOptions()
 
     // Toggles whether unboxed plain objects can be created by the VM.
     SET_DEFAULT(disableUnboxedObjects, false);
+
+    // Test whether wasm int64 / double NaN bits testing is enabled.
+    SET_DEFAULT(wasmTestMode, false);
 }
 
 bool
@@ -205,6 +230,8 @@ DefaultJitOptions::setEagerCompilation()
     baselineWarmUpThreshold = 0;
     forcedDefaultIonWarmUpThreshold.reset();
     forcedDefaultIonWarmUpThreshold.emplace(0);
+    forcedDefaultIonSmallFunctionWarmUpThreshold.reset();
+    forcedDefaultIonSmallFunctionWarmUpThreshold.emplace(0);
 }
 
 void
@@ -212,6 +239,8 @@ DefaultJitOptions::setCompilerWarmUpThreshold(uint32_t warmUpThreshold)
 {
     forcedDefaultIonWarmUpThreshold.reset();
     forcedDefaultIonWarmUpThreshold.emplace(warmUpThreshold);
+    forcedDefaultIonSmallFunctionWarmUpThreshold.reset();
+    forcedDefaultIonSmallFunctionWarmUpThreshold.emplace(warmUpThreshold);
 
     // Undo eager compilation
     if (eagerCompilation && warmUpThreshold != 0) {

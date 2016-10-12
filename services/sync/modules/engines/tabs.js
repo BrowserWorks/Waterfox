@@ -145,7 +145,7 @@ TabStore.prototype = {
       }
 
       for (let tab of win.gBrowser.tabs) {
-        tabState = this.getTabState(tab);
+        let tabState = this.getTabState(tab);
 
         // Make sure there are history entries to look at.
         if (!tabState || !tabState.entries.length) {
@@ -162,6 +162,11 @@ TabStore.prototype = {
         // We ignore the tab completely if the current entry url is
         // not acceptable (we need something accurate to open).
         if (!acceptable(current.url)) {
+          continue;
+        }
+
+        if (current.url.length >= (MAX_UPLOAD_BYTES - 1000)) {
+          this._log.trace("Skipping over-long URL.");
           continue;
         }
 
@@ -184,7 +189,9 @@ TabStore.prototype = {
         allTabs.push({
           title: current.title || "",
           urlHistory: urls,
-          icon: tabState.attributes && tabState.attributes.image || "",
+          icon: tabState.image ||
+                (tabState.attributes && tabState.attributes.image) ||
+                "",
           lastUsed: Math.floor((tabState.lastAccessed || 0) / 1000),
         });
       }
@@ -258,27 +265,9 @@ TabStore.prototype = {
 
   create: function (record) {
     this._log.debug("Adding remote tabs from " + record.clientName);
-    this._remoteClients[record.id] = record.cleartext;
-
-    // Lose some precision, but that's good enough (seconds).
-    let roundModify = Math.floor(record.modified / 1000);
-    let notifyState = Svc.Prefs.get("notifyTabState");
-
-    // If there's no existing pref, save this first modified time.
-    if (notifyState == null) {
-      Svc.Prefs.set("notifyTabState", roundModify);
-      return;
-    }
-
-    // Don't change notifyState if it's already 0 (don't notify).
-    if (notifyState == 0) {
-      return;
-    }
-
-    // We must have gotten a new tab that isn't the same as last time.
-    if (notifyState != roundModify) {
-      Svc.Prefs.set("notifyTabState", 0);
-    }
+    this._remoteClients[record.id] = Object.assign({}, record.cleartext, {
+      lastModified: record.modified
+    });
   },
 
   update: function (record) {
@@ -317,6 +306,10 @@ TabTracker.prototype = {
       window.addEventListener(topic, this.onTab, false);
     }
     window.addEventListener("unload", this._unregisterListeners, false);
+    // If it's got a tab browser we can listen for things like navigation.
+    if (window.gBrowser) {
+      window.gBrowser.addProgressListener(this);
+    }
   },
 
   _unregisterListeners: function (event) {
@@ -328,6 +321,9 @@ TabTracker.prototype = {
     window.removeEventListener("unload", this._unregisterListeners, false);
     for (let topic of this._topics) {
       window.removeEventListener(topic, this.onTab, false);
+    }
+    if (window.gBrowser) {
+      window.gBrowser.removeProgressListener(this);
     }
   },
 
@@ -382,6 +378,16 @@ TabTracker.prototype = {
     // events, always bump the score.
     if (event.type != "pageshow" || Math.random() < .1) {
       this.score += SCORE_INCREMENT_SMALL;
+    }
+  },
+
+  // web progress listeners.
+  onLocationChange: function (webProgress, request, location, flags) {
+    // We only care about top-level location changes which are not in the same
+    // document.
+    if (webProgress.isTopLevel &&
+        ((flags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT) == 0)) {
+      this.modified = true;
     }
   },
 };

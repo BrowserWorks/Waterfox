@@ -4,17 +4,7 @@
 
 # Set up the libvpx assembler config.
 
-AS=$(VPX_AS)
-ASM_SUFFIX=$(VPX_ASM_SUFFIX)
-
 ifdef VPX_ARM_ASM
-# Building on an ARM platform with a supported assembler, include
-# the optimized assembly in the build.
-
-ifeq ($(OS_TARGET),Android)
-# For cpu-features.h
-LOCAL_INCLUDES += -I$(ANDROID_NDK)/sources/android/cpufeatures
-endif
 
 ifdef VPX_AS_CONVERSION
 # The ARM asm is written in ARM RVCT syntax, but we actually build it with
@@ -22,20 +12,8 @@ ifdef VPX_AS_CONVERSION
 
 GENERATED_DIRS += $(dir $(ASFILES))
 
-%.asm.$(ASM_SUFFIX): %.asm $(ASM_OFFSETS)
+%.asm.s: %.asm $(ASM_OFFSETS)
 	$(VPX_AS_CONVERSION) < $< > $@
 
-endif
-endif
-
-include $(topsrcdir)/config/rules.mk
-
-# Workaround a bug of Sun Studio (CR 6963410)
-ifdef SOLARIS_SUNPRO_CC
-ifeq (86,$(findstring 86,$(OS_TEST)))
-filter.o: filter.c Makefile.in
-	$(REPORT_BUILD)
-	@$(MAKE_DEPS_AUTO_CC)
-	$(CC) -o $@ -c $(patsubst -xO[45],-xO3,$(COMPILE_CFLAGS)) $<
 endif
 endif

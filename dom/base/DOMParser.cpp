@@ -339,12 +339,9 @@ DOMParser::Init(nsIPrincipal* principal, nsIURI* documentURI,
   mPrincipal = principal;
   nsresult rv;
   if (!mPrincipal) {
-    nsIScriptSecurityManager* secMan = nsContentUtils::GetSecurityManager();
-    NS_ENSURE_TRUE(secMan, NS_ERROR_NOT_AVAILABLE);
-    rv =
-      secMan->GetSimpleCodebasePrincipal(mDocumentURI,
-                                         getter_AddRefs(mPrincipal));
-    NS_ENSURE_SUCCESS(rv, rv);
+    PrincipalOriginAttributes attrs;
+    mPrincipal = BasePrincipal::CreateCodebasePrincipal(mDocumentURI, attrs);
+    NS_ENSURE_TRUE(mPrincipal, NS_ERROR_FAILURE);
     mOriginalPrincipal = mPrincipal;
   } else {
     mOriginalPrincipal = mPrincipal;
@@ -352,7 +349,6 @@ DOMParser::Init(nsIPrincipal* principal, nsIURI* documentURI,
       // Don't give DOMParsers the system principal.  Use a null
       // principal instead.
       mPrincipal = nsNullPrincipal::Create();
-      NS_ENSURE_TRUE(mPrincipal, NS_ERROR_FAILURE);
 
       if (!mDocumentURI) {
         rv = mPrincipal->GetURI(getter_AddRefs(mDocumentURI));
@@ -422,7 +418,7 @@ DOMParser::InitInternal(nsISupports* aOwner, nsIPrincipal* prin,
     // while GetDocumentFromCaller() gives us the window that the DOMParser()
     // call was made on.
 
-    nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aOwner);
+    nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aOwner);
     if (!window) {
       return NS_ERROR_UNEXPECTED;
     }
@@ -468,8 +464,6 @@ DOMParser::SetUpDocument(DocumentFlavor aFlavor, nsIDOMDocument** aResult)
     AttemptedInitMarker marker(&mAttemptedInit);
 
     nsCOMPtr<nsIPrincipal> prin = nsNullPrincipal::Create();
-    NS_ENSURE_TRUE(prin, NS_ERROR_FAILURE);
-
     rv = Init(prin, nullptr, nullptr, scriptHandlingObject);
     NS_ENSURE_SUCCESS(rv, rv);
   }

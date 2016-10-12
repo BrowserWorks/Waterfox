@@ -204,13 +204,11 @@ function installApp() {
 function setup() {
   info("Setting up");
   return new Promise((resolve, reject) => {
-    SpecialPowers.setAllAppsLaunchable(true);
     SpecialPowers.pushPrefEnv({"set": [
       ["dom.mozBrowserFramesEnabled", true],
       ["dom.serviceWorkers.exemptFromPerDomainMax", true],
       ["dom.serviceWorkers.enabled", true],
       ["dom.serviceWorkers.testing.enabled", true],
-      ["dom.serviceWorkers.interception.enabled", true]
     ]}, () => {
       SpecialPowers.pushPermissions([
         { "type": "webapps-manage", "allow": 1, "context": document },

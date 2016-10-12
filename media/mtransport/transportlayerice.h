@@ -15,7 +15,6 @@
 #include "sigslot.h"
 
 #include "mozilla/RefPtr.h"
-#include "mozilla/Scoped.h"
 #include "nsCOMPtr.h"
 #include "nsIEventTarget.h"
 #include "nsITimer.h"
@@ -39,6 +38,9 @@ class TransportLayerIce : public TransportLayer {
                      RefPtr<NrIceMediaStream> stream,
                      int component);
 
+  void ResetOldStream(); // called after successful ice restart
+  void RestoreOldStream(); // called after unsuccessful ice restart
+
   // Transport layer overrides.
   virtual TransportResult SendPacket(const unsigned char *data, size_t len);
 
@@ -59,6 +61,9 @@ class TransportLayerIce : public TransportLayer {
   RefPtr<NrIceCtx> ctx_;
   RefPtr<NrIceMediaStream> stream_;
   int component_;
+
+  // used to hold the old stream
+  RefPtr<NrIceMediaStream> old_stream_;
 };
 
 }  // close namespace

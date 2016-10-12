@@ -8,7 +8,9 @@
 
 #include "DOMMediaStream.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
-#include "StreamBuffer.h"
+#include "StreamTracks.h"
+
+class nsIPrincipal;
 
 namespace mozilla {
 class DOMMediaStream;
@@ -68,7 +70,8 @@ class OutputStreamDriver : public FrameCaptureListener
 {
 public:
   OutputStreamDriver(SourceMediaStream* aSourceStream,
-                     const TrackID& aTrackId);
+                     const TrackID& aTrackId,
+                     const PrincipalHandle& aPrincipalHandle);
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(OutputStreamDriver);
 
@@ -96,12 +99,13 @@ private:
 class CanvasCaptureMediaStream : public DOMMediaStream
 {
 public:
-  explicit CanvasCaptureMediaStream(HTMLCanvasElement* aCanvas);
+  CanvasCaptureMediaStream(nsPIDOMWindowInner* aWindow, HTMLCanvasElement* aCanvas);
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(CanvasCaptureMediaStream, DOMMediaStream)
 
-  nsresult Init(const dom::Optional<double>& aFPS, const TrackID& aTrackId);
+  nsresult Init(const dom::Optional<double>& aFPS, const TrackID& aTrackId,
+                nsIPrincipal* aPrincipal);
 
   JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
@@ -114,7 +118,7 @@ public:
    * Create a CanvasCaptureMediaStream whose underlying stream is a SourceMediaStream.
    */
   static already_AddRefed<CanvasCaptureMediaStream>
-  CreateSourceStream(nsIDOMWindow* aWindow,
+  CreateSourceStream(nsPIDOMWindowInner* aWindow,
                      HTMLCanvasElement* aCanvas);
 
 protected:

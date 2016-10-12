@@ -19,9 +19,12 @@
 #include "nsAutoPtr.h"
 #include "nsNativeCharsetUtils.h"
 #include "nsIWindowsRegKey.h"
+#include "mozilla/UniquePtrExtensions.h"
+#include "mozilla/WindowsVersion.h"
 
 // shellapi.h is needed to build with WIN32_LEAN_AND_MEAN
 #include <shellapi.h>
+#include <shlwapi.h>
 
 #define LOG(args) MOZ_LOG(mLog, mozilla::LogLevel::Debug, args)
 
@@ -162,8 +165,23 @@ NS_IMETHODIMP nsOSHelperAppService::GetApplicationDescription(const nsACString& 
 
   NS_ConvertASCIItoUTF16 buf(aScheme);
 
-  // Vista: use new application association interface
+  if (mozilla::IsWin8OrLater()) {
+    wchar_t result[1024];
+    DWORD resultSize = 1024;
+    HRESULT hr = AssocQueryString(0x1000 /* ASSOCF_IS_PROTOCOL */,
+                                  ASSOCSTR_FRIENDLYAPPNAME,
+                                  buf.get(),
+                                  NULL,
+                                  result,
+                                  &resultSize);
+    if (SUCCEEDED(hr)) {
+      _retval = result;
+      return NS_OK;
+    }
+  }
+
   if (mAppAssoc) {
+    // Vista: use new application association interface
     wchar_t * pResult = nullptr;
     // We are responsible for freeing returned strings.
     HRESULT hr = mAppAssoc->QueryCurrentDefault(buf.get(),
@@ -352,14 +370,14 @@ static void StripRundll32(nsString& aCommandString)
   if (bufLength == 0) // Error
     return false;
 
-  nsAutoArrayPtr<wchar_t> destination(new wchar_t[bufLength]);
+  auto destination = mozilla::MakeUniqueFallible<wchar_t[]>(bufLength);
   if (!destination)
     return false;
-  if (!::ExpandEnvironmentStringsW(handlerCommand.get(), destination,
+  if (!::ExpandEnvironmentStringsW(handlerCommand.get(), destination.get(),
                                    bufLength))
     return false;
 
-  handlerCommand = static_cast<const wchar_t*>(destination);
+  handlerCommand.Assign(destination.get());
 
   // Remove quotes around paths
   handlerCommand.StripChars("\"");

@@ -13,6 +13,9 @@
 
 class GrGLSLVarying;
 
+// Enough precision to represent 1 / 2048 accurately in printf
+#define GR_SIGNIFICANT_POW2_DECIMAL_DIG 11
+
 class GrGLSLVertexBuilder : public GrGLSLShaderBuilder {
 public:
     GrGLSLVertexBuilder(GrGLSLProgramBuilder* program);
@@ -20,7 +23,7 @@ public:
     void transformToNormalizedDeviceSpace(const GrShaderVar& posVar);
 private:
     void onFinalize() override;
-    
+
     const char* fRtAdjustName;
 
     friend class GrGLProgramBuilder;

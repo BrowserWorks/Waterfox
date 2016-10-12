@@ -2,7 +2,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-/* globals Services, XPCOMUtils, NewTabPrefsProvider, Preferences, aboutNewTabService */
+/* globals Services, XPCOMUtils, NewTabPrefsProvider, Preferences, aboutNewTabService, do_register_cleanup */
 
 "use strict";
 
@@ -18,26 +18,36 @@ XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
                                    "@mozilla.org/browser/aboutnewtab-service;1",
                                    "nsIAboutNewTabService");
 
+XPCOMUtils.defineLazyModuleGetter(this, "Locale",
+                                  "resource://gre/modules/Locale.jsm");
+
 const DEFAULT_HREF = aboutNewTabService.generateRemoteURL();
+const DEFAULT_CHROME_URL = "chrome://browser/content/newtab/newTab.xhtml";
+const DOWNLOADS_URL = "chrome://browser/content/downloads/contentAreaDownloadsView.xul";
+const DEFAULT_VERSION = aboutNewTabService.remoteVersion;
+
+function cleanup() {
+  Services.prefs.setBoolPref("browser.newtabpage.remote", false);
+  Services.prefs.setCharPref("browser.newtabpage.remote.version", DEFAULT_VERSION);
+  aboutNewTabService.resetNewTabURL();
+  NewTabPrefsProvider.prefs.uninit();
+}
+
+do_register_cleanup(cleanup);
 
 /**
  * Test the overriding of the default URL
  */
-add_task(function* () {
+add_task(function* test_override_remote_disabled() {
   NewTabPrefsProvider.prefs.init();
   let notificationPromise;
   Services.prefs.setBoolPref("browser.newtabpage.remote", false);
-  let localChromeURL = "chrome://browser/content/newtab/newTab.xhtml";
 
   // tests default is the local newtab resource
-  Assert.equal(aboutNewTabService.newTabURL, localChromeURL,
-               `Default newtab URL should be ${localChromeURL}`);
+  Assert.equal(aboutNewTabService.defaultURL, DEFAULT_CHROME_URL,
+               `Default newtab URL should be ${DEFAULT_CHROME_URL}`);
 
-  // test the newtab service does not go in a circular redirect
-  aboutNewTabService.newTabURL = "about:newtab";
-  Assert.equal(aboutNewTabService.newTabURL, localChromeURL,
-               "Newtab URL avoids a circular redirect by setting to the default URL");
-
+  // override with some remote URL
   let url = "http://example.com/";
   notificationPromise = nextChangeNotificationPromise(url);
   aboutNewTabService.newTabURL = url;
@@ -46,35 +56,71 @@ add_task(function* () {
   Assert.ok(!aboutNewTabService.remoteEnabled, "Newtab remote should not be enabled");
   Assert.equal(aboutNewTabService.newTabURL, url, "Newtab URL should be the custom URL");
 
-  notificationPromise = nextChangeNotificationPromise("chrome://browser/content/newtab/newTab.xhtml");
+  // test reset with remote disabled
+  notificationPromise = nextChangeNotificationPromise("about:newtab");
   aboutNewTabService.resetNewTabURL();
   yield notificationPromise;
   Assert.ok(!aboutNewTabService.overridden, "Newtab URL should not be overridden");
-  Assert.equal(aboutNewTabService.newTabURL, "chrome://browser/content/newtab/newTab.xhtml",
-               "Newtab URL should be the default");
+  Assert.equal(aboutNewTabService.newTabURL, "about:newtab", "Newtab URL should be the default");
 
+  // test override to a chrome URL
+  notificationPromise = nextChangeNotificationPromise(DOWNLOADS_URL);
+  aboutNewTabService.newTabURL = DOWNLOADS_URL;
+  yield notificationPromise;
+  Assert.ok(aboutNewTabService.overridden, "Newtab URL should be overridden");
+  Assert.equal(aboutNewTabService.newTabURL, DOWNLOADS_URL, "Newtab URL should be the custom URL");
+
+  cleanup();
+});
+
+add_task(function* test_override_remote_enabled() {
+  NewTabPrefsProvider.prefs.init();
+  let notificationPromise;
   // change newtab page to remote
+  notificationPromise = nextChangeNotificationPromise("about:newtab");
   Services.prefs.setBoolPref("browser.newtabpage.remote", true);
+  yield notificationPromise;
   let remoteHref = aboutNewTabService.generateRemoteURL();
-  Assert.equal(aboutNewTabService.newTabURL, remoteHref, "Newtab URL should be the default remote URL");
+  Assert.equal(aboutNewTabService.defaultURL, remoteHref, "Newtab URL should be the default remote URL");
   Assert.ok(!aboutNewTabService.overridden, "Newtab URL should not be overridden");
   Assert.ok(aboutNewTabService.remoteEnabled, "Newtab remote should be enabled");
-  NewTabPrefsProvider.prefs.uninit();
+
+  // change to local newtab page while remote is enabled
+  notificationPromise = nextChangeNotificationPromise(DEFAULT_CHROME_URL);
+  aboutNewTabService.newTabURL = DEFAULT_CHROME_URL;
+  yield notificationPromise;
+  Assert.equal(aboutNewTabService.newTabURL, DEFAULT_CHROME_URL,
+               "Newtab URL set to chrome url");
+  Assert.equal(aboutNewTabService.defaultURL, DEFAULT_CHROME_URL,
+               "Newtab URL defaultURL set to the default chrome URL");
+  Assert.ok(aboutNewTabService.overridden, "Newtab URL should be overridden");
+  Assert.ok(!aboutNewTabService.remoteEnabled, "Newtab remote should not be enabled");
+
+  cleanup();
 });
 
 /**
  * Tests reponse to updates to prefs
  */
 add_task(function* test_updates() {
+  /*
+   * Simulates a "cold-boot" situation, with some pref already set before testing a series
+   * of changes.
+   */
   Preferences.set("browser.newtabpage.remote", true);
+  aboutNewTabService.resetNewTabURL(); // need to set manually because pref notifs are off
   let notificationPromise;
-  let expectedHref = "https://newtab.cdn.mozilla.net" +
+  let productionModeBaseUrl = "https://content.cdn.mozilla.net";
+  let testModeBaseUrl = "https://example.com";
+  let expectedPath = `/newtab` +
                      `/v${aboutNewTabService.remoteVersion}` +
                      `/${aboutNewTabService.remoteReleaseName}` +
                      "/en-GB" +
                      "/index.html";
+  let expectedHref = productionModeBaseUrl + expectedPath;
   Preferences.set("intl.locale.matchOS", true);
   Preferences.set("general.useragent.locale", "en-GB");
+  Preferences.set("browser.newtabpage.remote.mode", "production");
   NewTabPrefsProvider.prefs.init();
 
   // test update checks for prefs
@@ -86,7 +132,19 @@ add_task(function* test_updates() {
   notificationPromise = nextChangeNotificationPromise(
     DEFAULT_HREF, "Remote href changes back to default");
   Preferences.set("general.useragent.locale", "en-US");
+  yield notificationPromise;
 
+  // test update fires when mode is changed
+  expectedPath = expectedPath.replace("/en-GB/", "/en-US/");
+  notificationPromise = nextChangeNotificationPromise(
+    testModeBaseUrl + expectedPath, "Remote href changes back to origin of test mode");
+  Preferences.set("browser.newtabpage.remote.mode", "test");
+  yield notificationPromise;
+
+  // test invalid mode ends up pointing to production url
+  notificationPromise = nextChangeNotificationPromise(
+    DEFAULT_HREF, "Remote href changes back to production default");
+  Preferences.set("browser.newtabpage.remote.mode", "invalid");
   yield notificationPromise;
 
   // test update fires on override and reset
@@ -98,9 +156,10 @@ add_task(function* test_updates() {
 
   // from overridden to default
   notificationPromise = nextChangeNotificationPromise(
-    DEFAULT_HREF, "a notification occurs on reset");
+    "about:newtab", "a notification occurs on reset");
   aboutNewTabService.resetNewTabURL();
   Assert.ok(aboutNewTabService.remoteEnabled, "Newtab remote should be enabled");
+  Assert.equal(aboutNewTabService.defaultURL, DEFAULT_HREF, "Default URL should be the remote page");
   yield notificationPromise;
 
   // override to default URL from default URL
@@ -109,16 +168,16 @@ add_task(function* test_updates() {
   aboutNewTabService.newTabURL = aboutNewTabService.generateRemoteURL();
   Assert.ok(aboutNewTabService.remoteEnabled, "Newtab remote should be enabled");
   aboutNewTabService.newTabURL = testURL;
-  Assert.ok(!aboutNewTabService.remoteEnabled, "Newtab remote should not be enabled");
   yield notificationPromise;
+  Assert.ok(!aboutNewTabService.remoteEnabled, "Newtab remote should not be enabled");
 
   // reset twice, only one notification for default URL
   notificationPromise = nextChangeNotificationPromise(
-    DEFAULT_HREF, "reset occurs");
+    "about:newtab", "reset occurs");
   aboutNewTabService.resetNewTabURL();
   yield notificationPromise;
 
-  NewTabPrefsProvider.prefs.uninit();
+  cleanup();
 });
 
 /**
@@ -138,6 +197,32 @@ add_task(function* test_release_names() {
     Assert.equal("nightly", aboutNewTabService.releaseFromUpdateChannel(channel),
           "release == nightly when invalid");
   }
+});
+
+/**
+ * Verifies that remote version updates changes the remote newtab url
+ */
+add_task(function* test_version_update() {
+  NewTabPrefsProvider.prefs.init();
+
+  Services.prefs.setBoolPref("browser.newtabpage.remote", true);
+  Assert.ok(aboutNewTabService.remoteEnabled, "remote mode enabled");
+
+  let productionModeBaseUrl = "https://content.cdn.mozilla.net";
+  let version_incr = String(parseInt(DEFAULT_VERSION) + 1);
+  let expectedPath = `/newtab` +
+                     `/v${version_incr}` +
+                     `/${aboutNewTabService.remoteReleaseName}` +
+                     `/${Locale.getLocale()}` +
+                     `/index.html`;
+  let expectedHref = productionModeBaseUrl + expectedPath;
+
+  let notificationPromise;
+  notificationPromise = nextChangeNotificationPromise(expectedHref);
+  Preferences.set("browser.newtabpage.remote.version", version_incr);
+  yield notificationPromise;
+
+  cleanup();
 });
 
 function nextChangeNotificationPromise(aNewURL, testMessage) {

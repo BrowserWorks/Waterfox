@@ -17,7 +17,7 @@ const TEST_URI = `
   <div></div>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode("div", inspector);
@@ -39,12 +39,12 @@ function* testImageDimension(ruleView) {
 
   info("Showing the tooltip");
   let onShown = tooltip.once("shown");
-  tooltip.show();
+  tooltip.show(uriSpan);
   yield onShown;
 
   // Let's not test for a specific size, but instead let's make sure it's at
   // least as big as the image
-  let imageRect = panel.querySelector("image").getBoundingClientRect();
+  let imageRect = panel.querySelector("img").getBoundingClientRect();
   let panelRect = panel.getBoundingClientRect();
 
   ok(panelRect.width >= imageRect.width,

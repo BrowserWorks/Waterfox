@@ -9,12 +9,14 @@
 
 #include "mozilla/layout/PRemotePrintJobParent.h"
 
+#include "nsCOMArray.h"
 #include "nsCOMPtr.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
 
 class nsDeviceContext;
 class nsIPrintSettings;
+class nsIWebProgressListener;
 class PrintTranslator;
 
 namespace mozilla {
@@ -38,6 +40,28 @@ public:
 
   bool RecvAbortPrint(const nsresult& aRv) final;
 
+  bool RecvStateChange(const long& aStateFlags,
+                       const nsresult& aStatus) final;
+
+  bool RecvProgressChange(const long& aCurSelfProgress,
+                          const long& aMaxSelfProgress,
+                          const long& aCurTotalProgress,
+                          const long& aMaxTotalProgress) final;
+
+  bool RecvStatusChange(const nsresult& aStatus) final;
+
+  /**
+    * Register a progress listener to receive print progress updates.
+    *
+    * @param aListener the progress listener to register. Must not be null.
+    */
+  void RegisterListener(nsIWebProgressListener* aListener);
+
+  /**
+    * @return the print settings for this remote print job.
+    */
+  already_AddRefed<nsIPrintSettings> GetPrintSettings();
+
 private:
   ~RemotePrintJobParent() final;
 
@@ -51,6 +75,7 @@ private:
   nsCOMPtr<nsIPrintSettings> mPrintSettings;
   RefPtr<nsDeviceContext> mPrintDeviceContext;
   UniquePtr<PrintTranslator> mPrintTranslator;
+  nsCOMArray<nsIWebProgressListener> mPrintProgressListeners;
 };
 
 } // namespace layout

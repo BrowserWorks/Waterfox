@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 requestLongerTimeout(2);
 
@@ -11,8 +13,12 @@ requestLongerTimeout(2);
 const TAB_URL = EXAMPLE_URL + "doc_recursion-stack.html";
 
 function test() {
-  Task.spawn(function*() {
-    let [tab,, panel] = yield initDebugger(TAB_URL);
+  Task.spawn(function* () {
+    let options = {
+      source: TAB_URL,
+      line: 1
+    };
+    let [tab,, panel] = yield initDebugger(TAB_URL, options);
     let win = panel.panelWin;
     let events = win.EVENTS;
     let editor = win.DebuggerView.editor;
@@ -53,8 +59,10 @@ function test() {
       return finished;
     }
 
+    let onCaretAndScopes = waitForCaretAndScopes(panel, 26);
     callInTab(tab, "recurse");
-    yield waitForSourceAndCaretAndScopes(panel, ".html", 26);
+    yield onCaretAndScopes;
+
     yield checkView(0, 26);
 
     yield expandGlobalScope();

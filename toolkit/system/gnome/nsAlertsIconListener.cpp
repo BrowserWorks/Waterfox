@@ -5,11 +5,12 @@
 
 #include "nsAlertsIconListener.h"
 #include "imgIContainer.h"
-#include "imgILoader.h"
 #include "imgIRequest.h"
 #include "nsNetUtil.h"
 #include "nsServiceManagerUtils.h"
+#include "nsSystemAlertsService.h"
 #include "nsIAlertsService.h"
+#include "nsICancelable.h"
 #include "nsIImageToPixbuf.h"
 #include "nsIStringBundle.h"
 #include "nsIObserverService.h"
@@ -31,6 +32,7 @@ nsAlertsIconListener::notify_notification_new_t nsAlertsIconListener::notify_not
 nsAlertsIconListener::notify_notification_show_t nsAlertsIconListener::notify_notification_show = nullptr;
 nsAlertsIconListener::notify_notification_set_icon_from_pixbuf_t nsAlertsIconListener::notify_notification_set_icon_from_pixbuf = nullptr;
 nsAlertsIconListener::notify_notification_add_action_t nsAlertsIconListener::notify_notification_add_action = nullptr;
+nsAlertsIconListener::notify_notification_close_t nsAlertsIconListener::notify_notification_close = nullptr;
 
 static void notify_action_cb(NotifyNotification *notification,
                              gchar *action, gpointer user_data)
@@ -69,11 +71,13 @@ GetPixbufFromImgRequest(imgIRequest* aRequest)
   return imgToPixbuf->ConvertImageToPixbuf(image);
 }
 
-NS_IMPL_ISUPPORTS(nsAlertsIconListener, imgINotificationObserver,
+NS_IMPL_ISUPPORTS(nsAlertsIconListener, nsIAlertNotificationImageListener,
                   nsIObserver, nsISupportsWeakReference)
 
-nsAlertsIconListener::nsAlertsIconListener()
-: mLoadedFrame(false),
+nsAlertsIconListener::nsAlertsIconListener(nsSystemAlertsService* aBackend,
+                                           const nsAString& aAlertName)
+: mAlertName(aAlertName),
+  mBackend(aBackend),
   mNotification(nullptr)
 {
   if (!libNotifyHandle && !libNotifyNotAvail) {
@@ -93,7 +97,8 @@ nsAlertsIconListener::nsAlertsIconListener()
     notify_notification_show = (notify_notification_show_t)dlsym(libNotifyHandle, "notify_notification_show");
     notify_notification_set_icon_from_pixbuf = (notify_notification_set_icon_from_pixbuf_t)dlsym(libNotifyHandle, "notify_notification_set_icon_from_pixbuf");
     notify_notification_add_action = (notify_notification_add_action_t)dlsym(libNotifyHandle, "notify_notification_add_action");
-    if (!notify_is_initted || !notify_init || !notify_get_server_caps || !notify_notification_new || !notify_notification_show || !notify_notification_set_icon_from_pixbuf || !notify_notification_add_action) {
+    notify_notification_close = (notify_notification_close_t)dlsym(libNotifyHandle, "notify_notification_close");
+    if (!notify_is_initted || !notify_init || !notify_get_server_caps || !notify_notification_new || !notify_notification_show || !notify_notification_set_icon_from_pixbuf || !notify_notification_add_action || !notify_notification_close) {
       dlclose(libNotifyHandle);
       libNotifyHandle = nullptr;
     }
@@ -102,65 +107,21 @@ nsAlertsIconListener::nsAlertsIconListener()
 
 nsAlertsIconListener::~nsAlertsIconListener()
 {
-  if (mIconRequest)
-    mIconRequest->CancelAndForgetObserver(NS_BINDING_ABORTED);
+  mBackend->RemoveListener(mAlertName, this);
   // Don't dlclose libnotify as it uses atexit().
 }
 
 NS_IMETHODIMP
-nsAlertsIconListener::Notify(imgIRequest *aRequest, int32_t aType, const nsIntRect* aData)
+nsAlertsIconListener::OnImageMissing(nsISupports*)
 {
-  if (aType == imgINotificationObserver::LOAD_COMPLETE) {
-    return OnLoadComplete(aRequest);
-  }
-
-  if (aType == imgINotificationObserver::FRAME_COMPLETE) {
-    return OnFrameComplete(aRequest);
-  }
-
-  return NS_OK;
+  // This notification doesn't have an image, or there was an error getting
+  // the image. Show the notification without an icon.
+  return ShowAlert(nullptr);
 }
 
-nsresult
-nsAlertsIconListener::OnLoadComplete(imgIRequest* aRequest)
+NS_IMETHODIMP
+nsAlertsIconListener::OnImageReady(nsISupports*, imgIRequest* aRequest)
 {
-  NS_ASSERTION(mIconRequest == aRequest, "aRequest does not match!");
-
-  uint32_t imgStatus = imgIRequest::STATUS_ERROR;
-  nsresult rv = aRequest->GetImageStatus(&imgStatus);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if ((imgStatus & imgIRequest::STATUS_ERROR) && !mLoadedFrame) {
-    // We have an error getting the image. Display the notification with no icon.
-    ShowAlert(nullptr);
-
-    // Cancel any pending request
-    mIconRequest->Cancel(NS_BINDING_ABORTED);
-    mIconRequest = nullptr;
-  }
-
-  nsCOMPtr<imgIContainer> image;
-  rv = aRequest->GetImage(getter_AddRefs(image));
-  if (NS_WARN_IF(NS_FAILED(rv) || !image)) {
-    return rv;
-  }
-
-  // Ask the image to decode at its intrinsic size.
-  int32_t width = 0, height = 0;
-  image->GetWidth(&width);
-  image->GetHeight(&height);
-  image->RequestDecodeForSize(nsIntSize(width, height), imgIContainer::FLAG_NONE);
-
-  return NS_OK;
-}
-
-nsresult
-nsAlertsIconListener::OnFrameComplete(imgIRequest* aRequest)
-{
-  NS_ASSERTION(mIconRequest == aRequest, "aRequest does not match!");
-
-  if (mLoadedFrame)
-    return NS_OK; // only use one frame
-
   GdkPixbuf* imagePixbuf = GetPixbufFromImgRequest(aRequest);
   if (!imagePixbuf) {
     ShowAlert(nullptr);
@@ -169,18 +130,15 @@ nsAlertsIconListener::OnFrameComplete(imgIRequest* aRequest)
     g_object_unref(imagePixbuf);
   }
 
-  mLoadedFrame = true;
-
-  // Cancel any pending request (multipart image loading/decoding for instance)
-  mIconRequest->Cancel(NS_BINDING_ABORTED);
-  mIconRequest = nullptr;
-
   return NS_OK;
 }
 
 nsresult
 nsAlertsIconListener::ShowAlert(GdkPixbuf* aPixbuf)
 {
+  if (!mBackend->IsActiveListener(mAlertName, this))
+    return NS_OK;
+
   mNotification = notify_notification_new(mAlertTitle.get(), mAlertText.get(),
                                           nullptr, nullptr);
 
@@ -211,41 +169,15 @@ nsAlertsIconListener::ShowAlert(GdkPixbuf* aPixbuf)
   GClosure* closure = g_closure_new_simple(sizeof(GClosure), this);
   g_closure_set_marshal(closure, notify_closed_marshal);
   mClosureHandler = g_signal_connect_closure(mNotification, "closed", closure, FALSE);
-  gboolean result = notify_notification_show(mNotification, nullptr);
-
-  if (result && mAlertListener)
-    mAlertListener->Observe(nullptr, "alertshow", mAlertCookie.get());
-
-  return result ? NS_OK : NS_ERROR_FAILURE;
-}
-
-nsresult
-nsAlertsIconListener::StartRequest(const nsAString & aImageUrl, bool aInPrivateBrowsing)
-{
-  if (mIconRequest) {
-    // Another icon request is already in flight.  Kill it.
-    mIconRequest->Cancel(NS_BINDING_ABORTED);
-    mIconRequest = nullptr;
+  GError* error = nullptr;
+  if (!notify_notification_show(mNotification, &error)) {
+    NS_WARNING(error->message);
+    g_error_free(error);
+    return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsIURI> imageUri;
-  NS_NewURI(getter_AddRefs(imageUri), aImageUrl);
-  if (!imageUri)
-    return ShowAlert(nullptr);
-
-  nsCOMPtr<imgILoader> il(do_GetService("@mozilla.org/image/loader;1"));
-  if (!il)
-    return ShowAlert(nullptr);
-
-  nsresult rv = il->LoadImageXPCOM(imageUri, nullptr, nullptr,
-                                   NS_LITERAL_STRING("default"), nullptr, nullptr,
-                                   this, nullptr,
-                                   aInPrivateBrowsing ? nsIRequest::LOAD_ANONYMOUS :
-                                                        nsIRequest::LOAD_NORMAL,
-                                   nullptr, 0 /* use default */,
-                                   getter_AddRefs(mIconRequest));
-  if (NS_FAILED(rv))
-    return rv;
+  if (mAlertListener)
+    mAlertListener->Observe(nullptr, "alertshow", mAlertCookie.get());
 
   return NS_OK;
 }
@@ -264,8 +196,7 @@ nsAlertsIconListener::SendClosed()
     g_object_unref(mNotification);
     mNotification = nullptr;
   }
-  if (mAlertListener)
-    mAlertListener->Observe(nullptr, "alertfinished", mAlertCookie.get());
+  NotifyFinished();
 }
 
 NS_IMETHODIMP
@@ -279,6 +210,29 @@ nsAlertsIconListener::Observe(nsISupports *aSubject, const char *aTopic,
     mNotification = nullptr;
     Release(); // equivalent to NS_RELEASE(this)
   }
+  return NS_OK;
+}
+
+nsresult
+nsAlertsIconListener::Close()
+{
+  if (mIconRequest) {
+    mIconRequest->Cancel(NS_BINDING_ABORTED);
+    mIconRequest = nullptr;
+  }
+
+  if (!mNotification) {
+    NotifyFinished();
+    return NS_OK;
+  }
+
+  GError* error = nullptr;
+  if (!notify_notification_close(mNotification, &error)) {
+    NS_WARNING(error->message);
+    g_error_free(error);
+    return NS_ERROR_FAILURE;
+  }
+
   return NS_OK;
 }
 
@@ -362,12 +316,12 @@ nsAlertsIconListener::InitAlertAsync(nsIAlertNotification* aAlert,
   rv = aAlert->GetCookie(mAlertCookie);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsAutoString imageUrl;
-  rv = aAlert->GetImageURL(imageUrl);
-  NS_ENSURE_SUCCESS(rv, rv);
-  bool inPrivateBrowsing;
-  rv = aAlert->GetInPrivateBrowsing(&inPrivateBrowsing);
-  NS_ENSURE_SUCCESS(rv, rv);
+  return aAlert->LoadImage(/* aTimeout = */ 0, this, /* aUserData = */ nullptr,
+                           getter_AddRefs(mIconRequest));
+}
 
-  return StartRequest(imageUrl, inPrivateBrowsing);
+void nsAlertsIconListener::NotifyFinished()
+{
+  if (mAlertListener)
+    mAlertListener->Observe(nullptr, "alertfinished", mAlertCookie.get());
 }

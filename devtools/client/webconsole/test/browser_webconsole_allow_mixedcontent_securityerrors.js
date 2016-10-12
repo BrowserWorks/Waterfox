@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -29,7 +31,7 @@ add_task(function* () {
       {
         name: "Logged mixed active content",
         text: "Loading mixed (insecure) active content " +
-              "\"http://example.com/\" on a secure page",
+              "\u201chttp://example.com/\u201d on a secure page",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_WARNING,
         objects: true,
@@ -37,7 +39,7 @@ add_task(function* () {
       {
         name: "Logged mixed passive content - image",
         text: "Loading mixed (insecure) display content " +
-              "\"http://example.com/tests/image/test/mochitest/blue.png\" " +
+              "\u201chttp://example.com/tests/image/test/mochitest/blue.png\u201d " +
               "on a secure page",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_WARNING,

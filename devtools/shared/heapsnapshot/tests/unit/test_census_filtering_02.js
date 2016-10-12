@@ -30,11 +30,11 @@ function run_test() {
   stack5 = saveStack(1);
 
   const REPORT = new Map([
-    [stack1,    { bytes: 10, count: 1 }],
-    [stack2,    { bytes: 20, count: 2 }],
-    [stack3,    { bytes: 30, count: 3 }],
-    [stack4,    { bytes: 40, count: 4 }],
-    [stack5,    { bytes: 50, count: 5 }],
+    [stack1, { bytes: 10, count: 1 }],
+    [stack2, { bytes: 20, count: 2 }],
+    [stack3, { bytes: 30, count: 3 }],
+    [stack4, { bytes: 40, count: 4 }],
+    [stack5, { bytes: 50, count: 5 }],
     ["noStack", { bytes: 60, count: 6 }],
   ]);
 
@@ -48,16 +48,16 @@ function run_test() {
       {
         name: stack1.parent.parent,
         bytes: 0,
-        totalBytes: 180,
+        totalBytes: 60,
         count: 0,
-        totalCount: 18,
+        totalCount: 6,
         children: [
           {
             name: stack2.parent,
             bytes: 0,
-            totalBytes: 100,
+            totalBytes: 50,
             count: 0,
-            totalCount: 10,
+            totalCount: 5,
             children: [
               {
                 name: stack3,
@@ -67,7 +67,8 @@ function run_test() {
                 totalCount: 3,
                 children: undefined,
                 id: 15,
-                parent: 14
+                parent: 14,
+                reportLeafIndex: 3,
               },
               {
                 name: stack2,
@@ -77,11 +78,13 @@ function run_test() {
                 totalCount: 2,
                 children: undefined,
                 id: 16,
-                parent: 14
+                parent: 14,
+                reportLeafIndex: 2,
               }
             ],
             id: 14,
-            parent: 13
+            parent: 13,
+            reportLeafIndex: undefined,
           },
           {
             name: stack1.parent,
@@ -98,19 +101,23 @@ function run_test() {
                 totalCount: 1,
                 children: undefined,
                 id: 18,
-                parent: 17
+                parent: 17,
+                reportLeafIndex: 1,
               }
             ],
             id: 17,
-            parent: 13
+            parent: 13,
+            reportLeafIndex: undefined,
           }
         ],
         id: 13,
-        parent: 12
+        parent: 12,
+        reportLeafIndex: undefined,
       }
     ],
     id: 12,
-    parent: undefined
+    parent: undefined,
+    reportLeafIndex: undefined,
   };
 
   compareCensusViewData(BREAKDOWN, REPORT, EXPECTED, { filter: "bar" });

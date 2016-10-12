@@ -24,6 +24,7 @@ LeafAccessible::
   LeafAccessible(nsIContent* aContent, DocAccessible* aDoc) :
   AccessibleWrap(aContent, aDoc)
 {
+  mStateFlags |= eNoKidsFromDOM;
 }
 
 NS_IMPL_ISUPPORTS_INHERITED0(LeafAccessible, Accessible)
@@ -53,13 +54,11 @@ LeafAccessible::RemoveChild(Accessible* aChild)
   return false;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// LeafAccessible: Accessible private
-
-void
-LeafAccessible::CacheChildren()
+bool
+LeafAccessible::IsAcceptableChild(nsIContent* aEl) const
 {
   // No children for leaf accessible.
+  return false;
 }
 
 

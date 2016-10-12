@@ -33,7 +33,7 @@ PresentationRequest::Constructor(const GlobalObject& aGlobal,
                                  const nsAString& aUrl,
                                  ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aGlobal.GetAsSupports());
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aGlobal.GetAsSupports());
   if (!window) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return nullptr;
@@ -49,7 +49,7 @@ PresentationRequest::Constructor(const GlobalObject& aGlobal,
   return NS_WARN_IF(!request->Init()) ? nullptr : request.forget();
 }
 
-PresentationRequest::PresentationRequest(nsPIDOMWindow* aWindow,
+PresentationRequest::PresentationRequest(nsPIDOMWindowInner* aWindow,
                                          const nsAString& aUrl)
   : DOMEventTargetHelper(aWindow)
   , mUrl(aUrl)
@@ -131,7 +131,7 @@ PresentationRequest::StartWithDevice(const nsAString& aDeviceId,
 
   nsCOMPtr<nsIPresentationServiceCallback> callback =
     new PresentationRequesterCallback(this, mUrl, id, promise);
-  rv = service->StartSession(mUrl, id, origin, aDeviceId, callback);
+  rv = service->StartSession(mUrl, id, origin, aDeviceId, GetOwner()->WindowID(), callback);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     promise->MaybeReject(NS_ERROR_DOM_OPERATION_ERR);
   }

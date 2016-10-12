@@ -44,7 +44,7 @@ public class TabInput extends PromptInput implements AdapterView.OnItemClickList
                 JSONArray items = tab.getJSONArray("items");
                 mTabs.put(title, PromptListItem.getArray(items));
             }
-        } catch(JSONException ex) {
+        } catch (JSONException ex) {
             Log.e(LOGTAG, "Exception", ex);
         }
     }
@@ -69,14 +69,7 @@ public class TabInput extends PromptInput implements AdapterView.OnItemClickList
                 }
             });
 
-            // On older android versions, we use a custom style for the tabs.
-            if (Versions.preHC) {
-                TextView textview = (TextView) inflater.inflate(R.layout.tab_prompt_tab, null);
-                textview.setText(title);
-                spec.setIndicator(textview);
-            } else {
-                spec.setIndicator(title);
-            }
+            spec.setIndicator(title);
             mHost.addTab(spec);
         }
         mView = mHost;
@@ -89,7 +82,7 @@ public class TabInput extends PromptInput implements AdapterView.OnItemClickList
         try {
             obj.put("tab", mHost.getCurrentTab());
             obj.put("item", mPosition);
-        } catch(JSONException ex) { }
+        } catch (JSONException ex) { }
 
         return obj;
     }

@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -8,7 +10,7 @@ function test() {
   gDevTools.on("toolbox-created", onToolboxCreated);
   on(DebuggerClient, "connect", onDebuggerClientConnect);
 
-  addTab("about:blank").then(function() {
+  addTab("about:blank").then(function () {
     let target = TargetFactory.forTab(gBrowser.selectedTab);
     gDevTools.showToolbox(target, "webconsole").then(testResults);
   });
@@ -25,9 +27,9 @@ function cleanUp(toolbox) {
   gDevTools.off("toolbox-created", onToolboxCreated);
   off(DebuggerClient, "connect", onDebuggerClientConnect);
 
-  toolbox.destroy().then(function() {
+  toolbox.destroy().then(function () {
     gBrowser.removeCurrentTab();
-    executeSoon(function() {
+    executeSoon(function () {
       finish();
     });
   });

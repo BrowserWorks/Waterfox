@@ -5,7 +5,6 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 XPIDL_SOURCES += [
-    'nsICancelableRunnable.idl',
     'nsIEnvironment.idl',
     'nsIEventTarget.idl',
     'nsIProcess.idl',
@@ -22,6 +21,7 @@ XPIDL_MODULE = 'xpcom_threads'
 
 EXPORTS += [
     'nsEventQueue.h',
+    'nsICancelableRunnable.h',
     'nsMemoryPressure.h',
     'nsProcess.h',
     'nsThread.h',
@@ -65,9 +65,15 @@ UNIFIED_SOURCES += [
 LOCAL_INCLUDES += [
     '../build',
     '/caps',
-    '/toolkit/crashreporter/google-breakpad/src',
     '/tools/profiler',
 ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+    # Gonk's bionic doesn't have ucontext.h
+    LOCAL_INCLUDES += [
+        '/toolkit/crashreporter/gonk-include',
+    ]
+
 
 # BHR disabled for Release builds because of bug 965392.
 # BHR disabled for debug builds because of bug 979069.
@@ -82,6 +88,3 @@ if CONFIG['MOZ_UPDATE_CHANNEL'] not in ('release') and \
 FINAL_LIBRARY = 'xul'
 
 include('/ipc/chromium/chromium-config.mozbuild')
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

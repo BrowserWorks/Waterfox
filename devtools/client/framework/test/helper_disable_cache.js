@@ -1,31 +1,33 @@
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
+
 "use strict";
 
 // Common code shared by browser_toolbox_options_disable_cache-*.js
 const TEST_URI = URL_ROOT + "browser_toolbox_options_disable_cache.sjs";
 var tabs = [
-{
-  title: "Tab 0",
-  desc: "Toggles cache on.",
-  startToolbox: true
-},
-{
-  title: "Tab 1",
-  desc: "Toolbox open before Tab 1 toggles cache.",
-  startToolbox: true
-},
-{
-  title: "Tab 2",
-  desc: "Opens toolbox after Tab 1 has toggled cache. Also closes and opens.",
-  startToolbox: false
-},
-{
-  title: "Tab 3",
-  desc: "No toolbox",
-  startToolbox: false
-}];
+  {
+    title: "Tab 0",
+    desc: "Toggles cache on.",
+    startToolbox: true
+  },
+  {
+    title: "Tab 1",
+    desc: "Toolbox open before Tab 1 toggles cache.",
+    startToolbox: true
+  },
+  {
+    title: "Tab 2",
+    desc: "Opens toolbox after Tab 1 has toggled cache. Also closes and opens.",
+    startToolbox: false
+  },
+  {
+    title: "Tab 3",
+    desc: "No toolbox",
+    startToolbox: false
+  }];
 
 function* initTab(tabX, startToolbox) {
   tabX.tab = yield addTab(TEST_URI);
@@ -37,7 +39,7 @@ function* initTab(tabX, startToolbox) {
 }
 
 function* checkCacheStateForAllTabs(states) {
-  for (let i = 0; i < tabs.length; i ++) {
+  for (let i = 0; i < tabs.length; i++) {
     let tab = tabs[i];
     yield checkCacheEnabled(tab, states[i]);
   }
@@ -48,15 +50,19 @@ function* checkCacheEnabled(tabX, expected) {
 
   yield reloadTab(tabX);
 
-  let doc = content.document;
-  let h1 = doc.querySelector("h1");
-  let oldGuid = h1.textContent;
+  let oldGuid = yield ContentTask.spawn(gBrowser.selectedBrowser, {}, function () {
+    let doc = content.document;
+    let h1 = doc.querySelector("h1");
+    return h1.textContent;
+  });
 
   yield reloadTab(tabX);
 
-  doc = content.document;
-  h1 = doc.querySelector("h1");
-  let guid = h1.textContent;
+  let guid = yield ContentTask.spawn(gBrowser.selectedBrowser, {}, function () {
+    let doc = content.document;
+    let h1 = doc.querySelector("h1");
+    return h1.textContent;
+  });
 
   if (expected) {
     is(guid, oldGuid, tabX.title + " cache is enabled");
@@ -71,14 +77,9 @@ function* setDisableCacheCheckboxChecked(tabX, state) {
   let panel = tabX.toolbox.getCurrentPanel();
   let cbx = panel.panelDoc.getElementById("devtools-disable-cache");
 
-  cbx.scrollIntoView();
-
-  // After uising scrollIntoView() we need to wait for the browser to scroll.
-  yield waitForTick();
-
   if (cbx.checked !== state) {
     info("Setting disable cache checkbox to " + state + " for " + tabX.title);
-    EventUtils.synthesizeMouseAtCenter(cbx, {}, panel.panelWin);
+    cbx.click();
 
     // We need to wait for all checkboxes to be updated and the docshells to
     // apply the new cache settings.

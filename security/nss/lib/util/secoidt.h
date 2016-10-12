@@ -479,6 +479,18 @@ typedef enum {
     SEC_OID_TLS_DH_ANON_EXPORT         = 344,
     SEC_OID_APPLY_SSL_POLICY           = 345,
 
+    SEC_OID_CHACHA20_POLY1305          = 346,
+
+    SEC_OID_TLS_ECDHE_PSK              = 347,
+    SEC_OID_TLS_DHE_PSK              = 348,
+
+    SEC_OID_TLS_FFDHE_2048 = 349,
+    SEC_OID_TLS_FFDHE_3072 = 350,
+    SEC_OID_TLS_FFDHE_4096 = 351,
+    SEC_OID_TLS_FFDHE_6144 = 352,
+    SEC_OID_TLS_FFDHE_8192 = 353,
+    SEC_OID_TLS_DHE_CUSTOM = 354,
+
     SEC_OID_TOTAL
 } SECOidTag;
 

@@ -15,6 +15,7 @@
 #include "nsIInterfaceRequestor.h"
 #include "OfflineObserver.h"
 #include "nsIChannelEventSink.h"
+#include "nsIFTPChannelParentInternal.h"
 
 class nsILoadContext;
 
@@ -34,6 +35,7 @@ class FTPChannelParent final : public PFTPChannelParent
                              , public ADivertableParentChannel
                              , public nsIChannelEventSink
                              , public DisconnectableParent
+                             , public nsIFTPChannelParentInternal
 {
 public:
   NS_DECL_ISUPPORTS
@@ -52,6 +54,8 @@ public:
   // ADivertableParentChannel functions.
   void DivertTo(nsIStreamListener *aListener) override;
   nsresult SuspendForDiversion() override;
+  nsresult SuspendMessageDiversion() override;
+  nsresult ResumeMessageDiversion() override;
 
   // Calls OnStartRequest for "DivertTo" listener, then notifies child channel
   // that it should divert OnDataAvailable and OnStopRequest calls to this
@@ -61,6 +65,8 @@ public:
   // Handles calling OnStart/Stop if there are errors during diversion.
   // Called asynchronously from FailDiversion.
   void NotifyDiversionFailed(nsresult aErrorCode, bool aSkipResume = true);
+
+  NS_IMETHOD SetErrorMsg(const char *aMsg, bool aUseUTF8) override;
 
 protected:
   virtual ~FTPChannelParent();
@@ -99,6 +105,9 @@ protected:
   virtual bool RecvDivertOnStopRequest(const nsresult& statusCode) override;
   virtual bool RecvDivertComplete() override;
 
+  nsresult SuspendChannel();
+  nsresult ResumeChannel();
+
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
   void OfflineDisconnect() override;
@@ -132,6 +141,9 @@ protected:
   RefPtr<mozilla::dom::TabParent> mTabParent;
 
   RefPtr<ChannelEventQueue> mEventQ;
+
+  nsCString mErrorMsg;
+  bool mUseUTF8;
 };
 
 } // namespace net

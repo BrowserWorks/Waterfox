@@ -4,7 +4,9 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+import __main__
 import argparse
+import json
 import logging
 import mozpack.path as mozpath
 import os
@@ -12,6 +14,7 @@ import platform
 import subprocess
 import sys
 import which
+from distutils.version import LooseVersion
 
 from mozbuild.base import (
     MachCommandBase,
@@ -23,10 +26,17 @@ from mach.decorators import (
     Command,
 )
 
+ESLINT_PACKAGES = [
+    "eslint@2.9.0",
+    "eslint-plugin-html@1.4.0",
+    "eslint-plugin-mozilla@0.0.3",
+    "eslint-plugin-react@4.2.3"
+]
+
 ESLINT_NOT_FOUND_MESSAGE = '''
 Could not find eslint!  We looked at the --binary option, at the ESLINT
-environment variable, and then at your path.  Install eslint and needed plugins
-with
+environment variable, and then at your local node_modules path. Please Install
+eslint and needed plugins with:
 
 mach eslint --setup
 
@@ -34,7 +44,7 @@ and try again.
 '''.strip()
 
 NODE_NOT_FOUND_MESSAGE = '''
-nodejs is either not installed or is installed to a non-standard path.
+nodejs v4.2.3 is either not installed or is installed to a non-standard path.
 Please install nodejs from https://nodejs.org and try again.
 
 Valid installation paths:
@@ -67,7 +77,7 @@ class MachCommands(MachCommandBase):
             append_env={b'PYTHONDONTWRITEBYTECODE': str('1')})
 
     @Command('python-test', category='testing',
-        description='Run Python unit tests.')
+        description='Run Python unit tests with an appropriate test runner.')
     @CommandArgument('--verbose',
         default=False,
         action='store_true',
@@ -76,53 +86,86 @@ class MachCommands(MachCommandBase):
         default=False,
         action='store_true',
         help='Stop running tests after the first error or failure.')
-    @CommandArgument('tests', nargs='+',
+    @CommandArgument('--path-only',
+        default=False,
+        action='store_true',
+        help=('Collect all tests under given path instead of default '
+              'test resolution. Supports pytest-style tests.'))
+    @CommandArgument('tests', nargs='*',
         metavar='TEST',
-        help='Tests to run. Each test can be a single file or a directory.')
-    def python_test(self, tests, verbose=False, stop=False):
+        help=('Tests to run. Each test can be a single file or a directory. '
+              'Default test resolution relies on PYTHON_UNIT_TESTS.'))
+    def python_test(self,
+                    tests=[],
+                    test_objects=None,
+                    subsuite=None,
+                    verbose=False,
+                    path_only=False,
+                    stop=False):
         self._activate_virtualenv()
-        import glob
+
+        def find_tests_by_path():
+            import glob
+            files = []
+            for t in tests:
+                if t.endswith('.py') and os.path.isfile(t):
+                    files.append(t)
+                elif os.path.isdir(t):
+                    for root, _, _ in os.walk(t):
+                        files += glob.glob(mozpath.join(root, 'test*.py'))
+                        files += glob.glob(mozpath.join(root, 'unit*.py'))
+                else:
+                    self.log(logging.WARN, 'python-test',
+                                 {'test': t},
+                                 'TEST-UNEXPECTED-FAIL | Invalid test: {test}')
+                    if stop:
+                        break
+            return files
 
         # Python's unittest, and in particular discover, has problems with
         # clashing namespaces when importing multiple test modules. What follows
         # is a simple way to keep environments separate, at the price of
-        # launching Python multiple times. This also runs tests via mozunit,
+        # launching Python multiple times. Most tests are run via mozunit,
         # which produces output in the format Mozilla infrastructure expects.
+        # Some tests are run via pytest, and these should be equipped with a
+        # local mozunit_report plugin to meet output expectations.
         return_code = 0
-        files = []
-        # We search for files in both the current directory (for people running
-        # from topsrcdir or cd'd into their test directory) and topsrcdir (to
-        # support people running mach from the objdir).  The |break|s in the
-        # loop below ensure that we don't run tests twice if we're running mach
-        # from topsrcdir
-        search_dirs = ['.', self.topsrcdir]
-        last_search_dir = search_dirs[-1]
-        for t in tests:
-            for d in search_dirs:
-                test = mozpath.join(d, t)
-                if test.endswith('.py') and os.path.isfile(test):
-                    files.append(test)
-                    break
-                elif os.path.isfile(test + '.py'):
-                    files.append(test + '.py')
-                    break
-                elif os.path.isdir(test):
-                    files += glob.glob(mozpath.join(test, 'test*.py'))
-                    files += glob.glob(mozpath.join(test, 'unit*.py'))
-                    break
-                elif d == last_search_dir:
-                    self.log(logging.WARN, 'python-test',
-                             {'test': t},
-                             'TEST-UNEXPECTED-FAIL | Invalid test: {test}')
-                    if stop:
-                        return 1
+        found_tests = False
+        if test_objects is None:
+            # If we're not being called from `mach test`, do our own
+            # test resolution.
+            if path_only:
+                if tests:
+                    self.virtualenv_manager.install_pip_package(
+                       'pytest==2.9.1'
+                    )
+                    test_objects = [{'path': p} for p in find_tests_by_path()]
+                else:
+                    self.log(logging.WARN, 'python-test', {},
+                             'TEST-UNEXPECTED-FAIL | No tests specified')
+                    test_objects = []
+            else:
+                from mozbuild.testing import TestResolver
+                resolver = self._spawn(TestResolver)
+                if tests:
+                    # If we were given test paths, try to find tests matching them.
+                    test_objects = resolver.resolve_tests(paths=tests,
+                                                          flavor='python')
+                else:
+                    # Otherwise just run everything in PYTHON_UNIT_TESTS
+                    test_objects = resolver.resolve_tests(flavor='python')
 
-        for f in files:
+        for test in test_objects:
+            found_tests = True
+            f = test['path']
             file_displayed_test = []  # Used as a boolean.
 
             def _line_handler(line):
-                if not file_displayed_test and line.startswith('TEST-'):
-                    file_displayed_test.append(True)
+                if not file_displayed_test:
+                    output = ('Ran' in line or 'collected' in line or
+                              line.startswith('TEST-'))
+                    if output:
+                        file_displayed_test.append(True)
 
             inner_return_code = self.run_process(
                 [self.virtualenv_manager.python_path, f],
@@ -147,6 +190,13 @@ class MachCommands(MachCommandBase):
             if stop and return_code > 0:
                 return 1
 
+        if not found_tests:
+            message = 'TEST-UNEXPECTED-FAIL | No tests collected'
+            if not path_only:
+                 message += ' (Not in PYTHON_UNIT_TESTS? Try --path-only?)'
+            self.log(logging.WARN, 'python-test', {}, message)
+            return 1
+
         return 0 if return_code == 0 else 1
 
     @Command('eslint', category='devenv',
@@ -161,16 +211,45 @@ class MachCommands(MachCommandBase):
     def eslint(self, setup, ext=None, binary=None, args=None):
         '''Run eslint.'''
 
+        module_path = self.get_eslint_module_path()
+
+        # eslint requires at least node 4.2.3
+        nodePath = self.getNodeOrNpmPath("node", LooseVersion("4.2.3"))
+        if not nodePath:
+            return 1
+
         if setup:
             return self.eslint_setup()
 
+        npmPath = self.getNodeOrNpmPath("npm")
+        if not npmPath:
+            return 1
+
+        if self.eslintModuleHasIssues():
+            install = self._prompt_yn("\nContinuing will automatically fix "
+                                      "these issues. Would you like to "
+                                      "continue")
+            if install:
+                self.eslint_setup()
+            else:
+                return 1
+
+        # Valid binaries are:
+        #  - Any provided by the binary argument.
+        #  - Any pointed at by the ESLINT environmental variable.
+        #  - Those provided by mach eslint --setup.
+        #
+        #  eslint --setup installs some mozilla specific plugins and installs
+        #  all node modules locally. This is the preferred method of
+        #  installation.
+
         if not binary:
             binary = os.environ.get('ESLINT', None)
+
             if not binary:
-                try:
-                    binary = which.which('eslint')
-                except which.WhichError:
-                    pass
+                binary = os.path.join(module_path, "node_modules", ".bin", "eslint")
+                if not os.path.isfile(binary):
+                    binary = None
 
         if not binary:
             print(ESLINT_NOT_FOUND_MESSAGE)
@@ -207,47 +286,48 @@ class MachCommands(MachCommandBase):
         guide you through an interactive wizard helping you configure
         eslint for optimal use on Mozilla projects.
         """
+        orig_cwd = os.getcwd()
         sys.path.append(os.path.dirname(__file__))
 
-        # At the very least we need node installed.
-        nodePath = self.getNodeOrNpmPath("node")
-        if not nodePath:
-            return 1
+        module_path = self.get_eslint_module_path()
+
+        # npm sometimes fails to respect cwd when it is run using check_call so
+        # we manually switch folders here instead.
+        os.chdir(module_path)
 
         npmPath = self.getNodeOrNpmPath("npm")
         if not npmPath:
             return 1
 
-        # Install eslint.
-        success = self.callProcess("eslint",
-                                   [npmPath, "install", "eslint", "-g"])
-        if not success:
-            return 1
+        # Install eslint and necessary plugins.
+        for pkg in ESLINT_PACKAGES:
+            name, version = pkg.split("@")
+            success = False
 
-        # Install eslint-plugin-mozilla.
-        success = self.callProcess("eslint-plugin-mozilla",
-                                   [npmPath, "link"],
-                                   "testing/eslint-plugin-mozilla")
-        if not success:
-            return 1
+            if self.node_package_installed(pkg, cwd=module_path):
+                success = True
+            else:
+                if pkg.startswith("eslint-plugin-mozilla"):
+                    cmd = [npmPath, "install",
+                           os.path.join(module_path, "eslint-plugin-mozilla")]
+                else:
+                    cmd = [npmPath, "install", pkg]
 
-        # Install eslint-plugin-html.
-        success = self.callProcess("eslint-plugin-html",
-                                   [npmPath, "install", "eslint-plugin-html", "-g"])
-        if not success:
-            return 1
+                print("Installing %s v%s using \"%s\"..."
+                      % (name, version, " ".join(cmd)))
+                success = self.callProcess(pkg, cmd)
 
-        # Install eslint-plugin-react.
-        success = self.callProcess("eslint-plugin-react",
-                                   [npmPath, "install", "eslint-plugin-react", "-g"])
-        if not success:
-            return 1
+            if not success:
+                return 1
+
+        eslint_path = os.path.join(module_path, "node_modules", ".bin", "eslint")
 
         print("\nESLint and approved plugins installed successfully!")
+        print("\nNOTE: Your local eslint binary is at %s\n" % eslint_path)
+
+        os.chdir(orig_cwd)
 
     def callProcess(self, name, cmd, cwd=None):
-        print("\nInstalling %s using \"%s\"..." % (name, " ".join(cmd)))
-
         try:
             with open(os.devnull, "w") as fnull:
                 subprocess.check_call(cmd, cwd=cwd, stdout=fnull)
@@ -260,6 +340,43 @@ class MachCommands(MachCommandBase):
             return False
 
         return True
+
+    def eslintModuleHasIssues(self):
+        has_issues = False
+        node_module_path = os.path.join(self.get_eslint_module_path(), "node_modules")
+
+        for pkg in ESLINT_PACKAGES:
+            name, req_version = pkg.split("@")
+            path = os.path.join(node_module_path, name, "package.json")
+
+            if not os.path.exists(path):
+                print("%s v%s needs to be installed locally." % (name, req_version))
+                has_issues = True
+                continue
+
+            data = json.load(open(path))
+
+            if data["version"] != req_version:
+                print("%s v%s should be v%s." % (name, version, req_version))
+                has_issues = True
+
+        return has_issues
+
+    def node_package_installed(self, package_name="", globalInstall=False, cwd=None):
+        try:
+            npmPath = self.getNodeOrNpmPath("npm")
+
+            cmd = [npmPath, "ls", "--parseable", package_name]
+
+            if globalInstall:
+                cmd.append("-g")
+
+            with open(os.devnull, "w") as fnull:
+                subprocess.check_call(cmd, stdout=fnull, stderr=fnull, cwd=cwd)
+
+            return True
+        except subprocess.CalledProcessError:
+            return False
 
     def getPossibleNodePathsWin(self):
         """
@@ -275,7 +392,7 @@ class MachCommands(MachCommandBase):
             os.path.join(os.environ.get("PROGRAMFILES"), "nodejs")
         })
 
-    def getNodeOrNpmPath(self, filename):
+    def getNodeOrNpmPath(self, filename, minversion=None):
         """
         Return the nodejs or npm path.
         """
@@ -284,13 +401,15 @@ class MachCommands(MachCommandBase):
                 try:
                     nodeOrNpmPath = which.which(filename + ext,
                                                 path=self.getPossibleNodePathsWin())
-                    if self.is_valid(nodeOrNpmPath):
+                    if self.is_valid(nodeOrNpmPath, minversion):
                         return nodeOrNpmPath
                 except which.WhichError:
                     pass
         else:
             try:
-                return which.which(filename)
+                nodeOrNpmPath = which.which(filename)
+                if self.is_valid(nodeOrNpmPath, minversion):
+                    return nodeOrNpmPath
             except which.WhichError:
                 pass
 
@@ -311,10 +430,41 @@ class MachCommands(MachCommandBase):
 
         return None
 
-    def is_valid(self, path):
+    def is_valid(self, path, minversion = None):
         try:
-            with open(os.devnull, "w") as fnull:
-                subprocess.check_call([path, "--version"], stdout=fnull)
-                return True
-        except (subprocess.CalledProcessError, WindowsError):
+            version_str = subprocess.check_output([path, "--version"],
+                                                  stderr=subprocess.STDOUT)
+            if minversion:
+                # nodejs prefixes its version strings with "v"
+                version = LooseVersion(version_str.lstrip('v'))
+                return version >= minversion
+            return True
+        except (subprocess.CalledProcessError, OSError):
             return False
+
+    def get_project_root(self):
+        fullpath = os.path.abspath(sys.modules['__main__'].__file__)
+        return os.path.dirname(fullpath)
+
+    def get_eslint_module_path(self):
+        return os.path.join(self.get_project_root(), "testing", "eslint")
+
+    def _prompt_yn(self, msg):
+        if not sys.stdin.isatty():
+            return False
+
+        print('%s? [Y/n]' % msg)
+
+        while True:
+            choice = raw_input().lower().strip()
+
+            if not choice:
+                return True
+
+            if choice in ('y', 'yes'):
+                return True
+
+            if choice in ('n', 'no'):
+                return False
+
+            print('Must reply with one of {yes, no, y, n}.')

@@ -7,6 +7,7 @@ config = {
     "device_ip": "127.0.0.1",
     "tooltool_manifest_path": "testing/config/tooltool-manifests/androidx86/releng.manifest",
     "tooltool_cache": "/builds/tooltool_cache",
+    "avds_dir": "/home/cltbld/.android",
     "emulator_manifest": """
         [
         {
@@ -92,7 +93,6 @@ config = {
             "run_filename": "remotereftest.py",
             "options": ["--app=%(app)s",
                         "--ignore-window-size",
-                        "--bootstrap",
                         "--remote-webserver=%(remote_webserver)s",
                         "--xre-path=%(xre_path)s",
                         "--utility-path=%(utility_path)s",

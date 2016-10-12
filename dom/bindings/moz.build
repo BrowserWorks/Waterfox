@@ -12,6 +12,8 @@ EXPORTS.ipc += [
 
 EXPORTS.mozilla += [
     'ErrorResult.h',
+    'RootedOwningNonNull.h',
+    'RootedRefPtr.h',
 ]
 
 EXPORTS.mozilla.dom += [
@@ -34,10 +36,12 @@ EXPORTS.mozilla.dom += [
     'Nullable.h',
     'PrimitiveConversions.h',
     'RootedDictionary.h',
+    'SimpleGlobalObject.h',
     'StructuredClone.h',
     'ToJSValue.h',
     'TypedArray.h',
     'UnionMember.h',
+    'WebIDLGlobalNameHash.h',
 ]
 
 # Generated bindings reference *Binding.h, not mozilla/dom/*Binding.h. And,
@@ -86,7 +90,9 @@ UNIFIED_SOURCES += [
     'DOMJSProxyHandler.cpp',
     'Exceptions.cpp',
     'IterableIterator.cpp',
+    'SimpleGlobalObject.cpp',
     'ToJSValue.cpp',
+    'WebIDLGlobalNameHash.cpp',
 ]
 
 SOURCES += [
@@ -100,6 +106,7 @@ SOURCES += [
 # them are only run in debug mode.
 if CONFIG['MOZ_DEBUG']:
     EXPORTS.mozilla.dom += [
+        "test/TestFunctions.h",
         "test/TestInterfaceIterableDouble.h",
         "test/TestInterfaceIterableSingle.h",
         "test/TestInterfaceMaplike.h",
@@ -108,6 +115,7 @@ if CONFIG['MOZ_DEBUG']:
         "test/TestInterfaceSetlikeNode.h"
         ]
     UNIFIED_SOURCES += [
+        "test/TestFunctions.cpp",
         "test/TestInterfaceIterableDouble.cpp",
         "test/TestInterfaceIterableSingle.cpp",
         "test/TestInterfaceMaplike.cpp",
@@ -139,3 +147,6 @@ if CONFIG['MOZ_SIMPLEPUSH']:
 PYTHON_UNIT_TESTS += [
     'mozwebidlcodegen/test/test_mozwebidlcodegen.py',
 ]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

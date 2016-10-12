@@ -169,7 +169,7 @@ PRTime RoundedPRNow();
  * Used to finalize a statementCache on a specified thread.
  */
 template<typename StatementType>
-class FinalizeStatementCacheProxy : public nsRunnable
+class FinalizeStatementCacheProxy : public Runnable
 {
 public:
   /**
@@ -196,7 +196,7 @@ public:
   {
     mStatementCache.FinalizeStatements();
     // Release the owner back on the calling thread.
-    (void)NS_ProxyRelease(mCallingThread, mOwner);
+    NS_ProxyRelease(mCallingThread, mOwner.forget());
     return NS_OK;
   }
 
@@ -230,7 +230,7 @@ bool GetHiddenState(bool aIsRedirect,
 /**
  * Notifies a specified topic via the observer service.
  */
-class PlacesEvent : public nsRunnable
+class PlacesEvent : public Runnable
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED

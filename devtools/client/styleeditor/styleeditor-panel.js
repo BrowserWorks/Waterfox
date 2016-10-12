@@ -4,24 +4,27 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {Cc, Ci, Cu, Cr} = require("chrome");
+"use strict";
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
+const {Cu} = require("chrome");
 
+var Services = require("Services");
 var promise = require("promise");
+var {Task} = require("devtools/shared/task");
+var {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
 var EventEmitter = require("devtools/shared/event-emitter");
 
 Cu.import("resource://devtools/client/styleeditor/StyleEditorUI.jsm");
+/* import-globals-from StyleEditorUtil.jsm */
 Cu.import("resource://devtools/client/styleeditor/StyleEditorUtil.jsm");
 
 loader.lazyGetter(this, "StyleSheetsFront",
-  () => require("devtools/server/actors/stylesheets").StyleSheetsFront);
+  () => require("devtools/shared/fronts/stylesheets").StyleSheetsFront);
 
 loader.lazyGetter(this, "StyleEditorFront",
-  () => require("devtools/server/actors/styleeditor").StyleEditorFront);
+  () => require("devtools/shared/fronts/styleeditor").StyleEditorFront);
 
-this.StyleEditorPanel = function StyleEditorPanel(panelWin, toolbox) {
+var StyleEditorPanel = function StyleEditorPanel(panelWin, toolbox) {
   EventEmitter.decorate(this);
 
   this._toolbox = toolbox;
@@ -31,7 +34,7 @@ this.StyleEditorPanel = function StyleEditorPanel(panelWin, toolbox) {
 
   this.destroy = this.destroy.bind(this);
   this._showError = this._showError.bind(this);
-}
+};
 
 exports.StyleEditorPanel = StyleEditorPanel;
 
@@ -57,8 +60,7 @@ StyleEditorPanel.prototype = {
 
     if (this.target.form.styleSheetsActor) {
       this._debuggee = StyleSheetsFront(this.target.client, this.target.form);
-    }
-    else {
+    } else {
       /* We're talking to a pre-Firefox 29 server-side */
       this._debuggee = StyleEditorFront(this.target.client, this.target.form);
     }
@@ -82,19 +84,20 @@ StyleEditorPanel.prototype = {
    * @param  {string} data
    *         The parameters to customize the error message
    */
-  _showError: function(event, data) {
+  _showError: function (event, data) {
     if (!this._toolbox) {
       // could get an async error after we've been destroyed
       return;
     }
 
-    let errorMessage = _(data.key);
+    let errorMessage = getString(data.key);
     if (data.append) {
       errorMessage += " " + data.append;
     }
 
     let notificationBox = this._toolbox.getNotificationBox();
-    let notification = notificationBox.getNotificationWithValue("styleeditor-error");
+    let notification =
+        notificationBox.getNotificationWithValue("styleeditor-error");
     let level = (data.level === "info") ?
                 notificationBox.PRIORITY_INFO_LOW :
                 notificationBox.PRIORITY_CRITICAL_LOW;
@@ -118,9 +121,9 @@ StyleEditorPanel.prototype = {
    *         Promise that will resolve when the editor is selected and ready
    *         to be used.
    */
-  selectStyleSheet: function(href, line, col) {
+  selectStyleSheet: function (href, line, col) {
     if (!this._debuggee || !this.UI) {
-      return;
+      return null;
     }
     return this.UI.selectStyleSheet(href, line - 1, col ? col - 1 : 0);
   },
@@ -128,7 +131,7 @@ StyleEditorPanel.prototype = {
   /**
    * Destroy the style editor.
    */
-  destroy: function() {
+  destroy: function () {
     if (!this._destroyed) {
       this._destroyed = true;
 
@@ -146,7 +149,7 @@ StyleEditorPanel.prototype = {
 
     return promise.resolve(null);
   },
-}
+};
 
 XPCOMUtils.defineLazyGetter(StyleEditorPanel.prototype, "strings",
   function () {

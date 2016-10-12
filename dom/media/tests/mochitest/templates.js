@@ -165,12 +165,12 @@ var commandsPeerConnectionInitial = [
     test.pcRemote.logSignalingState();
   },
 
-  function PC_LOCAL_SETUP_ADDSTREAM_HANDLER(test) {
-    test.pcLocal.setupAddStreamEventHandler();
+  function PC_LOCAL_SETUP_TRACK_HANDLER(test) {
+    test.pcLocal.setupTrackEventHandler();
   },
 
-  function PC_REMOTE_SETUP_ADDSTREAM_HANDLER(test) {
-    test.pcRemote.setupAddStreamEventHandler();
+  function PC_REMOTE_SETUP_TRACK_HANDLER(test) {
+    test.pcRemote.setupTrackEventHandler();
   },
 
   function PC_LOCAL_CHECK_INITIAL_SIGNALINGSTATE(test) {
@@ -193,6 +193,15 @@ var commandsPeerConnectionInitial = [
        "Initial remote ICE connection state is 'new'");
   },
 
+  function PC_LOCAL_CHECK_INITIAL_CAN_TRICKLE_SYNC(test) {
+    is(test.pcLocal._pc.canTrickleIceCandidates, null,
+       "Local trickle status should start out unknown");
+  },
+
+  function PC_REMOTE_CHECK_INITIAL_CAN_TRICKLE_SYNC(test) {
+    is(test.pcRemote._pc.canTrickleIceCandidates, null,
+       "Remote trickle status should start out unknown");
+  },
 ];
 
 var commandsGetUserMedia = [
@@ -305,6 +314,11 @@ var commandsPeerConnectionOfferAnswer = [
       });
   },
 
+  function PC_REMOTE_CHECK_CAN_TRICKLE_SYNC(test) {
+    is(test.pcRemote._pc.canTrickleIceCandidates, true,
+       "Remote thinks that local can trickle");
+  },
+
   function PC_LOCAL_SANE_LOCAL_SDP(test) {
     test.pcLocal.localRequiresTrickleIce =
       sdputils.verifySdp(test._local_offer, "offer",
@@ -339,7 +353,8 @@ var commandsPeerConnectionOfferAnswer = [
       .then(() => {
         is(test.pcRemote.signalingState, STABLE,
            "signalingState after remote setLocalDescription is 'stable'");
-      });
+      })
+      .then(() => test.pcRemote.markRemoteTracksAsNegotiated());
   },
 
   function PC_LOCAL_GET_ANSWER(test) {
@@ -361,8 +376,10 @@ var commandsPeerConnectionOfferAnswer = [
       .then(() => {
         is(test.pcLocal.signalingState, STABLE,
            "signalingState after local setRemoteDescription is 'stable'");
-      });
+      })
+      .then(() => test.pcLocal.markRemoteTracksAsNegotiated());
   },
+
   function PC_REMOTE_SANE_LOCAL_SDP(test) {
     test.pcRemote.localRequiresTrickleIce =
       sdputils.verifySdp(test._remote_answer, "answer",
@@ -374,6 +391,11 @@ var commandsPeerConnectionOfferAnswer = [
       sdputils.verifySdp(test._remote_answer, "answer",
                          test._offer_constraints, test._offer_options,
                          test.testOptions);
+  },
+
+  function PC_LOCAL_CHECK_CAN_TRICKLE_SYNC(test) {
+    is(test.pcLocal._pc.canTrickleIceCandidates, true,
+       "Local thinks that remote can trickle");
   },
 
   function PC_LOCAL_WAIT_FOR_ICE_CONNECTED(test) {
@@ -390,14 +412,6 @@ var commandsPeerConnectionOfferAnswer = [
 
   function PC_REMOTE_VERIFY_ICE_GATHERING(test) {
     return waitForAnIceCandidate(test.pcRemote);
-  },
-
-  function PC_LOCAL_CHECK_MEDIA_TRACKS(test) {
-    return test.pcLocal.checkMediaTracks();
-  },
-
-  function PC_REMOTE_CHECK_MEDIA_TRACKS(test) {
-    return test.pcRemote.checkMediaTracks();
   },
 
   function PC_LOCAL_WAIT_FOR_MEDIA_FLOW(test) {
@@ -422,13 +436,15 @@ var commandsPeerConnectionOfferAnswer = [
 
   function PC_LOCAL_CHECK_ICE_CONNECTION_TYPE(test) {
     return test.pcLocal.getStats().then(stats => {
-      test.pcLocal.checkStatsIceConnectionType(stats);
+      test.pcLocal.checkStatsIceConnectionType(stats,
+          test.testOptions.expectedLocalCandidateType);
     });
   },
 
   function PC_REMOTE_CHECK_ICE_CONNECTION_TYPE(test) {
     return test.pcRemote.getStats().then(stats => {
-      test.pcRemote.checkStatsIceConnectionType(stats);
+      test.pcRemote.checkStatsIceConnectionType(stats,
+          test.testOptions.expectedRemoteCandidateType);
     });
   },
 
@@ -457,10 +473,10 @@ var commandsPeerConnectionOfferAnswer = [
     return test.pcRemote.checkMsids();
   },
 
-  function PC_LOCAL_CHECK_STATS(test) {
+  function PC_LOCAL_CHECK_TRACK_STATS(test) {
     return checkAllTrackStats(test.pcLocal);
   },
-  function PC_REMOTE_CHECK_STATS(test) {
+  function PC_REMOTE_CHECK_TRACK_STATS(test) {
     return checkAllTrackStats(test.pcRemote);
   },
   function PC_LOCAL_VERIFY_SDP_AFTER_END_OF_TRICKLE(test) {

@@ -7,7 +7,7 @@ const TEST_URI = "data:text/html;charset=utf-8,<p>browser_telemetry_sidebar.js</
 // opened we make use of setTimeout() to create tool active times.
 const TOOL_DELAY = 200;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab(TEST_URI);
   let Telemetry = loadTelemetryAndRecordLogs();
 
@@ -39,7 +39,7 @@ function* testSidebar(toolbox) {
       let tool = sidebarTools.pop();
       if (tool) {
         inspector.sidebar.select(tool);
-        setTimeout(function() {
+        setTimeout(function () {
           setTimeout(selectSidebarTab, TOOL_DELAY);
         }, TOOL_DELAY);
       } else {
@@ -62,12 +62,12 @@ function checkResults(Telemetry) {
     if (histId.endsWith("OPENED_PER_USER_FLAG")) {
       ok(value.length === 1 && value[0] === true,
          "Per user value " + histId + " has a single value of true");
-    } else if (histId === "DEVTOOLS_TOOLBOX_OPENED_BOOLEAN") {
+    } else if (histId === "DEVTOOLS_TOOLBOX_OPENED_COUNT") {
       is(value.length, 1, histId + " has only one entry");
-    } else if (histId.endsWith("OPENED_BOOLEAN")) {
+    } else if (histId.endsWith("OPENED_COUNT")) {
       ok(value.length > 1, histId + " has more than one entry");
 
-      let okay = value.every(function(element) {
+      let okay = value.every(function (element) {
         return element === true;
       });
 
@@ -75,7 +75,7 @@ function checkResults(Telemetry) {
     } else if (histId.endsWith("TIME_ACTIVE_SECONDS")) {
       ok(value.length > 1, histId + " has more than one entry");
 
-      let okay = value.every(function(element) {
+      let okay = value.every(function (element) {
         return element > 0;
       });
 

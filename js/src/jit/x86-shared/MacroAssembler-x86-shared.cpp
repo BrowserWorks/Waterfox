@@ -78,7 +78,8 @@ MacroAssembler::restoreFrameAlignmentForICArguments(AfterICSaveLive& aic)
 bool
 MacroAssemblerX86Shared::buildOOLFakeExitFrame(void* fakeReturnAddr)
 {
-    uint32_t descriptor = MakeFrameDescriptor(asMasm().framePushed(), JitFrame_IonJS);
+    uint32_t descriptor = MakeFrameDescriptor(asMasm().framePushed(), JitFrame_IonJS,
+                                              ExitFrameLayout::Size());
     asMasm().Push(Imm32(descriptor));
     asMasm().Push(ImmPtr(fakeReturnAddr));
     return true;
@@ -104,14 +105,14 @@ MacroAssemblerX86Shared::branchNegativeZero(FloatRegister reg,
         zeroDouble(scratchDouble);
 
         // If reg is non-zero, jump to nonZero.
-        branchDouble(DoubleNotEqual, reg, scratchDouble, &nonZero);
+        asMasm().branchDouble(DoubleNotEqual, reg, scratchDouble, &nonZero);
     }
     // Input register is either zero or negative zero. Retrieve sign of input.
     vmovmskpd(reg, scratch);
 
     // If reg is 1 or 3, input is negative zero.
     // If reg is 0 or 2, input is a normal zero.
-    branchTest32(NonZero, scratch, Imm32(1), label);
+    asMasm().branchTest32(NonZero, scratch, Imm32(1), label);
 
     bind(&nonZero);
 #elif defined(JS_CODEGEN_X64)
@@ -316,6 +317,14 @@ MacroAssemblerX86Shared::asmMergeWith(const MacroAssemblerX86Shared& other)
 
 //{{{ check_macroassembler_style
 // ===============================================================
+// MacroAssembler high-level usage.
+
+void
+MacroAssembler::flush()
+{
+}
+
+// ===============================================================
 // Stack manipulation functions.
 
 void
@@ -345,7 +354,7 @@ MacroAssembler::PushRegsInMask(LiveRegisterSet set)
         else if (reg.isSingle())
             storeFloat32(reg, spillAddress);
         else if (reg.isSimd128())
-            storeUnalignedFloat32x4(reg, spillAddress);
+            storeUnalignedSimd128Float(reg, spillAddress);
         else
             MOZ_CRASH("Unknown register type.");
     }
@@ -379,7 +388,7 @@ MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore)
         else if (reg.isSingle())
             loadFloat32(spillAddress, reg);
         else if (reg.isSimd128())
-            loadUnalignedFloat32x4(spillAddress, reg);
+            loadUnalignedSimd128Float(spillAddress, reg);
         else
             MOZ_CRASH("Unknown register type.");
     }
@@ -541,6 +550,42 @@ void
 MacroAssembler::patchCall(uint32_t callerOffset, uint32_t calleeOffset)
 {
     Assembler::patchCall(callerOffset, calleeOffset);
+}
+
+CodeOffset
+MacroAssembler::thunkWithPatch()
+{
+    return Assembler::thunkWithPatch();
+}
+
+void
+MacroAssembler::patchThunk(uint32_t thunkOffset, uint32_t targetOffset)
+{
+    Assembler::patchThunk(thunkOffset, targetOffset);
+}
+
+void
+MacroAssembler::repatchThunk(uint8_t* code, uint32_t thunkOffset, uint32_t targetOffset)
+{
+    Assembler::repatchThunk(code, thunkOffset, targetOffset);
+}
+
+CodeOffset
+MacroAssembler::nopPatchableToNearJump()
+{
+    return Assembler::twoByteNop();
+}
+
+void
+MacroAssembler::patchNopToNearJump(uint8_t* jump, uint8_t* target)
+{
+    Assembler::patchTwoByteNopToJump(jump, target);
+}
+
+void
+MacroAssembler::patchNearJumpToNop(uint8_t* jump)
+{
+    Assembler::patchJumpToTwoByteNop(jump);
 }
 
 void

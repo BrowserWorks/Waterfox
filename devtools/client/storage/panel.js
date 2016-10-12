@@ -6,11 +6,10 @@
 
 "use strict";
 
-const {Cu} = require("chrome");
 const EventEmitter = require("devtools/shared/event-emitter");
 
 loader.lazyRequireGetter(this, "StorageFront",
-                        "devtools/server/actors/storage", true);
+                         "devtools/shared/fronts/storage", true);
 loader.lazyRequireGetter(this, "StorageUI",
                          "devtools/client/storage/ui", true);
 
@@ -39,7 +38,7 @@ StoragePanel.prototype = {
   /**
    * open is effectively an asynchronous constructor
    */
-  open: function() {
+  open: function () {
     let targetPromise;
     // We always interact with the target as if it were remote
     if (!this.target.isRemote) {
@@ -52,18 +51,22 @@ StoragePanel.prototype = {
       this.target.on("close", this.destroy);
       this._front = new StorageFront(this.target.client, this.target.form);
 
-      this.UI = new StorageUI(this._front, this._target, this._panelWin);
+      this.UI = new StorageUI(this._front, this._target,
+                              this._panelWin, this._toolbox);
       this.isReady = true;
       this.emit("ready");
 
       return this;
-    }).catch(this.destroy);
+    }).catch(e => {
+      console.log("error while opening storage panel", e);
+      this.destroy();
+    });
   },
 
   /**
    * Destroy the storage inspector.
    */
-  destroy: function() {
+  destroy: function () {
     if (!this._destroyed) {
       this.UI.destroy();
       this.UI = null;

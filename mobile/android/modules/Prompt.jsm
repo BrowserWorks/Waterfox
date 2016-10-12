@@ -43,6 +43,9 @@ function Prompt(aOptions) {
   if ("buttons" in aOptions && aOptions.buttons != null)
     this.msg.buttons = aOptions.buttons;
 
+  if ("doubleTapButton" in aOptions && aOptions.doubleTapButton != null)
+    this.msg.doubleTapButton = aOptions.doubleTapButton;
+
   if ("hint" in aOptions && aOptions.hint != null)
     this.msg.hint = aOptions.hint;
 }
@@ -187,9 +190,6 @@ Prompt.prototype = {
       let obj = { id: item.id };
 
       obj.label = item.label;
-
-      if (item.icon)
-        obj.icon = item.icon;
 
       if (item.disabled)
         obj.disabled = true;

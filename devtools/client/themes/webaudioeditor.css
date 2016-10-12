@@ -5,7 +5,6 @@
 /* Reload and waiting notices */
 .notice-container {
   margin-top: -50vh;
-  background-color: var(--theme-toolbar-background);
   color: var(--theme-body-color-alt);
 }
 
@@ -62,15 +61,7 @@ g.edgeLabel tspan {
 .nodes rect {
   stroke-width: 1px;
   cursor: pointer;
-}
-
-.nodes rect {
   stroke: var(--theme-tab-toolbar-background);
-}
-.theme-light rect {
-  fill: var(--theme-tab-toolbar-background);
-}
-.theme-dark rect {
   fill: var(--theme-toolbar-background);
 }
 
@@ -150,8 +141,7 @@ text {
   background: none;
   box-shadow: none;
   border: none;
-  list-style-image: url(images/debugger-collapse.png);
-  -moz-image-region: rect(0px,16px,16px,0px);
+  list-style-image: var(--theme-pane-collapse-image);
 }
 
 #inspector-pane-toggle > .toolbarbutton-icon {
@@ -160,11 +150,7 @@ text {
 }
 
 #inspector-pane-toggle[pane-collapsed] {
-  list-style-image: url(images/debugger-expand.png);
-}
-
-#inspector-pane-toggle:active {
-  -moz-image-region: rect(0px,32px,16px,16px);
+  list-style-image: var(--theme-pane-expand-image);
 }
 
 /**
@@ -182,19 +168,6 @@ text {
 }
 
 @media (min-resolution: 1.1dppx) {
-  #inspector-pane-toggle {
-    list-style-image: url(images/debugger-collapse@2x.png);
-    -moz-image-region: rect(0px,32px,32px,0px);
-  }
-
-  #inspector-pane-toggle[pane-collapsed] {
-    list-style-image: url(images/debugger-expand@2x.png);
-  }
-
-  #inspector-pane-toggle:active {
-    -moz-image-region: rect(0px,64px,32px,32px);
-  }
-
   .web-audio-inspector .error {
     background-image: url(images/alerticon-warning@2x.png);
   }

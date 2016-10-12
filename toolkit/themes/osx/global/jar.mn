@@ -29,7 +29,6 @@ toolkit.jar:
 * skin/classic/global/notification.css
   skin/classic/global/netError.css
   skin/classic/global/numberbox.css
-  skin/classic/global/passwordmgr.css
   skin/classic/global/popup.css
   skin/classic/global/preferences.css
   skin/classic/global/progressmeter.css
@@ -95,7 +94,6 @@ toolkit.jar:
   skin/classic/global/icons/checkbox@2x.png                          (icons/checkbox@2x.png)
   skin/classic/global/icons/close.png                                (icons/close.png)
   skin/classic/global/icons/close@2x.png                             (icons/close@2x.png)
-  skin/classic/global/icons/find-arrows.png                          (icons/find-arrows.png)
   skin/classic/global/icons/glyph-dropdown.png                       (icons/glyph-dropdown.png)
   skin/classic/global/icons/glyph-dropdown@2x.png                    (icons/glyph-dropdown@2x.png)
   skin/classic/global/icons/information-16.png                       (icons/information-16.png)
@@ -103,7 +101,8 @@ toolkit.jar:
   skin/classic/global/icons/information-32.png                       (icons/information-32.png)
   skin/classic/global/icons/information-64.png                       (icons/information-64.png)
   skin/classic/global/icons/information-large.png                    (icons/information-large.png)
-  skin/classic/global/icons/loading_16.png                           (icons/loading_16.png)
+  skin/classic/global/icons/loading.png                              (icons/loading.png)
+  skin/classic/global/icons/loading@2x.png                           (icons/loading@2x.png)
   skin/classic/global/icons/menulist-dropmarker.png                  (icons/menulist-dropmarker.png)
   skin/classic/global/icons/notfound.png                             (icons/notfound.png)
   skin/classic/global/icons/panebutton-active.png                    (icons/panebutton-active.png)
@@ -113,9 +112,8 @@ toolkit.jar:
   skin/classic/global/icons/resizer@2x.png                           (icons/resizer@2x.png)
   skin/classic/global/icons/resizer-rtl.png                          (icons/resizer-rtl.png)
   skin/classic/global/icons/resizer-rtl@2x.png                       (icons/resizer-rtl@2x.png)
-  skin/classic/global/icons/search-textbox.png                       (icons/search-textbox.png)
-  skin/classic/global/icons/searchfield-regular-cancel.png           (icons/searchfield-regular-cancel.png)
-  skin/classic/global/icons/searchfield-small-cancel.png             (icons/searchfield-small-cancel.png)
+  skin/classic/global/icons/search-textbox.svg                       (icons/search-textbox.svg)
+  skin/classic/global/icons/searchfield-cancel.svg                   (icons/searchfield-cancel.svg)
   skin/classic/global/icons/tabprompts-bgtexture.png                 (icons/tabprompts-bgtexture.png)
   skin/classic/global/icons/warning-16.png                           (icons/warning-16.png)
   skin/classic/global/icons/warning-32.png                           (icons/warning-32.png)
@@ -130,9 +128,6 @@ toolkit.jar:
   skin/classic/global/icons/question-64.png                          (icons/question-64.png)
   skin/classic/global/icons/question-large.png                       (icons/question-large.png)
   skin/classic/global/icons/sslWarning.png                           (icons/sslWarning.png)
-  skin/classic/global/icons/webapps-16.png                           (icons/webapps-16.png)
-  skin/classic/global/icons/webapps-16@2x.png                        (icons/webapps-16@2x.png)
-  skin/classic/global/icons/webapps-64.png                           (icons/webapps-64.png)
   skin/classic/global/notification/close.png                         (notification/close.png)
   skin/classic/global/notification/error-icon.png                    (notification/error-icon.png)
   skin/classic/global/notification/info-icon.png                     (notification/info-icon.png)
@@ -178,6 +173,7 @@ toolkit.jar:
   skin/classic/global/splitter/grip-right.gif                        (splitter/grip-right.gif)
   skin/classic/global/toolbar/spring.png                             (toolbar/spring.png)
   skin/classic/global/toolbar/toolbar-separator.png                  (toolbar/toolbar-separator.png)
+  skin/classic/global/tree/arrow-disclosure.svg                      (tree/arrow-disclosure.svg)
   skin/classic/global/tree/columnpicker.gif                          (tree/columnpicker.gif)
   skin/classic/global/tree/folder.png                                (tree/folder.png)
   skin/classic/global/tree/folder@2x.png                             (tree/folder@2x.png)

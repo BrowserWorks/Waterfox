@@ -1269,7 +1269,7 @@ function copyTempDouble(ptr) {
           node.contentMode = MEMFS.CONTENT_FLEXIBLE;
         }
       },mount:function (mount) {
-        return MEMFS.create_node(null, '/', 0040000 | 0777, 0);
+        return MEMFS.create_node(null, '/', 0o040000 | 0o777, 0);
       },create_node:function (parent, name, mode, dev) {
         if (FS.isBlkdev(mode) || FS.isFIFO(mode)) {
           // no supported
@@ -1407,7 +1407,7 @@ function copyTempDouble(ptr) {
           }
           return entries;
         },symlink:function (parent, newname, oldpath) {
-          var node = MEMFS.create_node(parent, newname, 0777 | 0120000, 0);
+          var node = MEMFS.create_node(parent, newname, 0o777 | 0o120000, 0);
           node.link = oldpath;
           return node;
         },readlink:function (node) {
@@ -1657,19 +1657,19 @@ function copyTempDouble(ptr) {
       },isMountpoint:function (node) {
         return node.mounted;
       },isFile:function (mode) {
-        return (mode & 0170000) === 0100000;
+        return (mode & 0o170000) === 0o100000;
       },isDir:function (mode) {
-        return (mode & 0170000) === 0040000;
+        return (mode & 0o170000) === 0o040000;
       },isLink:function (mode) {
-        return (mode & 0170000) === 0120000;
+        return (mode & 0o170000) === 0o120000;
       },isChrdev:function (mode) {
-        return (mode & 0170000) === 0020000;
+        return (mode & 0o170000) === 0o020000;
       },isBlkdev:function (mode) {
-        return (mode & 0170000) === 0060000;
+        return (mode & 0o170000) === 0o060000;
       },isFIFO:function (mode) {
-        return (mode & 0170000) === 0010000;
+        return (mode & 0o170000) === 0o010000;
       },isSocket:function (mode) {
-        return (mode & 0140000) === 0140000;
+        return (mode & 0o140000) === 0o140000;
       },flagModes:{"r":0,"rs":8192,"r+":2,"w":1537,"wx":3585,"xw":3585,"w+":1538,"wx+":3586,"xw+":3586,"a":521,"ax":2569,"xa":2569,"a+":522,"ax+":2570,"xa+":2570},modeStringToFlags:function (str) {
         var flags = FS.flagModes[str];
         if (typeof flags === 'undefined') {
@@ -1836,21 +1836,21 @@ function copyTempDouble(ptr) {
         }
         return parent.node_ops.mknod(parent, name, mode, dev);
       },create:function (path, mode) {
-        mode = mode !== undefined ? mode : 0666;
+        mode = mode !== undefined ? mode : 0o666;
         mode &= 4095;
-        mode |= 0100000;
+        mode |= 0o100000;
         return FS.mknod(path, mode, 0);
       },mkdir:function (path, mode) {
-        mode = mode !== undefined ? mode : 0777;
-        mode &= 511 | 0001000;
-        mode |= 0040000;
+        mode = mode !== undefined ? mode : 0o777;
+        mode &= 511 | 0o001000;
+        mode |= 0o040000;
         return FS.mknod(path, mode, 0);
       },mkdev:function (path, mode, dev) {
         if (typeof(dev) === 'undefined') {
           dev = mode;
-          mode = 0666;
+          mode = 0o666;
         }
-        mode |= 0020000;
+        mode |= 0o020000;
         return FS.mknod(path, mode, dev);
       },symlink:function (oldpath, newpath) {
         var lookup = FS.lookupPath(newpath, { parent: true });
@@ -2096,16 +2096,16 @@ function copyTempDouble(ptr) {
       },open:function (path, flags, mode, fd_start, fd_end) {
         path = PATH.normalize(path);
         flags = typeof flags === 'string' ? FS.modeStringToFlags(flags) : flags;
-        mode = typeof mode === 'undefined' ? 0666 : mode;
+        mode = typeof mode === 'undefined' ? 0o666 : mode;
         if ((flags & 512)) {
-          mode = (mode & 4095) | 0100000;
+          mode = (mode & 4095) | 0o100000;
         } else {
           mode = 0;
         }
         var node;
         try {
           var lookup = FS.lookupPath(path, {
-            follow: !(flags & 0200000)
+            follow: !(flags & 0o200000)
           });
           node = lookup.node;
           path = lookup.path;
@@ -2345,7 +2345,7 @@ function copyTempDouble(ptr) {
         assert(stderr.fd === 3, 'invalid handle for stderr (' + stderr.fd + ')');
       },staticInit:function () {
         FS.nameTable = new Array(4096);
-        FS.root = FS.createNode(null, '/', 0040000 | 0777, 0);
+        FS.root = FS.createNode(null, '/', 0o040000 | 0o777, 0);
         FS.mount(MEMFS, {}, '/');
         FS.createDefaultDirectories();
         FS.createDefaultDevices();
@@ -2767,7 +2767,7 @@ function copyTempDouble(ptr) {
         openRequest.onerror = onerror;
       }};
   var SOCKFS={mount:function (mount) {
-        return FS.createNode(null, '/', 0040000 | 0777, 0);
+        return FS.createNode(null, '/', 0o040000 | 0o777, 0);
       },nextname:function () {
         if (!SOCKFS.nextname.current) {
           SOCKFS.nextname.current = 0;
@@ -2791,7 +2791,7 @@ function copyTempDouble(ptr) {
         };
         // create the filesystem node to store the socket structure
         var name = SOCKFS.nextname();
-        var node = FS.createNode(SOCKFS.root, name, 0140000, 0);
+        var node = FS.createNode(SOCKFS.root, name, 0o140000, 0);
         node.sock = sock;
         // and the wrapping stream that enables library functions such
         // as read and write to indirectly interact with the socket
@@ -54446,7 +54446,7 @@ function b35() {
 var ffis = { "abort": abort, "assert": assert, "asmPrintInt": asmPrintInt, "asmPrintFloat": asmPrintFloat, "min": Math_min, "invoke_iiiiiiii": invoke_iiiiiiii, "invoke_vif": invoke_vif, "invoke_viifii": invoke_viifii, "invoke_viiiii": invoke_viiiii, "invoke_vi": invoke_vi, "invoke_vii": invoke_vii, "invoke_viiifii": invoke_viiifii, "invoke_vifiii": invoke_vifiii, "invoke_ii": invoke_ii, "invoke_viiiiffffiif": invoke_viiiiffffiif, "invoke_fiii": invoke_fiii, "invoke_viiif": invoke_viiif, "invoke_fiiiiiiiiiii": invoke_fiiiiiiiiiii, "invoke_fiifii": invoke_fiifii, "invoke_iii": invoke_iii, "invoke_iiii": invoke_iiii, "invoke_fif": invoke_fif, "invoke_viiiiiiii": invoke_viiiiiiii, "invoke_vifi": invoke_vifi, "invoke_viiiiii": invoke_viiiiii, "invoke_iiiiiiiiii": invoke_iiiiiiiiii, "invoke_viffiii": invoke_viffiii, "invoke_iiiiiii": invoke_iiiiiii, "invoke_fiiiiiiiiii": invoke_fiiiiiiiiii, "invoke_fiiiii": invoke_fiiiii, "invoke_iiiiiiiiiiii": invoke_iiiiiiiiiiii, "invoke_vifii": invoke_vifii, "invoke_fi": invoke_fi, "invoke_viiiiiiiiii": invoke_viiiiiiiiii, "invoke_viiiifffffif": invoke_viiiifffffif, "invoke_viiiiiffii": invoke_viiiiiffii, "invoke_iifif": invoke_iifif, "invoke_iiiii": invoke_iiiii, "invoke_viii": invoke_viii, "invoke_viifi": invoke_viifi, "invoke_v": invoke_v, "invoke_viif": invoke_viif, "invoke_iiif": invoke_iiif, "invoke_fiiifii": invoke_fiiifii, "invoke_viiii": invoke_viiii, "_llvm_lifetime_end": _llvm_lifetime_end, "_cosf": _cosf, "_fabsf": _fabsf, "_sysconf": _sysconf, "___cxa_throw": ___cxa_throw, "_atexit": _atexit, "_abort": _abort, "_fprintf": _fprintf, "_llvm_eh_exception": _llvm_eh_exception, "_printf": _printf, "_acosf": _acosf, "_fflush": _fflush, "__reallyNegative": __reallyNegative, "_sqrtf": _sqrtf, "_llvm_pow_f32": _llvm_pow_f32, "___setErrNo": ___setErrNo, "_fwrite": _fwrite, "_send": _send, "_write": _write, "_exit": _exit, "_atan2f": _atan2f, "___cxa_pure_virtual": ___cxa_pure_virtual, "___cxa_is_number_type": ___cxa_is_number_type, "_time": _time, "__formatString": __formatString, "___cxa_does_inherit": ___cxa_does_inherit, "___cxa_guard_acquire": ___cxa_guard_acquire, "__ZSt9terminatev": __ZSt9terminatev, "_gettimeofday": _gettimeofday, "___cxa_find_matching_catch": ___cxa_find_matching_catch, "_sinf": _sinf, "___assert_func": ___assert_func, "__ZSt18uncaught_exceptionv": __ZSt18uncaught_exceptionv, "_pwrite": _pwrite, "___cxa_call_unexpected": ___cxa_call_unexpected, "_sbrk": _sbrk, "___cxa_guard_abort": ___cxa_guard_abort, "___cxa_allocate_exception": ___cxa_allocate_exception, "___errno_location": ___errno_location, "___gxx_personality_v0": ___gxx_personality_v0, "_llvm_lifetime_start": _llvm_lifetime_start, "_fmod": _fmod, "___cxa_guard_release": ___cxa_guard_release, "__exit": __exit, "___resumeException": ___resumeException, "STACKTOP": STACKTOP, "STACK_MAX": STACK_MAX, "tempDoublePtr": tempDoublePtr, "ABORT": ABORT, "cttz_i8": cttz_i8, "ctlz_i8": ctlz_i8, "NaN": NaN, "Infinity": Infinity, "__ZTVN10__cxxabiv117__class_type_infoE": __ZTVN10__cxxabiv117__class_type_infoE, "__ZTVN10__cxxabiv120__si_class_type_infoE": __ZTVN10__cxxabiv120__si_class_type_infoE, "___dso_handle": ___dso_handle };
 
 // Stress-test re-linking by linking once before the "real" one.
-var throwAway = asmModule(this, ffis, new ArrayBuffer(4*4096));
+var throwAway = asmModule(this, ffis, new ArrayBuffer(64*4096));
 
 var asm = asmModule(this, ffis, buffer);
 var _strlen = Module["_strlen"] = asm["_strlen"];

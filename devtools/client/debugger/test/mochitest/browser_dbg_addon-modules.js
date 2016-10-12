@@ -1,18 +1,21 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Make sure the add-on actor can see loaded JS Modules from an add-on
 
 const ADDON_URL = EXAMPLE_URL + "addon4.xpi";
 
 function test() {
-  Task.spawn(function*() {
+  Task.spawn(function* () {
     let addon = yield addAddon(ADDON_URL);
     let tab1 = yield addTab("chrome://browser_dbg_addon4/content/test.xul");
 
     let addonDebugger = yield initAddonDebugger(ADDON_URL);
 
-    is(addonDebugger.title, "Debugger - Test add-on with JS Modules", "Saw the right toolbox title.");
+    is(addonDebugger.title, `Developer Tools - Test add-on with JS Modules - ${ADDON_URL}`,
+       "Saw the right toolbox title.");
 
     // Check the inital list of sources is correct
     let groups = yield addonDebugger.getSourceGroups();
@@ -22,12 +25,12 @@ function test() {
 
     let sources = groups[0].sources;
     is(sources.length, 3, "Should be three sources");
-    ok(sources[0].url.endsWith("/browser_dbg_addon4@tests.mozilla.org.xpi!/bootstrap.js"), "correct url for bootstrap code")
-    is(sources[0].label, "bootstrap.js", "correct label for bootstrap code")
-    is(sources[1].url, "resource://browser_dbg_addon4/test.jsm", "correct url for addon code")
-    is(sources[1].label, "test.jsm", "correct label for addon code")
-    is(sources[2].url, "chrome://browser_dbg_addon4/content/testxul.js", "correct url for addon tab code")
-    is(sources[2].label, "testxul.js", "correct label for addon tab code")
+    ok(sources[0].url.endsWith("/browser_dbg_addon4@tests.mozilla.org.xpi!/bootstrap.js"), "correct url for bootstrap code");
+    is(sources[0].label, "bootstrap.js", "correct label for bootstrap code");
+    is(sources[1].url, "resource://browser_dbg_addon4/test.jsm", "correct url for addon code");
+    is(sources[1].label, "test.jsm", "correct label for addon code");
+    is(sources[2].url, "chrome://browser_dbg_addon4/content/testxul.js", "correct url for addon tab code");
+    is(sources[2].label, "testxul.js", "correct label for addon tab code");
 
     // Load a new module and tab and check they appear in the list of sources
     Cu.import("resource://browser_dbg_addon4/test2.jsm", {});
@@ -40,16 +43,16 @@ function test() {
 
     sources = groups[0].sources;
     is(sources.length, 5, "Should be five sources");
-    ok(sources[0].url.endsWith("/browser_dbg_addon4@tests.mozilla.org.xpi!/bootstrap.js"), "correct url for bootstrap code")
-    is(sources[0].label, "bootstrap.js", "correct label for bootstrap code")
-    is(sources[1].url, "resource://browser_dbg_addon4/test.jsm", "correct url for addon code")
-    is(sources[1].label, "test.jsm", "correct label for addon code")
-    is(sources[2].url, "chrome://browser_dbg_addon4/content/testxul.js", "correct url for addon tab code")
-    is(sources[2].label, "testxul.js", "correct label for addon tab code")
-    is(sources[3].url, "resource://browser_dbg_addon4/test2.jsm", "correct url for addon code")
-    is(sources[3].label, "test2.jsm", "correct label for addon code")
-    is(sources[4].url, "chrome://browser_dbg_addon4/content/testxul2.js", "correct url for addon tab code")
-    is(sources[4].label, "testxul2.js", "correct label for addon tab code")
+    ok(sources[0].url.endsWith("/browser_dbg_addon4@tests.mozilla.org.xpi!/bootstrap.js"), "correct url for bootstrap code");
+    is(sources[0].label, "bootstrap.js", "correct label for bootstrap code");
+    is(sources[1].url, "resource://browser_dbg_addon4/test.jsm", "correct url for addon code");
+    is(sources[1].label, "test.jsm", "correct label for addon code");
+    is(sources[2].url, "chrome://browser_dbg_addon4/content/testxul.js", "correct url for addon tab code");
+    is(sources[2].label, "testxul.js", "correct label for addon tab code");
+    is(sources[3].url, "resource://browser_dbg_addon4/test2.jsm", "correct url for addon code");
+    is(sources[3].label, "test2.jsm", "correct label for addon code");
+    is(sources[4].url, "chrome://browser_dbg_addon4/content/testxul2.js", "correct url for addon tab code");
+    is(sources[4].label, "testxul2.js", "correct label for addon tab code");
 
     Cu.unload("resource://browser_dbg_addon4/test2.jsm");
     yield addonDebugger.destroy();

@@ -12,7 +12,6 @@
 #include "nsIFileURL.h"
 #include "nsEscape.h"
 #include "nsIDirIndex.h"
-#include "nsDateTimeFormatCID.h"
 #include "nsURLHelper.h"
 #include "nsIPlatformCharset.h"
 #include "nsIPrefService.h"
@@ -70,9 +69,9 @@ nsIndexedToHTML::Init(nsIStreamListener* aListener) {
 
     mListener = aListener;
 
-    mDateTime = do_CreateInstance(NS_DATETIMEFORMAT_CONTRACTID, &rv);
-    if (NS_FAILED(rv))
-      return rv;
+    mDateTime = nsIDateTimeFormat::Create();
+    if (!mDateTime)
+      return NS_ERROR_FAILURE;
 
     nsCOMPtr<nsIStringBundleService> sbs =
         do_GetService(NS_STRINGBUNDLE_CONTRACTID, &rv);
@@ -268,7 +267,7 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
                          "table[order] > thead > tr > th::after {\n"
                          "  display: none;\n"
                          "  width: .8em;\n"
-                         "  -moz-margin-end: -.8em;\n"
+                         "  margin-inline-end: -.8em;\n"
                          "  text-align: end;\n"
                          "}\n"
                          "table[order=\"asc\"] > thead > tr > th::after {\n"
@@ -306,24 +305,24 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
                          "/* name */\n"
                          "/* name */\n"
                          "th:first-child {\n"
-                         "  -moz-padding-end: 2em;\n"
+                         "  padding-inline-end: 2em;\n"
                          "}\n"
                          "/* size */\n"
                          "th:first-child + th {\n"
-                         "  -moz-padding-end: 1em;\n"
+                         "  padding-inline-end: 1em;\n"
                          "}\n"
                          "td:first-child + td {\n"
                          "  text-align: end;\n"
-                         "  -moz-padding-end: 1em;\n"
+                         "  padding-inline-end: 1em;\n"
                          "}\n"
                          "/* date */\n"
                          "td:first-child + td + td {\n"
-                         "  -moz-padding-start: 1em;\n"
-                         "  -moz-padding-end: .5em;\n"
+                         "  padding-inline-start: 1em;\n"
+                         "  padding-inline-end: .5em;\n"
                          "}\n"
                          "/* time */\n"
                          "td:first-child + td + td + td {\n"
-                         "  -moz-padding-start: .5em;\n"
+                         "  padding-inline-start: .5em;\n"
                          "}\n"
                          ".symlink {\n"
                          "  font-style: italic;\n"
@@ -331,12 +330,12 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
                          ".dir ,\n"
                          ".symlink ,\n"
                          ".file {\n"
-                         "  -moz-margin-start: 20px;\n"
+                         "  margin-inline-start: 20px;\n"
                          "}\n"
                          ".dir::before ,\n"
                          ".file > img {\n"
-                         "  -moz-margin-end: 4px;\n"
-                         "  -moz-margin-start: -20px;\n"
+                         "  margin-inline-end: 4px;\n"
+                         "  margin-inline-start: -20px;\n"
                          "  max-width: 16px;\n"
                          "  max-height: 16px;\n"
                          "  vertical-align: middle;\n"
@@ -760,8 +759,10 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
     // for some protocols, we expect the location to be absolute.
     // if so, and if the location indeed appears to be a valid URI, then go
     // ahead and treat it like one.
+
+    nsAutoCString scheme;
     if (mExpectAbsLoc &&
-        NS_SUCCEEDED(net_ExtractURLScheme(loc, nullptr, nullptr, nullptr))) {
+        NS_SUCCEEDED(net_ExtractURLScheme(loc, scheme))) {
         // escape as absolute 
         escFlags = esc_Forced | esc_AlwaysCopy | esc_Minimal;
     }
@@ -827,7 +828,7 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
     PRTime t;
     aIndex->GetLastModified(&t);
 
-    if (t == -1) {
+    if (t == -1LL) {
         pushBuffer.AppendLiteral("></td>\n <td>");
     } else {
         pushBuffer.AppendLiteral(" sortable-data=\"");

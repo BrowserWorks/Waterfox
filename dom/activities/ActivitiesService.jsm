@@ -257,14 +257,6 @@ var Activities = {
   startActivity: function activities_startActivity(aMsg) {
     debug("StartActivity: " + JSON.stringify(aMsg));
 
-    // The caller app will be killed by |assertAppHasStatus| if it doesn't
-    // fit our permission requirement.
-    let callerApp = this.callers[aMsg.id].mm;
-    if (aMsg.options.name === 'internal-system-engineering-mode' &&
-        !callerApp.assertAppHasStatus(Ci.nsIPrincipal.APP_STATUS_CERTIFIED)) {
-      return;
-    }
-
     let self = this;
     let successCb = function successCb(aResults) {
       debug(JSON.stringify(aResults));
@@ -285,17 +277,10 @@ var Activities = {
             // Don't do this check until we have passed to UIGlue so the glue
             // can choose to launch its own activity if needed.
             if (aResults.options.length === 0) {
-              if (AppConstants.MOZ_B2GDROID) {
-                // Fallback on the Android Intent mapper.
-                let glue = Cc["@mozilla.org/dom/activities/android-ui-glue;1"]
-                             .createInstance(Ci.nsIActivityUIGlue);
-                glue.chooseActivity(aMsg.options, aResults.options, getActivityChoice);
-              } else {
                 self.trySendAndCleanup(aMsg.id, "Activity:FireError", {
                   "id": aMsg.id,
                   "error": "NO_PROVIDER"
                 });
-              }
               return;
             }
 
@@ -391,13 +376,6 @@ var Activities = {
     };
 
     let matchFunc = function matchFunc(aResult) {
-      let calleeApp = DOMApplicationRegistry.getAppByManifestURL(aResult.manifest);
-      // Only allow certified apps to handle this special activity
-      if (aMsg.options.name === 'internal-system-engineering-mode' &&
-          calleeApp.appStatus !== Ci.nsIPrincipal.APP_STATUS_CERTIFIED) {
-        return false;
-      }
-
       // If the activity is in the developer mode activity list, only let the
       // system app be a provider.
       let isSystemApp = false;

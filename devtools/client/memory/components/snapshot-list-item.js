@@ -9,9 +9,15 @@ const {
   getSnapshotTitle,
   getSnapshotTotals,
   getStatusText,
-  snapshotIsDiffable
+  snapshotIsDiffable,
+  getSavedCensus
 } = require("../utils");
-const { snapshotState: states, diffingState } = require("../constants");
+const {
+  snapshotState: states,
+  diffingState,
+  censusState,
+  treeMapState
+} = require("../constants");
 const { snapshot: snapshotModel } = require("../models");
 
 const SnapshotListItem = module.exports = createClass({
@@ -20,12 +26,13 @@ const SnapshotListItem = module.exports = createClass({
   propTypes: {
     onClick: PropTypes.func.isRequired,
     onSave: PropTypes.func.isRequired,
+    onDelete: PropTypes.func.isRequired,
     item: snapshotModel.isRequired,
     index: PropTypes.number.isRequired,
   },
 
   render() {
-    let { index, item: snapshot, onClick, onSave, diffing } = this.props;
+    let { index, item: snapshot, onClick, onSave, onDelete, diffing } = this.props;
     let className = `snapshot-list-item ${snapshot.selected ? " selected" : ""}`;
     let statusText = getStatusText(snapshot.state);
     let wantThrobber = !!statusText;
@@ -61,27 +68,41 @@ const SnapshotListItem = module.exports = createClass({
     }
 
     let details;
-    if (!selectedForDiffing && snapshot.state === states.SAVED_CENSUS) {
-      let { bytes } = getSnapshotTotals(snapshot.census);
-      let formatBytes = L10N.getFormatStr("aggregate.mb", L10N.numberWithDecimals(bytes / 1000000, 2));
+    if (!selectedForDiffing) {
+      // See if a tree map or census is in the read state.
+      let census = getSavedCensus(snapshot);
 
-      details = dom.span({ className: "snapshot-totals" },
-        dom.span({ className: "total-bytes" }, formatBytes)
-      );
-    } else {
+      // If there is census data, fill in the total bytes.
+      if (census) {
+        let { bytes } = getSnapshotTotals(census);
+        let formatBytes = L10N.getFormatStr("aggregate.mb", L10N.numberWithDecimals(bytes / 1000000, 2));
+
+        details = dom.span({ className: "snapshot-totals" },
+          dom.span({ className: "total-bytes" }, formatBytes)
+        );
+      }
+    }
+    if (!details) {
       details = dom.span({ className: "snapshot-state" }, statusText);
     }
 
     let saveLink = !snapshot.path ? void 0 : dom.a({
       onClick: () => onSave(snapshot),
       className: "save",
-    }, L10N.getFormatStr("snapshot.io.save"));
+    }, L10N.getStr("snapshot.io.save"));
+
+    let deleteButton = !snapshot.path ? void 0 : dom.button({
+      onClick: () => onDelete(snapshot),
+      className: "devtools-button delete",
+      title: L10N.getStr("snapshot.io.delete")
+    });
 
     return (
       dom.li({ className, onClick },
         dom.span({ className: `snapshot-title ${wantThrobber ? " devtools-throbber" : ""}` },
           checkbox,
-          title
+          title,
+          deleteButton
         ),
         dom.span({ className: "snapshot-info" },
           details,

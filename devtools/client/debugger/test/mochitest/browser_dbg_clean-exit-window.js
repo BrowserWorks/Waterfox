@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test that closing a window with the debugger in a paused state exits cleanly.
@@ -11,7 +13,7 @@ const TAB_URL = EXAMPLE_URL + "doc_inline-debugger-statement.html";
 
 function test() {
   addWindow(TAB_URL)
-    .then(win => initDebugger(TAB_URL, win))
+    .then(win => initDebugger(TAB_URL, { window: win }))
     .then(([aTab, aDebuggee, aPanel, aWindow]) => {
       gDebuggee = aDebuggee;
       gPanel = aPanel;
@@ -76,7 +78,7 @@ function testCleanExit() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gWindow = null;
   gDebuggee = null;
   gPanel = null;

@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2006-2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -10,22 +12,7 @@
 
 #include <string>
 
-#include "base/tracked.h"
-
 namespace win_util {
-
-// Returns true if the shift key is currently pressed.
-bool IsShiftPressed();
-
-// Returns true if the ctrl key is currently pressed.
-bool IsCtrlPressed();
-
-// Returns true if the alt key is currently pressed.
-bool IsAltPressed();
-
-// Use the Win32 API FormatMessage() function to generate a string, using
-// Windows's default Message Compiled resources; ignoring the inserts.
-std::wstring FormatMessage(unsigned messageid);
 
 // Uses the last Win32 error to generate a human readable message string.
 std::wstring FormatLastWin32Error();

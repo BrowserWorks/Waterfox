@@ -15,6 +15,11 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
+XPCOMUtils.defineLazyGetter(this, "getExtensionUUID", () => {
+  let {getExtensionUUID} = Cu.import("resource://gre/modules/Extension.jsm", {});
+  return getExtensionUUID;
+});
+
 /*
  * This file should be kept short and simple since it's loaded even
  * when no extensions are running.
@@ -35,7 +40,7 @@ var Frames = {
     }
 
     Services.mm.addMessageListener("Extension:TopWindowID", this);
-    Services.mm.addMessageListener("Extension:RemoveTopWindowID", this);
+    Services.mm.addMessageListener("Extension:RemoveTopWindowID", this, true);
   },
 
   isTopWindowId(windowId) {
@@ -111,6 +116,11 @@ var Schemas = {
   },
 };
 
+function getURLForExtension(id, path = "") {
+  let uuid = getExtensionUUID(id);
+  return `moz-extension://${uuid}/${path}`;
+}
+
 // This object manages various platform-level issues related to
 // moz-extension:// URIs. It lives here so that it can be used in both
 // the parent and child processes.
@@ -160,6 +170,7 @@ var Service = {
     this.uuidMap.set(uuid, extension);
     this.aps.setAddonLoadURICallback(extension.id, this.checkAddonMayLoad.bind(this, extension));
     this.aps.setAddonLocalizeCallback(extension.id, extension.localize.bind(extension));
+    this.aps.setAddonCSP(extension.id, extension.manifest.content_security_policy);
   },
 
   // Called when an extension is unloaded.
@@ -168,6 +179,7 @@ var Service = {
     this.uuidMap.delete(uuid);
     this.aps.setAddonLoadURICallback(extension.id, null);
     this.aps.setAddonLocalizeCallback(extension.id, null);
+    this.aps.setAddonCSP(extension.id, null);
 
     let handler = Services.io.getProtocolHandler("moz-extension");
     handler.QueryInterface(Ci.nsISubstitutingProtocolHandler);
@@ -180,15 +192,15 @@ var Service = {
   extensionURILoadableByAnyone(uri) {
     let uuid = uri.host;
     let extension = this.uuidMap.get(uuid);
-    if (!extension) {
+    if (!extension || !extension.webAccessibleResources) {
       return false;
     }
 
-    let path = uri.path;
+    let path = uri.QueryInterface(Ci.nsIURL).filePath;
     if (path.length > 0 && path[0] == "/") {
       path = path.substr(1);
     }
-    return extension.webAccessibleResources.has(path);
+    return extension.webAccessibleResources.matches(path);
   },
 
   // Checks whether a given extension can load this URI (typically via
@@ -228,25 +240,48 @@ const API_LEVELS = Object.freeze({
 // Finds the API Level ("FULL_PRIVILEGES", "CONTENTSCRIPT_PRIVILEGES", "NO_PRIVILEGES")
 // with a given a window object.
 function getAPILevelForWindow(window, addonId) {
-  const { NO_PRIVILEGES, CONTENTSCRIPT_PRIVILEGES, FULL_PRIVILEGES } = API_LEVELS;
+  const {NO_PRIVILEGES, CONTENTSCRIPT_PRIVILEGES, FULL_PRIVILEGES} = API_LEVELS;
 
   // Non WebExtension URLs and WebExtension URLs from a different extension
   // has no access to APIs.
-  if (!addonId && getAddonIdForWindow(window) != addonId) {
+  if (!addonId || getAddonIdForWindow(window) != addonId) {
     return NO_PRIVILEGES;
   }
 
-  let docShell = window.QueryInterface(Ci.nsIInterfaceRequestor)
-        .getInterface(Ci.nsIDocShell);
-
-  // WebExtension URLs loaded into sub-frame UI have "content script API level privileges".
-  // (see Bug 1214658 for rationale)
-  if (docShell.sameTypeParent) {
+  // Extension pages running in the content process always defaults to
+  // "content script API level privileges".
+  if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
     return CONTENTSCRIPT_PRIVILEGES;
   }
 
-  // Extension pages running in the content process defaults to "content script API level privileges".
-  if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
+  let docShell = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                       .getInterface(Ci.nsIDocShell);
+
+  // Handling of ExtensionPages running inside sub-frames.
+  if (docShell.sameTypeParent) {
+    let parentWindow = docShell.sameTypeParent.QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIDOMWindow);
+
+    // The option page iframe embedded in the about:addons tab should have
+    // full API level privileges. (see Bug 1256282 for rationale)
+    let parentDocument = parentWindow.document;
+    let parentIsSystemPrincipal = Services.scriptSecurityManager
+                                          .isSystemPrincipal(parentDocument.nodePrincipal);
+    if (parentDocument.location.href == "about:addons" && parentIsSystemPrincipal) {
+      return FULL_PRIVILEGES;
+    }
+
+    // The addon iframes embedded in a addon page from with the same addonId
+    // should have the same privileges of the sameTypeParent.
+    // (see Bug 1258347 for rationale)
+    let parentSameAddonPrivileges = getAPILevelForWindow(parentWindow, addonId);
+    if (parentSameAddonPrivileges > NO_PRIVILEGES) {
+      return parentSameAddonPrivileges;
+    }
+
+    // In all the other cases, WebExtension URLs loaded into sub-frame UI
+    // will have "content script API level privileges".
+    // (see Bug 1214658 for rationale)
     return CONTENTSCRIPT_PRIVILEGES;
   }
 
@@ -266,6 +301,8 @@ this.ExtensionManagement = {
 
   getFrameId: Frames.getId.bind(Frames),
   getParentFrameId: Frames.getParentId.bind(Frames),
+
+  getURLForExtension,
 
   // exported API Level Helpers
   getAddonIdForWindow,

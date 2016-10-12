@@ -9,7 +9,11 @@
 #include "nsDebug.h"
 #include "nsIAtom.h"
 #include "nsIContent.h"
+#include "nsIDocument.h"
+#include "nsGlobalWindow.h"
 #include "nsString.h"
+#include "xpcpublic.h" // For xpc::NativeGlobal
+#include "mozilla/Preferences.h"
 
 namespace mozilla {
 
@@ -31,6 +35,31 @@ AnimationUtils::LogAsyncAnimationFailure(nsCString& aMessage,
   }
   aMessage.Append('\n');
   printf_stderr("%s", aMessage.get());
+}
+
+/* static */ nsIDocument*
+AnimationUtils::GetCurrentRealmDocument(JSContext* aCx)
+{
+  nsGlobalWindow* win = xpc::CurrentWindowOrNull(aCx);
+  if (!win) {
+    return nullptr;
+  }
+  return win->GetDoc();
+}
+
+/* static */ bool
+AnimationUtils::IsOffscreenThrottlingEnabled()
+{
+  static bool sOffscreenThrottlingEnabled;
+  static bool sPrefCached = false;
+
+  if (!sPrefCached) {
+    sPrefCached = true;
+    Preferences::AddBoolVarCache(&sOffscreenThrottlingEnabled,
+                                 "dom.animations.offscreen-throttling");
+  }
+
+  return sOffscreenThrottlingEnabled;
 }
 
 } // namespace mozilla

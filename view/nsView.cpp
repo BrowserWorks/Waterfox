@@ -102,7 +102,7 @@ nsView::~nsView()
   delete mDirtyRegion;
 }
 
-class DestroyWidgetRunnable : public nsRunnable {
+class DestroyWidgetRunnable : public Runnable {
 public:
   NS_DECL_NSIRUNNABLE
 
@@ -340,26 +340,7 @@ void nsView::DoResetWidgetBounds(bool aMoveOnly,
   // because of the potential for device-pixel coordinate spaces for mixed
   // hidpi/lodpi screens to overlap each other and result in bad placement
   // (bug 814434).
-  DesktopToLayoutDeviceScale scale = widget->GetDesktopToDeviceScale();
-
-#ifdef XP_MACOSX
-  // On OS X, this can be called before Cocoa has updated the backing scale
-  // factor of our widget, in which case |scale| is wrong here. To work
-  // around this, we check the device context and override |scale| if it
-  // doesn't match. (This happens when a popup window that has previously
-  // been created and hidden is being moved between hi- and lo-dpi screens,
-  // but is not currently visible; Cocoa doesn't notify it of the scale
-  // factor change until it gets shown on the new screen, which is too late
-  // for us because we'll have already done the computations involving scale
-  // here to move/size it.)
-  // It might be better to avoid this by keeping calculations such as
-  // CalcWidgetBounds entirely in appUnits, rather than using device pixels,
-  // but that seems like a more extensive and potentially risky change.
-  int32_t appPerDev = dx->AppUnitsPerDevPixelAtUnitFullZoom();
-  if (NSToIntRound(60.0 / scale.scale) != appPerDev) {
-    scale = DesktopToLayoutDeviceScale(60.0 / appPerDev);
-  }
-#endif
+  DesktopToLayoutDeviceScale scale = dx->GetDesktopToDeviceScale();
 
   DesktopRect deskRect = newBounds / scale;
   if (changedPos) {
@@ -440,13 +421,13 @@ void nsView::SetFloating(bool aFloatingView)
 		mVFlags &= ~NS_VIEW_FLAG_FLOATING;
 }
 
-void nsView::InvalidateHierarchy(nsViewManager *aViewManagerParent)
+void nsView::InvalidateHierarchy()
 {
   if (mViewManager->GetRootView() == this)
     mViewManager->InvalidateHierarchy();
 
   for (nsView *child = mFirstChild; child; child = child->GetNextSibling())
-    child->InvalidateHierarchy(aViewManagerParent);
+    child->InvalidateHierarchy();
 }
 
 void nsView::InsertChild(nsView *aChild, nsView *aSibling)
@@ -477,7 +458,7 @@ void nsView::InsertChild(nsView *aChild, nsView *aSibling)
     nsViewManager *vm = aChild->GetViewManager();
     if (vm->GetRootView() == aChild)
     {
-      aChild->InvalidateHierarchy(nullptr); // don't care about releasing grabs
+      aChild->InvalidateHierarchy();
     }
   }
 }
@@ -513,7 +494,7 @@ void nsView::RemoveChild(nsView *child)
     nsViewManager *vm = child->GetViewManager();
     if (vm->GetRootView() == child)
     {
-      child->InvalidateHierarchy(GetViewManager());
+      child->InvalidateHierarchy();
     }
   }
 }
@@ -1078,7 +1059,8 @@ nsView::DidPaintWindow()
 }
 
 void
-nsView::DidCompositeWindow(const TimeStamp& aCompositeStart,
+nsView::DidCompositeWindow(uint64_t aTransactionId,
+                           const TimeStamp& aCompositeStart,
                            const TimeStamp& aCompositeEnd)
 {
   nsIPresShell* presShell = mViewManager->GetPresShell();
@@ -1088,7 +1070,8 @@ nsView::DidCompositeWindow(const TimeStamp& aCompositeStart,
     nsPresContext* context = presShell->GetPresContext();
     nsRootPresContext* rootContext = context->GetRootPresContext();
     MOZ_ASSERT(rootContext, "rootContext must be valid.");
-    rootContext->NotifyDidPaintForSubtree(nsIPresShell::PAINT_COMPOSITE);
+    rootContext->NotifyDidPaintForSubtree(nsIPresShell::PAINT_COMPOSITE, aTransactionId,
+                                          aCompositeEnd);
 
     // If the two timestamps are identical, this was likely a fake composite
     // event which wouldn't be terribly useful to display.
@@ -1121,16 +1104,16 @@ nsEventStatus
 nsView::HandleEvent(WidgetGUIEvent* aEvent,
                     bool aUseAttachedEvents)
 {
-  NS_PRECONDITION(nullptr != aEvent->widget, "null widget ptr");
+  NS_PRECONDITION(nullptr != aEvent->mWidget, "null widget ptr");
 
   nsEventStatus result = nsEventStatus_eIgnore;
   nsView* view;
   if (aUseAttachedEvents) {
-    nsIWidgetListener* listener = aEvent->widget->GetAttachedWidgetListener();
+    nsIWidgetListener* listener = aEvent->mWidget->GetAttachedWidgetListener();
     view = listener ? listener->GetView() : nullptr;
   }
   else {
-    view = GetViewFor(aEvent->widget);
+    view = GetViewFor(aEvent->mWidget);
   }
 
   if (view) {

@@ -112,7 +112,7 @@
 
 #include "mozAutoDocUpdate.h"
 
-#include "prprf.h"
+#include "mozilla/Snprintf.h"
 #include "nsDOMMutationObserver.h"
 #include "nsWrapperCacheInlines.h"
 #include "nsCycleCollector.h"
@@ -280,7 +280,7 @@ nsIContent::LookupNamespaceURIInternal(const nsAString& aNamespacePrefix,
 
   nsCOMPtr<nsIAtom> name;
   if (!aNamespacePrefix.IsEmpty()) {
-    name = do_GetAtom(aNamespacePrefix);
+    name = NS_Atomize(aNamespacePrefix);
     NS_ENSURE_TRUE(name, NS_ERROR_OUT_OF_MEMORY);
   }
   else {
@@ -308,7 +308,7 @@ nsIContent::GetBaseURI(bool aTryUseXHRDocBaseURI) const
   // faster for the far more common case of there not being any such
   // attributes.
   // Also check for SVG elements which require special handling
-  nsAutoTArray<nsString, 5> baseAttrs;
+  AutoTArray<nsString, 5> baseAttrs;
   nsString attr;
   const nsIContent *elem = this;
   do {
@@ -594,7 +594,9 @@ FragmentOrElement::nsDOMSlots::Unlink(bool aIsXUL)
   }
   if (aIsXUL)
     NS_IF_RELEASE(mControllers);
-  mXBLBinding = nullptr;
+
+  MOZ_ASSERT(!mXBLBinding);
+
   mXBLInsertionParent = nullptr;
   mShadowRoot = nullptr;
   mContainingShadow = nullptr;
@@ -640,7 +642,7 @@ FragmentOrElement::FragmentOrElement(already_AddRefed<mozilla::dom::NodeInfo>&& 
 
 FragmentOrElement::~FragmentOrElement()
 {
-  NS_PRECONDITION(!IsInDoc(),
+  NS_PRECONDITION(!IsInUncomposedDoc(),
                   "Please remove this from the document properly");
   if (GetParent()) {
     NS_RELEASE(mParent);
@@ -690,7 +692,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
       // dispatched or when we're about to propagate from
       // chrome access only subtree or if we are about to propagate out of
       // a shadow root to a shadow root host.
-      ((this == aVisitor.mEvent->originalTarget &&
+      ((this == aVisitor.mEvent->mOriginalTarget &&
         !ChromeOnlyAccess()) || isAnonForEvents || GetShadowRoot())) {
      nsCOMPtr<nsIContent> relatedTarget =
        do_QueryInterface(aVisitor.mEvent->AsMouseEvent()->relatedTarget);
@@ -715,7 +717,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
       // If this is the original target, aVisitor.mRelatedTargetIsInAnon
       // must be updated.
       if (isAnonForEvents || aVisitor.mRelatedTargetIsInAnon ||
-          (aVisitor.mEvent->originalTarget == this &&
+          (aVisitor.mEvent->mOriginalTarget == this &&
            (aVisitor.mRelatedTargetIsInAnon =
             relatedTarget->ChromeOnlyAccess()))) {
         nsIContent* anonOwner = FindChromeAccessOnlySubtreeOwner(this);
@@ -734,7 +736,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
             if (anonOwner == anonOwnerRelated) {
 #ifdef DEBUG_smaug
               nsCOMPtr<nsIContent> originalTarget =
-                do_QueryInterface(aVisitor.mEvent->originalTarget);
+                do_QueryInterface(aVisitor.mEvent->mOriginalTarget);
               nsAutoString ot, ct, rt;
               if (originalTarget) {
                 originalTarget->NodeInfo()->NameAtom()->ToString(ot);
@@ -847,7 +849,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
       // the event to chrome (nsPIDOMWindow::GetParentTarget()).
       // The load event is special in that we don't ever propagate it
       // to chrome.
-      nsCOMPtr<nsPIDOMWindow> win = OwnerDoc()->GetWindow();
+      nsCOMPtr<nsPIDOMWindowOuter> win = OwnerDoc()->GetWindow();
       EventTarget* parentTarget = win && aVisitor.mEvent->mMessage != eLoad
         ? win->GetParentTarget() : nullptr;
 
@@ -873,7 +875,8 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
 #ifdef DEBUG
     // If a DOM event is explicitly dispatched using node.dispatchEvent(), then
     // all the events are allowed even in the native anonymous content..
-    nsCOMPtr<nsIContent> t = do_QueryInterface(aVisitor.mEvent->originalTarget);
+    nsCOMPtr<nsIContent> t =
+      do_QueryInterface(aVisitor.mEvent->mOriginalTarget);
     NS_ASSERTION(!t || !t->ChromeOnlyAccess() ||
                  aVisitor.mEvent->mClass != eMutationEventClass ||
                  aVisitor.mDOMEvent,
@@ -881,7 +884,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
 #endif
     aVisitor.mEventTargetAtParent = parent;
   } else if (parent && aVisitor.mOriginalTargetIsInAnon) {
-    nsCOMPtr<nsIContent> content(do_QueryInterface(aVisitor.mEvent->target));
+    nsCOMPtr<nsIContent> content(do_QueryInterface(aVisitor.mEvent->mTarget));
     if (content && content->GetBindingParent() == parent) {
       aVisitor.mEventTargetAtParent = parent;
     }
@@ -1180,12 +1183,9 @@ void
 FragmentOrElement::DestroyContent()
 {
   nsIDocument *document = OwnerDoc();
-  document->BindingManager()->RemovedFromDocument(this, document);
+  document->BindingManager()->RemovedFromDocument(this, document,
+                                                  nsBindingManager::eRunDtor);
   document->ClearBoxObjectFor(this);
-
-  // XXX We really should let cycle collection do this, but that currently still
-  //     leaks (see https://bugzilla.mozilla.org/show_bug.cgi?id=406684).
-  ReleaseWrapper(this);
 
   uint32_t i, count = mAttrsAndChildren.ChildCount();
   for (i = 0; i < count; ++i) {
@@ -1237,7 +1237,7 @@ FragmentOrElement::FireNodeInserted(nsIDocument* aDoc,
 
 #define SUBTREE_UNBINDINGS_PER_RUNNABLE 500
 
-class ContentUnbinder : public nsRunnable
+class ContentUnbinder : public Runnable
 {
 public:
   ContentUnbinder()
@@ -1328,7 +1328,7 @@ public:
   }
 
 private:
-  nsAutoTArray<nsCOMPtr<nsIContent>,
+  AutoTArray<nsCOMPtr<nsIContent>,
                SUBTREE_UNBINDINGS_PER_RUNNABLE> mSubtreeRoots;
   RefPtr<ContentUnbinder>                     mNext;
   ContentUnbinder*                              mLast;
@@ -1396,6 +1396,10 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FragmentOrElement)
   // containing shadow root pointer.
   tmp->UnsetFlags(NODE_IS_IN_SHADOW_TREE);
 
+  nsIDocument* doc = tmp->OwnerDoc();
+  doc->BindingManager()->RemovedFromDocument(tmp, doc,
+                                             nsBindingManager::eDoNotRunDtor);
+
   // Unlink any DOM slots of interest.
   {
     nsDOMSlots *slots = tmp->GetExistingDOMSlots();
@@ -1404,12 +1408,6 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FragmentOrElement)
     }
   }
 
-  {
-    nsIDocument *doc;
-    if (!tmp->GetParentNode() && (doc = tmp->OwnerDoc())) {
-      doc->BindingManager()->RemovedFromDocument(tmp, doc);
-    }
-  }
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(FragmentOrElement)
@@ -1528,11 +1526,11 @@ FragmentOrElement::CanSkipInCC(nsINode* aNode)
 
   // nodesToUnpurple contains nodes which will be removed
   // from the purple buffer if the DOM tree is black.
-  nsAutoTArray<nsIContent*, 1020> nodesToUnpurple;
+  AutoTArray<nsIContent*, 1020> nodesToUnpurple;
   // grayNodes need script traverse, so they aren't removed from
   // the purple buffer, but are marked to be in black subtree so that
   // traverse is faster.
-  nsAutoTArray<nsINode*, 1020> grayNodes;
+  AutoTArray<nsINode*, 1020> grayNodes;
 
   bool foundBlack = root->IsBlack();
   if (root != currentDoc) {
@@ -1598,8 +1596,8 @@ FragmentOrElement::CanSkipInCC(nsINode* aNode)
   return !NeedsScriptTraverse(aNode);
 }
 
-nsAutoTArray<nsINode*, 1020>* gPurpleRoots = nullptr;
-nsAutoTArray<nsIContent*, 1020>* gNodesToUnbind = nullptr;
+AutoTArray<nsINode*, 1020>* gPurpleRoots = nullptr;
+AutoTArray<nsIContent*, 1020>* gNodesToUnbind = nullptr;
 
 void ClearCycleCollectorCleanupData()
 {
@@ -1702,7 +1700,7 @@ FragmentOrElement::CanSkip(nsINode* aNode, bool aRemovingAllowed)
 
   // nodesToClear contains nodes which are either purple or
   // gray.
-  nsAutoTArray<nsIContent*, 1020> nodesToClear;
+  AutoTArray<nsIContent*, 1020> nodesToClear;
 
   bool foundBlack = root->IsBlack();
   bool domOnlyCycle = false;
@@ -1751,7 +1749,7 @@ FragmentOrElement::CanSkip(nsINode* aNode, bool aRemovingAllowed)
     root->SetIsPurpleRoot(true);
     if (domOnlyCycle) {
       if (!gNodesToUnbind) {
-        gNodesToUnbind = new nsAutoTArray<nsIContent*, 1020>();
+        gNodesToUnbind = new AutoTArray<nsIContent*, 1020>();
       }
       gNodesToUnbind->AppendElement(static_cast<nsIContent*>(root));
       for (uint32_t i = 0; i < nodesToClear.Length(); ++i) {
@@ -1763,7 +1761,7 @@ FragmentOrElement::CanSkip(nsINode* aNode, bool aRemovingAllowed)
       return true;
     } else {
       if (!gPurpleRoots) {
-        gPurpleRoots = new nsAutoTArray<nsINode*, 1020>();
+        gPurpleRoots = new AutoTArray<nsINode*, 1020>();
       }
       gPurpleRoots->AppendElement(root);
     }
@@ -1874,7 +1872,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(FragmentOrElement)
     }
 
     nsAutoCString orphan;
-    if (!tmp->IsInDoc() &&
+    if (!tmp->IsInUncomposedDoc() &&
         // Ignore xbl:content, which is never in the document and hence always
         // appears to be orphaned.
         !tmp->NodeInfo()->Equals(nsGkAtoms::content, kNameSpaceID_XBL)) {
@@ -1882,13 +1880,13 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(FragmentOrElement)
     }
 
     const char* nsuri = nsid < ArrayLength(kNSURIs) ? kNSURIs[nsid] : "";
-    PR_snprintf(name, sizeof(name), "FragmentOrElement%s %s%s%s%s %s",
-                nsuri,
-                localName.get(),
-                NS_ConvertUTF16toUTF8(id).get(),
-                NS_ConvertUTF16toUTF8(classes).get(),
-                orphan.get(),
-                uri.get());
+    snprintf_literal(name, "FragmentOrElement%s %s%s%s%s %s",
+                     nsuri,
+                     localName.get(),
+                     NS_ConvertUTF16toUTF8(id).get(),
+                     NS_ConvertUTF16toUTF8(classes).get(),
+                     orphan.get(),
+                     uri.get());
     cb.DescribeRefCountedNode(tmp->mRefCnt.get(), name);
   }
   else {

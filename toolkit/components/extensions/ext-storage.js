@@ -1,6 +1,6 @@
 "use strict";
 
-var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionStorage",
                                   "resource://gre/modules/ExtensionStorage.jsm");
@@ -8,38 +8,23 @@ XPCOMUtils.defineLazyModuleGetter(this, "ExtensionStorage",
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   EventManager,
-  runSafe,
 } = ExtensionUtils;
 
-extensions.registerPrivilegedAPI("storage", (extension, context) => {
+extensions.registerSchemaAPI("storage", "storage", (extension, context) => {
   return {
     storage: {
       local: {
-        get: function(keys, callback) {
-          ExtensionStorage.get(extension.id, keys).then(result => {
-            runSafe(context, callback, result);
-          });
+        get: function(keys) {
+          return ExtensionStorage.get(extension.id, keys);
         },
-        set: function(items, callback) {
-          ExtensionStorage.set(extension.id, items).then(() => {
-            if (callback) {
-              runSafe(context, callback);
-            }
-          });
+        set: function(items) {
+          return ExtensionStorage.set(extension.id, items, context.cloneScope);
         },
-        remove: function(items, callback) {
-          ExtensionStorage.remove(extension.id, items).then(() => {
-            if (callback) {
-              runSafe(context, callback);
-            }
-          });
+        remove: function(items) {
+          return ExtensionStorage.remove(extension.id, items);
         },
-        clear: function(callback) {
-          ExtensionStorage.clear(extension.id).then(() => {
-            if (callback) {
-              runSafe(context, callback);
-            }
-          });
+        clear: function() {
+          return ExtensionStorage.clear(extension.id);
         },
       },
 

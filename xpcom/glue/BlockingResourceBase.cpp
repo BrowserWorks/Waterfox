@@ -23,7 +23,7 @@
 #include "mozilla/ReentrantMonitor.h"
 #include "mozilla/Mutex.h"
 
-#if defined(MOZILLA_INTERNAL_API) && !defined(MOZILLA_XPCOMRT_API)
+#if defined(MOZILLA_INTERNAL_API)
 #include "GeckoProfiler.h"
 #endif //MOZILLA_INTERNAL_API
 
@@ -350,9 +350,9 @@ BlockingResourceBase::Release()
     ResourceChainRemove();
   } else {
     // not an error, but makes code hard to reason about.
-    NS_WARNING("Resource acquired at calling context\n");
-    NS_WARNING("  [stack trace unavailable]\n");
-    NS_WARNING("\nis being released in non-LIFO order; why?");
+    NS_WARNING("Resource acquired is being released in non-LIFO order; why?\n");
+    nsCString tmp;
+    Print(tmp);
 
     // remove this resource from wherever it lives in the chain
     // we walk backwards in order of acquisition:
@@ -416,9 +416,7 @@ ReentrantMonitor::Enter()
          br = ResourceChainPrev(br)) {
       if (br == this) {
         NS_WARNING(
-          "Re-entering ReentrantMonitor after acquiring other resources.\n"
-          "At calling context\n"
-          "  [stack trace unavailable]\n");
+          "Re-entering ReentrantMonitor after acquiring other resources.");
 
         // show the caller why this is potentially bad
         CheckAcquire();
@@ -461,7 +459,7 @@ ReentrantMonitor::Wait(PRIntervalTime aInterval)
   mChainPrev = 0;
 
   nsresult rv;
-#if defined(MOZILLA_INTERNAL_API) && !defined(MOZILLA_XPCOMRT_API)
+#if defined(MOZILLA_INTERNAL_API)
   {
     GeckoProfilerSleepRAII profiler_sleep;
 #endif //MOZILLA_INTERNAL_API
@@ -470,7 +468,7 @@ ReentrantMonitor::Wait(PRIntervalTime aInterval)
     rv = PR_Wait(mReentrantMonitor, aInterval) == PR_SUCCESS ? NS_OK :
                                                                NS_ERROR_FAILURE;
 
-#if defined(MOZILLA_INTERNAL_API) && !defined(MOZILLA_XPCOMRT_API)
+#if defined(MOZILLA_INTERNAL_API)
   }
 #endif //MOZILLA_INTERNAL_API
 

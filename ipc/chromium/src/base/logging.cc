@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2006-2009 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -42,7 +44,7 @@ Logger::~Logger()
     break;
   }
 
-  MOZ_LOG(GetLog(), prlevel, ("%s:%i: %s", mFile, mLine, mMsg ? mMsg : "<no message>"));
+  MOZ_LOG(gChromiumPRLog, prlevel, ("%s:%i: %s", mFile, mLine, mMsg ? mMsg : "<no message>"));
   if (xpcomlevel != -1)
     NS_DebugBreak(xpcomlevel, mMsg, NULL, mFile, mLine);
 
@@ -58,15 +60,7 @@ Logger::printf(const char* fmt, ...)
   va_end(args);
 }
 
-PRLogModuleInfo* Logger::gChromiumPRLog;
-
-PRLogModuleInfo* Logger::GetLog()
-{
-  if (!gChromiumPRLog)
-    gChromiumPRLog = PR_NewLogModule("chromium");
-  return gChromiumPRLog;
-}
-
+LazyLogModule Logger::gChromiumPRLog("chromium");
 } // namespace mozilla 
 
 mozilla::Logger&

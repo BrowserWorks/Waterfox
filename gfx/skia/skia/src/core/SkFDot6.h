@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2006 The Android Open Source Project
  *
@@ -10,6 +9,7 @@
 #ifndef SkFDot6_DEFINED
 #define SkFDot6_DEFINED
 
+#include "SkFixed.h"
 #include "SkScalar.h"
 #include "SkMath.h"
 
@@ -56,19 +56,20 @@ inline SkFDot6 SkScalarRoundToFDot6(SkScalar x, int shift = 0)
 #define SkFixedToFDot6(x)   ((x) >> 10)
 
 inline SkFixed SkFDot6ToFixed(SkFDot6 x) {
-    SkASSERT((x << 10 >> 10) == x);
+    SkASSERT((SkLeftShift(x, 10) >> 10) == x);
 
-    return x << 10;
+    return SkLeftShift(x, 10);
 }
 
 #define SkScalarToFDot6(x)  (SkFDot6)((x) * 64)
 #define SkFDot6ToScalar(x)  ((SkScalar)(x) * 0.015625f)
+#define SkFDot6ToFloat      SkFDot6ToScalar
 
 inline SkFixed SkFDot6Div(SkFDot6 a, SkFDot6 b) {
     SkASSERT(b != 0);
 
     if (a == (int16_t)a) {
-        return (a << 16) / b;
+        return SkLeftShift(a, 16) / b;
     } else {
         return SkFixedDiv(a, b);
     }

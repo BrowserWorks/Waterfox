@@ -207,7 +207,13 @@ class StructuredLogger(object):
                     return
 
             for handler in self.handlers:
-                handler(data)
+                try:
+                    handler(data)
+                except Exception:
+                    # Write the exception details directly to stderr because
+                    # log() would call this method again which is currently locked.
+                    print >> sys.__stderr__, '%s: Failure calling log handler:' % __name__
+                    print >> sys.__stderr__, traceback.format_exc()
 
     def _make_log_data(self, action, data):
         all_data = {"action": action,
@@ -238,7 +244,8 @@ class StructuredLogger(object):
     @log_action(List("tests", Unicode),
                 Dict("run_info", default=None, optional=True),
                 Dict("version_info", default=None, optional=True),
-                Dict("device_info", default=None, optional=True))
+                Dict("device_info", default=None, optional=True),
+                Dict("extra", default=None, optional=True))
     def suite_start(self, data):
         """Log a suite_start message
 
@@ -252,7 +259,7 @@ class StructuredLogger(object):
 
         self._log_data("suite_start", data)
 
-    @log_action()
+    @log_action(Dict("extra", default=None, optional=True))
     def suite_end(self, data):
         """Log a suite_end message"""
         if not self._ensure_suite_state('suite_end', data):

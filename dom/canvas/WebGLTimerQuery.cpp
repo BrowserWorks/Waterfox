@@ -10,6 +10,7 @@
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
 #include "nsContentUtils.h"
 #include "WebGLContext.h"
+#include "nsThreadUtils.h"
 
 namespace mozilla {
 
@@ -23,7 +24,9 @@ WebGLTimerQuery::WebGLTimerQuery(WebGLContext* webgl, GLuint name)
   : WebGLContextBoundObject(webgl)
   , mGLName(name)
   , mTarget(LOCAL_GL_NONE)
+  , mCanBeAvailable(false)
 {
+  mContext->mTimerQueries.insertBack(this);
 }
 
 WebGLTimerQuery::~WebGLTimerQuery()
@@ -43,8 +46,12 @@ WebGLTimerQuery::Create(WebGLContext* webgl)
 void
 WebGLTimerQuery::Delete()
 {
-  mContext->MakeContextCurrent();
-  mContext->gl->fDeleteQueries(1, &mGLName);
+  gl::GLContext* gl = mContext->GL();
+
+  gl->MakeCurrent();
+  gl->fDeleteQueries(1, &mGLName);
+
+  LinkedListElement<WebGLTimerQuery>::removeFrom(mContext->mTimerQueries);
 }
 
 WebGLContext*
@@ -53,6 +60,12 @@ WebGLTimerQuery::GetParentObject() const
   return mContext;
 }
 
+void
+WebGLTimerQuery::QueueAvailablity()
+{
+  RefPtr<WebGLTimerQuery> self = this;
+  NS_DispatchToCurrentThread(NS_NewRunnableFunction([self] { self->mCanBeAvailable = true; }));
+}
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(WebGLTimerQuery)
 

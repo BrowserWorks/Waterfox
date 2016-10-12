@@ -24,7 +24,7 @@ var prefSvc = Cc['@mozilla.org/preferences-service;1']
                         .getService(Ci.nsIPrefService);
 var prefBranch = prefSvc.getBranch(null).QueryInterface(Ci.nsIPrefBranch);
 
-var Services = Cu.import('resource://gre/modules/Services.jsm', {}).Services;
+var Services = require("Services");
 var stringBundle = Services.strings.createBundle(
         'chrome://devtools-shared/locale/gclicommands.properties');
 
@@ -47,7 +47,7 @@ exports.lookup = function(name) {
  * <code>l10n:l10n.propertyLookup</code> in the template data and use it
  * like <code>${l10n.BLAH}</code>
  */
-exports.propertyLookup = Proxy.create({
+exports.propertyLookup = new Proxy({}, {
   get: function(rcvr, name) {
     return exports.lookup(name);
   }

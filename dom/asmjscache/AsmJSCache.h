@@ -132,9 +132,6 @@ CloseEntryForWrite(size_t aSize,
                    uint8_t* aMemory,
                    intptr_t aHandle);
 
-bool
-GetBuildId(JS::BuildIdCharVector* aBuildId);
-
 // Called from QuotaManager.cpp:
 
 quota::Client*
@@ -172,7 +169,7 @@ struct ParamTraits<mozilla::dom::asmjscache::Metadata>
 {
   typedef mozilla::dom::asmjscache::Metadata paramType;
   static void Write(Message* aMsg, const paramType& aParam);
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult);
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult);
   static void Log(const paramType& aParam, std::wstring* aLog);
 };
 
@@ -181,7 +178,7 @@ struct ParamTraits<mozilla::dom::asmjscache::WriteParams>
 {
   typedef mozilla::dom::asmjscache::WriteParams paramType;
   static void Write(Message* aMsg, const paramType& aParam);
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult);
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult);
   static void Log(const paramType& aParam, std::wstring* aLog);
 };
 

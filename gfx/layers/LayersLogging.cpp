@@ -95,10 +95,9 @@ AppendToString(std::stringstream& aStream, const nsRegion& r,
 {
   aStream << pfx;
 
-  nsRegionRectIterator it(r);
   aStream << "< ";
-  while (const nsRect* sr = it.Next()) {
-    AppendToString(aStream, *sr);
+  for (auto iter = r.RectIter(); !iter.Done(); iter.Next()) {
+    AppendToString(aStream, iter.Get());
     aStream << "; ";
   }
   aStream << ">";
@@ -112,10 +111,9 @@ AppendToString(std::stringstream& aStream, const nsIntRegion& r,
 {
   aStream << pfx;
 
-  nsIntRegionRectIterator it(r);
   aStream << "< ";
-  while (const IntRect* sr = it.Next()) {
-    AppendToString(aStream, *sr);
+  for (auto iter = r.RectIter(); !iter.Done(); iter.Next()) {
+    AppendToString(aStream, iter.Get());
     aStream << "; ";
   }
   aStream << ">";
@@ -147,6 +145,22 @@ AppendToString(std::stringstream& aStream, const EventRegions& e,
 }
 
 void
+AppendToString(std::stringstream& aStream, const ScrollMetadata& m,
+               const char* pfx, const char* sfx)
+{
+  aStream << pfx;
+  AppendToString(aStream, m.GetMetrics(), "{ [metrics=");
+  AppendToString(aStream, m.GetBackgroundColor(), "] [color=");
+  if (m.GetScrollParentId() != FrameMetrics::NULL_SCROLL_ID) {
+    AppendToString(aStream, m.GetScrollParentId(), "] [scrollParent=");
+  }
+  if (m.HasScrollClip()) {
+    AppendToString(aStream, m.ScrollClip().GetClipRect(), "] [clip=");
+  }
+  aStream << "] }" << sfx;
+}
+
+void
 AppendToString(std::stringstream& aStream, const FrameMetrics& m,
                const char* pfx, const char* sfx, bool detailed)
 {
@@ -159,17 +173,10 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
   }
   AppendToString(aStream, m.GetDisplayPort(), "] [dp=");
   AppendToString(aStream, m.GetCriticalDisplayPort(), "] [cdp=");
-  AppendToString(aStream, m.GetBackgroundColor(), "] [color=");
   if (!detailed) {
     AppendToString(aStream, m.GetScrollId(), "] [scrollId=");
-    if (m.GetScrollParentId() != FrameMetrics::NULL_SCROLL_ID) {
-      AppendToString(aStream, m.GetScrollParentId(), "] [scrollParent=");
-    }
     if (m.IsRootContent()) {
       aStream << "] [rcd";
-    }
-    if (m.HasClipRect()) {
-      AppendToString(aStream, m.ClipRect(), "] [clip=");
     }
     AppendToString(aStream, m.GetZoom(), "] [z=", "] }");
   } else {
@@ -184,9 +191,8 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
     AppendToString(aStream, m.GetZoom(), " z=");
     AppendToString(aStream, m.GetExtraResolution(), " er=");
     aStream << nsPrintfCString(")] [u=(%d %d %lu)",
-            m.GetScrollOffsetUpdated(), m.GetDoSmoothScroll(),
+            m.GetScrollUpdateType(), m.GetDoSmoothScroll(),
             m.GetScrollGeneration()).get();
-    AppendToString(aStream, m.GetScrollParentId(), "] [p=");
     aStream << nsPrintfCString("] [i=(%ld %lld %d)] }",
             m.GetPresShellId(), m.GetScrollId(), m.IsRootContent()).get();
   }
@@ -242,17 +248,17 @@ AppendToString(std::stringstream& aStream, const Matrix5x4& m,
 }
 
 void
-AppendToString(std::stringstream& aStream, const Filter filter,
+AppendToString(std::stringstream& aStream, const SamplingFilter filter,
                const char* pfx, const char* sfx)
 {
   aStream << pfx;
 
   switch (filter) {
-    case Filter::GOOD: aStream << "Filter::GOOD"; break;
-    case Filter::LINEAR: aStream << "Filter::LINEAR"; break;
-    case Filter::POINT: aStream << "Filter::POINT"; break;
+    case SamplingFilter::GOOD: aStream << "SamplingFilter::GOOD"; break;
+    case SamplingFilter::LINEAR: aStream << "SamplingFilter::LINEAR"; break;
+    case SamplingFilter::POINT: aStream << "SamplingFilter::POINT"; break;
     default:
-      NS_ERROR("unknown filter type");
+      NS_ERROR("unknown SamplingFilter type");
       aStream << "???";
   }
   aStream << sfx;
@@ -302,6 +308,7 @@ AppendToString(std::stringstream& aStream, mozilla::gfx::SurfaceFormat format,
   case SurfaceFormat::A8:        aStream << "SurfaceFormat::A8"; break;
   case SurfaceFormat::YUV:       aStream << "SurfaceFormat::YUV"; break;
   case SurfaceFormat::NV12:      aStream << "SurfaceFormat::NV12"; break;
+  case SurfaceFormat::YUV422:    aStream << "SurfaceFormat::YUV422"; break;
   case SurfaceFormat::UNKNOWN:   aStream << "SurfaceFormat::UNKNOWN"; break;
   default:
     NS_ERROR("unknown surface format");

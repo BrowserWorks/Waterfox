@@ -20,6 +20,7 @@
 #include "mozilla/dom/EventTarget.h"
 
 struct JSCompartment;
+class nsIDocument;
 
 namespace mozilla {
 
@@ -38,7 +39,7 @@ public:
     , mHasOrHasHadOwnerWindow(false)
   {
   }
-  explicit DOMEventTargetHelper(nsPIDOMWindow* aWindow)
+  explicit DOMEventTargetHelper(nsPIDOMWindowInner* aWindow)
     : mParentObject(nullptr)
     , mOwnerWindow(nullptr)
     , mHasOrHasHadOwnerWindow(false)
@@ -71,7 +72,7 @@ public:
   using dom::EventTarget::RemoveEventListener;
   virtual void AddEventListener(const nsAString& aType,
                                 dom::EventListener* aListener,
-                                bool aCapture,
+                                const dom::AddEventListenerOptionsOrBoolean& aOptions,
                                 const dom::Nullable<bool>& aWantsUntrusted,
                                 ErrorResult& aRv) override;
 
@@ -121,12 +122,12 @@ public:
                        JSContext* aCx,
                        JS::Value* aValue);
   using dom::EventTarget::GetEventHandler;
-  virtual nsIDOMWindow* GetOwnerGlobalForBindings() override
+  virtual nsPIDOMWindowOuter* GetOwnerGlobalForBindings() override
   {
-    return nsPIDOMWindow::GetOuterFromCurrentInner(GetOwner());
+    return nsPIDOMWindowOuter::GetFromCurrentInner(GetOwner());
   }
 
-  nsresult CheckInnerWindowCorrectness()
+  nsresult CheckInnerWindowCorrectness() const
   {
     NS_ENSURE_STATE(!mHasOrHasHadOwnerWindow || mOwnerWindow);
     if (mOwnerWindow && !mOwnerWindow->IsCurrentInnerWindow()) {
@@ -135,9 +136,15 @@ public:
     return NS_OK;
   }
 
-  nsPIDOMWindow* GetOwner() const { return mOwnerWindow; }
+  nsPIDOMWindowInner* GetOwner() const { return mOwnerWindow; }
+  // Like GetOwner, but only returns non-null if the window being returned is
+  // current (in the "current document" sense of the HTML spec).
+  nsPIDOMWindowInner* GetWindowIfCurrent() const;
+  // Returns the document associated with this event target, if that document is
+  // the current document of its browsing context.  Will return null otherwise.
+  nsIDocument* GetDocumentIfCurrent() const;
   void BindToOwner(nsIGlobalObject* aOwner);
-  void BindToOwner(nsPIDOMWindow* aOwner);
+  void BindToOwner(nsPIDOMWindowInner* aOwner);
   void BindToOwner(DOMEventTargetHelper* aOther);
   virtual void DisconnectFromOwner();                   
   nsIGlobalObject* GetParentObject() const
@@ -186,7 +193,7 @@ private:
   // mParentObject pre QI-ed and cached (inner window)
   // (it is needed for off main thread access)
   // It is obtained in BindToOwner and reset in DisconnectFromOwner.
-  nsPIDOMWindow* MOZ_NON_OWNING_REF mOwnerWindow;
+  nsPIDOMWindowInner* MOZ_NON_OWNING_REF mOwnerWindow;
   bool                       mHasOrHasHadOwnerWindow;
 };
 

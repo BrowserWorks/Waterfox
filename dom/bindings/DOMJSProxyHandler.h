@@ -55,12 +55,13 @@ public:
   // other lower-level methods.
   bool getOwnPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> proxy,
                                 JS::Handle<jsid> id,
-                                JS::MutableHandle<JSPropertyDescriptor> desc) const override;
+                                JS::MutableHandle<JS::PropertyDescriptor> desc) const override;
   virtual bool ownPropertyKeys(JSContext* cx, JS::Handle<JSObject*> proxy,
                                JS::AutoIdVector &props) const override;
 
-  virtual bool enumerate(JSContext *cx, JS::Handle<JSObject*> proxy,
-                         JS::MutableHandle<JSObject*> objp) const override;
+  virtual bool getPrototypeIfOrdinary(JSContext* cx, JS::Handle<JSObject*> proxy,
+                                      bool* isOrdinary,
+                                      JS::MutableHandle<JSObject*> proto) const override;
 
   // We override getOwnEnumerablePropertyKeys() and implement it directly
   // instead of using the default implementation, which would call
@@ -91,7 +92,7 @@ protected:
                                     JS::Handle<JSObject*> proxy,
                                     JS::Handle<jsid> id,
                                     bool ignoreNamedProps,
-                                    JS::MutableHandle<JSPropertyDescriptor> desc) const = 0;
+                                    JS::MutableHandle<JS::PropertyDescriptor> desc) const = 0;
 };
 
 class DOMProxyHandler : public BaseDOMProxyHandler
@@ -102,14 +103,14 @@ public:
   {}
 
   bool defineProperty(JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id,
-                      JS::Handle<JSPropertyDescriptor> desc,
+                      JS::Handle<JS::PropertyDescriptor> desc,
                       JS::ObjectOpResult &result) const override
   {
     bool unused;
     return defineProperty(cx, proxy, id, desc, result, &unused);
   }
   virtual bool defineProperty(JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id,
-                              JS::Handle<JSPropertyDescriptor> desc,
+                              JS::Handle<JS::PropertyDescriptor> desc,
                               JS::ObjectOpResult &result, bool *defined) const;
   bool delete_(JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id,
                JS::ObjectOpResult &result) const override;
@@ -117,8 +118,6 @@ public:
                          JS::ObjectOpResult& result) const override;
   bool isExtensible(JSContext *cx, JS::Handle<JSObject*> proxy, bool *extensible)
                     const override;
-  bool has(JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id,
-           bool* bp) const override;
   bool set(JSContext *cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id,
            JS::Handle<JS::Value> v, JS::Handle<JS::Value> receiver, JS::ObjectOpResult &result)
            const override;
@@ -157,48 +156,49 @@ GetDOMProxyHandler(JSObject* obj)
 
 extern jsid s_length_id;
 
-int32_t IdToInt32(JSContext* cx, JS::Handle<jsid> id);
-
-// XXXbz this should really return uint32_t, with the maximum value
-// meaning "not an index"...
-inline int32_t
+// A return value of UINT32_MAX indicates "not an array index".  Note, in
+// particular, that UINT32_MAX itself is not a valid array index in general.
+inline uint32_t
 GetArrayIndexFromId(JSContext* cx, JS::Handle<jsid> id)
 {
+  // Much like js::IdIsIndex, except with a fast path for "length" and another
+  // fast path for starting with a lowercase ascii char.  Is that second one
+  // really needed?  I guess it is because StringIsArrayIndex is out of line...
   if (MOZ_LIKELY(JSID_IS_INT(id))) {
     return JSID_TO_INT(id);
   }
   if (MOZ_LIKELY(id == s_length_id)) {
-    return -1;
+    return UINT32_MAX;
   }
-  if (MOZ_LIKELY(JSID_IS_ATOM(id))) {
-    JSAtom* atom = JSID_TO_ATOM(id);
-    char16_t s;
-    {
-      JS::AutoCheckCannotGC nogc;
-      if (js::AtomHasLatin1Chars(atom)) {
-        s = *js::GetLatin1AtomChars(nogc, atom);
-      } else {
-        s = *js::GetTwoByteAtomChars(nogc, atom);
-      }
-    }
-    if (MOZ_LIKELY((unsigned)s >= 'a' && (unsigned)s <= 'z'))
-      return -1;
+  if (MOZ_UNLIKELY(!JSID_IS_ATOM(id))) {
+    return UINT32_MAX;
+  }
 
-    uint32_t i;
-    JSLinearString* str = js::AtomToLinearString(JSID_TO_ATOM(id));
-    return js::StringIsArrayIndex(str, &i) ? i : -1;
+  JSLinearString* str = js::AtomToLinearString(JSID_TO_ATOM(id));
+  char16_t s;
+  {
+    JS::AutoCheckCannotGC nogc;
+    if (js::LinearStringHasLatin1Chars(str)) {
+      s = *js::GetLatin1LinearStringChars(nogc, str);
+    } else {
+      s = *js::GetTwoByteLinearStringChars(nogc, str);
+    }
   }
-  return IdToInt32(cx, id);
+  if (MOZ_LIKELY((unsigned)s >= 'a' && (unsigned)s <= 'z'))
+    return UINT32_MAX;
+
+  uint32_t i;
+  return js::StringIsArrayIndex(str, &i) ? i : UINT32_MAX;
 }
 
 inline bool
-IsArrayIndex(int32_t index)
+IsArrayIndex(uint32_t index)
 {
-  return index >= 0;
+  return index < UINT32_MAX;
 }
 
 inline void
-FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
+FillPropertyDescriptor(JS::MutableHandle<JS::PropertyDescriptor> desc,
                        JSObject* obj, bool readonly, bool enumerable = true)
 {
   desc.object().set(obj);
@@ -209,7 +209,7 @@ FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
 }
 
 inline void
-FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
+FillPropertyDescriptor(JS::MutableHandle<JS::PropertyDescriptor> desc,
                        JSObject* obj, JS::Value v,
                        bool readonly, bool enumerable = true)
 {
@@ -218,7 +218,7 @@ FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
 }
 
 inline void
-FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
+FillPropertyDescriptor(JS::MutableHandle<JS::PropertyDescriptor> desc,
                        JSObject* obj, unsigned attributes, JS::Value v)
 {
   desc.object().set(obj);

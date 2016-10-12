@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure that reloading a page with a breakpoint set does not cause it to
@@ -10,14 +12,18 @@ const TAB_URL = EXAMPLE_URL + "doc_included-script.html";
 const SOURCE_URL = EXAMPLE_URL + "code_location-changes.js";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  const options = {
+    source: SOURCE_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab, aDebuggee, aPanel]) => {
     const gTab = aTab;
     const gDebuggee = aDebuggee;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gEditor = gDebugger.DebuggerView.editor;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
+    const queries = gDebugger.require("./content/queries");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
 
@@ -27,8 +33,10 @@ function test() {
       return paused;
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceAndCaretAndScopes(gPanel, ".html", 17);
+    Task.spawn(function* () {
+      let onCaretUpdated = waitForCaretUpdated(gPanel, 17);
+      callInTab(gTab, "runDebuggerStatement");
+      yield onCaretUpdated;
 
       const location = { actor: getSourceActor(gSources, SOURCE_URL), line: 5 };
       yield actions.addBreakpoint(location);
@@ -123,7 +131,7 @@ function test() {
       isnot(packet.why.type, "breakpoint",
             "No ghost breakpoint was hit.");
 
-      yield ensureCaretAt(gPanel, 6, 1, true)
+      yield ensureCaretAt(gPanel, 6, 1, true);
 
       is(gDebugger.gThreadClient.state, "paused",
          "The debugger statement was hit (7).");
@@ -132,12 +140,12 @@ function test() {
       ok(isCaretPos(gPanel, 6),
          "The source editor caret position is incorrect (7).");
 
-      let sourceShown = waitForDebuggerEvents(gPanel, gDebugger.EVENTS.SOURCE_SHOWN)
+      let sourceShown = waitForDebuggerEvents(gPanel, gDebugger.EVENTS.SOURCE_SHOWN);
       // Click the second source in the list.
       yield actions.selectSource(getSourceForm(gSources, TAB_URL));
       yield sourceShown;
       is(gEditor.getText().indexOf("debugger"), 447,
-         "The correct source is shown in the source editor.")
+         "The correct source is shown in the source editor.");
       is(gEditor.getBreakpoints().length, 0,
          "No breakpoints should be shown for the second source.");
       yield ensureCaretAt(gPanel, 1, 1, true);
@@ -146,17 +154,12 @@ function test() {
       yield actions.selectSource(getSourceForm(gSources, SOURCE_URL));
       yield sourceShown;
       is(gEditor.getText().indexOf("debugger"), 148,
-         "The correct source is shown in the source editor.")
+         "The correct source is shown in the source editor.");
       is(gEditor.getBreakpoints().length, 1,
          "One breakpoint should be shown for the first source.");
 
-      //yield waitForTime(2000);
-      yield ensureCaretAt(gPanel, 1, 1, true);
-
-      //yield waitForTime(50000);
+      yield ensureCaretAt(gPanel, 6, 1, true);
       resumeDebuggerThenCloseAndFinish(gPanel);
     });
-
-    callInTab(gTab, "runDebuggerStatement");
   });
 }

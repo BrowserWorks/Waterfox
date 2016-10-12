@@ -34,7 +34,7 @@ private:
   // Disallow copy constructor
   nsKeyObject(nsKeyObject&);
 
-  ScopedPK11SymKey mSymKey;
+  UniquePK11SymKey mSymKey;
 
   virtual void virtualDestroyNSSReference() override;
   void destructorSafeDestroyNSSReference();
@@ -51,7 +51,7 @@ public:
   NS_DECL_NSIKEYOBJECTFACTORY
 
 private:
-  ~nsKeyObjectFactory() {}
+  ~nsKeyObjectFactory();
 
   // Disallow copy constructor
   nsKeyObjectFactory(nsKeyObjectFactory&);

@@ -8,7 +8,6 @@ package org.mozilla.gecko;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.mozglue.GeckoLoader;
-import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import org.json.JSONException;
@@ -24,54 +23,67 @@ import android.os.MessageQueue;
 import android.os.SystemClock;
 import android.util.Log;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GeckoThread extends Thread implements GeckoEventListener {
+public class GeckoThread extends Thread {
     private static final String LOGTAG = "GeckoThread";
 
-    @WrapForJNI
     public enum State {
         // After being loaded by class loader.
-        INITIAL,
+        @WrapForJNI INITIAL(0),
         // After launching Gecko thread
-        LAUNCHED,
+        @WrapForJNI LAUNCHED(1),
         // After loading the mozglue library.
-        MOZGLUE_READY,
+        @WrapForJNI MOZGLUE_READY(2),
         // After loading the libxul library.
-        LIBS_READY,
+        @WrapForJNI LIBS_READY(3),
         // After initializing nsAppShell and JNI calls.
-        JNI_READY,
+        @WrapForJNI JNI_READY(4),
         // After initializing profile and prefs.
-        PROFILE_READY,
-        // After initializing frontend JS (corresponding to "Gecko:Ready" event)
-        RUNNING,
+        @WrapForJNI PROFILE_READY(5),
+        // After initializing frontend JS
+        @WrapForJNI RUNNING(6),
         // After leaving Gecko event loop
-        EXITING,
+        @WrapForJNI EXITING(3),
         // After exiting GeckoThread (corresponding to "Gecko:Exited" event)
-        EXITED;
+        @WrapForJNI EXITED(0);
+
+        /* The rank is an arbitrary value reflecting the amount of components or features
+         * that are available for use. During startup and up to the RUNNING state, the
+         * rank value increases because more components are initialized and available for
+         * use. During shutdown and up to the EXITED state, the rank value decreases as
+         * components are shut down and become unavailable. EXITING has the same rank as
+         * LIBS_READY because both states have a similar amount of components available.
+         */
+        private final int rank;
+
+        private State(int rank) {
+            this.rank = rank;
+        }
 
         public boolean is(final State other) {
             return this == other;
         }
 
         public boolean isAtLeast(final State other) {
-            return ordinal() >= other.ordinal();
+            return this.rank >= other.rank;
         }
 
         public boolean isAtMost(final State other) {
-            return ordinal() <= other.ordinal();
+            return this.rank <= other.rank;
         }
 
         // Inclusive
         public boolean isBetween(final State min, final State max) {
-            final int ord = ordinal();
-            return ord >= min.ordinal() && ord <= max.ordinal();
+            return this.rank >= min.rank && this.rank <= max.rank;
         }
     }
 
@@ -105,30 +117,81 @@ public class GeckoThread extends Thread implements GeckoEventListener {
     @WrapForJNI
     private static MessageQueue msgQueue;
 
+    private GeckoProfile mProfile;
+
     private final String mArgs;
     private final String mAction;
     private final boolean mDebugging;
 
-    GeckoThread(String args, String action, boolean debugging) {
+    GeckoThread(GeckoProfile profile, String args, String action, boolean debugging) {
+        mProfile = profile;
         mArgs = args;
         mAction = action;
         mDebugging = debugging;
 
         setName("Gecko");
-        EventDispatcher.getInstance().registerGeckoThreadListener(this, "Gecko:Ready");
     }
 
-    public static boolean ensureInit(String args, String action) {
-        return ensureInit(args, action, /* debugging */ false);
-    }
-
-    public static boolean ensureInit(String args, String action, boolean debugging) {
+    public static boolean init(GeckoProfile profile, String args, String action, boolean debugging) {
         ThreadUtils.assertOnUiThread();
         if (isState(State.INITIAL) && sGeckoThread == null) {
-            sGeckoThread = new GeckoThread(args, action, debugging);
+            sGeckoThread = new GeckoThread(profile, args, action, debugging);
             return true;
         }
         return false;
+    }
+
+    private static boolean canUseProfile(final Context context, final GeckoProfile profile,
+                                         final String profileName, final File profileDir) {
+        if (profileDir != null && !profileDir.isDirectory()) {
+            return false;
+        }
+
+        if (profile == null) {
+            // We haven't initialized; any profile is okay as long as we follow the guest mode setting.
+            return GuestSession.shouldUse(context) ==
+                    GeckoProfile.isGuestProfile(context, profileName, profileDir);
+        }
+
+        // We already initialized and have a profile; see if it matches ours.
+        try {
+            return profileDir == null ? profileName.equals(profile.getName()) :
+                    profile.getDir().getCanonicalPath().equals(profileDir.getCanonicalPath());
+        } catch (final IOException e) {
+            Log.e(LOGTAG, "Cannot compare profile " + profileName);
+            return false;
+        }
+    }
+
+    public static boolean canUseProfile(final String profileName, final File profileDir) {
+        if (profileName == null) {
+            throw new IllegalArgumentException("Null profile name");
+        }
+        return canUseProfile(GeckoAppShell.getApplicationContext(), getActiveProfile(),
+                             profileName, profileDir);
+    }
+
+    public static boolean initWithProfile(final String profileName, final File profileDir) {
+        if (profileName == null) {
+            throw new IllegalArgumentException("Null profile name");
+        }
+
+        final Context context = GeckoAppShell.getApplicationContext();
+        final GeckoProfile profile = getActiveProfile();
+
+        if (!canUseProfile(context, profile, profileName, profileDir)) {
+            // Profile is incompatible with current profile.
+            return false;
+        }
+
+        if (profile != null) {
+            // We already have a compatible profile.
+            return true;
+        }
+
+        // We haven't initialized yet; okay to initialize now.
+        return init(GeckoProfile.get(context, profileName, profileDir),
+                    /* args */ null, /* action */ null, /* debugging */ false);
     }
 
     public static boolean launch() {
@@ -191,7 +254,16 @@ public class GeckoThread extends Thread implements GeckoEventListener {
             method = cls.getDeclaredMethod(
                     methodName, argTypes.toArray(new Class<?>[argTypes.size()]));
         } catch (final NoSuchMethodException e) {
-            throw new UnsupportedOperationException("Cannot find method", e);
+            throw new IllegalArgumentException("Cannot find method", e);
+        }
+
+        if (!Modifier.isNative(method.getModifiers())) {
+            // As a precaution, we disallow queuing non-native methods. Queuing non-native
+            // methods is dangerous because the method could end up being called on either
+            // the original thread or the Gecko thread depending on timing. Native methods
+            // usually handle this by posting an event to the Gecko thread automatically,
+            // but there is no automatic mechanism for non-native methods.
+            throw new UnsupportedOperationException("Not allowed to queue non-native methods");
         }
 
         if (isStateAtLeast(state)) {
@@ -333,35 +405,29 @@ public class GeckoThread extends Thread implements GeckoEventListener {
         return null;
     }
 
-    private static String addCustomProfileArg(String args) {
+    private String addCustomProfileArg(String args) {
         String profileArg = "";
-        String guestArg = "";
-        if (GeckoAppShell.getGeckoInterface() != null) {
-            final GeckoProfile profile = GeckoAppShell.getGeckoInterface().getProfile();
 
-            if (profile.inGuestMode()) {
-                try {
-                    profileArg = " -profile " + profile.getDir().getCanonicalPath();
-                } catch (final IOException ioe) {
-                    Log.e(LOGTAG, "error getting guest profile path", ioe);
-                }
+        // Make sure a profile exists.
+        final GeckoProfile profile = getProfile();
+        profile.getDir(); // call the lazy initializer
 
-                if (args == null || !args.contains(BrowserApp.GUEST_BROWSING_ARG)) {
-                    guestArg = " " + BrowserApp.GUEST_BROWSING_ARG;
-                }
-            } else if (!GeckoProfile.sIsUsingCustomProfile) {
-                // If nothing was passed in the intent, make sure the default profile exists and
-                // force Gecko to use the default profile for this activity
-                profileArg = " -P " + profile.forceCreate().getName();
+        // If args don't include the profile, make sure it's included.
+        if (args == null || !args.matches(".*\\B-(P|profile)\\s+\\S+.*")) {
+            if (profile.isCustomProfile()) {
+                profileArg = " -profile " + profile.getDir().getAbsolutePath();
+            } else {
+                profileArg = " -P " + profile.getName();
             }
         }
 
-        return (args != null ? args : "") + profileArg + guestArg;
+        return (args != null ? args : "") + profileArg;
     }
 
     private String getGeckoArgs(final String apkPath) {
-        // First argument is the .apk path
-        final StringBuilder args = new StringBuilder(apkPath);
+        // argv[0] is the program name, which for us is the package name.
+        final Context context = GeckoAppShell.getApplicationContext();
+        final StringBuilder args = new StringBuilder(context.getPackageName());
         args.append(" -greomni ").append(apkPath);
 
         final String userArgs = addCustomProfileArg(mArgs);
@@ -385,6 +451,25 @@ public class GeckoThread extends Thread implements GeckoEventListener {
         }
 
         return args.toString();
+    }
+
+    public static GeckoProfile getActiveProfile() {
+        if (sGeckoThread == null) {
+            return null;
+        }
+        final GeckoProfile profile = sGeckoThread.mProfile;
+        if (profile != null) {
+            return profile;
+        }
+        return sGeckoThread.getProfile();
+    }
+
+    public synchronized GeckoProfile getProfile() {
+        if (mProfile == null) {
+            final Context context = GeckoAppShell.getApplicationContext();
+            mProfile = GeckoProfile.initFromArgs(context, mArgs);
+        }
+        return mProfile;
     }
 
     @Override
@@ -451,7 +536,7 @@ public class GeckoThread extends Thread implements GeckoEventListener {
 
     public static void addPendingEvent(final GeckoEvent e) {
         synchronized (QUEUED_CALLS) {
-            if (QUEUED_CALLS.size() == 0 && isRunning()) {
+            if (isRunning()) {
                 // We may just have switched to running state.
                 GeckoAppShell.notifyGeckoOfEvent(e);
                 e.recycle();
@@ -477,15 +562,6 @@ public class GeckoThread extends Thread implements GeckoEventListener {
         }
 
         return true;
-    }
-
-    @Override
-    public void handleMessage(String event, JSONObject message) {
-        if ("Gecko:Ready".equals(event)) {
-            EventDispatcher.getInstance().unregisterGeckoThreadListener(this, event);
-            setState(State.RUNNING);
-            Log.i(LOGTAG, "zerdatime " + SystemClock.uptimeMillis() + " - Gecko ready");
-        }
     }
 
     /**
@@ -541,6 +617,7 @@ public class GeckoThread extends Thread implements GeckoEventListener {
         }
     }
 
+    @WrapForJNI
     private static boolean checkAndSetState(final State currentState, final State newState) {
         synchronized (QUEUED_CALLS) {
             if (sState == currentState) {
@@ -562,5 +639,44 @@ public class GeckoThread extends Thread implements GeckoEventListener {
         // so the earliest it can happen is after profile is ready.
         queueNativeCallUntil(State.PROFILE_READY, GeckoThread.class,
                              "speculativeConnectNative", uri);
+    }
+
+    @WrapForJNI @RobocopTarget
+    public static native void waitOnGecko();
+
+    @WrapForJNI(stubName = "OnPause")
+    private static native void nativeOnPause();
+
+    public static void onPause() {
+        if (isStateAtLeast(State.PROFILE_READY)) {
+            nativeOnPause();
+        } else {
+            queueNativeCallUntil(State.PROFILE_READY, GeckoThread.class,
+                                 "nativeOnPause");
+        }
+    }
+
+    @WrapForJNI(stubName = "OnResume")
+    private static native void nativeOnResume();
+
+    public static void onResume() {
+        if (isStateAtLeast(State.PROFILE_READY)) {
+            nativeOnResume();
+        } else {
+            queueNativeCallUntil(State.PROFILE_READY, GeckoThread.class,
+                                 "nativeOnResume");
+        }
+    }
+
+    @WrapForJNI(stubName = "CreateServices")
+    private static native void nativeCreateServices(String category, String data);
+
+    public static void createServices(final String category, final String data) {
+        if (isStateAtLeast(State.PROFILE_READY)) {
+            nativeCreateServices(category, data);
+        } else {
+            queueNativeCallUntil(State.PROFILE_READY, GeckoThread.class, "nativeCreateServices",
+                                 String.class, category, String.class, data);
+        }
     }
 }

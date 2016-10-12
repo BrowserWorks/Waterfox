@@ -4,6 +4,7 @@ config = {
     #########################################################################
     ######## ANDROID GENERIC CONFIG KEYS/VAlUES
 
+    # note: overridden by MOZHARNESS_ACTIONS in TaskCluster tasks
     'default_actions': [
         'clobber',
         'clone-tools',
@@ -13,6 +14,7 @@ config = {
         'upload-files',
         'sendchange',
         'multi-l10n',
+        'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     "buildbot_json_path": "buildprops.json",
@@ -25,8 +27,6 @@ config = {
     'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     # decides whether we want to use moz_sign_cmd in env
     'enable_signing': True,
-    'purge_skip': ['info', 'rel-*:10d', 'tb-rel-*:10d'],
-    'purge_basedirs':  ["/mock/users/cltbld/home/cltbld/build"],
     # mock shtuff
     'mock_mozilla_dir':  '/builds/mock_mozilla',
     'mock_target': 'mozilla-centos6-x86_64-android',
@@ -34,10 +34,17 @@ config = {
         ('/home/cltbld/.ssh', '/home/mock_mozilla/.ssh'),
         ('/home/cltbld/.hgrc', '/builds/.hgrc'),
         ('/home/cltbld/.boto', '/builds/.boto'),
+        ('/builds/relengapi.tok', '/builds/relengapi.tok'),
+        ('/tools/tooltool.py', '/builds/tooltool.py'),
         ('/builds/mozilla-api.key', '/builds/mozilla-api.key'),
         ('/builds/mozilla-fennec-geoloc-api.key', '/builds/mozilla-fennec-geoloc-api.key'),
         ('/builds/crash-stats-api.token', '/builds/crash-stats-api.token'),
         ('/usr/local/lib/hgext', '/usr/local/lib/hgext'),
+    ],
+    'secret_files': [
+        {'filename': '/builds/mozilla-fennec-geoloc-api.key',
+         'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/mozilla-fennec-geoloc-api.key',
+         'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
     ],
     'enable_ccache': True,
     'vcs_share_base': '/builds/hg-shared',
@@ -66,12 +73,6 @@ config = {
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
-        # SYMBOL_SERVER_HOST is dictated from build_pool_specifics.py
-        'SYMBOL_SERVER_HOST': '%(symbol_server_host)s',
-        'SYMBOL_SERVER_SSH_KEY': "/home/mock_mozilla/.ssh/ffxbld_rsa",
-        'SYMBOL_SERVER_USER': 'ffxbld',
-        'SYMBOL_SERVER_PATH': '/mnt/netapp/breakpad/symbols_ffx/',
-        'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'TINDERBOX_OUTPUT': '1',
         'TOOLTOOL_CACHE': '/builds/tooltool_cache',
         'TOOLTOOL_HOME': '/builds',
@@ -93,7 +94,6 @@ config = {
         'MINIDUMP_STACKWALK': '%(abs_tools_dir)s/breakpad/linux/minidump_stackwalk',
         'MINIDUMP_SAVE_PATH': '%(base_work_dir)s/minidumps',
     },
-    'purge_minsize': 12,
     'mock_packages': ['autoconf213', 'mozilla-python27-mercurial', 'yasm',
                       'ccache', 'zip', "gcc472_0moz1", "gcc473_0moz1",
                       'java-1.7.0-openjdk-devel', 'zlib-devel',

@@ -764,7 +764,6 @@ sync_thirdparty_java_files = [
 ]
 
 sync_java_files = [TOPSRCDIR + '/mobile/android/services/src/main/java/org/mozilla/gecko/' + x for x in [
-    'background/BackgroundService.java',
     'background/common/EditorBranch.java',
     'background/common/GlobalConstants.java',
     'background/common/log/Logger.java',
@@ -859,6 +858,10 @@ sync_java_files = [TOPSRCDIR + '/mobile/android/services/src/main/java/org/mozil
     'fxa/sync/FxAccountSyncStatusHelper.java',
     'fxa/sync/SchedulePolicy.java',
     'fxa/SyncStatusListener.java',
+    'push/autopush/AutopushClient.java',
+    'push/autopush/AutopushClientException.java',
+    'push/RegisterUserAgentResponse.java',
+    'push/SubscribeChannelResponse.java',
     'sync/AlreadySyncingException.java',
     'sync/BackoffHandler.java',
     'sync/BadRequiredFieldJSONException.java',
@@ -908,6 +911,7 @@ sync_java_files = [TOPSRCDIR + '/mobile/android/services/src/main/java/org/mozil
     'sync/net/BearerAuthHeaderProvider.java',
     'sync/net/BrowserIDAuthHeaderProvider.java',
     'sync/net/ConnectionMonitorThread.java',
+    'sync/net/GzipNonChunkedCompressingEntity.java',
     'sync/net/HandleProgressException.java',
     'sync/net/HawkAuthHeaderProvider.java',
     'sync/net/HMACAuthHeaderProvider.java',
@@ -938,7 +942,6 @@ sync_java_files = [TOPSRCDIR + '/mobile/android/services/src/main/java/org/mozil
     'sync/repositories/android/AndroidBrowserBookmarksRepository.java',
     'sync/repositories/android/AndroidBrowserBookmarksRepositorySession.java',
     'sync/repositories/android/AndroidBrowserHistoryDataAccessor.java',
-    'sync/repositories/android/AndroidBrowserHistoryDataExtender.java',
     'sync/repositories/android/AndroidBrowserHistoryRepository.java',
     'sync/repositories/android/AndroidBrowserHistoryRepositorySession.java',
     'sync/repositories/android/AndroidBrowserRepository.java',
@@ -954,6 +957,7 @@ sync_java_files = [TOPSRCDIR + '/mobile/android/services/src/main/java/org/mozil
     'sync/repositories/android/FormHistoryRepositorySession.java',
     'sync/repositories/android/PasswordsRepositorySession.java',
     'sync/repositories/android/RepoUtils.java',
+    'sync/repositories/android/VisitsHelper.java',
     'sync/repositories/BookmarkNeedsReparentingException.java',
     'sync/repositories/BookmarksRepository.java',
     'sync/repositories/ConstrainedServer11Repository.java',
@@ -1064,4 +1068,5 @@ sync_java_files = [TOPSRCDIR + '/mobile/android/services/src/main/java/org/mozil
     'tokenserver/TokenServerClientDelegate.java',
     'tokenserver/TokenServerException.java',
     'tokenserver/TokenServerToken.java',
+    'util/PRNGFixes.java',
 ]]

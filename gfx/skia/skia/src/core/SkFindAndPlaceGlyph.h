@@ -14,6 +14,7 @@
 #include "SkPaint.h"
 #include "SkTemplates.h"
 #include "SkUtils.h"
+#include <utility>
 
 // Calculate a type with the same size as the max of all the Ts.
 // This must be top level because the is no specialization of inner classes.
@@ -29,6 +30,16 @@ struct SkMaxSizeOf<H, Ts...> {
     static const size_t value =
         sizeof(H) >= SkMaxSizeOf<Ts...>::value ? sizeof(H) : SkMaxSizeOf<Ts...>::value;
 };
+
+
+// This is a temporary helper function to work around a bug in the code generation
+// for aarch64 (arm) on GCC 4.9. This bug does not show up on other platforms, so it
+// seems to be an aarch64 backend problem.
+//
+// GCC 4.9 on ARM64 does not generate the proper constructor code for PositionReader or
+// GlyphFindAndPlace. The vtable is not set properly without adding the fixme code.
+// The implementation is in SkDraw.cpp.
+extern void FixGCC49Arm64Bug(int v);
 
 class SkFindAndPlaceGlyph {
 public:
@@ -81,7 +92,7 @@ private:
             #define alignof __alignof
         #endif
             SkASSERT(alignof(Variant) <= alignof(Space));
-            new(&fSpace) Variant(skstd::forward<Args>(args)...);
+            new(&fSpace) Variant(std::forward<Args>(args)...);
         }
 
     private:
@@ -229,6 +240,9 @@ private:
     public:
         virtual ~PositionReaderInterface() { }
         virtual SkPoint nextPoint() = 0;
+        // This is only here to fix a GCC 4.9 aarch64 code gen bug.
+        // See comment at the top of the file.
+        virtual int forceUseForBug() = 0;
     };
 
     class HorizontalPositions final : public PositionReaderInterface {
@@ -240,6 +254,8 @@ private:
             SkScalar x = *fPositions++;
             return {x, 0};
         }
+
+        int forceUseForBug() override { return 1; }
 
     private:
         const SkScalar* fPositions;
@@ -255,6 +271,8 @@ private:
             fPositions += 2;
             return to_return;
         }
+
+        int forceUseForBug() override { return 2; }
 
     private:
         const SkScalar* fPositions;
@@ -329,11 +347,11 @@ private:
             case SkPaint::kLeft_Align:
                 return {0.0f, 0.0f};
             case SkPaint::kCenter_Align:
-                return {SkFixedToScalar(glyph.fAdvanceX >> 1),
-                        SkFixedToScalar(glyph.fAdvanceY >> 1)};
+                return {SkFloatToScalar(glyph.fAdvanceX) / 2,
+                        SkFloatToScalar(glyph.fAdvanceY) / 2};
             case SkPaint::kRight_Align:
-                return {SkFixedToScalar(glyph.fAdvanceX),
-                        SkFixedToScalar(glyph.fAdvanceY)};
+                return {SkFloatToScalar(glyph.fAdvanceX),
+                        SkFloatToScalar(glyph.fAdvanceY)};
         }
         // Even though the entire enum is covered above, MVSC doesn't think so. Make it happy.
         SkFAIL("Should never get here.");
@@ -349,7 +367,7 @@ private:
     static SkPoint SubpixelPositionRounding(SkAxisAlignment axisAlignment) {
         switch (axisAlignment) {
             case kX_SkAxisAlignment:
-                return {SkFixedToScalar(SkGlyph::kSubpixelRound), SK_ScalarHalf};
+                return {kSubpixelRounding, SK_ScalarHalf};
             case kY_SkAxisAlignment:
                 return {SK_ScalarHalf, kSubpixelRounding};
             case kNone_SkAxisAlignment:
@@ -363,14 +381,16 @@ private:
     // produce the correct sub-pixel alignment. If a position is aligned with an axis a shortcut
     // of 0 is used for the sub-pixel position.
     static SkIPoint SubpixelAlignment(SkAxisAlignment axisAlignment, SkPoint position) {
+        // Only the fractional part of position.fX and position.fY matter, because the result of
+        // this function will just be passed to FixedToSub.
         switch (axisAlignment) {
             case kX_SkAxisAlignment:
-                return {SkScalarToFixed(position.fX + kSubpixelRounding), 0};
+                return {SkScalarToFixed(SkScalarFraction(position.fX) + kSubpixelRounding), 0};
             case kY_SkAxisAlignment:
-                return {0, SkScalarToFixed(position.fY + kSubpixelRounding)};
+                return {0, SkScalarToFixed(SkScalarFraction(position.fY) + kSubpixelRounding)};
             case kNone_SkAxisAlignment:
-                return {SkScalarToFixed(position.fX + kSubpixelRounding),
-                        SkScalarToFixed(position.fY + kSubpixelRounding)};
+                return {SkScalarToFixed(SkScalarFraction(position.fX) + kSubpixelRounding),
+                        SkScalarToFixed(SkScalarFraction(position.fY) + kSubpixelRounding)};
         }
         SkFAIL("Should not get here.");
         return {0, 0};
@@ -410,7 +430,9 @@ private:
     class GlyphFindAndPlaceSubpixel final : public GlyphFindAndPlaceInterface<ProcessOneGlyph> {
     public:
         GlyphFindAndPlaceSubpixel(LookupGlyph& glyphFinder)
-            : fGlyphFinder(glyphFinder) { }
+            : fGlyphFinder(glyphFinder) {
+            FixGCC49Arm64Bug(1);
+        }
 
         SkPoint findAndPositionGlyph(
             const char** text, SkPoint position, ProcessOneGlyph&& processOneGlyph) override {
@@ -425,8 +447,8 @@ private:
                 if (metricGlyph.fWidth <= 0) {
                     // Exiting early, be sure to update text pointer.
                     *text = tempText;
-                    return finalPosition + SkPoint{SkFixedToScalar(metricGlyph.fAdvanceX),
-                                                   SkFixedToScalar(metricGlyph.fAdvanceY)};
+                    return finalPosition + SkPoint{SkFloatToScalar(metricGlyph.fAdvanceX),
+                                                   SkFloatToScalar(metricGlyph.fAdvanceY)};
                 }
 
                 // Adjust the final position by the alignment adjustment.
@@ -443,8 +465,8 @@ private:
                 processOneGlyph(renderGlyph, finalPosition,
                                 SubpixelPositionRounding(kAxisAlignment));
             }
-            return finalPosition + SkPoint{SkFixedToScalar(renderGlyph.fAdvanceX),
-                                           SkFixedToScalar(renderGlyph.fAdvanceY)};
+            return finalPosition + SkPoint{SkFloatToScalar(renderGlyph.fAdvanceX),
+                                           SkFloatToScalar(renderGlyph.fAdvanceY)};
         }
 
     private:
@@ -464,6 +486,7 @@ private:
     public:
         GlyphFindAndPlaceFullPixel(LookupGlyph& glyphFinder)
             : fGlyphFinder(glyphFinder) {
+            FixGCC49Arm64Bug(2);
             // Kerning can only be used with SkPaint::kLeft_Align
             static_assert(!kUseKerning || SkPaint::kLeft_Align == kTextAlignment,
                           "Kerning can only be used with left aligned text.");
@@ -474,14 +497,14 @@ private:
             SkPoint finalPosition = position;
             const SkGlyph& glyph = fGlyphFinder->lookupGlyph(text);
             if (kUseKerning) {
-                finalPosition += {SkFixedToScalar(fAutoKern.adjust(glyph)), 0.0f};
+                finalPosition += {fAutoKern.adjust(glyph), 0.0f};
             }
             if (glyph.fWidth > 0) {
                 finalPosition -= TextAlignmentAdjustment(kTextAlignment, glyph);
                 processOneGlyph(glyph, finalPosition, {SK_ScalarHalf, SK_ScalarHalf});
             }
-            return finalPosition + SkPoint{SkFixedToScalar(glyph.fAdvanceX),
-                                           SkFixedToScalar(glyph.fAdvanceY)};
+            return finalPosition + SkPoint{SkFloatToScalar(glyph.fAdvanceX),
+                                           SkFloatToScalar(glyph.fAdvanceY)};
         }
 
     private:
@@ -541,7 +564,7 @@ private:
     }
 
     static SkPoint MeasureText(LookupGlyph& glyphFinder, const char text[], size_t byteLength) {
-        SkFixed     x = 0, y = 0;
+        SkScalar    x = 0, y = 0;
         const char* stop = text + byteLength;
 
         SkAutoKern  autokern;
@@ -551,11 +574,11 @@ private:
             // same advance
             const SkGlyph& glyph = glyphFinder->lookupGlyph(&text);
 
-            x += autokern.adjust(glyph) + glyph.fAdvanceX;
-            y += glyph.fAdvanceY;
+            x += autokern.adjust(glyph) + SkFloatToScalar(glyph.fAdvanceX);
+            y += SkFloatToScalar(glyph.fAdvanceY);
         }
         SkASSERT(text == stop);
-        return {SkFixedToScalar(x), SkFixedToScalar(y)};
+        return {x, y};
     }
 };
 
@@ -566,9 +589,8 @@ inline void SkFindAndPlaceGlyph::ProcessPosText(
     SkPaint::Align textAlignment,
     SkGlyphCache* cache, ProcessOneGlyph&& processOneGlyph) {
 
-    SkAxisAlignment axisAlignment = SkComputeAxisAlignmentForHText(matrix);
+    SkAxisAlignment axisAlignment = cache->getScalerContext()->computeAxisAlignmentForHText();
     uint32_t mtype = matrix.getType();
-
     LookupGlyph glyphFinder(textEncoding, cache);
 
     // Specialized code for handling the most common case for blink. The while loop is totally
@@ -589,7 +611,7 @@ inline void SkFindAndPlaceGlyph::ProcessPosText(
             SkPoint mappedPoint = mapper.TranslationMapper::map(
                 positions.HorizontalPositions::nextPoint());
             positioner.Positioner::findAndPositionGlyph(
-                &cursor, mappedPoint, skstd::forward<ProcessOneGlyph>(processOneGlyph));
+                &cursor, mappedPoint, std::forward<ProcessOneGlyph>(processOneGlyph));
         }
         return;
     }
@@ -601,6 +623,7 @@ inline void SkFindAndPlaceGlyph::ProcessPosText(
             } else {
                 to_init->initialize<HorizontalPositions>(pos);
             }
+            positionReader->forceUseForBug();
         }
     };
 
@@ -617,7 +640,7 @@ inline void SkFindAndPlaceGlyph::ProcessPosText(
         }
     };
 
-    GlyphFindAndPlace<ProcessOneGlyph> findAndPosition{
+    GlyphFindAndPlace<ProcessOneGlyph> findAndPosition {
         [&](typename GlyphFindAndPlace<ProcessOneGlyph>::Variants* to_init) {
             if (cache->isSubpixel()) {
                 switch (textAlignment) {
@@ -660,7 +683,7 @@ inline void SkFindAndPlaceGlyph::ProcessPosText(
     while (text < stop) {
         SkPoint mappedPoint = mapper->map(positionReader->nextPoint());
         findAndPosition->findAndPositionGlyph(
-            &text, mappedPoint, skstd::forward<ProcessOneGlyph>(processOneGlyph));
+            &text, mappedPoint, std::forward<ProcessOneGlyph>(processOneGlyph));
     }
 }
 
@@ -688,7 +711,8 @@ inline void SkFindAndPlaceGlyph::ProcessText(
     GlyphFindAndPlace<ProcessOneGlyph> findAndPosition{
         [&](typename GlyphFindAndPlace<ProcessOneGlyph>::Variants* to_init) {
             if (cache->isSubpixel()) {
-                SkAxisAlignment axisAlignment = SkComputeAxisAlignmentForHText(matrix);
+                SkAxisAlignment axisAlignment =
+                    cache->getScalerContext()->computeAxisAlignmentForHText();
                 InitSubpixel<ProcessOneGlyph, SkPaint::kLeft_Align>(
                     to_init, axisAlignment, glyphFinder);
             } else {
@@ -704,7 +728,7 @@ inline void SkFindAndPlaceGlyph::ProcessText(
     while (text < stop) {
         current =
             findAndPosition->findAndPositionGlyph(
-                &text, current, skstd::forward<ProcessOneGlyph>(processOneGlyph));
+                &text, current, std::forward<ProcessOneGlyph>(processOneGlyph));
 
     }
 }

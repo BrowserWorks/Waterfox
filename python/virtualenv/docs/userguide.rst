@@ -45,7 +45,9 @@ On Posix systems, this resides in :file:`/ENV/bin/`, so you can run::
     $ source bin/activate
 
 For some shells (e.g. the original Bourne Shell) you may need to use the
-:command:`.` command, when :command:`source` does not exist.
+:command:`.` command, when :command:`source` does not exist. There are also
+separate activate files for some other shells, like csh and fish.
+:file:`bin/activate` should work for bash/zsh/dash.
 
 This will change your ``$PATH`` so its first entry is the virtualenv's
 ``bin/`` directory. (You have to use ``source`` because it changes your
@@ -124,6 +126,15 @@ below.
     it is not considered a remote script and can then be executed.
 
 .. _`execution policies`: http://technet.microsoft.com/en-us/library/dd347641.aspx
+
+Removing an Environment
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Removing a virtual environment is simply done by deactivating it and deleting the
+environment folder with all its contents::
+
+    (ENV)$ deactivate
+    $ rm -r /path/to/ENV
 
 The :option:`--system-site-packages` Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,5 +256,3 @@ As well as the extra directories, the search order includes:
 #. The directory where virtualenv.py is located.
 #. The current directory.
 
-If no satisfactory local distributions are found, virtualenv will
-fail. Virtualenv will never download packages.

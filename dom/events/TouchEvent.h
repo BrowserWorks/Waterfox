@@ -71,7 +71,6 @@ public:
     }
     return mPoints[aIndex];
   }
-  Touch* IdentifiedTouch(int32_t aIdentifier) const;
 
 protected:
   ~TouchList() {}
@@ -110,7 +109,7 @@ public:
   void InitTouchEvent(const nsAString& aType,
                       bool aCanBubble,
                       bool aCancelable,
-                      nsIDOMWindow* aView,
+                      nsGlobalWindow* aView,
                       int32_t aDetail,
                       bool aCtrlKey,
                       bool aAltKey,

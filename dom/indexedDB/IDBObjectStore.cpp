@@ -23,7 +23,7 @@
 #include "js/Date.h"
 #include "js/StructuredClone.h"
 #include "KeyPath.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Move.h"
 #include "mozilla/dom/BindingUtils.h"
@@ -54,7 +54,6 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
 
 using namespace mozilla::dom::quota;
 using namespace mozilla::dom::workers;
@@ -198,7 +197,7 @@ struct MOZ_STACK_CLASS GetAddInfoClosure final
 };
 
 already_AddRefed<IDBRequest>
-GenerateRequest(IDBObjectStore* aObjectStore)
+GenerateRequest(JSContext* aCx, IDBObjectStore* aObjectStore)
 {
   MOZ_ASSERT(aObjectStore);
   aObjectStore->AssertIsOnOwningThread();
@@ -206,7 +205,7 @@ GenerateRequest(IDBObjectStore* aObjectStore)
   IDBTransaction* transaction = aObjectStore->Transaction();
 
   RefPtr<IDBRequest> request =
-    IDBRequest::Create(aObjectStore, transaction->Database(), transaction);
+    IDBRequest::Create(aCx, aObjectStore, transaction->Database(), transaction);
   MOZ_ASSERT(request);
 
   return request.forget();
@@ -445,8 +444,7 @@ ResolveMysteryFile(BlobImpl* aImpl,
   BlobChild* actor = ActorFromRemoteBlobImpl(aImpl);
   if (actor) {
     return actor->SetMysteryBlobInfo(aName, aContentType,
-                                     aSize, aLastModifiedDate,
-                                     BlobDirState::eUnknownIfDir);
+                                     aSize, aLastModifiedDate);
   }
   return true;
 }
@@ -1297,7 +1295,8 @@ IDBObjectStore::AddOrPut(JSContext* aCx,
   MOZ_ASSERT(aCx);
   MOZ_ASSERT_IF(aFromCursor, aOverwrite);
 
-  if (mDeletedSpec) {
+  if (mTransaction->GetMode() == IDBTransaction::CLEANUP ||
+      mDeletedSpec) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR);
     return nullptr;
   }
@@ -1398,7 +1397,7 @@ IDBObjectStore::AddOrPut(JSContext* aCx,
     params = ObjectStoreAddParams(commonParams);
   }
 
-  RefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   if (!aFromCursor) {
@@ -1477,7 +1476,7 @@ IDBObjectStore::GetAllInternal(bool aKeysOnly,
     params = ObjectStoreGetAllParams(id, optionalKeyRange, limit);
   }
 
-  RefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   if (aKeysOnly) {
@@ -1514,7 +1513,7 @@ IDBObjectStore::GetAllInternal(bool aKeysOnly,
 }
 
 already_AddRefed<IDBRequest>
-IDBObjectStore::Clear(ErrorResult& aRv)
+IDBObjectStore::Clear(JSContext* aCx, ErrorResult& aRv)
 {
   AssertIsOnOwningThread();
 
@@ -1536,7 +1535,7 @@ IDBObjectStore::Clear(ErrorResult& aRv)
   ObjectStoreClearParams params;
   params.objectStoreId() = Id();
 
-  RefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   IDB_LOG_MARK("IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
@@ -1612,7 +1611,7 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(IDBObjectStore)
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(IDBObjectStore)
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedKeyPath)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedKeyPath)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(IDBObjectStore)
@@ -1650,7 +1649,7 @@ IDBObjectStore::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
   return IDBObjectStoreBinding::Wrap(aCx, this, aGivenProto);
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 IDBObjectStore::GetParentObject() const
 {
   return mTransaction->GetParentObject();
@@ -1735,7 +1734,7 @@ IDBObjectStore::Get(JSContext* aCx,
   params.objectStoreId() = Id();
   keyRange->ToSerialized(params.keyRange());
 
-  RefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   IDB_LOG_MARK("IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
@@ -1793,7 +1792,7 @@ IDBObjectStore::DeleteInternal(JSContext* aCx,
   params.objectStoreId() = Id();
   keyRange->ToSerialized(params.keyRange());
 
-  RefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   if (!aFromCursor) {
@@ -1816,47 +1815,9 @@ IDBObjectStore::DeleteInternal(JSContext* aCx,
 
 already_AddRefed<IDBIndex>
 IDBObjectStore::CreateIndex(const nsAString& aName,
-                            const nsAString& aKeyPath,
+                            const StringOrStringSequence& aKeyPath,
                             const IDBIndexParameters& aOptionalParameters,
                             ErrorResult& aRv)
-{
-  AssertIsOnOwningThread();
-
-  KeyPath keyPath(0);
-  if (NS_FAILED(KeyPath::Parse(aKeyPath, &keyPath)) ||
-      !keyPath.IsValid()) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-    return nullptr;
-  }
-
-  return CreateIndexInternal(aName, keyPath, aOptionalParameters, aRv);
-}
-
-already_AddRefed<IDBIndex>
-IDBObjectStore::CreateIndex(const nsAString& aName,
-                            const Sequence<nsString >& aKeyPath,
-                            const IDBIndexParameters& aOptionalParameters,
-                            ErrorResult& aRv)
-{
-  AssertIsOnOwningThread();
-
-  KeyPath keyPath(0);
-  if (aKeyPath.IsEmpty() ||
-      NS_FAILED(KeyPath::Parse(aKeyPath, &keyPath)) ||
-      !keyPath.IsValid()) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-    return nullptr;
-  }
-
-  return CreateIndexInternal(aName, keyPath, aOptionalParameters, aRv);
-}
-
-already_AddRefed<IDBIndex>
-IDBObjectStore::CreateIndexInternal(
-                                  const nsAString& aName,
-                                  const KeyPath& aKeyPath,
-                                  const IDBIndexParameters& aOptionalParameters,
-                                  ErrorResult& aRv)
 {
   AssertIsOnOwningThread();
 
@@ -1884,7 +1845,24 @@ IDBObjectStore::CreateIndexInternal(
     }
   }
 
-  if (aOptionalParameters.mMultiEntry && aKeyPath.IsArray()) {
+  KeyPath keyPath(0);
+  if (aKeyPath.IsString()) {
+    if (NS_FAILED(KeyPath::Parse(aKeyPath.GetAsString(), &keyPath)) ||
+        !keyPath.IsValid()) {
+      aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+      return nullptr;
+    }
+  } else {
+    MOZ_ASSERT(aKeyPath.IsStringSequence());
+    if (aKeyPath.GetAsStringSequence().IsEmpty() ||
+        NS_FAILED(KeyPath::Parse(aKeyPath.GetAsStringSequence(), &keyPath)) ||
+        !keyPath.IsValid()) {
+      aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+      return nullptr;
+    }
+  }
+
+  if (aOptionalParameters.mMultiEntry && keyPath.IsArray()) {
     aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
     return nullptr;
   }
@@ -1913,7 +1891,7 @@ IDBObjectStore::CreateIndexInternal(
 #endif
 
   IndexMetadata* metadata = indexes.AppendElement(
-    IndexMetadata(transaction->NextIndexId(), nsString(aName), aKeyPath,
+    IndexMetadata(transaction->NextIndexId(), nsString(aName), keyPath,
                   locale,
                   aOptionalParameters.mUnique,
                   aOptionalParameters.mMultiEntry,
@@ -2062,7 +2040,7 @@ IDBObjectStore::Count(JSContext* aCx,
     params.optionalKeyRange() = void_t();
   }
 
-  RefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   IDB_LOG_MARK("IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
@@ -2089,6 +2067,7 @@ IDBObjectStore::OpenCursorInternal(bool aKeysOnly,
                                    ErrorResult& aRv)
 {
   AssertIsOnOwningThread();
+  MOZ_ASSERT(aCx);
 
   if (mDeletedSpec) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR);
@@ -2138,7 +2117,7 @@ IDBObjectStore::OpenCursorInternal(bool aKeysOnly,
     params = Move(openParams);
   }
 
-  RefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   if (aKeysOnly) {
@@ -2265,6 +2244,59 @@ IDBObjectStore::Name() const
   return mSpec->metadata().name();
 }
 
+void
+IDBObjectStore::SetName(const nsAString& aName, ErrorResult& aRv)
+{
+  AssertIsOnOwningThread();
+
+  if (mTransaction->GetMode() != IDBTransaction::VERSION_CHANGE ||
+      mDeletedSpec) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
+
+  IDBTransaction* transaction = IDBTransaction::GetCurrent();
+  if (!transaction || transaction != mTransaction) {
+    aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
+    return;
+  }
+
+  MOZ_ASSERT(transaction->IsOpen());
+
+  if (aName == mSpec->metadata().name()) {
+    return;
+  }
+
+  // Cache logging string of this object store before renaming.
+  const LoggingString loggingOldObjectStore(this);
+
+  nsresult rv =
+    transaction->Database()->RenameObjectStore(mSpec->metadata().id(),
+                                               aName);
+
+  if (NS_FAILED(rv)) {
+    aRv.Throw(rv);
+    return;
+  }
+
+  // Don't do this in the macro because we always need to increment the serial
+  // number to keep in sync with the parent.
+  const uint64_t requestSerialNumber = IDBRequest::NextSerialNumber();
+
+  IDB_LOG_MARK("IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+                 "database(%s).transaction(%s).objectStore(%s).rename(%s)",
+               "IndexedDB %s: C T[%lld] R[%llu]: IDBObjectStore.rename()",
+               IDB_LOG_ID_STRING(),
+               mTransaction->LoggingSerialNumber(),
+               requestSerialNumber,
+               IDB_LOG_STRINGIFY(mTransaction->Database()),
+               IDB_LOG_STRINGIFY(mTransaction),
+               loggingOldObjectStore.get(),
+               IDB_LOG_STRINGIFY(this));
+
+  transaction->RenameObjectStore(mSpec->metadata().id(), aName);
+}
+
 bool
 IDBObjectStore::AutoIncrement() const
 {
@@ -2274,7 +2306,7 @@ IDBObjectStore::AutoIncrement() const
   return mSpec->metadata().autoIncrement();
 }
 
-const KeyPath&
+const indexedDB::KeyPath&
 IDBObjectStore::GetKeyPath() const
 {
   AssertIsOnOwningThread();
@@ -2292,6 +2324,5 @@ IDBObjectStore::HasValidKeyPath() const
   return GetKeyPath().IsValid();
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

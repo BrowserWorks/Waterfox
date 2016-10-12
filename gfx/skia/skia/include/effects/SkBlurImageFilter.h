@@ -13,29 +13,36 @@
 
 class SK_API SkBlurImageFilter : public SkImageFilter {
 public:
-    static SkImageFilter* Create(SkScalar sigmaX, SkScalar sigmaY, SkImageFilter* input = NULL,
-                                 const CropRect* cropRect = NULL) {
-        return new SkBlurImageFilter(sigmaX, sigmaY, input, cropRect);
+    static sk_sp<SkImageFilter> Make(SkScalar sigmaX, SkScalar sigmaY, sk_sp<SkImageFilter> input,
+                                     const CropRect* cropRect = nullptr) {
+        if (0 == sigmaX && 0 == sigmaY && nullptr == cropRect) {
+            return input;
+        }
+        return sk_sp<SkImageFilter>(new SkBlurImageFilter(sigmaX, sigmaY, input, cropRect));
     }
 
-    void computeFastBounds(const SkRect&, SkRect*) const override;
+    SkRect computeFastBounds(const SkRect&) const override;
 
     SK_TO_STRING_OVERRIDE()
     SK_DECLARE_PUBLIC_FLATTENABLE_DESERIALIZATION_PROCS(SkBlurImageFilter)
 
+#ifdef SK_SUPPORT_LEGACY_IMAGEFILTER_PTR
+    static SkImageFilter* Create(SkScalar sigmaX, SkScalar sigmaY, SkImageFilter* input = nullptr,
+                                 const CropRect* cropRect = nullptr) {
+        return Make(sigmaX, sigmaY, sk_ref_sp<SkImageFilter>(input), cropRect).release();
+    }
+#endif
+
 protected:
     void flatten(SkWriteBuffer&) const override;
-    bool onFilterImage(Proxy*, const SkBitmap& src, const Context&, SkBitmap* result,
-                       SkIPoint* offset) const override;
-    bool onFilterBounds(const SkIRect& src, const SkMatrix&, SkIRect* dst) const override;
-    bool canFilterImageGPU() const override { return true; }
-    bool filterImageGPU(Proxy* proxy, const SkBitmap& src, const Context& ctx, SkBitmap* result,
-                        SkIPoint* offset) const override;
+    sk_sp<SkSpecialImage> onFilterImage(SkSpecialImage* source, const Context&,
+                                        SkIPoint* offset) const override;
+    SkIRect onFilterNodeBounds(const SkIRect& src, const SkMatrix&, MapDirection) const override;
 
 private:
     SkBlurImageFilter(SkScalar sigmaX,
                       SkScalar sigmaY,
-                      SkImageFilter* input,
+                      sk_sp<SkImageFilter> input,
                       const CropRect* cropRect);
 
     SkSize   fSigma;

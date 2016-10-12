@@ -167,7 +167,6 @@ public class TabsProvider extends SharedBrowserDatabaseProvider {
                 // fall through
             case CLIENTS:
                 trace("Delete on CLIENTS: " + uri);
-                // Delete from both TABLE_TABS and TABLE_CLIENTS.
                 deleted = deleteValues(uri, selection, selectionArgs, TABLE_CLIENTS);
                 break;
 
@@ -329,7 +328,7 @@ public class TabsProvider extends SharedBrowserDatabaseProvider {
                 // Use a subquery to quietly exclude stale duplicate client records.
                 qb.setTables(excludeStaleClientsTable + " AS " + TABLE_CLIENTS + " LEFT OUTER JOIN " + TABLE_TABS +
                         " ON (" + projectColumn(TABLE_CLIENTS, Clients.GUID) +
-                        " = " + projectColumn(TABLE_TABS,Tabs.CLIENT_GUID) + ")");
+                        " = " + projectColumn(TABLE_TABS, Tabs.CLIENT_GUID) + ")");
                 groupBy = projectColumn(TABLE_CLIENTS, Clients.GUID);
                 break;
 

@@ -25,7 +25,7 @@ const TEST_URI = `
   <div class="test-element">test element</div>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
 
@@ -43,7 +43,7 @@ add_task(function*() {
 
   info("Switching over to the computed-view");
   let onComputedViewReady = inspector.once("computed-view-refreshed");
-  ({view} = yield openComputedView());
+  view = selectComputedView(inspector);
   yield onComputedViewReady;
 
   info("Testing that the background-image computed style has a tooltip too");
@@ -65,7 +65,7 @@ function* testBodyRuleView(view) {
 
   yield assertHoverTooltipOn(view.tooltips.previewTooltip, uriSpan);
 
-  let images = panel.getElementsByTagName("image");
+  let images = panel.getElementsByTagName("img");
   is(images.length, 1, "Tooltip contains an image");
   ok(images[0].getAttribute("src")
     .indexOf("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHe") !== -1,
@@ -81,7 +81,7 @@ function* testDivRuleView(view) {
 
   yield assertHoverTooltipOn(view.tooltips.previewTooltip, uriSpan);
 
-  let images = panel.getElementsByTagName("image");
+  let images = panel.getElementsByTagName("img");
   is(images.length, 1, "Tooltip contains an image");
   ok(images[0].getAttribute("src").startsWith("data:"),
     "Tooltip contains a data-uri image as expected");
@@ -117,7 +117,7 @@ function* testComputedView(view) {
 
   yield assertHoverTooltipOn(view.tooltips.previewTooltip, uriSpan);
 
-  let images = panel.getElementsByTagName("image");
+  let images = panel.getElementsByTagName("img");
   is(images.length, 1, "Tooltip contains an image");
 
   ok(images[0].getAttribute("src").startsWith("data:"),

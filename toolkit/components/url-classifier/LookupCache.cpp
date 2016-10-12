@@ -35,7 +35,7 @@
 #define PREFIXSET_SUFFIX  ".pset"
 
 // NSPR_LOG_MODULES=UrlClassifierDbService:5
-extern PRLogModuleInfo *gUrlClassifierDbServiceLog;
+extern mozilla::LazyLogModule gUrlClassifierDbServiceLog;
 #define LOG(args) MOZ_LOG(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug, args)
 #define LOG_ENABLED() MOZ_LOG_TEST(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug)
 
@@ -564,7 +564,9 @@ LookupCache::ConstructPrefixSet(AddPrefixArray& aAddPrefixes)
   Telemetry::AutoTimer<Telemetry::URLCLASSIFIER_PS_CONSTRUCT_TIME> timer;
 
   nsTArray<uint32_t> array;
-  array.SetCapacity(aAddPrefixes.Length());
+  if (!array.SetCapacity(aAddPrefixes.Length(), fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   for (uint32_t i = 0; i < aAddPrefixes.Length(); i++) {
     array.AppendElement(aAddPrefixes[i].PrefixHash().ToUint32());
@@ -584,7 +586,7 @@ LookupCache::ConstructPrefixSet(AddPrefixArray& aAddPrefixes)
 
 #ifdef DEBUG
   uint32_t size;
-  size = mPrefixSet->SizeInMemory();
+  size = mPrefixSet->SizeOfIncludingThis(moz_malloc_size_of);
   LOG(("SB tree done, size = %d bytes\n", size));
 #endif
 
@@ -627,7 +629,7 @@ LookupCache::LoadPrefixSet()
 
 #ifdef DEBUG
   if (mPrimed) {
-    uint32_t size = mPrefixSet->SizeInMemory();
+    uint32_t size = mPrefixSet->SizeOfIncludingThis(moz_malloc_size_of);
     LOG(("SB tree done, size = %d bytes\n", size));
   }
 #endif

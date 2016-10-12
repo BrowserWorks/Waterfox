@@ -352,10 +352,10 @@ public:
     bool    mPropagateChanges;
 
 private:
-    static PRLogModuleInfo* gLog;
+    static mozilla::LazyLogModule gLog;
 };
 
-PRLogModuleInfo* InMemoryDataSource::gLog;
+mozilla::LazyLogModule InMemoryDataSource::gLog("InMemoryDataSource");
 
 //----------------------------------------------------------------------
 //
@@ -539,7 +539,7 @@ private:
     InMemoryDataSource* mDataSource;
     nsIRDFResource*     mSource;
     nsIRDFNode*         mTarget;
-    nsAutoTArray<nsCOMPtr<nsIRDFResource>, 8> mAlreadyReturned;
+    AutoTArray<nsCOMPtr<nsIRDFResource>, 8> mAlreadyReturned;
     nsIRDFResource*     mCurrent;
     Assertion*          mAssertion;
     nsCOMPtr<nsISupportsArray> mHashArcs;
@@ -743,9 +743,6 @@ InMemoryDataSource::InMemoryDataSource(nsISupports* aOuter)
 
     mPropagateChanges = true;
     MOZ_COUNT_CTOR(InMemoryDataSource);
-
-    if (! gLog)
-        gLog = PR_NewLogModule("InMemoryDataSource");
 }
 
 

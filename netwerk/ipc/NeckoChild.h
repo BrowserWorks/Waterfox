@@ -75,6 +75,10 @@ protected:
   AllocPChannelDiverterChild(const ChannelDiverterArgs& channel) override;
   virtual bool
   DeallocPChannelDiverterChild(PChannelDiverterChild* actor) override;
+  virtual PTransportProviderChild*
+  AllocPTransportProviderChild() override;
+  virtual bool
+  DeallocPTransportProviderChild(PTransportProviderChild* aActor) override;
   virtual bool RecvAsyncAuthPromptForNestedFrame(const TabId& aNestedFrameId,
                                                  const nsCString& aUri,
                                                  const nsString& aRealm,
@@ -85,8 +89,12 @@ protected:
   virtual bool DeallocPWebSocketEventListenerChild(PWebSocketEventListenerChild*) override;
 
   /* Predictor Messsages */
+  virtual bool RecvPredOnPredictPrefetch(const URIParams& aURI,
+                                         const uint32_t& aHttpStatus) override;
   virtual bool RecvPredOnPredictPreconnect(const URIParams& aURI) override;
   virtual bool RecvPredOnPredictDNS(const URIParams& aURI) override;
+
+  virtual bool RecvSpeculativeConnectRequest(const nsCString& aNotificationData) override;
 };
 
 /**

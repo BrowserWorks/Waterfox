@@ -69,7 +69,9 @@ WorkerThread::WorkerThread()
   , mWorkerPrivateCondVar(mLock, "WorkerThread::mWorkerPrivateCondVar")
   , mWorkerPrivate(nullptr)
   , mOtherThreadsDispatchingViaEventTarget(0)
+#ifdef DEBUG
   , mAcceptingNonWorkerRunnables(true)
+#endif
 {
 }
 
@@ -109,13 +111,15 @@ WorkerThread::SetWorker(const WorkerThreadFriendKey& /* aKey */,
       MOZ_ASSERT(mAcceptingNonWorkerRunnables);
 
       mWorkerPrivate = aWorkerPrivate;
+#ifdef DEBUG
       mAcceptingNonWorkerRunnables = false;
+#endif
     }
 
     mObserver = new Observer(aWorkerPrivate);
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(AddObserver(mObserver)));
+    MOZ_ALWAYS_SUCCEEDS(AddObserver(mObserver));
   } else {
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(RemoveObserver(mObserver)));
+    MOZ_ALWAYS_SUCCEEDS(RemoveObserver(mObserver));
     mObserver = nullptr;
 
     {
@@ -131,7 +135,9 @@ WorkerThread::SetWorker(const WorkerThreadFriendKey& /* aKey */,
         mWorkerPrivateCondVar.Wait();
       }
 
+#ifdef DEBUG
       mAcceptingNonWorkerRunnables = true;
+#endif
       mWorkerPrivate = nullptr;
     }
   }
@@ -139,7 +145,7 @@ WorkerThread::SetWorker(const WorkerThreadFriendKey& /* aKey */,
 
 nsresult
 WorkerThread::DispatchPrimaryRunnable(const WorkerThreadFriendKey& /* aKey */,
-                                      already_AddRefed<nsIRunnable>&& aRunnable)
+                                      already_AddRefed<nsIRunnable> aRunnable)
 {
   nsCOMPtr<nsIRunnable> runnable(aRunnable);
 
@@ -164,7 +170,7 @@ WorkerThread::DispatchPrimaryRunnable(const WorkerThreadFriendKey& /* aKey */,
 
 nsresult
 WorkerThread::DispatchAnyThread(const WorkerThreadFriendKey& /* aKey */,
-                       already_AddRefed<WorkerRunnable>&& aWorkerRunnable)
+                       already_AddRefed<WorkerRunnable> aWorkerRunnable)
 {
   // May be called on any thread!
 
@@ -207,7 +213,7 @@ WorkerThread::DispatchFromScript(nsIRunnable* aRunnable, uint32_t aFlags)
 }
 
 NS_IMETHODIMP
-WorkerThread::Dispatch(already_AddRefed<nsIRunnable>&& aRunnable, uint32_t aFlags)
+WorkerThread::Dispatch(already_AddRefed<nsIRunnable> aRunnable, uint32_t aFlags)
 {
   // May be called on any thread!
   nsCOMPtr<nsIRunnable> runnable(aRunnable); // in case we exit early
@@ -290,6 +296,12 @@ WorkerThread::Dispatch(already_AddRefed<nsIRunnable>&& aRunnable, uint32_t aFlag
   }
 
   return NS_OK;
+}
+
+NS_IMETHODIMP
+WorkerThread::DelayedDispatch(already_AddRefed<nsIRunnable>, uint32_t)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 uint32_t

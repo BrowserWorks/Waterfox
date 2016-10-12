@@ -1,6 +1,5 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: sw=2 ts=8 et :
- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -20,18 +19,18 @@
 namespace mozilla {
 namespace ipc {
 
-class SharedMemoryBasic final : public SharedMemory
+class SharedMemoryBasic final : public SharedMemoryCommon<base::FileDescriptor>
 {
 public:
-  typedef base::FileDescriptor Handle;
-
   SharedMemoryBasic();
 
-  SharedMemoryBasic(const Handle& aHandle);
+  virtual bool SetHandle(const Handle& aHandle) override;
 
   virtual bool Create(size_t aNbytes) override;
 
   virtual bool Map(size_t nBytes) override;
+
+  virtual void CloseHandle() override;
 
   virtual void* memory() const override
   {
@@ -48,19 +47,18 @@ public:
     return Handle();
   }
 
-  static bool IsHandleValid(const Handle &aHandle)
+  virtual bool IsHandleValid(const Handle &aHandle) const override
   {
     return aHandle.fd >= 0;
   }
 
-  bool ShareToProcess(base::ProcessId aProcessId,
-                      Handle* aNewHandle);
+  virtual bool ShareToProcess(base::ProcessId aProcessId,
+                              Handle* aNewHandle) override;
 
 private:
   ~SharedMemoryBasic();
 
   void Unmap();
-  void Destroy();
 
   // The /dev/ashmem fd we allocate.
   int mShmFd;

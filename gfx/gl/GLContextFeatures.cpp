@@ -187,6 +187,16 @@ static const FeatureInfo sFeatureInfoArr[] = {
         }
     },
     {
+        "EXT_color_buffer_float",
+        GLVersion::GL3,
+        GLESVersion::NONE,
+        GLContext::Extension_None,
+        {
+            GLContext::EXT_color_buffer_float,
+            GLContext::Extensions_End
+        }
+    },
+    {
         // Removes clamping for float color outputs from frag shaders.
         "frag_color_float",
         GLVersion::GL3,
@@ -501,6 +511,7 @@ static const FeatureInfo sFeatureInfoArr[] = {
         GLContext::Extension_None,
         {
             GLContext::ARB_texture_float,
+            GLContext::EXT_color_buffer_float,
             GLContext::EXT_color_buffer_half_float,
             GLContext::Extensions_End
         }
@@ -543,6 +554,15 @@ static const FeatureInfo sFeatureInfoArr[] = {
         GLVersion::GL3_3,
         GLESVersion::ES3,
         GLContext::ARB_sampler_objects,
+        {
+            GLContext::Extensions_End
+        }
+    },
+    {
+        "seamless_cube_map_opt_in",
+        GLVersion::GL3_2,
+        GLESVersion::NONE,
+        GLContext::ARB_seamless_cube_map,
         {
             GLContext::Extensions_End
         }
@@ -678,6 +698,15 @@ static const FeatureInfo sFeatureInfoArr[] = {
         {
             GLContext::ARB_texture_non_power_of_two,
             GLContext::OES_texture_npot,
+            GLContext::Extensions_End
+        }
+    },
+    {
+        "texture_rg",
+        GLVersion::GL3,
+        GLESVersion::ES3,
+        GLContext::ARB_texture_rg,
+        {
             GLContext::Extensions_End
         }
     },

@@ -10,7 +10,7 @@ import json
 import os
 import tempfile
 
-from droid import DroidADB, DroidSUT
+from mozdevice import DroidADB, DroidSUT
 from mozprofile import DEFAULT_PORTS
 import mozinfo
 import mozlog
@@ -33,6 +33,19 @@ except ImportError:
 def get_default_valgrind_suppression_files():
     # We are trying to locate files in the source tree.  So if we
     # don't know where the source tree is, we must give up.
+    #
+    # When this is being run by |mach mochitest --valgrind ...|, it is
+    # expected that |build_obj| is not None, and so the logic below will
+    # select the correct suppression files.
+    #
+    # When this is run from mozharness, |build_obj| is None, and we expect
+    # that testing/mozharness/configs/unittests/linux_unittests.py will
+    # select the correct suppression files (and paths to them) and
+    # will specify them using the --valgrind-supp-files= flag.  Hence this
+    # function will not get called when running from mozharness.
+    #
+    # Note: keep these Valgrind .sup file names consistent with those
+    # in testing/mozharness/configs/unittests/linux_unittest.py.
     if build_obj is None or build_obj.topsrcdir is None:
         return []
 
@@ -220,20 +233,6 @@ class MochitestArguments(ArgumentContainer):
           "default": False,
           "suppress": True,
           }],
-        [["--webapprt-content"],
-         {"action": "store_true",
-          "dest": "webapprtContent",
-          "help": "Run WebappRT content tests.",
-          "default": False,
-          "suppress": True,
-          }],
-        [["--webapprt-chrome"],
-         {"action": "store_true",
-          "dest": "webapprtChrome",
-          "help": "Run WebappRT chrome tests.",
-          "default": False,
-          "suppress": True,
-          }],
         [["--a11y"],
          {"action": "store_true",
           "help": "Run accessibility Mochitests.",
@@ -389,10 +388,11 @@ class MochitestArguments(ArgumentContainer):
           "help": "Breaks execution and enters the JS debugger on a test failure. Should "
                   "be used together with --jsdebugger."
           }],
-        [["--e10s"],
-         {"action": "store_true",
-          "default": False,
-          "help": "Run tests with electrolysis preferences and test filtering enabled.",
+        [["--disable-e10s"],
+         {"action": "store_false",
+          "default": True,
+          "dest": "e10s",
+          "help": "Run tests with electrolysis preferences and test filtering disabled.",
           }],
         [["--store-chrome-manifest"],
          {"action": "store",
@@ -517,7 +517,7 @@ class MochitestArguments(ArgumentContainer):
         [["--valgrind-args"],
          {"dest": "valgrindArgs",
           "default": None,
-          "help": "Extra arguments to pass to Valgrind.",
+          "help": "Comma-separated list of extra arguments to pass to Valgrind.",
           }],
         [["--valgrind-supp-files"],
          {"dest": "valgrindSuppFiles",
@@ -545,13 +545,34 @@ class MochitestArguments(ArgumentContainer):
           "help": "Enable logging of unsafe CPOW usage, which is disabled by default for tests",
           "suppress": True,
           }],
+        [["--marionette"],
+         {"default": None,
+          "help": "host:port to use when connecting to Marionette",
+          }],
+        [["--marionette-port-timeout"],
+         {"default": None,
+          "help": "Timeout while waiting for the marionette port to open.",
+          "suppress": True,
+          }],
+        [["--marionette-socket-timeout"],
+         {"default": None,
+          "help": "Timeout while waiting to receive a message from the marionette server.",
+          "suppress": True,
+          }],
+        [["--cleanup-crashes"],
+         {"action": "store_true",
+          "dest": "cleanupCrashes",
+          "default": False,
+          "help": "Delete pending crash reports before running tests.",
+          "suppress": True,
+          }],
     ]
 
     defaults = {
         # Bug 1065098 - The geckomediaplugin process fails to produce a leak
         # log for some reason.
         'ignoreMissingLeaks': ["geckomediaplugin"],
-
+        'extensionsToExclude': ['specialpowers'],
         # Set server information on the args object
         'webServer': '127.0.0.1',
         'httpPort': DEFAULT_PORTS['http'],
@@ -646,7 +667,7 @@ class MochitestArguments(ArgumentContainer):
 
         if options.dmd and not options.dmdPath:
             if build_obj:
-                options.dmdPath = build_obj.bin_dir
+                options.dmdPath = build_obj.bindir
             else:
                 parser.error(
                     "could not find dmd libraries, specify them with --dmd-path")
@@ -664,10 +685,6 @@ class MochitestArguments(ArgumentContainer):
         elif not options.symbolsPath and build_obj:
             options.symbolsPath = os.path.join(build_obj.distdir, 'crashreporter-symbols')
 
-        if options.webapprtContent and options.webapprtChrome:
-            parser.error(
-                "Only one of --webapprt-content and --webapprt-chrome may be given.")
-
         if options.jsdebugger:
             options.extraPrefs += [
                 "devtools.debugger.remote-enabled=true",
@@ -683,6 +700,12 @@ class MochitestArguments(ArgumentContainer):
         if options.debuggerArgs and not options.debugger:
             parser.error(
                 "--debugger-args requires --debugger.")
+
+        if options.valgrind or options.debugger:
+            # valgrind and some debuggers may cause Gecko to start slowly. Make sure
+            # marionette waits long enough to connect.
+            options.marionette_port_timeout = 900
+            options.marionette_socket_timeout = 540
 
         if options.store_chrome_manifest:
             options.store_chrome_manifest = os.path.abspath(options.store_chrome_manifest)
@@ -771,9 +794,7 @@ class MochitestArguments(ArgumentContainer):
                         '--use-test-media-devices' % f)
 
         if options.nested_oop:
-            if not options.e10s:
-                options.e10s = True
-        mozinfo.update({"e10s": options.e10s})  # for test manifest parsing.
+            options.e10s = True
 
         options.leakThresholds = {
             "default": options.defaultLeakThreshold,
@@ -782,10 +803,10 @@ class MochitestArguments(ArgumentContainer):
             "geckomediaplugin": 20000,
         }
 
-        # Bug 1091917 - We exit early in tab processes on Windows, so we don't
-        # get leak logs yet.
-        if mozinfo.isWin:
-            options.ignoreMissingLeaks.append("tab")
+        # Bug 1293324 - OSX 10.10 sometimes leaks a little more
+        # graphics layers stuff in the content process.
+        if mozinfo.isMac:
+            options.leakThresholds["tab"] = 12000
 
         # XXX We can't normalize test_paths in the non build_obj case here,
         # because testRoot depends on the flavor, which is determined by the
@@ -808,10 +829,6 @@ class B2GArguments(ArgumentContainer):
           "default": None,
           "help": "Path to B2G repo or QEMU directory.",
           "suppress": True,
-          }],
-        [["--marionette"],
-         {"default": None,
-          "help": "host:port to use when connecting to Marionette",
           }],
         [["--emulator"],
          {"default": None,
@@ -906,6 +923,8 @@ class B2GArguments(ArgumentContainer):
         # Specialpowers is integrated with marionette for b2g,
         # see marionette's jar.mn.
         'extensionsToExclude': ['specialpowers'],
+        # mochijar doesn't get installed via marionette on android
+        'extensionsToInstall': [os.path.join(here, 'mochijar')],
         # See dependencies of bug 1038943.
         'defaultLeakThreshold': 5536,
     }
@@ -1058,6 +1077,10 @@ class AndroidArguments(ArgumentContainer):
 
     defaults = {
         'dm': None,
+        # we don't want to exclude specialpowers on android just yet
+        'extensionsToExclude': [],
+        # mochijar doesn't get installed via marionette on android
+        'extensionsToInstall': [os.path.join(here, 'mochijar')],
         'logFile': 'mochitest.log',
         'utilityPath': None,
     }
@@ -1155,6 +1178,11 @@ class AndroidArguments(ArgumentContainer):
                     "Unable to find robocop APK '%s'" %
                     options.robocopApk)
             options.robocopApk = os.path.abspath(options.robocopApk)
+
+        # Disable e10s by default on Android because we don't run Android
+        # e10s jobs anywhere yet.
+        options.e10s = False
+        mozinfo.update({'e10s': options.e10s})
 
         # allow us to keep original application around for cleanup while
         # running robocop via 'am'

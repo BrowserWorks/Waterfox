@@ -1,4 +1,7 @@
-
+/* -*- Mode: Java; c-basic-offset: 4; tab-width: 20; indent-tabs-mode: nil; -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.dlc;
 
@@ -7,6 +10,7 @@ import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.dlc.catalog.DownloadContent;
 import org.mozilla.gecko.dlc.catalog.DownloadContentCatalog;
+import org.mozilla.gecko.util.HardwareUtils;
 
 import android.app.IntentService;
 import android.content.ComponentName;
@@ -20,9 +24,30 @@ import android.util.Log;
 public class DownloadContentService extends IntentService {
     private static final String LOGTAG = "GeckoDLCService";
 
+    /**
+     * Study: Scan the catalog for "new" content available for download.
+     */
     private static final String ACTION_STUDY_CATALOG = AppConstants.ANDROID_PACKAGE_NAME + ".DLC.STUDY";
+
+    /**
+     * Verify: Validate downloaded content. Does it still exist and does it have the correct checksum?
+     */
     private static final String ACTION_VERIFY_CONTENT = AppConstants.ANDROID_PACKAGE_NAME + ".DLC.VERIFY";
+
+    /**
+     * Download content that has been scheduled during "study" or "verify".
+     */
     private static final String ACTION_DOWNLOAD_CONTENT = AppConstants.ANDROID_PACKAGE_NAME + ".DLC.DOWNLOAD";
+
+    /**
+     * Sync: Synchronize catalog from a Kinto instance.
+     */
+    private static final String ACTION_SYNCHRONIZE_CATALOG = AppConstants.ANDROID_PACKAGE_NAME + ".DLC.SYNC";
+
+    /**
+     * CleanupAction: Remove content that is no longer needed (e.g. Removed from the catalog after a sync).
+     */
+    private static final String ACTION_CLEANUP_FILES = AppConstants.ANDROID_PACKAGE_NAME + ".DLC.CLEANUP";
 
     public static void startStudy(Context context) {
         Intent intent = new Intent(ACTION_STUDY_CATALOG);
@@ -38,6 +63,18 @@ public class DownloadContentService extends IntentService {
 
     public static void startDownloads(Context context) {
         Intent intent = new Intent(ACTION_DOWNLOAD_CONTENT);
+        intent.setComponent(new ComponentName(context, DownloadContentService.class));
+        context.startService(intent);
+    }
+
+    public static void startSync(Context context) {
+        Intent intent = new Intent(ACTION_SYNCHRONIZE_CATALOG);
+        intent.setComponent(new ComponentName(context, DownloadContentService.class));
+        context.startService(intent);
+    }
+
+    public static void startCleanup(Context context) {
+        Intent intent = new Intent(ACTION_CLEANUP_FILES);
         intent.setComponent(new ComponentName(context, DownloadContentService.class));
         context.startService(intent);
     }
@@ -61,6 +98,12 @@ public class DownloadContentService extends IntentService {
             return;
         }
 
+        if (!HardwareUtils.isSupportedSystem()) {
+            // This service is running very early before checks in BrowserApp can prevent us from running.
+            Log.w(LOGTAG, "System is not supported. Stop.");
+            return;
+        }
+
         if (intent == null) {
             return;
         }
@@ -77,7 +120,7 @@ public class DownloadContentService extends IntentService {
                     @Override
                     public void onContentDownloaded(DownloadContent content) {
                         if (content.isFont()) {
-                            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Fonts:Reload", ""));
+                            GeckoAppShell.notifyObservers("Fonts:Reload", "");
                         }
                     }
                 });
@@ -85,6 +128,10 @@ public class DownloadContentService extends IntentService {
 
             case ACTION_VERIFY_CONTENT:
                 action = new VerifyAction();
+                break;
+
+            case ACTION_SYNCHRONIZE_CATALOG:
+                action = new SyncAction();
                 break;
 
             default:

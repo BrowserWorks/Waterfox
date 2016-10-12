@@ -25,7 +25,6 @@
 
 #ifdef XP_WIN
 // we want a wmain entry point
-#define XRE_DONT_SUPPORT_XPSP2 // See https://bugzil.la/1023941#c32
 #include "nsWindowsWMain.cpp"
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
 #define snprintf _snprintf
@@ -138,7 +137,7 @@ static int do_main(int argc, char* argv[])
 
     char appEnv[MAXPATHLEN];
     snprintf(appEnv, MAXPATHLEN, "XUL_APP_FILE=%s", argv[2]);
-    if (putenv(appEnv)) {
+    if (putenv(strdup(appEnv))) {
       Output("Couldn't set %s.\n", appEnv);
       return 255;
     }

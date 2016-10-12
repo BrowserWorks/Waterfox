@@ -37,6 +37,11 @@ class LIRGeneratorMIPSShared : public LIRGeneratorShared
     void lowerForALU(LInstructionHelper<1, 2, 0>* ins, MDefinition* mir,
                      MDefinition* lhs, MDefinition* rhs);
 
+    void lowerForALUInt64(LInstructionHelper<INT64_PIECES, 2 * INT64_PIECES, 0>* ins, MDefinition* mir,
+                          MDefinition* lhs, MDefinition* rhs);
+    void lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, 0>* ins,
+                            MDefinition* mir, MDefinition* lhs, MDefinition* rhs);
+
     void lowerForFPU(LInstructionHelper<1, 1, 0>* ins, MDefinition* mir,
                      MDefinition* src);
     template<size_t Temps>
@@ -58,11 +63,14 @@ class LIRGeneratorMIPSShared : public LIRGeneratorShared
                                  MDefinition* lhs, MDefinition* rhs);
     void lowerDivI(MDiv* div);
     void lowerModI(MMod* mod);
+    void lowerDivI64(MDiv* div);
+    void lowerModI64(MMod* mod);
     void lowerMulI(MMul* mul, MDefinition* lhs, MDefinition* rhs);
     void lowerUDiv(MDiv* div);
     void lowerUMod(MMod* mod);
     void visitPowHalf(MPowHalf* ins);
     void visitAsmJSNeg(MAsmJSNeg* ins);
+    void visitAsmSelect(MAsmSelect* ins);
 
     LTableSwitch* newLTableSwitch(const LAllocation& in, const LDefinition& inputCopy,
                                   MTableSwitch* ins);
@@ -81,14 +89,12 @@ class LIRGeneratorMIPSShared : public LIRGeneratorShared
     void visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins);
     void visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr* ins);
     void visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic* ins);
-    void visitSimdBinaryArith(MSimdBinaryArith* ins);
-    void visitSimdSelect(MSimdSelect* ins);
-    void visitSimdSplatX4(MSimdSplatX4* ins);
-    void visitSimdValueX4(MSimdValueX4* ins);
     void visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement* ins);
     void visitAtomicExchangeTypedArrayElement(MAtomicExchangeTypedArrayElement* ins);
     void visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins);
     void visitSubstr(MSubstr* ins);
+    void visitWasmTruncateToInt64(MWasmTruncateToInt64* ins);
+    void visitInt64ToFloatingPoint(MInt64ToFloatingPoint* ins);
 };
 
 } // namespace jit

@@ -4,13 +4,13 @@
 
 #include "CSFLog.h"
 
-#include "base/histogram.h"
 #include "PeerConnectionImpl.h"
 #include "PeerConnectionCtx.h"
 #include "runnable_utils.h"
 #include "prcvar.h"
 
 #include "mozilla/Telemetry.h"
+#include "browser_logging/WebRtcLog.h"
 
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
 #include "mozilla/dom/RTCPeerConnectionBinding.h"
@@ -54,7 +54,7 @@ public:
       rv = observerService->AddObserver(this,
                                         NS_XPCOM_SHUTDOWN_OBSERVER_ID,
                                         false);
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(rv));
+      MOZ_ALWAYS_SUCCEEDS(rv);
 #endif
       (void) rv;
     }
@@ -72,7 +72,7 @@ public:
 
       nsresult rv = observerService->RemoveObserver(this,
                                                     NS_XPCOM_SHUTDOWN_OBSERVER_ID);
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(rv));
+      MOZ_ALWAYS_SUCCEEDS(rv);
 
       // Make sure we're not deleted while still inside ::Observe()
       RefPtr<PeerConnectionCtxShutdown> kungFuDeathGrip(this);
@@ -135,6 +135,7 @@ nsresult PeerConnectionCtx::InitializeGlobal(nsIThread *mainThread,
     }
   }
 
+  EnableWebRtcLog();
   return NS_OK;
 }
 
@@ -155,6 +156,8 @@ void PeerConnectionCtx::Destroy() {
     delete gInstance;
     gInstance = nullptr;
   }
+
+  StopWebRtcLog();
 }
 
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
@@ -352,9 +355,6 @@ nsresult PeerConnectionCtx::Initialize() {
   initGMP();
 
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
-  mConnectionCounter = 0;
-  Telemetry::GetHistogramById(Telemetry::WEBRTC_CALL_COUNT)->Add(0);
-
   mTelemetryTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
   MOZ_ASSERT(mTelemetryTimer);
   nsresult rv = mTelemetryTimer->SetTarget(gMainThread);

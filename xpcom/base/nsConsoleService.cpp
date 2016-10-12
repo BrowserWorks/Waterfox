@@ -75,6 +75,7 @@ void
 nsConsoleService::ClearMessagesForWindowID(const uint64_t innerID)
 {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
+  MutexAutoLock lock(mLock);
 
   for (MessageElement* e = mMessages.getFirst(); e != nullptr; ) {
     // Only messages implementing nsIScriptError interface expose the
@@ -104,6 +105,8 @@ nsConsoleService::ClearMessagesForWindowID(const uint64_t innerID)
 void
 nsConsoleService::ClearMessages()
 {
+  // NB: A lock is not required here as it's only called from |Reset| which
+  //     locks for us and from the dtor.
   while (!mMessages.isEmpty()) {
     MessageElement* e = mMessages.popFirst();
     delete e;
@@ -118,7 +121,7 @@ nsConsoleService::~nsConsoleService()
   ClearMessages();
 }
 
-class AddConsolePrefWatchers : public nsRunnable
+class AddConsolePrefWatchers : public Runnable
 {
 public:
   explicit AddConsolePrefWatchers(nsConsoleService* aConsole) : mConsole(aConsole)
@@ -158,7 +161,7 @@ nsConsoleService::Init()
 
 namespace {
 
-class LogMessageRunnable : public nsRunnable
+class LogMessageRunnable : public Runnable
 {
 public:
   LogMessageRunnable(nsIConsoleMessage* aMessage, nsConsoleService* aService)
@@ -314,7 +317,7 @@ nsConsoleService::LogMessageWithMode(nsIConsoleMessage* aMessage,
     // Release |retiredMessage| on the main thread in case it is an instance of
     // a mainthread-only class like nsScriptErrorWithStack and we're off the
     // main thread.
-    NS_ReleaseOnMainThread(retiredMessage);
+    NS_ReleaseOnMainThread(retiredMessage.forget());
   }
 
   if (r) {
@@ -460,7 +463,7 @@ nsConsoleService::Observe(nsISupports* aSubject, const char* aTopic,
     MOZ_ASSERT(supportsInt);
 
     uint64_t windowId;
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(supportsInt->GetData(&windowId)));
+    MOZ_ALWAYS_SUCCEEDS(supportsInt->GetData(&windowId));
 
     ClearMessagesForWindowID(windowId);
   } else {

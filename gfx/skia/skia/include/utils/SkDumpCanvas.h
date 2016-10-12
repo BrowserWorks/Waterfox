@@ -48,6 +48,7 @@ public:
         kDrawVertices_Verb,
         kDrawPatch_Verb,
         kDrawData_Verb, // obsolete
+        kDrawAnnotation_Verb,
 
         kCull_Verb
     };
@@ -73,7 +74,7 @@ public:
 
 protected:
     void willSave() override;
-    SaveLayerStrategy willSaveLayer(const SkRect*, const SkPaint*, SaveFlags) override;
+    SaveLayerStrategy getSaveLayerStrategy(const SaveLayerRec&) override;
     void willRestore() override;
 
     void didConcat(const SkMatrix&) override;
@@ -108,7 +109,6 @@ protected:
                          const SkPaint*, SrcRectConstraint) override;
     void onDrawBitmapNine(const SkBitmap&, const SkIRect& center, const SkRect& dst,
                           const SkPaint*) override;
-    void onDrawSprite(const SkBitmap&, int left, int top, const SkPaint*) override;
     void onDrawVertices(VertexMode vmode, int vertexCount,
                         const SkPoint vertices[], const SkPoint texs[],
                         const SkColor colors[], SkXfermode* xmode,
@@ -121,6 +121,7 @@ protected:
     void onClipRegion(const SkRegion&, SkRegion::Op) override;
 
     void onDrawPicture(const SkPicture*, const SkMatrix*, const SkPaint*) override;
+    void onDrawAnnotation(const SkRect&, const char key[], SkData* value) override;
 
     static const char* EdgeStyleToAAString(ClipEdgeStyle edgeStyle);
 

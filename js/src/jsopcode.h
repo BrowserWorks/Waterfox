@@ -431,6 +431,21 @@ BytecodeFallsThrough(JSOp op)
     }
 }
 
+static inline bool
+BytecodeIsJumpTarget(JSOp op)
+{
+    switch (op) {
+      case JSOP_JUMPTARGET:
+      case JSOP_LOOPHEAD:
+      case JSOP_LOOPENTRY:
+      case JSOP_ENDITER:
+      case JSOP_TRY:
+        return true;
+      default:
+        return false;
+    }
+}
+
 class SrcNoteLineScanner
 {
     /* offset of the current JSOp in the bytecode */
@@ -846,7 +861,8 @@ DumpPCCounts(JSContext* cx, JS::Handle<JSScript*> script, Sprinter* sp);
 
 namespace jit { struct IonScriptCounts; }
 void
-DumpIonScriptCounts(js::Sprinter* sp, jit::IonScriptCounts* ionCounts);
+DumpIonScriptCounts(js::Sprinter* sp, HandleScript script,
+                    jit::IonScriptCounts* ionCounts);
 
 void
 DumpCompartmentPCCounts(JSContext* cx);

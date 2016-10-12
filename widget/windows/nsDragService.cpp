@@ -11,6 +11,7 @@
 // shellapi.h is needed to build with WIN32_LEAN_AND_MEAN
 #include <shellapi.h>
 
+#include "mozilla/RefPtr.h"
 #include "nsDragService.h"
 #include "nsITransferable.h"
 #include "nsDataObj.h"
@@ -22,8 +23,6 @@
 #include "nsISupportsArray.h"
 #include "nsIDocument.h"
 #include "nsDataObjCollection.h"
-
-#include "nsAutoPtr.h"
 
 #include "nsString.h"
 #include "nsEscape.h"
@@ -538,14 +537,6 @@ nsDragService::IsDataFlavorSupported(const char *aDataFlavor, bool *_retval)
         format = nsClipboard::GetFormat(kFileMime);
         SET_FORMATETC(fe, format, 0, DVASPECT_CONTENT, -1,
                       TYMED_HGLOBAL | TYMED_FILE | TYMED_GDI);
-        if (mDataObject->QueryGetData(&fe) == S_OK)
-          *_retval = true;                 // found it!
-      }
-      else if (strcmp(aDataFlavor, kHTMLMime) == 0) {
-        // If the client wants html, maybe it's in "HTML Format".
-        format = nsClipboard::GetFormat(kHTMLMime);
-        SET_FORMATETC(fe, format, 0, DVASPECT_CONTENT, -1,
-                      TYMED_HGLOBAL);
         if (mDataObject->QueryGetData(&fe) == S_OK)
           *_retval = true;                 // found it!
       }

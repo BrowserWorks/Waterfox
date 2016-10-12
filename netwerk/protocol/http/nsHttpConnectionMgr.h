@@ -293,9 +293,9 @@ private:
         ~nsConnectionEntry();
 
         RefPtr<nsHttpConnectionInfo> mConnInfo;
-        nsTArray<nsHttpTransaction*> mPendingQ;    // pending transaction queue
-        nsTArray<nsHttpConnection*>  mActiveConns; // active connections
-        nsTArray<nsHttpConnection*>  mIdleConns;   // idle persistent connections
+        nsTArray<RefPtr<nsHttpTransaction> > mPendingQ;    // pending transaction queue
+        nsTArray<RefPtr<nsHttpConnection> >  mActiveConns; // active connections
+        nsTArray<RefPtr<nsHttpConnection> >  mIdleConns;   // idle persistent connections
         nsTArray<nsHalfOpenSocket*>  mHalfOpens;   // half open connections
 
         bool AvailableForDispatchNow();
@@ -370,12 +370,6 @@ private:
         // entry has done NPN=spdy/* at some point. It does not mean every
         // connection is currently using spdy.
         bool mUsingSpdy : 1;
-
-        // mTestedSpdy is set after NPN negotiation has occurred and we know
-        // with confidence whether a host speaks spdy or not (which is reflected
-        // in mUsingSpdy). Before mTestedSpdy is set, handshake parallelism is
-        // minimized so that we can multiplex on a single spdy connection.
-        bool mTestedSpdy : 1;
 
         bool mInPreferredHash : 1;
 
@@ -513,13 +507,6 @@ private:
     // NOTE: these members are only accessed on the socket transport thread
     //-------------------------------------------------------------------------
 
-    static PLDHashOperator ProcessAllTransactionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
-
-    static PLDHashOperator PruneDeadConnectionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
-    static PLDHashOperator ShutdownPassCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
-    static PLDHashOperator ClosePersistentConnectionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
-    static PLDHashOperator VerifyTrafficCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
-    static PLDHashOperator PruneNoTrafficCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
     bool     ProcessPendingQForEntry(nsConnectionEntry *, bool considerAll);
     bool     IsUnderPressure(nsConnectionEntry *ent,
                              nsHttpTransaction::Classifier classification);
@@ -538,7 +525,7 @@ private:
     nsresult BuildPipeline(nsConnectionEntry *,
                            nsAHttpTransaction *,
                            nsHttpPipeline **);
-    bool     RestrictConnections(nsConnectionEntry *, bool = false);
+    bool     RestrictConnections(nsConnectionEntry *);
     nsresult ProcessNewTransaction(nsHttpTransaction *);
     nsresult EnsureSocketThreadTarget();
     void     ClosePersistentConnections(nsConnectionEntry *ent);
@@ -572,9 +559,6 @@ private:
                                              nsHttpTransaction *trans);
 
     void               ProcessSpdyPendingQ(nsConnectionEntry *ent);
-    static PLDHashOperator ProcessSpdyPendingQCB(
-        const nsACString &key, nsAutoPtr<nsConnectionEntry> &ent,
-        void *closure);
 
     // used to marshall events to the socket transport thread.
     nsresult PostEvent(nsConnEventHandler  handler,
@@ -637,24 +621,12 @@ private:
     //
     nsClassHashtable<nsCStringHashKey, nsConnectionEntry> mCT;
 
-    static PLDHashOperator ReadConnectionEntry(const nsACString &key,
-                                               nsAutoPtr<nsConnectionEntry> &ent,
-                                               void *aArg);
-    static PLDHashOperator RemoveDeadConnections(const nsACString &key,
-        nsAutoPtr<nsConnectionEntry> &ent,
-        void *aArg);
-
     // Read Timeout Tick handlers
     void TimeoutTick();
-    static PLDHashOperator TimeoutTickCB(const nsACString &key,
-                                         nsAutoPtr<nsConnectionEntry> &ent,
-                                         void *closure);
 
     // For diagnostics
     void OnMsgPrintDiagnostics(int32_t, ARefBase *);
-    static PLDHashOperator PrintDiagnosticsCB(const nsACString &key,
-                                              nsAutoPtr<nsConnectionEntry> &ent,
-                                              void *closure);
+
     nsCString mLogData;
 };
 

@@ -21,18 +21,16 @@ public:
     // This function is used by the NVPR PathProcessor to add a varying directly into the fragment
     // shader since there is no vertex shader.
     VaryingHandle addPathProcessingVarying(const char* name, GrGLSLVertToFrag*,
-                                       GrSLPrecision fsPrecision = kDefault_GrSLPrecision);
+                                           GrSLPrecision fsPrecision = kDefault_GrSLPrecision);
 
 private:
-    typedef GrGLProgramDataManager::VaryingInfo VaryingInfo;
-    typedef GrGLProgramDataManager::VaryingInfoArray VaryingInfoArray;
+    void onFinalize() override;
 
-    VaryingInfoArray fPathProcVaryingInfos;
+    GrGLProgramDataManager::VaryingInfoArray fPathProcVaryingInfos;
 
     friend class GrGLProgramBuilder;
 
-    typedef GrGLSLVaryingHandler INHERITED; 
+    typedef GrGLSLVaryingHandler INHERITED;
 };
 
 #endif
-

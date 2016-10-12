@@ -23,9 +23,11 @@ public interface PanZoomTarget {
     /** This triggers an (asynchronous) viewport update/redraw. */
     public void forceRedraw(DisplayPortMetrics displayPort);
 
+    public boolean isGeckoReady();
     public boolean post(Runnable action);
     public void postRenderTask(RenderTask task);
     public void removeRenderTask(RenderTask task);
     public Object getLock();
     public PointF convertViewPointToLayerPoint(PointF viewPoint);
+    public void setScrollingRootContent(boolean isRootContent);
 }

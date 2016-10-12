@@ -131,6 +131,9 @@ public:
   bool Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat);
   uint32_t GetByteSize() const;
 
+  // This function will get an image for a surface, it may adjust the source
+  // transform for any transformation of the resulting image relative to the
+  // oritingal SourceSurface.
   already_AddRefed<ID2D1Image> GetImageForSurface(SourceSurface *aSurface, Matrix &aSourceTransform,
                                               ExtendMode aExtendMode, const IntRect* aSourceRect = nullptr);
 
@@ -164,6 +167,7 @@ private:
   // This function will mark the surface as changing, and make sure any
   // copy-on-write snapshots are notified.
   void MarkChanged();
+  bool ShouldClipTemporarySurfaceDrawing(CompositionOp aOp, const Pattern& aPattern, bool aClipIsComplex);
   void PrepareForDrawing(CompositionOp aOp, const Pattern &aPattern);
   void FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern);
   void FlushTransformToDC() {
@@ -266,7 +270,7 @@ private:
   // A list of targets which have this object in their mDependentTargets set
   TargetSet mDependingOnTargets;
 
-  uint32_t mPushedLayersSincePurge;
+  uint32_t mUsedCommandListsSincePurge;
 
   static ID2D1Factory1 *mFactory;
   static IDWriteFactory *mDWriteFactory;

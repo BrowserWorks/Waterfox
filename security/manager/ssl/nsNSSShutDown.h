@@ -10,11 +10,12 @@
 #include "PLDHashTable.h"
 #include "mozilla/CondVar.h"
 #include "mozilla/Mutex.h"
+#include "mozilla/StaticMutex.h"
 
 class nsNSSShutDownObject;
 class nsOnPK11LogoutCancelObject;
 
-// Singleton, owner by nsNSSShutDownList
+// Singleton, owned by nsNSSShutDownList
 class nsNSSActivityState
 {
 public:
@@ -62,10 +63,8 @@ public:
 class nsNSSShutDownList
 {
 public:
-  ~nsNSSShutDownList();
+  static void shutdown();
 
-  static nsNSSShutDownList *construct();
-  
   // track instances that support early cleanup
   static void remember(nsNSSShutDownObject *o);
   static void forget(nsNSSShutDownObject *o);
@@ -76,23 +75,23 @@ public:
   static void forget(nsOnPK11LogoutCancelObject *o);
 
   // Do the "early cleanup", if possible.
-  nsresult evaporateAllNSSResources();
+  static nsresult evaporateAllNSSResources();
 
   // PSM has been asked to log out of a token.
   // Notify all registered instances that want to react to that event.
-  nsresult doPK11Logout();
-  
-  static nsNSSActivityState *getActivityState()
-  {
-    return singleton ? &singleton->mActivityState : nullptr;
-  }
-  
+  static nsresult doPK11Logout();
+
+  // Signal entering/leaving a scope where shutting down NSS is prohibited.
+  static void enterActivityState();
+  static void leaveActivityState();
+
 private:
+  static bool construct(const mozilla::StaticMutexAutoLock& /*proofOfLock*/);
+
   nsNSSShutDownList();
+  ~nsNSSShutDownList();
 
 protected:
-  mozilla::Mutex mListLock;
-  static nsNSSShutDownList *singleton;
   PLDHashTable mObjects;
   PLDHashTable mPK11LogoutCancelObjects;
   nsNSSActivityState mActivityState;
@@ -128,6 +127,22 @@ protected:
   shutdown(calledFromObject). The second call will deregister with
   the tracking list, to ensure no additional attempt to free the resources
   will be made.
+
+  ----------------------------------------------------------------------------
+  IMPORTANT NOTE REGARDING CLASSES THAT IMPLEMENT nsNSSShutDownObject BUT DO
+  NOT DIRECTLY HOLD NSS RESOURCES:
+  ----------------------------------------------------------------------------
+  Currently, classes that do not hold NSS resources but do call NSS functions
+  inherit from nsNSSShutDownObject (and use the lock/isAlreadyShutDown
+  mechanism) as a way of ensuring it is safe to call those functions. Because
+  these classes do not hold any resources, however, it is tempting to skip the
+  destructor component of this interface. This MUST NOT be done, because
+  if an object of such a class is destructed before the nsNSSShutDownList
+  processes all of its entries, this essentially causes a use-after-free when
+  nsNSSShutDownList reaches the entry that has been destroyed. The safe way to
+  do this is to implement the destructor as usual but omit the call to
+  destructorSafeDestroyNSSReference() as it is unnecessary and probably isn't
+  defined for that class.
 
   destructorSafeDestroyNSSReference() does not need to acquire an
   nsNSSShutDownPreventionLock or check isAlreadyShutDown() as long as it

@@ -117,14 +117,6 @@ class SyntaxParseHandler
         // yields |b| each time it's resumed.
         NodeUnparenthesizedCommaExpr,
 
-        // Yield expressions currently (but not in ES6 -- a SpiderMonkey bug to
-        // fix) must generally be parenthesized.  (See the uses of
-        // isUnparenthesizedYieldExpression in Parser.cpp for the rare
-        // exceptions.)  Thus we need this to treat |yield 1, 2;| as a syntax
-        // error and |(yield 1), 2;| as a comma expression that will yield 1,
-        // then evaluate to 2.
-        NodeUnparenthesizedYieldExpr,
-
         // Assignment expressions in condition contexts could be typos for
         // equality checks.  (Think |if (x = y)| versus |if (x == y)|.)  Thus
         // we need this to treat |if (x = y)| as a possible typo and
@@ -221,9 +213,7 @@ class SyntaxParseHandler
         return NodeGeneric;
     }
 
-    bool addToCallSiteObject(Node callSiteObj, Node rawNode, Node cookedNode) {
-        return true;
-    }
+    void addToCallSiteObject(Node callSiteObj, Node rawNode, Node cookedNode) {}
 
     Node newThisLiteral(const TokenPos& pos, Node thisName) { return NodeGeneric; }
     Node newNullLiteral(const TokenPos& pos) { return NodeGeneric; }
@@ -269,8 +259,8 @@ class SyntaxParseHandler
 
     Node newArrayComprehension(Node body, const TokenPos& pos) { return NodeGeneric; }
     Node newArrayLiteral(uint32_t begin) { return NodeUnparenthesizedArray; }
-    bool addElision(Node literal, const TokenPos& pos) { return true; }
-    bool addSpreadElement(Node literal, uint32_t begin, Node inner) { return true; }
+    MOZ_MUST_USE bool addElision(Node literal, const TokenPos& pos) { return true; }
+    MOZ_MUST_USE bool addSpreadElement(Node literal, uint32_t begin, Node inner) { return true; }
     void addArrayElement(Node literal, Node element) { }
 
     Node newCall() { return NodeFunctionCall; }
@@ -283,12 +273,12 @@ class SyntaxParseHandler
     Node newPosHolder(const TokenPos& pos) { return NodeGeneric; }
     Node newSuperBase(Node thisName, const TokenPos& pos) { return NodeSuperBase; }
 
-    bool addPrototypeMutation(Node literal, uint32_t begin, Node expr) { return true; }
-    bool addPropertyDefinition(Node literal, Node name, Node expr) { return true; }
-    bool addShorthand(Node literal, Node name, Node expr) { return true; }
-    bool addObjectMethodDefinition(Node literal, Node name, Node fn, JSOp op) { return true; }
-    bool addClassMethodDefinition(Node literal, Node name, Node fn, JSOp op, bool isStatic) { return true; }
-    Node newYieldExpression(uint32_t begin, Node value, Node gen) { return NodeUnparenthesizedYieldExpr; }
+    MOZ_MUST_USE bool addPrototypeMutation(Node literal, uint32_t begin, Node expr) { return true; }
+    MOZ_MUST_USE bool addPropertyDefinition(Node literal, Node name, Node expr) { return true; }
+    MOZ_MUST_USE bool addShorthand(Node literal, Node name, Node expr) { return true; }
+    MOZ_MUST_USE bool addObjectMethodDefinition(Node literal, Node name, Node fn, JSOp op) { return true; }
+    MOZ_MUST_USE bool addClassMethodDefinition(Node literal, Node name, Node fn, JSOp op, bool isStatic) { return true; }
+    Node newYieldExpression(uint32_t begin, Node value, Node gen) { return NodeGeneric; }
     Node newYieldStarExpression(uint32_t begin, Node value, Node gen) { return NodeGeneric; }
 
     // Statements
@@ -296,7 +286,7 @@ class SyntaxParseHandler
     Node newStatementList(unsigned blockid, const TokenPos& pos) { return NodeGeneric; }
     void addStatementToList(Node list, Node stmt, ParseContext<SyntaxParseHandler>* pc) {}
     void addCaseStatementToList(Node list, Node stmt, ParseContext<SyntaxParseHandler>* pc) {}
-    bool prependInitialYield(Node stmtList, Node gen) { return true; }
+    MOZ_MUST_USE bool prependInitialYield(Node stmtList, Node gen) { return true; }
     Node newEmptyStatement(const TokenPos& pos) { return NodeEmptyStatement; }
 
     Node newSetThis(Node thisName, Node value) { return value; }
@@ -331,10 +321,10 @@ class SyntaxParseHandler
 
     Node newPropertyByValue(Node pn, Node kid, uint32_t end) { return NodeElement; }
 
-    bool addCatchBlock(Node catchList, Node letBlock,
-                       Node catchName, Node catchGuard, Node catchBody) { return true; }
+    MOZ_MUST_USE bool addCatchBlock(Node catchList, Node letBlock, Node catchName,
+                                    Node catchGuard, Node catchBody) { return true; }
 
-    bool setLastFunctionArgumentDefault(Node funcpn, Node pn) { return true; }
+    MOZ_MUST_USE bool setLastFunctionArgumentDefault(Node funcpn, Node pn) { return true; }
     void setLastFunctionArgumentDestructuring(Node funcpn, Node pn) {}
     Node newFunctionDefinition() { return NodeFunctionDefinition; }
     void setFunctionBody(Node pn, Node kid) {}
@@ -374,7 +364,7 @@ class SyntaxParseHandler
         return NodeGeneric;
     }
 
-    bool finishInitializerAssignment(Node pn, Node init) { return true; }
+    MOZ_MUST_USE bool finishInitializerAssignment(Node pn, Node init) { return true; }
     void setLexicalDeclarationOp(Node pn, JSOp op) {}
 
     void setBeginPosition(Node pn, Node oth) {}
@@ -483,10 +473,6 @@ class SyntaxParseHandler
         return newBinary(kind, lhs, rhs, op);
     }
 
-    bool isUnparenthesizedYieldExpression(Node node) {
-        return node == NodeUnparenthesizedYieldExpr;
-    }
-
     bool isUnparenthesizedCommaExpression(Node node) {
         return node == NodeUnparenthesizedCommaExpr;
     }
@@ -514,7 +500,7 @@ class SyntaxParseHandler
     void setBlockId(Node pn, unsigned blockid) {}
     void setFlag(Node pn, unsigned flag) {}
     void setListFlag(Node pn, unsigned flag) {}
-    MOZ_WARN_UNUSED_RESULT Node parenthesize(Node node) {
+    MOZ_MUST_USE Node parenthesize(Node node) {
         // A number of nodes have different behavior upon parenthesization, but
         // only in some circumstances.  Convert these nodes to special
         // parenthesized forms.
@@ -534,7 +520,6 @@ class SyntaxParseHandler
         // them to a generic node.
         if (node == NodeUnparenthesizedString ||
             node == NodeUnparenthesizedCommaExpr ||
-            node == NodeUnparenthesizedYieldExpr ||
             node == NodeUnparenthesizedAssignment)
         {
             return NodeGeneric;
@@ -544,7 +529,7 @@ class SyntaxParseHandler
         // to the unparenthesized form: return |node| unchanged.
         return node;
     }
-    MOZ_WARN_UNUSED_RESULT Node setLikelyIIFE(Node pn) {
+    MOZ_MUST_USE Node setLikelyIIFE(Node pn) {
         return pn; // Remain in syntax-parse mode.
     }
     void setPrologue(Node pn) {}

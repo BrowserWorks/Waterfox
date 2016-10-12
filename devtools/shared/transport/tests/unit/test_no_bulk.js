@@ -10,7 +10,7 @@ function run_test() {
   // Allow incoming connections.
   DebuggerServer.init();
 
-  add_task(function*() {
+  add_task(function* () {
     yield test_bulk_send_error(socket_transport);
     yield test_bulk_send_error(local_transport);
     DebuggerServer.destroy();
@@ -19,25 +19,22 @@ function run_test() {
   run_next_test();
 }
 
-/*** Tests ***/
+/** * Tests ***/
 
-var test_bulk_send_error = Task.async(function*(transportFactory) {
+var test_bulk_send_error = Task.async(function* (transportFactory) {
   let deferred = promise.defer();
   let transport = yield transportFactory();
 
   let client = new DebuggerClient(transport);
-  client.connect((app, traits) => {
+  return client.connect().then(([app, traits]) => {
     do_check_false(traits.bulk);
 
     try {
       client.startBulkRequest();
       do_throw(new Error("Can't use bulk since server doesn't support it"));
-    } catch(e) {
+    } catch (e) {
       do_check_true(true);
     }
 
-    deferred.resolve();
   });
-
-  return deferred.promise;
 });

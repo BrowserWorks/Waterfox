@@ -127,7 +127,7 @@ public:
   }
   void GetReferrerPolicy(nsAString& aReferrer)
   {
-    GetHTMLAttr(nsGkAtoms::referrerpolicy, aReferrer);
+    GetEnumAttr(nsGkAtoms::referrerpolicy, EmptyCString().get(), aReferrer);
   }
   nsDOMTokenList* RelList();
   void GetHreflang(DOMString& aValue)
@@ -227,11 +227,11 @@ public:
     GetHref(aResult);
   }
 
+  static DOMTokenListSupportedToken sSupportedRelValues[];
+
 protected:
   virtual ~HTMLAnchorElement();
 
-  virtual void GetItemValueText(DOMString& text) override;
-  virtual void SetItemValueText(const nsAString& text) override;
   virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
   RefPtr<nsDOMTokenList > mRelList;
 };

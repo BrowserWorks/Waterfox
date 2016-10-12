@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Tests that anonymous functions appear in the stack frame list with either
@@ -11,7 +13,11 @@ const TAB_URL = EXAMPLE_URL + "doc_function-display-name.html";
 var gTab, gPanel, gDebugger;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -21,7 +27,10 @@ function test() {
 }
 
 function testAnonCall() {
-  waitForSourceAndCaretAndScopes(gPanel, ".html", 15).then(() => {
+  let onCaretUpdated = waitForCaretUpdated(gPanel, 15);
+  let onScopes = waitForDebuggerEvents(gPanel, gDebugger.EVENTS.FETCHED_SCOPES);
+  callInTab(gTab, "evalCall");
+  promise.all([onCaretUpdated, onScopes]).then(() => {
     ok(isCaretPos(gPanel, 15),
       "The source editor caret position was incorrect.");
     is(gDebugger.gThreadClient.state, "paused",
@@ -33,8 +42,6 @@ function testAnonCall() {
 
     testInferredName();
   });
-
-  callInTab(gTab, "evalCall");
 }
 
 function testInferredName() {
@@ -54,7 +61,7 @@ function testInferredName() {
   gDebugger.gThreadClient.resume();
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

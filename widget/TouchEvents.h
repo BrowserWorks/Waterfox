@@ -10,7 +10,7 @@
 
 #include "mozilla/dom/Touch.h"
 #include "mozilla/MouseEvents.h"
-#include "nsAutoPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsIDOMSimpleGestureEvent.h"
 #include "nsTArray.h"
 
@@ -39,8 +39,8 @@ public:
   WidgetGestureNotifyEvent(bool aIsTrusted, EventMessage aMessage,
                            nsIWidget *aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, eGestureNotifyEventClass)
-    , panDirection(ePanNone)
-    , displayPanFeedback(false)
+    , mPanDirection(ePanNone)
+    , mDisplayPanFeedback(false)
   {
   }
 
@@ -61,7 +61,8 @@ public:
     return result;
   }
 
-  enum ePanDirection
+  typedef int8_t PanDirectionType;
+  enum PanDirection : PanDirectionType
   {
     ePanNone,
     ePanVertical,
@@ -69,21 +70,21 @@ public:
     ePanBoth
   };
 
-  ePanDirection panDirection;
-  bool displayPanFeedback;
+  PanDirection mPanDirection;
+  bool mDisplayPanFeedback;
 
   void AssignGestureNotifyEventData(const WidgetGestureNotifyEvent& aEvent,
                                     bool aCopyTargets)
   {
     AssignGUIEventData(aEvent, aCopyTargets);
 
-    panDirection = aEvent.panDirection;
-    displayPanFeedback = aEvent.displayPanFeedback;
+    mPanDirection = aEvent.mPanDirection;
+    mDisplayPanFeedback = aEvent.mDisplayPanFeedback;
   }
 };
 
 /******************************************************************************
- * mozilla::WidgetTouchEvent
+ * mozilla::WidgetSimpleGestureEvent
  ******************************************************************************/
 
 class WidgetSimpleGestureEvent : public WidgetMouseEventBase
@@ -98,20 +99,20 @@ public:
                            nsIWidget* aWidget)
     : WidgetMouseEventBase(aIsTrusted, aMessage, aWidget,
                            eSimpleGestureEventClass)
-    , allowedDirections(0)
-    , direction(0)
-    , delta(0.0)
-    , clickCount(0)
+    , mAllowedDirections(0)
+    , mDirection(0)
+    , mClickCount(0)
+    , mDelta(0.0)
   {
   }
 
   WidgetSimpleGestureEvent(const WidgetSimpleGestureEvent& aOther)
-    : WidgetMouseEventBase(aOther.mFlags.mIsTrusted, aOther.mMessage,
-                           aOther.widget, eSimpleGestureEventClass)
-    , allowedDirections(aOther.allowedDirections)
-    , direction(aOther.direction)
-    , delta(aOther.delta)
-    , clickCount(0)
+    : WidgetMouseEventBase(aOther.IsTrusted(), aOther.mMessage,
+                           aOther.mWidget, eSimpleGestureEventClass)
+    , mAllowedDirections(aOther.mAllowedDirections)
+    , mDirection(aOther.mDirection)
+    , mClickCount(0)
+    , mDelta(aOther.mDelta)
   {
   }
 
@@ -128,13 +129,13 @@ public:
   }
 
   // See nsIDOMSimpleGestureEvent for values
-  uint32_t allowedDirections;
+  uint32_t mAllowedDirections;
   // See nsIDOMSimpleGestureEvent for values
-  uint32_t direction;
-  // Delta for magnify and rotate events
-  double delta;
+  uint32_t mDirection;
   // The number of taps for tap events
-  uint32_t clickCount;
+  uint32_t mClickCount;
+  // Delta for magnify and rotate events
+  double mDelta;
 
   // XXX Not tested by test_assign_event_data.html
   void AssignSimpleGestureEventData(const WidgetSimpleGestureEvent& aEvent,
@@ -142,10 +143,10 @@ public:
   {
     AssignMouseEventBaseData(aEvent, aCopyTargets);
 
-    // allowedDirections isn't copied
-    direction = aEvent.direction;
-    delta = aEvent.delta;
-    clickCount = aEvent.clickCount;
+    // mAllowedDirections isn't copied
+    mDirection = aEvent.mDirection;
+    mDelta = aEvent.mDelta;
+    mClickCount = aEvent.mClickCount;
   }
 };
 
@@ -157,25 +158,26 @@ class WidgetTouchEvent : public WidgetInputEvent
 {
 public:
   typedef nsTArray<RefPtr<mozilla::dom::Touch>> TouchArray;
-  typedef nsAutoTArray<RefPtr<mozilla::dom::Touch>, 10> AutoTouchArray;
+  typedef AutoTArray<RefPtr<mozilla::dom::Touch>, 10> AutoTouchArray;
 
   virtual WidgetTouchEvent* AsTouchEvent() override { return this; }
 
   WidgetTouchEvent()
   {
+    MOZ_COUNT_CTOR(WidgetTouchEvent);
   }
 
   WidgetTouchEvent(const WidgetTouchEvent& aOther)
-    : WidgetInputEvent(aOther.mFlags.mIsTrusted, aOther.mMessage, aOther.widget,
+    : WidgetInputEvent(aOther.IsTrusted(), aOther.mMessage, aOther.mWidget,
                        eTouchEventClass)
   {
-    modifiers = aOther.modifiers;
-    time = aOther.time;
-    timeStamp = aOther.timeStamp;
-    touches.AppendElements(aOther.touches);
+    MOZ_COUNT_CTOR(WidgetTouchEvent);
+    mModifiers = aOther.mModifiers;
+    mTime = aOther.mTime;
+    mTimeStamp = aOther.mTimeStamp;
+    mTouches.AppendElements(aOther.mTouches);
     mFlags.mCancelable = mMessage != eTouchCancel;
     mFlags.mHandledByAPZ = aOther.mFlags.mHandledByAPZ;
-    MOZ_COUNT_CTOR(WidgetTouchEvent);
   }
 
   WidgetTouchEvent(bool aIsTrusted, EventMessage aMessage, nsIWidget* aWidget)
@@ -201,15 +203,15 @@ public:
     return result;
   }
 
-  TouchArray touches;
+  TouchArray mTouches;
 
   void AssignTouchEventData(const WidgetTouchEvent& aEvent, bool aCopyTargets)
   {
     AssignInputEventData(aEvent, aCopyTargets);
 
     // Assign*EventData() assume that they're called only new instance.
-    MOZ_ASSERT(touches.IsEmpty());
-    touches.AppendElements(aEvent.touches);
+    MOZ_ASSERT(mTouches.IsEmpty());
+    mTouches.AppendElements(aEvent.mTouches);
   }
 };
 

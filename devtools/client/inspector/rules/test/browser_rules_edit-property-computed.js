@@ -16,7 +16,7 @@ const TEST_URI = `
   <div id="testid">Styled Node</div>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode("#testid", inspector);
@@ -36,6 +36,7 @@ function* editAndCheck(view) {
 
   let onPropertyChange = waitForComputedStyleProperty("#testid", null,
     "padding-top", newPaddingValue);
+  let onRefreshAfterPreview = once(view, "ruleview-changed");
 
   info("Entering a new value");
   EventUtils.sendString(newPaddingValue, view.styleWindow);
@@ -43,6 +44,9 @@ function* editAndCheck(view) {
   info("Waiting for the throttled previewValue to apply the " +
     "changes to document");
   yield onPropertyChange;
+
+  info("Waiting for ruleview-refreshed after previewValue was applied.");
+  yield onRefreshAfterPreview;
 
   let onBlur = once(editor.input, "blur");
 

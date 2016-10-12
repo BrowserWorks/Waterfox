@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Test that Promises get their internal state added as psuedo properties.
@@ -8,8 +10,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_promise.html";
 
 var test = Task.async(function* () {
-  const [tab,, panel] = yield initDebugger(TAB_URL);
-  yield ensureSourceIs(panel, "doc_promise.html", true);
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  const [tab,, panel] = yield initDebugger(TAB_URL, options);
 
   const scopes = waitForCaretAndScopes(panel, 21);
   callInTab(tab, "doPause");

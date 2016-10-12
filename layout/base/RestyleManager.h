@@ -18,7 +18,6 @@
 #include "nsPresContext.h"
 #include "nsRefreshDriver.h"
 #include "nsRefPtrHashtable.h"
-#include "nsCSSPseudoElements.h"
 #include "nsTransitionManager.h"
 
 class nsIFrame;
@@ -26,6 +25,7 @@ class nsStyleChangeList;
 struct TreeMatchContext;
 
 namespace mozilla {
+  enum class CSSPseudoElementType : uint8_t;
   class EventStates;
   struct UndisplayedNode;
 
@@ -108,7 +108,14 @@ public:
   // This is normally performed automatically by ProcessPendingRestyles
   // but it is also called when we have out-of-band changes to animations
   // such as changes made through the Web Animations API.
-  void IncrementAnimationGeneration() { ++mAnimationGeneration; }
+  void IncrementAnimationGeneration() {
+    // We update the animation generation at start of each call to
+    // ProcessPendingRestyles so we should ignore any subsequent (redundant)
+    // calls that occur while we are still processing restyles.
+    if (!mIsProcessingRestyles) {
+      ++mAnimationGeneration;
+    }
+  }
 
   // Whether rule matching should skip styles associated with animation
   bool SkipAnimationRules() const { return mSkipAnimationRules; }
@@ -191,29 +198,29 @@ public:
 
     void Put(nsIContent* aContent, nsStyleContext* aStyleContext) {
       MOZ_ASSERT(aContent);
-      nsCSSPseudoElements::Type pseudoType = aStyleContext->GetPseudoType();
-      if (pseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement) {
+      CSSPseudoElementType pseudoType = aStyleContext->GetPseudoType();
+      if (pseudoType == CSSPseudoElementType::NotPseudo) {
         mElementContexts.Put(aContent, aStyleContext);
-      } else if (pseudoType == nsCSSPseudoElements::ePseudo_before) {
+      } else if (pseudoType == CSSPseudoElementType::before) {
         MOZ_ASSERT(aContent->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentbefore);
         mBeforePseudoContexts.Put(aContent->GetParent(), aStyleContext);
-      } else if (pseudoType == nsCSSPseudoElements::ePseudo_after) {
+      } else if (pseudoType == CSSPseudoElementType::after) {
         MOZ_ASSERT(aContent->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentafter);
         mAfterPseudoContexts.Put(aContent->GetParent(), aStyleContext);
       }
     }
 
     nsStyleContext* Get(nsIContent* aContent,
-                        nsCSSPseudoElements::Type aPseudoType) {
+                        CSSPseudoElementType aPseudoType) {
       MOZ_ASSERT(aContent);
-      if (aPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement) {
+      if (aPseudoType == CSSPseudoElementType::NotPseudo) {
         return mElementContexts.GetWeak(aContent);
       }
-      if (aPseudoType == nsCSSPseudoElements::ePseudo_before) {
+      if (aPseudoType == CSSPseudoElementType::before) {
         MOZ_ASSERT(aContent->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentbefore);
         return mBeforePseudoContexts.GetWeak(aContent->GetParent());
       }
-      if (aPseudoType == nsCSSPseudoElements::ePseudo_after) {
+      if (aPseudoType == CSSPseudoElementType::after) {
         MOZ_ASSERT(aContent->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentafter);
         return mAfterPseudoContexts.GetWeak(aContent->GetParent());
       }
@@ -250,8 +257,8 @@ public:
                         nsStyleContext* aOldStyleContext,
                         RefPtr<nsStyleContext>* aNewStyleContext /* inout */);
 
-  // AnimationsWithDestroyedFrame is used to stop animations on elements that
-  // have no frame at the end of the restyling process.
+  // AnimationsWithDestroyedFrame is used to stop animations and transitions
+  // on elements that have no frame at the end of the restyling process.
   // It only lives during the restyling process.
   class MOZ_STACK_CLASS AnimationsWithDestroyedFrame final {
   public:
@@ -260,22 +267,19 @@ public:
     // object.  (This is generally easy since the caller is typically a
     // method of RestyleManager.)
     explicit AnimationsWithDestroyedFrame(RestyleManager* aRestyleManager);
-    ~AnimationsWithDestroyedFrame()
-    {
-    }
 
     // This method takes the content node for the generated content for
-    // animation on ::before and ::after, rather than the content node for
-    // the real element.
+    // animation/transition on ::before and ::after, rather than the
+    // content node for the real element.
     void Put(nsIContent* aContent, nsStyleContext* aStyleContext) {
       MOZ_ASSERT(aContent);
-      nsCSSPseudoElements::Type pseudoType = aStyleContext->GetPseudoType();
-      if (pseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement) {
+      CSSPseudoElementType pseudoType = aStyleContext->GetPseudoType();
+      if (pseudoType == CSSPseudoElementType::NotPseudo) {
         mContents.AppendElement(aContent);
-      } else if (pseudoType == nsCSSPseudoElements::ePseudo_before) {
+      } else if (pseudoType == CSSPseudoElementType::before) {
         MOZ_ASSERT(aContent->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentbefore);
         mBeforeContents.AppendElement(aContent->GetParent());
-      } else if (pseudoType == nsCSSPseudoElements::ePseudo_after) {
+      } else if (pseudoType == CSSPseudoElementType::after) {
         MOZ_ASSERT(aContent->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentafter);
         mAfterContents.AppendElement(aContent->GetParent());
       }
@@ -285,13 +289,13 @@ public:
 
   private:
     void StopAnimationsWithoutFrame(nsTArray<RefPtr<nsIContent>>& aArray,
-                                    nsCSSPseudoElements::Type aPseudoType);
+                                    CSSPseudoElementType aPseudoType);
 
     RestyleManager* mRestyleManager;
     AutoRestore<AnimationsWithDestroyedFrame*> mRestorePointer;
 
     // Below three arrays might include elements that have already had their
-    // animations stopped.
+    // animations or transitions stopped.
     //
     // mBeforeContents and mAfterContents hold the real element rather than
     // the content node for the generated content (which might change during
@@ -442,6 +446,10 @@ public:
   void PostRebuildAllStyleDataEvent(nsChangeHint aExtraHint,
                                     nsRestyleHint aRestyleHint);
 
+#ifdef DEBUG
+  bool InRebuildAllStyleData() const { return mInRebuildAllStyleData; }
+#endif
+
 #ifdef RESTYLE_LOGGING
   /**
    * Returns whether a restyle event currently being processed by this
@@ -484,6 +492,8 @@ public:
 #endif
 
 private:
+  inline nsStyleSet* StyleSet() const;
+
   /* aMinHint is the minimal change that should be made to the element */
   // XXXbz do we really need the aPrimaryFrame argument here?
   void RestyleElement(Element*        aElement,
@@ -559,9 +569,11 @@ private:
 
   RestyleTracker mPendingRestyles;
 
-#ifdef DEBUG
+  // Are we currently in the middle of a call to ProcessRestyles?
+  // This flag is used both as a debugging aid to assert that we are not
+  // performing nested calls to ProcessPendingRestyles, as well as to ignore
+  // redundant calls to IncrementAnimationGeneration.
   bool mIsProcessingRestyles;
-#endif
 
 #ifdef RESTYLE_LOGGING
   int32_t mLoggingDepth;
@@ -678,6 +690,8 @@ public:
 #endif
 
 private:
+  inline nsStyleSet* StyleSet() const;
+
   // Enum for the result of RestyleSelf, which indicates whether the
   // restyle procedure should continue to the children, and how.
   //
@@ -792,7 +806,7 @@ private:
                                const uint8_t    aDisplay);
   void MaybeReframeForBeforePseudo();
   void MaybeReframeForAfterPseudo(nsIFrame* aFrame);
-  void MaybeReframeForPseudo(nsCSSPseudoElements::Type aPseudoType,
+  void MaybeReframeForPseudo(CSSPseudoElementType aPseudoType,
                              nsIFrame* aGenConParentFrame,
                              nsIFrame* aFrame,
                              nsIContent* aContent,
@@ -801,7 +815,7 @@ private:
   bool MustReframeForBeforePseudo();
   bool MustReframeForAfterPseudo(nsIFrame* aFrame);
 #endif
-  bool MustReframeForPseudo(nsCSSPseudoElements::Type aPseudoType,
+  bool MustReframeForPseudo(CSSPseudoElementType aPseudoType,
                             nsIFrame* aGenConParentFrame,
                             nsIFrame* aFrame,
                             nsIContent* aContent,
@@ -905,7 +919,7 @@ private:
  * (and further ancestors) may be display:contents nodes which have
  * not yet been pushed onto TreeMatchContext.
  */
-class MOZ_STACK_CLASS AutoDisplayContentsAncestorPusher final
+class MOZ_RAII AutoDisplayContentsAncestorPusher final
 {
  public:
   typedef mozilla::dom::Element Element;
@@ -917,7 +931,7 @@ class MOZ_STACK_CLASS AutoDisplayContentsAncestorPusher final
 private:
   TreeMatchContext& mTreeMatchContext;
   nsPresContext* const mPresContext;
-  nsAutoTArray<mozilla::dom::Element*, 4> mAncestors;
+  AutoTArray<mozilla::dom::Element*, 4> mAncestors;
 };
 
 } // namespace mozilla

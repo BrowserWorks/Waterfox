@@ -1,8 +1,8 @@
 $inherits:
-  from: 'tasks/builds/sm_base.yml'
+  from: 'tasks/builds/sm_variant_base.yml'
   variables:
     build_name: 'sm-rootanalysis'
-    build_type: 'opt'
+    build_type: 'debug'
 task:
   payload:
     env:

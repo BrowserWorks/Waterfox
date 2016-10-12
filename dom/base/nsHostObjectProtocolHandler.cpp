@@ -7,11 +7,14 @@
 #include "nsHostObjectProtocolHandler.h"
 
 #include "DOMMediaStream.h"
+#include "mozilla/dom/Exceptions.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/MediaSource.h"
 #include "mozilla/LoadInfo.h"
+#include "mozilla/ModuleUtils.h"
 #include "mozilla/Preferences.h"
 #include "nsClassHashtable.h"
+#include "nsContentUtils.h"
 #include "nsError.h"
 #include "nsHostObjectURI.h"
 #include "nsIMemoryReporter.h"
@@ -21,7 +24,7 @@
 
 using mozilla::dom::BlobImpl;
 using mozilla::ErrorResult;
-using mozilla::LoadInfo;
+using mozilla::net::LoadInfo;
 
 // -----------------------------------------------------------------------
 // Hash table
@@ -200,11 +203,7 @@ class BlobURLsReporter final : public nsIMemoryReporter
       return;
     }
 
-    nsresult rv;
-    nsIXPConnect* xpc = nsContentUtils::XPConnect();
-    nsCOMPtr<nsIStackFrame> frame;
-    rv = xpc->GetCurrentJSStack(getter_AddRefs(frame));
-    NS_ENSURE_SUCCESS_VOID(rv);
+    nsCOMPtr<nsIStackFrame> frame = dom::GetCurrentJSStack(maxFrames);
 
     nsAutoCString origin;
     nsCOMPtr<nsIURI> principalURI;
@@ -213,12 +212,17 @@ class BlobURLsReporter final : public nsIMemoryReporter
       principalURI->GetPrePath(origin);
     }
 
-    for (uint32_t i = 0; i < maxFrames && frame; ++i) {
+    // If we got a frame, we better have a current JSContext.  This is cheating
+    // a bit; ideally we'd have our caller pass in a JSContext, or have
+    // GetCurrentJSStack() hand out the JSContext it found.
+    JSContext* cx = frame ? nsContentUtils::GetCurrentJSContext() : nullptr;
+
+    for (uint32_t i = 0; frame; ++i) {
       nsString fileNameUTF16;
       int32_t lineNumber = 0;
 
-      frame->GetFilename(fileNameUTF16);
-      frame->GetLineNumber(&lineNumber);
+      frame->GetFilename(cx, fileNameUTF16);
+      frame->GetLineNumber(cx, &lineNumber);
 
       if (!fileNameUTF16.IsEmpty()) {
         NS_ConvertUTF16toUTF8 fileName(fileNameUTF16);
@@ -245,8 +249,10 @@ class BlobURLsReporter final : public nsIMemoryReporter
         stack += ")/";
       }
 
-      rv = frame->GetCaller(getter_AddRefs(frame));
+      nsCOMPtr<nsIStackFrame> caller;
+      nsresult rv = frame->GetCaller(cx, getter_AddRefs(caller));
       NS_ENSURE_SUCCESS_VOID(rv);
+      caller.swap(frame);
     }
   }
 
@@ -714,7 +720,7 @@ nsFontTableProtocolHandler::NewURI(const nsACString& aSpec,
     // fonttable: scheme.
     // If aSpec is a relative URI -other- than a bare #ref,
     // this will leave uri empty, and we'll return a failure code below.
-    uri = new nsSimpleURI();
+    uri = new mozilla::net::nsSimpleURI();
     uri->SetSpec(aSpec);
   }
 
@@ -743,3 +749,53 @@ NS_GetSourceForMediaSourceURI(nsIURI* aURI, mozilla::dom::MediaSource** aSource)
   source.forget(aSource);
   return NS_OK;
 }
+
+#define NS_BLOBPROTOCOLHANDLER_CID \
+{ 0xb43964aa, 0xa078, 0x44b2, \
+  { 0xb0, 0x6b, 0xfd, 0x4d, 0x1b, 0x17, 0x2e, 0x66 } }
+
+#define NS_MEDIASTREAMPROTOCOLHANDLER_CID \
+{ 0x27d1fa24, 0x2b73, 0x4db3, \
+  { 0xab, 0x48, 0xb9, 0x83, 0x83, 0x40, 0xe0, 0x81 } }
+
+#define NS_MEDIASOURCEPROTOCOLHANDLER_CID \
+{ 0x12ef31fc, 0xa8fb, 0x4661, \
+  { 0x9a, 0x63, 0xfb, 0x61, 0x04,0x5d, 0xb8, 0x61 } }
+
+#define NS_FONTTABLEPROTOCOLHANDLER_CID \
+{ 0x3fc8f04e, 0xd719, 0x43ca, \
+  { 0x9a, 0xd0, 0x18, 0xee, 0x32, 0x02, 0x11, 0xf2 } }
+
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsBlobProtocolHandler)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsMediaStreamProtocolHandler)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsMediaSourceProtocolHandler)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsFontTableProtocolHandler)
+
+NS_DEFINE_NAMED_CID(NS_BLOBPROTOCOLHANDLER_CID);
+NS_DEFINE_NAMED_CID(NS_MEDIASTREAMPROTOCOLHANDLER_CID);
+NS_DEFINE_NAMED_CID(NS_MEDIASOURCEPROTOCOLHANDLER_CID);
+NS_DEFINE_NAMED_CID(NS_FONTTABLEPROTOCOLHANDLER_CID);
+
+static const mozilla::Module::CIDEntry kHostObjectProtocolHandlerCIDs[] = {
+  { &kNS_BLOBPROTOCOLHANDLER_CID, false, nullptr, nsBlobProtocolHandlerConstructor },
+  { &kNS_MEDIASTREAMPROTOCOLHANDLER_CID, false, nullptr, nsMediaStreamProtocolHandlerConstructor },
+  { &kNS_MEDIASOURCEPROTOCOLHANDLER_CID, false, nullptr, nsMediaSourceProtocolHandlerConstructor },
+  { &kNS_FONTTABLEPROTOCOLHANDLER_CID, false, nullptr, nsFontTableProtocolHandlerConstructor },
+  { nullptr }
+};
+
+static const mozilla::Module::ContractIDEntry kHostObjectProtocolHandlerContracts[] = {
+  { NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX BLOBURI_SCHEME, &kNS_BLOBPROTOCOLHANDLER_CID },
+  { NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX MEDIASTREAMURI_SCHEME, &kNS_MEDIASTREAMPROTOCOLHANDLER_CID },
+  { NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX MEDIASOURCEURI_SCHEME, &kNS_MEDIASOURCEPROTOCOLHANDLER_CID },
+  { NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX FONTTABLEURI_SCHEME, &kNS_FONTTABLEPROTOCOLHANDLER_CID },
+  { nullptr }
+};
+
+static const mozilla::Module kHostObjectProtocolHandlerModule = {
+  mozilla::Module::kVersion,
+  kHostObjectProtocolHandlerCIDs,
+  kHostObjectProtocolHandlerContracts
+};
+
+NSMODULE_DEFN(HostObjectProtocolHandler) = &kHostObjectProtocolHandlerModule;

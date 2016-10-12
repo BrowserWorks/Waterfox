@@ -195,7 +195,7 @@ NS_IMPL_ISUPPORTS(CacheEntry,
                   CacheFileListener)
 
 CacheEntry::CacheEntry(const nsACString& aStorageID,
-                       nsIURI* aURI,
+                       const nsACString& aURI,
                        const nsACString& aEnhanceID,
                        bool aUseDisk,
                        bool aSkipSizeCheck,
@@ -220,9 +220,8 @@ CacheEntry::CacheEntry(const nsACString& aStorageID,
 , mWriter(nullptr)
 , mPredictedDataSize(0)
 , mUseCount(0)
-, mReleaseThread(NS_GetCurrentThread())
 {
-  MOZ_COUNT_CTOR(CacheEntry);
+  LOG(("CacheEntry::CacheEntry [this=%p]", this));
 
   mService = CacheStorageService::Self();
 
@@ -232,10 +231,7 @@ CacheEntry::CacheEntry(const nsACString& aStorageID,
 
 CacheEntry::~CacheEntry()
 {
-  ProxyRelease(mURI, mReleaseThread);
-
   LOG(("CacheEntry::~CacheEntry [this=%p]", this));
-  MOZ_COUNT_DTOR(CacheEntry);
 }
 
 char const * CacheEntry::StateString(uint32_t aState)
@@ -545,7 +541,6 @@ already_AddRefed<CacheEntryHandle> CacheEntry::ReopenTruncated(bool aMemoryOnly,
       mUseDisk && !aMemoryOnly,
       mSkipSizeCheck,
       mPinned,
-      true, // always create
       true, // truncate existing (this one)
       getter_AddRefs(handle));
 
@@ -669,10 +664,9 @@ bool CacheEntry::InvokeCallbacks(bool aReadOnly)
 
     if (NS_SUCCEEDED(rv) && !onCheckThread) {
       // Redispatch to the target thread
-      RefPtr<nsRunnableMethod<CacheEntry> > event =
-        NS_NewRunnableMethod(this, &CacheEntry::InvokeCallbacksLock);
-
-      rv = mCallbacks[i].mTargetThread->Dispatch(event, nsIEventTarget::DISPATCH_NORMAL);
+      rv = mCallbacks[i].mTargetThread->Dispatch(NewRunnableMethod(this,
+								   &CacheEntry::InvokeCallbacksLock),
+						 nsIEventTarget::DISPATCH_NORMAL);
       if (NS_SUCCEEDED(rv)) {
         LOG(("  re-dispatching to target thread"));
         return false;
@@ -929,6 +923,13 @@ void CacheEntry::OnHandleClosed(CacheEntryHandle const* aHandle)
 
   mozilla::MutexAutoLock lock(mLock);
 
+  if (IsDoomed() && mHandlesCount == 0 && NS_SUCCEEDED(mFileStatus)) {
+    // This entry is no longer referenced from outside and is doomed.
+    // Tell the file to kill the handle, i.e. bypass any I/O operations
+    // on it except removing the file.
+    mFile->Kill();
+  }
+
   if (mWriter != aHandle) {
     LOG(("  not the writer"));
     return;
@@ -1029,7 +1030,8 @@ NS_IMETHODIMP CacheEntry::GetPersistent(bool *aPersistToDisk)
 
 NS_IMETHODIMP CacheEntry::GetKey(nsACString & aKey)
 {
-  return mURI->GetAsciiSpec(aKey);
+  aKey.Assign(mURI);
+  return NS_OK;
 }
 
 NS_IMETHODIMP CacheEntry::GetFetchCount(int32_t *aFetchCount)
@@ -1072,13 +1074,12 @@ NS_IMETHODIMP CacheEntry::GetIsForcedValid(bool *aIsForcedValid)
   }
 
   nsAutoCString key;
-
-  nsresult rv = HashingKeyWithStorage(key);
+  nsresult rv = HashingKey(key);
   if (NS_FAILED(rv)) {
     return rv;
   }
 
-  *aIsForcedValid = CacheStorageService::Self()->IsForcedValidEntry(key);
+  *aIsForcedValid = CacheStorageService::Self()->IsForcedValidEntry(mStorageID, key);
   LOG(("CacheEntry::GetIsForcedValid [this=%p, IsForcedValid=%d]", this, *aIsForcedValid));
 
   return NS_OK;
@@ -1089,12 +1090,12 @@ NS_IMETHODIMP CacheEntry::ForceValidFor(uint32_t aSecondsToTheFuture)
   LOG(("CacheEntry::ForceValidFor [this=%p, aSecondsToTheFuture=%d]", this, aSecondsToTheFuture));
 
   nsAutoCString key;
-  nsresult rv = HashingKeyWithStorage(key);
+  nsresult rv = HashingKey(key);
   if (NS_FAILED(rv)) {
     return rv;
   }
 
-  CacheStorageService::Self()->ForceEntryValidFor(key, aSecondsToTheFuture);
+  CacheStorageService::Self()->ForceEntryValidFor(mStorageID, key, aSecondsToTheFuture);
 
   return NS_OK;
 }
@@ -1119,8 +1120,10 @@ NS_IMETHODIMP CacheEntry::OpenInputStream(int64_t offset, nsIInputStream * *_ret
 
   nsresult rv;
 
+  RefPtr<CacheEntryHandle> selfHandle = NewHandle();
+
   nsCOMPtr<nsIInputStream> stream;
-  rv = mFile->OpenInputStream(getter_AddRefs(stream));
+  rv = mFile->OpenInputStream(selfHandle, getter_AddRefs(stream));
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsISeekableStream> seekable =
@@ -1324,6 +1327,8 @@ NS_IMETHODIMP CacheEntry::AsyncDoom(nsICacheEntryDoomCallback *aCallback)
 
     if (mIsDoomed || mDoomCallback)
       return NS_ERROR_IN_PROGRESS; // to aggregate have DOOMING state
+
+    RemoveForcedValidity();
 
     mIsDoomed = true;
     mDoomCallback = aCallback;
@@ -1623,6 +1628,8 @@ void CacheEntry::DoomAlreadyRemoved()
 
   mozilla::MutexAutoLock lock(mLock);
 
+  RemoveForcedValidity();
+
   mIsDoomed = true;
 
   // Pretend pinning is know.  This entry is now doomed for good, so don't
@@ -1664,6 +1671,25 @@ void CacheEntry::DoomFile()
 
   // Always posts to the main thread.
   OnFileDoomed(rv);
+}
+
+void CacheEntry::RemoveForcedValidity()
+{
+  mLock.AssertCurrentThreadOwns();
+
+  nsresult rv;
+
+  if (mIsDoomed) {
+    return;
+  }
+
+  nsAutoCString entryKey;
+  rv = HashingKey(entryKey);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  CacheStorageService::Self()->RemoveEntryForceValid(mStorageID, entryKey);
 }
 
 void CacheEntry::BackgroundOp(uint32_t aOperations, bool aForceAsync)
@@ -1709,9 +1735,7 @@ void CacheEntry::BackgroundOp(uint32_t aOperations, bool aForceAsync)
 
       // Because CacheFile::Set*() are not thread-safe to use (uses WeakReference that
       // is not thread-safe) we must post to the main thread...
-      RefPtr<nsRunnableMethod<CacheEntry> > event =
-        NS_NewRunnableMethodWithArg<double>(this, &CacheEntry::StoreFrecency, mFrecency);
-      NS_DispatchToMainThread(event);
+      NS_DispatchToMainThread(NewRunnableMethod<double>(this, &CacheEntry::StoreFrecency, mFrecency));
     }
 
     if (aOperations & Ops::REGISTER) {
@@ -1782,11 +1806,7 @@ size_t CacheEntry::SizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
     n += mFile->SizeOfIncludingThis(mallocSizeOf);
   }
 
-  sizeOf = do_QueryInterface(mURI);
-  if (sizeOf) {
-    n += sizeOf->SizeOfIncludingThis(mallocSizeOf);
-  }
-
+  n += mURI.SizeOfExcludingThisIfUnshared(mallocSizeOf);
   n += mEnhanceID.SizeOfExcludingThisIfUnshared(mallocSizeOf);
   n += mStorageID.SizeOfExcludingThisIfUnshared(mallocSizeOf);
 

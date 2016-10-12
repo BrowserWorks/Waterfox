@@ -34,7 +34,6 @@ VideoSink::VideoSink(AbstractThread* aThread,
   , mProducerID(ImageContainer::AllocateProducerID())
   , mFrameStats(aFrameStats)
   , mVideoFrameEndTime(-1)
-  , mOldDroppedCount(0)
   , mHasVideo(false)
   , mUpdateScheduler(aThread)
   , mVideoQueueSendToCompositorSize(aVQueueSentToCompositerSize)
@@ -265,10 +264,26 @@ VideoSink::OnVideoQueueFinished()
 }
 
 void
-VideoSink::Redraw()
+VideoSink::Redraw(const VideoInfo& aInfo)
 {
   AssertOwnerThread();
-  RenderVideoFrames(1);
+
+  // No video track, nothing to draw.
+  if (!aInfo.IsValid() || !mContainer) {
+    return;
+  }
+
+  if (VideoQueue().GetSize() > 0) {
+    RenderVideoFrames(1);
+    return;
+  }
+
+  // When we reach here, it means there are no frames in this video track.
+  // Draw a blank frame to ensure there is something in the image container
+  // to fire 'loadeddata'.
+  RefPtr<Image> blank =
+    mContainer->GetImageContainer()->CreatePlanarYCbCrImage();
+  mContainer->SetCurrentFrame(aInfo.mDisplay, blank, TimeStamp::Now());
 }
 
 void
@@ -314,19 +329,23 @@ VideoSink::RenderVideoFrames(int32_t aMaxFrames,
 {
   AssertOwnerThread();
 
-  nsAutoTArray<RefPtr<MediaData>,16> frames;
+  AutoTArray<RefPtr<MediaData>,16> frames;
   VideoQueue().GetFirstElements(aMaxFrames, &frames);
   if (frames.IsEmpty() || !mContainer) {
     return;
   }
 
-  nsAutoTArray<ImageContainer::NonOwningImage,16> images;
+  AutoTArray<ImageContainer::NonOwningImage,16> images;
   TimeStamp lastFrameTime;
   MediaSink::PlaybackParams params = mAudioSink->GetPlaybackParams();
   for (uint32_t i = 0; i < frames.Length(); ++i) {
     VideoData* frame = frames[i]->As<VideoData>();
 
     frame->mSentToCompositor = true;
+    // This frame is behind the current time. Let's report it as dropped.
+    if (aClockTime >= frame->GetEndTime()) {
+      frame->mIsDropped = true;
+    }
 
     if (!frame->mImage || !frame->mImage->IsValid()) {
       continue;
@@ -364,10 +383,6 @@ VideoSink::RenderVideoFrames(int32_t aMaxFrames,
                 frame->mTime, frame->mFrameID, VideoQueue().GetSize());
   }
   mContainer->SetCurrentFrames(frames[0]->As<VideoData>()->mDisplay, images);
-
-  uint32_t dropped = mContainer->GetDroppedImageCount();
-  mFrameStats.NotifyDecodedFrames(0, 0, dropped - mOldDroppedCount);
-  mOldDroppedCount = dropped;
 }
 
 void
@@ -388,13 +403,14 @@ VideoSink::UpdateRenderedVideoFrames()
     RefPtr<MediaData> currentFrame = VideoQueue().PopFront();
     int32_t framesRemoved = 0;
     while (VideoQueue().GetSize() > 0) {
-      MediaData* nextFrame = VideoQueue().PeekFront();
+      RefPtr<MediaData> nextFrame = VideoQueue().PeekFront();
       if (nextFrame->mTime > clockTime) {
         remainingTime = nextFrame->mTime - clockTime;
         break;
       }
       ++framesRemoved;
-      if (!currentFrame->As<VideoData>()->mSentToCompositor) {
+      if (!currentFrame->As<VideoData>()->mSentToCompositor ||
+          currentFrame->As<VideoData>()->mIsDropped) {
         mFrameStats.NotifyDecodedFrames(0, 0, 1);
         VSINK_LOG_V("discarding video frame mTime=%lld clock_time=%lld",
                     currentFrame->mTime, clockTime);

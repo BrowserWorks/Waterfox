@@ -49,8 +49,18 @@ reduceAudioMLineToPcmuPcma: function(sdp) {
   return sdp.replace(/m=audio .*\r\n/g, "m=audio 9 UDP/TLS/RTP/SAVPF 0 8\r\n");
 },
 
+setAllMsectionsInactive: function(sdp) {
+  return sdp.replace(/\r\na=sendrecv/g, "\r\na=inactive")
+            .replace(/\r\na=sendonly/g, "\r\na=inactive")
+            .replace(/\r\na=recvonly/g, "\r\na=inactive");
+},
+
 removeAllRtpMaps: function(sdp) {
   return sdp.replace(/a=rtpmap:.*\r\n/g, "");
+},
+
+reduceAudioMLineToDynamicPtAndOpus: function(sdp) {
+  return sdp.replace(/m=audio .*\r\n/g, "m=audio 9 UDP/TLS/RTP/SAVPF 101 109\r\n");
 },
 
 transferSimulcastProperties: function(offer_sdp, answer_sdp) {

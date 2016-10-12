@@ -288,6 +288,15 @@ nsCSPContext::GetPolicy(uint32_t aIndex, nsAString& outStr)
   return NS_OK;
 }
 
+const nsCSPPolicy*
+nsCSPContext::GetPolicy(uint32_t aIndex)
+{
+  if (aIndex >= mPolicies.Length()) {
+    return nullptr;
+  }
+  return mPolicies[aIndex];
+}
+
 NS_IMETHODIMP
 nsCSPContext::GetPolicyCount(uint32_t *outPolicyCount)
 {
@@ -302,6 +311,20 @@ nsCSPContext::GetUpgradeInsecureRequests(bool *outUpgradeRequest)
   for (uint32_t i = 0; i < mPolicies.Length(); i++) {
     if (mPolicies[i]->hasDirective(nsIContentSecurityPolicy::UPGRADE_IF_INSECURE_DIRECTIVE)) {
       *outUpgradeRequest = true;
+      return NS_OK;
+    }
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsCSPContext::GetBlockAllMixedContent(bool *outBlockAllMixedContent)
+{
+  *outBlockAllMixedContent = false;
+  for (uint32_t i = 0; i < mPolicies.Length(); i++) {
+     if (!mPolicies[i]->getReportOnlyFlag() &&
+        mPolicies[i]->hasDirective(nsIContentSecurityPolicy::BLOCK_ALL_MIXED_CONTENT)) {
+      *outBlockAllMixedContent = true;
       return NS_OK;
     }
   }
@@ -570,6 +593,11 @@ nsCSPContext::LogViolationDetails(uint16_t aViolationType,
                             CSP_UNSAFE_INLINE, SCRIPT_HASH_VIOLATION_OBSERVER_TOPIC);
       CASE_CHECK_AND_REPORT(HASH_STYLE,        STYLESHEET, aContent,
                             CSP_UNSAFE_INLINE, STYLE_HASH_VIOLATION_OBSERVER_TOPIC);
+      CASE_CHECK_AND_REPORT(REQUIRE_SRI_FOR_STYLE,   STYLESHEET, NS_LITERAL_STRING(""),
+                            CSP_REQUIRE_SRI_FOR, REQUIRE_SRI_STYLE_VIOLATION_OBSERVER_TOPIC);
+      CASE_CHECK_AND_REPORT(REQUIRE_SRI_FOR_SCRIPT,   SCRIPT, NS_LITERAL_STRING(""),
+                            CSP_REQUIRE_SRI_FOR, REQUIRE_SRI_SCRIPT_VIOLATION_OBSERVER_TOPIC);
+
 
       default:
         NS_ASSERTION(false, "LogViolationDetails with invalid type");
@@ -601,6 +629,9 @@ nsCSPContext::SetRequestContext(nsIDOMDocument* aDOMDocument,
     // console messages until it becomes available, see flushConsoleMessages
     mQueueUpMessages = !mInnerWindowID;
     mCallingChannelLoadGroup = doc->GetDocumentLoadGroup();
+
+    // set the flag on the document for CSP telemetry
+    doc->SetHasCSP(true);
   }
   else {
     NS_WARNING("No Document in SetRequestContext; can not query loadgroup; sending reports may fail.");
@@ -677,35 +708,35 @@ nsCSPContext::logToConsole(const char16_t* aName,
  *
  * @param aURI
  *        The uri to be stripped for reporting
- * @param aProtectedResourcePrincipal
- *        The loadingPrincipal of the protected resource
+ * @param aSelfURI
+ *        The uri of the protected resource
  *        which is needed to enforce the SOP.
  * @return ASCII serialization of the uri to be reported.
  */
 void
 StripURIForReporting(nsIURI* aURI,
-                     nsIPrincipal* aProtectedResourcePrincipal,
+                     nsIURI* aSelfURI,
                      nsACString& outStrippedURI)
 {
   // 1) If the origin of uri is a globally unique identifier (for example,
   // aURI has a scheme of data, blob, or filesystem), then return the
   // ASCII serialization of uri’s scheme.
-  bool isHttp =
-    (NS_SUCCEEDED(aURI->SchemeIs("http", &isHttp)) && isHttp) ||
-    (NS_SUCCEEDED(aURI->SchemeIs("https", &isHttp)) && isHttp);
-  if (!isHttp) {
+  bool isHttpOrFtp =
+    (NS_SUCCEEDED(aURI->SchemeIs("http", &isHttpOrFtp)) && isHttpOrFtp) ||
+    (NS_SUCCEEDED(aURI->SchemeIs("https", &isHttpOrFtp)) && isHttpOrFtp) ||
+    (NS_SUCCEEDED(aURI->SchemeIs("ftp", &isHttpOrFtp)) && isHttpOrFtp);
+
+  if (!isHttpOrFtp) {
     // not strictly spec compliant, but what we really care about is
-    // http/https. If it's not http/https, then treat aURI as if
-    // it's a globally unique identifier and just return the scheme.
+    // http/https and also ftp. If it's not http/https or ftp, then treat aURI
+    // as if it's a globally unique identifier and just return the scheme.
     aURI->GetScheme(outStrippedURI);
     return;
   }
 
   // 2) If the origin of uri is not the same as the origin of the protected
   // resource, then return the ASCII serialization of uri’s origin.
-  bool sameOrigin =
-    NS_SUCCEEDED(aProtectedResourcePrincipal->CheckMayLoad(aURI, false, false));
-  if (!sameOrigin) {
+  if (!NS_SecurityCompareURIs(aSelfURI, aURI, false)) {
     // cross origin redirects also fall into this category, see:
     // http://www.w3.org/TR/CSP/#violation-reports
     aURI->GetPrePath(outStrippedURI);
@@ -762,7 +793,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
     nsCOMPtr<nsIURI> uri = do_QueryInterface(aBlockedContentSource);
     // could be a string or URI
     if (uri) {
-      StripURIForReporting(uri, mLoadingPrincipal, reportBlockedURI);
+      StripURIForReporting(uri, mSelfURI, reportBlockedURI);
     } else {
       nsCOMPtr<nsISupportsCString> cstr = do_QueryInterface(aBlockedContentSource);
       if (cstr) {
@@ -779,7 +810,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
 
   // document-uri
   nsAutoCString reportDocumentURI;
-  StripURIForReporting(mSelfURI, mLoadingPrincipal, reportDocumentURI);
+  StripURIForReporting(mSelfURI, mSelfURI, reportDocumentURI);
   report.mCsp_report.mDocument_uri = NS_ConvertUTF8toUTF16(reportDocumentURI);
 
   // original-policy
@@ -851,19 +882,26 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
     }
 
     // try to create a new channel for every report-uri
+    nsLoadFlags loadFlags = nsIRequest::LOAD_NORMAL | nsIChannel::LOAD_CLASSIFY_URI;
     if (doc) {
       rv = NS_NewChannel(getter_AddRefs(reportChannel),
                          reportURI,
                          doc,
                          nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-                         nsIContentPolicy::TYPE_CSP_REPORT);
+                         nsIContentPolicy::TYPE_CSP_REPORT,
+                         nullptr, // aLoadGroup
+                         nullptr, // aCallbacks
+                         loadFlags);
     }
     else {
       rv = NS_NewChannel(getter_AddRefs(reportChannel),
                          reportURI,
                          mLoadingPrincipal,
                          nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-                         nsIContentPolicy::TYPE_CSP_REPORT);
+                         nsIContentPolicy::TYPE_CSP_REPORT,
+                         nullptr, // aLoadGroup
+                         nullptr, // aCallbacks
+                         loadFlags);
     }
 
     if (NS_FAILED(rv)) {
@@ -881,6 +919,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
       const char16_t* params[] = { reportURIs[r].get() };
       logToConsole(MOZ_UTF16("reportURInotHttpsOrHttp2"), params, ArrayLength(params),
                    aSourceFile, aScriptSample, aLineNum, 0, nsIScriptError::errorFlag);
+      continue;
     }
 
     // make sure this is an anonymous request (no cookies) so in case the
@@ -915,8 +954,13 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIUploadChannel> uploadChannel(do_QueryInterface(reportChannel));
-    NS_ASSERTION(uploadChannel, "nsIUploadChannel is needed but not available to send CSP violation reports");
-    rv = uploadChannel->SetUploadStream(sis, NS_LITERAL_CSTRING("application/json"), -1);
+    if (!uploadChannel) {
+      // It's possible the URI provided can't be uploaded to, in which case
+      // we skip this one. We'll already have warned about a non-HTTP URI earlier.
+      continue;
+    }
+
+    rv = uploadChannel->SetUploadStream(sis, NS_LITERAL_CSTRING("application/csp-report"), -1);
     NS_ENSURE_SUCCESS(rv, rv);
 
     // if this is an HTTP channel, set the request method to post
@@ -948,7 +992,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
 /**
  * Dispatched from the main thread to send reports for one CSP violation.
  */
-class CSPReportSenderRunnable final : public nsRunnable
+class CSPReportSenderRunnable final : public Runnable
 {
   public:
     CSPReportSenderRunnable(nsISupports* aBlockedContentSource,
@@ -1090,6 +1134,21 @@ nsCSPContext::AsyncReportViolation(nsISupports* aBlockedContentSource,
                                                       aLineNum,
                                                       this));
    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsCSPContext::RequireSRIForType(nsContentPolicyType aContentType, bool* outRequiresSRIForType)
+{
+  *outRequiresSRIForType = false;
+  for (uint32_t i = 0; i < mPolicies.Length(); i++) {
+    if (mPolicies[i]->hasDirective(REQUIRE_SRI_FOR)) {
+      if (mPolicies[i]->requireSRIForType(aContentType)) {
+        *outRequiresSRIForType = true;
+        return NS_OK;
+      }
+    }
+  }
+  return NS_OK;
 }
 
 /**

@@ -11,13 +11,6 @@
 #include <windows.h>
 #endif
 
-template<>
-struct RunnableMethodTraits<mozilla::_ipdltest::TestUrgentHangsParent>
-{
-    static void RetainCallee(mozilla::_ipdltest::TestUrgentHangsParent* obj) { }
-    static void ReleaseCallee(mozilla::_ipdltest::TestUrgentHangsParent* obj) { }
-};
-
 namespace mozilla {
 namespace _ipdltest {
 
@@ -56,8 +49,7 @@ TestUrgentHangsParent::Main()
 
     // Do a second round of testing once the reply to Test2 comes back.
     MessageLoop::current()->PostDelayedTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &TestUrgentHangsParent::SecondStage),
+        NewNonOwningRunnableMethod(this, &TestUrgentHangsParent::SecondStage),
         3000);
 }
 
@@ -75,8 +67,7 @@ TestUrgentHangsParent::SecondStage()
         fail("sending Test4_1");
 
     MessageLoop::current()->PostDelayedTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &TestUrgentHangsParent::ThirdStage),
+        NewNonOwningRunnableMethod(this, &TestUrgentHangsParent::ThirdStage),
         3000);
 }
 
@@ -99,8 +90,7 @@ TestUrgentHangsParent::ThirdStage()
 
     // Close the channel after the child finishes its work in RecvTest5.
     MessageLoop::current()->PostDelayedTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &TestUrgentHangsParent::Close),
+        NewNonOwningRunnableMethod(this, &TestUrgentHangsParent::Close),
         3000);
 }
 

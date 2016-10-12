@@ -78,12 +78,8 @@ GamepadService::Observe(nsISupports* aSubject,
 }
 
 void
-GamepadService::BeginShutdown()
+GamepadService::StopMonitoring()
 {
-  mShuttingDown = true;
-  if (mTimer) {
-    mTimer->Cancel();
-  }
   if (mStarted) {
     if (XRE_IsParentProcess()) {
       MaybeStopGamepadMonitoring();
@@ -92,12 +88,22 @@ GamepadService::BeginShutdown()
     }
     mStarted = false;
   }
+  mGamepads.Clear();
+}
+
+void
+GamepadService::BeginShutdown()
+{
+  mShuttingDown = true;
+  if (mTimer) {
+    mTimer->Cancel();
+  }
+  StopMonitoring();
   // Don't let windows call back to unregister during shutdown
   for (uint32_t i = 0; i < mListeners.Length(); i++) {
     mListeners[i]->SetHasGamepadEventListener(false);
   }
   mListeners.Clear();
-  mGamepads.Clear();
   sShutdown = true;
 }
 
@@ -144,7 +150,11 @@ GamepadService::RemoveListener(nsGlobalWindow* aWindow)
   mListeners.RemoveElement(aWindow);
 
   if (mListeners.Length() == 0 && !mShuttingDown && mStarted) {
-    StartCleanupTimer();
+    if (XRE_IsParentProcess()) {
+      StartCleanupTimer();
+    } else {
+      StopMonitoring();
+    }
   }
 }
 
@@ -206,13 +216,15 @@ GamepadService::NewButtonEvent(uint32_t aIndex, uint32_t aButton, bool aPressed,
 
   // Hold on to listeners in a separate array because firing events
   // can mutate the mListeners array.
-  nsTArray<RefPtr<nsGlobalWindow> > listeners(mListeners);
+  nsTArray<RefPtr<nsGlobalWindow>> listeners(mListeners);
 
   for (uint32_t i = listeners.Length(); i > 0 ; ) {
     --i;
 
+    MOZ_ASSERT(listeners[i]->IsInnerWindow());
+
     // Only send events to non-background windows
-    if (!listeners[i]->IsCurrentInnerWindow() ||
+    if (!listeners[i]->AsInner()->IsCurrentInnerWindow() ||
         listeners[i]->GetOuterWindow()->IsBackground()) {
       continue;
     }
@@ -277,8 +289,10 @@ GamepadService::NewAxisMoveEvent(uint32_t aIndex, uint32_t aAxis, double aValue)
   for (uint32_t i = listeners.Length(); i > 0 ; ) {
     --i;
 
+    MOZ_ASSERT(listeners[i]->IsInnerWindow());
+
     // Only send events to non-background windows
-    if (!listeners[i]->IsCurrentInnerWindow() ||
+    if (!listeners[i]->AsInner()->IsCurrentInnerWindow() ||
         listeners[i]->GetOuterWindow()->IsBackground()) {
       continue;
     }
@@ -345,8 +359,10 @@ GamepadService::NewConnectionEvent(uint32_t aIndex, bool aConnected)
     for (uint32_t i = listeners.Length(); i > 0 ; ) {
       --i;
 
+      MOZ_ASSERT(listeners[i]->IsInnerWindow());
+
       // Only send events to non-background windows
-      if (!listeners[i]->IsCurrentInnerWindow() ||
+      if (!listeners[i]->AsInner()->IsCurrentInnerWindow() ||
           listeners[i]->GetOuterWindow()->IsBackground()) {
         continue;
       }
@@ -500,16 +516,9 @@ GamepadService::TimeoutHandler(nsITimer* aTimer, void* aClosure)
   }
 
   if (self->mListeners.Length() == 0) {
-    if (XRE_IsParentProcess()) {
-      MaybeStopGamepadMonitoring();
-    } else {
-      ContentChild::GetSingleton()->SendGamepadListenerRemoved();
-    }
-
-    self->mStarted = false;
-      self->mGamepads.Clear();
-    }
+    self->StopMonitoring();
   }
+}
 
 void
 GamepadService::StartCleanupTimer()

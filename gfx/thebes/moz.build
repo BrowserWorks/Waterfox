@@ -38,9 +38,6 @@ EXPORTS += [
     'gfxQuad.h',
     'gfxQuaternion.h',
     'gfxRect.h',
-    'gfxReusableImageSurfaceWrapper.h',
-    'gfxReusableSharedImageSurfaceWrapper.h',
-    'gfxReusableSurfaceWrapper.h',
     'gfxSharedImageSurface.h',
     'gfxSharedQuartzSurface.h',
     'gfxSkipChars.h',
@@ -100,7 +97,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'gfxQuartzNativeDrawing.cpp',
         'gfxQuartzSurface.cpp',
     ]
-elif CONFIG['MOZ_WIDGET_GTK']:
+elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
     EXPORTS += [
         'gfxFontconfigFonts.h',
         'gfxFT2FontBase.h',
@@ -232,8 +229,6 @@ UNIFIED_SOURCES += [
     'gfxPattern.cpp',
     'gfxPlatformFontList.cpp',
     'gfxRect.cpp',
-    'gfxReusableImageSurfaceWrapper.cpp',
-    'gfxReusableSharedImageSurfaceWrapper.cpp',
     'gfxScriptItemizer.cpp',
     'gfxSkipChars.cpp',
     'gfxSVGGlyphs.cpp',
@@ -261,9 +256,6 @@ if CONFIG['ENABLE_INTL_API']:
         'icu',
     ]
 
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -271,6 +263,7 @@ FINAL_LIBRARY = 'xul'
 GENERATED_FILES = [
     'DeprecatedPremultiplyTables.h',
 ]
+GENERATED_FILES['DeprecatedPremultiplyTables.h'].script = 'genTables.py:generate'
 
 LOCAL_INCLUDES += [
     '/dom/workers',
@@ -311,3 +304,7 @@ DEFINES['GRAPHITE2_STATIC'] = True
 if CONFIG['CLANG_CXX']:
     # Suppress warnings from Skia header files.
     SOURCES['gfxPlatform.cpp'].flags += ['-Wno-implicit-fallthrough']
+
+if CONFIG['_MSC_VER']:
+    # This is intended as a temporary hack to support building with VS2015.
+    CXXFLAGS += ['-wd4577']

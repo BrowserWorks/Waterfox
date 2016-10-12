@@ -1,13 +1,10 @@
 [
-   {
-      "hg_id" : "0b889f399d47+ cleaner/qtip/tip",
-      "sixgill_version" : "0.9.1-177"
-   },
-   {
-      "algorithm" : "sha512",
-      "digest" : "c5c22d19005a1389d8dc04e405f5b99e6b8755908fb52a285ff516213d9f32e1e64d5c402a3ee2e52bceffa7dee71852c9d922ec0003e1642a701a0daadb06d3",
-      "filename" : "sixgill.tar.xz",
-      "size" : 2255520,
-      "unpack": true
-   }
+{
+"digest" : "36dc644e24c0aa824975ad8f5c15714445d5cb064d823000c3cb637e885199414d7df551e6b99233f0656dcf5760918192ef04113c486af37f3c489bb93ad029",
+"size" : 2631908,
+"hg_id" : "8cb9c3fb039a+ tip",
+"unpack" : true,
+"filename" : "sixgill.tar.xz",
+"algorithm" : "sha512"
+}
 ]

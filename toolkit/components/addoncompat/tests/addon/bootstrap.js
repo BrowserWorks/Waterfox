@@ -15,12 +15,10 @@ var contentSecManager = Cc["@mozilla.org/contentsecuritymanager;1"]
 
 function forEachWindow(f)
 {
-  let wins = Services.ww.getWindowEnumerator("navigator:browser");
+  let wins = Services.wm.getEnumerator("navigator:browser");
   while (wins.hasMoreElements()) {
     let win = wins.getNext();
-    if (win.gBrowser) {
-      f(win);
-    }
+    f(win);
   }
 }
 
@@ -61,6 +59,7 @@ function testContentWindow()
       ok(browser.contentWindow, "contentWindow is defined");
       ok(browser.contentDocument, "contentWindow is defined");
       is(gWin.content, browser.contentWindow, "content === contentWindow");
+      ok(browser.webNavigation.sessionHistory, "sessionHistory is defined");
 
       ok(browser.contentDocument.getElementById("link"), "link present in document");
 

@@ -34,7 +34,7 @@
 class nsIContentSecurityPolicy;
 class nsIScriptContext;
 class nsIGlobalObject;
-class nsPIDOMWindow;
+class nsPIDOMWindowInner;
 class nsIPrincipal;
 class nsILoadGroup;
 class nsITabChild;
@@ -92,6 +92,7 @@ struct JSSettings
     JSSettings_JSGC_SLICE_TIME_BUDGET,
     JSSettings_JSGC_DYNAMIC_HEAP_GROWTH,
     JSSettings_JSGC_DYNAMIC_MARK_SLICE,
+    JSSettings_JSGC_REFRESH_FRAME_SLICES,
     // JSGC_MODE not supported
 
     // This must be last so that we get an accurate count.
@@ -214,7 +215,7 @@ struct WorkerLoadInfo
   nsCOMPtr<nsIURI> mResolvedScriptURI;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCOMPtr<nsIScriptContext> mScriptContext;
-  nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsCOMPtr<nsPIDOMWindowInner> mWindow;
   nsCOMPtr<nsIContentSecurityPolicy> mCSP;
   nsCOMPtr<nsIChannel> mChannel;
   nsCOMPtr<nsILoadGroup> mLoadGroup;
@@ -280,20 +281,22 @@ struct WorkerLoadInfo
 // All of these are implemented in RuntimeService.cpp
 
 void
-CancelWorkersForWindow(nsPIDOMWindow* aWindow);
+CancelWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
 void
-FreezeWorkersForWindow(nsPIDOMWindow* aWindow);
+FreezeWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
 void
-ThawWorkersForWindow(nsPIDOMWindow* aWindow);
+ThawWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
 void
-SuspendWorkersForWindow(nsPIDOMWindow* aWindow);
+SuspendWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
 void
-ResumeWorkersForWindow(nsPIDOMWindow* aWindow);
+ResumeWorkersForWindow(nsPIDOMWindowInner* aWindow);
 
+// A class that can be used with WorkerCrossThreadDispatcher to run a
+// bit of C++ code on the worker thread.
 class WorkerTask
 {
 protected:
@@ -306,6 +309,8 @@ protected:
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(WorkerTask)
 
+  // The return value here has the same semantics as the return value
+  // of WorkerRunnable::WorkerRun.
   virtual bool
   RunTask(JSContext* aCx) = 0;
 };
@@ -355,9 +360,6 @@ void
 ThrowDOMExceptionForNSResult(JSContext* aCx, nsresult aNSResult);
 
 } // namespace exceptions
-
-nsIGlobalObject*
-GetGlobalObjectForGlobal(JSObject* global);
 
 bool
 IsWorkerGlobal(JSObject* global);

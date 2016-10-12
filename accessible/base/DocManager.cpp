@@ -26,7 +26,6 @@
 #include "nsDocShellLoadTypes.h"
 #include "nsIChannel.h"
 #include "nsIDOMDocument.h"
-#include "nsIDOMWindow.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIWebNavigation.h"
 #include "nsServiceManagerUtils.h"
@@ -40,6 +39,8 @@ using namespace mozilla::a11y;
 using namespace mozilla::dom;
 
 StaticAutoPtr<nsTArray<DocAccessibleParent*>> DocManager::sRemoteDocuments;
+nsRefPtrHashtable<nsPtrHashKey<const DocAccessibleParent>, xpcAccessibleDocument>*
+DocManager::sRemoteXPCDocumentCache = nullptr;
 
 ////////////////////////////////////////////////////////////////////////////////
 // DocManager
@@ -58,9 +59,6 @@ DocManager::GetDocAccessible(nsIDocument* aDocument)
 {
   if (!aDocument)
     return nullptr;
-
-  // Ensure CacheChildren is called before we query cache.
-  ApplicationAcc()->EnsureChildren();
 
   DocAccessible* docAcc = GetExistingDocAccessible(aDocument);
   if (docAcc)
@@ -101,6 +99,16 @@ DocManager::NotifyOfDocumentShutdown(DocAccessible* aDocument,
   RemoveListeners(aDOMDocument);
 }
 
+void
+DocManager::NotifyOfRemoteDocShutdown(DocAccessibleParent* aDoc)
+{
+  xpcAccessibleDocument* doc = GetCachedXPCDocument(aDoc);
+  if (doc) {
+    doc->Shutdown();
+    sRemoteXPCDocumentCache->Remove(aDoc);
+  }
+}
+
 xpcAccessibleDocument*
 DocManager::GetXPCDocument(DocAccessible* aDocument)
 {
@@ -113,6 +121,26 @@ DocManager::GetXPCDocument(DocAccessible* aDocument)
     mXPCDocumentCache.Put(aDocument, xpcDoc);
   }
   return xpcDoc;
+}
+
+xpcAccessibleDocument*
+DocManager::GetXPCDocument(DocAccessibleParent* aDoc)
+{
+  xpcAccessibleDocument* doc = GetCachedXPCDocument(aDoc);
+  if (doc) {
+    return doc;
+  }
+
+  if (!sRemoteXPCDocumentCache) {
+    sRemoteXPCDocumentCache =
+      new nsRefPtrHashtable<nsPtrHashKey<const DocAccessibleParent>, xpcAccessibleDocument>;
+  }
+
+  doc =
+    new xpcAccessibleDocument(aDoc, Interfaces::DOCUMENT | Interfaces::HYPERTEXT);
+  sRemoteXPCDocumentCache->Put(aDoc, doc);
+
+  return doc;
 }
 
 #ifdef DEBUG
@@ -186,11 +214,11 @@ DocManager::OnStateChange(nsIWebProgress* aWebProgress,
       (aStateFlags & (STATE_START | STATE_STOP)) == 0)
     return NS_OK;
 
-  nsCOMPtr<nsIDOMWindow> DOMWindow;
+  nsCOMPtr<mozIDOMWindowProxy> DOMWindow;
   aWebProgress->GetDOMWindow(getter_AddRefs(DOMWindow));
   NS_ENSURE_STATE(DOMWindow);
 
-  nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(DOMWindow);
+  nsPIDOMWindowOuter* piWindow = nsPIDOMWindowOuter::From(DOMWindow);
   MOZ_ASSERT(piWindow);
 
   nsCOMPtr<nsIDocument> document = piWindow->GetDoc();
@@ -371,7 +399,7 @@ void
 DocManager::AddListeners(nsIDocument* aDocument,
                          bool aAddDOMContentLoadedListener)
 {
-  nsPIDOMWindow* window = aDocument->GetWindow();
+  nsPIDOMWindowOuter* window = aDocument->GetWindow();
   EventTarget* target = window->GetChromeEventHandler();
   EventListenerManager* elm = target->GetOrCreateListenerManager();
   elm->AddEventListenerByType(this, NS_LITERAL_STRING("pagehide"),
@@ -395,7 +423,7 @@ DocManager::AddListeners(nsIDocument* aDocument,
 void
 DocManager::RemoveListeners(nsIDocument* aDocument)
 {
-  nsPIDOMWindow* window = aDocument->GetWindow();
+  nsPIDOMWindowOuter* window = aDocument->GetWindow();
   if (!window)
     return;
 
@@ -439,17 +467,15 @@ DocManager::CreateDocOrRootAccessible(nsIDocument* aDocument)
 
   // We only create root accessibles for the true root, otherwise create a
   // doc accessible.
-  nsIContent *rootElm = nsCoreUtils::GetRoleContent(aDocument);
   RefPtr<DocAccessible> docAcc = isRootDoc ?
-    new RootAccessibleWrap(aDocument, rootElm, presShell) :
-    new DocAccessibleWrap(aDocument, rootElm, presShell);
+    new RootAccessibleWrap(aDocument, presShell) :
+    new DocAccessibleWrap(aDocument, presShell);
 
   // Cache the document accessible into document cache.
   mDocAccessibleCache.Put(aDocument, docAcc);
 
   // Initialize the document accessible.
   docAcc->Init();
-  docAcc->SetRoleMapEntry(aria::GetRoleMap(aDocument));
 
   // Bind the document to the tree.
   if (isRootDoc) {
@@ -470,7 +496,7 @@ DocManager::CreateDocOrRootAccessible(nsIDocument* aDocument)
     if (IPCAccessibilityActive()) {
       nsIDocShell* docShell = aDocument->GetDocShell();
       if (docShell) {
-        nsCOMPtr<nsITabChild> tabChild = do_GetInterface(docShell);
+        nsCOMPtr<nsITabChild> tabChild = docShell->GetTabChild();
 
         // XXX We may need to handle the case that we don't have a tab child
         // differently.  It may be that this will cause us to fail to notify

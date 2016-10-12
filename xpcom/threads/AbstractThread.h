@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -42,6 +42,9 @@ public:
 
   AbstractThread(bool aSupportsTailDispatch) : mSupportsTailDispatch(aSupportsTailDispatch) {}
 
+  static already_AddRefed<AbstractThread>
+  CreateXPCOMThreadWrapper(nsIThread* aThread, bool aRequireTailDispatch);
+
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AbstractThread);
 
   enum DispatchFailureHandling { AssertDispatchSuccess, DontAssertDispatchSuccess };
@@ -69,6 +72,7 @@ public:
   // Returns true if this thread requires all dispatches originating from
   // aThread go through the tail dispatcher.
   bool RequiresTailDispatch(AbstractThread* aThread) const;
+  bool RequiresTailDispatchFromCurrentThread() const;
 
   virtual TaskQueue* AsTaskQueue() { MOZ_CRASH("Not a task queue!"); }
   virtual nsIThread* AsXPCOMThread() { MOZ_CRASH("Not an XPCOM thread!"); }
@@ -91,9 +95,6 @@ protected:
   // this queue go through our queue's tail dispatcher.
   const bool mSupportsTailDispatch;
 };
-
-already_AddRefed<AbstractThread> CreateXPCOMAbstractThreadWrapper(nsIThread* aThread,
-                                 bool aRequireTailDispatch);
 
 } // namespace mozilla
 

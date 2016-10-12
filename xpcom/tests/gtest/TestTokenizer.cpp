@@ -1,3 +1,9 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "mozilla/Tokenizer.h"
 #include "gtest/gtest.h"
 
@@ -526,6 +532,21 @@ TEST(Tokenizer, SkipWhites)
   EXPECT_TRUE(p.CheckEOF());
 }
 
+TEST(Tokenizer, SkipCustomWhites)
+{
+  Tokenizer p("Text1 \n\r\t.Text2 \n\r\t.", " \n\r\t.");
+
+  EXPECT_TRUE(p.CheckWord("Text1"));
+  p.SkipWhites();
+  EXPECT_TRUE(p.CheckWord("Text2"));
+  EXPECT_TRUE(p.CheckWhite());
+  EXPECT_TRUE(p.CheckWhite());
+  EXPECT_TRUE(p.CheckWhite());
+  EXPECT_TRUE(p.CheckWhite());
+  EXPECT_TRUE(p.CheckWhite());
+  EXPECT_TRUE(p.CheckEOF());
+}
+
 TEST(Tokenizer, IntegerReading)
 {
 #define INT_6_BITS                 64U
@@ -638,5 +659,76 @@ TEST(Tokenizer, IntegerReading)
     uint64_t u;
     EXPECT_FALSE(p.ReadInteger(&u));
     EXPECT_FALSE(p.CheckEOF());
+  }
+}
+
+TEST(Tokenizer, ReadUntil)
+{
+  Tokenizer p("Hello;test 4,");
+  nsDependentCSubstring f;
+  EXPECT_TRUE(p.ReadUntil(Tokenizer::Token::Char(';'), f));
+  EXPECT_TRUE(f == "Hello");
+  p.Rollback();
+
+  EXPECT_TRUE(p.ReadUntil(Tokenizer::Token::Char(';'), f, Tokenizer::INCLUDE_LAST));
+  EXPECT_TRUE(f == "Hello;");
+  p.Rollback();
+
+  EXPECT_FALSE(p.ReadUntil(Tokenizer::Token::Char('!'), f));
+  EXPECT_TRUE(f == "Hello;test 4,");
+  p.Rollback();
+
+  EXPECT_TRUE(p.ReadUntil(Tokenizer::Token::Word(NS_LITERAL_CSTRING("test")), f));
+  EXPECT_TRUE(f == "Hello;");
+  p.Rollback();
+
+  EXPECT_TRUE(p.ReadUntil(Tokenizer::Token::Word(NS_LITERAL_CSTRING("test")), f, Tokenizer::INCLUDE_LAST));
+  EXPECT_TRUE(f == "Hello;test");
+  EXPECT_TRUE(p.ReadUntil(Tokenizer::Token::Char(','), f));
+  EXPECT_TRUE(f == " 4");
+}
+
+TEST(Tokenizer, SkipUntil)
+{
+  {
+    Tokenizer p("test1,test2,,,test3");
+
+    p.SkipUntil(Tokenizer::Token::Char(','));
+    EXPECT_TRUE(p.CheckChar(','));
+    EXPECT_TRUE(p.CheckWord("test2"));
+
+    p.SkipUntil(Tokenizer::Token::Char(',')); // must not move
+    EXPECT_TRUE(p.CheckChar(',')); // check the first comma of the ',,,' string
+
+    p.Rollback(); // moves cursor back to the first comma of the ',,,' string
+
+    p.SkipUntil(Tokenizer::Token::Char(',')); // must not move, we are on the ',' char
+    EXPECT_TRUE(p.CheckChar(','));
+    EXPECT_TRUE(p.CheckChar(','));
+    EXPECT_TRUE(p.CheckChar(','));
+    EXPECT_TRUE(p.CheckWord("test3"));
+    p.Rollback();
+
+    p.SkipUntil(Tokenizer::Token::Char(','));
+    EXPECT_TRUE(p.CheckEOF());
+  }
+
+  {
+    Tokenizer p("test0,test1,test2");
+
+    p.SkipUntil(Tokenizer::Token::Char(','));
+    EXPECT_TRUE(p.CheckChar(','));
+
+    p.SkipUntil(Tokenizer::Token::Char(','));
+    p.Rollback();
+
+    EXPECT_TRUE(p.CheckWord("test1"));
+    EXPECT_TRUE(p.CheckChar(','));
+
+    p.SkipUntil(Tokenizer::Token::Char(','));
+    p.Rollback();
+
+    EXPECT_TRUE(p.CheckWord("test2"));
+    EXPECT_TRUE(p.CheckEOF());
   }
 }

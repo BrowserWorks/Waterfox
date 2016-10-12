@@ -62,7 +62,7 @@ CheckForTrailingTextFrameRecursive(nsIFrame* aFrame, nsIFrame* aStopAtFrame)
   if (!aFrame->IsFrameOfType(nsIFrame::eLineParticipant))
     return nullptr;
 
-  for (nsIFrame* f = aFrame->GetFirstPrincipalChild(); f; f = f->GetNextSibling())
+  for (nsIFrame* f : aFrame->PrincipalChildList())
   {
     nsIFrame* r = CheckForTrailingTextFrameRecursive(f, aStopAtFrame);
     if (r)
@@ -321,9 +321,8 @@ nsCaret::GetGeometryForFrame(nsIFrame* aFrame,
                "We should not be in the middle of reflow");
   nscoord baseline = frame->GetCaretBaseline();
   nscoord ascent = 0, descent = 0;
-  RefPtr<nsFontMetrics> fm;
-  nsLayoutUtils::GetFontMetricsForFrame(aFrame, getter_AddRefs(fm),
-    nsLayoutUtils::FontSizeInflationFor(aFrame));
+  RefPtr<nsFontMetrics> fm =
+    nsLayoutUtils::GetInflatedFontMetricsForFrame(aFrame);
   NS_ASSERTION(fm, "We should be able to get the font metrics");
   if (fm) {
     ascent = fm->MaxAscent();

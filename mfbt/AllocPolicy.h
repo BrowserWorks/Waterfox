@@ -12,6 +12,7 @@
 #ifndef mozilla_AllocPolicy_h
 #define mozilla_AllocPolicy_h
 
+#include "mozilla/Attributes.h"
 #include "mozilla/TemplateLib.h"
 
 #include <stddef.h>
@@ -121,7 +122,7 @@ public:
   {
   }
 
-  bool checkSimulatedOOM() const
+  MOZ_MUST_USE bool checkSimulatedOOM() const
   {
     return true;
   }

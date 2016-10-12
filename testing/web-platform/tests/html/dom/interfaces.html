@@ -285,10 +285,11 @@ interface Element : Node {
 
            attribute DOMString id;
            attribute DOMString className;
-  [SameObject] readonly attribute DOMTokenList classList;
+  [SameObject, PutForwards=value] readonly attribute DOMTokenList classList;
 
   boolean hasAttributes();
   [SameObject] readonly attribute NamedNodeMap attributes;
+  sequence<DOMString> getAttributeNames();
   DOMString? getAttribute(DOMString name);
   DOMString? getAttributeNS(DOMString? namespace, DOMString localName);
   void setAttribute(DOMString name, DOMString value);
@@ -462,14 +463,12 @@ interface DOMTokenList {
   void add(DOMString... tokens);
   void remove(DOMString... tokens);
   boolean toggle(DOMString token, optional boolean force);
+  void replace(DOMString token, DOMString newToken);
+  boolean supports(DOMString token);
+           attribute DOMString value;
   stringifier;
 //  iterable<DOMString>;
-};
-
-interface DOMSettableTokenList : DOMTokenList {
-            attribute DOMString value;
-};
-</script>
+};</script>
 <!-- UI Events IDLs -->
 <script type=text/plain class=untested>
 [Constructor(DOMString type, optional UIEventInit eventInitDict)]
@@ -861,7 +860,7 @@ typedef (Int8Array or Uint8Array or Uint8ClampedArray or
 [NoInterfaceObject, Exposed=Window]
 interface HTMLHyperlinkElementUtils {
   stringifier attribute USVString href;
-           attribute USVString origin;
+  readonly attribute USVString origin;
            attribute USVString protocol;
            attribute USVString username;
            attribute USVString password;
@@ -873,11 +872,11 @@ interface HTMLHyperlinkElementUtils {
            attribute USVString hash;
 };
 
-interface HTMLAllCollection : HTMLCollection {
-  // inherits length and 'getter'
-  Element? item(unsigned long index);
+interface HTMLAllCollection {
+  readonly attribute unsigned long length;
+  getter Element? item(unsigned long index);
   (HTMLCollection or Element)? item(DOMString name);
-  legacycaller getter (HTMLCollection or Element)? namedItem(DOMString name); // shadows inherited namedItem()
+  legacycaller getter (HTMLCollection or Element)? namedItem(DOMString name);
 };
 
 interface HTMLFormControlsCollection : HTMLCollection {
@@ -899,17 +898,7 @@ interface HTMLOptionsCollection : HTMLCollection {
            attribute long selectedIndex;
 };
 
-interface HTMLPropertiesCollection : HTMLCollection {
-  // inherits length and item()
-  getter PropertyNodeList? namedItem(DOMString name); // shadows inherited namedItem()
-  readonly attribute DOMString[] names;
-};
-
 typedef sequence<any> PropertyValueArray;
-
-interface PropertyNodeList : NodeList {
-  PropertyValueArray getValues();
-};
 
 [OverrideBuiltins, Exposed=(Window,Worker)]
 interface DOMStringMap {
@@ -953,7 +942,6 @@ partial /*sealed*/ interface Document {
   readonly attribute HTMLCollection forms;
   readonly attribute HTMLCollection scripts;
   NodeList getElementsByName(DOMString elementName);
-  NodeList getItems(optional DOMString typeNames = ""); // microdata
   readonly attribute DOMElementMap cssElementMap;
   readonly attribute HTMLScriptElement? currentScript;
 
@@ -996,15 +984,6 @@ interface HTMLElement : Element {
            attribute DOMString dir;
   readonly attribute DOMStringMap dataset;
 
-  // microdata
-           attribute boolean itemScope;
-  [PutForwards=value] readonly attribute DOMSettableTokenList itemType;
-           attribute DOMString itemId;
-  [PutForwards=value] readonly attribute DOMSettableTokenList itemRef;
-  [PutForwards=value] readonly attribute DOMSettableTokenList itemProp;
-  readonly attribute HTMLPropertiesCollection properties;
-           attribute any itemValue; // acts as DOMString on setting
-
   // user interaction
            attribute boolean hidden;
   void click();
@@ -1014,7 +993,7 @@ interface HTMLElement : Element {
            attribute DOMString accessKey;
   readonly attribute DOMString accessKeyLabel;
            attribute boolean draggable;
-  [PutForwards=value] readonly attribute DOMSettableTokenList dropzone;
+  [PutForwards=value] readonly attribute DOMTokenList dropzone;
            attribute DOMString contentEditable;
   readonly attribute boolean isContentEditable;
            attribute HTMLMenuElement? contextMenu;
@@ -1050,13 +1029,13 @@ interface HTMLBaseElement : HTMLElement {
 
 interface HTMLLinkElement : HTMLElement {
            attribute DOMString href;
-           attribute DOMString crossOrigin;
+           attribute DOMString? crossOrigin;
            attribute DOMString rel;
-  readonly attribute DOMTokenList relList;
+  [PutForwards=value] readonly attribute DOMTokenList relList;
            attribute DOMString media;
            attribute DOMString hreflang;
            attribute DOMString type;
-  [PutForwards=value] readonly attribute DOMSettableTokenList sizes;
+  [PutForwards=value] readonly attribute DOMTokenList sizes;
 
   // also has obsolete members
 };
@@ -1132,9 +1111,9 @@ interface HTMLDivElement : HTMLElement {
 interface HTMLAnchorElement : HTMLElement {
   attribute DOMString target;
   attribute DOMString download;
-  [PutForwards=value] readonly attribute DOMSettableTokenList ping;
+  [CEReactions] attribute USVString ping;
   attribute DOMString rel;
-  readonly attribute DOMTokenList relList;
+  [PutForwards=value] readonly attribute DOMTokenList relList;
   attribute DOMString hreflang;
   attribute DOMString type;
 
@@ -1175,7 +1154,7 @@ interface HTMLImageElement : HTMLElement {
            attribute DOMString src;
            attribute DOMString srcset;
            attribute DOMString sizes;
-           attribute DOMString crossOrigin;
+           attribute DOMString? crossOrigin;
            attribute DOMString useMap;
            attribute boolean isMap;
            attribute unsigned long width;
@@ -1192,7 +1171,7 @@ interface HTMLIFrameElement : HTMLElement {
            attribute DOMString src;
            attribute DOMString srcdoc;
            attribute DOMString name;
-  [PutForwards=value] readonly attribute DOMSettableTokenList sandbox;
+  [PutForwards=value] readonly attribute DOMTokenList sandbox;
            attribute boolean seamless;
            attribute boolean allowFullscreen;
            attribute DOMString width;
@@ -1288,7 +1267,7 @@ interface HTMLMediaElement : HTMLElement {
   // network state
            attribute DOMString src;
   readonly attribute DOMString currentSrc;
-           attribute DOMString crossOrigin;
+           attribute DOMString? crossOrigin;
   const unsigned short NETWORK_EMPTY = 0;
   const unsigned short NETWORK_IDLE = 1;
   const unsigned short NETWORK_LOADING = 2;
@@ -1502,9 +1481,9 @@ interface HTMLAreaElement : HTMLElement {
   attribute DOMString shape;
   attribute DOMString target;
   attribute DOMString download;
-  [PutForwards=value] readonly attribute DOMSettableTokenList ping;
+  [CEReactions] attribute USVString ping;
   attribute DOMString rel;
-  readonly attribute DOMTokenList relList;
+  [PutForwards=value] readonly attribute DOMTokenList relList;
   // hreflang and type are not reflected
 };
 HTMLAreaElement implements HTMLHyperlinkElementUtils;
@@ -1558,22 +1537,14 @@ interface HTMLTableRowElement : HTMLElement {
   // also has obsolete members
 };
 
-interface HTMLTableDataCellElement : HTMLTableCellElement {
-  // also has obsolete members
-};
-
-interface HTMLTableHeaderCellElement : HTMLTableCellElement {
-           attribute DOMString scope;
-           attribute DOMString abbr;
-           attribute DOMString sorted;
-  void sort();
-};
-
 interface HTMLTableCellElement : HTMLElement {
-           attribute unsigned long colSpan;
-           attribute unsigned long rowSpan;
-  [PutForwards=value] readonly attribute DOMSettableTokenList headers;
+  [CEReactions] attribute unsigned long colSpan;
+  [CEReactions] attribute unsigned long rowSpan;
+  [CEReactions] attribute DOMString headers;
   readonly attribute long cellIndex;
+
+  [CEReactions] attribute DOMString scope; // only conforming for th elements
+  [CEReactions] attribute DOMString abbr;  // only conforming for th elements
 
   // also has obsolete members
 };
@@ -1591,7 +1562,7 @@ interface HTMLFormElement : HTMLElement {
            attribute DOMString target;
 
   readonly attribute HTMLFormControlsCollection elements;
-  readonly attribute long length;
+  readonly attribute unsigned long length;
   getter Element (unsigned long index);
   getter (RadioNodeList or Element) (DOMString name);
 
@@ -1664,9 +1635,9 @@ interface HTMLInputElement : HTMLElement {
   readonly attribute NodeList labels;
 
   void select();
-           attribute unsigned long selectionStart;
-           attribute unsigned long selectionEnd;
-           attribute DOMString selectionDirection;
+           attribute unsigned long? selectionStart;
+           attribute unsigned long? selectionEnd;
+           attribute DOMString? selectionDirection;
   void setRangeText(DOMString replacement);
   void setRangeText(DOMString replacement, unsigned long start, unsigned long end, optional SelectionMode selectionMode = "preserve");
   void setSelectionRange(unsigned long start, unsigned long end, optional DOMString direction);
@@ -1787,9 +1758,9 @@ interface HTMLTextAreaElement : HTMLElement {
   readonly attribute NodeList labels;
 
   void select();
-           attribute unsigned long selectionStart;
-           attribute unsigned long selectionEnd;
-           attribute DOMString selectionDirection;
+           attribute unsigned long? selectionStart;
+           attribute unsigned long? selectionEnd;
+           attribute DOMString? selectionDirection;
   void setRangeText(DOMString replacement);
   void setRangeText(DOMString replacement, unsigned long start, unsigned long end, optional SelectionMode selectionMode = "preserve");
   void setSelectionRange(unsigned long start, unsigned long end, optional DOMString direction);
@@ -1816,7 +1787,7 @@ interface HTMLKeygenElement : HTMLElement {
 };
 
 interface HTMLOutputElement : HTMLElement {
-  [PutForwards=value] readonly attribute DOMSettableTokenList htmlFor;
+  [PutForwards=value] readonly attribute DOMTokenList htmlFor;
   readonly attribute HTMLFormElement? form;
            attribute DOMString name;
 
@@ -1951,7 +1922,7 @@ interface HTMLScriptElement : HTMLElement {
            attribute DOMString charset;
            attribute boolean async;
            attribute boolean defer;
-           attribute DOMString crossOrigin;
+           attribute DOMString? crossOrigin;
            attribute DOMString text;
 
   // also has obsolete members
@@ -1959,6 +1930,15 @@ interface HTMLScriptElement : HTMLElement {
 
 interface HTMLTemplateElement : HTMLElement {
   readonly attribute DocumentFragment content;
+};
+
+interface HTMLSlotElement : HTMLElement {
+  /*[CEReactions]*/ attribute DOMString name;
+  sequence<Node> assignedNodes(optional AssignedNodesOptions options);
+};
+
+dictionary AssignedNodesOptions {
+  boolean flatten = false;
 };
 
 typedef (CanvasRenderingContext2D or WebGLRenderingContext) RenderingContext;
@@ -2306,11 +2286,14 @@ Window implements GlobalEventHandlers;
 Window implements WindowEventHandlers;
 
 interface BarProp {
-           attribute boolean visible;
+  readonly attribute boolean visible;
 };
 
+enum ScrollRestoration { "auto", "manual" };
 interface History {
+
   readonly attribute long length;
+  attribute ScrollRestoration scrollRestoration;
   readonly attribute any state;
   void go(optional long delta);
   void back();
@@ -2321,7 +2304,7 @@ interface History {
 
 [Unforgeable] interface Location {
   stringifier attribute USVString href;
-           attribute USVString origin;
+  readonly attribute USVString origin;
            attribute USVString protocol;
            attribute USVString host;
            attribute USVString hostname;
@@ -3126,10 +3109,6 @@ partial interface HTMLTableCellElement {
   [TreatNullAs=EmptyString] attribute DOMString bgColor;
 };
 
-partial interface HTMLTableDataCellElement {
-           attribute DOMString abbr;
-};
-
 partial interface HTMLTableRowElement {
            attribute DOMString align;
            attribute DOMString ch;
@@ -3188,6 +3167,13 @@ setup(function() {
   iframe.hidden = true;
   document.body.appendChild(iframe);
 }, {explicit_done:true});
+
+function createInput(type) {
+  var input = document.createElement('input');
+  input.type = type;
+  return input;
+}
+
 window.onload = function() {
   idlArray.add_objects({
     NodeList: ['document.getElementsByName("name")'],
@@ -3195,66 +3181,13 @@ window.onload = function() {
     HTMLFormControlsCollection: ['document.createElement("form").elements'],
     RadioNodeList: [],
     HTMLOptionsCollection: ['document.createElement("select").options'],
-    HTMLPropertiesCollection: ['document.head.properties'],
-    PropertyNodeList: [],
     DOMStringMap: ['document.head.dataset'],
     DOMElementMap: ['document.cssElementMap'],
     Transferable: [],
-    Document: ['iframe.contentDocument'],
+    Document: ['iframe.contentDocument', 'new Document()'],
     XMLDocument: ['document.implementation.createDocument(null, "", null)'],
-    HTMLElement: [
-      'document.createElement("noscript")',
-      'document.createElement("section")',
-      'document.createElement("nav")',
-      'document.createElement("article")',
-      'document.createElement("aside")',
-      'document.createElement("hgroup")',
-      'document.createElement("header")',
-      'document.createElement("footer")',
-      'document.createElement("address")',
-      'document.createElement("dt")',
-      'document.createElement("dd")',
-      'document.createElement("figure")',
-      'document.createElement("figcaption")',
-      'document.createElement("em")',
-      'document.createElement("strong")',
-      'document.createElement("small")',
-      'document.createElement("s")',
-      'document.createElement("cite")',
-      'document.createElement("dfn")',
-      'document.createElement("abbr")',
-      'document.createElement("code")',
-      'document.createElement("var")',
-      'document.createElement("samp")',
-      'document.createElement("kbd")',
-      'document.createElement("sub")',
-      'document.createElement("sup")',
-      'document.createElement("i")',
-      'document.createElement("b")',
-      'document.createElement("u")',
-      'document.createElement("mark")',
-      'document.createElement("ruby")',
-      'document.createElement("rt")',
-      'document.createElement("rp")',
-      'document.createElement("bdi")',
-      'document.createElement("bdo")',
-      'document.createElement("wbr")',
-      'document.createElement("summary")',
-      'document.createElement("acronym")',
-    ],
-    HTMLUnknownElement: [
-      'document.createElement("blink")',
-      'document.createElement("quasit")',
-      'document.createElement("bgsound")',
-      'document.createElement("isindex")',
-      'document.createElement("multicol")',
-      'document.createElement("nextid")',
-      'document.createElement("rb")',
-      'document.createElement("spacer")',
-      'document.createElement("basefont")',
-      'document.createElement("directory")',
-      'document.createElement("mod")',
-    ],
+    HTMLElement: ['document.createElement("noscript")'], // more tests in html/semantics/interfaces.js
+    HTMLUnknownElement: ['document.createElement("bgsound")'], // more tests in html/semantics/interfaces.js
     HTMLHtmlElement: ['document.createElement("html")'],
     HTMLHeadElement: ['document.createElement("head")'],
     HTMLTitleElement: ['document.createElement("title")'],
@@ -3264,20 +3197,12 @@ window.onload = function() {
     HTMLStyleElement: ['document.createElement("style")'],
     HTMLScriptElement: ['document.createElement("script")'],
     HTMLBodyElement: ['document.createElement("body")'],
-    HTMLHeadingElement: [
-      'document.createElement("h1")',
-      'document.createElement("h2")',
-      'document.createElement("h3")',
-      'document.createElement("h4")',
-      'document.createElement("h5")',
-      'document.createElement("h6")',
-    ],
+    HTMLHeadingElement: ['document.createElement("h1")'],
     HTMLParagraphElement: ['document.createElement("p")'],
     HTMLHRElement: ['document.createElement("hr")'],
     HTMLPreElement: [
       'document.createElement("pre")',
       'document.createElement("listing")',
-      'document.createElement("plaintext")',
       'document.createElement("xmp")',
     ],
     HTMLQuoteElement: [
@@ -3322,6 +3247,8 @@ window.onload = function() {
     DataCue: [],
     TimeRanges: ['document.createElement("video").buffered'],
     TrackEvent: ['new TrackEvent("addtrack"; {track:document.createElement("track").track})'],
+    HTMLTemplateElement: ['document.createElement("template")'],
+    HTMLSlotElement: ['document.createElement("slot")'],
     HTMLCanvasElement: ['document.createElement("canvas")'],
     CanvasRenderingContext2D: ['document.createElement("canvas").getContext("2d")'],
     CanvasGradient: [],
@@ -3342,14 +3269,39 @@ window.onload = function() {
       'document.createElement("tfoot")',
     ],
     HTMLTableRowElement: ['document.createElement("tr")'],
-    HTMLTableDataCellElement: ['document.createElement("td")'],
-    HTMLTableHeaderCellElement: ['document.createElement("th")'],
-    HTMLTableCellElement: [],
+    HTMLTableCellElement: [
+      'document.createElement("td")',
+      'document.createElement("th")',
+    ],
     HTMLFormElement: ['document.createElement("form")'],
     HTMLFieldsetElement: ['document.createElement("fieldset")'],
     HTMLLegendElement: ['document.createElement("legend")'],
     HTMLLabelElement: ['document.createElement("label")'],
-    HTMLInputElement: ['document.createElement("input")'],
+    HTMLInputElement: [
+      'document.createElement("input")',
+      'createInput("text")',
+      'createInput("hidden")',
+      'createInput("search")',
+      'createInput("tel")',
+      'createInput("url")',
+      'createInput("email")',
+      'createInput("password")',
+      'createInput("date")',
+      'createInput("month")',
+      'createInput("week")',
+      'createInput("time")',
+      'createInput("datetime-local")',
+      'createInput("number")',
+      'createInput("range")',
+      'createInput("color")',
+      'createInput("checkbox")',
+      'createInput("radio")',
+      'createInput("file")',
+      'createInput("submit")',
+      'createInput("image")',
+      'createInput("reset")',
+      'createInput("button")'
+    ],
     HTMLButtonElement: ['document.createElement("button")'],
     HTMLSelectElement: ['document.createElement("select")'],
     HTMLDataListElement: ['document.createElement("datalist")'],
@@ -3362,7 +3314,6 @@ window.onload = function() {
     HTMLMeterElement: ['document.createElement("meter")'],
     ValidityState: ['document.createElement("input").validity'],
     HTMLDetailsElement: ['document.createElement("details")'],
-    HTMLCommandElement: ['document.createElement("command")'],
     HTMLMenuElement: ['document.createElement("menu")'],
     Window: ['window'],
     BarProp: [],

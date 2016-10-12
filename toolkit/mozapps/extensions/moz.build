@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+SPHINX_TREES['addon-manager'] = 'docs'
+
 if CONFIG['MOZ_BUILD_APP'] == 'mobile/android':
     DEFINES['MOZ_FENNEC'] = True
 
@@ -23,6 +25,7 @@ EXTRA_COMPONENTS += [
     'addonManager.js',
     'amContentHandler.js',
     'amInstallTrigger.js',
+    'amWebAPI.js',
     'amWebInstallListener.js',
     'nsBlocklistService.js',
     'nsBlocklistServiceContent.js',
@@ -43,12 +46,18 @@ JAR_MANIFESTS += ['jar.mn']
 
 EXPORTS.mozilla += [
     'AddonContentPolicy.h',
+    'AddonManagerWebAPI.h',
     'AddonPathService.h',
 ]
 
 UNIFIED_SOURCES += [
     'AddonContentPolicy.cpp',
+    'AddonManagerWebAPI.cpp',
     'AddonPathService.cpp',
+]
+
+LOCAL_INCLUDES += [
+    '/dom/base',
 ]
 
 FINAL_LIBRARY = 'xul'

@@ -62,6 +62,7 @@ class MessageListener
   public:
     MOZ_DECLARE_WEAKREFERENCE_TYPENAME(MessageListener)
     typedef IPC::Message Message;
+    typedef IPC::MessageInfo MessageInfo;
 
     virtual ~MessageListener() { }
 
@@ -76,6 +77,38 @@ class MessageListener
         return false;
     }
 
+    // WARNING: This function is called with the MessageChannel monitor held.
+    virtual void IntentionalCrash() {
+        MOZ_CRASH("Intentional IPDL crash");
+    }
+
+    // The code here is only useful for fuzzing. It should not be used for any
+    // other purpose.
+#ifdef DEBUG
+    // Returns true if we should simulate a timeout.
+    // WARNING: This is a testing-only function that is called with the
+    // MessageChannel monitor held. Don't do anything fancy here or we could
+    // deadlock.
+    virtual bool ArtificialTimeout() {
+        return false;
+    }
+
+    // Returns true if we want to cause the worker thread to sleep with the
+    // monitor unlocked.
+    virtual bool NeedArtificialSleep() {
+        return false;
+    }
+
+    // This function should be implemented to sleep for some amount of time on
+    // the worker thread. Will only be called if NeedArtificialSleep() returns
+    // true.
+    virtual void ArtificialSleep() {}
+#else
+    bool ArtificialTimeout() { return false; }
+    bool NeedArtificialSleep() { return false; }
+    void ArtificialSleep() {}
+#endif
+
     virtual void OnEnteredCxxStack() {
         NS_RUNTIMEABORT("default impl shouldn't be invoked");
     }
@@ -88,8 +121,8 @@ class MessageListener
     virtual void OnExitedCall() {
         NS_RUNTIMEABORT("default impl shouldn't be invoked");
     }
-    virtual RacyInterruptPolicy MediateInterruptRace(const Message& parent,
-                                                     const Message& child)
+    virtual RacyInterruptPolicy MediateInterruptRace(const MessageInfo& parent,
+                                                     const MessageInfo& child)
     {
         return RIPChildWins;
     }
@@ -172,7 +205,7 @@ class ProcessLink
     // These methods acquire the monitor and forward to the
     // similarly named methods in AsyncChannel below
     // (OnMessageReceivedFromLink(), etc)
-    virtual void OnMessageReceived(const Message& msg) override;
+    virtual void OnMessageReceived(Message&& msg) override;
     virtual void OnChannelConnected(int32_t peer_pid) override;
     virtual void OnChannelError() override;
 

@@ -175,7 +175,7 @@ function get_actual_results() {
         continue;
       }
 
-      var result = sourceURI.match(/^http:\/\/example\.com\/(.+)\.xpi$/);
+      let result = sourceURI.match(/^http:\/\/example\.com\/(.+)\.xpi$/);
       if (result != null) {
         is(item.mInstall.name.indexOf("PASS"), 0, "Install name should start with PASS");
         results.push({name: result[1], item: item});
@@ -183,7 +183,7 @@ function get_actual_results() {
       }
     }
     else if (item.mAddon) {
-      var result = item.mAddon.id.match(/^(.+)@tests\.mozilla\.org$/);
+      let result = item.mAddon.id.match(/^(.+)@tests\.mozilla\.org$/);
       if (result != null) {
         is(item.mAddon.name.indexOf("PASS"), 0, "Addon name should start with PASS");
         results.push({name: result[1], item: item});
@@ -269,9 +269,9 @@ function check_results(aQuery, aSortBy, aReverseOrder, aShowLocal) {
   try {
     xpinstall_enabled = Services.prefs.getBoolPref(PREF_XPI_ENABLED);
   }
-  catch (e) {};
+  catch (e) {}
 
-  // When XPI Instalation is disabled, those buttons are hidden and unused  
+  // When XPI Instalation is disabled, those buttons are hidden and unused
   if (xpinstall_enabled) {
     var localFilterSelected = gManagerWindow.document.getElementById("search-filter-local").selected;
     var remoteFilterSelected = gManagerWindow.document.getElementById("search-filter-remote").selected;
@@ -617,7 +617,7 @@ add_test(function() {
 
 // Tests that compatible-by-default addons are shown if strict compatibility checking is disabled
 add_test(function() {
-  restart_manager(gManagerWindow, null, function(aWindow) {
+  restart_manager(gManagerWindow, "addons://list/extension", function(aWindow) {
     gManagerWindow = aWindow;
     gCategoryUtilities = new CategoryUtilities(gManagerWindow);
 
@@ -626,10 +626,10 @@ add_test(function() {
       var item = get_addon_item("remote5");
       is_element_visible(item, "Incompatible addon should be visible");
       isnot(item.getAttribute("notification"), "warning", "Compatibility warning should not be shown");
-  
-      var item = get_addon_item("remote6");
+
+      item = get_addon_item("remote6");
       is(item, null, "Addon incompatible with the product should not be visible");
-  
+
       Services.prefs.setBoolPref(PREF_STRICT_COMPAT, true);
       run_next_test();
     });
@@ -649,13 +649,16 @@ add_test(function() {
     // Installed add-on is considered local on new search
     gAddonInstalled = true;
 
-    search(QUERY, false, function() {
-      check_filtered_results(QUERY, "relevancescore", false);
+    // Switch over to extensions list so we can do a new search
+    gCategoryUtilities.openType("extension", function() {
+      search(QUERY, false, function() {
+        check_filtered_results(QUERY, "relevancescore", false);
 
-      var installBtn = get_install_button(get_addon_item(REMOTE_TO_INSTALL));
-      is(installBtn.hidden, true, "Install button should be hidden for installed item");
+        var installBtn = get_install_button(get_addon_item(REMOTE_TO_INSTALL));
+        is(installBtn.hidden, true, "Install button should be hidden for installed item");
 
-      run_next_test();
+        run_next_test();
+      });
     });
   });
 });

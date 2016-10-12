@@ -19,7 +19,6 @@
 #include "mozilla/SheetType.h"
 #include "mozilla/UniquePtr.h"
 #include "nsAutoPtr.h"
-#include "nsCSSPseudoElements.h"
 #include "nsExpirationTracker.h"
 #include "nsIMediaList.h"
 #include "nsIStyleRuleProcessor.h"
@@ -40,6 +39,7 @@ class nsCSSCounterStyleRule;
 
 namespace mozilla {
 class CSSStyleSheet;
+enum class CSSPseudoElementType : uint8_t;
 namespace css {
 class DocumentRule;
 } // namespace css
@@ -65,6 +65,11 @@ public:
   // aPreviousCSSRuleProcessor is the rule processor (if any) that this
   // one is replacing.
   nsCSSRuleProcessor(const sheet_array_type& aSheets,
+                     mozilla::SheetType aSheetType,
+                     mozilla::dom::Element* aScopeElement,
+                     nsCSSRuleProcessor* aPreviousCSSRuleProcessor,
+                     bool aIsShared = false);
+  nsCSSRuleProcessor(sheet_array_type&& aSheets,
                      mozilla::SheetType aSheetType,
                      mozilla::dom::Element* aScopeElement,
                      nsCSSRuleProcessor* aPreviousCSSRuleProcessor,
@@ -234,7 +239,7 @@ private:
 
   nsRestyleHint HasStateDependentStyle(ElementDependentRuleProcessorData* aData,
                                        mozilla::dom::Element* aStatefulElement,
-                                       nsCSSPseudoElements::Type aPseudoType,
+                                       mozilla::CSSPseudoElementType aPseudoType,
                                        mozilla::EventStates aStateMask);
 
   void ClearSheets();

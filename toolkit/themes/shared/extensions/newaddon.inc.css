@@ -37,7 +37,7 @@
 
 #icon {
   margin-top: 8px;
-  -moz-margin-end: 10px;
+  margin-inline-end: 10px;
   max-width: 64px;
   max-height: 64px;
   list-style-image: url("chrome://mozapps/skin/extensions/extensionGeneric.svg");
@@ -81,31 +81,33 @@
   width: 16px;
   height: 16px;
   margin-top: 5px;
-  -moz-margin-end: 5px;
+  margin-inline-end: 5px;
 }
 
 #allow {
-  -moz-margin-start: 84px;
+  margin-inline-start: 84px;
   margin-bottom: 20px;
 }
 
-#continuePanel,
-#restartPanel {
+#buttonDeck {
   margin-top: 25px;
-  -moz-box-pack: end;
-  -moz-box-align: center;
+  -moz-box-align: stretch;
+  -moz-box-pack: stretch;
 }
 
 #continuePanel {
   -moz-box-pack: end;
+  -moz-box-align: end;
 }
 
-#restartMessage {
-  text-align: right;
+#restartPanel {
+  -moz-box-pack: end;
+  -moz-box-align: stretch;
 }
 
-#restartSpacer {
-  -moz-box-flex: 1;
+#restartPanelButtons {
+  margin-top: 25px;
+  -moz-box-pack: end;
 }
 
 #later {

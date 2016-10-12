@@ -2,15 +2,14 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
+Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   EventManager,
-  runSafe,
 } = ExtensionUtils;
 
 // WeakMap[Extension -> PageAction]
 var pageActionMap = new WeakMap();
-
 
 // Handles URL bar icons, including the |page_action| manifest entry
 // and associated API.
@@ -20,19 +19,18 @@ function PageAction(options, extension) {
 
   this.tabManager = TabManager.for(extension);
 
-  let title = extension.localize(options.default_title || "");
-  let popup = extension.localize(options.default_popup || "");
-  if (popup) {
-    popup = extension.baseURI.resolve(popup);
-  }
-
   this.defaults = {
     show: false,
-    title: title || extension.name,
-    icon: IconDetails.normalize({ path: options.default_icon }, extension,
-                                null, true),
-    popup: popup && extension.baseURI.resolve(popup),
+    title: options.default_title || extension.name,
+    icon: IconDetails.normalize({path: options.default_icon}, extension),
+    popup: options.default_popup || "",
   };
+
+  this.browserStyle = options.browser_style || false;
+  if (options.browser_style === null) {
+    this.extension.logger.warn("Please specify whether you want browser_style " +
+                               "or not in your page_action options.");
+  }
 
   this.tabContext = new TabContext(tab => Object.create(this.defaults),
                                    extension);
@@ -93,7 +91,7 @@ PageAction.prototype = {
       button.setAttribute("tooltiptext", title);
       button.setAttribute("aria-label", title);
 
-      let icon = IconDetails.getURL(tabData.icon, window, this.extension);
+      let {icon} = IconDetails.getURL(tabData.icon, window, this.extension);
       button.setAttribute("src", icon);
     }
 
@@ -131,6 +129,19 @@ PageAction.prototype = {
     return this.buttons.get(window);
   },
 
+  /**
+   * Triggers this page action for the given window, with the same effects as
+   * if it were clicked by a user.
+   *
+   * This has no effect if the page action is hidden for the selected tab.
+   */
+  triggerAction(window) {
+    let pageAction = pageActionMap.get(this.extension);
+    if (pageAction.getProperty(window.gBrowser.selectedTab, "show")) {
+      pageAction.handleClick(window);
+    }
+  },
+
   // Handles a click event on the page action button for the given
   // window.
   // If the page action has a |popup| property, a panel is opened to
@@ -147,7 +158,8 @@ PageAction.prototype = {
     // If it has no popup URL defined, we dispatch a click event, but do not
     // open a popup.
     if (popupURL) {
-      new PanelPopup(this.extension, this.getButton(window), popupURL);
+      new PanelPopup(this.extension, this.getButton(window), popupURL,
+                     this.browserStyle);
     } else {
       this.emit("click", tab);
     }
@@ -171,11 +183,6 @@ PageAction.prototype = {
   },
 };
 
-PageAction.for = extension => {
-  return pageActionMap.get(extension);
-};
-
-
 /* eslint-disable mozilla/balanced-listeners */
 extensions.on("manifest_page_action", (type, directive, extension, manifest) => {
   let pageAction = new PageAction(manifest.page_action, extension);
@@ -190,6 +197,11 @@ extensions.on("shutdown", (type, extension) => {
 });
 /* eslint-enable mozilla/balanced-listeners */
 
+PageAction.for = extension => {
+  return pageActionMap.get(extension);
+};
+
+global.pageActionFor = PageAction.for;
 
 extensions.registerSchemaAPI("pageAction", null, (extension, context) => {
   return {
@@ -223,16 +235,17 @@ extensions.registerSchemaAPI("pageAction", null, (extension, context) => {
         PageAction.for(extension).setProperty(tab, "title", details.title || null);
       },
 
-      getTitle(details, callback) {
+      getTitle(details) {
         let tab = TabManager.getTab(details.tabId);
         let title = PageAction.for(extension).getProperty(tab, "title");
-        runSafe(context, callback, title);
+        return Promise.resolve(title);
       },
 
-      setIcon(details, callback) {
+      setIcon(details) {
         let tab = TabManager.getTab(details.tabId);
         let icon = IconDetails.normalize(details, extension, context);
         PageAction.for(extension).setProperty(tab, "icon", icon);
+        return Promise.resolve();
       },
 
       setPopup(details) {
@@ -246,10 +259,10 @@ extensions.registerSchemaAPI("pageAction", null, (extension, context) => {
         PageAction.for(extension).setProperty(tab, "popup", url);
       },
 
-      getPopup(details, callback) {
+      getPopup(details) {
         let tab = TabManager.getTab(details.tabId);
         let popup = PageAction.for(extension).getProperty(tab, "popup");
-        runSafe(context, callback, popup);
+        return Promise.resolve(popup);
       },
     },
   };

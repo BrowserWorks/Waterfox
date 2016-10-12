@@ -499,14 +499,17 @@ public:
     }
 
     EGLDisplay Display() {
+        MOZ_ASSERT(mInitialized);
         return mEGLDisplay;
     }
 
     bool IsANGLE() const {
+        MOZ_ASSERT(mInitialized);
         return mIsANGLE;
     }
 
     bool IsWARP() const {
+        MOZ_ASSERT(mInitialized);
         return mIsWARP;
     }
 
@@ -532,7 +535,7 @@ public:
 
     bool ReadbackEGLImage(EGLImage image, gfx::DataSourceSurface* out_surface);
 
-    bool EnsureInitialized(bool forceAccel = false);
+    bool EnsureInitialized(bool forceAccel, nsACString& aFailureId);
 
     void DumpEGLConfig(EGLConfig cfg);
     void DumpEGLConfigs();

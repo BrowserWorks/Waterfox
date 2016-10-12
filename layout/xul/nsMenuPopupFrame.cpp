@@ -236,7 +236,7 @@ nsMenuPopupFrame::EnsureWidget()
 {
   nsView* ourView = GetView();
   if (!ourView->HasWidget()) {
-    NS_ASSERTION(!mGeneratedChildren && !GetFirstPrincipalChild(),
+    NS_ASSERTION(!mGeneratedChildren && !PrincipalChildList().FirstChild(),
                  "Creating widget for MenuPopupFrame with children");
     CreateWidgetForView(ourView);
   }
@@ -387,15 +387,16 @@ void nsXULPopupShownEvent::CancelListener()
   mPopup->RemoveSystemEventListener(NS_LITERAL_STRING("transitionend"), this, false);
 }
 
-NS_IMPL_ISUPPORTS_INHERITED(nsXULPopupShownEvent, nsRunnable, nsIDOMEventListener);
+NS_IMPL_ISUPPORTS_INHERITED(nsXULPopupShownEvent, Runnable, nsIDOMEventListener);
 
 void
 nsMenuPopupFrame::SetInitialChildList(ChildListID  aListID,
                                       nsFrameList& aChildList)
 {
   // unless the list is empty, indicate that children have been generated.
-  if (aChildList.NotEmpty())
+  if (aListID == kPrincipalList && aChildList.NotEmpty()) {
     mGeneratedChildren = true;
+  }
   nsBoxFrame::SetInitialChildList(aListID, aChildList);
 }
 
@@ -444,7 +445,7 @@ nsMenuPopupFrame::LayoutPopup(nsBoxLayoutState& aState, nsIFrame* aParentMenu,
 
   // if the popup has just been opened, make sure the scrolled window is at 0,0
   if (mIsOpenChanged) {
-    nsIScrollableFrame *scrollframe = do_QueryFrame(nsBox::GetChildBox(this));
+    nsIScrollableFrame *scrollframe = do_QueryFrame(nsBox::GetChildXULBox(this));
     if (scrollframe) {
       nsWeakFrame weakFrame(this);
       scrollframe->ScrollTo(nsPoint(0,0), nsIScrollableFrame::INSTANT);
@@ -456,9 +457,9 @@ nsMenuPopupFrame::LayoutPopup(nsBoxLayoutState& aState, nsIFrame* aParentMenu,
 
   // get the preferred, minimum and maximum size. If the menu is sized to the
   // popup, then the popup's width is the menu's width.
-  nsSize prefSize = GetPrefSize(aState);
-  nsSize minSize = GetMinSize(aState); 
-  nsSize maxSize = GetMaxSize(aState);
+  nsSize prefSize = GetXULPrefSize(aState);
+  nsSize minSize = GetXULMinSize(aState); 
+  nsSize maxSize = GetXULMaxSize(aState);
 
   if (aSizedToPopup) {
     prefSize.width = aParentMenu->GetRect().width;
@@ -468,7 +469,7 @@ nsMenuPopupFrame::LayoutPopup(nsBoxLayoutState& aState, nsIFrame* aParentMenu,
   // if the size changed then set the bounds to be the preferred size
   bool sizeChanged = (mPrefSize != prefSize);
   if (sizeChanged) {
-    SetBounds(aState, nsRect(0, 0, prefSize.width, prefSize.height), false);
+    SetXULBounds(aState, nsRect(0, 0, prefSize.width, prefSize.height), false);
     mPrefSize = prefSize;
   }
 
@@ -480,7 +481,7 @@ nsMenuPopupFrame::LayoutPopup(nsBoxLayoutState& aState, nsIFrame* aParentMenu,
   }
 
   nsRect bounds(GetRect());
-  Layout(aState);
+  XULLayout(aState);
 
   // if the width or height changed, readjust the popup position. This is a
   // special case for tooltips where the preferred height doesn't include the
@@ -846,6 +847,11 @@ nsMenuPopupFrame::ShowPopup(bool aIsContextMenu)
     mPopupState = ePopupOpening;
     mIsOpenChanged = true;
 
+    // Clear mouse capture when a context menu is opened.
+    if (aIsContextMenu) {
+      nsIPresShell::SetCapturingContent(nullptr, 0);
+    }
+
     nsMenuFrame* menuFrame = do_QueryFrame(GetParent());
     if (menuFrame) {
       nsWeakFrame weakFrame(this);
@@ -888,10 +894,9 @@ nsMenuPopupFrame::HidePopup(bool aDeselectMenu, nsPopupState aNewState)
     // if the popup had a trigger node set, clear the global window popup node
     // as well
     if (mTriggerContent) {
-      nsIDocument* doc = mContent->GetCurrentDoc();
+      nsIDocument* doc = mContent->GetUncomposedDoc();
       if (doc) {
-        nsPIDOMWindow* win = doc->GetWindow();
-        if (win) {
+        if (nsPIDOMWindowOuter* win = doc->GetWindow()) {
           nsCOMPtr<nsPIWindowRoot> root = win->GetTopWindowRoot();
           if (root) {
             root->SetPopupNode(nullptr);
@@ -947,10 +952,10 @@ nsMenuPopupFrame::HidePopup(bool aDeselectMenu, nsPopupState aNewState)
   }
 }
 
-void
-nsMenuPopupFrame::GetLayoutFlags(uint32_t& aFlags)
+uint32_t
+nsMenuPopupFrame::GetXULLayoutFlags()
 {
-  aFlags = NS_FRAME_NO_SIZE_VIEW | NS_FRAME_NO_MOVE_VIEW | NS_FRAME_NO_VISIBILITY;
+  return NS_FRAME_NO_SIZE_VIEW | NS_FRAME_NO_MOVE_VIEW | NS_FRAME_NO_VISIBILITY;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1524,7 +1529,7 @@ nsMenuPopupFrame::SetPopupPosition(nsIFrame* aAnchorFrame, bool aIsMove, bool aS
   if (aSizedToPopup) {
     nsBoxLayoutState state(PresContext());
     // XXXndeakin can parentSize.width still extend outside?
-    SetBounds(state, mRect);
+    SetXULBounds(state, mRect);
   }
 
   return NS_OK;
@@ -1553,9 +1558,12 @@ nsMenuPopupFrame::GetConstraintRect(const LayoutDeviceIntRect& aAnchorRect,
     // This is because we need to constrain the content to this content area,
     // so we should use the same screen. Otherwise, use the screen where the
     // anchor is located.
-    LayoutDeviceIntRect rect = mInContentShell ? aRootScreenRect : aAnchorRect;
-    int32_t width = std::max(1, rect.width);
-    int32_t height = std::max(1, rect.height);
+    DesktopToLayoutDeviceScale scale =
+      PresContext()->DeviceContext()->GetDesktopToDeviceScale();
+    DesktopRect rect =
+      (mInContentShell ? aRootScreenRect : aAnchorRect) / scale;
+    int32_t width = std::max(1, NSToIntRound(rect.width));
+    int32_t height = std::max(1, NSToIntRound(rect.height));
     sm->ScreenForRect(rect.x, rect.y, width, height, getter_AddRefs(screen));
     if (screen) {
       // Non-top-level popups (which will always be panels)
@@ -1683,7 +1691,7 @@ nsIScrollableFrame* nsMenuPopupFrame::GetScrollFrame(nsIFrame* aStart)
   // try children
   currFrame = aStart;
   do {
-    nsIFrame* childFrame = currFrame->GetFirstPrincipalChild();
+    nsIFrame* childFrame = currFrame->PrincipalChildList().FirstChild();
     nsIScrollableFrame* sf = GetScrollFrame(childFrame);
     if (sf)
       return sf;
@@ -2100,6 +2108,14 @@ nsMenuPopupFrame::AttributeChanged(int32_t aNameSpaceID,
   
   if (aAttribute == nsGkAtoms::left || aAttribute == nsGkAtoms::top)
     MoveToAttributePosition();
+
+#ifndef MOZ_GTK2
+  if (aAttribute == nsGkAtoms::noautohide) {
+    nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
+    if (pm)
+      pm->EnableRollup(mContent, !IsNoAutoHide());
+  }
+#endif
 
   if (aAttribute == nsGkAtoms::label) {
     // set the label for the titlebar

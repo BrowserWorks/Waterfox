@@ -6,7 +6,6 @@ package org.mozilla.android.sync.net.test;
 import ch.boye.httpclientandroidlib.HttpStatus;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,18 +56,27 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+/**
+ * Some tests in this class run client/server multi-threaded code but JUnit assertions triggered
+ * from background threads do not fail the test. If you see unexplained connection-related test failures,
+ * an assertion on the server may have been thrown. Unfortunately, it is non-trivial to get the background
+ * threads to transfer failures back to the test thread so we leave the tests in this state for now.
+ *
+ * One reason the server might throw an assertion is if you have not installed the crypto policies. See
+ * https://wiki.mozilla.org/Mobile/Fennec/Android/Testing#JUnit4_tests for more information.
+ */
 @RunWith(TestRunner.class)
 public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public final static String LOG_TAG = "TestClientsEngSta";
 
-  public TestClientsEngineStage() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
+  public TestClientsEngineStage() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, CryptoException, URISyntaxException {
     super();
     session = initializeSession();
   }
 
   // Static so we can set it during the constructor. This is so evil.
   private static MockGlobalSessionCallback callback;
-  private static GlobalSession initializeSession() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
+  private static GlobalSession initializeSession() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, CryptoException, URISyntaxException {
     callback = new MockGlobalSessionCallback();
     SyncConfiguration config = new SyncConfiguration(USERNAME, new BasicAuthHeaderProvider(USERNAME, PASSWORD), new MockSharedPreferences());
     config.syncKeyBundle = new KeyBundle(USERNAME, SYNC_KEY);
@@ -178,7 +186,6 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
         throws SyncConfigurationException,
                IllegalArgumentException,
                IOException,
-               ParseException,
                NonObjectJSONException {
       super(config, callback);
     }
@@ -603,7 +610,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertEquals(uploadHeaderTimestamp, session.config.getPersistedServerClientsTimestamp());
   }
 
-  @Test
+  @Test // client/server multi-threaded
   public void testDownloadHasOurRecord() {
     // Make sure no upload occurs after a download so we can
     // test download in isolation.

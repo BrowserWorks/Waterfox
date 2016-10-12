@@ -7,12 +7,12 @@
 #define mozilla_layers_APZThreadUtils_h
 
 #include "base/message_loop.h"
-#include "mozilla/TimeStamp.h"  // for TimeDuration
 #include "nsITimer.h"
 
-class Task;
-
 namespace mozilla {
+
+class Runnable;
+
 namespace layers {
 
 class APZThreadUtils
@@ -50,13 +50,7 @@ public:
    * this function is called from the controller thread itself then the task is
    * run immediately without getting queued.
    */
-  static void RunOnControllerThread(Task* aTask);
-
-  /**
-   * Runs the given task on the current thread after a delay of |aDelay|.
-   */
-  static void RunDelayedTaskOnCurrentThread(Task* aTask,
-                                            const TimeDuration& aDelay);
+  static void RunOnControllerThread(already_AddRefed<Runnable> aTask);
 
   /**
    * Returns true if currently on APZ "controller thread".

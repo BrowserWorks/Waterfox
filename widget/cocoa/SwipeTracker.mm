@@ -199,9 +199,9 @@ SwipeTracker::CreateSwipeGestureEvent(EventMessage aMsg, nsIWidget* aWidget,
                                       const LayoutDeviceIntPoint& aPosition)
 {
   WidgetSimpleGestureEvent geckoEvent(true, aMsg, aWidget);
-  geckoEvent.modifiers = 0;
-  geckoEvent.timeStamp = TimeStamp::Now();
-  geckoEvent.refPoint = aPosition;
+  geckoEvent.mModifiers = 0;
+  geckoEvent.mTimeStamp = TimeStamp::Now();
+  geckoEvent.mRefPoint = aPosition;
   geckoEvent.buttons = 0;
   return geckoEvent;
 }
@@ -211,9 +211,9 @@ SwipeTracker::SendSwipeEvent(EventMessage aMsg, uint32_t aDirection, double aDel
 {
   WidgetSimpleGestureEvent geckoEvent =
     CreateSwipeGestureEvent(aMsg, &mWidget, mEventPosition);
-  geckoEvent.direction = aDirection;
-  geckoEvent.delta = aDelta;
-  geckoEvent.allowedDirections = mAllowedDirections;
+  geckoEvent.mDirection = aDirection;
+  geckoEvent.mDelta = aDelta;
+  geckoEvent.mAllowedDirections = mAllowedDirections;
   return mWidget.DispatchWindowEvent(geckoEvent);
 }
 

@@ -10,7 +10,7 @@ function test() {
   var cm = Components.classes["@mozilla.org/cookiemanager;1"]
                      .getService(Components.interfaces.nsICookieManager2);
   cm.add("example.com", "/browser/" + RELATIVE_DIR, "xpinstall", "true", false,
-         false, true, (Date.now() / 1000) + 60);
+         false, true, (Date.now() / 1000) + 60, {});
 
   var pm = Services.perms;
   pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
@@ -18,7 +18,7 @@ function test() {
   Services.prefs.setIntPref("network.cookie.cookieBehavior", 1);
 
   var triggers = encodeURIComponent(JSON.stringify({
-    "Cookie check": TESTROOT + "cookieRedirect.sjs?" + TESTROOT + "unsigned.xpi"
+    "Cookie check": TESTROOT + "cookieRedirect.sjs?" + TESTROOT + "amosigned.xpi"
   }));
   gBrowser.selectedTab = gBrowser.addTab();
   gBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
@@ -33,7 +33,7 @@ function finish_test(count) {
 
   var cm = Components.classes["@mozilla.org/cookiemanager;1"]
                      .getService(Components.interfaces.nsICookieManager2);
-  cm.remove("example.com", "xpinstall", "/browser/" + RELATIVE_DIR, false);
+  cm.remove("example.com", "xpinstall", "/browser/" + RELATIVE_DIR, false, {});
 
   Services.prefs.clearUserPref("network.cookie.cookieBehavior");
 

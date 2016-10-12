@@ -23,14 +23,15 @@
  *  NSSCKFWSlot_GetMDSlot
  *  NSSCKFWSlot_GetFWInstance
  *  NSSCKFWSlot_GetMDInstance
+ *  NSSCKFWSlot_GetSlotID
  *
  *  -- implement public accessors --
  *  nssCKFWSlot_GetMDSlot
  *  nssCKFWSlot_GetFWInstance
  *  nssCKFWSlot_GetMDInstance
+ *  nssCKFWSlot_GetSlotID
  *
  *  -- private accessors --
- *  nssCKFWSlot_GetSlotID
  *  nssCKFWSlot_ClearToken
  *
  *  -- module fronts --
@@ -336,8 +337,7 @@ nssCKFWSlot_GetSlotDescription(
             if ((!fwSlot->slotDescription) && (CKR_OK != error)) {
                 goto done;
             }
-        }
-        else {
+        } else {
             fwSlot->slotDescription = (NSSUTF8 *)"";
         }
     }
@@ -385,8 +385,7 @@ nssCKFWSlot_GetManufacturerID(
             if ((!fwSlot->manufacturerID) && (CKR_OK != error)) {
                 goto done;
             }
-        }
-        else {
+        } else {
             fwSlot->manufacturerID = (NSSUTF8 *)"";
         }
     }
@@ -496,8 +495,7 @@ nssCKFWSlot_GetHardwareVersion(
     if (fwSlot->mdSlot->GetHardwareVersion) {
         fwSlot->hardwareVersion = fwSlot->mdSlot->GetHardwareVersion(
             fwSlot->mdSlot, fwSlot, fwSlot->mdInstance, fwSlot->fwInstance);
-    }
-    else {
+    } else {
         fwSlot->hardwareVersion.major = 0;
         fwSlot->hardwareVersion.minor = 1;
     }
@@ -539,8 +537,7 @@ nssCKFWSlot_GetFirmwareVersion(
     if (fwSlot->mdSlot->GetFirmwareVersion) {
         fwSlot->firmwareVersion = fwSlot->mdSlot->GetFirmwareVersion(
             fwSlot->mdSlot, fwSlot, fwSlot->mdInstance, fwSlot->fwInstance);
-    }
-    else {
+    } else {
         fwSlot->firmwareVersion.major = 0;
         fwSlot->firmwareVersion.minor = 1;
     }
@@ -597,8 +594,7 @@ nssCKFWSlot_GetToken(
 
         fwToken = nssCKFWToken_Create(fwSlot, mdToken, pError);
         fwSlot->fwToken = fwToken;
-    }
-    else {
+    } else {
         fwToken = fwSlot->fwToken;
     }
 
@@ -683,4 +679,16 @@ NSSCKFWSlot_GetMDInstance(
 #endif /* DEBUG */
 
     return nssCKFWSlot_GetMDInstance(fwSlot);
+}
+
+/*
+ * NSSCKFWSlot_GetSlotID
+ *
+ */
+
+NSS_IMPLEMENT CK_SLOT_ID
+NSSCKFWSlot_GetSlotID(
+    NSSCKFWSlot *fwSlot)
+{
+    return nssCKFWSlot_GetSlotID(fwSlot);
 }

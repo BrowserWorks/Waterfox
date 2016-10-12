@@ -37,9 +37,19 @@ function prefillAlertInfo() {
   // arguments[8] --> replaced alert window (nsIDOMWindow)
   // arguments[9] --> an optional callback listener (nsIObserver)
   // arguments[10] -> the nsIURI.hostPort of the origin, optional
+  // arguments[11] -> the alert icon URL, optional
 
   switch (window.arguments.length) {
     default:
+    case 12: {
+      if (window.arguments[11]) {
+        let alertBox = document.getElementById("alertBox");
+        alertBox.setAttribute("hasIcon", true);
+
+        let icon = document.getElementById("alertIcon");
+        icon.src = window.arguments[11];
+      }
+    }
     case 11: {
       if (window.arguments[10]) {
         let alertBox = document.getElementById("alertBox");
@@ -136,7 +146,7 @@ function prefillAlertInfo() {
 }
 
 function onAlertLoad() {
-  const ALERT_DURATION_IMMEDIATE = 12000;
+  const ALERT_DURATION_IMMEDIATE = 20000;
   let alertTextBox = document.getElementById("alertTextBox");
   let alertImageBox = document.getElementById("alertImageBox");
   alertImageBox.style.minHeight = alertTextBox.scrollHeight + "px";

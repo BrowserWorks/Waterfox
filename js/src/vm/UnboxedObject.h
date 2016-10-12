@@ -10,6 +10,7 @@
 #include "jsgc.h"
 #include "jsobj.h"
 
+#include "vm/Runtime.h"
 #include "vm/TypeInference.h"
 
 namespace js {
@@ -61,11 +62,11 @@ class UnboxedLayout : public mozilla::LinkedListElement<UnboxedLayout>
     // If objects in this group have ever been converted to native objects,
     // these store the corresponding native group and initial shape for such
     // objects. Type information for this object is reflected in nativeGroup.
-    HeapPtrObjectGroup nativeGroup_;
-    HeapPtrShape nativeShape_;
+    GCPtrObjectGroup nativeGroup_;
+    GCPtrShape nativeShape_;
 
     // Any script/pc which the associated group is created for.
-    HeapPtrScript allocationScript_;
+    GCPtrScript allocationScript_;
     jsbytecode* allocationPc_;
 
     // If nativeGroup is set and this object originally had a TypeNewScript or
@@ -73,7 +74,7 @@ class UnboxedLayout : public mozilla::LinkedListElement<UnboxedLayout>
     // this one. This link is only needed to keep the replacement group from
     // being GC'ed. If it were GC'ed and a new one regenerated later, that new
     // group might have a different allocation kind from this group.
-    HeapPtrObjectGroup replacementGroup_;
+    GCPtrObjectGroup replacementGroup_;
 
     // The following members are only used for unboxed plain objects.
 
@@ -93,7 +94,7 @@ class UnboxedLayout : public mozilla::LinkedListElement<UnboxedLayout>
     // If this layout has been used to construct script or JSON constant
     // objects, this code might be filled in to more quickly fill in objects
     // from an array of values.
-    HeapPtrJitCode constructorCode_;
+    GCPtrJitCode constructorCode_;
 
     // The following members are only used for unboxed arrays.
 
@@ -245,7 +246,7 @@ class UnboxedPlainObject : public JSObject
                                    MutableHandleShape propp);
 
     static bool obj_defineProperty(JSContext* cx, HandleObject obj, HandleId id,
-                                   Handle<JSPropertyDescriptor> desc,
+                                   Handle<PropertyDescriptor> desc,
                                    ObjectOpResult& result);
 
     static bool obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
@@ -257,7 +258,7 @@ class UnboxedPlainObject : public JSObject
                                 HandleValue receiver, ObjectOpResult& result);
 
     static bool obj_getOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id,
-                                             MutableHandle<JSPropertyDescriptor> desc);
+                                             MutableHandle<PropertyDescriptor> desc);
 
     static bool obj_deleteProperty(JSContext* cx, HandleObject obj, HandleId id,
                                    ObjectOpResult& result);
@@ -303,7 +304,7 @@ class UnboxedPlainObject : public JSObject
                                           NewObjectKind newKind, IdValuePair* properties);
 
     void fillAfterConvert(ExclusiveContext* cx,
-                          const AutoValueVector& values, size_t* valueCursor);
+                          Handle<GCVector<Value>> values, size_t* valueCursor);
 
     static void trace(JSTracer* trc, JSObject* object);
 
@@ -320,7 +321,7 @@ class UnboxedPlainObject : public JSObject
 // provided they all match the template shape. If successful, converts the
 // preliminary objects and their group to the new unboxed representation.
 bool
-TryConvertToUnboxedLayout(ExclusiveContext* cx, Shape* templateShape,
+TryConvertToUnboxedLayout(ExclusiveContext* cx, AutoEnterAnalysis& enter, Shape* templateShape,
                           ObjectGroup* group, PreliminaryObjectArray* objects);
 
 inline gc::AllocKind
@@ -381,7 +382,7 @@ class UnboxedArrayObject : public JSObject
                                    MutableHandleShape propp);
 
     static bool obj_defineProperty(JSContext* cx, HandleObject obj, HandleId id,
-                                   Handle<JSPropertyDescriptor> desc,
+                                   Handle<PropertyDescriptor> desc,
                                    ObjectOpResult& result);
 
     static bool obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
@@ -393,7 +394,7 @@ class UnboxedArrayObject : public JSObject
                                 HandleValue receiver, ObjectOpResult& result);
 
     static bool obj_getOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id,
-                                             MutableHandle<JSPropertyDescriptor> desc);
+                                             MutableHandle<PropertyDescriptor> desc);
 
     static bool obj_deleteProperty(JSContext* cx, HandleObject obj, HandleId id,
                                    ObjectOpResult& result);
@@ -426,7 +427,7 @@ class UnboxedArrayObject : public JSObject
     bool convertInt32ToDouble(ExclusiveContext* cx, ObjectGroup* group);
 
     void fillAfterConvert(ExclusiveContext* cx,
-                          const AutoValueVector& values, size_t* valueCursor);
+                          Handle<GCVector<Value>> values, size_t* valueCursor);
 
     static void trace(JSTracer* trc, JSObject* object);
     static void objectMoved(JSObject* obj, const JSObject* old);
@@ -518,5 +519,13 @@ class UnboxedArrayObject : public JSObject
 };
 
 } // namespace js
+
+namespace JS {
+
+template <>
+struct DeletePolicy<js::UnboxedLayout> : public js::GCManagedDeletePolicy<js::UnboxedLayout>
+{};
+
+} /* namespace JS */
 
 #endif /* vm_UnboxedObject_h */

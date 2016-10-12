@@ -9,10 +9,12 @@
 
 #include "Workers.h"
 
+#include "nsIObserver.h"
 #include "nsIWorkerDebuggerManager.h"
 
 #include "nsServiceManagerUtils.h"
 #include "nsTArray.h"
+#include "nsThreadUtils.h"
 
 #define WORKERDEBUGGERMANAGER_CID \
   { 0x62ec8731, 0x55ad, 0x4246, \
@@ -24,7 +26,8 @@ BEGIN_WORKERS_NAMESPACE
 
 class WorkerDebugger;
 
-class WorkerDebuggerManager final : public nsIWorkerDebuggerManager
+class WorkerDebuggerManager final : public nsIObserver,
+                                    public nsIWorkerDebuggerManager
 {
   Mutex mMutex;
 
@@ -35,54 +38,58 @@ class WorkerDebuggerManager final : public nsIWorkerDebuggerManager
   nsTArray<RefPtr<WorkerDebugger>> mDebuggers;
 
 public:
+  static already_AddRefed<WorkerDebuggerManager>
+  GetInstance();
+
   static WorkerDebuggerManager*
-  GetOrCreateService()
-  {
-    nsCOMPtr<nsIWorkerDebuggerManager> manager =
-      do_GetService(WORKERDEBUGGERMANAGER_CONTRACTID);
-    return static_cast<WorkerDebuggerManager*>(manager.get());
-  }
+  GetOrCreate();
+
+  static WorkerDebuggerManager*
+  Get();
 
   WorkerDebuggerManager();
 
-  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIOBSERVER
   NS_DECL_NSIWORKERDEBUGGERMANAGER
 
-  void ClearListeners();
+  nsresult
+  Init();
 
-  void RegisterDebugger(WorkerPrivate* aWorkerPrivate);
+  void
+  Shutdown();
 
-  void UnregisterDebugger(WorkerPrivate* aWorkerPrivate);
+  void
+  RegisterDebugger(WorkerPrivate* aWorkerPrivate);
 
-  void RegisterDebuggerMainThread(WorkerPrivate* aWorkerPrivate,
-                                  bool aNotifyListeners);
+  void
+  RegisterDebuggerMainThread(WorkerPrivate* aWorkerPrivate,
+                             bool aNotifyListeners);
 
-  void UnregisterDebuggerMainThread(WorkerPrivate* aWorkerPrivate);
+  void
+  UnregisterDebugger(WorkerPrivate* aWorkerPrivate);
+
+  void
+  UnregisterDebuggerMainThread(WorkerPrivate* aWorkerPrivate);
 
 private:
   virtual ~WorkerDebuggerManager();
 };
 
 inline nsresult
-ClearWorkerDebuggerManagerListeners()
-{
-  RefPtr<WorkerDebuggerManager> manager =
-    WorkerDebuggerManager::GetOrCreateService();
-  if (!manager) {
-    return NS_ERROR_FAILURE;
-  }
-
-  manager->ClearListeners();
-  return NS_OK;
-}
-
-inline nsresult
 RegisterWorkerDebugger(WorkerPrivate* aWorkerPrivate)
 {
-  RefPtr<WorkerDebuggerManager> manager =
-    WorkerDebuggerManager::GetOrCreateService();
-  if (!manager) {
-    return NS_ERROR_FAILURE;
+  WorkerDebuggerManager* manager;
+
+  if (NS_IsMainThread()) {
+    manager = WorkerDebuggerManager::GetOrCreate();
+    if (!manager) {
+      NS_WARNING("Failed to create worker debugger manager!");
+      return NS_ERROR_FAILURE;
+    }
+  }
+  else {
+    manager = WorkerDebuggerManager::Get();
   }
 
   manager->RegisterDebugger(aWorkerPrivate);
@@ -92,10 +99,17 @@ RegisterWorkerDebugger(WorkerPrivate* aWorkerPrivate)
 inline nsresult
 UnregisterWorkerDebugger(WorkerPrivate* aWorkerPrivate)
 {
-  RefPtr<WorkerDebuggerManager> manager =
-    WorkerDebuggerManager::GetOrCreateService();
-  if (!manager) {
-    return NS_ERROR_FAILURE;
+  WorkerDebuggerManager* manager;
+
+  if (NS_IsMainThread()) {
+    manager = WorkerDebuggerManager::GetOrCreate();
+    if (!manager) {
+      NS_WARNING("Failed to create worker debugger manager!");
+      return NS_ERROR_FAILURE;
+    }
+  }
+  else {
+    manager = WorkerDebuggerManager::Get();
   }
 
   manager->UnregisterDebugger(aWorkerPrivate);

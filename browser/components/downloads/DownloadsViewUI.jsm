@@ -17,6 +17,8 @@ const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
+                                  "resource://gre/modules/Downloads.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadUtils",
                                   "resource://gre/modules/DownloadUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadsCommon",
@@ -24,7 +26,15 @@ XPCOMUtils.defineLazyModuleGetter(this, "DownloadsCommon",
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 
-this.DownloadsViewUI = {};
+this.DownloadsViewUI = {
+  /**
+   * Returns true if the given string is the name of a command that can be
+   * handled by the Downloads user interface, including standard commands.
+   */
+  isCommandName(name) {
+    return name.startsWith("cmd_") || name.startsWith("downloadsCmd_");
+  },
+};
 
 /**
  * A download element shell is responsible for handling the commands and the
@@ -104,6 +114,14 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
     this.element.setAttribute("state",
                               DownloadsCommon.stateOfDownload(this.download));
 
+    if (this.download.error &&
+        this.download.error.becauseBlockedByReputationCheck) {
+      this.element.setAttribute("verdict",
+                                this.download.error.reputationCheckVerdict);
+    } else {
+      this.element.removeAttribute("verdict");
+    }
+
     // Since state changed, reset the time left estimation.
     this.lastEstimatedSecondsLeft = Infinity;
 
@@ -123,6 +141,11 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
         this.element.removeAttribute("exists");
       }
     }
+
+    // When a block is confirmed, the removal of blocked data will not trigger a
+    // state change for the download, so this class must be updated here.
+    this.element.classList.toggle("temporary-block",
+                                  !!this.download.hasBlockedData);
 
     // The progress bar is only displayed for in-progress downloads.
     if (this.download.hasProgress) {
@@ -159,7 +182,6 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
    * Derived objects may call this to get the status text.
    */
   get rawStatusTextAndTip() {
-    const nsIDM = Ci.nsIDownloadManager;
     let s = DownloadsCommon.strings;
 
     let text = "";
@@ -213,7 +235,17 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       } else if (this.download.error.becauseBlockedByParentalControls) {
         stateLabel = s.stateBlockedParentalControls;
       } else if (this.download.error.becauseBlockedByReputationCheck) {
-        stateLabel = s.stateDirty;
+        switch (this.download.error.reputationCheckVerdict) {
+          case Downloads.Error.BLOCK_VERDICT_UNCOMMON:
+            stateLabel = s.blockedUncommon2;
+            break;
+          case Downloads.Error.BLOCK_VERDICT_POTENTIALLY_UNWANTED:
+            stateLabel = s.blockedPotentiallyUnwanted;
+            break;
+          default: // Assume Downloads.Error.BLOCK_VERDICT_MALWARE
+            stateLabel = s.blockedMalware;
+            break;
+        }
       } else {
         stateLabel = s.stateFailed;
       }
@@ -230,5 +262,102 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
     }
 
     return { text, tip: tip || text };
+  },
+
+  /**
+   * Shows the appropriate unblock dialog based on the verdict, and executes the
+   * action selected by the user in the dialog, which may involve unblocking,
+   * opening or removing the file.
+   *
+   * @param window
+   *        The window to which the dialog should be anchored.
+   * @param dialogType
+   *        Can be "unblock", "chooseUnblock", or "chooseOpen".
+   */
+  confirmUnblock(window, dialogType) {
+    DownloadsCommon.confirmUnblockDownload({
+      verdict: this.download.error.reputationCheckVerdict,
+      window,
+      dialogType,
+    }).then(action => {
+      if (action == "open") {
+        return this.download.unblock().then(() => this.downloadsCmd_open());
+      } else if (action == "unblock") {
+        return this.download.unblock();
+      } else if (action == "confirmBlock") {
+        return this.download.confirmBlock();
+      }
+    }).catch(Cu.reportError);
+  },
+
+  /**
+   * Returns the name of the default command to use for the current state of the
+   * download, when there is a double click or another default interaction. If
+   * there is no default command for the current state, returns an empty string.
+   * The commands are implemented as functions on this object or derived ones.
+   */
+  get currentDefaultCommandName() {
+    switch (DownloadsCommon.stateOfDownload(this.download)) {
+      case Ci.nsIDownloadManager.DOWNLOAD_NOTSTARTED:
+        return "downloadsCmd_cancel";
+      case Ci.nsIDownloadManager.DOWNLOAD_FAILED:
+      case Ci.nsIDownloadManager.DOWNLOAD_CANCELED:
+        return "downloadsCmd_retry";
+      case Ci.nsIDownloadManager.DOWNLOAD_PAUSED:
+        return "downloadsCmd_pauseResume";
+      case Ci.nsIDownloadManager.DOWNLOAD_FINISHED:
+        return "downloadsCmd_open";
+      case Ci.nsIDownloadManager.DOWNLOAD_BLOCKED_PARENTAL:
+      case Ci.nsIDownloadManager.DOWNLOAD_DIRTY:
+        return "downloadsCmd_openReferrer";
+    }
+    return "";
+  },
+
+  /**
+   * Returns true if the specified command can be invoked on the current item.
+   * The commands are implemented as functions on this object or derived ones.
+   *
+   * @param aCommand
+   *        Name of the command to check, for example "downloadsCmd_retry".
+   */
+  isCommandEnabled(aCommand) {
+    switch (aCommand) {
+      case "downloadsCmd_retry":
+        return this.download.canceled || this.download.error;
+      case "downloadsCmd_pauseResume":
+        return this.download.hasPartialData && !this.download.error;
+      case "downloadsCmd_openReferrer":
+        return !!this.download.source.referrer;
+      case "downloadsCmd_confirmBlock":
+      case "downloadsCmd_chooseUnblock":
+      case "downloadsCmd_chooseOpen":
+      case "downloadsCmd_unblock":
+        return this.download.hasBlockedData;
+    }
+    return false;
+  },
+
+  downloadsCmd_cancel() {
+    // This is the correct way to avoid race conditions when cancelling.
+    this.download.cancel().catch(() => {});
+    this.download.removePartialData().catch(Cu.reportError);
+  },
+
+  downloadsCmd_retry() {
+    // Errors when retrying are already reported as download failures.
+    this.download.start().catch(() => {});
+  },
+
+  downloadsCmd_pauseResume() {
+    if (this.download.stopped) {
+      this.download.start();
+    } else {
+      this.download.cancel();
+    }
+  },
+
+  downloadsCmd_confirmBlock() {
+    this.download.confirmBlock().catch(Cu.reportError);
   },
 };

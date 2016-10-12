@@ -447,6 +447,13 @@ this.TelemetryStorage = {
   _testGetArchivedPingDataFromFileName: function(aFileName) {
     return TelemetryStorageImpl._getArchivedPingDataFromFileName(aFileName);
   },
+
+  /**
+   * Only used in tests, this helper allows cleaning up the pending ping storage.
+   */
+  testClearPendingPings: function() {
+    return TelemetryStorageImpl.runRemovePendingPingsTask();
+  }
 };
 
 /**
@@ -665,6 +672,7 @@ var TelemetryStorageImpl = {
     });
 
     Telemetry.getHistogramById("TELEMETRY_ARCHIVE_SESSION_PING_COUNT").add();
+    return undefined;
   }),
 
   /**
@@ -1026,6 +1034,7 @@ var TelemetryStorageImpl = {
     } finally {
       this._enforcePendingPingsQuotaTask = null;
     }
+    return undefined;
   }),
 
   /**
@@ -1342,7 +1351,7 @@ var TelemetryStorageImpl = {
       this._pendingPings.delete(id);
       // Then propagate the rejection.
       throw e;
-    };
+    }
 
     return ping;
   }),
@@ -1402,6 +1411,7 @@ var TelemetryStorageImpl = {
     } finally {
       this._removePendingPingsTask = null;
     }
+    return undefined;
   }),
 
   removePendingPings: Task.async(function*() {
@@ -1576,10 +1586,6 @@ var TelemetryStorageImpl = {
     let ping;
     try {
       ping = JSON.parse(string);
-      // The ping's payload used to be stringified JSON.  Deal with that.
-      if (typeof(ping.payload) == "string") {
-        ping.payload = JSON.parse(ping.payload);
-      }
     } catch (e) {
       this._log.trace("loadPingfile - unparseable ping " + aFilePath, e);
       yield OS.File.remove(aFilePath).catch((ex) => {

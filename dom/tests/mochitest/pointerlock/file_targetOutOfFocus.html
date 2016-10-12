@@ -48,21 +48,19 @@
         document.addEventListener("mozpointerlockchange", function (e) {
           if (document.mozPointerLockElement === div) {
             divPointerLock = true;
-            document.mozCancelFullScreen();
-          }
-        }, false);
-
-        document.addEventListener("mozfullscreenchange", function() {
-          if (document.mozFullScreenElement === div) {
-            input.focus();
-          } else {
-            runTests();
-            SimpleTest.finish();
+            addFullscreenChangeContinuation("exit", function() {
+              runTests();
+              SimpleTest.finish();
+            });
+            document.exitFullscreen();
           }
         }, false);
 
         function start() {
-          div.mozRequestFullScreen();
+          addFullscreenChangeContinuation("enter", function() {
+            input.focus();
+          });
+          div.requestFullscreen();
         }
       </script>
     </pre>

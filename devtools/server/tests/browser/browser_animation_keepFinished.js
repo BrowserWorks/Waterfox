@@ -9,7 +9,7 @@
 // still, so we want the AnimationsActor to preserve the corresponding
 // AnimationPlayerActor.
 
-add_task(function*() {
+add_task(function* () {
   let {client, walker, animations} =
     yield initAnimationsFrontForUrl(MAIN_DOMAIN + "animation.html");
 
@@ -34,6 +34,9 @@ add_task(function*() {
 
   info("Wait for longer than the animation's duration");
   yield wait(2000);
+
+  players = yield animations.getAnimationPlayersForNode(node);
+  is(players.length, 0, "The added animation is surely finished");
 
   is(reportedMutations.length, 1, "Only one mutation was reported");
   is(reportedMutations[0].type, "added", "The mutation was an addition");

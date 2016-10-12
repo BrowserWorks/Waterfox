@@ -30,7 +30,9 @@ BaselineCompilerShared::BaselineCompilerShared(JSContext* cx, TempAllocator& all
     pcMappingEntries_(),
     icLoadLabels_(),
     pushedBeforeCall_(0),
+#ifdef DEBUG
     inCall_(false),
+#endif
     spsPushToggleOffset_(),
     profilerEnterFrameToggleOffset_(),
     profilerExitFrameToggleOffset_(),
@@ -43,7 +45,9 @@ void
 BaselineCompilerShared::prepareVMCall()
 {
     pushedBeforeCall_ = masm.framePushed();
+#ifdef DEBUG
     inCall_ = true;
+#endif
 
     // Ensure everything is synced.
     frame.syncStack(0);
@@ -63,9 +67,7 @@ BaselineCompilerShared::callVM(const VMFunction& fun, CallVMPhase phase)
     // Assert prepareVMCall() has been called.
     MOZ_ASSERT(inCall_);
     inCall_ = false;
-#endif
 
-#ifdef DEBUG
     // Assert the frame does not have an override pc when we're executing JIT code.
     {
         Label ok;
@@ -89,12 +91,14 @@ BaselineCompilerShared::callVM(const VMFunction& fun, CallVMPhase phase)
     uint32_t frameFullSize = frameBaseSize + (frameVals * sizeof(Value));
     if (phase == POST_INITIALIZE) {
         masm.store32(Imm32(frameFullSize), frameSizeAddress);
-        uint32_t descriptor = MakeFrameDescriptor(frameFullSize + argSize, JitFrame_BaselineJS);
+        uint32_t descriptor = MakeFrameDescriptor(frameFullSize + argSize, JitFrame_BaselineJS,
+                                                  ExitFrameLayout::Size());
         masm.push(Imm32(descriptor));
 
     } else if (phase == PRE_INITIALIZE) {
         masm.store32(Imm32(frameBaseSize), frameSizeAddress);
-        uint32_t descriptor = MakeFrameDescriptor(frameBaseSize + argSize, JitFrame_BaselineJS);
+        uint32_t descriptor = MakeFrameDescriptor(frameBaseSize + argSize, JitFrame_BaselineJS,
+                                                  ExitFrameLayout::Size());
         masm.push(Imm32(descriptor));
 
     } else {
@@ -117,7 +121,7 @@ BaselineCompilerShared::callVM(const VMFunction& fun, CallVMPhase phase)
         masm.bind(&afterWrite);
         masm.store32(ICTailCallReg, frameSizeAddress);
         masm.add32(Imm32(argSize), ICTailCallReg);
-        masm.makeFrameDescriptor(ICTailCallReg, JitFrame_BaselineJS);
+        masm.makeFrameDescriptor(ICTailCallReg, JitFrame_BaselineJS, ExitFrameLayout::Size());
         masm.push(ICTailCallReg);
     }
     MOZ_ASSERT(fun.expectTailCall == NonTailCall);

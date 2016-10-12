@@ -91,7 +91,18 @@ public:
    */
   virtual void NotifyAnimationUpdated(Animation& aAnimation);
 
-  void RemoveAnimation(Animation* aAnimation);
+  /**
+   * Returns true if any CSS animations, CSS transitions or Web animations are
+   * currently associated with this timeline.  As soon as an animation is
+   * applied to an element it is associated with the timeline even if it has a
+   * delayed start, so this includes animations that may not be active for some
+   * time.
+   */
+  bool HasAnimations() const {
+    return !mAnimations.IsEmpty();
+  }
+
+  virtual void RemoveAnimation(Animation* aAnimation);
 
 protected:
   nsCOMPtr<nsIGlobalObject> mWindow;
