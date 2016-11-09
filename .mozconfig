@@ -26,7 +26,7 @@ ac_add_options --disable-verify-mar
 ac_add_options --disable-webapp-runtime
 ac_add_options --disable-websms-backend
 
-ac_add_options --enable-application=browser
+ac_add_options --enable-application=b2g/graphene
 ac_add_options --enable-optimize="-O2 -D_ATL_XP_TARGETING"
 ac_add_options --enable-update-channel=release
 ac_add_options --enable-updater
