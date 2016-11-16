@@ -336,14 +336,14 @@ def check_compiler(compiler, language, target):
     # -std=gnu++11.
     if info.language == 'C++' and info.language_version != 201103:
         if info.type in ('clang-cl', 'clang', 'gcc'):
-            append_flag('-std=gnu++11')
+            append_flag('-std=gnu++14')
 
     # We force clang-cl to emulate Visual C++ 2013 Update 3 with fallback to
     # cl.exe.
-    if info.type == 'clang-cl' and info.version != '18.00.30723':
+    if info.type == 'clang-cl' and info.version != '19.00.24215':
         # Those flags are direct clang-cl flags that don't need -Xclang, add
         # them directly.
-        flags.append('-fms-compatibility-version=18.00.30723')
+        flags.append('-fms-compatibility-version=19.00.24215')
         flags.append('-fallback')
 
     # Check compiler target
@@ -660,10 +660,6 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                 % (host_or_target_str.capitalize(), language,
                    info.target_endianness or 'unknown', host_or_target_str,
                    host_or_target.endianness))
-
-        if info.flags:
-            raise FatalCheckError(
-                'Unknown compiler or compiler not supported.')
 
         # Compiler version checks
         # ===================================================
