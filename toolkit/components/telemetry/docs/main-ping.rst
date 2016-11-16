@@ -15,6 +15,8 @@ This ping is triggered by different scenarios, which is documented by the ``reas
 
 Most reasons lead to a session split, initiating a new *subsession*. We reset important measurements for those subsessions.
 
+After a new subsession split, the ``internal-telemetry-after-subsession-split`` topic is notified to all the observers. *This is an internal topic and is only meant for internal Telemetry usage.*
+
 *Note:* ``saved-session`` is sent with a different ping type (``saved-session``, not ``main``), but otherwise has the same format as discussed here.
 
 Structure::
@@ -46,6 +48,7 @@ Structure::
         addons: <string>, // obsolete, use ``environment.addons``
       },
 
+      processes: {...},
       childPayloads: [...], // only present with e10s; reduced payloads from content processes, null on failure
       simpleMeasurements: {...},
 
@@ -82,6 +85,23 @@ The length of this subsession in seconds.
 This uses a monotonic clock, so this may mismatch with other measurements that are not monotonic (e.g. based on Date.now()).
 
 If ``sessionLength`` is ``-1``, the monotonic clock is not working.
+
+processes
+---------
+This section contains per-process data.
+
+Structure::
+
+    "processes" : {
+      ... other processes ...
+      "parent": {
+        scalars: {...},
+      },
+    }
+
+scalars
+~~~~~~~
+This section contains the :doc:`scalars` that are valid for the current platform. Scalars are not created nor submitted if no data was added to them, and are only reported with subsession pings. Scalar data is only currently reported for the main process. Their type and format is described by the ``Scalars.yaml`` file. Its most recent version is available `here <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Scalars.yaml>`_. The ``info.revision`` field indicates the revision of the file that describes the reported scalars.
 
 childPayloads
 -------------

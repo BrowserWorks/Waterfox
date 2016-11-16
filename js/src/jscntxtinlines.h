@@ -29,14 +29,6 @@ class CompartmentChecker
     explicit CompartmentChecker(ExclusiveContext* cx)
       : compartment(cx->compartment())
     {
-#ifdef DEBUG
-        // In debug builds, make sure the embedder passed the cx it claimed it
-        // was going to use.
-        JSContext* activeContext = nullptr;
-        if (cx->isJSContext())
-            activeContext = cx->asJSContext()->runtime()->activeContext;
-        MOZ_ASSERT_IF(activeContext, cx == activeContext);
-#endif
     }
 
     /*
@@ -76,6 +68,7 @@ class CompartmentChecker
     }
 
     void check(JSObject* obj) {
+        MOZ_ASSERT_IF(obj, IsInsideNursery(obj) || !obj->asTenured().isMarked(gc::GRAY));
         if (obj)
             check(obj->compartment());
     }
@@ -91,6 +84,7 @@ class CompartmentChecker
     }
 
     void check(JSString* str) {
+        MOZ_ASSERT(!str->isMarked(gc::GRAY));
         if (!str->isAtom())
             checkZone(str->zone());
     }
@@ -125,6 +119,7 @@ class CompartmentChecker
     void check(jsid id) {}
 
     void check(JSScript* script) {
+        MOZ_ASSERT_IF(script, !script->isMarked(gc::GRAY));
         if (script)
             check(script->compartment());
     }
@@ -384,7 +379,7 @@ JSContext::setPendingException(js::Value v)
 inline bool
 JSContext::runningWithTrustedPrincipals() const
 {
-    return !compartment() || compartment()->principals() == runtime()->trustedPrincipals();
+    return !compartment() || compartment()->principals() == trustedPrincipals();
 }
 
 inline void
@@ -452,8 +447,8 @@ JSContext::currentScript(jsbytecode** ppc,
     if (ppc)
         *ppc = nullptr;
 
-    js::Activation* act = runtime()->activation();
-    while (act && (act->cx() != this || (act->isJit() && !act->asJit()->isActive())))
+    js::Activation* act = activation();
+    while (act && act->isJit() && !act->asJit()->isActive())
         act = act->prev();
 
     if (!act)

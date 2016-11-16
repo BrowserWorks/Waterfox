@@ -715,8 +715,7 @@ LoginManagerPrompter.prototype = {
 
     this.log("Adding new " + aName + " notification bar");
     var newBar = aNotifyBox.appendNotification(
-                            aText, aName,
-                            "chrome://mozapps/skin/passwordmgr/key.png",
+                            aText, aName, "",
                             priority, aButtons);
 
     // The page we're going to hasn't loaded yet, so we want to persist
@@ -948,21 +947,24 @@ LoginManagerPrompter.prototype = {
                        .addEventListener("input", onInput);
               chromeDoc.getElementById("password-notification-password")
                        .addEventListener("input", onInput);
+              let toggleBtn = chromeDoc.getElementById("password-notification-visibilityToggle");
+
               if (Services.prefs.getBoolPref("signon.rememberSignons.visibilityToggle")) {
+                toggleBtn.addEventListener("command", onVisibilityToggle);
+                toggleBtn.setAttribute("label", togglePasswordLabel);
+                toggleBtn.setAttribute("accesskey", togglePasswordAccessKey);
+                toggleBtn.setAttribute("hidden", LoginHelper.isMasterPasswordSet());
+              }
+              if (this.wasDismissed) {
                 chromeDoc.getElementById("password-notification-visibilityToggle")
-                         .addEventListener("command", onVisibilityToggle);
-                chromeDoc.getElementById("password-notification-visibilityToggle")
-                         .setAttribute("label", togglePasswordLabel);
-                chromeDoc.getElementById("password-notification-visibilityToggle")
-                         .setAttribute("accesskey", togglePasswordAccessKey);
-                chromeDoc.getElementById("password-notification-visibilityToggle")
-                         .removeAttribute("hidden");
+                         .setAttribute("hidden", true);
               }
               break;
             case "shown":
               writeDataToUI();
               break;
             case "dismissed":
+              this.wasDismissed = true;
               readDataFromUI();
               // Fall through.
             case "removed":

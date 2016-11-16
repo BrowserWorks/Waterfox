@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/collation/sq.xml
@@ -23,7 +23,7 @@ sq{
                 "&[before 1]Y<xh<<<Xh<<<XH"
                 "&[before 1]Ʒ<zh<<<Zh<<<ZH"
             }
-            Version{"29"}
+            Version{"28"}
         }
     }
 }

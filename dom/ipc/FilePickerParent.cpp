@@ -110,11 +110,13 @@ FilePickerParent::IORunnable::Run()
     ErrorResult error;
     blobImpl->GetSize(error);
     if (NS_WARN_IF(error.Failed())) {
+      error.SuppressException();
       continue;
     }
 
     blobImpl->GetLastModified(error);
     if (NS_WARN_IF(error.Failed())) {
+      error.SuppressException();
       continue;
     }
 
@@ -249,7 +251,8 @@ FilePickerParent::RecvOpen(const int16_t& aSelectedType,
                            const nsString& aDefaultExtension,
                            InfallibleTArray<nsString>&& aFilters,
                            InfallibleTArray<nsString>&& aFilterNames,
-                           const nsString& aDisplayDirectory)
+                           const nsString& aDisplayDirectory,
+                           const nsString& aOkButtonLabel)
 {
   if (!CreateFilePicker()) {
     Unused << Send__delete__(this, void_t(), nsIFilePicker::returnCancel);
@@ -265,6 +268,7 @@ FilePickerParent::RecvOpen(const int16_t& aSelectedType,
   mFilePicker->SetDefaultString(aDefaultFile);
   mFilePicker->SetDefaultExtension(aDefaultExtension);
   mFilePicker->SetFilterIndex(aSelectedType);
+  mFilePicker->SetOkButtonLabel(aOkButtonLabel);
 
   if (!aDisplayDirectory.IsEmpty()) {
     nsCOMPtr<nsIFile> localFile = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID);

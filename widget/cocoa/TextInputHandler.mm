@@ -27,7 +27,7 @@
 using namespace mozilla;
 using namespace mozilla::widget;
 
-PRLogModuleInfo* gLog = nullptr;
+LazyLogModule gLog("TextInputHandlerWidgets");
 
 static const char*
 OnOrOff(bool aBool)
@@ -290,34 +290,17 @@ IsControlChar(uint32_t aCharCode)
 }
 
 static uint32_t gHandlerInstanceCount = 0;
-static TISInputSourceWrapper gCurrentInputSource;
 
 static void
-InitLogModule()
+EnsureToLogAllKeyboardLayoutsAndIMEs()
 {
-  // Clear() is always called when TISInputSourceWrappper is created.
-  if (!gLog) {
-    gLog = PR_NewLogModule("TextInputHandlerWidgets");
+  static bool sDone = false;
+  if (!sDone) {
+    sDone = true;
     TextInputHandler::DebugPrintAllKeyboardLayouts();
     IMEInputHandler::DebugPrintAllIMEModes();
   }
 }
-
-static void
-InitCurrentInputSource()
-{
-  if (gHandlerInstanceCount > 0 &&
-      !gCurrentInputSource.IsInitializedByCurrentInputSource()) {
-    gCurrentInputSource.InitByCurrentInputSource();
-  }
-}
-
-static void
-FinalizeCurrentInputSource()
-{
-  gCurrentInputSource.Clear();
-}
-
 
 #pragma mark -
 
@@ -328,12 +311,31 @@ FinalizeCurrentInputSource()
  *
  ******************************************************************************/
 
+TISInputSourceWrapper* TISInputSourceWrapper::sCurrentInputSource = nullptr;
+
 // static
 TISInputSourceWrapper&
 TISInputSourceWrapper::CurrentInputSource()
 {
-  InitCurrentInputSource();
-  return gCurrentInputSource;
+  if (!sCurrentInputSource) {
+    sCurrentInputSource = new TISInputSourceWrapper();
+  }
+  if (!sCurrentInputSource->IsInitializedByCurrentInputSource()) {
+    sCurrentInputSource->InitByCurrentInputSource();
+  }
+  return *sCurrentInputSource;
+}
+
+// static
+void
+TISInputSourceWrapper::Shutdown()
+{
+  if (!sCurrentInputSource) {
+    return;
+  }
+  sCurrentInputSource->Clear();
+  delete sCurrentInputSource;
+  sCurrentInputSource = nullptr;
 }
 
 bool
@@ -472,18 +474,21 @@ TISInputSourceWrapper::InitByLayoutID(SInt32 aLayoutID,
       InitByInputSourceID("com.apple.keylayout.Arabic");
       break;
     case 7:
-      InitByInputSourceID("com.apple.keylayout.French");
+      InitByInputSourceID("com.apple.keylayout.ArabicPC");
       break;
     case 8:
-      InitByInputSourceID("com.apple.keylayout.Hebrew");
+      InitByInputSourceID("com.apple.keylayout.French");
       break;
     case 9:
-      InitByInputSourceID("com.apple.keylayout.Lithuanian");
+      InitByInputSourceID("com.apple.keylayout.Hebrew");
       break;
     case 10:
-      InitByInputSourceID("com.apple.keylayout.Norwegian");
+      InitByInputSourceID("com.apple.keylayout.Lithuanian");
       break;
     case 11:
+      InitByInputSourceID("com.apple.keylayout.Norwegian");
+      break;
+    case 12:
       InitByInputSourceID("com.apple.keylayout.Spanish");
       break;
     default:
@@ -719,7 +724,7 @@ void
 TISInputSourceWrapper::Clear()
 {
   // Clear() is always called when TISInputSourceWrappper is created.
-  InitLogModule();
+  EnsureToLogAllKeyboardLayoutsAndIMEs();
 
   if (mInputSourceList) {
     ::CFRelease(mInputSourceList);
@@ -1467,12 +1472,12 @@ TextInputHandler::DebugPrintAllKeyboardLayouts()
       tis.GetLocalizedName(name);
       tis.GetInputSourceID(isid);
       MOZ_LOG(gLog, LogLevel::Info,
-             ("  %s\t<%s>%s%s\n",
-              NS_ConvertUTF16toUTF8(name).get(),
-              NS_ConvertUTF16toUTF8(isid).get(),
-              tis.IsASCIICapable() ? "" : "\t(Isn't ASCII capable)",
-              tis.IsKeyboardLayout() && tis.GetUCKeyboardLayout() ?
-                "" : "\t(uchr is NOT AVAILABLE)"));
+        ("  %s\t<%s>%s%s\n",
+         NS_ConvertUTF16toUTF8(name).get(),
+         NS_ConvertUTF16toUTF8(isid).get(),
+         tis.IsASCIICapable() ? "" : "\t(Isn't ASCII capable)",
+         tis.IsKeyboardLayout() && tis.GetUCKeyboardLayout() ?
+           "" : "\t(uchr is NOT AVAILABLE)"));
     }
     ::CFRelease(list);
   }
@@ -1492,7 +1497,7 @@ TextInputHandler::TextInputHandler(nsChildView* aWidget,
                                    NSView<mozView> *aNativeView) :
   IMEInputHandler(aWidget, aNativeView)
 {
-  InitLogModule();
+  EnsureToLogAllKeyboardLayoutsAndIMEs();
   [mView installTextInputHandler:this];
 }
 
@@ -1532,7 +1537,7 @@ TextInputHandler::HandleKeyDownEvent(NSEvent* aNativeEvent)
     [NSCursor setHiddenUntilMouseMoves:YES];
   }
 
-  RefPtr<nsChildView> kungFuDeathGrip(mWidget);
+  RefPtr<nsChildView> widget(mWidget);
 
   KeyEventState* currentKeyEvent = PushKeyEvent(aNativeEvent);
   AutoKeyEventStateCleaner remover(this);
@@ -1551,7 +1556,7 @@ TextInputHandler::HandleKeyDownEvent(NSEvent* aNativeEvent)
         return false;
       }
 
-      WidgetKeyboardEvent imeEvent(true, eKeyDown, mWidget);
+      WidgetKeyboardEvent imeEvent(true, eKeyDown, widget);
       currentKeyEvent->InitKeyEvent(this, imeEvent);
       imeEvent.mPluginTextEventString.Assign(committed);
       nsEventStatus status = nsEventStatus_eIgnore;
@@ -1572,7 +1577,7 @@ TextInputHandler::HandleKeyDownEvent(NSEvent* aNativeEvent)
     return false;
   }
 
-  WidgetKeyboardEvent keydownEvent(true, eKeyDown, mWidget);
+  WidgetKeyboardEvent keydownEvent(true, eKeyDown, widget);
   currentKeyEvent->InitKeyEvent(this, keydownEvent);
 
   nsEventStatus status = nsEventStatus_eIgnore;
@@ -1611,7 +1616,7 @@ TextInputHandler::HandleKeyDownEvent(NSEvent* aNativeEvent)
   // Don't call interpretKeyEvents when a plugin has focus.  If we call it,
   // for example, a character is inputted twice during a composition in e10s
   // mode.
-  if (!mWidget->IsPluginFocused() && (IsIMEEnabled() || IsASCIICapableOnly())) {
+  if (!widget->IsPluginFocused() && (IsIMEEnabled() || IsASCIICapableOnly())) {
     MOZ_LOG(gLog, LogLevel::Info,
       ("%p TextInputHandler::HandleKeyDownEvent, calling interpretKeyEvents",
        this));
@@ -1645,7 +1650,7 @@ TextInputHandler::HandleKeyDownEvent(NSEvent* aNativeEvent)
       return false;
     }
 
-    WidgetKeyboardEvent keypressEvent(true, eKeyPress, mWidget);
+    WidgetKeyboardEvent keypressEvent(true, eKeyPress, widget);
     currentKeyEvent->InitKeyEvent(this, keypressEvent);
 
     // If we called interpretKeyEvents and this isn't normal character input
@@ -1741,6 +1746,7 @@ TextInputHandler::HandleFlagsChanged(NSEvent* aNativeEvent)
   }
 
   RefPtr<nsChildView> kungFuDeathGrip(mWidget);
+  mozilla::Unused << kungFuDeathGrip; // Not referenced within this function
 
   MOZ_LOG(gLog, LogLevel::Info,
     ("%p TextInputHandler::HandleFlagsChanged, aNativeEvent=%p, "
@@ -2184,6 +2190,14 @@ TextInputHandler::InsertText(NSAttributedString* aAttrString,
 
   if (str.Length() != 1 || IsIMEComposing()) {
     InsertTextAsCommittingComposition(aAttrString, aReplacementRange);
+    // For now, consume keypress events when we dispatch the string with a
+    // composition for preventing to dispatch keypress events later.
+    // TODO: When there is a currentKeyEvent, we should dispatch keypress
+    //       events even if the length of the string is over 1.
+    if (currentKeyEvent) {
+      currentKeyEvent->mKeyPressHandled = true;
+      currentKeyEvent->mKeyPressDispatched = true;
+    }
     return;
   }
 
@@ -2193,7 +2207,7 @@ TextInputHandler::InsertText(NSAttributedString* aAttrString,
     return;
   }
 
-  RefPtr<nsChildView> kungFuDeathGrip(mWidget);
+  RefPtr<nsChildView> widget(mWidget);
 
   // If the replacement range is specified, select the range.  Then, the
   // selection will be replaced by the later keypress event.
@@ -2212,7 +2226,7 @@ TextInputHandler::InsertText(NSAttributedString* aAttrString,
   }
 
   // Dispatch keypress event with char instead of compositionchange event
-  WidgetKeyboardEvent keypressEvent(true, eKeyPress, mWidget);
+  WidgetKeyboardEvent keypressEvent(true, eKeyPress, widget);
   // XXX Why do we need to dispatch keypress event for not inputting any
   //     string?  If it wants to delete the specified range, should we
   //     dispatch an eContentCommandDelete event instead?  Because this
@@ -2261,7 +2275,7 @@ TextInputHandler::InsertText(NSAttributedString* aAttrString,
 bool
 TextInputHandler::DoCommandBySelector(const char* aSelector)
 {
-  RefPtr<nsChildView> kungFuDeathGrip(mWidget);
+  RefPtr<nsChildView> widget(mWidget);
 
   KeyEventState* currentKeyEvent = GetCurrentKeyEvent();
 
@@ -2287,7 +2301,7 @@ TextInputHandler::DoCommandBySelector(const char* aSelector)
       return false;
     }
 
-    WidgetKeyboardEvent keypressEvent(true, eKeyPress, mWidget);
+    WidgetKeyboardEvent keypressEvent(true, eKeyPress, widget);
     currentKeyEvent->InitKeyEvent(this, keypressEvent);
 
     nsEventStatus status = nsEventStatus_eIgnore;
@@ -2456,11 +2470,11 @@ IMEInputHandler::DebugPrintAllIMEModes()
       tis.GetLocalizedName(name);
       tis.GetInputSourceID(isid);
       MOZ_LOG(gLog, LogLevel::Info,
-             ("  %s\t<%s>%s%s\n",
-              NS_ConvertUTF16toUTF8(name).get(),
-              NS_ConvertUTF16toUTF8(isid).get(),
-              tis.IsASCIICapable() ? "" : "\t(Isn't ASCII capable)",
-              tis.IsEnabled() ? "" : "\t(Isn't Enabled)"));
+        ("  %s\t<%s>%s%s\n",
+         NS_ConvertUTF16toUTF8(name).get(),
+         NS_ConvertUTF16toUTF8(isid).get(),
+         tis.IsASCIICapable() ? "" : "\t(Isn't ASCII capable)",
+         tis.IsEnabled() ? "" : "\t(Isn't Enabled)"));
     }
     ::CFRelease(list);
   }
@@ -3948,7 +3962,7 @@ TextInputHandlerBase::~TextInputHandlerBase()
 {
   [mView release];
   if (--gHandlerInstanceCount == 0) {
-    FinalizeCurrentInputSource();
+    TISInputSourceWrapper::Shutdown();
   }
 }
 

@@ -19,11 +19,12 @@
 #include "js/GCAPI.h"
 #include "js/SliceBudget.h"
 #include "js/Vector.h"
-
+#include "threading/ConditionVariable.h"
 #include "vm/NativeObject.h"
 
 namespace js {
 
+class AutoLockHelperThreadState;
 unsigned GetCPUCount();
 
 enum ThreadType
@@ -42,15 +43,18 @@ namespace gc {
 
 struct FinalizePhase;
 
-enum State {
-    NO_INCREMENTAL,
-    MARK_ROOTS,
-    MARK,
-    SWEEP,
-    FINALIZE,
-    COMPACT,
-
-    NUM_STATES
+#define GCSTATES(D) \
+    D(NotActive) \
+    D(MarkRoots) \
+    D(Mark) \
+    D(Sweep) \
+    D(Finalize) \
+    D(Compact) \
+    D(Decommit)
+enum class State {
+#define MAKE_STATE(name) name,
+    GCSTATES(MAKE_STATE)
+#undef MAKE_STATE
 };
 
 /*
@@ -739,18 +743,22 @@ class ArenaLists
 #endif
     }
 
-    void checkEmptyArenaLists() {
+    bool checkEmptyArenaLists() {
+        bool empty = true;
 #ifdef DEBUG
-        for (auto i : AllAllocKinds())
-            checkEmptyArenaList(i);
+        for (auto i : AllAllocKinds()) {
+            if (!checkEmptyArenaList(i))
+                empty = false;
+        }
 #endif
+        return empty;
     }
 
     void checkEmptyFreeList(AllocKind kind) {
         MOZ_ASSERT(freeLists[kind]->isEmpty());
     }
 
-    void checkEmptyArenaList(AllocKind kind);
+    bool checkEmptyArenaList(AllocKind kind);
 
     bool relocateArenas(Zone* zone, Arena*& relocatedListOut, JS::gcreason::Reason reason,
                         SliceBudget& sliceBudget, gcstats::Statistics& stats);
@@ -849,7 +857,7 @@ class GCHelperState
     // Condvar for notifying the main thread when work has finished. This is
     // associated with the runtime's GC lock --- the worker thread state
     // condvars can't be used here due to lock ordering issues.
-    PRCondVar* done;
+    js::ConditionVariable done;
 
     // Activity for the helper to do, protected by the GC lock.
     State state_;
@@ -858,12 +866,10 @@ class GCHelperState
     PRThread* thread;
 
     void startBackgroundThread(State newState);
-    void waitForBackgroundThread();
+    void waitForBackgroundThread(js::AutoLockGC& lock);
 
     State state();
     void setState(State state);
-
-    bool shrinkFlag;
 
     friend class js::gc::ArenaLists;
 
@@ -879,13 +885,11 @@ class GCHelperState
   public:
     explicit GCHelperState(JSRuntime* rt)
       : rt(rt),
-        done(nullptr),
+        done(),
         state_(IDLE),
-        thread(nullptr),
-        shrinkFlag(false)
+        thread(nullptr)
     { }
 
-    bool init();
     void finish();
 
     void work();
@@ -904,11 +908,6 @@ class GCHelperState
      */
     bool isBackgroundSweeping() const {
         return state_ == SWEEPING;
-    }
-
-    bool shouldShrink() const {
-        MOZ_ASSERT(isBackgroundSweeping());
-        return shrinkFlag;
     }
 };
 
@@ -957,7 +956,7 @@ class GCParallelTask
     // If multiple tasks are to be started or joined at once, it is more
     // efficient to take the helper thread lock once and use these methods.
     bool startWithLockHeld();
-    void joinWithLockHeld();
+    void joinWithLockHeld(AutoLockHelperThreadState& locked);
 
     // Instead of dispatching to a helper, run the task on the main thread.
     void runFromMainThread(JSRuntime* rt);
@@ -971,12 +970,13 @@ class GCParallelTask
     }
 
     // Check if a task is actively running.
+    bool isRunningWithLockHeld(const AutoLockHelperThreadState& locked) const;
     bool isRunning() const;
 
     // This should be friended to HelperThread, but cannot be because it
     // would introduce several circular dependencies.
   public:
-    virtual void runFromHelperThread();
+    virtual void runFromHelperThread(AutoLockHelperThreadState& locked);
 };
 
 typedef void (*IterateChunkCallback)(JSRuntime* rt, void* data, gc::Chunk* chunk);
@@ -992,7 +992,7 @@ typedef void (*IterateCellCallback)(JSRuntime* rt, void* data, void* thing,
  * on every in-use cell in the GC heap.
  */
 extern void
-IterateZonesCompartmentsArenasCells(JSRuntime* rt, void* data,
+IterateZonesCompartmentsArenasCells(JSContext* cx, void* data,
                                     IterateZoneCallback zoneCallback,
                                     JSIterateCompartmentCallback compartmentCallback,
                                     IterateArenaCallback arenaCallback,
@@ -1003,7 +1003,7 @@ IterateZonesCompartmentsArenasCells(JSRuntime* rt, void* data,
  * single zone.
  */
 extern void
-IterateZoneCompartmentsArenasCells(JSRuntime* rt, Zone* zone, void* data,
+IterateZoneCompartmentsArenasCells(JSContext* cx, Zone* zone, void* data,
                                    IterateZoneCallback zoneCallback,
                                    JSIterateCompartmentCallback compartmentCallback,
                                    IterateArenaCallback arenaCallback,
@@ -1013,7 +1013,7 @@ IterateZoneCompartmentsArenasCells(JSRuntime* rt, Zone* zone, void* data,
  * Invoke chunkCallback on every in-use chunk.
  */
 extern void
-IterateChunks(JSRuntime* rt, void* data, IterateChunkCallback chunkCallback);
+IterateChunks(JSContext* cx, void* data, IterateChunkCallback chunkCallback);
 
 typedef void (*IterateScriptCallback)(JSRuntime* rt, void* data, JSScript* script);
 
@@ -1022,7 +1022,7 @@ typedef void (*IterateScriptCallback)(JSRuntime* rt, void* data, JSScript* scrip
  * the given compartment or for all compartments if it is null.
  */
 extern void
-IterateScripts(JSRuntime* rt, JSCompartment* compartment,
+IterateScripts(JSContext* cx, JSCompartment* compartment,
                void* data, IterateScriptCallback scriptCallback);
 
 extern void
@@ -1225,13 +1225,14 @@ CheckValueAfterMovingGC(const JS::Value& value)
             D(ElementsBarrier, 12)             \
             D(CheckHashTablesOnMinorGC, 13)    \
             D(Compact, 14)                     \
-            D(CheckHeapOnMovingGC, 15)
+            D(CheckHeapOnMovingGC, 15)         \
+            D(CheckNursery, 16)
 
 enum class ZealMode {
 #define ZEAL_MODE(name, value) name = value,
     JS_FOR_EACH_ZEAL_MODE(ZEAL_MODE)
 #undef ZEAL_MODE
-    Limit = 15
+    Limit = 16
 };
 
 enum VerifierType {
@@ -1276,7 +1277,7 @@ class MOZ_RAII JS_HAZ_GC_SUPPRESSED AutoSuppressGC
   public:
     explicit AutoSuppressGC(ExclusiveContext* cx);
     explicit AutoSuppressGC(JSCompartment* comp);
-    explicit AutoSuppressGC(JSRuntime* rt);
+    explicit AutoSuppressGC(JSContext* cx);
 
     ~AutoSuppressGC()
     {
@@ -1443,7 +1444,7 @@ struct MOZ_RAII AutoDisableProxyCheck
 
 struct MOZ_RAII AutoDisableCompactingGC
 {
-    explicit AutoDisableCompactingGC(JSRuntime* rt);
+    explicit AutoDisableCompactingGC(JSContext* cx);
     ~AutoDisableCompactingGC();
 
   private:

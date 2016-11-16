@@ -19,6 +19,7 @@
 #include "ClearKeySession.h"
 #include "ClearKeyUtils.h"
 #include "ClearKeyStorage.h"
+#include "ClearKeyCencParser.h"
 #include "gmp-task-utils.h"
 #include "gmp-api/gmp-decryption.h"
 #include <assert.h>
@@ -60,13 +61,13 @@ ClearKeySession::Init(uint32_t aCreateSessionToken,
   CK_LOGD("ClearKeySession::Init");
 
   if (aInitDataType == "cenc") {
-    ClearKeyUtils::ParseCENCInitData(aInitData, aInitDataSize, mKeyIds);
+    ParseCENCInitData(aInitData, aInitDataSize, mKeyIds);
   } else if (aInitDataType == "keyids") {
     std::string sessionType;
     ClearKeyUtils::ParseKeyIdsInitData(aInitData, aInitDataSize, mKeyIds, sessionType);
     if (sessionType != ClearKeyUtils::SessionTypeToString(mSessionType)) {
       const char message[] = "Session type specified in keyids init data doesn't match session type.";
-      mCallback->RejectPromise(aPromiseId, kGMPAbortError, message, strlen(message));
+      mCallback->RejectPromise(aPromiseId, kGMPInvalidAccessError, message, strlen(message));
       return;
     }
   } else if (aInitDataType == "webm" && aInitDataSize == 16) {
@@ -78,7 +79,7 @@ ClearKeySession::Init(uint32_t aCreateSessionToken,
 
   if (!mKeyIds.size()) {
     const char message[] = "Couldn't parse init data";
-    mCallback->RejectPromise(aPromiseId, kGMPAbortError, message, strlen(message));
+    mCallback->RejectPromise(aPromiseId, kGMPInvalidAccessError, message, strlen(message));
     return;
   }
 

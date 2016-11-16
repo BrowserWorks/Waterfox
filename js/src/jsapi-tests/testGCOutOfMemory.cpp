@@ -32,7 +32,7 @@ BEGIN_TEST(testGCOutOfMemory)
     CHECK(match);
     JS_ClearPendingException(cx);
 
-    JS_GC(rt);
+    JS_GC(cx);
 
     // The above GC should have discarded everything. Verify that we can now
     // allocate half as many objects without OOMing.
@@ -47,7 +47,7 @@ BEGIN_TEST(testGCOutOfMemory)
     return true;
 }
 
-virtual JSRuntime * createRuntime() override {
+virtual JSContext* createContext() override {
     // Note that the max nursery size must be less than the whole heap size, or
     // the test will fail because 'max' (the number of allocations required for
     // OOM) will be based on the nursery size, and that will overflow the
@@ -55,15 +55,15 @@ virtual JSRuntime * createRuntime() override {
     // OOM. (Actually, this only happens with nursery zeal, because normally
     // the nursery will start out with only a single chunk before triggering a
     // major GC.)
-    JSRuntime* rt = JS_NewRuntime(768 * 1024, 128 * 1024);
-    if (!rt)
+    JSContext* cx = JS_NewContext(768 * 1024, 128 * 1024);
+    if (!cx)
         return nullptr;
-    setNativeStackQuota(rt);
-    return rt;
+    setNativeStackQuota(cx);
+    return cx;
 }
 
-virtual void destroyRuntime() override {
-    JS_DestroyRuntime(rt);
+virtual void destroyContext() override {
+    JS_DestroyContext(cx);
 }
 
 END_TEST(testGCOutOfMemory)

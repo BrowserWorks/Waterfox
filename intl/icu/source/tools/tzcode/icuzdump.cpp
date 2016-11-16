@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2007-2016, International Business Machines
+*   Copyright (C) 2007-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -34,7 +34,6 @@
 #include "unicode/ustream.h"
 #include "unicode/putil.h"
 
-#include "cmemory.h"
 #include "uoptions.h"
 
 using namespace std;
@@ -290,7 +289,7 @@ main(int argc, char *argv[]) {
     const char *linesep = NULL;
 
     U_MAIN_INIT_ARGS(argc, argv);
-    argc = u_parseArgs(argc, argv, UPRV_LENGTHOF(options), options);
+    argc = u_parseArgs(argc, argv, sizeof(options)/sizeof(options[0]), options);
 
     if (argc < 0) {
         cerr << "Illegal command line argument(s)" << endl << endl;

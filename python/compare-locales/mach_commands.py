@@ -70,7 +70,7 @@ class CompareLocales(MachCommandBase):
                 merge_dir = mozpath.join(
                     self.topobjdir,
                     self.substs['MOZ_BUILD_APP'],
-                    'locales', 'merge-{ab_CD}'
+                    'locales', 'merge-dir-{ab_CD}'
                 )
             except Exception:
                 pass
@@ -78,4 +78,4 @@ class CompareLocales(MachCommandBase):
         app = EnumerateApp(l10n_ini, l10n_base, locales)
         observer = compareApp(app, merge_stage=merge_dir,
                               clobber=True)
-        print(observer.serialize().encode('utf-8', 'replace'))
+        print(observer.serialize())

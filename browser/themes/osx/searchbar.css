@@ -3,7 +3,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #PopupSearchAutoComplete {
+  /* JS code forces the panel to have the width of the searchbar rather than
+   * the width of the textfield. Alignment of the panel with the searchbar is
+   * obtained with negative margins here: margin-inline-start when the text
+   * field is in the same direction as the rest of the UI, margin-inline-end
+   * when the textfield's direction has been reversed.
+   * (eg. using command+shift+X) */
   margin-inline-start: -23px;
+  margin-inline-end: -21px;
 }
 
 .searchbar-textbox {
@@ -45,7 +52,7 @@
   -moz-image-region: rect(14px, 42px, 28px, 28px);
 }
 
-.search-go-button:-moz-locale-dir(rtl) > .toolbarbutton-icon {
+.search-go-button:-moz-locale-dir(rtl) {
   transform: scaleX(-1);
 }
 
@@ -155,6 +162,10 @@
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAWCAYAAAABxvaqAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gofECQNNVW2/AAAABBJREFUGFdjOHPmzH8GehEA/KpKg9YTf4AAAAAASUVORK5CYII=');
   background-repeat: no-repeat;
   background-position: right center;
+}
+
+.searchbar-engine-one-off-item:-moz-locale-dir(rtl) {
+  background-position: left center;
 }
 
 .searchbar-engine-one-off-item:not(.last-row) {

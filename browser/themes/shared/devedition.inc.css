@@ -36,15 +36,6 @@
   --tab-selection-box-shadow: none;
   --pinned-tab-glow: radial-gradient(22px at center calc(100% - 2px), rgba(76,158,217,0.9) 13%, rgba(0,0,0,0.4) 16%, transparent 70%);
 
-  /* Toolbar buttons */
-  --toolbarbutton-hover-background: rgba(25,33, 38,.6) linear-gradient(rgba(25,33,38,.6), rgba(25,33,38,.6)) padding-box;
-  --toolbarbutton-hover-boxshadow: none;
-  --toolbarbutton-hover-bordercolor: rgba(25,33,38,.6);
-  --toolbarbutton-active-background: rgba(25,33,38,1) linear-gradient(rgba(25,33,38,1), rgba(25,33,38,1)) border-box;
-  --toolbarbutton-active-boxshadow: none;
-  --toolbarbutton-active-bordercolor: rgba(25,33,38,.8);
-  --toolbarbutton-checkedhover-backgroundcolor: #3C5283;
-
   /* Url and search bars */
   --url-and-searchbar-background-color: #171B1F;
   --urlbar-separator-color: #5F6670;
@@ -61,8 +52,18 @@
 :root[devtoolstheme="dark"] #identity-box {
   --identity-box-chrome-color: #46afe3;
   --identity-box-verified-background-color: transparent;
-  --identity-box-hover-background-color: rgba(231,230,230,.2);
-  --identity-box-selected-background-color: rgba(211,210,210,.2);
+}
+
+/* Override the lwtheme-specific styling for toolbar buttons */
+:root[devtoolstheme="dark"],
+:root[devtoolstheme="dark"] toolbar:-moz-lwtheme {
+  --toolbarbutton-hover-background: rgba(25,33, 38,.6) linear-gradient(rgba(25,33,38,.6), rgba(25,33,38,.6)) padding-box;
+  --toolbarbutton-hover-boxshadow: none;
+  --toolbarbutton-hover-bordercolor: rgba(25,33,38,.6);
+  --toolbarbutton-active-background: rgba(25,33,38,1) linear-gradient(rgba(25,33,38,1), rgba(25,33,38,1)) border-box;
+  --toolbarbutton-active-boxshadow: none;
+  --toolbarbutton-active-bordercolor: rgba(25,33,38,.8);
+  --toolbarbutton-checkedhover-backgroundcolor: #3C5283;
 }
 
 :root[devtoolstheme="light"] {
@@ -85,9 +86,11 @@
   --tab-selection-background-color: #4c9ed9;
   --tab-selection-box-shadow: none;
   --pinned-tab-glow: radial-gradient(22px at center calc(100% - 2px), rgba(76,158,217,0.9) 13%, transparent 16%);
+}
 
-
-  /* Toolbar buttons */
+/* Override the lwtheme-specific styling for toolbar buttons */
+:root[devtoolstheme="light"],
+:root[devtoolstheme="light"] toolbar:-moz-lwtheme {
   --toolbarbutton-hover-background: #eaeaea;
   --toolbarbutton-hover-boxshadow: none;
   --toolbarbutton-hover-bordercolor: rgba(0,0,0,0.1);
@@ -152,7 +155,7 @@
   color: var(--chrome-color);
 }
 
-#navigator-toolbox::after {
+#navigator-toolbox:-moz-lwtheme::after {
   background: var(--chrome-navigator-toolbox-separator-color);
 }
 
@@ -209,23 +212,6 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper {
   margin-inline-start: 0;
 }
 
-/* Swap out the white arrow with a dark one for the dark theme */
-:root[devtoolstheme="dark"] #notification-popup-box {
-  border-image: url("chrome://browser/skin/devedition/urlbar-arrow.png") 0 8 0 0 fill;
-}
-
-@media (min-resolution: 1.1dppx) {
-  :root[devtoolstheme="dark"] #notification-popup-box {
-    border-image: url("chrome://browser/skin/devedition/urlbar-arrow@2x.png") 0 16 0 0 fill;
-  }
-}
-
-/* The (white) notification box background color should match the theme */
-#notification-popup-box {
-  border-radius: 0;
-  background-color: var(--url-and-searchbar-background-color);
-}
-
 /* Nav bar specific stuff */
 #nav-bar {
   margin-top: 0 !important;
@@ -245,6 +231,12 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper {
 /* Use smaller back button icon */
 #back-button {
   -moz-image-region: rect(0, 54px, 18px, 36px);
+}
+
+@media (min-resolution: 1.1dppx) {
+  #back-button {
+    -moz-image-region: rect(0, 108px, 36px, 72px);
+  }
 }
 
 .tab-background {

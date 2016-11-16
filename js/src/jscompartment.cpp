@@ -63,7 +63,7 @@ JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options =
     allocationMetadataBuilder(nullptr),
     lastAnimationTime(0),
     regExps(runtime_),
-    globalWriteBarriered(false),
+    globalWriteBarriered(0),
     detachedTypedObjects(0),
     objectMetadataState(ImmediateMetadata()),
     propertyTree(thisForCtor()),
@@ -71,7 +71,9 @@ JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options =
     initialShapes(zone, InitialShapeSet()),
     selfHostingScriptSource(nullptr),
     objectMetadataTable(nullptr),
+    innerViews(zone, InnerViewTable()),
     lazyArrayBuffers(nullptr),
+    wasmInstances(zone, WasmInstanceObjectSet()),
     nonSyntacticLexicalScopes_(nullptr),
     gcIncomingGrayPointers(nullptr),
     debugModeBits(0),
@@ -207,49 +209,9 @@ JSCompartment::ensureJitCompartmentExists(JSContext* cx)
     return true;
 }
 
-/*
- * This class is used to add a post barrier on the crossCompartmentWrappers map,
- * as the key is calculated based on objects which may be moved by generational
- * GC.
- */
-class WrapperMapRef : public BufferableRef
-{
-    WrapperMap* map;
-    CrossCompartmentKey key;
-
-  public:
-    WrapperMapRef(WrapperMap* map, const CrossCompartmentKey& key)
-      : map(map), key(key) {}
-
-    struct TraceFunctor {
-        JSTracer* trc_;
-        const char* name_;
-        TraceFunctor(JSTracer *trc, const char* name) : trc_(trc), name_(name) {}
-
-        using ReturnType = void;
-        template <class T> void operator()(T* t) { TraceManuallyBarrieredEdge(trc_, t, name_); }
-    };
-    void trace(JSTracer* trc) override {
-        CrossCompartmentKey prior = key;
-        key.applyToWrapped(TraceFunctor(trc, "ccw wrapped"));
-        key.applyToDebugger(TraceFunctor(trc, "ccw debugger"));
-        if (key == prior)
-            return;
-
-        /* Look for the original entry, which might have been removed. */
-        WrapperMap::Ptr p = map->lookup(prior);
-        if (!p)
-            return;
-
-        /* Rekey the entry. */
-        map->rekeyAs(prior, key, key);
-    }
-};
-
 #ifdef JSGC_HASH_TABLE_CHECKS
 namespace {
 struct CheckGCThingAfterMovingGCFunctor {
-    using ReturnType = void;
     template <class T> void operator()(T* t) { CheckGCThingAfterMovingGC(*t); }
 };
 } // namespace (anonymous)
@@ -274,7 +236,6 @@ JSCompartment::checkWrapperMapAfterMovingGC()
 
 namespace {
 struct IsInsideNurseryFunctor {
-    using ReturnType = bool;
     template <class T> bool operator()(T tp) { return IsInsideNursery(*tp); }
 };
 } // namespace (anonymous)
@@ -289,16 +250,20 @@ JSCompartment::putWrapper(JSContext* cx, const CrossCompartmentKey& wrapped,
     /* There's no point allocating wrappers in the nursery since we will tenure them anyway. */
     MOZ_ASSERT(!IsInsideNursery(static_cast<gc::Cell*>(wrapper.toGCThing())));
 
-    if (!crossCompartmentWrappers.put(wrapped, ReadBarriered<Value>(wrapper))) {
+    bool isNuseryKey =
+        const_cast<CrossCompartmentKey&>(wrapped).applyToWrapped(IsInsideNurseryFunctor()) ||
+        const_cast<CrossCompartmentKey&>(wrapped).applyToDebugger(IsInsideNurseryFunctor());
+
+    if (isNuseryKey && !nurseryCCKeys.append(wrapped)) {
         ReportOutOfMemory(cx);
         return false;
     }
 
-    if (const_cast<CrossCompartmentKey&>(wrapped).applyToWrapped(IsInsideNurseryFunctor()) ||
-        const_cast<CrossCompartmentKey&>(wrapped).applyToDebugger(IsInsideNurseryFunctor()))
-    {
-        WrapperMapRef ref(&crossCompartmentWrappers, wrapped);
-        cx->runtime()->gc.storeBuffer.putGeneric(ref);
+    if (!crossCompartmentWrappers.put(wrapped, ReadBarriered<Value>(wrapper))) {
+        if (isNuseryKey)
+            nurseryCCKeys.popBack();
+        ReportOutOfMemory(cx);
+        return false;
     }
 
     return true;
@@ -398,6 +363,17 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
         return true;
     AutoDisableProxyCheck adpc(cx->runtime());
 
+    // The gray bit handling here is a bit complicated.  The basic problem is
+    // that generally the return value of wrap() escapes (and the input is an
+    // object that _has_ "escaped") and in those cases the input must not be
+    // gray and the return value must not be gray.  However, when `existingArg`
+    // is non-null we're doing an internal wrapper remapping operation, and both
+    // `obj` and `existingArg` might be gray, quite purposefully.
+    //
+    // This means that when `existingArg` is not null, we can't assert anything
+    // useful about anything being non-gray.
+    MOZ_ASSERT_IF(!existingArg, !ObjectIsMarkedGray(obj));
+
     // Wrappers should really be parented to the wrapped parent of the wrapped
     // object, but in that case a wrapped global object would have a nullptr
     // parent without being a proper global object (JSCLASS_IS_GLOBAL). Instead,
@@ -408,10 +384,9 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
     MOZ_ASSERT(global);
     MOZ_ASSERT(objGlobal);
 
-    const JSWrapObjectCallbacks* cb = cx->runtime()->wrapObjectCallbacks;
-
     if (obj->compartment() == this) {
         obj.set(ToWindowProxyIfWindow(obj));
+        MOZ_ASSERT_IF(!existingArg, !ObjectIsMarkedGray(obj));
         return true;
     }
 
@@ -426,6 +401,12 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
     RootedObject objectPassedToWrap(cx, obj);
     obj.set(UncheckedUnwrap(obj, /* stopAtWindowProxy = */ true));
 
+    // We crossed a compartment boundary, so obj may be gray.  We really don't
+    // want to return gray things from here if !existingArg, so make sure it's
+    // not.
+    if (!existingArg)
+        ExposeObjectToActiveJS(obj);
+
     if (obj->compartment() == this) {
         MOZ_ASSERT(!IsWindow(obj));
         return true;
@@ -439,8 +420,11 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
         if (!GetBuiltinConstructor(cx, JSProto_StopIteration, &stopIteration))
             return false;
         obj.set(stopIteration);
+        MOZ_ASSERT_IF(!existingArg, !ObjectIsMarkedGray(obj));
         return true;
     }
+
+    const JSWrapObjectCallbacks* cb = cx->runtime()->wrapObjectCallbacks;
 
     // Invoke the prewrap callback. We're a bit worried about infinite
     // recursion here, so we do a check - see bug 809295.
@@ -449,6 +433,7 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
         obj.set(cb->preWrap(cx, global, obj, objectPassedToWrap));
         if (!obj)
             return false;
+        MOZ_ASSERT_IF(!existingArg, !ObjectIsMarkedGray(obj));
     }
     MOZ_ASSERT(!IsWindow(obj));
 
@@ -460,6 +445,9 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
     if (WrapperMap::Ptr p = crossCompartmentWrappers.lookup(CrossCompartmentKey(key))) {
         obj.set(&p->value().get().toObject());
         MOZ_ASSERT(obj->is<CrossCompartmentWrapperObject>());
+        // crossCompartmentWrappers has a read barrier, so obj is not gray now,
+        // even if existing is non-null.
+        MOZ_ASSERT(!ObjectIsMarkedGray(obj));
         return true;
     }
 
@@ -478,6 +466,7 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
     RootedObject wrapper(cx, cb->wrap(cx, existing, obj));
     if (!wrapper)
         return false;
+    MOZ_ASSERT_IF(!existingArg, !ObjectIsMarkedGray(wrapper));
 
     // We maintain the invariant that the key in the cross-compartment wrapper
     // map is always directly wrapped by the value.
@@ -605,6 +594,16 @@ JSCompartment::trace(JSTracer* trc)
     savedStacks_.trace(trc);
 }
 
+struct TraceFunctor {
+    JSTracer* trc_;
+    const char* name_;
+    TraceFunctor(JSTracer *trc, const char* name)
+      : trc_(trc), name_(name) {}
+    template <class T> void operator()(T* t) {
+        TraceManuallyBarrieredEdge(trc_, t, name_);
+    }
+};
+
 void
 JSCompartment::traceRoots(JSTracer* trc, js::gc::GCRuntime::TraceOrMarkRuntime traceOrMark)
 {
@@ -675,21 +674,27 @@ JSCompartment::traceRoots(JSTracer* trc, js::gc::GCRuntime::TraceOrMarkRuntime t
 
     if (nonSyntacticLexicalScopes_)
         nonSyntacticLexicalScopes_->trace(trc);
+
+    // In a minor GC we need to mark nursery objects that are the targets of
+    // cross compartment wrappers.
+    if (trc->runtime()->isHeapMinorCollecting()) {
+        for (auto key : nurseryCCKeys) {
+            CrossCompartmentKey prior = key;
+            key.applyToWrapped(TraceFunctor(trc, "ccw wrapped"));
+            key.applyToDebugger(TraceFunctor(trc, "ccw debugger"));
+            crossCompartmentWrappers.rekeyIfMoved(prior, key);
+        }
+        nurseryCCKeys.clear();
+    }
 }
 
 void
 JSCompartment::sweepAfterMinorGC()
 {
-    globalWriteBarriered = false;
+    globalWriteBarriered = 0;
 
     if (innerViews.needsSweepAfterMinorGC())
         innerViews.sweepAfterMinorGC();
-}
-
-void
-JSCompartment::sweepInnerViews()
-{
-    innerViews.sweep();
 }
 
 void
@@ -774,11 +779,9 @@ struct TraceRootFunctor {
     JSTracer* trc;
     const char* name;
     TraceRootFunctor(JSTracer* trc, const char* name) : trc(trc), name(name) {}
-    using ReturnType = void;
-    template <class T> ReturnType operator()(T* t) { return TraceRoot(trc, t, name); }
+    template <class T> void operator()(T* t) { return TraceRoot(trc, t, name); }
 };
 struct NeedsSweepUnbarrieredFunctor {
-    using ReturnType = bool;
     template <class T> bool operator()(T* t) const { return IsAboutToBeFinalizedUnbarriered(t); }
 };
 } // namespace (anonymous)
@@ -916,6 +919,8 @@ JSCompartment::clearTables()
         baseShapes.clear();
     if (initialShapes.initialized())
         initialShapes.clear();
+    if (wasmInstances.initialized())
+        wasmInstances.clear();
     if (savedStacks_.initialized())
         savedStacks_.clear();
 }
@@ -1185,7 +1190,8 @@ JSCompartment::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                         tiArrayTypeTables, tiObjectTypeTables,
                                         compartmentTables);
     *compartmentTables += baseShapes.sizeOfExcludingThis(mallocSizeOf)
-                        + initialShapes.sizeOfExcludingThis(mallocSizeOf);
+                        + initialShapes.sizeOfExcludingThis(mallocSizeOf)
+                        + wasmInstances.sizeOfExcludingThis(mallocSizeOf);
     *innerViewsArg += innerViews.sizeOfExcludingThis(mallocSizeOf);
     if (lazyArrayBuffers)
         *lazyArrayBuffersArg += lazyArrayBuffers->sizeOfIncludingThis(mallocSizeOf);

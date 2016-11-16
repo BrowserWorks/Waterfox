@@ -80,11 +80,11 @@ function addTab(aUrl, aWindow) {
   let tab = targetBrowser.selectedTab = targetBrowser.addTab(aUrl);
   let linkedBrowser = tab.linkedBrowser;
 
-  linkedBrowser.addEventListener("load", function onLoad() {
-    linkedBrowser.removeEventListener("load", onLoad, true);
-    info("Tab added and finished loading: " + aUrl);
-    deferred.resolve(tab);
-  }, true);
+  BrowserTestUtils.browserLoaded(linkedBrowser)
+    .then(function () {
+      info("Tab added and finished loading: " + aUrl);
+      deferred.resolve(tab);
+    });
 
   return deferred.promise;
 }
@@ -158,6 +158,7 @@ function once(aTarget, aEventName, aUseCapture = false) {
   ]) {
     if ((add in aTarget) && (remove in aTarget)) {
       aTarget[add](aEventName, function onEvent(...aArgs) {
+        info("Got event: '" + aEventName + "' on " + aTarget + ".");
         aTarget[remove](aEventName, onEvent, aUseCapture);
         deferred.resolve(...aArgs);
       }, aUseCapture);

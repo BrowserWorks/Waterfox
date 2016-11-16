@@ -792,7 +792,7 @@ nsHTMLDocument::StartDocumentLoad(const char* aCommand,
     NS_ASSERTION(NS_SUCCEEDED(rv) && bundle, "chrome://global/locale/browser.properties could not be loaded");
     nsXPIDLString title;
     if (bundle) {
-      bundle->GetStringFromName(MOZ_UTF16("plainText.wordWrap"), getter_Copies(title));
+      bundle->GetStringFromName(u"plainText.wordWrap", getter_Copies(title));
     }
     SetSelectedStyleSheetSet(title);
   }
@@ -2240,8 +2240,6 @@ nsHTMLDocument::NamedGetter(JSContext* cx, const nsAString& aName, bool& aFound,
   }
 
   JS::Rooted<JS::Value> val(cx);
-  // XXXbz Should we call the (slightly misnamed, really) WrapNativeParent
-  // here?
   if (!dom::WrapObject(cx, supp, cache, nullptr, &val)) {
     rv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
@@ -2672,8 +2670,10 @@ nsHTMLDocument::EditingStateChanged()
   if (existingEditor) {
     // We might already have an editor if it was set up for mail, let's see
     // if this is actually the case.
+#ifdef DEBUG
     nsCOMPtr<nsIHTMLEditor> htmlEditor = do_QueryInterface(existingEditor);
     MOZ_ASSERT(htmlEditor, "If we have an editor, it must be an HTML editor");
+#endif
     uint32_t flags = 0;
     existingEditor->GetFlags(&flags);
     if (flags & nsIPlaintextEditor::eEditorMailMask) {

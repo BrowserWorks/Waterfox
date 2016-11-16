@@ -108,7 +108,15 @@ class CodeGeneratorShared : public LElementVisitor
     Vector<PatchableBackedgeInfo, 0, SystemAllocPolicy> patchableBackedges_;
 
 #ifdef JS_TRACE_LOGGING
+    struct PatchableTLEvent {
+        CodeOffset offset;
+        const char* event;
+        PatchableTLEvent(CodeOffset offset, const char* event)
+            : offset(offset), event(event)
+        {}
+    };
     js::Vector<CodeOffset, 0, SystemAllocPolicy> patchableTraceLoggers_;
+    js::Vector<PatchableTLEvent, 0, SystemAllocPolicy> patchableTLEvents_;
     js::Vector<CodeOffset, 0, SystemAllocPolicy> patchableTLScripts_;
 #endif
 
@@ -335,7 +343,7 @@ class CodeGeneratorShared : public LElementVisitor
     void emitTruncateDouble(FloatRegister src, Register dest, MInstruction* mir);
     void emitTruncateFloat32(FloatRegister src, Register dest, MInstruction* mir);
 
-    void emitAsmJSCall(LAsmJSCall* ins);
+    void emitAsmJSCallBase(LAsmJSCallBase* ins);
 
     void emitPreBarrier(Register base, const LAllocation* index, int32_t offsetAdjustment);
     void emitPreBarrier(Address address);
@@ -460,13 +468,17 @@ class CodeGeneratorShared : public LElementVisitor
     void addOutOfLineCode(OutOfLineCode* code, const BytecodeSite* site);
     bool generateOutOfLineCode();
 
-    Label* labelForBackedgeWithImplicitCheck(MBasicBlock* mir);
+    Label* getJumpLabelForBranch(MBasicBlock* block);
 
     // Generate a jump to the start of the specified block, adding information
     // if this is a loop backedge. Use this in place of jumping directly to
     // mir->lir()->label(), or use getJumpLabelForBranch() if a label to use
     // directly is needed.
     void jumpToBlock(MBasicBlock* mir);
+
+    // Get a label for the start of block which can be used for jumping, in
+    // place of jumpToBlock.
+    Label* labelForBackedgeWithImplicitCheck(MBasicBlock* mir);
 
 // This function is not used for MIPS. MIPS has branchToBlock.
 #if !defined(JS_CODEGEN_MIPS32) && !defined(JS_CODEGEN_MIPS64)
@@ -495,6 +507,7 @@ class CodeGeneratorShared : public LElementVisitor
   protected:
     void emitTracelogScript(bool isStart);
     void emitTracelogTree(bool isStart, uint32_t textId);
+    void emitTracelogTree(bool isStart, const char* text, TraceLoggerTextId enabledTextId);
 
   public:
     void emitTracelogScriptStart() {
@@ -508,6 +521,15 @@ class CodeGeneratorShared : public LElementVisitor
     }
     void emitTracelogStopEvent(uint32_t textId) {
         emitTracelogTree(/* isStart =*/ false, textId);
+    }
+    // Log an arbitrary text. The TraceloggerTextId is used to toggle the
+    // logging on and off.
+    // Note: the text is not copied and need to be kept alive until linking.
+    void emitTracelogStartEvent(const char* text, TraceLoggerTextId enabledTextId) {
+        emitTracelogTree(/* isStart =*/ true, text, enabledTextId);
+    }
+    void emitTracelogStopEvent(const char* text, TraceLoggerTextId enabledTextId) {
+        emitTracelogTree(/* isStart =*/ false, text, enabledTextId);
     }
 #endif
     void emitTracelogIonStart() {
@@ -523,9 +545,18 @@ class CodeGeneratorShared : public LElementVisitor
 #endif
     }
 
-    inline void verifyHeapAccessDisassembly(uint32_t begin, uint32_t end, bool isLoad,
+  protected:
+    inline void verifyHeapAccessDisassembly(uint32_t begin, uint32_t end, bool isLoad, bool isInt64,
                                             Scalar::Type type, unsigned numElems,
                                             const Operand& mem, LAllocation alloc);
+
+  public:
+    inline void verifyLoadDisassembly(uint32_t begin, uint32_t end, bool isInt64, Scalar::Type type,
+                                      unsigned numElems, const Operand& mem, LAllocation alloc);
+    inline void verifyStoreDisassembly(uint32_t begin, uint32_t end, bool isInt64, Scalar::Type type,
+                                       unsigned numElems, const Operand& mem, LAllocation alloc);
+
+    bool isGlobalObject(JSObject* object);
 };
 
 // An out-of-line path is generated at the end of the function.

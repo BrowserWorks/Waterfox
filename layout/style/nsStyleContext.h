@@ -376,7 +376,7 @@ public:
 
   /**
    * Compute the style changes needed during restyling when this style
-   * context is being replaced by aOther.  (This is nonsymmetric since
+   * context is being replaced by aNewContext.  (This is nonsymmetric since
    * we optimize by skipping comparison for styles that have never been
    * requested.)
    *
@@ -393,10 +393,29 @@ public:
    * aEqualStructs must not be null.  Into it will be stored a bitfield
    * representing which structs were compared to be non-equal.
    */
-  nsChangeHint CalcStyleDifference(nsStyleContext* aOther,
+  nsChangeHint CalcStyleDifference(nsStyleContext* aNewContext,
                                    nsChangeHint aParentHintsNotHandledForDescendants,
                                    uint32_t* aEqualStructs,
                                    uint32_t* aSamePointerStructs);
+
+#ifdef MOZ_STYLO
+  /*
+   * Like the above, but does not require the new style context to exist yet.
+   * Servo uses this to compute change hints during parallel traversal.
+   */
+  nsChangeHint CalcStyleDifference(ServoComputedValues* aNewComputedValues,
+                                   nsChangeHint aParentHintsNotHandledForDescendants,
+                                   uint32_t* aEqualStructs,
+                                   uint32_t* aSamePointerStructs);
+#endif
+
+private:
+  template<class StyleContextLike>
+  nsChangeHint CalcStyleDifferenceInternal(StyleContextLike* aNewContext,
+                                           nsChangeHint aParentHintsNotHandledForDescendants,
+                                           uint32_t* aEqualStructs,
+                                           uint32_t* aSamePointerStructs);
+public:
 
   /**
    * Get a color that depends on link-visitedness using this and
@@ -507,6 +526,29 @@ public:
   }
 
   mozilla::NonOwningStyleContextSource StyleSource() const { return mSource.AsRaw(); }
+
+#ifdef MOZ_STYLO
+  void StoreChangeHint(nsChangeHint aHint)
+  {
+    MOZ_ASSERT(!mHasStoredChangeHint);
+    MOZ_ASSERT(!IsShared());
+    mStoredChangeHint = aHint;
+#ifdef DEBUG
+    mHasStoredChangeHint = true;
+#endif
+  }
+
+  nsChangeHint ConsumeStoredChangeHint()
+  {
+    MOZ_ASSERT(mHasStoredChangeHint);
+    nsChangeHint result = mStoredChangeHint;
+    mStoredChangeHint = nsChangeHint(0);
+#ifdef DEBUG
+    mHasStoredChangeHint = false;
+#endif
+    return result;
+  }
+#endif
 
 private:
   // Private destructor, to discourage deletion outside of Release():
@@ -717,6 +759,15 @@ private:
   uint64_t                mBits;
 
   uint32_t                mRefCnt;
+
+  // For now we store change hints on the style context during parallel traversal.
+  // We should improve this - see bug 1289861.
+#ifdef MOZ_STYLO
+  nsChangeHint            mStoredChangeHint;
+#ifdef DEBUG
+  bool                    mHasStoredChangeHint;
+#endif
+#endif
 
 #ifdef DEBUG
   uint32_t                mFrameRefCnt; // number of frames that use this

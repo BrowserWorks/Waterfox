@@ -290,14 +290,14 @@ protected:
     nsIFrame* prevCont = aFrame->GetPrevContinuation();
     if (!prevCont &&
         (aFrame->GetStateBits() & NS_FRAME_PART_OF_IBSPLIT)) {
-      nsIFrame* block = static_cast<nsIFrame*>
-        (aFrame->Properties().Get(nsIFrame::IBSplitPrevSibling()));
+      nsIFrame* block =
+        aFrame->Properties().Get(nsIFrame::IBSplitPrevSibling());
       if (block) {
         // The {ib} properties are only stored on first continuations
         NS_ASSERTION(!block->GetPrevContinuation(),
                      "Incorrect value for IBSplitPrevSibling");
-        prevCont = static_cast<nsIFrame*>
-          (block->Properties().Get(nsIFrame::IBSplitPrevSibling()));
+        prevCont =
+          block->Properties().Get(nsIFrame::IBSplitPrevSibling());
         NS_ASSERTION(prevCont, "How did that happen?");
       }
     }
@@ -311,11 +311,9 @@ protected:
         (aFrame->GetStateBits() & NS_FRAME_PART_OF_IBSPLIT)) {
       // The {ib} properties are only stored on first continuations
       aFrame = aFrame->FirstContinuation();
-      nsIFrame* block = static_cast<nsIFrame*>
-        (aFrame->Properties().Get(nsIFrame::IBSplitSibling()));
+      nsIFrame* block = aFrame->Properties().Get(nsIFrame::IBSplitSibling());
       if (block) {
-        nextCont = static_cast<nsIFrame*>
-          (block->Properties().Get(nsIFrame::IBSplitSibling()));
+        nextCont = block->Properties().Get(nsIFrame::IBSplitSibling());
         NS_ASSERTION(nextCont, "How did that happen?");
       }
     }
@@ -798,6 +796,7 @@ nsCSSRendering::PaintBorderWithStyleBorder(nsPresContext* aPresContext,
                             Float(border.right / twipsPerPixel),
                             Float(border.bottom / twipsPerPixel),
                             Float(border.left / twipsPerPixel) };
+  Rect dirtyRect = NSRectToRect(aDirtyRect, twipsPerPixel);
 
   uint8_t borderStyles[4];
   nscolor borderColors[4];
@@ -823,8 +822,16 @@ nsCSSRendering::PaintBorderWithStyleBorder(nsPresContext* aPresContext,
   aDrawTarget.FillRect(joinedBorderAreaPx, color);
 #endif
 
-  nsCSSBorderRenderer br(aPresContext->Type(),
+  nsIDocument* document = nullptr;
+  nsIContent* content = aForFrame->GetContent();
+  if (content) {
+    document = content->OwnerDoc();
+  }
+
+  nsCSSBorderRenderer br(aPresContext,
+                         document,
                          &aDrawTarget,
+                         dirtyRect,
                          joinedBorderAreaPx,
                          borderStyles,
                          borderWidths,
@@ -846,8 +853,8 @@ nsCSSRendering::PaintBorderWithStyleBorder(nsPresContext* aPresContext,
 static nsRect
 GetOutlineInnerRect(nsIFrame* aFrame)
 {
-  nsRect* savedOutlineInnerRect = static_cast<nsRect*>
-    (aFrame->Properties().Get(nsIFrame::OutlineInnerRectProperty()));
+  nsRect* savedOutlineInnerRect =
+    aFrame->Properties().Get(nsIFrame::OutlineInnerRectProperty());
   if (savedOutlineInnerRect)
     return *savedOutlineInnerRect;
   NS_NOTREACHED("we should have saved a frame property");
@@ -959,11 +966,20 @@ nsCSSRendering::PaintOutline(nsPresContext* aPresContext,
                              Float(width / twipsPerPixel),
                              Float(width / twipsPerPixel),
                              Float(width / twipsPerPixel) };
+  Rect dirtyRect = NSRectToRect(aDirtyRect, twipsPerPixel);
+
+  nsIDocument* document = nullptr;
+  nsIContent* content = aForFrame->GetContent();
+  if (content) {
+    document = content->OwnerDoc();
+  }
 
   // start drawing
 
-  nsCSSBorderRenderer br(aPresContext->Type(),
+  nsCSSBorderRenderer br(aPresContext,
+                         document,
                          aRenderingContext.GetDrawTarget(),
+                         dirtyRect,
                          oRect,
                          outlineStyles,
                          outlineWidths,
@@ -1009,8 +1025,10 @@ nsCSSRendering::PaintFocus(nsPresContext* aPresContext,
   // something that CSS can style, this function will then have access
   // to a style context and can use the same logic that PaintBorder
   // and PaintOutline do.)
-  nsCSSBorderRenderer br(aPresContext->Type(),
+  nsCSSBorderRenderer br(aPresContext,
+                         nullptr,
                          aDrawTarget,
+                         focusRect,
                          focusRect,
                          focusStyles,
                          focusWidths,
@@ -2514,6 +2532,79 @@ ResolvePremultipliedAlpha(nsTArray<ColorStop>& aStops)
   }
 }
 
+static ColorStop
+InterpolateColorStop(const ColorStop& aFirst, const ColorStop& aSecond,
+                     double aPosition, const Color& aDefault)
+{
+  MOZ_ASSERT(aFirst.mPosition <= aPosition);
+  MOZ_ASSERT(aPosition <= aSecond.mPosition);
+
+  double delta = aSecond.mPosition - aFirst.mPosition;
+
+  if (delta < 1e-6) {
+    return ColorStop(aPosition, false, aDefault);
+  }
+
+  return ColorStop(aPosition, false,
+                   Unpremultiply(InterpolateColor(Premultiply(aFirst.mColor),
+                                                  Premultiply(aSecond.mColor),
+                                                  (aPosition - aFirst.mPosition) / delta)));
+}
+
+// Clamp and extend the given ColorStop array in-place to fit exactly into the
+// range [0, 1].
+static void
+ClampColorStops(nsTArray<ColorStop>& aStops)
+{
+  MOZ_ASSERT(aStops.Length() > 0);
+
+  // If all stops are outside the range, then get rid of everything and replace
+  // with a single colour.
+  if (aStops.Length() < 2 || aStops[0].mPosition > 1 ||
+      aStops.LastElement().mPosition < 0) {
+    Color c = aStops[0].mPosition > 1 ? aStops[0].mColor : aStops.LastElement().mColor;
+    aStops.Clear();
+    aStops.AppendElement(ColorStop(0, false, c));
+    return;
+  }
+
+  // Create the 0 and 1 points if they fall in the range of |aStops|, and discard
+  // all stops outside the range [0, 1].
+  // XXX: If we have stops positioned at 0 or 1, we only keep the innermost of
+  // those stops. This should be fine for the current user(s) of this function.
+  for (size_t i = aStops.Length() - 1; i > 0; i--) {
+    if (aStops[i - 1].mPosition < 1 && aStops[i].mPosition >= 1) {
+      // Add a point to position 1.
+      aStops[i] = InterpolateColorStop(aStops[i - 1], aStops[i],
+                                       /* aPosition = */ 1,
+                                       aStops[i - 1].mColor);
+      // Remove all the elements whose position is greater than 1.
+      aStops.RemoveElementsAt(i + 1, aStops.Length() - (i + 1));
+    }
+    if (aStops[i - 1].mPosition <= 0 && aStops[i].mPosition > 0) {
+      // Add a point to position 0.
+      aStops[i - 1] = InterpolateColorStop(aStops[i - 1], aStops[i],
+                                           /* aPosition = */ 0,
+                                           aStops[i].mColor);
+      // Remove all of the preceding stops -- they are all negative.
+      aStops.RemoveElementsAt(0, i - 1);
+      break;
+    }
+  }
+
+  MOZ_ASSERT(aStops[0].mPosition >= 0);
+  MOZ_ASSERT(aStops.LastElement().mPosition <= 1);
+
+  // The end points won't exist yet if they don't fall in the original range of
+  // |aStops|. Create them if needed.
+  if (aStops[0].mPosition > 0) {
+    aStops.InsertElementAt(0, ColorStop(0, false, aStops[0].mColor));
+  }
+  if (aStops.LastElement().mPosition < 1) {
+    aStops.AppendElement(ColorStop(1, false, aStops.LastElement().mColor));
+  }
+}
+
 void
 nsCSSRendering::PaintGradient(nsPresContext* aPresContext,
                               nsRenderingContext& aRenderingContext,
@@ -2628,6 +2719,55 @@ nsCSSRendering::PaintGradient(nsPresContext* aPresContext,
     }
   }
 
+  // If a non-repeating linear gradient is axis-aligned and there are no gaps
+  // between tiles, we can optimise away most of the work by converting to a
+  // repeating linear gradient and filling the whole destination rect at once.
+  bool forceRepeatToCoverTiles =
+    aGradient->mShape == NS_STYLE_GRADIENT_SHAPE_LINEAR &&
+    (lineStart.x == lineEnd.x) != (lineStart.y == lineEnd.y) &&
+    aRepeatSize.width == aDest.width && aRepeatSize.height == aDest.height &&
+    !aGradient->mRepeating && !aSrc.IsEmpty() && !cellContainsFill;
+
+  gfxMatrix matrix;
+  if (forceRepeatToCoverTiles) {
+    // Length of the source rectangle along the gradient axis.
+    double rectLen;
+    // The position of the start of the rectangle along the gradient.
+    double offset;
+
+    // The gradient line is "backwards". Flip the line upside down to make
+    // things easier, and then rotate the matrix to turn everything back the
+    // right way up.
+    if (lineStart.x > lineEnd.x || lineStart.y > lineEnd.y) {
+      std::swap(lineStart, lineEnd);
+      matrix.Scale(-1, -1);
+    }
+
+    // Fit the gradient line exactly into the source rect.
+    if (lineStart.x != lineEnd.x) {
+      rectLen = aPresContext->CSSPixelsToDevPixels(aSrc.width);
+      offset = ((double)aSrc.x - lineStart.x) / lineLength;
+      lineStart.x = aSrc.x;
+      lineEnd.x = aSrc.x + rectLen;
+    } else {
+      rectLen = aPresContext->CSSPixelsToDevPixels(aSrc.height);
+      offset = ((double)aSrc.y - lineStart.y) / lineLength;
+      lineStart.y = aSrc.y;
+      lineEnd.y = aSrc.y + rectLen;
+    }
+
+    // Adjust gradient stop positions for the new gradient line.
+    double scale = lineLength / rectLen;
+    for (size_t i = 0; i < stops.Length(); i++) {
+      stops[i].mPosition = (stops[i].mPosition - offset) * fabs(scale);
+    }
+
+    // Clamp or extrapolate gradient stops to exactly [0, 1].
+    ClampColorStops(stops);
+
+    lineLength = rectLen;
+  }
+
   // Eliminate negative-position stops if the gradient is radial.
   double firstStop = stops[0].mPosition;
   if (aGradient->mShape != NS_STYLE_GRADIENT_SHAPE_LINEAR && firstStop < 0.0) {
@@ -2727,8 +2867,6 @@ nsCSSRendering::PaintGradient(nsPresContext* aPresContext,
 
   // Create the gradient pattern.
   RefPtr<gfxPattern> gradientPattern;
-  bool forceRepeatToCoverTiles = false;
-  gfxMatrix matrix;
   gfxPoint gradientStart;
   gfxPoint gradientEnd;
   if (aGradient->mShape == NS_STYLE_GRADIENT_SHAPE_LINEAR) {
@@ -2752,18 +2890,6 @@ nsCSSRendering::PaintGradient(nsPresContext* aPresContext,
 
     gradientPattern = new gfxPattern(gradientStart.x, gradientStart.y,
                                       gradientEnd.x, gradientEnd.y);
-
-    // When the gradient line is parallel to the x axis from the left edge
-    // to the right edge of a tile, then we can repeat by just repeating the
-    // gradient.
-    if (!cellContainsFill &&
-        stopDelta != 0.0 && // if 0.0, gradientStopEnd is bogus (see above)
-        ((gradientStopStart.y == gradientStopEnd.y && gradientStopStart.x == 0 &&
-          gradientStopEnd.x == srcSize.width) ||
-          (gradientStopStart.x == gradientStopEnd.x && gradientStopStart.y == 0 &&
-          gradientStopEnd.y == srcSize.height))) {
-      forceRepeatToCoverTiles = true;
-    }
   } else {
     NS_ASSERTION(firstStop >= 0.0,
                   "Negative stops not allowed for radial gradients");
@@ -3354,14 +3480,14 @@ ComputeDrawnSizeForBackground(const CSSSizeOrRatio& aIntrinsicSize,
 /* ComputeSpacedRepeatSize
  * aImageDimension: the image width/height
  * aAvailableSpace: the background positioning area width/height
- * aRepeatSize: the image size plus gap size of app units for use as spacing
  * aRepeat: determine whether the image is repeated
+ * Returns the image size plus gap size of app units for use as spacing
  */
 static nscoord
 ComputeSpacedRepeatSize(nscoord aImageDimension,
                         nscoord aAvailableSpace,
                         bool& aRepeat) {
-  float ratio = aAvailableSpace / aImageDimension;
+  float ratio = static_cast<float>(aAvailableSpace) / aImageDimension;
 
   if (ratio < 2.0f) { // If you can't repeat at least twice, then don't repeat.
     aRepeat = false;
@@ -3370,6 +3496,22 @@ ComputeSpacedRepeatSize(nscoord aImageDimension,
     aRepeat = true;
     return (aAvailableSpace - aImageDimension) / (NSToIntFloor(ratio) - 1);
   }
+}
+
+/* ComputeBorderSpacedRepeatSize
+ * aImageDimension: the image width/height
+ * aAvailableSpace: the background positioning area width/height
+ * aSpace: the space between each image
+ * Returns the image size plus gap size of app units for use as spacing
+ */
+static nscoord
+ComputeBorderSpacedRepeatSize(nscoord aImageDimension,
+                              nscoord aAvailableSpace,
+                              nscoord& aSpace)
+{
+  int32_t count = aAvailableSpace / aImageDimension;
+  aSpace = (aAvailableSpace - aImageDimension * count) / (count + 1);
+  return aSpace + aImageDimension;
 }
 
 nsBackgroundLayerState
@@ -3814,6 +3956,15 @@ DrawBorderImage(nsPresContext*       aPresContext,
 
   DrawResult result = DrawResult::SUCCESS;
 
+  // intrinsicSize.CanComputeConcreteSize() return false means we can not
+  // read intrinsic size from aStyleBorder.mBorderImageSource.
+  // In this condition, we pass imageSize(a resolved size comes from
+  // default sizing algorithm) to renderer as the viewport size.
+  Maybe<nsSize> svgViewportSize = intrinsicSize.CanComputeConcreteSize() ?
+    Nothing() : Some(imageSize);
+  bool hasIntrinsicRatio = intrinsicSize.HasRatio();
+  renderer.PurgeCacheForViewportChange(svgViewportSize, hasIntrinsicRatio);
+
   for (int i = LEFT; i <= RIGHT; i++) {
     for (int j = TOP; j <= BOTTOM; j++) {
       uint8_t fillStyleH, fillStyleV;
@@ -3900,13 +4051,6 @@ DrawBorderImage(nsPresContext*       aPresContext,
         continue;
 
       nsIntRect intSubArea = subArea.ToOutsidePixels(nsPresContext::AppUnitsPerCSSPixel());
-      // intrinsicSize.CanComputeConcreteSize() return false means we can not
-      // read intrinsic size from aStyleBorder.mBorderImageSource.
-      // In this condition, we pass imageSize(a resolved size comes from
-      // default sizing algorithm) to renderer as the viewport size.
-      Maybe<nsSize> svgViewportSize = intrinsicSize.CanComputeConcreteSize() ?
-        Nothing() : Some(imageSize);
-
       result &=
         renderer.DrawBorderImageComponent(aPresContext,
                                           aRenderingContext, aDirtyRect,
@@ -3916,7 +4060,7 @@ DrawBorderImage(nsPresContext*       aPresContext,
                                                                intSubArea.height),
                                           fillStyleH, fillStyleV,
                                           unitSize, j * (RIGHT + 1) + i,
-                                          svgViewportSize);
+                                          svgViewportSize, hasIntrinsicRatio);
     }
   }
 
@@ -5289,8 +5433,16 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
   if (ctx->CurrentOp() != CompositionOp::OP_OVER || mMaskOp == NS_STYLE_MASK_MODE_LUMINANCE) {
     gfxRect clipRect = ctx->GetClipExtents();
     tmpDTRect = RoundedOut(ToRect(clipRect));
-    RefPtr<DrawTarget> tempDT = ctx->GetDrawTarget()->CreateSimilarDrawTarget(tmpDTRect.Size(), SurfaceFormat::B8G8R8A8);
-    ctx = gfxContext::ForDrawTarget(tempDT, tmpDTRect.TopLeft());
+    RefPtr<DrawTarget> tempDT =
+      gfxPlatform::GetPlatform()->CreateSimilarSoftwareDrawTarget(ctx->GetDrawTarget(),
+                                                                  tmpDTRect.Size(),
+                                                                  SurfaceFormat::B8G8R8A8);
+    if (!tempDT || !tempDT->IsValid()) {
+      gfxDevCrash(LogReason::InvalidContext) << "ImageRenderer::Draw problem " << gfx::hexa(tempDT);
+      return DrawResult::TEMPORARY_ERROR;
+    }
+    tempDT->SetTransform(Matrix::Translation(-tmpDTRect.TopLeft()));
+    ctx = gfxContext::CreatePreservingTransformOrNull(tempDT);
     if (!ctx) {
       gfxDevCrash(LogReason::InvalidContext) << "ImageRenderer::Draw problem " << gfx::hexa(tempDT);
       return DrawResult::TEMPORARY_ERROR;
@@ -5433,24 +5585,39 @@ nsImageRenderer::DrawBackground(nsPresContext*       aPresContext,
  * aUnitSize The size of the source rect in dest coords.
  */
 static nsRect
-ComputeTile(const nsRect&        aFill,
+ComputeTile(nsRect&              aFill,
             uint8_t              aHFill,
             uint8_t              aVFill,
-            const nsSize&        aUnitSize)
+            const nsSize&        aUnitSize,
+            nsSize&              aRepeatSize)
 {
   nsRect tile;
   switch (aHFill) {
   case NS_STYLE_BORDER_IMAGE_REPEAT_STRETCH:
     tile.x = aFill.x;
     tile.width = aFill.width;
+    aRepeatSize.width = tile.width;
     break;
   case NS_STYLE_BORDER_IMAGE_REPEAT_REPEAT:
     tile.x = aFill.x + aFill.width/2 - aUnitSize.width/2;
     tile.width = aUnitSize.width;
+    aRepeatSize.width = tile.width;
     break;
   case NS_STYLE_BORDER_IMAGE_REPEAT_ROUND:
     tile.x = aFill.x;
     tile.width = ComputeRoundedSize(aUnitSize.width, aFill.width);
+    aRepeatSize.width = tile.width;
+    break;
+  case NS_STYLE_BORDER_IMAGE_REPEAT_SPACE:
+    {
+      nscoord space;
+      aRepeatSize.width =
+        ComputeBorderSpacedRepeatSize(aUnitSize.width, aFill.width, space);
+      tile.x = aFill.x + space;
+      tile.width = aUnitSize.width;
+      aFill.x = tile.x;
+      aFill.width = aFill.width - space * 2;
+    }
     break;
   default:
     NS_NOTREACHED("unrecognized border-image fill style");
@@ -5460,14 +5627,28 @@ ComputeTile(const nsRect&        aFill,
   case NS_STYLE_BORDER_IMAGE_REPEAT_STRETCH:
     tile.y = aFill.y;
     tile.height = aFill.height;
+    aRepeatSize.height = tile.height;
     break;
   case NS_STYLE_BORDER_IMAGE_REPEAT_REPEAT:
     tile.y = aFill.y + aFill.height/2 - aUnitSize.height/2;
     tile.height = aUnitSize.height;
+    aRepeatSize.height = tile.height;
     break;
   case NS_STYLE_BORDER_IMAGE_REPEAT_ROUND:
     tile.y = aFill.y;
     tile.height = ComputeRoundedSize(aUnitSize.height, aFill.height);
+    aRepeatSize.height = tile.height;
+    break;
+  case NS_STYLE_BORDER_IMAGE_REPEAT_SPACE:
+    {
+      nscoord space;
+      aRepeatSize.height =
+        ComputeBorderSpacedRepeatSize(aUnitSize.height, aFill.height, space);
+      tile.y = aFill.y + space;
+      tile.height = aUnitSize.height;
+      aFill.y = tile.y;
+      aFill.height = aFill.height - space * 2;
+    }
     break;
   default:
     NS_NOTREACHED("unrecognized border-image fill style");
@@ -5505,7 +5686,8 @@ nsImageRenderer::DrawBorderImageComponent(nsPresContext*       aPresContext,
                                           uint8_t              aVFill,
                                           const nsSize&        aUnitSize,
                                           uint8_t              aIndex,
-                                          const Maybe<nsSize>& aSVGViewportSize)
+                                          const Maybe<nsSize>& aSVGViewportSize,
+                                          const bool           aHasIntrinsicRatio)
 {
   if (!IsReady()) {
     NS_NOTREACHED("Ensure PrepareImage() has returned true before calling me");
@@ -5529,7 +5711,7 @@ nsImageRenderer::DrawBorderImageComponent(nsPresContext*       aPresContext,
     // For those SVG image sources which don't have fixed aspect ratio (i.e.
     // without viewport size and viewBox), we should scale the source uniformly
     // after the viewport size is decided by "Default Sizing Algorithm".
-    if (!ComputeIntrinsicSize().HasRatio()) {
+    if (!aHasIntrinsicRatio) {
       drawFlags = drawFlags | imgIContainer::FLAG_FORCE_UNIFORM_SCALING;
     }
     // Retrieve or create the subimage we'll draw.
@@ -5574,21 +5756,27 @@ nsImageRenderer::DrawBorderImageComponent(nsPresContext*       aPresContext,
                                             drawFlags);
     }
 
-    nsRect tile = ComputeTile(aFill, aHFill, aVFill, aUnitSize);
-    return nsLayoutUtils::DrawImage(*aRenderingContext.ThebesContext(),
-                                    aPresContext,
-                                    subImage,
-                                    samplingFilter,
-                                    tile, aFill, tile.TopLeft(), aDirtyRect,
-                                    drawFlags);
+    nsSize repeatSize;
+    nsRect fillRect(aFill);
+    nsRect tile = ComputeTile(fillRect, aHFill, aVFill, aUnitSize, repeatSize);
+    CSSIntSize imageSize(nsPresContext::AppUnitsToIntCSSPixels(srcRect.width),
+                         nsPresContext::AppUnitsToIntCSSPixels(srcRect.height));
+    return nsLayoutUtils::DrawBackgroundImage(*aRenderingContext.ThebesContext(),
+                                              aPresContext,
+                                              subImage, imageSize, samplingFilter,
+                                              tile, fillRect, repeatSize,
+                                              tile.TopLeft(), aDirtyRect,
+                                              drawFlags,
+                                              ExtendMode::CLAMP);
   }
 
-  nsRect destTile = RequiresScaling(aFill, aHFill, aVFill, aUnitSize)
-                  ? ComputeTile(aFill, aHFill, aVFill, aUnitSize)
-                  : aFill;
-
+  nsSize repeatSize(aFill.Size());
+  nsRect fillRect(aFill);
+  nsRect destTile = RequiresScaling(fillRect, aHFill, aVFill, aUnitSize)
+                  ? ComputeTile(fillRect, aHFill, aVFill, aUnitSize, repeatSize)
+                  : fillRect;
   return Draw(aPresContext, aRenderingContext, aDirtyRect, destTile,
-              aFill, destTile.TopLeft(), destTile.Size(), aSrc);
+              fillRect, destTile.TopLeft(), repeatSize, aSrc);
 }
 
 bool
@@ -5620,6 +5808,18 @@ nsImageRenderer::GetImage()
 
   nsCOMPtr<imgIContainer> image = mImageContainer;
   return image.forget();
+}
+
+void
+nsImageRenderer::PurgeCacheForViewportChange(
+  const Maybe<nsSize>& aSVGViewportSize, const bool aHasIntrinsicRatio)
+{
+  // Check if we should flush the cached data - only vector images need to do
+  // the check since they might not have fixed ratio.
+  if (mImageContainer &&
+      mImageContainer->GetType() == imgIContainer::TYPE_VECTOR) {
+    mImage->PurgeCacheForViewportChange(aSVGViewportSize, aHasIntrinsicRatio);
+  }
 }
 
 #define MAX_BLUR_RADIUS 300

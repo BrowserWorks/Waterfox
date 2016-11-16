@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2000-2015, International Business Machines
+*   Copyright (C) 2000-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 */
@@ -221,18 +221,6 @@ ures_getStringByKeyWithFallback(const UResourceBundle *resB,
                           const char* inKey,  
                           int32_t* len,
                           UErrorCode *status);
-
-#ifdef __cplusplus
-
-U_CAPI void U_EXPORT2
-ures_getAllArrayItemsWithFallback(const UResourceBundle *bundle, const char *path,
-                                  icu::ResourceArraySink &sink, UErrorCode &errorCode);
-
-U_CAPI void U_EXPORT2
-ures_getAllTableItemsWithFallback(const UResourceBundle *bundle, const char *path,
-                                  icu::ResourceTableSink &sink, UErrorCode &errorCode);
-
-#endif  /* __cplusplus */
 
 /**
  * Get a version number by key

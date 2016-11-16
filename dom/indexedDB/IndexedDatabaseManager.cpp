@@ -348,6 +348,10 @@ IndexedDatabaseManager::Init()
 
     mDeleteTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
     NS_ENSURE_STATE(mDeleteTimer);
+
+    if (QuotaManager* quotaManager = QuotaManager::Get()) {
+      NoteLiveQuotaManager(quotaManager);
+    }
   }
 
   Preferences::RegisterCallbackAndCall(AtomicBoolPrefChangedCallback,
@@ -485,7 +489,7 @@ IndexedDatabaseManager::CommonPostHandleEvent(EventChainPostVisitor& aVisitor,
     error->GetName(errorName);
   }
 
-  RootedDictionary<ErrorEventInit> init(nsContentUtils::RootingCxForThread());
+  RootedDictionary<ErrorEventInit> init(nsContentUtils::RootingCx());
   request->GetCallerLocation(init.mFilename, &init.mLineno, &init.mColno);
 
   init.mMessage = errorName;
@@ -553,11 +557,11 @@ IndexedDatabaseManager::CommonPostHandleEvent(EventChainPostVisitor& aVisitor,
 
 // static
 bool
-IndexedDatabaseManager::ResolveSandboxBinding(JSContext* aCx,
-                                              JS::Handle<JSObject*> aGlobal)
+IndexedDatabaseManager::ResolveSandboxBinding(JSContext* aCx)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL,
+  MOZ_ASSERT(js::GetObjectClass(JS::CurrentGlobalOrNull(aCx))->flags &
+             JSCLASS_DOM_GLOBAL,
              "Passed object is not a global object!");
 
   // We need to ensure that the manager has been created already here so that we
@@ -566,19 +570,19 @@ IndexedDatabaseManager::ResolveSandboxBinding(JSContext* aCx,
     return false;
   }
 
-  if (!IDBCursorBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBCursorWithValueBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBDatabaseBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBFactoryBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBIndexBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBKeyRangeBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBLocaleAwareKeyRangeBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBMutableFileBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBObjectStoreBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBOpenDBRequestBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBRequestBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBTransactionBinding::GetConstructorObject(aCx, aGlobal) ||
-      !IDBVersionChangeEventBinding::GetConstructorObject(aCx, aGlobal))
+  if (!IDBCursorBinding::GetConstructorObject(aCx) ||
+      !IDBCursorWithValueBinding::GetConstructorObject(aCx) ||
+      !IDBDatabaseBinding::GetConstructorObject(aCx) ||
+      !IDBFactoryBinding::GetConstructorObject(aCx) ||
+      !IDBIndexBinding::GetConstructorObject(aCx) ||
+      !IDBKeyRangeBinding::GetConstructorObject(aCx) ||
+      !IDBLocaleAwareKeyRangeBinding::GetConstructorObject(aCx) ||
+      !IDBMutableFileBinding::GetConstructorObject(aCx) ||
+      !IDBObjectStoreBinding::GetConstructorObject(aCx) ||
+      !IDBOpenDBRequestBinding::GetConstructorObject(aCx) ||
+      !IDBRequestBinding::GetConstructorObject(aCx) ||
+      !IDBTransactionBinding::GetConstructorObject(aCx) ||
+      !IDBVersionChangeEventBinding::GetConstructorObject(aCx))
   {
     return false;
   }
@@ -747,13 +751,24 @@ IndexedDatabaseManager::ClearBackgroundActor()
 }
 
 void
-IndexedDatabaseManager::NoteBackgroundThread(nsIEventTarget* aBackgroundThread)
+IndexedDatabaseManager::NoteLiveQuotaManager(QuotaManager* aQuotaManager)
 {
   MOZ_ASSERT(IsMainProcess());
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aBackgroundThread);
+  MOZ_ASSERT(aQuotaManager);
 
-  mBackgroundThread = aBackgroundThread;
+  mBackgroundThread = aQuotaManager->OwningThread();
+}
+
+void
+IndexedDatabaseManager::NoteShuttingDownQuotaManager()
+{
+  MOZ_ASSERT(IsMainProcess());
+  MOZ_ASSERT(NS_IsMainThread());
+
+  MOZ_ALWAYS_SUCCEEDS(mDeleteTimer->Cancel());
+
+  mBackgroundThread = nullptr;
 }
 
 already_AddRefed<FileManager>
@@ -851,6 +866,10 @@ IndexedDatabaseManager::AsyncDeleteFile(FileManager* aFileManager,
   MOZ_ASSERT(aFileManager);
   MOZ_ASSERT(aFileId > 0);
   MOZ_ASSERT(mDeleteTimer);
+
+  if (!mBackgroundThread) {
+    return NS_OK;
+  }
 
   nsresult rv = mDeleteTimer->Cancel();
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -1043,6 +1062,7 @@ IndexedDatabaseManager::Notify(nsITimer* aTimer)
 {
   MOZ_ASSERT(IsMainProcess());
   MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(mBackgroundThread);
 
   for (auto iter = mPendingDeleteInfos.ConstIter(); !iter.Done(); iter.Next()) {
     auto key = iter.Key();

@@ -901,7 +901,8 @@ bool
 CallSetElementPolicy::adjustInputs(TempAllocator& alloc, MInstruction* ins)
 {
     // The first operand should be an object.
-    SingleObjectPolicy::staticAdjustInputs(alloc, ins);
+    if (!SingleObjectPolicy::staticAdjustInputs(alloc, ins))
+        return false;
 
     // Box the index and value operands.
     for (size_t i = 1, e = ins->numOperands(); i < e; i++) {
@@ -918,7 +919,8 @@ InstanceOfPolicy::adjustInputs(TempAllocator& alloc, MInstruction* def)
 {
     // Box first operand if it isn't object
     if (def->getOperand(0)->type() != MIRType::Object)
-        BoxPolicy<0>::staticAdjustInputs(alloc, def);
+        if (!BoxPolicy<0>::staticAdjustInputs(alloc, def))
+            return false;
 
     return true;
 }
@@ -1016,7 +1018,8 @@ StoreUnboxedScalarPolicy::adjustValueInput(TempAllocator& alloc, MInstruction* i
 bool
 StoreUnboxedScalarPolicy::adjustInputs(TempAllocator& alloc, MInstruction* ins)
 {
-    SingleObjectPolicy::staticAdjustInputs(alloc, ins);
+    if (!SingleObjectPolicy::staticAdjustInputs(alloc, ins))
+        return false;
 
     MStoreUnboxedScalar* store = ins->toStoreUnboxedScalar();
     MOZ_ASSERT(IsValidElementsType(store->elements(), store->offsetAdjustment()));
@@ -1048,8 +1051,11 @@ StoreTypedArrayElementStaticPolicy::adjustInputs(TempAllocator& alloc, MInstruct
 bool
 StoreUnboxedObjectOrNullPolicy::adjustInputs(TempAllocator& alloc, MInstruction* ins)
 {
-    ObjectPolicy<0>::staticAdjustInputs(alloc, ins);
-    ObjectPolicy<3>::staticAdjustInputs(alloc, ins);
+    if (!ObjectPolicy<0>::staticAdjustInputs(alloc, ins))
+        return false;
+
+    if (!ObjectPolicy<3>::staticAdjustInputs(alloc, ins))
+        return false;
 
     // Change the value input to a ToObjectOrNull instruction if it might be
     // a non-null primitive. Insert a post barrier for the instruction's object
@@ -1236,6 +1242,7 @@ FilterTypeSetPolicy::adjustInputs(TempAllocator& alloc, MInstruction* ins)
     _(MixPolicy<ConvertToStringPolicy<0>, ConvertToStringPolicy<1> >)   \
     _(MixPolicy<ConvertToStringPolicy<0>, ObjectPolicy<1> >)            \
     _(MixPolicy<DoublePolicy<0>, DoublePolicy<1> >)                     \
+    _(MixPolicy<IntPolicy<0>, IntPolicy<1> >)                           \
     _(MixPolicy<ObjectPolicy<0>, BoxPolicy<1> >)                        \
     _(MixPolicy<ObjectPolicy<0>, CacheIdPolicy<1>>)                     \
     _(MixPolicy<ObjectPolicy<0>, ConvertToStringPolicy<1> >)            \

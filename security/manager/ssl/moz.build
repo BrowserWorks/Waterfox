@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,7 +93,6 @@ UNIFIED_SOURCES += [
     'LocalCertService.cpp',
     'nsCertOverrideService.cpp',
     'nsCertPicker.cpp',
-    'nsCertVerificationThread.cpp',
     'nsClientAuthRemember.cpp',
     'nsCrypto.cpp',
     'nsCryptoHash.cpp',
@@ -132,7 +131,6 @@ UNIFIED_SOURCES += [
     'nsSSLSocketProvider.cpp',
     'nsSSLStatus.cpp',
     'nsTLSSocketProvider.cpp',
-    'nsUsageArrayHelper.cpp',
     'PSMContentListener.cpp',
     'PSMRunnable.cpp',
     'PublicKeyPinningService.cpp',

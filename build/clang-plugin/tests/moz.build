@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,12 +8,14 @@
 Library('clang-plugin-tests')
 
 SOURCES += [
+    'TestAssertWithAssignment.cpp',
     'TestBadImplicitConversionCtor.cpp',
     'TestCustomHeap.cpp',
     'TestExplicitOperatorBool.cpp',
     'TestGlobalClass.cpp',
     'TestHeapClass.cpp',
     'TestInheritTypeAnnotationsFromTemplateArgs.cpp',
+    'TestKungFuDeathGrip.cpp',
     'TestMultipleAnnotations.cpp',
     'TestMustOverride.cpp',
     'TestMustUse.cpp',

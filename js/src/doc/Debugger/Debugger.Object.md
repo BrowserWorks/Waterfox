@@ -158,49 +158,51 @@ from its prototype:
    this is a string which is the name of the template; `undefined` otherwise.
 
 `isBoundFunction`
-:   `true` if the referent is a bound function; `false` otherwise.
+:   If the referent is a debuggee function, returns `true` if the referent is a
+    bound function; `false` otherwise. If the referent is not a debuggee
+    function, or not a function at all, returns `undefined` instead.
 
 `isArrowFunction`
-:   `true` if the referent is an arrow function; `false` otherwise.
+:   If the referent is a debuggee function, returns `true` if the referent is an
+    arrow function; `false` otherwise. If the referent is not a debuggee
+    function, or not a function at all, returns `undefined` instead.
 
 `isPromise`
 :   `true` if the referent is a Promise; `false` otherwise.
 
 `boundTargetFunction`
-:   If the referent is a bound function, this is its target function—the
-    function that was bound to a particular `this` object. If the referent
-    is not a bound function, this is `undefined`.
+:   If the referent is a bound debuggee function, this is its target function—
+    the function that was bound to a particular `this` object. If the referent
+    is either not a bound function, not a debuggee function, or not a function
+    at all, this is `undefined`.
 
 `boundThis`
-:   If the referent is a bound function, this is the `this` value it was
-    bound to. If the referent is not a bound function, this is `undefined`.
+:   If the referent is a bound debuggee function, this is the `this` value it
+    was bound to. If the referent is either not a bound function, not a debuggee
+    function, or not a function at all, this is `undefined`.
 
 `boundArguments`
-:   If the referent is a bound function, this is an array (in the Debugger
-    object's compartment) that contains the debuggee values of the `arguments`
-    object it was bound to. If the referent is not a bound function, this is
+:   If the referent is a bound debuggee function, this is an array (in the
+    Debugger object's compartment) that contains the debuggee values of the
+    `arguments` object it was bound to. If the referent is either not a bound
+    function, not a debuggee function, or not a function at all, this is
     `undefined`.
 
+`isProxy`
+:   If the referent is a (scripted) proxy, either revoked or not, return `true`.
+    If the referent is not a (scripted) proxy, return `false`.
+
+`proxyTarget`
+:   If the referent is a non-revoked (scripted) proxy, return a `Debugger.Object`
+    instance referring to the ECMAScript `[[ProxyTarget]]` of the referent.
+    If the referent is a revoked (scripted) proxy, return `null`.
+    If the referent is not a (scripted) proxy, return `undefined`.
+
 `proxyHandler`
-:   If the referent is a proxy whose handler object was allocated by
-    debuggee code, this is its handler object—the object whose methods are
-    invoked to implement accesses of the proxy's properties. If the referent
-    is not a proxy whose handler object was allocated by debuggee code, this
-    is `null`.
-
-`proxyCallTrap`
-:   If the referent is a function proxy whose handler object was allocated
-    by debuggee code, this is its call trap function—the function called
-    when the function proxy is called. If the referent is not a function
-    proxy whose handler object was allocated by debuggee code, this is
-    `null`.
-
-`proxyConstructTrap`
-:   If the referent is a function proxy whose handler object was allocated
-    by debuggee code, its construction trap function—the function called
-    when the function proxy is called via a `new` expression. If the
-    referent is not a function proxy whose handler object was allocated by
-    debuggee code, this is `null`.
+:   If the referent is a non-revoked (scripted) proxy, return a `Debugger.Object`
+    instance referring to the ECMAScript `[[ProxyHandler]]` of the referent.
+    If the referent is a revoked (scripted) proxy, return `null`.
+    If the referent is not a (scripted) proxy, return `undefined`.
 
 `promiseState`
 :   If the referent is a [`Promise`][promise], this is an object describing

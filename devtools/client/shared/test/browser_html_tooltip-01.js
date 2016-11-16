@@ -11,7 +11,7 @@
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
   <?xml-stylesheet href="chrome://global/skin/global.css"?>
-  <?xml-stylesheet href="chrome://devtools/skin/common.css"?>
+  <?xml-stylesheet href="chrome://devtools/skin/tooltips.css"?>
   <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
    title="Tooltip test">
     <vbox flex="1">
@@ -25,6 +25,8 @@ const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
 const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
 loadHelperScript("helper_html_tooltip.js");
 
+let useXulWrapper;
+
 function getTooltipContent(doc) {
   let div = doc.createElementNS(HTML_NS, "div");
   div.style.height = "50px";
@@ -34,13 +36,23 @@ function getTooltipContent(doc) {
 }
 
 add_task(function* () {
-  yield addTab("about:blank");
   let [,, doc] = yield createHost("bottom", TEST_URI);
 
-  let tooltip = new HTMLTooltip({doc}, {});
+  info("Run tests for a Tooltip without using a XUL panel");
+  useXulWrapper = false;
+  yield runTests(doc);
+
+  info("Run tests for a Tooltip with a XUL panel");
+  useXulWrapper = true;
+  yield runTests(doc);
+});
+
+function* runTests(doc) {
+  yield addTab("about:blank");
+  let tooltip = new HTMLTooltip({doc}, {useXulWrapper});
 
   info("Set tooltip content");
-  yield tooltip.setContent(getTooltipContent(doc), 100, 50);
+  tooltip.setContent(getTooltipContent(doc), {width: 100, height: 50});
 
   is(tooltip.isVisible(), false, "Tooltip is not visible");
 
@@ -71,4 +83,6 @@ add_task(function* () {
 
   yield waitForReflow(tooltip);
   is(tooltip.isVisible(), false, "Tooltip is not visible");
-});
+
+  tooltip.destroy();
+}

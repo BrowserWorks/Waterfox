@@ -110,6 +110,15 @@ BrowserAddonActor.prototype = {
     }
   },
 
+  onInstalled: function BAA_updateAddonWrapper(aAddon) {
+    if (aAddon.id != this._addon.id) {
+      return;
+    }
+
+    // Update the AddonManager's addon object on reload/update.
+    this._addon = aAddon;
+  },
+
   onDisabled: function BAA_onDisabled(aAddon) {
     if (aAddon != this._addon) {
       return;
@@ -125,6 +134,9 @@ BrowserAddonActor.prototype = {
 
     if (this.attached) {
       this.onDetach();
+
+      // The BrowserAddonActor is not a TabActor and it has to send
+      // "tabDetached" directly to close the devtools toolbox window.
       this.conn.send({ from: this.actorID, type: "tabDetached" });
     }
 

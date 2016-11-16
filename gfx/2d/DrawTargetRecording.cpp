@@ -478,6 +478,12 @@ DrawTargetRecording::Snapshot()
 }
 
 void
+DrawTargetRecording::DetachAllSnapshots()
+{
+  mFinalDT->DetachAllSnapshots();
+}
+
+void
 DrawTargetRecording::DrawSurface(SourceSurface *aSurface,
                                  const Rect &aDest,
                                  const Rect &aSource,
@@ -579,10 +585,10 @@ DrawTargetRecording::PushLayer(bool aOpaque, Float aOpacity,
     EnsureSurfaceStored(mRecorder, aMask, "PushLayer");
   }
 
-  mRecorder->RecordEvent(RecordedPushLayer(this, aOpacity, aOpacity, aMask,
+  mRecorder->RecordEvent(RecordedPushLayer(this, aOpaque, aOpacity, aMask,
                                            aMaskTransform, aBounds,
                                            aCopyBackground));
-  mFinalDT->PushLayer(aOpacity, aOpacity, aMask, aMaskTransform, aBounds,
+  mFinalDT->PushLayer(aOpaque, aOpacity, aMask, aMaskTransform, aBounds,
                       aCopyBackground);
 }
 

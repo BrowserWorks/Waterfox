@@ -46,11 +46,7 @@ class PuppetWidget;
 using mozilla::widget::PuppetWidget;
 
 #ifdef MOZ_X11
-#ifdef MOZ_WIDGET_QT
-#include "gfxQtNativeRenderer.h"
-#else
 #include "gfxXlibNativeRenderer.h"
-#endif
 #endif
 
 class nsPluginInstanceOwner final : public nsIPluginInstanceOwner
@@ -233,8 +229,6 @@ public:
   // Returns true if this is windowed plugin that can return static captures
   // for scroll operations.
   bool NeedsScrollImageLayer();
-  // Notification we receive from nsPluginFrame about scroll state.
-  bool UpdateScrollState(bool aIsScrolling);
 
   void DidComposite();
 
@@ -395,12 +389,7 @@ private:
   int mLastMouseDownButtonType;
 
 #ifdef MOZ_X11
-  class Renderer
-#if defined(MOZ_WIDGET_QT)
-  : public gfxQtNativeRenderer
-#else
-  : public gfxXlibNativeRenderer
-#endif
+  class Renderer : public gfxXlibNativeRenderer
   {
   public:
     Renderer(NPWindow* aWindow, nsPluginInstanceOwner* aInstanceOwner,
@@ -420,9 +409,6 @@ private:
 #endif
 
   bool mWaitingForPaint;
-#if defined(XP_WIN)
-  bool mScrollState;
-#endif
 };
 
 #endif // nsPluginInstanceOwner_h_

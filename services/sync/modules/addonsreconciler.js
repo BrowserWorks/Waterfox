@@ -417,7 +417,7 @@ AddonsReconciler.prototype = {
    *        Addon instance being updated.
    */
   rectifyStateFromAddon: function rectifyStateFromAddon(addon) {
-    this._log.debug("Rectifying state for addon: " + addon.id);
+    this._log.debug(`Rectifying state for addon ${addon.name} (version=${addon.version}, id=${addon.id})`);
     this._ensureStateLoaded();
 
     let id = addon.id;
@@ -434,7 +434,8 @@ AddonsReconciler.prototype = {
         modified: now,
         type: addon.type,
         scope: addon.scope,
-        foreignInstall: addon.foreignInstall
+        foreignInstall: addon.foreignInstall,
+        isSyncable: addon.isSyncable,
       };
       this._addons[id] = record;
       this._log.debug("Adding change because add-on not present locally: " +
@@ -444,6 +445,7 @@ AddonsReconciler.prototype = {
     }
 
     let record = this._addons[id];
+    record.isSyncable = addon.isSyncable;
 
     if (!record.installed) {
       // It is possible the record is marked as uninstalled because an

@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,9 +6,9 @@
 
 toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
 
-if toolkit in ('cocoa', 'qt', 'android', 'gonk', 'uikit'):
+if toolkit in ('cocoa', 'android', 'gonk', 'uikit'):
     DIRS += [toolkit]
-if toolkit in ('qt', 'android', 'gonk', 'gtk2', 'gtk3'):
+if toolkit in ('android', 'gonk', 'gtk2', 'gtk3'):
     EXPORTS += ['nsIPrintDialogService.h']
 
 if toolkit == 'windows':
@@ -65,6 +65,7 @@ XPIDL_SOURCES += [
     'nsIClipboardHelper.idl',
     'nsIClipboardOwner.idl',
     'nsIColorPicker.idl',
+    'nsIDatePicker.idl',
     'nsIDisplayInfo.idl',
     'nsIDragService.idl',
     'nsIDragSession.idl',
@@ -87,7 +88,6 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'widget'
 
 EXPORTS += [
-    'CompositorWidgetProxy.h',
     'GfxDriverInfo.h',
     'GfxInfoBase.h',
     'GfxInfoCollector.h',
@@ -128,18 +128,22 @@ EXPORTS.mozilla += [
 ]
 
 EXPORTS.mozilla.widget += [
+    'CompositorWidget.h',
     'IMEData.h',
+    'InProcessCompositorWidget.h',
     'PuppetBidiKeyboard.h',
     'WidgetMessageUtils.h',
+    'WindowSurface.h'
 ]
 
 UNIFIED_SOURCES += [
-    'CompositorWidgetProxy.cpp',
+    'CompositorWidget.cpp',
     'ContentCache.cpp',
     'GfxDriverInfo.cpp',
     'GfxInfoBase.cpp',
     'GfxInfoCollector.cpp',
     'GfxInfoWebGL.cpp',
+    'InProcessCompositorWidget.cpp',
     'InputData.cpp',
     'nsBaseAppShell.cpp',
     'nsBaseScreen.cpp',
@@ -147,6 +151,7 @@ UNIFIED_SOURCES += [
     'nsClipboardProxy.cpp',
     'nsColorPickerProxy.cpp',
     'nsContentProcessWidgetFactory.cpp',
+    'nsDatePickerProxy.cpp',
     'nsDragServiceProxy.cpp',
     'nsFilePickerProxy.cpp',
     'nsHTMLFormatConverter.cpp',
@@ -157,7 +162,6 @@ UNIFIED_SOURCES += [
     'nsScreenManagerProxy.cpp',
     'nsTransferable.cpp',
     'nsXPLookAndFeel.cpp',
-    'PluginWidgetProxy.cpp',
     'PuppetBidiKeyboard.cpp',
     'PuppetWidget.cpp',
     'ScreenProxy.cpp',
@@ -181,9 +185,12 @@ if CONFIG['MOZ_XUL'] and CONFIG['NS_PRINTING']:
 
 # nsBaseWidget.cpp needs to be built separately because of name clashes in the OS X headers
 # nsBaseDragService.cpp moved out of UNIFIED to fix xgill crash (bug 1259850) after moving widget/ContentHelper -> apz/util/TouchActionHelper
+# PluginWidgetProxy includes MacOS system headers which define a Point struct
+# that conflicts with mozilla::gfx::Point
 SOURCES += [
     'nsBaseDragService.cpp',
-    'nsBaseWidget.cpp'
+    'nsBaseWidget.cpp',
+    'PluginWidgetProxy.cpp',
 ]
 
 if CONFIG['MOZ_INSTRUMENT_EVENT_LOOP']:
@@ -199,7 +206,8 @@ if CONFIG['MOZ_X11']:
         'GfxInfoX11.cpp'
     ]
     SOURCES += [
-        'nsShmImage.cpp'
+        'nsShmImage.cpp',
+        'WindowSurfaceX11SHM.cpp',
     ]
 
 if toolkit in ('cocoa', 'windows'):
@@ -207,13 +215,13 @@ if toolkit in ('cocoa', 'windows'):
         'nsBaseClipboard.cpp',
     ]
 
-if toolkit in {'qt', 'gtk2', 'gtk3', 'cocoa', 'windows',
+if toolkit in {'gtk2', 'gtk3', 'cocoa', 'windows',
                'android', 'gonk', 'uikit'}:
     UNIFIED_SOURCES += [
         'nsBaseFilePicker.cpp',
     ]
 
-if toolkit in ('qt', 'gtk2', 'gtk3', 'windows', 'cocoa'):
+if toolkit in ('gtk2', 'gtk3', 'windows', 'cocoa'):
     UNIFIED_SOURCES += [
         'nsNativeTheme.cpp',
     ]
@@ -237,6 +245,17 @@ LOCAL_INCLUDES += [
     '/view',
     '/widget',
 ]
+
+if toolkit == 'windows':
+    IPDL_SOURCES = [
+        'windows/PCompositorWidget.ipdl',
+        'windows/PlatformWidgetTypes.ipdlh',
+    ]
+else:
+    IPDL_SOURCES = [
+        'PCompositorWidget.ipdl',
+        'PlatformWidgetTypes.ipdlh',
+    ]
 
 widget_dir = toolkit
 if widget_dir in ('gtk3', 'gtk2'):

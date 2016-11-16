@@ -173,6 +173,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             'all_actions': [
                 "clobber",
                 "pull",
+                "clone-locales",
                 "list-locales",
                 "setup",
                 "repack",
@@ -465,7 +466,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
     def _query_revision(self):
         """ Get the gecko revision in this order of precedence
               * cached value
-              * command line arg --revision   (development)
+              * command line arg --revision   (development, taskcluster)
               * buildbot properties           (try with buildbot forced build)
               * buildbot change               (try with buildbot scheduler)
               * from the en-US build          (m-c & m-a)
@@ -602,8 +603,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
     def clobber(self):
         """clobber"""
         dirs = self.query_abs_dirs()
-        clobber_dirs = (dirs['abs_objdir'], dirs['abs_compare_locales_dir'],
-                        dirs['abs_upload_dir'])
+        clobber_dirs = (dirs['abs_objdir'], dirs['abs_upload_dir'])
         PurgeMixin.clobber(self, always_clobber_dirs=clobber_dirs)
 
     def pull(self):
@@ -637,6 +637,8 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.info("repositories: %s" % repos)
         self.vcs_checkout_repos(repos, parent_dir=dirs['abs_work_dir'],
                                 tag_override=config.get('tag_override'))
+
+    def clone_locales(self):
         self.pull_locale_source()
 
     def setup(self):
@@ -1074,7 +1076,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         pushdate = time.strftime('%Y%m%d%H%M%S', time.gmtime(pushinfo.pushdate))
 
         routes_json = os.path.join(self.query_abs_dirs()['abs_mozilla_dir'],
-                                   'testing/taskcluster/routes.json')
+                                   'taskcluster/ci/legacy/routes.json')
         with open(routes_json) as f:
             contents = json.load(f)
             templates = contents['l10n']

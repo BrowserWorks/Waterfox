@@ -16,11 +16,19 @@
 "unpack": true
 },
 {
-"version": "gecko rust 1.9.0 (commit e4e8b666850a763fdf1c3c2c142856ab51e32779)",
-"size": 96854912,
-"digest": "d613d5528e83bb73917372948c05a766912a9dd0ec4e8a5fab69161a515c1545d52e9ed3394716df96a9dcdf1c086b6f970413e97c2df78a11e5f9151573921a",
+"version": "gecko rustc 1.10.0 (cfcb716cf 2016-07-03) x86_64+i586",
+"size": 102207436,
+"digest": "7f0fcaf31fd2e76f0941b601f86b42f15d2f3ba22676ad14c322a9bcfd2bc361d1110b2f9c97e4d3056ffe49e126aaa3ae3015ee91b0229560d603a0c1e310a0",
 "algorithm": "sha512",
 "filename": "rustc.tar.xz",
+"unpack": true
+},
+{
+"version": "cargo 0.13.0-nightly (664125b 2016-07-19)",
+"size": 3123796,
+"digest": "4b9d2bcb8488b6649ba6c748e19d33bfceb25c7566e882fc7e00322392e424a5a9c5878c11c61d57cdaecf67bcc110842c6eff95e49736e8f3c83d9ce1677122",
+"algorithm": "sha512",
+"filename": "cargo.tar.xz",
 "unpack": true
 },
 {

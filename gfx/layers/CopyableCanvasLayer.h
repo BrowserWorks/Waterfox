@@ -17,7 +17,6 @@
 #include "mozilla/RefPtr.h"             // for RefPtr
 #include "mozilla/gfx/2D.h"             // for DrawTarget
 #include "mozilla/mozalloc.h"           // for operator delete, etc
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 
 namespace mozilla {
@@ -48,24 +47,18 @@ public:
   bool IsGLLayer() { return !!mGLContext; }
 
 protected:
-  void UpdateTarget(gfx::DrawTarget* aDestTarget = nullptr);
-
-  RefPtr<gfx::SourceSurface> mSurface;
   RefPtr<gl::GLContext> mGLContext;
-  GLuint mCanvasFrontbufferTexID;
   RefPtr<PersistentBufferProvider> mBufferProvider;
-
   UniquePtr<gl::SharedSurface> mGLFrontbuffer;
 
   bool mIsAlphaPremultiplied;
   gl::OriginPos mOriginPos;
+  bool mIsMirror;
 
   RefPtr<gfx::DataSourceSurface> mCachedTempSurface;
 
   gfx::DataSourceSurface* GetTempSurface(const gfx::IntSize& aSize,
                                          const gfx::SurfaceFormat aFormat);
-
-  void DiscardTempSurface();
 };
 
 } // namespace layers

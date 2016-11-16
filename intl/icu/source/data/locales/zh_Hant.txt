@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zh_Hant.xml
@@ -237,7 +237,7 @@ zh_Hant{
         native{"hanidec"}
         traditional{"hant"}
     }
-    Version{"2.1.23.90"}
+    Version{"2.1.19.89"}
     calendar{
         buddhist{
             DateTimePatterns{
@@ -1232,10 +1232,6 @@ zh_Hant{
         }
         gregorian{
             AmPmMarkers{
-                "上午",
-                "下午",
-            }
-            AmPmMarkersAbbr{
                 "上午",
                 "下午",
             }

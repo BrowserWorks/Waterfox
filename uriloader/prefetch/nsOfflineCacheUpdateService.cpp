@@ -70,10 +70,10 @@ typedef mozilla::docshell::OfflineCacheUpdateChild OfflineCacheUpdateChild;
 typedef mozilla::docshell::OfflineCacheUpdateGlue OfflineCacheUpdateGlue;
 
 //
-// To enable logging (see prlog.h for full details):
+// To enable logging (see mozilla/Logging.h for full details):
 //
-//    set NSPR_LOG_MODULES=nsOfflineCacheUpdate:5
-//    set NSPR_LOG_FILE=offlineupdate.log
+//    set MOZ_LOG=nsOfflineCacheUpdate:5
+//    set MOZ_LOG_FILE=offlineupdate.log
 //
 // this enables LogLevel::Debug level information and places all output in
 // the file offlineupdate.log
@@ -380,6 +380,7 @@ nsOfflineCacheUpdateService::UpdateFinished(nsOfflineCacheUpdate *aUpdate)
 
     // keep this item alive until we're done notifying observers
     RefPtr<nsOfflineCacheUpdate> update = mUpdates[0];
+    Unused << update;
     mUpdates.RemoveElementAt(0);
     mUpdateRunning = false;
 

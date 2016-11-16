@@ -52,7 +52,7 @@
   --urlbar-separator-color: hsla(0,0%,16%,.2);
 }
 
-#nav-bar[brighttext] {
+toolbar[brighttext] {
   --toolbarbutton-hover-background: rgba(255,255,255,.25);
   --toolbarbutton-hover-bordercolor: rgba(255,255,255,.5);
 
@@ -63,7 +63,7 @@
   --toolbarbutton-checkedhover-backgroundcolor: rgba(255,255,255,.3);
 }
 
-#nav-bar:-moz-lwtheme {
+toolbar:-moz-lwtheme {
   --toolbarbutton-hover-background: rgba(255,255,255,.25);
   --toolbarbutton-hover-bordercolor: rgba(0,0,0,.2);
 
@@ -194,10 +194,6 @@
   #main-window[tabsintitlebar]:not([inFullscreen]) #TabsToolbar:not(:-moz-lwtheme):-moz-window-inactive {
     color: InactiveCaptionText;
   }
-
-  #main-window[tabsintitlebar] #main-menubar > menu:not(:-moz-lwtheme) {
-    color: inherit;
-  }
 }
 
 @media not all and (-moz-windows-compositor) {
@@ -208,6 +204,12 @@
   #main-window[tabsintitlebar] #titlebar-content:-moz-lwtheme {
     -moz-binding: url("chrome://global/content/bindings/general.xml#windowdragbox");
     visibility: visible;
+  }
+
+  /* Top-level menu appearance has transparent background, so the text color
+     needs to be inherited from our custom menubar too. */
+  #main-window[tabsintitlebar] #main-menubar > menu:not(:-moz-lwtheme) {
+    color: inherit;
   }
 }
 
@@ -464,14 +466,25 @@ toolbarbutton.bookmark-item:not(.subviewbutton),
 #personal-bookmarks[cui-areatype="toolbar"]:not([overflowedItem=true]) > #bookmarks-toolbar-placeholder {
   margin: 0;
   padding: 2px 3px;
+  -moz-appearance: none;
+  border: 1px solid transparent;
+  border-radius: 1px;
+  background-origin: padding-box !important;
+  background-clip: padding-box !important;
+  transition-property: background-color, border-color, box-shadow;
+  transition-duration: 150ms;
 }
 
-toolbarbutton.bookmark-item:not([disabled="true"]):not(.subviewbutton):hover:active,
+toolbarbutton.bookmark-item:not(.subviewbutton):hover:not([disabled="true"]):not([open]) {
+  border-color: var(--toolbarbutton-hover-bordercolor);
+  background: var(--toolbarbutton-hover-background);
+}
+
+toolbarbutton.bookmark-item:not(.subviewbutton):hover:active:not([disabled="true"]),
 toolbarbutton.bookmark-item[open="true"] {
-  padding-top: 3px;
-  padding-bottom: 1px;
-  padding-inline-start: 4px;
-  padding-inline-end: 2px;
+  border-color: var(--toolbarbutton-active-bordercolor);
+  box-shadow: var(--toolbarbutton-active-boxshadow);
+  background: var(--toolbarbutton-active-background);
 }
 
 .bookmark-item > .toolbarbutton-icon,
@@ -1023,49 +1036,114 @@ toolbar[brighttext] .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
 
 /* ::::: fullscreen window controls ::::: */
 
-#window-controls {
-  margin-inline-start: 4px;
-}
-
 #minimize-button,
 #restore-button,
 #close-button {
-  list-style-image: url("chrome://global/skin/icons/windowControls.png");
-  padding: 0;
+  -moz-appearance: none;
+  border: none;
+  margin: 0 !important;
+  padding: 6px 12px;
 }
 
 #minimize-button {
-  -moz-image-region: rect(0, 16px, 16px, 0);
-}
-#minimize-button:hover {
-  -moz-image-region: rect(16px, 16px, 32px, 0);
-}
-#minimize-button:hover:active {
-  -moz-image-region: rect(32px, 16px, 48px, 0);
-}
-#restore-button {
-  -moz-image-region: rect(0, 32px, 16px, 16px);
-}
-#restore-button:hover {
-  -moz-image-region: rect(16px, 32px, 32px, 16px);
-}
-#restore-button:hover:active {
-  -moz-image-region: rect(32px, 32px, 48px, 16px);
-}
-#close-button {
-  -moz-image-region: rect(0, 48px, 16px, 32px);
-  -moz-appearance: none;
-  border-style: none;
-  margin: 2px;
-}
-#close-button:hover {
-  -moz-image-region: rect(16px, 48px, 32px, 32px);
-}
-#close-button:hover:active {
-  -moz-image-region: rect(32px, 48px, 48px, 32px);
+  list-style-image: url(chrome://browser/skin/caption-buttons.svg#minimize);
 }
 
-@media not all and (-moz-os-version: windows-xp) {
+#restore-button {
+  list-style-image: url(chrome://browser/skin/caption-buttons.svg#restore);
+}
+
+#minimize-button:hover,
+#restore-button:hover {
+  background-color: hsla(0, 0%, 0%, .12);
+}
+
+#minimize-button:hover:active,
+#restore-button:hover:active {
+  background-color: hsla(0, 0%, 0%, .22);
+}
+
+#close-button {
+  list-style-image: url(chrome://browser/skin/caption-buttons.svg#close);
+}
+
+#close-button:hover {
+  background-color: hsl(355, 86%, 49%);
+  list-style-image: url(chrome://browser/skin/caption-buttons.svg#close-white);
+}
+
+#close-button:hover:active {
+  background-color: hsl(355, 82%, 69%);
+}
+
+toolbar[brighttext] #minimize-button {
+  list-style-image: url(chrome://browser/skin/caption-buttons.svg#minimize-white);
+}
+
+toolbar[brighttext] #restore-button {
+  list-style-image: url(chrome://browser/skin/caption-buttons.svg#restore-white);
+}
+
+toolbar[brighttext] #close-button {
+  list-style-image: url(chrome://browser/skin/caption-buttons.svg#close-white);
+}
+
+@media (-moz-os-version: windows-xp),
+       (-moz-os-version: windows-vista),
+       (-moz-os-version: windows-win7) {
+  #window-controls {
+    margin-inline-start: 4px;
+  }
+
+  #minimize-button,
+  #restore-button,
+  #close-button {
+    list-style-image: url("chrome://global/skin/icons/windowControls.png");
+    padding: 0;
+  }
+
+  #minimize-button {
+    -moz-image-region: rect(0, 16px, 16px, 0);
+  }
+
+  #minimize-button:hover {
+    -moz-image-region: rect(16px, 16px, 32px, 0);
+  }
+
+  #minimize-button:hover:active {
+    -moz-image-region: rect(32px, 16px, 48px, 0);
+  }
+
+  #restore-button {
+    -moz-image-region: rect(0, 32px, 16px, 16px);
+  }
+
+  #restore-button:hover {
+    -moz-image-region: rect(16px, 32px, 32px, 16px);
+  }
+
+  #restore-button:hover:active {
+    -moz-image-region: rect(32px, 32px, 48px, 16px);
+  }
+
+  #close-button {
+    -moz-image-region: rect(0, 48px, 16px, 32px);
+    -moz-appearance: none;
+    border-style: none;
+    margin: 2px;
+  }
+
+  #close-button:hover {
+    -moz-image-region: rect(16px, 48px, 32px, 32px);
+  }
+
+  #close-button:hover:active {
+    -moz-image-region: rect(32px, 48px, 48px, 32px);
+  }
+}
+
+@media (-moz-os-version: windows-vista),
+       (-moz-os-version: windows-win7) {
   #window-controls {
     -moz-box-align: start;
   }
@@ -1077,12 +1155,15 @@ toolbar[brighttext] .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
     border-style: none;
     margin: 0;
   }
+
   #close-button {
     -moz-image-region: rect(0, 49px, 16px, 32px);
   }
+
   #close-button:hover {
     -moz-image-region: rect(16px, 49px, 32px, 32px);
   }
+
   #close-button:hover:active {
     -moz-image-region: rect(32px, 49px, 48px, 32px);
   }
@@ -1265,6 +1346,14 @@ html|*.urlbar-input:-moz-lwtheme::-moz-placeholder,
   margin-inline-start: 0;
 }
 
+.urlbar-input-box,
+#urlbar-display-box {
+  padding-inline-start: 4px;
+  border-inline-start: 1px solid var(--urlbar-separator-color);
+  border-image: linear-gradient(transparent 15%, var(--urlbar-separator-color) 15%, var(--urlbar-separator-color) 85%, transparent 85%);
+  border-image-slice: 1;
+}
+
 #urlbar-icons {
   -moz-box-align: center;
 }
@@ -1314,11 +1403,6 @@ html|*.urlbar-input:-moz-lwtheme::-moz-placeholder,
   margin-inline-start: 0;
 }
 
-#urlbar-display-box {
-  border-inline-end: 1px solid #AAA;
-  margin-inline-end: 3px;
-}
-
 .urlbar-display {
   margin-top: 0;
   margin-bottom: 0;
@@ -1360,7 +1444,7 @@ html|*.urlbar-input:-moz-lwtheme::-moz-placeholder,
   transition: none;
 }
 
-#navigator-toolbox:not(:hover) #urlbar:not([focused]) > .urlbar-textbox-container > .urlbar-history-dropmarker {
+#navigator-toolbox:not(:hover) #nav-bar:not([customizing="true"]) #urlbar:not([focused]) > .urlbar-textbox-container > .urlbar-history-dropmarker {
   opacity: 0;
 }
 
@@ -1914,47 +1998,6 @@ html|span.ac-emphasize-text-url {
 
 %include ../shared/tabs.inc.css
 
-@media (min-resolution: 1.1dppx) {
-  /* image preloading hack from shared/tabs.inc.css */
-  #tabbrowser-tabs::before {
-    background-image:
-      url(chrome://browser/skin/tabbrowser/tab-background-end@2x.png),
-      url(chrome://browser/skin/tabbrowser/tab-background-middle@2x.png),
-      url(chrome://browser/skin/tabbrowser/tab-background-start@2x.png);
-  }
-
-  .tabbrowser-tab:hover > .tab-stack > .tab-background:not([visuallyselected=true]),
-  .tabs-newtab-button:hover {
-    background-image: url(chrome://browser/skin/tabbrowser/tab-background-start@2x.png),
-                      url(chrome://browser/skin/tabbrowser/tab-background-middle@2x.png),
-                      url(chrome://browser/skin/tabbrowser/tab-background-end@2x.png);
-  }
-
-  .tab-background-middle[visuallyselected=true] {
-    background-image: url(chrome://browser/skin/tabbrowser/tab-active-middle@2x.png),
-                      @fgTabTexture@,
-                      none;
-  }
-
-  .tab-background-start[visuallyselected=true]:-moz-locale-dir(ltr)::after,
-  .tab-background-end[visuallyselected=true]:-moz-locale-dir(rtl)::after {
-    background-image: url(chrome://browser/skin/tabbrowser/tab-stroke-start@2x.png);
-  }
-
-  .tab-background-end[visuallyselected=true]:-moz-locale-dir(ltr)::after,
-  .tab-background-start[visuallyselected=true]:-moz-locale-dir(rtl)::after {
-    background-image: url(chrome://browser/skin/tabbrowser/tab-stroke-end@2x.png);
-  }
-
-  .tab-throbber[busy] {
-    list-style-image: url("chrome://browser/skin/tabbrowser/connecting@2x.png");
-  }
-
-  .tab-throbber[progress] {
-    list-style-image: url("chrome://global/skin/icons/loading@2x.png");
-  }
-}
-
 /* Remove border between tab strip and navigation toolbar on Windows 10+ */
 @media not all and (-moz-os-version: windows-xp) {
   @media not all and (-moz-os-version: windows-vista) {
@@ -2207,9 +2250,6 @@ toolbarbutton.bookmark-item[dragover="true"][open="true"] {
 }
 
 /* Notification icon box */
-#notification-popup-box {
-  border-radius: 2.5px 0 0 2.5px;
-}
 
 .notification-anchor-icon:-moz-focusring {
   outline: 1px dotted -moz-DialogText;
@@ -2316,23 +2356,13 @@ notification[value="translation"] {
   -moz-image-region: auto;
 }
 
-/* ::::: Keyboard UI Panel ::::: */
-
-.KUI-panel {
-  -moz-appearance: none;
-  background: rgba(27%,27%,27%,.9) url(KUI-background.png) repeat-x;
-  color: white;
-  border-style: none;
-  border-radius: 20px;
-}
-
-.KUI-panel[level="top"] {
-  background-color: rgba(27%,27%,27%,.65);
-}
-
 /* Ctrl-Tab */
 
 #ctrlTab-panel {
+  -moz-appearance: none;
+  background: rgba(27%,27%,27%,.7);
+  color: white;
+  border-style: none;
   padding: 20px 10px 10px;
   font-weight: bold;
   text-shadow: 0 0 1px rgb(27%,27%,27%), 0 0 2px rgb(27%,27%,27%);
@@ -2346,7 +2376,7 @@ notification[value="translation"] {
 }
 
 .ctrlTab-preview-inner > .tabPreview-canvas {
-  box-shadow: 1px 1px 2px rgb(12%,12%,12%);
+  box-shadow: 1px 1px 2px hsl(0,0%,12%);
 }
 
 .ctrlTab-preview:not(#ctrlTab-showAll) > * > .ctrlTab-preview-inner > .tabPreview-canvas {
@@ -2439,27 +2469,6 @@ notification.pluginVulnerable > .notification-inner > .messageCloseButton {
   background-image: linear-gradient(#B4211B, #8A1915);
   border-radius: 1px;
   margin-inline-end: 5px;
-}
-
-/* Social toolbar item */
-
-#socialActivatedNotification .popup-notification-button-container {
-  margin-left: 6px;
-}
-
-.social-activation-icon {
-  width: auto;
-  height: auto;
-  max-height: 64px;
-  max-width: 64px;
-}
-
-#social-activation-message {
-  max-width: 250px;
-}
-
-#social-activation-message > label {
-  margin: 0;
 }
 
 /* social toolbar provider menu */

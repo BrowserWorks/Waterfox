@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,13 +12,13 @@ UNIFIED_SOURCES += [
     'testArgumentsObject.cpp',
     'testArrayBuffer.cpp',
     'testArrayBufferView.cpp',
+    'testBoundFunction.cpp',
     'testBug604087.cpp',
     'testCallArgs.cpp',
     'testCallNonGenericMethodOnProxy.cpp',
     'testChromeBuffer.cpp',
     'testClassGetter.cpp',
     'testCloneScript.cpp',
-    'testContexts.cpp',
     'testDateToLocaleString.cpp',
     'testDebugger.cpp',
     'testDeepFreeze.cpp',
@@ -44,6 +44,7 @@ UNIFIED_SOURCES += [
     'testGCExactRooting.cpp',
     'testGCFinalizeCallback.cpp',
     'testGCHeapPostBarriers.cpp',
+    'testGCHooks.cpp',
     'testGCMarking.cpp',
     'testGCOutOfMemory.cpp',
     'testGCStoreBufferRemoval.cpp',
@@ -96,7 +97,6 @@ UNIFIED_SOURCES += [
     'testToIntWidth.cpp',
     'testTypedArrays.cpp',
     'testUbiNode.cpp',
-    'testUncaughtError.cpp',
     'testUncaughtSymbol.cpp',
     'testUTF8.cpp',
     'testWasmLEB128.cpp',
@@ -114,6 +114,7 @@ if CONFIG['ENABLE_ION']:
         'testJitDCEinGVN.cpp',
         'testJitFoldsTo.cpp',
         'testJitGVN.cpp',
+        'testJitMacroAssembler.cpp',
         'testJitMoveEmitterCycles-mips32.cpp',
         'testJitMoveEmitterCycles.cpp',
         'testJitRangeAnalysis.cpp',

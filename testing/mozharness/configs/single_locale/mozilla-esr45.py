@@ -18,12 +18,8 @@ config = {
     }, {
         "vcs": "hgtool",
         "repo": "https://hg.mozilla.org/releases/mozilla-esr45",
-        "revision": "default",
+        "revision": "%(revision)s",
         "dest": "mozilla-esr45",
-    }, {
-        "vcs": "hgtool",
-        "repo": "https://hg.mozilla.org/build/compare-locales",
-        "revision": "RELEASE_AUTOMATION"
     }],
     # purge options
     'purge_minsize': 12,
@@ -31,6 +27,7 @@ config = {
     'default_actions': [
         "clobber",
         "pull",
+        "clone-locales",
         "list-locales",
         "setup",
         "repack",

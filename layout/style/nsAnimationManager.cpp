@@ -440,14 +440,11 @@ nsAnimationManager::UpdateAnimations(nsStyleContext* aStyleContext,
     newAnimations[newAnimIdx]->CancelFromStyle();
   }
 
-  EffectCompositor::UpdateCascadeResults(aElement,
-                                         aStyleContext->GetPseudoType(),
-                                         aStyleContext);
-
   mPresContext->EffectCompositor()->
     MaybeUpdateAnimationRule(aElement,
                              aStyleContext->GetPseudoType(),
-                             EffectCompositor::CascadeLevel::Animations);
+                             EffectCompositor::CascadeLevel::Animations,
+                             aStyleContext);
 
   // We don't actually dispatch the pending events now.  We'll either
   // dispatch them the next time we get a refresh driver notification
@@ -638,8 +635,10 @@ CSSAnimationBuilder::Build(nsPresContext* aPresContext,
   // mTarget is non-null here, so we emplace it directly.
   Maybe<OwningAnimationTarget> target;
   target.emplace(mTarget, mStyleContext->GetPseudoType());
+  KeyframeEffectParams effectOptions;
   RefPtr<KeyframeEffectReadOnly> effect =
-    new KeyframeEffectReadOnly(aPresContext->Document(), target, timing);
+    new KeyframeEffectReadOnly(aPresContext->Document(), target, timing,
+                               effectOptions);
 
   effect->SetKeyframes(Move(keyframes), mStyleContext);
 

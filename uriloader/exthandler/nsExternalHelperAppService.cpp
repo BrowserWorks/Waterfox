@@ -100,7 +100,7 @@
 #endif
 
 #ifdef MOZ_WIDGET_ANDROID
-#include "AndroidBridge.h"
+#include "GeneratedJNIWrappers.h"
 #endif
 
 #include "mozilla/Preferences.h"
@@ -382,7 +382,7 @@ static nsresult GetDownloadDirectory(nsIFile **_directory,
   // In the case where we do not have the permission we will start the
   // download to the app cache directory and later move it to the final
   // destination after prompting for the permission.
-  auto downloadDir = widget::DownloadsIntegration::GetTemporaryDownloadDirectory();
+  auto downloadDir = java::DownloadsIntegration::GetTemporaryDownloadDirectory();
 
   nsresult rv;
   if (downloadDir) {
@@ -522,6 +522,7 @@ static const nsDefaultMimeTypeEntry defaultMimeEntries[] =
   { APPLICATION_OGG, "ogg" },
   { AUDIO_OGG, "oga" },
   { AUDIO_OGG, "opus" },
+  { APPLICATION_PDF, "pdf" },
   { VIDEO_WEBM, "webm" },
   { AUDIO_WEBM, "webm" },
 #if defined(MOZ_WMF)
@@ -1920,7 +1921,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
                 nsresult qiRv;
                 nsCOMPtr<nsIPrompt> prompter(do_GetInterface(GetDialogParent(), &qiRv));
                 nsXPIDLString title;
-                bundle->FormatStringFromName(MOZ_UTF16("title"),
+                bundle->FormatStringFromName(u"title",
                                              strings,
                                              1,
                                              getter_Copies(title));
@@ -2304,11 +2305,11 @@ void nsExternalAppHandler::RequestSaveDestination(const nsAFlatString &aDefaultF
   RefPtr<nsExternalAppHandler> kungFuDeathGrip(this);
   nsCOMPtr<nsIHelperAppLauncherDialog> dlg(mDialog);
 
-  rv = mDialog->PromptForSaveToFileAsync(this,
-                                         GetDialogParent(),
-                                         aDefaultFile.get(),
-                                         aFileExtension.get(),
-                                         mForceSave);
+  rv = dlg->PromptForSaveToFileAsync(this,
+                                     GetDialogParent(),
+                                     aDefaultFile.get(),
+                                     aFileExtension.get(),
+                                     mForceSave);
   if (NS_FAILED(rv)) {
     Cancel(NS_BINDING_ABORTED);
   }
@@ -2863,7 +2864,6 @@ NS_IMETHODIMP nsExternalHelperAppService::GetTypeFromFile(nsIFile* aFile, nsACSt
 {
   NS_ENSURE_ARG_POINTER(aFile);
   nsresult rv;
-  nsCOMPtr<nsIMIMEInfo> info;
 
   // Get the Extension
   nsAutoString fileName;

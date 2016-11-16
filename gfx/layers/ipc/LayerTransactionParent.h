@@ -14,7 +14,6 @@
 #include "mozilla/Attributes.h"         // for override
 #include "mozilla/ipc/SharedMemory.h"   // for SharedMemory, etc
 #include "mozilla/layers/PLayerTransactionParent.h"
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsTArrayForwardDeclare.h"     // for InfallibleTArray
 
 namespace mozilla {
@@ -43,7 +42,6 @@ class LayerTransactionParent final : public PLayerTransactionParent,
   typedef InfallibleTArray<Edit> EditArray;
   typedef InfallibleTArray<OpDestroy> OpDestroyArray;
   typedef InfallibleTArray<EditReply> EditReplyArray;
-  typedef InfallibleTArray<AsyncChildMessageData> AsyncChildMessageArray;
   typedef InfallibleTArray<PluginWindowData> PluginsArray;
 
 public:
@@ -80,16 +78,18 @@ public:
   void SetPendingTransactionId(uint64_t aId) { mPendingTransaction = aId; }
 
   // CompositableParentManager
-  virtual void SendFenceHandleIfPresent(PTextureParent* aTexture) override;
-
   virtual void SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage) override;
+
+  virtual void SendPendingAsyncMessages() override;
+
+  virtual void SetAboutToSendAsyncMessages() override;
+
+  virtual void NotifyNotUsed(PTextureParent* aTexture, uint64_t aTransactionId) override;
 
   virtual base::ProcessId GetChildProcessId() override
   {
     return OtherPid();
   }
-
-  virtual void ReplyRemoveTexture(const OpReplyRemoveTexture& aReply) override;
 
   void AddPendingCompositorUpdate() {
     mPendingCompositorUpdates++;
@@ -111,6 +111,7 @@ protected:
 
   virtual bool RecvUpdate(EditArray&& cset,
                           OpDestroyArray&& aToDestroy,
+                          const uint64_t& aFwdTransactionId,
                           const uint64_t& aTransactionId,
                           const TargetConfig& targetConfig,
                           PluginsArray&& aPlugins,
@@ -124,6 +125,7 @@ protected:
 
   virtual bool RecvUpdateNoSwap(EditArray&& cset,
                                 OpDestroyArray&& aToDestroy,
+                                const uint64_t& aFwdTransactionId,
                                 const uint64_t& aTransactionId,
                                 const TargetConfig& targetConfig,
                                 PluginsArray&& aPlugins,
@@ -159,9 +161,6 @@ protected:
   virtual PCompositableParent* AllocPCompositableParent(const TextureInfo& aInfo) override;
   virtual bool DeallocPCompositableParent(PCompositableParent* actor) override;
 
-  virtual bool
-  RecvChildAsyncMessages(InfallibleTArray<AsyncChildMessageData>&& aMessages) override;
-
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
   bool Attach(ShadowLayerParent* aLayerParent,
@@ -171,12 +170,12 @@ protected:
   void AddIPDLReference() {
     MOZ_ASSERT(mIPCOpen == false);
     mIPCOpen = true;
-    ADDREF_MANUALLY(this);
+    AddRef();
   }
   void ReleaseIPDLReference() {
     MOZ_ASSERT(mIPCOpen == true);
     mIPCOpen = false;
-    RELEASE_MANUALLY(this);
+    Release();
   }
   friend class CompositorBridgeParent;
   friend class CrossProcessCompositorBridgeParent;

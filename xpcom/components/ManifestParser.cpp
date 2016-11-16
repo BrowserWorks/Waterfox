@@ -564,7 +564,7 @@ ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
 #pragma warning(disable:4996) // VC12+ deprecates GetVersionEx
   OSVERSIONINFO info = { sizeof(OSVERSIONINFO) };
   if (GetVersionEx(&info)) {
-    nsTextFormatter::ssprintf(osVersion, MOZ_UTF16("%ld.%ld"),
+    nsTextFormatter::ssprintf(osVersion, u"%ld.%ld",
                               info.dwMajorVersion,
                               info.dwMinorVersion);
   }
@@ -572,11 +572,11 @@ ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
 #elif defined(MOZ_WIDGET_COCOA)
   SInt32 majorVersion = nsCocoaFeatures::OSXVersionMajor();
   SInt32 minorVersion = nsCocoaFeatures::OSXVersionMinor();
-  nsTextFormatter::ssprintf(osVersion, MOZ_UTF16("%ld.%ld"),
+  nsTextFormatter::ssprintf(osVersion, u"%ld.%ld",
                             majorVersion,
                             minorVersion);
 #elif defined(MOZ_WIDGET_GTK)
-  nsTextFormatter::ssprintf(osVersion, MOZ_UTF16("%ld.%ld"),
+  nsTextFormatter::ssprintf(osVersion, u"%ld.%ld",
                             gtk_major_version,
                             gtk_minor_version);
 #elif defined(MOZ_WIDGET_ANDROID)
@@ -585,7 +585,7 @@ ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
     mozilla::AndroidBridge::Bridge()->GetStaticStringField("android/os/Build$VERSION",
                                                            "RELEASE",
                                                            osVersion);
-    isTablet = mozilla::widget::GeckoAppShell::IsTablet();
+    isTablet = java::GeckoAppShell::IsTablet();
   }
 #endif
 

@@ -21,6 +21,7 @@
 #include "mozilla/DebugOnly.h"          // for DebugOnly
 #include "mozilla/EventForwards.h"      // for nsPaintEvent
 #include "mozilla/Maybe.h"              // for Maybe
+#include "mozilla/Poison.h"
 #include "mozilla/RefPtr.h"             // for already_AddRefed
 #include "mozilla/StyleAnimationValue.h" // for StyleAnimationValue, etc
 #include "mozilla/TimeStamp.h"          // for TimeStamp, TimeDuration
@@ -1317,8 +1318,18 @@ public:
   bool IsScrollInfoLayer() const;
   const EventRegions& GetEventRegions() const { return mEventRegions; }
   ContainerLayer* GetParent() { return mParent; }
-  Layer* GetNextSibling() { return mNextSibling; }
-  const Layer* GetNextSibling() const { return mNextSibling; }
+  Layer* GetNextSibling() {
+    if (mNextSibling) {
+      mNextSibling->CheckCanary();
+    }
+    return mNextSibling;
+  }
+  const Layer* GetNextSibling() const {
+    if (mNextSibling) {
+      mNextSibling->CheckCanary();
+    }
+    return mNextSibling;
+  }
   Layer* GetPrevSibling() { return mPrevSibling; }
   const Layer* GetPrevSibling() const { return mPrevSibling; }
   virtual Layer* GetFirstChild() const { return nullptr; }
@@ -1345,6 +1356,7 @@ public:
   float GetScrollbarThumbRatio() { return mScrollbarThumbRatio; }
   bool IsScrollbarContainer() { return mIsScrollbarContainer; }
   Layer* GetMaskLayer() const { return mMaskLayer; }
+  void CheckCanary() const { mCanary.Check(); }
 
   // Ancestor mask layers are associated with FrameMetrics, but for simplicity
   // in maintaining the layer tree structure we attach them to the layer.
@@ -1375,7 +1387,7 @@ public:
    * visible regions of higher siblings of this layer and each ancestor.
    *
    * Note translation values for offsets of visible regions and accumulated
-   * aLayerOffset are integer rounded using Point's RoundedToInt.
+   * aLayerOffset are integer rounded using IntPoint::Round.
    *
    * @param aResult - the resulting visible region of this layer.
    * @param aLayerOffset - this layer's total offset from the root layer.
@@ -1856,6 +1868,8 @@ protected:
   void* mImplData;
   RefPtr<Layer> mMaskLayer;
   nsTArray<RefPtr<Layer>> mAncestorMaskLayers;
+  // Look for out-of-bound in the middle of the structure
+  mozilla::CorruptionCanary mCanary;
   gfx::UserData mUserData;
   gfx::IntRect mLayerBounds;
   LayerIntRegion mVisibleRegion;
@@ -2377,6 +2391,7 @@ public:
       , mSize(0,0)
       , mHasAlpha(false)
       , mIsGLAlphaPremult(true)
+      , mIsMirror(false)
     { }
 
     // One of these three must be specified for Canvas2D, but never more than one
@@ -2395,6 +2410,10 @@ public:
 
     // Whether mGLContext contains data that is alpha-premultiplied.
     bool mIsGLAlphaPremult;
+
+    // Whether the canvas front buffer is already being rendered somewhere else.
+    // When true, do not swap buffers or Morph() to another factory on mGLContext
+    bool mIsMirror;
   };
 
   /**

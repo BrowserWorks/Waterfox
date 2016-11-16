@@ -120,23 +120,19 @@ void
 MacroAssemblerMIPSCompat::convertDoubleToInt32(FloatRegister src, Register dest,
                                          Label* fail, bool negativeZeroCheck)
 {
+    if (negativeZeroCheck) {
+        moveFromDoubleHi(src, dest);
+        moveFromDoubleLo(src, ScratchRegister);
+        as_movn(dest, zero, ScratchRegister);
+        ma_b(dest, Imm32(INT32_MIN), fail, Assembler::Equal);
+    }
+
     // Convert double to int, then convert back and check if we have the
     // same number.
     as_cvtwd(ScratchDoubleReg, src);
     as_mfc1(dest, ScratchDoubleReg);
     as_cvtdw(ScratchDoubleReg, ScratchDoubleReg);
     ma_bc1d(src, ScratchDoubleReg, fail, Assembler::DoubleNotEqualOrUnordered);
-
-    if (negativeZeroCheck) {
-        Label notZero;
-        ma_b(dest, Imm32(0), &notZero, Assembler::NotEqual, ShortJump);
-        // Test and bail for -0.0, when integer result is 0
-        // Move the top word of the double into the output reg, if it is
-        // non-zero, then the original value was -0.0
-        moveFromDoubleHi(src, dest);
-        ma_b(dest, Imm32(INT32_MIN), fail, Assembler::Equal);
-        bind(&notZero);
-    }
 }
 
 // Checks whether a float32 is representable as a 32-bit integer. If so, the
@@ -146,6 +142,11 @@ void
 MacroAssemblerMIPSCompat::convertFloat32ToInt32(FloatRegister src, Register dest,
                                           Label* fail, bool negativeZeroCheck)
 {
+    if (negativeZeroCheck) {
+        moveFromFloat32(src, dest);
+        ma_b(dest, Imm32(INT32_MIN), fail, Assembler::Equal);
+    }
+
     // Converting the floating point value to an integer and then converting it
     // back to a float32 would not work, as float to int32 conversions are
     // clamping (e.g. float(INT32_MAX + 1) would get converted into INT32_MAX
@@ -158,17 +159,6 @@ MacroAssemblerMIPSCompat::convertFloat32ToInt32(FloatRegister src, Register dest
 
     // Bail out in the clamped cases.
     ma_b(dest, Imm32(INT32_MAX), fail, Assembler::Equal);
-
-    if (negativeZeroCheck) {
-        Label notZero;
-        ma_b(dest, Imm32(0), &notZero, Assembler::NotEqual, ShortJump);
-        // Test and bail for -0.0, when integer result is 0
-        // Move the top word of the double into the output reg,
-        // if it is non-zero, then the original value was -0.0
-        moveFromDoubleHi(src, dest);
-        ma_b(dest, Imm32(INT32_MIN), fail, Assembler::Equal);
-        bind(&notZero);
-    }
 }
 
 void
@@ -1048,7 +1038,8 @@ template <typename T>
 void
 MacroAssemblerMIPSCompat::storePtr(ImmGCPtr imm, T address)
 {
-    storePtr(ImmWord(uintptr_t(imm.value)), address);
+    movePtr(imm, SecondScratchReg);
+    storePtr(SecondScratchReg, address);
 }
 
 template void MacroAssemblerMIPSCompat::storePtr<Address>(ImmGCPtr imm, Address address);
@@ -1121,7 +1112,7 @@ MacroAssembler::clampDoubleToUint8(FloatRegister input, Register output)
 
     Label outOfRange;
 
-    branchTruncateDouble(input, output, &outOfRange);
+    branchTruncateDoubleMaybeModUint32(input, output, &outOfRange);
     asMasm().branch32(Assembler::Above, output, Imm32(255), &outOfRange);
     {
         // Check if we had a tie.
@@ -2012,7 +2003,7 @@ MacroAssembler::PushRegsInMask(LiveRegisterSet set)
     int32_t diffG = set.gprs().size() * sizeof(intptr_t);
 
     reserveStack(diffG);
-    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); iter++) {
+    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); ++iter) {
         diffG -= sizeof(intptr_t);
         storePtr(*iter, Address(StackPointer, diffG));
     }
@@ -2024,7 +2015,7 @@ MacroAssembler::PushRegsInMask(LiveRegisterSet set)
     ma_and(SecondScratchReg, sp, Imm32(~(ABIStackAlignment - 1)));
     reserveStack(diffF + sizeof(double));
 
-    for (FloatRegisterForwardIterator iter(set.fpus().reduceSetForPush()); iter.more(); iter++) {
+    for (FloatRegisterForwardIterator iter(set.fpus().reduceSetForPush()); iter.more(); ++iter) {
         if ((*iter).code() % 2 == 0)
             as_sd(*iter, SecondScratchReg, -diffF);
         diffF -= sizeof(double);
@@ -2044,7 +2035,7 @@ MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore)
     ma_addu(SecondScratchReg, sp, Imm32(reservedF + sizeof(double)));
     ma_and(SecondScratchReg, SecondScratchReg, Imm32(~(ABIStackAlignment - 1)));
 
-    for (FloatRegisterForwardIterator iter(set.fpus().reduceSetForPush()); iter.more(); iter++) {
+    for (FloatRegisterForwardIterator iter(set.fpus().reduceSetForPush()); iter.more(); ++iter) {
         if (!ignore.has(*iter) && ((*iter).code() % 2 == 0))
             // Use assembly l.d because we have alligned the stack.
             as_ld(*iter, SecondScratchReg, -diffF);
@@ -2053,7 +2044,7 @@ MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore)
     freeStack(reservedF + sizeof(double));
     MOZ_ASSERT(diffF == 0);
 
-    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); iter++) {
+    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); ++iter) {
         diffG -= sizeof(intptr_t);
         if (!ignore.has(*iter))
             loadPtr(Address(StackPointer, diffG), *iter);

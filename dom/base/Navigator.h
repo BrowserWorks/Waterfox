@@ -12,7 +12,6 @@
 #include "mozilla/ErrorResult.h"
 #include "nsIDOMNavigator.h"
 #include "nsIMozNavigatorNetwork.h"
-#include "nsAutoPtr.h"
 #include "nsWrapperCache.h"
 #include "nsHashKeys.h"
 #include "nsInterfaceHashtable.h"
@@ -72,6 +71,7 @@ class MobileMessageManager;
 class MozIdleObserver;
 #ifdef MOZ_GAMEPAD
 class Gamepad;
+class GamepadServiceTest;
 #endif // MOZ_GAMEPAD
 class NavigatorUserMediaSuccessCallback;
 class NavigatorUserMediaErrorCallback;
@@ -147,9 +147,6 @@ public:
    */
   void OnNavigation();
 
-  // Helper to initialize mMessagesManager.
-  nsresult EnsureMessagesManager();
-
   // The XPCOM GetProduct is OK
   // The XPCOM GetLanguage is OK
   void GetUserAgent(nsString& aUserAgent, ErrorResult& /* unused */)
@@ -167,7 +164,6 @@ public:
   // The XPCOM GetDoNotTrack is ok
   Geolocation* GetGeolocation(ErrorResult& aRv);
   Promise* GetBattery(ErrorResult& aRv);
-  battery::BatteryManager* GetDeprecatedBattery(ErrorResult& aRv);
 
   already_AddRefed<Promise> PublishServer(const nsAString& aName,
                                           const FlyWebPublishOptions& aOptions,
@@ -252,11 +248,6 @@ public:
   network::Connection* GetConnection(ErrorResult& aRv);
   nsDOMCameraManager* GetMozCameras(ErrorResult& aRv);
   MediaDevices* GetMediaDevices(ErrorResult& aRv);
-  void MozSetMessageHandler(const nsAString& aType,
-                            systemMessageCallback* aCallback,
-                            ErrorResult& aRv);
-  bool MozHasPendingMessage(const nsAString& aType, ErrorResult& aRv);
-  void MozSetMessageHandlerPromise(Promise& aPromise, ErrorResult& aRv);
 
 #ifdef MOZ_B2G
   already_AddRefed<Promise> GetMobileIdAssertion(const MobileIdOptions& options,
@@ -267,6 +258,7 @@ public:
 #endif // MOZ_B2G_RIL
 #ifdef MOZ_GAMEPAD
   void GetGamepads(nsTArray<RefPtr<Gamepad> >& aGamepads, ErrorResult& aRv);
+  GamepadServiceTest* RequestGamepadServiceTest();
 #endif // MOZ_GAMEPAD
   already_AddRefed<Promise> GetVRDevices(ErrorResult& aRv);
   void NotifyVRDevicesUpdated();
@@ -393,18 +385,17 @@ private:
 #endif
   RefPtr<nsDOMCameraManager> mCameraManager;
   RefPtr<MediaDevices> mMediaDevices;
-  nsCOMPtr<nsIDOMNavigatorSystemMessages> mMessagesManager;
   nsTArray<nsWeakPtr> mDeviceStorageStores;
   RefPtr<time::TimeManager> mTimeManager;
   RefPtr<ServiceWorkerContainer> mServiceWorkerContainer;
   nsCOMPtr<nsPIDOMWindowInner> mWindow;
   RefPtr<DeviceStorageAreaListener> mDeviceStorageAreaListener;
   RefPtr<Presentation> mPresentation;
-
+#ifdef MOZ_GAMEPAD
+  RefPtr<GamepadServiceTest> mGamepadServiceTest;
+#endif
   nsTArray<RefPtr<Promise> > mVRGetDevicesPromises;
   nsTArray<uint32_t> mRequestedVibrationPattern;
-
-  bool mBatteryTelemetryReported;
 };
 
 } // namespace dom

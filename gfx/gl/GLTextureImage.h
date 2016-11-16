@@ -6,7 +6,6 @@
 #ifndef GLTEXTUREIMAGE_H_
 #define GLTEXTUREIMAGE_H_
 
-#include "nsAutoPtr.h"
 #include "nsRegion.h"
 #include "nsTArray.h"
 #include "gfxTypes.h"
@@ -169,7 +168,7 @@ public:
      * aFrom - offset in the source to update from
      */
     virtual bool DirectUpdate(gfx::DataSourceSurface* aSurf, const nsIntRegion& aRegion, const gfx::IntPoint& aFrom = gfx::IntPoint(0,0)) = 0;
-    bool UpdateFromDataSource(gfx::DataSourceSurface *aSurf,
+    bool UpdateFromDataSource(gfx::DataSourceSurface* aSurf,
                               const nsIntRegion* aDstRegion = nullptr,
                               const gfx::IntPoint* aSrcOffset = nullptr);
 
@@ -353,6 +352,17 @@ CreateBasicTextureImage(GLContext* aGL,
                         TextureImage::ContentType aContentType,
                         GLenum aWrapMode,
                         TextureImage::Flags aFlags);
+
+/**
+ * Creates a TiledTextureImage backed by platform-specific or basic TextureImages.
+ * In doubt, use GLContext::CreateTextureImage instead.
+ */
+already_AddRefed<TextureImage>
+CreateTiledTextureImage(GLContext* aGL,
+                        const gfx::IntSize& aSize,
+                        TextureImage::ContentType aContentType,
+                        TextureImage::Flags aFlags,
+                        TextureImage::ImageFormat aImageFormat);
 
 /**
   * Return a valid, allocated TextureImage of |aSize| with

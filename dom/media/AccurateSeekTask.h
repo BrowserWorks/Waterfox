@@ -8,7 +8,6 @@
 #define ACCURATE_SEEK_TASK_H
 
 #include "SeekTask.h"
-#include "MediaCallbackID.h"
 #include "MediaDecoderReader.h"
 #include "SeekJob.h"
 
@@ -19,9 +18,9 @@ public:
   AccurateSeekTask(const void* aDecoderID,
                    AbstractThread* aThread,
                    MediaDecoderReaderWrapper* aReader,
-                   SeekJob&& aSeekJob,
+                   const SeekTarget& aTarget,
                    const MediaInfo& aInfo,
-                   const media::TimeUnit& aDuration,
+                   const media::TimeUnit& aEnd,
                    int64_t aCurrentMediaTime);
 
   void Discard() override;
@@ -33,22 +32,6 @@ public:
 private:
   ~AccurateSeekTask();
 
-  bool HasAudio() const;
-
-  bool HasVideo() const;
-
-  bool IsVideoDecoding() const;
-
-  bool IsAudioDecoding() const;
-
-  nsresult EnsureVideoDecodeTaskQueued();
-
-  nsresult EnsureAudioDecodeTaskQueued();
-
-  const char* AudioRequestStatus();
-
-  const char* VideoRequestStatus();
-
   void RequestVideoData();
 
   void RequestAudioData();
@@ -57,11 +40,7 @@ private:
 
   nsresult DropVideoUpToSeekTarget(MediaData* aSample);
 
-  bool IsAudioSeekComplete();
-
-  bool IsVideoSeekComplete();
-
-  void CheckIfSeekComplete();
+  void MaybeFinishSeek();
 
   void OnSeekResolved(media::TimeUnit);
 
@@ -69,25 +48,25 @@ private:
 
   void OnAudioDecoded(MediaData* aAudioSample);
 
-  void OnAudioNotDecoded(MediaDecoderReader::NotDecodedReason aReason);
-
   void OnVideoDecoded(MediaData* aVideoSample);
 
-  void OnVideoNotDecoded(MediaDecoderReader::NotDecodedReason aReason);
+  void OnNotDecoded(MediaData::Type, MediaDecoderReader::NotDecodedReason);
 
-  void SetMediaDecoderReaderWrapperCallback();
+  void SetCallbacks();
 
-  void CancelMediaDecoderReaderWrapperCallback();
+  void CancelCallbacks();
+
+  void AdjustFastSeekIfNeeded(MediaData* aSample);
 
   /*
    * Internal state.
    */
-  const int64_t mCurrentTimeBeforeSeek;
+  const media::TimeUnit mCurrentTimeBeforeSeek;
   const uint32_t mAudioRate;  // Audio sample rate.
-  const bool mHasAudio;
-  const bool mHasVideo;
-  bool mDropAudioUntilNextDiscontinuity;
-  bool mDropVideoUntilNextDiscontinuity;
+  bool mDoneAudioSeeking;
+  bool mDoneVideoSeeking;
+  bool mFirstAudioSample = true;
+  bool mFirstVideoSample = true;
 
   // This temporarily stores the first frame we decode after we seek.
   // This is so that if we hit end of stream while we're decoding to reach
@@ -99,10 +78,11 @@ private:
    * Track the current seek promise made by the reader.
    */
   MozPromiseRequestHolder<MediaDecoderReader::SeekPromise> mSeekRequest;
-  CallbackID mAudioCallbackID;
-  CallbackID mVideoCallbackID;
-  CallbackID mWaitAudioCallbackID;
-  CallbackID mWaitVideoCallbackID;
+
+  MediaEventListener mAudioCallback;
+  MediaEventListener mVideoCallback;
+  MediaEventListener mAudioWaitCallback;
+  MediaEventListener mVideoWaitCallback;
 };
 
 } // namespace mozilla

@@ -1,0 +1,89 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+%include ../../shared/customizableui/panelUI.inc.css
+
+.panel-subviews {
+  background-color: hsla(0,0%,100%,.97);
+}
+
+.panelUI-grid .toolbarbutton-1 {
+  margin-right: 0;
+  margin-left: 0;
+  margin-bottom: 0;
+}
+
+.subviewbutton > .toolbarbutton-text {
+  margin: 2px 0 !important; /* !important for overriding toolbarbutton.css */
+}
+
+.subviewbutton:-moz-any([image],[targetURI],.cui-withicon, .bookmark-item) > .toolbarbutton-text {
+  margin: 2px 6px !important; /* !important for overriding toolbarbutton.css */
+}
+
+.restoreallitem > .toolbarbutton-icon {
+  display: none;
+}
+
+.subviewbutton {
+  padding-inline-start: 18px;
+}
+
+.subviewbutton[checked="true"] {
+  background-position: top 5px left 4px;
+}
+
+.subviewbutton[checked="true"]:-moz-locale-dir(rtl) {
+  background-position: top 5px right 4px;
+}
+
+.subviewbutton:not(:-moz-any([image],[targetURI],.cui-withicon, .bookmark-item)) > .menu-iconic-left {
+  display: none;
+}
+
+menu.subviewbutton,
+menuitem.subviewbutton:not(.panel-subview-footer) {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+/* Override OSX-specific toolkit styles for the bookmarks panel */
+menu.subviewbutton > .menu-right {
+  margin-inline-end: 0;
+  -moz-appearance: none;
+}
+
+menu.subviewbutton > .menu-right > image {
+ /* We don't want the arrow to highlight when the .subviewbutton is hovered,
+  * so we set the -moz-appearance rule on the image
+  * (which doesn't inherit the _moz-menuactive attribute) instead.
+  */
+  -moz-appearance: menuarrow;
+}
+
+.widget-overflow-list .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
+  margin-inline-start: 4px;
+}
+
+.PanelUI-subView menuseparator,
+.cui-widget-panelview menuseparator {
+  padding: 0 !important;
+}
+
+toolbarpaletteitem[place="palette"] > .toolbarbutton-1 > .toolbarbutton-menubutton-button {
+  padding: 3px 1px;
+}
+
+#PanelUI-remotetabs-tabslist > label[itemtype="client"] {
+  padding-inline-start: 6px;
+}
+
+.PanelUI-remotetabs-notabsforclient-label {
+  margin-left: 19px;
+  font-size: 13px;
+}
+
+#PanelUI-remotetabs-tabslist {
+  padding-bottom: 4px;
+}

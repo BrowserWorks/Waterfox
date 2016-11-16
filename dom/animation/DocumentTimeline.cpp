@@ -21,6 +21,9 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(DocumentTimeline)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(DocumentTimeline,
                                                 AnimationTimeline)
   tmp->UnregisterFromRefreshDriver();
+  if (tmp->isInList()) {
+    tmp->remove();
+  }
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mDocument)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(DocumentTimeline,
@@ -42,6 +45,31 @@ JSObject*
 DocumentTimeline::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   return DocumentTimelineBinding::Wrap(aCx, this, aGivenProto);
+}
+
+/* static */ already_AddRefed<DocumentTimeline>
+DocumentTimeline::Constructor(const GlobalObject& aGlobal,
+                              const DOMHighResTimeStamp& aOriginTime,
+                              ErrorResult& aRv)
+{
+  nsIDocument* doc = AnimationUtils::GetCurrentRealmDocument(aGlobal.Context());
+  if (!doc) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return nullptr;
+  }
+
+  TimeDuration originTime = TimeDuration::FromMilliseconds(aOriginTime);
+  if (originTime == TimeDuration::Forever() ||
+      originTime == -TimeDuration::Forever()) {
+    nsAutoString inputOriginTime;
+    inputOriginTime.AppendFloat(aOriginTime);
+    aRv.ThrowTypeError<dom::MSG_TIME_VALUE_OUT_OF_RANGE>(
+      NS_LITERAL_STRING("Origin time"));
+    return nullptr;
+  }
+  RefPtr<DocumentTimeline> timeline = new DocumentTimeline(doc, originTime);
+
+  return timeline.forget();
 }
 
 Nullable<TimeDuration>
@@ -96,7 +124,9 @@ DocumentTimeline::ToTimelineTime(const TimeStamp& aTimeStamp) const
     return result;
   }
 
-  result.SetValue(aTimeStamp - timing->GetNavigationStartTimeStamp());
+  result.SetValue(aTimeStamp
+                  - timing->GetNavigationStartTimeStamp()
+                  - mOriginTime);
   return result;
 }
 
@@ -108,6 +138,9 @@ DocumentTimeline::NotifyAnimationUpdated(Animation& aAnimation)
   if (!mIsObservingRefreshDriver) {
     nsRefreshDriver* refreshDriver = GetRefreshDriver();
     if (refreshDriver) {
+      MOZ_ASSERT(isInList(),
+                "We should not register with the refresh driver if we are not"
+                " in the document's list of timelines");
       refreshDriver->AddRefreshObserver(this, Flush_Style);
       mIsObservingRefreshDriver = true;
     }
@@ -172,6 +205,9 @@ DocumentTimeline::NotifyRefreshDriverCreated(nsRefreshDriver* aDriver)
              " it is created");
 
   if (!mAnimationOrder.isEmpty()) {
+    MOZ_ASSERT(isInList(),
+               "We should not register with the refresh driver if we are not"
+               " in the document's list of timelines");
     aDriver->AddRefreshObserver(this, Flush_Style);
     mIsObservingRefreshDriver = true;
   }
@@ -207,7 +243,8 @@ DocumentTimeline::ToTimeStamp(const TimeDuration& aTimeDuration) const
     return result;
   }
 
-  result = timing->GetNavigationStartTimeStamp() + aTimeDuration;
+  result =
+    timing->GetNavigationStartTimeStamp() + (aTimeDuration + mOriginTime);
   return result;
 }
 

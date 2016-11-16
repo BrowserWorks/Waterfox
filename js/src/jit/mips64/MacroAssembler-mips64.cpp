@@ -129,23 +129,18 @@ void
 MacroAssemblerMIPS64Compat::convertDoubleToInt32(FloatRegister src, Register dest,
                                                  Label* fail, bool negativeZeroCheck)
 {
+    if (negativeZeroCheck) {
+        moveFromDouble(src, dest);
+        ma_drol(dest, dest, Imm32(1));
+        ma_b(dest, Imm32(1), fail, Assembler::Equal);
+    }
+
     // Convert double to int, then convert back and check if we have the
     // same number.
     as_cvtwd(ScratchDoubleReg, src);
     as_mfc1(dest, ScratchDoubleReg);
     as_cvtdw(ScratchDoubleReg, ScratchDoubleReg);
     ma_bc1d(src, ScratchDoubleReg, fail, Assembler::DoubleNotEqualOrUnordered);
-
-    if (negativeZeroCheck) {
-        Label notZero;
-        ma_b(dest, Imm32(0), &notZero, Assembler::NotEqual, ShortJump);
-        // Test and bail for -0.0, when integer result is 0
-        // Move the top word of the double into the output reg, if it is
-        // non-zero, then the original value was -0.0
-        moveFromDoubleHi(src, dest);
-        ma_b(dest, Imm32(INT32_MIN), fail, Assembler::Equal);
-        bind(&notZero);
-    }
 }
 
 // Checks whether a float32 is representable as a 32-bit integer. If so, the
@@ -155,6 +150,11 @@ void
 MacroAssemblerMIPS64Compat::convertFloat32ToInt32(FloatRegister src, Register dest,
                                                   Label* fail, bool negativeZeroCheck)
 {
+    if (negativeZeroCheck) {
+        moveFromFloat32(src, dest);
+        ma_b(dest, Imm32(INT32_MIN), fail, Assembler::Equal);
+    }
+
     // Converting the floating point value to an integer and then converting it
     // back to a float32 would not work, as float to int32 conversions are
     // clamping (e.g. float(INT32_MAX + 1) would get converted into INT32_MAX
@@ -167,17 +167,6 @@ MacroAssemblerMIPS64Compat::convertFloat32ToInt32(FloatRegister src, Register de
 
     // Bail out in the clamped cases.
     ma_b(dest, Imm32(INT32_MAX), fail, Assembler::Equal);
-
-    if (negativeZeroCheck) {
-        Label notZero;
-        ma_b(dest, Imm32(0), &notZero, Assembler::NotEqual, ShortJump);
-        // Test and bail for -0.0, when integer result is 0
-        // Move the top word of the double into the output reg,
-        // if it is non-zero, then the original value was -0.0
-        moveFromDoubleHi(src, dest);
-        ma_b(dest, Imm32(INT32_MIN), fail, Assembler::Equal);
-        bind(&notZero);
-    }
 }
 
 void
@@ -406,9 +395,9 @@ MacroAssemblerMIPS64::ma_daddu(Register rd, Imm32 imm)
 void
 MacroAssemblerMIPS64::ma_addTestOverflow(Register rd, Register rs, Register rt, Label* overflow)
 {
+    as_daddu(SecondScratchReg, rs, rt);
     as_addu(rd, rs, rt);
-    as_daddu(ScratchRegister, rs, rt);
-    ma_b(rd, ScratchRegister, overflow, Assembler::NotEqual);
+    ma_b(rd, SecondScratchReg, overflow, Assembler::NotEqual);
 }
 
 void
@@ -416,9 +405,9 @@ MacroAssemblerMIPS64::ma_addTestOverflow(Register rd, Register rs, Imm32 imm, La
 {
     // Check for signed range because of as_daddiu
     if (Imm16::IsInSignedRange(imm.value) && Imm16::IsInUnsignedRange(imm.value)) {
+        as_daddiu(SecondScratchReg, rs, imm.value);
         as_addiu(rd, rs, imm.value);
-        as_daddiu(ScratchRegister, rs, imm.value);
-        ma_b(rd, ScratchRegister, overflow, Assembler::NotEqual);
+        ma_b(rd, SecondScratchReg, overflow, Assembler::NotEqual);
     } else {
         ma_li(ScratchRegister, imm);
         ma_addTestOverflow(rd, rs, ScratchRegister, overflow);
@@ -446,9 +435,9 @@ MacroAssemblerMIPS64::ma_dsubu(Register rd, Imm32 imm)
 void
 MacroAssemblerMIPS64::ma_subTestOverflow(Register rd, Register rs, Register rt, Label* overflow)
 {
+    as_dsubu(SecondScratchReg, rs, rt);
     as_subu(rd, rs, rt);
-    as_dsubu(ScratchRegister, rs, rt);
-    ma_b(rd, ScratchRegister, overflow, Assembler::NotEqual);
+    ma_b(rd, SecondScratchReg, overflow, Assembler::NotEqual);
 }
 
 void
@@ -1196,7 +1185,8 @@ template <typename T>
 void
 MacroAssemblerMIPS64Compat::storePtr(ImmGCPtr imm, T address)
 {
-    storePtr(ImmWord(uintptr_t(imm.value)), address);
+    movePtr(imm, SecondScratchReg);
+    storePtr(SecondScratchReg, address);
 }
 
 template void MacroAssemblerMIPS64Compat::storePtr<Address>(ImmGCPtr imm, Address address);
@@ -1269,7 +1259,7 @@ MacroAssembler::clampDoubleToUint8(FloatRegister input, Register output)
 
     Label outOfRange;
 
-    branchTruncateDouble(input, output, &outOfRange);
+    branchTruncateDoubleMaybeModUint32(input, output, &outOfRange);
     asMasm().branch32(Assembler::Above, output, Imm32(255), &outOfRange);
     {
         // Check if we had a tie.
@@ -2135,11 +2125,11 @@ MacroAssembler::PushRegsInMask(LiveRegisterSet set)
     const int32_t reserved = diff;
 
     reserveStack(reserved);
-    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); iter++) {
+    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); ++iter) {
         diff -= sizeof(intptr_t);
         storePtr(*iter, Address(StackPointer, diff));
     }
-    for (FloatRegisterBackwardIterator iter(set.fpus().reduceSetForPush()); iter.more(); iter++) {
+    for (FloatRegisterBackwardIterator iter(set.fpus().reduceSetForPush()); iter.more(); ++iter) {
         diff -= sizeof(double);
         storeDouble(*iter, Address(StackPointer, diff));
     }
@@ -2153,12 +2143,12 @@ MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore)
         set.fpus().getPushSizeInBytes();
     const int32_t reserved = diff;
 
-    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); iter++) {
+    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); ++iter) {
         diff -= sizeof(intptr_t);
         if (!ignore.has(*iter))
           loadPtr(Address(StackPointer, diff), *iter);
     }
-    for (FloatRegisterBackwardIterator iter(set.fpus().reduceSetForPush()); iter.more(); iter++) {
+    for (FloatRegisterBackwardIterator iter(set.fpus().reduceSetForPush()); iter.more(); ++iter) {
         diff -= sizeof(double);
         if (!ignore.has(*iter))
           loadDouble(Address(StackPointer, diff), *iter);

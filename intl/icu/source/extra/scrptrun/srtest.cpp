@@ -1,14 +1,13 @@
 /*
  * %W% %E%
  *
- * (C) Copyright IBM Corp. 2001-2016 - All Rights Reserved
+ * (C) Copyright IBM Corp. 2001 - All Rights Reserved
  *
  */
 
 #include "unicode/utypes.h"
 #include "unicode/uscript.h"
 
-#include "cmemory.h"
 #include "scrptrun.h"
 
 #include <stdio.h>
@@ -23,7 +22,7 @@ UChar testChars[] = {
             0xD801, 0xDC00, 0xD801, 0xDC01, 0xD801, 0xDC02, 0xD801, 0xDC03
 };
 
-int32_t testLength = UPRV_LENGTHOF(testChars);
+int32_t testLength = sizeof testChars / sizeof testChars[0];
 
 void main()
 {

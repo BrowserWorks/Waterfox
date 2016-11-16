@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/he.xml
@@ -282,7 +282,7 @@ he{
         native{"latn"}
         traditional{"hebr"}
     }
-    Version{"2.1.23.7"}
+    Version{"2.1.19.17"}
     calendar{
         generic{
             DateTimePatterns{
@@ -437,10 +437,6 @@ he{
                 "לפנה״צ",
                 "אחה״צ",
             }
-            AmPmMarkersAbbr{
-                "לפנה״צ",
-                "אחה״צ",
-            }
             DateTimePatterns{
                 "H:mm:ss zzzz",
                 "H:mm:ss z",
@@ -479,7 +475,7 @@ he{
                 MEd{"E, d.M"}
                 MMM{"LLL"}
                 MMMEd{"E, d בMMM"}
-                MMMMd{"d בMMMM"}
+                MMMMd{"MMMM d"}
                 MMMd{"d בMMM"}
                 Md{"d.M"}
                 d{"d"}
@@ -581,14 +577,6 @@ he{
             }
             dayPeriod{
                 format{
-                    abbreviated{
-                        afternoon1{"צהריים"}
-                        afternoon2{"אחר הצהריים"}
-                        evening1{"ערב"}
-                        midnight{"חצות"}
-                        morning1{"בוקר"}
-                        night1{"לילה"}
-                    }
                     wide{
                         afternoon1{"צהריים"}
                         afternoon2{"אחר הצהריים"}
@@ -889,8 +877,8 @@ he{
             availableFormats{
                 Gy{"y G"}
                 GyMMM{"MMMM y G"}
-                GyMMMEd{"E, d בMMMM y G"}
-                GyMMMd{"d בMMMM y G"}
+                GyMMMEd{"E, d MMMM y G"}
+                GyMMMd{"d MMMM y G"}
                 M{"MMMM"}
                 MEd{"E, d בMMMM"}
                 MMM{"MMMM"}
@@ -1044,7 +1032,7 @@ he{
                 MEd{"E, d/M"}
                 MMM{"LLL"}
                 MMMEd{"E, d בMMM"}
-                MMMMd{"d בMMMM"}
+                MMMMd{"MMMM d"}
                 MMMd{"d בMMM"}
                 Md{"d/M"}
                 d{"d"}
@@ -1402,10 +1390,10 @@ he{
         }
     }
     delimiters{
-        alternateQuotationEnd{"’"}
-        alternateQuotationStart{"’"}
-        quotationEnd{"”"}
-        quotationStart{"”"}
+        alternateQuotationEnd{"׳"}
+        alternateQuotationStart{"׳"}
+        quotationEnd{"״"}
+        quotationStart{"״"}
     }
     fields{
         day{

@@ -23,17 +23,17 @@ const TEST_HOST = "mochi.test:8888";
  */
 var addTab = function (url, win) {
   info("Adding a new tab with URL: '" + url + "'");
-  let def = promise.defer();
+  let def = defer();
 
   let targetWindow = win || window;
   let targetBrowser = targetWindow.gBrowser;
 
   let tab = targetBrowser.selectedTab = targetBrowser.addTab(url);
-  targetBrowser.selectedBrowser.addEventListener("load", function onload() {
-    targetBrowser.selectedBrowser.removeEventListener("load", onload, true);
-    info("URL '" + url + "' loading complete");
-    def.resolve(tab);
-  }, true);
+  BrowserTestUtils.browserLoaded(targetBrowser.selectedBrowser)
+    .then(function () {
+      info("URL '" + url + "' loading complete");
+      def.resolve(tab);
+    });
 
   return def.promise;
 };
@@ -47,7 +47,7 @@ var navigateTo = Task.async(function* (url) {
   info(`Navigating to ${url}`);
   let browser = gBrowser.selectedBrowser;
 
-  let navigating = promise.defer();
+  let navigating = defer();
   browser.addEventListener("load", function onload() {
     browser.removeEventListener("load", onload, true);
     navigating.resolve();

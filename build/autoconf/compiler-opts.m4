@@ -95,30 +95,6 @@ dnl =
 dnl ========================================================
 AC_DEFUN([MOZ_DEBUGGING_OPTS],
 [
-dnl Debug info is ON by default.
-if test -z "$MOZ_DEBUG_FLAGS"; then
-  if test -n "$_MSC_VER"; then
-    MOZ_DEBUG_FLAGS="-Zi"
-  else
-    MOZ_DEBUG_FLAGS="-g"
-  fi
-fi
-
-AC_SUBST(MOZ_DEBUG_FLAGS)
-
-MOZ_ARG_ENABLE_STRING(debug,
-[  --enable-debug[=DBG]    Enable building with developer debug info
-                           (using compiler flags DBG)],
-[ if test "$enableval" != "no"; then
-    MOZ_DEBUG=1
-    if test -n "$enableval" -a "$enableval" != "yes"; then
-        MOZ_DEBUG_FLAGS=`echo $enableval | sed -e 's|\\\ | |g'`
-        _MOZ_DEBUG_FLAGS_SET=1
-    fi
-  else
-    MOZ_DEBUG=
-  fi ],
-  MOZ_DEBUG=)
 
 if test -z "$MOZ_DEBUG" -o -n "$MOZ_ASAN"; then
     MOZ_NO_DEBUG_RTL=1
@@ -156,31 +132,6 @@ fi
 
 AC_SUBST_LIST(MOZ_DEBUG_DEFINES)
 
-dnl ========================================================
-dnl = Enable generation of debug symbols
-dnl ========================================================
-MOZ_ARG_ENABLE_STRING(debug-symbols,
-[  --enable-debug-symbols[=DBG]
-                          Enable debugging symbols (using compiler flags DBG)],
-[ if test "$enableval" != "no"; then
-      MOZ_DEBUG_SYMBOLS=1
-      if test -n "$enableval" -a "$enableval" != "yes"; then
-          if test -z "$_MOZ_DEBUG_FLAGS_SET"; then
-              MOZ_DEBUG_FLAGS=`echo $enableval | sed -e 's|\\\ | |g'`
-          else
-              AC_MSG_ERROR([--enable-debug-symbols flags cannot be used with --enable-debug flags])
-          fi
-      fi
-  else
-      MOZ_DEBUG_SYMBOLS=
-  fi ],
-  MOZ_DEBUG_SYMBOLS=1)
-
-if test -n "$MOZ_DEBUG" -o -n "$MOZ_DEBUG_SYMBOLS"; then
-    AC_DEFINE(MOZ_DEBUG_SYMBOLS)
-    export MOZ_DEBUG_SYMBOLS
-fi
-
 ])
 
 dnl A high level macro for selecting compiler options.
@@ -195,18 +146,6 @@ if test "$CLANG_CXX"; then
     ## from C.
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wno-unknown-warning-option -Wno-return-type-c-linkage"
 fi
-
-AC_MSG_CHECKING([whether the C++ compiler ($CXX $CXXFLAGS $LDFLAGS) actually is a C++ compiler])
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
-_SAVE_LIBS=$LIBS
-LIBS=
-AC_TRY_LINK([#include <new>], [int *foo = new int;],,
-            AC_MSG_RESULT([no])
-            AC_MSG_ERROR([$CXX $CXXFLAGS $LDFLAGS failed to compile and link a simple C++ source.]))
-LIBS=$_SAVE_LIBS
-AC_LANG_RESTORE
-AC_MSG_RESULT([yes])
 
 if test -n "$DEVELOPER_OPTIONS"; then
     MOZ_FORCE_GOLD=1
@@ -445,6 +384,7 @@ AC_DEFUN([MOZ_SET_WARNINGS_CFLAGS],
     # -Wclass-varargs - catches objects passed by value to variadic functions.
     # -Wloop-analysis - catches issues around loops
     # -Wnon-literal-null-conversion - catches expressions used as a null pointer constant
+    # -Wstring-conversion - catches string literals used in boolean expressions
     # -Wthread-safety - catches inconsistent use of mutexes
     #
     # XXX: at the time of writing, the version of clang used on the OS X test
@@ -461,6 +401,7 @@ AC_DEFUN([MOZ_SET_WARNINGS_CFLAGS],
         MOZ_C_SUPPORTS_WARNING(-Werror=, non-literal-null-conversion, ac_c_has_non_literal_null_conversion)
     fi
 
+    MOZ_C_SUPPORTS_WARNING(-W, string-conversion, ac_c_has_wstring_conversion)
     MOZ_C_SUPPORTS_WARNING(-W, thread-safety, ac_c_has_wthread_safety)
 
     # Turn off some non-useful warnings that -Wall turns on.
@@ -511,6 +452,7 @@ AC_DEFUN([MOZ_SET_WARNINGS_CXXFLAGS],
     # -Wimplicit-fallthrough - catches unintentional switch case fallthroughs
     # -Wloop-analysis - catches issues around loops
     # -Wnon-literal-null-conversion - catches expressions used as a null pointer constant
+    # -Wstring-conversion - catches string literals used in boolean expressions
     # -Wthread-safety - catches inconsistent use of mutexes
     #
     # XXX: at the time of writing, the version of clang used on the OS X test
@@ -532,6 +474,7 @@ AC_DEFUN([MOZ_SET_WARNINGS_CXXFLAGS],
         MOZ_CXX_SUPPORTS_WARNING(-Werror=, non-literal-null-conversion, ac_cxx_has_non_literal_null_conversion)
     fi
 
+    MOZ_CXX_SUPPORTS_WARNING(-W, string-conversion, ac_cxx_has_wstring_conversion)
     MOZ_CXX_SUPPORTS_WARNING(-W, thread-safety, ac_cxx_has_wthread_safety)
 
     # Turn off some non-useful warnings that -Wall turns on.

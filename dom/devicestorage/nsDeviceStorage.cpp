@@ -29,7 +29,6 @@
 #include "mozilla/ipc/BackgroundUtils.h" // for PrincipalInfoToPrincipal
 
 #include "nsArrayUtils.h"
-#include "nsAutoPtr.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "nsGlobalWindow.h"
 #include "nsServiceManagerUtils.h"
@@ -1959,6 +1958,7 @@ public:
     nsCOMPtr<nsIInputStream> stream;
     mBlob->GetInternalStream(getter_AddRefs(stream), rv);
     if (NS_WARN_IF(rv.Failed())) {
+      rv.SuppressException();
       return Reject(POST_ERROR_EVENT_UNKNOWN);
     }
 
@@ -2071,6 +2071,7 @@ public:
     nsCOMPtr<nsIInputStream> stream;
     mBlob->GetInternalStream(getter_AddRefs(stream), rv);
     if (NS_WARN_IF(rv.Failed())) {
+      rv.SuppressException();
       return Reject(POST_ERROR_EVENT_UNKNOWN);
     }
 
@@ -3976,8 +3977,7 @@ DeviceStorageRequestManager::Resolve(uint32_t aId, uint64_t aValue,
     return NS_OK;
   }
 
-  JS::RootedValue value(nsContentUtils::RootingCxForThread(),
-                        JS_NumberValue((double)aValue));
+  JS::RootedValue value(GetJSRuntime(), JS_NumberValue((double)aValue));
   return ResolveInternal(i, value);
 }
 

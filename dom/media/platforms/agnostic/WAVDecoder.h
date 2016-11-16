@@ -15,13 +15,11 @@ namespace mozilla {
 class WaveDataDecoder : public MediaDataDecoder
 {
 public:
-  WaveDataDecoder(const AudioInfo& aConfig,
-                  MediaDataDecoderCallback* aCallback);
+  explicit WaveDataDecoder(const CreateDecoderParams& aParams);
 
   // Return true if mimetype is Wave
   static bool IsWave(const nsACString& aMimeType);
 
-private:
   RefPtr<InitPromise> Init() override;
   nsresult Input(MediaRawData* aSample) override;
   nsresult Flush() override;
@@ -32,6 +30,7 @@ private:
     return "wave audio decoder";
   }
 
+private:
   bool DoDecode(MediaRawData* aSample);
 
   const AudioInfo& mInfo;

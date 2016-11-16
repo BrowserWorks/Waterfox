@@ -15,6 +15,7 @@
 
 #include "MediaDataDemuxer.h"
 #include "MediaDecoderReader.h"
+#include "nsAutoPtr.h"
 #include "PDMFactory.h"
 
 namespace mozilla {
@@ -63,7 +64,7 @@ public:
   // For Media Resource Management
   void ReleaseMediaResources() override;
 
-  nsresult ResetDecode(TargetQueues aQueues) override;
+  nsresult ResetDecode(TrackSet aTracks) override;
 
   RefPtr<ShutdownPromise> Shutdown() override;
 
@@ -102,8 +103,9 @@ public:
   void GetMozDebugReaderData(nsAString& aString);
 
 private:
-  bool HasVideo() { return mVideo.mTrackDemuxer; }
-  bool HasAudio() { return mAudio.mTrackDemuxer; }
+
+  bool HasVideo() const { return mVideo.mTrackDemuxer; }
+  bool HasAudio() const { return mAudio.mTrackDemuxer; }
 
   bool IsWaitingOnCDMResource();
 
@@ -183,6 +185,8 @@ private:
   void DropDecodedSamples(TrackType aTrack);
 
   bool ShouldSkip(bool aSkipToNextKeyframe, media::TimeUnit aTimeThreshold);
+
+  void SetVideoDecodeThreshold();
 
   size_t SizeOfQueue(TrackType aTrack);
 
@@ -422,6 +426,8 @@ private:
     Maybe<uint32_t> mNextStreamSourceID;
     media::TimeIntervals mTimeRanges;
     Maybe<media::TimeUnit> mLastTimeRangesEnd;
+    // TrackInfo as first discovered during ReadMetadata.
+    UniquePtr<TrackInfo> mOriginalInfo;
     RefPtr<SharedTrackInfo> mInfo;
     Maybe<media::TimeUnit> mFirstDemuxedSampleTime;
   };
@@ -512,17 +518,18 @@ private:
   // delta there.
   uint64_t mLastReportedNumDecodedFrames;
 
+  // Timestamp of the previous decoded keyframe, in microseconds.
+  int64_t mPreviousDecodedKeyframeTime_us;
+  // Default mLastDecodedKeyframeTime_us value, must be bigger than anything.
+  static const int64_t sNoPreviousDecodedKeyframe = INT64_MAX;
+
   layers::LayersBackend mLayersBackendType;
 
   // Metadata objects
   // True if we've read the streams' metadata.
   bool mInitDone;
   MozPromiseHolder<MetadataPromise> mMetadataPromise;
-  bool IsEncrypted()
-  {
-    return mIsEncrypted;
-  }
-  bool mIsEncrypted;
+  bool IsEncrypted() const;
 
   // Set to true if any of our track buffers may be blocking.
   bool mTrackDemuxersMayBlock;
@@ -543,18 +550,12 @@ private:
   void OnSeekFailed(TrackType aTrack, DemuxerFailureReason aFailure);
   void DoVideoSeek();
   void OnVideoSeekCompleted(media::TimeUnit aTime);
-  void OnVideoSeekFailed(DemuxerFailureReason aFailure)
-  {
-    OnSeekFailed(TrackType::kVideoTrack, aFailure);
-  }
+  void OnVideoSeekFailed(DemuxerFailureReason aFailure);
   bool mSeekScheduled;
 
   void DoAudioSeek();
   void OnAudioSeekCompleted(media::TimeUnit aTime);
-  void OnAudioSeekFailed(DemuxerFailureReason aFailure)
-  {
-    OnSeekFailed(TrackType::kAudioTrack, aFailure);
-  }
+  void OnAudioSeekFailed(DemuxerFailureReason aFailure);
   // The SeekTarget that was last given to Seek()
   SeekTarget mOriginalSeekTarget;
   // Temporary seek information while we wait for the data
@@ -568,6 +569,7 @@ private:
 #ifdef MOZ_EME
   RefPtr<CDMProxy> mCDMProxy;
 #endif
+  RefPtr<GMPCrashHelper> mCrashHelper;
 
   // The duration explicitly set by JS, mirrored from the main thread.
   Mirror<Maybe<double>> mExplicitDuration;

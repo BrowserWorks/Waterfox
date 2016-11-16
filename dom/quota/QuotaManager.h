@@ -347,6 +347,10 @@ public:
   uint64_t
   GetGroupLimit() const;
 
+  void
+  GetGroupUsageAndLimit(const nsACString& aGroup,
+                        UsageInfo* aUsageInfo);
+
   static void
   GetStorageId(PersistenceType aPersistenceType,
                const nsACString& aOrigin,
@@ -513,6 +517,8 @@ private:
   // by any mutex but it is only ever touched on the IO thread.
   nsTArray<nsCString> mInitializedOrigins;
 
+  // This array is populated at initialization time and then never modified, so
+  // it can be iterated on any thread.
   AutoTArray<RefPtr<Client>, Client::TYPE_MAX> mClients;
 
   nsString mBasePath;

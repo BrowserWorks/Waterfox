@@ -538,7 +538,7 @@ nsHttpTransaction::OnTransportStatus(nsITransport* transport,
     // then the requestStart timestamp will be null, so we mark the timestamps
     // for domainLookupStart/End and connectStart/End
     // If we are using a persistent connection they will remain null,
-    // and the correct value will be returned in nsPerformance.
+    // and the correct value will be returned in Performance.
     if (TimingEnabled() && GetRequestStart().IsNull()) {
         if (status == NS_NET_STATUS_RESOLVING_HOST) {
             SetDomainLookupStart(TimeStamp::Now(), true);
@@ -1366,9 +1366,9 @@ nsHttpTransaction::LocateHttpStart(char *buf, uint32_t len,
 }
 
 nsresult
-nsHttpTransaction::ParseLine(char *line)
+nsHttpTransaction::ParseLine(nsACString &line)
 {
-    LOG(("nsHttpTransaction::ParseLine [%s]\n", line));
+    LOG(("nsHttpTransaction::ParseLine [%s]\n", PromiseFlatCString(line).get()));
     nsresult rv = NS_OK;
 
     if (!mHaveStatusLine) {
@@ -1396,7 +1396,7 @@ nsHttpTransaction::ParseLineSegment(char *segment, uint32_t len)
         // of mLineBuf.
         mLineBuf.Truncate(mLineBuf.Length() - 1);
         if (!mHaveStatusLine || (*segment != ' ' && *segment != '\t')) {
-            nsresult rv = ParseLine(mLineBuf.BeginWriting());
+            nsresult rv = ParseLine(mLineBuf);
             mLineBuf.Truncate();
             if (NS_FAILED(rv)) {
                 gHttpHandler->ConnMgr()->PipelineFeedbackInfo(
@@ -1475,7 +1475,7 @@ nsHttpTransaction::ParseHead(char *buf,
                 if (mRequestHead->IsPut())
                     return NS_ERROR_ABORT;
 
-                mResponseHead->ParseStatusLine("");
+                mResponseHead->ParseStatusLine(EmptyCString());
                 mHaveStatusLine = true;
                 mHaveAllHeaders = true;
                 return NS_OK;

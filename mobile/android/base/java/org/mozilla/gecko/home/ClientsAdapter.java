@@ -191,6 +191,10 @@ public class ClientsAdapter extends RecyclerView.Adapter<CombinedHistoryItem> im
         }
     }
 
+    public int getClientsCount() {
+        return hiddenClients.size() + visibleClients.size();
+    }
+
     @UiThread
     public void setClients(List<RemoteClient> clients) {
         adapterList.clear();

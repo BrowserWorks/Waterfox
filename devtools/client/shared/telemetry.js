@@ -56,9 +56,7 @@ this.Telemetry = function () {
 
 module.exports = Telemetry;
 
-var {Cc, Ci, Cu} = require("chrome");
 var Services = require("Services");
-var {XPCOMUtils} = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 
 Telemetry.prototype = {
   _histograms: {
@@ -96,11 +94,6 @@ Telemetry.prototype = {
       histogram: "DEVTOOLS_COMPUTEDVIEW_OPENED_COUNT",
       userHistogram: "DEVTOOLS_COMPUTEDVIEW_OPENED_PER_USER_FLAG",
       timerHistogram: "DEVTOOLS_COMPUTEDVIEW_TIME_ACTIVE_SECONDS"
-    },
-    layoutview: {
-      histogram: "DEVTOOLS_LAYOUTVIEW_OPENED_COUNT",
-      userHistogram: "DEVTOOLS_LAYOUTVIEW_OPENED_PER_USER_FLAG",
-      timerHistogram: "DEVTOOLS_LAYOUTVIEW_TIME_ACTIVE_SECONDS"
     },
     fontinspector: {
       histogram: "DEVTOOLS_FONTINSPECTOR_OPENED_COUNT",
@@ -193,6 +186,10 @@ Telemetry.prototype = {
     pickereyedropper: {
       histogram: "DEVTOOLS_PICKER_EYEDROPPER_OPENED_COUNT",
       userHistogram: "DEVTOOLS_PICKER_EYEDROPPER_OPENED_PER_USER_FLAG",
+    },
+    toolbareyedropper: {
+      histogram: "DEVTOOLS_TOOLBAR_EYEDROPPER_OPENED_COUNT",
+      userHistogram: "DEVTOOLS_TOOLBAR_EYEDROPPER_OPENED_PER_USER_FLAG",
     },
     developertoolbar: {
       histogram: "DEVTOOLS_DEVELOPERTOOLBAR_OPENED_COUNT",
@@ -362,7 +359,7 @@ Telemetry.prototype = {
    *         Histogram in which the data is to be stored.
    */
   logOncePerBrowserVersion: function (perUserHistogram, value) {
-    let currentVersion = appInfo.version;
+    let currentVersion = Services.appinfo.version;
     let latest = Services.prefs.getCharPref(TOOLS_OPENED_PREF);
     let latestObj = JSON.parse(latest);
 
@@ -383,7 +380,3 @@ Telemetry.prototype = {
     }
   }
 };
-
-XPCOMUtils.defineLazyGetter(this, "appInfo", function () {
-  return Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
-});

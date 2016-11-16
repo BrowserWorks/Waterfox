@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@ def Libxul(name):
     DELAYLOAD_DLLS += [
         'comdlg32.dll',
         'dbghelp.dll',
+        'netapi32.dll',
         'PowrProf.dll',
         'psapi.dll',
         'rasapi32.dll',
@@ -129,7 +130,7 @@ if CONFIG['MOZ_JPROF']:
         'jprof',
     ]
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT'] or CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt' or \
+if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT'] or \
         CONFIG['MOZ_TREE_FREETYPE']:
     USE_LIBS += [
         'freetype',
@@ -304,13 +305,6 @@ if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
         'gthread-2.0',
     ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
-    OS_LIBS += CONFIG['XLDFLAGS']
-    OS_LIBS += CONFIG['XLIBS']
-    OS_LIBS += CONFIG['XT_LIBS']
-    OS_LIBS += CONFIG['MOZ_QT_LIBS']
-    OS_LIBS += CONFIG['MOZ_PANGO_LIBS']
-
 if CONFIG['MOZ_ENABLE_STARTUP_NOTIFICATION']:
     OS_LIBS += CONFIG['MOZ_STARTUP_NOTIFICATION_LIBS']
 
@@ -340,6 +334,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'comdlg32',
         'imm32',
         'msimg32',
+        'netapi32',
         'shlwapi',
         'psapi',
         'ws2_32',
@@ -365,14 +360,27 @@ if CONFIG['OS_ARCH'] == 'WINNT':
             'oleacc',
         ]
 
-if CONFIG['MOZ_ENABLE_QT']:
-    OS_LIBS += CONFIG['XEXT_LIBS']
-
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     OS_LIBS += [
         'usp10',
         'oleaut32',
     ]
+
+if CONFIG['COMPILE_ENVIRONMENT']:
+    if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('cocoa', 'uikit'):
+        full_libname = SHARED_LIBRARY_NAME
+    else:
+        full_libname = '%s%s%s' % (
+            CONFIG['DLL_PREFIX'],
+            LIBRARY_NAME,
+            CONFIG['DLL_SUFFIX']
+        )
+    GENERATED_FILES += ['dependentlibs.list']
+    GENERATED_FILES['dependentlibs.list'].script = 'dependentlibs.py:gen_list'
+    GENERATED_FILES['dependentlibs.list'].inputs = [
+        '!%s' % full_libname,
+    ]
+    FINAL_TARGET_FILES += ['!dependentlibs.list']
 
 # This needs to be last
 USE_LIBS += ['StaticXULComponentsEnd']

@@ -40,6 +40,7 @@ namespace dom {
 class AfterSetFilesOrDirectoriesRunnable;
 class Date;
 class DispatchChangeEventCallback;
+class Entry;
 class File;
 class FileList;
 class GetFilesHelper;
@@ -133,6 +134,11 @@ public:
   virtual void Blur(ErrorResult& aError) override;
   virtual void Focus(ErrorResult& aError) override;
 
+  // nsINode
+#if !defined(ANDROID) && !defined(XP_MACOSX)
+  virtual bool IsNodeApzAwareInternal() const override;
+#endif
+
   // Element
   virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override;
 
@@ -153,7 +159,7 @@ public:
   // Overriden nsIFormControl methods
   NS_IMETHOD_(uint32_t) GetType() const override { return mType; }
   NS_IMETHOD Reset() override;
-  NS_IMETHOD SubmitNamesValues(nsFormSubmission* aFormSubmission) override;
+  NS_IMETHOD SubmitNamesValues(HTMLFormSubmission* aFormSubmission) override;
   NS_IMETHOD SaveState() override;
   virtual bool RestoreState(nsPresState* aState) override;
   virtual bool AllowDrop() override;
@@ -237,6 +243,10 @@ public:
                              bool aSetValueChanged);
   void SetFiles(nsIDOMFileList* aFiles, bool aSetValueChanged);
 
+  // This method is used for test only. Onces the data is set, a 'change' event
+  // is dispatched.
+  void MozSetDndFilesAndDirectories(const nsTArray<OwningFileOrDirectory>& aSequence);
+
   // Called when a nsIFilePicker or a nsIColorPicker terminate.
   void PickerClosed();
 
@@ -266,6 +276,9 @@ public:
   // which directory was last used on a site-by-site basis
   static void InitUploadLastDir();
   static void DestroyUploadLastDir();
+
+  //If the valueAsDate attribute should be enabled in webIDL
+  static bool ValueAsDateEnabled(JSContext* cx, JSObject* obj);
 
   void MaybeLoadImage();
 
@@ -629,7 +642,7 @@ public:
     SetHTMLAttr(nsGkAtoms::value, aValue, aRv);
   }
 
-  // XPCOM GetValue() is OK
+  void GetValue(nsAString& aValue, ErrorResult& aRv);
   void SetValue(const nsAString& aValue, ErrorResult& aRv);
 
   Nullable<Date> GetValueAsDate(ErrorResult& aRv);
@@ -695,14 +708,14 @@ public:
                     ErrorResult& aRv, int32_t aSelectionStart = -1,
                     int32_t aSelectionEnd = -1);
 
-  bool DirectoryAttr() const
+  bool Allowdirs() const
   {
-    return HasAttr(kNameSpaceID_None, nsGkAtoms::directory);
+    return HasAttr(kNameSpaceID_None, nsGkAtoms::allowdirs);
   }
 
-  void SetDirectoryAttr(bool aValue, ErrorResult& aRv)
+  void SetAllowdirs(bool aValue, ErrorResult& aRv)
   {
-    SetHTMLBoolAttr(nsGkAtoms::directory, aValue, aRv);
+    SetHTMLBoolAttr(nsGkAtoms::allowdirs, aValue, aRv);
   }
 
   bool WebkitDirectoryAttr() const
@@ -714,6 +727,8 @@ public:
   {
     SetHTMLBoolAttr(nsGkAtoms::webkitdirectory, aValue, aRv);
   }
+
+  void GetWebkitEntries(nsTArray<RefPtr<Entry>>& aSequence);
 
   bool IsFilesAndDirectoriesSupported() const;
 
@@ -790,6 +805,8 @@ public:
    * it will return a Decimal for which Decimal::isFinite() will return false.
    */
   static Decimal StringToDecimal(const nsAString& aValue);
+
+  void UpdateEntries(const nsTArray<OwningFileOrDirectory>& aFilesOrDirectories);
 
 protected:
   virtual ~HTMLInputElement();
@@ -956,7 +973,6 @@ protected:
    * This method can explore the directory recursively if needed.
    */
   void AfterSetFilesOrDirectories(bool aSetValueChanged);
-  void AfterSetFilesOrDirectoriesInternal(bool aSetValueChanged);
 
   /**
    * Recursively explore the directory and populate mFileOrDirectories correctly
@@ -1007,7 +1023,11 @@ protected:
   /**
    * Returns if the step attribute apply for the current type.
    */
-  bool DoesStepApply() const { return DoesMinMaxApply(); }
+  bool DoesStepApply() const
+  {
+    // TODO: this is temporary until bug 888324 is fixed.
+    return DoesMinMaxApply() && mType != NS_FORM_INPUT_MONTH;
+  }
 
   /**
    * Returns if stepDown and stepUp methods apply for the current type.
@@ -1129,6 +1149,14 @@ protected:
   bool IsValidSimpleColor(const nsAString& aValue) const;
 
   /**
+   * Parse a date string of the form yyyy-mm
+   * @param the string to be parsed.
+   * @return whether the string is a valid month.
+   * Note : this function does not consider the empty string as valid.
+   */
+  bool IsValidMonth(const nsAString& aValue) const;
+
+  /**
    * Parse a date string of the form yyyy-mm-dd
    * @param the string to be parsed.
    * @return whether the string is a valid date.
@@ -1137,20 +1165,48 @@ protected:
   bool IsValidDate(const nsAString& aValue) const;
 
   /**
+   * Parse a year string of the form yyyy
+   *
+   * @param the string to be parsed.
+   *
+   * @return the year in aYear.
+   * @return whether the parsing was successful.
+   */
+  bool ParseYear(const nsAString& aValue, uint32_t* aYear) const;
+
+  /**
+   * Parse a month string of the form yyyy-mm
+   *
+   * @param the string to be parsed.
+   * @return the year and month in aYear and aMonth.
+   * @return whether the parsing was successful.
+   */
+  bool ParseMonth(const nsAString& aValue,
+                  uint32_t* aYear,
+                  uint32_t* aMonth) const;
+
+  /**
    * Parse a date string of the form yyyy-mm-dd
+   *
    * @param the string to be parsed.
    * @return the date in aYear, aMonth, aDay.
    * @return whether the parsing was successful.
    */
-  bool GetValueAsDate(const nsAString& aValue,
-                      uint32_t* aYear,
-                      uint32_t* aMonth,
-                      uint32_t* aDay) const;
+  bool ParseDate(const nsAString& aValue,
+                 uint32_t* aYear,
+                 uint32_t* aMonth,
+                 uint32_t* aDay) const;
 
   /**
    * This methods returns the number of days in a given month, for a given year.
    */
   uint32_t NumberOfDaysInMonth(uint32_t aMonth, uint32_t aYear) const;
+
+  /**
+   * This methods returns the number of months between January 1970 and the
+   * given year and month.
+   */
+  int32_t MonthsSinceJan1970(uint32_t aYear, uint32_t aMonth) const;
 
   /**
    * Returns whether aValue is a valid time as described by HTML specifications:
@@ -1239,10 +1295,13 @@ protected:
   /**
    * Returns if the current type is an experimental mobile type.
    */
-  static bool IsExperimentalMobileType(uint8_t aType)
-  {
-    return aType == NS_FORM_INPUT_DATE || aType == NS_FORM_INPUT_TIME;
-  }
+  static bool IsExperimentalMobileType(uint8_t aType);
+
+  /*
+   * Returns if the current type is one of the date/time input types: date,
+   * time and month. TODO: week and datetime-local.
+   */
+  static bool IsDateTimeInputType(uint8_t aType);
 
   /**
    * Flushes the layout frame tree to make sure we have up-to-date frames.
@@ -1269,6 +1328,7 @@ protected:
   };
   nsresult InitFilePicker(FilePickerType aType);
   nsresult InitColorPicker();
+  nsresult InitDatePicker();
 
   /**
    * Use this function before trying to open a picker.
@@ -1283,6 +1343,17 @@ protected:
                                             ErrorResult& aRv);
 
   void ClearGetFilesHelpers();
+
+  /**
+   * nsINode::SetMayBeApzAware() will be invoked in this function if necessary 
+   * to prevent default action of APZC so that we can increase/decrease the
+   * value of this InputElement when mouse wheel event comes without scrolling
+   * the page.
+   *
+   * SetMayBeApzAware() will set flag MayBeApzAware which is checked by apzc to
+   * decide whether to add this element into its dispatch-to-content region.
+   */
+  void UpdateApzAwareFlag();
 
   nsCOMPtr<nsIControllers> mControllers;
 
@@ -1320,14 +1391,13 @@ protected:
   RefPtr<GetFilesHelper> mGetFilesRecursiveHelper;
   RefPtr<GetFilesHelper> mGetFilesNonRecursiveHelper;
 
-#ifndef MOZ_CHILD_PERMISSIONS
   /**
    * Hack for bug 1086684: Stash the .value when we're a file picker.
    */
   nsString mFirstFilePath;
-#endif
 
   RefPtr<FileList>  mFileList;
+  Sequence<RefPtr<Entry>> mEntries;
 
   nsString mStaticDocFileList;
 
@@ -1368,6 +1438,11 @@ protected:
 
   // Float value returned by GetStep() when the step attribute is set to 'any'.
   static const Decimal kStepAny;
+
+  // Maximum year limited by ECMAScript date object range, year <= 275760.
+  static const double kMaximumYear;
+  // Minimum year limited by HTML standard, year >= 1.
+  static const double kMinimumYear;
 
   /**
    * The type of this input (<input type=...>) as an integer.

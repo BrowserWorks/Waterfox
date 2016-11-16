@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/chr.xml
@@ -37,7 +37,7 @@ chr{
             }
         }
     }
-    Version{"2.1.23.7"}
+    Version{"2.1.19.77"}
     calendar{
         generic{
             DateTimePatterns{
@@ -135,10 +135,6 @@ chr{
                 "ᏌᎾᎴ",
                 "ᏒᎯᏱᎢᏗᏢ",
             }
-            AmPmMarkersAbbr{
-                "ᏌᎾᎴ",
-                "ᏒᎯᏱᎢᏗᏢ",
-            }
             DateTimePatterns{
                 "h:mm:ss a zzzz",
                 "h:mm:ss a z",
@@ -211,11 +207,6 @@ chr{
             }
             dayPeriod{
                 format{
-                    abbreviated{
-                        afternoon1{"ᏒᎯᏱᎢᏗᏢ"}
-                        morning1{"ᏌᎾᎴ"}
-                        noon{"ᎢᎦ"}
-                    }
                     wide{
                         afternoon1{"ᏒᎯᏱᎢᏗᏢ"}
                         morning1{"ᏌᎾᎴ"}

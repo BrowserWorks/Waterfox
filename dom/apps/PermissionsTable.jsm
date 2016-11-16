@@ -503,7 +503,7 @@ this.PermissionsTable =  { geolocation: {
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
                            },
-                           "killswitch": {
+                           "previously-certified-app": {
                              app: DENY_ACTION,
                              trusted: DENY_ACTION,
                              privileged: DENY_ACTION,

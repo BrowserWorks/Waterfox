@@ -6,8 +6,7 @@
 const React = require("devtools/client/shared/vendor/react");
 
 // Reps
-const { createFactories } = require("devtools/client/shared/components/reps/rep-utils");
-const { parseURLEncodedText } = require("devtools/client/shared/components/reps/url");
+const { createFactories, parseURLEncodedText } = require("devtools/client/shared/components/reps/rep-utils");
 const TreeView = React.createFactory(require("devtools/client/shared/components/tree/tree-view"));
 const { Rep } = createFactories(require("devtools/client/shared/components/reps/rep"));
 
@@ -181,7 +180,7 @@ var PostTab = React.createClass({
         key: "raw-longstring",
         name: Locale.$STR("netRequest.rawData"),
         content: DOM.div({className: "netInfoResponseContent"},
-          text.initial,
+          sanitize(text.initial),
           SizeLimit({
             actions: this.props.actions,
             data: file.request.postData,

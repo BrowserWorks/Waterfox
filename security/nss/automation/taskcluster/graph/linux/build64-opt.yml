@@ -29,11 +29,9 @@
     - gtests
     - lowhash
     - merge
-    - ocsp
-    - pkits
-    - pkix
     - sdr
     - smime
+    - ssl
     - tools
 
 - task:
@@ -43,7 +41,6 @@
 
     payload:
       env:
-        NSS_TESTS: ssl
         BUILD_OPT: 1
         USE_64: 1
 
@@ -59,9 +56,6 @@
         groupName: Various builds
         symbol: noTLSv1.3
 
-  tests:
-    - ssl
-
 - task:
     metadata:
       name: "Linux 64 (opt, clang-3.8)"
@@ -70,8 +64,8 @@
     payload:
       env:
         NSS_ENABLE_TLS_1_3: 1
-        GCC_VERSION: clang-3.8
-        GXX_VERSION: clang++-3.8
+        GCC_VERSION: clang
+        GXX_VERSION: clang++
         BUILD_OPT: 1
         USE_64: 1
 
@@ -139,13 +133,13 @@
 
 - task:
     metadata:
-      name: "Linux 64 (opt, NO_PKCS11_BYPASS=1)"
-      description: "Linux 64 (opt, NO_PKCS11_BYPASS=1)"
+      name: "Linux 64 (opt, NSS_NO_PKCS11_BYPASS=1)"
+      description: "Linux 64 (opt, NSS_NO_PKCS11_BYPASS=1)"
 
     payload:
       env:
+        NSS_NO_PKCS11_BYPASS: 1
         NSS_ENABLE_TLS_1_3: 1
-        NO_PKCS11_BYPASS: 1
         BUILD_OPT: 1
         USE_64: 1
 

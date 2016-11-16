@@ -7,7 +7,8 @@ from __future__ import print_function
 
 import platform
 import sys
-import os.path
+import os
+import subprocess
 
 # Don't forgot to add new mozboot modules to the bootstrap download
 # list in bin/bootstrap.py!
@@ -19,6 +20,10 @@ from mozboot.osx import OSXBootstrapper
 from mozboot.openbsd import OpenBSDBootstrapper
 from mozboot.archlinux import ArchlinuxBootstrapper
 from mozboot.windows import WindowsBootstrapper
+from mozboot.mozillabuild import MozillaBuildBootstrapper
+from mozboot.util import (
+    get_state_dir,
+)
 
 APPLICATION_CHOICE = '''
 Please choose the version of Firefox you want to build:
@@ -61,11 +66,33 @@ APPLICATIONS = dict(
     mobile_android=APPLICATIONS_LIST[2],
 )
 
-FINISHED = '''
-Your system should be ready to build %s! If you have not already,
-obtain a copy of the source code by running:
+STATE_DIR_INFO = '''
+The Firefox build system and related tools store shared, persistent state
+in a common directory on the filesystem. On this machine, that directory
+is:
 
-    hg clone https://hg.mozilla.org/mozilla-central
+  {statedir}
+
+If you would like to use a different directory, hit CTRL+c and set the
+MOZBUILD_STATE_PATH environment variable to the directory you'd like to
+use and re-run the bootstrapper.
+
+Would you like to create this directory?
+
+  1. Yes
+  2. No
+
+Your choice:
+'''
+
+FINISHED = '''
+Your system should be ready to build %s!
+'''
+
+SOURCE_ADVERTISE = '''
+Source code can be obtained by running
+
+    hg clone https://hg.mozilla.org/mozilla-unified
 
 Or, if you prefer Git, you should install git-cinnabar, and follow the
 instruction here to clone from the Mercurial repository:
@@ -76,6 +103,27 @@ Or, if you really prefer vanilla flavor Git:
 
     git clone https://git.mozilla.org/integration/gecko-dev.git
 '''
+
+CONFIGURE_MERCURIAL = '''
+Mozilla recommends a number of changes to Mercurial to enhance your
+experience with it.
+
+Would you like to run a configuration wizard to ensure Mercurial is
+optimally configured?
+
+  1. Yes
+  2. No
+
+Please enter your reply: '''.lstrip()
+
+CLONE_MERCURIAL = '''
+If you would like to clone the canonical Mercurial repository, please
+enter the destination path below.
+
+(If you prefer to use Git, leave this blank.)
+
+Destination directory for Mercurial clone (leave empty to not clone): '''.lstrip()
+
 
 DEBIAN_DISTROS = (
     'Debian',
@@ -96,10 +144,12 @@ DEBIAN_DISTROS = (
 class Bootstrapper(object):
     """Main class that performs system bootstrap."""
 
-    def __init__(self, finished=FINISHED, choice=None, no_interactive=False):
+    def __init__(self, finished=FINISHED, choice=None, no_interactive=False,
+                 hg_configure=False):
         self.instance = None
         self.finished = finished
         self.choice = choice
+        self.hg_configure = hg_configure
         cls = None
         args = {'no_interactive': no_interactive}
 
@@ -141,7 +191,10 @@ class Bootstrapper(object):
             args['flavor'] = platform.system()
 
         elif sys.platform.startswith('win32') or sys.platform.startswith('msys'):
-            cls = WindowsBootstrapper
+            if 'MOZILLABUILD' in os.environ:
+                cls = MozillaBuildBootstrapper
+            else:
+                cls = WindowsBootstrapper
 
         if cls is None:
             raise NotImplementedError('Bootstrap support is not yet available '
@@ -166,10 +219,211 @@ class Bootstrapper(object):
         # Like 'install_browser_packages' or 'install_mobile_android_packages'.
         getattr(self.instance, 'install_%s_packages' % application)()
 
-        self.instance.ensure_mercurial_modern()
+        hg_installed, hg_modern = self.instance.ensure_mercurial_modern()
         self.instance.ensure_python_modern()
+
+        # The state directory code is largely duplicated from mach_bootstrap.py.
+        # We can't easily import mach_bootstrap.py because the bootstrapper may
+        # run in self-contained mode and only the files in this directory will
+        # be available. We /could/ refactor parts of mach_bootstrap.py to be
+        # part of this directory to avoid the code duplication.
+        state_dir, _ = get_state_dir()
+
+        if not os.path.exists(state_dir):
+            if not self.instance.no_interactive:
+                choice = self.instance.prompt_int(
+                    prompt=STATE_DIR_INFO.format(statedir=state_dir),
+                    low=1,
+                    high=2)
+
+                if choice == 1:
+                    print('Creating global state directory: %s' % state_dir)
+                    os.makedirs(state_dir, mode=0o770)
+
+        state_dir_available = os.path.exists(state_dir)
+
+        # Possibly configure Mercurial if the user wants to.
+        # TODO offer to configure Git.
+        if hg_installed and state_dir_available:
+            configure_hg = False
+            if not self.instance.no_interactive:
+                choice = self.instance.prompt_int(prompt=CONFIGURE_MERCURIAL,
+                                                  low=1, high=2)
+                if choice == 1:
+                    configure_hg = True
+            else:
+                configure_hg = self.hg_configure
+
+            if configure_hg:
+                configure_mercurial(self.instance.which('hg'), state_dir)
+
+        # Offer to clone if we're not inside a clone.
+        checkout_type = current_firefox_checkout(check_output=self.instance.check_output,
+                                                 hg=self.instance.which('hg'))
+        have_clone = False
+
+        if checkout_type:
+            have_clone = True
+        elif hg_installed and not self.instance.no_interactive:
+            dest = raw_input(CLONE_MERCURIAL)
+            dest = dest.strip()
+            if dest:
+                dest = os.path.expanduser(dest)
+                have_clone = clone_firefox(self.instance.which('hg'), dest)
+
+        if not have_clone:
+            print(SOURCE_ADVERTISE)
 
         print(self.finished % name)
 
         # Like 'suggest_browser_mozconfig' or 'suggest_mobile_android_mozconfig'.
         getattr(self.instance, 'suggest_%s_mozconfig' % application)()
+
+
+def update_vct(hg, root_state_dir):
+    """Ensure version-control-tools in the state directory is up to date."""
+    vct_dir = os.path.join(root_state_dir, 'version-control-tools')
+
+    # Ensure the latest revision of version-control-tools is present.
+    update_mercurial_repo(hg, 'https://hg.mozilla.org/hgcustom/version-control-tools',
+                          vct_dir, '@')
+
+    return vct_dir
+
+
+def configure_mercurial(hg, root_state_dir):
+    """Run the Mercurial configuration wizard."""
+    vct_dir = update_vct(hg, root_state_dir)
+
+    # Run the config wizard from v-c-t.
+    args = [
+        hg,
+        '--config', 'extensions.configwizard=%s/hgext/configwizard' % vct_dir,
+        'configwizard',
+    ]
+    subprocess.call(args)
+
+
+def update_mercurial_repo(hg, url, dest, revision):
+    """Perform a clone/pull + update of a Mercurial repository."""
+    args = [hg]
+
+    # Disable common extensions whose older versions may cause `hg`
+    # invocations to abort.
+    disable_exts = [
+        'bzexport',
+        'bzpost',
+        'firefoxtree',
+        'hgwatchman',
+        'mozext',
+        'mqext',
+        'qimportbz',
+        'push-to-try',
+        'reviewboard',
+    ]
+    for ext in disable_exts:
+        args.extend(['--config', 'extensions.%s=!' % ext])
+
+    if os.path.exists(dest):
+        args.extend(['pull', url])
+        cwd = dest
+    else:
+        args.extend(['clone', '--noupdate', url, dest])
+        cwd = '/'
+
+    print('=' * 80)
+    print('Ensuring %s is up to date at %s' % (url, dest))
+
+    try:
+        subprocess.check_call(args, cwd=cwd)
+        subprocess.check_call([hg, 'update', '-r', revision], cwd=dest)
+    finally:
+        print('=' * 80)
+
+
+def clone_firefox(hg, dest):
+    """Clone the Firefox repository to a specified destination."""
+    print('Cloning Firefox Mercurial repository to %s' % dest)
+
+    # We create an empty repo then modify the config before adding data.
+    # This is necessary to ensure storage settings are optimally
+    # configured.
+    args = [
+        hg,
+        # The unified repo is generaldelta, so ensure the client is as
+        # well.
+        '--config', 'format.generaldelta=true',
+        'init',
+        dest
+    ]
+    res = subprocess.call(args)
+    if res:
+        print('unable to create destination repo; please try cloning manually')
+        return False
+
+    # Strictly speaking, this could overwrite a config based on a template
+    # the user has installed. Let's pretend this problem doesn't exist
+    # unless someone complains about it.
+    with open(os.path.join(dest, '.hg', 'hgrc'), 'ab') as fh:
+        fh.write('[paths]\n')
+        fh.write('default = https://hg.mozilla.org/mozilla-unified\n')
+        fh.write('\n')
+
+        # The server uses aggressivemergedeltas which can blow up delta chain
+        # length. This can cause performance to tank due to delta chains being
+        # too long. Limit the delta chain length to something reasonable
+        # to bound revlog read time.
+        fh.write('[format]\n')
+        fh.write('# This is necessary to keep performance in check\n')
+        fh.write('maxchainlen = 10000\n')
+
+    res = subprocess.call([hg, 'pull', 'https://hg.mozilla.org/mozilla-unified'], cwd=dest)
+    print('')
+    if res:
+        print('error pulling; try running `hg pull https://hg.mozilla.org/mozilla-unified` manually')
+        return False
+
+    print('updating to "central" - the development head of Gecko and Firefox')
+    res = subprocess.call([hg, 'update', '-r', 'central'], cwd=dest)
+    if res:
+        print('error updating; you will need to `hg update` manually')
+
+    print('Firefox source code available at %s' % dest)
+    return True
+
+
+def current_firefox_checkout(check_output, hg=None):
+    """Determine whether we're in a Firefox checkout.
+
+    Returns one of None, ``git``, or ``hg``.
+    """
+    HG_ROOT_REVISIONS = set([
+        # From mozilla-central.
+        '8ba995b74e18334ab3707f27e9eb8f4e37ba3d29',
+    ])
+
+    path = os.getcwd()
+    while path:
+        hg_dir = os.path.join(path, '.hg')
+        git_dir = os.path.join(path, '.git')
+        if hg and os.path.exists(hg_dir):
+            # Verify the hg repo is a Firefox repo by looking at rev 0.
+            try:
+                node = check_output([hg, 'log', '-r', '0', '-T', '{node}'], cwd=path)
+                if node in HG_ROOT_REVISIONS:
+                    return 'hg'
+                # Else the root revision is different. There could be nested
+                # repos. So keep traversing the parents.
+            except subprocess.CalledProcessError:
+                pass
+
+        # TODO check git remotes or `git rev-parse -q --verify $sha1^{commit}`
+        # for signs of Firefox.
+        elif os.path.exists(git_dir):
+            return 'git'
+
+        path, child = os.path.split(path)
+        if child == '':
+            break
+
+    return None

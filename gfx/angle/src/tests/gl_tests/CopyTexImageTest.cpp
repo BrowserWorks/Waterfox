@@ -82,7 +82,7 @@ class CopyTexImageTest : public ANGLETest
         glCopyTexSubImage2D(GL_TEXTURE_2D, 0, xoffset, yoffset, x, y, w, h);
     }
 
-    virtual void SetUp()
+    void SetUp() override
     {
         ANGLETest::SetUp();
 
@@ -119,14 +119,14 @@ class CopyTexImageTest : public ANGLETest
         ASSERT_GL_NO_ERROR();
     }
 
-    virtual void TearDown()
+    void TearDown() override
     {
         glDeleteProgram(mTextureProgram);
 
         ANGLETest::TearDown();
     }
 
-    void verifyResults(GLuint texture, GLubyte data[4], GLint x, GLint y) const
+    void verifyResults(GLuint texture, GLubyte data[4], GLint x, GLint y)
     {
         glViewport(0, 0, 16, 16);
 
@@ -166,7 +166,7 @@ TEST_P(CopyTexImageTest, RGBToL)
 {
     // TODO (geofflang): Figure out why CopyTex[Sub]Image doesn't work with
     // RGB->L on older Intel chips
-    if (isIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
+    if (IsIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
     {
         std::cout << "Test skipped on Intel OpenGL." << std::endl;
         return;
@@ -269,7 +269,7 @@ TEST_P(CopyTexImageTest, SubImageRGBToL)
 {
     // TODO (geofflang): Figure out why CopyTex[Sub]Image doesn't work with
     // RGB->L on older Intel chips
-    if (isIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
+    if (IsIntel() && getPlatformRenderer() == EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE)
     {
         std::cout << "Test skipped on Intel OpenGL." << std::endl;
         return;
@@ -298,6 +298,37 @@ TEST_P(CopyTexImageTest, SubImageRGBToL)
     verifyResults(tex, expected1, 7, 7);
 }
 
+// specialization of CopyTexImageTest is added so that some tests can be explicitly run with an ES3
+// context
+class CopyTexImageTestES3 : public CopyTexImageTest
+{
+};
+
+//  The test verifies that glCopyTexSubImage2D generates a GL_INVALID_OPERATION error
+//  when the read buffer is GL_NONE.
+//  Reference: GLES 3.0.4, Section 3.8.5 Alternate Texture Image Specification Commands
+TEST_P(CopyTexImageTestES3, ReadBufferIsNone)
+{
+    GLfloat color[] = {
+        0.25f, 1.0f, 0.75f, 0.5f,
+    };
+
+    GLuint fbo = createFramebuffer(GL_RGBA, GL_UNSIGNED_BYTE, color);
+    GLuint tex = createTextureFromCopyTexImage(fbo, GL_RGBA);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glBindTexture(GL_TEXTURE_2D, tex);
+
+    glReadBuffer(GL_NONE);
+
+    EXPECT_GL_NO_ERROR();
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, 4, 4);
+    EXPECT_GL_ERROR(GL_INVALID_OPERATION);
+
+    glDeleteFramebuffers(1, &fbo);
+    glDeleteTextures(1, &tex);
+}
+
 // Use this to select which configurations (e.g. which renderer, which GLES major version) these
 // tests should be run against.
 ANGLE_INSTANTIATE_TEST(CopyTexImageTest,
@@ -307,4 +338,6 @@ ANGLE_INSTANTIATE_TEST(CopyTexImageTest,
                        ES2_OPENGL(),
                        ES2_OPENGL(3, 3),
                        ES2_OPENGLES());
+
+ANGLE_INSTANTIATE_TEST(CopyTexImageTestES3, ES3_D3D11(), ES3_OPENGL(), ES3_OPENGLES());
 }

@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/metaZones.xml
@@ -590,9 +590,6 @@ metaZones:table(nofallback){
         }
         Ponape{
             001{"Pacific/Ponape"}
-        }
-        Pyongyang{
-            001{"Asia/Pyongyang"}
         }
         Qyzylorda{
             001{"Asia/Qyzylorda"}
@@ -1592,18 +1589,6 @@ metaZones:table(nofallback){
                 "America_Central",
             }
         }
-        "America:Fort_Nelson"{
-            {
-                "America_Pacific",
-                "1970-01-01 00:00",
-                "2015-03-08 10:00",
-            }
-            {
-                "America_Mountain",
-                "2015-03-08 10:00",
-                "9999-12-31 23:59",
-            }
-        }
         "America:Fortaleza"{
             {
                 "Brasilia",
@@ -2057,13 +2042,6 @@ metaZones:table(nofallback){
         "America:Metlakatla"{
             {
                 "America_Pacific",
-                "1970-01-01 00:00",
-                "2015-11-01 10:00",
-            }
-            {
-                "Alaska",
-                "2015-11-01 10:00",
-                "9999-12-31 23:59",
             }
         }
         "America:Mexico_City"{
@@ -2637,11 +2615,6 @@ metaZones:table(nofallback){
             {
                 "Magadan",
                 "2010-03-27 14:00",
-                "2014-10-25 14:00",
-            }
-            {
-                "Anadyr",
-                "2014-10-25 14:00",
                 "9999-12-31 23:59",
             }
         }
@@ -2761,11 +2734,6 @@ metaZones:table(nofallback){
             {
                 "Irkutsk",
                 "2014-10-25 16:00",
-                "2016-03-26 18:00",
-            }
-            {
-                "Yakutsk",
-                "2016-03-26 18:00",
                 "9999-12-31 23:59",
             }
         }
@@ -3084,11 +3052,6 @@ metaZones:table(nofallback){
                 "Korea",
                 "1970-01-01 00:00",
                 "2015-08-14 15:00",
-            }
-            {
-                "Pyongyang",
-                "2015-08-14 15:00",
-                "9999-12-31 23:59",
             }
         }
         "Asia:Qatar"{
@@ -3452,13 +3415,6 @@ metaZones:table(nofallback){
                 "Europe_Central",
             }
         }
-        "Europe:Astrakhan"{
-            {
-                "Moscow",
-                "1992-03-28 22:00",
-                "2016-03-26 23:00",
-            }
-        }
         "Europe:Athens"{
             {
                 "Europe_Eastern",
@@ -3777,8 +3733,13 @@ metaZones:table(nofallback){
                 "1991-09-29 00:00",
             }
             {
-                "Samara",
+                "Kuybyshev",
                 "1991-09-29 00:00",
+                "1991-10-20 00:00",
+            }
+            {
+                "Samara",
+                "1991-10-20 00:00",
                 "9999-12-31 23:59",
             }
         }
@@ -3849,13 +3810,6 @@ metaZones:table(nofallback){
         "Europe:Tirane"{
             {
                 "Europe_Central",
-            }
-        }
-        "Europe:Ulyanovsk"{
-            {
-                "Moscow",
-                "1992-01-19 00:00",
-                "2016-03-26 23:00",
             }
         }
         "Europe:Uzhgorod"{

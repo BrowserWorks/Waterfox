@@ -665,23 +665,72 @@ js::XDRInterpretedFunction(XDRState<XDR_ENCODE>*, HandleObject, HandleScript, Mu
 template bool
 js::XDRInterpretedFunction(XDRState<XDR_DECODE>*, HandleObject, HandleScript, MutableHandleFunction);
 
+/* ES6 (04-25-16) 19.2.3.6 Function.prototype [ @@hasInstance ] */
+bool
+js::fun_symbolHasInstance(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+
+    if (args.length() < 1) {
+        args.rval().setBoolean(false);
+        return true;
+    }
+
+    /* Step 1. */
+    HandleValue func = args.thisv();
+
+    // Primitives are non-callable and will always return false from
+    // OrdinaryHasInstance.
+    if (!func.isObject()) {
+        args.rval().setBoolean(false);
+        return true;
+    }
+
+    RootedObject obj(cx, &func.toObject());
+    RootedValue v(cx, args[0]);
+
+    /* Step 2. */
+    bool result;
+    if (!OrdinaryHasInstance(cx, obj, &v, &result))
+        return false;
+
+    args.rval().setBoolean(result);
+    return true;
+}
+
 /*
- * [[HasInstance]] internal method for Function objects: fetch the .prototype
- * property of its 'this' parameter, and walks the prototype chain of v (only
- * if v is an object) returning true if .prototype is found.
+ * ES6 (4-25-16) 7.3.19 OrdinaryHasInstance
  */
-static bool
-fun_hasInstance(JSContext* cx, HandleObject objArg, MutableHandleValue v, bool* bp)
+bool
+js::OrdinaryHasInstance(JSContext* cx, HandleObject objArg, MutableHandleValue v, bool* bp)
 {
     RootedObject obj(cx, objArg);
 
-    while (obj->is<JSFunction>() && obj->isBoundFunction())
-        obj = obj->as<JSFunction>().getBoundFunctionTarget();
+    /* Step 1. */
+    if (!obj->isCallable()) {
+        *bp = false;
+        return true;
+    }
 
+    /* Step 2. */
+    if (obj->is<JSFunction>() && obj->isBoundFunction()) {
+        /* Steps 2a-b. */
+        obj = obj->as<JSFunction>().getBoundFunctionTarget();
+        return InstanceOfOperator(cx, obj, v, bp);
+    }
+
+    /* Step 3. */
+    if (!v.isObject()) {
+        *bp = false;
+        return true;
+    }
+
+    /* Step 4. */
     RootedValue pval(cx);
     if (!GetProperty(cx, obj, obj, cx->names().prototype, &pval))
         return false;
 
+    /* Step 5. */
     if (pval.isPrimitive()) {
         /*
          * Throw a runtime error if instanceof is called on a function that
@@ -692,6 +741,7 @@ fun_hasInstance(JSContext* cx, HandleObject objArg, MutableHandleValue v, bool* 
         return false;
     }
 
+    /* Step 6. */
     RootedObject pobj(cx, &pval.toObject());
     bool isDelegate;
     if (!IsDelegate(cx, pobj, v, &isDelegate))
@@ -851,7 +901,7 @@ static const ClassOps JSFunctionClassOps = {
     fun_mayResolve,
     nullptr,                 /* finalize    */
     nullptr,                 /* call        */
-    fun_hasInstance,
+    nullptr,
     nullptr,                 /* construct   */
     fun_trace,
 };
@@ -975,7 +1025,9 @@ js::FunctionToString(JSContext* cx, HandleFunction fun, bool lambdaParen)
                                         fun->isGetter() || fun->isSetter();
 
     // If we're not in pretty mode, put parentheses around lambda functions and methods.
-    if (fun->isInterpreted() && !lambdaParen && funIsMethodOrNonArrowLambda) {
+    if (fun->isInterpreted() && !lambdaParen && funIsMethodOrNonArrowLambda &&
+        !fun->isSelfHostedBuiltin())
+    {
         if (!out.append("("))
             return nullptr;
     }
@@ -1104,6 +1156,20 @@ fun_toStringHelper(JSContext* cx, HandleObject obj, unsigned indent)
 }
 
 bool
+js::FunctionHasDefaultHasInstance(JSFunction* fun, const WellKnownSymbols& symbols)
+{
+    jsid id = SYMBOL_TO_JSID(symbols.hasInstance);
+    Shape* shape = fun->lookupPure(id);
+    if (shape) {
+        if (!shape->hasSlot() || !shape->hasDefaultGetter())
+            return false;
+        const Value hasInstance = fun->as<NativeObject>().getSlot(shape->slot());
+        return IsNativeFunction(hasInstance, js::fun_symbolHasInstance);
+    }
+    return true;
+}
+
+bool
 js::fun_toString(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
@@ -1177,7 +1243,7 @@ js::fun_call(JSContext* cx, unsigned argc, Value* vp)
         argCount--; // strip off provided |this|
 
     InvokeArgs iargs(cx);
-    if (!iargs.init(argCount))
+    if (!iargs.init(cx, argCount))
         return false;
 
     for (size_t i = 0; i < argCount; i++)
@@ -1217,7 +1283,7 @@ js::fun_apply(JSContext* cx, unsigned argc, Value* vp)
         // Step 3-6.
         ScriptFrameIter iter(cx);
         MOZ_ASSERT(iter.numActualArgs() <= ARGS_LENGTH_MAX);
-        if (!args2.init(iter.numActualArgs()))
+        if (!args2.init(cx, iter.numActualArgs()))
             return false;
 
         // Steps 7-8.
@@ -1238,12 +1304,7 @@ js::fun_apply(JSContext* cx, unsigned argc, Value* vp)
             return false;
 
         // Step 6.
-        if (length > ARGS_LENGTH_MAX) {
-            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_TOO_MANY_FUN_APPLY_ARGS);
-            return false;
-        }
-
-        if (!args2.init(length))
+        if (!args2.init(cx, length))
             return false;
 
         // Steps 7-8.
@@ -1408,9 +1469,9 @@ JSFunction::createScriptForLazilyInterpretedFunction(JSContext* cx, HandleFuncti
         // Additionally, the lazy script cache is not used during incremental
         // GCs, to avoid resurrecting dead scripts after incremental sweeping
         // has started.
-        if (canRelazify && !JS::IsIncrementalGCInProgress(cx->runtime())) {
+        if (canRelazify && !JS::IsIncrementalGCInProgress(cx)) {
             LazyScriptCache::Lookup lookup(cx, lazy);
-            cx->runtime()->lazyScriptCache.lookup(lookup, script.address());
+            cx->caches.lazyScriptCache.lookup(lookup, script.address());
         }
 
         if (script) {
@@ -1464,7 +1525,7 @@ JSFunction::createScriptForLazilyInterpretedFunction(JSContext* cx, HandleFuncti
             script->setColumn(lazy->column());
 
             LazyScriptCache::Lookup lookup(cx, lazy);
-            cx->runtime()->lazyScriptCache.insert(lookup, script);
+            cx->caches.lazyScriptCache.insert(lookup, script);
 
             // Remember the lazy script on the compiled script, so it can be
             // stored on the function again in case of re-lazification.
@@ -1534,6 +1595,8 @@ JSFunction::maybeRelazify(JSRuntime* rt)
         MOZ_ASSERT(isExtended());
         MOZ_ASSERT(getExtendedSlot(LAZY_FUNCTION_NAME_SLOT).toString()->isAtom());
     }
+
+    comp->scheduleDelazificationForDebugger();
 }
 
 static bool
@@ -1569,7 +1632,8 @@ const JSFunctionSpec js::function_methods[] = {
     JS_FN(js_apply_str,      fun_apply,      2,0),
     JS_FN(js_call_str,       fun_call,       1,0),
     JS_FN("isGenerator",     fun_isGenerator,0,0),
-    JS_SELF_HOSTED_FN("bind", "FunctionBind", 2,JSFUN_HAS_REST),
+    JS_SELF_HOSTED_FN("bind", "FunctionBind", 2, JSFUN_HAS_REST),
+    JS_SYM_FN(hasInstance, fun_symbolHasInstance, 1, JSPROP_READONLY | JSPROP_PERMANENT),
     JS_FS_END
 };
 

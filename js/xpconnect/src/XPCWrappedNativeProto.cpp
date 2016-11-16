@@ -17,12 +17,10 @@ int32_t XPCWrappedNativeProto::gDEBUG_LiveProtoCount = 0;
 
 XPCWrappedNativeProto::XPCWrappedNativeProto(XPCWrappedNativeScope* Scope,
                                              nsIClassInfo* ClassInfo,
-                                             uint32_t ClassInfoFlags,
                                              XPCNativeSet* Set)
     : mScope(Scope),
       mJSProtoObject(nullptr),
       mClassInfo(ClassInfo),
-      mClassInfoFlags(ClassInfoFlags),
       mSet(Set),
       mScriptableInfo(nullptr)
 {
@@ -33,7 +31,7 @@ XPCWrappedNativeProto::XPCWrappedNativeProto(XPCWrappedNativeScope* Scope,
     MOZ_ASSERT(mScope);
 
 #ifdef DEBUG
-    PR_ATOMIC_INCREMENT(&gDEBUG_LiveProtoCount);
+    gDEBUG_LiveProtoCount++;
 #endif
 }
 
@@ -44,7 +42,7 @@ XPCWrappedNativeProto::~XPCWrappedNativeProto()
     MOZ_COUNT_DTOR(XPCWrappedNativeProto);
 
 #ifdef DEBUG
-    PR_ATOMIC_DECREMENT(&gDEBUG_LiveProtoCount);
+    gDEBUG_LiveProtoCount--;
 #endif
 
     // Note that our weak ref to mScope is not to be trusted at this point.
@@ -164,10 +162,6 @@ XPCWrappedNativeProto::GetNewOrUsed(XPCWrappedNativeScope* scope,
     AutoMarkingWrappedNativeProtoPtr proto(cx);
     ClassInfo2WrappedNativeProtoMap* map = nullptr;
 
-    uint32_t ciFlags;
-    if (NS_FAILED(classInfo->GetFlags(&ciFlags)))
-        ciFlags = 0;
-
     map = scope->GetWrappedNativeProtoMap();
     proto = map->Find(classInfo);
     if (proto)
@@ -178,7 +172,7 @@ XPCWrappedNativeProto::GetNewOrUsed(XPCWrappedNativeScope* scope,
     if (!set)
         return nullptr;
 
-    proto = new XPCWrappedNativeProto(scope, classInfo, ciFlags, set);
+    proto = new XPCWrappedNativeProto(scope, classInfo, set);
 
     if (!proto || !proto->Init(scriptableCreateInfo, callPostCreatePrototype)) {
         delete proto.get();

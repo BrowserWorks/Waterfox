@@ -60,6 +60,7 @@ config = {
         "bin/*",
         "certs/*",
         "config/*",
+        "mach",
         "marionette/*",
         "modules/*",
         "mozbase/*",
@@ -272,6 +273,11 @@ config = {
         "xpcshell-addons": {
             "options": ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
                         "--tag=addons",
+                        "--manifest=tests/xpcshell/tests/xpcshell.ini"],
+            "tests": []
+        },
+        "xpcshell-coverage": {
+            "options": ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
                         "--manifest=tests/xpcshell/tests/xpcshell.ini"],
             "tests": []
         },

@@ -107,8 +107,6 @@ struct LinearMemoryAddress
     {}
 };
 
-struct Nothing {};
-
 template <typename ControlItem>
 class ControlStackEntry
 {
@@ -203,12 +201,6 @@ struct ExprIterPolicy
 
     // Should the iterator produce output values?
     static const bool Output = false;
-
-    // This function is called to report failures.
-    static bool fail(const char*, const Decoder&) {
-        MOZ_CRASH("unexpected validation failure");
-        return false;
-    }
 
     // These members allow clients to add additional information to the value
     // and control stacks, respectively. Using Nothing means that no additional
@@ -414,8 +406,8 @@ class MOZ_STACK_CLASS ExprIter : private Policy
     }
 
   public:
-    ExprIter(Policy policy, Decoder& decoder)
-      : Policy(policy), d_(decoder)
+    explicit ExprIter(Decoder& decoder)
+      : d_(decoder)
     {
         expr_ = Expr::Limit;
     }
@@ -594,8 +586,9 @@ ExprIter<Policy>::unrecognizedOpcode(Expr expr)
 
 template <typename Policy>
 inline bool
-ExprIter<Policy>::fail(const char* msg) {
-    return Policy::fail(msg, d_);
+ExprIter<Policy>::fail(const char* msg)
+{
+    return d_.fail(msg);
 }
 
 template <typename Policy>
@@ -1218,7 +1211,7 @@ ExprIter<Policy>::readGetGlobal(const GlobalDescVector& globals, uint32_t* id)
     if (Validate && validateId >= globals.length())
         return fail("get_global index out of range");
 
-    if (!push(ToExprType(globals[validateId].type)))
+    if (!push(ToExprType(globals[validateId].type())))
         return false;
 
     if (Output)
@@ -1240,7 +1233,10 @@ ExprIter<Policy>::readSetGlobal(const GlobalDescVector& globals, uint32_t* id, V
     if (Validate && validateId >= globals.length())
         return fail("set_global index out of range");
 
-    if (!topWithType(ToExprType(globals[validateId].type), value))
+    if (Validate && !globals[validateId].isMutable())
+        return fail("can't write an immutable global");
+
+    if (!topWithType(ToExprType(globals[validateId].type()), value))
         return false;
 
     if (Output)
@@ -1836,8 +1832,8 @@ ExprIter<Policy>::readSimdCtorReturn(ValType simdType)
 namespace mozilla {
 
 // Specialize IsPod for the Nothing specializations.
-template<> struct IsPod<js::wasm::TypeAndValue<js::wasm::Nothing>> : TrueType {};
-template<> struct IsPod<js::wasm::ControlStackEntry<js::wasm::Nothing>> : TrueType {};
+template<> struct IsPod<js::wasm::TypeAndValue<Nothing>> : TrueType {};
+template<> struct IsPod<js::wasm::ControlStackEntry<Nothing>> : TrueType {};
 
 } // namespace mozilla
 

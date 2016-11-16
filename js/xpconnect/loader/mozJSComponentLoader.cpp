@@ -47,6 +47,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/UniquePtrExtensions.h"
+#include "mozilla/unused.h"
 
 using namespace mozilla;
 using namespace mozilla::scache;
@@ -71,7 +72,7 @@ static const char kJSCachePrefix[] = "jsloader";
 #define XPC_SERIALIZATION_BUFFER_SIZE   (64 * 1024)
 #define XPC_DESERIALIZATION_BUFFER_SIZE (12 * 8192)
 
-// NSPR_LOG_MODULES=JSComponentLoader:5
+// MOZ_LOG=JSComponentLoader:5
 static LazyLogModule gJSCLLog("JSComponentLoader");
 
 #define LOG(args) MOZ_LOG(gJSCLLog, mozilla::LogLevel::Debug, args)
@@ -345,6 +346,11 @@ ResolveModuleObjectProperty(JSContext* aCx, HandleObject aModObj, const char* na
 const mozilla::Module*
 mozJSComponentLoader::LoadModule(FileLocation& aFile)
 {
+    if (!NS_IsMainThread()) {
+        MOZ_ASSERT(false, "Don't use JS components off the main thread");
+        return nullptr;
+    }
+
     nsCOMPtr<nsIFile> file = aFile.GetBaseFile();
 
     nsCString spec;
@@ -835,7 +841,8 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
             rv = aInfo.EnsureScriptChannel();
             NS_ENSURE_SUCCESS(rv, rv);
             nsCOMPtr<nsIInputStream> scriptStream;
-            rv = aInfo.ScriptChannel()->Open(getter_AddRefs(scriptStream));
+            rv = NS_MaybeOpenChannelUsingOpen2(aInfo.ScriptChannel(),
+                   getter_AddRefs(scriptStream));
             NS_ENSURE_SUCCESS(rv, rv);
 
             uint64_t len64;
@@ -877,7 +884,8 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
         // exception on this context.
         if (!script && !function && aPropagateExceptions &&
             jsapi.HasException()) {
-            jsapi.StealException(aException);
+            if (!jsapi.StealException(aException))
+                return NS_ERROR_OUT_OF_MEMORY;
         }
     }
 
@@ -942,7 +950,9 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
 
         if (!ok) {
             if (aPropagateExceptions && aes.HasException()) {
-                aes.StealException(aException);
+                // Ignore return value because we're returning an error code
+                // anyway.
+                Unused << aes.StealException(aException);
             }
             aObject.set(nullptr);
             aTableScript.set(nullptr);

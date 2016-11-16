@@ -1,12 +1,12 @@
-FROM          taskcluster/ubuntu1204-test-upd:0.1.9.20160329211700
+FROM          taskcluster/ubuntu1204-test-upd:0.1.11.20160628204600
 MAINTAINER    Jonas Finnemann Jensen <jopsen@gmail.com>
 
 # Add utilities and configuration
-COPY           dot-config                    /home/worker/.config
-COPY           dot-pulse                     /home/worker/.pulse
+COPY           dot-files/config              /home/worker/.config
+COPY           dot-files/pulse               /home/worker/.pulse
+COPY           dot-files/hgrc                /home/worker/.hgrc
 COPY           bin                           /home/worker/bin
-# This removes the requirement of a developer to call it with bash
-RUN            chmod +x bin/test.sh
+RUN            chmod +x bin/*
 # TODO: remove this when buildbot is gone
 COPY           buildprops.json               /home/worker/buildprops.json
 COPY           tc-vcs-config.yml /etc/taskcluster-vcs.yml
@@ -19,14 +19,17 @@ RUN chmod u+x /home/worker/bin/buildbot_step
 ADD            https://s3-us-west-2.amazonaws.com/test-caching/packages/linux64-stackwalk /usr/local/bin/linux64-minidump_stackwalk
 RUN chmod +x /usr/local/bin/linux64-minidump_stackwalk
 
+# Add wrapper scripts for xvfb allowing tasks to easily retry starting up xvfb
+# %include testing/docker/recipes/xvfb.sh
+ADD topsrcdir/testing/docker/recipes/xvfb.sh /home/worker/scripts/xvfb.sh
+
 # allow the worker user to access video devices
 RUN usermod -a -G video worker
 
 RUN mkdir Documents; mkdir Pictures; mkdir Music; mkdir Videos; mkdir artifacts
 
-# install a new enough npm, plus tc-vcs and tc-npm-cache
-RUN npm install -g npm@^2.0.0 \
- && npm install -g taskcluster-vcs@2.3.12 \
+# install tc-vcs and tc-npm-cache
+RUN npm install -g taskcluster-vcs@2.3.12 \
  && npm install -g taskcluster-npm-cache@1.1.14 \
  && rm -rf ~/.npm
 ENV PATH $PATH:/home/worker/bin
@@ -62,6 +65,11 @@ ADD apport /etc/default/apport
 
 # Disable font antialiasing for now to match releng's setup
 ADD fonts.conf /home/worker/.fonts.conf
+
+# Set up first-run experience for interactive mode
+ADD motd /etc/taskcluster-motd
+ADD taskcluster-interactive-shell /bin/taskcluster-interactive-shell
+RUN chmod +x /bin/taskcluster-interactive-shell
 
 # Set a default command useful for debugging
 CMD ["/bin/bash", "--login"]

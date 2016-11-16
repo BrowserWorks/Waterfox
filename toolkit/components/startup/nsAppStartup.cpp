@@ -364,7 +364,12 @@ nsAppStartup::Quit(uint32_t aMode)
       mediator->GetEnumerator(nullptr, getter_AddRefs(windowEnumerator));
       if (windowEnumerator) {
         bool more;
-        while (windowEnumerator->HasMoreElements(&more), more) {
+        windowEnumerator->HasMoreElements(&more);
+        // If we reported no windows, we definitely shouldn't be
+        // iterating any here.
+        MOZ_ASSERT_IF(!mConsiderQuitStopper, !more);
+
+        while (more) {
           nsCOMPtr<nsISupports> window;
           windowEnumerator->GetNext(getter_AddRefs(window));
           nsCOMPtr<nsPIDOMWindowOuter> domWindow(do_QueryInterface(window));
@@ -373,6 +378,7 @@ nsAppStartup::Quit(uint32_t aMode)
             if (!domWindow->CanClose())
               return NS_OK;
           }
+          windowEnumerator->HasMoreElements(&more);
         }
       }
     }
@@ -608,7 +614,7 @@ nsAppStartup::CreateChromeWindow(nsIWebBrowserChrome *aParent,
                                  nsIWebBrowserChrome **_retval)
 {
   bool cancel;
-  return CreateChromeWindow2(aParent, aChromeFlags, 0, 0, nullptr, &cancel, _retval);
+  return CreateChromeWindow2(aParent, aChromeFlags, 0, nullptr, &cancel, _retval);
 }
 
 
@@ -631,7 +637,6 @@ NS_IMETHODIMP
 nsAppStartup::CreateChromeWindow2(nsIWebBrowserChrome *aParent,
                                   uint32_t aChromeFlags,
                                   uint32_t aContextFlags,
-                                  nsIURI *aURI,
                                   nsITabParent *aOpeningTab,
                                   bool *aCancel,
                                   nsIWebBrowserChrome **_retval)

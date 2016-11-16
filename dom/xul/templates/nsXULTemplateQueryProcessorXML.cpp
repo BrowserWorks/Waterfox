@@ -19,12 +19,12 @@
 #include "nsArrayUtils.h"
 #include "nsPIDOMWindow.h"
 #include "nsXULContentUtils.h"
-#include "nsXMLHttpRequest.h"
 #include "mozilla/dom/XPathEvaluator.h"
 #include "nsXULTemplateQueryProcessorXML.h"
 #include "nsXULTemplateResultXML.h"
 #include "nsXULSortService.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/XMLHttpRequest.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -45,7 +45,13 @@ nsXULTemplateResultSetXML::HasMoreElements(bool *aResult)
     // nodes, so just return false in this case.
     ErrorResult rv;
     uint32_t length = mResults->GetSnapshotLength(rv);
-    *aResult = !rv.Failed() && mPosition < length;
+    if (NS_WARN_IF(rv.Failed())) {
+      rv.SuppressException();
+      *aResult = false;
+      return NS_OK;
+    }
+
+    *aResult = mPosition < length;
     return NS_OK;
 }
 
@@ -157,16 +163,11 @@ nsXULTemplateQueryProcessorXML::GetDatasource(nsIArray* aDataSources,
       doc->GetScriptHandlingObject(hasHadScriptObject);
     NS_ENSURE_STATE(scriptObject);
 
-    nsIScriptContext *context = scriptObject->GetContext();
-    NS_ENSURE_TRUE(context, NS_OK);
-
     nsCOMPtr<nsIXMLHttpRequest> req =
         do_CreateInstance(NS_XMLHTTPREQUEST_CONTRACTID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = req->Init(docPrincipal, context,
-                   scriptObject ? scriptObject : doc->GetScopeObject(),
-                   nullptr, nullptr);
+    rv = req->Init(docPrincipal, scriptObject, nullptr, nullptr);
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = req->Open(NS_LITERAL_CSTRING("GET"), uriStr, true,

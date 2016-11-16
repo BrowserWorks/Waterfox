@@ -9,7 +9,6 @@
 
 #include "AudioEventTimeline.h"
 #include "mozilla/ErrorResult.h"
-#include "nsAutoPtr.h"
 #include "MediaStreamGraph.h"
 #include "AudioSegment.h"
 
@@ -24,9 +23,9 @@ namespace dom {
 // This MediaStream is managed by the AudioParam subclass on the main
 // thread, and can only be obtained from the AudioNodeEngine instances
 // consuming this class.
-class AudioParamTimeline : public AudioEventTimeline<ErrorResult>
+class AudioParamTimeline : public AudioEventTimeline
 {
-  typedef AudioEventTimeline<ErrorResult> BaseClass;
+  typedef AudioEventTimeline BaseClass;
 
 public:
   explicit AudioParamTimeline(float aDefaultValue)

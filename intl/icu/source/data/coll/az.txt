@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/collation/az.xml
@@ -15,7 +15,7 @@ az{
                 "[import az-u-co-standard]"
                 "[reorder others]"
             }
-            Version{"29"}
+            Version{"28"}
         }
         standard{
             Sequence{
@@ -32,7 +32,7 @@ az{
                 "&H<x<<<X"
                 "&Z<w<<<W"
             }
-            Version{"29"}
+            Version{"28"}
         }
     }
 }

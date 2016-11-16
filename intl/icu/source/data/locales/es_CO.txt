@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es_CO.xml
@@ -23,7 +23,7 @@ es_CO{
             }
         }
     }
-    Version{"2.1.22.17"}
+    Version{"2.1.20.32"}
     calendar{
         generic{
             DateTimePatterns{
@@ -147,6 +147,23 @@ es_CO{
                         "j",
                         "v",
                         "s",
+                    }
+                }
+            }
+            dayPeriod{
+                format{
+                    narrow{
+                        evening1{"p. m."}
+                        morning2{"a. m."}
+                        night1{"p. m."}
+                    }
+                }
+                stand-alone{
+                    narrow{
+                        evening1{"p. m."}
+                        morning2{"a. m."}
+                        night1{"p. m."}
+                        noon{"m."}
                     }
                 }
             }

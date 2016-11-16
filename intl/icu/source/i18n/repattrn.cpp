@@ -3,8 +3,8 @@
 //
 /*
 ***************************************************************************
-*   Copyright (C) 2002-2016 International Business Machines Corporation
-*   and others. All rights reserved.
+*   Copyright (C) 2002-2015 International Business Machines Corporation   *
+*   and others. All rights reserved.                                      *
 ***************************************************************************
 */
 
@@ -14,8 +14,6 @@
 
 #include "unicode/regex.h"
 #include "unicode/uclean.h"
-#include "cmemory.h"
-#include "cstr.h"
 #include "uassert.h"
 #include "uhash.h"
 #include "uvector.h"
@@ -677,6 +675,7 @@ int32_t  RegexPattern::split(UText *input,
 }
 
 
+
 //---------------------------------------------------------------------
 //
 //   dump    Output the compiled form of the pattern.
@@ -691,7 +690,7 @@ void   RegexPattern::dumpOp(int32_t index) const {
     int32_t val         = URX_VAL(op);
     int32_t type        = URX_TYPE(op);
     int32_t pinnedType  = type;
-    if ((uint32_t)pinnedType >= UPRV_LENGTHOF(opNames)) {
+    if ((uint32_t)pinnedType >= sizeof(opNames)/sizeof(char *)) {
         pinnedType = 0;
     }
 
@@ -752,11 +751,7 @@ void   RegexPattern::dumpOp(int32_t index) const {
 
     case URX_ONECHAR:
     case URX_ONECHAR_I:
-        if (val < 0x20) {
-            printf("%#x", val);
-        } else {
-            printf("'%s'", CStr(UnicodeString(val))());
-        }
+        printf("%c", val<256?val:'?');
         break;
 
     case URX_STRING:
@@ -765,8 +760,12 @@ void   RegexPattern::dumpOp(int32_t index) const {
             int32_t lengthOp       = fCompiledPat->elementAti(index+1);
             U_ASSERT(URX_TYPE(lengthOp) == URX_STRING_LEN);
             int32_t length = URX_VAL(lengthOp);
-            UnicodeString str(fLiteralText, val, length);
-            printf("%s", CStr(str)());
+            int32_t i;
+            for (i=val; i<val+length; i++) {
+                UChar c = fLiteralText[i];
+                if (c < 32 || c >= 256) {c = '.';}
+                printf("%c", c);
+            }
         }
         break;
 
@@ -776,7 +775,9 @@ void   RegexPattern::dumpOp(int32_t index) const {
             UnicodeString s;
             UnicodeSet *set = (UnicodeSet *)fSets->elementAt(val);
             set->toPattern(s, TRUE);
-            printf("%s", CStr(s)());
+            for (int32_t i=0; i<s.length(); i++) {
+                printf("%c", s.charAt(i));
+            }
         }
         break;
 
@@ -790,7 +791,9 @@ void   RegexPattern::dumpOp(int32_t index) const {
             }
             UnicodeSet *set = fStaticSets[val];
             set->toPattern(s, TRUE);
-            printf("%s", CStr(s)());
+            for (int32_t i=0; i<s.length(); i++) {
+                printf("%c", s.charAt(i));
+            }
         }
         break;
 
@@ -806,27 +809,53 @@ void   RegexPattern::dumpOp(int32_t index) const {
 
 void RegexPattern::dumpPattern() const {
 #if defined(REGEX_DEBUG)
+    // TODO: This function assumes an ASCII based charset.
     int      index;
+    int      i;
 
-    UnicodeString patStr;
-    for (UChar32 c = utext_next32From(fPattern, 0); c != U_SENTINEL; c = utext_next32(fPattern)) {
-        patStr.append(c);
+    printf("Original Pattern:  ");
+    UChar32 c = utext_next32From(fPattern, 0);
+    while (c != U_SENTINEL) {
+        if (c<32 || c>256) {
+            c = '.';
+        }
+        printf("%c", c);
+
+        c = UTEXT_NEXT32(fPattern);
     }
-    printf("Original Pattern:  \"%s\"\n", CStr(patStr)());
+    printf("\n");
     printf("   Min Match Length:  %d\n", fMinMatchLen);
     printf("   Match Start Type:  %s\n", START_OF_MATCH_STR(fStartType));
     if (fStartType == START_STRING) {
-        UnicodeString initialString(fLiteralText,fInitialStringIdx, fInitialStringLen);
-        printf("   Initial match string: \"%s\"\n", CStr(initialString)());
+        printf("    Initial match string: \"");
+        for (i=fInitialStringIdx; i<fInitialStringIdx+fInitialStringLen; i++) {
+            printf("%c", fLiteralText[i]);   // TODO:  non-printables, surrogates.
+        }
+        printf("\"\n");
+
     } else if (fStartType == START_SET) {
-        UnicodeString s;
-        fInitialChars->toPattern(s, TRUE);
-        printf("    Match First Chars: %s\n", CStr(s)());
+        int32_t numSetChars = fInitialChars->size();
+        if (numSetChars > 20) {
+            numSetChars = 20;
+        }
+        printf("     Match First Chars : ");
+        for (i=0; i<numSetChars; i++) {
+            UChar32 c = fInitialChars->charAt(i);
+            if (0x20<c && c <0x7e) {
+                printf("%c ", c);
+            } else {
+                printf("%#x ", c);
+            }
+        }
+        if (numSetChars < fInitialChars->size()) {
+            printf(" ...");
+        }
+        printf("\n");
 
     } else if (fStartType == START_CHAR) {
-        printf("    First char of Match: ");
-        if (fInitialChar > 0x20) {
-                printf("'%s'\n", CStr(UnicodeString(fInitialChar))());
+        printf("    First char of Match : ");
+        if (0x20 < fInitialChar && fInitialChar<0x7e) {
+                printf("%c\n", fInitialChar);
             } else {
                 printf("%#x\n", fInitialChar);
             }
@@ -840,8 +869,10 @@ void RegexPattern::dumpPattern() const {
         const UHashElement *el = NULL;
         while ((el = uhash_nextElement(fNamedCaptureMap, &pos))) {
             const UnicodeString *name = (const UnicodeString *)el->key.pointer;
+            char s[100];
+            name->extract(0, 99, s, sizeof(s), US_INV);  // capture group names are invariant.
             int32_t number = el->value.integer;
-            printf("   %d\t%s\n", number, CStr(*name)());
+            printf("   %d\t%s\n", number, s);
         }
     }
 

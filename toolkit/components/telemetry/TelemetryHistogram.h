@@ -15,6 +15,9 @@
 
 namespace TelemetryHistogram {
 
+void CreateStatisticsRecorder();
+void DestroyStatisticsRecorder();
+
 void InitializeGlobalState(bool canRecordBase, bool canRecordExtended);
 void DeInitializeGlobalState();
 #ifdef DEBUG
@@ -36,6 +39,8 @@ void Accumulate(mozilla::Telemetry::ID aID, const nsCString& aKey,
                                             uint32_t aSample);
 void Accumulate(const char* name, uint32_t sample);
 void Accumulate(const char* name, const nsCString& key, uint32_t sample);
+
+void AccumulateCategorical(mozilla::Telemetry::ID aId, const nsCString& aLabel);
 
 void
 ClearHistogram(mozilla::Telemetry::ID aId);

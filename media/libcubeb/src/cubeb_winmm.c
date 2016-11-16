@@ -89,7 +89,7 @@ struct cubeb {
   PSLIST_HEADER work;
   CRITICAL_SECTION lock;
   unsigned int active_streams;
-  unsigned int minimum_latency;
+  unsigned int minimum_latency_ms;
 };
 
 struct cubeb_stream {
@@ -207,7 +207,7 @@ winmm_refill_stream(cubeb_stream * stm)
       short * b = (short *) hdr->lpData;
       uint32_t i;
       for (i = 0; i < got * stm->params.channels; i++) {
-        b[i] *= stm->soft_volume;
+        b[i] = (short) (b[i] * stm->soft_volume);
       }
     }
   }
@@ -336,7 +336,7 @@ winmm_init(cubeb ** context, char const * context_name)
   InitializeCriticalSection(&ctx->lock);
   ctx->active_streams = 0;
 
-  ctx->minimum_latency = calculate_minimum_latency();
+  ctx->minimum_latency_ms = calculate_minimum_latency();
 
   *context = ctx;
 
@@ -384,7 +384,7 @@ winmm_stream_init(cubeb * context, cubeb_stream ** stream, char const * stream_n
                   cubeb_stream_params * input_stream_params,
                   cubeb_devid output_device,
                   cubeb_stream_params * output_stream_params,
-                  unsigned int latency,
+                  unsigned int latency_frames,
                   cubeb_data_callback data_callback,
                   cubeb_state_callback state_callback,
                   void * user_ptr)
@@ -467,11 +467,13 @@ winmm_stream_init(cubeb * context, cubeb_stream ** stream, char const * stream_n
   stm->user_ptr = user_ptr;
   stm->written = 0;
 
-  if (latency < context->minimum_latency) {
-    latency = context->minimum_latency;
+  uint32_t latency_ms = latency_frames * 1000 / output_stream_params->rate;
+
+  if (latency_ms < context->minimum_latency_ms) {
+    latency_ms = context->minimum_latency_ms;
   }
 
-  bufsz = (size_t) (stm->params.rate / 1000.0 * latency * bytes_per_frame(stm->params) / NBUFS);
+  bufsz = (size_t) (stm->params.rate / 1000.0 * latency_ms * bytes_per_frame(stm->params) / NBUFS);
   if (bufsz % bytes_per_frame(stm->params) != 0) {
     bufsz += bytes_per_frame(stm->params) - (bufsz % bytes_per_frame(stm->params));
   }
@@ -600,7 +602,7 @@ static int
 winmm_get_min_latency(cubeb * ctx, cubeb_stream_params params, uint32_t * latency)
 {
   // 100ms minimum, if we are not in a bizarre configuration.
-  *latency = ctx->minimum_latency;
+  *latency = ctx->minimum_latency_ms * params.rate / 1000;
 
   return CUBEB_OK;
 }
@@ -701,7 +703,8 @@ winmm_stream_get_latency(cubeb_stream * stm, uint32_t * latency)
     return CUBEB_ERROR;
   }
 
-  *latency = written - time.u.sample;
+  XASSERT(written - time.u.sample <= UINT32_MAX);
+  *latency = (uint32_t) (written - time.u.sample);
 
   return CUBEB_OK;
 }
@@ -787,7 +790,10 @@ static char *
 guid_to_cstr(LPGUID guid)
 {
   char * ret = malloc(sizeof(char) * 40);
-  _snprintf(ret, sizeof(char) * 40,
+  if (!ret) {
+    return NULL;
+  }
+  _snprintf_s(ret, sizeof(char) * 40, _TRUNCATE,
       "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
       guid->Data1, guid->Data2, guid->Data3,
       guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
@@ -818,7 +824,10 @@ static char *
 device_id_idx(UINT devid)
 {
   char * ret = (char *)malloc(sizeof(char)*16);
-  _snprintf(ret, 16, "%u", devid);
+  if (!ret) {
+    return NULL;
+  }
+  _snprintf_s(ret, 16, _TRUNCATE, "%u", devid);
   return ret;
 }
 
@@ -828,6 +837,9 @@ winmm_create_device_from_outcaps2(LPWAVEOUTCAPS2A caps, UINT devid)
   cubeb_device_info * ret;
 
   ret = calloc(1, sizeof(cubeb_device_info));
+  if (!ret) {
+    return NULL;
+  }
   ret->devid = (cubeb_devid)(size_t)devid;
   ret->device_id = device_id_idx(devid);
   ret->friendly_name = _strdup(caps->szPname);
@@ -844,8 +856,8 @@ winmm_create_device_from_outcaps2(LPWAVEOUTCAPS2A caps, UINT devid)
       &ret->format, &ret->default_format);
 
   /* Hardcoed latency estimates... */
-  ret->latency_lo_ms = 100;
-  ret->latency_hi_ms = 200;
+  ret->latency_lo = 100 * ret->default_rate / 1000;
+  ret->latency_hi = 200 * ret->default_rate / 1000;
 
   return ret;
 }
@@ -856,6 +868,9 @@ winmm_create_device_from_outcaps(LPWAVEOUTCAPSA caps, UINT devid)
   cubeb_device_info * ret;
 
   ret = calloc(1, sizeof(cubeb_device_info));
+  if (!ret) {
+    return NULL;
+  }
   ret->devid = (cubeb_devid)(size_t)devid;
   ret->device_id = device_id_idx(devid);
   ret->friendly_name = _strdup(caps->szPname);
@@ -872,8 +887,8 @@ winmm_create_device_from_outcaps(LPWAVEOUTCAPSA caps, UINT devid)
       &ret->format, &ret->default_format);
 
   /* Hardcoed latency estimates... */
-  ret->latency_lo_ms = 100;
-  ret->latency_hi_ms = 200;
+  ret->latency_lo = 100 * ret->default_rate / 1000;
+  ret->latency_hi = 200 * ret->default_rate / 1000;
 
   return ret;
 }
@@ -903,6 +918,9 @@ winmm_create_device_from_incaps2(LPWAVEINCAPS2A caps, UINT devid)
   cubeb_device_info * ret;
 
   ret = calloc(1, sizeof(cubeb_device_info));
+  if (!ret) {
+    return NULL;
+  }
   ret->devid = (cubeb_devid)(size_t)devid;
   ret->device_id = device_id_idx(devid);
   ret->friendly_name = _strdup(caps->szPname);
@@ -919,8 +937,8 @@ winmm_create_device_from_incaps2(LPWAVEINCAPS2A caps, UINT devid)
       &ret->format, &ret->default_format);
 
   /* Hardcoed latency estimates... */
-  ret->latency_lo_ms = 100;
-  ret->latency_hi_ms = 200;
+  ret->latency_lo = 100 * ret->default_rate / 1000;
+  ret->latency_hi = 200 * ret->default_rate / 1000;
 
   return ret;
 }
@@ -931,6 +949,9 @@ winmm_create_device_from_incaps(LPWAVEINCAPSA caps, UINT devid)
   cubeb_device_info * ret;
 
   ret = calloc(1, sizeof(cubeb_device_info));
+  if (!ret) {
+    return NULL;
+  }
   ret->devid = (cubeb_devid)(size_t)devid;
   ret->device_id = device_id_idx(devid);
   ret->friendly_name = _strdup(caps->szPname);
@@ -947,8 +968,8 @@ winmm_create_device_from_incaps(LPWAVEINCAPSA caps, UINT devid)
       &ret->format, &ret->default_format);
 
   /* Hardcoed latency estimates... */
-  ret->latency_lo_ms = 100;
-  ret->latency_hi_ms = 200;
+  ret->latency_lo = 100 * ret->default_rate / 1000;
+  ret->latency_hi = 200 * ret->default_rate / 1000;
 
   return ret;
 }

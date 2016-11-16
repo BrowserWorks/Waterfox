@@ -22,13 +22,6 @@
 #include "PseudoStack.h"
 #include "ProfilerBacktrace.h"
 
-/* QT has a #define for the word "slots" and jsfriendapi.h has a struct with
- * this variable name, causing compilation problems. Alleviate this for now by
- * removing this #define */
-#ifdef MOZ_WIDGET_QT
-#undef slots
-#endif
-
 // Make sure that we can use std::min here without the Windows headers messing with us.
 #ifdef min
 #undef min
@@ -444,13 +437,9 @@ public:
 
       // We have to use seperate printf's because we're using
       // the vargs.
-#if _MSC_VER
-      _vsnprintf(buff, SAMPLER_MAX_STRING, aFormat, args);
-      _snprintf(mDest, SAMPLER_MAX_STRING, "%s %s", aInfo, buff);
-#else
       ::vsnprintf(buff, SAMPLER_MAX_STRING, aFormat, args);
       ::snprintf(mDest, SAMPLER_MAX_STRING, "%s %s", aInfo, buff);
-#endif
+
       mHandle = mozilla_sampler_call_enter(mDest, aCategory, this, true, line);
       va_end(args);
     } else {

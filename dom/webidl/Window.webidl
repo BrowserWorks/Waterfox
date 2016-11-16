@@ -36,6 +36,8 @@ typedef any Transferable;
   [PutForwards=href, Unforgeable, Throws,
    CrossOriginReadable, CrossOriginWritable] readonly attribute Location? location;
   [Throws] readonly attribute History history;
+  [Func="CustomElementsRegistry::IsCustomElementsEnabled"]
+  readonly attribute CustomElementsRegistry customElements;
   [Replaceable, Throws] readonly attribute BarProp locationbar;
   [Replaceable, Throws] readonly attribute BarProp menubar;
   [Replaceable, Throws] readonly attribute BarProp personalbar;
@@ -89,11 +91,11 @@ typedef any Transferable;
 Window implements GlobalEventHandlers;
 Window implements WindowEventHandlers;
 
-[NoInterfaceObject, Exposed=(Window)]
-interface AppInstallEventHandlersMixin {
+// https://w3c.github.io/manifest/#oninstall-attribute
+partial interface Window {
+  [Pref="dom.manifest.oninstall"]
   attribute EventHandler oninstall;
 };
-Window implements AppInstallEventHandlersMixin;
 
 // http://www.whatwg.org/specs/web-apps/current-work/
 [NoInterfaceObject, Exposed=(Window,Worker)]

@@ -16,7 +16,7 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/Logging.h"
 
-// NSPR_LOG_MODULES=UrlClassifierDbService:5
+// MOZ_LOG=UrlClassifierDbService:5
 extern mozilla::LazyLogModule gUrlClassifierDbServiceLog;
 #define LOG(args) MOZ_LOG(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug, args)
 #define LOG_ENABLED() MOZ_LOG_TEST(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug)
@@ -372,10 +372,6 @@ Classifier::SetLastUpdateTime(const nsACString &aTable,
 void
 Classifier::DropStores()
 {
-  for (uint32_t i = 0; i < mHashStores.Length(); i++) {
-    delete mHashStores[i];
-  }
-  mHashStores.Clear();
   for (uint32_t i = 0; i < mLookupCaches.Length(); i++) {
     delete mLookupCaches[i];
   }

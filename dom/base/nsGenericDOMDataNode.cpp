@@ -311,7 +311,7 @@ nsGenericDOMDataNode::SetTextInternal(uint32_t aOffset, uint32_t aCount,
   if (haveMutationListeners) {
     oldValue = GetCurrentValueAtom();
   }
-    
+
   if (aNotify) {
     CharacterDataChangeInfo info = {
       aOffset == textLength,
@@ -484,7 +484,7 @@ nsGenericDOMDataNode::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                   "Already have a binding parent.  Unbind first!");
   NS_PRECONDITION(aBindingParent != this,
                   "Content must not be its own binding parent");
-  NS_PRECONDITION(!IsRootOfNativeAnonymousSubtree() || 
+  NS_PRECONDITION(!IsRootOfNativeAnonymousSubtree() ||
                   aBindingParent == aParent,
                   "Native anonymous content must have its parent as its "
                   "own binding parent");
@@ -540,7 +540,7 @@ nsGenericDOMDataNode::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     ClearSubtreeRootPointer();
 
     // XXX See the comment in Element::BindToTree
-    SetInDocument();
+    SetIsInDocument();
     if (mText.IsBidi()) {
       aDocument->SetBidiEnabled();
     }
@@ -589,6 +589,12 @@ nsGenericDOMDataNode::UnbindFromTree(bool aDeep, bool aNullParent)
     SetParentIsContent(false);
   }
   ClearInDocument();
+
+#ifdef MOZ_STYLO
+  // Drop any servo node data, since it will generally need to be recomputed on
+  // re-insertion anyway.
+  ServoData().reset();
+#endif
 
   if (aNullParent || !mParent->IsInShadowTree()) {
     UnsetFlags(NODE_IS_IN_SHADOW_TREE);
@@ -645,6 +651,12 @@ const nsAttrName*
 nsGenericDOMDataNode::GetAttrNameAt(uint32_t aIndex) const
 {
   return nullptr;
+}
+
+BorrowedAttrInfo
+nsGenericDOMDataNode::GetAttrInfoAt(uint32_t aIndex) const
+{
+  return BorrowedAttrInfo(nullptr, nullptr);
 }
 
 uint32_t
@@ -805,7 +817,7 @@ nsGenericDOMDataNode::List(FILE* out, int32_t aIndent) const
 
 void
 nsGenericDOMDataNode::DumpContent(FILE* out, int32_t aIndent,
-                                  bool aDumpAll) const 
+                                  bool aDumpAll) const
 {
 }
 #endif

@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/yo_BJ.xml
@@ -71,6 +71,10 @@ yo_BJ{
         ETB{
             "ETB",
             "Biri ti Orílɛ́ède Eutopia",
+        }
+        EUR{
+            "€",
+            "Uro",
         }
         GBP{
             "£",
@@ -172,6 +176,10 @@ yo_BJ{
             "SHP",
             "Pɔɔun ti Orílɛ́ède ̣Elena",
         }
+        SLL{
+            "SLL",
+            "Lioni",
+        }
         SOS{
             "SOS",
             "Sile ti Orílɛ́ède Somali",
@@ -179,6 +187,10 @@ yo_BJ{
         STD{
             "STD",
             "Dobira ti Orílɛ́ède Sao tome Ati Pirisipe",
+        }
+        SZL{
+            "SZL",
+            "Lilangeni",
         }
         TND{
             "TND",
@@ -221,5 +233,5 @@ yo_BJ{
             "Dɔla ti Orílɛ́ède Siibabuwe",
         }
     }
-    Version{"2.1.24.17"}
+    Version{"2.1.19.80"}
 }

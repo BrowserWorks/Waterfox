@@ -231,12 +231,12 @@ pref("dom.ipc.plugins.enabled", true);
 // product URLs
 // The breakpad report server to link to in about:crashes
 pref("breakpad.reportURL", "https://crash-stats.mozilla.com/report/index/");
-pref("app.releaseNotesURL", "http://www.mozilla.com/%LOCALE%/b2g/%VERSION%/releasenotes/");
-pref("app.support.baseURL", "http://support.mozilla.com/b2g");
-pref("app.privacyURL", "http://www.mozilla.com/%LOCALE%/m/privacy.html");
-pref("app.creditsURL", "http://www.mozilla.org/credits/");
-pref("app.featuresURL", "http://www.mozilla.com/%LOCALE%/b2g/features/");
-pref("app.faqURL", "http://www.mozilla.com/%LOCALE%/b2g/faq/");
+pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/b2g/%VERSION%/releasenotes/");
+pref("app.support.baseURL", "https://support.mozilla.com/b2g");
+pref("app.privacyURL", "https://www.mozilla.com/%LOCALE%/m/privacy.html");
+pref("app.creditsURL", "https://www.mozilla.org/credits/");
+pref("app.featuresURL", "https://www.mozilla.com/%LOCALE%/b2g/features/");
+pref("app.faqURL", "https://www.mozilla.com/%LOCALE%/b2g/faq/");
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
 pref("security.alternate_certificate_error_page", "certerror");
@@ -299,10 +299,10 @@ pref("ui.dragThresholdY", 25);
 // they're not maintained anywhere else.
 #ifndef MOZ_WIDGET_GONK
 pref("dom.ipc.tabs.disabled", true);
+pref("layers.async-pan-zoom.enabled", false);
 #else
 pref("dom.ipc.tabs.disabled", false);
 pref("layers.acceleration.disabled", false);
-pref("layers.async-pan-zoom.enabled", true);
 pref("gfx.content.azure.backends", "cairo");
 #endif
 
@@ -621,7 +621,6 @@ pref("javascript.options.mem.gc_high_frequency_low_limit_mb", 0);
 pref("javascript.options.mem.gc_low_frequency_heap_growth", 120);
 pref("javascript.options.mem.high_water_mark", 6);
 pref("javascript.options.mem.gc_allocation_threshold_mb", 1);
-pref("javascript.options.mem.gc_decommit_threshold_mb", 1);
 pref("javascript.options.mem.gc_min_empty_chunk_count", 1);
 pref("javascript.options.mem.gc_max_empty_chunk_count", 2);
 
@@ -1021,9 +1020,7 @@ pref("identity.fxaccounts.remote.profile.uri", "https://profile.accounts.firefox
 pref("identity.fxaccounts.skipDeviceRegistration", true);
 
 // Enable mapped array buffer.
-#ifndef XP_WIN
 pref("dom.mapped_arraybuffer.enabled", true);
-#endif
 
 // SystemUpdate API
 pref("dom.system_update.enabled", true);

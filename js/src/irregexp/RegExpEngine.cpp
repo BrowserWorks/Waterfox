@@ -93,10 +93,10 @@ static const int kWordAndSurrogateRanges[] = {
 static const int kWordAndSurrogateRangeCount = ArrayLength(kWordAndSurrogateRanges);
 static const int kNegatedIgnoreCaseWordAndSurrogateRanges[] = {
     0, '0', '9' + 1, 'A',
-    'K', 'K' + 1, 'S', 'S' + 1,
     'Z' + 1, '_', '_' + 1, 'a',
-    'k', 'k' + 1, 's', 's' + 1,
-    'z' + 1, unicode::LeadSurrogateMin,
+    'z' + 1, 0x017F,
+    0x017F + 1, 0x212A,
+    0x212A + 1, unicode::LeadSurrogateMin,
     unicode::TrailSurrogateMax + 1, 0x10000,
     0x10000 };
 static const int kNegatedIgnoreCaseWordAndSurrogateRangeCount =
@@ -286,13 +286,6 @@ GetCaseIndependentLetters(char16_t character,
     for (size_t i = 0; i < choices_length; i++) {
         char16_t c = choices[i];
 
-        // The standard requires that non-ASCII characters cannot have ASCII
-        // character codes in their equivalence class, even though this
-        // situation occurs multiple times in the unicode tables.
-        static const unsigned kMaxAsciiCharCode = 127;
-        if (!unicode && character > kMaxAsciiCharCode && c <= kMaxAsciiCharCode)
-            continue;
-
         // Skip characters that can't appear in one byte strings.
         if (!unicode && ascii_subject && c > kMaxOneByteCharCode)
             continue;
@@ -332,10 +325,40 @@ GetCaseIndependentLetters(char16_t character,
                                          choices, ArrayLength(choices), letters);
     }
 
+    char16_t upper = unicode::ToUpperCase(character);
+    unicode::CodepointsWithSameUpperCase others(character);
+    char16_t other1 = others.other1();
+    char16_t other2 = others.other2();
+    char16_t other3 = others.other3();
+
+    // ES 2017 draft 996af87b7072b3c3dd2b1def856c66f456102215 21.2.4.2
+    // step 3.g.
+    // The standard requires that non-ASCII characters cannot have ASCII
+    // character codes in their equivalence class, even though this
+    // situation occurs multiple times in the unicode tables.
+    static const unsigned kMaxAsciiCharCode = 127;
+    if (upper <= kMaxAsciiCharCode) {
+        if (character > kMaxAsciiCharCode) {
+            // If Canonicalize(character) == character, all other characters
+            // should be ignored.
+            return GetCaseIndependentLetters(character, ascii_subject, unicode,
+                                             &character, 1, letters);
+        }
+
+        if (other1 > kMaxAsciiCharCode)
+            other1 = character;
+        if (other2 > kMaxAsciiCharCode)
+            other2 = character;
+        if (other3 > kMaxAsciiCharCode)
+            other3 = character;
+    }
+
     const char16_t choices[] = {
         character,
-        unicode::ToLowerCase(character),
-        unicode::ToUpperCase(character)
+        upper,
+        other1,
+        other2,
+        other3
     };
     return GetCaseIndependentLetters(character, ascii_subject, unicode,
                                      choices, ArrayLength(choices), letters);
@@ -1720,6 +1743,12 @@ RegExpCompiler::Assemble(JSContext* cx,
     macro_assembler_ = assembler;
     macro_assembler_->set_slow_safe(false);
 
+    // The LifoAlloc used by the regexp compiler is infallible and is currently
+    // expected to crash on OOM. Thus we have to disable the assertions made to
+    // prevent us from allocating any new chunk in the LifoAlloc. This is needed
+    // because the jit::MacroAssembler turns these assertions on by default.
+    LifoAlloc::AutoFallibleScope fallibleAllocator(alloc());
+
     jit::Label fail;
     macro_assembler_->PushBacktrack(&fail);
     Trace new_trace;
@@ -1766,7 +1795,7 @@ IsNativeRegExpEnabled(JSContext* cx)
 #ifdef JS_CODEGEN_NONE
     return false;
 #else
-    return cx->runtime()->options().nativeRegExp();
+    return cx->options().nativeRegExp();
 #endif
 }
 

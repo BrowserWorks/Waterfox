@@ -57,6 +57,10 @@ public:
     return !Test(kEnabledForMedia) || Test(kHasSeccompBPF);
   }
 
+#ifdef MOZ_CRASHREPORTER
+  MOZ_EXPORT void AnnotateCrashReport() const;
+#endif
+
   static void SubmitTelemetry();
 
   // For bug 1222500 or anything else like it: On desktop, this is

@@ -183,13 +183,6 @@ class JSObject : public js::gc::Cell
                                    js::HandleShape shape,
                                    js::HandleObjectGroup group);
 
-    // Set the shape of an object. This pointer is valid for native objects and
-    // some non-native objects. After creating an object, the objects for which
-    // the shape pointer is invalid need to overwrite this pointer before a GC
-    // can occur.
-    inline void setInitialShapeMaybeNonNative(js::Shape* shape);
-    inline void setShapeMaybeNonNative(js::Shape* shape);
-
     // Set the initial slots and elements of an object. These pointers are only
     // valid for native objects, but during initialization are set for all
     // objects. For non-native objects, these must not be dynamically allocated
@@ -473,7 +466,20 @@ class JSObject : public js::gc::Cell
     inline JSObject* enclosingScope() const;
 
     inline js::GlobalObject& global() const;
-    inline bool isOwnGlobal() const;
+
+    // In some rare cases the global object's compartment's global may not be
+    // the same global object. For this reason, we need to take extra care when
+    // tracing.
+    //
+    // These cases are:
+    //  1) The off-thread parsing task uses a dummy global since it cannot
+    //     share with the actual global being used concurrently on the main
+    //     thread.
+    //  2) A GC may occur when creating the GlobalObject, in which case the
+    //     compartment global pointer may not yet be set. In this case there is
+    //     nothing interesting to trace in the compartment.
+    inline bool isOwnGlobal(JSTracer*) const;
+    inline js::GlobalObject* globalForTracing(JSTracer*) const;
 
     /*
      * ES5 meta-object properties and operations.
@@ -562,13 +568,13 @@ class JSObject : public js::gc::Cell
     }
 
 #ifdef DEBUG
-    void dump();
+    void dump(FILE* fp) const;
+    void dump() const;
 #endif
 
     /* JIT Accessors */
 
     static size_t offsetOfGroup() { return offsetof(JSObject, group_); }
-    static size_t offsetOfShape() { return sizeof(JSObject); }
 
     // Maximum size in bytes of a JSObject.
     static const size_t MAX_BYTE_SIZE = 4 * sizeof(void*) + 16 * sizeof(JS::Value);

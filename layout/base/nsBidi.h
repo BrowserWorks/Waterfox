@@ -409,6 +409,23 @@ struct LevState {
     nsBidiLevel runLevel;               /* run level before implicit solving */
 };
 
+namespace mozilla {
+
+// Pseudo bidi embedding level indicating nonexistence.
+static const nsBidiLevel kBidiLevelNone = 0xff;
+
+struct FrameBidiData
+{
+  nsBidiLevel baseLevel;
+  nsBidiLevel embeddingLevel;
+  // The embedding level of virtual bidi formatting character before
+  // this frame if any. kBidiLevelNone is used to indicate nonexistence
+  // or unnecessity of such virtual character.
+  nsBidiLevel precedingControl;
+};
+
+} // namespace mozilla
+
 /**
  * This class holds information about a paragraph of text
  * with Bidi-algorithm-related details, or about one line of
@@ -658,18 +675,22 @@ public:
    */
   nsresult WriteReverse(const char16_t *aSrc, int32_t aSrcLength, char16_t *aDest, uint16_t aOptions, int32_t *aDestSize);
 
-  NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(BaseLevelProperty, nsBidiLevel)
-  NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(EmbeddingLevelProperty, nsBidiLevel)
-  NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(ParagraphDepthProperty, uint8_t)
+  NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(BidiDataProperty, mozilla::FrameBidiData)
 
-#define NS_GET_BASE_LEVEL(frame) \
-  frame->Properties().Get(nsBidi::BaseLevelProperty())
+  static mozilla::FrameBidiData GetBidiData(nsIFrame* aFrame)
+  {
+    return aFrame->Properties().Get(BidiDataProperty());
+  }
 
-#define NS_GET_EMBEDDING_LEVEL(frame) \
-  frame->Properties().Get(nsBidi::EmbeddingLevelProperty())
+  static nsBidiLevel GetBaseLevel(nsIFrame* aFrame)
+  {
+    return GetBidiData(aFrame).baseLevel;
+  }
 
-#define NS_GET_PARAGRAPH_DEPTH(frame) \
-  frame->Properties().Get(nsBidi::ParagraphDepthProperty())
+  static nsBidiLevel GetEmbeddingLevel(nsIFrame* aFrame)
+  {
+    return GetBidiData(aFrame).embeddingLevel;
+  }
 
 protected:
   friend class nsBidiPresUtils;

@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@ EXPORTS.mozilla.gfx += [
     'BasePoint4D.h',
     'BaseRect.h',
     'BaseSize.h',
+    'BezierUtils.h',
     'Blur.h',
     'BorrowedContext.h',
     'Coord.h',
@@ -32,13 +33,13 @@ EXPORTS.mozilla.gfx += [
     'JobScheduler_posix.h',
     'JobScheduler_win32.h',
     'Logging.h',
+    'LoggingConstants.h',
     'Matrix.h',
     'MatrixFwd.h',
     'NumericTools.h',
     'PathHelpers.h',
     'PatternHelpers.h',
     'Point.h',
-    'Preferences.h',
     'Quaternion.h',
     'RecordedEvent.h',
     'RecordingTypes.h',
@@ -85,6 +86,11 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
 if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'windows':
     SOURCES += [
         'JobScheduler_posix.cpp',
+    ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'gtk3'):
+    SOURCES += [
+        'ScaledFontFontconfig.cpp',
     ]
 
 if CONFIG['MOZ_ENABLE_SKIA']:
@@ -138,6 +144,7 @@ elif CONFIG['CPU_ARCH'].startswith('mips'):
         ]
 
 UNIFIED_SOURCES += [
+    'BezierUtils.cpp',
     'Blur.cpp',
     'DataSourceSurface.cpp',
     'DataSurfaceHelpers.cpp',
@@ -159,7 +166,6 @@ UNIFIED_SOURCES += [
     'PathCairo.cpp',
     'PathHelpers.cpp',
     'PathRecording.cpp',
-    'Preferences.cpp',
     'Quaternion.cpp',
     'RecordedEvent.cpp',
     'Scale.cpp',
@@ -201,12 +207,12 @@ FINAL_LIBRARY = 'xul'
 for var in ('USE_CAIRO', 'MOZ2D_HAS_MOZ_CAIRO'):
     DEFINES[var] = True
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk', 'qt'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk'):
     DEFINES['MOZ_ENABLE_FREETYPE'] = True
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk', 'qt'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk'):
     CXXFLAGS += CONFIG['CAIRO_FT_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']

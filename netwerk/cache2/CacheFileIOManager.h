@@ -12,6 +12,7 @@
 #include "nsCOMPtr.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/SHA1.h"
+#include "mozilla/StaticPtr.h"
 #include "mozilla/TimeStamp.h"
 #include "nsTArray.h"
 #include "nsString.h"
@@ -82,8 +83,12 @@ private:
   const SHA1Sum::Hash *mHash;
   mozilla::Atomic<bool, ReleaseAcquire> mIsDoomed;
   mozilla::Atomic<bool, ReleaseAcquire> mClosed;
-  bool const           mPriority : 1;
-  bool const           mSpecialFile : 1;
+
+  // mPriority and mSpecialFile are plain "bool", not "bool:1", so as to
+  // avoid bitfield races with the byte containing mInvalid et al.  See
+  // bug 1278502.
+  bool const           mPriority;
+  bool const           mSpecialFile;
 
   // These bit flags are all accessed only on the IO thread
   bool                 mInvalid : 1;
@@ -437,7 +442,8 @@ private:
   // Memory reporting (private part)
   size_t SizeOfExcludingThisInternal(mozilla::MallocSizeOf mallocSizeOf) const;
 
-  static CacheFileIOManager           *gInstance;
+  static StaticRefPtr<CacheFileIOManager> gInstance;
+
   TimeStamp                            mStartTime;
   // Set true on the IO thread, CLOSE level as part of the internal shutdown
   // procedure.

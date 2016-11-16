@@ -10,6 +10,7 @@
 #include "GLContext.h"
 #include "WGLLibrary.h"
 #include "nsPrintfCString.h"
+#include "mozilla/gfx/DeviceManagerD3D11.h"
 
 namespace mozilla {
 namespace gl {
@@ -125,9 +126,8 @@ public:
     static already_AddRefed<DXGLDevice> Open(WGLLibrary* wgl)
     {
         MOZ_ASSERT(wgl->HasDXInterop2());
-        gfxWindowsPlatform* plat = gfxWindowsPlatform::GetPlatform();
 
-        RefPtr<ID3D11Device> d3d = plat->GetD3D11ContentDevice();
+        RefPtr<ID3D11Device> d3d = gfx::DeviceManagerD3D11::Get()->GetContentDevice();
         if (!d3d) {
             NS_WARNING("Failed to create D3D11 device.");
             return nullptr;
@@ -305,21 +305,13 @@ SharedSurface_D3D11Interop::~SharedSurface_D3D11Interop()
         NS_WARNING("Failed to release a DXGL object, possibly leaking it.");
     }
 
-    if (!mGL->MakeCurrent())
+    if (!mGL || !mGL->MakeCurrent())
         return;
 
     mGL->fDeleteRenderbuffers(1, &mProdRB);
 
     // mDXGL is closed when it runs out of refs.
 }
-
-void
-SharedSurface_D3D11Interop::LockProdImpl()
-{ }
-
-void
-SharedSurface_D3D11Interop::UnlockProdImpl()
-{ }
 
 void
 SharedSurface_D3D11Interop::ProducerAcquireImpl()

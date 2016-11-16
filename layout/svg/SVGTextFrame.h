@@ -13,6 +13,7 @@
 #include "gfxRect.h"
 #include "gfxSVGGlyphs.h"
 #include "gfxTextRun.h"
+#include "nsAutoPtr.h"
 #include "nsIContent.h" // for GetContent
 #include "nsStubMutationObserver.h"
 #include "nsSVGPaintServerFrame.h"
@@ -262,6 +263,7 @@ class SVGTextFrame final : public nsSVGDisplayContainerFrame
   typedef mozilla::gfx::Path Path;
   typedef mozilla::gfx::Point Point;
   typedef mozilla::SVGTextContextPaint SVGTextContextPaint;
+  typedef mozilla::image::DrawResult DrawResult;
 
 protected:
   explicit SVGTextFrame(nsStyleContext* aContext)
@@ -324,9 +326,9 @@ public:
 
   // nsISVGChildFrame interface:
   virtual void NotifySVGChanged(uint32_t aFlags) override;
-  virtual nsresult PaintSVG(gfxContext& aContext,
-                            const gfxMatrix& aTransform,
-                            const nsIntRect* aDirtyRect = nullptr) override;
+  virtual DrawResult PaintSVG(gfxContext& aContext,
+                              const gfxMatrix& aTransform,
+                              const nsIntRect* aDirtyRect = nullptr) override;
   virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) override;
   virtual void ReflowSVG() override;
   virtual nsRect GetCoveredRegion() override;
@@ -398,8 +400,8 @@ public:
    * it.
    *
    * The only case where we have to do this is in response to a style change on
-   * a non-display <text>; the only caller of ScheduleReflowSVGNonDisplayText
-   * currently is SVGTextFrame::DidSetStyleContext.
+   * a non-display <text>. It is done in response to glyphs changes on
+   * non-display <text> (i.e., animated SVG-in-OpenType glyphs).
    */
   void ScheduleReflowSVGNonDisplayText();
 

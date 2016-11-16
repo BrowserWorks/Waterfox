@@ -1,0 +1,202 @@
+<html>
+<head>
+  <title>Test subresources prompts (Bug 625187 and bug 1230462)</title>
+  <script type="text/javascript" src="/MochiKit/MochiKit.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <script type="text/javascript" src="prompt_common.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css">
+<!--
+   - Any copyright is dedicated to the Public Domain.
+   - http://creativecommons.org/publicdomain/zero/1.0/
+   -
+   - Contributor(s):
+   -   Mihai Sucan <mihai.sucan@gmail.com>
+   -->
+</head>
+<body>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=625187">Mozilla Bug 625187</a>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1230462">Mozilla Bug 1230462</a>
+
+<p><button onclick="alert('hello world')">Button</button></p>
+
+<iframe id="iframe_diff_origin" src="http://example.com/tests/toolkit/components/prompts/test/bug625187_iframe.html"></iframe>
+
+<iframe id="iframe_same_origin" src="bug625187_iframe.html"></iframe>
+
+<iframe id="iframe_prompt"></iframe>
+
+<pre id="test"></pre>
+
+<script class="testbody" type="text/javascript">
+var iframe1Loaded = onloadPromiseFor("iframe_diff_origin");
+var iframe2Loaded = onloadPromiseFor("iframe_same_origin");
+var iframe_prompt = document.getElementById("iframe_prompt");
+
+add_task(function* runTest()
+{
+  // This test depends on tab modal prompts being enabled.
+  if (!isTabModal) {
+    todo(false, "Test disabled when tab modal prompts are not enabled.");
+    return;
+  }
+
+  info("Ensuring iframe1 has loaded...");
+  yield iframe1Loaded;
+  info("Ensuring iframe2 has loaded...");
+  yield iframe2Loaded;
+  let state, action;
+
+  state = {
+    msg         : "hello world",
+    iconClass   : "alert-icon",
+    titleHidden : true,
+    textHidden  : true,
+    passHidden  : true,
+    checkHidden : true,
+    textValue   : "",
+    passValue   : "",
+    checkMsg    : "",
+    checked     : false,
+    focused     : "button0",
+    defButton   : "button0",
+  };
+  action = {
+    buttonClick: "ok",
+  };
+
+  promptDone = handlePrompt(state, action);
+
+  var button = document.querySelector("button");
+  dispatchMouseEvent(button, "click");
+
+  yield promptDone;
+
+
+  // mostly reusing same state/action
+  state.titleHidden = false;
+  state.msg = "hello world 2";
+  promptDone = handlePrompt(state, action);
+
+  var iframe = document.getElementById("iframe_diff_origin");
+  button = SpecialPowers.wrap(iframe.contentWindow).document.getElementById("btn1");
+  dispatchMouseEvent(button, "click");
+
+  yield promptDone;
+
+
+  // mostly reusing same state/action
+  state.titleHidden = true;
+  state.msg = "hello world 2";
+  promptDone = handlePrompt(state, action);
+
+  iframe = document.getElementById("iframe_same_origin");
+  button = iframe.contentWindow.document.getElementById("btn1");
+  dispatchMouseEvent(button, "click");
+
+  yield promptDone;
+
+
+  // mostly reusing same state/action
+  state.msg = "hello world 3";
+  promptDone = handlePrompt(state, action);
+
+  button = iframe.contentWindow.document.getElementById("btn2");
+  dispatchMouseEvent(button, "click");
+
+  yield promptDone;
+});
+
+add_task(function* runTestAuth()
+{
+  // Following tests chack prompt message for a cross-origin and not
+  // cross-origin subresources load
+
+  // Force parent to not look for tab-modal prompts, as they're not
+  // used for auth prompts.
+  isTabModal = false;
+
+  state = {
+    msg         : "http://mochi.test:8888 is requesting your username " +
+                  "and password. The site says: “mochitest”",
+    title       : "Authentication Required",
+    textValue   : "",
+    passValue   : "",
+    iconClass   : "authentication-icon question-icon",
+    titleHidden : true,
+    textHidden  : false,
+    passHidden  : false,
+    checkHidden : true,
+    checkMsg    : "",
+    checked     : false,
+    focused     : "textField",
+    defButton   : "button0",
+  };
+
+  action = {
+    buttonClick : "ok",
+    setCheckbox : false,
+    textField   : "mochiuser1",
+    passField   : "mochipass1",
+  };
+
+  promptDone = handlePrompt(state, action);
+
+  var iframe3Loaded = onloadPromiseFor("iframe_prompt");
+  iframe_prompt.src = "authenticate.sjs?user=mochiuser1&pass=mochipass1";
+  yield promptDone;
+  yield iframe3Loaded;
+  checkEchoedAuthInfo({user: "mochiuser1", pass: "mochipass1"},
+                      iframe_prompt.contentDocument);
+
+  // Cross-origin subresourse test.
+
+  // Force parent to not look for tab-modal prompts, as they're not used for auth prompts.
+  isTabModal =false;
+  state = {
+    msg         : "http://example.com is requesting your username and password. " +
+                  "WARNING: Your password will not be sent to the website you are currently visiting!",
+    title       : "Authentication Required",
+    textValue   : "",
+    passValue   : "",
+    iconClass   : "authentication-icon question-icon",
+    titleHidden : true,
+    textHidden  : false,
+    passHidden  : false,
+    checkHidden : true,
+    checkMsg    : "",
+    checked     : false,
+    focused     : "textField",
+    defButton   : "button0",
+  };
+
+  action = {
+    buttonClick : "ok",
+    setCheckbox : false,
+    textField   : "mochiuser2",
+    passField   : "mochipass2",
+  };
+
+  promptDone = handlePrompt(state, action);
+
+  iframe3Loaded = onloadPromiseFor("iframe_prompt");
+  iframe_prompt.src = "http://example.com/tests/toolkit/components/prompts/test/authenticate.sjs?user=mochiuser2&pass=mochipass2&realm=mochitest";
+  yield promptDone;
+  yield iframe3Loaded;
+  checkEchoedAuthInfo({user: "mochiuser2", pass: "mochipass2"},
+                      SpecialPowers.wrap(iframe_prompt.contentWindow).document);
+});
+
+function dispatchMouseEvent(target, type)
+{
+  var win = SpecialPowers.unwrap(target.ownerDocument.defaultView);
+  var e = document.createEvent("MouseEvent");
+  e.initEvent(type, false, false, win, 0, 1, 1, 1, 1,
+              false, false, false, false, 0, null);
+  var utils = SpecialPowers.getDOMWindowUtils(win);
+  utils.dispatchDOMEventViaPresShell(SpecialPowers.unwrap(target), e, true);
+}
+</script>
+</body>
+</html>

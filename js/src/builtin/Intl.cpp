@@ -77,6 +77,33 @@ using icu::NumberingSystem;
  * directory for license.
  */
 
+typedef bool UBool;
+typedef char16_t UChar;
+typedef double UDate;
+
+enum UErrorCode {
+    U_ZERO_ERROR,
+    U_BUFFER_OVERFLOW_ERROR,
+};
+
+static inline UBool
+U_FAILURE(UErrorCode code)
+{
+    MOZ_CRASH("U_FAILURE: Intl API disabled");
+}
+
+inline const UChar*
+Char16ToUChar(const char16_t* chars)
+{
+    MOZ_CRASH("Char16ToUChar: Intl API disabled");
+}
+
+inline UChar*
+Char16ToUChar(char16_t* chars)
+{
+    MOZ_CRASH("Char16ToUChar: Intl API disabled");
+}
+
 static int32_t
 u_strlen(const UChar* s)
 {
@@ -1765,8 +1792,11 @@ InitDateTimeFormatClass(JSContext* cx, HandleObject Intl, Handle<GlobalObject*> 
     // is enabled, also add it.
     if (cx->compartment()->creationOptions().experimentalDateTimeFormatFormatToPartsEnabled()) {
         RootedValue ftp(cx);
-        if (!GlobalObject::getIntrinsicValue(cx, cx->global(),
-                                             cx->names().DateTimeFormatFormatToParts, &ftp))
+        HandlePropertyName name = cx->names().formatToParts;
+        if (!GlobalObject::getSelfHostedFunction(cx, cx->global(),
+                    cx->names().DateTimeFormatFormatToParts,
+                    name,
+                    0, &ftp))
         {
             return nullptr;
         }

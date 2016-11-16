@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,12 @@ DIRS += ['blink']
 TEST_DIRS += ['compiledtest']
 
 MOCHITEST_MANIFESTS += [
+    'test/blink/mochitest.ini',
     'test/mochitest.ini',
+]
+
+BROWSER_CHROME_MANIFESTS += [
+    'test/browser.ini',
 ]
 
 TEST_HARNESS_FILES.testing.mochitest.tests.dom.media.webaudio.test.blink += [
@@ -56,6 +61,7 @@ EXPORTS.mozilla.dom += [
     'DelayNode.h',
     'DynamicsCompressorNode.h',
     'GainNode.h',
+    'IIRFilterNode.h',
     'MediaElementAudioSourceNode.h',
     'MediaStreamAudioDestinationNode.h',
     'MediaStreamAudioSourceNode.h',
@@ -75,6 +81,7 @@ UNIFIED_SOURCES += [
     'AudioBufferSourceNode.cpp',
     'AudioContext.cpp',
     'AudioDestinationNode.cpp',
+    'AudioEventTimeline.cpp',
     'AudioListener.cpp',
     'AudioNode.cpp',
     'AudioNodeEngine.cpp',
@@ -92,6 +99,7 @@ UNIFIED_SOURCES += [
     'DynamicsCompressorNode.cpp',
     'FFTBlock.cpp',
     'GainNode.cpp',
+    'IIRFilterNode.cpp',
     'MediaBufferDecoder.cpp',
     'MediaElementAudioSourceNode.cpp',
     'MediaStreamAudioDestinationNode.cpp',

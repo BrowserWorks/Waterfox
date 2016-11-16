@@ -276,7 +276,7 @@ class ExecuteState : public RunState
 };
 
 // Data to invoke a function.
-class InvokeState : public RunState
+class InvokeState final : public RunState
 {
     const CallArgs& args_;
     MaybeConstruct construct_;
@@ -321,6 +321,9 @@ TypeOfObject(JSObject* obj);
 
 extern JSType
 TypeOfValue(const Value& v);
+
+extern bool
+InstanceOfOperator(JSContext* cx, HandleObject obj, MutableHandleValue v, bool* bp);
 
 extern bool
 HasInstance(JSContext* cx, HandleObject obj, HandleValue v, bool* bp);

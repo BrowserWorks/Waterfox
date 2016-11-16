@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es_GT.xml
@@ -67,7 +67,7 @@ es_GT{
             }
         }
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.20.32"}
     calendar{
         generic{
             DateTimePatterns{
@@ -203,11 +203,7 @@ es_GT{
     fields{
         day{
             relative{
-                "-1"{"ayer"}
                 "-2"{"antier"}
-                "0"{"hoy"}
-                "1"{"mañana"}
-                "2"{"pasado mañana"}
             }
         }
     }

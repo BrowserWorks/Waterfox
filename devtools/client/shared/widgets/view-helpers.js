@@ -219,6 +219,17 @@ const ViewHelpers = exports.ViewHelpers = {
   },
 
   /**
+   * Check if the enter key or space was pressed
+   *
+   * @param event event
+   *        The event triggered by a keypress on an element
+   */
+  isSpaceOrReturn: function (event) {
+    return event.keyCode === event.DOM_VK_SPACE ||
+          event.keyCode === event.DOM_VK_RETURN;
+  },
+
+  /**
    * Sets a toggled pane hidden or visible. The pane can either be displayed on
    * the side (right or left depending on the locale) or at the bottom.
    *
@@ -244,7 +255,7 @@ const ViewHelpers = exports.ViewHelpers = {
     pane.classList.add("generic-toggled-pane");
 
     // Avoid useless toggles.
-    if (flags.visible == !pane.hasAttribute("pane-collapsed")) {
+    if (flags.visible == !pane.classList.contains("pane-collapsed")) {
       if (flags.callback) {
         flags.callback();
       }
@@ -267,14 +278,14 @@ const ViewHelpers = exports.ViewHelpers = {
         pane.style.marginLeft = "0";
         pane.style.marginRight = "0";
         pane.style.marginBottom = "0";
-        pane.removeAttribute("pane-collapsed");
+        pane.classList.remove("pane-collapsed");
       } else {
         let width = Math.floor(pane.getAttribute("width")) + 1;
         let height = Math.floor(pane.getAttribute("height")) + 1;
         pane.style.marginLeft = -width + "px";
         pane.style.marginRight = -width + "px";
         pane.style.marginBottom = -height + "px";
-        pane.setAttribute("pane-collapsed", "");
+        pane.classList.add("pane-collapsed");
       }
 
       // Wait for the animation to end before calling afterToggle()

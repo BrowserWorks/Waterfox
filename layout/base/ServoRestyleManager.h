@@ -8,8 +8,13 @@
 #define mozilla_ServoRestyleManager_h
 
 #include "mozilla/EventStates.h"
+#include "mozilla/RestyleManagerBase.h"
+#include "mozilla/ServoElementSnapshot.h"
 #include "nsChangeHint.h"
+#include "nsHashKeys.h"
+#include "nsINode.h"
 #include "nsISupportsImpl.h"
+#include "nsPresContext.h"
 
 namespace mozilla {
 namespace dom {
@@ -26,14 +31,14 @@ namespace mozilla {
 /**
  * Restyle manager for a Servo-backed style system.
  */
-class ServoRestyleManager
+class ServoRestyleManager : public RestyleManagerBase
 {
+  friend class ServoStyleSet;
 public:
   NS_INLINE_DECL_REFCOUNTING(ServoRestyleManager)
 
-  ServoRestyleManager();
+  explicit ServoRestyleManager(nsPresContext* aPresContext);
 
-  void Disconnect();
   void PostRestyleEvent(dom::Element* aElement,
                         nsRestyleHint aRestyleHint,
                         nsChangeHint aMinChangeHint);
@@ -57,19 +62,52 @@ public:
                            nsIAtom* aAttribute,
                            int32_t aModType,
                            const nsAttrValue* aNewValue);
-  void AttributeChanged(dom::Element* aElement,
-                        int32_t aNameSpaceID,
-                        nsIAtom* aAttribute,
-                        int32_t aModType,
-                        const nsAttrValue* aOldValue);
+
+  // XXXbholley: We should assert that the element is already snapshotted.
+  void AttributeChanged(dom::Element* aElement, int32_t aNameSpaceID,
+                        nsIAtom* aAttribute, int32_t aModType,
+                        const nsAttrValue* aOldValue) {}
+
   nsresult ReparentStyleContext(nsIFrame* aFrame);
-  bool HasPendingRestyles();
-  uint64_t GetRestyleGeneration() const;
+
+  bool HasPendingRestyles() { return !mModifiedElements.IsEmpty(); }
 
 protected:
   ~ServoRestyleManager() {}
 
-  uint64_t mRestyleGeneration;
+private:
+  ServoElementSnapshot* SnapshotForElement(Element* aElement);
+
+  /**
+   * The element-to-element snapshot table to compute restyle hints.
+   */
+  nsClassHashtable<nsRefPtrHashKey<Element>, ServoElementSnapshot>
+    mModifiedElements;
+
+  /**
+   * Traverses a tree of content that Servo has just restyled, recreating style
+   * contexts for their frames with the new style data.
+   *
+   * This is just static so ServoStyleSet can mark this class as friend, so we
+   * can access to the GetContext method without making it available to everyone
+   * else.
+   */
+  static void RecreateStyleContexts(nsIContent* aContent,
+                                    nsStyleContext* aParentContext,
+                                    ServoStyleSet* aStyleSet);
+
+  /**
+   * Marks the tree with the appropriate dirty flags for the given restyle hint.
+   */
+  static void NoteRestyleHint(Element* aElement, nsRestyleHint aRestyleHint);
+
+  inline ServoStyleSet* StyleSet() const
+  {
+    MOZ_ASSERT(PresContext()->StyleSet()->IsServo(),
+               "ServoRestyleManager should only be used with a Servo-flavored "
+               "style backend");
+    return PresContext()->StyleSet()->AsServo();
+  }
 };
 
 } // namespace mozilla

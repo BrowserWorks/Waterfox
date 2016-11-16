@@ -30,16 +30,13 @@ pref("services.sync.engine.history", true);
 pref("services.sync.engine.passwords", true);
 pref("services.sync.engine.prefs", true);
 pref("services.sync.engine.tabs", true);
-pref("services.sync.engine.tabs.filteredUrls", "^(about:.*|chrome://weave/.*|wyciwyg:.*|file:.*)$");
+pref("services.sync.engine.tabs.filteredUrls", "^(about:.*|chrome://weave/.*|wyciwyg:.*|file:.*|blob:.*)$");
 
 pref("services.sync.jpake.serverURL", "https://setup.services.mozilla.com/");
 pref("services.sync.jpake.pollInterval", 1000);
 pref("services.sync.jpake.firstMsgMaxTries", 300); // 5 minutes
 pref("services.sync.jpake.lastMsgMaxTries", 300);  // 5 minutes
 pref("services.sync.jpake.maxTries", 10);
-
-// Allow add-ons to be synced from non-trusted sources.
-pref("services.sync.addons.ignoreRepositoryChecking", false);
 
 // If true, add-on sync ignores changes to the user-enabled flag. This
 // allows people to have the same set of add-ons installed across all
@@ -78,3 +75,6 @@ pref("services.sync.log.cryptoDebug", false);
 
 pref("services.sync.fxa.termsURL", "https://accounts.firefox.com/legal/terms");
 pref("services.sync.fxa.privacyURL", "https://accounts.firefox.com/legal/privacy");
+
+pref("services.sync.telemetry.submissionInterval", 43200); // 12 hours in seconds
+pref("services.sync.telemetry.maxPayloadCount", 500);

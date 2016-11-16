@@ -79,19 +79,19 @@ static DllBlockInfo sWindowsDllBlocklist[] = {
   // The DLL name must be in lowercase!
   // The version field is a maximum, that is, we block anything that is
   // less-than or equal to that version.
-  
+
   // NPFFAddon - Known malware
   { "npffaddon.dll", ALL_VERSIONS},
 
   // AVG 8 - Antivirus vendor AVG, old version, plugin already blocklisted
   {"avgrsstx.dll", MAKE_VERSION(8,5,0,401)},
-  
+
   // calc.dll - Suspected malware
   {"calc.dll", MAKE_VERSION(1,0,0,1)},
 
   // hook.dll - Suspected malware
   {"hook.dll", ALL_VERSIONS},
-  
+
   // GoogleDesktopNetwork3.dll - Extremely old, unversioned instances
   // of this DLL cause crashes
   {"googledesktopnetwork3.dll", UNVERSIONED},
@@ -101,7 +101,7 @@ static DllBlockInfo sWindowsDllBlocklist[] = {
 
   // fgjk4wvb.dll - Suspected malware
   {"fgjk4wvb.dll", MAKE_VERSION(8,8,8,8)},
-  
+
   // radhslib.dll - Naomi internet filter - unmaintained since 2006
   {"radhslib.dll", UNVERSIONED},
 
@@ -218,6 +218,9 @@ static DllBlockInfo sWindowsDllBlocklist[] = {
   { "prls64.dll", ALL_VERSIONS },
   { "rlls.dll", ALL_VERSIONS },
   { "rlls64.dll", ALL_VERSIONS },
+
+  // Vorbis DirectShow filters, bug 1239690.
+  { "vorbis.acm", MAKE_VERSION(0, 0, 3, 6) },
 
   { nullptr, 0 }
 };
@@ -397,7 +400,7 @@ public:
     mReentered = mPreviousDllName && !stricmp(mPreviousDllName, dllName);
     (*sThreadMap)[currentThreadId] = dllName;
   }
-    
+
   ~ReentrancySentinel()
   {
     DWORD currentThreadId = GetCurrentThreadId();
@@ -409,7 +412,7 @@ public:
   {
     return mReentered;
   };
-    
+
   static void InitializeStatics()
   {
     InitializeCriticalSection(&sLock);
@@ -760,20 +763,6 @@ DllBlocklist_Initialize()
     return;
   }
   sBlocklistInitAttempted = true;
-#if defined(_MSC_VER) && _MSC_VER < 1900 && defined(_M_X64)
-  // The code below is not blocklist-related, but is the best place for it.
-  // This is the earliest place where msvcr120.dll is loaded, and this
-  // codepath is used by both firefox.exe and plugin-container.exe processes.
-
-  // Disable CRT use of FMA3 on non-AVX2 CPUs and on Win7RTM due to bug 1160148
-  int cpuid0[4] = {0};
-  int cpuid7[4] = {0};
-  __cpuid(cpuid0, 0); // Get the maximum supported CPUID function
-  __cpuid(cpuid7, 7); // AVX2 is function 7, subfunction 0, EBX, bit 5
-  if (cpuid0[0] < 7 || !(cpuid7[1] & 0x20) || !IsWin7SP1OrLater()) {
-    _set_FMA3_enable(0);
-  }
-#endif
 
   if (GetModuleHandleA("user32.dll")) {
     sUser32BeforeBlocklist = true;

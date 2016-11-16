@@ -9,7 +9,6 @@
 #include "mozilla/dom/Selection.h"
 #include "mozilla/mozalloc.h"           // for operator new, etc
 #include "nsAString.h"                  // for nsAString_internal::Length, etc
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsContentUtils.h"             // for nsContentUtils
 #include "nsDebug.h"                    // for NS_ENSURE_TRUE, etc
 #include "nsDependentSubstring.h"       // for Substring
@@ -524,7 +523,7 @@ nsTextServicesDocument::LastSelectedBlock(TSDBlockSelectionStatus *aSelStatus,
     return result;
   }
 
-  RefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
+  RefPtr<Selection> selection = domSelection->AsSelection();
 
   bool isCollapsed = selection->IsCollapsed();
 
@@ -2527,7 +2526,7 @@ nsTextServicesDocument::GetCollapsedSelection(nsITextServicesDocument::TSDBlockS
   NS_ENSURE_SUCCESS(result, result);
   NS_ENSURE_TRUE(domSelection, NS_ERROR_FAILURE);
 
-  RefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
+  RefPtr<Selection> selection = domSelection->AsSelection();
 
   // The calling function should have done the GetIsCollapsed()
   // check already. Just assume it's collapsed!
@@ -2745,7 +2744,7 @@ nsTextServicesDocument::GetUncollapsedSelection(nsITextServicesDocument::TSDBloc
   NS_ENSURE_SUCCESS(result, result);
   NS_ENSURE_TRUE(domSelection, NS_ERROR_FAILURE);
 
-  RefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
+  RefPtr<Selection> selection = domSelection->AsSelection();
 
   // It is assumed that the calling function has made sure that the
   // selection is not collapsed, and that the input params to this
@@ -3168,7 +3167,6 @@ nsTextServicesDocument::FirstTextNodeInCurrentBlock(nsIContentIterator *iter)
 nsresult
 nsTextServicesDocument::FirstTextNodeInPrevBlock(nsIContentIterator *aIterator)
 {
-  nsCOMPtr<nsIContent> content;
   nsresult result;
 
   NS_ENSURE_TRUE(aIterator, NS_ERROR_NULL_POINTER);

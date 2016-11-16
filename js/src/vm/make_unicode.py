@@ -95,12 +95,61 @@ def read_case_folding(case_folding):
         row[2] = int(row[2], 16)
         yield row
 
+def utf16_encode(code):
+    NonBMPMin = 0x10000
+    LeadSurrogateMin = 0xD800
+    TrailSurrogateMin = 0xDC00
+
+    lead = (code - NonBMPMin) / 1024 + LeadSurrogateMin
+    trail = ((code - NonBMPMin) % 1024) + TrailSurrogateMin
+
+    return lead, trail
+
+def make_non_bmp_convert_macro(out_file, name, convert_map):
+    convert_list = []
+    entry = None
+    for code in sorted(convert_map.keys()):
+        converted = convert_map[code]
+        diff = converted - code
+
+        if entry and code == entry['code'] + entry['length'] and diff == entry['diff']:
+            entry['length'] += 1
+            continue
+
+        entry = { 'code': code, 'diff': diff, 'length': 1 }
+        convert_list.append(entry)
+
+    lines = []
+    for entry in convert_list:
+        from_code = entry['code']
+        to_code = entry['code'] + entry['length'] - 1
+        diff = entry['diff']
+
+        from_lead, from_trail = utf16_encode(from_code)
+        to_lead, to_trail = utf16_encode(to_code)
+
+        assert from_lead == to_lead
+
+        lines.append('    macro(0x{:x}, 0x{:x}, 0x{:x}, 0x{:x}, 0x{:x}, {:d})'.format(
+            from_code, to_code, from_lead, from_trail, to_trail, diff))
+
+    out_file.write('#define FOR_EACH_NON_BMP_{}(macro) \\\n'.format(name))
+    out_file.write(' \\\n'.join(lines))
+    out_file.write('\n')
+
 def generate_unicode_stuff(unicode_data, case_folding,
-                           data_file, test_mapping, test_space, test_icase):
+                           data_file, non_bmp_file,
+                           test_mapping, test_non_bmp_mapping,
+                           test_space, test_icase):
     dummy = (0, 0, 0)
     table = [dummy]
     cache = {dummy: 0}
     index = [0] * (MAX + 1)
+    same_upper_map = {}
+    same_upper_dummy = (0, 0, 0)
+    same_upper_table = [same_upper_dummy]
+    same_upper_cache = {same_upper_dummy: 0}
+    same_upper_index = [0] * (MAX + 1)
     folding_map = {}
     rev_folding_map = {}
     folding_dummy = (0, 0, 0, 0)
@@ -112,6 +161,11 @@ def generate_unicode_stuff(unicode_data, case_folding,
     folding_tests = []
     folding_codes = set()
 
+    non_bmp_lower_map = {}
+    non_bmp_upper_map = {}
+    non_bmp_folding_map = {}
+    non_bmp_rev_folding_map = {}
+
     for row in read_unicode_data(unicode_data):
         code = row[0]
         name = row[1]
@@ -121,8 +175,27 @@ def generate_unicode_stuff(unicode_data, case_folding,
         lowercase = row[-2]
         flags = 0
 
+        if uppercase:
+            upper = int(uppercase, 16)
+
+            if upper not in same_upper_map:
+                same_upper_map[upper] = [code]
+            else:
+                same_upper_map[upper].append(code)
+        else:
+            upper = code
+
+        if lowercase:
+            lower = int(lowercase, 16)
+        else:
+            lower = code
+
         if code > MAX:
-            break
+            if code != lower:
+                non_bmp_lower_map[code] = lower
+            if code != upper:
+                non_bmp_upper_map[code] = upper
+            continue
 
         # we combine whitespace and lineterminators because in pratice we don't need them separated
         if category == 'Zs' or code in whitespace or code in line_terminator:
@@ -132,16 +205,6 @@ def generate_unicode_stuff(unicode_data, case_folding,
             flags |= FLAG_LETTER
         if category in ['Mn', 'Mc', 'Nd', 'Pc'] or code == ZWNJ or code == ZWJ: # $ 7.6 (IdentifierPart)
             flags |= FLAG_IDENTIFIER_PART
-
-        if uppercase:
-            upper = int(uppercase, 16)
-        else:
-            upper = code
-
-        if lowercase:
-            lower = int(lowercase, 16)
-        else:
-            lower = code
 
         test_table[code] = (upper, lower, name, alias)
 
@@ -163,10 +226,44 @@ def generate_unicode_stuff(unicode_data, case_folding,
             table.append(item)
         index[code] = i
 
+    for code in range(0, MAX + 1):
+        entry = test_table.get(code)
+
+        if not entry:
+            continue
+
+        (upper, lower, name, alias) = entry
+
+        if upper not in same_upper_map:
+            continue
+
+        same_upper_ds = [v - code for v in same_upper_map[upper]]
+
+        assert len(same_upper_ds) <= 3
+        assert all([v > -65535 and v < 65535 for v in same_upper_ds])
+
+        same_upper = [v & 0xffff for v in same_upper_ds]
+        same_upper_0 = same_upper[0] if len(same_upper) >= 1 else 0
+        same_upper_1 = same_upper[1] if len(same_upper) >= 2 else 0
+        same_upper_2 = same_upper[2] if len(same_upper) >= 3 else 0
+
+        item = (same_upper_0, same_upper_1, same_upper_2)
+
+        i = same_upper_cache.get(item)
+        if i is None:
+            assert item not in same_upper_table
+            same_upper_cache[item] = i = len(same_upper_table)
+            same_upper_table.append(item)
+        same_upper_index[code] = i
+
     for row in read_case_folding(case_folding):
         code = row[0]
         mapping = row[2]
         folding_map[code] = mapping
+
+        if code > MAX:
+            non_bmp_folding_map[code] = mapping
+            non_bmp_rev_folding_map[mapping] = code
 
         if mapping not in rev_folding_map:
             rev_folding_map[mapping] = [code]
@@ -221,6 +318,31 @@ def generate_unicode_stuff(unicode_data, case_folding,
             folding_table.append(item)
         folding_index[code] = i
 
+    non_bmp_file.write("""/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ * vim: set ts=8 sts=4 et sw=4 tw=99:
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Generated by make_unicode.py DO NOT MODIFY */
+
+#ifndef vm_UnicodeNonBMP_h
+#define vm_UnicodeNonBMP_h
+
+""")
+
+    make_non_bmp_convert_macro(non_bmp_file, 'LOWERCASE', non_bmp_lower_map)
+    non_bmp_file.write('\n')
+    make_non_bmp_convert_macro(non_bmp_file, 'UPPERCASE', non_bmp_upper_map)
+    non_bmp_file.write('\n')
+    make_non_bmp_convert_macro(non_bmp_file, 'CASE_FOLDING', non_bmp_folding_map)
+    non_bmp_file.write('\n')
+    make_non_bmp_convert_macro(non_bmp_file, 'REV_CASE_FOLDING', non_bmp_rev_folding_map)
+
+    non_bmp_file.write("""
+#endif /* vm_UnicodeNonBMP_h */
+""")
+
     test_mapping.write('/* Generated by make_unicode.py DO NOT MODIFY */\n')
     test_mapping.write(public_domain)
     test_mapping.write('var mapping = [\n')
@@ -228,7 +350,7 @@ def generate_unicode_stuff(unicode_data, case_folding,
         entry = test_table.get(code)
 
         if entry:
-            upper, lower, name, alias = entry
+            (upper, lower, name, alias) = entry
             test_mapping.write('  [' + hex(upper) + ', ' + hex(lower) + '], /* ' +
                        name + (' (' + alias + ')' if alias else '') + ' */\n')
         else:
@@ -247,6 +369,23 @@ for (var i = 0; i <= 0xffff; i++) {
 if (typeof reportCompare === "function")
     reportCompare(true, true);
 """)
+
+    test_non_bmp_mapping.write('/* Generated by make_unicode.py DO NOT MODIFY */\n')
+    test_non_bmp_mapping.write(public_domain)
+    for code in sorted(non_bmp_upper_map.keys()):
+        test_non_bmp_mapping.write("""\
+assertEq(String.fromCodePoint(0x{:x}).toUpperCase().codePointAt(0), 0x{:x});
+""".format(code, non_bmp_upper_map[code]))
+    for code in sorted(non_bmp_lower_map.keys()):
+        test_non_bmp_mapping.write("""\
+assertEq(String.fromCodePoint(0x{:x}).toLowerCase().codePointAt(0), 0x{:x});
+""".format(code, non_bmp_lower_map[code]))
+
+    test_non_bmp_mapping.write("""
+if (typeof reportCompare === "function")
+    reportCompare(true, true);
+""")
+
 
     test_space.write('/* Generated by make_unicode.py DO NOT MODIFY */\n')
     test_space.write(public_domain)
@@ -290,6 +429,11 @@ if (typeof reportCompare === "function")
     # Don't forget to update CharInfo in Unicode.cpp if you need to change this
     assert shift == 5
 
+    same_upper_index1, same_upper_index2, same_upper_shift = splitbins(same_upper_index)
+
+    # Don't forget to update CharInfo in Unicode.cpp if you need to change this
+    assert same_upper_shift == 6
+
     folding_index1, folding_index2, folding_shift = splitbins(folding_index)
 
     # Don't forget to update CharInfo in Unicode.cpp if you need to change this
@@ -303,6 +447,15 @@ if (typeof reportCompare === "function")
         idx = index2[(idx << shift) + (char & ((1 << shift) - 1))]
 
         assert test == table[idx]
+
+    # verify correctness
+    for char in same_upper_index:
+        test = same_upper_table[same_upper_index[char]]
+
+        idx = same_upper_index1[char >> same_upper_shift]
+        idx = same_upper_index2[(idx << same_upper_shift) + (char & ((1 << same_upper_shift) - 1))]
+
+        assert test == same_upper_table[idx]
 
     # verify correctness
     for char in folding_index:
@@ -396,6 +549,19 @@ if (typeof reportCompare === "function")
     dump(index1, 'index1', data_file)
     data_file.write('\n')
     dump(index2, 'index2', data_file)
+    data_file.write('\n')
+
+    data_file.write('const CodepointsWithSameUpperCaseInfo unicode::js_codepoints_with_same_upper_info[] = {\n')
+    for d in same_upper_table:
+        data_file.write('    {')
+        data_file.write(', '.join((str(e) for e in d)))
+        data_file.write('},\n')
+    data_file.write('};\n')
+    data_file.write('\n')
+
+    dump(same_upper_index1, 'codepoints_with_same_upper_index1', data_file)
+    data_file.write('\n')
+    dump(same_upper_index2, 'codepoints_with_same_upper_index2', data_file)
     data_file.write('\n')
 
     data_file.write('const FoldingInfo unicode::js_foldinfo[] = {\n')
@@ -512,6 +678,8 @@ if __name__ == '__main__':
     print('Generating...')
     generate_unicode_stuff(unicode_data, case_folding,
         open('Unicode.cpp', 'w'),
+        open('UnicodeNonBMP.h', 'w'),
         open('../tests/ecma_5/String/string-upper-lower-mapping.js', 'w'),
+        open('../tests/ecma_6/String/string-code-point-upper-lower-mapping.js', 'w'),
         open('../tests/ecma_5/String/string-space-trim.js', 'w'),
         open('../tests/ecma_6/RegExp/unicode-ignoreCase.js', 'w'))

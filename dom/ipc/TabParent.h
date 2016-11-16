@@ -143,6 +143,7 @@ public:
             uint32_t aChromeFlags);
 
   Element* GetOwnerElement() const { return mFrameElement; }
+  already_AddRefed<nsPIDOMWindowOuter> GetParentWindowOuter();
 
   void SetOwnerElement(Element* aElement);
 
@@ -378,6 +379,10 @@ public:
   virtual bool
   DeallocPColorPickerParent(PColorPickerParent* aColorPicker) override;
 
+  virtual PDatePickerParent*
+  AllocPDatePickerParent(const nsString& aTitle, const nsString& aInitialDate) override;
+  virtual bool DeallocPDatePickerParent(PDatePickerParent* aDatePicker) override;
+
   virtual PDocAccessibleParent*
   AllocPDocAccessibleParent(PDocAccessibleParent*, const uint64_t&) override;
 
@@ -563,7 +568,7 @@ public:
   }
 
   LayoutDeviceIntPoint GetChildProcessOffset();
-  CSSPoint AdjustTapToChildWidget(const CSSPoint& aPoint);
+  LayoutDevicePoint AdjustTapToChildWidget(const LayoutDevicePoint& aPoint);
 
   /**
    * Native widget remoting protocol for use with windowed plugins with e10s.

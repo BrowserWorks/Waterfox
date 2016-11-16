@@ -22,7 +22,7 @@
 static NS_DEFINE_CID(kStreamTransportServiceCID, NS_STREAMTRANSPORTSERVICE_CID);
 
 //
-// NSPR_LOG_MODULES=nsStreamPump:5
+// MOZ_LOG=nsStreamPump:5
 //
 static mozilla::LazyLogModule gStreamPumpLog("nsStreamPump");
 #undef LOG
@@ -66,8 +66,7 @@ nsInputStreamPump::Create(nsInputStreamPump  **result,
         rv = pump->Init(stream, streamPos, streamLen,
                         segsize, segcount, closeWhenDone);
         if (NS_SUCCEEDED(rv)) {
-            *result = nullptr;
-            pump.swap(*result);
+            pump.forget(result);
         }
     }
     return rv;

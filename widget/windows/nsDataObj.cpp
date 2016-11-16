@@ -64,6 +64,7 @@ nsDataObj::CStream::~CStream()
 //-----------------------------------------------------------------------------
 // helper - initializes the stream
 nsresult nsDataObj::CStream::Init(nsIURI *pSourceURI,
+                                  uint32_t aContentPolicyType,
                                   nsINode* aRequestingNode)
 {
   // we can not create a channel without a requestingNode
@@ -74,14 +75,14 @@ nsresult nsDataObj::CStream::Init(nsIURI *pSourceURI,
   rv = NS_NewChannel(getter_AddRefs(mChannel),
                      pSourceURI,
                      aRequestingNode,
-                     nsILoadInfo::SEC_NORMAL,
-                     nsIContentPolicy::TYPE_OTHER,
+                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
+                     aContentPolicyType,
                      nullptr,   // loadGroup
                      nullptr,   // aCallbacks
                      nsIRequest::LOAD_FROM_CACHE);
 
   NS_ENSURE_SUCCESS(rv, rv);
-  rv = mChannel->AsyncOpen(this, nullptr);
+  rv = mChannel->AsyncOpen2(this);
   NS_ENSURE_SUCCESS(rv, rv);
   return NS_OK;
 }
@@ -345,8 +346,10 @@ HRESULT nsDataObj::CreateStream(IStream **outStream)
   mTransferable->GetRequestingNode(getter_AddRefs(requestingDomNode));
   nsCOMPtr<nsINode> requestingNode = do_QueryInterface(requestingDomNode);
   MOZ_ASSERT(requestingNode, "can not create channel without a node");
-
-  rv = pStream->Init(sourceURI, requestingNode);
+  // default transferable content policy is nsIContentPolicy::TYPE_OTHER
+  uint32_t contentPolicyType = nsIContentPolicy::TYPE_OTHER;
+  mTransferable->GetContentPolicyType(&contentPolicyType);
+  rv = pStream->Init(sourceURI, contentPolicyType, requestingNode);
   if (NS_FAILED(rv))
   {
     pStream->Release();
@@ -1055,7 +1058,7 @@ nsDataObj :: GetFileDescriptorInternetShortcutA ( FORMATETC& aFE, STGMEDIUM& aST
   if (!CreateFilenameFromTextA(title, ".URL", 
                                fileGroupDescA->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
     nsXPIDLString untitled;
-    if (!GetLocalizedString(MOZ_UTF16("noPageTitle"), untitled) ||
+    if (!GetLocalizedString(u"noPageTitle", untitled) ||
         !CreateFilenameFromTextA(untitled, ".URL", 
                                  fileGroupDescA->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
       strcpy(fileGroupDescA->fgd[0].cFileName, "Untitled.URL");
@@ -1096,7 +1099,7 @@ nsDataObj :: GetFileDescriptorInternetShortcutW ( FORMATETC& aFE, STGMEDIUM& aST
   if (!CreateFilenameFromTextW(title, L".URL",
                                fileGroupDescW->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
     nsXPIDLString untitled;
-    if (!GetLocalizedString(MOZ_UTF16("noPageTitle"), untitled) ||
+    if (!GetLocalizedString(u"noPageTitle", untitled) ||
         !CreateFilenameFromTextW(untitled, L".URL",
                                  fileGroupDescW->fgd[0].cFileName, NS_MAX_FILEDESCRIPTOR)) {
       wcscpy(fileGroupDescW->fgd[0].cFileName, L"Untitled.URL");
@@ -1130,9 +1133,11 @@ nsDataObj :: GetFileContentsInternetShortcut ( FORMATETC& aFE, STGMEDIUM& aSTG )
     return E_OUTOFMEMORY;
 
   nsCOMPtr<nsIURI> aUri;
-  NS_NewURI(getter_AddRefs(aUri), url);
+  nsresult rv = NS_NewURI(getter_AddRefs(aUri), url);
+  if (NS_FAILED(rv)) {
+    return E_FAIL;
+  }
 
-  nsresult rv;
   nsAutoCString asciiUrl;
   rv = aUri->GetAsciiSpec(asciiUrl);
   if (NS_FAILED(rv)) {

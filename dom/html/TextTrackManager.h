@@ -56,7 +56,7 @@ public:
   void RemoveTextTrack(TextTrack* aTextTrack, bool aPendingListOnly);
   void DidSeek();
 
-  void AddCue(TextTrackCue& aCue);
+  void NotifyCueAdded(TextTrackCue& aCue);
   void AddCues(TextTrack* aTextTrack);
   void NotifyCueRemoved(TextTrackCue& aCue);
   /**
@@ -83,12 +83,6 @@ public:
    * Current rules are taken from revision on April 15, 2013.
    */
 
-  /**
-   * Converts the TextTrackCue's cuetext into a tree of DOM objects and attaches
-   * it to a div on it's owning TrackElement's MediaElement's caption overlay.
-   */
-  void UpdateCueDisplay();
-
   void PopulatePendingList();
 
   void AddListeners();
@@ -97,16 +91,25 @@ public:
   RefPtr<HTMLMediaElement> mMediaElement;
 
   void DispatchTimeMarchesOn();
+  void TimeMarchesOn();
+  void DispatchUpdateCueDisplay();
 
   void NotifyShutdown()
   {
     mShutdown = true;
   }
 
+  void NotifyCueUpdated(TextTrackCue *aCue);
+
   void NotifyReset();
 
 private:
-  void TimeMarchesOn();
+  /**
+   * Converts the TextTrackCue's cuetext into a tree of DOM objects
+   * and attaches it to a div on its owning TrackElement's
+   * MediaElement's caption overlay.
+   */
+  void UpdateCueDisplay();
 
   // List of the TextTrackManager's owning HTMLMediaElement's TextTracks.
   RefPtr<TextTrackList> mTextTracks;
@@ -114,7 +117,7 @@ private:
   RefPtr<TextTrackList> mPendingTextTracks;
   // List of newly introduced Text Track cues.
 
-  // Contain all cues for a MediaElement.
+  // Contain all cues for a MediaElement. Not sorted.
   RefPtr<TextTrackCueList> mNewCues;
   // The active cues for the last TimeMarchesOn iteration.
   RefPtr<TextTrackCueList> mLastActiveCues;
@@ -126,6 +129,7 @@ private:
   double mLastTimeMarchesOnCalled;
 
   bool mTimeMarchesOnDispatched;
+  bool mUpdateCueDisplayDispatched;
 
   static StaticRefPtr<nsIWebVTTParserWrapper> sParserWrapper;
 

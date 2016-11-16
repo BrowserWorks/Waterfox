@@ -3,6 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsIServiceManager.h"
 #include "nsResizerFrame.h"
@@ -80,16 +81,8 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
           // GetScreenRectInAppUnits returns the border box rectangle, so
           // adjust to get the desired content rectangle.
           nsRect rect = frameToResize->GetScreenRectInAppUnits();
-          switch (frameToResize->StylePosition()->mBoxSizing) {
-            case StyleBoxSizing::Content:
-              rect.Deflate(frameToResize->GetUsedPadding());
-              MOZ_FALLTHROUGH;
-            case StyleBoxSizing::Padding:
-              rect.Deflate(frameToResize->GetUsedBorder());
-              MOZ_FALLTHROUGH;
-            case StyleBoxSizing::Border:
-              // nothing
-              break;
+          if (frameToResize->StylePosition()->mBoxSizing == StyleBoxSizing::Content) {
+            rect.Deflate(frameToResize->GetUsedBorderAndPadding());
           }
 
           mMouseDownRect =

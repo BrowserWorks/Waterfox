@@ -28,6 +28,7 @@ public class CodeGenerator {
     private final Class<?> cls;
     private final String clsName;
     private boolean isMultithreaded;
+    private int numNativesInits;
 
     private final HashSet<String> takenMethodNames = new HashSet<String>();
 
@@ -41,13 +42,14 @@ public class CodeGenerator {
                         unqualifiedName + ", jobject>\n" +
                 "{\n" +
                 "public:\n" +
+                "    static const char name[];\n" +
+                "\n" +
                 "    explicit " + unqualifiedName + "(const Context& ctx) : ObjectBase<" +
                         unqualifiedName + ", jobject>(ctx) {}\n" +
                 "\n");
 
         cpp.append(
-                "template<> const char mozilla::jni::Context<" +
-                        clsName + ", jobject>::name[] =\n" +
+                "const char " + clsName + "::name[] =\n" +
                 "        \"" + cls.getName().replace('.', '/') + "\";\n" +
                 "\n");
 
@@ -340,9 +342,10 @@ public class CodeGenerator {
         nativesInits.append(
                 "\n" +
                 "\n" +
-                "        mozilla::jni::MakeNativeMethod<" + traits + ">(\n" +
-                "                mozilla::jni::NativeStub<" + traits + ", Impl>\n" +
-                "                ::template Wrap<&Impl::" + info.wrapperName + ">)");
+                "    mozilla::jni::MakeNativeMethod<" + traits + ">(\n" +
+                "            mozilla::jni::NativeStub<" + traits + ", Impl>\n" +
+                "            ::template Wrap<&Impl::" + info.wrapperName + ">)");
+        numNativesInits++;
     }
 
     private String getLiteral(Object val, AnnotationInfo info) {
@@ -562,12 +565,12 @@ public class CodeGenerator {
             return "";
         }
         natives.append(
-                "    static constexpr JNINativeMethod methods[] = {" + nativesInits + '\n' +
-                "    };\n" +
+                "    static const JNINativeMethod methods[" + numNativesInits + "];\n" +
                 "};\n" +
                 "\n" +
                 "template<class Impl>\n" +
-                "constexpr JNINativeMethod " + clsName + "::Natives<Impl>::methods[];\n" +
+                "const JNINativeMethod " + clsName + "::Natives<Impl>::methods[] = {" + nativesInits + '\n' +
+                "};\n" +
                 "\n");
         return natives.toString();
     }

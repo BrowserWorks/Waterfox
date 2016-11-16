@@ -7,6 +7,7 @@
 
 #include "WidevineAdapter.h"
 #include "WidevineUtils.h"
+#include "WidevineFileIO.h"
 #include <mozilla/SizePrintfMacros.h>
 #include <stdarg.h>
 
@@ -35,10 +36,21 @@ WidevineDecryptor::SetCDM(RefPtr<CDMWrapper> aCDM)
 }
 
 void
-WidevineDecryptor::Init(GMPDecryptorCallback* aCallback)
+WidevineDecryptor::Init(GMPDecryptorCallback* aCallback,
+                        bool aDistinctiveIdentifierRequired,
+                        bool aPersistentStateRequired)
 {
+  Log("WidevineDecryptor::Init() this=%p distinctiveId=%d persistentState=%d",
+      this, aDistinctiveIdentifierRequired, aPersistentStateRequired);
   MOZ_ASSERT(aCallback);
   mCallback = aCallback;
+  MOZ_ASSERT(mCDM);
+  mDistinctiveIdentifierRequired = aDistinctiveIdentifierRequired;
+  mPersistentStateRequired = aPersistentStateRequired;
+  if (CDM()) {
+    CDM()->Initialize(aDistinctiveIdentifierRequired,
+                      aPersistentStateRequired);
+  }
 }
 
 static SessionType
@@ -64,11 +76,23 @@ WidevineDecryptor::CreateSession(uint32_t aCreateSessionToken,
                                  GMPSessionType aSessionType)
 {
   Log("Decryptor::CreateSession(token=%d, pid=%d)", aCreateSessionToken, aPromiseId);
-  MOZ_ASSERT(!strcmp(aInitDataType, "cenc"));
+  InitDataType initDataType;
+  if (!strcmp(aInitDataType, "cenc")) {
+    initDataType = kCenc;
+  } else if (!strcmp(aInitDataType, "webm")) {
+    initDataType = kWebM;
+  } else if (!strcmp(aInitDataType, "keyids")) {
+    initDataType = kKeyIds;
+  } else {
+    // Invalid init data type
+    const char* errorMsg = "Invalid init data type when creating session.";
+    OnRejectPromise(aPromiseId, kNotSupportedError, 0, errorMsg, sizeof(errorMsg));
+    return;
+  }
   mPromiseIdToNewSessionTokens[aPromiseId] = aCreateSessionToken;
   CDM()->CreateSessionAndGenerateRequest(aPromiseId,
                                          ToCDMSessionType(aSessionType),
-                                         kCenc,
+                                         initDataType,
                                          aInitData, aInitDataSize);
 }
 
@@ -484,9 +508,10 @@ FileIO*
 WidevineDecryptor::CreateFileIO(FileIOClient* aClient)
 {
   Log("Decryptor::CreateFileIO()");
-  // Persistent storage not required or supported!
-  MOZ_ASSERT(false);
-  return nullptr;
+  if (!mPersistentStateRequired) {
+    return nullptr;
+  }
+  return new WidevineFileIO(aClient);
 }
 
 } // namespace mozilla

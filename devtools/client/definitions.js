@@ -4,10 +4,8 @@
 
 "use strict";
 
-const {Cc, Ci} = require("chrome");
 const Services = require("Services");
-
-loader.lazyGetter(this, "osString", () => Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).OS);
+const osString = Services.appinfo.OS;
 
 // Panels
 loader.lazyGetter(this, "OptionsPanel", () => require("devtools/client/framework/toolbox-options").OptionsPanel);
@@ -65,7 +63,7 @@ Tools.options = {
   ordinal: 0,
   url: "chrome://devtools/content/framework/toolbox-options.xhtml",
   icon: "chrome://devtools/skin/images/tool-options.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   bgTheme: "theme-body",
   label: l10n("options.label", toolboxStrings),
   iconOnly: true,
@@ -89,7 +87,7 @@ Tools.inspector = {
   ordinal: 1,
   modifiers: osString == "Darwin" ? "accel,alt" : "accel,shift",
   icon: "chrome://devtools/skin/images/tool-inspector.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/inspector/inspector.xul",
   label: l10n("inspector.label", inspectorStrings),
   panelLabel: l10n("inspector.panelLabel", inspectorStrings),
@@ -100,8 +98,7 @@ Tools.inspector = {
   inMenu: true,
   commands: [
     "devtools/client/responsivedesign/resize-commands",
-    "devtools/client/inspector/inspector-commands",
-    "devtools/client/eyedropper/commands.js"
+    "devtools/client/inspector/inspector-commands"
   ],
 
   preventClosingOnKey: true,
@@ -125,7 +122,7 @@ Tools.webConsole = {
   modifiers: Services.appinfo.OS == "Darwin" ? "accel,alt" : "accel,shift",
   ordinal: 2,
   icon: "chrome://devtools/skin/images/tool-webconsole.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/webconsole/webconsole.xul",
   label: l10n("ToolboxTabWebconsole.label", webConsoleStrings),
   menuLabel: l10n("MenuWebconsole.label", webConsoleStrings),
@@ -163,7 +160,7 @@ Tools.jsdebugger = {
   modifiers: osString == "Darwin" ? "accel,alt" : "accel,shift",
   ordinal: 3,
   icon: "chrome://devtools/skin/images/tool-debugger.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   highlightedicon: "chrome://devtools/skin/images/tool-debugger-paused.svg",
   url: "chrome://devtools/content/debugger/debugger.xul",
   label: l10n("ToolboxDebugger.label", debuggerStrings),
@@ -188,10 +185,11 @@ Tools.styleEditor = {
   id: "styleeditor",
   key: l10n("open.commandkey", styleEditorStrings),
   ordinal: 4,
+  visibilityswitch: "devtools.styleeditor.enabled",
   accesskey: l10n("open.accesskey", styleEditorStrings),
   modifiers: "shift",
   icon: "chrome://devtools/skin/images/tool-styleeditor.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/styleeditor/styleeditor.xul",
   label: l10n("ToolboxStyleEditor.label", styleEditorStrings),
   panelLabel: l10n("ToolboxStyleEditor.panelLabel", styleEditorStrings),
@@ -216,7 +214,7 @@ Tools.shaderEditor = {
   ordinal: 5,
   visibilityswitch: "devtools.shadereditor.enabled",
   icon: "chrome://devtools/skin/images/tool-shadereditor.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/shadereditor/shadereditor.xul",
   label: l10n("ToolboxShaderEditor.label", shaderEditorStrings),
   panelLabel: l10n("ToolboxShaderEditor.panelLabel", shaderEditorStrings),
@@ -236,7 +234,7 @@ Tools.canvasDebugger = {
   ordinal: 6,
   visibilityswitch: "devtools.canvasdebugger.enabled",
   icon: "chrome://devtools/skin/images/tool-canvas.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/canvasdebugger/canvasdebugger.xul",
   label: l10n("ToolboxCanvasDebugger.label", canvasDebuggerStrings),
   panelLabel: l10n("ToolboxCanvasDebugger.panelLabel", canvasDebuggerStrings),
@@ -257,7 +255,7 @@ Tools.performance = {
   id: "performance",
   ordinal: 7,
   icon: "chrome://devtools/skin/images/tool-profiler.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   highlightedicon: "chrome://devtools/skin/images/tool-profiler-active.svg",
   url: "chrome://devtools/content/performance/performance.xul",
   visibilityswitch: "devtools.performance.enabled",
@@ -285,7 +283,7 @@ Tools.memory = {
   id: "memory",
   ordinal: 8,
   icon: "chrome://devtools/skin/images/tool-memory.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   highlightedicon: "chrome://devtools/skin/images/tool-memory-active.svg",
   url: "chrome://devtools/content/memory/memory.xhtml",
   visibilityswitch: "devtools.memory.enabled",
@@ -294,7 +292,7 @@ Tools.memory = {
   tooltip: l10n("memory.tooltip", memoryStrings),
 
   isTargetSupported: function (target) {
-    return target.getTrait("heapSnapshots");
+    return target.getTrait("heapSnapshots") && !target.isAddon;
   },
 
   build: function (frame, target) {
@@ -310,7 +308,7 @@ Tools.netMonitor = {
   modifiers: osString == "Darwin" ? "accel,alt" : "accel,shift",
   visibilityswitch: "devtools.netmonitor.enabled",
   icon: "chrome://devtools/skin/images/tool-network.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/netmonitor/netmonitor.xul",
   label: l10n("netmonitor.label", netMonitorStrings),
   panelLabel: l10n("netmonitor.panelLabel", netMonitorStrings),
@@ -337,7 +335,7 @@ Tools.storage = {
   modifiers: "shift",
   visibilityswitch: "devtools.storage.enabled",
   icon: "chrome://devtools/skin/images/tool-storage.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/storage/storage.xul",
   label: l10n("storage.label", storageStrings),
   menuLabel: l10n("storage.menuLabel", storageStrings),
@@ -363,7 +361,7 @@ Tools.webAudioEditor = {
   ordinal: 11,
   visibilityswitch: "devtools.webaudioeditor.enabled",
   icon: "chrome://devtools/skin/images/tool-webaudio.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/webaudioeditor/webaudioeditor.xul",
   label: l10n("ToolboxWebAudioEditor1.label", webAudioEditorStrings),
   panelLabel: l10n("ToolboxWebAudioEditor1.panelLabel", webAudioEditorStrings),
@@ -383,7 +381,7 @@ Tools.scratchpad = {
   ordinal: 12,
   visibilityswitch: "devtools.scratchpad.enabled",
   icon: "chrome://devtools/skin/images/tool-scratchpad.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/scratchpad/scratchpad.xul",
   label: l10n("scratchpad.label", scratchpadStrings),
   panelLabel: l10n("scratchpad.panelLabel", scratchpadStrings),
@@ -408,7 +406,7 @@ Tools.dom = {
   modifiers: osString == "Darwin" ? "accel,alt" : "accel,shift",
   visibilityswitch: "devtools.dom.enabled",
   icon: "chrome://devtools/skin/images/tool-dom.svg",
-  invertIconForLightTheme: true,
+  invertIconForDarkTheme: true,
   url: "chrome://devtools/content/dom/dom.html",
   label: l10n("dom.label", domStrings),
   panelLabel: l10n("dom.panelLabel", domStrings),

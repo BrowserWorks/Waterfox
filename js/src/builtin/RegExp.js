@@ -37,21 +37,23 @@ function RegExpFlagsGetter() {
 }
 _SetCanonicalName(RegExpFlagsGetter, "get flags");
 
-// ES6 draft rc1 21.2.5.14.
+// ES 2017 draft 40edb3a95a475c1b251141ac681b8793129d9a6d 21.2.5.14.
 function RegExpToString()
 {
-    // Steps 1-2.
+    // Step 1.
     var R = this;
+
+    // Step 2.
     if (!IsObject(R))
         ThrowTypeError(JSMSG_NOT_NONNULL_OBJECT, R === null ? "null" : typeof R);
 
-    // Steps 3-4.
-    var pattern = R.source;
+    // Step 3.
+    var pattern = ToString(R.source);
+
+    // Step 4.
+    var flags = ToString(R.flags);
 
     // Steps 5-6.
-    var flags = R.flags;
-
-    // Step 7.
     return '/' + pattern + '/' + flags;
 }
 _SetCanonicalName(RegExpToString, "toString");
@@ -577,6 +579,7 @@ function IsRegExpSplitOptimizable(rx, C) {
     // If RegExpPrototypeOptimizable succeeds, `RegExpProto.exec` is guaranteed
     // to be a data property.
     return RegExpPrototypeOptimizable(RegExpProto) &&
+           RegExpInstanceOptimizable(rx, RegExpProto) &&
            RegExpProto.exec === RegExp_prototype_Exec;
 }
 
@@ -601,7 +604,8 @@ function RegExpSplit(string, limit) {
     // Steps 6-7.
     var unicodeMatching = callFunction(std_String_includes, flags, "u");
 
-    var optimizable = IsRegExpSplitOptimizable(rx, C);
+    var optimizable = IsRegExpSplitOptimizable(rx, C) &&
+                      (limit === undefined || typeof limit == "number");
     var splitter;
     if (optimizable) {
         // Steps 8-9 (skipped).

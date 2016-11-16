@@ -7,9 +7,9 @@
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/CycleCollectedJSRuntime.h"
 
 #include "jsapi.h"
-#include "xpcprivate.h" // For AutoCxPusher guts
 #include "xpcpublic.h"
 #include "nsIGlobalObject.h"
 #include "nsIDocShell.h"
@@ -38,8 +38,13 @@ public:
   static void Push(ScriptSettingsStackEntry *aEntry) {
     MOZ_ASSERT(!aEntry->mOlder);
     // Whenever JSAPI use is disabled, the next stack entry pushed must
-    // always be a candidate entry point.
-    MOZ_ASSERT_IF(!Top() || Top()->NoJSAPI(), aEntry->mIsCandidateEntryPoint);
+    // not be an AutoIncumbentScript.
+    MOZ_ASSERT_IF(!Top() || Top()->NoJSAPI(),
+                  !aEntry->IsIncumbentScript());
+    // Whenever the top entry is not an incumbent canidate, the next stack entry
+    // pushed must not be an AutoIncumbentScript.
+    MOZ_ASSERT_IF(Top() && !Top()->IsIncumbentCandidate(),
+                  !aEntry->IsIncumbentScript());
 
     aEntry->mOlder = Top();
     sScriptSettingsTLS.set(aEntry);
@@ -52,23 +57,24 @@ public:
 
   static nsIGlobalObject* IncumbentGlobal() {
     ScriptSettingsStackEntry *entry = Top();
-    if (!entry) {
-      return nullptr;
+    while (entry) {
+      if (entry->IsIncumbentCandidate()) {
+        return entry->mGlobalObject;
+      }
+      entry = entry->mOlder;
     }
-    return entry->mGlobalObject;
+    return nullptr;
   }
 
   static ScriptSettingsStackEntry* EntryPoint() {
     ScriptSettingsStackEntry *entry = Top();
-    if (!entry) {
-      return nullptr;
-    }
     while (entry) {
-      if (entry->mIsCandidateEntryPoint)
+      if (entry->IsEntryCandidate()) {
         return entry;
+      }
       entry = entry->mOlder;
     }
-    MOZ_CRASH("Non-empty stack should always have an entry point");
+    return nullptr;
   }
 
   static nsIGlobalObject* EntryGlobal() {
@@ -78,6 +84,19 @@ public:
     }
     return entry->mGlobalObject;
   }
+
+#ifdef DEBUG
+  static ScriptSettingsStackEntry* TopNonIncumbentScript() {
+    ScriptSettingsStackEntry *entry = Top();
+    while (entry) {
+      if (!entry->IsIncumbentScript()) {
+        return entry;
+      }
+      entry = entry->mOlder;
+    }
+    return nullptr;
+  }
+#endif // DEBUG
 
 };
 
@@ -123,35 +142,23 @@ ScriptSettingsInitialized()
 }
 
 ScriptSettingsStackEntry::ScriptSettingsStackEntry(nsIGlobalObject *aGlobal,
-                                                   bool aCandidate)
+                                                   Type aType)
   : mGlobalObject(aGlobal)
-  , mIsCandidateEntryPoint(aCandidate)
+  , mType(aType)
   , mOlder(nullptr)
 {
-  MOZ_ASSERT(mGlobalObject);
-  MOZ_ASSERT(mGlobalObject->GetGlobalJSObject(),
+  MOZ_ASSERT_IF(IsIncumbentCandidate() && !NoJSAPI(), mGlobalObject);
+  MOZ_ASSERT(!mGlobalObject || mGlobalObject->GetGlobalJSObject(),
              "Must have an actual JS global for the duration on the stack");
-  MOZ_ASSERT(JS_IsGlobalObject(mGlobalObject->GetGlobalJSObject()),
+  MOZ_ASSERT(!mGlobalObject ||
+             JS_IsGlobalObject(mGlobalObject->GetGlobalJSObject()),
              "No outer windows allowed");
-
-  ScriptSettingsStack::Push(this);
-}
-
-// This constructor is only for use by AutoNoJSAPI.
-ScriptSettingsStackEntry::ScriptSettingsStackEntry()
-   : mGlobalObject(nullptr)
-   , mIsCandidateEntryPoint(true)
-   , mOlder(nullptr)
-{
-  ScriptSettingsStack::Push(this);
 }
 
 ScriptSettingsStackEntry::~ScriptSettingsStackEntry()
 {
   // We must have an actual JS global for the entire time this is on the stack.
   MOZ_ASSERT_IF(mGlobalObject, mGlobalObject->GetGlobalJSObject());
-
-  ScriptSettingsStack::Pop(this);
 }
 
 // If the entry or incumbent global ends up being something that the subject
@@ -268,35 +275,33 @@ GetWebIDLCallerPrincipal()
   }
   AutoEntryScript* aes = static_cast<AutoEntryScript*>(entry);
 
-  // We can't yet rely on the Script Settings Stack to properly determine the
-  // entry script, because there are still lots of places in the tree where we
-  // don't yet use an AutoEntryScript (bug 951991 tracks this work). In the
-  // mean time though, we can make some observations to hack around the
-  // problem:
-  //
-  // (1) All calls into JS-implemented WebIDL go through CallSetup, which goes
-  //     through AutoEntryScript.
-  // (2) The top candidate entry point in the Script Settings Stack is the
-  //     entry point if and only if no other JSContexts have been pushed on
-  //     top of the push made by that entry's AutoEntryScript.
-  //
-  // Because of (1), all of the cases where we might return a non-null
-  // WebIDL Caller are guaranteed to have put an entry on the Script Settings
-  // Stack, so we can restrict our search to that. Moreover, (2) gives us a
-  // criterion to determine whether an entry in the Script Setting Stack means
-  // that we should return a non-null WebIDL Caller.
-  //
-  // Once we fix bug 951991, this can all be simplified.
-  if (!aes->CxPusherIsStackTop()) {
-    return nullptr;
-  }
-
   return aes->mWebIDLCallerPrincipal;
 }
 
+bool
+IsJSAPIActive()
+{
+  ScriptSettingsStackEntry* topEntry = ScriptSettingsStack::Top();
+  return topEntry && !topEntry->NoJSAPI();
+}
+
+namespace danger {
+JSContext*
+GetJSContext()
+{
+  return CycleCollectedJSRuntime::Get()->Context();
+}
+} // namespace danger
+
+JSRuntime*
+GetJSRuntime()
+{
+  return CycleCollectedJSRuntime::Get()->Runtime();
+}
+
 AutoJSAPI::AutoJSAPI()
-  : mCx(nullptr)
-  , mOldAutoJSAPIOwnsErrorReporting(false)
+  : ScriptSettingsStackEntry(nullptr, eJSAPI)
+  , mCx(nullptr)
   , mIsMainThread(false) // For lack of anything better
 {
 }
@@ -306,22 +311,24 @@ AutoJSAPI::~AutoJSAPI()
   if (!mCx) {
     // No need to do anything here: we never managed to Init, so can't have an
     // exception on our (nonexistent) JSContext.  We also don't need to restore
-    // any state on it.
+    // any state on it.  Finally, we never made it to pushing outselves onto the
+    // ScriptSettingsStack, so shouldn't pop.
+    MOZ_ASSERT(ScriptSettingsStack::Top() != this);
     return;
   }
 
   ReportException();
 
-  // We need to do this _after_ processing the existing exception, because the
-  // JS engine can throw while doing that, and uses this bit to determine what
-  // to do in that case: squelch the exception if the bit is set, otherwise
-  // call the error reporter. Calling WarningOnlyErrorReporter with a
-  // non-warning will assert, so we need to make sure we do the former.
-  JS::ContextOptionsRef(cx()).setAutoJSAPIOwnsErrorReporting(mOldAutoJSAPIOwnsErrorReporting);
-
-  if (mOldErrorReporter.isSome()) {
-    JS_SetErrorReporter(JS_GetRuntime(cx()), mOldErrorReporter.value());
+  if (mOldWarningReporter.isSome()) {
+    JS::SetWarningReporter(cx(), mOldWarningReporter.value());
   }
+
+  // Leave the request before popping.
+  if (mIsMainThread) {
+    mAutoRequest.reset();
+  }
+
+  ScriptSettingsStack::Pop(this);
 }
 
 void
@@ -333,6 +340,7 @@ AutoJSAPI::InitInternal(nsIGlobalObject* aGlobalObject, JSObject* aGlobal,
                         JSContext* aCx, bool aIsMainThread)
 {
   MOZ_ASSERT(aCx);
+  MOZ_ASSERT(aCx == danger::GetJSContext());
   MOZ_ASSERT(aIsMainThread == NS_IsMainThread());
   MOZ_ASSERT(bool(aGlobalObject) == bool(aGlobal));
   MOZ_ASSERT_IF(aGlobalObject, aGlobalObject->GetGlobalJSObject() == aGlobal);
@@ -344,23 +352,21 @@ AutoJSAPI::InitInternal(nsIGlobalObject* aGlobalObject, JSObject* aGlobal,
   mIsMainThread = aIsMainThread;
   mGlobalObject = aGlobalObject;
   if (aIsMainThread) {
-    // This Rooted<> is necessary only as long as AutoCxPusher::AutoCxPusher
-    // can GC, which is only possible because XPCJSContextStack::Push calls
-    // nsIPrincipal.Equals. Once that is removed, the Rooted<> will no longer
-    // be necessary.
-    JS::Rooted<JSObject*> global(JS_GetRuntime(aCx), aGlobal);
-    mCxPusher.emplace(mCx);
-    mAutoNullableCompartment.emplace(mCx, global);
-  } else {
-    mAutoNullableCompartment.emplace(mCx, aGlobal);
+    // We _could_ just unconditionally emplace mAutoRequest here.  It's just not
+    // needed on worker threads, and we're hoping to kill it on the main thread
+    // too.
+    mAutoRequest.emplace(mCx);
   }
+  if (aGlobal) {
+    JS::ExposeObjectToActiveJS(aGlobal);
+  }
+  mAutoNullableCompartment.emplace(mCx, aGlobal);
 
-  JSRuntime* rt = JS_GetRuntime(aCx);
-  mOldErrorReporter.emplace(JS_GetErrorReporter(rt));
+  ScriptSettingsStack::Push(this);
 
-  mOldAutoJSAPIOwnsErrorReporting = JS::ContextOptionsRef(aCx).autoJSAPIOwnsErrorReporting();
-  JS::ContextOptionsRef(aCx).setAutoJSAPIOwnsErrorReporting(true);
-  JS_SetErrorReporter(rt, WarningOnlyErrorReporter);
+  mOldWarningReporter.emplace(JS::GetWarningReporter(aCx));
+
+  JS::SetWarningReporter(aCx, WarningOnlyErrorReporter);
 
 #ifdef DEBUG
   if (haveException) {
@@ -431,17 +437,16 @@ AutoJSAPI::InitInternal(nsIGlobalObject* aGlobalObject, JSObject* aGlobal,
 
 AutoJSAPI::AutoJSAPI(nsIGlobalObject* aGlobalObject,
                      bool aIsMainThread,
-                     JSContext* aCx)
-  : mOldAutoJSAPIOwnsErrorReporting(false)
+                     Type aType)
+  : ScriptSettingsStackEntry(aGlobalObject, aType)
   , mIsMainThread(aIsMainThread)
 {
   MOZ_ASSERT(aGlobalObject);
   MOZ_ASSERT(aGlobalObject->GetGlobalJSObject(), "Must have a JS global");
-  MOZ_ASSERT(aCx);
   MOZ_ASSERT(aIsMainThread == NS_IsMainThread());
 
-  InitInternal(aGlobalObject, aGlobalObject->GetGlobalJSObject(), aCx,
-               aIsMainThread);
+  InitInternal(aGlobalObject, aGlobalObject->GetGlobalJSObject(),
+               danger::GetJSContext(), aIsMainThread);
 }
 
 void
@@ -450,8 +455,7 @@ AutoJSAPI::Init()
   MOZ_ASSERT(!mCx, "An AutoJSAPI should only be initialised once");
 
   InitInternal(/* aGlobalObject */ nullptr, /* aGlobal */ nullptr,
-               nsContentUtils::GetDefaultJSContextForThread(),
-               NS_IsMainThread());
+               danger::GetJSContext(), NS_IsMainThread());
 }
 
 bool
@@ -476,7 +480,7 @@ AutoJSAPI::Init(nsIGlobalObject* aGlobalObject, JSContext* aCx)
 bool
 AutoJSAPI::Init(nsIGlobalObject* aGlobalObject)
 {
-  return Init(aGlobalObject, nsContentUtils::GetDefaultJSContextForThread());
+  return Init(aGlobalObject, danger::GetJSContext());
 }
 
 bool
@@ -617,7 +621,7 @@ AutoJSAPI::ReportException()
 bool
 AutoJSAPI::PeekException(JS::MutableHandle<JS::Value> aVal)
 {
-  MOZ_ASSERT_IF(mIsMainThread, CxPusherIsStackTop());
+  MOZ_ASSERT_IF(mIsMainThread, IsStackTop());
   MOZ_ASSERT(HasException());
   MOZ_ASSERT(js::GetContextCompartment(cx()));
   if (!JS_GetPendingException(cx(), aVal)) {
@@ -636,18 +640,21 @@ AutoJSAPI::StealException(JS::MutableHandle<JS::Value> aVal)
   return true;
 }
 
+#ifdef DEBUG
+bool
+AutoJSAPI::IsStackTop() const
+{
+  return ScriptSettingsStack::TopNonIncumbentScript() == this;
+}
+#endif // DEBUG
+
 AutoEntryScript::AutoEntryScript(nsIGlobalObject* aGlobalObject,
                                  const char *aReason,
-                                 bool aIsMainThread,
-                                 JSContext* aCx)
-  : AutoJSAPI(aGlobalObject, aIsMainThread,
-              aCx ? aCx : nsContentUtils::GetSafeJSContext())
-  , ScriptSettingsStackEntry(aGlobalObject, /* aCandidate = */ true)
+                                 bool aIsMainThread)
+  : AutoJSAPI(aGlobalObject, aIsMainThread, eEntryScript)
   , mWebIDLCallerPrincipal(nullptr)
 {
   MOZ_ASSERT(aGlobalObject);
-  MOZ_ASSERT_IF(!aCx, aIsMainThread); // cx is mandatory off-main-thread.
-  MOZ_ASSERT_IF(aCx && aIsMainThread, aCx == nsContentUtils::GetSafeJSContext());
 
   if (aIsMainThread && gRunToCompletionListeners > 0) {
     mDocShellEntryMonitor.emplace(cx(), aReason);
@@ -656,9 +663,8 @@ AutoEntryScript::AutoEntryScript(nsIGlobalObject* aGlobalObject,
 
 AutoEntryScript::AutoEntryScript(JSObject* aObject,
                                  const char *aReason,
-                                 bool aIsMainThread,
-                                 JSContext* aCx)
-  : AutoEntryScript(xpc::NativeGlobal(aObject), aReason, aIsMainThread, aCx)
+                                 bool aIsMainThread)
+  : AutoEntryScript(xpc::NativeGlobal(aObject), aReason, aIsMainThread)
 {
 }
 
@@ -746,63 +752,26 @@ AutoEntryScript::DocshellEntryMonitor::Exit(JSContext* aCx)
 }
 
 AutoIncumbentScript::AutoIncumbentScript(nsIGlobalObject* aGlobalObject)
-  : ScriptSettingsStackEntry(aGlobalObject, /* aCandidate = */ false)
+  : ScriptSettingsStackEntry(aGlobalObject, eIncumbentScript)
   , mCallerOverride(nsContentUtils::GetCurrentJSContextForThread())
 {
+  ScriptSettingsStack::Push(this);
 }
 
-AutoNoJSAPI::AutoNoJSAPI(bool aIsMainThread)
-  : ScriptSettingsStackEntry()
+AutoIncumbentScript::~AutoIncumbentScript()
 {
-  if (aIsMainThread) {
-    mCxPusher.emplace(static_cast<JSContext*>(nullptr),
-                      /* aAllowNull = */ true);
-  }
+  ScriptSettingsStack::Pop(this);
 }
 
-danger::AutoCxPusher::AutoCxPusher(JSContext* cx, bool allowNull)
+AutoNoJSAPI::AutoNoJSAPI()
+  : ScriptSettingsStackEntry(nullptr, eNoJSAPI)
 {
-  MOZ_ASSERT_IF(!allowNull, cx);
-
-  XPCJSContextStack *stack = XPCJSRuntime::Get()->GetJSContextStack();
-  stack->Push(cx);
-  mStackDepthAfterPush = stack->Count();
-
-#ifdef DEBUG
-  mPushedContext = cx;
-  mCompartmentDepthOnEntry = cx ? js::GetEnterCompartmentDepth(cx) : 0;
-#endif
-
-  // Enter a request and a compartment for the duration that the cx is on the
-  // stack if non-null.
-  if (cx) {
-    mAutoRequest.emplace(cx);
-  }
+  ScriptSettingsStack::Push(this);
 }
 
-danger::AutoCxPusher::~AutoCxPusher()
+AutoNoJSAPI::~AutoNoJSAPI()
 {
-  // Leave the request before popping.
-  mAutoRequest.reset();
-
-  // When we push a context, we may save the frame chain and pretend like we
-  // haven't entered any compartment. This gets restored on Pop(), but we can
-  // run into trouble if a Push/Pop are interleaved with a
-  // JSAutoEnterCompartment. Make sure the compartment depth right before we
-  // pop is the same as it was right after we pushed.
-  MOZ_ASSERT_IF(mPushedContext, mCompartmentDepthOnEntry ==
-                                js::GetEnterCompartmentDepth(mPushedContext));
-  DebugOnly<JSContext*> stackTop;
-  MOZ_ASSERT(mPushedContext == nsXPConnect::XPConnect()->GetCurrentJSContext());
-  XPCJSRuntime::Get()->GetJSContextStack()->Pop();
-}
-
-bool
-danger::AutoCxPusher::IsStackTop() const
-{
-  uint32_t currentDepth = XPCJSRuntime::Get()->GetJSContextStack()->Count();
-  MOZ_ASSERT(currentDepth >= mStackDepthAfterPush);
-  return currentDepth == mStackDepthAfterPush;
+  ScriptSettingsStack::Pop(this);
 }
 
 } // namespace dom
@@ -812,13 +781,13 @@ AutoJSContext::AutoJSContext(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM_IN_IMPL)
 {
   JS::AutoSuppressGCAnalysis nogc;
   MOZ_ASSERT(!mCx, "mCx should not be initialized!");
+  MOZ_ASSERT(NS_IsMainThread());
 
   MOZ_GUARD_OBJECT_NOTIFIER_INIT;
 
-  nsXPConnect *xpc = nsXPConnect::XPConnect();
-  mCx = xpc->GetCurrentJSContext();
-
-  if (!mCx) {
+  if (IsJSAPIActive()) {
+    mCx = danger::GetJSContext();
+  } else {
     mJSAPI.Init();
     mCx = mJSAPI.cx();
   }

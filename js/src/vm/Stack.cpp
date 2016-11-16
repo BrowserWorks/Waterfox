@@ -10,7 +10,7 @@
 
 #include "jscntxt.h"
 
-#include "asmjs/WasmModule.h"
+#include "asmjs/WasmInstance.h"
 #include "gc/Marking.h"
 #include "jit/BaselineFrame.h"
 #include "jit/JitcodeMap.h"
@@ -224,7 +224,10 @@ InterpreterFrame::prologue(JSContext* cx)
         } else if (script->isDerivedClassConstructor()) {
             MOZ_ASSERT(callee().isClassConstructor());
             thisArgument() = MagicValue(JS_UNINITIALIZED_LEXICAL);
-        } else if (thisArgument().isPrimitive()) {
+        } else if (thisArgument().isObject()) {
+            // Nothing to do. Correctly set.
+        } else {
+            MOZ_ASSERT(thisArgument().isMagic(JS_IS_CONSTRUCTING));
             RootedObject callee(cx, &this->callee());
             RootedObject newTarget(cx, &this->newTarget().toObject());
             JSObject* obj = CreateThisForFunction(cx, callee, newTarget,
@@ -587,6 +590,7 @@ FrameIter::Data::Data(JSContext* cx, DebuggerEvalOption debuggerEvalOption,
   : cx_(cx),
     debuggerEvalOption_(debuggerEvalOption),
     principals_(principals),
+    state_(DONE),
     pc_(nullptr),
     interpFrames_(nullptr),
     activations_(cx->runtime()),
@@ -713,7 +717,6 @@ FrameIter::operator++()
                     popInterpreterFrame();
             }
 
-            data_.cx_ = data_.activations_->cx();
             break;
         }
         popInterpreterFrame();
@@ -738,11 +741,6 @@ FrameIter::copyData() const
     MOZ_ASSERT(data_.state_ != WASM);
     if (data && data_.jitFrames_.isIonScripted())
         data->ionInlineFrameNo_ = ionInlineFrames_.frameNo();
-    // Give the copied Data the cx of the current activation, which may be
-    // different than the cx that the current FrameIter was constructed
-    // with. This ensures that when we instantiate another FrameIter with the
-    // copied data, its cx is still alive.
-    data->cx_ = activation()->cx();
     return data;
 }
 
@@ -865,7 +863,7 @@ FrameIter::filename() const
       case JIT:
         return script()->filename();
       case WASM:
-        return data_.activations_->asWasm()->module().filename();
+        return data_.activations_->asWasm()->instance().metadata().filename.get();
     }
 
     MOZ_CRASH("Unexpected state");
@@ -883,7 +881,7 @@ FrameIter::displayURL() const
         return ss->hasDisplayURL() ? ss->displayURL() : nullptr;
       }
       case WASM:
-        return data_.activations_->asWasm()->module().displayURL();
+        return data_.activations_->asWasm()->instance().metadata().displayURL();
     }
     MOZ_CRASH("Unexpected state");
 }
@@ -916,9 +914,8 @@ FrameIter::mutedErrors() const
       case JIT:
         return script()->mutedErrors();
       case WASM:
-        return data_.activations_->asWasm()->module().mutedErrors();
+        return data_.activations_->asWasm()->instance().metadata().mutedErrors();
     }
-
     MOZ_CRASH("Unexpected state");
 }
 
@@ -1398,15 +1395,12 @@ jit::JitActivation::JitActivation(JSContext* cx, bool active)
 {
     if (active) {
         prevJitTop_ = cx->runtime()->jitTop;
-        prevJitJSContext_ = cx->runtime()->jitJSContext;
         prevJitActivation_ = cx->runtime()->jitActivation;
-        cx->runtime()->jitJSContext = cx;
         cx->runtime()->jitActivation = this;
 
         registerProfiling();
     } else {
         prevJitTop_ = nullptr;
-        prevJitJSContext_ = nullptr;
         prevJitActivation_ = nullptr;
     }
 }
@@ -1418,7 +1412,6 @@ jit::JitActivation::~JitActivation()
             unregisterProfiling();
 
         cx_->runtime()->jitTop = prevJitTop_;
-        cx_->runtime()->jitJSContext = prevJitJSContext_;
         cx_->runtime()->jitActivation = prevJitActivation_;
     }
 
@@ -1468,9 +1461,7 @@ jit::JitActivation::setActive(JSContext* cx, bool active)
     if (active) {
         *((volatile bool*) active_) = true;
         prevJitTop_ = cx->runtime()->jitTop;
-        prevJitJSContext_ = cx->runtime()->jitJSContext;
         prevJitActivation_ = cx->runtime()->jitActivation;
-        cx->runtime()->jitJSContext = cx;
         cx->runtime()->jitActivation = this;
 
         registerProfiling();
@@ -1479,7 +1470,6 @@ jit::JitActivation::setActive(JSContext* cx, bool active)
         unregisterProfiling();
 
         cx->runtime()->jitTop = prevJitTop_;
-        cx->runtime()->jitJSContext = prevJitJSContext_;
         cx->runtime()->jitActivation = prevJitActivation_;
 
         *((volatile bool*) active_) = false;
@@ -1634,9 +1624,9 @@ jit::JitActivation::markIonRecovery(JSTracer* trc)
         it->trace(trc);
 }
 
-WasmActivation::WasmActivation(JSContext* cx, wasm::Module& module)
+WasmActivation::WasmActivation(JSContext* cx, wasm::Instance& instance)
   : Activation(cx, Wasm),
-    module_(module),
+    instance_(instance),
     entrySP_(nullptr),
     resumePC_(nullptr),
     fp_(nullptr),
@@ -1644,8 +1634,8 @@ WasmActivation::WasmActivation(JSContext* cx, wasm::Module& module)
 {
     (void) entrySP_;  // squelch GCC warning
 
-    prevWasmForModule_ = module.activation();
-    module.activation() = this;
+    prevWasmForInstance_ = instance.activation();
+    instance.activation() = this;
 
     prevWasm_ = cx->runtime()->wasmActivationStack_;
     cx->runtime()->wasmActivationStack_ = this;
@@ -1662,8 +1652,8 @@ WasmActivation::~WasmActivation()
 
     MOZ_ASSERT(fp_ == nullptr);
 
-    MOZ_ASSERT(module_.activation() == this);
-    module_.activation() = prevWasmForModule_;
+    MOZ_ASSERT(instance_.activation() == this);
+    instance_.activation() = prevWasmForInstance_;
 
     MOZ_ASSERT(cx_->runtime()->wasmActivationStack_ == this);
 

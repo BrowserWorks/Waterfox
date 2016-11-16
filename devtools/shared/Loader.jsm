@@ -8,10 +8,8 @@
  * Manages the addon-sdk loader instance used to load the developer tools.
  */
 
-var { Constructor: CC, classes: Cc, interfaces: Ci, utils: Cu } = Components;
-
-Cu.import("resource://gre/modules/Services.jsm");
-
+var { utils: Cu } = Components;
+var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 var { Loader, descriptor, resolveURI } = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
 
 this.EXPORTED_SYMBOLS = ["DevToolsLoader", "devtools", "BuiltinProvider",
@@ -53,7 +51,7 @@ BuiltinProvider.prototype = {
     // But we have to keep using Promise.jsm for other loader to prevent
     // breaking unhandled promise rejection in tests.
     if (this.invisibleToDebugger) {
-      paths["promise"] = "resource://gre/modules/Promise-backend.js";
+      paths.promise = "resource://gre/modules/Promise-backend.js";
     }
     this.loader = new Loader.Loader({
       id: "fx-devtools",
@@ -84,6 +82,15 @@ this.DevToolsLoader = function DevToolsLoader() {
 };
 
 DevToolsLoader.prototype = {
+  destroy: function (reason = "shutdown") {
+    Services.obs.removeObserver(this, "devtools-unload");
+
+    if (this._provider) {
+      this._provider.unload(reason);
+      delete this._provider;
+    }
+  },
+
   get provider() {
     if (!this._provider) {
       this._loadProvider();
@@ -96,9 +103,9 @@ DevToolsLoader.prototype = {
   get id() {
     if (this._id) {
       return this._id;
-    } else {
-      return this._id = ++gNextLoaderID;
     }
+    this._id = ++gNextLoaderID;
+    return this._id;
   },
 
   /**
@@ -140,7 +147,7 @@ DevToolsLoader.prototype = {
     // Promise-backend.js, as a Loader module. Instead of Promise.jsm which
     // can't be flagged as invisible to debugger.
     if (this.invisibleToDebugger) {
-      delete modules["promise"];
+      delete modules.promise;
     }
 
     // Register custom pseudo modules to the current loader instance
@@ -179,12 +186,7 @@ DevToolsLoader.prototype = {
     if (topic != "devtools-unload") {
       return;
     }
-    Services.obs.removeObserver(this, "devtools-unload");
-
-    if (this._provider) {
-      this._provider.unload(data);
-      delete this._provider;
-    }
+    this.destroy(data);
   },
 
   /**

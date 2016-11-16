@@ -45,7 +45,6 @@
 #include "mozilla/Logging.h"
 #include "nsCRT.h"
 #include "nsContentCreatorFunctions.h"
-#include "nsCORSListenerProxy.h"
 #include "nsProxyRelease.h"
 #include "nsSandboxFlags.h"
 #include "nsContentTypeParser.h"
@@ -88,6 +87,13 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(nsScriptLoadRequest)
 nsScriptLoadRequest::~nsScriptLoadRequest()
 {
   js_free(mScriptTextBuf);
+
+  // We should always clean up any off-thread script parsing resources.
+  MOZ_ASSERT(!mOffThreadToken);
+
+  // But play it safe in release builds and try to clean them up here
+  // as a fail safe.
+  MaybeCancelOffThreadScript();
 }
 
 void
@@ -95,6 +101,27 @@ nsScriptLoadRequest::SetReady()
 {
   MOZ_ASSERT(mProgress != Progress::Ready);
   mProgress = Progress::Ready;
+}
+
+void
+nsScriptLoadRequest::Cancel()
+{
+  MaybeCancelOffThreadScript();
+  mIsCanceled = true;
+}
+
+void
+nsScriptLoadRequest::MaybeCancelOffThreadScript()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (!mOffThreadToken) {
+    return;
+  }
+
+  JSContext* cx = JS_GetContext(xpc::GetJSRuntime());
+  JS::CancelOffThreadScript(cx, mOffThreadToken);
+  mOffThreadToken = nullptr;
 }
 
 //////////////////////////////////////////////////////////////
@@ -272,7 +299,13 @@ public:
                  JS::Handle<JSObject*> aModuleRecord);
 
   nsScriptLoader* Loader() const { return mLoader; }
-  JSObject* ModuleRecord() const { return mModuleRecord; }
+  JSObject* ModuleRecord() const
+  {
+    if (mModuleRecord) {
+      JS::ExposeObjectToActiveJS(mModuleRecord);
+    }
+    return mModuleRecord;
+  }
   nsIURI* BaseURL() const { return mBaseURL; }
 
   void UnlinkModuleRecord();
@@ -709,8 +742,7 @@ nsScriptLoader::CreateModuleScript(nsModuleLoadRequest* aRequest)
     JS::Rooted<JSObject*> module(cx);
 
     if (aRequest->mWasCompiledOMT) {
-      module = JS::FinishOffThreadModule(cx, xpc::GetJSRuntime(),
-                                         aRequest->mOffThreadToken);
+      module = JS::FinishOffThreadModule(cx, aRequest->mOffThreadToken);
       aRequest->mOffThreadToken = nullptr;
       rv = module ? NS_OK : NS_ERROR_FAILURE;
     } else {
@@ -866,25 +898,16 @@ ResolveRequestedModules(nsModuleLoadRequest* aRequest, nsCOMArray<nsIURI> &aUrls
     return NS_ERROR_FAILURE;
   }
 
-  JS::Rooted<JS::Value> arrayValue(cx, JS::ObjectValue(*specifiers));
-  JS::ForOfIterator iter(cx);
-  if (!iter.init(arrayValue)) {
-    return NS_ERROR_FAILURE;
-  }
-
   JS::Rooted<JS::Value> val(cx);
-  while (true) {
-    bool done;
-    if (!iter.next(&val, &done)) {
+  for (uint32_t i = 0; i < length; i++) {
+    if (!JS_GetElement(cx, specifiers, i, &val)) {
       return NS_ERROR_FAILURE;
     }
 
-    if (done) {
-      break;
-    }
-
     nsAutoJSString specifier;
-    specifier.init(cx, val);
+    if (!specifier.init(cx, val)) {
+      return NS_ERROR_FAILURE;
+    }
 
     // Let url be the result of resolving a module specifier given module script and requested.
     nsModuleScript* ms = aRequest->mModuleScript;
@@ -898,7 +921,7 @@ ResolveRequestedModules(nsModuleLoadRequest* aRequest, nsCOMArray<nsIURI> &aUrls
     nsresult rv = RequestedModuleIsInAncestorList(aRequest, uri, &isAncestor);
     NS_ENSURE_SUCCESS(rv, rv);
     if (!isAncestor) {
-      aUrls.AppendElement(uri);
+      aUrls.AppendElement(uri.forget());
     }
   }
 
@@ -1287,7 +1310,8 @@ nsScriptLoader::ProcessScriptElement(nsIScriptElement *aElement)
   // Check the type attribute to determine language and version.
   // If type exists, it trumps the deprecated 'language='
   nsAutoString type;
-  aElement->GetScriptType(type);
+  bool hasType = aElement->GetScriptType(type);
+
   nsScriptKind scriptKind = nsScriptKind::Classic;
   if (!type.IsEmpty()) {
     // Support type="module" only for chrome documents.
@@ -1296,7 +1320,7 @@ nsScriptLoader::ProcessScriptElement(nsIScriptElement *aElement)
     } else {
       NS_ENSURE_TRUE(ParseTypeAttribute(type, &version), false);
     }
-  } else {
+  } else if (!hasType) {
     // no 'type=' element
     // "language" is a deprecated attribute of HTML, so we check it only for
     // HTML script elements.
@@ -1839,8 +1863,7 @@ nsScriptLoader::ProcessRequest(nsScriptLoadRequest* aRequest)
     // (disappearing window, some other error, ...). Finish the
     // request to avoid leaks in the JS engine.
     MOZ_ASSERT(!aRequest->IsModuleRequest());
-    JS::FinishOffThreadScript(nullptr, xpc::GetJSRuntime(), aRequest->mOffThreadToken);
-    aRequest->mOffThreadToken = nullptr;
+    aRequest->MaybeCancelOffThreadScript();
   }
 
   // Free any source data.
@@ -2726,8 +2749,11 @@ nsScriptLoadHandler::TryDecodeRawData(const uint8_t* aData,
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint32_t haveRead = mBuffer.length();
-  uint32_t capacity = haveRead + dstLen;
-  if (!mBuffer.reserve(capacity)) {
+
+  CheckedInt<uint32_t> capacity = haveRead;
+  capacity += dstLen;
+
+  if (!capacity.isValid() || !mBuffer.reserve(capacity.value())) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -2739,7 +2765,7 @@ nsScriptLoadHandler::TryDecodeRawData(const uint8_t* aData,
   NS_ENSURE_SUCCESS(rv, rv);
 
   haveRead += dstLen;
-  MOZ_ASSERT(haveRead <= capacity, "mDecoder produced more data than expected");
+  MOZ_ASSERT(haveRead <= capacity.value(), "mDecoder produced more data than expected");
   MOZ_ALWAYS_TRUE(mBuffer.resizeUninitialized(haveRead));
 
   return NS_OK;

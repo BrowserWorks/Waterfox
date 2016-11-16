@@ -81,6 +81,21 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
 {
   EME_LOG("MediaKeySystemAccessManager::Request %s", NS_ConvertUTF16toUTF8(aKeySystem).get());
 
+  if (aKeySystem.IsEmpty()) {
+    aPromise->MaybeReject(NS_ERROR_DOM_TYPE_ERR,
+                          NS_LITERAL_CSTRING("Key system string is empty"));
+    // Don't notify DecoderDoctor, as there's nothing we or the user can
+    // do to fix this situation; the site is using the API wrong.
+    return;
+  }
+  if (aConfigs.IsEmpty()) {
+    aPromise->MaybeReject(NS_ERROR_DOM_TYPE_ERR,
+                          NS_LITERAL_CSTRING("Candidate MediaKeySystemConfigs is empty"));
+    // Don't notify DecoderDoctor, as there's nothing we or the user can
+    // do to fix this situation; the site is using the API wrong.
+    return;
+  }
+
   DecoderDoctorDiagnostics diagnostics;
 
   // Parse keysystem, split it out into keySystem prefix, and version suffix.
@@ -97,8 +112,10 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
     return;
   }
 
-  if (!MediaPrefs::EMEEnabled()) {
+  if (!MediaPrefs::EMEEnabled() && !IsClearkeyKeySystem(aKeySystem)) {
     // EME disabled by user, send notification to chrome so UI can inform user.
+    // Clearkey is allowed even when EME is disabled because we want the pref
+    // "media.eme.enabled" only taking effect on proprietary DRMs.
     MediaKeySystemAccess::NotifyObservers(mWindow,
                                           aKeySystem,
                                           MediaKeySystemStatus::Api_disabled);
@@ -125,8 +142,8 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
 
   if ((status == MediaKeySystemStatus::Cdm_not_installed ||
        status == MediaKeySystemStatus::Cdm_insufficient_version) &&
-      (keySystem.EqualsLiteral("com.adobe.primetime") ||
-       keySystem.EqualsLiteral("com.widevine.alpha"))) {
+      (keySystem.EqualsASCII(kEMEKeySystemPrimetime) ||
+       keySystem.EqualsASCII(kEMEKeySystemWidevine))) {
     // These are cases which could be resolved by downloading a new(er) CDM.
     // When we send the status to chrome, chrome's GMPProvider will attempt to
     // download or update the CDM. In AwaitInstall() we add listeners to wait
@@ -169,10 +186,7 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
   }
 
   MediaKeySystemConfiguration config;
-  // TODO: Remove IsSupported() check here once we remove backwards
-  // compatibility with initial implementation...
-  if (MediaKeySystemAccess::GetSupportedConfig(keySystem, aConfigs, config, &diagnostics) ||
-      MediaKeySystemAccess::IsSupported(keySystem, aConfigs, &diagnostics)) {
+  if (MediaKeySystemAccess::GetSupportedConfig(keySystem, aConfigs, config, &diagnostics)) {
     RefPtr<MediaKeySystemAccess> access(
       new MediaKeySystemAccess(mWindow, keySystem, NS_ConvertUTF8toUTF16(cdmVersion), config));
     aPromise->MaybeResolve(access);

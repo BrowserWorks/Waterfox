@@ -25,68 +25,59 @@ function consoleOpened(HUD) {
   ];
 
   let popup = HUD.jsterm.autocompletePopup;
-
-  let input = popup._document.activeElement;
-  function getActiveDescendant() {
-    return input.ownerDocument.getElementById(
-      input.getAttribute("aria-activedescendant"));
-  }
+  let input = HUD.jsterm.inputNode;
 
   ok(!popup.isOpen, "popup is not open");
   ok(!input.hasAttribute("aria-activedescendant"), "no aria-activedescendant");
 
-  popup._panel.addEventListener("popupshown", function onPopupPanel() {
-    popup._panel.removeEventListener("popupshown", onPopupPanel, false);
-
+  popup.once("popup-opened", () => {
     ok(popup.isOpen, "popup is open");
 
     is(popup.itemCount, 0, "no items");
-    ok(!input.hasAttribute("aria-activedescendant"),
-       "no aria-activedescendant");
+    ok(!input.hasAttribute("aria-activedescendant"), "no aria-activedescendant");
 
     popup.setItems(items);
 
     is(popup.itemCount, items.length, "items added");
 
     let sameItems = popup.getItems();
-    is(sameItems.every(function (aItem, aIndex) {
-      return aItem === items[aIndex];
+    is(sameItems.every(function (item, index) {
+      return item === items[index];
     }), true, "getItems returns back the same items");
 
-    is(popup.selectedIndex, 2,
-       "Index of the first item from bottom is selected.");
+    is(popup.selectedIndex, 2, "Index of the first item from bottom is selected.");
     is(popup.selectedItem, items[2], "First item from bottom is selected");
-    ok(getActiveDescendant().selected, "aria-activedescendant is correct");
+    checkActiveDescendant(popup, input);
 
     popup.selectedIndex = 1;
 
     is(popup.selectedIndex, 1, "index 1 is selected");
     is(popup.selectedItem, items[1], "item1 is selected");
-    ok(getActiveDescendant().selected, "aria-activedescendant is correct");
+    checkActiveDescendant(popup, input);
 
     popup.selectedItem = items[2];
 
     is(popup.selectedIndex, 2, "index 2 is selected");
     is(popup.selectedItem, items[2], "item2 is selected");
-    ok(getActiveDescendant().selected, "aria-activedescendant is correct");
+    checkActiveDescendant(popup, input);
 
     is(popup.selectPreviousItem(), items[1], "selectPreviousItem() works");
 
     is(popup.selectedIndex, 1, "index 1 is selected");
     is(popup.selectedItem, items[1], "item1 is selected");
-    ok(getActiveDescendant().selected, "aria-activedescendant is correct");
+    checkActiveDescendant(popup, input);
 
-    is(popup.selectNextItem(), items[2], "selectPreviousItem() works");
+    is(popup.selectNextItem(), items[2], "selectNextItem() works");
 
     is(popup.selectedIndex, 2, "index 2 is selected");
     is(popup.selectedItem, items[2], "item2 is selected");
-    ok(getActiveDescendant().selected, "aria-activedescendant is correct");
+    checkActiveDescendant(popup, input);
 
-    ok(popup.selectNextItem(), "selectPreviousItem() works");
+    ok(popup.selectNextItem(), "selectNextItem() works");
 
     is(popup.selectedIndex, 0, "index 0 is selected");
     is(popup.selectedItem, items[0], "item0 is selected");
-    ok(getActiveDescendant().selected, "aria-activedescendant is correct");
+    checkActiveDescendant(popup, input);
 
     items.push({label: "label3", value: "value3"});
     popup.appendItem(items[3]);
@@ -95,25 +86,38 @@ function consoleOpened(HUD) {
 
     popup.selectedIndex = 3;
     is(popup.selectedItem, items[3], "item3 is selected");
-    ok(getActiveDescendant().selected, "aria-activedescendant is correct");
+    checkActiveDescendant(popup, input);
 
     popup.removeItem(items[2]);
 
     is(popup.selectedIndex, 2, "index2 is selected");
     is(popup.selectedItem, items[3], "item3 is still selected");
-    ok(getActiveDescendant().selected, "aria-activedescendant is correct");
+    checkActiveDescendant(popup, input);
     is(popup.itemCount, items.length - 1, "item2 removed");
 
     popup.clearItems();
     is(popup.itemCount, 0, "items cleared");
-    ok(!input.hasAttribute("aria-activedescendant"),
-       "no aria-activedescendant");
+    ok(!input.hasAttribute("aria-activedescendant"), "no aria-activedescendant");
 
+    popup.once("popup-closed", () => {
+      deferred.resolve();
+    });
     popup.hidePopup();
-    deferred.resolve();
-  }, false);
+  });
 
-  popup.openPopup();
+  popup.openPopup(input);
 
   return deferred.promise;
+}
+
+function checkActiveDescendant(popup, input) {
+  let activeElement = input.ownerDocument.activeElement;
+  let descendantId = activeElement.getAttribute("aria-activedescendant");
+  let popupItem = popup._tooltip.panel.querySelector("#" + descendantId);
+  let cloneItem = input.ownerDocument.querySelector("#" + descendantId);
+
+  ok(popupItem, "Active descendant is found in the popup list");
+  ok(cloneItem, "Active descendant is found in the list clone");
+  is(popupItem.innerHTML, cloneItem.innerHTML,
+    "Cloned item has the same HTML as the original element");
 }

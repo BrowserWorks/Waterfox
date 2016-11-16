@@ -40,8 +40,8 @@ python/**
 rdf/**
 startupcache/**
 testing/**
-!testing/eslint-plugin-mozilla/
-testing/eslint-plugin-mozilla/node_modules/**
+!tools/lint/eslint/eslint-plugin-mozilla/
+tools/lint/eslint/eslint-plugin-mozilla/node_modules/**
 tools/**
 uriloader/**
 view/**
@@ -71,6 +71,8 @@ browser/components/shell/**
 browser/components/tabview/**
 browser/components/translation/**
 browser/extensions/pdfjs/**
+# generated or library files in pocket
+browser/extensions/pocket/content/panels/js/tmpl.js
 browser/extensions/pocket/content/panels/js/vendor/**
 browser/locales/**
 
@@ -84,7 +86,10 @@ devtools/client/jsonview/lib/**
 devtools/client/memory/**
 devtools/client/netmonitor/test/**
 devtools/client/netmonitor/har/test/**
-devtools/client/performance/**
+devtools/client/performance/components/**
+devtools/client/performance/legacy/**
+devtools/client/performance/modules/**
+devtools/client/performance/test/**
 devtools/client/projecteditor/**
 devtools/client/promisedebugger/**
 devtools/client/responsivedesign/**
@@ -96,6 +101,7 @@ devtools/client/shared/developer-toolbar.js
 devtools/client/shared/components/test/**
 devtools/client/shared/redux/middleware/test/**
 devtools/client/shared/test/**
+!devtools/client/shared/test/test-actor-registry.js
 devtools/client/shared/widgets/*.jsm
 devtools/client/sourceeditor/**
 devtools/client/webaudioeditor/**
@@ -104,22 +110,35 @@ devtools/client/webconsole/**
 !devtools/client/webconsole/jsterm.js
 !devtools/client/webconsole/console-commands.js
 devtools/client/webide/**
-devtools/server/**
+!devtools/client/webide/components/webideCli.js
+devtools/server/*.js
+devtools/server/*.jsm
+!devtools/server/child.js
+!devtools/server/css-logic.js
+!devtools/server/main.js
+devtools/server/actors/**
+!devtools/server/actors/inspector.js
+!devtools/server/actors/highlighters/eye-dropper.js
 !devtools/server/actors/webbrowser.js
+!devtools/server/actors/webextension.js
 !devtools/server/actors/styles.js
 !devtools/server/actors/string.js
+!devtools/server/actors/csscoverage.js
+devtools/server/performance/**
+devtools/server/tests/**
 devtools/shared/*.js
 !devtools/shared/css-lexer.js
 !devtools/shared/defer.js
+!devtools/shared/event-emitter.js
 !devtools/shared/task.js
 devtools/shared/*.jsm
+!devtools/shared/Loader.jsm
 devtools/shared/apps/**
 devtools/shared/client/**
 devtools/shared/discovery/**
 devtools/shared/gcli/**
 !devtools/shared/gcli/templater.js
 devtools/shared/heapsnapshot/**
-devtools/shared/inspector/**
 devtools/shared/layout/**
 devtools/shared/locales/**
 devtools/shared/performance/**
@@ -130,8 +149,10 @@ devtools/shared/tests/**
 !devtools/shared/tests/unit/test_csslexer.js
 devtools/shared/touch/**
 devtools/shared/transport/**
+!devtools/shared/transport/transport.js
 devtools/shared/webconsole/test/**
 devtools/shared/worker/**
+!devtools/shared/worker/worker.js
 
 # Ignore devtools pre-processed files
 devtools/client/framework/toolbox-process-window.js

@@ -48,9 +48,6 @@ class CompileRuntime
     const void* addressOfIonBailAfter();
 #endif
 
-    // &runtime()->jitJSContext
-    const void* addressOfJSContext();
-
     // &runtime()->activation_
     const void* addressOfActivation();
 
@@ -63,12 +60,15 @@ class CompileRuntime
 
     const void* addressOfInterruptUint32();
 
+    // We have to bake JSContext* into JIT code, but this pointer shouldn't be
+    // used/dereferenced on the background thread so we return it as void*.
+    const void* getJSContext();
+
     const JitRuntime* jitRuntime();
 
     // Compilation does not occur off thread when the SPS profiler is enabled.
     SPSProfiler& spsProfiler();
 
-    bool canUseSignalHandlers();
     bool jitSupportsFloatingPoint();
     bool hadOutOfMemory();
     bool profilingScripts();
@@ -87,10 +87,10 @@ class CompileRuntime
     // DOM callbacks must be threadsafe (and will hopefully be removed soon).
     const DOMCallbacks* DOMcallbacks();
 
-    const MathCache* maybeGetMathCache();
-
     const Nursery& gcNursery();
     void setMinorGCShouldCancelIonCompilations();
+
+    bool runtimeMatches(JSRuntime* rt);
 };
 
 class CompileZone
@@ -121,6 +121,8 @@ class CompileCompartment
     const void* addressOfRandomNumberGenerator();
 
     const JitCompartment* jitCompartment();
+
+    const GlobalObject* maybeGlobal();
 
     bool hasAllocationMetadataBuilder();
 

@@ -97,6 +97,13 @@ FirefoxProfileMigrator.prototype.getResources = function(aProfile) {
   return this._getResourcesInternal(sourceProfileDir, currentProfileDir, aProfile);
 };
 
+FirefoxProfileMigrator.prototype.getLastUsedDate = function() {
+  // We always pretend we're really old, so that we don't mess
+  // up the determination of which browser is the most 'recent'
+  // to import from.
+  return Promise.resolve(new Date(0));
+};
+
 FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileDir, currentProfileDir, aProfile) {
   let getFileResource = function(aMigrationType, aFileNames) {
     let files = [];
@@ -150,11 +157,6 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
           // session with the "what's new" page:
           Services.prefs.setCharPref("browser.startup.homepage_override.mstone", mstone);
           Services.prefs.setCharPref("browser.startup.homepage_override.buildID", buildID);
-          // Also set the Windows 10 pref to avoid the win10 intro page to show up
-          // on startup.
-          if (AppConstants.isPlatformAndVersionAtLeast("win", "10")) {
-            Services.prefs.setBoolPref("browser.usedOnWindows10", true);
-          }
           // It's too early in startup for the pref service to have a profile directory,
           // so we have to manually tell it where to save the prefs file.
           let newPrefsFile = currentProfileDir.clone();

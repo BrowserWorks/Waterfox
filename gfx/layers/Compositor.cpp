@@ -8,6 +8,7 @@
 #include "mozilla/layers/CompositorBridgeParent.h"  // for CompositorBridgeParent
 #include "mozilla/layers/Effects.h"     // for Effect, EffectChain, etc
 #include "mozilla/layers/TextureClient.h"
+#include "mozilla/layers/TextureHost.h"
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/mozalloc.h"           // for operator delete, etc
 #include "gfx2DGlue.h"
@@ -24,7 +25,7 @@ namespace mozilla {
 
 namespace layers {
 
-Compositor::Compositor(widget::CompositorWidgetProxy* aWidget,
+Compositor::Compositor(widget::CompositorWidget* aWidget,
                       CompositorBridgeParent* aParent)
   : mCompositorID(0)
   , mDiagnosticTypes(DiagnosticTypes::NO_DIAGNOSTIC)
@@ -33,6 +34,7 @@ Compositor::Compositor(widget::CompositorWidgetProxy* aWidget,
   , mPixelsFilled(0)
   , mScreenRotation(ROTATION_0)
   , mWidget(aWidget)
+  , mIsDestroyed(false)
 {
 }
 
@@ -45,12 +47,15 @@ void
 Compositor::Destroy()
 {
   ReadUnlockTextures();
+  FlushPendingNotifyNotUsed();
+  mIsDestroyed = true;
 }
 
 void
 Compositor::EndFrame()
 {
   ReadUnlockTextures();
+  mLastCompositionEndTime = TimeStamp::Now();
 }
 
 void
@@ -66,6 +71,35 @@ void
 Compositor::UnlockAfterComposition(TextureHost* aTexture)
 {
   mUnlockAfterComposition.AppendElement(aTexture);
+}
+
+void
+Compositor::NotifyNotUsedAfterComposition(TextureHost* aTextureHost)
+{
+  MOZ_ASSERT(!mIsDestroyed);
+
+  mNotifyNotUsedAfterComposition.AppendElement(aTextureHost);
+
+  // If Compositor holds many TextureHosts without compositing,
+  // the TextureHosts should be flushed to reduce memory consumption.
+  const int thresholdCount = 5;
+  const double thresholdSec = 2.0f;
+  if (mNotifyNotUsedAfterComposition.Length() > thresholdCount) {
+    TimeDuration duration = TimeStamp::Now() - mLastCompositionEndTime;
+    // Check if we could flush
+    if (duration.ToSeconds() > thresholdSec) {
+      FlushPendingNotifyNotUsed();
+    }
+  }
+}
+
+void
+Compositor::FlushPendingNotifyNotUsed()
+{
+  for (auto& textureHost : mNotifyNotUsedAfterComposition) {
+    textureHost->CallNotifyNotUsed();
+  }
+  mNotifyNotUsedAfterComposition.Clear();
 }
 
 /* static */ void
@@ -346,15 +380,18 @@ DecomposeIntoNoRepeatRects(const gfx::Rect& aRect,
   GLfloat xmid = aRect.x + (1.0f - tl.x) / texCoordRect.width * aRect.width;
   GLfloat ymid = aRect.y + (1.0f - tl.y) / texCoordRect.height * aRect.height;
 
+  // Due to floating-point inaccuracy, we have to use XMost()-x and YMost()-y
+  // to calculate width and height, respectively, to ensure that size will
+  // remain consistent going from absolute to relative and back again.
   NS_ASSERTION(!xwrap ||
-               (xmid > aRect.x &&
-                xmid < aRect.XMost() &&
-                FuzzyEqual((xmid - aRect.x) + (aRect.XMost() - xmid), aRect.width)),
+               (xmid >= aRect.x &&
+                xmid <= aRect.XMost() &&
+                FuzzyEqual((xmid - aRect.x) + (aRect.XMost() - xmid), aRect.XMost() - aRect.x)),
                "xmid should be within [x,XMost()] and the wrapped rect should have the same width");
   NS_ASSERTION(!ywrap ||
-               (ymid > aRect.y &&
-                ymid < aRect.YMost() &&
-                FuzzyEqual((ymid - aRect.y) + (aRect.YMost() - ymid), aRect.height)),
+               (ymid >= aRect.y &&
+                ymid <= aRect.YMost() &&
+                FuzzyEqual((ymid - aRect.y) + (aRect.YMost() - ymid), aRect.YMost() - aRect.y)),
                "ymid should be within [y,YMost()] and the wrapped rect should have the same height");
 
   if (!xwrap && ywrap) {

@@ -1,16 +1,16 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 TEST_DIRS += [
-    'compiledtest', 
+    'compiledtest',
     'gtest'
 ]
 
-# Change the following line to avoid bug 1081323 (clobber after changing a manifest):
-# Add test for webglcontextcreationerror.
+# Change the following line(s) to avoid bug 1081323 (clobber after changing a manifest):
+# * Implement ReadPixel with PBOs.
 
 MOCHITEST_MANIFESTS += [
     'test/crash/mochitest.ini',
@@ -71,7 +71,6 @@ SOURCES += [
 UNIFIED_SOURCES += [
     'TexUnpackBlob.cpp',
     'WebGL1Context.cpp',
-    'WebGL1ContextBuffers.cpp',
     'WebGL1ContextUniforms.cpp',
     'WebGL2Context.cpp',
     'WebGL2ContextBuffers.cpp',

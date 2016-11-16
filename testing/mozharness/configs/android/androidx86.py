@@ -2,7 +2,7 @@ import os
 
 config = {
     "buildbot_json_path": "buildprops.json",
-    "host_utils_url": "http://talos-remote.pvt.build.mozilla.org/tegra/tegra-host-utils.Linux.1109310.2.zip",
+    "hostutils_manifest_path": "testing/config/tooltool-manifests/linux64/hostutils.manifest",
     "robocop_package_name": "org.mozilla.roboexample.test",
     "device_ip": "127.0.0.1",
     "tooltool_manifest_path": "testing/config/tooltool-manifests/androidx86/releng.manifest",
@@ -112,6 +112,7 @@ config = {
                         "--manifest=tests/xpcshell.ini",
                         "--log-raw=%(raw_log_file)s",
                         "--log-errorsummary=%(error_summary_file)s",
+                        "--test-plugin-path=none",
                     ],
         },
     }, # end suite_definitions

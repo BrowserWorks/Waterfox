@@ -10,6 +10,7 @@ Cu.import("resource://devtools/shared/event-emitter.js");
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   EventManager,
+  IconDetails,
 } = ExtensionUtils;
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
@@ -78,6 +79,7 @@ BrowserAction.prototype = {
 
       onCreated: node => {
         node.classList.add("badged-button");
+        node.classList.add("webextension-browser-action");
         node.setAttribute("constrain-size", "true");
 
         this.updateButton(node, this.defaults);
@@ -112,7 +114,7 @@ BrowserAction.prototype = {
     });
 
     this.tabContext.on("tab-select", // eslint-disable-line mozilla/balanced-listeners
-                       (evt, tab) => { this.updateWindow(tab.ownerDocument.defaultView); });
+                       (evt, tab) => { this.updateWindow(tab.ownerGlobal); });
 
     this.widget = widget;
   },
@@ -149,22 +151,34 @@ BrowserAction.prototype = {
     const LEGACY_CLASS = "toolbarbutton-legacy-addon";
     node.classList.remove(LEGACY_CLASS);
 
-
-    let win = node.ownerDocument.defaultView;
-    let {icon, size} = IconDetails.getURL(tabData.icon, win, this.extension);
+    let baseSize = 16;
+    let {icon, size} = IconDetails.getPreferredIcon(tabData.icon, this.extension, baseSize);
 
     // If the best available icon size is not divisible by 16, check if we have
     // an 18px icon to fall back to, and trim off the padding instead.
     if (size % 16 && !icon.endsWith(".svg")) {
-      let result = IconDetails.getURL(tabData.icon, win, this.extension, 18);
+      let result = IconDetails.getPreferredIcon(tabData.icon, this.extension, 18);
 
       if (result.size % 18 == 0) {
+        baseSize = 18;
         icon = result.icon;
         node.classList.add(LEGACY_CLASS);
       }
     }
 
-    node.setAttribute("image", icon);
+    // These URLs should already be properly escaped, but make doubly sure CSS
+    // string escape characters are escaped here, since they could lead to a
+    // sandbox break.
+    let escape = str => str.replace(/[\\\s"]/g, encodeURIComponent);
+
+    let getIcon = size => escape(IconDetails.getPreferredIcon(tabData.icon, this.extension, size).icon);
+
+    node.setAttribute("style", `
+      --webextension-menupanel-image: url("${getIcon(32)}");
+      --webextension-menupanel-image-2x: url("${getIcon(64)}");
+      --webextension-toolbar-image: url("${escape(icon)}");
+      --webextension-toolbar-image-2x: url("${getIcon(baseSize * 2)}");
+    `);
   },
 
   // Update the toolbar button for a given window.
@@ -182,7 +196,7 @@ BrowserAction.prototype = {
   updateOnChange(tab) {
     if (tab) {
       if (tab.selected) {
-        this.updateWindow(tab.ownerDocument.defaultView);
+        this.updateWindow(tab.ownerGlobal);
       }
     } else {
       for (let window of WindowListManager.browserWindows()) {
@@ -242,7 +256,7 @@ extensions.on("shutdown", (type, extension) => {
 });
 /* eslint-enable mozilla/balanced-listeners */
 
-extensions.registerSchemaAPI("browserAction", null, (extension, context) => {
+extensions.registerSchemaAPI("browserAction", (extension, context) => {
   return {
     browserAction: {
       onClicked: new EventManager(context, "browserAction.onClicked", fire => {

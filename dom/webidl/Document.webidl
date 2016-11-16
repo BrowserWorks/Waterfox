@@ -14,6 +14,11 @@ interface nsILoadGroup;
 
 enum VisibilityState { "hidden", "visible", "prerender" };
 
+/* https://dom.spec.whatwg.org/#dictdef-elementcreationoptions */
+dictionary ElementCreationOptions {
+  DOMString is;
+};
+
 /* http://dom.spec.whatwg.org/#interface-document */
 [Constructor]
 interface Document : Node {
@@ -48,9 +53,9 @@ interface Document : Node {
   Element? getElementById(DOMString elementId);
 
   [NewObject, Throws]
-  Element createElement(DOMString localName);
+  Element createElement(DOMString localName, optional (ElementCreationOptions or DOMString) options);
   [NewObject, Throws]
-  Element createElementNS(DOMString? namespace, DOMString qualifiedName);
+  Element createElementNS(DOMString? namespace, DOMString qualifiedName, optional ElementCreationOptions options);
   [NewObject]
   DocumentFragment createDocumentFragment();
   [NewObject]
@@ -248,24 +253,26 @@ partial interface Document {
   attribute EventHandler onfullscreenerror;
 };
 
-// http://dvcs.w3.org/hg/pointerlock/raw-file/default/index.html#extensions-to-the-document-interface
+// https://w3c.github.io/pointerlock/#extensions-to-the-document-interface
+// https://w3c.github.io/pointerlock/#extensions-to-the-documentorshadowroot-mixin
 partial interface Document {
-    readonly attribute Element? mozPointerLockElement;
-    void mozExitPointerLock ();
+  readonly attribute Element? pointerLockElement;
+  [BinaryName="pointerLockElement", Pref="pointer-lock-api.prefixed.enabled"]
+  readonly attribute Element? mozPointerLockElement;
+  void exitPointerLock();
+  [BinaryName="exitPointerLock", Pref="pointer-lock-api.prefixed.enabled"]
+  void mozExitPointerLock();
+
+  // Event handlers
+  attribute EventHandler onpointerlockchange;
+  attribute EventHandler onpointerlockerror;
 };
 
 //http://dvcs.w3.org/hg/webcomponents/raw-file/tip/spec/custom/index.html#dfn-document-register
 partial interface Document {
-    [Throws, Func="nsDocument::IsWebComponentsEnabled"]
+    // this is deprecated from CustomElements v0
+    [Throws, Func="CustomElementsRegistry::IsCustomElementsEnabled"]
     object registerElement(DOMString name, optional ElementRegistrationOptions options);
-};
-
-//http://dvcs.w3.org/hg/webcomponents/raw-file/tip/spec/custom/index.html#dfn-document-register
-partial interface Document {
-    [NewObject, Throws]
-    Element createElement(DOMString localName, DOMString typeExtension);
-    [NewObject, Throws]
-    Element createElementNS(DOMString? namespace, DOMString qualifiedName, DOMString typeExtension);
 };
 
 // http://dvcs.w3.org/hg/webperf/raw-file/tip/specs/PageVisibility/Overview.html#sec-document-interface
@@ -391,6 +398,14 @@ partial interface Document {
 partial interface Document {
   [ChromeOnly] readonly attribute boolean isSrcdocDocument;
 };
+
+
+// Extension to give chrome JS the ability to get the underlying
+// sandbox flag attribute
+partial interface Document {
+  [ChromeOnly] readonly attribute DOMString? sandboxFlagsAsString;
+};
+
 
 /**
  * Chrome document anonymous content management.

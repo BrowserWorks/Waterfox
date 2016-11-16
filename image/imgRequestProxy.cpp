@@ -668,7 +668,8 @@ imgRequestProxy::GetImagePrincipal(nsIPrincipal** aPrincipal)
     return NS_ERROR_FAILURE;
   }
 
-  NS_ADDREF(*aPrincipal = GetOwner()->GetPrincipal());
+  nsCOMPtr<nsIPrincipal> principal = GetOwner()->GetPrincipal();
+  principal.forget(aPrincipal);
   return NS_OK;
 }
 
@@ -786,7 +787,7 @@ imgRequestProxy::Notify(int32_t aType, const mozilla::gfx::IntRect* aRect)
   // Make sure the listener stays alive while we notify.
   nsCOMPtr<imgINotificationObserver> listener(mListener);
 
-  mListener->Notify(this, aType, aRect);
+  listener->Notify(this, aType, aRect);
 }
 
 void
@@ -806,8 +807,8 @@ imgRequestProxy::OnLoadComplete(bool aLastPart)
 
   if (mListener && !mCanceled) {
     // Hold a ref to the listener while we call it, just in case.
-    nsCOMPtr<imgINotificationObserver> kungFuDeathGrip(mListener);
-    mListener->Notify(this, imgINotificationObserver::LOAD_COMPLETE, nullptr);
+    nsCOMPtr<imgINotificationObserver> listener(mListener);
+    listener->Notify(this, imgINotificationObserver::LOAD_COMPLETE, nullptr);
   }
 
   // If we're expecting more data from a multipart channel, re-add ourself

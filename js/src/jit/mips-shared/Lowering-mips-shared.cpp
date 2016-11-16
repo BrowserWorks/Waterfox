@@ -62,11 +62,25 @@ LIRGeneratorMIPSShared::lowerForALUInt64(LInstructionHelper<INT64_PIECES, 2 * IN
 }
 
 void
-LIRGeneratorMIPSShared::lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, 0>* ins,
+LIRGeneratorMIPSShared::lowerForMulInt64(LMulI64* ins, MMul* mir, MDefinition* lhs, MDefinition* rhs)
+{
+    MOZ_CRASH("NYI");
+}
+
+template<size_t Temps>
+void
+LIRGeneratorMIPSShared::lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, Temps>* ins,
                                            MDefinition* mir, MDefinition* lhs, MDefinition* rhs)
 {
     MOZ_CRASH("NYI");
 }
+
+template void LIRGeneratorMIPSShared::lowerForShiftInt64(
+    LInstructionHelper<INT64_PIECES, INT64_PIECES+1, 0>* ins, MDefinition* mir,
+    MDefinition* lhs, MDefinition* rhs);
+template void LIRGeneratorMIPSShared::lowerForShiftInt64(
+    LInstructionHelper<INT64_PIECES, INT64_PIECES+1, 1>* ins, MDefinition* mir,
+    MDefinition* lhs, MDefinition* rhs);
 
 void
 LIRGeneratorMIPSShared::lowerForFPU(LInstructionHelper<1, 1, 0>* ins, MDefinition* mir,
@@ -274,6 +288,58 @@ LIRGeneratorMIPSShared::visitAsmJSNeg(MAsmJSNeg* ins)
 }
 
 void
+LIRGeneratorMIPSShared::visitWasmBoundsCheck(MWasmBoundsCheck* ins)
+{
+    if (!gen->needsBoundsCheckBranch(ins))
+        return;
+
+    MDefinition* index = ins->input();
+    auto* lir = new(alloc()) LWasmBoundsCheck(useRegisterAtStart(index));
+    add(lir, ins);
+}
+
+void
+LIRGeneratorMIPSShared::visitWasmLoad(MWasmLoad* ins)
+{
+    MDefinition* base = ins->base();
+    MOZ_ASSERT(base->type() == MIRType::Int32);
+
+#ifdef JS_CODEGEN_MIPS64
+    if (ins->type() == MIRType::Int64) {
+        auto* lir = new(alloc()) LWasmLoadI64(useRegisterAtStart(base));
+        if (ins->offset())
+            lir->setTemp(0, tempCopy(base, 0));
+
+        defineInt64(lir, ins);
+        return;
+    }
+#endif
+
+    auto* lir = new(alloc()) LWasmLoad(useRegisterAtStart(base));
+    if (ins->offset())
+        lir->setTemp(0, tempCopy(base, 0));
+
+    define(lir, ins);
+}
+
+void
+LIRGeneratorMIPSShared::visitWasmStore(MWasmStore* ins)
+{
+    MDefinition* base = ins->base();
+    MOZ_ASSERT(base->type() == MIRType::Int32);
+
+    MDefinition* value = ins->value();
+    LAllocation valueAlloc = useRegisterAtStart(value);
+    LAllocation baseAlloc = useRegisterAtStart(base);
+    auto* lir = new(alloc()) LWasmStore(baseAlloc, valueAlloc);
+
+    if (ins->offset())
+        lir->setTemp(0, tempCopy(base, 0));
+
+    add(lir, ins);
+}
+
+void
 LIRGeneratorMIPSShared::visitAsmSelect(MAsmSelect* ins)
 {
     if (ins->type() == MIRType::Int64) {
@@ -377,12 +443,6 @@ LIRGeneratorMIPSShared::visitAsmJSStoreHeap(MAsmJSStoreHeap* ins)
         baseAlloc = useRegisterAtStart(base);
 
     add(new(alloc()) LAsmJSStoreHeap(baseAlloc, useRegisterAtStart(ins->value())), ins);
-}
-
-void
-LIRGeneratorMIPSShared::visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr* ins)
-{
-    define(new(alloc()) LAsmJSLoadFuncPtr(useRegister(ins->index())), ins);
 }
 
 void
@@ -582,11 +642,41 @@ LIRGeneratorMIPSShared::visitAtomicTypedArrayElementBinop(MAtomicTypedArrayEleme
 void
 LIRGeneratorMIPSShared::visitWasmTruncateToInt64(MWasmTruncateToInt64* ins)
 {
-    MOZ_CRASH("NY");
+    MOZ_CRASH("NYI");
 }
 
 void
 LIRGeneratorMIPSShared::visitInt64ToFloatingPoint(MInt64ToFloatingPoint* ins)
 {
-    MOZ_CRASH("NY");
+    MOZ_CRASH("NYI");
+}
+
+void
+LIRGeneratorMIPSShared::visitCopySign(MCopySign* ins)
+{
+    MDefinition* lhs = ins->lhs();
+    MDefinition* rhs = ins->rhs();
+
+    MOZ_ASSERT(IsFloatingPointType(lhs->type()));
+    MOZ_ASSERT(lhs->type() == rhs->type());
+    MOZ_ASSERT(lhs->type() == ins->type());
+
+    LInstructionHelper<1, 2, 2>* lir;
+    if (lhs->type() == MIRType::Double)
+        lir = new(alloc()) LCopySignD();
+    else
+        lir = new(alloc()) LCopySignF();
+
+    lir->setTemp(0, temp());
+    lir->setTemp(1, temp());
+
+    lir->setOperand(0, useRegister(lhs));
+    lir->setOperand(1, useRegister(rhs));
+    defineReuseInput(lir, ins, 0);
+}
+
+void
+LIRGeneratorMIPSShared::visitExtendInt32ToInt64(MExtendInt32ToInt64* ins)
+{
+    MOZ_CRASH("NYI");
 }

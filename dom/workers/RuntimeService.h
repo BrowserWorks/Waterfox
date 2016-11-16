@@ -42,34 +42,21 @@ class RuntimeService final : public nsIObserver
   struct WorkerDomainInfo
   {
     nsCString mDomain;
-    nsTArray<WorkerPrivate*> mActiveWorkers;
-    nsTArray<WorkerPrivate*> mActiveServiceWorkers;
-    nsTArray<WorkerPrivate*> mQueuedWorkers;
+    nsTArray<WorkerPrivate*> mWorkers;
+    nsTArray<WorkerPrivate*> mServiceWorkers;
     nsClassHashtable<nsCStringHashKey, SharedWorkerInfo> mSharedWorkerInfos;
     uint32_t mChildWorkerCount;
 
     WorkerDomainInfo()
-    : mActiveWorkers(1), mChildWorkerCount(0)
+    : mWorkers(1), mChildWorkerCount(0)
     { }
-
-    uint32_t
-    ActiveWorkerCount() const
-    {
-      return mActiveWorkers.Length() +
-             mChildWorkerCount;
-    }
-
-    uint32_t
-    ActiveServiceWorkerCount() const
-    {
-      return mActiveServiceWorkers.Length();
-    }
 
     bool
     HasNoWorkers() const
     {
-      return ActiveWorkerCount() == 0 &&
-             ActiveServiceWorkerCount() == 0;
+      return mWorkers.IsEmpty() &&
+             mServiceWorkers.IsEmpty() &&
+             !mChildWorkerCount;
     }
   };
 
@@ -181,10 +168,10 @@ public:
   }
 
   static void
-  SetDefaultRuntimeOptions(const JS::RuntimeOptions& aRuntimeOptions)
+  SetDefaultContextOptions(const JS::ContextOptions& aContextOptions)
   {
     AssertIsOnMainThread();
-    sDefaultJSSettings.runtimeOptions = aRuntimeOptions;
+    sDefaultJSSettings.contextOptions = aContextOptions;
   }
 
   void
@@ -197,7 +184,7 @@ public:
   UpdatePlatformOverridePreference(const nsAString& aValue);
 
   void
-  UpdateAllWorkerRuntimeOptions();
+  UpdateAllWorkerContextOptions();
 
   void
   UpdateAllWorkerLanguages(const nsTArray<nsString>& aLanguages);

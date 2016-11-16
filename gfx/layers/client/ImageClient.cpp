@@ -28,7 +28,6 @@
 #include "mozilla/layers/TextureClient.h"  // for TextureClient, etc
 #include "mozilla/layers/TextureClientOGL.h"  // for SurfaceTextureClient
 #include "mozilla/mozalloc.h"           // for operator delete, etc
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_WARNING, NS_ASSERTION
 #include "nsISupportsImpl.h"            // for Image::Release, etc
@@ -78,23 +77,14 @@ void
 ImageClient::RemoveTextureWithWaiter(TextureClient* aTexture,
                                      AsyncTransactionWaiter* aAsyncTransactionWaiter)
 {
-  if ((aAsyncTransactionWaiter || GetForwarder()->UsesImageBridge())
-#ifndef MOZ_WIDGET_GONK
-      // If the texture client is taking part in recycling then we should make sure
-      // the host has finished with it before dropping the ref and triggering
-      // the recycle callback.
-      && aTexture->GetRecycleAllocator()
-#endif
-     ) {
+  if (aAsyncTransactionWaiter &&
+      GetForwarder()->UsesImageBridge()) {
     RefPtr<AsyncTransactionTracker> request =
       new RemoveTextureFromCompositableTracker(aAsyncTransactionWaiter);
-    // Hold TextureClient until the transaction complete to postpone
-    // the TextureClient recycle/delete.
-    request->SetTextureClient(aTexture);
     GetForwarder()->RemoveTextureFromCompositableAsync(request, this, aTexture);
     return;
   }
-
+  MOZ_ASSERT(!aAsyncTransactionWaiter);
   GetForwarder()->RemoveTextureFromCompositable(this, aTexture);
 }
 
@@ -113,6 +103,8 @@ TextureInfo ImageClientSingle::GetTextureInfo() const
 void
 ImageClientSingle::FlushAllImages(AsyncTransactionWaiter* aAsyncTransactionWaiter)
 {
+  MOZ_ASSERT(GetForwarder()->UsesImageBridge());
+
   for (auto& b : mBuffers) {
     RemoveTextureWithWaiter(b.mTextureClient, aAsyncTransactionWaiter);
   }

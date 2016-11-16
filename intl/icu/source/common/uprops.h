@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2002-2016, International Business Machines
+*   Copyright (C) 2002-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -187,21 +187,13 @@ enum {
 /*
  * Properties in vector word 2
  * Bits
- * 31..28   http://www.unicode.org/reports/tr51/#Emoji_Properties
- * 27..26   reserved
+ * 31..26   reserved
  * 25..20   Line Break
  * 19..15   Sentence Break
  * 14..10   Word Break
  *  9.. 5   Grapheme Cluster Break
  *  4.. 0   Decomposition Type
  */
-enum {
-    UPROPS_2_EMOJI=28,
-    UPROPS_2_EMOJI_PRESENTATION,
-    UPROPS_2_EMOJI_MODIFIER,
-    UPROPS_2_EMOJI_MODIFIER_BASE
-};
-
 #define UPROPS_LB_MASK          0x03f00000
 #define UPROPS_LB_SHIFT         20
 

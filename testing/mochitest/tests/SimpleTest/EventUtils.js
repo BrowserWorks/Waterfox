@@ -844,6 +844,8 @@ function _parseNativeModifiers(aModifiers, aWindow = window)
 
 const KEYBOARD_LAYOUT_ARABIC =
   { name: "Arabic",             Mac: 6,    Win: 0x00000401 };
+const KEYBOARD_LAYOUT_ARABIC_PC =
+  { name: "Arabic - PC",        Mac: 7,    Win: null       };
 const KEYBOARD_LAYOUT_BRAZILIAN_ABNT =
   { name: "Brazilian ABNT",     Mac: null, Win: 0x00000416 };
 const KEYBOARD_LAYOUT_DVORAK_QWERTY =
@@ -851,21 +853,21 @@ const KEYBOARD_LAYOUT_DVORAK_QWERTY =
 const KEYBOARD_LAYOUT_EN_US =
   { name: "US",                 Mac: 0,    Win: 0x00000409 };
 const KEYBOARD_LAYOUT_FRENCH =
-  { name: "French",             Mac: 7,    Win: 0x0000040C };
+  { name: "French",             Mac: 8,    Win: 0x0000040C };
 const KEYBOARD_LAYOUT_GREEK =
   { name: "Greek",              Mac: 1,    Win: 0x00000408 };
 const KEYBOARD_LAYOUT_GERMAN =
   { name: "German",             Mac: 2,    Win: 0x00000407 };
 const KEYBOARD_LAYOUT_HEBREW =
-  { name: "Hebrew",             Mac: 8,    Win: 0x0000040D };
+  { name: "Hebrew",             Mac: 9,    Win: 0x0000040D };
 const KEYBOARD_LAYOUT_JAPANESE =
   { name: "Japanese",           Mac: null, Win: 0x00000411 };
 const KEYBOARD_LAYOUT_LITHUANIAN =
-  { name: "Lithuanian",         Mac: 9,    Win: 0x00010427 };
+  { name: "Lithuanian",         Mac: 10,   Win: 0x00010427 };
 const KEYBOARD_LAYOUT_NORWEGIAN =
-  { name: "Norwegian",          Mac: 10,   Win: 0x00000414 };
+  { name: "Norwegian",          Mac: 11,   Win: 0x00000414 };
 const KEYBOARD_LAYOUT_SPANISH =
-  { name: "Spanish",            Mac: 11,   Win: 0x0000040A };
+  { name: "Spanish",            Mac: 12,   Win: 0x0000040A };
 const KEYBOARD_LAYOUT_SWEDISH =
   { name: "Swedish",            Mac: 3,    Win: 0x0000041D };
 const KEYBOARD_LAYOUT_THAI =
@@ -1558,26 +1560,74 @@ function synthesizeCompositionChange(aEvent, aWindow = window, aCallback)
 const QUERY_CONTENT_FLAG_USE_NATIVE_LINE_BREAK          = 0x0000;
 const QUERY_CONTENT_FLAG_USE_XP_LINE_BREAK              = 0x0001;
 
+const QUERY_CONTENT_FLAG_SELECTION_NORMAL                    = 0x0000;
+const QUERY_CONTENT_FLAG_SELECTION_SPELLCHECK                = 0x0002;
+const QUERY_CONTENT_FLAG_SELECTION_IME_RAWINPUT              = 0x0004;
+const QUERY_CONTENT_FLAG_SELECTION_IME_SELECTEDRAWTEXT       = 0x0008;
+const QUERY_CONTENT_FLAG_SELECTION_IME_CONVERTEDTEXT         = 0x0010;
+const QUERY_CONTENT_FLAG_SELECTION_IME_SELECTEDCONVERTEDTEXT = 0x0020;
+const QUERY_CONTENT_FLAG_SELECTION_ACCESSIBILITY             = 0x0040;
+const QUERY_CONTENT_FLAG_SELECTION_FIND                      = 0x0080;
+const QUERY_CONTENT_FLAG_SELECTION_URLSECONDARY              = 0x0100;
+const QUERY_CONTENT_FLAG_SELECTION_URLSTRIKEOUT              = 0x0200;
+
+const QUERY_CONTENT_FLAG_OFFSET_RELATIVE_TO_INSERTION_POINT  = 0x0400;
+
 const SELECTION_SET_FLAG_USE_NATIVE_LINE_BREAK          = 0x0000;
 const SELECTION_SET_FLAG_USE_XP_LINE_BREAK              = 0x0001;
 const SELECTION_SET_FLAG_REVERSE                        = 0x0002;
 
 /**
- * Synthesize a query selected text event.
+ * Synthesize a query text content event.
  *
+ * @param aOffset  The character offset.  0 means the first character in the
+ *                 selection root.
+ * @param aLength  The length of getting text.  If the length is too long,
+ *                 the extra length is ignored.
+ * @param aIsRelative   Optional (If true, aOffset is relative to start of
+ *                      composition if there is, or start of selection.)
  * @param aWindow  Optional (If null, current |window| will be used)
  * @return         An nsIQueryContentEventResult object.  If this failed,
  *                 the result might be null.
  */
-function synthesizeQuerySelectedText(aWindow)
+function synthesizeQueryTextContent(aOffset, aLength, aIsRelative, aWindow)
+{
+  var utils = _getDOMWindowUtils(aWindow);
+  if (!utils) {
+    return nullptr;
+  }
+  var flags = QUERY_CONTENT_FLAG_USE_NATIVE_LINE_BREAK;
+  if (aIsRelative === true) {
+    flags |= QUERY_CONTENT_FLAG_OFFSET_RELATIVE_TO_INSERTION_POINT;
+  }
+  return utils.sendQueryContentEvent(utils.QUERY_TEXT_CONTENT,
+                                     aOffset, aLength, 0, 0, flags);
+}
+
+/**
+ * Synthesize a query selected text event.
+ *
+ * @param aSelectionType    Optional, one of QUERY_CONTENT_FLAG_SELECTION_*.
+ *                          If null, QUERY_CONTENT_FLAG_SELECTION_NORMAL will
+ *                          be used.
+ * @param aWindow  Optional (If null, current |window| will be used)
+ * @return         An nsIQueryContentEventResult object.  If this failed,
+ *                 the result might be null.
+ */
+function synthesizeQuerySelectedText(aSelectionType, aWindow)
 {
   var utils = _getDOMWindowUtils(aWindow);
   if (!utils) {
     return null;
   }
 
+  var flags = QUERY_CONTENT_FLAG_USE_NATIVE_LINE_BREAK;
+  if (aSelectionType) {
+    flags |= aSelectionType;
+  }
+
   return utils.sendQueryContentEvent(utils.QUERY_SELECTED_TEXT, 0, 0, 0, 0,
-                                     QUERY_CONTENT_FLAG_USE_NATIVE_LINE_BREAK);
+                                     flags);
 }
 
 /**

@@ -92,8 +92,9 @@ static RefPtr<GLContext> sPluginContext = nullptr;
 static bool EnsureGLContext()
 {
   if (!sPluginContext) {
-    nsCString failureId;
-    sPluginContext = GLContextProvider::CreateHeadless(CreateContextFlags::REQUIRE_COMPAT_PROFILE, failureId);
+    const auto flags = CreateContextFlags::REQUIRE_COMPAT_PROFILE;
+    nsCString discardedFailureId;
+    sPluginContext = GLContextProvider::CreateHeadless(flags, &discardedFailureId);
   }
 
   return sPluginContext != nullptr;
@@ -318,10 +319,10 @@ nsNPAPIPluginInstance::GetDOMWindow()
   if (!mOwner)
     return nullptr;
 
-  RefPtr<nsPluginInstanceOwner> deathGrip(mOwner);
+  RefPtr<nsPluginInstanceOwner> kungFuDeathGrip(mOwner);
 
   nsCOMPtr<nsIDocument> doc;
-  mOwner->GetDocument(getter_AddRefs(doc));
+  kungFuDeathGrip->GetDocument(getter_AddRefs(doc));
   if (!doc)
     return nullptr;
 
@@ -787,7 +788,7 @@ void nsNPAPIPluginInstance::NotifyFullScreen(bool aFullScreen)
   SendLifecycleEvent(this, mFullScreen ? kEnterFullScreen_ANPLifecycleAction : kExitFullScreen_ANPLifecycleAction);
 
   if (mFullScreen && mFullScreenOrientation != dom::eScreenOrientation_None) {
-    widget::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
+    java::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
   }
 }
 
@@ -844,11 +845,11 @@ void nsNPAPIPluginInstance::SetFullScreenOrientation(uint32_t orientation)
     // We're already fullscreen so immediately apply the orientation change
 
     if (mFullScreenOrientation != dom::eScreenOrientation_None) {
-      widget::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
+      java::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
     } else if (oldOrientation != dom::eScreenOrientation_None) {
       // We applied an orientation when we entered fullscreen, but
       // we don't want it anymore
-      widget::GeckoAppShell::UnlockScreenOrientation();
+      java::GeckoAppShell::UnlockScreenOrientation();
     }
   }
 }
@@ -912,7 +913,7 @@ void* nsNPAPIPluginInstance::AcquireContentWindow()
       return nullptr;
   }
 
-  return mContentSurface->NativeWindow()->Handle();
+  return mContentSurface->NativeWindow();
 }
 
 AndroidSurfaceTexture*
@@ -933,7 +934,7 @@ void* nsNPAPIPluginInstance::AcquireVideoWindow()
 
   VideoInfo* info = new VideoInfo(surface);
 
-  void* window = info->mSurfaceTexture->NativeWindow()->Handle();
+  void* window = info->mSurfaceTexture->NativeWindow();
   mVideos.insert(std::pair<void*, VideoInfo*>(window, info));
 
   return window;
@@ -1159,15 +1160,6 @@ nsNPAPIPluginInstance::GetScrollCaptureContainer(ImageContainer**aContainer)
 
   AutoPluginLibraryCall library(this);
   return !library ? NS_ERROR_FAILURE : library->GetScrollCaptureContainer(&mNPP, aContainer);
-}
-nsresult
-nsNPAPIPluginInstance::UpdateScrollState(bool aIsScrolling)
-{
-  if (RUNNING != mRunning)
-    return NS_OK;
-
-  AutoPluginLibraryCall library(this);
-  return !library ? NS_ERROR_FAILURE : library->UpdateScrollState(&mNPP, aIsScrolling);
 }
 #endif
 

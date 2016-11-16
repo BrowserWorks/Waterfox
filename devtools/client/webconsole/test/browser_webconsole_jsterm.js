@@ -149,21 +149,21 @@ function* testJSTerm(hud) {
   jsterm.clearOutput();
   yield jsterm.execute("throw '';");
   yield checkResult((node) => {
-    return node.parentNode.getAttribute("severity") === "error" &&
+    return node.closest(".message").getAttribute("severity") === "error" &&
       node.textContent === new Error("").toString();
   }, "thrown empty string generates error message");
 
   jsterm.clearOutput();
   yield jsterm.execute("throw 'tomatoes';");
   yield checkResult((node) => {
-    return node.parentNode.getAttribute("severity") === "error" &&
+    return node.closest(".message").getAttribute("severity") === "error" &&
       node.textContent === new Error("tomatoes").toString();
   }, "thrown non-empty string generates error message");
 
   jsterm.clearOutput();
   yield jsterm.execute("throw { foo: 'bar' };");
   yield checkResult((node) => {
-    return node.parentNode.getAttribute("severity") === "error" &&
+    return node.closest(".message").getAttribute("severity") === "error" &&
       node.textContent === Object.prototype.toString();
   }, "thrown object generates error message");
 
@@ -180,13 +180,13 @@ function* testJSTerm(hud) {
   };
 
   for (let errorMessageName of Object.keys(ErrorDocStatements)) {
-    let url = ErrorDocs.GetURL(errorMessageName);
+    let title = ErrorDocs.GetURL({ errorMessageName }).split("?")[0];
 
     jsterm.clearOutput();
     yield jsterm.execute(ErrorDocStatements[errorMessageName]);
     yield checkResult((node) => {
-      return node.parentNode.getElementsByTagName("a")[0].title == url;
-    }, `error links to ${url}`);
+      return node.parentNode.getElementsByTagName("a")[0].title == title;
+    }, `error links to ${title}`);
   }
 
   // Ensure that dom errors, with error numbers outside of the range

@@ -60,7 +60,7 @@ class GeneralPattern;
 
 // maximum dimension of an offscreen surface - choose so that
 // the surface size doesn't overflow a 32-bit signed int using
-// 4 bytes per pixel; in line with gfxASurface::CheckSurfaceSize
+// 4 bytes per pixel; in line with Factory::CheckSurfaceSize
 // In fact Macs can't even manage that
 #define NS_SVG_OFFSCREEN_MAX_DIMENSION 4096
 
@@ -185,6 +185,7 @@ public:
   typedef mozilla::gfx::GeneralPattern GeneralPattern;
   typedef mozilla::gfx::Size Size;
   typedef mozilla::SVGTextContextPaint SVGTextContextPaint;
+  typedef mozilla::image::DrawResult DrawResult;
 
   static void Init();
 
@@ -282,7 +283,7 @@ public:
 
   /* Paint SVG frame with SVG effects - aDirtyRect is the area being
    * redrawn, in device pixel coordinates relative to the outer svg */
-  static void
+  static DrawResult
   PaintFrameWithEffects(nsIFrame *aFrame,
                         gfxContext& aContext,
                         const gfxMatrix& aTransform,

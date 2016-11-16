@@ -235,8 +235,12 @@ TVTuner::CreateSimulatedMediaStream()
   }
 
   ErrorResult error;
-  RefPtr<Element> element = doc->CreateElement(VIDEO_TAG, error);
+  ElementCreationOptionsOrString options;
+
+  options.SetAsString();
+  RefPtr<Element> element = doc->CreateElement(VIDEO_TAG, options, error);
   if (NS_WARN_IF(error.Failed())) {
+    error.SuppressException();
     return nullptr;
   }
 
@@ -252,11 +256,13 @@ TVTuner::CreateSimulatedMediaStream()
 
   mediaElement->SetAutoplay(true, error);
   if (NS_WARN_IF(error.Failed())) {
+    error.SuppressException();
     return nullptr;
   }
 
   mediaElement->SetLoop(true, error);
   if (NS_WARN_IF(error.Failed())) {
+    error.SuppressException();
     return nullptr;
   }
 
@@ -292,6 +298,7 @@ TVTuner::CreateSimulatedMediaStream()
 
   mediaElement->SetSrc(currentVideoBlobUrl, error);
   if (NS_WARN_IF(error.Failed())) {
+    error.SuppressException();
     return nullptr;
   }
 
@@ -299,6 +306,7 @@ TVTuner::CreateSimulatedMediaStream()
   // http://www.w3.org/TR/mediacapture-fromelement/
   RefPtr<DOMMediaStream> stream = mediaElement->MozCaptureStream(error);
   if (NS_WARN_IF(error.Failed())) {
+    error.SuppressException();
     return nullptr;
   }
 

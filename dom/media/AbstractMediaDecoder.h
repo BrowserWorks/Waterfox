@@ -10,11 +10,14 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/StateMirroring.h"
 
+#include "FrameStatistics.h"
 #include "MediaEventSource.h"
 #include "MediaInfo.h"
 #include "nsISupports.h"
 #include "nsDataHashtable.h"
 #include "nsThreadUtils.h"
+
+class GMPCrashHelper;
 
 namespace mozilla
 {
@@ -55,8 +58,7 @@ public:
   // Increments the parsed, decoded and dropped frame counters by the passed in
   // counts.
   // Can be called on any thread.
-  virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
-                                   uint32_t aDropped) = 0;
+  virtual void NotifyDecodedFrames(const FrameStatisticsData& aStats) = 0;
 
   virtual AbstractCanonical<media::NullableTimeUnit>* CanonicalDurationOrNull() { return nullptr; };
   virtual AbstractCanonical<Maybe<double>>* CanonicalExplicitDuration() { return nullptr; }
@@ -83,12 +85,14 @@ public:
   virtual VideoFrameContainer* GetVideoFrameContainer() = 0;
   virtual mozilla::layers::ImageContainer* GetImageContainer() = 0;
 
-  // Returns the owner of this media decoder. The owner should only be used
-  // on the main thread.
+  // Returns the owner of this decoder or null when the decoder is shutting
+  // down. The owner should only be used on the main thread.
   virtual MediaDecoderOwner* GetOwner() = 0;
 
   // Set by Reader if the current audio track can be offloaded
   virtual void SetPlatformCanOffloadAudio(bool aCanOffloadAudio) {}
+
+  virtual already_AddRefed<GMPCrashHelper> GetCrashHelper() { return nullptr; }
 
   // Stack based class to assist in notifying the frame statistics of
   // parsed and decoded frames. Use inside video demux & decode functions
@@ -96,15 +100,15 @@ public:
   class AutoNotifyDecoded {
   public:
     explicit AutoNotifyDecoded(AbstractMediaDecoder* aDecoder)
-      : mParsed(0), mDecoded(0), mDropped(0), mDecoder(aDecoder) {}
+      : mDecoder(aDecoder)
+    {}
     ~AutoNotifyDecoded() {
       if (mDecoder) {
-        mDecoder->NotifyDecodedFrames(mParsed, mDecoded, mDropped);
+        mDecoder->NotifyDecodedFrames(mStats);
       }
     }
-    uint32_t mParsed;
-    uint32_t mDecoded;
-    uint32_t mDropped;
+
+    FrameStatisticsData mStats;
 
   private:
     AbstractMediaDecoder* mDecoder;

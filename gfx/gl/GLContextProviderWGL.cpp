@@ -17,16 +17,18 @@
 
 #include "mozilla/Preferences.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/widget/CompositorWidget.h"
 
 namespace mozilla {
 namespace gl {
 
 using namespace mozilla::gfx;
+using namespace mozilla::widget;
 
 WGLLibrary sWGLLib;
 
 HWND
-WGLLibrary::CreateDummyWindow(HDC *aWindowDC)
+WGLLibrary::CreateDummyWindow(HDC* aWindowDC)
 {
     WNDCLASSW wc;
     if (!GetClassInfoW(GetModuleHandle(nullptr), L"GLContextWGLClass", &wc)) {
@@ -177,24 +179,24 @@ WGLLibrary::EnsureInitialized()
     }
 
     GLLibraryLoader::SymLoadStruct extensionsSymbols[] = {
-        { (PRFuncPtr *) &fGetExtensionsString, { "wglGetExtensionsStringARB", nullptr} },
+        { (PRFuncPtr*) &fGetExtensionsString, { "wglGetExtensionsStringARB", nullptr} },
         { nullptr, { nullptr } }
     };
 
     GLLibraryLoader::SymLoadStruct robustnessSymbols[] = {
-        { (PRFuncPtr *) &fCreateContextAttribs, { "wglCreateContextAttribsARB", nullptr} },
+        { (PRFuncPtr*) &fCreateContextAttribs, { "wglCreateContextAttribsARB", nullptr} },
         { nullptr, { nullptr } }
     };
 
     GLLibraryLoader::SymLoadStruct dxInteropSymbols[] = {
-        { (PRFuncPtr *)&fDXSetResourceShareHandle,{ "wglDXSetResourceShareHandleNV", nullptr } },
-        { (PRFuncPtr *)&fDXOpenDevice,            { "wglDXOpenDeviceNV",             nullptr } },
-        { (PRFuncPtr *)&fDXCloseDevice,           { "wglDXCloseDeviceNV",            nullptr } },
-        { (PRFuncPtr *)&fDXRegisterObject,        { "wglDXRegisterObjectNV",         nullptr } },
-        { (PRFuncPtr *)&fDXUnregisterObject,      { "wglDXUnregisterObjectNV",       nullptr } },
-        { (PRFuncPtr *)&fDXObjectAccess,          { "wglDXObjectAccessNV",           nullptr } },
-        { (PRFuncPtr *)&fDXLockObjects,           { "wglDXLockObjectsNV",            nullptr } },
-        { (PRFuncPtr *)&fDXUnlockObjects,         { "wglDXUnlockObjectsNV",          nullptr } },
+        { (PRFuncPtr*)&fDXSetResourceShareHandle,{ "wglDXSetResourceShareHandleNV", nullptr } },
+        { (PRFuncPtr*)&fDXOpenDevice,            { "wglDXOpenDeviceNV",             nullptr } },
+        { (PRFuncPtr*)&fDXCloseDevice,           { "wglDXCloseDeviceNV",            nullptr } },
+        { (PRFuncPtr*)&fDXRegisterObject,        { "wglDXRegisterObjectNV",         nullptr } },
+        { (PRFuncPtr*)&fDXUnregisterObject,      { "wglDXUnregisterObjectNV",       nullptr } },
+        { (PRFuncPtr*)&fDXObjectAccess,          { "wglDXObjectAccessNV",           nullptr } },
+        { (PRFuncPtr*)&fDXLockObjects,           { "wglDXLockObjectsNV",            nullptr } },
+        { (PRFuncPtr*)&fDXUnlockObjects,         { "wglDXUnlockObjectsNV",          nullptr } },
         { nullptr, { nullptr } }
     };
 
@@ -204,7 +206,7 @@ WGLLibrary::EnsureInitialized()
         MOZ_ASSERT(extString);
         MOZ_ASSERT(HasExtension(extString, "WGL_ARB_extensions_string"));
 
-        if (HasExtension(extString, "WGL_ARB_context_create")) {
+        if (HasExtension(extString, "WGL_ARB_create_context")) {
             if (GLLibraryLoader::LoadSymbols(mOGLLibrary, &robustnessSymbols[0], lookupFunc)) {
                 if (HasExtension(extString, "WGL_ARB_create_context_robustness")) {
                     mHasRobustness = true;
@@ -266,14 +268,10 @@ WGLLibrary::EnsureInitialized()
     return true;
 }
 
-GLContextWGL::GLContextWGL(
-                  const SurfaceCaps& caps,
-                  GLContext* sharedContext,
-                  bool isOffscreen,
-                  HDC aDC,
-                  HGLRC aContext,
-                  HWND aWindow)
-    : GLContext(caps, sharedContext, isOffscreen),
+GLContextWGL::GLContextWGL(CreateContextFlags flags, const SurfaceCaps& caps,
+                           GLContext* sharedContext, bool isOffscreen, HDC aDC,
+                           HGLRC aContext, HWND aWindow)
+    : GLContext(flags, caps, sharedContext, isOffscreen),
       mDC(aDC),
       mContext(aContext),
       mWnd(aWindow),
@@ -285,15 +283,10 @@ GLContextWGL::GLContextWGL(
     SetProfileVersion(ContextProfile::OpenGLCompatibility, 200);
 }
 
-GLContextWGL::GLContextWGL(
-                  const SurfaceCaps& caps,
-                  GLContext* sharedContext,
-                  bool isOffscreen,
-                  HANDLE aPbuffer,
-                  HDC aDC,
-                  HGLRC aContext,
-                  int aPixelFormat)
-    : GLContext(caps, sharedContext, isOffscreen),
+GLContextWGL::GLContextWGL(CreateContextFlags flags, const SurfaceCaps& caps,
+                           GLContext* sharedContext, bool isOffscreen, HANDLE aPbuffer,
+                           HDC aDC, HGLRC aContext, int aPixelFormat)
+    : GLContext(flags, caps, sharedContext, isOffscreen),
       mDC(aDC),
       mContext(aContext),
       mWnd(nullptr),
@@ -401,7 +394,7 @@ GetMaxSize(HDC hDC, int format, IntSize& size)
     int query[] = {LOCAL_WGL_MAX_PBUFFER_WIDTH_ARB, LOCAL_WGL_MAX_PBUFFER_HEIGHT_ARB};
     int result[2];
 
-    // (HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, int* piAttributes, int *piValues)
+    // (HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, int* piAttributes, int* piValues)
     if (!sWGLLib.fGetPixelFormatAttribiv(hDC, format, 0, 2, query, result))
         return false;
 
@@ -439,7 +432,13 @@ GLContextProviderWGL::CreateWrappingExisting(void*, void*)
 }
 
 already_AddRefed<GLContext>
-GLContextProviderWGL::CreateForWindow(nsIWidget *aWidget, bool aForceAccelerated)
+GLContextProviderWGL::CreateForCompositorWidget(CompositorWidget* aCompositorWidget, bool aForceAccelerated)
+{
+    return CreateForWindow(aCompositorWidget->RealWidget(), aForceAccelerated);
+}
+
+already_AddRefed<GLContext>
+GLContextProviderWGL::CreateForWindow(nsIWidget* aWidget, bool aForceAccelerated)
 {
     if (!sWGLLib.EnsureInitialized()) {
         return nullptr;
@@ -456,7 +455,7 @@ GLContextProviderWGL::CreateForWindow(nsIWidget *aWidget, bool aForceAccelerated
     SetPixelFormat(dc, sWGLLib.GetWindowPixelFormat(), nullptr);
     HGLRC context;
 
-    GLContextWGL *shareContext = GetGlobalContextWGL();
+    GLContextWGL* shareContext = GetGlobalContextWGL();
 
     if (sWGLLib.HasRobustness()) {
         int attribs[] = {
@@ -485,7 +484,8 @@ GLContextProviderWGL::CreateForWindow(nsIWidget *aWidget, bool aForceAccelerated
     }
 
     SurfaceCaps caps = SurfaceCaps::ForRGBA();
-    RefPtr<GLContextWGL> glContext = new GLContextWGL(caps,
+    RefPtr<GLContextWGL> glContext = new GLContextWGL(CreateContextFlags::NONE,
+                                                        caps,
                                                         shareContext,
                                                         false,
                                                         dc,
@@ -500,8 +500,8 @@ GLContextProviderWGL::CreateForWindow(nsIWidget *aWidget, bool aForceAccelerated
 }
 
 static already_AddRefed<GLContextWGL>
-CreatePBufferOffscreenContext(const IntSize& aSize,
-                              GLContextWGL *aShareContext)
+CreatePBufferOffscreenContext(CreateContextFlags flags, const IntSize& aSize,
+                              GLContextWGL* aShareContext)
 {
     WGLLibrary& wgl = sWGLLib;
 
@@ -561,8 +561,8 @@ CreatePBufferOffscreenContext(const IntSize& aSize,
             LOCAL_WGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB, LOCAL_WGL_LOSE_CONTEXT_ON_RESET_ARB,
             0
         };
-
-        context = wgl.fCreateContextAttribs(pbdc, aShareContext->Context(), attribs);
+        const HGLRC shareHandle = (aShareContext ? aShareContext->Context() : 0);
+        context = wgl.fCreateContextAttribs(pbdc, shareHandle, attribs);
     } else {
         context = wgl.fCreateContext(pbdc);
         if (context && aShareContext) {
@@ -580,7 +580,7 @@ CreatePBufferOffscreenContext(const IntSize& aSize,
     }
 
     SurfaceCaps dummyCaps = SurfaceCaps::Any();
-    RefPtr<GLContextWGL> glContext = new GLContextWGL(dummyCaps,
+    RefPtr<GLContextWGL> glContext = new GLContextWGL(flags, dummyCaps,
                                                         aShareContext,
                                                         true,
                                                         pbuffer,
@@ -595,7 +595,7 @@ static already_AddRefed<GLContextWGL>
 CreateWindowOffscreenContext()
 {
     // CreateWindowOffscreenContext must return a global-shared context
-    GLContextWGL *shareContext = GetGlobalContextWGL();
+    GLContextWGL* shareContext = GetGlobalContextWGL();
     if (!shareContext) {
         return nullptr;
     }
@@ -633,15 +633,16 @@ CreateWindowOffscreenContext()
     }
 
     SurfaceCaps caps = SurfaceCaps::ForRGBA();
-    RefPtr<GLContextWGL> glContext = new GLContextWGL(caps,
-                                                        shareContext, true,
-                                                        dc, context, win);
+    RefPtr<GLContextWGL> glContext = new GLContextWGL(CreateContextFlags::NONE, caps,
+                                                      shareContext, true, dc, context,
+                                                      win);
 
     return glContext.forget();
 }
 
 /*static*/ already_AddRefed<GLContext>
-GLContextProviderWGL::CreateHeadless(CreateContextFlags, nsACString& aFailureId)
+GLContextProviderWGL::CreateHeadless(CreateContextFlags flags,
+                                     nsACString* const out_failureId)
 {
     if (!sWGLLib.EnsureInitialized()) {
         return nullptr;
@@ -655,7 +656,8 @@ GLContextProviderWGL::CreateHeadless(CreateContextFlags, nsACString& aFailureId)
         sWGLLib.fChoosePixelFormat)
     {
         IntSize dummySize = IntSize(16, 16);
-        glContext = CreatePBufferOffscreenContext(dummySize, GetGlobalContextWGL());
+        glContext = CreatePBufferOffscreenContext(flags, dummySize,
+                                                  GetGlobalContextWGL());
     }
 
     // If it failed, then create a window context and use a FBO.
@@ -677,14 +679,14 @@ GLContextProviderWGL::CreateHeadless(CreateContextFlags, nsACString& aFailureId)
 GLContextProviderWGL::CreateOffscreen(const IntSize& size,
                                       const SurfaceCaps& minCaps,
                                       CreateContextFlags flags,
-                                      nsACString& aFailureId)
+                                      nsACString* const out_failureId)
 {
-    RefPtr<GLContext> gl = CreateHeadless(flags, aFailureId);
+    RefPtr<GLContext> gl = CreateHeadless(flags, out_failureId);
     if (!gl)
         return nullptr;
 
     if (!gl->InitOffscreen(size, minCaps)) {
-        aFailureId = NS_LITERAL_CSTRING("FEATURE_FAILURE_WGL_INIT");
+        *out_failureId = NS_LITERAL_CSTRING("FEATURE_FAILURE_WGL_INIT");
         return nullptr;
     }
 
@@ -700,9 +702,10 @@ GLContextProviderWGL::GetGlobalContext()
     if (!triedToCreateContext) {
         triedToCreateContext = true;
 
-        MOZ_RELEASE_ASSERT(!gGlobalContext);
+        MOZ_RELEASE_ASSERT(!gGlobalContext, "GFX: Global GL context already initialized.");
         nsCString discardFailureId;
-        RefPtr<GLContext> temp = CreateHeadless(CreateContextFlags::NONE, discardFailureId);
+        RefPtr<GLContext> temp = CreateHeadless(CreateContextFlags::NONE,
+                                                &discardFailureId);
         gGlobalContext = temp;
     }
 

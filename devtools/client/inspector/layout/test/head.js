@@ -17,35 +17,22 @@ registerCleanupFunction(() => {
 });
 
 /**
- * Simple DOM node accesor function that takes either a node or a string css
- * selector as argument and returns the corresponding node
- * FIXME: Delete this function and use inspector/test/head.js' getNode instead,
- * and fix all layout-view tests to use nodeFronts instead of CPOWs.
- * @param {String|DOMNode} nodeOrSelector
- * @return {DOMNode}
- */
-function getNode(nodeOrSelector) {
-  return typeof nodeOrSelector === "string" ?
-    content.document.querySelector(nodeOrSelector) :
-    nodeOrSelector;
-}
-
-/**
  * Highlight a node and set the inspector's current selection to the node or
  * the first match of the given css selector.
- * @param {String|DOMNode} nodeOrSelector
+ * @param {String|NodeFront} selectorOrNodeFront
+ *        The selector for the node to be set, or the nodeFront
  * @param {InspectorPanel} inspector
  *        The instance of InspectorPanel currently loaded in the toolbox
  * @return a promise that resolves when the inspector is updated with the new
  * node
  */
-function selectAndHighlightNode(nodeOrSelector, inspector) {
-  info("Highlighting and selecting the node " + nodeOrSelector);
+function* selectAndHighlightNode(selectorOrNodeFront, inspector) {
+  info("Highlighting and selecting the node " + selectorOrNodeFront);
 
-  let node = getNode(nodeOrSelector);
+  let nodeFront = yield getNodeFront(selectorOrNodeFront, inspector);
   let updated = inspector.toolbox.once("highlighter-ready");
-  inspector.selection.setNode(node, "test-highlight");
-  return updated;
+  inspector.selection.setNodeFront(nodeFront, "test-highlight");
+  yield updated;
 }
 
 /**
@@ -55,7 +42,7 @@ function selectAndHighlightNode(nodeOrSelector, inspector) {
  * view is visible and ready
  */
 function openLayoutView() {
-  return openInspectorSidebarTab("layoutview").then(data => {
+  return openInspectorSidebarTab("computedview").then(data => {
     // The actual highligher show/hide methods are mocked in layoutview tests.
     // The highlighter is tested in devtools/inspector/test.
     function mockHighlighter({highlighter}) {
@@ -71,7 +58,7 @@ function openLayoutView() {
     return {
       toolbox: data.toolbox,
       inspector: data.inspector,
-      view: data.inspector.layoutview,
+      view: data.inspector.computedview.layoutView,
       testActor: data.testActor
     };
   });

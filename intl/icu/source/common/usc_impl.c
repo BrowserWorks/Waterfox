@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1999-2016, International Business Machines
+*   Copyright (C) 1999-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -16,6 +16,8 @@
 #include "unicode/uscript.h"
 #include "usc_impl.h"
 #include "cmemory.h"
+
+#define ARRAY_SIZE(array) (sizeof array  / sizeof array[0])
 
 #define PAREN_STACK_DEPTH 32
 
@@ -154,7 +156,7 @@ highBit(int32_t value)
 static int32_t
 getPairIndex(UChar32 ch)
 {
-    int32_t pairedCharCount = UPRV_LENGTHOF(pairedChars);
+    int32_t pairedCharCount = ARRAY_SIZE(pairedChars);
     int32_t pairedCharPower = 1 << highBit(pairedCharCount);
     int32_t pairedCharExtra = pairedCharCount - pairedCharPower;
 

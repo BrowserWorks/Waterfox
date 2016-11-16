@@ -61,7 +61,7 @@ import java.util.TreeSet;
  *   * no locking: {@link #onUploadAttemptComplete(Set)} deletes the given pings, none of which should be
  * currently written
  */
-public class TelemetryJSONFilePingStore implements TelemetryPingStore {
+public class TelemetryJSONFilePingStore extends TelemetryPingStore {
     private static final String LOGTAG = StringUtils.safeSubstring(
             "Gecko" + TelemetryJSONFilePingStore.class.getSimpleName(), 0, 23);
 
@@ -76,10 +76,22 @@ public class TelemetryJSONFilePingStore implements TelemetryPingStore {
     private final FileLastModifiedComparator fileLastModifiedComparator = new FileLastModifiedComparator();
 
     @WorkerThread // Writes to disk
-    public TelemetryJSONFilePingStore(final File storeDir) {
+    public TelemetryJSONFilePingStore(final File storeDir, final String profileName) {
+        super(profileName);
+        if (storeDir.exists() && !storeDir.isDirectory()) {
+            // An alternative is to create a new directory, but we wouldn't
+            // be able to access it later so it's better to throw.
+            throw new IllegalStateException("Store dir unexpectedly exists & is not a directory - cannot continue");
+        }
+
         this.storeDir = storeDir;
         this.storeDir.mkdirs();
         uuidFilenameFilter = new FilenameRegexFilter(UUIDUtil.UUID_PATTERN);
+
+        if (!this.storeDir.canRead() || !this.storeDir.canWrite() || !this.storeDir.canExecute()) {
+            throw new IllegalStateException("Cannot read, write, or execute store dir: " +
+                    this.storeDir.canRead() + " " + this.storeDir.canWrite() + " " + this.storeDir.canExecute());
+        }
     }
 
     @VisibleForTesting File getPingFile(final String docID) {
@@ -110,17 +122,22 @@ public class TelemetryJSONFilePingStore implements TelemetryPingStore {
             return;
         }
 
-        final SortedSet<File> sortedFiles = new TreeSet<>(fileLastModifiedComparator);
-        sortedFiles.addAll(Arrays.asList(files));
+        // It's possible that multiple files will have the same timestamp: in this case they are treated
+        // as equal by the fileLastModifiedComparator. We therefore have to use a sorted list (as
+        // opposed to a set, or map).
+        final ArrayList<File> sortedFiles = new ArrayList<>(Arrays.asList(files));
+        Collections.sort(sortedFiles, fileLastModifiedComparator);
         deleteSmallestFiles(sortedFiles, files.length - MAX_PING_COUNT);
     }
 
-    private void deleteSmallestFiles(final SortedSet<File> files, final int numFilesToRemove) {
+    private void deleteSmallestFiles(final ArrayList<File> files, final int numFilesToRemove) {
         final Iterator<File> it = files.iterator();
         int i = 0;
+
         while (i < numFilesToRemove) {
             i += 1;
-            // Sorted set so we're iterating over ascending files.
+
+            // Sorted list so we're iterating over ascending files.
             final File file = it.next(); // file count > files to remove so this should not throw.
             file.delete();
         }
@@ -128,7 +145,15 @@ public class TelemetryJSONFilePingStore implements TelemetryPingStore {
 
     @Override
     public ArrayList<TelemetryPing> getAllPings() {
-        final List<File> files = Arrays.asList(storeDir.listFiles(uuidFilenameFilter));
+        final File[] fileArray = storeDir.listFiles(uuidFilenameFilter);
+        if (fileArray == null) {
+            // Intentionally don't log all info for the store directory to prevent leaking the path.
+            Log.w(LOGTAG, "listFiles unexpectedly returned null - unable to retrieve pings. Debug: exists? " +
+                    storeDir.exists() + "; directory? " + storeDir.isDirectory());
+            return new ArrayList<>(1);
+        }
+
+        final List<File> files = Arrays.asList(fileArray);
         Collections.sort(files, fileLastModifiedComparator); // oldest to newest
         final ArrayList<TelemetryPing> out = new ArrayList<>(files.size());
         for (final File file : files) {
@@ -243,7 +268,8 @@ public class TelemetryJSONFilePingStore implements TelemetryPingStore {
         @Override
         public TelemetryJSONFilePingStore createFromParcel(final Parcel source) {
             final String storeDirPath = source.readString();
-            return new TelemetryJSONFilePingStore(new File(storeDirPath));
+            final String profileName = source.readString();
+            return new TelemetryJSONFilePingStore(new File(storeDirPath), profileName);
         }
 
         @Override
@@ -260,5 +286,6 @@ public class TelemetryJSONFilePingStore implements TelemetryPingStore {
     @Override
     public void writeToParcel(final Parcel dest, final int flags) {
         dest.writeString(storeDir.getAbsolutePath());
+        dest.writeString(getProfileName());
     }
 }

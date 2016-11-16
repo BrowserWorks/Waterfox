@@ -37,7 +37,7 @@ size_t fakeMallocSizeOf(const void*) {
 }
 
 DEF_TEST(DeserializedNodeUbiNodes, {
-    const char16_t* typeName = MOZ_UTF16("TestTypeName");
+    const char16_t* typeName = u"TestTypeName";
     const char* className = "MyObjectClassName";
     const char* filename = "my-cool-filename.js";
 
@@ -90,7 +90,7 @@ DEF_TEST(DeserializedNodeUbiNodes, {
       .Times(1)
       .WillOnce(Return(JS::ubi::Node(referent3.get())));
 
-    auto range = ubi.edges(rt);
+    auto range = ubi.edges(cx);
     ASSERT_TRUE(!!range);
 
     for ( ; !range->empty(); range->popFront()) {

@@ -20,6 +20,7 @@ extern "C" {
 #include "mozilla/TimeStamp.h"
 #include "VorbisUtils.h"
 #include "MediaMetadataManager.h"
+#include "nsAutoPtr.h"
 #include "nsISeekableStream.h"
 #include "gfx2DGlue.h"
 #include "mozilla/Telemetry.h"
@@ -169,17 +170,17 @@ nsresult OggReader::Init() {
   return NS_OK;
 }
 
-nsresult OggReader::ResetDecode(TargetQueues aQueues)
+nsresult OggReader::ResetDecode(TrackSet aTracks)
 {
-  return ResetDecode(false, aQueues);
+  return ResetDecode(false, aTracks);
 }
 
-nsresult OggReader::ResetDecode(bool start, TargetQueues aQueues)
+nsresult OggReader::ResetDecode(bool start, TrackSet aTracks)
 {
   MOZ_ASSERT(OnTaskQueue());
   nsresult res = NS_OK;
 
-  if (NS_FAILED(MediaDecoderReader::ResetDecode(aQueues))) {
+  if (NS_FAILED(MediaDecoderReader::ResetDecode(aTracks))) {
     res = NS_ERROR_FAILURE;
   }
 
@@ -920,7 +921,7 @@ bool OggReader::DecodeVideoFrame(bool &aKeyframeSkip,
   }
   nsAutoRef<ogg_packet> autoRelease(packet);
 
-  a.mParsed++;
+  a.mStats.mParsedFrames++;
   NS_ASSERTION(packet && packet->granulepos != -1,
                 "Must know first packet's granulepos");
   bool eos = packet->e_o_s;
@@ -930,7 +931,7 @@ bool OggReader::DecodeVideoFrame(bool &aKeyframeSkip,
   {
     aKeyframeSkip = false;
     nsresult res = DecodeTheora(packet, aTimeThreshold);
-    a.mDecoded++;
+    a.mStats.mDecodedFrames++;
     if (NS_FAILED(res)) {
       return false;
     }
@@ -1589,7 +1590,7 @@ nsresult OggReader::SeekBisection(int64_t aTarget,
   MOZ_ASSERT(OnTaskQueue());
   nsresult res;
 
-  if (aTarget == aRange.mTimeStart) {
+  if (aTarget <= aRange.mTimeStart) {
     if (NS_FAILED(ResetDecode())) {
       return NS_ERROR_FAILURE;
     }
@@ -2020,29 +2021,6 @@ RefPtr<VideoData> OggReader::SyncDecodeToFirstVideoData()
     VideoQueue().Finish();
   }
   return VideoQueue().PeekFront();
-}
-
-OggCodecStore::OggCodecStore()
-: mMonitor("CodecStore")
-{
-}
-
-void OggCodecStore::Add(uint32_t serial, OggCodecState* codecState)
-{
-  MonitorAutoLock mon(mMonitor);
-  mCodecStates.Put(serial, codecState);
-}
-
-bool OggCodecStore::Contains(uint32_t serial)
-{
-  MonitorAutoLock mon(mMonitor);
-  return mCodecStates.Get(serial, nullptr);
-}
-
-OggCodecState* OggCodecStore::Get(uint32_t serial)
-{
-  MonitorAutoLock mon(mMonitor);
-  return mCodecStates.Get(serial);
 }
 
 } // namespace mozilla

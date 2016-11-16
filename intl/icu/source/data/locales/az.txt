@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/az.xml
@@ -209,7 +209,7 @@ az{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.23.7"}
+    Version{"2.1.19.83"}
     calendar{
         generic{
             DateTimePatterns{
@@ -320,10 +320,6 @@ az{
         }
         gregorian{
             AmPmMarkers{
-                "AM",
-                "PM",
-            }
-            AmPmMarkersAbbr{
                 "AM",
                 "PM",
             }
@@ -470,16 +466,6 @@ az{
             }
             dayPeriod{
                 format{
-                    abbreviated{
-                        afternoon1{"gündüz"}
-                        evening1{"axşamüstü"}
-                        midnight{"gecəyarı"}
-                        morning1{"sübh"}
-                        morning2{"səhər"}
-                        night1{"axşam"}
-                        night2{"gecə"}
-                        noon{"günorta"}
-                    }
                     narrow{
                         afternoon1{"gündüz"}
                         evening1{"axşamüstü"}

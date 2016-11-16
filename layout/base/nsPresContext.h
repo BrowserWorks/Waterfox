@@ -43,6 +43,7 @@
 #include "mozilla/RestyleManagerHandle.h"
 #include "prenv.h"
 #include "mozilla/StaticPresData.h"
+#include "mozilla/StyleBackendType.h"
 
 class nsAString;
 class nsIPrintSettings;
@@ -160,10 +161,11 @@ public:
   nsresult Init(nsDeviceContext* aDeviceContext);
 
   /**
-   * Set the presentation shell that this context is bound to.
+   * Set and detach presentation shell that this context is bound to.
    * A presentation context may only be bound to a single shell.
    */
-  void SetShell(nsIPresShell* aShell);
+  void AttachShell(nsIPresShell* aShell, mozilla::StyleBackendType aBackendType);
+  void DetachShell();
 
 
   nsPresContextType Type() const { return mType; }
@@ -239,7 +241,10 @@ public:
 
   nsRefreshDriver* RefreshDriver() { return mRefreshDriver; }
 
-  mozilla::RestyleManagerHandle RestyleManager() { return mRestyleManager; }
+  mozilla::RestyleManagerHandle RestyleManager() {
+    MOZ_ASSERT(mRestyleManager);
+    return mRestyleManager;
+  }
 
   mozilla::CounterStyleManager* CounterStyleManager() {
     return mCounterStyleManager;
@@ -1099,6 +1104,14 @@ public:
     mHasWarnedAboutPositionedTableParts = true;
   }
 
+  bool HasWarnedAboutTooLargeDashedOrDottedRadius() const {
+    return mHasWarnedAboutTooLargeDashedOrDottedRadius;
+  }
+
+  void SetHasWarnedAboutTooLargeDashedOrDottedRadius() {
+    mHasWarnedAboutTooLargeDashedOrDottedRadius = true;
+  }
+
   static bool StyloEnabled()
   {
     // Stylo (the Servo backend for Gecko's style system) is generally enabled
@@ -1388,6 +1401,8 @@ protected:
   mutable unsigned mPaintFlashingInitialized : 1;
 
   unsigned mHasWarnedAboutPositionedTableParts : 1;
+
+  unsigned mHasWarnedAboutTooLargeDashedOrDottedRadius : 1;
 
   // Have we added quirk.css to the style set?
   unsigned              mQuirkSheetAdded : 1;

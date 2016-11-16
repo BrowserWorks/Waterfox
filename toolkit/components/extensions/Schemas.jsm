@@ -93,8 +93,12 @@ class Context {
       },
     };
 
+    this.currentChoices = new Set();
+    this.choicePathIndex = 0;
+
     let methods = ["addListener", "callFunction",
                    "callFunctionNoReturn", "callAsyncFunction",
+                   "hasPermission",
                    "hasListener", "removeListener",
                    "getProperty", "setProperty",
                    "checkLoadURL", "logError"];
@@ -114,6 +118,11 @@ class Context {
         }
       }
     }
+  }
+
+  get choicePath() {
+    let path = this.path.slice(this.choicePathIndex);
+    return path.join(".");
   }
 
   get cloneScope() {
@@ -140,17 +149,51 @@ class Context {
   }
 
   /**
+   * Checks whether this context has the given permission.
+   *
+   * @param {string} permission
+   *        The name of the permission to check.
+   *
+   * @returns {boolean} True if the context has the given permission.
+   */
+  hasPermission(permission) {
+    return false;
+  }
+
+  /**
    * Returns an error result object with the given message, for return
    * by Type normalization functions.
    *
    * If the context has a `currentTarget` value, this is prepended to
    * the message to indicate the location of the error.
+   *
+   * @param {string} errorMessage
+   *        The error message which will be displayed when this is the
+   *        only possible matching schema.
+   * @param {string} choicesMessage
+   *        The message describing the valid what constitutes a valid
+   *        value for this schema, which will be displayed when multiple
+   *        schema choices are available and none match.
+   *
+   *        A caller may pass `null` to prevent a choice from being
+   *        added, but this should *only* be done from code processing a
+   *        choices type.
+   * @returns {object}
    */
-  error(message) {
-    if (this.currentTarget) {
-      return {error: `Error processing ${this.currentTarget}: ${message}`};
+  error(errorMessage, choicesMessage = undefined) {
+    if (choicesMessage !== null) {
+      let {choicePath} = this;
+      if (choicePath) {
+        choicesMessage = `.${choicePath} must ${choicesMessage}`;
+      }
+
+      this.currentChoices.add(choicesMessage);
     }
-    return {error: message};
+
+    if (this.currentTarget) {
+      return {error: `Error processing ${this.currentTarget}: ${errorMessage}`};
+    }
+    return {error: errorMessage};
   }
 
   /**
@@ -160,6 +203,9 @@ class Context {
    *
    * If the context has a `currentTarget` value, this is prepended to
    * the message, in the same way as for the `error` method.
+   *
+   * @param {string} message
+   * @returns {Error}
    */
   makeError(message) {
     let {error} = this.error(message);
@@ -172,6 +218,8 @@ class Context {
   /**
    * Logs the given error to the console. May be overridden to enable
    * custom logging.
+   *
+   * @param {Error|string} error
    */
   logError(error) {
     Cu.reportError(error);
@@ -192,12 +240,53 @@ class Context {
   }
 
   /**
+   * Executes the given callback, and returns an array of choice strings
+   * passed to {@see #error} during its execution.
+   *
+   * @param {function} callback
+   * @returns {object}
+   *          An object with a `result` property containing the return
+   *          value of the callback, and a `choice` property containing
+   *          an array of choices.
+   */
+  withChoices(callback) {
+    let {currentChoices, choicePathIndex} = this;
+
+    let choices = new Set();
+    this.currentChoices = choices;
+    this.choicePathIndex = this.path.length;
+
+    try {
+      let result = callback();
+
+      return {result, choices: Array.from(choices)};
+    } finally {
+      this.currentChoices = currentChoices;
+      this.choicePathIndex = choicePathIndex;
+
+      choices = Array.from(choices);
+      if (choices.length == 1) {
+        currentChoices.add(choices[0]);
+      } else if (choices.length) {
+        let n = choices.length - 1;
+        choices[n] = `or ${choices[n]}`;
+
+        this.error(null, `must either [${choices.join(", ")}]`);
+      }
+    }
+  }
+
+  /**
    * Appends the given component to the `currentTarget` path to indicate
    * that it is being processed, calls the given callback function, and
    * then restores the original path.
    *
    * This is used to identify the path of the property being processed
    * when reporting type errors.
+   *
+   * @param {string} component
+   * @param {function} callback
+   * @returns {*}
    */
   withPath(component, callback) {
     this.path.push(component);
@@ -309,6 +398,7 @@ class Entry {
     }
 
     /**
+     * @property {string} [preprocessor]
      * If set to a string value, and a preprocessor of the same is
      * defined in the validation context, it will be applied to this
      * value prior to any normalization.
@@ -319,6 +409,10 @@ class Entry {
   /**
    * Preprocess the given value with the preprocessor declared in
    * `preprocessor`.
+   *
+   * @param {*} value
+   * @param {Context} context
+   * @returns {*}
    */
   preprocess(value, context) {
     if (this.preprocessor) {
@@ -330,6 +424,9 @@ class Entry {
   /**
    * Logs a deprecation warning for this entry, based on the value of
    * its `deprecated` property.
+   *
+   * @param {Context} context
+   * @param {value} [value]
    */
   logDeprecation(context, value = null) {
     let message = "This property is deprecated";
@@ -351,6 +448,9 @@ class Entry {
   /**
    * Checks whether the entry is deprecated and, if so, logs a
    * deprecation message.
+   *
+   * @param {Context} context
+   * @param {value} [value]
    */
   checkDeprecated(context, value = null) {
     if (this.deprecated) {
@@ -383,7 +483,7 @@ class Type extends Entry {
   // |baseType| (one of the possible getValueBaseType results) is
   // valid for this type. It returns true or false. It's used to fill
   // in optional arguments to functions before actually type checking
-  // the arguments.
+
   checkBaseType(baseType) {
     return false;
   }
@@ -395,7 +495,16 @@ class Type extends Entry {
       this.checkDeprecated(context, value);
       return {value: this.preprocess(value, context)};
     }
-    return context.error(`Expected ${type} instead of ${JSON.stringify(value)}`);
+
+    let choice;
+    if (/^[aeiou]/.test(type)) {
+      choice = `be an ${type} value`;
+    } else {
+      choice = `be a ${type} value`;
+    }
+
+    return context.error(`Expected ${type} instead of ${JSON.stringify(value)}`,
+                         choice);
   }
 }
 
@@ -428,19 +537,30 @@ class ChoiceType extends Type {
     this.checkDeprecated(context, value);
 
     let error;
-
-    let baseType = getValueBaseType(value);
-    for (let choice of this.choices) {
-      if (choice.checkBaseType(baseType)) {
+    let {choices, result} = context.withChoices(() => {
+      for (let choice of this.choices) {
         let r = choice.normalize(value, context);
         if (!r.error) {
           return r;
         }
-        error = r.error;
+
+        error = r;
       }
+    });
+
+    if (result) {
+      return result;
+    }
+    if (choices.length <= 1) {
+      return error;
     }
 
-    return context.error(error || `Unexpected value ${JSON.stringify(value)}`);
+    let n = choices.length - 1;
+    choices[n] = `or ${choices[n]}`;
+
+    let message = `Value must either: ${choices.join(", ")}`;
+
+    return context.error(message, null);
   }
 
   checkBaseType(baseType) {
@@ -498,25 +618,32 @@ class StringType extends Type {
       if (this.enumeration.includes(value)) {
         return {value};
       }
-      return context.error(`Invalid enumeration value ${JSON.stringify(value)}`);
+
+      let choices = this.enumeration.map(JSON.stringify).join(", ");
+
+      return context.error(`Invalid enumeration value ${JSON.stringify(value)}`,
+                           `be one of [${choices}]`);
     }
 
     if (value.length < this.minLength) {
-      return context.error(`String ${JSON.stringify(value)} is too short (must be ${this.minLength})`);
+      return context.error(`String ${JSON.stringify(value)} is too short (must be ${this.minLength})`,
+                           `be longer than ${this.minLength}`);
     }
     if (value.length > this.maxLength) {
-      return context.error(`String ${JSON.stringify(value)} is too long (must be ${this.maxLength})`);
+      return context.error(`String ${JSON.stringify(value)} is too long (must be ${this.maxLength})`,
+                           `be shorter than ${this.maxLength}`);
     }
 
     if (this.pattern && !this.pattern.test(value)) {
-      return context.error(`String ${JSON.stringify(value)} must match ${this.pattern}`);
+      return context.error(`String ${JSON.stringify(value)} must match ${this.pattern}`,
+                           `match the pattern ${this.pattern.toSource()}`);
     }
 
     if (this.format) {
       try {
         r.value = this.format(r.value, context);
       } catch (e) {
-        return context.error(String(e));
+        return context.error(String(e), `match the format "${this.format.name}"`);
       }
     }
 
@@ -580,7 +707,8 @@ class ObjectType extends Type {
       }
 
       if (!instanceOf(value, this.isInstanceOf)) {
-        return context.error(`Object must be an instance of ${this.isInstanceOf}`);
+        return context.error(`Object must be an instance of ${this.isInstanceOf}`,
+                             `be an instance of ${this.isInstanceOf}`);
       }
 
       // This is kind of a hack, but we can't normalize things that
@@ -598,7 +726,8 @@ class ObjectType extends Type {
 
     let klass = Cu.getClassName(value, true);
     if (klass != "Object") {
-      return context.error(`Expected a plain JavaScript object, got a ${klass}`);
+      return context.error(`Expected a plain JavaScript object, got a ${klass}`,
+                           `be a plain JavaScript object`);
     }
 
     let properties = Object.create(null);
@@ -609,7 +738,8 @@ class ObjectType extends Type {
       for (let prop of Object.getOwnPropertyNames(waived)) {
         let desc = Object.getOwnPropertyDescriptor(waived, prop);
         if (desc.get || desc.set) {
-          return context.error("Objects cannot have getters or setters on properties");
+          return context.error("Objects cannot have getters or setters on properties",
+                               "contain no getter or setter properties");
         }
         if (!desc.enumerable) {
           // Chrome ignores non-enumerable properties.
@@ -625,7 +755,8 @@ class ObjectType extends Type {
       let {type, optional, unsupported} = propType;
       if (unsupported) {
         if (prop in properties) {
-          return context.error(`Property "${prop}" is unsupported by Firefox`);
+          return context.error(`Property "${prop}" is unsupported by Firefox`,
+                               `not contain an unsupported "${prop}" property`);
         }
       } else if (prop in properties) {
         if (optional && (properties[prop] === null || properties[prop] === undefined)) {
@@ -640,7 +771,8 @@ class ObjectType extends Type {
         }
         remainingProps.delete(prop);
       } else if (!optional) {
-        return context.error(`Property "${prop}" is required`);
+        return context.error(`Property "${prop}" is required`,
+                             `contain the required "${prop}" property`);
       } else {
         result[prop] = null;
       }
@@ -683,9 +815,12 @@ class ObjectType extends Type {
         result[prop] = r.value;
       }
     } else if (remainingProps.size == 1) {
-      return context.error(`Unexpected property "${[...remainingProps]}"`);
+      return context.error(`Unexpected property "${[...remainingProps]}"`,
+                           `not contain an unexpected "${[...remainingProps]}" property`);
     } else if (remainingProps.size) {
-      return context.error(`Unexpected properties: ${[...remainingProps]}`);
+      let props = [...remainingProps].sort().join(", ");
+      return context.error(`Unexpected properties: ${props}`,
+                           `not contain the unexpected properties [${props}]`);
     }
 
     return {value: result};
@@ -709,7 +844,8 @@ class NumberType extends Type {
     }
 
     if (isNaN(r.value) || !Number.isFinite(r.value)) {
-      return context.error("NaN or infinity are not valid");
+      return context.error("NaN and infinity are not valid",
+                           "be a finite number");
     }
 
     return r;
@@ -736,14 +872,17 @@ class IntegerType extends Type {
 
     // Ensure it's between -2**31 and 2**31-1
     if (!Number.isSafeInteger(value)) {
-      return context.error("Integer is out of range");
+      return context.error("Integer is out of range",
+                           "be a valid 32 bit signed integer");
     }
 
     if (value < this.minimum) {
-      return context.error(`Integer ${value} is too small (must be at least ${this.minimum})`);
+      return context.error(`Integer ${value} is too small (must be at least ${this.minimum})`,
+                           `be at least ${this.minimum}`);
     }
     if (value > this.maximum) {
-      return context.error(`Integer ${value} is too big (must be at most ${this.maximum})`);
+      return context.error(`Integer ${value} is too big (must be at most ${this.maximum})`,
+                           `be no greater than ${this.maximum}`);
     }
 
     return r;
@@ -789,11 +928,13 @@ class ArrayType extends Type {
     }
 
     if (result.length < this.minItems) {
-      return context.error(`Array requires at least ${this.minItems} items; you have ${result.length}`);
+      return context.error(`Array requires at least ${this.minItems} items; you have ${result.length}`,
+                           `have at least ${this.minItems} items`);
     }
 
     if (result.length > this.maxItems) {
-      return context.error(`Array requires at most ${this.maxItems} items; you have ${result.length}`);
+      return context.error(`Array requires at most ${this.maxItems} items; you have ${result.length}`,
+                           `have at most ${this.maxItems} items`);
     }
 
     return {value: result};
@@ -805,10 +946,11 @@ class ArrayType extends Type {
 }
 
 class FunctionType extends Type {
-  constructor(schema, parameters, isAsync) {
+  constructor(schema, parameters, isAsync, hasAsyncCallback) {
     super(schema);
     this.parameters = parameters;
     this.isAsync = isAsync;
+    this.hasAsyncCallback = hasAsyncCallback;
   }
 
   normalize(value, context) {
@@ -1008,16 +1150,22 @@ class CallEntry extends Entry {
 
 // Represents a "function" defined in a schema namespace.
 class FunctionEntry extends CallEntry {
-  constructor(schema, path, name, type, unsupported, allowAmbiguousOptionalArguments, returns) {
+  constructor(schema, path, name, type, unsupported, allowAmbiguousOptionalArguments, returns, permissions) {
     super(schema, path, name, type.parameters, allowAmbiguousOptionalArguments);
     this.unsupported = unsupported;
     this.returns = returns;
+    this.permissions = permissions;
 
     this.isAsync = type.isAsync;
+    this.hasAsyncCallback = type.hasAsyncCallback;
   }
 
   inject(path, name, dest, context) {
     if (this.unsupported) {
+      return;
+    }
+
+    if (this.permissions && !this.permissions.some(perm => context.hasPermission(perm))) {
       return;
     }
 
@@ -1026,7 +1174,10 @@ class FunctionEntry extends CallEntry {
       stub = (...args) => {
         this.checkDeprecated(context);
         let actuals = this.checkParameters(args, context);
-        let callback = actuals.pop();
+        let callback = null;
+        if (this.hasAsyncCallback) {
+          callback = actuals.pop();
+        }
         return context.callAsyncFunction(path, name, actuals, callback);
       };
     } else if (!this.returns) {
@@ -1048,10 +1199,11 @@ class FunctionEntry extends CallEntry {
 
 // Represents an "event" defined in a schema namespace.
 class Event extends CallEntry {
-  constructor(schema, path, name, type, extraParameters, unsupported) {
+  constructor(schema, path, name, type, extraParameters, unsupported, permissions) {
     super(schema, path, name, extraParameters);
     this.type = type;
     this.unsupported = unsupported;
+    this.permissions = permissions;
   }
 
   checkListener(listener, context) {
@@ -1064,6 +1216,10 @@ class Event extends CallEntry {
 
   inject(path, name, dest, context) {
     if (this.unsupported) {
+      return;
+    }
+
+    if (this.permissions && !this.permissions.some(perm => context.hasPermission(perm))) {
       return;
     }
 
@@ -1108,6 +1264,7 @@ this.Schemas = {
     let ns = this.namespaces.get(namespaceName);
     if (!ns) {
       ns = new Map();
+      ns.permissions = null;
       this.namespaces.set(namespaceName, ns);
     }
     ns.set(symbol, value);
@@ -1198,7 +1355,7 @@ this.Schemas = {
       let parseProperty = (type, extraProps = []) => {
         return {
           type: this.parseType(path, type,
-                               ["unsupported", "onError", ...extraProps]),
+                               ["unsupported", "onError", "permissions", ...extraProps]),
           optional: type.optional || false,
           unsupported: type.unsupported || false,
           onError: type.onError || null,
@@ -1246,13 +1403,12 @@ this.Schemas = {
       return new NumberType(type);
     } else if (type.type == "integer") {
       checkTypeProperties("minimum", "maximum");
-      return new IntegerType(type, type.minimum || 0, type.maximum || Infinity);
+      return new IntegerType(type, type.minimum || -Infinity, type.maximum || Infinity);
     } else if (type.type == "boolean") {
       checkTypeProperties();
       return new BooleanType(type);
     } else if (type.type == "function") {
-      let isAsync = typeof(type.async) == "string";
-
+      let isAsync = !!type.async;
       let parameters = null;
       if ("parameters" in type) {
         parameters = [];
@@ -1269,9 +1425,10 @@ this.Schemas = {
         }
       }
 
+      let hasAsyncCallback = false;
       if (isAsync) {
-        if (!parameters || !parameters.length || parameters[parameters.length - 1].name != type.async) {
-          throw new Error(`Internal error: "async" property must name the last parameter of the function.`);
+        if (parameters && parameters.length && parameters[parameters.length - 1].name == type.async) {
+          hasAsyncCallback = true;
         }
         if (type.returns || type.allowAmbiguousOptionalArguments) {
           throw new Error(`Internal error: Async functions must not have return values or ambiguous arguments.`);
@@ -1279,7 +1436,7 @@ this.Schemas = {
       }
 
       checkTypeProperties("parameters", "async", "returns");
-      return new FunctionType(type, parameters, isAsync);
+      return new FunctionType(type, parameters, isAsync, hasAsyncCallback);
     } else if (type.type == "any") {
       // Need to see what minimum and maximum are supposed to do here.
       checkTypeProperties("minimum", "maximum");
@@ -1293,10 +1450,12 @@ this.Schemas = {
     let f = new FunctionEntry(fun, path, fun.name,
                               this.parseType(path, fun,
                                              ["name", "unsupported", "returns",
+                                              "permissions",
                                               "allowAmbiguousOptionalArguments"]),
                               fun.unsupported || false,
                               fun.allowAmbiguousOptionalArguments || false,
-                              fun.returns || null);
+                              fun.returns || null,
+                              fun.permissions || null);
     return f;
   },
 
@@ -1367,11 +1526,12 @@ this.Schemas = {
     /* eslint-enable no-unused-vars */
 
     let type = this.parseType([namespaceName], event,
-                              ["name", "unsupported",
+                              ["name", "unsupported", "permissions",
                                "extraParameters", "returns", "filters"]);
 
     let e = new Event(event, [namespaceName], event.name, type, extras,
-                      event.unsupported || false);
+                      event.unsupported || false,
+                      event.permissions || null);
     this.register(namespaceName, event.name, e);
   },
 
@@ -1423,6 +1583,11 @@ this.Schemas = {
         for (let event of events) {
           this.loadEvent(name, event);
         }
+
+        if (namespace.permissions) {
+          let ns = this.namespaces.get(name);
+          ns.permissions = namespace.permissions;
+        }
       }
     };
 
@@ -1449,11 +1614,17 @@ this.Schemas = {
   },
 
   inject(dest, wrapperFuncs) {
+    let context = new Context(wrapperFuncs);
+
     for (let [namespace, ns] of this.namespaces) {
+      if (ns.permissions && !ns.permissions.some(perm => context.hasPermission(perm))) {
+        continue;
+      }
+
       let obj = Cu.createObjectIn(dest, {defineAs: namespace});
       for (let [name, entry] of ns) {
         if (wrapperFuncs.shouldInject(namespace, name)) {
-          entry.inject([namespace], name, obj, new Context(wrapperFuncs));
+          entry.inject([namespace], name, obj, context);
         }
       }
 

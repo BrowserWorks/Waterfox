@@ -358,7 +358,7 @@ this.PushService = {
 
               delete this._pendingRequests[channelID];
               for (let i = this._requestQueue.length - 1; i >= 0; --i)
-                if (this._requestQueue[i].channelID == channelID)
+                if (this._requestQueue[i][1].channelID == channelID)
                   this._requestQueue.splice(i, 1);
             }
           }
@@ -828,7 +828,7 @@ this.PushService = {
       this._ws.initLoadInfo(null, // aLoadingNode
                             Services.scriptSecurityManager.getSystemPrincipal(),
                             null, // aTriggeringPrincipal
-                            Ci.nsILoadInfo.SEC_NORMAL,
+                            Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                             Ci.nsIContentPolicy.TYPE_WEBSOCKET);
     }
     else if (uri.scheme === "ws") {

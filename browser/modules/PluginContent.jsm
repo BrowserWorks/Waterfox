@@ -46,6 +46,7 @@ PluginContent.prototype = {
     global.addEventListener("pagehide",              this, true);
     global.addEventListener("pageshow",              this, true);
     global.addEventListener("unload",                this);
+    global.addEventListener("HiddenPlugin",          this, true);
 
     global.addMessageListener("BrowserPlugins:ActivatePlugins", this);
     global.addMessageListener("BrowserPlugins:NotificationShown", this);
@@ -66,6 +67,7 @@ PluginContent.prototype = {
     global.removeEventListener("pagehide",              this, true);
     global.removeEventListener("pageshow",              this, true);
     global.removeEventListener("unload",                this);
+    global.removeEventListener("HiddenPlugin",          this, true);
 
     global.removeMessageListener("BrowserPlugins:ActivatePlugins", this);
     global.removeMessageListener("BrowserPlugins:NotificationShown", this);
@@ -194,6 +196,45 @@ PluginContent.prototype = {
            };
   },
 
+  _getPluginInfoForTag: function (pluginTag, tagMimetype) {
+    let pluginHost = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
+
+    let pluginName = gNavigatorBundle.GetStringFromName("pluginInfo.unknownPlugin");
+    let permissionString = null;
+    let blocklistState = null;
+
+    if (pluginTag) {
+      pluginName = BrowserUtils.makeNicePluginName(pluginTag.name);
+
+      permissionString = pluginHost.getPermissionStringForTag(pluginTag);
+      blocklistState = pluginTag.blocklistState;
+
+      // Convert this from nsIPluginTag so it can be serialized.
+      let properties = ["name", "description", "filename", "version", "enabledState", "niceName"];
+      let pluginTagCopy = {};
+      for (let prop of properties) {
+        pluginTagCopy[prop] = pluginTag[prop];
+      }
+      pluginTag = pluginTagCopy;
+
+      // Make state-softblocked == state-notblocked for our purposes,
+      // they have the same UI. STATE_OUTDATED should not exist for plugin
+      // items, but let's alias it anyway, just in case.
+      if (blocklistState == Ci.nsIBlocklistService.STATE_SOFTBLOCKED ||
+          blocklistState == Ci.nsIBlocklistService.STATE_OUTDATED) {
+        blocklistState = Ci.nsIBlocklistService.STATE_NOT_BLOCKED;
+      }
+    }
+
+    return { mimetype: tagMimetype,
+             pluginName: pluginName,
+             pluginTag: pluginTag,
+             permissionString: permissionString,
+             fallbackType: null,
+             blocklistState: blocklistState,
+           };
+  },
+
   /**
    * Update the visibility of the plugin overlay.
    */
@@ -247,7 +288,7 @@ PluginContent.prototype = {
       return false;
     }
 
-    let contentWindow = plugin.ownerDocument.defaultView;
+    let contentWindow = plugin.ownerGlobal;
     let cwu = contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindowUtils);
 
@@ -353,6 +394,14 @@ PluginContent.prototype = {
       return;
     }
 
+    if (eventType == "HiddenPlugin") {
+      let pluginTag = event.tag.QueryInterface(Ci.nsIPluginTag);
+      if (event.target.defaultView.top.document != this.content.document) {
+        return;
+      }
+      this._showClickToPlayNotification(pluginTag, false);
+    }
+
     let plugin = event.target;
     let doc = plugin.ownerDocument;
 
@@ -395,7 +444,9 @@ PluginContent.prototype = {
 
       case "PluginVulnerableUpdatable":
         let updateLink = this.getPluginUI(plugin, "checkForUpdatesLink");
-        this.addLinkClickCallback(updateLink, "forwardCallback", "openPluginUpdatePage");
+        let { pluginTag } = this._getPluginInfo(plugin);
+        this.addLinkClickCallback(updateLink, "forwardCallback",
+                                  "openPluginUpdatePage", pluginTag);
         /* FALLTHRU */
 
       case "PluginVulnerableNoUpdate":
@@ -524,7 +575,7 @@ PluginContent.prototype = {
 
     let pluginHost = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
     let permissionString = pluginHost.getPermissionStringForType(objLoadingContent.actualType);
-    let principal = objLoadingContent.ownerDocument.defaultView.top.document.nodePrincipal;
+    let principal = objLoadingContent.ownerGlobal.top.document.nodePrincipal;
     let pluginPermission = Services.perms.testPermissionFromPrincipal(principal, permissionString);
 
     let isFallbackTypeValid =
@@ -544,8 +595,9 @@ PluginContent.prototype = {
   },
 
   // Forward a link click callback to the chrome process.
-  forwardCallback: function (name) {
-    this.global.sendAsyncMessage("PluginContent:LinkClickCallback", { name: name });
+  forwardCallback: function (name, pluginTag) {
+    this.global.sendAsyncMessage("PluginContent:LinkClickCallback",
+      { name, pluginTag });
   },
 
   submitReport: function submitReport(plugin) {
@@ -609,7 +661,7 @@ PluginContent.prototype = {
   onOverlayClick: function (event) {
     let document = event.target.ownerDocument;
     let plugin = document.getBindingParent(event.target);
-    let contentWindow = plugin.ownerDocument.defaultView.top;
+    let contentWindow = plugin.ownerGlobal.top;
     let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
     let overlay = this.getPluginUI(plugin, "main");
     // Have to check that the target is not the link to update the plugin
@@ -710,7 +762,13 @@ PluginContent.prototype = {
     let location = this.content.document.location.href;
 
     for (let p of plugins) {
-      let pluginInfo = this._getPluginInfo(p);
+      let pluginInfo;
+      if (p instanceof Ci.nsIPluginTag) {
+        let mimeType = p.getMimeTypes() > 0 ? p.getMimeTypes()[0] : null;
+        pluginInfo = this._getPluginInfoForTag(p, mimeType);
+      } else {
+        pluginInfo = this._getPluginInfo(p);
+      }
       if (pluginInfo.permissionString === null) {
         Cu.reportError("No permission string for active plugin.");
         continue;

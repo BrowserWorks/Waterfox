@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/hr.xml
@@ -245,7 +245,7 @@ hr{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.23.7"}
+    Version{"2.1.19.14"}
     calendar{
         buddhist{
             eras{
@@ -568,10 +568,6 @@ hr{
         }
         gregorian{
             AmPmMarkers{
-                "AM",
-                "PM",
-            }
-            AmPmMarkersAbbr{
                 "AM",
                 "PM",
             }
@@ -1710,10 +1706,7 @@ hr{
         day-narrow{
             dn{"d."}
             relative{
-                "-1"{"jučer"}
                 "-2"{"prekjučer"}
-                "0"{"danas"}
-                "1"{"sutra"}
                 "2"{"prekosutra"}
             }
             relativeTime{
@@ -1732,10 +1725,7 @@ hr{
         day-short{
             dn{"d."}
             relative{
-                "-1"{"jučer"}
                 "-2"{"prekjučer"}
-                "0"{"danas"}
-                "1"{"sutra"}
                 "2"{"prekosutra"}
             }
             relativeTime{

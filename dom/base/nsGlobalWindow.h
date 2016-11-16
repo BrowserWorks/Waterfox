@@ -106,6 +106,7 @@ class BarProp;
 struct ChannelPixelLayout;
 class Console;
 class Crypto;
+class CustomElementsRegistry;
 class External;
 class Function;
 class Gamepad;
@@ -205,7 +206,6 @@ public:
   // stack depth at which timeout is firing
   uint32_t mFiringDepth;
 
-  // 
   uint32_t mNestingLevel;
 
   // The popup state at timeout creation time if not created from
@@ -878,6 +878,7 @@ public:
   nsLocation* GetLocation(mozilla::ErrorResult& aError);
   nsIDOMLocation* GetLocation() override;
   nsHistory* GetHistory(mozilla::ErrorResult& aError);
+  mozilla::dom::CustomElementsRegistry* CustomElements() override;
   mozilla::dom::BarProp* GetLocationbar(mozilla::ErrorResult& aError);
   mozilla::dom::BarProp* GetMenubar(mozilla::ErrorResult& aError);
   mozilla::dom::BarProp* GetPersonalbar(mozilla::ErrorResult& aError);
@@ -1257,7 +1258,8 @@ public:
 
   already_AddRefed<nsWindowRoot> GetWindowRootOuter();
   already_AddRefed<nsWindowRoot> GetWindowRoot(mozilla::ErrorResult& aError);
-  nsPerformance* GetPerformance();
+
+  mozilla::dom::Performance* GetPerformance();
 
 protected:
   // Web IDL helpers
@@ -1607,8 +1609,6 @@ public:
 
   virtual void SetKeyboardIndicators(UIStateChangeType aShowAccelerators,
                                      UIStateChangeType aShowFocusRings) override;
-  virtual void GetKeyboardIndicators(bool* aShowAccelerators,
-                                     bool* aShowFocusRings) override;
 
   // Inner windows only.
   void UpdateCanvasFocus(bool aFocusChanged, nsIContent* aNewContent);
@@ -1759,12 +1759,6 @@ protected:
   bool                   mNeedsFocus : 1;
   bool                   mHasFocus : 1;
 
-  // whether to show keyboard accelerators
-  bool                   mShowAccelerators : 1;
-
-  // whether to show focus rings
-  bool                   mShowFocusRings : 1;
-
   // when true, show focus rings for the current focused content only.
   // This will be reset when another element is focused
   bool                   mShowFocusRingForContent : 1;
@@ -1845,6 +1839,7 @@ protected:
   uint32_t                      mTimeoutFiringDepth;
   RefPtr<nsLocation>          mLocation;
   RefPtr<nsHistory>           mHistory;
+  RefPtr<mozilla::dom::CustomElementsRegistry> mCustomElements;
 
   // These member variables are used on both inner and the outer windows.
   nsCOMPtr<nsIPrincipal> mDocumentPrincipal;

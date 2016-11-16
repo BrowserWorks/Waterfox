@@ -19,7 +19,6 @@
 #include "npapi.h"
 #include "npfunctions.h"
 
-#include "nsAutoPtr.h"
 #include "nsDataHashtable.h"
 #include "nsTHashtable.h"
 #include "nsHashKeys.h"
@@ -52,11 +51,6 @@ class PCrashReporterChild;
 } // namespace dom
 
 namespace plugins {
-
-#ifdef MOZ_WIDGET_QT
-class NestedLoopTimer;
-static const int kNestedLoopDetectorIntervalMs = 90;
-#endif
 
 class PluginInstanceChild;
 
@@ -266,10 +260,6 @@ private:
 
     virtual void EnteredCxxStack() override;
     virtual void ExitedCxxStack() override;
-#elif defined(MOZ_WIDGET_QT)
-
-    virtual void EnteredCxxStack() override;
-    virtual void ExitedCxxStack() override;
 #endif
 
     PRLibrary* mLibrary;
@@ -331,8 +321,6 @@ private:
     // MessagePumpForUI.
     int mTopLoopDepth;
 #  endif
-#elif defined (MOZ_WIDGET_QT)
-    NestedLoopTimer *mNestedLoopTimerObject;
 #endif
 
 public: // called by PluginInstanceChild

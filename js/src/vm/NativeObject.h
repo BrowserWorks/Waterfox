@@ -21,6 +21,7 @@
 #include "gc/Marking.h"
 #include "js/Value.h"
 #include "vm/Shape.h"
+#include "vm/ShapedObject.h"
 #include "vm/String.h"
 #include "vm/TypeInference.h"
 
@@ -40,7 +41,7 @@ Debug_SetValueRangeToCrashOnTouch(Value* beg, Value* end)
 {
 #ifdef DEBUG
     for (Value* v = beg; v != end; ++v)
-        v->setObject(*reinterpret_cast<JSObject*>(0x42));
+        v->setObject(*reinterpret_cast<JSObject*>(0x48));
 #endif
 }
 
@@ -181,14 +182,6 @@ class ObjectElements
         // memory.  This is a static property of the TypedArray, set when it
         // is created and never changed.
         SHARED_MEMORY               = 0x8,
-
-        // Set if the object has already been added to the whole-cell store
-        // buffer, and therefore adding individual elements into the slots store
-        // buffer would be pointless. This is never set for the empty or shared
-        // elements headers, nor if the elements are copy on write; in such
-        // situations it isn't clear *which* object that references this
-        // elements header has already been put in the whole-cell store buffer.
-        IN_WHOLE_CELL_BUFFER        = 0x10,
     };
 
   private:
@@ -245,22 +238,9 @@ class ObjectElements
         MOZ_ASSERT(isCopyOnWrite());
         flags &= ~COPY_ON_WRITE;
     }
-    bool isInWholeCellBuffer() const {
-        return flags & IN_WHOLE_CELL_BUFFER;
-    }
-    void setInWholeCellBuffer() {
-        MOZ_ASSERT(!isSharedMemory());
-        MOZ_ASSERT(!isCopyOnWrite());
-        flags |= IN_WHOLE_CELL_BUFFER;
-    }
-    void clearInWholeCellBuffer() {
-        MOZ_ASSERT(!isSharedMemory());
-        MOZ_ASSERT(!isCopyOnWrite());
-        flags &= ~IN_WHOLE_CELL_BUFFER;
-    }
 
   public:
-    MOZ_CONSTEXPR ObjectElements(uint32_t capacity, uint32_t length)
+    constexpr ObjectElements(uint32_t capacity, uint32_t length)
       : flags(0), initializedLength(0), capacity(capacity), length(length)
     {}
 
@@ -268,7 +248,7 @@ class ObjectElements
         IsShared
     };
 
-    MOZ_CONSTEXPR ObjectElements(uint32_t capacity, uint32_t length, SharedMemory shmem)
+    constexpr ObjectElements(uint32_t capacity, uint32_t length, SharedMemory shmem)
       : flags(SHARED_MEMORY), initializedLength(0), capacity(capacity), length(length)
     {}
 
@@ -348,17 +328,18 @@ enum class DenseElementResult {
 /*
  * NativeObject specifies the internal implementation of a native object.
  *
- * Native objects extend the base implementation of an object with storage
- * for the object's named properties and indexed elements.
+ * Native objects use ShapedObject::shape_ to record property information.  Two
+ * native objects with the same shape are guaranteed to have the same number of
+ * fixed slots.
+ *
+ * Native objects extend the base implementation of an object with storage for
+ * the object's named properties and indexed elements.
  *
  * These are stored separately from one another. Objects are followed by a
  * variable-sized array of values for inline storage, which may be used by
  * either properties of native objects (fixed slots), by elements (fixed
  * elements), or by other data for certain kinds of objects, such as
  * ArrayBufferObjects and TypedArrayObjects.
- *
- * Two native objects with the same shape are guaranteed to have the same
- * number of fixed slots.
  *
  * Named property storage can be split between fixed slots and a dynamically
  * allocated array (the slots member). For an object with N fixed slots, shapes
@@ -375,12 +356,9 @@ enum class DenseElementResult {
  * Slots and elements may both be non-empty. The slots may be either names or
  * indexes; no indexed property will be in both the slots and elements.
  */
-class NativeObject : public JSObject
+class NativeObject : public ShapedObject
 {
   protected:
-    // Property layout description and other state.
-    GCPtrShape shape_;
-
     /* Slots for object properties. */
     js::HeapSlot* slots_;
 
@@ -398,8 +376,6 @@ class NativeObject : public JSObject
         static_assert(sizeof(NativeObject) % sizeof(Value) == 0,
                       "fixed slots after an object must be aligned");
 
-        static_assert(offsetof(NativeObject, shape_) == offsetof(shadow::Object, shape),
-                      "shadow shape must match actual shape");
         static_assert(offsetof(NativeObject, group_) == offsetof(shadow::Object, group),
                       "shadow type must match actual type");
         static_assert(offsetof(NativeObject, slots_) == offsetof(shadow::Object, slots),
@@ -434,14 +410,14 @@ class NativeObject : public JSObject
         // Backdoor allowing direct access to copy on write elements.
         return HeapSlotArray(elements_, true);
     }
-    const Value& getDenseElement(uint32_t idx) {
+    const Value& getDenseElement(uint32_t idx) const {
         MOZ_ASSERT(idx < getDenseInitializedLength());
         return elements_[idx];
     }
     bool containsDenseElement(uint32_t idx) {
         return idx < getDenseInitializedLength() && !elements_[idx].isMagic(JS_ELEMENTS_HOLE);
     }
-    uint32_t getDenseInitializedLength() {
+    uint32_t getDenseInitializedLength() const {
         return getElementsHeader()->initializedLength;
     }
     uint32_t getDenseCapacity() const {
@@ -481,15 +457,9 @@ class NativeObject : public JSObject
     }
 
     bool isInWholeCellBuffer() const {
-        return getElementsHeader()->isInWholeCellBuffer();
-    }
-    void setInWholeCellBuffer() {
-        if (!hasEmptyElements() && !isSharedMemory() && !getElementsHeader()->isCopyOnWrite())
-            getElementsHeader()->setInWholeCellBuffer();
-    }
-    void clearInWholeCellBuffer() {
-        if (!hasEmptyElements() && !isSharedMemory() && !getElementsHeader()->isCopyOnWrite())
-            getElementsHeader()->clearInWholeCellBuffer();
+        const gc::TenuredCell* cell = &asTenured();
+        gc::ArenaCellSet* cells = cell->arena()->bufferedCells;
+        return cells && cells->hasCell(cell);
     }
 
   protected:

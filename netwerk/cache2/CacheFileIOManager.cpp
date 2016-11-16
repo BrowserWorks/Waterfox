@@ -1092,7 +1092,7 @@ public:
   }
 };
 
-CacheFileIOManager * CacheFileIOManager::gInstance = nullptr;
+StaticRefPtr<CacheFileIOManager> CacheFileIOManager::gInstance;
 
 NS_IMPL_ISUPPORTS(CacheFileIOManager, nsITimerCallback)
 
@@ -1130,7 +1130,7 @@ CacheFileIOManager::Init()
   nsresult rv = ioMan->InitInternal();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  ioMan.swap(gInstance);
+  gInstance = ioMan.forget();
   return NS_OK;
 }
 
@@ -1154,7 +1154,7 @@ CacheFileIOManager::InitInternal()
 nsresult
 CacheFileIOManager::Shutdown()
 {
-  LOG(("CacheFileIOManager::Shutdown() [gInstance=%p]", gInstance));
+  LOG(("CacheFileIOManager::Shutdown() [gInstance=%p]", gInstance.get()));
 
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1185,8 +1185,7 @@ CacheFileIOManager::Shutdown()
     gInstance->SyncRemoveAllCacheFiles();
   }
 
-  RefPtr<CacheFileIOManager> ioMan;
-  ioMan.swap(gInstance);
+  gInstance = nullptr;
 
   return NS_OK;
 }
@@ -1259,7 +1258,7 @@ CacheFileIOManager::ShutdownInternal()
 nsresult
 CacheFileIOManager::OnProfile()
 {
-  LOG(("CacheFileIOManager::OnProfile() [gInstance=%p]", gInstance));
+  LOG(("CacheFileIOManager::OnProfile() [gInstance=%p]", gInstance.get()));
 
   RefPtr<CacheFileIOManager> ioMan = gInstance;
   if (!ioMan) {
@@ -1818,6 +1817,11 @@ CacheFileIOManager::Read(CacheFileHandle *aHandle, int64_t aOffset,
   LOG(("CacheFileIOManager::Read() [handle=%p, offset=%lld, count=%d, "
        "listener=%p]", aHandle, aOffset, aCount, aCallback));
 
+  if (CacheObserver::ShuttingDown()) {
+    LOG(("  no reads after shutdown"));
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
   nsresult rv;
   RefPtr<CacheFileIOManager> ioMan = gInstance;
 
@@ -1843,6 +1847,11 @@ CacheFileIOManager::ReadInternal(CacheFileHandle *aHandle, int64_t aOffset,
        aHandle, aOffset, aCount));
 
   nsresult rv;
+
+  if (CacheObserver::ShuttingDown()) {
+    LOG(("  no reads after shutdown"));
+    return NS_ERROR_NOT_INITIALIZED;
+  }
 
   if (!aHandle->mFileExists) {
     NS_WARNING("Trying to read from non-existent file");
@@ -2331,7 +2340,7 @@ void CacheFileIOManager::GetCacheDirectory(nsIFile** result)
   *result = nullptr;
 
   RefPtr<CacheFileIOManager> ioMan = gInstance;
-  if (!ioMan) {
+  if (!ioMan || !ioMan->mCacheDirectory) {
     return;
   }
 
@@ -3054,7 +3063,7 @@ CacheFileIOManager::CacheIndexStateChanged()
   // the lock in CacheIndex
   nsCOMPtr<nsIRunnable> ev;
   ev = NewRunnableMethod(
-    gInstance, &CacheFileIOManager::CacheIndexStateChangedInternal);
+    gInstance.get(), &CacheFileIOManager::CacheIndexStateChangedInternal);
 
   nsCOMPtr<nsIEventTarget> ioTarget = IOTarget();
   MOZ_ASSERT(ioTarget);

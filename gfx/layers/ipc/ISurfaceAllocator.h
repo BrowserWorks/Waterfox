@@ -16,8 +16,6 @@
 #include "mozilla/Atomics.h"            // for Atomic
 #include "mozilla/layers/LayersMessages.h" // for ShmemSection
 #include "LayersTypes.h"
-#include "gfxPrefs.h"
-#include "mozilla/layers/AtomicRefCountedWithFinalize.h"
 
 /*
  * FIXME [bjacob] *** PURE CRAZYNESS WARNING ***
@@ -43,6 +41,7 @@ namespace layers {
 
 class CompositableForwarder;
 class ShadowLayerForwarder;
+class TextureForwarder;
 
 class ShmemAllocator;
 class ShmemSectionAllocator;
@@ -76,10 +75,13 @@ mozilla::ipc::SharedMemory::SharedMemoryType OptimalShmemType();
  * These methods should be only called in the ipdl implementor's thread, unless
  * specified otherwise in the implementing class.
  */
-class ISurfaceAllocator : public AtomicRefCountedWithFinalize<ISurfaceAllocator>
+class ISurfaceAllocator
 {
 public:
   MOZ_DECLARE_REFCOUNTED_TYPENAME(ISurfaceAllocator)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ISurfaceAllocator)
+
+  ISurfaceAllocator() {}
 
   // down-casting
 
@@ -88,6 +90,8 @@ public:
   virtual ShmemSectionAllocator* AsShmemSectionAllocator() { return nullptr; }
 
   virtual CompositableForwarder* AsCompositableForwarder() { return nullptr; }
+
+  virtual TextureForwarder* AsTextureForwarder() { return nullptr; }
 
   virtual ShadowLayerForwarder* AsLayerForwarder() { return nullptr; }
 
@@ -110,33 +114,68 @@ protected:
   void Finalize() {}
 
   virtual ~ISurfaceAllocator() {}
-
-  friend class AtomicRefCountedWithFinalize<ISurfaceAllocator>;
 };
 
 /// Methods that are specific to the client/child side.
 class ClientIPCAllocator : public ISurfaceAllocator
 {
 public:
+  ClientIPCAllocator() {}
+
   virtual ClientIPCAllocator* AsClientAllocator() override { return this; }
+
+  virtual base::ProcessId GetParentPid() const = 0;
 
   virtual MessageLoop * GetMessageLoop() const = 0;
 
-  virtual int32_t GetMaxTextureSize() const { return gfxPrefs::MaxTextureSize(); }
+  virtual int32_t GetMaxTextureSize() const;
+
+  virtual void CancelWaitForRecycle(uint64_t aTextureId) = 0;
 };
 
 /// Methods that are specific to the host/parent side.
 class HostIPCAllocator : public ISurfaceAllocator
 {
 public:
+  HostIPCAllocator() {}
+
   virtual HostIPCAllocator* AsHostIPCAllocator() override { return this; }
 
   /**
    * Get child side's process Id.
    */
   virtual base::ProcessId GetChildProcessId() = 0;
+
+  virtual void NotifyNotUsed(PTextureParent* aTexture, uint64_t aTransactionId) = 0;
+
+  virtual void SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage) = 0;
+
+  void SendFenceHandleIfPresent(PTextureParent* aTexture);
+
+  virtual void SendPendingAsyncMessages();
+
+  virtual void SetAboutToSendAsyncMessages()
+  {
+    mAboutToSendAsyncMessages = true;
+  }
+
+  bool IsAboutToSendAsyncMessages()
+  {
+    return mAboutToSendAsyncMessages;
+  }
+
+protected:
+  std::vector<AsyncParentMessageData> mPendingAsyncMessage;
+  bool mAboutToSendAsyncMessages = false;
 };
 
+/// Specific to the CompositorBridgeParent/CrossProcessCompositorBridgeParent.
+class CompositorBridgeParentIPCAllocator : public HostIPCAllocator
+{
+public:
+  CompositorBridgeParentIPCAllocator() {}
+  virtual void NotifyNotUsed(PTextureParent* aTexture, uint64_t aTransactionId) override;
+};
 
 /// An allocator can provide shared memory.
 ///
@@ -240,6 +279,73 @@ private:
   // Therefore, we use a signed type so that any such negative values show up
   // as negative in about:memory, rather than as enormous positive numbers.
   static mozilla::Atomic<ptrdiff_t> sAmount;
+};
+
+/// A simple shmem section allocator that can only allocate small
+/// fixed size elements (only intended to be used to store tile
+/// copy-on-write locks for now).
+class FixedSizeSmallShmemSectionAllocator final : public ShmemSectionAllocator
+{
+public:
+  enum AllocationStatus
+  {
+    STATUS_ALLOCATED,
+    STATUS_FREED
+  };
+
+  struct ShmemSectionHeapHeader
+  {
+    Atomic<uint32_t> mTotalBlocks;
+    Atomic<uint32_t> mAllocatedBlocks;
+  };
+
+  struct ShmemSectionHeapAllocation
+  {
+    Atomic<uint32_t> mStatus;
+    uint32_t mSize;
+  };
+
+  explicit FixedSizeSmallShmemSectionAllocator(ClientIPCAllocator* aShmProvider);
+
+  ~FixedSizeSmallShmemSectionAllocator();
+
+  virtual bool AllocShmemSection(uint32_t aSize, ShmemSection* aShmemSection) override;
+
+  virtual void DeallocShmemSection(ShmemSection& aShmemSection) override;
+
+  virtual void MemoryPressure() override { ShrinkShmemSectionHeap(); }
+
+  // can be called on the compositor process.
+  static void FreeShmemSection(ShmemSection& aShmemSection);
+
+  void ShrinkShmemSectionHeap();
+
+  ShmemAllocator* GetShmAllocator() { return mShmProvider->AsShmemAllocator(); }
+
+  /**
+    * In order to avoid shutdown crashes, we need to test for mShmProvider->AsShmemAllocator()
+    * here. Basically, there's a case where we have the following class hierarchy:
+    *
+    * ClientIPCAllocator -> TextureForwarder -> CompositableForwarder -> ShadowLayerForwarder
+    *
+    * In ShadowLayerForwarder's dtor, we tear down the actor and close the IPC channel.
+    * In TextureForwarder's dtor, we destroy the FixedSizeSmallShmemAllocator and that in turn calls
+    * ClientIPCAllocator::IPCOpen() to determine whether we can dealloc some shmem regions.
+    *
+    * This does not work. In the above class diagram, as the ShadowLayerForwarder's dtor has run
+    * its course, the ClientIPCAllocator object we're holding on to is now just a plain
+    * ClientIPCAllocator and so we call ClientIPCAllocator's IPCOpen() which unconditionally
+    * returns true. We therefore have to rely on AsShmemAllocator() to determine whether we can
+    * do these deallocs as ClientIPCAllocator::AsShmemAllocator() returns nullptr.
+    *
+    * Ideally, we should move a lot of this destruction work into non-destructor Destroy() methods
+    * which do cleanup before we destroy the objects.
+    */
+  bool IPCOpen() const { return mShmProvider->AsShmemAllocator() && mShmProvider->IPCOpen(); }
+
+protected:
+  std::vector<mozilla::ipc::Shmem> mUsedShmems;
+  ClientIPCAllocator* mShmProvider;
 };
 
 } // namespace layers

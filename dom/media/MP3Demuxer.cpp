@@ -11,16 +11,17 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/EndianUtils.h"
+#include "nsAutoPtr.h"
 #include "VideoUtils.h"
 #include "TimeUnits.h"
 #include "prenv.h"
 
 #ifdef PR_LOGGING
-mozilla::LazyLogModule gMP3DemuxerLog("MP3Demuxer");
+extern mozilla::LazyLogModule gMediaDemuxerLog;
 #define MP3LOG(msg, ...) \
-  MOZ_LOG(gMP3DemuxerLog, LogLevel::Debug, ("MP3Demuxer " msg, ##__VA_ARGS__))
+  MOZ_LOG(gMediaDemuxerLog, LogLevel::Debug, ("MP3Demuxer " msg, ##__VA_ARGS__))
 #define MP3LOGV(msg, ...) \
-  MOZ_LOG(gMP3DemuxerLog, LogLevel::Verbose, ("MP3Demuxer " msg, ##__VA_ARGS__))
+  MOZ_LOG(gMediaDemuxerLog, LogLevel::Verbose, ("MP3Demuxer " msg, ##__VA_ARGS__))
 #else
 #define MP3LOG(msg, ...)
 #define MP3LOGV(msg, ...)

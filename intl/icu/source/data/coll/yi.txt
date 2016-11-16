@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/collation/yi.xml
@@ -17,7 +17,7 @@ yi{
                 "‎&״"
                 "<<'\u0022'"
             }
-            Version{"29"}
+            Version{"28"}
         }
         standard{
             Sequence{
@@ -34,7 +34,7 @@ yi{
                 "&ש<שׂ"
                 "&[before 1]ת<תּ"
             }
-            Version{"29"}
+            Version{"28"}
         }
     }
 }

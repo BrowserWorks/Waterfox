@@ -199,6 +199,7 @@ nsHtml5Tokenizer::endTagExpectationToArray()
 void 
 nsHtml5Tokenizer::setLineNumber(int32_t line)
 {
+  this->attributeLine = line;
   this->line = line;
 }
 
@@ -218,12 +219,6 @@ nsHtml5Tokenizer::emitOrAppendCharRefBuf(int32_t returnState)
       tokenHandler->characters(charRefBuf, 0, charRefBufLen);
     }
   }
-}
-
-void 
-nsHtml5Tokenizer::appendStrBuf(char16_t c)
-{
-  strBuf[strBufLen++] = c;
 }
 
 nsString* 
@@ -249,14 +244,15 @@ nsHtml5Tokenizer::emitStrBuf()
 void 
 nsHtml5Tokenizer::appendStrBuf(char16_t* buffer, int32_t offset, int32_t length)
 {
-  int32_t reqLen = strBufLen + length;
-  if (strBuf.length < reqLen) {
-    jArray<char16_t,int32_t> newBuf = jArray<char16_t,int32_t>::newJArray(reqLen + (reqLen >> 1));
-    nsHtml5ArrayCopy::arraycopy(strBuf, newBuf, strBuf.length);
-    strBuf = newBuf;
+  int32_t newLen = strBufLen + length;
+  MOZ_ASSERT(newLen <= strBuf.length, "Previous buffer length insufficient.");
+  if (MOZ_UNLIKELY(strBuf.length < newLen)) {
+    if (MOZ_UNLIKELY(!EnsureBufferSpace(length))) {
+      MOZ_CRASH("Unable to recover from buffer reallocation failure");
+    }
   }
   nsHtml5ArrayCopy::arraycopy(buffer, offset, strBuf, strBufLen, length);
-  strBufLen = reqLen;
+  strBufLen = newLen;
 }
 
 void 
@@ -335,7 +331,7 @@ nsHtml5Tokenizer::addAttributeWithoutValue()
 {
 
   if (attributeName) {
-    attributes->addAttribute(attributeName, nsHtml5Portability::newEmptyString());
+    attributes->addAttribute(attributeName, nsHtml5Portability::newEmptyString(), attributeLine);
     attributeName = nullptr;
   }
 }
@@ -348,7 +344,7 @@ nsHtml5Tokenizer::addAttributeWithValue()
     if (mViewSource) {
       mViewSource->MaybeLinkifyAttributeValue(attributeName, val);
     }
-    attributes->addAttribute(attributeName, val);
+    attributes->addAttribute(attributeName, val, attributeLine);
     attributeName = nullptr;
   }
 }
@@ -620,6 +616,7 @@ nsHtml5Tokenizer::stateLoop(int32_t state, char16_t c, int32_t pos, char16_t* bu
               if (c >= 'A' && c <= 'Z') {
                 c += 0x20;
               }
+              attributeLine = line;
               clearStrBufAndAppend(c);
               state = P::transition(mViewSource, NS_HTML5TOKENIZER_ATTRIBUTE_NAME, reconsume, pos);
               NS_HTML5_BREAK(beforeattributenameloop);
@@ -712,11 +709,13 @@ nsHtml5Tokenizer::stateLoop(int32_t state, char16_t c, int32_t pos, char16_t* bu
               continue;
             }
             case '\"': {
+              attributeLine = line;
               clearStrBuf();
               state = P::transition(mViewSource, NS_HTML5TOKENIZER_ATTRIBUTE_VALUE_DOUBLE_QUOTED, reconsume, pos);
               NS_HTML5_BREAK(beforeattributevalueloop);
             }
             case '&': {
+              attributeLine = line;
               clearStrBuf();
               reconsume = true;
               state = P::transition(mViewSource, NS_HTML5TOKENIZER_ATTRIBUTE_VALUE_UNQUOTED, reconsume, pos);
@@ -724,6 +723,7 @@ nsHtml5Tokenizer::stateLoop(int32_t state, char16_t c, int32_t pos, char16_t* bu
               NS_HTML5_CONTINUE(stateloop);
             }
             case '\'': {
+              attributeLine = line;
               clearStrBuf();
               state = P::transition(mViewSource, NS_HTML5TOKENIZER_ATTRIBUTE_VALUE_SINGLE_QUOTED, reconsume, pos);
               NS_HTML5_CONTINUE(stateloop);
@@ -750,6 +750,7 @@ nsHtml5Tokenizer::stateLoop(int32_t state, char16_t c, int32_t pos, char16_t* bu
               }
             }
             default: {
+              attributeLine = line;
               clearStrBufAndAppend(c);
               state = P::transition(mViewSource, NS_HTML5TOKENIZER_ATTRIBUTE_VALUE_UNQUOTED, reconsume, pos);
 
@@ -4043,6 +4044,7 @@ nsHtml5Tokenizer::initializeWithoutStarting()
   confident = false;
   strBuf = nullptr;
   line = 1;
+  attributeLine = 1;
   resetToDataState();
 }
 

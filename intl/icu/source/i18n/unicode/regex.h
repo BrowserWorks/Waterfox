@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2002-2016, International Business Machines
+*   Copyright (C) 2002-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  regex.h
@@ -450,7 +450,7 @@ public:
      * @param  groupName   The capture group name.
      * @param  status      A UErrorCode to receive any errors.
      *
-     * @stable ICU 55
+     * @draft ICU 55
      */
     virtual int32_t groupNumberFromName(const UnicodeString &groupName, UErrorCode &status) const;
 
@@ -469,7 +469,7 @@ public:
      *                     nul-terminated.
      * @param  status      A UErrorCode to receive any errors.
      *
-     * @stable ICU 55
+     * @draft ICU 55
      */
     virtual int32_t groupNumberFromName(const char *groupName, int32_t nameLength, UErrorCode &status) const;
 
@@ -849,7 +849,7 @@ public:
     *     position may not be valid with the altered input string.</p>
     *  @param   status  A reference to a UErrorCode to receive any errors.
     *  @return  TRUE if a match is found.
-    * @stable ICU 55
+    *  @draft ICU 55
     */
     virtual UBool find(UErrorCode &status);
 

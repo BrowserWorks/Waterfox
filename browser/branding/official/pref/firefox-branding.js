@@ -4,12 +4,13 @@
 
 pref("startup.homepage_override_url", "");
 pref("startup.homepage_welcome_url", "https://www.mozilla.org/%LOCALE%/firefox/%VERSION%/firstrun/");
-pref("startup.homepage_welcome_url.additional", "https://www.mozilla.org/%LOCALE%/firefox/%VERSION%/firstrun/learnmore/");
+pref("startup.homepage_welcome_url.additional", "");
 // Interval: Time between checks for a new version (in seconds)
 pref("app.update.interval", 43200); // 12 hours
 // The time interval between the downloading of mar file chunks in the
 // background (in seconds)
-pref("app.update.download.backgroundInterval", 60);
+// 0 means "download everything at once"
+pref("app.update.download.backgroundInterval", 0);
 // Give the user x seconds to react before showing the big UI. default=192 hours
 pref("app.update.promptWaitTime", 691200);
 // URL user can browse to manually if for some reason all update installation

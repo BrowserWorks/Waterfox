@@ -55,20 +55,18 @@ class JSAPITest
     static JSAPITest* list;
     JSAPITest* next;
 
-    JSRuntime* rt;
     JSContext* cx;
     JS::PersistentRootedObject global;
     bool knownFail;
     JSAPITestString msgs;
     JSCompartment* oldCompartment;
 
-    JSAPITest() : rt(nullptr), cx(nullptr), knownFail(false), oldCompartment(nullptr) {
+    JSAPITest() : cx(nullptr), knownFail(false), oldCompartment(nullptr) {
         next = list;
         list = this;
     }
 
     virtual ~JSAPITest() {
-        MOZ_RELEASE_ASSERT(!rt);
         MOZ_RELEASE_ASSERT(!cx);
         MOZ_RELEASE_ASSERT(!global);
     }
@@ -267,7 +265,7 @@ class JSAPITest
 
     bool definePrint();
 
-    static void setNativeStackQuota(JSRuntime* rt)
+    static void setNativeStackQuota(JSContext* cx)
     {
         const size_t MAX_STACK_SIZE =
 /* Assume we can't use more than 5e5 bytes of C stack by default. */
@@ -282,23 +280,22 @@ class JSAPITest
 #endif
         ;
 
-        JS_SetNativeStackQuota(rt, MAX_STACK_SIZE);
+        JS_SetNativeStackQuota(cx, MAX_STACK_SIZE);
     }
 
-    virtual JSRuntime * createRuntime() {
-        JSRuntime* rt = JS_NewRuntime(8L * 1024 * 1024);
-        if (!rt)
+    virtual JSContext* createContext() {
+        JSContext* cx = JS_NewContext(8L * 1024 * 1024);
+        if (!cx)
             return nullptr;
-        JS_SetErrorReporter(rt, &reportWarning);
-        setNativeStackQuota(rt);
-        return rt;
+        JS::SetWarningReporter(cx, &reportWarning);
+        setNativeStackQuota(cx);
+        return cx;
     }
 
-    virtual void destroyRuntime() {
-        MOZ_RELEASE_ASSERT(!cx);
-        MOZ_RELEASE_ASSERT(rt);
-        JS_DestroyRuntime(rt);
-        rt = nullptr;
+    virtual void destroyContext() {
+        MOZ_RELEASE_ASSERT(cx);
+        JS_DestroyContext(cx);
+        cx = nullptr;
     }
 
     static void reportWarning(JSContext* cx, const char* message, JSErrorReport* report) {
@@ -309,16 +306,6 @@ class JSAPITest
                 report->filename ? report->filename : "<no filename>",
                 (unsigned int) report->lineno,
                 message);
-    }
-
-    virtual JSContext* createContext() {
-        JSContext* cx = JS_NewContext(rt, 8192);
-        if (!cx)
-            return nullptr;
-
-        JS::ContextOptionsRef(cx).setDontReportUncaught(true);
-        JS::ContextOptionsRef(cx).setAutoJSAPIOwnsErrorReporting(true);
-        return cx;
     }
 
     virtual const JSClass * getGlobalClass() {
@@ -446,14 +433,14 @@ class AutoLeaveZeal
     explicit AutoLeaveZeal(JSContext* cx) : cx_(cx) {
         uint32_t dummy;
         JS_GetGCZealBits(cx_, &zealBits_, &frequency_, &dummy);
-        JS_SetGCZeal(JS_GetRuntime(cx_), 0, 0);
-        JS::PrepareForFullGC(JS_GetRuntime(cx_));
-        JS::GCForReason(JS_GetRuntime(cx_), GC_SHRINK, JS::gcreason::DEBUG_GC);
+        JS_SetGCZeal(cx_, 0, 0);
+        JS::PrepareForFullGC(cx_);
+        JS::GCForReason(cx_, GC_SHRINK, JS::gcreason::DEBUG_GC);
     }
     ~AutoLeaveZeal() {
         for (size_t i = 0; i < sizeof(zealBits_) * 8; i++) {
             if (zealBits_ & (1 << i))
-                JS_SetGCZeal(JS_GetRuntime(cx_), i, frequency_);
+                JS_SetGCZeal(cx_, i, frequency_);
         }
 
 #ifdef DEBUG

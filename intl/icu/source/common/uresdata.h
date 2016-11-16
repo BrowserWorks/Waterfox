@@ -453,67 +453,11 @@ res_getTableItemByIndex(const ResourceData *pResData, Resource table, int32_t in
 U_INTERNAL Resource U_EXPORT2
 res_getTableItemByKey(const ResourceData *pResData, Resource table, int32_t *indexS, const char* * key);
 
-/**
- * Iterates over the path and stops when a scalar resource is found.
- * Follows aliases.
+/*
  * Modifies the contents of *path (replacing separators with NULs),
  * and also moves *path forward while it finds items.
- *
- * @param path input: "CollationElements/Sequence" or "zoneStrings/3/2" etc.;
- *             output: points to the part that has not yet been processed
  */
-U_CFUNC Resource res_findResource(const ResourceData *pResData, Resource r,
-                                  char** path, const char** key);
-
-#ifdef __cplusplus
-
-#include "resource.h"
-
-U_NAMESPACE_BEGIN
-
-class ResourceDataValue : public ResourceValue {
-public:
-    ResourceDataValue() : pResData(NULL), res(URES_NONE) {}
-    virtual ~ResourceDataValue();
-
-    void setData(const ResourceData *data) { pResData = data; }
-    void setResource(Resource r) { res = r; }
-
-    virtual UResType getType() const;
-    virtual const UChar *getString(int32_t &length, UErrorCode &errorCode) const;
-    virtual const UChar *getAliasString(int32_t &length, UErrorCode &errorCode) const;
-    virtual int32_t getInt(UErrorCode &errorCode) const;
-    virtual uint32_t getUInt(UErrorCode &errorCode) const;
-    virtual const int32_t *getIntVector(int32_t &length, UErrorCode &errorCode) const;
-    virtual const uint8_t *getBinary(int32_t &length, UErrorCode &errorCode) const;
-
-    const ResourceData *pResData;
-
-private:
-    Resource res;
-};
-
-U_NAMESPACE_END
-
-/**
- * @param value will be set during enumeration; input contents is ignored
- * @param sink receives all table item key-value pairs
- */
-U_CFUNC void
-ures_getAllTableItems(const ResourceData *pResData, Resource table,
-                      icu::ResourceDataValue &value, icu::ResourceTableSink &sink,
-                      UErrorCode &errorCode);
-
-/**
- * @param value will be set during enumeration; input contents is ignored
- * @param sink receives all array item values
- */
-U_CFUNC void
-ures_getAllArrayItems(const ResourceData *pResData, Resource array,
-                      icu::ResourceDataValue &value, icu::ResourceArraySink &sink,
-                      UErrorCode &errorCode);
-
-#endif  /* __cplusplus */
+U_CFUNC Resource res_findResource(const ResourceData *pResData, Resource r, char** path, const char** key);
 
 /**
  * Swap an ICU resource bundle. See udataswp.h.

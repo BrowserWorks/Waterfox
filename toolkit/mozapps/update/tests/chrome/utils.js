@@ -86,7 +86,6 @@ const IS_WIN = ("@mozilla.org/windows-registry-key;1" in Cc);
 // app update wizard's access method being random.
 const PAGEID_DUMMY            = "dummy";                 // Done
 const PAGEID_CHECKING         = "checking";              // Done
-const PAGEID_PLUGIN_UPDATES   = "pluginupdatesfound";
 const PAGEID_NO_UPDATES_FOUND = "noupdatesfound";        // Done
 const PAGEID_MANUAL_UPDATE    = "manualUpdate";          // Done
 const PAGEID_UNSUPPORTED      = "unsupported";           // Done
@@ -754,7 +753,7 @@ function verifyTestsRan() {
  */
 function setupFiles() {
   // Backup the updater-settings.ini file if it exists by moving it.
-  let baseAppDir = getAppBaseDir();
+  let baseAppDir = getGREDir();
   let updateSettingsIni = baseAppDir.clone();
   updateSettingsIni.append(FILE_UPDATE_SETTINGS_INI);
   if (updateSettingsIni.exists()) {
@@ -909,7 +908,7 @@ function setupPrefs() {
  */
 function resetFiles() {
   // Restore the backed up updater-settings.ini if it exists.
-  let baseAppDir = getAppBaseDir();
+  let baseAppDir = getGREDir();
   let updateSettingsIni = baseAppDir.clone();
   updateSettingsIni.append(FILE_UPDATE_SETTINGS_INI_BAK);
   if (updateSettingsIni.exists()) {
@@ -990,6 +989,10 @@ function resetPrefs() {
     Services.prefs.clearUserPref(PREF_APP_UPDATE_LOG);
   }
 
+  if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_SILENT)) {
+    Services.prefs.clearUserPref(PREF_APP_UPDATE_SILENT);
+  }
+
   if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_CERT_ERRORS)) {
     Services.prefs.clearUserPref(PREF_APP_UPDATE_CERT_ERRORS);
   }
@@ -1014,13 +1017,13 @@ function resetPrefs() {
     Services.prefs.clearUserPref(PREF_APP_UPDATE_CERT_REQUIREBUILTIN);
   }
 
-  if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_CERT_CHECKATTRS)) {
-    Services.prefs.clearUserPref(PREF_APP_UPDATE_CERT_CHECKATTRS);
+  if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_CERT_CHECKATTRIBUTES)) {
+    Services.prefs.clearUserPref(PREF_APP_UPDATE_CERT_CHECKATTRIBUTES);
   }
 
   try {
     CERT_ATTRS.forEach(function(aCertAttrName) {
-      Services.prefs.clearUserPref(PREF_APP_UPDATE_CERTS_BRANCH + "1." +
+      Services.prefs.clearUserPref(PREFBRANCH_APP_UPDATE_CERTS + "1." +
                                    aCertAttrName);
     });
   }
@@ -1028,13 +1031,9 @@ function resetPrefs() {
   }
 
   try {
-    Services.prefs.deleteBranch(PREF_APP_UPDATE_NEVER_BRANCH);
+    Services.prefs.deleteBranch(PREFBRANCH_APP_UPDATE_NEVER);
   }
   catch(e) {
-  }
-
-  if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_SILENT)) {
-    Services.prefs.clearUserPref(PREF_APP_UPDATE_SILENT);
   }
 }
 

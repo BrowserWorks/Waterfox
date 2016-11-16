@@ -352,7 +352,6 @@ uprv_detectWindowsTimeZone() {
                     tryPreVistaFallback = FALSE;
                 }
             }
-            ures_close(winTZ);
         }
     }
 

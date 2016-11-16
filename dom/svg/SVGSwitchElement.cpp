@@ -127,14 +127,10 @@ SVGSwitchElement::IsAttributeMapped(const nsIAtom* name) const
 nsIContent *
 SVGSwitchElement::FindActiveChild() const
 {
-  bool allowReorder = AttrValueIs(kNameSpaceID_None,
-                                  nsGkAtoms::allowReorder,
-                                  nsGkAtoms::yes, eCaseMatters);
-
   const nsAdoptingString& acceptLangs =
     Preferences::GetLocalizedString("intl.accept_languages");
 
-  if (allowReorder && !acceptLangs.IsEmpty()) {
+  if (!acceptLangs.IsEmpty()) {
     int32_t bestLanguagePreferenceRank = -1;
     nsIContent *bestChild = nullptr;
     nsIContent *defaultChild = nullptr;
@@ -160,8 +156,10 @@ SVGSwitchElement::FindActiveChild() const
             break;
           case -2:
             // no systemLanguage attribute. If there's nothing better
-            // we'll use the last such child.
-            defaultChild = child;
+            // we'll use the first such child.
+            if (!defaultChild) {
+              defaultChild = child;
+            }
             break;
           default:
             if (bestLanguagePreferenceRank == -1 ||

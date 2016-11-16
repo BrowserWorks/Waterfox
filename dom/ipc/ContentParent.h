@@ -25,6 +25,7 @@
 #include "nsIThreadInternal.h"
 #include "nsIDOMGeoPositionCallback.h"
 #include "nsIDOMGeoPositionErrorCallback.h"
+#include "nsRefPtrHashtable.h"
 #include "PermissionMessageUtils.h"
 #include "DriverCrashGuard.h"
 
@@ -65,7 +66,6 @@ class PJavaScriptParent;
 } // namespace jsipc
 
 namespace layers {
-class PCompositorBridgeParent;
 class PSharedBufferManagerParent;
 struct TextureFactoryIdentifier;
 } // namespace layers
@@ -83,6 +83,7 @@ class ClonedMessageData;
 class MemoryReport;
 class TabContext;
 class ContentBridgeParent;
+class GetFilesHelper;
 
 class ContentParent final : public PContentParent
                           , public nsIContentParent
@@ -548,8 +549,6 @@ public:
 
   virtual bool HandleWindowsMessages(const Message& aMsg) const override;
 
-  bool HasGamepadListener() const { return mHasGamepadListener; }
-
   void SetNuwaParent(NuwaParent* aNuwaParent) { mNuwaParent = aNuwaParent; }
 
   void ForkNewProcess(bool aBlocking);
@@ -561,7 +560,6 @@ public:
                                 const bool& aCalledFromJS,
                                 const bool& aPositionSpecified,
                                 const bool& aSizeSpecified,
-                                const nsString& aName,
                                 const nsCString& aFeatures,
                                 const nsCString& aBaseURI,
                                 const DocShellOriginAttributes& aOpenerOriginAttributes,
@@ -574,6 +572,24 @@ public:
                                 uint64_t* aLayersId) override;
 
   static bool AllocateLayerTreeId(TabParent* aTabParent, uint64_t* aId);
+
+  static void
+  BroadcastBlobURLRegistration(const nsACString& aURI,
+                               BlobImpl* aBlobImpl,
+                               nsIPrincipal* aPrincipal,
+                               ContentParent* aIgnoreThisCP = nullptr);
+
+  static void
+  BroadcastBlobURLUnregistration(const nsACString& aURI,
+                                 ContentParent* aIgnoreThisCP = nullptr);
+
+  virtual bool
+  RecvStoreAndBroadcastBlobURLRegistration(const nsCString& aURI,
+                                           PBlobParent* aBlobParent,
+                                           const Principal& aPrincipal) override;
+
+  virtual bool
+  RecvUnstoreAndBroadcastBlobURLUnregistration(const nsCString& aURI) override;
 
 protected:
   void OnChannelConnected(int32_t pid) override;
@@ -659,12 +675,6 @@ private:
   // called after the process has been transformed to app or browser.
   void ForwardKnownInfo();
 
-  // If the frame element indicates that the child process is "critical" and
-  // has a pending system message, this function acquires the CPU wake lock on
-  // behalf of the child.  We'll release the lock when the system message is
-  // handled or after a timeout, whichever comes first.
-  void MaybeTakeCPUWakeLock(Element* aFrameElement);
-
   // Set the child process's priority and then check whether the child is
   // still alive.  Returns true if the process is still alive, and false
   // otherwise.  If you pass a FOREGROUND* priority here, it's (hopefully)
@@ -734,14 +744,6 @@ private:
   bool
   DeallocPAPZParent(PAPZParent* aActor) override;
 
-  PCompositorBridgeParent*
-  AllocPCompositorBridgeParent(mozilla::ipc::Transport* aTransport,
-                               base::ProcessId aOtherProcess) override;
-
-  PImageBridgeParent*
-  AllocPImageBridgeParent(mozilla::ipc::Transport* aTransport,
-                          base::ProcessId aOtherProcess) override;
-
   PSharedBufferManagerParent*
   AllocPSharedBufferManagerParent(mozilla::ipc::Transport* aTranport,
                                    base::ProcessId aOtherProcess) override;
@@ -754,10 +756,6 @@ private:
   AllocPProcessHangMonitorParent(Transport* aTransport,
                                  ProcessId aOtherProcess) override;
 
-  PVRManagerParent*
-  AllocPVRManagerParent(Transport* aTransport,
-                        ProcessId aOtherProcess) override;
-
   virtual bool RecvGetProcessAttributes(ContentParentId* aCpId,
                                         bool* aIsForApp,
                                         bool* aIsForBrowser) override;
@@ -766,6 +764,7 @@ private:
   RecvGetXPCOMProcessAttributes(bool* aIsOffline,
                                 bool* aIsConnected,
                                 bool* aIsLangRTL,
+                                bool* aHaveBidiKeyboards,
                                 InfallibleTArray<nsString>* dictionaries,
                                 ClipboardCapabilities* clipboardCaps,
                                 DomainPolicyClone* domainPolicy,
@@ -1002,6 +1001,7 @@ private:
 
   virtual bool RecvLoadURIExternal(const URIParams& uri,
                                    PBrowserParent* windowContext) override;
+  virtual bool RecvExtProtocolChannelConnectParent(const uint32_t& registrarId) override;
 
   virtual bool RecvSyncMessage(const nsString& aMsg,
                                const ClonedMessageData& aData,
@@ -1059,8 +1059,6 @@ private:
   virtual bool RecvSpeakerManagerGetSpeakerStatus(bool* aValue) override;
 
   virtual bool RecvSpeakerManagerForceSpeaker(const bool& aEnable) override;
-
-  virtual bool RecvSystemMessageHandled() override;
 
   // Callbacks from NuwaParent.
   void OnNuwaReady();
@@ -1143,10 +1141,6 @@ private:
   virtual bool RecvUpdateDropEffect(const uint32_t& aDragAction,
                                     const uint32_t& aDropEffect) override;
 
-  virtual bool RecvGamepadListenerAdded() override;
-
-  virtual bool RecvGamepadListenerRemoved() override;
-
   virtual bool RecvProfile(const nsCString& aProfile) override;
 
   virtual bool RecvGetGraphicsDeviceInitData(DeviceInitData* aOut) override;
@@ -1179,6 +1173,18 @@ private:
                                                            const IPC::Principal& aPrincipal) override;
 
   virtual bool RecvNotifyLowMemory() override;
+
+  virtual bool RecvGetFilesRequest(const nsID& aID,
+                                   const nsString& aDirectoryPath,
+                                   const bool& aRecursiveFlag) override;
+
+  virtual bool RecvDeleteGetFilesRequest(const nsID& aID) override;
+
+public:
+  void SendGetFilesResponseAndForget(const nsID& aID,
+                                     const GetFilesResponseResult& aResult);
+
+private:
 
   // If you add strong pointers to cycle collected objects here, be sure to
   // release these objects in ShutDownProcess.  See the comment there for more
@@ -1223,12 +1229,10 @@ private:
   bool mSendPermissionUpdates;
   bool mIsForBrowser;
   bool mIsNuwaProcess;
-  bool mHasGamepadListener;
 
-  // These variables track whether we've called Close(), CloseWithError()
-  // and KillHard() on our channel.
+  // These variables track whether we've called Close() and KillHard() on our
+  // channel.
   bool mCalledClose;
-  bool mCalledCloseWithError;
   bool mCalledKillHard;
   bool mCreatedPairedMinidumps;
   bool mShutdownPending;
@@ -1277,6 +1281,12 @@ private:
 #ifdef NS_PRINTING
   RefPtr<embedding::PrintingParent> mPrintingParent;
 #endif
+
+  // This hashtable is used to run GetFilesHelper objects in the parent process.
+  // GetFilesHelper can be aborted by receiving RecvDeleteGetFilesRequest.
+  nsRefPtrHashtable<nsIDHashKey, GetFilesHelper> mGetFilesPendingRequests;
+
+  nsTArray<nsCString> mBlobURLs;
 };
 
 } // namespace dom

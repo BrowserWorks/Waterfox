@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/vi.xml
@@ -177,7 +177,7 @@ vi{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.23.12"}
+    Version{"2.1.19.17"}
     calendar{
         buddhist{
             DateTimePatterns{
@@ -191,7 +191,7 @@ vi{
                 "dd/MM/y GGGGG",
                 "{1} {0}",
                 "{1} 'lúc' {0}",
-                "{1} 'lúc' {0}",
+                "{1} l'ú'c {0}",
                 "{1} {0}",
                 "{1} {0}",
             }
@@ -614,7 +614,7 @@ vi{
                 "dd/MM/y GGGGG",
                 "{1} {0}",
                 "{1} 'lúc' {0}",
-                "{1} 'lúc' {0}",
+                "{1} l'ú'c {0}",
                 "{1} {0}",
                 "{1} {0}",
             }
@@ -1354,7 +1354,7 @@ vi{
                 "dd/MM/y G",
                 "{1} {0}",
                 "{1} 'lúc' {0}",
-                "{1} 'lúc' {0}",
+                "{1} l'ú'c {0}",
                 "{1} {0}",
                 "{1} {0}",
             }
@@ -1435,7 +1435,7 @@ vi{
                 "dd/MM/y GGGGG",
                 "{1} {0}",
                 "{1} 'lúc' {0}",
-                "{1} 'lúc' {0}",
+                "{1} l'ú'c {0}",
                 "{1} {0}",
                 "{1} {0}",
             }

@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (c) 2014-2016, International Business Machines
+* Copyright (c) 2014, International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 */
@@ -11,6 +11,7 @@
 
 #if !UCONFIG_NO_FORMATTING
 
+#ifndef U_HIDE_DRAFT_API
 
 #include "unicode/unistr.h"
 
@@ -44,7 +45,7 @@ class Formattable;
  * fmt->format(1.23456e-78, appendTo, status);
  * </pre>
  *
- * @stable ICU 55
+ * @draft ICU 55
  */
 class U_I18N_API ScientificNumberFormatter : public UObject {
 public:
@@ -57,7 +58,7 @@ public:
      * @param status error returned here.
      * @return The new ScientificNumberFormatter instance.
      *
-     * @stable ICU 55
+     * @draft ICU 55
      */
     static ScientificNumberFormatter *createSuperscriptInstance(
             DecimalFormat *fmtToAdopt, UErrorCode &status);
@@ -69,7 +70,7 @@ public:
      * @param status error returned here.
      * @return The ScientificNumberFormatter instance.
      *
-     * @stable ICU 55
+     * @draft ICU 55
      */
     static ScientificNumberFormatter *createSuperscriptInstance(
             const Locale &locale, UErrorCode &status);
@@ -85,7 +86,7 @@ public:
      * @param status error returned here.
      * @return The new ScientificNumberFormatter instance.
      *
-     * @stable ICU 55
+     * @draft ICU 55
      */
     static ScientificNumberFormatter *createMarkupInstance(
             DecimalFormat *fmtToAdopt,
@@ -102,7 +103,7 @@ public:
      * @param status error returned here.
      * @return The ScientificNumberFormatter instance.
      *
-     * @stable ICU 55
+     * @draft ICU 55
      */
     static ScientificNumberFormatter *createMarkupInstance(
             const Locale &locale,
@@ -113,7 +114,7 @@ public:
 
     /**
      * Returns a copy of this object. Caller must free returned copy.
-     * @stable ICU 55
+     * @draft ICU 55
      */
     ScientificNumberFormatter *clone() const {
         return new ScientificNumberFormatter(*this);
@@ -121,7 +122,7 @@ public:
 
     /**
      * Destructor.
-     * @stable ICU 55
+     * @draft ICU 55
      */
     virtual ~ScientificNumberFormatter();
 
@@ -133,7 +134,7 @@ public:
      * @param status any error returned here.
      * @return appendTo
      *
-     * @stable ICU 55
+     * @draft ICU 55
      */
     UnicodeString &format(
             const Formattable &number,
@@ -215,6 +216,7 @@ public:
 
 U_NAMESPACE_END
 
+#endif /* U_HIDE_DRAFT_API */
 
 #endif /* !UCONFIG_NO_FORMATTING */
 #endif 

@@ -1,8 +1,9 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 var Pipe = CC("@mozilla.org/pipe;1", "nsIPipe", "init");
 
 function run_test() {
@@ -101,7 +102,7 @@ var replyHandlers = {
 
   json: function (request) {
     // Receive JSON reply from server
-    let replyDeferred = promise.defer();
+    let replyDeferred = defer();
     request.on("json-reply", (reply) => {
       do_check_true(reply.allDone);
       replyDeferred.resolve();
@@ -111,7 +112,7 @@ var replyHandlers = {
 
   bulk: function (request) {
     // Receive bulk data reply from server
-    let replyDeferred = promise.defer();
+    let replyDeferred = defer();
     request.on("bulk-reply", ({length, copyTo}) => {
       do_check_eq(length, really_long().length);
 
@@ -137,9 +138,9 @@ var test_bulk_request_cs = Task.async(function* (transportFactory, actorType, re
   cleanup_files();
   writeTestTempFile("bulk-input", really_long());
 
-  let clientDeferred = promise.defer();
-  let serverDeferred = promise.defer();
-  let bulkCopyDeferred = promise.defer();
+  let clientDeferred = defer();
+  let serverDeferred = defer();
+  let bulkCopyDeferred = defer();
 
   let transport = yield transportFactory();
 
@@ -194,8 +195,8 @@ var test_json_request_cs = Task.async(function* (transportFactory, actorType, re
   cleanup_files();
   writeTestTempFile("bulk-input", really_long());
 
-  let clientDeferred = promise.defer();
-  let serverDeferred = promise.defer();
+  let clientDeferred = defer();
+  let serverDeferred = defer();
 
   let transport = yield transportFactory();
 
@@ -242,7 +243,7 @@ function verify_files() {
   do_check_eq(outputFile.fileSize, reallyLong.length);
 
   // Ensure output file contents actually match
-  let compareDeferred = promise.defer();
+  let compareDeferred = defer();
   NetUtil.asyncFetch({
     uri: NetUtil.newURI(getTestTempFile("bulk-output")),
     loadUsingSystemPrincipal: true

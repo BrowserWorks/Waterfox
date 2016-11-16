@@ -189,6 +189,7 @@
     macro(multiline, multiline, "multiline") \
     macro(name, name, "name") \
     macro(NaN, NaN, "NaN") \
+    macro(NegativeInfinity, NegativeInfinity, "-Infinity") \
     macro(new, new_, "new") \
     macro(next, next, "next") \
     macro(NFC, NFC, "NFC") \
@@ -321,5 +322,8 @@
     macro(symbol, symbol, "symbol") \
     /* Function names for properties named by symbols. */ \
     macro(Symbol_iterator_fun, Symbol_iterator_fun, "[Symbol.iterator]") \
+    /* Not really a property name, but we use this to compare to atomized
+       script source strings */ \
+    macro(selfHosted, selfHosted, "self-hosted") \
 
 #endif /* vm_CommonPropertyNames_h */

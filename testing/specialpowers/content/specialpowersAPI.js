@@ -1489,13 +1489,12 @@ SpecialPowersAPI.prototype = {
   // needs to run several times and when no other JS is running.
   // The current number of iterations has been determined according to massive
   // cross platform testing.
-  exactGC: function(win, callback) {
-    var self = this;
+  exactGC: function(callback) {
     let count = 0;
 
     function genGCCallback(cb) {
       return function() {
-        self.getDOMWindowUtils(win).cycleCollect();
+        Cu.forceCC();
         if (++count < 2) {
           Cu.schedulePreciseGC(genGCCallback(cb));
         } else if (cb) {
@@ -1577,6 +1576,14 @@ SpecialPowersAPI.prototype = {
     Cc["@mozilla.org/eventlistenerservice;1"].
       getService(Ci.nsIEventListenerService).
       removeSystemEventListener(target, type, listener, useCapture);
+  },
+
+  // helper method to check if the event is consumed by either default group's
+  // event listener or system group's event listener.
+  defaultPreventedInAnyGroup: function(event) {
+    // FYI: Event.defaultPrevented returns false in content context if the
+    //      event is consumed only by system group's event listeners.
+    return event.defaultPrevented;
   },
 
   getDOMRequestService: function() {

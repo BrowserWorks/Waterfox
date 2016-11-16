@@ -11,6 +11,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <vector>
+#ifdef MOZ_WIDGET_ANDROID
+#include <sys/mman.h>
+#endif
 
 #include "GLBlitHelper.h"
 #include "GLReadTexImageHelper.h"
@@ -32,6 +35,7 @@
 #include "gfx2DGlue.h"
 #include "gfxPrefs.h"
 #include "mozilla/IntegerPrintfMacros.h"
+#include "mozilla/gfx/Logging.h"
 
 #include "OGLShaderProgram.h" // for ShaderProgramType
 
@@ -45,6 +49,10 @@
 #include "nsCocoaFeatures.h"
 #endif
 
+#ifdef MOZ_WIDGET_ANDROID
+#include "AndroidBridge.h"
+#endif
+
 namespace mozilla {
 namespace gl {
 
@@ -54,8 +62,6 @@ using namespace mozilla::layers;
 #ifdef MOZ_GL_DEBUG
 unsigned GLContext::sCurrentGLContextTLS = -1;
 #endif
-
-uint32_t GLContext::sDebugMode = 0;
 
 // If adding defines, don't forget to undefine symbols. See #undef block below.
 #define CORE_SYMBOL(x) { (PRFuncPtr*) &mSymbols.f##x, { #x, nullptr } }
@@ -100,6 +106,7 @@ static const char* const sExtensionNames[] = {
     "GL_ARB_robustness",
     "GL_ARB_sampler_objects",
     "GL_ARB_seamless_cube_map",
+    "GL_ARB_shader_texture_lod",
     "GL_ARB_sync",
     "GL_ARB_texture_compression",
     "GL_ARB_texture_float",
@@ -156,6 +163,7 @@ static const char* const sExtensionNames[] = {
     "GL_NV_geometry_program4",
     "GL_NV_half_float",
     "GL_NV_instanced_arrays",
+    "GL_NV_primitive_restart",
     "GL_NV_texture_barrier",
     "GL_NV_transform_feedback",
     "GL_NV_transform_feedback2",
@@ -399,9 +407,49 @@ ParseGLVersion(GLContext* gl, uint32_t* out_version)
     return true;
 }
 
-GLContext::GLContext(const SurfaceCaps& caps,
-                     GLContext* sharedContext,
-                     bool isOffscreen)
+static uint8_t
+ChooseDebugFlags(CreateContextFlags createFlags)
+{
+    uint8_t debugFlags = 0;
+
+#ifdef MOZ_GL_DEBUG
+    if (gfxEnv::GlDebug()) {
+        debugFlags |= GLContext::DebugFlagEnabled;
+    }
+
+    // Enables extra verbose output, informing of the start and finish of every GL call.
+    // Useful e.g. to record information to investigate graphics system crashes/lockups
+    if (gfxEnv::GlDebugVerbose()) {
+        debugFlags |= GLContext::DebugFlagTrace;
+    }
+
+    // Aborts on GL error. Can be useful to debug quicker code that is known not to
+    // generate any GL error in principle.
+    bool abortOnError = false;
+
+    if (createFlags & CreateContextFlags::NO_VALIDATION) {
+        abortOnError = true;
+
+        const auto fnStringsMatch = [](const char* a, const char* b) {
+            return strcmp(a, b) == 0;
+        };
+
+        const char* envAbortOnError = PR_GetEnv("MOZ_GL_DEBUG_ABORT_ON_ERROR");
+        if (envAbortOnError && fnStringsMatch(envAbortOnError, "0")) {
+           abortOnError = false;
+        }
+    }
+
+    if (abortOnError) {
+        debugFlags |= GLContext::DebugFlagAbortOnError;
+    }
+#endif
+
+    return debugFlags;
+}
+
+GLContext::GLContext(CreateContextFlags flags, const SurfaceCaps& caps,
+                     GLContext* sharedContext, bool isOffscreen)
   : mIsOffscreen(isOffscreen),
     mContextLost(false),
     mVersion(0),
@@ -410,6 +458,7 @@ GLContext::GLContext(const SurfaceCaps& caps,
     mVendor(GLVendor::Other),
     mRenderer(GLRenderer::Other),
     mTopError(LOCAL_GL_NO_ERROR),
+    mDebugFlags(ChooseDebugFlags(flags)),
     mSharedContext(sharedContext),
     mCaps(caps),
     mScreen(nullptr),
@@ -421,6 +470,8 @@ GLContext::GLContext(const SurfaceCaps& caps,
     mMaxSamples(0),
     mNeedsTextureSizeChecks(false),
     mNeedsFlushBeforeDeleteFB(false),
+    mTextureAllocCrashesOnMapFailure(false),
+    mNeedsCheckAfterAttachTextureToFb(false),
     mWorkAroundDriverBugs(true),
     mHeavyGLCallsSinceLastFlush(false)
 {
@@ -433,7 +484,7 @@ GLContext::~GLContext() {
     NS_ASSERTION(IsDestroyed(), "GLContext implementation must call MarkDestroyed in destructor!");
 #ifdef MOZ_GL_DEBUG
     if (mSharedContext) {
-        GLContext *tip = mSharedContext;
+        GLContext* tip = mSharedContext;
         while (tip->mSharedContext)
             tip = tip->mSharedContext;
         tip->SharedContextDestroyed(this);
@@ -470,7 +521,7 @@ bool
 GLContext::InitWithPrefix(const char* prefix, bool trygl)
 {
     MOZ_RELEASE_ASSERT(!mSymbols.fBindFramebuffer,
-                       "InitWithPrefix should only be called once.");
+                       "GFX: InitWithPrefix should only be called once.");
 
     ScopedGfxFeatureReporter reporter("GL Context");
 
@@ -529,20 +580,6 @@ bool
 GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
 {
     mWorkAroundDriverBugs = gfxPrefs::WorkAroundDriverBugs();
-
-#ifdef MOZ_GL_DEBUG
-    if (gfxEnv::GlDebug())
-        sDebugMode |= DebugEnabled;
-
-    // enables extra verbose output, informing of the start and finish of every GL call.
-    // useful e.g. to record information to investigate graphics system crashes/lockups
-    if (gfxEnv::GlDebugVerbose())
-        sDebugMode |= DebugTrace;
-
-    // aborts on GL error. Can be useful to debug quicker code that is known not to generate any GL error in principle.
-    if (gfxEnv::GlDebugAbortOnError())
-        sDebugMode |= DebugAbortOnError;
-#endif
 
     const SymLoadStruct coreSymbols[] = {
         { (PRFuncPtr*) &mSymbols.fActiveTexture, { "ActiveTexture", "ActiveTextureARB", nullptr } },
@@ -779,11 +816,15 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
         "Adreno 205",
         "Adreno (TM) 200",
         "Adreno (TM) 205",
+        "Adreno (TM) 305",
         "Adreno (TM) 320",
+        "Adreno (TM) 330",
         "Adreno (TM) 420",
         "Mali-400 MP",
+        "Mali-450 MP",
         "PowerVR SGX 530",
         "PowerVR SGX 540",
+        "PowerVR SGX 544MP",
         "NVIDIA Tegra",
         "Android Emulator",
         "Gallium 0.4 on llvmpipe",
@@ -826,7 +867,7 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
         };
 
         if (!LoadGLSymbols(this, prefix, trygl, symbols, "get_string_indexed")) {
-            MOZ_RELEASE_ASSERT(false, "get_string_indexed is required!");
+            MOZ_RELEASE_ASSERT(false, "GFX: get_string_indexed is required!");
             return false;
         }
     }
@@ -967,7 +1008,7 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
         NS_ERROR("GLContext requires support for framebuffer objects.");
         return false;
     }
-    MOZ_RELEASE_ASSERT(mSymbols.fBindFramebuffer);
+    MOZ_RELEASE_ASSERT(mSymbols.fBindFramebuffer, "GFX: mSymbols.fBindFramebuffer zero or not set.");
 
     ////////////////
 
@@ -992,15 +1033,9 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
             mMaxRenderbufferSize   = std::min(mMaxRenderbufferSize,   4096);
             mNeedsTextureSizeChecks = true;
         } else if (mVendor == GLVendor::NVIDIA) {
-            if (nsCocoaFeatures::OnMountainLionOrLater()) {
-                // See bug 879656.  8192 fails, 8191 works.
-                mMaxTextureSize = std::min(mMaxTextureSize, 8191);
-                mMaxRenderbufferSize = std::min(mMaxRenderbufferSize, 8191);
-            } else {
-                // See bug 877949.
-                mMaxTextureSize = std::min(mMaxTextureSize, 4096);
-                mMaxRenderbufferSize = std::min(mMaxRenderbufferSize, 4096);
-            }
+            // See bug 879656.  8192 fails, 8191 works.
+            mMaxTextureSize = std::min(mMaxTextureSize, 8191);
+            mMaxRenderbufferSize = std::min(mMaxRenderbufferSize, 8191);
 
             // Part of the bug 879656, but it also doesn't hurt the 877949
             mNeedsTextureSizeChecks = true;
@@ -1028,6 +1063,28 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
         // prevents occasional driver crash.
         mNeedsFlushBeforeDeleteFB = true;
     }
+#ifdef MOZ_WIDGET_ANDROID
+    if (mWorkAroundDriverBugs &&
+        (Renderer() == GLRenderer::AdrenoTM305 ||
+         Renderer() == GLRenderer::AdrenoTM320 ||
+         Renderer() == GLRenderer::AdrenoTM330) &&
+        AndroidBridge::Bridge()->GetAPIVersion() < 21) {
+        // Bug 1164027. Driver crashes when functions such as
+        // glTexImage2D fail due to virtual memory exhaustion.
+        mTextureAllocCrashesOnMapFailure = true;
+    }
+#endif
+#if MOZ_WIDGET_ANDROID
+    if (mWorkAroundDriverBugs &&
+        Renderer() == GLRenderer::SGX540 &&
+        AndroidBridge::Bridge()->GetAPIVersion() <= 15) {
+        // Bug 1288446. Driver sometimes crashes when uploading data to a
+        // texture if the render target has changed since the texture was
+        // rendered from. Calling glCheckFramebufferStatus after
+        // glFramebufferTexture2D prevents the crash.
+        mNeedsCheckAfterAttachTextureToFb = true;
+    }
+#endif
 
     mMaxTextureImageSize = mMaxTextureSize;
 
@@ -1051,7 +1108,7 @@ GLContext::InitWithPrefixImpl(const char* prefix, bool trygl)
 
     MOZ_ASSERT(IsCurrent());
 
-    if (DebugMode() && IsExtensionSupported(KHR_debug)) {
+    if (ShouldSpew() && IsExtensionSupported(KHR_debug)) {
         fEnable(LOCAL_GL_DEBUG_OUTPUT);
         fDisable(LOCAL_GL_DEBUG_OUTPUT_SYNCHRONOUS);
         fDebugMessageCallback(&StaticDebugCallback, (void*)this);
@@ -1091,9 +1148,10 @@ GLContext::LoadMoreSymbols(const char* prefix, bool trygl)
         return fnLoadForFeature(list, feature);
     };
 
-    bool hasRobustness = false;
-    if (SupportsRobustness()) {
-        if (IsExtensionSupported(ARB_robustness)) {
+    if (IsSupported(GLFeature::robustness)) {
+        bool hasRobustness = false;
+
+        if (!hasRobustness && IsExtensionSupported(ARB_robustness)) {
             const SymLoadStruct symbols[] = {
                 { (PRFuncPtr*) &mSymbols.fGetGraphicsResetStatus, { "GetGraphicsResetStatusARB", nullptr } },
                 END_SYMBOLS
@@ -1112,9 +1170,10 @@ GLContext::LoadMoreSymbols(const char* prefix, bool trygl)
                 hasRobustness = true;
             }
         }
-    }
-    if (!hasRobustness) {
-        MarkUnsupported(GLFeature::robustness);
+
+        if (!hasRobustness) {
+            MarkUnsupported(GLFeature::robustness);
+        }
     }
 
     if (IsSupported(GLFeature::sync)) {
@@ -1523,11 +1582,19 @@ GLContext::LoadMoreSymbols(const char* prefix, bool trygl)
 
     if (IsSupported(GLFeature::invalidate_framebuffer)) {
         const SymLoadStruct symbols[] = {
-            { (PRFuncPtr *) &mSymbols.fInvalidateFramebuffer,    { "InvalidateFramebuffer", nullptr } },
-            { (PRFuncPtr *) &mSymbols.fInvalidateSubFramebuffer, { "InvalidateSubFramebuffer", nullptr } },
+            { (PRFuncPtr*) &mSymbols.fInvalidateFramebuffer,    { "InvalidateFramebuffer", nullptr } },
+            { (PRFuncPtr*) &mSymbols.fInvalidateSubFramebuffer, { "InvalidateSubFramebuffer", nullptr } },
             END_SYMBOLS
         };
         fnLoadForFeature(symbols, GLFeature::invalidate_framebuffer);
+    }
+
+    if (IsSupported(GLFeature::prim_restart)) {
+        const SymLoadStruct symbols[] = {
+            { (PRFuncPtr*) &mSymbols.fPrimitiveRestartIndex,    { "PrimitiveRestartIndex", "PrimitiveRestartIndexNV", nullptr } },
+            END_SYMBOLS
+        };
+        fnLoadForFeature(symbols, GLFeature::prim_restart);
     }
 
     if (IsExtensionSupported(KHR_debug)) {
@@ -1592,7 +1659,7 @@ GLContext::LoadMoreSymbols(const char* prefix, bool trygl)
             { (PRFuncPtr*) &mSymbols.fGetTexLevelParameteriv, { "GetTexLevelParameteriv", nullptr } },
             END_SYMBOLS
     };
-    const bool warnOnFailures = DebugMode();
+    const bool warnOnFailures = ShouldSpew();
     LoadSymbols(devSymbols, trygl, prefix, warnOnFailures);
 }
 
@@ -1743,8 +1810,20 @@ GLContext::InitExtensions()
             MarkExtensionUnsupported(OES_EGL_sync);
         }
 
+#ifdef MOZ_WIDGET_ANDROID
+        if (Vendor() == GLVendor::Imagination &&
+            Renderer() == GLRenderer::SGX544MP &&
+            AndroidBridge::Bridge()->GetAPIVersion() < 21)
+        {
+            // Bug 1026404
+            MarkExtensionUnsupported(OES_EGL_image);
+            MarkExtensionUnsupported(OES_EGL_image_external);
+        }
+#endif
+
         if (Vendor() == GLVendor::ARM &&
-            Renderer() == GLRenderer::Mali400MP)
+            (Renderer() == GLRenderer::Mali400MP ||
+             Renderer() == GLRenderer::Mali450MP))
         {
             // Bug 1264505
             MarkExtensionUnsupported(OES_EGL_image_external);
@@ -1808,17 +1887,18 @@ GLContext::PlatformStartup()
 
 // Common code for checking for both GL extensions and GLX extensions.
 bool
-GLContext::ListHasExtension(const GLubyte *extensions, const char *extension)
+GLContext::ListHasExtension(const GLubyte* extensions, const char* extension)
 {
     // fix bug 612572 - we were crashing as we were calling this function with extensions==null
     if (extensions == nullptr || extension == nullptr)
         return false;
 
-    const GLubyte *start;
-    GLubyte *where, *terminator;
+    const GLubyte* start;
+    GLubyte* where;
+    GLubyte* terminator;
 
     /* Extension names should not have spaces. */
-    where = (GLubyte *) strchr(extension, ' ');
+    where = (GLubyte*) strchr(extension, ' ');
     if (where || *extension == '\0')
         return false;
 
@@ -1829,7 +1909,7 @@ GLContext::ListHasExtension(const GLubyte *extensions, const char *extension)
      */
     start = extensions;
     for (;;) {
-        where = (GLubyte *) strstr((const char *) start, extension);
+        where = (GLubyte*) strstr((const char*) start, extension);
         if (!where) {
             break;
         }
@@ -2051,7 +2131,7 @@ GLContext::AssembleOffscreenFBs(const GLuint colorMSRB,
     if (!IsFramebufferComplete(drawFB, &status)) {
         NS_WARNING("DrawFBO: Incomplete");
   #ifdef MOZ_GL_DEBUG
-        if (DebugMode()) {
+        if (ShouldSpew()) {
             printf_stderr("Framebuffer status: %X\n", status);
         }
   #endif
@@ -2061,7 +2141,7 @@ GLContext::AssembleOffscreenFBs(const GLuint colorMSRB,
     if (!IsFramebufferComplete(readFB, &status)) {
         NS_WARNING("ReadFBO: Incomplete");
   #ifdef MOZ_GL_DEBUG
-        if (DebugMode()) {
+        if (ShouldSpew()) {
             printf_stderr("Framebuffer status: %X\n", status);
         }
   #endif
@@ -2217,19 +2297,19 @@ GLContext::AssertNotPassingStackBufferToTheGL(const void* ptr)
 }
 
 void
-GLContext::CreatedProgram(GLContext *aOrigin, GLuint aName)
+GLContext::CreatedProgram(GLContext* aOrigin, GLuint aName)
 {
     mTrackedPrograms.AppendElement(NamedResource(aOrigin, aName));
 }
 
 void
-GLContext::CreatedShader(GLContext *aOrigin, GLuint aName)
+GLContext::CreatedShader(GLContext* aOrigin, GLuint aName)
 {
     mTrackedShaders.AppendElement(NamedResource(aOrigin, aName));
 }
 
 void
-GLContext::CreatedBuffers(GLContext *aOrigin, GLsizei aCount, GLuint *aNames)
+GLContext::CreatedBuffers(GLContext* aOrigin, GLsizei aCount, GLuint* aNames)
 {
     for (GLsizei i = 0; i < aCount; ++i) {
         mTrackedBuffers.AppendElement(NamedResource(aOrigin, aNames[i]));
@@ -2237,7 +2317,7 @@ GLContext::CreatedBuffers(GLContext *aOrigin, GLsizei aCount, GLuint *aNames)
 }
 
 void
-GLContext::CreatedQueries(GLContext *aOrigin, GLsizei aCount, GLuint *aNames)
+GLContext::CreatedQueries(GLContext* aOrigin, GLsizei aCount, GLuint* aNames)
 {
     for (GLsizei i = 0; i < aCount; ++i) {
         mTrackedQueries.AppendElement(NamedResource(aOrigin, aNames[i]));
@@ -2245,7 +2325,7 @@ GLContext::CreatedQueries(GLContext *aOrigin, GLsizei aCount, GLuint *aNames)
 }
 
 void
-GLContext::CreatedTextures(GLContext *aOrigin, GLsizei aCount, GLuint *aNames)
+GLContext::CreatedTextures(GLContext* aOrigin, GLsizei aCount, GLuint* aNames)
 {
     for (GLsizei i = 0; i < aCount; ++i) {
         mTrackedTextures.AppendElement(NamedResource(aOrigin, aNames[i]));
@@ -2253,7 +2333,7 @@ GLContext::CreatedTextures(GLContext *aOrigin, GLsizei aCount, GLuint *aNames)
 }
 
 void
-GLContext::CreatedFramebuffers(GLContext *aOrigin, GLsizei aCount, GLuint *aNames)
+GLContext::CreatedFramebuffers(GLContext* aOrigin, GLsizei aCount, GLuint* aNames)
 {
     for (GLsizei i = 0; i < aCount; ++i) {
         mTrackedFramebuffers.AppendElement(NamedResource(aOrigin, aNames[i]));
@@ -2261,7 +2341,7 @@ GLContext::CreatedFramebuffers(GLContext *aOrigin, GLsizei aCount, GLuint *aName
 }
 
 void
-GLContext::CreatedRenderbuffers(GLContext *aOrigin, GLsizei aCount, GLuint *aNames)
+GLContext::CreatedRenderbuffers(GLContext* aOrigin, GLsizei aCount, GLuint* aNames)
 {
     for (GLsizei i = 0; i < aCount; ++i) {
         mTrackedRenderbuffers.AppendElement(NamedResource(aOrigin, aNames[i]));
@@ -2269,7 +2349,7 @@ GLContext::CreatedRenderbuffers(GLContext *aOrigin, GLsizei aCount, GLuint *aNam
 }
 
 static void
-RemoveNamesFromArray(GLContext *aOrigin, GLsizei aCount, const GLuint *aNames, nsTArray<GLContext::NamedResource>& aArray)
+RemoveNamesFromArray(GLContext* aOrigin, GLsizei aCount, const GLuint* aNames, nsTArray<GLContext::NamedResource>& aArray)
 {
     for (GLsizei j = 0; j < aCount; ++j) {
         GLuint name = aNames[j];
@@ -2287,49 +2367,49 @@ RemoveNamesFromArray(GLContext *aOrigin, GLsizei aCount, const GLuint *aNames, n
 }
 
 void
-GLContext::DeletedProgram(GLContext *aOrigin, GLuint aName)
+GLContext::DeletedProgram(GLContext* aOrigin, GLuint aName)
 {
     RemoveNamesFromArray(aOrigin, 1, &aName, mTrackedPrograms);
 }
 
 void
-GLContext::DeletedShader(GLContext *aOrigin, GLuint aName)
+GLContext::DeletedShader(GLContext* aOrigin, GLuint aName)
 {
     RemoveNamesFromArray(aOrigin, 1, &aName, mTrackedShaders);
 }
 
 void
-GLContext::DeletedBuffers(GLContext *aOrigin, GLsizei aCount, const GLuint *aNames)
+GLContext::DeletedBuffers(GLContext* aOrigin, GLsizei aCount, const GLuint* aNames)
 {
     RemoveNamesFromArray(aOrigin, aCount, aNames, mTrackedBuffers);
 }
 
 void
-GLContext::DeletedQueries(GLContext *aOrigin, GLsizei aCount, const GLuint *aNames)
+GLContext::DeletedQueries(GLContext* aOrigin, GLsizei aCount, const GLuint* aNames)
 {
     RemoveNamesFromArray(aOrigin, aCount, aNames, mTrackedQueries);
 }
 
 void
-GLContext::DeletedTextures(GLContext *aOrigin, GLsizei aCount, const GLuint *aNames)
+GLContext::DeletedTextures(GLContext* aOrigin, GLsizei aCount, const GLuint* aNames)
 {
     RemoveNamesFromArray(aOrigin, aCount, aNames, mTrackedTextures);
 }
 
 void
-GLContext::DeletedFramebuffers(GLContext *aOrigin, GLsizei aCount, const GLuint *aNames)
+GLContext::DeletedFramebuffers(GLContext* aOrigin, GLsizei aCount, const GLuint* aNames)
 {
     RemoveNamesFromArray(aOrigin, aCount, aNames, mTrackedFramebuffers);
 }
 
 void
-GLContext::DeletedRenderbuffers(GLContext *aOrigin, GLsizei aCount, const GLuint *aNames)
+GLContext::DeletedRenderbuffers(GLContext* aOrigin, GLsizei aCount, const GLuint* aNames)
 {
     RemoveNamesFromArray(aOrigin, aCount, aNames, mTrackedRenderbuffers);
 }
 
 static void
-MarkContextDestroyedInArray(GLContext *aContext, nsTArray<GLContext::NamedResource>& aArray)
+MarkContextDestroyedInArray(GLContext* aContext, nsTArray<GLContext::NamedResource>& aArray)
 {
     for (uint32_t i = 0; i < aArray.Length(); ++i) {
         if (aArray[i].origin == aContext)
@@ -2338,7 +2418,7 @@ MarkContextDestroyedInArray(GLContext *aContext, nsTArray<GLContext::NamedResour
 }
 
 void
-GLContext::SharedContextDestroyed(GLContext *aChild)
+GLContext::SharedContextDestroyed(GLContext* aChild)
 {
     MarkContextDestroyedInArray(aChild, mTrackedPrograms);
     MarkContextDestroyedInArray(aChild, mTrackedShaders);
@@ -2350,7 +2430,7 @@ GLContext::SharedContextDestroyed(GLContext *aChild)
 }
 
 static void
-ReportArrayContents(const char *title, const nsTArray<GLContext::NamedResource>& aArray)
+ReportArrayContents(const char* title, const nsTArray<GLContext::NamedResource>& aArray)
 {
     if (aArray.Length() == 0)
         return;
@@ -2360,7 +2440,7 @@ ReportArrayContents(const char *title, const nsTArray<GLContext::NamedResource>&
     nsTArray<GLContext::NamedResource> copy(aArray);
     copy.Sort();
 
-    GLContext *lastContext = nullptr;
+    GLContext* lastContext = nullptr;
     for (uint32_t i = 0; i < copy.Length(); ++i) {
         if (lastContext != copy[i].origin) {
             if (lastContext)
@@ -2514,12 +2594,12 @@ GLContext::ShouldDumpExts()
 }
 
 bool
-DoesStringMatch(const char* aString, const char *aWantedString)
+DoesStringMatch(const char* aString, const char* aWantedString)
 {
     if (!aString || !aWantedString)
         return false;
 
-    const char *occurrence = strstr(aString, aWantedString);
+    const char* occurrence = strstr(aString, aWantedString);
 
     // aWanted not found
     if (!occurrence)
@@ -2530,7 +2610,7 @@ DoesStringMatch(const char* aString, const char *aWantedString)
         return false;
 
     // aWantedVendor followed by alpha character
-    const char *afterOccurrence = occurrence + strlen(aWantedString);
+    const char* afterOccurrence = occurrence + strlen(aWantedString);
     if (isalpha(*afterOccurrence))
         return false;
 
@@ -2827,6 +2907,54 @@ GLContext::fDeleteFramebuffers(GLsizei n, const GLuint* names)
     TRACKING_CONTEXT(DeletedFramebuffers(this, n, names));
 }
 
+#ifdef MOZ_WIDGET_ANDROID
+/**
+ * Conservatively estimate whether there is enough available
+ * contiguous virtual address space to map a newly allocated texture.
+ */
+static bool
+WillTextureMapSucceed(GLsizei width, GLsizei height, GLenum format, GLenum type)
+{
+    bool willSucceed = false;
+    // Some drivers leave large gaps between textures, so require
+    // there to be double the actual size of the texture available.
+    size_t size = width * height * GetBytesPerTexel(format, type) * 2;
+
+    void *p = mmap(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (p != MAP_FAILED) {
+        willSucceed = true;
+        munmap(p, size);
+    }
+
+    return willSucceed;
+}
+#endif // MOZ_WIDGET_ANDROID
+
+void
+GLContext::fTexImage2D(GLenum target, GLint level, GLint internalformat,
+                       GLsizei width, GLsizei height, GLint border,
+                       GLenum format, GLenum type, const GLvoid* pixels) {
+    if (!IsTextureSizeSafeToPassToDriver(target, width, height)) {
+        // pass wrong values to cause the GL to generate GL_INVALID_VALUE.
+        // See bug 737182 and the comment in IsTextureSizeSafeToPassToDriver.
+        level = -1;
+        width = -1;
+        height = -1;
+        border = -1;
+    }
+#if MOZ_WIDGET_ANDROID
+    if (mTextureAllocCrashesOnMapFailure) {
+        // We have no way of knowing whether this texture already has
+        // storage allocated for it, and therefore whether this check
+        // is necessary. We must therefore assume it does not and
+        // always perform the check.
+        if (!WillTextureMapSucceed(width, height, internalformat, type)) {
+            return;
+        }
+    }
+#endif
+    raw_fTexImage2D(target, level, internalformat, width, height, border, format, type, pixels);
+}
 
 GLuint
 GLContext::GetDrawFB()
@@ -2945,6 +3073,50 @@ CreateTextureForOffscreen(GLContext* aGL, const GLFormats& aFormats,
     return CreateTexture(aGL, internalFormat, unpackFormat, unpackType, aSize);
 }
 
+uint32_t
+GetBytesPerTexel(GLenum format, GLenum type)
+{
+    // If there is no defined format or type, we're not taking up any memory
+    if (!format || !type) {
+        return 0;
+    }
+
+    if (format == LOCAL_GL_DEPTH_COMPONENT) {
+        if (type == LOCAL_GL_UNSIGNED_SHORT)
+            return 2;
+        else if (type == LOCAL_GL_UNSIGNED_INT)
+            return 4;
+    } else if (format == LOCAL_GL_DEPTH_STENCIL) {
+        if (type == LOCAL_GL_UNSIGNED_INT_24_8_EXT)
+            return 4;
+    }
+
+    if (type == LOCAL_GL_UNSIGNED_BYTE || type == LOCAL_GL_FLOAT || type == LOCAL_GL_UNSIGNED_INT_8_8_8_8_REV) {
+        uint32_t multiplier = type == LOCAL_GL_UNSIGNED_BYTE ? 1 : 4;
+        switch (format) {
+            case LOCAL_GL_ALPHA:
+            case LOCAL_GL_LUMINANCE:
+                return 1 * multiplier;
+            case LOCAL_GL_LUMINANCE_ALPHA:
+                return 2 * multiplier;
+            case LOCAL_GL_RGB:
+                return 3 * multiplier;
+            case LOCAL_GL_RGBA:
+            case LOCAL_GL_BGRA_EXT:
+                return 4 * multiplier;
+            default:
+                break;
+        }
+    } else if (type == LOCAL_GL_UNSIGNED_SHORT_4_4_4_4 ||
+               type == LOCAL_GL_UNSIGNED_SHORT_5_5_5_1 ||
+               type == LOCAL_GL_UNSIGNED_SHORT_5_6_5)
+    {
+        return 2;
+    }
+
+    gfxCriticalError() << "Unknown texture type " << type << " or format " << format;
+    return 0;
+}
 
 } /* namespace gl */
 } /* namespace mozilla */

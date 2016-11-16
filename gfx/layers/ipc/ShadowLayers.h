@@ -27,6 +27,8 @@
 namespace mozilla {
 namespace layers {
 
+class ClientLayerManager;
+class CompositorBridgeChild;
 class EditReply;
 class FixedSizeSmallShmemSectionAllocator;
 class ImageContainer;
@@ -127,10 +129,14 @@ public:
 
   virtual ShadowLayerForwarder* AsLayerForwarder() override { return this; }
 
+  // TODO: confusingly, this returns a pointer to the CompositorBridgeChild.
+  // Right now ShadowLayerForwarder inherits TextureForwarder but it would
+  // probably be best if it didn't, since it forwards all of the relevent
+  // methods to CompositorBridgeChild.
+  virtual TextureForwarder* AsTextureForwarder() override;
+
   virtual LegacySurfaceDescriptorAllocator*
   AsLegacySurfaceDescriptorAllocator() override { return this; }
-
-  FixedSizeSmallShmemSectionAllocator* GetTileLockAllocator();
 
   /**
    * Setup the IPDL actor for aCompositable to be part of layers
@@ -141,7 +147,8 @@ public:
 
   virtual PTextureChild* CreateTexture(const SurfaceDescriptor& aSharedData,
                                        LayersBackend aLayersBackend,
-                                       TextureFlags aFlags) override;
+                                       TextureFlags aFlags,
+                                       uint64_t aSerial) override;
 
   /**
    * Adds an edit in the layers transaction in order to attach
@@ -291,8 +298,6 @@ public:
 
   void Composite();
 
-  virtual void SendPendingAsyncMessges() override;
-
   /**
    * True if this is forwarding to a LayerManagerComposite.
    */
@@ -349,7 +354,9 @@ public:
 
   virtual MessageLoop* GetMessageLoop() const override { return mMessageLoop; }
 
-  base::ProcessId GetParentPid() const;
+  virtual void CancelWaitForRecycle(uint64_t aTextureId) override;
+
+  virtual base::ProcessId GetParentPid() const override;
 
   /**
    * Construct a shadow of |aLayer| on the "other side", at the
@@ -377,11 +384,14 @@ public:
 
   virtual void DestroySurfaceDescriptor(SurfaceDescriptor* aSurface) override;
 
+  virtual void UpdateFwdTransactionId() override;
+  virtual uint64_t GetFwdTransactionId() override;
+
   // Returns true if aSurface wraps a Shmem.
   static bool IsShmem(SurfaceDescriptor* aSurface);
 
 protected:
-  ShadowLayerForwarder();
+  explicit ShadowLayerForwarder(ClientLayerManager* aClientLayerManager);
 
 #ifdef DEBUG
   void CheckSurfaceDescriptor(const SurfaceDescriptor* aDescriptor) const;
@@ -391,19 +401,21 @@ protected:
 
   bool InWorkerThread();
 
+  CompositorBridgeChild* GetCompositorBridgeChild();
+
   RefPtr<LayerTransactionChild> mShadowManager;
+  RefPtr<CompositorBridgeChild> mCompositorBridgeChild;
 
 private:
 
+  ClientLayerManager* mClientLayerManager;
   Transaction* mTxn;
   MessageLoop* mMessageLoop;
-  std::vector<CompositableOperation> mPendingAsyncMessages;
   DiagnosticTypes mDiagnosticTypes;
   bool mIsFirstPaint;
   bool mWindowOverlayChanged;
   int32_t mPaintSyncId;
   InfallibleTArray<PluginWindowData> mPluginWindowData;
-  FixedSizeSmallShmemSectionAllocator* mSectionAllocator;
 };
 
 class CompositableClient;
@@ -438,54 +450,6 @@ protected:
   ShadowableLayer() : mShadow(nullptr) {}
 
   PLayerChild* mShadow;
-};
-
-/// A simple shmem section allocator that can only allocate small
-/// fixed size elements (only intended to be used to store tile
-/// copy-on-write locks for now).
-class FixedSizeSmallShmemSectionAllocator final : public ShmemSectionAllocator
-{
-public:
-  enum AllocationStatus
-  {
-    STATUS_ALLOCATED,
-    STATUS_FREED
-  };
-
-  struct ShmemSectionHeapHeader
-  {
-    Atomic<uint32_t> mTotalBlocks;
-    Atomic<uint32_t> mAllocatedBlocks;
-  };
-
-  struct ShmemSectionHeapAllocation
-  {
-    Atomic<uint32_t> mStatus;
-    uint32_t mSize;
-  };
-
-  explicit FixedSizeSmallShmemSectionAllocator(ClientIPCAllocator* aShmProvider);
-
-  ~FixedSizeSmallShmemSectionAllocator();
-
-  virtual bool AllocShmemSection(uint32_t aSize, ShmemSection* aShmemSection) override;
-
-  virtual void DeallocShmemSection(ShmemSection& aShmemSection) override;
-
-  virtual void MemoryPressure() override { ShrinkShmemSectionHeap(); }
-
-  // can be called on the compositor process.
-  static void FreeShmemSection(ShmemSection& aShmemSection);
-
-  void ShrinkShmemSectionHeap();
-
-  ShmemAllocator* GetShmAllocator() { return mShmProvider->AsShmemAllocator(); }
-
-  bool IPCOpen() const { return mShmProvider->IPCOpen(); }
-
-protected:
-  std::vector<mozilla::ipc::Shmem> mUsedShmems;
-  ClientIPCAllocator* mShmProvider;
 };
 
 } // namespace layers

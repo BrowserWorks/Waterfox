@@ -157,6 +157,12 @@ function testHarnessSteps() {
           worker._expectingUncaughtException = message.expecting;
           break;
 
+        case "clearAllDatabases":
+          clearAllDatabases(function(){
+            worker.postMessage({ op: "clearAllDatabasesDone" });
+          });
+          break;
+
         default:
           ok(false,
              "Received a bad message from worker: " + JSON.stringify(message));
@@ -339,7 +345,7 @@ function gc()
 
 function scheduleGC()
 {
-  SpecialPowers.exactGC(window, continueToNextStep);
+  SpecialPowers.exactGC(continueToNextStep);
 }
 
 function workerScript() {
@@ -511,6 +517,12 @@ function workerScript() {
     self.postMessage({ op: "expectUncaughtException", expecting: !!_expecting_ });
   };
 
+  self._clearAllDatabasesCallback = undefined;
+  self.clearAllDatabases = function(_callback_) {
+    self._clearAllDatabasesCallback = _callback_;
+    self.postMessage({ op: "clearAllDatabases" });
+  }
+
   self.onerror = function(_message_, _file_, _line_) {
     if (self._expectingUncaughtException) {
       self._expectingUncaughtException = false;
@@ -540,6 +552,13 @@ function workerScript() {
           info("Worker: starting tests");
           testGenerator.next();
         });
+        break;
+
+      case "clearAllDatabasesDone":
+        info("Worker: all databases are cleared");
+        if (self._clearAllDatabasesCallback) {
+          self._clearAllDatabasesCallback();
+        }
         break;
 
       default:

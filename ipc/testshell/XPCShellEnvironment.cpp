@@ -240,11 +240,8 @@ GC(JSContext *cx,
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 
-    JSRuntime *rt = JS_GetRuntime(cx);
-    JS_GC(rt);
-#ifdef JS_GCMETER
-    js_DumpGCStats(rt, stdout);
-#endif
+    JS_GC(cx);
+
     args.rval().setUndefined();
     return true;
 }
@@ -259,7 +256,7 @@ GCZeal(JSContext *cx, unsigned argc, JS::Value *vp)
   if (!ToUint32(cx, args.get(0), &zeal))
     return false;
 
-  JS_SetGCZeal(JS_GetRuntime(cx), uint8_t(zeal), JS_DEFAULT_ZEAL_FREQ);
+  JS_SetGCZeal(cx, uint8_t(zeal), JS_DEFAULT_ZEAL_FREQ);
   return true;
 }
 #endif
@@ -369,17 +366,17 @@ XPCShellEnvironment::ProcessFile(JSContext *cx,
         options.setFileAndLine("typein", startline);
         JS::Rooted<JSScript*> script(cx);
         if (JS_CompileScript(cx, buffer, strlen(buffer), options, &script)) {
-            JSErrorReporter older;
+            JS::WarningReporter older;
 
             ok = JS_ExecuteScript(cx, script, &result);
             if (ok && !result.isUndefined()) {
-                /* Suppress error reports from JS::ToString(). */
-                older = JS_SetErrorReporter(JS_GetRuntime(cx), nullptr);
+                /* Suppress warnings from JS::ToString(). */
+                older = JS::SetWarningReporter(cx, nullptr);
                 str = JS::ToString(cx, result);
                 JSAutoByteString bytes;
                 if (str)
                     bytes.encodeLatin1(cx, str);
-                JS_SetErrorReporter(JS_GetRuntime(cx), older);
+                JS::SetWarningReporter(cx, older);
 
                 if (!!bytes)
                     fprintf(stdout, "%s\n", bytes.ptr());
@@ -470,8 +467,7 @@ XPCShellEnvironment::~XPCShellEnvironment()
         }
         mGlobalHolder.reset();
 
-        JSRuntime *rt = JS_GetRuntime(cx);
-        JS_GC(rt);
+        JS_GC(cx);
     }
 }
 
@@ -493,8 +489,6 @@ XPCShellEnvironment::Init()
     mGlobalHolder.init(rt);
 
     AutoSafeJSContext cx;
-
-    JS_SetContextPrivate(cx, this);
 
     nsCOMPtr<nsIXPConnect> xpc =
       do_GetService(nsIXPConnect::GetCID());
@@ -597,12 +591,12 @@ XPCShellEnvironment::EvaluateString(const nsString& aString,
   JS::Rooted<JS::Value> result(cx);
   bool ok = JS_ExecuteScript(cx, script, &result);
   if (ok && !result.isUndefined()) {
-      JSErrorReporter old = JS_SetErrorReporter(JS_GetRuntime(cx), nullptr);
+      JS::WarningReporter old = JS::SetWarningReporter(cx, nullptr);
       JSString* str = JS::ToString(cx, result);
       nsAutoJSString autoStr;
       if (str)
           autoStr.init(cx, str);
-      JS_SetErrorReporter(JS_GetRuntime(cx), old);
+      JS::SetWarningReporter(cx, old);
 
       if (!autoStr.IsEmpty() && aResult) {
           aResult->Assign(autoStr);

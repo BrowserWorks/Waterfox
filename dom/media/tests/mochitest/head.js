@@ -312,7 +312,8 @@ function setupEnvironment() {
     defaultMochitestPrefs.set.push(
       ["media.navigator.video.default_width", 320],
       ["media.navigator.video.default_height", 240],
-      ["media.navigator.video.max_fr", 10]
+      ["media.navigator.video.max_fr", 10],
+      ["media.autoplay.enabled", true]
     );
   }
 
@@ -323,7 +324,7 @@ function setupEnvironment() {
 
   // We don't care about waiting for this to complete, we just want to ensure
   // that we don't build up a huge backlog of GC work.
-  SpecialPowers.exactGC(window);
+  SpecialPowers.exactGC();
 }
 
 // This is called by steeplechase; which provides the test configuration options
@@ -441,8 +442,8 @@ function checkMediaStreamTrackCloneAgainstOriginal(clone, original) {
 /*** Utility methods */
 
 /** The dreadful setTimeout, use sparingly */
-function wait(time) {
-  return new Promise(r => setTimeout(r, time));
+function wait(time, message) {
+  return new Promise(r => setTimeout(() => r(message), time));
 }
 
 /** The even more dreadful setInterval, use even more sparingly */
@@ -482,8 +483,8 @@ var addFinallyToPromise = promise => {
 /** Use event listener to call passed-in function on fire until it returns true */
 var listenUntil = (target, eventName, onFire) => {
   return new Promise(resolve => target.addEventListener(eventName,
-                                                        function callback() {
-    var result = onFire();
+                                                        function callback(event) {
+    var result = onFire(event);
     if (result) {
       target.removeEventListener(eventName, callback, false);
       resolve(result);
@@ -590,6 +591,27 @@ function createOneShotEventWrapper(wrapper, obj, event) {
   };
 }
 
+/**
+ * Returns a promise that resolves when `target` has raised an event with the
+ * given name. Cancel the returned promise by passing in a `cancelPromise` and
+ * resolve it.
+ *
+ * @param {object} target
+ *        The target on which the event should occur.
+ * @param {string} name
+ *        The name of the event that should occur.
+ * @param {promise} cancelPromise
+ *        A promise that on resolving rejects the returned promise,
+ *        so we can avoid logging results after a test has finished.
+ */
+function haveEvent(target, name, cancelPromise) {
+  var listener;
+  var p = Promise.race([
+    (cancelPromise || new Promise()).then(e => Promise.reject(e)),
+    new Promise(resolve => target.addEventListener(name, listener = resolve))
+  ]);
+  return p.then(event => (target.removeEventListener(name, listener), event));
+};
 
 /**
  * This class executes a series of functions in a continuous sequence.
@@ -811,11 +833,12 @@ VideoStreamHelper.prototype = {
         // ignore; stream might have shut down, and we don't bother clearing
         // the setInterval.
       }
-    }, 100);
+    }, 500);
   },
 
   waitForFrames: function(canvas, timeout_value) {
     var intervalId = this.startCapturingFrames();
+    timeout_value = timeout_value || 8000;
 
     return addFinallyToPromise(timeout(
       Promise.all([
@@ -824,7 +847,7 @@ VideoStreamHelper.prototype = {
         this._helper.waitForPixelColor(canvas, this._helper.red, 128,
                                        canvas.id + " should become red")
       ]),
-      2000,
+      timeout_value,
       "Timed out waiting for frames")).finally(() => clearInterval(intervalId));
   },
 

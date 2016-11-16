@@ -12,7 +12,7 @@ const PREF_SIGNATURE_ROOT = "security.content.signature.root_hash";
 const TEST_DATA_DIR = "test_content_signing/";
 
 const ONECRL_NAME = "oneCRL-signer.mozilla.org";
-const ABOUT_NEWTAB_NAME = "remote-newtab-signer.mozilla.org";
+const ABOUT_NEWTAB_NAME = "remotenewtab.content-signature.mozilla.org";
 
 function getSignatureVerifier() {
   return Cc["@mozilla.org/security/contentsignatureverifier;1"]
@@ -44,8 +44,6 @@ function run_test() {
                         "UWM4GJke4pE8ecHiXoi-7KnZXty6Pe3s4o3yAIyKDP9jUC52Ek1G" +
                         "q25j_X703nP5rk5gM1qz5Fe-qCWakPPl6L";
 
-  setRoot(TEST_DATA_DIR + "content_signing_root.pem");
-
   let remoteNewTabChain = loadChain(TEST_DATA_DIR + "content_signing",
                                     ["remote_newtab_ee", "int", "root"]);
 
@@ -61,9 +59,16 @@ function run_test() {
   let noSANChain = loadChain(TEST_DATA_DIR + "content_signing",
                              ["onecrl_no_SAN_ee", "int", "root"]);
 
-  // Check good signatures from good certificates with the correct SAN
+  // Check signature verification works without error before the root is set
   let chain1 = oneCRLChain.join("\n");
   let verifier = getSignatureVerifier();
+  ok(!verifier.verifyContentSignature(DATA, GOOD_SIGNATURE, chain1, ONECRL_NAME),
+     "Before the root is set, signatures should fail to verify but not throw.");
+
+  setRoot(TEST_DATA_DIR + "content_signing_root.pem");
+
+  // Check good signatures from good certificates with the correct SAN
+  verifier = getSignatureVerifier();
   ok(verifier.verifyContentSignature(DATA, GOOD_SIGNATURE, chain1, ONECRL_NAME),
      "A OneCRL signature should verify with the OneCRL chain");
   let chain2 = remoteNewTabChain.join("\n");

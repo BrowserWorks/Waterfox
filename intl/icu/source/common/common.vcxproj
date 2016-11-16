@@ -104,7 +104,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>..\..\bin\icuuc57.dll</OutputFile>
+      <OutputFile>..\..\bin\icuuc56.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\..\..\lib\icuuc.pdb</ProgramDatabaseFile>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -145,7 +145,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>..\..\bin\icuuc57d.dll</OutputFile>
+      <OutputFile>..\..\bin\icuuc56d.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\..\..\lib\icuucd.pdb</ProgramDatabaseFile>
@@ -183,7 +183,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>..\..\bin64\icuuc57.dll</OutputFile>
+      <OutputFile>..\..\bin64\icuuc56.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\..\..\lib64\icuuc.pdb</ProgramDatabaseFile>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -222,7 +222,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <OutputFile>..\..\bin64\icuuc57d.dll</OutputFile>
+      <OutputFile>..\..\bin64\icuuc56d.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\..\..\lib64\icuucd.pdb</ProgramDatabaseFile>
@@ -365,7 +365,6 @@
     </ClCompile>
     <ClCompile Include="locbased.cpp" />
     <ClCompile Include="locdispnames.cpp" />
-    <ClCompile Include="locdspnm.cpp" />
     <ClCompile Include="locid.cpp">
     </ClCompile>
     <ClCompile Include="loclikely.cpp" />
@@ -380,9 +379,7 @@
     <ClCompile Include="uloc_tag.c" />
     <ClCompile Include="ures_cnv.c" />
     <ClCompile Include="uresbund.cpp" />
-    <ClCompile Include="uresdata.cpp" />
-    <ClCompile Include="resource.cpp" />
-    <ClCompile Include="ucurr.cpp" />
+    <ClCompile Include="uresdata.c" />
     <ClCompile Include="caniter.cpp">
     </ClCompile>
     <ClCompile Include="filterednormalizer2.cpp" />
@@ -442,13 +439,12 @@
     <ClCompile Include="chariter.cpp" />
     <ClCompile Include="charstr.cpp" />
     <ClCompile Include="cstring.c" />
-    <ClCompile Include="cstr.cpp" />
     <ClCompile Include="cwchar.c" />
     <ClCompile Include="messagepattern.cpp" />
     <ClCompile Include="schriter.cpp" />
     <ClCompile Include="stringpiece.cpp" />
     <ClCompile Include="stringtriebuilder.cpp" />
-    <ClCompile Include="simpleformatter.cpp" />
+    <ClCompile Include="simplepatternformatter.cpp" />
     <ClCompile Include="ucasemap.cpp" />
     <ClCompile Include="ucasemap_titlecase_brkiter.cpp" />
     <ClCompile Include="ucharstrie.cpp" />
@@ -1091,63 +1087,8 @@
     </CustomBuild>
     <ClInclude Include="sharedobject.h" />
     <ClCompile Include="sharedobject.cpp" />
-    <CustomBuild Include="unicode\locdspnm.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="unicode\simpleformatter.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-    </CustomBuild>
+    <ClInclude Include="simplepatternformatter.h" />
     <CustomBuild Include="unicode\ucat.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="unicode\udisplaycontext.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="unicode\uldnames.h">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
@@ -1194,22 +1135,6 @@
     <ClInclude Include="uresdata.h" />
     <ClInclude Include="uresimp.h" />
     <ClInclude Include="ureslocs.h" />
-    <ClInclude Include="resource.h" />
-    <CustomBuild Include="unicode\ucurr.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy "%(FullPath)" ..\..\include\unicode
-</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
-    </CustomBuild>
-    <ClInclude Include="ucurrimp.h" />
     <CustomBuild Include="unicode\caniter.h">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode
 </Command>
@@ -1524,7 +1449,6 @@
     </CustomBuild>
     <ClInclude Include="charstr.h" />
     <ClInclude Include="cstring.h" />
-    <ClInclude Include="cstr.h" />
     <ClInclude Include="cwchar.h" />
     <CustomBuild Include="unicode\messagepattern.h">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode

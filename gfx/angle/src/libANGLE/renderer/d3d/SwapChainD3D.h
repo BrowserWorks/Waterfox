@@ -16,9 +16,6 @@
 #include "common/angleutils.h"
 #include "common/platform.h"
 
-// TODO: move out of D3D11
-#include "libANGLE/renderer/d3d/d3d11/NativeWindow.h"
-
 #if !defined(ANGLE_FORCE_VSYNC_OFF)
 #define ANGLE_FORCE_VSYNC_OFF 0
 #endif
@@ -30,8 +27,10 @@ class RenderTargetD3D;
 class SwapChainD3D : angle::NonCopyable
 {
   public:
-    SwapChainD3D(rx::NativeWindow nativeWindow, HANDLE shareHandle, GLenum backBufferFormat, GLenum depthBufferFormat)
-        : mNativeWindow(nativeWindow), mOffscreenRenderTargetFormat(backBufferFormat), mDepthBufferFormat(depthBufferFormat), mShareHandle(shareHandle)
+    SwapChainD3D(HANDLE shareHandle, GLenum backBufferFormat, GLenum depthBufferFormat)
+        : mOffscreenRenderTargetFormat(backBufferFormat),
+          mDepthBufferFormat(depthBufferFormat),
+          mShareHandle(shareHandle)
     {
     }
 
@@ -45,14 +44,13 @@ class SwapChainD3D : angle::NonCopyable
     virtual RenderTargetD3D *getColorRenderTarget() = 0;
     virtual RenderTargetD3D *getDepthStencilRenderTarget() = 0;
 
-    GLenum GetRenderTargetInternalFormat() const { return mOffscreenRenderTargetFormat; }
-    GLenum GetDepthBufferInternalFormat() const { return mDepthBufferFormat; }
+    GLenum getRenderTargetInternalFormat() const { return mOffscreenRenderTargetFormat; }
+    GLenum getDepthBufferInternalFormat() const { return mDepthBufferFormat; }
 
     HANDLE getShareHandle() { return mShareHandle; }
     virtual void *getKeyedMutex() = 0;
 
   protected:
-    rx::NativeWindow mNativeWindow;  // Handler for the Window that the surface is created for.
     const GLenum mOffscreenRenderTargetFormat;
     const GLenum mDepthBufferFormat;
 

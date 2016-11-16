@@ -10,6 +10,7 @@
 
 #include "nsDataHashtable.h"
 
+#include "nsITimer.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/TimeStamp.h"
 #include "nsIMemoryReporter.h"
@@ -17,6 +18,7 @@
 #include "nsIRunnable.h"
 #include "nsIAsyncShutdown.h"
 #include "Latency.h"
+#include "mozilla/Services.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WeakPtr.h"
 #include "GraphDriver.h"
@@ -96,11 +98,13 @@ public:
  * object too.
  */
 class MediaStreamGraphImpl : public MediaStreamGraph,
-                             public nsIMemoryReporter
+                             public nsIMemoryReporter,
+                             public nsITimerCallback
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIMEMORYREPORTER
+  NS_DECL_NSITIMERCALLBACK
 
   /**
    * Use aGraphDriverRequested with SYSTEM_THREAD_DRIVER or AUDIO_THREAD_DRIVER
@@ -192,25 +196,20 @@ public:
    * Called before the thread runs.
    */
   void Init();
-  // The following methods run on the graph thread (or possibly the main thread if
-  // mLifecycleState > LIFECYCLE_RUNNING)
-  void AssertOnGraphThreadOrNotRunning() const
-  {
-    // either we're on the right thread (and calling CurrentDriver() is safe),
-    // or we're going to assert anyways, so don't cross-check CurrentDriver
-#ifdef DEBUG
-    // if all the safety checks fail, assert we own the monitor
-    if (!mDriver->OnThread()) {
-      if (!(mDetectedNotRunning &&
-            mLifecycleState > LIFECYCLE_RUNNING &&
-            NS_IsMainThread())) {
-        mMonitor.AssertCurrentThreadOwns();
-      }
-    }
-#endif
-  }
 
-  void MaybeProduceMemoryReport();
+  /**
+   * Respond to CollectReports with sizes collected on the graph thread.
+   */
+  static void
+  FinishCollectReports(nsIHandleReportCallback* aHandleReport,
+                       nsISupports* aData,
+                       const nsTArray<AudioNodeSizes>& aAudioStreamSizes);
+
+  // The following methods run on the graph thread (or possibly the main thread
+  // if mLifecycleState > LIFECYCLE_RUNNING)
+  void CollectSizesForMemoryReport(
+         already_AddRefed<nsIHandleReportCallback> aHandleReport,
+         already_AddRefed<nsISupports> aHandlerData);
 
   /**
    * Returns true if this MediaStreamGraph should keep running
@@ -514,6 +513,8 @@ public:
   void EnsureNextIteration()
   {
     mNeedAnotherIteration = true; // atomic
+    // Note: GraphDriver must ensure that there's no race on setting
+    // mNeedAnotherIteration and mGraphDriverAsleep -- see WaitForNextIteration()
     if (mGraphDriverAsleep) { // atomic
       MonitorAutoLock mon(mMonitor);
       CurrentDriver()->WakeUp(); // Might not be the same driver; might have woken already
@@ -743,6 +744,9 @@ public:
     // realtime graph when it has no streams.
     LIFECYCLE_WAITING_FOR_STREAM_DESTRUCTION
   };
+  /**
+   * Modified only on the main thread in mMonitor.
+   */
   LifecycleState mLifecycleState;
   /**
    * The graph should stop processing at or after this time.
@@ -811,15 +815,14 @@ public:
 
   dom::AudioChannel AudioChannel() const { return mAudioChannel; }
 
+  // used to limit graph shutdown time
+  nsCOMPtr<nsITimer> mShutdownTimer;
+
 private:
   virtual ~MediaStreamGraphImpl();
 
   MOZ_DEFINE_MALLOC_SIZE_OF(MallocSizeOf)
 
-  /**
-   * Used to signal that a memory report has been requested.
-   */
-  Monitor mMemoryReportMonitor;
   /**
    * This class uses manual memory management, and all pointers to it are raw
    * pointers. However, in order for it to implement nsIMemoryReporter, it needs
@@ -828,10 +831,6 @@ private:
    * and Destroy() nulls this self-reference in order to trigger self-deletion.
    */
   RefPtr<MediaStreamGraphImpl> mSelfRef;
-  /**
-   * Used to pass memory report information across threads.
-   */
-  nsTArray<AudioNodeSizes> mAudioStreamSizes;
 
   struct WindowAndStream
   {
@@ -842,10 +841,6 @@ private:
    * Stream for window audio capture.
    */
   nsTArray<WindowAndStream> mWindowCaptureStreams;
-  /**
-   * Indicates that the MSG thread should gather data for a memory report.
-   */
-  bool mNeedsMemoryReport;
 
 #ifdef DEBUG
   /**

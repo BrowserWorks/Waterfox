@@ -165,10 +165,14 @@ class CodeGeneratorMIPSShared : public CodeGeneratorShared
     virtual void visitTruncateFToInt32(LTruncateFToInt32* ins);
 
     void visitWasmTruncateToInt32(LWasmTruncateToInt32* lir);
+    void visitWasmLoadGlobalVar(LWasmLoadGlobalVar* ins);
+    void visitWasmStoreGlobalVar(LWasmStoreGlobalVar* ins);
 
     // Out of line visitors.
     virtual void visitOutOfLineBailout(OutOfLineBailout* ool) = 0;
     void visitOutOfLineWasmTruncateCheck(OutOfLineWasmTruncateCheck* ool);
+    void visitCopySignD(LCopySignD* ins);
+    void visitCopySignF(LCopySignF* ins);
 
   protected:
     virtual ValueOperand ToOutValue(LInstruction* ins) = 0;
@@ -191,16 +195,16 @@ class CodeGeneratorMIPSShared : public CodeGeneratorShared
     void visitLoadTypedArrayElementStatic(LLoadTypedArrayElementStatic* ins);
     void visitStoreTypedArrayElementStatic(LStoreTypedArrayElementStatic* ins);
     void visitAsmJSCall(LAsmJSCall* ins);
+    void visitAsmJSCallI64(LAsmJSCallI64* ins);
+    void visitWasmBoundsCheck(LWasmBoundsCheck* ins);
+    void visitWasmLoad(LWasmLoad* ins);
+    void visitWasmStore(LWasmStore* ins);
     void visitAsmJSLoadHeap(LAsmJSLoadHeap* ins);
     void visitAsmJSStoreHeap(LAsmJSStoreHeap* ins);
     void visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins);
     void visitAsmJSAtomicExchangeHeap(LAsmJSAtomicExchangeHeap* ins);
     void visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins);
     void visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEffect* ins);
-    void visitAsmJSLoadGlobalVar(LAsmJSLoadGlobalVar* ins);
-    void visitAsmJSStoreGlobalVar(LAsmJSStoreGlobalVar* ins);
-    void visitAsmJSLoadFuncPtr(LAsmJSLoadFuncPtr* ins);
-    void visitAsmJSLoadFFIFunc(LAsmJSLoadFFIFunc* ins);
 
     void visitAsmJSPassStackArg(LAsmJSPassStackArg* ins);
     void visitAsmSelect(LAsmSelect* ins);

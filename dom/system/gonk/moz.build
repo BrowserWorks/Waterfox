@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # Copyright 2013 Mozilla Foundation and Mozilla contributors
 #
@@ -127,6 +127,8 @@ if CONFIG['MOZ_B2G_RIL']:
         ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+DEFINES['HAVE_ANDROID_OS'] = True
 
 LOCAL_INCLUDES += [
     '/dom/base',

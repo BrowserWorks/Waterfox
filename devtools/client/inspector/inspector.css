@@ -3,33 +3,28 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* Set the minimum width for the side bar so, all tabs are
+  properly visible. The value can be decreased when bug 1281789
+  is fixed and the all-tabs-menu is available again. */
+#inspector-sidebar-container {
+  overflow: hidden;
+  min-width: 300px;
+  position: relative;
+}
+
 #inspector-sidebar {
-  min-width: 250px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
-#searchbox-panel-listbox {
-  width: 250px;
-  max-width: 250px;
-  overflow-x: hidden;
-}
-
-#searchbox-panel-listbox > richlistitem,
-#searchbox-panel-listbox > richlistitem[selected] {
-  overflow-x: hidden;
-}
-
-#searchbox-panel-listbox > richlistitem > .initial-value {
-  max-width: 130px;
-  margin-left: 15px;
-}
-
-#searchbox-panel-listbox > richlistitem > .autocomplete-value {
-  max-width: 150px;
-}
-
+/* Override `-moz-user-focus:ignore;` from toolkit/content/minimal-xul.css */
 .inspector-tabpanel > * {
-  /*
-   * Override `-moz-user-focus:ignore;` from toolkit/content/minimal-xul.css
-   */
   -moz-user-focus: normal;
+}
+
+#inspector-sidebar-toggle-box {
+  line-height: initial;
 }

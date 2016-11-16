@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1997-2016, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -428,12 +428,9 @@
 #   define U_HAVE_DEBUG_LOCATION_NEW 0
 #endif
 
-/* Compatibility with non clang compilers: http://clang.llvm.org/docs/LanguageExtensions.html */
+/* Compatibility with non clang compilers */
 #ifndef __has_attribute
 #    define __has_attribute(x) 0
-#endif
-#ifndef __has_cpp_attribute
-#    define __has_cpp_attribute(x) 0
 #endif
 #ifndef __has_builtin
 #    define __has_builtin(x) 0
@@ -443,9 +440,6 @@
 #endif
 #ifndef __has_extension
 #    define __has_extension(x) 0
-#endif
-#ifndef __has_warning
-#    define __has_warning(x) 0
 #endif
 
 /**
@@ -520,32 +514,12 @@
  */
 #ifdef U_NOEXCEPT
     /* Use the predefined value. */
-#elif defined(_HAS_EXCEPTIONS) && !_HAS_EXCEPTIONS  /* Visual Studio */
-#   define U_NOEXCEPT
 #elif U_CPLUSPLUS_VERSION >= 11 || __has_feature(cxx_noexcept) || __has_extension(cxx_noexcept) \
         || (defined(_MSC_VER) && _MSC_VER >= 1900)  /* Visual Studio 2015 */
 #   define U_NOEXCEPT noexcept
 #else
 #   define U_NOEXCEPT
 #endif
-
-/**
- * \def U_FALLTHROUGH
- * Annotate intentional fall-through between switch labels.
- * http://clang.llvm.org/docs/AttributeReference.html#fallthrough-clang-fallthrough
- * @internal
- */
-#ifdef __cplusplus
-#   if __has_cpp_attribute(clang::fallthrough) || \
-            (__has_feature(cxx_attributes) && __has_warning("-Wimplicit-fallthrough"))
-#       define U_FALLTHROUGH [[clang::fallthrough]]
-#   else
-#       define U_FALLTHROUGH
-#   endif
-#else
-#   define U_FALLTHROUGH
-#endif
-
 
 /** @} */
 

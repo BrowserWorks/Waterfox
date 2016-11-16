@@ -188,16 +188,21 @@ public:
   {
   }
 
-  VideoInfo(int32_t aWidth, int32_t aHeight)
+  explicit VideoInfo(int32_t aWidth, int32_t aHeight)
+    : VideoInfo(nsIntSize(aWidth, aHeight))
+  {
+  }
+
+  explicit VideoInfo(const nsIntSize& aSize)
     : TrackInfo(kVideoTrack, NS_LITERAL_STRING("2"), NS_LITERAL_STRING("main"),
                 EmptyString(), EmptyString(), true, 2)
-    , mDisplay(nsIntSize(aWidth, aHeight))
+    , mDisplay(aSize)
     , mStereoMode(StereoMode::MONO)
-    , mImage(nsIntSize(aWidth, aHeight))
+    , mImage(aSize)
     , mCodecSpecificConfig(new MediaByteBuffer)
     , mExtraData(new MediaByteBuffer)
     , mRotation(kDegree_0)
-    , mImageRect(nsIntRect(0, 0, aWidth, aHeight))
+    , mImageRect(nsIntRect(nsIntPoint(), aSize))
   {
   }
 
@@ -256,7 +261,8 @@ public:
   // container.
   nsIntRect ScaledImageRect(int64_t aWidth, int64_t aHeight) const
   {
-    if (aWidth == mImage.width && aHeight == mImage.height) {
+    if ((aWidth == mImage.width && aHeight == mImage.height) ||
+        !mImage.width || !mImage.height) {
       return ImageRect();
     }
     nsIntRect imageRect = ImageRect();
@@ -458,7 +464,8 @@ public:
 
   bool IsEncrypted() const
   {
-    return mCrypto.IsEncrypted();
+    return (HasAudio() && mAudio.mCrypto.mValid) ||
+           (HasVideo() && mVideo.mCrypto.mValid);
   }
 
   bool HasValidMedia() const

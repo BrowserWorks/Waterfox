@@ -1,0 +1,151 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "mozilla/mscom/MainThreadRuntime.h"
+
+#include "mozilla/ArrayUtils.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/WindowsVersion.h"
+#include "nsDebug.h"
+#include "nsWindowsHelpers.h"
+
+#include <accctrl.h>
+#include <aclapi.h>
+#include <objbase.h>
+#include <objidl.h>
+
+namespace {
+
+struct LocalFreeDeleter
+{
+  void operator()(void* aPtr)
+  {
+    ::LocalFree(aPtr);
+  }
+};
+
+} // anonymous namespace
+
+namespace mozilla {
+namespace mscom {
+
+MainThreadRuntime::MainThreadRuntime()
+  : mInitResult(E_UNEXPECTED)
+{
+  // We must be the outermost COM initialization on this thread. The COM runtime
+  // cannot be configured once we start manipulating objects
+  MOZ_ASSERT(mStaRegion.IsValidOutermost());
+  if (NS_WARN_IF(!mStaRegion.IsValidOutermost())) {
+    return;
+  }
+
+  mInitResult = S_OK;
+}
+
+HRESULT
+MainThreadRuntime::InitializeSecurity()
+{
+  HANDLE rawToken = nullptr;
+  BOOL ok = ::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &rawToken);
+  if (!ok) {
+    return HRESULT_FROM_WIN32(::GetLastError());
+  }
+  nsAutoHandle token(rawToken);
+
+  DWORD len = 0;
+  ok = ::GetTokenInformation(token, TokenUser, nullptr, len, &len);
+  DWORD win32Error = ::GetLastError();
+  if (!ok && win32Error != ERROR_INSUFFICIENT_BUFFER) {
+    return HRESULT_FROM_WIN32(win32Error);
+  }
+
+  auto tokenUserBuf = MakeUnique<BYTE[]>(len);
+  TOKEN_USER& tokenUser = *reinterpret_cast<TOKEN_USER*>(tokenUserBuf.get());
+  ok = ::GetTokenInformation(token, TokenUser, tokenUserBuf.get(), len, &len);
+  if (!ok) {
+    return HRESULT_FROM_WIN32(::GetLastError());
+  }
+
+  len = 0;
+  ok = ::GetTokenInformation(token, TokenPrimaryGroup, nullptr, len, &len);
+  win32Error = ::GetLastError();
+  if (!ok && win32Error != ERROR_INSUFFICIENT_BUFFER) {
+    return HRESULT_FROM_WIN32(win32Error);
+  }
+
+  auto tokenPrimaryGroupBuf = MakeUnique<BYTE[]>(len);
+  TOKEN_PRIMARY_GROUP& tokenPrimaryGroup =
+    *reinterpret_cast<TOKEN_PRIMARY_GROUP*>(tokenPrimaryGroupBuf.get());
+  ok = ::GetTokenInformation(token, TokenPrimaryGroup, tokenPrimaryGroupBuf.get(),
+                             len, &len);
+  if (!ok) {
+    return HRESULT_FROM_WIN32(::GetLastError());
+  }
+
+  SECURITY_DESCRIPTOR sd;
+  if (!::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION)) {
+    return HRESULT_FROM_WIN32(::GetLastError());
+  }
+
+  BYTE systemSid[SECURITY_MAX_SID_SIZE];
+  DWORD systemSidSize = sizeof(systemSid);
+  if (!::CreateWellKnownSid(WinLocalSystemSid, nullptr, systemSid,
+                            &systemSidSize)) {
+    return HRESULT_FROM_WIN32(::GetLastError());
+  }
+
+  BYTE adminSid[SECURITY_MAX_SID_SIZE];
+  DWORD adminSidSize = sizeof(adminSid);
+  if (!::CreateWellKnownSid(WinBuiltinAdministratorsSid, nullptr, adminSid,
+                            &adminSidSize)) {
+    return HRESULT_FROM_WIN32(::GetLastError());
+  }
+
+  // Grant access to SYSTEM, Administrators, and the user.
+  EXPLICIT_ACCESS entries[] = {
+    {COM_RIGHTS_EXECUTE, GRANT_ACCESS, NO_INHERITANCE,
+      {nullptr, NO_MULTIPLE_TRUSTEE, TRUSTEE_IS_SID, TRUSTEE_IS_USER,
+       reinterpret_cast<LPWSTR>(systemSid)}},
+    {COM_RIGHTS_EXECUTE, GRANT_ACCESS, NO_INHERITANCE,
+      {nullptr, NO_MULTIPLE_TRUSTEE, TRUSTEE_IS_SID, TRUSTEE_IS_WELL_KNOWN_GROUP,
+       reinterpret_cast<LPWSTR>(adminSid)}},
+    {COM_RIGHTS_EXECUTE, GRANT_ACCESS, NO_INHERITANCE,
+      {nullptr, NO_MULTIPLE_TRUSTEE, TRUSTEE_IS_SID, TRUSTEE_IS_USER,
+       reinterpret_cast<LPWSTR>(tokenUser.User.Sid)}}
+  };
+
+  PACL rawDacl = nullptr;
+  win32Error = ::SetEntriesInAcl(ArrayLength(entries), entries, nullptr,
+                                 &rawDacl);
+  if (win32Error != ERROR_SUCCESS) {
+    return HRESULT_FROM_WIN32(win32Error);
+  }
+
+  UniquePtr<ACL, LocalFreeDeleter> dacl(rawDacl);
+
+  if (!::SetSecurityDescriptorDacl(&sd, TRUE, dacl.get(), FALSE)) {
+    return HRESULT_FROM_WIN32(::GetLastError());
+  }
+
+  if (!::SetSecurityDescriptorOwner(&sd, tokenUser.User.Sid, FALSE)) {
+    return HRESULT_FROM_WIN32(::GetLastError());
+  }
+
+  if (!::SetSecurityDescriptorGroup(&sd, tokenPrimaryGroup.PrimaryGroup, FALSE)) {
+    return HRESULT_FROM_WIN32(::GetLastError());
+  }
+
+  return ::CoInitializeSecurity(&sd, -1, nullptr, nullptr,
+                                RPC_C_AUTHN_LEVEL_DEFAULT,
+                                RPC_C_IMP_LEVEL_IDENTIFY, nullptr, EOAC_NONE,
+                                nullptr);
+}
+
+} // namespace mscom
+} // namespace mozilla
+

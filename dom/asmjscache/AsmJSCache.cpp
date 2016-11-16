@@ -27,6 +27,7 @@
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundChild.h"
 #include "mozilla/unused.h"
+#include "nsAutoPtr.h"
 #include "nsIAtom.h"
 #include "nsIFile.h"
 #include "nsIIPCBackgroundChildCreateCallback.h"
@@ -1309,7 +1310,8 @@ private:
 
     mFileSize = aFileSize;
 
-    mFileDesc = PR_ImportFile(PROsfd(aFileDesc.PlatformHandle()));
+    auto rawFD = aFileDesc.ClonePlatformHandle();
+    mFileDesc = PR_ImportFile(PROsfd(rawFD.release()));
     if (!mFileDesc) {
       return false;
     }

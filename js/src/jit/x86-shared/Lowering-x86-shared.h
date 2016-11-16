@@ -32,11 +32,6 @@ class LIRGeneratorX86Shared : public LIRGeneratorShared
     void lowerForALU(LInstructionHelper<1, 2, 0>* ins, MDefinition* mir, MDefinition* lhs,
                      MDefinition* rhs);
 
-    void lowerForALUInt64(LInstructionHelper<INT64_PIECES, 2 * INT64_PIECES, 0>* ins, MDefinition* mir,
-                          MDefinition* lhs, MDefinition* rhs);
-    void lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, 0>* ins,
-                            MDefinition* mir, MDefinition* lhs, MDefinition* rhs);
-
     template<size_t Temps>
     void lowerForFPU(LInstructionHelper<1, 2, Temps>* ins, MDefinition* mir, MDefinition* lhs,
                      MDefinition* rhs);
@@ -47,7 +42,9 @@ class LIRGeneratorX86Shared : public LIRGeneratorShared
     void lowerForBitAndAndBranch(LBitAndAndBranch* baab, MInstruction* mir,
                                  MDefinition* lhs, MDefinition* rhs);
     void visitAsmJSNeg(MAsmJSNeg* ins);
-    void visitAsmSelect(MAsmSelect* ins);
+    void visitWasmBoundsCheck(MWasmBoundsCheck* ins);
+    void lowerWasmLoad(MWasmLoad* ins);
+    void lowerAsmSelect(MAsmSelect* ins);
     void lowerMulI(MMul* mul, MDefinition* lhs, MDefinition* rhs);
     void lowerDivI(MDiv* div);
     void lowerModI(MMod* mod);
@@ -72,6 +69,7 @@ class LIRGeneratorX86Shared : public LIRGeneratorShared
                                               bool useI386ByteRegisters);
     void lowerAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins,
                                            bool useI386ByteRegisters);
+    void visitCopySign(MCopySign* ins);
 };
 
 } // namespace jit

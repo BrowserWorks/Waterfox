@@ -466,6 +466,12 @@ class ResourceMonitoringMixin(object):
                                         method='pip', optional=True)
         self.register_virtualenv_module('jsonschema==2.5.1',
                                         method='pip')
+        # explicitly install functools32, because some slaves aren't using
+        # a version of pip recent enough to install it automatically with
+        # jsonschema (which depends on it)
+        # https://github.com/Julian/jsonschema/issues/233
+        self.register_virtualenv_module('functools32==3.2.3-2',
+                                        method='pip')
         self._resource_monitor = None
 
         # 2-tuple of (name, options) to assign Perfherder resource monitor
@@ -616,13 +622,17 @@ class ResourceMonitoringMixin(object):
                     {
                         'name': 'time',
                         'value': phase_duration,
-                    },
-                    {
+                    }
+                ]
+                cpu_percent = rm.aggregate_cpu_percent(phase=phase,
+                                                       per_cpu=False)
+                if cpu_percent is not None:
+                    subtests.append({
                         'name': 'cpu_percent',
                         'value': rm.aggregate_cpu_percent(phase=phase,
                                                           per_cpu=False),
-                    }
-                ]
+                    })
+
                 # We don't report I/O during each step because measured I/O
                 # is system I/O and that I/O can be delayed (e.g. writes will
                 # buffer before being flushed and recorded in our metrics).
@@ -636,18 +646,18 @@ class ResourceMonitoringMixin(object):
                 'suites': suites,
             }
 
-            try:
-                schema_path = os.path.join(external_tools_path,
-                                           'performance-artifact-schema.json')
-                with open(schema_path, 'rb') as fh:
-                    schema = json.load(fh)
+            schema_path = os.path.join(external_tools_path,
+                                       'performance-artifact-schema.json')
+            with open(schema_path, 'rb') as fh:
+                schema = json.load(fh)
 
-                self.info('Validating Perfherder data against %s' % schema_path)
-                jsonschema.validate(data, schema)
-            except Exception:
-                self.exception('error while validating Perfherder data; ignoring')
-            else:
-                self.info('PERFHERDER_DATA: %s' % json.dumps(data))
+            # this will throw an exception that causes the job to fail if the
+            # perfherder data is not valid -- please don't change this
+            # behaviour, otherwise people will inadvertently break this
+            # functionality
+            self.info('Validating Perfherder data against %s' % schema_path)
+            jsonschema.validate(data, schema)
+            self.info('PERFHERDER_DATA: %s' % json.dumps(data))
 
         log_usage('Total resource usage', duration, cpu_percent, cpu_times, io)
 

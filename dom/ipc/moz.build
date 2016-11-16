@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,6 +61,7 @@ UNIFIED_SOURCES += [
     'ContentProcess.cpp',
     'ContentProcessManager.cpp',
     'CrashReporterParent.cpp',
+    'DatePickerParent.cpp',
     'FilePickerParent.cpp',
     'nsIContentChild.cpp',
     'nsIContentParent.cpp',
@@ -89,6 +90,7 @@ SOURCES += [
 ]
 
 IPDL_SOURCES += [
+    'BlobTypes.ipdlh',
     'DOMTypes.ipdlh',
     'PBlob.ipdl',
     'PBlobStream.ipdl',
@@ -101,6 +103,7 @@ IPDL_SOURCES += [
     'PContentPermissionRequest.ipdl',
     'PCrashReporter.ipdl',
     'PCycleCollectWithLogs.ipdl',
+    'PDatePicker.ipdl',
     'PDocumentRenderer.ipdl',
     'PFilePicker.ipdl',
     'PMemoryReportRequest.ipdl',
@@ -138,7 +141,6 @@ LOCAL_INCLUDES += [
     '/dom/security',
     '/dom/storage',
     '/dom/workers',
-    '/editor/libeditor',
     '/embedding/components/printingui/ipc',
     '/extensions/cookie',
     '/extensions/spellcheck/src',
@@ -167,7 +169,7 @@ if CONFIG['OS_ARCH'] != 'WINNT':
 
 DEFINES['BIN_SUFFIX'] = '"%s"' % CONFIG['BIN_SUFFIX']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gonk', 'qt'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gonk'):
     DEFINES['MOZ_ENABLE_FREETYPE'] = True
 
 if CONFIG['MOZ_TOOLKIT_SEARCH']:

@@ -18,7 +18,6 @@
 #include "mozilla/gfx/Types.h"          // for Float, etc
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/Preferences.h"
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsISupportsImpl.h"            // for Layer::AddRef, etc
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
@@ -89,7 +88,7 @@ ClientPaintedLayer::PaintThebes()
     
     SetAntialiasingFlags(this, target);
 
-    RefPtr<gfxContext> ctx = gfxContext::ForDrawTargetWithTransform(target);
+    RefPtr<gfxContext> ctx = gfxContext::CreatePreservingTransformOrNull(target);
     MOZ_ASSERT(ctx); // already checked the target above
 
     ClientManager()->GetPaintedLayerCallback()(this,

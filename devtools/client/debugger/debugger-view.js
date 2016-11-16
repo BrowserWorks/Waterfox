@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -57,7 +55,7 @@ var DebuggerView = {
    * @return object
    *         A promise that is resolved when the view finishes initializing.
    */
-  initialize: function () {
+  initialize: function (isWorker) {
     if (this._startup) {
       return this._startup;
     }
@@ -72,7 +70,7 @@ var DebuggerView = {
     this.StackFrames.initialize();
     this.StackFramesClassicList.initialize();
     this.Workers.initialize();
-    this.Sources.initialize();
+    this.Sources.initialize(isWorker);
     this.VariableBubble.initialize();
     this.WatchExpressions.initialize();
     this.EventListeners.initialize();
@@ -81,8 +79,6 @@ var DebuggerView = {
 
     this._editorSource = {};
     this._editorDocuments = {};
-
-    document.title = L10N.getStr("DebuggerWindowTitle");
 
     this.editor.on("cursorActivity", this.Sources._onEditorCursorActivity);
 
@@ -455,6 +451,10 @@ var DebuggerView = {
       return void this.editor.setMode(Editor.modes.js);
     }
 
+    if (aContentType === "text/wasm") {
+      return void this.editor.setMode(Editor.modes.wasm);
+    }
+
     // Use HTML mode for files in which the first non whitespace character is
     // &lt;, regardless of extension.
     if (aTextContent.match(/^\s*</)) {
@@ -659,7 +659,7 @@ var DebuggerView = {
    * @return boolean
    */
   get instrumentsPaneHidden() {
-    return this._instrumentsPane.hasAttribute("pane-collapsed");
+    return this._instrumentsPane.classList.contains("pane-collapsed");
   },
 
   /**
@@ -689,10 +689,10 @@ var DebuggerView = {
     ViewHelpers.togglePane(aFlags, pane);
 
     if (aFlags.visible) {
-      button.removeAttribute("pane-collapsed");
+      button.classList.remove("pane-collapsed");
       button.setAttribute("tooltiptext", this._collapsePaneString);
     } else {
-      button.setAttribute("pane-collapsed", "");
+      button.classList.add("pane-collapsed");
       button.setAttribute("tooltiptext", this._expandPaneString);
     }
 

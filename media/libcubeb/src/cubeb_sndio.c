@@ -177,7 +177,7 @@ sndio_stream_init(cubeb * context,
                   cubeb_stream_params * input_stream_params,
                   cubeb_devid output_device,
                   cubeb_stream_params * output_stream_params,
-                  unsigned int latency,
+                  unsigned int latency_frames,
                   cubeb_data_callback data_callback,
                   cubeb_state_callback state_callback,
                   void *user_ptr)
@@ -222,7 +222,7 @@ sndio_stream_init(cubeb * context,
   }
   wpar.rate = output_stream_params->rate;
   wpar.pchan = output_stream_params->channels;
-  wpar.appbufsz = latency * wpar.rate / 1000;
+  wpar.appbufsz = latency_frames;
   if (!sio_setpar(s->hdl, &wpar) || !sio_getpar(s->hdl, &rpar)) {
     sio_close(s->hdl);
     free(s);
@@ -287,10 +287,10 @@ sndio_get_preferred_sample_rate(cubeb * ctx, uint32_t * rate)
 }
 
 static int
-sndio_get_min_latency(cubeb * ctx, cubeb_stream_params params, uint32_t * latency_ms)
+sndio_get_min_latency(cubeb * ctx, cubeb_stream_params params, uint32_t * latency_frames)
 {
   // XXX Not yet implemented.
-  *latency_ms = 40;
+  *latency_frames = 2048;
 
   return CUBEB_OK;
 }

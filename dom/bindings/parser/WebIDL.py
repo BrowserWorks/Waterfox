@@ -1261,10 +1261,7 @@ class IDLInterfaceOrNamespace(IDLObjectWithScope, IDLExposureMixins):
                         member.getExtendedAttribute("ChromeOnly") or
                         member.getExtendedAttribute("Pref") or
                         member.getExtendedAttribute("Func") or
-                        member.getExtendedAttribute("SecureContext") or
-                        member.getExtendedAttribute("AvailableIn") or
-                        member.getExtendedAttribute("CheckAnyPermissions") or
-                        member.getExtendedAttribute("CheckAllPermissions")):
+                        member.getExtendedAttribute("SecureContext")):
                         raise WebIDLError("[Alias] must not be used on a "
                                           "conditionally exposed operation",
                                           [member.location])
@@ -1296,17 +1293,11 @@ class IDLInterfaceOrNamespace(IDLObjectWithScope, IDLExposureMixins):
                               self.parentScope.primaryGlobalName,
                               [self.location])
 
-        for attribute in ["CheckAnyPermissions", "CheckAllPermissions"]:
-            if (self.getExtendedAttribute(attribute) and
-                self._exposureGlobalNames != set([self.parentScope.primaryGlobalName])):
-                raise WebIDLError("[%s] used on an interface that is "
-                                  "not %s-only" %
-                                  (attribute, self.parentScope.primaryGlobalName),
-                                  [self.location])
-
         # Conditional exposure makes no sense for interfaces with no
         # interface object, unless they're navigator properties.
-        if (self.isExposedConditionally() and
+        # And SecureContext makes sense for interfaces with no interface object,
+        # since it is also propagated to interface members.
+        if (self.isExposedConditionally(exclusions=["SecureContext"]) and
             not self.hasInterfaceObject() and
             not self.isNavigatorProperty()):
             raise WebIDLError("Interface with no interface object is "
@@ -1544,8 +1535,8 @@ class IDLInterfaceOrNamespace(IDLObjectWithScope, IDLExposureMixins):
                                     "SecureContext",
                                     "CheckAnyPermissions",
                                     "CheckAllPermissions" ]
-    def isExposedConditionally(self):
-        return any(self.getExtendedAttribute(a) for a in self.conditionExtendedAttributes)
+    def isExposedConditionally(self, exclusions=[]):
+        return any(((not a in exclusions) and self.getExtendedAttribute(a)) for a in self.conditionExtendedAttributes)
 
 class IDLInterface(IDLInterfaceOrNamespace):
     def __init__(self, location, parentScope, name, parent, members,
@@ -1720,10 +1711,7 @@ class IDLInterface(IDLInterfaceOrNamespace):
                   identifier == "JSImplementation" or
                   identifier == "HeaderFile" or
                   identifier == "NavigatorProperty" or
-                  identifier == "AvailableIn" or
                   identifier == "Func" or
-                  identifier == "CheckAnyPermissions" or
-                  identifier == "CheckAllPermissions" or
                   identifier == "Deprecated"):
                 # Known extended attributes that take a string value
                 if not attr.hasValue():
@@ -3550,14 +3538,6 @@ class IDLInterfaceMember(IDLObjectWithIdentifier, IDLExposureMixins):
                               "%s-only" % self._globalScope.primaryGlobalName,
                               [self.location])
 
-        for attribute in ["CheckAnyPermissions", "CheckAllPermissions"]:
-            if (self.getExtendedAttribute(attribute) and
-                self.exposureSet != set([self._globalScope.primaryGlobalName])):
-                raise WebIDLError("[%s] used on an interface member that is "
-                                  "not %s-only" %
-                                  (attribute, self.parentScope.primaryGlobalName),
-                                  [self.location])
-
         if self.isAttr() or self.isMethod():
             if self.affects == "Everything" and self.dependsOn != "Everything":
                 raise WebIDLError("Interface member is flagged as affecting "
@@ -3974,10 +3954,7 @@ class IDLConst(IDLInterfaceMember):
         elif (identifier == "Pref" or
               identifier == "ChromeOnly" or
               identifier == "Func" or
-              identifier == "SecureContext" or
-              identifier == "AvailableIn" or
-              identifier == "CheckAnyPermissions" or
-              identifier == "CheckAllPermissions"):
+              identifier == "SecureContext"):
             # Known attributes that we don't need to do anything with here
             pass
         else:
@@ -4317,11 +4294,8 @@ class IDLAttribute(IDLInterfaceMember):
               identifier == "Func" or
               identifier == "SecureContext" or
               identifier == "Frozen" or
-              identifier == "AvailableIn" or
               identifier == "NewObject" or
               identifier == "UnsafeInPrerendering" or
-              identifier == "CheckAnyPermissions" or
-              identifier == "CheckAllPermissions" or
               identifier == "BinaryName"):
             # Known attributes that we don't need to do anything with here
             pass
@@ -4402,10 +4376,11 @@ class IDLArgument(IDLObjectWithIdentifier):
                 self.enforceRange = True
             elif identifier == "TreatNonCallableAsNull":
                 self._allowTreatNonCallableAsNull = True
-            elif self.dictionaryMember and identifier == "ChromeOnly":
+            elif (self.dictionaryMember and
+                  (identifier == "ChromeOnly" or identifier == "Func")):
                 if not self.optional:
-                    raise WebIDLError("[ChromeOnly] must not be used on a required "
-                                      "dictionary member",
+                    raise WebIDLError("[%s] must not be used on a required "
+                                      "dictionary member" % identifier,
                                       [attribute.location])
             else:
                 raise WebIDLError("Unhandled extended attribute on %s" %
@@ -5042,9 +5017,6 @@ class IDLMethod(IDLInterfaceMember, IDLScope):
               identifier == "Deprecated" or
               identifier == "Func" or
               identifier == "SecureContext" or
-              identifier == "AvailableIn" or
-              identifier == "CheckAnyPermissions" or
-              identifier == "CheckAllPermissions" or
               identifier == "BinaryName" or
               identifier == "StaticClassOverride"):
             # Known attributes that we don't need to do anything with here

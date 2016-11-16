@@ -144,7 +144,7 @@ def test_environment(xrePath, env=None, crashreporter=True, debugger=False,
 
     # Set WebRTC logging in case it is not set yet
     env.setdefault(
-        'NSPR_LOG_MODULES',
+        'MOZ_LOG',
         'signaling:3,mtransport:4,datachannel:4,jsep:4,MediaPipelineFactory:4'
     )
     env.setdefault('R_LOG_LEVEL', '6')
@@ -185,6 +185,8 @@ def test_environment(xrePath, env=None, crashreporter=True, debugger=False,
                 log.info("LSan enabled.")
                 asanOptions.append('detect_leaks=1')
                 lsanOptions = ["exitcode=0"]
+                # Uncomment out the next line to report the addresses of leaked objects.
+                #lsanOptions.append("report_objects=1")
                 suppressionsFile = os.path.join(
                     lsanPath, 'lsan_suppressions.txt')
                 if os.path.exists(suppressionsFile):

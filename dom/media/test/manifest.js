@@ -181,7 +181,7 @@ var gPlayTests = [
   // Multiple audio streams.
   { name:"bug516323.ogv", type:"video/ogg", duration:4.208 },
   // oggz-chop with non-keyframe as first frame
-  { name:"bug556821.ogv", type:"video/ogg", duration:2.551 },
+  { name:"bug556821.ogv", type:"video/ogg", duration:2.936 },
 
   // Encoded with vorbis beta1, includes unusually sized codebooks
   { name:"beta-phrasebook.ogg", type:"audio/ogg", duration:4.01 },
@@ -198,9 +198,9 @@ var gPlayTests = [
   { name:"bug498855-3.ogv", type:"video/ogg", duration:0.24 },
   { name:"bug504644.ogv", type:"video/ogg", duration:1.6 },
   { name:"chain.ogv", type:"video/ogg", duration:Number.NaN },
-  { name:"bug523816.ogv", type:"video/ogg", duration:0.533 },
+  { name:"bug523816.ogv", type:"video/ogg", duration:0.766 },
   { name:"bug495129.ogv", type:"video/ogg", duration:2.41 },
-  { name:"bug498380.ogv", type:"video/ogg", duration:0.533 },
+  { name:"bug498380.ogv", type:"video/ogg", duration:0.7663 },
   { name:"bug495794.ogg", type:"audio/ogg", duration:0.3 },
   { name:"bug557094.ogv", type:"video/ogg", duration:0.24 },
   { name:"multiple-bos.ogg", type:"video/ogg", duration:0.431 },
@@ -294,16 +294,16 @@ var gSeekToNextFrameTests = [
   // Multiple audio streams.
   { name:"bug516323.ogv", type:"video/ogg", duration:4.208 },
   // oggz-chop with non-keyframe as first frame
-  { name:"bug556821.ogv", type:"video/ogg", duration:2.551 },
+  { name:"bug556821.ogv", type:"video/ogg", duration:2.936 },
   // Various weirdly formed Ogg files
   { name:"bug498855-1.ogv", type:"video/ogg", duration:0.24 },
   { name:"bug498855-2.ogv", type:"video/ogg", duration:0.24 },
   { name:"bug498855-3.ogv", type:"video/ogg", duration:0.24 },
   { name:"bug504644.ogv", type:"video/ogg", duration:1.6 },
 
-  { name:"bug523816.ogv", type:"video/ogg", duration:0.533 },
+  { name:"bug523816.ogv", type:"video/ogg", duration:0.766 },
 
-  { name:"bug498380.ogv", type:"video/ogg", duration:0.533 },
+  { name:"bug498380.ogv", type:"video/ogg", duration:0.766 },
   { name:"bug557094.ogv", type:"video/ogg", duration:0.24 },
   { name:"multiple-bos.ogg", type:"video/ogg", duration:0.431 },
   // Test playback/metadata work after a redirect
@@ -526,6 +526,20 @@ var gErrorTests = [
   { name:"bogus.duh", type:"bogus/duh" }
 ];
 
+function IsWindowsVistaOrLater() {
+  var re = /Windows NT (\d+.\d)/;
+  var winver = manifestNavigator().userAgent.match(re);
+  return winver && winver.length == 2 && parseFloat(winver[1]) >= 6.0;
+}
+
+// Windows' H.264 decoder cannot handle H.264 streams with resolution
+// less than 48x48 pixels. We refuse to play and error on such streams.
+if (IsWindowsVistaOrLater() &&
+    manifestVideo().canPlayType('video/mp4; codecs="avc1.42E01E"')) {
+  gErrorTests = gErrorTests.concat({name: "red-46x48.mp4", type:"video/mp4"},
+                                   {name: "red-48x46.mp4", type:"video/mp4"});
+}
+
 // These are files that have nontrivial duration and are useful for seeking within.
 var gSeekTests = [
   { name:"r11025_s16_c1.wav", type:"audio/x-wav", duration:1.0 },
@@ -554,12 +568,6 @@ var gFastSeekTests = [
   // points, as the audio required for that sync point may be before the keyframe.
   { name:"bug516323.indexed.ogv", type:"video/ogg", keyframes:[0, 0.46, 3.06] },
 ];
-
-function IsWindows8OrLater() {
-  var re = /Windows NT (\d.\d)/;
-  var winver = manifestNavigator().userAgent.match(re);
-  return winver && winver.length == 2 && parseFloat(winver[1]) >= 6.2;
-}
 
 // These files are WebMs without cues. They're seekable within their buffered
 // ranges. If work renders WebMs fully seekable these files should be moved
@@ -1349,6 +1357,56 @@ var gEMETests = [
     sessionCount:3,
     duration:1.60,
   },
+  {
+    name: "WebM vorbis audio & vp8 video clearkey",
+    tracks: [
+      {
+        name:"audio",
+        type:"audio/webm; codecs=\"vorbis\"",
+        fragments:[ "bipbop_360w_253kbps-clearkey-audio.webm",
+                  ],
+      },
+      {
+        name:"video",
+        type:"video/webm; codecs=\"vp8\"",
+        fragments:[ "bipbop_360w_253kbps-clearkey-video-vp8.webm",
+                  ],
+      },
+    ],
+    keys: {
+      // "keyid" : "key"
+      "f1f3ee1790527e9de47217d43835f76a" : "97b9ddc459c8d5ff23c1f2754c95abe8",
+      "8b5df745ad84145b5617c33116e35a67" : "bddfd35dd9be033ee73bc18bc1885056",
+    },
+    sessionType:"temporary",
+    sessionCount:2,
+    duration:1.60,
+  },
+  {
+    name: "WebM vorbis audio & vp9 video clearkey",
+    tracks: [
+      {
+        name:"audio",
+        type:"audio/webm; codecs=\"vorbis\"",
+        fragments:[ "bipbop_360w_253kbps-clearkey-audio.webm",
+                  ],
+      },
+      {
+        name:"video",
+        type:"video/webm; codecs=\"vp9\"",
+        fragments:[ "bipbop_360w_253kbps-clearkey-video-vp9.webm",
+                  ],
+      },
+    ],
+    keys: {
+      // "keyid" : "key"
+      "f1f3ee1790527e9de47217d43835f76a" : "97b9ddc459c8d5ff23c1f2754c95abe8",
+      "eedf63a94fa7c398ee094f123a4ee709" : "973b679a746c82f3acdb856b30e9378e",
+    },
+    sessionType:"temporary",
+    sessionCount:2,
+    duration:1.60,
+  },
 ];
 
 var gEMENonMSEFailTests = [
@@ -1615,7 +1673,7 @@ function mediaTestCleanup(callback) {
       removeNodeAndSource(A[i]);
       A[i] = null;
     }
-    SpecialPowers.exactGC(window, callback);
+    SpecialPowers.exactGC(callback);
 }
 
 function setMediaTestsPrefs(callback, extraPrefs) {

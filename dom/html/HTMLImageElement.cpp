@@ -117,6 +117,7 @@ HTMLImageElement::HTMLImageElement(already_AddRefed<mozilla::dom::NodeInfo>& aNo
   : nsGenericHTMLElement(aNodeInfo)
   , mForm(nullptr)
   , mInDocResponsiveContent(false)
+  , mCurrentDensity(1.0)
 {
   // We start out broken
   AddStatesSilently(NS_EVENT_STATE_BROKEN);
@@ -343,11 +344,11 @@ HTMLImageElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
     nsGenericHTMLElement::GetAttributeChangeHint(aAttribute, aModType);
   if (aAttribute == nsGkAtoms::usemap ||
       aAttribute == nsGkAtoms::ismap) {
-    retval |= NS_STYLE_HINT_FRAMECHANGE;
+    retval |= nsChangeHint_ReconstructFrame;
   } else if (aAttribute == nsGkAtoms::alt) {
     if (aModType == nsIDOMMutationEvent::ADDITION ||
         aModType == nsIDOMMutationEvent::REMOVAL) {
-      retval |= NS_STYLE_HINT_FRAMECHANGE;
+      retval |= nsChangeHint_ReconstructFrame;
     }
   }
   return retval;
@@ -445,17 +446,15 @@ HTMLImageElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                             aValue, aNotify);
 }
 
-
 nsresult
 HTMLImageElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
-  // If we are a map and get a mouse click, don't let it be handled by
-  // the Generic Element as this could cause a click event to fire
-  // twice, once by the image frame for the map and once by the Anchor
-  // element. (bug 39723)
+  // We handle image element with attribute ismap in its corresponding frame
+  // element. Set mMultipleActionsPrevented here to prevent the click event
+  // trigger the behaviors in Element::PostHandleEventForLinks
   WidgetMouseEvent* mouseEvent = aVisitor.mEvent->AsMouseEvent();
   if (mouseEvent && mouseEvent->IsLeftClickEvent() && IsMap()) {
-    aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
+    mouseEvent->mFlags.mMultipleActionsPrevented = true;
   }
   return nsGenericHTMLElement::PreHandleEvent(aVisitor);
 }
@@ -555,8 +554,10 @@ HTMLImageElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
   } else if (aName == nsGkAtoms::referrerpolicy &&
       aNameSpaceID == kNameSpaceID_None &&
       aNotify) {
-    ReferrerPolicy referrerPolicy = ReferrerPolicyFromString(aValue);
-    if (!InResponsiveMode() && referrerPolicy != GetImageReferrerPolicy()) {
+    ReferrerPolicy referrerPolicy = AttributeReferrerPolicyFromString(aValue);
+    if (!InResponsiveMode() &&
+        referrerPolicy != RP_Unset &&
+        referrerPolicy != GetImageReferrerPolicy()) {
       // XXX: Bug 1076583 - We still use the older synchronous algorithm
       // Because referrerPolicy is not treated as relevant mutations, setting
       // the attribute will neither trigger a reload nor update the referrer
@@ -663,6 +664,8 @@ HTMLImageElement::UnbindFromTree(bool aDeep, bool aNullParent)
       mInDocResponsiveContent = false;
     }
   }
+
+  mLastSelectedSource = nullptr;
 
   nsImageLoadingContent::UnbindFromTree(aDeep, aNullParent);
   nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
@@ -951,6 +954,19 @@ HTMLImageElement::InResponsiveMode()
          HaveSrcsetOrInPicture();
 }
 
+bool
+HTMLImageElement::SelectedSourceMatchesLast(nsIURI* aSelectedSource, double aSelectedDensity)
+{
+  // If there was no selected source previously, we don't want to short-circuit the load.
+  // Similarly for if there is no newly selected source.
+  if (!mLastSelectedSource || !aSelectedSource) {
+    return false;
+  }
+  bool equal = false;
+  return NS_SUCCEEDED(mLastSelectedSource->Equals(aSelectedSource, &equal)) && equal &&
+      aSelectedDensity == mCurrentDensity;
+}
+
 nsresult
 HTMLImageElement::LoadSelectedImage(bool aForce, bool aNotify, bool aAlwaysLoad)
 {
@@ -965,8 +981,15 @@ HTMLImageElement::LoadSelectedImage(bool aForce, bool aNotify, bool aAlwaysLoad)
     }
   }
 
+  nsCOMPtr<nsIURI> selectedSource;
+  double currentDensity = 1.0; // default to 1.0 for the src attribute case
   if (mResponsiveSelector) {
     nsCOMPtr<nsIURI> url = mResponsiveSelector->GetSelectedImageURL();
+    selectedSource = url;
+    currentDensity = mResponsiveSelector->GetSelectedImageDensity();
+    if (!aAlwaysLoad && SelectedSourceMatchesLast(selectedSource, currentDensity)) {
+      return NS_OK;
+    }
     if (url) {
       rv = LoadImage(url, aForce, aNotify, eImageLoadType_Imageset);
     }
@@ -976,6 +999,14 @@ HTMLImageElement::LoadSelectedImage(bool aForce, bool aNotify, bool aAlwaysLoad)
       CancelImageRequests(aNotify);
       rv = NS_OK;
     } else {
+      nsIDocument* doc = GetOurOwnerDoc();
+      if (doc) {
+        StringToURI(src, doc, getter_AddRefs(selectedSource));
+        if (!aAlwaysLoad && SelectedSourceMatchesLast(selectedSource, currentDensity)) {
+          return NS_OK;
+        }
+      }
+
       // If we have a srcset attribute or are in a <picture> element,
       // we always use the Imageset load type, even if we parsed no
       // valid responsive sources from either, per spec.
@@ -984,6 +1015,8 @@ HTMLImageElement::LoadSelectedImage(bool aForce, bool aNotify, bool aAlwaysLoad)
                                              : eImageLoadType_Normal);
     }
   }
+  mLastSelectedSource = selectedSource;
+  mCurrentDensity = currentDensity;
 
   if (NS_FAILED(rv)) {
     CancelImageRequests(aNotify);

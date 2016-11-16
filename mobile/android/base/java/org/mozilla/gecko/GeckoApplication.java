@@ -21,6 +21,7 @@ import org.mozilla.gecko.dlc.DownloadContentService;
 import org.mozilla.gecko.home.HomePanelsManager;
 import org.mozilla.gecko.lwt.LightweightTheme;
 import org.mozilla.gecko.mdns.MulticastDNSManager;
+import org.mozilla.gecko.notifications.NotificationHelper;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -131,9 +132,8 @@ public class GeckoApplication extends Application
             mPausedGecko = false;
         }
 
-        final Context applicationContext = getApplicationContext();
-        GeckoBatteryManager.getInstance().start(applicationContext);
-        GeckoNetworkManager.getInstance().start();
+        GeckoBatteryManager.getInstance().start(this);
+        GeckoNetworkManager.getInstance().start(this);
 
         mInBackground = false;
     }

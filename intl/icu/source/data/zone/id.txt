@@ -1,13 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/id.xml
 // *
 // ***************************************************************************
 id{
-    Version{"2.1.22.93"}
+    Version{"2.1.19.17"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidjan"}
@@ -1435,9 +1435,9 @@ id{
             ls{"Waktu Standar Cile"}
         }
         "meta:China"{
-            ld{"Waktu Terang Tiongkok"}
-            lg{"Waktu Tiongkok"}
-            ls{"Waktu Standar Tiongkok"}
+            ld{"Waktu Terang China"}
+            lg{"Waktu China"}
+            ls{"Waktu Standar China"}
         }
         "meta:Choibalsan"{
             ld{"Waktu Musim Panas Choibalsan"}

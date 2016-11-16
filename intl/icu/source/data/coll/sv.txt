@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/collation/sv.xml
@@ -18,14 +18,14 @@ sv{
                 "&Y<<ü<<<Ü<<ű<<<Ű"
                 "&[before 1]ǀ<å<<<Å<ä<<<Ä<<æ<<<Æ<<ę<<<Ę<ö<<<Ö<<ø<<<Ø<<ő<<<Ő<<œ<<<Œ<<ô<<<Ô"
             }
-            Version{"29"}
+            Version{"28"}
         }
         search{
             Sequence{
                 "[import und-u-co-search]"
                 "[import sv-u-co-standard]"
             }
-            Version{"29"}
+            Version{"28"}
         }
         standard{
             Sequence{
@@ -36,7 +36,7 @@ sv{
                 "&Y<<ü<<<Ü<<ű<<<Ű"
                 "&[before 1]ǀ<å<<<Å<ä<<<Ä<<æ<<<Æ<<ę<<<Ę<ö<<<Ö<<ø<<<Ø<<ő<<<Ő<<œ<<<Œ<<ô<<<Ô"
             }
-            Version{"29"}
+            Version{"28"}
         }
     }
 }

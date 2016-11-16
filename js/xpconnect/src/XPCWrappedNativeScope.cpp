@@ -26,8 +26,10 @@ using namespace JS;
 
 XPCWrappedNativeScope* XPCWrappedNativeScope::gScopes = nullptr;
 XPCWrappedNativeScope* XPCWrappedNativeScope::gDyingScopes = nullptr;
+bool XPCWrappedNativeScope::gShutdownObserverInitialized = false;
 XPCWrappedNativeScope::InterpositionMap* XPCWrappedNativeScope::gInterpositionMap = nullptr;
 InterpositionWhitelistArray* XPCWrappedNativeScope::gInterpositionWhitelists = nullptr;
+XPCWrappedNativeScope::AddonSet* XPCWrappedNativeScope::gAllowCPOWAddonSet = nullptr;
 
 NS_IMPL_ISUPPORTS(XPCWrappedNativeScope::ClearInterpositionsObserver, nsIObserver)
 
@@ -50,6 +52,11 @@ XPCWrappedNativeScope::ClearInterpositionsObserver::Observe(nsISupports* subject
     if (gInterpositionWhitelists) {
         delete gInterpositionWhitelists;
         gInterpositionWhitelists = nullptr;
+    }
+
+    if (gAllowCPOWAddonSet) {
+        delete gAllowCPOWAddonSet;
+        gAllowCPOWAddonSet = nullptr;
     }
 
     nsContentUtils::UnregisterShutdownObserver(this);
@@ -156,6 +163,11 @@ XPCWrappedNativeScope::XPCWrappedNativeScope(JSContext* cx,
           }
         }
     }
+
+    if (addonId) {
+        // We forbid CPOWs unless they're specifically allowed.
+        priv->allowCPOWs = gAllowCPOWAddonSet ? gAllowCPOWAddonSet->has(addonId) : false;
+    }
 }
 
 // static
@@ -183,7 +195,7 @@ XPCWrappedNativeScope::GetComponentsJSObject(JS::MutableHandleObject obj)
     RootedValue val(cx);
     xpcObjectHelper helper(mComponents);
     bool ok = XPCConvert::NativeInterface2JSObject(&val, nullptr, helper,
-                                                   nullptr, nullptr, false,
+                                                   nullptr, false,
                                                    nullptr);
     if (NS_WARN_IF(!ok))
         return false;
@@ -280,11 +292,12 @@ XPCWrappedNativeScope::EnsureContentXBLScope(JSContext* cx)
 
     // Use an nsExpandedPrincipal to create asymmetric security.
     nsIPrincipal* principal = GetPrincipal();
-    nsCOMPtr<nsIExpandedPrincipal> ep;
-    MOZ_ASSERT(!(ep = do_QueryInterface(principal)));
-    nsTArray< nsCOMPtr<nsIPrincipal> > principalAsArray(1);
+    MOZ_ASSERT(!nsContentUtils::IsExpandedPrincipal(principal));
+    nsTArray<nsCOMPtr<nsIPrincipal>> principalAsArray(1);
     principalAsArray.AppendElement(principal);
-    ep = new nsExpandedPrincipal(principalAsArray);
+    nsCOMPtr<nsIExpandedPrincipal> ep =
+        new nsExpandedPrincipal(principalAsArray,
+                                BasePrincipal::Cast(principal)->OriginAttributesRef());
 
     // Create the sandbox.
     RootedValue v(cx);
@@ -362,6 +375,12 @@ UseContentXBLScope(JSCompartment* c)
 {
   XPCWrappedNativeScope* scope = CompartmentPrivate::Get(c)->scope;
   return scope && scope->UseContentXBLScope();
+}
+
+void
+ClearContentXBLScope(JSObject* global)
+{
+    CompartmentPrivate::Get(global)->scope->ClearContentXBLScope();
 }
 
 } /* namespace xpc */
@@ -704,9 +723,10 @@ XPCWrappedNativeScope::SetAddonInterposition(JSContext* cx,
         bool ok = gInterpositionMap->init();
         NS_ENSURE_TRUE(ok, false);
 
-        // Make sure to clear the map at shutdown.
-        // Note: this will take care of gInterpositionWhitelists too.
-        nsContentUtils::RegisterShutdownObserver(new ClearInterpositionsObserver());
+        if (!gShutdownObserverInitialized) {
+            gShutdownObserverInitialized = true;
+            nsContentUtils::RegisterShutdownObserver(new ClearInterpositionsObserver());
+        }
     }
     if (interp) {
         bool ok = gInterpositionMap->put(addonId, interp);
@@ -714,6 +734,30 @@ XPCWrappedNativeScope::SetAddonInterposition(JSContext* cx,
         UpdateInterpositionWhitelist(cx, interp);
     } else {
         gInterpositionMap->remove(addonId);
+    }
+    return true;
+}
+
+/* static */ bool
+XPCWrappedNativeScope::AllowCPOWsInAddon(JSContext* cx,
+                                         JSAddonId* addonId,
+                                         bool allow)
+{
+    if (!gAllowCPOWAddonSet) {
+        gAllowCPOWAddonSet = new AddonSet();
+        bool ok = gAllowCPOWAddonSet->init();
+        NS_ENSURE_TRUE(ok, false);
+
+        if (!gShutdownObserverInitialized) {
+            gShutdownObserverInitialized = true;
+            nsContentUtils::RegisterShutdownObserver(new ClearInterpositionsObserver());
+        }
+    }
+    if (allow) {
+        bool ok = gAllowCPOWAddonSet->put(addonId);
+        NS_ENSURE_TRUE(ok, false);
+    } else {
+        gAllowCPOWAddonSet->remove(addonId);
     }
     return true;
 }

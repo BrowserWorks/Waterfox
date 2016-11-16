@@ -38,8 +38,8 @@
 #include "nsProxyRelease.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDocShell.h"
-#include "nsPerformance.h"
 #include "nsINetworkInterceptController.h"
+#include "mozilla/dom/Performance.h"
 #include "mozIThirdPartyUtil.h"
 #include "nsStreamUtils.h"
 #include "nsContentSecurityManager.h"
@@ -808,8 +808,14 @@ HttpBaseChannel::ExplicitSetUploadStream(nsIInputStream *aStream,
     contentLengthStr.AppendInt(aContentLength);
     SetRequestHeader(NS_LITERAL_CSTRING("Content-Length"), contentLengthStr,
                      false);
-    SetRequestHeader(NS_LITERAL_CSTRING("Content-Type"), aContentType,
-                     false);
+    if (!aContentType.IsVoid()) {
+      if (aContentType.IsEmpty()) {
+        SetEmptyRequestHeader(NS_LITERAL_CSTRING("Content-Type"));
+      } else {
+        SetRequestHeader(NS_LITERAL_CSTRING("Content-Type"), aContentType,
+                         false);
+      }
+    }
   }
 
   mUploadStreamHasHeaders = aStreamHasHeaders;
@@ -1508,43 +1514,50 @@ HttpBaseChannel::SetReferrerWithPolicy(nsIURI *referrer,
   }
 
   // check how much referer to send
-  switch (userReferrerTrimmingPolicy) {
-
-  case 1: {
-    // scheme+host+port+path
-    nsAutoCString prepath, path;
-    rv = clone->GetPrePath(prepath);
-    if (NS_FAILED(rv)) return rv;
-
-    nsCOMPtr<nsIURL> url(do_QueryInterface(clone));
-    if (!url) {
-      // if this isn't a url, play it safe
-      // and just send the prepath
-      spec = prepath;
-      break;
-    }
-    rv = url->GetFilePath(path);
-    if (NS_FAILED(rv)) return rv;
-    spec = prepath + path;
-    break;
-  }
-  case 2:
-    // scheme+host+port+/
-    rv = clone->GetPrePath(spec);
-    spec.AppendLiteral("/");
-    if (NS_FAILED(rv)) return rv;
-    break;
-
-  default:
-    // full URI
-    rv = clone->GetAsciiSpec(spec);
-    if (NS_FAILED(rv)) return rv;
-    break;
-  }
-
-  // If any user trimming policy is in effect, use the trimmed URI.
   if (userReferrerTrimmingPolicy) {
-    rv = NS_NewURI(getter_AddRefs(clone), spec);
+    // All output strings start with: scheme+host+port
+    // We want the IDN-normalized PrePath.  That's not something currently
+    // available and there doesn't yet seem to be justification for adding it to
+    // the interfaces, so just build it up ourselves from scheme+AsciiHostPort
+    nsAutoCString scheme, asciiHostPort;
+    rv = clone->GetScheme(scheme);
+    if (NS_FAILED(rv)) return rv;
+    spec = scheme;
+    spec.AppendLiteral("://");
+    // Note we explicitly cleared UserPass above, so do not need to build it.
+    rv = clone->GetAsciiHostPort(asciiHostPort);
+    if (NS_FAILED(rv)) return rv;
+    spec.Append(asciiHostPort);
+
+    switch (userReferrerTrimmingPolicy) {
+      case 1: { // scheme+host+port+path
+        nsCOMPtr<nsIURL> url(do_QueryInterface(clone));
+        if (url) {
+          nsAutoCString path;
+          rv = url->GetFilePath(path);
+          if (NS_FAILED(rv)) return rv;
+          spec.Append(path);
+          rv = url->SetQuery(EmptyCString());
+          if (NS_FAILED(rv)) return rv;
+          rv = url->SetRef(EmptyCString());
+          if (NS_FAILED(rv)) return rv;
+          break;
+        }
+        // No URL, so fall through to truncating the path and any query/ref off
+        // as well.
+      }
+      MOZ_FALLTHROUGH;
+      default: // (Pref limited to [0,2] enforced by clamp, MOZ_CRASH overkill.)
+      case 2: // scheme+host+port+/
+        spec.AppendLiteral("/");
+        // This nukes any query/ref present as well in the case of nsStandardURL
+        rv = clone->SetPath(EmptyCString());
+        if (NS_FAILED(rv)) return rv;
+        break;
+    }
+  } else {
+    // use the full URI
+    rv = clone->GetAsciiSpec(spec);
     if (NS_FAILED(rv)) return rv;
   }
 
@@ -2417,6 +2430,8 @@ HttpBaseChannel::GetFetchCacheMode(uint32_t* aFetchCacheMode)
     *aFetchCacheMode = nsIHttpChannelInternal::FETCH_CACHE_MODE_RELOAD;
   } else if (mLoadFlags & VALIDATE_ALWAYS) {
     *aFetchCacheMode = nsIHttpChannelInternal::FETCH_CACHE_MODE_NO_CACHE;
+  } else if (mLoadFlags & (LOAD_FROM_CACHE | nsICachingChannel::LOAD_ONLY_FROM_CACHE)) {
+    *aFetchCacheMode = nsIHttpChannelInternal::FETCH_CACHE_MODE_ONLY_IF_CACHED;
   } else if (mLoadFlags & LOAD_FROM_CACHE) {
     *aFetchCacheMode = nsIHttpChannelInternal::FETCH_CACHE_MODE_FORCE_CACHE;
   } else {
@@ -2454,6 +2469,15 @@ HttpBaseChannel::SetFetchCacheMode(uint32_t aFetchCacheMode)
   case nsIHttpChannelInternal::FETCH_CACHE_MODE_FORCE_CACHE:
     // force-cache means don't validate unless if the response would vary.
     mLoadFlags |= LOAD_FROM_CACHE;
+    break;
+  case nsIHttpChannelInternal::FETCH_CACHE_MODE_ONLY_IF_CACHED:
+    // only-if-cached means only from cache, no network, no validation, generate
+    // a network error if the document was't in the cache.
+    // The privacy implications of these flags (making it fast/easy to check if
+    // the user has things in their cache without any network traffic side
+    // effects) are addressed in the Request constructor which enforces/requires
+    // same-origin request mode.
+    mLoadFlags |= LOAD_FROM_CACHE | nsICachingChannel::LOAD_ONLY_FROM_CACHE;
     break;
   }
 
@@ -3332,10 +3356,10 @@ IMPL_TIMING_ATTR(RedirectEnd)
 
 #undef IMPL_TIMING_ATTR
 
-nsPerformance*
+mozilla::dom::Performance*
 HttpBaseChannel::GetPerformance()
 {
-  // If performance timing is disabled, there is no need for the nsPerformance
+  // If performance timing is disabled, there is no need for the Performance
   // object anymore.
   if (!mTimingEnabled) {
     return nullptr;
@@ -3372,7 +3396,7 @@ HttpBaseChannel::GetPerformance()
     return nullptr;
   }
 
-  nsPerformance* docPerformance = innerWindow->GetPerformance();
+  mozilla::dom::Performance* docPerformance = innerWindow->GetPerformance();
   if (!docPerformance) {
     return nullptr;
   }

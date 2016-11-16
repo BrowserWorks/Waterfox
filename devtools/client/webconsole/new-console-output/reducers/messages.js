@@ -13,15 +13,16 @@ function messages(state = Immutable.List(), action) {
     case constants.MESSAGE_ADD:
       let newMessage = action.message;
 
-      if (newMessage.data.level === "clear") {
+      if (newMessage.type === "clear") {
         return Immutable.List([newMessage]);
       }
 
       if (newMessage.allowRepeating && state.size > 0) {
         let lastMessage = state.last();
         if (lastMessage.repeatId === newMessage.repeatId) {
-          newMessage.repeat = lastMessage.repeat + 1;
-          return state.pop().push(newMessage);
+          return state.pop().push(
+            newMessage.set("repeat", lastMessage.repeat + 1)
+          );
         }
       }
       return state.push(newMessage);

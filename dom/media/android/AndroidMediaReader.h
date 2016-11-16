@@ -10,7 +10,6 @@
 #include "MediaResource.h"
 #include "MediaDecoderReader.h"
 #include "ImageContainer.h"
-#include "nsAutoPtr.h"
 #include "mozilla/layers/SharedRGBImage.h"
 
 #include "MPAPI.h"
@@ -42,7 +41,8 @@ public:
   AndroidMediaReader(AbstractMediaDecoder* aDecoder,
                      const nsACString& aContentType);
 
-  nsresult ResetDecode(TargetQueues aQueues) override;
+  nsresult ResetDecode(TrackSet aTracks = TrackSet(TrackInfo::kAudioTrack,
+                                                   TrackInfo::kVideoTrack)) override;
 
   bool DecodeAudioData() override;
   bool DecodeVideoFrame(bool &aKeyframeSkip, int64_t aTimeThreshold) override;

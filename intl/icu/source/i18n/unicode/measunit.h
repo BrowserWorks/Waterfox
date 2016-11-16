@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (c) 2004-2016, International Business Machines
+* Copyright (c) 2004-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 * Author: Alan Liu
@@ -185,14 +185,6 @@ class U_I18N_API MeasureUnit: public UObject {
 
     /**
      * ICU use only.
-     * @return the unit.getIndex() of the unit which has this unit.getType() and unit.getSubtype(),
-     *         or a negative value if there is no such unit
-     * @internal
-     */
-    static int32_t internalGetIndexForTypeAndSubtype(const char *type, const char *subtype);
-
-    /**
-     * ICU use only.
      * @internal
      */
     static MeasureUnit *resolveUnitPerUnit(
@@ -337,44 +329,6 @@ class U_I18N_API MeasureUnit: public UObject {
      */
     static MeasureUnit *createSquareYard(UErrorCode &status);
 
-    /**
-     * Returns unit of concentr: karat.
-     * Caller owns returned value and must free it.
-     * @param status ICU error code.
-     * @stable ICU 54
-     */
-    static MeasureUnit *createKarat(UErrorCode &status);
-
-#ifndef U_HIDE_DRAFT_API
-    /**
-     * Returns unit of concentr: milligram-per-deciliter.
-     * Caller owns returned value and must free it.
-     * @param status ICU error code.
-     * @draft ICU 57
-     */
-    static MeasureUnit *createMilligramPerDeciliter(UErrorCode &status);
-#endif  /* U_HIDE_DRAFT_API */
-
-#ifndef U_HIDE_DRAFT_API
-    /**
-     * Returns unit of concentr: millimole-per-liter.
-     * Caller owns returned value and must free it.
-     * @param status ICU error code.
-     * @draft ICU 57
-     */
-    static MeasureUnit *createMillimolePerLiter(UErrorCode &status);
-#endif  /* U_HIDE_DRAFT_API */
-
-#ifndef U_HIDE_DRAFT_API
-    /**
-     * Returns unit of concentr: part-per-million.
-     * Caller owns returned value and must free it.
-     * @param status ICU error code.
-     * @draft ICU 57
-     */
-    static MeasureUnit *createPartPerMillion(UErrorCode &status);
-#endif  /* U_HIDE_DRAFT_API */
-
 #ifndef U_HIDE_DRAFT_API
     /**
      * Returns unit of consumption: liter-per-100kilometers.
@@ -400,16 +354,6 @@ class U_I18N_API MeasureUnit: public UObject {
      * @stable ICU 54
      */
     static MeasureUnit *createMilePerGallon(UErrorCode &status);
-
-#ifndef U_HIDE_DRAFT_API
-    /**
-     * Returns unit of consumption: mile-per-gallon-imperial.
-     * Caller owns returned value and must free it.
-     * @param status ICU error code.
-     * @draft ICU 57
-     */
-    static MeasureUnit *createMilePerGallonImperial(UErrorCode &status);
-#endif  /* U_HIDE_DRAFT_API */
 
     /**
      * Returns unit of digital: bit.
@@ -1032,6 +976,14 @@ class U_I18N_API MeasureUnit: public UObject {
     static MeasureUnit *createPoundPerSquareInch(UErrorCode &status);
 
     /**
+     * Returns unit of proportion: karat.
+     * Caller owns returned value and must free it.
+     * @param status ICU error code.
+     * @stable ICU 54
+     */
+    static MeasureUnit *createKarat(UErrorCode &status);
+
+    /**
      * Returns unit of speed: kilometer-per-hour.
      * Caller owns returned value and must free it.
      * @param status ICU error code.
@@ -1220,16 +1172,6 @@ class U_I18N_API MeasureUnit: public UObject {
      * @stable ICU 54
      */
     static MeasureUnit *createGallon(UErrorCode &status);
-
-#ifndef U_HIDE_DRAFT_API
-    /**
-     * Returns unit of volume: gallon-imperial.
-     * Caller owns returned value and must free it.
-     * @param status ICU error code.
-     * @draft ICU 57
-     */
-    static MeasureUnit *createGallonImperial(UErrorCode &status);
-#endif  /* U_HIDE_DRAFT_API */
 
     /**
      * Returns unit of volume: hectoliter.

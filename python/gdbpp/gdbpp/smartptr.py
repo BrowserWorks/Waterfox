@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,9 +24,9 @@ class weak_ptr_printer(object):
 
         return '[(%s) %s]' % (weak_ptr.dynamic_type, weak_ptr)
 
-@GeckoPrettyPrinter('nsAutoPtr', 'nsAutoPtr<.*>')
-@GeckoPrettyPrinter('nsCOMPtr', 'nsCOMPtr<.*>')
-@GeckoPrettyPrinter('RefPtr', 'RefPtr<.*>')
+@GeckoPrettyPrinter('nsAutoPtr', '^nsAutoPtr<.*>$')
+@GeckoPrettyPrinter('nsCOMPtr', '^nsCOMPtr<.*>$')
+@GeckoPrettyPrinter('RefPtr', '^RefPtr<.*>$')
 class smartptr_printer(object):
     def __init__(self, value):
         self.value = value['mRawPtr']

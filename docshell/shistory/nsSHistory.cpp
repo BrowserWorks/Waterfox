@@ -797,7 +797,7 @@ nsSHistory::EvictAllContentViewers()
   while (trans) {
     EvictContentViewerForTransaction(trans);
 
-    nsISHTransaction* temp = trans;
+    nsCOMPtr<nsISHTransaction> temp = trans;
     temp->GetNext(getter_AddRefs(trans));
   }
 
@@ -974,7 +974,7 @@ nsSHistory::EvictOutOfRangeWindowContentViewers(int32_t aIndex)
   for (int32_t i = startSafeIndex; trans && i <= endSafeIndex; i++) {
     nsCOMPtr<nsIContentViewer> viewer = GetContentViewerForTransaction(trans);
     safeViewers.AppendObject(viewer);
-    nsISHTransaction* temp = trans;
+    nsCOMPtr<nsISHTransaction> temp = trans;
     temp->GetNext(getter_AddRefs(trans));
   }
 
@@ -986,7 +986,7 @@ nsSHistory::EvictOutOfRangeWindowContentViewers(int32_t aIndex)
       EvictContentViewerForTransaction(trans);
     }
 
-    nsISHTransaction* temp = trans;
+    nsCOMPtr<nsISHTransaction> temp = trans;
     temp->GetNext(getter_AddRefs(trans));
   }
 }
@@ -1108,7 +1108,7 @@ nsSHistory::GloballyEvictContentViewers()
         }
       }
 
-      nsISHTransaction* temp = trans;
+      nsCOMPtr<nsISHTransaction> temp = trans;
       temp->GetNext(getter_AddRefs(trans));
     }
 
@@ -1154,7 +1154,7 @@ nsSHistory::EvictExpiredContentViewerForEntry(nsIBFCacheEntry* aEntry)
       break;
     }
 
-    nsISHTransaction* temp = trans;
+    nsCOMPtr<nsISHTransaction> temp = trans;
     temp->GetNext(getter_AddRefs(trans));
   }
   if (i > endIndex) {
@@ -1584,7 +1584,6 @@ nsSHistory::LoadEntry(int32_t aIndex, long aLoadType, uint32_t aHistCmd)
     return NS_OK;  // XXX Maybe I can return some other error code?
   }
 
-  nsCOMPtr<nsIURI> nexturi;
   int32_t pCount = 0;
   int32_t nCount = 0;
   nsCOMPtr<nsISHContainer> prevAsContainer(do_QueryInterface(prevEntry));
@@ -1594,7 +1593,6 @@ nsSHistory::LoadEntry(int32_t aIndex, long aLoadType, uint32_t aHistCmd)
     nextAsContainer->GetChildCount(&nCount);
   }
 
-  nsCOMPtr<nsIDocShellLoadInfo> loadInfo;
   if (mRequestedIndex == mIndex) {
     // Possibly a reload case
     docShell = mRootDocShell;
@@ -1696,7 +1694,7 @@ nsSHistory::CompareFrames(nsISHEntry* aPrevEntry, nsISHEntry* aNextEntry,
     aParent->GetChildAt(i, getter_AddRefs(treeItem));
     nsCOMPtr<nsIDocShell> shell = do_QueryInterface(treeItem);
     if (shell) {
-      docshells.AppendObject(shell);
+      docshells.AppendElement(shell.forget());
     }
   }
 

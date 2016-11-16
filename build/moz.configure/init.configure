@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,6 +114,8 @@ def mozconfig(current_project, mozconfig, old_configure, build_env, help):
     mozconfig = loader.read_mozconfig(mozconfig, moz_build_app=current_project)
 
     return mozconfig
+
+set_config('MOZCONFIG', depends(mozconfig)(lambda m: m['path']))
 
 
 # Hacks related to old-configure
@@ -403,16 +405,15 @@ def split_triplet(triplet):
         endianness = 'big' if cpu.startswith(('armeb', 'armbe')) else 'little'
     elif cpu in ('mips', 'mipsel'):
         canonical_cpu = 'mips32'
-        endianness = 'little' if 'le' in cpu else 'big'
+        endianness = 'little' if 'el' in cpu else 'big'
     elif cpu in ('mips64', 'mips64el'):
         canonical_cpu = 'mips64'
-        endianness = 'little' if 'le' in cpu else 'big'
+        endianness = 'little' if 'el' in cpu else 'big'
     elif cpu.startswith('aarch64'):
         canonical_cpu = 'aarch64'
         endianness = 'little'
     else:
-        canonical_cpu = cpu
-        endianness = 'unknown'
+        die('Unknown CPU type: %s' % cpu)
 
     return namespace(
         alias=triplet,
@@ -793,4 +794,14 @@ include('pkg.configure')
 # Make this assignment here rather than in pkg.configure to avoid
 # requiring this file in unit tests.
 add_old_configure_assignment('PKG_CONFIG', pkg_config)
+
+# Bug 1278542: This function is a workaround to resolve
+# |android_ndk_include|'s dependency on 'gonkdir.' The
+# actual implementation is located in b2g/moz.configure.
+# Remove this function as soon as 'android_ndk_include'
+# depends on 'target.'
+@depends('--help')
+def gonkdir(_):
+    return None
+
 include(include_project_configure)

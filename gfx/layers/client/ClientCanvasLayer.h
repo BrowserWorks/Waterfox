@@ -14,7 +14,6 @@
 #include "mozilla/RefPtr.h"             // for RefPtr
 #include "mozilla/layers/LayersMessages.h"  // for CanvasLayerAttributes, etc
 #include "mozilla/mozalloc.h"           // for operator delete
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsRegion.h"                   // for nsIntRegion
@@ -91,6 +90,9 @@ public:
   const TextureFlags& Flags() const { return mFlags; }
 
 protected:
+
+  bool UpdateTarget(gfx::DrawTarget* aDestTarget = nullptr);
+
   ClientLayerManager* ClientManager()
   {
     return static_cast<ClientLayerManager*>(mManager);

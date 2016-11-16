@@ -24,6 +24,7 @@
 #include "nsNetUtil.h"
 #include "nsSerializationHelper.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/Performance.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/ipc/BackgroundUtils.h"
@@ -32,7 +33,6 @@
 #include "SerializedLoadContext.h"
 #include "nsInputStreamPump.h"
 #include "InterceptedChannel.h"
-#include "nsPerformance.h"
 #include "mozIThirdPartyUtil.h"
 #include "nsContentSecurityManager.h"
 #include "nsIDeprecationWarner.h"
@@ -859,6 +859,8 @@ HttpChannelChild::OnStopRequest(const nsresult& channelStatus,
   LOG(("HttpChannelChild::OnStopRequest [this=%p status=%x]\n",
        this, channelStatus));
 
+  mUploadStream = nullptr;
+
   if (mDivertingToParent) {
     MOZ_RELEASE_ASSERT(!mFlushedForDiversion,
       "Should not be processing any more callbacks from parent!");
@@ -896,7 +898,7 @@ HttpChannelChild::OnStopRequest(const nsresult& channelStatus,
   mCacheReadStart = timing.cacheReadStart;
   mCacheReadEnd = timing.cacheReadEnd;
 
-  nsPerformance* documentPerformance = GetPerformance();
+  Performance* documentPerformance = GetPerformance();
   if (documentPerformance) {
       documentPerformance->AddEntry(this, this);
   }
@@ -1319,6 +1321,16 @@ HttpChannelChild::BeginNonIPCRedirect(nsIURI* responseURI,
                               getter_AddRefs(newChannel));
 
   if (NS_SUCCEEDED(rv)) {
+    // Ensure that the new channel shares the original channel's security information,
+    // since it won't be provided via IPC. In particular, if the target of this redirect
+    // is a synthesized response that has its own security info, the pre-redirect channel
+    // has already received it and it must be propagated to the post-redirect channel.
+    nsCOMPtr<nsIHttpChannelChild> channelChild = do_QueryInterface(newChannel);
+    if (mSecurityInfo && channelChild) {
+      HttpChannelChild* httpChannelChild = static_cast<HttpChannelChild*>(channelChild.get());
+      httpChannelChild->OverrideSecurityInfoForNonIPCRedirect(mSecurityInfo);
+    }
+
     rv = gHttpHandler->AsyncOnChannelRedirect(this,
                                               newChannel,
                                               nsIChannelEventSink::REDIRECT_INTERNAL);
@@ -1326,6 +1338,13 @@ HttpChannelChild::BeginNonIPCRedirect(nsIURI* responseURI,
 
   if (NS_FAILED(rv))
     OnRedirectVerifyCallback(rv);
+}
+
+void
+HttpChannelChild::OverrideSecurityInfoForNonIPCRedirect(nsISupports* securityInfo)
+{
+  mResponseCouldBeSynthesized = true;
+  OverrideSecurityInfo(securityInfo);
 }
 
 class Redirect3Event : public ChannelEvent
@@ -1458,6 +1477,12 @@ HttpChannelChild::ConnectParent(uint32_t registrarId)
   if (MissingRequiredTabChild(tabChild, "http")) {
     return NS_ERROR_ILLEGAL_VALUE;
   }
+
+  if (tabChild && !tabChild->IPCOpen()) {
+    return NS_ERROR_FAILURE;
+  }
+
+  HttpBaseChannel::SetDocshellUserAgentOverride();
 
   // The socket transport in the chrome process now holds a logical ref to us
   // until OnStopRequest, or we do a redirect, or we hit an IPDL error.
@@ -1635,9 +1660,16 @@ HttpChannelChild::OnRedirectVerifyCallback(nsresult result)
     }
   }
 
+  bool chooseAppcache = false;
+  nsCOMPtr<nsIApplicationCacheChannel> appCacheChannel =
+    do_QueryInterface(newHttpChannel);
+  if (appCacheChannel) {
+    appCacheChannel->GetChooseApplicationCache(&chooseAppcache);
+  }
+
   if (mIPCOpen)
     SendRedirect2Verify(result, *headerTuples, loadFlags, redirectURI,
-                        corsPreflightArgs);
+                        corsPreflightArgs, chooseAppcache);
 
   return NS_OK;
 }
@@ -1977,15 +2009,25 @@ HttpChannelChild::ContinueAsyncOpen()
   mChannelId.ToProvidedString(chid);
   openArgs.channelId().AssignASCII(chid);
 
+  if (tabChild && !tabChild->IPCOpen()) {
+    return NS_ERROR_FAILURE;
+  }
+
+  ContentChild* cc = static_cast<ContentChild*>(gNeckoChild->Manager());
+  if (cc->IsShuttingDown()) {
+    return NS_ERROR_FAILURE;
+  }
+
   // The socket transport in the chrome process now holds a logical ref to us
   // until OnStopRequest, or we do a redirect, or we hit an IPDL error.
   AddIPDLReference();
 
-  PBrowserOrId browser = static_cast<ContentChild*>(gNeckoChild->Manager())
-                         ->GetBrowserOrId(tabChild);
-  gNeckoChild->SendPHttpChannelConstructor(this, browser,
-                                           IPC::SerializedLoadContext(this),
-                                           openArgs);
+  PBrowserOrId browser = cc->GetBrowserOrId(tabChild);
+  if (!gNeckoChild->SendPHttpChannelConstructor(this, browser,
+                                                IPC::SerializedLoadContext(this),
+                                                openArgs)) {
+    return NS_ERROR_FAILURE;
+  }
 
   if (optionalFDs.type() ==
         OptionalFileDescriptorSet::TPFileDescriptorSetChild) {

@@ -305,7 +305,7 @@ TrackBuffersManager::Buffered()
   // 2. Let highest end time be the largest track buffer ranges end time across all the track buffers managed by this SourceBuffer object.
   TimeUnit highestEndTime;
 
-  nsTArray<TimeIntervals*> tracks;
+  nsTArray<const TimeIntervals*> tracks;
   if (HasVideo()) {
     tracks.AppendElement(&mVideoBufferedRanges);
   }
@@ -321,13 +321,16 @@ TrackBuffersManager::Buffered()
 
   // 4. For each track buffer managed by this SourceBuffer, run the following steps:
   //   1. Let track ranges equal the track buffer ranges for the current track buffer.
-  for (auto trackRanges : tracks) {
+  for (const TimeIntervals* trackRanges : tracks) {
     // 2. If readyState is "ended", then set the end time on the last range in track ranges to highest end time.
-    if (mEnded) {
-      trackRanges->Add(TimeInterval(trackRanges->GetEnd(), highestEndTime));
-    }
     // 3. Let new intersection ranges equal the intersection between the intersection ranges and the track ranges.
-    intersection.Intersection(*trackRanges);
+    if (mEnded) {
+      TimeIntervals tR = *trackRanges;
+      tR.Add(TimeInterval(tR.GetEnd(), highestEndTime));
+      intersection.Intersection(tR);
+    } else {
+      intersection.Intersection(*trackRanges);
+    }
   }
   return intersection;
 }
@@ -1050,14 +1053,14 @@ TrackBuffersManager::OnDemuxerInitDone(nsresult)
     // Try and dispatch 'encrypted'. Won't go if ready state still HAVE_NOTHING.
     for (uint32_t i = 0; i < crypto->mInitDatas.Length(); i++) {
       NS_DispatchToMainThread(
-        new DispatchKeyNeededEvent(mParentDecoder, crypto->mInitDatas[i].mInitData, NS_LITERAL_STRING("cenc")));
+        new DispatchKeyNeededEvent(mParentDecoder, crypto->mInitDatas[i].mInitData,
+                                   crypto->mInitDatas[i].mType));
     }
 #endif // MOZ_EME
     info.mCrypto = *crypto;
     // We clear our crypto init data array, so the MediaFormatReader will
     // not emit an encrypted event for the same init data again.
     info.mCrypto.mInitDatas.Clear();
-    mEncrypted = true;
   }
 
   {
@@ -1363,6 +1366,9 @@ TrackBuffersManager::ProcessFrames(TrackBuffer& aSamples, TrackData& aTrackData)
   // a frame be ignored due to the target window.
   bool needDiscontinuityCheck = true;
 
+  // Highest presentation time seen in samples block.
+  TimeUnit highestSampleTime;
+
   if (aSamples.Length()) {
     aTrackData.mLastParsedEndTime = TimeUnit();
   }
@@ -1495,6 +1501,7 @@ TrackBuffersManager::ProcessFrames(TrackBuffer& aSamples, TrackData& aTrackData)
         samplesRange = TimeIntervals();
         trackBuffer.mSizeBuffer += sizeNewSamples;
         sizeNewSamples = 0;
+        UpdateHighestTimestamp(trackBuffer, highestSampleTime);
       }
       trackBuffer.mNeedRandomAccessPoint = true;
       needDiscontinuityCheck = true;
@@ -1527,6 +1534,9 @@ TrackBuffersManager::ProcessFrames(TrackBuffer& aSamples, TrackData& aTrackData)
         sampleInterval.mEnd > trackBuffer.mHighestEndTimestamp.ref()) {
       trackBuffer.mHighestEndTimestamp = Some(sampleInterval.mEnd);
     }
+    if (sampleInterval.mStart > highestSampleTime) {
+      highestSampleTime = sampleInterval.mStart;
+    }
     // 20. If frame end timestamp is greater than group end timestamp, then set group end timestamp equal to frame end timestamp.
     if (sampleInterval.mEnd > mSourceBufferAttributes->GetGroupEndTimestamp()) {
       mSourceBufferAttributes->SetGroupEndTimestamp(sampleInterval.mEnd);
@@ -1540,6 +1550,7 @@ TrackBuffersManager::ProcessFrames(TrackBuffer& aSamples, TrackData& aTrackData)
   if (samples.Length()) {
     InsertFrames(samples, samplesRange, trackBuffer);
     trackBuffer.mSizeBuffer += sizeNewSamples;
+    UpdateHighestTimestamp(trackBuffer, highestSampleTime);
   }
 }
 
@@ -1678,6 +1689,16 @@ TrackBuffersManager::InsertFrames(TrackBuffer& aSamples,
   }
 }
 
+void
+TrackBuffersManager::UpdateHighestTimestamp(TrackData& aTrackData,
+                                            const media::TimeUnit& aHighestTime)
+{
+  if (aHighestTime > aTrackData.mHighestStartTimestamp) {
+    MonitorAutoLock mon(mMonitor);
+    aTrackData.mHighestStartTimestamp = aHighestTime;
+  }
+}
+
 size_t
 TrackBuffersManager::RemoveFrames(const TimeIntervals& aIntervals,
                                   TrackData& aTrackData,
@@ -1775,6 +1796,20 @@ TrackBuffersManager::RemoveFrames(const TimeIntervals& aIntervals,
   data.RemoveElementsAt(firstRemovedIndex.ref(),
                         lastRemovedIndex - firstRemovedIndex.ref() + 1);
 
+  if (aIntervals.GetEnd() >= aTrackData.mHighestStartTimestamp) {
+    // The sample with the highest presentation time got removed.
+    // Rescan the trackbuffer to determine the new one.
+    int64_t highestStartTime = 0;
+    for (const auto& sample : data) {
+      if (sample->mTime > highestStartTime) {
+        highestStartTime = sample->mTime;
+      }
+    }
+    MonitorAutoLock mon(mMonitor);
+    aTrackData.mHighestStartTimestamp =
+      TimeUnit::FromMicroseconds(highestStartTime);
+  }
+
   return firstRemovedIndex.ref();
 }
 
@@ -1799,7 +1834,6 @@ TrackBuffersManager::RecreateParser(bool aReuseInitData)
 nsTArray<TrackBuffersManager::TrackData*>
 TrackBuffersManager::GetTracksList()
 {
-  MOZ_ASSERT(OnTaskQueue());
   nsTArray<TrackData*> tracks;
   if (HasVideo()) {
     tracks.AppendElement(&mVideoTracks);
@@ -1839,6 +1873,18 @@ TrackBuffersManager::SafeBuffered(TrackInfo::TrackType aTrack) const
   return aTrack == TrackInfo::kVideoTrack
     ? mVideoBufferedRanges
     : mAudioBufferedRanges;
+}
+
+TimeUnit
+TrackBuffersManager::HighestStartTime()
+{
+  MonitorAutoLock mon(mMonitor);
+  TimeUnit highestStartTime;
+  for (auto& track : GetTracksList()) {
+    highestStartTime =
+      std::max(track->mHighestStartTimestamp, highestStartTime);
+  }
+  return highestStartTime;
 }
 
 const TrackBuffersManager::TrackBuffer&

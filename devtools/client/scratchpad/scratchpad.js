@@ -55,12 +55,12 @@ const Services = require("Services");
 const {gDevTools} = require("devtools/client/framework/devtools");
 const {Heritage} = require("devtools/client/shared/widgets/view-helpers");
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/NetUtil.jsm");
-Cu.import("resource://devtools/client/scratchpad/scratchpad-manager.jsm");
-Cu.import("resource://gre/modules/jsdebugger.jsm");
-Cu.import("resource://gre/modules/osfile.jsm");
-Cu.import("resource://gre/modules/reflect.jsm");
+const {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
+const {NetUtil} = require("resource://gre/modules/NetUtil.jsm");
+const {ScratchpadManager} = require("resource://devtools/client/scratchpad/scratchpad-manager.jsm");
+const {addDebuggerToGlobal} = require("resource://gre/modules/jsdebugger.jsm");
+const {OS} = require("resource://gre/modules/osfile.jsm");
+const {Reflect} = require("resource://gre/modules/reflect.jsm");
 
 XPCOMUtils.defineConstant(this, "SCRATCHPAD_CONTEXT_CONTENT", SCRATCHPAD_CONTEXT_CONTENT);
 XPCOMUtils.defineConstant(this, "SCRATCHPAD_CONTEXT_BROWSER", SCRATCHPAD_CONTEXT_BROWSER);
@@ -434,11 +434,11 @@ var Scratchpad = {
   },
 
   /**
-   * Get the most recent chrome window of type navigator:browser.
+   * Get the most recent main chrome browser window
    */
   get browserWindow()
   {
-    return Services.wm.getMostRecentWindow("navigator:browser");
+    return Services.wm.getMostRecentWindow(gDevTools.chromeWindowType);
   },
 
   /**
@@ -1703,7 +1703,9 @@ var Scratchpad = {
       if (state) {
         state = JSON.parse(state);
         this.setState(state);
-        initialText = state.text;
+        if ("text" in state) {
+          initialText = state.text;
+        }
       }
     } else {
       this._instanceId = ScratchpadManager.createUid();
@@ -2059,9 +2061,8 @@ var Scratchpad = {
   openDocumentationPage: function SP_openDocumentationPage()
   {
     let url = this.strings.GetStringFromName("help.openDocumentationPage");
-    let newTab = this.gBrowser.addTab(url);
+    this.browserWindow.openUILinkIn(url,"tab");
     this.browserWindow.focus();
-    this.gBrowser.selectedTab = newTab;
   },
 };
 
@@ -2308,7 +2309,7 @@ ScratchpadSidebar.prototype = {
     }
     else {
       this._sidebar.once("variablesview-ready", onTabReady);
-      this._sidebar.addTab("variablesview", VARIABLES_VIEW_URL, true);
+      this._sidebar.addTab("variablesview", VARIABLES_VIEW_URL, {selected: true});
     }
 
     return deferred.promise;

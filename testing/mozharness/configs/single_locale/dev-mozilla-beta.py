@@ -22,10 +22,6 @@ config = {
         "repo": "https://hg.mozilla.org/projects/date",
         "revision": "default",
         "dest": "date",
-    }, {
-        "vcs": "hgtool",
-        "repo": "https://hg.mozilla.org/build/compare-locales",
-        "revision": "RELEASE_AUTOMATION"
     }],
     # purge options
     'is_automation': True,
@@ -33,6 +29,7 @@ config = {
     'default_actions': [
         "clobber",
         "pull",
+        "clone-locales",
         "list-locales",
         "setup",
         "repack",

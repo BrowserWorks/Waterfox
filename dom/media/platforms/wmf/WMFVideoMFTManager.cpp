@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <algorithm>
+#include <winsdkver.h>
 #include "WMFVideoMFTManager.h"
 #include "MediaDecoderReader.h"
 #include "MediaPrefs.h"
@@ -37,7 +38,7 @@ using mozilla::layers::IMFYCbCrImage;
 using mozilla::layers::LayerManager;
 using mozilla::layers::LayersBackend;
 
-#if MOZ_WINSDK_MAXVER < 0x0A000000
+#if WINVER_MAXVER < 0x0A00
 // Windows 10+ SDK has VP80 and VP90 defines
 const GUID MFVideoFormat_VP80 =
 {
@@ -88,6 +89,7 @@ WMFVideoMFTManager::WMFVideoMFTManager(
   , mNullOutputCount(0)
   , mGotValidOutputAfterNullOutput(false)
   , mGotExcessiveNullOutput(false)
+  , mIsValid(true)
   // mVideoStride, mVideoWidth, mVideoHeight, mUseHwAccel are initialized in
   // Init().
 {
@@ -369,8 +371,32 @@ WMFVideoMFTManager::InitializeDXVA(bool aForceD3D9)
 }
 
 bool
+WMFVideoMFTManager::ValidateVideoInfo()
+{
+  // The WMF H.264 decoder is documented to have a minimum resolution
+  // 48x48 pixels. We've observed the decoder working for output smaller than
+  // that, but on some output it hangs in IMFTransform::ProcessOutput(), so
+  // we just reject streams which are less than the documented minimum.
+  // https://msdn.microsoft.com/en-us/library/windows/desktop/dd797815(v=vs.85).aspx
+  static const int32_t MIN_H264_FRAME_DIMENSION = 48;
+  if (mStreamType == H264 &&
+      (mVideoInfo.mImage.width < MIN_H264_FRAME_DIMENSION ||
+       mVideoInfo.mImage.height < MIN_H264_FRAME_DIMENSION)) {
+    LogToBrowserConsole(NS_LITERAL_STRING(
+      "Can't decode H.264 stream with width or height less than 48 pixels."));
+    mIsValid = false;
+  }
+
+  return mIsValid;
+}
+
+bool
 WMFVideoMFTManager::Init()
 {
+  if (!ValidateVideoInfo()) {
+    return false;
+  }
+
   bool success = InitInternal(/* aForceD3D9 = */ false);
 
   if (success && mDXVA2Manager) {
@@ -482,6 +508,10 @@ WMFVideoMFTManager::SetDecoderMediaTypes()
 HRESULT
 WMFVideoMFTManager::Input(MediaRawData* aSample)
 {
+  if (!mIsValid) {
+    return E_FAIL;
+  }
+
   if (!mDecoder) {
     // This can happen during shutdown.
     return E_FAIL;
@@ -705,11 +735,31 @@ WMFVideoMFTManager::CreateBasicVideoFrame(IMFSample* aSample,
   NS_ENSURE_TRUE(pts.IsValid(), E_FAIL);
   media::TimeUnit duration = GetSampleDuration(aSample);
   NS_ENSURE_TRUE(duration.IsValid(), E_FAIL);
+  nsIntRect pictureRegion = mVideoInfo.ScaledImageRect(videoWidth, videoHeight);
+
+  if (mLayersBackend != LayersBackend::LAYERS_D3D9 &&
+      mLayersBackend != LayersBackend::LAYERS_D3D11) {
+    RefPtr<VideoData> v = VideoData::Create(mVideoInfo,
+                                            mImageContainer,
+                                            aStreamOffset,
+                                            pts.ToMicroseconds(),
+                                            duration.ToMicroseconds(),
+                                            b,
+                                            false,
+                                            -1,
+                                            pictureRegion);
+    if (twoDBuffer) {
+      twoDBuffer->Unlock2D();
+    } else {
+      buffer->Unlock();
+    }
+    v.forget(aOutVideoData);
+    return S_OK;
+  }
 
   RefPtr<layers::PlanarYCbCrImage> image =
     new IMFYCbCrImage(buffer, twoDBuffer);
 
-  nsIntRect pictureRegion = mVideoInfo.ScaledImageRect(videoWidth, videoHeight);
   VideoData::SetVideoDataToImage(image,
                                  mVideoInfo,
                                  b,
@@ -824,6 +874,21 @@ WMFVideoMFTManager::Output(int64_t aStreamOffset,
         }
         continue;
       }
+      if (mSeekTargetThreshold.isSome()) {
+        media::TimeUnit pts = GetSampleTime(sample);
+		media::TimeUnit duration = GetSampleDuration(sample);
+        if (!pts.IsValid() || !duration.IsValid()) {
+          return E_FAIL;
+        }
+        if ((pts + duration) < mSeekTargetThreshold.ref()) {
+          LOG("Dropping video frame which pts is smaller than seek target.");
+          // It is necessary to clear the pointer to release the previous output
+          // buffer.
+          sample = nullptr;
+          continue;
+        }
+        mSeekTargetThreshold.reset();
+      }
       break;
     }
     // Else unexpected error, assert, and bail.
@@ -871,6 +936,7 @@ WMFVideoMFTManager::ConfigurationChanged(const TrackInfo& aConfig)
   MOZ_ASSERT(aConfig.GetAsVideoInfo());
   mVideoInfo = *aConfig.GetAsVideoInfo();
   mImageSize = mVideoInfo.mImage;
+  ValidateVideoInfo();
 }
 
 } // namespace mozilla

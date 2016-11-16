@@ -380,7 +380,15 @@
                 <include name="root.txt" />
             </fileset>
             <fileset id="brkitr" dir="${env.ICU4C_DIR}/source/data/brkitr">
-                <include name="*.txt"/>
+                <!-- brkitr directory contains bunch of txt files that are not produced by LDML2ICUConverter.
+                     So can't clean up everything. This needs to be updated when new files are added to xml/brkitr directory -->
+                <include name="root.txt" />
+                <include name="el.txt" />
+                <include name="en.txt" />
+                <include name="en_US.txt" />
+                <include name="en_US_POSIX.txt" />
+                <include name="fi.txt" />
+                <include name="ja.txt" />
             </fileset>
             <fileset id="brkfiles" dir="${env.ICU4C_DIR}/source/data/brkitr">
                 <include name="brkfiles.mk" />

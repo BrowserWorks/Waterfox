@@ -1,9 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
-var Pipe = CC("@mozilla.org/pipe;1", "nsIPipe", "init");
+"use strict";
 
 function run_test() {
   initTestDebuggerServer();
@@ -73,7 +71,7 @@ function json_reply(client, response) {
   });
 
   // Send bulk data to server
-  let copyDeferred = promise.defer();
+  let copyDeferred = defer();
   request.on("bulk-send-ready", ({writer, done}) => {
     let input = Cc["@mozilla.org/io/string-input-stream;1"].
                   createInstance(Ci.nsIStringInputStream);

@@ -5,26 +5,44 @@
 /* Replace app binary complete MAR file patch apply success test */
 
 function run_test() {
-  if (!shouldRunServiceTest()) {
+  if (!setupTestCommon()) {
     return;
   }
-
-  setupTestCommon();
   gTestFiles = gTestFilesCompleteSuccess;
   gTestDirs = gTestDirsCompleteSuccess;
-  setupUpdaterTest(FILE_COMPLETE_MAR);
-
   gCallbackBinFile = "exe0.exe";
-
-  setupAppFilesAsync();
+  setupUpdaterTest(FILE_COMPLETE_MAR, false);
 }
 
-function setupAppFilesFinished() {
-  runUpdateUsingService(STATE_PENDING_SVC, STATE_SUCCEEDED);
+/**
+ * Called after the call to setupUpdaterTest finishes.
+ */
+function setupUpdaterTestFinished() {
+  runUpdate(STATE_SUCCEEDED, false, 0, true);
 }
 
-function checkUpdateFinished() {
-  checkFilesAfterUpdateSuccess(getApplyDirFile, false, false);
+/**
+ * Called after the call to runUpdate finishes.
+ */
+function runUpdateFinished() {
+  checkPostUpdateAppLog();
+}
+
+/**
+ * Called after the call to checkPostUpdateAppLog finishes.
+ */
+function checkPostUpdateAppLogFinished() {
   standardInit();
-  checkCallbackServiceLog();
+  Assert.equal(readStatusState(), STATE_NONE,
+               "the status file state" + MSG_SHOULD_EQUAL);
+  Assert.ok(!gUpdateManager.activeUpdate,
+            "the active update should not be defined");
+  Assert.equal(gUpdateManager.updateCount, 1,
+               "the update manager updateCount attribute" + MSG_SHOULD_EQUAL);
+  Assert.equal(gUpdateManager.getUpdateAt(0).state, STATE_SUCCEEDED,
+               "the update state" + MSG_SHOULD_EQUAL);
+  checkPostUpdateRunningFile(true);
+  checkFilesAfterUpdateSuccess(getApplyDirFile);
+  checkUpdateLogContents(LOG_COMPLETE_SUCCESS);
+  checkCallbackLog();
 }

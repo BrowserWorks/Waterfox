@@ -15,7 +15,10 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.mozilla.gecko.background.common.GlobalConstants;
@@ -73,6 +76,9 @@ public class AndroidFxAccount {
   public static final String BUNDLE_KEY_STATE_LABEL = "stateLabel";
   public static final String BUNDLE_KEY_STATE = "state";
   public static final String BUNDLE_KEY_PROFILE_JSON = "profile";
+
+  public static final String ACCOUNT_KEY_DEVICE_ID = "deviceId";
+  public static final String ACCOUNT_KEY_DEVICE_REGISTRATION_VERSION = "deviceRegistrationVersion";
 
   // Account authentication token type for fetching account profile.
   public static final String PROFILE_OAUTH_TOKEN_TYPE = "oauth::profile";
@@ -384,6 +390,8 @@ public class AndroidFxAccount {
     } catch (UnsupportedEncodingException e) {
       // Ignore.
     }
+    o.put("fxaDeviceId", getDeviceId());
+    o.put("fxaDeviceRegistrationVersion", getDeviceRegistrationVersion());
     return o;
   }
 
@@ -569,7 +577,7 @@ public class AndroidFxAccount {
   protected void broadcastAccountStateChangedIntent() {
     final Intent intent = new Intent(FxAccountConstants.ACCOUNT_STATE_CHANGED_ACTION);
     intent.putExtra(Constants.JSON_KEY_ACCOUNT, account.name);
-    context.sendBroadcast(intent, FxAccountConstants.PER_ACCOUNT_TYPE_PERMISSION);
+    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
   }
 
   public synchronized State getState() {
@@ -629,12 +637,12 @@ public class AndroidFxAccount {
   }
 
   /**
-   * Create an intent announcing that a Firefox account will be deleted.
+   * Populate an intent used for starting FxAccountDeletedService service.
    *
-   * @return <code>Intent</code> to broadcast.
+   * @param intent Intent to populate with necessary extras
+   * @return <code>Intent</code> with a deleted action and account/OAuth information extras
    */
-  public Intent makeDeletedAccountIntent() {
-    final Intent intent = new Intent(FxAccountConstants.ACCOUNT_DELETED_ACTION);
+  public Intent populateDeletedAccountIntent(final Intent intent) {
     final List<String> tokens = new ArrayList<>();
 
     intent.putExtra(FxAccountConstants.ACCOUNT_DELETED_INTENT_VERSION_KEY,
@@ -771,6 +779,44 @@ public class AndroidFxAccount {
         context.startService(intent);
       }
     });
+  }
+
+  @Nullable
+  public synchronized String getDeviceId() {
+    return accountManager.getUserData(account, ACCOUNT_KEY_DEVICE_ID);
+  }
+
+  @NonNull
+  public synchronized int getDeviceRegistrationVersion() {
+    String versionStr = accountManager.getUserData(account, ACCOUNT_KEY_DEVICE_REGISTRATION_VERSION);
+    if (TextUtils.isEmpty(versionStr)) {
+      return 0;
+    } else {
+      try {
+        return Integer.parseInt(versionStr);
+      } catch (NumberFormatException ex) {
+        return 0;
+      }
+    }
+  }
+
+  public synchronized void setDeviceId(String id) {
+    accountManager.setUserData(account, ACCOUNT_KEY_DEVICE_ID, id);
+  }
+
+  public synchronized void setDeviceRegistrationVersion(int deviceRegistrationVersion) {
+    accountManager.setUserData(account, ACCOUNT_KEY_DEVICE_REGISTRATION_VERSION,
+        Integer.toString(deviceRegistrationVersion));
+  }
+
+  public synchronized void resetDeviceRegistrationVersion() {
+    setDeviceRegistrationVersion(0);
+  }
+
+  public synchronized void setFxAUserData(String id, int deviceRegistrationVersion) {
+    accountManager.setUserData(account, ACCOUNT_KEY_DEVICE_ID, id);
+    accountManager.setUserData(account, ACCOUNT_KEY_DEVICE_REGISTRATION_VERSION,
+        Integer.toString(deviceRegistrationVersion));
   }
 
   @SuppressLint("ParcelCreator") // The CREATOR field is defined in the super class.

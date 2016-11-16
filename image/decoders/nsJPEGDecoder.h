@@ -57,9 +57,10 @@ public:
     mSampleSize = aSampleSize;
   }
 
-  virtual void InitInternal() override;
-  virtual void WriteInternal(const char* aBuffer, uint32_t aCount) override;
-  virtual void FinishInternal() override;
+  nsresult InitInternal() override;
+  LexerResult DoDecode(SourceBufferIterator& aIterator,
+                       IResumable* aOnResume) override;
+  nsresult FinishInternal() override;
 
   virtual Telemetry::ID SpeedHistogram() override;
   void NotifyDone();
@@ -73,6 +74,17 @@ private:
 
   // Decoders should only be instantiated via DecoderFactory.
   nsJPEGDecoder(RasterImage* aImage, Decoder::DecodeStyle aDecodeStyle);
+
+  enum class State
+  {
+    JPEG_DATA,
+    FINISHED_JPEG_DATA
+  };
+
+  LexerTransition<State> ReadJPEGData(const char* aData, size_t aLength);
+  LexerTransition<State> FinishedJPEGData();
+
+  StreamingLexer<State> mLexer;
 
 public:
   struct jpeg_decompress_struct mInfo;

@@ -6,7 +6,9 @@
 #if !defined(MediaDecoderReader_h_)
 #define MediaDecoderReader_h_
 
+#include "mozilla/EnumSet.h"
 #include "mozilla/MozPromise.h"
+#include "nsAutoPtr.h"
 
 #include "AbstractMediaDecoder.h"
 #include "MediaInfo.h"
@@ -73,10 +75,7 @@ public:
     CANCELED
   };
 
-  enum TargetQueues {
-    VIDEO_ONLY,
-    AUDIO_VIDEO
-  };
+  using TrackSet = EnumSet<TrackInfo::TrackType>;
 
   using MetadataPromise =
     MozPromise<RefPtr<MetadataHolder>, ReadMetadataFailureReason, IsExclusive>;
@@ -130,7 +129,11 @@ public:
   // The first samples of every stream produced after a ResetDecode() call
   // *must* be marked as "discontinuities". If it's not, seeking work won't
   // properly!
-  virtual nsresult ResetDecode(TargetQueues aQueues = AUDIO_VIDEO);
+  //
+  // aParam is a set of TrackInfo::TrackType enums specifying which
+  // queues need to be reset, defaulting to both audio and video tracks.
+  virtual nsresult ResetDecode(TrackSet aTracks = TrackSet(TrackInfo::kAudioTrack,
+                                                           TrackInfo::kVideoTrack));
 
   // Requests one audio sample from the reader.
   //
@@ -288,6 +291,32 @@ public:
   // Notified by the OggReader during playback when chained ogg is detected.
   MediaEventSource<void>& OnMediaNotSeekable() { return mOnMediaNotSeekable; }
 
+  TimedMetadataEventProducer& TimedMetadataProducer()
+  {
+    return mTimedMetadataEvent;
+  }
+
+  MediaEventProducer<void>& MediaNotSeekableProducer()
+  {
+    return mOnMediaNotSeekable;
+  }
+
+  bool IsSuspended() const
+  {
+    MOZ_ASSERT(OnTaskQueue());
+    return mIsSuspended;
+  }
+
+  void SetIsSuspended(bool aState)
+  {
+    MOZ_ASSERT(OnTaskQueue());
+    mIsSuspended = aState;
+  }
+
+  AbstractCanonical<bool>* CanonicalIsSuspended() {
+    return &mIsSuspended;
+  }
+
 protected:
   virtual ~MediaDecoderReader();
 
@@ -433,6 +462,7 @@ private:
   // "discontinuity" in the stream. For example after a seek.
   bool mAudioDiscontinuity;
   bool mVideoDiscontinuity;
+  Canonical<bool> mIsSuspended;
 
   MediaEventListener mDataArrivedListener;
 };

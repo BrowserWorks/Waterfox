@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/te.xml
@@ -213,7 +213,7 @@ te{
         minimumGroupingDigits{"1"}
         native{"telu"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.17"}
     calendar{
         generic{
             DateTimePatterns{
@@ -866,10 +866,7 @@ te{
         day-narrow{
             dn{"ది"}
             relative{
-                "-1"{"నిన్న"}
                 "-2"{"మొన్న"}
-                "0"{"ఈ రోజు"}
-                "1"{"రేపు"}
                 "2"{"ఎల్లుండి"}
             }
             relativeTime{
@@ -886,10 +883,7 @@ te{
         day-short{
             dn{"దినం"}
             relative{
-                "-1"{"నిన్న"}
                 "-2"{"మొన్న"}
-                "0"{"ఈ రోజు"}
-                "1"{"రేపు"}
                 "2"{"ఎల్లుండి"}
             }
             relativeTime{

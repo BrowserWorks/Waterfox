@@ -337,6 +337,12 @@ class JSFunction : public js::NativeObject
         atom_ = atom;
         flags_ |= HAS_GUESSED_ATOM;
     }
+    void clearGuessedAtom() {
+        MOZ_ASSERT(hasGuessedAtom());
+        MOZ_ASSERT(atom_);
+        atom_ = nullptr;
+        flags_ &= ~HAS_GUESSED_ATOM;
+    }
 
     /* uint16_t representation bounds number of call object dynamic slots. */
     enum { MAX_ARGS_AND_VARS = 2 * ((1U << 16) - 1) };
@@ -677,6 +683,17 @@ FunctionHasResolveHook(const JSAtomState& atomState, jsid id);
 extern bool
 fun_toString(JSContext* cx, unsigned argc, Value* vp);
 
+struct WellKnownSymbols;
+
+extern bool
+FunctionHasDefaultHasInstance(JSFunction* fun, const WellKnownSymbols& symbols);
+
+extern bool
+fun_symbolHasInstance(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+OrdinaryHasInstance(JSContext* cx, HandleObject objArg, MutableHandleValue v, bool* bp);
+
 /*
  * Function extended with reserved slots for use by various kinds of functions.
  * Most functions do not have these extensions, but enough do that efficient
@@ -693,16 +710,22 @@ class FunctionExtended : public JSFunction
     static const unsigned METHOD_HOMEOBJECT_SLOT = 0;
 
     /*
-     * All asm.js/wasm functions store their compiled module (either
-     * WasmModuleObject or AsmJSModuleObject) in the first extended slot.
+     * Exported asm.js/wasm functions store their WasmInstanceObject in the
+     * first slot.
      */
-    static const unsigned WASM_MODULE_SLOT = 0;
+    static const unsigned WASM_INSTANCE_SLOT = 0;
 
     /*
-     * wasm/asm.js exported functions store the index of the export in the
-     * module's export vector in the second slot.
+     * wasm/asm.js exported functions store the function index of the exported
+     * function in the original module.
      */
-    static const unsigned WASM_EXPORT_INDEX_SLOT = 1;
+    static const unsigned WASM_FUNC_INDEX_SLOT = 1;
+
+    /*
+     * asm.js module functions store their WasmModuleObject in the first slot.
+     */
+    static const unsigned ASMJS_MODULE_SLOT = 0;
+
 
     static inline size_t offsetOfExtendedSlot(unsigned which) {
         MOZ_ASSERT(which < NUM_EXTENDED_SLOTS);

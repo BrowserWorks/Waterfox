@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
-* Copyright (C) 2009-2016, International Business Machines Corporation and
-* others. All Rights Reserved.
+* Copyright (C) 2009-2013, International Business Machines Corporation and    *
+* others. All Rights Reserved.                                                *
 *******************************************************************************
 *
 * This file contains the class DecimalFormatStaticSets
@@ -141,11 +141,11 @@ DecimalFormatStaticSets::DecimalFormatStaticSets(UErrorCode &status)
 
     initUnicodeSet(
             gMinusSigns,
-            UPRV_LENGTHOF(gMinusSigns),
+            sizeof(gMinusSigns) / sizeof(gMinusSigns[0]),
             fMinusSigns);
     initUnicodeSet(
             gPlusSigns,
-            UPRV_LENGTHOF(gPlusSigns),
+            sizeof(gPlusSigns) / sizeof(gPlusSigns[0]),
             fPlusSigns);
 
     // Freeze all the sets

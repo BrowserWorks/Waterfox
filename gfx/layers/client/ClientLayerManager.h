@@ -17,7 +17,6 @@
 #include "mozilla/layers/LayersTypes.h"  // for BufferMode, LayersBackend, etc
 #include "mozilla/layers/ShadowLayers.h"  // for ShadowLayerForwarder, etc
 #include "mozilla/layers/APZTestData.h" // for APZTestData
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsIObserver.h"                // for nsIObserver
 #include "nsISupportsImpl.h"            // for Layer::Release, etc
@@ -35,7 +34,6 @@ class CompositorBridgeChild;
 class ImageLayer;
 class PLayerChild;
 class FrameUniformityData;
-class TextureClientPool;
 
 class ClientLayerManager final : public LayerManager
 {
@@ -115,8 +113,6 @@ public:
   virtual bool HasShadowManagerInternal() const override { return HasShadowManager(); }
 
   virtual void SetIsFirstPaint() override;
-
-  TextureClientPool* GetTexturePool(gfx::SurfaceFormat aFormat, TextureFlags aFlags);
 
   /**
    * Pass through call to the forwarder for nsPresContext's
@@ -250,6 +246,9 @@ public:
   void AddDidCompositeObserver(DidCompositeObserver* aObserver);
   void RemoveDidCompositeObserver(DidCompositeObserver* aObserver);
 
+  virtual already_AddRefed<PersistentBufferProvider>
+  CreatePersistentBufferProvider(const gfx::IntSize& aSize, gfx::SurfaceFormat aFormat) override;
+
 protected:
   enum TransactionPhase {
     PHASE_NONE, PHASE_CONSTRUCTION, PHASE_DRAWING, PHASE_FORWARD
@@ -344,7 +343,6 @@ private:
   APZTestData mApzTestData;
 
   RefPtr<ShadowLayerForwarder> mForwarder;
-  AutoTArray<RefPtr<TextureClientPool>,2> mTexturePools;
   AutoTArray<dom::OverfillCallback*,0> mOverfillCallbacks;
   mozilla::TimeStamp mTransactionStart;
 

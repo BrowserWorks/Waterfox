@@ -341,7 +341,7 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
             return;
           }
           case 4:
-            storePtr(value.valueReg(), address);
+            store32(value.valueReg(), address);
             return;
           case 1:
             store8(value.valueReg(), address);
@@ -1512,7 +1512,7 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
                 Mov(ScratchReg64, immediate);
                 Eor(ScratchReg64, ScratchReg2_64, ScratchReg64);
             }
-            Tst(ScratchReg64, Operand(-1ll << JSVAL_TAG_SHIFT));
+            Tst(ScratchReg64, Operand((unsigned long long)(-1ll) << JSVAL_TAG_SHIFT));
             return cond;
         }
 
@@ -1873,13 +1873,6 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     }
 
     void handleFailureWithHandlerTail(void* handler);
-
-    // FIXME: See CodeGeneratorX64 calls to noteAsmJSGlobalAccess.
-    void patchAsmJSGlobalAccess(CodeOffset patchAt, uint8_t* code,
-                                uint8_t* globalData, unsigned globalDataOffset)
-    {
-        MOZ_CRASH("patchAsmJSGlobalAccess");
-    }
 
     void profilerEnterFrame(Register framePtr, Register scratch) {
         AbsoluteAddress activation(GetJitContext()->runtime->addressOfProfilingActivation());
@@ -2312,12 +2305,12 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
 #endif
     }
 
-    void loadWasmActivation(Register dest) {
-        loadPtr(Address(GlobalReg, wasm::ActivationGlobalDataOffset - AsmJSGlobalRegBias), dest);
+    void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
+        loadPtr(Address(GlobalReg, globalDataOffset - AsmJSGlobalRegBias), dest);
     }
     void loadAsmJSHeapRegisterFromGlobalData() {
-        loadPtr(Address(GlobalReg, wasm::HeapGlobalDataOffset - AsmJSGlobalRegBias), HeapReg);
-        loadPtr(Address(GlobalReg, wasm::HeapGlobalDataOffset - AsmJSGlobalRegBias + 8), HeapLenReg);
+        loadWasmGlobalPtr(wasm::HeapGlobalDataOffset, HeapReg);
+        loadWasmGlobalPtr(wasm::HeapGlobalDataOffset + 8, HeapLenReg);
     }
 
     // Overwrites the payload bits of a dest register containing a Value.

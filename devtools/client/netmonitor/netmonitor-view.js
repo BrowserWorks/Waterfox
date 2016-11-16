@@ -18,13 +18,19 @@ XPCOMUtils.defineLazyGetter(this, "NetworkHelper", function () {
   return require("devtools/shared/webconsole/network-helper");
 });
 
+const {SideMenuWidget} = require("resource://devtools/client/shared/widgets/SideMenuWidget.jsm");
+const {VariablesView} = require("resource://devtools/client/shared/widgets/VariablesView.jsm");
+const {VariablesViewController} = require("resource://devtools/client/shared/widgets/VariablesViewController.jsm");
 const {ToolSidebar} = require("devtools/client/framework/sidebar");
-const {Tooltip} = require("devtools/client/shared/widgets/Tooltip");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
+const {setImageTooltip, getImageDimensions} =
+  require("devtools/client/shared/widgets/tooltip/ImageTooltipHelper");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const {LocalizationHelper} = require("devtools/client/shared/l10n");
 const {PrefsHelper} = require("devtools/client/shared/prefs");
 const {ViewHelpers, Heritage, WidgetMethods, setNamedTimeout} =
   require("devtools/client/shared/widgets/view-helpers");
+const {gDevTools} = require("devtools/client/framework/devtools");
 
 /**
  * Localization convenience methods.
@@ -62,11 +68,12 @@ const SOURCE_SYNTAX_HIGHLIGHT_MAX_FILE_SIZE = 102400;
 const RESIZE_REFRESH_RATE = 50;
 // ms
 const REQUESTS_REFRESH_RATE = 50;
-const REQUESTS_TOOLTIP_POSITION = "topcenter bottomleft";
 // tooltip show/hide delay in ms
 const REQUESTS_TOOLTIP_TOGGLE_DELAY = 500;
 // px
 const REQUESTS_TOOLTIP_IMAGE_MAX_DIM = 400;
+// px
+const REQUESTS_TOOLTIP_STACK_TRACE_WIDTH = 600;
 // px
 const REQUESTS_WATERFALL_SAFE_BOUNDS = 90;
 // ms
@@ -131,6 +138,11 @@ const LOAD_CAUSE_STRINGS = {
   [Ci.nsIContentPolicy.TYPE_IMAGESET]: "imageset",
   [Ci.nsIContentPolicy.TYPE_WEB_MANIFEST]: "webManifest"
 };
+
+function loadCauseString(causeType) {
+  return LOAD_CAUSE_STRINGS[causeType] || "unknown";
+}
+
 const DEFAULT_EDITOR_CONFIG = {
   mode: Editor.modes.text,
   readOnly: true,
@@ -238,7 +250,7 @@ var NetMonitorView = {
    * @return boolean
    */
   get detailsPaneHidden() {
-    return this._detailsPane.hasAttribute("pane-collapsed");
+    return this._detailsPane.classList.contains("pane-collapsed");
   },
 
   /**
@@ -260,12 +272,12 @@ var NetMonitorView = {
     ViewHelpers.togglePane(flags, pane);
 
     if (flags.visible) {
-      this._body.removeAttribute("pane-collapsed");
-      button.removeAttribute("pane-collapsed");
+      this._body.classList.remove("pane-collapsed");
+      button.classList.remove("pane-collapsed");
       button.setAttribute("tooltiptext", this._collapsePaneString);
     } else {
-      this._body.setAttribute("pane-collapsed", "");
-      button.setAttribute("pane-collapsed", "");
+      this._body.classList.add("pane-collapsed");
+      button.classList.add("pane-collapsed");
       button.setAttribute("tooltiptext", this._expandPaneString);
     }
 
@@ -440,6 +452,7 @@ function RequestsMenuView() {
   this._onSelect = this._onSelect.bind(this);
   this._onSwap = this._onSwap.bind(this);
   this._onResize = this._onResize.bind(this);
+  this._onScroll = this._onScroll.bind(this);
   this._byFile = this._byFile.bind(this);
   this._byDomain = this._byDomain.bind(this);
   this._byType = this._byType.bind(this);
@@ -453,7 +466,8 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
   initialize: function () {
     dumpn("Initializing the RequestsMenuView");
 
-    this.widget = new SideMenuWidget($("#requests-menu-contents"));
+    let widgetParentEl = $("#requests-menu-contents");
+    this.widget = new SideMenuWidget(widgetParentEl);
     this._splitter = $("#network-inspector-view-splitter");
     this._summary = $("#requests-menu-network-summary-button");
     this._summary.setAttribute("label", L10N.getStr("networkMenu.empty"));
@@ -461,18 +475,12 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
       .createInstance(Ci.nsITimer);
 
     // Create a tooltip for the newly appended network request item.
-    this.tooltip = new Tooltip(document, {
-      closeOnEvents: [{
-        emitter: $("#requests-menu-contents"),
-        event: "scroll",
-        useCapture: true
-      }]
-    });
-    this.tooltip.startTogglingOnHover(this.widget, this._onHover, {
+    this.tooltip = new HTMLTooltip(NetMonitorController._toolbox, { type: "arrow" });
+    this.tooltip.startTogglingOnHover(widgetParentEl, this._onHover, {
       toggleDelay: REQUESTS_TOOLTIP_TOGGLE_DELAY,
       interactive: true
     });
-    this.tooltip.defaultPosition = REQUESTS_TOOLTIP_POSITION;
+    $("#requests-menu-contents").addEventListener("scroll", this._onScroll, true);
 
     Prefs.filters.forEach(type => this.filterOn(type));
     this.sortContents(this._byTiming);
@@ -486,7 +494,10 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     window.addEventListener("resize", this._onResize, false);
 
     this.requestsMenuSortEvent = getKeyWithEvent(this.sortBy.bind(this));
+    this.requestsMenuSortKeyboardEvent = getKeyWithEvent(this.sortBy.bind(this), true);
     this.requestsMenuFilterEvent = getKeyWithEvent(this.filterOn.bind(this));
+    this.requestsMenuFilterKeyboardEvent = getKeyWithEvent(
+      this.filterOn.bind(this), true);
     this.reqeustsMenuClearEvent = this.clear.bind(this);
     this._onContextShowing = this._onContextShowing.bind(this);
     this._onContextNewTabCommand = this.openRequestInTab.bind(this);
@@ -518,8 +529,12 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
 
     $("#toolbar-labels").addEventListener("click",
       this.requestsMenuSortEvent, false);
+    $("#toolbar-labels").addEventListener("keydown",
+      this.requestsMenuSortKeyboardEvent, false);
     $("#requests-menu-filter-buttons").addEventListener("click",
       this.requestsMenuFilterEvent, false);
+    $("#requests-menu-filter-buttons").addEventListener("keydown",
+      this.requestsMenuFilterKeyboardEvent, false);
     $("#requests-menu-clear-button").addEventListener("click",
       this.reqeustsMenuClearEvent, false);
     $("#network-request-popup").addEventListener("popupshowing",
@@ -582,9 +597,14 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    * Destruction function, called when the network monitor is closed.
    */
   destroy: function () {
-    dumpn("Destroying the SourcesView");
+    dumpn("Destroying the RequestsMenuView");
 
     Prefs.filters = this._activeFilters;
+
+    /* Destroy the tooltip */
+    this.tooltip.stopTogglingOnHover();
+    this.tooltip.destroy();
+    $("#requests-menu-contents").removeEventListener("scroll", this._onScroll, true);
 
     this.widget.removeEventListener("select", this._onSelect, false);
     this.widget.removeEventListener("swap", this._onSwap, false);
@@ -593,8 +613,12 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
 
     $("#toolbar-labels").removeEventListener("click",
       this.requestsMenuSortEvent, false);
+    $("#toolbar-labels").removeEventListener("keydown",
+      this.requestsMenuSortKeyboardEvent, false);
     $("#requests-menu-filter-buttons").removeEventListener("click",
       this.requestsMenuFilterEvent, false);
+    $("#requests-menu-filter-buttons").removeEventListener("keydown",
+      this.requestsMenuFilterKeyboardEvent, false);
     $("#requests-menu-clear-button").removeEventListener("click",
       this.reqeustsMenuClearEvent, false);
     this.freetextFilterBox.removeEventListener("input",
@@ -708,7 +732,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
    * Opens selected item in a new tab.
    */
   openRequestInTab: function () {
-    let win = Services.wm.getMostRecentWindow("navigator:browser");
+    let win = Services.wm.getMostRecentWindow(gDevTools.chromeWindowType);
     let selected = this.selectedItem.attachment;
     win.openUILinkIn(selected.url, "tab", { relatedToCurrent: true });
   },
@@ -1221,6 +1245,13 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
           this.sortContents((a, b) => !this._byDomain(a, b));
         }
         break;
+      case "cause":
+        if (direction == "ascending") {
+          this.sortContents(this._byCause);
+        } else {
+          this.sortContents((a, b) => !this._byCause(a, b));
+        }
+        break;
       case "type":
         if (direction == "ascending") {
           this.sortContents(this._byType);
@@ -1432,10 +1463,18 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
       : firstDomain > secondDomain;
   },
 
+  _byCause: function ({ attachment: first }, { attachment: second }) {
+    let firstCause = loadCauseString(first.cause.type);
+    let secondCause = loadCauseString(second.cause.type);
+
+    return firstCause == secondCause
+      ? first.startedMillis > second.startedMillis
+      : firstCause > secondCause;
+  },
+
   _byType: function ({ attachment: first }, { attachment: second }) {
     let firstType = this._getAbbreviatedMimeType(first.mimeType).toLowerCase();
-    let secondType = this._getAbbreviatedMimeType(second.mimeType)
-      .toLowerCase();
+    let secondType = this._getAbbreviatedMimeType(second.mimeType).toLowerCase();
 
     return firstType == secondType
       ? first.startedMillis > second.startedMillis
@@ -1933,8 +1972,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
       }
       case "cause": {
         let labelNode = $(".requests-menu-cause-label", target);
-        let text = LOAD_CAUSE_STRINGS[value.type] || "unknown";
-        labelNode.setAttribute("value", text);
+        labelNode.setAttribute("value", loadCauseString(value.type));
         if (value.loadingDocumentUri) {
           labelNode.setAttribute("tooltiptext", value.loadingDocumentUri);
         }
@@ -2314,14 +2352,13 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     }
 
     let string = yield gNetwork.getString(text);
-    let anchor = $(".requests-menu-icon", requestItem.target);
     let src = formDataURI(mimeType, encoding, string);
+    let maxDim = REQUESTS_TOOLTIP_IMAGE_MAX_DIM;
+    let { naturalWidth, naturalHeight } = yield getImageDimensions(tooltip.doc, src);
+    let options = { maxDim, naturalWidth, naturalHeight };
+    setImageTooltip(tooltip, tooltip.doc, src, options);
 
-    tooltip.setImageContent(src, {
-      maxDim: REQUESTS_TOOLTIP_IMAGE_MAX_DIM
-    });
-
-    return anchor;
+    return $(".requests-menu-icon", requestItem.target);
   }),
 
   _setTooltipStackTraceContent: Task.async(function* (tooltip, requestItem) {
@@ -2332,39 +2369,51 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     }
 
     let doc = tooltip.doc;
-    let el = doc.createElement("vbox");
-    el.className = "requests-menu-stack-trace";
+    let el = doc.createElementNS(HTML_NS, "div");
+    el.className = "stack-trace-tooltip devtools-monospace";
 
     for (let f of stacktrace) {
-      let { functionName, filename, lineNumber, columnNumber } = f;
+      let { functionName, filename, lineNumber, columnNumber, asyncCause } = f;
 
-      let frameEl = doc.createElement("hbox");
-      frameEl.className = "requests-menu-stack-frame devtools-monospace";
+      if (asyncCause) {
+        // if there is asyncCause, append a "divider" row into the trace
+        let asyncFrameEl = doc.createElementNS(HTML_NS, "div");
+        asyncFrameEl.className = "stack-frame stack-frame-async";
+        asyncFrameEl.textContent =
+          WEBCONSOLE_L10N.getFormatStr("stacktrace.asyncStack", asyncCause);
+        el.appendChild(asyncFrameEl);
+      }
 
-      let funcEl = doc.createElement("label");
-      funcEl.className = "requests-menu-stack-frame-function-name";
-      funcEl.setAttribute("value",
-        functionName || WEBCONSOLE_L10N.getStr("stacktrace.anonymousFunction"));
+      // Parse a source name in format "url -> url"
+      let sourceUrl = filename.split(" -> ").pop();
+
+      let frameEl = doc.createElementNS(HTML_NS, "div");
+      frameEl.className = "stack-frame stack-frame-call";
+
+      let funcEl = doc.createElementNS(HTML_NS, "span");
+      funcEl.className = "stack-frame-function-name";
+      funcEl.textContent =
+        functionName || WEBCONSOLE_L10N.getStr("stacktrace.anonymousFunction");
       frameEl.appendChild(funcEl);
 
-      let fileEl = doc.createElement("label");
-      fileEl.className = "requests-menu-stack-frame-file-name";
-      // Parse a stack frame in format "url -> url"
-      let sourceUrl = filename.split(" -> ").pop();
-      fileEl.setAttribute("value", sourceUrl);
-      fileEl.setAttribute("tooltiptext", sourceUrl);
-      fileEl.setAttribute("crop", "start");
-      frameEl.appendChild(fileEl);
+      let sourceEl = doc.createElementNS(HTML_NS, "span");
+      sourceEl.className = "stack-frame-source-name";
+      frameEl.appendChild(sourceEl);
 
-      let lineEl = doc.createElement("label");
-      lineEl.className = "requests-menu-stack-frame-line";
-      lineEl.setAttribute("value", `:${lineNumber}:${columnNumber}`);
-      frameEl.appendChild(lineEl);
+      let sourceInnerEl = doc.createElementNS(HTML_NS, "span");
+      sourceInnerEl.className = "stack-frame-source-name-inner";
+      sourceEl.appendChild(sourceInnerEl);
+
+      sourceInnerEl.textContent = sourceUrl;
+      sourceInnerEl.title = sourceUrl;
+
+      let lineEl = doc.createElementNS(HTML_NS, "span");
+      lineEl.className = "stack-frame-line";
+      lineEl.textContent = `:${lineNumber}:${columnNumber}`;
+      sourceInnerEl.appendChild(lineEl);
 
       frameEl.addEventListener("click", () => {
-        // avoid an ugly visual artefact when the view is switched to debugger and the
-        // tooltip is hidden only after a delay - the tooltip is moved outside the browser
-        // window.
+        // hide the tooltip immediately, not after delay
         tooltip.hide();
         NetMonitorController.viewSourceInDebugger(filename, lineNumber);
       }, false);
@@ -2372,8 +2421,7 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
       el.appendChild(frameEl);
     }
 
-    tooltip.content = el;
-    tooltip.panel.setAttribute("wide", "");
+    tooltip.setContent(el, {width: REQUESTS_TOOLTIP_STACK_TRACE_WIDTH});
 
     return true;
   }),
@@ -2397,6 +2445,13 @@ RequestsMenuView.prototype = Heritage.extend(WidgetMethods, {
     // Allow requests to settle down first.
     setNamedTimeout("resize-events",
       RESIZE_REFRESH_RATE, () => this._flushWaterfallViews(true));
+  },
+
+  /**
+   * Scroll listener for the requests menu view.
+   */
+  _onScroll: function () {
+    this.tooltip.hide();
   },
 
   /**
@@ -3624,7 +3679,7 @@ NetworkDetailsView.prototype = {
       errorbox.hidden = false;
 
       // Strip any HTML from the message.
-      let plain = DOMParser.parseFromString(securityInfo.errorMessage,
+      let plain = new DOMParser().parseFromString(securityInfo.errorMessage,
         "text/html");
       setValue("#security-error-message", plain.body.textContent);
     }
@@ -3978,13 +4033,19 @@ function responseIsFresh({ responseHeaders, status }) {
  * @param function callback
  *          Function to execute execute when data-key
  *          is present in event.target.
+ * @param bool onlySpaceOrReturn
+ *          Flag to indicate if callback should only be called
+            when the space or return button is pressed
  * @return function
- *          Wrapped function with the target data-key as the first argument.
+ *          Wrapped function with the target data-key as the first argument
+ *          and the event as the second argument.
  */
-function getKeyWithEvent(callback) {
+function getKeyWithEvent(callback, onlySpaceOrReturn) {
   return function (event) {
     let key = event.target.getAttribute("data-key");
-    if (key) {
+    let filterKeyboardEvent = onlySpaceOrReturn
+       ? ViewHelpers.isSpaceOrReturn(event) : true;
+    if (key && filterKeyboardEvent) {
       callback.call(null, key);
     }
   };

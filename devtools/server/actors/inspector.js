@@ -53,20 +53,19 @@
 const {Cc, Ci, Cu} = require("chrome");
 const Services = require("Services");
 const protocol = require("devtools/shared/protocol");
-const {Arg, Option, method, RetVal, types} = protocol;
 const {LongStringActor} = require("devtools/server/actors/string");
 const promise = require("promise");
 const {Task} = require("devtools/shared/task");
-const object = require("sdk/util/object");
 const events = require("sdk/event/core");
-const {Class} = require("sdk/core/heritage");
 const {WalkerSearch} = require("devtools/server/actors/utils/walker-search");
 const {PageStyleActor, getFontPreviewData} = require("devtools/server/actors/styles");
 const {
   HighlighterActor,
   CustomHighlighterActor,
   isTypeRegistered,
+  HighlighterEnvironment
 } = require("devtools/server/actors/highlighters");
+const {EyeDropper} = require("devtools/server/actors/highlighters/eye-dropper");
 const {
   isAnonymous,
   isNativeAnonymous,
@@ -74,12 +73,12 @@ const {
   isShadowAnonymous,
   getFrameElement
 } = require("devtools/shared/layout/utils");
-const {getLayoutChangesObserver, releaseLayoutChangesObserver} =
-  require("devtools/server/actors/layout");
+const {getLayoutChangesObserver, releaseLayoutChangesObserver} = require("devtools/server/actors/layout");
+const nodeFilterConstants = require("devtools/shared/dom-node-filter-constants");
 
 loader.lazyRequireGetter(this, "CSS", "CSS");
 
-const {EventParsers} = require("devtools/shared/event-parsers");
+const {EventParsers} = require("devtools/server/event-parsers");
 const {nodeSpec, nodeListSpec, walkerSpec, inspectorSpec} = require("devtools/shared/specs/inspector");
 
 const FONT_FAMILY_PREVIEW_TEXT = "The quick brown fox jumps over the lazy dog";
@@ -150,7 +149,7 @@ loader.lazyGetter(this, "eventListenerService", function () {
            .getService(Ci.nsIEventListenerService);
 });
 
-loader.lazyGetter(this, "CssLogic", () => require("devtools/shared/inspector/css-logic").CssLogic);
+loader.lazyGetter(this, "CssLogic", () => require("devtools/server/css-logic").CssLogic);
 
 /**
  * We only send nodeValue up to a certain size by default.  This stuff
@@ -348,8 +347,9 @@ var NodeActor = exports.NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
     let hasAnonChildren = rawNode.nodeType === Ci.nsIDOMNode.ELEMENT_NODE &&
                           rawNode.ownerDocument.getAnonymousNodes(rawNode);
 
-    if (numChildren === 0 &&
-        (rawNode.contentDocument || rawNode.getSVGDocument)) {
+    let hasContentDocument = rawNode.contentDocument;
+    let hasSVGDocument = rawNode.getSVGDocument && rawNode.getSVGDocument();
+    if (numChildren === 0 && (hasContentDocument || hasSVGDocument)) {
       // This might be an iframe with virtual children.
       numChildren = 1;
     }
@@ -440,7 +440,7 @@ var NodeActor = exports.NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
   getEventListeners: function (node) {
     let parsers = this._eventParsers;
     let dbg = this.parent().tabActor.makeDebugger();
-    let events = [];
+    let listeners = [];
 
     for (let [, {getListeners, normalizeHandler}] of parsers) {
       try {
@@ -455,7 +455,7 @@ var NodeActor = exports.NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
             eventInfo.normalizeHandler = normalizeHandler;
           }
 
-          this.processHandlerForEvent(node, events, dbg, eventInfo);
+          this.processHandlerForEvent(node, listeners, dbg, eventInfo);
         }
       } catch (e) {
         // An object attached to the node looked like a listener but wasn't...
@@ -463,11 +463,11 @@ var NodeActor = exports.NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
       }
     }
 
-    events.sort((a, b) => {
+    listeners.sort((a, b) => {
       return a.type.localeCompare(b.type);
     });
 
-    return events;
+    return listeners;
   },
 
   /**
@@ -499,7 +499,7 @@ var NodeActor = exports.NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
    *             }
    *           }
    */
-  processHandlerForEvent: function (node, events, dbg, eventInfo) {
+  processHandlerForEvent: function (node, listeners, dbg, eventInfo) {
     let type = eventInfo.type || "";
     let handler = eventInfo.handler;
     let tags = eventInfo.tags || "";
@@ -590,7 +590,7 @@ var NodeActor = exports.NodeActor = protocol.ActorClassWithSpec(nodeSpec, {
       hide: hide
     };
 
-    events.push(eventObj);
+    listeners.push(eventObj);
 
     dbg.removeDebuggee(globalDO);
   },
@@ -1296,8 +1296,8 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
 
     // We're going to create a few document walkers with the same filter,
     // make it easier.
-    let getFilteredWalker = node => {
-      return this.getDocumentWalker(node, options.whatToShow);
+    let getFilteredWalker = documentWalkerNode => {
+      return this.getDocumentWalker(documentWalkerNode, options.whatToShow);
     };
 
     // Need to know the first and last child.
@@ -1610,10 +1610,6 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
           }
         }
         sugs.classes.delete("");
-        // Editing the style editor may make the stylesheet have errors and
-        // thus the page's elements' styles start changing with a transition.
-        // That transition comes from the `moz-styleeditor-transitioning` class.
-        sugs.classes.delete("moz-styleeditor-transitioning");
         sugs.classes.delete(HIDDEN_CLASS);
         for (let [className, count] of sugs.classes) {
           if (className.startsWith(completing)) {
@@ -1685,10 +1681,6 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
           id && result.push(["#" + id, count]);
         }
         sugs.classes.delete("");
-        // Editing the style editor may make the stylesheet have errors and
-        // thus the page's elements' styles start changing with a transition.
-        // That transition comes from the `moz-styleeditor-transitioning` class.
-        sugs.classes.delete("moz-styleeditor-transitioning");
         sugs.classes.delete(HIDDEN_CLASS);
         for (let [className, count] of sugs.classes) {
           className && result.push(["." + className, count]);
@@ -2113,7 +2105,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     if (isNodeDead(node) ||
         isNodeDead(parent) ||
         (sibling && isNodeDead(sibling))) {
-      return null;
+      return;
     }
 
     let rawNode = node.rawNode;
@@ -2128,7 +2120,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
                                                 null;
 
       if (rawNode === rawSibling || currentNextSibling === rawSibling) {
-        return null;
+        return;
       }
     }
 
@@ -2156,8 +2148,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     } catch (x) {
       // Failed to create a new element with that tag name, ignore the change,
       // and signal the error to the front.
-      return Promise.reject(new Error("Could not change node's tagName to " +
-        tagName));
+      return Promise.reject(new Error("Could not change node's tagName to " + tagName));
     }
 
     let attrs = oldNode.attributes;
@@ -2172,6 +2163,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     }
 
     oldNode.remove();
+    return null;
   },
 
   /**
@@ -2586,14 +2578,20 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
  * Server side of the inspector actor, which is used to create
  * inspector-related actors, including the walker.
  */
-var InspectorActor = exports.InspectorActor = protocol.ActorClassWithSpec(inspectorSpec, {
+exports.InspectorActor = protocol.ActorClassWithSpec(inspectorSpec, {
   initialize: function (conn, tabActor) {
     protocol.Actor.prototype.initialize.call(this, conn);
     this.tabActor = tabActor;
+
+    this._onColorPicked = this._onColorPicked.bind(this);
+    this._onColorPickCanceled = this._onColorPickCanceled.bind(this);
+    this.destroyEyeDropper = this.destroyEyeDropper.bind(this);
   },
 
   destroy: function () {
     protocol.Actor.prototype.destroy.call(this);
+
+    this.destroyEyeDropper();
 
     this._highlighterPromise = null;
     this._pageStylePromise = null;
@@ -2742,6 +2740,66 @@ var InspectorActor = exports.InspectorActor = protocol.ActorClassWithSpec(inspec
 
     let baseURI = Services.io.newURI(document.location.href, null, null);
     return Services.io.newURI(url, null, baseURI).spec;
+  },
+
+  /**
+   * Create an instance of the eye-dropper highlighter and store it on this._eyeDropper.
+   * Note that for now, a new instance is created every time to deal with page navigation.
+   */
+  createEyeDropper: function () {
+    this.destroyEyeDropper();
+    this._highlighterEnv = new HighlighterEnvironment();
+    this._highlighterEnv.initFromTabActor(this.tabActor);
+    this._eyeDropper = new EyeDropper(this._highlighterEnv);
+  },
+
+  /**
+   * Destroy the current eye-dropper highlighter instance.
+   */
+  destroyEyeDropper: function () {
+    if (this._eyeDropper) {
+      this.cancelPickColorFromPage();
+      this._eyeDropper.destroy();
+      this._eyeDropper = null;
+      this._highlighterEnv.destroy();
+      this._highlighterEnv = null;
+    }
+  },
+
+  /**
+   * Pick a color from the page using the eye-dropper. This method doesn't return anything
+   * but will cause events to be sent to the front when a color is picked or when the user
+   * cancels the picker.
+   * @param {Object} options
+   */
+  pickColorFromPage: function (options) {
+    this.createEyeDropper();
+    this._eyeDropper.show(this.window.document.documentElement, options);
+    this._eyeDropper.once("selected", this._onColorPicked);
+    this._eyeDropper.once("canceled", this._onColorPickCanceled);
+    events.once(this.tabActor, "will-navigate", this.destroyEyeDropper);
+  },
+
+  /**
+   * After the pickColorFromPage method is called, the only way to dismiss the eye-dropper
+   * highlighter is for the user to click in the page and select a color. If you need to
+   * dismiss the eye-dropper programatically instead, use this method.
+   */
+  cancelPickColorFromPage: function () {
+    if (this._eyeDropper) {
+      this._eyeDropper.hide();
+      this._eyeDropper.off("selected", this._onColorPicked);
+      this._eyeDropper.off("canceled", this._onColorPickCanceled);
+      events.off(this.tabActor, "will-navigate", this.destroyEyeDropper);
+    }
+  },
+
+  _onColorPicked: function (e, color) {
+    events.emit(this, "color-picked", color);
+  },
+
+  _onColorPickCanceled: function () {
+    events.emit(this, "color-pick-canceled");
   }
 });
 
@@ -2763,6 +2821,7 @@ function nodeDocshell(node) {
     return win.QueryInterface(Ci.nsIInterfaceRequestor)
               .getInterface(Ci.nsIDocShell);
   }
+  return null;
 }
 
 function isNodeDead(node) {
@@ -2775,13 +2834,13 @@ function isNodeDead(node) {
  *
  * @param {DOMNode} node
  * @param {Window} rootWin
- * @param {Int} whatToShow See Ci.nsIDOMNodeFilter / inIDeepTreeWalker for
+ * @param {Int} whatToShow See nodeFilterConstants / inIDeepTreeWalker for
  * options.
  * @param {Function} filter A custom filter function Taking in a DOMNode
  *        and returning an Int. See WalkerActor.nodeFilter for an example.
  */
 function DocumentWalker(node, rootWin,
-    whatToShow = Ci.nsIDOMNodeFilter.SHOW_ALL,
+    whatToShow = nodeFilterConstants.SHOW_ALL,
     filter = standardTreeWalkerFilter) {
   if (!rootWin.location) {
     throw new Error("Got an invalid root window in DocumentWalker");
@@ -2800,7 +2859,7 @@ function DocumentWalker(node, rootWin,
   // causes currentNode to be updated.
   this.walker.currentNode = node;
   while (node &&
-         this.filter(node) === Ci.nsIDOMNodeFilter.FILTER_SKIP) {
+         this.filter(node) === nodeFilterConstants.FILTER_SKIP) {
     node = this.walker.parentNode();
   }
 }
@@ -2831,7 +2890,7 @@ DocumentWalker.prototype = {
 
     let nextNode = this.walker.nextNode();
     while (nextNode &&
-           this.filter(nextNode) === Ci.nsIDOMNodeFilter.FILTER_SKIP) {
+           this.filter(nextNode) === nodeFilterConstants.FILTER_SKIP) {
       nextNode = this.walker.nextNode();
     }
 
@@ -2846,7 +2905,7 @@ DocumentWalker.prototype = {
 
     let firstChild = this.walker.firstChild();
     while (firstChild &&
-           this.filter(firstChild) === Ci.nsIDOMNodeFilter.FILTER_SKIP) {
+           this.filter(firstChild) === nodeFilterConstants.FILTER_SKIP) {
       firstChild = this.walker.nextSibling();
     }
 
@@ -2861,7 +2920,7 @@ DocumentWalker.prototype = {
 
     let lastChild = this.walker.lastChild();
     while (lastChild &&
-           this.filter(lastChild) === Ci.nsIDOMNodeFilter.FILTER_SKIP) {
+           this.filter(lastChild) === nodeFilterConstants.FILTER_SKIP) {
       lastChild = this.walker.previousSibling();
     }
 
@@ -2870,7 +2929,7 @@ DocumentWalker.prototype = {
 
   previousSibling: function () {
     let node = this.walker.previousSibling();
-    while (node && this.filter(node) === Ci.nsIDOMNodeFilter.FILTER_SKIP) {
+    while (node && this.filter(node) === nodeFilterConstants.FILTER_SKIP) {
       node = this.walker.previousSibling();
     }
     return node;
@@ -2878,7 +2937,7 @@ DocumentWalker.prototype = {
 
   nextSibling: function () {
     let node = this.walker.nextSibling();
-    while (node && this.filter(node) === Ci.nsIDOMNodeFilter.FILTER_SKIP) {
+    while (node && this.filter(node) === nodeFilterConstants.FILTER_SKIP) {
       node = this.walker.nextSibling();
     }
     return node;
@@ -2902,13 +2961,13 @@ function standardTreeWalkerFilter(node) {
   // want to show them
   if (node.nodeName === "_moz_generated_content_before" ||
       node.nodeName === "_moz_generated_content_after") {
-    return Ci.nsIDOMNodeFilter.FILTER_ACCEPT;
+    return nodeFilterConstants.FILTER_ACCEPT;
   }
 
   // Ignore empty whitespace text nodes.
   if (node.nodeType == Ci.nsIDOMNode.TEXT_NODE &&
       !/[^\s]/.exec(node.nodeValue)) {
-    return Ci.nsIDOMNodeFilter.FILTER_SKIP;
+    return nodeFilterConstants.FILTER_SKIP;
   }
 
   // Ignore all native and XBL anonymous content inside a non-XUL document
@@ -2918,10 +2977,10 @@ function standardTreeWalkerFilter(node) {
     // that's XUL content injected in an HTML document, but we need to because
     // this also skips many other elements that need to be skipped - like form
     // controls, scrollbars, video controls, etc (see bug 1187482).
-    return Ci.nsIDOMNodeFilter.FILTER_SKIP;
+    return nodeFilterConstants.FILTER_SKIP;
   }
 
-  return Ci.nsIDOMNodeFilter.FILTER_ACCEPT;
+  return nodeFilterConstants.FILTER_ACCEPT;
 }
 
 /**
@@ -2932,9 +2991,9 @@ function allAnonymousContentTreeWalkerFilter(node) {
   // Ignore empty whitespace text nodes.
   if (node.nodeType == Ci.nsIDOMNode.TEXT_NODE &&
       !/[^\s]/.exec(node.nodeValue)) {
-    return Ci.nsIDOMNodeFilter.FILTER_SKIP;
+    return nodeFilterConstants.FILTER_SKIP;
   }
-  return Ci.nsIDOMNodeFilter.FILTER_ACCEPT;
+  return nodeFilterConstants.FILTER_ACCEPT;
 }
 
 /**
@@ -2968,7 +3027,7 @@ function ensureImageLoaded(image, timeout) {
   });
 
   // Don't timeout when testing. This is never settled.
-  let onAbort = new promise(() => {});
+  let onAbort = new Promise(() => {});
 
   if (!DevToolsUtils.testing) {
     // Tests are not running. Reject the promise after given timeout.
@@ -3030,8 +3089,9 @@ var imageToImageData = Task.async(function* (node, maxDim) {
   // Extract the image data
   let imageData;
   // The image may already be a data-uri, in which case, save ourselves the
-  // trouble of converting via the canvas.drawImage.toDataURL method
-  if (isImg && node.src.startsWith("data:")) {
+  // trouble of converting via the canvas.drawImage.toDataURL method, but only
+  // if the image doesn't need resizing
+  if (isImg && node.src.startsWith("data:") && resizeRatio === 1) {
     imageData = node.src;
   } else {
     // Create a canvas to copy the rawNode into and get the imageData from

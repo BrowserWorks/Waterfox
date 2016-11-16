@@ -97,7 +97,7 @@
     cursor: n-resize;
   }
 
-  .devtools-responsive-container > .devtools-sidebar-tabs:not([pane-collapsed]) {
+  .devtools-responsive-container > .devtools-sidebar-tabs:not(.pane-collapsed) {
     /* When the panel is collapsed min/max height should not be applied because
        collapsing relies on negative margins, which implies constant height. */
     min-height: 35vh;
@@ -214,7 +214,7 @@
 
 #breadcrumb-separator-after,
 #breadcrumb-separator-before:after {
-  background: var(--theme-toolbar-background);
+  background: var(--theme-body-background);
 }
 
 /* This chevron arrow cannot be replicated easily in CSS, so we are using
@@ -351,6 +351,7 @@
 .theme-firebug .breadcrumbs-widget-item {
   margin-inline-start: 10px;
   margin-inline-end: 1px;
+  background-image: none;
   border: 1px solid transparent;
   color: #141414;
   border-radius: 2px;
@@ -625,6 +626,12 @@ widgets.css is overwritten. */
   border-top-width: 1px;
   border-top-style: solid;
   margin-top: -1px;
+}
+
+/* Custom scope stylings */
+
+.variables-view-watch-expressions .title > .name  {
+  max-width: 14em;
 }
 
 .theme-firebug .variables-view-scope > .title {

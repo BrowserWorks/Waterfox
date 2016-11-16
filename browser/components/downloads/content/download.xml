@@ -18,10 +18,12 @@
     <content orient="horizontal"
              align="center"
              onclick="DownloadsView.onDownloadClick(event);">
-      <xul:image class="downloadTypeIcon"
-                 validate="always"
-                 xbl:inherits="src=image"/>
-      <xul:image class="downloadTypeIcon blockedIcon"/>
+      <xul:stack>
+        <xul:image class="downloadTypeIcon"
+                   validate="always"
+                   xbl:inherits="src=image"/>
+        <xul:image class="downloadBlockedBadge" />
+      </xul:stack>
       <xul:vbox pack="center"
                 flex="1"
                 class="downloadContainer"
@@ -69,6 +71,9 @@
         <xul:button class="downloadButton downloadChooseOpen downloadIconShow"
                     tooltiptext="&cmd.chooseOpen.label;"
                     oncommand="DownloadsView.onDownloadCommand(event, 'downloadsCmd_chooseOpen');"/>
+        <xul:button class="downloadButton downloadShowBlockedInfo"
+                    tooltiptext="&cmd.chooseUnblock.label;"
+                    oncommand="DownloadsView.onDownloadCommand(event, 'downloadsCmd_showBlockedInfo');"/>
       </xul:stack>
     </content>
   </binding>

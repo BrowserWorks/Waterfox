@@ -303,6 +303,20 @@ const DownloadsPanel = {
         return this._onKeyDown(aEvent);
       case "keypress":
         return this._onKeyPress(aEvent);
+      case "popupshown":
+        if (this.setHeightToFitOnShow) {
+          this.setHeightToFitOnShow = false;
+          this.setHeightToFit();
+        }
+        break;
+    }
+  },
+
+  setHeightToFit() {
+    if (this._state == this.kStateShown) {
+      DownloadsBlockedSubview.view.setHeightToFit();
+    } else {
+      this.setHeightToFitOnShow = true;
     }
   },
 
@@ -396,6 +410,8 @@ const DownloadsPanel = {
     // Handle keypress to be able to preventDefault() events before they reach
     // the richlistbox, for keyboard navigation.
     this.panel.addEventListener("keypress", this, false);
+    // Handle height adjustment on show.
+    this.panel.addEventListener("popupshown", this, false);
   },
 
   /**
@@ -405,6 +421,7 @@ const DownloadsPanel = {
   _unattachEventListeners() {
     this.panel.removeEventListener("keydown", this, false);
     this.panel.removeEventListener("keypress", this, false);
+    this.panel.removeEventListener("popupshown", this, false);
   },
 
   _onKeyPress(aEvent) {
@@ -839,6 +856,9 @@ const DownloadsView = {
     }
 
     this._itemCountChanged();
+
+    // Adjust the panel height if we removed items.
+    DownloadsPanel.setHeightToFit();
   },
 
   /**
@@ -912,7 +932,16 @@ const DownloadsView = {
     // Handle primary clicks only, and exclude the action button.
     if (aEvent.button == 0 &&
         !aEvent.originalTarget.hasAttribute("oncommand")) {
-      goDoCommand("downloadsCmd_open");
+      let target = aEvent.target;
+      while (target.nodeName != "richlistitem") {
+        target = target.parentNode;
+      }
+      let download = DownloadsView.itemForElement(target).download;
+      if (download.hasBlockedData) {
+        goDoCommand("downloadsCmd_showBlockedInfo");
+      } else {
+        goDoCommand("downloadsCmd_open");
+      }
     }
   },
 
@@ -1070,6 +1099,8 @@ DownloadsViewItem.prototype = {
       case "downloadsCmd_copyLocation":
       case "downloadsCmd_doDefault":
         return true;
+      case "downloadsCmd_showBlockedInfo":
+        return this.download.hasBlockedData;
     }
     return DownloadsViewUI.DownloadElementShell.prototype
                           .isCommandEnabled.call(this, aCommand);
@@ -1100,9 +1131,9 @@ DownloadsViewItem.prototype = {
     this.confirmUnblock(window, "chooseUnblock");
   },
 
-  downloadsCmd_chooseOpen() {
+  downloadsCmd_unblockAndOpen() {
     DownloadsPanel.hidePanel();
-    this.confirmUnblock(window, "chooseOpen");
+    this.unblockAndOpenDownload().catch(Cu.reportError);
   },
 
   downloadsCmd_open() {
@@ -1126,6 +1157,11 @@ DownloadsViewItem.prototype = {
     // window to open before the panel closed. This also helps to prevent the
     // user from opening the containing folder several times.
     DownloadsPanel.hidePanel();
+  },
+
+  downloadsCmd_showBlockedInfo() {
+    DownloadsBlockedSubview.toggle(this.element,
+                                   ...this.rawBlockedTitleAndDetails);
   },
 
   downloadsCmd_openReferrer() {
@@ -1178,7 +1214,17 @@ const DownloadsViewController = {
         !(aCommand in DownloadsViewItem.prototype)) {
       return false;
     }
-    // Secondly, determine if focus is on a control in the downloads list.
+    // The currently supported commands depend on whether the blocked subview is
+    // showing.  If it is, then take the following path.
+    if (DownloadsBlockedSubview.view.showingSubView) {
+      let blockedSubviewCmds = [
+        "downloadsCmd_unblockAndOpen",
+        "cmd_delete",
+      ];
+      return blockedSubviewCmds.indexOf(aCommand) >= 0;
+    }
+    // If the blocked subview is not showing, then determine if focus is on a
+    // control in the downloads list.
     let element = document.commandDispatcher.focusedElement;
     while (element && element != DownloadsView.richListBox) {
       element = element.parentNode;
@@ -1462,6 +1508,10 @@ const DownloadsFooter = {
       } else {
         this._footerNode.removeAttribute("showingsummary");
       }
+      if (!aValue && this._showingSummary) {
+        // Make sure the panel's height shrinks when the summary is hidden.
+        DownloadsPanel.setHeightToFit();
+      }
       this._showingSummary = aValue;
     }
     return aValue;
@@ -1481,3 +1531,127 @@ const DownloadsFooter = {
 };
 
 XPCOMUtils.defineConstant(this, "DownloadsFooter", DownloadsFooter);
+
+
+////////////////////////////////////////////////////////////////////////////////
+//// DownloadsBlockedSubview
+
+/**
+ * Manages the blocked subview that slides in when you click a blocked download.
+ */
+const DownloadsBlockedSubview = {
+
+  get subview() {
+    let subview = document.getElementById("downloadsPanel-blockedSubview");
+    delete this.subview;
+    return this.subview = subview;
+  },
+
+  /**
+   * Elements in the subview.
+   */
+  get elements() {
+    let idSuffixes = [
+      "title",
+      "details1",
+      "details2",
+      "openButton",
+      "deleteButton",
+    ];
+    let elements = idSuffixes.reduce((memo, s) => {
+      memo[s] = document.getElementById("downloadsPanel-blockedSubview-" + s);
+      return memo;
+    }, {});
+    delete this.elements;
+    return this.elements = elements;
+  },
+
+  /**
+   * The multiview that contains both the main view and the subview.
+   */
+  get view() {
+    let view = document.getElementById("downloadsPanel-multiView");
+    delete this.view;
+    return this.view = view;
+  },
+
+  /**
+   * The blocked-download richlistitem element that was clicked to show the
+   * subview.  If the subview is not showing, this is undefined.
+   */
+  element: undefined,
+
+  /**
+   * Slides in the blocked subview.
+   *
+   * @param element
+   *        The blocked-download richlistitem element that was clicked.
+   * @param title
+   *        The title to show in the subview.
+   * @param details
+   *        An array of strings with information about the block.
+   */
+  toggle(element, title, details) {
+    if (this.view.showingSubView) {
+      this.hide();
+      return;
+    }
+
+    this.element = element;
+    element.setAttribute("showingsubview", "true");
+
+    let e = this.elements;
+    let s = DownloadsCommon.strings;
+    e.title.textContent = title;
+    e.details1.textContent = details[0];
+    e.details2.textContent = details[1];
+    e.openButton.label = s.unblockButtonOpen;
+    e.deleteButton.label = s.unblockButtonConfirmBlock;
+
+    let verdict = element.getAttribute("verdict");
+    this.subview.setAttribute("verdict", verdict);
+    this.subview.addEventListener("ViewHiding", this);
+
+    this.view.showSubView(this.subview.id);
+
+    // Without this, the mainView is more narrow than the panel once all
+    // downloads are removed from the panel.
+    document.getElementById("downloadsPanel-mainView").style.minWidth =
+      window.getComputedStyle(this.view).width;
+  },
+
+  handleEvent(event) {
+    switch (event.type) {
+      case "ViewHiding":
+        this.subview.removeEventListener(event.type, this);
+        this.element.removeAttribute("showingsubview");
+        delete this.element;
+        break;
+      default:
+        DownloadsCommon.log("Unhandled DownloadsBlockedSubview event: " +
+                            event.type);
+        break;
+    }
+  },
+
+  /**
+   * Slides out the blocked subview and shows the main view.
+   */
+  hide() {
+    this.view.showMainView();
+    // The point of this is to focus the proper element in the panel now that
+    // the main view is showing again.  showPanel handles that.
+    DownloadsPanel.showPanel();
+  },
+
+  /**
+   * Deletes the download and hides the entire panel.
+   */
+  confirmBlock() {
+    goDoCommand("cmd_delete");
+    DownloadsPanel.hidePanel();
+  },
+};
+
+XPCOMUtils.defineConstant(this, "DownloadsBlockedSubview",
+                          DownloadsBlockedSubview);

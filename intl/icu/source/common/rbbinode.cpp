@@ -1,6 +1,6 @@
 /*
 ***************************************************************************
-*   Copyright (C) 2002-2016 International Business Machines Corporation   *
+*   Copyright (C) 2002-2008 International Business Machines Corporation   *
 *   and others. All rights reserved.                                      *
 ***************************************************************************
 */
@@ -56,8 +56,6 @@ RBBINode::RBBINode(NodeType t) : UMemory() {
     fLastPos      = 0;
     fNullable     = FALSE;
     fLookAheadEnd = FALSE;
-    fRuleRoot     = FALSE;
-    fChainIn      = FALSE;
     fVal          = 0;
     fPrecedence   = precZero;
 
@@ -88,8 +86,6 @@ RBBINode::RBBINode(const RBBINode &other) : UMemory(other) {
     fLastPos     = other.fLastPos;
     fNullable    = other.fNullable;
     fVal         = other.fVal;
-    fRuleRoot    = FALSE;
-    fChainIn     = other.fChainIn;
     UErrorCode     status = U_ZERO_ERROR;
     fFirstPosSet = new UVector(status);   // TODO - get a real status from somewhere
     fLastPosSet  = new UVector(status);
@@ -165,8 +161,6 @@ RBBINode *RBBINode::cloneTree() {
             }
         }
     }
-    n->fRuleRoot = this->fRuleRoot;
-    n->fChainIn  = this->fChainIn;
     return n;
 }
 
@@ -278,12 +272,6 @@ void   RBBINode::findNodes(UVector *dest, RBBINode::NodeType kind, UErrorCode &s
 //
 //-------------------------------------------------------------------------
 #ifdef RBBI_DEBUG
-
-static int32_t serial(const RBBINode *node) {
-    return (node == NULL? -1 : node->fSerialNum);
-}
-
-
 void RBBINode::printNode() {
     static const char * const nodeTypeNames[] = {
                 "setRef",
@@ -307,10 +295,9 @@ void RBBINode::printNode() {
     if (this==NULL) {
         RBBIDebugPrintf("%10p", (void *)this);
     } else {
-        RBBIDebugPrintf("%10p %5d %12s %c%c  %5d       %5d     %5d       %6d     %d ",
-            (void *)this, fSerialNum, nodeTypeNames[fType],   fRuleRoot?'R':' ',  fChainIn?'C':' ',
-             serial(fLeftChild), serial(fRightChild), serial(fParent),
-            fFirstPos, fVal);
+        RBBIDebugPrintf("%10p  %12s  %10p  %10p  %10p      %4d     %6d   %d ",
+            (void *)this, nodeTypeNames[fType], (void *)fParent, (void *)fLeftChild, (void *)fRightChild,
+            fSerialNum, fFirstPos, fVal);
         if (fType == varRef) {
             RBBI_DEBUG_printUnicodeString(fText);
         }
@@ -341,13 +328,11 @@ U_CFUNC void RBBI_DEBUG_printUnicodeString(const UnicodeString &s, int minWidth)
 //
 //-------------------------------------------------------------------------
 #ifdef RBBI_DEBUG
-void RBBINode::printNodeHeader() {
-    RBBIDebugPrintf(" Address   serial        type     LeftChild  RightChild   Parent   position value\n");
-}
-    
 void RBBINode::printTree(UBool printHeading) {
     if (printHeading) {
-        printNodeHeader();
+        RBBIDebugPrintf( "-------------------------------------------------------------------\n"
+                         "    Address       type         Parent   LeftChild  RightChild    serial  position value\n"
+              );
     }
     this->printNode();
     if (this != NULL) {

@@ -3,6 +3,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+:root {
+  --eyedropper-image: url(images/command-eyedropper.svg);
+}
+
+.theme-firebug {
+  --eyedropper-image: url(images/firebug/command-eyedropper.svg);
+}
+
+:root.theme-light {
+  --breadcrumbs-border-color: #f3f3f3;
+}
+
+:root.theme-dark {
+  --breadcrumbs-border-color: #454d5d;
+}
+
 /* Use flex layout for the Inspector toolbar. For now, it's done
    specifically for the Inspector toolbar since general rule applied
    on .devtools-toolbar breaks breadcrubs and also toolbars in other
@@ -37,6 +53,10 @@
   padding: 0px;
   border-bottom-width: 0px;
   border-top-width: 1px;
+  border-top-color: var(--breadcrumbs-border-color);
+  /* Bug 1262668 - Use the same background as the body so the breadcrumbs toolbar doesn't
+     get mistaken as a splitter */
+  background-color: var(--theme-body-background);
   display: block;
   position: relative;
 }
@@ -78,131 +98,29 @@
   font: message-box;
 }
 
-/* Expand/collapse panel toolbar button */
+/* Eyedropper toolbar button */
 
-#inspector-pane-toggle::before {
-  background-image: var(--theme-pane-collapse-image);
+#inspector-eyedropper-toggle {
+  /* hidden by default, until we can check that the required highlighter exists */
+  display: none;
 }
 
-#inspector-pane-toggle[pane-collapsed]::before {
-  background-image: var(--theme-pane-expand-image);
-}
-
-/* Rotate button icon 90deg if the toolbox container is
-  in vertical mode (sidebar displayed under the main panel) */
-@media (max-width: 700px) {
-  #inspector-pane-toggle::before {
-    transform: rotate(90deg);
-  }
+#inspector-eyedropper-toggle::before {
+  background-image: var(--eyedropper-image);
 }
 
 /* Add element toolbar button */
-
 #inspector-element-add-button::before {
   background-image: url("chrome://devtools/skin/images/add.svg");
+  list-style-image: url("chrome://devtools/skin/images/add.svg");
+  -moz-user-focus: normal;
 }
 
-/* Tooltip: Events */
+/* "no results" warning message displayed in the ruleview and in the computed view */
 
-#devtools-tooltip-events-container {
-  margin: -4px; /* Compensate for the .panel-arrowcontent padding. */
-  max-width: 590px;
-  overflow-y: auto;
-}
-
-.event-header {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.event-header:first-child {
-  border-width: 0;
-}
-
-.event-header:not(:first-child) {
-  border-width: 1px 0 0 0;
-}
-
-.event-tooltip-event-type,
-.event-tooltip-filename,
-.event-tooltip-attributes {
-  margin-inline-start: 0;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.event-tooltip-event-type {
-  font-weight: bold;
-  font-size: 13px;
-}
-
-.event-tooltip-filename {
-  margin-inline-end: 0;
-  font-size: 100%;
-  flex-shrink: 1;
-}
-
-.event-tooltip-debugger-icon {
-  width: 16px;
-  height: 16px;
-  margin-inline-end: 4px;
-  opacity: 0.6;
-  flex-shrink: 0;
-}
-
-.event-tooltip-debugger-icon:hover {
-  opacity: 1;
-}
-
-.event-tooltip-content-box {
-  display: none;
-  height: 100px;
-  overflow: hidden;
-  margin-inline-end: 0;
-  border: 1px solid var(--theme-splitter-color);
-  border-width: 1px 0 0 0;
-}
-
-.event-toolbox-content-box iframe {
-  height: 100%;
-}
-
-.event-tooltip-content-box[open] {
-  display: block;
-}
-
-.event-tooltip-source-container {
-  margin-top: 5px;
-  margin-bottom: 10px;
-  margin-inline-start: 5px;
-  margin-inline-end: 0;
-}
-
-.event-tooltip-source {
-  margin-bottom: 0;
-}
-
-.event-tooltip-attributes-container {
-  display: flex;
-  flex-shrink: 0;
-  flex-grow: 1;
-  justify-content: flex-end;
-}
-
-.event-tooltip-attributes-box {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  border-radius: 3px;
-  padding: 2px;
-  margin-inline-start: 5px;
-  background-color: var(--theme-body-color-alt);
-  color: var(--theme-toolbar-background);
-}
-
-.event-tooltip-attributes {
-  margin: 0;
-  font-size: 9px;
-  padding-top: 2px;
+#ruleview-no-results,
+#computedview-no-results {
+  color: var(--theme-body-color-inactive);
+  text-align: center;
+  margin: 5px;
 }

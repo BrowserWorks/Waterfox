@@ -36,6 +36,7 @@
 #include "jit/arm/Architecture-arm.h"
 #include "jit/arm/disasm/Disasm-arm.h"
 #include "jit/IonTypes.h"
+#include "threading/Mutex.h"
 
 namespace js {
 namespace jit {
@@ -203,6 +204,20 @@ class Simulator
         end_sim_pc = -2
     };
 
+    // ForbidUnaligned means "always fault on unaligned access".
+    //
+    // AllowUnaligned means "allow the unaligned access if other conditions are
+    // met".  The "other conditions" vary with the instruction: For all
+    // instructions the base condition is !HasAlignmentFault(), ie, the chip is
+    // configured to allow unaligned accesses.  For instructions like VLD1
+    // there is an additional constraint that the alignment attribute in the
+    // instruction must be set to "default alignment".
+
+    enum UnalignedPolicy {
+        ForbidUnaligned,
+        AllowUnaligned
+    };
+
     bool init();
 
     // Checks if the current instruction should be executed based on its
@@ -260,8 +275,8 @@ class Simulator
     inline uint16_t readExHU(int32_t addr, SimInstruction* instr);
     inline int32_t writeExH(int32_t addr, uint16_t value, SimInstruction* instr);
 
-    inline int readW(int32_t addr, SimInstruction* instr);
-    inline void writeW(int32_t addr, int value, SimInstruction* instr);
+    inline int readW(int32_t addr, SimInstruction* instr, UnalignedPolicy f = ForbidUnaligned);
+    inline void writeW(int32_t addr, int value, SimInstruction* instr, UnalignedPolicy f = ForbidUnaligned);
 
     inline int readExW(int32_t addr, SimInstruction* instr);
     inline int writeExW(int32_t addr, int value, SimInstruction* instr);
@@ -418,7 +433,7 @@ class Simulator
     // This lock creates a critical section around 'redirection_' and
     // 'icache_', which are referenced both by the execution engine
     // and by the off-thread compiler (see Redirection::Get in the cpp file).
-    PRLock* cacheLock_;
+    Mutex cacheLock_;
 #ifdef DEBUG
     PRThread* cacheLockHolder_;
 #endif

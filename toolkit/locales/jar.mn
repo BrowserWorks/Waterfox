@@ -32,8 +32,6 @@
   locale/@AB_CD@/global/commonDialogs.properties        (%chrome/global/commonDialogs.properties)
   locale/@AB_CD@/global/config.dtd                      (%chrome/global/config.dtd)
   locale/@AB_CD@/global/config.properties               (%chrome/global/config.properties)
-  locale/@AB_CD@/global/console.dtd                     (%chrome/global/console.dtd)
-  locale/@AB_CD@/global/console.properties              (%chrome/global/console.properties)
   locale/@AB_CD@/global/contentAreaCommands.properties  (%chrome/global/contentAreaCommands.properties)
 #ifndef MOZ_FENNEC
   locale/@AB_CD@/global/customizeToolbar.dtd            (%chrome/global/customizeToolbar.dtd)
@@ -87,8 +85,6 @@
   locale/@AB_CD@/global/wizard.properties               (%chrome/global/wizard.properties)
   locale/@AB_CD@/global/crashes.dtd                     (%crashreporter/crashes.dtd)
   locale/@AB_CD@/global/crashes.properties              (%crashreporter/crashes.properties)
-% locale global-region @AB_CD@ %locale/@AB_CD@/global-region/
-  locale/@AB_CD@/global-region/region.properties        (%chrome/global-region/region.properties)
 % locale global-platform @AB_CD@ %locale/@AB_CD@/global-platform/
   locale/@AB_CD@/global-platform/mac/platformKeys.properties  (%chrome/global-platform/mac/platformKeys.properties)
   locale/@AB_CD@/global-platform/unix/platformKeys.properties (%chrome/global-platform/unix/platformKeys.properties)

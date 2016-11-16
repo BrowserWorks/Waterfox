@@ -8,6 +8,7 @@
 #define MEDIA_OMX_COMMON_DECODER_H
 
 #include "MediaDecoder.h"
+#include "nsAutoPtr.h"
 
 namespace android {
 struct MOZ_EXPORT MediaSource;
@@ -26,7 +27,7 @@ public:
   void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
                         MediaDecoderEventVisibility aEventVisibility) override;
   void ChangeState(PlayState aState) override;
-  void CallSeek(const SeekTarget& aTarget) override;
+  void CallSeek(const SeekTarget& aTarget, dom::Promise* aPromise) override;
   void SetVolume(double aVolume) override;
   int64_t CurrentPosition() override;
   MediaDecoderOwner::NextFrameStatus NextFrameStatus() override;
@@ -44,6 +45,8 @@ public:
   virtual MediaDecoderStateMachine* CreateStateMachineFromReader(MediaOmxCommonReader* aReader) = 0;
 
   void NotifyOffloadPlayerPositionChanged() { UpdateLogicalPosition(); }
+
+  void Shutdown() override;
 
 protected:
   virtual ~MediaOmxCommonDecoder();

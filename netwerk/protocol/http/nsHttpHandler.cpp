@@ -323,7 +323,7 @@ nsHttpHandler::Init()
 
     mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
 
-    mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
+    mCompatFirefox.AssignLiteral("Firefox/" MOZILLA_UAVERSION);
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");
@@ -722,15 +722,18 @@ nsHttpHandler::BuildUserAgent()
     mUserAgent += '/';
     mUserAgent += mProductSub;
 
-    bool isFirefox = mAppName.EqualsLiteral("Waterfox");
+    bool isFirefox = mAppName.EqualsLiteral("Firefox");
     if (isFirefox || mCompatFirefoxEnabled) {
-        // App portion
-        mUserAgent += ' ';
-        mUserAgent += "Firefox";
-        mUserAgent += '/';
-        mUserAgent += mAppVersion;
+        // "Firefox/x.y" (compatibility) app token
         mUserAgent += ' ';
         mUserAgent += mCompatFirefox;
+    }
+    if (!isFirefox) {
+        // App portion
+        mUserAgent += ' ';
+        mUserAgent += mAppName;
+        mUserAgent += '/';
+        mUserAgent += mAppVersion;
     }
 }
 
@@ -1079,7 +1082,7 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
     if (PREF_CHANGED(HTTP_PREF("referer.trimmingPolicy"))) {
         rv = prefs->GetIntPref(HTTP_PREF("referer.trimmingPolicy"), &val);
         if (NS_SUCCEEDED(rv))
-            mReferrerTrimmingPolicy = (uint8_t) clamped(val, 0, 0xff);
+            mReferrerTrimmingPolicy = (uint8_t) clamped(val, 0, 2);
     }
 
     if (PREF_CHANGED(HTTP_PREF("referer.XOriginPolicy"))) {

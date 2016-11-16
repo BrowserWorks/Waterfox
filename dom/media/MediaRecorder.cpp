@@ -19,6 +19,7 @@
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/RecordErrorEvent.h"
 #include "mozilla/dom/VideoStreamTrack.h"
+#include "nsAutoPtr.h"
 #include "nsContentUtils.h"
 #include "nsError.h"
 #include "nsIDocument.h"
@@ -466,7 +467,7 @@ public:
 
     // Create a Track Union Stream
     MediaStreamGraph* gm = mRecorder->GetSourceMediaStream()->Graph();
-    mTrackUnionStream = gm->CreateTrackUnionStream(nullptr);
+    mTrackUnionStream = gm->CreateTrackUnionStream();
     MOZ_ASSERT(mTrackUnionStream, "CreateTrackUnionStream failed");
 
     mTrackUnionStream->SetAutofinish(true);

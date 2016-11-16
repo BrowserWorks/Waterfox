@@ -53,7 +53,8 @@ function WebRequestEventManager(context, eventName) {
         return;
       }
 
-      let optional = ["requestHeaders", "responseHeaders", "statusCode", "statusLine", "error", "redirectUrl"];
+      let optional = ["requestHeaders", "responseHeaders", "statusCode", "statusLine", "error", "redirectUrl",
+                      "requestBody"];
       for (let opt of optional) {
         if (opt in data) {
           data2[opt] = data[opt];
@@ -98,7 +99,7 @@ function WebRequestEventManager(context, eventName) {
 
 WebRequestEventManager.prototype = Object.create(SingletonEventManager.prototype);
 
-extensions.registerSchemaAPI("webRequest", "webRequest", (extension, context) => {
+extensions.registerSchemaAPI("webRequest", (extension, context) => {
   return {
     webRequest: {
       onBeforeRequest: new WebRequestEventManager(context, "onBeforeRequest").api(),

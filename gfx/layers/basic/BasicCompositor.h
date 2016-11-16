@@ -9,7 +9,6 @@
 #include "mozilla/layers/Compositor.h"
 #include "mozilla/layers/TextureHost.h"
 #include "mozilla/gfx/2D.h"
-#include "nsAutoPtr.h"
 
 namespace mozilla {
 namespace layers {
@@ -42,7 +41,7 @@ public:
 class BasicCompositor : public Compositor
 {
 public:
-  explicit BasicCompositor(CompositorBridgeParent* aParent, widget::CompositorWidgetProxy *aWidget);
+  explicit BasicCompositor(CompositorBridgeParent* aParent, widget::CompositorWidget* aWidget);
 
 protected:
   virtual ~BasicCompositor();
@@ -51,7 +50,7 @@ public:
 
   virtual BasicCompositor* AsBasicCompositor() override { return this; }
 
-  virtual bool Initialize() override;
+  virtual bool Initialize(nsCString* const out_failureReason) override;
 
   virtual void DetachWidget() override;
 
@@ -75,6 +74,9 @@ public:
 
   virtual already_AddRefed<DataTextureSource>
   CreateDataTextureSourceAround(gfx::DataSourceSurface* aSurface) override;
+
+  virtual already_AddRefed<DataTextureSource>
+  CreateDataTextureSourceAroundYCbCr(TextureHost* aTexture) override;
 
   virtual bool SupportsEffect(EffectTypes aEffect) override;
 

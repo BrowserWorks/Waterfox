@@ -47,7 +47,7 @@ BaselineCompiler::BaselineCompiler(JSContext* cx, TempAllocator& alloc, JSScript
 bool
 BaselineCompiler::init()
 {
-    if (!analysis_.init(alloc_, cx->runtime()->gsnCache))
+    if (!analysis_.init(alloc_, cx->caches.gsnCache))
         return false;
 
     if (!labels_.init(alloc_, script->length()))
@@ -251,7 +251,7 @@ BaselineCompiler::compile()
     for (size_t i = 0; i < icLoadLabels_.length(); i++) {
         CodeOffset label = icLoadLabels_[i].label;
         size_t icEntry = icLoadLabels_[i].icEntry;
-        ICEntry* entryAddr = &(baselineScript->icEntry(icEntry));
+        BaselineICEntry* entryAddr = &(baselineScript->icEntry(icEntry));
         Assembler::PatchDataWithValueCheck(CodeLocationLabel(code, label),
                                            ImmPtr(entryAddr),
                                            ImmPtr((void*)-1));
@@ -500,7 +500,7 @@ BaselineCompiler::emitOutOfLinePostBarrierSlot()
 bool
 BaselineCompiler::emitIC(ICStub* stub, ICEntry::Kind kind)
 {
-    ICEntry* entry = allocateICEntry(stub, kind);
+    BaselineICEntry* entry = allocateICEntry(stub, kind);
     if (!entry)
         return false;
 
@@ -4326,6 +4326,13 @@ BaselineCompiler::emit_JSOP_DEBUGCHECKSELFHOSTED()
 #endif
     return true;
 
+}
+
+bool
+BaselineCompiler::emit_JSOP_IS_CONSTRUCTING()
+{
+    frame.push(MagicValue(JS_IS_CONSTRUCTING));
+    return true;
 }
 
 bool

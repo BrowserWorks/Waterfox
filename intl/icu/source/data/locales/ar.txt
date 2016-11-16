@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ar.xml
@@ -375,7 +375,7 @@ ar{
         minimumGroupingDigits{"1"}
         native{"arab"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.94"}
     calendar{
         buddhist{
             eras{
@@ -539,7 +539,7 @@ ar{
                 MEd{"E، d/M"}
                 MMM{"LLL"}
                 MMMEd{"E، d MMM"}
-                MMMMd{"d MMMM"}
+                MMMMd{"MMMM d"}
                 MMMd{"d MMM"}
                 Md{"d/‏M"}
                 d{"d"}
@@ -1245,7 +1245,7 @@ ar{
                 MEd{"E، d/M"}
                 MMM{"LLL"}
                 MMMEd{"E، d MMM"}
-                MMMMd{"d MMMM"}
+                MMMMd{"MMMM d"}
                 MMMd{"d MMM"}
                 Md{"d/‏M"}
                 d{"d"}

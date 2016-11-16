@@ -6,16 +6,18 @@
 
 const { Ci } = require("chrome");
 
+const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 const EventEmitter = require("devtools/shared/event-emitter");
 const events = require("sdk/event/core");
 const protocol = require("devtools/shared/protocol");
-const { Arg, Option, method, RetVal } = protocol;
+const Services = require("Services");
 const { isWindowIncluded } = require("devtools/shared/layout/utils");
 const { highlighterSpec, customHighlighterSpec } = require("devtools/shared/specs/highlighters");
 const { isXUL, isNodeValid } = require("./highlighters/utils/markup");
 const { SimpleOutlineHighlighter } = require("./highlighters/simple-outline");
 
 const HIGHLIGHTER_PICKED_TIMER = 1000;
+const IS_OSX = Services.appinfo.OS === "Darwin";
 
 /**
  * The registration mechanism for highlighters provide a quick way to
@@ -291,7 +293,7 @@ var HighlighterActor = exports.HighlighterActor = protocol.ActorClassWithSpec(hi
        * LEFT_KEY: wider or parent
        * RIGHT_KEY: narrower or child
        * ENTER/CARRIAGE_RETURN: Picks currentNode
-       * ESC: Cancels picker, picks currentNode
+       * ESC/CTRL+SHIFT+C: Cancels picker, picks currentNode
        */
       switch (event.keyCode) {
         // Wider.
@@ -332,7 +334,13 @@ var HighlighterActor = exports.HighlighterActor = protocol.ActorClassWithSpec(hi
           this.cancelPick();
           events.emit(this._walker, "picker-node-canceled");
           return;
-
+        case Ci.nsIDOMKeyEvent.DOM_VK_C:
+          if ((IS_OSX && event.metaKey && event.altKey) ||
+            (!IS_OSX && event.ctrlKey && event.shiftKey)) {
+            this.cancelPick();
+            events.emit(this._walker, "picker-node-canceled");
+            return;
+          }
         default: return;
       }
 
@@ -671,3 +679,7 @@ exports.RulersHighlighter = RulersHighlighter;
 const { MeasuringToolHighlighter } = require("./highlighters/measuring-tool");
 register(MeasuringToolHighlighter);
 exports.MeasuringToolHighlighter = MeasuringToolHighlighter;
+
+const { EyeDropper } = require("./highlighters/eye-dropper");
+register(EyeDropper);
+exports.EyeDropper = EyeDropper;

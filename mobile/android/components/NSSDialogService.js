@@ -16,15 +16,28 @@ XPCOMUtils.defineLazyModuleGetter(this, "Prompt",
 // NSS Dialog Service
 // -----------------------------------------------------------------------
 
-function dump(a) {
-  Components.classes["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService).logStringMessage(a);
-}
-
 function NSSDialogs() { }
 
 NSSDialogs.prototype = {
   classID: Components.ID("{cbc08081-49b6-4561-9c18-a7707a50bda1}"),
   QueryInterface: XPCOMUtils.generateQI([Ci.nsICertificateDialogs, Ci.nsIClientAuthDialogs]),
+
+  /**
+   * Escapes the given input via HTML entity encoding. Used to prevent HTML
+   * injection when the input is to be placed inside an HTML body, but not in
+   * any other context.
+   *
+   * @param {String} input The input to interpret as a plain string.
+   * @returns {String} The escaped input.
+   */
+  escapeHTML: function(input) {
+    return input.replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#x27;")
+                .replace(/\//g, "&#x2F;");
+  },
 
   getString: function(aName) {
     if (!this.bundle) {
@@ -35,9 +48,12 @@ NSSDialogs.prototype = {
 
   formatString: function(aName, argList) {
     if (!this.bundle) {
-      this.bundle = Services.strings.createBundle("chrome://browser/locale/pippki.properties");
+      this.bundle =
+        Services.strings.createBundle("chrome://browser/locale/pippki.properties");
     }
-    return this.bundle.formatStringFromName(aName, argList, 1);
+    let escapedArgList = Array.from(argList, x => this.escapeHTML(x));
+    return this.bundle.formatStringFromName(aName, escapedArgList,
+                                            escapedArgList.length);
   },
 
   getPrompt: function(aTitle, aText, aButtons) {
@@ -114,33 +130,78 @@ NSSDialogs.prototype = {
   },
 
   certInfoSection: function(aHeading, aDataPairs, aTrailingNewline = true) {
-    var str = "<big>" + this.getString(aHeading) + "</big><br/>";
-    for (var i = 0; i < aDataPairs.length; i += 2) {
-      str += this.getString(aDataPairs[i]) + ": " + aDataPairs[i+1] + "<br/>";
+    let certInfoStrings = [
+      "<big>" + this.getString(aHeading) + "</big>",
+    ];
+
+    for (let i = 0; i < aDataPairs.length; i += 2) {
+      let key = aDataPairs[i];
+      let value = aDataPairs[i + 1];
+      certInfoStrings.push(this.formatString(key, [value]));
     }
-    return str + (aTrailingNewline ? "<br/>" : "");
+
+    if (aTrailingNewline) {
+      certInfoStrings.push("<br/>");
+    }
+
+    return certInfoStrings.join("<br/>");
   },
 
   viewCert: function(aCtx, aCert) {
-    let p = this.getPrompt(this.getString("certmgr.title"),
-                    "",
-                    [ this.getString("nssdialogs.ok.label") ])
+    let p = this.getPrompt(this.getString("certmgr.title"), "", [
+                             this.getString("nssdialogs.ok.label"),
+                           ]);
     p.addLabel({ label: this.certInfoSection("certmgr.subjectinfo.label",
-                          ["certmgr.certdetail.cn", aCert.commonName,
-                           "certmgr.certdetail.o", aCert.organization,
-                           "certmgr.certdetail.ou", aCert.organizationalUnit,
-                           "certmgr.certdetail.serialnumber", aCert.serialNumber])})
+                          ["certdetail.cn", aCert.commonName,
+                           "certdetail.o", aCert.organization,
+                           "certdetail.ou", aCert.organizationalUnit,
+                           "certdetail.serialnumber", aCert.serialNumber])})
      .addLabel({ label: this.certInfoSection("certmgr.issuerinfo.label",
-                          ["certmgr.certdetail.cn", aCert.issuerCommonName,
-                           "certmgr.certdetail.o", aCert.issuerOrganization,
-                           "certmgr.certdetail.ou", aCert.issuerOrganizationUnit])})
+                          ["certdetail.cn", aCert.issuerCommonName,
+                           "certdetail.o", aCert.issuerOrganization,
+                           "certdetail.ou", aCert.issuerOrganizationUnit])})
      .addLabel({ label: this.certInfoSection("certmgr.periodofvalidity.label",
-                          ["certmgr.begins", aCert.validity.notBeforeLocalDay,
-                           "certmgr.expires", aCert.validity.notAfterLocalDay])})
+                          ["certdetail.notBefore", aCert.validity.notBeforeLocalDay,
+                           "certdetail.notAfter", aCert.validity.notAfterLocalDay])})
      .addLabel({ label: this.certInfoSection("certmgr.fingerprints.label",
-                          ["certmgr.certdetail.sha256fingerprint", aCert.sha256Fingerprint,
-                           "certmgr.certdetail.sha1fingerprint", aCert.sha1Fingerprint], false) });
+                          ["certdetail.sha256fingerprint", aCert.sha256Fingerprint,
+                           "certdetail.sha1fingerprint", aCert.sha1Fingerprint],
+                          false) });
     this.showPrompt(p);
+  },
+
+  /**
+   * Returns a list of details of the given cert relevant for TLS client
+   * authentication.
+   *
+   * @param {nsIX509Cert} cert Cert to get the details of.
+   * @returns {String} <br/> delimited list of details.
+   */
+  getCertDetails: function(cert) {
+    let detailLines = [
+      this.formatString("clientAuthAsk.issuedTo", [cert.subjectName]),
+      this.formatString("clientAuthAsk.serial", [cert.serialNumber]),
+      this.formatString("clientAuthAsk.validityPeriod",
+                        [cert.validity.notBeforeLocalTime,
+                         cert.validity.notAfterLocalTime]),
+    ];
+    let keyUsages = cert.keyUsages;
+    if (keyUsages) {
+      detailLines.push(this.formatString("clientAuthAsk.keyUsages",
+                                         [keyUsages]));
+    }
+    let emailAddresses = cert.getEmailAddresses({});
+    if (emailAddresses.length > 0) {
+      let joinedAddresses = emailAddresses.join(", ");
+      detailLines.push(this.formatString("clientAuthAsk.emailAddresses",
+                                         [joinedAddresses]));
+    }
+    detailLines.push(this.formatString("clientAuthAsk.issuedBy",
+                                       [cert.issuerName]));
+    detailLines.push(this.formatString("clientAuthAsk.storedOn",
+                                       [cert.tokenName]));
+
+    return detailLines.join("<br/>");
   },
 
   viewCertDetails: function(details) {
@@ -151,56 +212,62 @@ NSSDialogs.prototype = {
     this.showPrompt(p);
   },
 
-  ChooseCertificate: function(aCtx, cn, organization, issuer, certNickList, certDetailsList, count, selectedIndex, canceled) {
-    let rememberSetting = true;
-    var pref = Cc['@mozilla.org/preferences-service;1']
-               .getService(Components.interfaces.nsIPrefService);
-    if (pref) {
-      pref = pref.getBranch(null);
-      try {
-        rememberSetting = pref.getBoolPref("security.remember_cert_checkbox_default_setting");
-      } catch (e) {
-        // pref is missing
-      }
+  chooseCertificate: function(ctx, hostname, port, organization, issuerOrg,
+                              certList, selectedIndex) {
+    let rememberSetting =
+      Services.prefs.getBoolPref("security.remember_cert_checkbox_default_setting");
+
+    let serverRequestedDetails = [
+      this.formatString("clientAuthAsk.hostnameAndPort",
+                        [hostname, port.toString()]),
+      this.formatString("clientAuthAsk.organization", [organization]),
+      this.formatString("clientAuthAsk.issuer", [issuerOrg]),
+    ].join("<br/>");
+
+    let certNickList = [];
+    let certDetailsList = [];
+    for (let i = 0; i < certList.length; i++) {
+      let cert = certList.queryElementAt(i, Ci.nsIX509Cert);
+      certNickList.push(this.formatString("clientAuthAsk.nickAndSerial",
+                                          [cert.nickname, cert.serialNumber]));
+      certDetailsList.push(this.getCertDetails(cert));
     }
 
-    let organizationString = this.formatString("clientAuthAsk.organization",
-                                               [organization]);
-    let issuerString = this.formatString("clientAuthAsk.issuer",
-                                         [issuer]);
-    let serverRequestedDetails = cn + '<br/>' + organizationString + '<br/>' + issuerString;
-
-    selectedIndex = 0;
+    selectedIndex.value = 0;
     while (true) {
+      let buttons = [
+        this.getString("nssdialogs.ok.label"),
+        this.getString("clientAuthAsk.viewCert.label"),
+        this.getString("nssdialogs.cancel.label"),
+      ];
       let prompt = this.getPrompt(this.getString("clientAuthAsk.title"),
-                                     this.getString("clientAuthAsk.message1"),
-                                     [ this.getString("nssdialogs.ok.label"),
-                                       this.getString("clientAuthAsk.viewCert.label"),
-                                       this.getString("nssdialogs.cancel.label")
-                                     ])
+                                  this.getString("clientAuthAsk.message1"),
+                                  buttons)
       .addLabel({ id: "requestedDetails", label: serverRequestedDetails } )
       .addMenulist({
         id: "nicknames",
         label: this.getString("clientAuthAsk.message2"),
-        values: certNickList, selected: selectedIndex
+        values: certNickList,
+        selected: selectedIndex.value,
       }).addCheckbox({
         id: "rememberBox",
         label: this.getString("clientAuthAsk.remember.label"),
         checked: rememberSetting
       });
       let response = this.showPrompt(prompt);
-      selectedIndex = response.nicknames;
-      if (response.button == 1) {
-        this.viewCertDetails(certDetailsList[selectedIndex]);
+      selectedIndex.value = response.nicknames;
+      if (response.button == 1 /* buttons[1] */) {
+        this.viewCertDetails(certDetailsList[selectedIndex.value]);
         continue;
-      } else if (response.button == 0) {
-        canceled.value = false;
+      } else if (response.button == 0 /* buttons[0] */) {
         if (response.rememberBox == true) {
-          aCtx.QueryInterface(Ci.nsIClientAuthUserDecision).rememberClientAuthCertificate = true;
+          let caud = ctx.QueryInterface(Ci.nsIClientAuthUserDecision);
+          if (caud) {
+            caud.rememberClientAuthCertificate = true;
+          }
         }
         return true;
       }
-      canceled.value = true;
       return false;
     }
   }

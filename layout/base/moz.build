@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,6 +107,7 @@ EXPORTS.mozilla += [
     'PaintTracker.h',
     'RestyleLogging.h',
     'RestyleManager.h',
+    'RestyleManagerBase.h',
     'RestyleManagerHandle.h',
     'RestyleManagerHandleInlines.h',
     'ServoRestyleManager.h',
@@ -118,9 +119,11 @@ UNIFIED_SOURCES += [
     'AccessibleCaretEventHub.cpp',
     'AccessibleCaretManager.cpp',
     'ActiveLayerTracker.cpp',
+    'DashedCornerFinder.cpp',
     'DisplayItemClip.cpp',
     'DisplayItemScrollClip.cpp',
     'DisplayListClipState.cpp',
+    'DottedCornerFinder.cpp',
     'FrameLayerBuilder.cpp',
     'FramePropertyTable.cpp',
     'GeometryUtils.cpp',
@@ -152,6 +155,7 @@ UNIFIED_SOURCES += [
     'PaintTracker.cpp',
     'PositionedEventTargeting.cpp',
     'RestyleManager.cpp',
+    'RestyleManagerBase.cpp',
     'RestyleTracker.cpp',
     'ScrollbarStyles.cpp',
     'ServoRestyleManager.cpp',

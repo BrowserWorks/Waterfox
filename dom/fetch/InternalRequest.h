@@ -11,6 +11,7 @@
 #include "mozilla/dom/InternalHeaders.h"
 #include "mozilla/dom/RequestBinding.h"
 #include "mozilla/LoadTainting.h"
+#include "mozilla/net/ReferrerPolicy.h"
 
 #include "nsIContentPolicy.h"
 #include "nsIInputStream.h"
@@ -95,6 +96,7 @@ public:
     , mContentPolicyType(nsIContentPolicy::TYPE_FETCH)
     , mReferrer(NS_LITERAL_STRING(kFETCH_CLIENT_REFERRER_STR))
     , mReferrerPolicy(ReferrerPolicy::_empty)
+    , mEnvironmentReferrerPolicy(net::RP_Default)
     , mMode(RequestMode::No_cors)
     , mCredentialsMode(RequestCredentials::Omit)
     , mResponseTainting(LoadTainting::Basic)
@@ -132,6 +134,7 @@ public:
     , mContentPolicyType(aContentPolicyType)
     , mReferrer(aReferrer)
     , mReferrerPolicy(aReferrerPolicy)
+    , mEnvironmentReferrerPolicy(net::RP_Default)
     , mMode(aMode)
     , mCredentialsMode(aRequestCredentials)
     , mResponseTainting(LoadTainting::Basic)
@@ -264,6 +267,18 @@ public:
   SetReferrerPolicy(ReferrerPolicy aReferrerPolicy)
   {
     mReferrerPolicy = aReferrerPolicy;
+  }
+
+  net::ReferrerPolicy
+  GetEnvironmentReferrerPolicy() const
+  {
+    return mEnvironmentReferrerPolicy;
+  }
+
+  void
+  SetEnvironmentReferrerPolicy(net::ReferrerPolicy aReferrerPolicy)
+  {
+    mEnvironmentReferrerPolicy = aReferrerPolicy;
   }
 
   bool
@@ -492,20 +507,27 @@ private:
   nsString mReferrer;
   ReferrerPolicy mReferrerPolicy;
 
+  // This will be used for request created from Window or Worker contexts
+  // In case there's no Referrer Policy in Request, this will be passed to
+  // channel.
+  // The Environment Referrer Policy should be net::ReferrerPolicy so that it
+  // could be associated with nsIHttpChannel.
+  net::ReferrerPolicy mEnvironmentReferrerPolicy;
+
   RequestMode mMode;
   RequestCredentials mCredentialsMode;
-  LoadTainting mResponseTainting;
+  MOZ_INIT_OUTSIDE_CTOR LoadTainting mResponseTainting;
   RequestCache mCacheMode;
   RequestRedirect mRedirectMode;
 
-  bool mAuthenticationFlag;
-  bool mForceOriginHeader;
-  bool mPreserveContentCodings;
-  bool mSameOriginDataURL;
-  bool mSkipServiceWorker;
-  bool mSynchronous;
-  bool mUnsafeRequest;
-  bool mUseURLCredentials;
+  MOZ_INIT_OUTSIDE_CTOR bool mAuthenticationFlag;
+  MOZ_INIT_OUTSIDE_CTOR bool mForceOriginHeader;
+  MOZ_INIT_OUTSIDE_CTOR bool mPreserveContentCodings;
+  MOZ_INIT_OUTSIDE_CTOR bool mSameOriginDataURL;
+  MOZ_INIT_OUTSIDE_CTOR bool mSkipServiceWorker;
+  MOZ_INIT_OUTSIDE_CTOR bool mSynchronous;
+  MOZ_INIT_OUTSIDE_CTOR bool mUnsafeRequest;
+  MOZ_INIT_OUTSIDE_CTOR bool mUseURLCredentials;
   // This is only set when a Request object is created by a fetch event.  We
   // use it to check if Service Workers are simply fetching intercepted Request
   // objects without modifying them.

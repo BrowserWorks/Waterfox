@@ -40,12 +40,12 @@ const size_t InitialElements = ElementCount / 10;
 
 template<class ArrayT>
 static void
-RunTest(JSRuntime* rt, JSContext* cx, ArrayT* array)
+RunTest(JSContext* cx, ArrayT* array)
 {
-  JS_GC(rt);
+  JS_GC(cx);
 
   ASSERT_TRUE(array != nullptr);
-  JS_AddExtraGCRootsTracer(rt, TraceArray<ArrayT>, array);
+  JS_AddExtraGCRootsTracer(cx, TraceArray<ArrayT>, array);
 
   /*
    * Create the array and fill it with new JS objects. With GGC these will be
@@ -65,7 +65,7 @@ RunTest(JSRuntime* rt, JSContext* cx, ArrayT* array)
    * If postbarriers are not working, we will crash here when we try to mark
    * objects that have been moved to the tenured heap.
    */
-  JS_GC(rt);
+  JS_GC(cx);
 
   /*
    * Sanity check that our array contains what we expect.
@@ -78,11 +78,11 @@ RunTest(JSRuntime* rt, JSContext* cx, ArrayT* array)
     ASSERT_EQ(static_cast<int32_t>(i), value.toInt32());
   }
 
-  JS_RemoveExtraGCRootsTracer(rt, TraceArray<ArrayT>, array);
+  JS_RemoveExtraGCRootsTracer(cx, TraceArray<ArrayT>, array);
 }
 
 static void
-CreateGlobalAndRunTest(JSRuntime* rt, JSContext* cx)
+CreateGlobalAndRunTest(JSContext* cx)
 {
   static const JSClassOps GlobalClassOps = {
     nullptr, nullptr, nullptr, nullptr,
@@ -108,19 +108,19 @@ CreateGlobalAndRunTest(JSRuntime* rt, JSContext* cx)
 
   {
     nsTArray<ElementT>* array = new nsTArray<ElementT>(InitialElements);
-    RunTest(rt, cx, array);
+    RunTest(cx, array);
     delete array;
   }
 
   {
     FallibleTArray<ElementT>* array = new FallibleTArray<ElementT>(InitialElements);
-    RunTest(rt, cx, array);
+    RunTest(cx, array);
     delete array;
   }
 
   {
     AutoTArray<ElementT, InitialElements> array;
-    RunTest(rt, cx, &array);
+    RunTest(cx, &array);
   }
 
   JS_LeaveCompartment(cx, oldCompartment);
@@ -132,12 +132,11 @@ TEST(GCPostBarriers, nsTArray) {
   JSRuntime* rt = ccrt->Runtime();
   ASSERT_TRUE(rt != nullptr);
 
-  JSContext *cx = JS_NewContext(rt, 8192);
-  ASSERT_TRUE(cx != nullptr);
+  JSContext* cx = JS_GetContext(rt);
+
   JS_BeginRequest(cx);
 
-  CreateGlobalAndRunTest(rt, cx);
+  CreateGlobalAndRunTest(cx);
 
   JS_EndRequest(cx);
-  JS_DestroyContext(cx);
 }

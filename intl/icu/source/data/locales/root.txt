@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/root.xml
@@ -55,7 +55,92 @@ root{
                 timeSeparator{"٫"}
             }
         }
+        bali{
+            symbols{
+                alias{""}
+            }
+        }
+        beng{
+            symbols{
+                alias{""}
+            }
+        }
+        brah{
+            symbols{
+                alias{""}
+            }
+        }
+        cakm{
+            symbols{
+                alias{""}
+            }
+        }
+        cham{
+            symbols{
+                alias{""}
+            }
+        }
         default{"latn"}
+        deva{
+            symbols{
+                alias{""}
+            }
+        }
+        fullwide{
+            symbols{
+                alias{""}
+            }
+        }
+        gujr{
+            symbols{
+                alias{""}
+            }
+        }
+        guru{
+            symbols{
+                alias{""}
+            }
+        }
+        hanidec{
+            symbols{
+                alias{""}
+            }
+        }
+        java{
+            symbols{
+                alias{""}
+            }
+        }
+        kali{
+            symbols{
+                alias{""}
+            }
+        }
+        khmr{
+            symbols{
+                alias{""}
+            }
+        }
+        knda{
+            symbols{
+                alias{""}
+            }
+        }
+        lana{
+            symbols{
+                alias{""}
+            }
+        }
+        lanatham{
+            symbols{
+                alias{""}
+            }
+        }
+        laoo{
+            symbols{
+                alias{""}
+            }
+        }
         latn{
             miscPatterns{
                 atLeast{"⩾{0}"}
@@ -161,10 +246,120 @@ root{
                 timeSeparator{":"}
             }
         }
+        lepc{
+            symbols{
+                alias{""}
+            }
+        }
+        limb{
+            symbols{
+                alias{""}
+            }
+        }
         minimumGroupingDigits{"1"}
+        mlym{
+            symbols{
+                alias{""}
+            }
+        }
+        mong{
+            symbols{
+                alias{""}
+            }
+        }
+        mtei{
+            symbols{
+                alias{""}
+            }
+        }
+        mymr{
+            symbols{
+                alias{""}
+            }
+        }
+        mymrshan{
+            symbols{
+                alias{""}
+            }
+        }
         native{"latn"}
+        nkoo{
+            symbols{
+                alias{""}
+            }
+        }
+        olck{
+            symbols{
+                alias{""}
+            }
+        }
+        orya{
+            symbols{
+                alias{""}
+            }
+        }
+        osma{
+            symbols{
+                alias{""}
+            }
+        }
+        saur{
+            symbols{
+                alias{""}
+            }
+        }
+        shrd{
+            symbols{
+                alias{""}
+            }
+        }
+        sora{
+            symbols{
+                alias{""}
+            }
+        }
+        sund{
+            symbols{
+                alias{""}
+            }
+        }
+        takr{
+            symbols{
+                alias{""}
+            }
+        }
+        talu{
+            symbols{
+                alias{""}
+            }
+        }
+        tamldec{
+            symbols{
+                alias{""}
+            }
+        }
+        telu{
+            symbols{
+                alias{""}
+            }
+        }
+        thai{
+            symbols{
+                alias{""}
+            }
+        }
+        tibt{
+            symbols{
+                alias{""}
+            }
+        }
+        vaii{
+            symbols{
+                alias{""}
+            }
+        }
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.19"}
     calendar{
         buddhist{
             AmPmMarkers:alias{"/LOCALE/calendar/gregorian/AmPmMarkers"}

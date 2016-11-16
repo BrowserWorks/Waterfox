@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "OrientedImage.h"
+
 #include <algorithm>
 
 #include "gfx2DGlue.h"
@@ -11,8 +13,6 @@
 #include "gfxUtils.h"
 #include "ImageRegion.h"
 #include "SVGImageContext.h"
-
-#include "OrientedImage.h"
 
 using std::swap;
 
@@ -89,7 +89,7 @@ OrientedImage::GetFrame(uint32_t aWhichFrame,
 
   // Determine an appropriate format for the surface.
   gfx::SurfaceFormat surfaceFormat;
-  if (InnerImage()->IsOpaque()) {
+  if (InnerImage()->WillDrawOpaqueNow()) {
     surfaceFormat = gfx::SurfaceFormat::B8G8R8X8;
   } else {
     surfaceFormat = gfx::SurfaceFormat::B8G8R8A8;
@@ -113,7 +113,7 @@ OrientedImage::GetFrame(uint32_t aWhichFrame,
     new gfxSurfaceDrawable(innerSurface, size);
 
   // Draw.
-  RefPtr<gfxContext> ctx = gfxContext::ForDrawTarget(target);
+  RefPtr<gfxContext> ctx = gfxContext::CreateOrNull(target);
   MOZ_ASSERT(ctx); // already checked the draw target above
   ctx->Multiply(OrientationMatrix(size));
   gfxUtils::DrawPixelSnapped(ctx, drawable, size, ImageRegion::Create(size),
@@ -256,18 +256,6 @@ OrientedImage::OrientationMatrix(const nsIntSize& aSize,
   return builder.Build();
 }
 
-static SVGImageContext
-OrientViewport(const SVGImageContext& aOldContext,
-               const Orientation& aOrientation)
-{
-  CSSIntSize viewportSize(aOldContext.GetViewportSize());
-  if (aOrientation.SwapsWidthAndHeight()) {
-    swap(viewportSize.width, viewportSize.height);
-  }
-  return SVGImageContext(viewportSize,
-                         aOldContext.GetPreserveAspectRatio());
-}
-
 NS_IMETHODIMP_(DrawResult)
 OrientedImage::Draw(gfxContext* aContext,
                     const nsIntSize& aSize,
@@ -303,9 +291,17 @@ OrientedImage::Draw(gfxContext* aContext,
   ImageRegion region(aRegion);
   region.TransformBoundsBy(inverseMatrix);
 
+  auto orientViewport = [&](const SVGImageContext& aOldContext) {
+    CSSIntSize viewportSize(aOldContext.GetViewportSize());
+    if (mOrientation.SwapsWidthAndHeight()) {
+      swap(viewportSize.width, viewportSize.height);
+    }
+    return SVGImageContext(viewportSize,
+                           aOldContext.GetPreserveAspectRatio());
+  };
+
   return InnerImage()->Draw(aContext, size, region, aWhichFrame, aSamplingFilter,
-                            aSVGContext.map(OrientViewport, mOrientation),
-                            aFlags);
+                            aSVGContext.map(orientViewport), aFlags);
 }
 
 nsIntSize

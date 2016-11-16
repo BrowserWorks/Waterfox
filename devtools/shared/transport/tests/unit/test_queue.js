@@ -1,13 +1,14 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 /**
  * This test verifies that the transport's queue operates correctly when various
  * packets are scheduled simultaneously.
  */
 
 var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 
 function run_test() {
   initTestDebuggerServer();
@@ -24,8 +25,8 @@ function run_test() {
 /** * Tests ***/
 
 var test_transport = Task.async(function* (transportFactory) {
-  let clientDeferred = promise.defer();
-  let serverDeferred = promise.defer();
+  let clientDeferred = defer();
+  let serverDeferred = defer();
 
   // Ensure test files are not present from a failed run
   cleanup_files();
@@ -148,7 +149,7 @@ function verify() {
   do_check_eq(outputFile.fileSize, reallyLong.length);
 
   // Ensure output file contents actually match
-  let compareDeferred = promise.defer();
+  let compareDeferred = defer();
   NetUtil.asyncFetch({
     uri: NetUtil.newURI(getTestTempFile("bulk-output")),
     loadUsingSystemPrincipal: true

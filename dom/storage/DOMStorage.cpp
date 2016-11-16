@@ -112,13 +112,6 @@ DOMStorage::SetItem(const nsAString& aKey, const nsAString& aData,
     return;
   }
 
-  Telemetry::Accumulate(GetType() == LocalStorage
-      ? Telemetry::LOCALDOMSTORAGE_KEY_SIZE_BYTES
-      : Telemetry::SESSIONDOMSTORAGE_KEY_SIZE_BYTES, aKey.Length());
-  Telemetry::Accumulate(GetType() == LocalStorage
-      ? Telemetry::LOCALDOMSTORAGE_VALUE_SIZE_BYTES
-      : Telemetry::SESSIONDOMSTORAGE_VALUE_SIZE_BYTES, aData.Length());
-
   nsString data;
   bool ok = data.Assign(aData, fallible);
   if (!ok) {
@@ -225,8 +218,8 @@ DOMStorage::BroadcastChangeNotification(const nsSubstring& aKey,
   RefPtr<StorageNotifierRunnable> r =
     new StorageNotifierRunnable(event,
                                 GetType() == LocalStorage
-                                  ? MOZ_UTF16("localStorage")
-                                  : MOZ_UTF16("sessionStorage"));
+                                  ? u"localStorage"
+                                  : u"sessionStorage");
   NS_DispatchToMainThread(r);
 }
 

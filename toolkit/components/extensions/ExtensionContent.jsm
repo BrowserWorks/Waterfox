@@ -51,6 +51,7 @@ var {
   injectAPI,
   flushJarCache,
   detectLanguage,
+  getInnerWindowID,
   promiseDocumentReady,
   ChildAPIManager,
 } = ExtensionUtils;
@@ -60,12 +61,6 @@ function isWhenBeforeOrSame(when1, when2) {
                "document_end": 1,
                "document_idle": 2};
   return table[when1] <= table[when2];
-}
-
-function getInnerWindowID(window) {
-  return window.QueryInterface(Ci.nsIInterfaceRequestor)
-    .getInterface(Ci.nsIDOMWindowUtils)
-    .currentInnerWindowID;
 }
 
 // This is the fairly simple API that we inject into content
@@ -154,7 +149,8 @@ var api = context => {
 };
 
 // Represents a content script.
-function Script(options, deferred = PromiseUtils.defer()) {
+function Script(extension, options, deferred = PromiseUtils.defer()) {
+  this.extension = extension;
   this.options = options;
   this.run_at = this.options.run_at;
   this.js = this.options.js || [];
@@ -170,11 +166,35 @@ function Script(options, deferred = PromiseUtils.defer()) {
   this.matches_host_ = new MatchPattern(this.options.matchesHost || null);
   this.include_globs_ = new MatchGlobs(this.options.include_globs);
   this.exclude_globs_ = new MatchGlobs(this.options.exclude_globs);
+
+  this.requiresCleanup = !this.remove_css && (this.css.length > 0 || options.cssCode);
 }
 
 Script.prototype = {
+  get cssURLs() {
+    // We can handle CSS urls (css) and CSS code (cssCode).
+    let urls = [];
+    for (let url of this.css) {
+      urls.push(this.extension.baseURI.resolve(url));
+    }
+
+    if (this.options.cssCode) {
+      let url = "data:text/css;charset=utf-8," + encodeURIComponent(this.options.cssCode);
+      urls.push(url);
+    }
+
+    return urls;
+  },
+
   matches(window) {
     let uri = window.document.documentURIObject;
+
+    // If mozAddonManager is present on this page, don't allow
+    // content scripts.
+    if (window.navigator.mozAddonManager !== undefined) {
+      return false;
+    }
+
     if (!(this.matches_.matches(uri) || this.matches_host_.matchesIgnoringPath(uri))) {
       return false;
     }
@@ -206,7 +226,18 @@ Script.prototype = {
     return true;
   },
 
-  tryInject(extension, window, sandbox, shouldRun) {
+  cleanup(window) {
+    if (!this.remove_css) {
+      let winUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                           .getInterface(Ci.nsIDOMWindowUtils);
+
+      for (let url of this.cssURLs) {
+        runSafeSyncWithoutClone(winUtils.removeSheetUsingURIString, url, winUtils.AUTHOR_SHEET);
+      }
+    }
+  },
+
+  tryInject(window, sandbox, shouldRun) {
     if (!this.matches(window)) {
       this.deferred.reject({message: "No matching window"});
       return;
@@ -216,25 +247,13 @@ Script.prototype = {
       let winUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindowUtils);
 
-      // We can handle CSS urls (css) and CSS code (cssCode).
-      let cssUrls = [];
-      for (let cssUrl of this.css) {
-        cssUrl = extension.baseURI.resolve(cssUrl);
-        cssUrls.push(cssUrl);
-      }
+      let {cssURLs} = this;
+      if (cssURLs.length > 0) {
+        let method = this.remove_css ? winUtils.removeSheetUsingURIString : winUtils.loadSheetUsingURIString;
+        for (let url of cssURLs) {
+          runSafeSyncWithoutClone(method, url, winUtils.AUTHOR_SHEET);
+        }
 
-      if (this.options.cssCode) {
-        let cssUrl = "data:text/css;charset=utf-8," + encodeURIComponent(this.options.cssCode);
-        cssUrls.push(cssUrl);
-      }
-
-      // We can insertCSS and removeCSS.
-      let method = this.remove_css ? winUtils.removeSheetUsingURIString : winUtils.loadSheetUsingURIString;
-      for (let cssUrl of cssUrls) {
-        runSafeSyncWithoutClone(method, cssUrl, winUtils.AUTHOR_SHEET);
-      }
-
-      if (cssUrls.length > 0) {
         this.deferred.resolve();
       }
     }
@@ -250,7 +269,7 @@ Script.prototype = {
           Cu.reportError(`Script injection: ignoring ${url} at ${scheduled}`);
           continue;
         }
-        url = extension.baseURI.resolve(url);
+        url = this.extension.baseURI.resolve(url);
 
         let options = {
           target: sandbox,
@@ -306,7 +325,8 @@ class ExtensionContext extends BaseContext {
     this.isExtensionPage = isExtensionPage;
     this.extension = ExtensionManager.get(extensionId);
     this.extensionId = extensionId;
-    this.contentWindow = contentWindow;
+
+    this.setContentWindow(contentWindow);
 
     let frameId = WebNavigationFrames.getFrameId(contentWindow);
     this.frameId = frameId;
@@ -350,10 +370,11 @@ class ExtensionContext extends BaseContext {
         isWebExtensionContentScript: true,
       });
     } else {
-      // sandbox metadata is needed to be recognized and supported in
-      // the Developer Tools of the tab where the content script is running.
+      // This metadata is required by the Developer Tools, in order for
+      // the content script to be associated with both the extension and
+      // the tab holding the content page.
       let metadata = {
-        "inner-window-id": getInnerWindowID(contentWindow),
+        "inner-window-id": this.innerWindowID,
         addonId: attrs.addonId,
       };
 
@@ -363,8 +384,15 @@ class ExtensionContext extends BaseContext {
         wantXrays: true,
         isWebExtensionContentScript: true,
         wantExportHelpers: true,
-        wantGlobalProperties: ["XMLHttpRequest"],
+        wantGlobalProperties: ["XMLHttpRequest", "fetch"],
+        originAttributes: attrs,
       });
+
+      Cu.evalInSandbox(`
+        window.JSON = JSON;
+        window.XMLHttpRequest = XMLHttpRequest;
+        window.fetch = fetch;
+      `, this.sandbox);
     }
 
     let delegate = {
@@ -418,7 +446,7 @@ class ExtensionContext extends BaseContext {
   }
 
   execute(script, shouldRun) {
-    script.tryInject(this.extension, this.contentWindow, this.sandbox, shouldRun);
+    script.tryInject(this.contentWindow, this.sandbox, shouldRun);
   }
 
   addScript(script) {
@@ -426,8 +454,8 @@ class ExtensionContext extends BaseContext {
     this.execute(script, scheduled => isWhenBeforeOrSame(scheduled, state));
 
     // Save the script in case it has pending operations in later load
-    // states, but only if we're before document_idle.
-    if (state != "document_idle") {
+    // states, but only if we're before document_idle, or require cleanup.
+    if (state != "document_idle" || script.requiresCleanup) {
       this.scripts.push(script);
     }
   }
@@ -438,7 +466,7 @@ class ExtensionContext extends BaseContext {
     }
     if (documentState == "document_idle") {
       // Don't bother saving scripts after document_idle.
-      this.scripts.length = 0;
+      this.scripts = this.scripts.filter(script => script.requiresCleanup);
     }
   }
 
@@ -447,12 +475,19 @@ class ExtensionContext extends BaseContext {
 
     this.childManager.close();
 
-    // Overwrite the content script APIs with an empty object if the APIs objects are still
-    // defined in the content window (See Bug 1214658 for rationale).
-    if (this.isExtensionPage && !Cu.isDeadWrapper(this.contentWindow) &&
-        Cu.waiveXrays(this.contentWindow).browser === this.chromeObj) {
-      Cu.createObjectIn(this.contentWindow, {defineAs: "browser"});
-      Cu.createObjectIn(this.contentWindow, {defineAs: "chrome"});
+    if (this.contentWindow) {
+      for (let script of this.scripts) {
+        if (script.requiresCleanup) {
+          script.cleanup(this.contentWindow);
+        }
+      }
+
+      // Overwrite the content script APIs with an empty object if the APIs objects are still
+      // defined in the content window (bug 1214658).
+      if (this.isExtensionPage) {
+        Cu.createObjectIn(this.contentWindow, {defineAs: "browser"});
+        Cu.createObjectIn(this.contentWindow, {defineAs: "chrome"});
+      }
     }
     Cu.nukeSandbox(this.sandbox);
     this.sandbox = null;
@@ -566,9 +601,11 @@ DocumentManager = {
 
   // Used to executeScript, insertCSS and removeCSS.
   executeScript(global, extensionId, options) {
+    let extension = ExtensionManager.get(extensionId);
+
     let executeInWin = (window) => {
       let deferred = PromiseUtils.defer();
-      let script = new Script(options, deferred);
+      let script = new Script(extension, options, deferred);
 
       if (script.matches(window)) {
         let context = this.getContentScriptContext(extensionId, window);
@@ -582,15 +619,19 @@ DocumentManager = {
                         .filter(promise => promise);
 
     if (!promises.length) {
-      return Promise.reject({message: `No matching window`});
+      let details = {};
+      for (let key of ["all_frames", "frame_id", "matches_about_blank", "matchesHost"]) {
+        if (key in options) {
+          details[key] = options[key];
+        }
+      }
+
+      return Promise.reject({message: `No window matching ${JSON.stringify(details)}`});
     }
-    if (options.all_frames) {
-      return Promise.all(promises);
-    }
-    if (promises.length > 1) {
+    if (!options.all_frames && promises.length > 1) {
       return Promise.reject({message: `Internal error: Script matched multiple windows`});
     }
-    return promises[0];
+    return Promise.all(promises);
   },
 
   enumerateWindows: function* (docShell) {
@@ -716,9 +757,10 @@ function BrowserExtensionContent(data) {
   this.id = data.id;
   this.uuid = data.uuid;
   this.data = data;
-  this.scripts = data.content_scripts.map(scriptData => new Script(scriptData));
+  this.scripts = data.content_scripts.map(scriptData => new Script(this, scriptData));
   this.webAccessibleResources = new MatchGlobs(data.webAccessibleResources);
   this.whiteListedHosts = new MatchPattern(data.whiteListedHosts);
+  this.permissions = data.permissions;
 
   this.localeData = new LocaleData(data.localeData);
 

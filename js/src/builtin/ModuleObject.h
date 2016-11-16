@@ -10,11 +10,10 @@
 #include "jsapi.h"
 #include "jsatom.h"
 
+#include "builtin/SelfHostingDefines.h"
 #include "gc/Zone.h"
-
 #include "js/GCVector.h"
 #include "js/Id.h"
-
 #include "vm/NativeObject.h"
 #include "vm/ProxyObject.h"
 
@@ -224,6 +223,9 @@ class ModuleObject : public NativeObject
         SlotCount
     };
 
+    static_assert(EnvironmentSlot == MODULE_OBJECT_ENVIRONMENT_SLOT,
+                  "EnvironmentSlot must match self-hosting define");
+
     static const Class class_;
 
     static bool isInstance(HandleValue value);
@@ -236,8 +238,10 @@ class ModuleObject : public NativeObject
                               HandleArrayObject localExportEntries,
                               HandleArrayObject indiretExportEntries,
                               HandleArrayObject starExportEntries);
-    static bool FreezeArrayProperties(JSContext* cx, HandleModuleObject self);
-    static void AssertArrayPropertiesFrozen(JSContext* cx, HandleModuleObject self);
+    static bool Freeze(JSContext* cx, HandleModuleObject self);
+#ifdef DEBUG
+    static bool IsFrozen(JSContext* cx, HandleModuleObject self);
+#endif
     void fixScopesAfterCompartmentMerge(JSContext* cx);
 
     JSScript* script() const;

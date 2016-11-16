@@ -15,7 +15,6 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/Date.h"
-#include "nsAutoPtr.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsCOMPtr.h"
 #include "nsIDOMBlob.h"
@@ -329,6 +328,13 @@ public:
   virtual bool IsDateUnknown() const = 0;
 
   virtual bool IsFile() const = 0;
+
+  // Returns true if the BlobImpl is backed by an nsIFile and the underlying
+  // file is a directory.
+  virtual bool IsDirectory() const
+  {
+    return false;
+  }
 
   // True if this implementation can be sent to other threads.
   virtual bool MayBeClonedToOtherThreads() const
@@ -712,6 +718,8 @@ public:
                                       ErrorResult& aRv) const override;
   virtual void GetInternalStream(nsIInputStream** aInputStream,
                                  ErrorResult& aRv) override;
+
+  virtual bool IsDirectory() const override;
 
   // We always have size and date for this kind of blob.
   virtual bool IsSizeUnknown() const override { return false; }

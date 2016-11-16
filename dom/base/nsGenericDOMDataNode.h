@@ -123,6 +123,7 @@ public:
   virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
                              bool aNotify) override;
   virtual const nsAttrName* GetAttrNameAt(uint32_t aIndex) const override;
+  virtual mozilla::dom::BorrowedAttrInfo GetAttrInfoAt(uint32_t aIndex) const override;
   virtual uint32_t GetAttrCount() const override;
   virtual const nsTextFragment *GetText() override;
   virtual uint32_t TextLength() const override;
@@ -172,12 +173,12 @@ public:
 
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override
   {
-    *aResult = CloneDataNode(aNodeInfo, true);
+    nsCOMPtr<nsINode> result = CloneDataNode(aNodeInfo, true);
+    result.forget(aResult);
+
     if (!*aResult) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
-
-    NS_ADDREF(*aResult);
 
     return NS_OK;
   }
@@ -325,7 +326,7 @@ public:
   {
     mRefCnt.RemovePurple();
   }
-  
+
 private:
   already_AddRefed<nsIAtom> GetCurrentValueAtom();
 };

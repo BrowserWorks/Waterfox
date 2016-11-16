@@ -32,6 +32,10 @@
 #include "gfxPlatformGtk.h"
 #endif
 
+#ifdef MOZ_X11
+#include "mozilla/X11Util.h"
+#endif
+
 using namespace mozilla;
 using namespace mozilla::unicode;
 
@@ -185,9 +189,11 @@ MapFcWidth(int aFcWidth)
 }
 
 gfxFontconfigFontEntry::gfxFontconfigFontEntry(const nsAString& aFaceName,
-                                               FcPattern* aFontPattern)
+                                               FcPattern* aFontPattern,
+                                               bool aIgnoreFcCharmap)
         : gfxFontEntry(aFaceName), mFontPattern(aFontPattern),
           mFTFace(nullptr), mFTFaceInitialized(false),
+          mIgnoreFcCharmap(aIgnoreFcCharmap),
           mAspect(0.0), mFontData(nullptr)
 {
     // italic
@@ -224,6 +230,7 @@ gfxFontconfigFontEntry::gfxFontconfigFontEntry(const nsAString& aFaceName,
                                                FT_Face aFace)
     : gfxFontEntry(aFaceName),
       mFTFace(aFace), mFTFaceInitialized(true),
+      mIgnoreFcCharmap(true),
       mAspect(0.0), mFontData(aData)
 {
     mWeight = aWeight;
@@ -269,6 +276,19 @@ gfxFontconfigFontEntry::gfxFontconfigFontEntry(const nsAString& aFaceName,
     mStyle = aStyle;
     mStretch = aStretch;
     mIsLocalUserFont = true;
+
+    // The proper setting of mIgnoreFcCharmap is tricky for fonts loaded
+    // via src:local()...
+    // If the local font happens to come from the application fontset,
+    // we want to set it to true so that color/svg fonts will work even
+    // if the default glyphs are blank; but if the local font is a non-
+    // sfnt face (e.g. legacy type 1) then we need to set it to false
+    // because our cmap-reading code will fail and we depend on FT+Fc to
+    // determine the coverage.
+    // We set the flag here, but may flip it the first time TestCharacterMap
+    // is called, at which point we'll look to see whether a 'cmap' is
+    // actually present in the font.
+    mIgnoreFcCharmap = true;
 }
 
 gfxFontconfigFontEntry::~gfxFontconfigFontEntry()
@@ -377,11 +397,23 @@ HasChar(FcPattern *aFont, FcChar32 aCh)
 bool
 gfxFontconfigFontEntry::TestCharacterMap(uint32_t aCh)
 {
-    // for system fonts, use the charmap in the pattern
-    if (!mIsDataUserFont) {
-        return HasChar(mFontPattern, aCh);
+    // For user fonts, or for fonts bundled with the app (which might include
+    // color/svg glyphs where the default glyphs may be blank, and thus confuse
+    // fontconfig/freetype's char map checking), we instead check the cmap
+    // directly for character coverage.
+    if (mIgnoreFcCharmap) {
+        // If it does not actually have a cmap, switch our strategy to use
+        // fontconfig's charmap after all (except for data fonts, which must
+        // always have a cmap to have passed OTS validation).
+        if (!mIsDataUserFont && !HasFontTable(TRUETYPE_TAG('c','m','a','p'))) {
+            mIgnoreFcCharmap = false;
+            // ...and continue with HasChar() below.
+        } else {
+            return gfxFontEntry::TestCharacterMap(aCh);
+        }
     }
-    return gfxFontEntry::TestCharacterMap(aCh);
+    // otherwise (for system fonts), use the charmap in the pattern
+    return HasChar(mFontPattern, aCh);
 }
 
 hb_blob_t*
@@ -389,7 +421,7 @@ gfxFontconfigFontEntry::GetFontTable(uint32_t aTableTag)
 {
     // for data fonts, read directly from the font data
     if (mFontData) {
-        return GetTableFromFontData(mFontData, aTableTag);
+        return gfxFontUtils::GetTableFromFontData(mFontData, aTableTag);
     }
 
     return gfxFontEntry::GetFontTable(aTableTag);
@@ -689,6 +721,29 @@ gfxFontconfigFontEntry::CreateScaledFont(FcPattern* aRenderPattern,
 static void ApplyGdkScreenFontOptions(FcPattern *aPattern);
 #endif
 
+#ifdef MOZ_X11
+static bool
+GetXftInt(Display* aDisplay, const char* aName, int* aResult)
+{
+    if (!aDisplay) {
+        return false;
+    }
+    char* value = XGetDefault(aDisplay, "Xft", aName);
+    if (!value) {
+        return false;
+    }
+    if (FcNameConstant(const_cast<FcChar8*>(ToFcChar8Ptr(value)), aResult)) {
+        return true;
+    }
+    char* end;
+    *aResult = strtol(value, &end, 0);
+    if (end != value) {
+        return true;
+    }
+    return false;
+}
+#endif
+
 static void
 PreparePattern(FcPattern* aPattern, bool aIsPrinterFont)
 {
@@ -717,6 +772,16 @@ PreparePattern(FcPattern* aPattern, bool aIsPrinterFont)
 #ifdef MOZ_WIDGET_GTK
        ApplyGdkScreenFontOptions(aPattern);
 #endif
+
+#ifdef MOZ_X11
+        FcValue value;
+        int lcdfilter;
+        if (FcPatternGet(aPattern, FC_LCD_FILTER, 0, &value)
+                == FcResultNoMatch &&
+            GetXftInt(DefaultXDisplay(), "lcdfilter", &lcdfilter)) {
+            FcPatternAddInteger(aPattern, FC_LCD_FILTER, lcdfilter);
+        }
+#endif
     }
 
     FcDefaultSubstitute(aPattern);
@@ -733,16 +798,10 @@ gfxFontconfigFontEntry::CreateFontInstance(const gfxFontStyle *aFontStyle,
     nsAutoRef<FcPattern> renderPattern
         (FcFontRenderPrepare(nullptr, pattern, mFontPattern));
 
-    FcBool autohint;
-    if (FcPatternGetBool(renderPattern, FC_AUTOHINT, 0, &autohint) != FcResultMatch) {
-      autohint = FcFalse;
-    }
-
     cairo_scaled_font_t* scaledFont =
         CreateScaledFont(renderPattern, aFontStyle, aNeedsBold);
     gfxFont* newFont =
-        new gfxFontconfigFont(scaledFont, this, aFontStyle, aNeedsBold,
-                              bool(autohint));
+        new gfxFontconfigFont(scaledFont, renderPattern, this, aFontStyle, aNeedsBold);
     cairo_scaled_font_destroy(scaledFont);
 
     return newFont;
@@ -810,7 +869,7 @@ gfxFontconfigFontFamily::FindStyleVariations(FontInfoData *aFontInfoData)
         const nsAutoString& faceName = !psname.IsEmpty() ? psname : fullname;
 
         gfxFontconfigFontEntry *fontEntry =
-            new gfxFontconfigFontEntry(faceName, face);
+            new gfxFontconfigFontEntry(faceName, face, mContainsAppFonts);
         AddFontEntry(fontEntry);
 
         if (fontEntry->IsUpright() &&
@@ -854,42 +913,17 @@ gfxFontconfigFontFamily::AddFontPattern(FcPattern* aFontPattern)
 }
 
 gfxFontconfigFont::gfxFontconfigFont(cairo_scaled_font_t *aScaledFont,
+                                     FcPattern *aPattern,
                                      gfxFontEntry *aFontEntry,
                                      const gfxFontStyle *aFontStyle,
-                                     bool aNeedsBold,
-                                     bool aAutoHinting) :
-    gfxFT2FontBase(aScaledFont, aFontEntry, aFontStyle),
-    mAutoHinting(aAutoHinting)
+                                     bool aNeedsBold) :
+    gfxFontconfigFontBase(aScaledFont, aPattern, aFontEntry, aFontStyle)
 {
 }
 
 gfxFontconfigFont::~gfxFontconfigFont()
 {
 }
-
-#ifdef USE_SKIA
-already_AddRefed<mozilla::gfx::GlyphRenderingOptions>
-gfxFontconfigFont::GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams)
-{
-  cairo_scaled_font_t *scaled_font = CairoScaledFont();
-  cairo_font_options_t *options = cairo_font_options_create();
-  cairo_scaled_font_get_font_options(scaled_font, options);
-  cairo_hint_style_t hint_style = cairo_font_options_get_hint_style(options);
-  cairo_antialias_t antialias = cairo_font_options_get_antialias(options);
-  cairo_font_options_destroy(options);
-
-  mozilla::gfx::FontHinting hinting =
-    mozilla::gfx::CairoHintingToGfxHinting(hint_style);
-
-  mozilla::gfx::AntialiasMode aaMode =
-    mozilla::gfx::CairoAntialiasToGfxAntialias(antialias);
-
-  bool autohint = GetAutoHinting();
-
-  // The fontconfig AA mode must be passed along because it may override the hinting style.
-  return mozilla::gfx::Factory::CreateCairoGlyphRenderingOptions(hinting, autohint, aaMode);
-}
-#endif
 
 gfxFcPlatformFontList::gfxFcPlatformFontList()
     : mLocalNames(64)
@@ -927,7 +961,7 @@ gfxFcPlatformFontList::~gfxFcPlatformFontList()
 }
 
 void
-gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet)
+gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet, bool aAppFonts)
 {
     // This iterates over the fonts in a font set and adds in gfxFontFamily
     // objects for each family. The patterns for individual fonts are not
@@ -942,7 +976,7 @@ gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet)
     }
 
     FcChar8* lastFamilyName = (FcChar8*)"";
-    gfxFontFamily* fontFamily = nullptr;
+    gfxFontconfigFontFamily* fontFamily = nullptr;
     nsAutoString familyName;
     for (int f = 0; f < aFontSet->nfont; f++) {
         FcPattern* font = aFontSet->fonts[f];
@@ -972,10 +1006,17 @@ gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet)
             nsAutoString keyName(familyName);
             ToLowerCase(keyName);
 
-            fontFamily = mFontFamilies.GetWeak(keyName);
+            fontFamily = static_cast<gfxFontconfigFontFamily*>
+                             (mFontFamilies.GetWeak(keyName));
             if (!fontFamily) {
                 fontFamily = new gfxFontconfigFontFamily(familyName);
                 mFontFamilies.Put(keyName, fontFamily);
+            }
+            // Record if the family contains fonts from the app font set
+            // (in which case we won't rely on fontconfig's charmap, due to
+            // bug 1276594).
+            if (aAppFonts) {
+                fontFamily->SetFamilyContainsAppFonts(true);
             }
 
             // Add pointers to other localized family names. Most fonts
@@ -994,9 +1035,7 @@ gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet)
         }
 
         NS_ASSERTION(fontFamily, "font must belong to a font family");
-        gfxFontconfigFontFamily* fcFamily =
-            static_cast<gfxFontconfigFontFamily*>(fontFamily);
-        fcFamily->AddFontPattern(font);
+        fontFamily->AddFontPattern(font);
 
         // map the psname, fullname ==> font family for local font lookups
         nsAutoString psname, fullname;
@@ -1025,13 +1064,13 @@ gfxFcPlatformFontList::InitFontList()
 
     // iterate over available fonts
     FcFontSet* systemFonts = FcConfigGetFonts(nullptr, FcSetSystem);
-    AddFontSetFamilies(systemFonts);
+    AddFontSetFamilies(systemFonts, /* aAppFonts = */ false);
     mAlwaysUseFontconfigGenerics = PrefFontListsUseOnlyGenerics();
 
 #ifdef MOZ_BUNDLED_FONTS
     ActivateBundledFonts();
     FcFontSet* appFonts = FcConfigGetFonts(nullptr, FcSetApplication);
-    AddFontSetFamilies(appFonts);
+    AddFontSetFamilies(appFonts, /* aAppFonts = */ true);
 #endif
 
     mOtherFamilyNamesInitialized = true;
@@ -1162,8 +1201,7 @@ gfxFcPlatformFontList::LookupLocalFont(const nsAString& aFontName,
         return nullptr;
     }
 
-    return new gfxFontconfigFontEntry(aFontName,
-                                      fontPattern,
+    return new gfxFontconfigFontEntry(aFontName, fontPattern,
                                       aWeight, aStretch, aStyle);
 }
 

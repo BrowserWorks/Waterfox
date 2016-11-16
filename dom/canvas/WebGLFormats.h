@@ -9,8 +9,8 @@
 #include <map>
 #include <set>
 
-#include "GLTypes.h"
 #include "mozilla/UniquePtr.h"
+#include "WebGLTypes.h"
 
 namespace mozilla {
 namespace webgl {
@@ -198,14 +198,31 @@ struct FormatInfo
     const GLenum sizedFormat;
     const UnsizedFormat unsizedFormat;
     const ComponentType componentType;
-    const uint8_t estimatedBytesPerPixel; // 0 iff `!!compression`. Only use this for
-    const bool isColorFormat;             // memory usage estimation. Use
-    const bool isSRGB;                    // BytesPerPixel(packingFormat, packingType) for
-    const bool hasAlpha;                  // calculating pack/unpack byte count.
-    const bool hasDepth;
-    const bool hasStencil;
+    const bool isSRGB;
 
     const CompressedFormatInfo* const compression;
+
+    const uint8_t estimatedBytesPerPixel; // 0 iff bool(compression).
+
+    // In bits. Iff bool(compression), active channels are 1.
+    const uint8_t r;
+    const uint8_t g;
+    const uint8_t b;
+    const uint8_t a;
+    const uint8_t d;
+    const uint8_t s;
+
+    //////
+
+    std::map<UnsizedFormat, const FormatInfo*> copyDecayFormats;
+
+    const FormatInfo* GetCopyDecayFormat(UnsizedFormat) const;
+
+    bool IsColorFormat() const {
+         // Alpha is a 'color format' since it's 'color-attachable'.
+        return bool(compression) ||
+               bool(r | g | b | a);
+    }
 };
 
 struct PackingInfo
@@ -237,6 +254,7 @@ struct DriverUnpackInfo
 
 const FormatInfo* GetFormat(EffectiveFormat format);
 uint8_t BytesPerPixel(const PackingInfo& packing);
+bool GetBytesPerPixel(const PackingInfo& packing, uint8_t* const out_bytes);
 /*
 GLint ComponentSize(const FormatInfo* format, GLenum component);
 GLenum ComponentType(const FormatInfo* format);
@@ -246,7 +264,9 @@ GLenum ComponentType(const FormatInfo* format);
 struct FormatUsageInfo
 {
     const FormatInfo* const format;
+private:
     bool isRenderable;
+public:
     bool isFilterable;
 
     std::map<PackingInfo, DriverUnpackInfo> validUnpacks;
@@ -270,6 +290,9 @@ struct FormatUsageInfo
         , maxSamplesKnown(false)
         , maxSamples(0)
     { }
+
+    bool IsRenderable() const { return isRenderable; }
+    void SetRenderable();
 
     bool IsUnpackValid(const PackingInfo& key,
                        const DriverUnpackInfo** const out_value) const;

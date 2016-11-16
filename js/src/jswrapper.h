@@ -60,7 +60,7 @@ class JS_FRIEND_API(Wrapper) : public BaseProxyHandler
     unsigned mFlags;
 
   public:
-    explicit MOZ_CONSTEXPR Wrapper(unsigned aFlags, bool aHasPrototype = false,
+    explicit constexpr Wrapper(unsigned aFlags, bool aHasPrototype = false,
                                    bool aHasSecurityPolicy = false)
       : BaseProxyHandler(&family, aHasPrototype, aHasSecurityPolicy),
         mFlags(aFlags)
@@ -111,8 +111,7 @@ class JS_FRIEND_API(Wrapper) : public BaseProxyHandler
                             const CallArgs& args) const override;
     virtual bool hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v,
                              bool* bp) const override;
-    virtual bool getBuiltinClass(JSContext* cx, HandleObject proxy,
-                                 ESClassValue* classValue) const override;
+    virtual bool getBuiltinClass(JSContext* cx, HandleObject proxy, ESClass* cls) const override;
     virtual bool isArray(JSContext* cx, HandleObject proxy,
                          JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
@@ -164,7 +163,7 @@ WrapperOptions::proto() const
 class JS_FRIEND_API(CrossCompartmentWrapper) : public Wrapper
 {
   public:
-    explicit MOZ_CONSTEXPR CrossCompartmentWrapper(unsigned aFlags, bool aHasPrototype = false,
+    explicit constexpr CrossCompartmentWrapper(unsigned aFlags, bool aHasPrototype = false,
                                                    bool aHasSecurityPolicy = false)
       : Wrapper(CROSS_COMPARTMENT | aFlags, aHasPrototype, aHasSecurityPolicy)
     { }
@@ -223,7 +222,7 @@ class JS_FRIEND_API(CrossCompartmentWrapper) : public Wrapper
 class JS_FRIEND_API(OpaqueCrossCompartmentWrapper) : public CrossCompartmentWrapper
 {
   public:
-    explicit MOZ_CONSTEXPR OpaqueCrossCompartmentWrapper() : CrossCompartmentWrapper(0)
+    explicit constexpr OpaqueCrossCompartmentWrapper() : CrossCompartmentWrapper(0)
     { }
 
     /* Standard internal methods. */
@@ -265,8 +264,7 @@ class JS_FRIEND_API(OpaqueCrossCompartmentWrapper) : public CrossCompartmentWrap
                         bool* bp) const override;
     virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject wrapper,
                                               AutoIdVector& props) const override;
-    virtual bool getBuiltinClass(JSContext* cx, HandleObject wrapper,
-                                 ESClassValue* classValue) const override;
+    virtual bool getBuiltinClass(JSContext* cx, HandleObject wrapper, ESClass* cls) const override;
     virtual bool isArray(JSContext* cx, HandleObject obj,
                          JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject wrapper) const override;
@@ -288,7 +286,7 @@ template <class Base>
 class JS_FRIEND_API(SecurityWrapper) : public Base
 {
   public:
-    explicit MOZ_CONSTEXPR SecurityWrapper(unsigned flags, bool hasPrototype = false)
+    explicit constexpr SecurityWrapper(unsigned flags, bool hasPrototype = false)
       : Base(flags, hasPrototype, /* hasSecurityPolicy = */ true)
     { }
 
@@ -307,8 +305,7 @@ class JS_FRIEND_API(SecurityWrapper) : public Base
 
     virtual bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
                             const CallArgs& args) const override;
-    virtual bool getBuiltinClass(JSContext* cx, HandleObject wrapper,
-                                 ESClassValue* classValue) const override;
+    virtual bool getBuiltinClass(JSContext* cx, HandleObject wrapper, ESClass* cls) const override;
     virtual bool isArray(JSContext* cx, HandleObject wrapper, JS::IsArrayAnswer* answer) const override;
     virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const override;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const override;

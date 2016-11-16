@@ -10,7 +10,6 @@
 
 #include "mozilla/PodOperations.h"
 #include "mozilla/SyncRunnable.h"
-#include "nsAutoPtr.h"
 
 #undef LOG
 #define LOG(type, msg) MOZ_LOG(sPDMLog, type, msg)
@@ -31,12 +30,10 @@ ogg_packet InitVorbisPacket(const unsigned char* aData, size_t aLength,
   return packet;
 }
 
-VorbisDataDecoder::VorbisDataDecoder(const AudioInfo& aConfig,
-                                     TaskQueue* aTaskQueue,
-                                     MediaDataDecoderCallback* aCallback)
-  : mInfo(aConfig)
-  , mTaskQueue(aTaskQueue)
-  , mCallback(aCallback)
+VorbisDataDecoder::VorbisDataDecoder(const CreateDecoderParams& aParams)
+  : mInfo(aParams.AudioConfig())
+  , mTaskQueue(aParams.mTaskQueue)
+  , mCallback(aParams.mCallback)
   , mPacketCount(0)
   , mFrames(0)
   , mIsFlushing(false)
@@ -170,8 +167,8 @@ VorbisDataDecoder::DoDecode(MediaRawData* aSample)
     mLastFrameTime = Some(aSample->mTime);
   }
 
-  ogg_packet pkt = InitVorbisPacket(aData, aLength, false, false, -1, mPacketCount++);
-  bool first_packet = mPacketCount == 4;
+  ogg_packet pkt = InitVorbisPacket(aData, aLength, false, aSample->mEOS,
+                                    aSample->mTimecode, mPacketCount++);
 
   if (vorbis_synthesis(&mVorbisBlock, &pkt) != 0) {
     return -1;
@@ -184,19 +181,9 @@ VorbisDataDecoder::DoDecode(MediaRawData* aSample)
 
   VorbisPCMValue** pcm = 0;
   int32_t frames = vorbis_synthesis_pcmout(&mVorbisDsp, &pcm);
-  // If the first packet of audio in the media produces no data, we
-  // still need to produce an AudioData for it so that the correct media
-  // start time is calculated.  Otherwise we'd end up with a media start
-  // time derived from the timecode of the first packet that produced
-  // data.
-  if (frames == 0 && first_packet) {
-    mCallback->Output(new AudioData(aOffset,
-                                    aTstampUsecs,
-                                    0,
-                                    0,
-                                    AlignedAudioBuffer(),
-                                    mVorbisDsp.vi->channels,
-                                    mVorbisDsp.vi->rate));
+  if (frames == 0) {
+    mCallback->InputExhausted();
+    return 0;
   }
   while (frames > 0) {
     uint32_t channels = mVorbisDsp.vi->channels;

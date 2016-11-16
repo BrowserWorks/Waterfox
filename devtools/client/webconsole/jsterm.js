@@ -246,17 +246,21 @@ JSTerm.prototype = {
     let autocompleteOptions = {
       onSelect: this.onAutocompleteSelect.bind(this),
       onClick: this.acceptProposedCompletion.bind(this),
-      panelId: "webConsole_autocompletePopup",
-      listBoxId: "webConsole_autocompletePopupListBox",
-      position: "before_start",
+      listId: "webConsole_autocompletePopupListBox",
+      position: "top",
       theme: "auto",
-      direction: "ltr",
       autoSelect: true
     };
-    this.autocompletePopup = new AutocompletePopup(this.hud.document,
-                                                   autocompleteOptions);
 
     let doc = this.hud.document;
+
+    let toolbox = gDevTools.getToolbox(this.hud.owner.target);
+    if (!toolbox) {
+      // In some cases (e.g. Browser Console), there is no toolbox.
+      toolbox = { doc };
+    }
+    this.autocompletePopup = new AutocompletePopup(toolbox, autocompleteOptions);
+
     let inputContainer = doc.querySelector(".jsterm-input-container");
     this.completeNode = doc.querySelector(".jsterm-complete-node");
     this.inputNode = doc.querySelector(".jsterm-input-node");
@@ -316,7 +320,7 @@ JSTerm.prototype = {
       errorDocLink = this.hud.document.createElementNS(XHTML_NS, "a");
       errorDocLink.className = "learn-more-link webconsole-learn-more-link";
       errorDocLink.textContent = `[${l10n.getStr("webConsoleMoreInfoLabel")}]`;
-      errorDocLink.title = errorDocURL;
+      errorDocLink.title = errorDocURL.split("?")[0];
       errorDocLink.href = "#";
       errorDocLink.draggable = false;
       errorDocLink.addEventListener("click", () => {
@@ -439,11 +443,24 @@ JSTerm.prototype = {
       selectedNodeActor = inspectorSelection.nodeFront.actorID;
     }
 
-    let message = new Messages.Simple(executeString, {
-      category: "input",
-      severity: "log",
-    });
-    this.hud.output.addMessage(message);
+    if (this.hud.NEW_CONSOLE_OUTPUT_ENABLED) {
+      const { ConsoleCommand } = require("devtools/client/webconsole/new-console-output/types");
+      let message = new ConsoleCommand({
+        messageText: executeString,
+        source: "javascript",
+        type: "command",
+        // @TODO remove category and severity
+        category: "input",
+        severity: "log",
+      });
+      this.hud.newConsoleOutput.dispatchMessageAdd(message);
+    } else {
+      let message = new Messages.Simple(executeString, {
+        category: "input",
+        severity: "log",
+      });
+      this.hud.output.addMessage(message);
+    }
     let onResult = this._executeResultCallback.bind(this, resultCallback);
 
     let options = {
@@ -657,7 +674,7 @@ JSTerm.prototype = {
       }
     } else {
       this.sidebar.once("variablesview-ready", onTabReady);
-      this.sidebar.addTab("variablesview", VARIABLES_VIEW_URL, true);
+      this.sidebar.addTab("variablesview", VARIABLES_VIEW_URL, {selected: true});
     }
 
     return deferred.promise;
@@ -1700,12 +1717,6 @@ JSTerm.prototype = {
 
     this.autocompletePopup.destroy();
     this.autocompletePopup = null;
-
-    let popup = this.hud.owner.chromeWindow.document
-                .getElementById("webConsole_autocompletePopup");
-    if (popup) {
-      popup.parentNode.removeChild(popup);
-    }
 
     if (this._onPaste) {
       this.inputNode.removeEventListener("paste", this._onPaste, false);

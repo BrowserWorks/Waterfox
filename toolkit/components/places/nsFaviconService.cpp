@@ -236,8 +236,8 @@ nsFaviconService::SetAndFetchFaviconForPage(nsIURI* aPageURI,
     // Bug 1227289 : Let's default to the systemPrincipal if no loadingPrincipal is provided
     // so addons not providing a loadingPrincipal do not break in release builds.
     const char16_t* params[] = {
-      MOZ_UTF16("nsFaviconService::setAndFetchFaviconForPage()"),
-      MOZ_UTF16("nsFaviconService::setAndFetchFaviconForPage(..., [optional aLoadingPrincipal])")
+      u"nsFaviconService::setAndFetchFaviconForPage()",
+      u"nsFaviconService::setAndFetchFaviconForPage(..., [optional aLoadingPrincipal])"
     };
     nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
                                     NS_LITERAL_CSTRING("Security by Default"),
@@ -347,7 +347,7 @@ nsFaviconService::ReplaceFaviconData(nsIURI* aFaviconURI,
     rv = OptimizeFaviconImage(aData, aDataLen, aMimeType, iconData->data, iconData->mimeType);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    if (iconData->data.Length() > MAX_FAVICON_SIZE) {
+    if (iconData->data.Length() > nsIFaviconService::MAX_FAVICON_SIZE) {
       // We cannot optimize this favicon size and we are over the maximum size
       // allowed, so we will not save data to the db to avoid bloating it.
       mUnassociatedIcons.RemoveEntry(aFaviconURI);
@@ -398,8 +398,8 @@ nsFaviconService::ReplaceFaviconDataFromDataURL(nsIURI* aFaviconURI,
     // Bug 1227289 : Let's default to the systemPrincipal if no loadingPrincipal is provided
     // so addons not providing a loadingPrincipal do not break in release builds.
     const char16_t* params[] = {
-      MOZ_UTF16("nsFaviconService::ReplaceFaviconDataFromDataURL()"),
-      MOZ_UTF16("nsFaviconService::ReplaceFaviconDataFromDataURL(..., [optional aLoadingPrincipal])")
+      u"nsFaviconService::ReplaceFaviconDataFromDataURL()",
+      u"nsFaviconService::ReplaceFaviconDataFromDataURL(..., [optional aLoadingPrincipal])"
     };
     nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
                                     NS_LITERAL_CSTRING("Security by Default"),

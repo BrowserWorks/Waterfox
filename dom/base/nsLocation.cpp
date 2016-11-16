@@ -108,7 +108,7 @@ nsLocation::CheckURL(nsIURI* aURI, nsIDocShellLoadInfo** aLoadInfo)
   nsCOMPtr<nsIDocShell> docShell(do_QueryReferent(mDocShell));
   NS_ENSURE_TRUE(docShell, NS_ERROR_NOT_AVAILABLE);
 
-  nsCOMPtr<nsISupports> owner;
+  nsCOMPtr<nsIPrincipal> triggeringPrincipal;
   nsCOMPtr<nsIURI> sourceURI;
   net::ReferrerPolicy referrerPolicy = net::RP_Default;
 
@@ -133,46 +133,58 @@ nsLocation::CheckURL(nsIURI* aURI, nsIDocShellLoadInfo** aLoadInfo)
     // push/replaceState) matches the principal's URI, use the document's
     // current URI as the referrer.  If they don't match, use the principal's
     // URI.
+    //
+    // The triggering principal for this load should be the principal of the
+    // incumbent document (which matches where the referrer information is
+    // coming from) when there is an incumbent document, and the subject
+    // principal otherwise.  Note that the URI in the triggering principal
+    // may not match the referrer URI in various cases, notably including
+    // the cases when the incumbent document's document URI was modified
+    // after the document was loaded.
 
-    nsCOMPtr<nsIDocument> doc;
-    nsCOMPtr<nsIURI> docOriginalURI, docCurrentURI, principalURI;
     nsCOMPtr<nsPIDOMWindowInner> incumbent =
       do_QueryInterface(mozilla::dom::GetIncumbentGlobal());
-    if (incumbent) {
-      doc = incumbent->GetDoc();
-    }
+    nsCOMPtr<nsIDocument> doc = incumbent ? incumbent->GetDoc() : nullptr;
+
     if (doc) {
+      nsCOMPtr<nsIURI> docOriginalURI, docCurrentURI, principalURI;
       docOriginalURI = doc->GetOriginalURI();
       docCurrentURI = doc->GetDocumentURI();
       rv = doc->NodePrincipal()->GetURI(getter_AddRefs(principalURI));
       NS_ENSURE_SUCCESS(rv, rv);
+
+      triggeringPrincipal = doc->NodePrincipal();
       referrerPolicy = doc->GetReferrerPolicy();
-    }
 
-    bool urisEqual = false;
-    if (docOriginalURI && docCurrentURI && principalURI) {
-      principalURI->Equals(docOriginalURI, &urisEqual);
-    }
-
-    if (urisEqual) {
-      sourceURI = docCurrentURI;
-    }
-    else {
-      // Use principalURI as long as it is not an nsNullPrincipalURI.
-      // We could add a method such as GetReferrerURI to principals to make this
-      // cleaner, but given that we need to start using Source Browsing Context
-      // for referrer (see Bug 960639) this may be wasted effort at this stage.
-      if (principalURI) {
-        bool isNullPrincipalScheme;
-        rv = principalURI->SchemeIs(NS_NULLPRINCIPAL_SCHEME,
-                                    &isNullPrincipalScheme);
-        if (NS_SUCCEEDED(rv) && !isNullPrincipalScheme) {
-          sourceURI = principalURI;
+      bool urisEqual = false;
+      if (docOriginalURI && docCurrentURI && principalURI) {
+        principalURI->Equals(docOriginalURI, &urisEqual);
+      }
+      if (urisEqual) {
+        sourceURI = docCurrentURI;
+      }
+      else {
+        // Use principalURI as long as it is not an nsNullPrincipalURI.
+        // We could add a method such as GetReferrerURI to principals to make this
+        // cleaner, but given that we need to start using Source Browsing Context
+        // for referrer (see Bug 960639) this may be wasted effort at this stage.
+        if (principalURI) {
+          bool isNullPrincipalScheme;
+          rv = principalURI->SchemeIs(NS_NULLPRINCIPAL_SCHEME,
+                                     &isNullPrincipalScheme);
+          if (NS_SUCCEEDED(rv) && !isNullPrincipalScheme) {
+            sourceURI = principalURI;
+          }
         }
       }
     }
-
-    owner = nsContentUtils::SubjectPrincipal();
+    else {
+      // No document; determine triggeringPrincipal by quering the
+      // subjectPrincipal, wich is the principal of the current JS
+      // compartment, or a null principal in case there is no
+      // compartment yet.
+      triggeringPrincipal = nsContentUtils::SubjectPrincipal();
+    }
   }
 
   // Create load info
@@ -180,7 +192,7 @@ nsLocation::CheckURL(nsIURI* aURI, nsIDocShellLoadInfo** aLoadInfo)
   docShell->CreateLoadInfo(getter_AddRefs(loadInfo));
   NS_ENSURE_TRUE(loadInfo, NS_ERROR_FAILURE);
 
-  loadInfo->SetOwner(owner);
+  loadInfo->SetTriggeringPrincipal(triggeringPrincipal);
 
   if (sourceURI) {
     loadInfo->SetReferrer(sourceURI);
@@ -251,7 +263,6 @@ nsLocation::SetURI(nsIURI* aURI, bool aReplace)
   nsCOMPtr<nsIDocShell> docShell(do_QueryReferent(mDocShell));
   if (docShell) {
     nsCOMPtr<nsIDocShellLoadInfo> loadInfo;
-    nsCOMPtr<nsIWebNavigation> webNav(do_QueryInterface(docShell));
 
     if(NS_FAILED(CheckURL(aURI, getter_AddRefs(loadInfo))))
       return NS_ERROR_FAILURE;

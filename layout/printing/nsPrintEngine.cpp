@@ -108,7 +108,7 @@ static const char kPrintingPromptService[] = "@mozilla.org/embedcomp/printingpro
 #include "nsIBaseWindow.h"
 #include "nsILayoutHistoryState.h"
 #include "nsFrameManager.h"
-#include "nsHTMLReflowState.h"
+#include "mozilla/ReflowInput.h"
 #include "nsIDOMHTMLAnchorElement.h"
 #include "nsIDOMHTMLAreaElement.h"
 #include "nsIDOMHTMLLinkElement.h"
@@ -1101,8 +1101,7 @@ nsPrintEngine::IsThereARangeSelection(nsPIDOMWindowOuter* aDOMWin)
 
   // check here to see if there is a range selection
   // so we know whether to turn on the "Selection" radio button
-  Selection* selection =
-    presShell->GetCurrentSelection(nsISelectionController::SELECTION_NORMAL);
+  Selection* selection = presShell->GetCurrentSelection(SelectionType::eNormal);
   if (!selection) {
     return false;
   }
@@ -1873,8 +1872,6 @@ nsPrintEngine::OnStateChange(nsIWebProgress* aWebProgress,
     return NS_OK;
   }
   if (aStateFlags & STATE_START) {
-    nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
-
     ++mLoadCounter;
   } else if (aStateFlags & STATE_STOP) {
     mDidLoadDataForPrinting = true;
@@ -1963,9 +1960,9 @@ nsPrintEngine::UpdateSelectionAndShrinkPrintObject(nsPrintObject* aPO,
   RefPtr<Selection> selection, selectionPS;
   // It's okay if there is no display shell, just skip copying the selection
   if (displayShell) {
-    selection = displayShell->GetCurrentSelection(nsISelectionController::SELECTION_NORMAL);
+    selection = displayShell->GetCurrentSelection(SelectionType::eNormal);
   }
-  selectionPS = aPO->mPresShell->GetCurrentSelection(nsISelectionController::SELECTION_NORMAL);
+  selectionPS = aPO->mPresShell->GetCurrentSelection(SelectionType::eNormal);
 
   // Reset all existing selection ranges that might have been added by calling
   // this function before.
@@ -2376,9 +2373,9 @@ static nsresult CloneSelection(nsIDocument* aOrigDoc, nsIDocument* aDoc)
   NS_ENSURE_STATE(origShell && shell);
 
   RefPtr<Selection> origSelection =
-    origShell->GetCurrentSelection(nsISelectionController::SELECTION_NORMAL);
+    origShell->GetCurrentSelection(SelectionType::eNormal);
   RefPtr<Selection> selection =
-    shell->GetCurrentSelection(nsISelectionController::SELECTION_NORMAL);
+    shell->GetCurrentSelection(SelectionType::eNormal);
   NS_ENSURE_STATE(origSelection && selection);
 
   int32_t rangeCount = origSelection->RangeCount();

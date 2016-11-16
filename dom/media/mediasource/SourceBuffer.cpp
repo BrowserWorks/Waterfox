@@ -51,7 +51,7 @@ SourceBuffer::SetMode(SourceBufferAppendMode aMode, ErrorResult& aRv)
   }
   if (mCurrentAttributes.mGenerateTimestamps &&
       aMode == SourceBufferAppendMode::Segments) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
+    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
     return;
   }
   MOZ_ASSERT(mMediaSource->ReadyState() != MediaSourceReadyState::Closed);
@@ -138,7 +138,7 @@ SourceBuffer::SetAppendWindowStart(double aAppendWindowStart, ErrorResult& aRv)
   }
   if (aAppendWindowStart < 0 ||
       aAppendWindowStart >= mCurrentAttributes.GetAppendWindowEnd()) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
+    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
     return;
   }
   mCurrentAttributes.SetAppendWindowStart(aAppendWindowStart);
@@ -155,7 +155,7 @@ SourceBuffer::SetAppendWindowEnd(double aAppendWindowEnd, ErrorResult& aRv)
   }
   if (IsNaN(aAppendWindowEnd) ||
       aAppendWindowEnd <= mCurrentAttributes.GetAppendWindowStart()) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
+    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
     return;
   }
   mCurrentAttributes.SetAppendWindowEnd(aAppendWindowEnd);
@@ -189,6 +189,10 @@ SourceBuffer::Abort(ErrorResult& aRv)
     return;
   }
   if (mMediaSource->ReadyState() != MediaSourceReadyState::Open) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
+  if (mPendingRemoval.Exists()) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
@@ -232,7 +236,7 @@ SourceBuffer::Remove(double aStart, double aEnd, ErrorResult& aRv)
   if (IsNaN(mMediaSource->Duration()) ||
       aStart < 0 || aStart > mMediaSource->Duration() ||
       aEnd <= aStart || IsNaN(aEnd)) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
+    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
     return;
   }
   if (mMediaSource->ReadyState() == MediaSourceReadyState::Ended) {
@@ -248,11 +252,15 @@ SourceBuffer::RangeRemoval(double aStart, double aEnd)
   StartUpdating();
 
   RefPtr<SourceBuffer> self = this;
-  mTrackBuffersManager->RangeRemoval(TimeUnit::FromSeconds(aStart),
-                                     TimeUnit::FromSeconds(aEnd))
-    ->Then(AbstractThread::MainThread(), __func__,
-           [self] (bool) { self->StopUpdating(); },
-           []() { MOZ_ASSERT(false); });
+  mPendingRemoval.Begin(
+    mTrackBuffersManager->RangeRemoval(TimeUnit::FromSeconds(aStart),
+                                       TimeUnit::FromSeconds(aEnd))
+      ->Then(AbstractThread::MainThread(), __func__,
+             [self] (bool) {
+               self->mPendingRemoval.Complete();
+               self->StopUpdating();
+             },
+             []() { MOZ_ASSERT(false); }));
 }
 
 void
@@ -389,7 +397,7 @@ SourceBuffer::CheckEndTime()
   double endTime = mCurrentAttributes.GetGroupEndTimestamp().ToSeconds();
   double duration = mMediaSource->Duration();
   if (endTime > duration) {
-    mMediaSource->SetDuration(endTime, MSRangeRemovalAction::SKIP);
+    mMediaSource->SetDuration(endTime);
   }
 }
 
@@ -535,6 +543,15 @@ SourceBuffer::GetBufferedEnd()
   ErrorResult dummy;
   RefPtr<TimeRanges> ranges = GetBuffered(dummy);
   return ranges->Length() > 0 ? ranges->GetEndTime() : 0;
+}
+
+double
+SourceBuffer::HighestStartTime()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  return mTrackBuffersManager
+         ? mTrackBuffersManager->HighestStartTime().ToSeconds()
+         : 0.0;
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(SourceBuffer)

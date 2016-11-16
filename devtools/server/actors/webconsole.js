@@ -220,8 +220,7 @@ WebConsoleActor.prototype =
   {
     if (window) {
       if (this._hadChromeWindow) {
-        let contextChangedMsg = WebConsoleActor.l10n.getStr("evaluationContextChanged");
-        Services.console.logStringMessage(contextChangedMsg);
+        Services.console.logStringMessage('Webconsole context has changed');
       }
       this._lastChromeWindow = Cu.getWeakReference(window);
       this._hadChromeWindow = true;
@@ -595,8 +594,11 @@ WebConsoleActor.prototype =
           break;
         case "ConsoleAPI":
           if (!this.consoleAPIListener) {
+            // Create the consoleAPIListener (and apply the filtering options defined
+            // in the parent actor).
             this.consoleAPIListener =
-              new ConsoleAPIListener(window, this);
+              new ConsoleAPIListener(window, this,
+                                     this.parentActor.consoleAPIListenerOptions);
             this.consoleAPIListener.init();
           }
           startedListeners.push(listener);
@@ -609,7 +611,9 @@ WebConsoleActor.prototype =
             this.stackTraceCollector = new StackTraceCollector({ window, appId });
             this.stackTraceCollector.init();
 
-            if (appId || messageManager) {
+            let processBoundary = Services.appinfo.processType !=
+                                  Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
+            if ((appId || messageManager) && processBoundary) {
               // Start a network monitor in the parent process to listen to
               // most requests than happen in parent
               this.networkMonitor =
@@ -907,7 +911,7 @@ WebConsoleActor.prototype =
           // It is possible that we won't have permission to unwrap an
           // object and retrieve its errorMessageName.
         try {
-          errorDocURL = ErrorDocs.GetURL(error && error.errorMessageName);
+          errorDocURL = ErrorDocs.GetURL(error);
         } catch (ex) {}
       }
     }
@@ -1295,7 +1299,19 @@ WebConsoleActor.prototype =
       evalOptions = { url: aOptions.url };
     }
 
+    // If the debugger object is changed from the last evaluation,
+    // adopt this._lastConsoleInputEvaluation value in the new debugger,
+    // to prevents "Debugger.Object belongs to a different Debugger" exceptions
+    // related to the $_ bindings.
+    if (this._lastConsoleInputEvaluation &&
+        this._lastConsoleInputEvaluation.global !== dbgWindow) {
+      this._lastConsoleInputEvaluation = dbg.adoptDebuggeeValue(
+        this._lastConsoleInputEvaluation
+      );
+    }
+
     let result;
+
     if (frame) {
       result = frame.evalWithBindings(aString, bindings, evalOptions);
     }
@@ -1453,6 +1469,7 @@ WebConsoleActor.prototype =
     return {
       errorMessage: this._createStringGrip(aPageError.errorMessage),
       errorMessageName: aPageError.errorMessageName,
+      exceptionDocURL: ErrorDocs.GetURL(aPageError),
       sourceName: aPageError.sourceName,
       lineText: lineText,
       lineNumber: aPageError.lineNumber,

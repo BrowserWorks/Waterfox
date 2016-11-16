@@ -15,6 +15,7 @@
 #include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/ISurfaceAllocator.h"  // for ISurfaceAllocator
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor, etc
+#include "mozilla/layers/TextureHostBasic.h"
 #include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
 #include "mozilla/layers/ImageDataSerializer.h"
 #include "mozilla/layers/TextureClient.h"
@@ -66,7 +67,7 @@ namespace layers {
 class TextureParent : public ParentActor<PTextureParent>
 {
 public:
-  explicit TextureParent(HostIPCAllocator* aAllocator);
+  explicit TextureParent(HostIPCAllocator* aAllocator, uint64_t aSerial);
 
   ~TextureParent();
 
@@ -74,9 +75,7 @@ public:
             const LayersBackend& aLayersBackend,
             const TextureFlags& aFlags);
 
-  void CompositorRecycle();
-
-  virtual bool RecvClientRecycle() override;
+  void NotifyNotUsed(uint64_t aTransactionId);
 
   virtual bool RecvRecycleTexture(const TextureFlags& aTextureFlags) override;
 
@@ -84,9 +83,12 @@ public:
 
   virtual void Destroy() override;
 
+  uint64_t GetSerial() const { return mSerial; }
+
   HostIPCAllocator* mSurfaceAllocator;
-  RefPtr<TextureHost> mWaitForClientRecycle;
   RefPtr<TextureHost> mTextureHost;
+  // mSerial is unique in TextureClient's process.
+  const uint64_t mSerial;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +96,8 @@ PTextureParent*
 TextureHost::CreateIPDLActor(HostIPCAllocator* aAllocator,
                              const SurfaceDescriptor& aSharedData,
                              LayersBackend aLayersBackend,
-                             TextureFlags aFlags)
+                             TextureFlags aFlags,
+                             uint64_t aSerial)
 {
   if (aSharedData.type() == SurfaceDescriptor::TSurfaceDescriptorBuffer &&
       aSharedData.get_SurfaceDescriptorBuffer().data().type() == MemoryOrShmem::Tuintptr_t &&
@@ -103,7 +106,7 @@ TextureHost::CreateIPDLActor(HostIPCAllocator* aAllocator,
     NS_ERROR("A client process is trying to peek at our address space using a MemoryTexture!");
     return nullptr;
   }
-  TextureParent* actor = new TextureParent(aAllocator);
+  TextureParent* actor = new TextureParent(aAllocator, aSerial);
   if (!actor->Init(aSharedData, aLayersBackend, aFlags)) {
     delete actor;
     return nullptr;
@@ -134,6 +137,16 @@ TextureHost::AsTextureHost(PTextureParent* actor)
     return nullptr;
   }
   return static_cast<TextureParent*>(actor)->mTextureHost;
+}
+
+// static
+uint64_t
+TextureHost::GetTextureSerial(PTextureParent* actor)
+{
+  if (!actor) {
+    return UINT64_MAX;
+  }
+  return static_cast<TextureParent*>(actor)->mSerial;
 }
 
 PTextureParent*
@@ -175,6 +188,13 @@ TextureHost::GetAndResetAcquireFenceHandle()
 {
   RefPtr<FenceHandle::FdObj> fdObj = mAcquireFenceHandle.GetAndResetFdObj();
   return FenceHandle(fdObj);
+}
+
+void
+TextureHost::SetLastFwdTransactionId(uint64_t aTransactionId)
+{
+  MOZ_ASSERT(mFwdTransactionId <= aTransactionId);
+  mFwdTransactionId = aTransactionId;
 }
 
 // implemented in TextureHostOGL.cpp
@@ -293,21 +313,13 @@ CreateBackendIndependentTextureHost(const SurfaceDescriptor& aDesc,
   return result.forget();
 }
 
-void
-TextureHost::CompositorRecycle()
-{
-  if (!mActor) {
-    return;
-  }
-  static_cast<TextureParent*>(mActor)->CompositorRecycle();
-}
-
 TextureHost::TextureHost(TextureFlags aFlags)
-    : mActor(nullptr)
+    : AtomicRefCountedWithFinalize("TextureHost")
+    , mActor(nullptr)
     , mFlags(aFlags)
     , mCompositableCount(0)
+    , mFwdTransactionId(0)
 {
-  MOZ_COUNT_CTOR(TextureHost);
 }
 
 TextureHost::~TextureHost()
@@ -317,7 +329,6 @@ TextureHost::~TextureHost()
   // destroyed by now. But we will hit assertions if we don't ReadUnlock before
   // destroying the lock itself.
   ReadUnlock();
-  MOZ_COUNT_DTOR(TextureHost);
 }
 
 void TextureHost::Finalize()
@@ -353,8 +364,49 @@ TextureHost::RecycleTexture(TextureFlags aFlags)
 {
   MOZ_ASSERT(GetFlags() & TextureFlags::RECYCLE);
   MOZ_ASSERT(aFlags & TextureFlags::RECYCLE);
-  MOZ_ASSERT(!HasRecycleCallback());
   mFlags = aFlags;
+}
+
+void
+TextureHost::NotifyNotUsed()
+{
+  if (!mActor) {
+    return;
+  }
+
+  // Do not need to call NotifyNotUsed() if TextureHost does not have
+  // TextureFlags::RECYCLE flag and TextureHost is not GrallocTextureHostOGL.
+  if (!(GetFlags() & TextureFlags::RECYCLE) &&
+      !AsGrallocTextureHostOGL()) {
+    return;
+  }
+
+  auto compositor = GetCompositor();
+  // The following cases do not need to defer NotifyNotUsed until next Composite.
+  // - TextureHost does not have Compositor.
+  // - Compositor is BasicCompositor.
+  // - TextureHost has intermediate buffer.
+  // - TextureHost is GrallocTextureHostOGL. Fence object is used to detect
+  //   end of buffer usage.
+  if (!compositor ||
+      compositor->IsDestroyed() ||
+      compositor->AsBasicCompositor() ||
+      HasIntermediateBuffer() ||
+      AsGrallocTextureHostOGL()) {
+    static_cast<TextureParent*>(mActor)->NotifyNotUsed(mFwdTransactionId);
+    return;
+  }
+
+  compositor->NotifyNotUsedAfterComposition(this);
+}
+
+void
+TextureHost::CallNotifyNotUsed()
+{
+  if (!mActor) {
+    return;
+  }
+  static_cast<TextureParent*>(mActor)->NotifyNotUsed(mFwdTransactionId);
 }
 
 void
@@ -423,7 +475,7 @@ BufferTextureHost::BufferTextureHost(const BufferDescriptor& aDesc,
       const YCbCrDescriptor& ycbcr = mDescriptor.get_YCbCrDescriptor();
       mSize = ycbcr.ySize();
       mFormat = gfx::SurfaceFormat::YUV;
-      mHasIntermediateBuffer = true;
+      mHasIntermediateBuffer = ycbcr.hasIntermediateBuffer();
       break;
     }
     case BufferDescriptor::TRGBDescriptor: {
@@ -554,7 +606,6 @@ bool
 BufferTextureHost::EnsureWrappingTextureSource()
 {
   MOZ_ASSERT(!mHasIntermediateBuffer);
-  MOZ_ASSERT(mFormat != gfx::SurfaceFormat::YUV);
 
   if (mFirstSource) {
     return true;
@@ -564,15 +615,18 @@ BufferTextureHost::EnsureWrappingTextureSource()
     return false;
   }
 
-  RefPtr<gfx::DataSourceSurface> surf =
-    gfx::Factory::CreateWrappingDataSourceSurface(GetBuffer(),
-      ImageDataSerializer::ComputeRGBStride(mFormat, mSize.width), mSize, mFormat);
-
-  if (!surf) {
-    return false;
+  if (mFormat == gfx::SurfaceFormat::YUV) {
+    mFirstSource = mCompositor->CreateDataTextureSourceAroundYCbCr(this);
+  } else {
+    RefPtr<gfx::DataSourceSurface> surf =
+      gfx::Factory::CreateWrappingDataSourceSurface(GetBuffer(),
+        ImageDataSerializer::ComputeRGBStride(mFormat, mSize.width), mSize, mFormat);
+    if (!surf) {
+      return false;
+    }
+    mFirstSource = mCompositor->CreateDataTextureSourceAround(surf);
   }
 
-  mFirstSource = mCompositor->CreateDataTextureSourceAround(surf);
   if (!mFirstSource) {
     // BasicCompositor::CreateDataTextureSourceAround never returns null
     // and we don't expect to take this branch if we are using another backend.
@@ -642,6 +696,18 @@ bool IsCompatibleTextureSource(TextureSource* aTexture,
 void
 BufferTextureHost::PrepareTextureSource(CompositableTextureSourceRef& aTexture)
 {
+  // Reuse WrappingTextureSourceYCbCrBasic to reduce memory consumption.
+  if (mFormat == gfx::SurfaceFormat::YUV &&
+      !mHasIntermediateBuffer &&
+      aTexture.get() &&
+      aTexture->AsWrappingTextureSourceYCbCrBasic() &&
+      aTexture->NumCompositableRefs() <= 1 &&
+      aTexture->GetSize() == GetSize()) {
+    aTexture->AsSourceBasic()->SetBufferTextureHost(this);
+    aTexture->AsDataTextureSource()->SetOwner(this);
+    mFirstSource = aTexture->AsDataTextureSource();
+  }
+
   if (!mHasIntermediateBuffer) {
     EnsureWrappingTextureSource();
   }
@@ -694,6 +760,9 @@ BufferTextureHost::BindTextureSource(CompositableTextureSourceRef& aTexture)
 void
 BufferTextureHost::UnbindTextureSource()
 {
+  if (mFirstSource && mFirstSource->IsOwnedBy(this)) {
+    mFirstSource->Unbind();
+  }
   // This texture is not used by any layer anymore.
   // If the texture doesn't have an intermediate buffer, it means we are
   // compositing synchronously on the CPU, so we don't need to wait until
@@ -1006,8 +1075,9 @@ size_t MemoryTextureHost::GetBufferSize()
   return std::numeric_limits<size_t>::max();
 }
 
-TextureParent::TextureParent(HostIPCAllocator* aSurfaceAllocator)
+TextureParent::TextureParent(HostIPCAllocator* aSurfaceAllocator, uint64_t aSerial)
 : mSurfaceAllocator(aSurfaceAllocator)
+, mSerial(aSerial)
 {
   MOZ_COUNT_CTOR(TextureParent);
 }
@@ -1015,40 +1085,15 @@ TextureParent::TextureParent(HostIPCAllocator* aSurfaceAllocator)
 TextureParent::~TextureParent()
 {
   MOZ_COUNT_DTOR(TextureParent);
-  if (mTextureHost) {
-    mTextureHost->ClearRecycleCallback();
-  }
-}
-
-static void RecycleCallback(TextureHost*, void* aClosure) {
-  TextureParent* tp = reinterpret_cast<TextureParent*>(aClosure);
-  tp->CompositorRecycle();
 }
 
 void
-TextureParent::CompositorRecycle()
+TextureParent::NotifyNotUsed(uint64_t aTransactionId)
 {
-  mTextureHost->ClearRecycleCallback();
-
-  if (mTextureHost->GetFlags() & TextureFlags::RECYCLE) {
-    mozilla::Unused << SendCompositorRecycle();
-    // Don't forget to prepare for the next reycle
-    // if TextureClient request it.
-    mWaitForClientRecycle = mTextureHost;
+  if (!mTextureHost) {
+    return;
   }
-}
-
-bool
-TextureParent::RecvClientRecycle()
-{
-  // This will allow the RecycleCallback to be called once the compositor
-  // releases any external references to TextureHost.
-  mTextureHost->SetRecycleCallback(RecycleCallback, this);
-  if (!mWaitForClientRecycle) {
-    RECYCLE_LOG("Not a recycable tile");
-  }
-  mWaitForClientRecycle = nullptr;
-  return true;
+  mSurfaceAllocator->NotifyNotUsed(this, aTransactionId);
 }
 
 bool
@@ -1062,10 +1107,6 @@ TextureParent::Init(const SurfaceDescriptor& aSharedData,
                                      aFlags);
   if (mTextureHost) {
     mTextureHost->mActor = this;
-    if (aFlags & TextureFlags::RECYCLE) {
-      mWaitForClientRecycle = mTextureHost;
-      RECYCLE_LOG("Setup recycling for tile %p\n", this);
-    }
   }
 
   return !!mTextureHost;
@@ -1082,17 +1123,9 @@ TextureParent::Destroy()
   // protocol that created it.
   mTextureHost->ReadUnlock();
 
-  if (mTextureHost->GetFlags() & TextureFlags::RECYCLE) {
-    RECYCLE_LOG("clear recycling for tile %p\n", this);
-    mTextureHost->ClearRecycleCallback();
-  }
   if (mTextureHost->GetFlags() & TextureFlags::DEALLOCATE_CLIENT) {
     mTextureHost->ForgetSharedData();
   }
-
-  // Clear recycle callback.
-  mTextureHost->ClearRecycleCallback();
-  mWaitForClientRecycle = nullptr;
 
   mTextureHost->mActor = nullptr;
   mTextureHost = nullptr;

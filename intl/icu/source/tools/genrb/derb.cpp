@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1999-2016, International Business Machines
+*   Copyright (C) 1999-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -342,7 +342,7 @@ static UChar *quotedString(const UChar *string) {
 
             case 0x0022:
                 *np++ = 0x005C;
-                U_FALLTHROUGH;
+
             default:
                 *np++ = *sp;
                 break;

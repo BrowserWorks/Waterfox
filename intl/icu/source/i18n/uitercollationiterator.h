@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2012-2016, International Business Machines
+* Copyright (C) 2012-2014, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * uitercollationiterator.h
@@ -20,7 +20,6 @@
 #include "cmemory.h"
 #include "collation.h"
 #include "collationdata.h"
-#include "collationiterator.h"
 #include "normalizer2impl.h"
 
 U_NAMESPACE_BEGIN

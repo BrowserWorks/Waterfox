@@ -11,6 +11,7 @@
 
 const EventEmitter = require("devtools/shared/event-emitter");
 const { Cc, Ci } = require("chrome");
+const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
 const { LocalizationHelper } = require("devtools/client/shared/l10n");
 const STRINGS_URI = "chrome://devtools/locale/filterwidget.properties";
@@ -118,7 +119,7 @@ const SPECIAL_VALUES = new Set(["none", "unset", "initial", "inherit"]);
  */
 function CSSFilterEditorWidget(el, value = "") {
   this.doc = el.ownerDocument;
-  this.win = this.doc.ownerGlobal;
+  this.win = this.doc.defaultView;
   this.el = el;
 
   this._addButtonClick = this._addButtonClick.bind(this);
@@ -131,6 +132,7 @@ function CSSFilterEditorWidget(el, value = "") {
   this._presetClick = this._presetClick.bind(this);
   this._savePreset = this._savePreset.bind(this);
   this._togglePresets = this._togglePresets.bind(this);
+  this._resetFocus = this._resetFocus.bind(this);
 
   // Passed to asyncStorage, requires binding
   this.renderPresets = this.renderPresets.bind(this);
@@ -151,6 +153,34 @@ exports.CSSFilterEditorWidget = CSSFilterEditorWidget;
 
 CSSFilterEditorWidget.prototype = {
   _initMarkup: function () {
+    let filterListSelectPlaceholder =
+      L10N.getStr("filterListSelectPlaceholder");
+    let addNewFilterButton = L10N.getStr("addNewFilterButton");
+    let presetsToggleButton = L10N.getStr("presetsToggleButton");
+    let newPresetPlaceholder = L10N.getStr("newPresetPlaceholder");
+    let savePresetButton = L10N.getStr("savePresetButton");
+
+    this.el.innerHTML = `
+      <div class="filters-list">
+        <div id="filters"></div>
+        <div class="footer">
+          <select value="">
+            <option value="">${filterListSelectPlaceholder}</option>
+          </select>
+          <button id="add-filter" class="add">${addNewFilterButton}</button>
+          <button id="toggle-presets">${presetsToggleButton}</button>
+        </div>
+      </div>
+
+      <div class="presets-list">
+        <div id="presets"></div>
+        <div class="footer">
+          <input value="" class="devtools-textinput"
+                 placeholder="${newPresetPlaceholder}"></input>
+          <button class="add">${savePresetButton}</button>
+        </div>
+      </div>
+    `;
     this.filtersList = this.el.querySelector("#filters");
     this.presetsList = this.el.querySelector("#presets");
     this.togglePresets = this.el.querySelector("#toggle-presets");
@@ -183,7 +213,7 @@ CSSFilterEditorWidget.prototype = {
   _populateFilterSelect: function () {
     let select = this.filterSelect;
     filterList.forEach(filter => {
-      let option = this.doc.createElement("option");
+      let option = this.doc.createElementNS(XHTML_NS, "option");
       option.innerHTML = option.value = filter.name;
       select.appendChild(option);
     });
@@ -193,31 +223,31 @@ CSSFilterEditorWidget.prototype = {
     * Creates a template for filter elements which is cloned and used in render
     */
   _buildFilterItemMarkup: function () {
-    let base = this.doc.createElement("div");
+    let base = this.doc.createElementNS(XHTML_NS, "div");
     base.className = "filter";
 
-    let name = this.doc.createElement("div");
+    let name = this.doc.createElementNS(XHTML_NS, "div");
     name.className = "filter-name";
 
-    let value = this.doc.createElement("div");
+    let value = this.doc.createElementNS(XHTML_NS, "div");
     value.className = "filter-value";
 
-    let drag = this.doc.createElement("i");
+    let drag = this.doc.createElementNS(XHTML_NS, "i");
     drag.title = L10N.getStr("dragHandleTooltipText");
 
-    let label = this.doc.createElement("label");
+    let label = this.doc.createElementNS(XHTML_NS, "label");
 
     name.appendChild(drag);
     name.appendChild(label);
 
-    let unitPreview = this.doc.createElement("span");
-    let input = this.doc.createElement("input");
+    let unitPreview = this.doc.createElementNS(XHTML_NS, "span");
+    let input = this.doc.createElementNS(XHTML_NS, "input");
     input.classList.add("devtools-textinput");
 
     value.appendChild(input);
     value.appendChild(unitPreview);
 
-    let removeButton = this.doc.createElement("button");
+    let removeButton = this.doc.createElementNS(XHTML_NS, "button");
     removeButton.className = "remove-button";
 
     base.appendChild(name);
@@ -228,16 +258,16 @@ CSSFilterEditorWidget.prototype = {
   },
 
   _buildPresetItemMarkup: function () {
-    let base = this.doc.createElement("div");
+    let base = this.doc.createElementNS(XHTML_NS, "div");
     base.classList.add("preset");
 
-    let name = this.doc.createElement("label");
+    let name = this.doc.createElementNS(XHTML_NS, "label");
     base.appendChild(name);
 
-    let value = this.doc.createElement("span");
+    let value = this.doc.createElementNS(XHTML_NS, "span");
     base.appendChild(value);
 
-    let removeButton = this.doc.createElement("button");
+    let removeButton = this.doc.createElementNS(XHTML_NS, "button");
     removeButton.classList.add("remove-button");
 
     base.appendChild(removeButton);
@@ -251,6 +281,7 @@ CSSFilterEditorWidget.prototype = {
     this.filtersList.addEventListener("click", this._removeButtonClick);
     this.filtersList.addEventListener("mousedown", this._mouseDown);
     this.filtersList.addEventListener("keydown", this._keyDown);
+    this.el.addEventListener("mousedown", this._resetFocus);
 
     this.presetsList.addEventListener("click", this._presetClick);
     this.togglePresets.addEventListener("click", this._togglePresets);
@@ -270,6 +301,7 @@ CSSFilterEditorWidget.prototype = {
     this.filtersList.removeEventListener("click", this._removeButtonClick);
     this.filtersList.removeEventListener("mousedown", this._mouseDown);
     this.filtersList.removeEventListener("keydown", this._keyDown);
+    this.el.removeEventListener("mousedown", this._resetFocus);
 
     this.presetsList.removeEventListener("click", this._presetClick);
     this.togglePresets.removeEventListener("click", this._togglePresets);
@@ -581,6 +613,14 @@ CSSFilterEditorWidget.prototype = {
   },
 
   /**
+   * Workaround needed to reset the focus when using a HTML select inside a XUL panel.
+   * See Bug 1294366.
+   */
+  _resetFocus: function () {
+    this.filterSelect.ownerDocument.defaultView.focus();
+  },
+
+  /**
    * Clears the list and renders filters, binding required events.
    * There are some delegated events bound in _addEventListeners method
    */
@@ -659,6 +699,11 @@ CSSFilterEditorWidget.prototype = {
 
   renderPresets: function () {
     this.getPresets().then(presets => {
+      // getPresets is async and the widget may be destroyed in between.
+      if (!this.presetsList) {
+        return;
+      }
+
       if (!presets || !presets.length) {
         this.presetsList.innerHTML = `<p>${L10N.getStr("emptyPresetList")}</p>`;
         this.emit("render");

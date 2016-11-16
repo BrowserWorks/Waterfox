@@ -1,6 +1,6 @@
 /*
 ********************************************************************************
-*   Copyright (C) 2012-2016, International Business Machines
+*   Copyright (C) 2012-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 *
@@ -157,7 +157,6 @@ public:
                                   FieldPositionIterator* posIter,
                                   UErrorCode& status) const;
 
-	/* Cannot use #ifndef U_HIDE_DRAFT_API for the following draft method since it is virtual. */
     /**
      * Format a long number using base-10 representation.
      *
@@ -303,7 +302,7 @@ public:
      * Format a decimal number. Currently sets status to U_UNSUPPORTED_ERROR.
      * The number is a DigitList wrapper onto a floating point decimal number.
      * The default implementation in NumberFormat converts the decimal number
-     * to a double and formats that.
+     * to a double and formats that.  
      *
      * @param number    The number, a DigitList format Decimal Floating Point.
      * @param appendTo  Output parameter to receive result.
@@ -336,7 +335,7 @@ public:
      * CompactDecimalFormat does not support parsing. This implementation
      * sets status to U_UNSUPPORTED_ERROR
      *
-     * @param text      Unused.
+     * @param text      Unused. 
      * @param result    Does not change.
      * @param status    Always set to U_UNSUPPORTED_ERROR.
      * @stable ICU 51

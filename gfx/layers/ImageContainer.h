@@ -280,7 +280,7 @@ public:
   void RecycleBuffer(mozilla::UniquePtr<uint8_t[]> aBuffer, uint32_t aSize);
   // Returns a recycled buffer of the right size, or allocates a new buffer.
   mozilla::UniquePtr<uint8_t[]> GetBuffer(uint32_t aSize);
-
+  virtual void ClearRecycledBuffers();
 private:
   typedef mozilla::Mutex Mutex;
 
@@ -359,7 +359,16 @@ public:
 
   enum Mode { SYNCHRONOUS = 0x0, ASYNCHRONOUS = 0x01 };
 
+  static const uint64_t sInvalidAsyncContainerId = 0;
+
   explicit ImageContainer(ImageContainer::Mode flag = SYNCHRONOUS);
+
+  /**
+   * Create ImageContainer just to hold another ASYNCHRONOUS ImageContainer's
+   * async container ID.
+   * @param aAsyncContainerID async container ID for which we are a proxy
+   */
+  explicit ImageContainer(uint64_t aAsyncContainerID);
 
   typedef uint32_t FrameID;
   typedef uint32_t ProducerID;
@@ -417,6 +426,12 @@ public:
    * Clear all images. Let ImageClient release all TextureClients.
    */
   void ClearAllImages();
+
+  /**
+   * Clear any resources that are not immediately necessary. This may be called
+   * in low-memory conditions.
+   */
+  void ClearCachedResources();
 
   /**
    * Clear the current images.
@@ -620,6 +635,8 @@ private:
   // frames to the compositor through transactions in the main thread rather than
   // asynchronusly using the ImageBridge IPDL protocol.
   ImageClient* mImageClient;
+
+  uint64_t mAsyncContainerID;
 
   nsTArray<FrameID> mFrameIDsNotYetComposited;
   // ProducerID for last current image(s), including the frames in

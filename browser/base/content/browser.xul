@@ -11,7 +11,7 @@
 <?xml-stylesheet href="chrome://browser/content/usercontext/usercontext.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/devtools-browser.css" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/controlcenter/panel.css" type="text/css"?>
-<?xml-stylesheet href="chrome://browser/skin/customizableui/panelUIOverlay.css" type="text/css"?>
+<?xml-stylesheet href="chrome://browser/skin/customizableui/panelUI.css" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://browser/skin/browser-lightweightTheme.css" type="text/css"?>
 
@@ -104,6 +104,12 @@
                 hidden="true"
                 oncommand="gBrowser.openNonRemoteWindow(TabContextMenu.contextTab);"/>
 #endif
+      <menuseparator id="context_sendTabToDevice_separator" hidden="true"/>
+      <menu id="context_sendTabToDevice" label="&sendTabToDevice.label;"
+            accesskey="&sendTabToDevice.accesskey;" hidden="true">
+        <menupopup id="context_sendTabToDevicePopupMenu"
+                   onpopupshowing="gFxAccounts.populateSendTabToDevicesMenu(event.target, TabContextMenu.contextTab.linkedBrowser.currentURI.spec, TabContextMenu.contextTab.linkedBrowser.contentTitle);"/>
+      </menu>
       <menuseparator/>
       <menuitem id="context_reloadAllTabs" label="&reloadAllTabs.label;" accesskey="&reloadAllTabs.accesskey;"
                 tbattr="tabbrowser-multiple-visible"
@@ -372,7 +378,6 @@
     <menupopup id="placesContext">
       <menuseparator id="placesContext_recentlyBookmarkedSeparator"
                      ignoreitem="true"
-                     ordinal="2"
                      hidden="true"/>
       <menuitem id="placesContext_hideRecentlyBookmarked"
                 label="&hideRecentlyBookmarked.label;"
@@ -380,7 +385,6 @@
                 oncommand="BookmarkingUI.hideRecentlyBookmarked();"
                 closemenu="single"
                 ignoreitem="true"
-                ordinal="2"
                 hidden="true"/>
       <menuitem id="placesContext_showRecentlyBookmarked"
                 label="&showRecentlyBookmarked.label;"
@@ -388,11 +392,10 @@
                 oncommand="BookmarkingUI.showRecentlyBookmarked();"
                 closemenu="single"
                 ignoreitem="true"
-                ordinal="2"
                 hidden="true"/>
     </menupopup>
 
-    <panel id="ctrlTab-panel" class="KUI-panel" hidden="true" norestorefocus="true" level="top">
+    <panel id="ctrlTab-panel" hidden="true" norestorefocus="true" level="top">
       <hbox>
         <button class="ctrlTab-preview" flex="1"/>
         <button class="ctrlTab-preview" flex="1"/>
@@ -545,12 +548,11 @@
   <toolbox id="navigator-toolbox" mode="icons">
     <!-- Menu -->
     <toolbar type="menubar" id="toolbar-menubar" class="chromeclass-menubar" customizable="true"
-             defaultset="menubar-items"
              mode="icons" iconsize="small"
 #ifdef MENUBAR_CAN_AUTOHIDE
              toolbarname="&menubarCmd.label;"
              accesskey="&menubarCmd.accesskey;"
-#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
+#if defined(MOZ_WIDGET_GTK)
              autohide="true"
 #endif
 #endif
@@ -577,10 +579,9 @@
              iconsize="small"
              aria-label="&tabsToolbar.label;"
              context="toolbar-context-menu"
-             defaultset="tabbrowser-tabs,new-tab-button,alltabs-button"
              collapsed="true">
 
-#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)
+#if defined(MOZ_WIDGET_GTK)
       <hbox id="private-browsing-indicator"
             skipintoolbarset="true"/>
 #endif
@@ -630,7 +631,7 @@
         </menupopup>
       </toolbarbutton>
 
-#if !defined(MOZ_WIDGET_GTK) && !defined(MOZ_WIDGET_QT)
+#if !defined(MOZ_WIDGET_GTK)
       <hbox class="private-browsing-indicator" skipintoolbarset="true"/>
 #endif
 #ifdef CAN_DRAW_IN_TITLEBAR
@@ -649,21 +650,10 @@
 #endif
     </toolbar>
 
-    <!--
-           CAVEAT EMPTOR
-           Should you need to add items to the toolbar here, make sure to also add them
-           to the default placements of buttons in CustomizableUI.jsm, so the
-           customization code doesn't get confused.
-      -->
     <toolbar id="nav-bar"
              aria-label="&navbarCmd.label;"
              fullscreentoolbar="true" mode="icons" customizable="true"
              iconsize="small"
-#ifdef MOZ_DEV_EDITION
-             defaultset="urlbar-container,search-container,developer-button,bookmarks-menu-button,downloads-button,home-button,loop-button"
-#else
-             defaultset="urlbar-container,search-container,bookmarks-menu-button,downloads-button,home-button,loop-button"
-#endif
              customizationtarget="nav-bar-customization-target"
              overflowable="true"
              overflowbutton="nav-bar-overflow-button"
@@ -707,46 +697,6 @@
                      pageproxystate="invalid"
                      onfocus="document.getElementById('identity-box').style.MozUserFocus= 'normal'"
                      onblur="setTimeout(() => { document.getElementById('identity-box').style.MozUserFocus = ''; }, 0);">
-              <box id="notification-popup-box" hidden="true" align="center">
-                <image id="default-notification-icon" class="notification-anchor-icon" role="button"
-                       aria-label="&urlbar.defaultNotificationAnchor.label;"/>
-                <image id="geo-notification-icon" class="notification-anchor-icon geo-icon" role="button"
-                       aria-label="&urlbar.geolocationNotificationAnchor.label;"/>
-                <image id="addons-notification-icon" class="notification-anchor-icon install-icon" role="button"
-                       aria-label="&urlbar.addonsNotificationAnchor.label;"/>
-                <image id="indexedDB-notification-icon" class="notification-anchor-icon indexedDB-icon" role="button"
-                       aria-label="&urlbar.indexedDBNotificationAnchor.label;"/>
-                <image id="login-fill-notification-icon" class="notification-anchor-icon login-icon" role="button"
-                       aria-label="&urlbar.loginFillNotificationAnchor.label;"/>
-                <image id="password-notification-icon" class="notification-anchor-icon login-icon" role="button"
-                       aria-label="&urlbar.passwordNotificationAnchor.label;"/>
-                <image id="plugins-notification-icon" class="notification-anchor-icon plugin-icon" role="button"
-                       aria-label="&urlbar.pluginsNotificationAnchor.label;"/>
-                <image id="web-notifications-notification-icon" class="notification-anchor-icon web-notifications-icon" role="button"
-                       aria-label="&urlbar.webNotsNotificationAnchor3.label;"/>
-                <image id="webRTC-shareDevices-notification-icon" class="notification-anchor-icon camera-icon" role="button"
-                       aria-label="&urlbar.webRTCShareDevicesNotificationAnchor.label;"/>
-                <image id="webRTC-sharingDevices-notification-icon" class="notification-anchor-icon camera-icon in-use" role="button"
-                       aria-label="&urlbar.webRTCSharingDevicesNotificationAnchor.label;"/>
-                <image id="webRTC-shareMicrophone-notification-icon" class="notification-anchor-icon microphone-icon" role="button"
-                       aria-label="&urlbar.webRTCShareMicrophoneNotificationAnchor.label;"/>
-                <image id="webRTC-sharingMicrophone-notification-icon" class="notification-anchor-icon microphone-icon in-use" role="button"
-                       aria-label="&urlbar.webRTCSharingMicrophoneNotificationAnchor.label;"/>
-                <image id="webRTC-shareScreen-notification-icon" class="notification-anchor-icon screen-icon" role="button"
-                       aria-label="&urlbar.webRTCShareScreenNotificationAnchor.label;"/>
-                <image id="webRTC-sharingScreen-notification-icon" class="notification-anchor-icon screen-icon in-use" role="button"
-                       aria-label="&urlbar.webRTCSharingScreenNotificationAnchor.label;"/>
-                <image id="pointerLock-notification-icon" class="notification-anchor-icon pointer-icon" role="button"
-                       aria-label="&urlbar.pointerLockNotificationAnchor.label;"/>
-                <image id="servicesInstall-notification-icon" class="notification-anchor-icon service-icon" role="button"
-                       aria-label="&urlbar.servicesNotificationAnchor.label;"/>
-                <image id="translate-notification-icon" class="notification-anchor-icon translation-icon" role="button"
-                       aria-label="&urlbar.translateNotificationAnchor.label;"/>
-                <image id="translated-notification-icon" class="notification-anchor-icon translation-icon in-use" role="button"
-                       aria-label="&urlbar.translatedNotificationAnchor.label;"/>
-                <image id="eme-notification-icon" class="notification-anchor-icon drm-icon" role="button"
-                       aria-label="&urlbar.emeNotificationAnchor.label;"/>
-              </box>
               <!-- Use onclick instead of normal popup= syntax since the popup
                    code fires onmousedown, and hence eats our favicon drag events.
                    We only add the identity-box button to the tab order when the location bar
@@ -760,6 +710,67 @@
                 <image id="identity-icon"
                        consumeanchor="identity-box"
                        onclick="PageProxyClickHandler(event);"/>
+                <box id="blocked-permissions-container" align="center" tooltiptext="">
+                  <image data-permission-id="geo" class="notification-anchor-icon geo-icon blocked" role="button"
+                         aria-label="&urlbar.geolocationNotificationAnchor.label;"/>
+                  <image data-permission-id="desktop-notification" class="notification-anchor-icon desktop-notification-icon blocked" role="button"
+                         aria-label="&urlbar.webNotsNotificationAnchor3.label;"/>
+                  <image data-permission-id="camera" class="notification-anchor-icon camera-icon blocked" role="button"
+                         aria-label="&urlbar.webRTCShareDevicesNotificationAnchor.label;"/>
+                  <image data-permission-id="indexedDB" class="notification-anchor-icon indexedDB-icon blocked" role="button"
+                         aria-label="&urlbar.indexedDBNotificationAnchor.label;"/>
+                  <image data-permission-id="microphone" class="notification-anchor-icon microphone-icon blocked" role="button"
+                         aria-label="&urlbar.webRTCShareMicrophoneNotificationAnchor.label;"/>
+                  <image data-permission-id="screen" class="notification-anchor-icon screen-icon blocked" role="button"
+                         aria-label="&urlbar.webRTCShareScreenNotificationAnchor.label;"/>
+                  <image data-permission-id="pointerLock" class="notification-anchor-icon pointerLock-icon blocked" role="button"
+                         aria-label="&urlbar.pointerLockNotificationAnchor.label;"/>
+                </box>
+                <box id="notification-popup-box"
+                     hidden="true"
+                     tooltiptext=""
+                     onmouseover="document.getElementById('identity-icon').classList.add('no-hover');"
+                     onmouseout="document.getElementById('identity-icon').classList.remove('no-hover');"
+                     align="center">
+                  <image id="default-notification-icon" class="notification-anchor-icon" role="button"
+                         aria-label="&urlbar.defaultNotificationAnchor.label;"/>
+                  <image id="geo-notification-icon" class="notification-anchor-icon geo-icon" role="button"
+                         aria-label="&urlbar.geolocationNotificationAnchor.label;"/>
+                  <image id="addons-notification-icon" class="notification-anchor-icon install-icon" role="button"
+                         aria-label="&urlbar.addonsNotificationAnchor.label;"/>
+                  <image id="indexedDB-notification-icon" class="notification-anchor-icon indexedDB-icon" role="button"
+                         aria-label="&urlbar.indexedDBNotificationAnchor.label;"/>
+                  <image id="login-fill-notification-icon" class="notification-anchor-icon login-icon" role="button"
+                         aria-label="&urlbar.loginFillNotificationAnchor.label;"/>
+                  <image id="password-notification-icon" class="notification-anchor-icon login-icon" role="button"
+                         aria-label="&urlbar.passwordNotificationAnchor.label;"/>
+                  <image id="plugins-notification-icon" class="notification-anchor-icon plugin-icon" role="button"
+                         aria-label="&urlbar.pluginsNotificationAnchor.label;"/>
+                  <image id="web-notifications-notification-icon" class="notification-anchor-icon desktop-notification-icon" role="button"
+                         aria-label="&urlbar.webNotsNotificationAnchor3.label;"/>
+                  <image id="webRTC-shareDevices-notification-icon" class="notification-anchor-icon camera-icon" role="button"
+                         aria-label="&urlbar.webRTCShareDevicesNotificationAnchor.label;"/>
+                  <image id="webRTC-sharingDevices-notification-icon" class="notification-anchor-icon camera-icon in-use" role="button"
+                         aria-label="&urlbar.webRTCSharingDevicesNotificationAnchor.label;"/>
+                  <image id="webRTC-shareMicrophone-notification-icon" class="notification-anchor-icon microphone-icon" role="button"
+                         aria-label="&urlbar.webRTCShareMicrophoneNotificationAnchor.label;"/>
+                  <image id="webRTC-sharingMicrophone-notification-icon" class="notification-anchor-icon microphone-icon in-use" role="button"
+                         aria-label="&urlbar.webRTCSharingMicrophoneNotificationAnchor.label;"/>
+                  <image id="webRTC-shareScreen-notification-icon" class="notification-anchor-icon screen-icon" role="button"
+                         aria-label="&urlbar.webRTCShareScreenNotificationAnchor.label;"/>
+                  <image id="webRTC-sharingScreen-notification-icon" class="notification-anchor-icon screen-icon in-use" role="button"
+                         aria-label="&urlbar.webRTCSharingScreenNotificationAnchor.label;"/>
+                  <image id="pointerLock-notification-icon" class="notification-anchor-icon pointerLock-icon" role="button"
+                         aria-label="&urlbar.pointerLockNotificationAnchor.label;"/>
+                  <image id="servicesInstall-notification-icon" class="notification-anchor-icon service-icon" role="button"
+                         aria-label="&urlbar.servicesNotificationAnchor.label;"/>
+                  <image id="translate-notification-icon" class="notification-anchor-icon translation-icon" role="button"
+                         aria-label="&urlbar.translateNotificationAnchor.label;"/>
+                  <image id="translated-notification-icon" class="notification-anchor-icon translation-icon in-use" role="button"
+                         aria-label="&urlbar.translatedNotificationAnchor.label;"/>
+                  <image id="eme-notification-icon" class="notification-anchor-icon drm-icon" role="button"
+                         aria-label="&urlbar.emeNotificationAnchor.label;"/>
+                </box>
                 <image id="tracking-protection-icon"/>
                 <image id="connection-icon"/>
                 <hbox id="identity-icon-labels">
@@ -964,7 +975,6 @@
              mode="icons" iconsize="small"
              class="chromeclass-directories"
              context="toolbar-context-menu"
-             defaultset="personal-bookmarks"
              toolbarname="&personalbarCmd.label;" accesskey="&personalbarCmd.accesskey;"
              collapsed="true"
              customizable="true">
@@ -1131,13 +1141,13 @@
 #include ../../components/customizableui/content/customizeMode.inc.xul
   </deck>
 
-  <html:div id="fullscreen-warning" hidden="true">
-    <html:div id="fullscreen-domain-text">
+  <html:div id="fullscreen-warning" class="pointerlockfswarning" hidden="true">
+    <html:div class="pointerlockfswarning-domain-text">
       &fullscreenWarning.beforeDomain.label;
-      <html:span id="fullscreen-domain"/>
+      <html:span class="pointerlockfswarning-domain"/>
       &fullscreenWarning.afterDomain.label;
     </html:div>
-    <html:div id="fullscreen-generic-text">
+    <html:div class="pointerlockfswarning-generic-text">
       &fullscreenWarning.generic.label;
     </html:div>
     <html:button id="fullscreen-exit-button"
@@ -1148,6 +1158,17 @@
             &exitDOMFullscreen.button;
 #endif
     </html:button>
+  </html:div>
+
+  <html:div id="pointerlock-warning" class="pointerlockfswarning" hidden="true">
+    <html:div class="pointerlockfswarning-domain-text">
+      &pointerlockWarning.beforeDomain.label;
+      <html:span class="pointerlockfswarning-domain"/>
+      &pointerlockWarning.afterDomain.label;
+    </html:div>
+    <html:div class="pointerlockfswarning-generic-text">
+      &pointerlockWarning.generic.label;
+    </html:div>
   </html:div>
 
   <vbox id="browser-bottombox" layer="true">

@@ -1,13 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es.xml
 // *
 // ***************************************************************************
 es{
-    AuxExemplarCharacters{"[ª à ă â å ä ã ā æ ç è ĕ ê ë ē ì ĭ î ī º ò ŏ ô ö ø ō œ ù ŭ û ū ÿ]"}
+    AuxExemplarCharacters{"[ª à ă â å ä ã ā æ ç è ĕ ê ë ē ì ĭ î ï ī º ò ŏ ô ö ø ō œ ù ŭ û ū ÿ]"}
     Ellipsis{
         final{"{0}…"}
         initial{"… {0}"}
@@ -16,7 +16,7 @@ es{
         word-initial{"… {0}"}
         word-medial{"{0}… {1}"}
     }
-    ExemplarCharacters{"[a á b c d e é f g h i í ï j k l m n ñ o ó p q r s t u ú ü v w x y ý z]"}
+    ExemplarCharacters{"[a á b c d e é f g h i í j k l m n ñ o ó p q r s t u ú ü v w x y z]"}
     ExemplarCharactersIndex{"[A B C D E F G H I J K L M N Ñ O P Q R S T U V W X Y Z]"}
     ExemplarCharactersPunctuation{
         "[\\- ‐ – — , ; \\: ! ¡ ? ¿ . … ' ‘ ’ \u0022 “ ” « » ( ) \\[ \\] § @ * / "
@@ -209,7 +209,7 @@ es{
         minimumGroupingDigits{"2"}
         native{"latn"}
     }
-    Version{"2.1.23.18"}
+    Version{"2.1.20.15"}
     calendar{
         buddhist{
             eras{

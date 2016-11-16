@@ -9,6 +9,8 @@
 #endif
 
 #include "compiler/translator/Types.h"
+#include "compiler/translator/InfoSink.h"
+#include "compiler/translator/IntermNode.h"
 
 #include <algorithm>
 #include <climits>
@@ -57,6 +59,122 @@ TType::TType(const TPublicType &p)
 bool TStructure::equals(const TStructure &other) const
 {
     return (uniqueId() == other.uniqueId());
+}
+
+const char *TType::getBuiltInTypeNameString() const
+{
+    if (isMatrix())
+    {
+        switch (getCols())
+        {
+            case 2:
+                switch (getRows())
+                {
+                    case 2:
+                        return "mat2";
+                    case 3:
+                        return "mat2x3";
+                    case 4:
+                        return "mat2x4";
+                    default:
+                        UNREACHABLE();
+                        return nullptr;
+                }
+            case 3:
+                switch (getRows())
+                {
+                    case 2:
+                        return "mat3x2";
+                    case 3:
+                        return "mat3";
+                    case 4:
+                        return "mat3x4";
+                    default:
+                        UNREACHABLE();
+                        return nullptr;
+                }
+            case 4:
+                switch (getRows())
+                {
+                    case 2:
+                        return "mat4x2";
+                    case 3:
+                        return "mat4x3";
+                    case 4:
+                        return "mat4";
+                    default:
+                        UNREACHABLE();
+                        return nullptr;
+                }
+            default:
+                UNREACHABLE();
+                return nullptr;
+        }
+    }
+    if (isVector())
+    {
+        switch (getBasicType())
+        {
+            case EbtFloat:
+                switch (getNominalSize())
+                {
+                    case 2:
+                        return "vec2";
+                    case 3:
+                        return "vec3";
+                    case 4:
+                        return "vec4";
+                    default:
+                        UNREACHABLE();
+                        return nullptr;
+                }
+            case EbtInt:
+                switch (getNominalSize())
+                {
+                    case 2:
+                        return "ivec2";
+                    case 3:
+                        return "ivec3";
+                    case 4:
+                        return "ivec4";
+                    default:
+                        UNREACHABLE();
+                        return nullptr;
+                }
+            case EbtBool:
+                switch (getNominalSize())
+                {
+                    case 2:
+                        return "bvec2";
+                    case 3:
+                        return "bvec3";
+                    case 4:
+                        return "bvec4";
+                    default:
+                        UNREACHABLE();
+                        return nullptr;
+                }
+            case EbtUInt:
+                switch (getNominalSize())
+                {
+                    case 2:
+                        return "uvec2";
+                    case 3:
+                        return "uvec3";
+                    case 4:
+                        return "uvec4";
+                    default:
+                        UNREACHABLE();
+                        return nullptr;
+                }
+            default:
+                UNREACHABLE();
+                return nullptr;
+        }
+    }
+    ASSERT(getBasicType() != EbtStruct);
+    ASSERT(getBasicType() != EbtInterfaceBlock);
+    return getBasicString();
 }
 
 TString TType::getCompleteString() const
@@ -200,7 +318,6 @@ size_t TType::getObjectSize() const
 
     if (isArray())
     {
-        // TODO: getArraySize() returns an int, not a size_t
         size_t currentArraySize = getArraySize();
         if (currentArraySize > INT_MAX / totalSize)
             totalSize = INT_MAX;
@@ -242,6 +359,77 @@ bool TStructure::containsSamplers() const
             return true;
     }
     return false;
+}
+
+void TStructure::createSamplerSymbols(const TString &structName,
+                                      const TString &structAPIName,
+                                      const unsigned int arrayOfStructsSize,
+                                      TVector<TIntermSymbol *> *outputSymbols,
+                                      TMap<TIntermSymbol *, TString> *outputSymbolsToAPINames) const
+{
+    for (auto &field : *mFields)
+    {
+        const TType *fieldType = field->type();
+        if (IsSampler(fieldType->getBasicType()))
+        {
+            if (arrayOfStructsSize > 0u)
+            {
+                for (unsigned int arrayIndex = 0u; arrayIndex < arrayOfStructsSize; ++arrayIndex)
+                {
+                    TStringStream name;
+                    name << structName << "_" << arrayIndex << "_" << field->name();
+                    TIntermSymbol *symbol = new TIntermSymbol(0, name.str(), *fieldType);
+                    outputSymbols->push_back(symbol);
+
+                    if (outputSymbolsToAPINames)
+                    {
+                        TStringStream apiName;
+                        apiName << structAPIName << "[" << arrayIndex << "]." << field->name();
+                        (*outputSymbolsToAPINames)[symbol] = apiName.str();
+                    }
+                }
+            }
+            else
+            {
+                TString symbolName    = structName + "_" + field->name();
+                TIntermSymbol *symbol = new TIntermSymbol(0, symbolName, *fieldType);
+                outputSymbols->push_back(symbol);
+
+                if (outputSymbolsToAPINames)
+                {
+                    TString apiName = structAPIName + "." + field->name();
+                    (*outputSymbolsToAPINames)[symbol] = apiName;
+                }
+            }
+        }
+        else if (fieldType->isStructureContainingSamplers())
+        {
+            unsigned int nestedArrayOfStructsSize =
+                fieldType->isArray() ? fieldType->getArraySize() : 0u;
+            if (arrayOfStructsSize > 0)
+            {
+                for (unsigned int arrayIndex = 0u; arrayIndex < arrayOfStructsSize; ++arrayIndex)
+                {
+                    TStringStream fieldName;
+                    fieldName << structName << "_" << arrayIndex << "_" << field->name();
+                    TStringStream fieldAPIName;
+                    if (outputSymbolsToAPINames)
+                    {
+                        fieldAPIName << structAPIName << "[" << arrayIndex << "]." << field->name();
+                    }
+                    fieldType->createSamplerSymbols(fieldName.str(), fieldAPIName.str(),
+                                                    nestedArrayOfStructsSize, outputSymbols,
+                                                    outputSymbolsToAPINames);
+                }
+            }
+            else
+            {
+                fieldType->createSamplerSymbols(
+                    structName + "_" + field->name(), structAPIName + "." + field->name(),
+                    nestedArrayOfStructsSize, outputSymbols, outputSymbolsToAPINames);
+            }
+        }
+    }
 }
 
 TString TFieldListCollection::buildMangledName(const TString &mangledNamePrefix) const

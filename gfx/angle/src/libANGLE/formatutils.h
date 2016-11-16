@@ -9,16 +9,29 @@
 #ifndef LIBANGLE_FORMATUTILS_H_
 #define LIBANGLE_FORMATUTILS_H_
 
-#include "libANGLE/Caps.h"
-#include "libANGLE/angletypes.h"
-
-#include "angle_gl.h"
-
 #include <cstddef>
 #include <stdint.h>
 
+#include "angle_gl.h"
+#include "libANGLE/Caps.h"
+#include "libANGLE/Error.h"
+#include "libANGLE/angletypes.h"
+
 namespace gl
 {
+
+struct FormatType final
+{
+    FormatType();
+    FormatType(GLenum format_, GLenum type_);
+    FormatType(const FormatType &other) = default;
+    FormatType &operator=(const FormatType &other) = default;
+
+    bool operator<(const FormatType &other) const;
+
+    GLenum format;
+    GLenum type;
+};
 
 struct Type
 {
@@ -33,6 +46,35 @@ const Type &GetTypeInfo(GLenum type);
 struct InternalFormat
 {
     InternalFormat();
+
+    gl::ErrorOrResult<GLuint> computeRowPitch(GLenum formatType,
+                                              GLsizei width,
+                                              GLint alignment,
+                                              GLint rowLength) const;
+    gl::ErrorOrResult<GLuint> computeDepthPitch(GLenum formatType,
+                                                GLsizei width,
+                                                GLsizei height,
+                                                GLint alignment,
+                                                GLint rowLength,
+                                                GLint imageHeight) const;
+    gl::ErrorOrResult<GLuint> computeCompressedImageSize(GLenum formatType,
+                                                         const gl::Extents &size) const;
+    gl::ErrorOrResult<GLuint> computeSkipBytes(GLuint rowPitch,
+                                               GLuint depthPitch,
+                                               GLint skipImages,
+                                               GLint skipRows,
+                                               GLint skipPixels,
+                                               bool applySkipImages) const;
+    gl::ErrorOrResult<GLuint> computeUnpackSize(GLenum formatType,
+                                                const gl::Extents &size,
+                                                const gl::PixelUnpackState &unpack) const;
+
+    bool isLUMA() const;
+
+    bool operator==(const InternalFormat &other) const;
+    bool operator!=(const InternalFormat &other) const;
+
+    GLenum internalFormat;
 
     GLuint redBits;
     GLuint greenBits;
@@ -64,21 +106,34 @@ struct InternalFormat
     SupportCheckFunction textureSupport;
     SupportCheckFunction renderSupport;
     SupportCheckFunction filterSupport;
-
-    GLuint computeRowPitch(GLenum formatType, GLsizei width, GLint alignment, GLint rowLength) const;
-    GLuint computeDepthPitch(GLenum formatType,
-                             GLsizei width,
-                             GLsizei height,
-                             GLint alignment,
-                             GLint rowLength,
-                             GLint imageHeight) const;
-    GLuint computeBlockSize(GLenum formatType, GLsizei width, GLsizei height) const;
-    GLuint computeSkipPixels(GLint rowPitch,
-                             GLint depthPitch,
-                             GLint skipImages,
-                             GLint skipRows,
-                             GLint skipPixels) const;
 };
+
+// A "Format" is either a sized format, or an {unsized format, type} combination.
+struct Format
+{
+    // Sized types only.
+    explicit Format(GLenum internalFormat);
+    explicit Format(const InternalFormat &internalFormat);
+
+    // Sized or unsized types.
+    Format(GLenum internalFormat, GLenum format, GLenum type);
+
+    Format(const Format &other);
+    Format &operator=(const Format &other);
+
+    GLenum asSized() const;
+    bool valid() const;
+
+    static Format Invalid();
+    static bool SameSized(const Format &a, const Format &b);
+
+    // This is the sized info.
+    const InternalFormat *info;
+    GLenum format;
+    GLenum type;
+    bool sized;
+};
+
 const InternalFormat &GetInternalFormatInfo(GLenum internalFormat);
 
 GLenum GetSizedInternalFormat(GLenum internalFormat, GLenum type);

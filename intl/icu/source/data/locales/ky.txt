@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ky.xml
@@ -208,7 +208,7 @@ ky{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.19"}
     calendar{
         generic{
             DateTimePatterns{
@@ -796,10 +796,7 @@ ky{
         day-narrow{
             dn{"күн"}
             relative{
-                "-1"{"кечээ"}
                 "-2"{"мурдагы күнү"}
-                "0"{"бүгүн"}
-                "1"{"эртеӊ"}
                 "2"{"бүрсүгүнү"}
             }
             relativeTime{
@@ -816,10 +813,7 @@ ky{
         day-short{
             dn{"күн"}
             relative{
-                "-1"{"кечээ"}
                 "-2"{"мурдагы күнү"}
-                "0"{"бүгүн"}
-                "1"{"эртеӊ"}
                 "2"{"бүрсүгүнү"}
             }
             relativeTime{

@@ -120,13 +120,13 @@ MediaEngineTabVideoSource::InitRunnable::Run()
 }
 
 void
-MediaEngineTabVideoSource::GetName(nsAString_internal& aName)
+MediaEngineTabVideoSource::GetName(nsAString_internal& aName) const
 {
-  aName.AssignLiteral(MOZ_UTF16("&getUserMedia.videoSource.tabShare;"));
+  aName.AssignLiteral(u"&getUserMedia.videoSource.tabShare;");
 }
 
 void
-MediaEngineTabVideoSource::GetUUID(nsACString_internal& aUuid)
+MediaEngineTabVideoSource::GetUUID(nsACString_internal& aUuid) const
 {
   aUuid.AssignLiteral("tab");
 }
@@ -139,22 +139,28 @@ nsresult
 MediaEngineTabVideoSource::Allocate(const dom::MediaTrackConstraints& aConstraints,
                                     const MediaEnginePrefs& aPrefs,
                                     const nsString& aDeviceId,
-                                    const nsACString& aOrigin)
+                                    const nsACString& aOrigin,
+                                    AllocationHandle** aOutHandle,
+                                    const char** aOutBadConstraint)
 {
   // windowId is not a proper constraint, so just read it.
   // It has no well-defined behavior in advanced, so ignore it there.
 
   mWindowId = aConstraints.mBrowserWindow.WasPassed() ?
               aConstraints.mBrowserWindow.Value() : -1;
-
-  return Restart(aConstraints, aPrefs, aDeviceId);
+  *aOutHandle = nullptr;
+  return Restart(nullptr, aConstraints, aPrefs, aDeviceId, aOutBadConstraint);
 }
 
 nsresult
-MediaEngineTabVideoSource::Restart(const dom::MediaTrackConstraints& aConstraints,
+MediaEngineTabVideoSource::Restart(AllocationHandle* aHandle,
+                                   const dom::MediaTrackConstraints& aConstraints,
                                    const mozilla::MediaEnginePrefs& aPrefs,
-                                   const nsString& aDeviceId)
+                                   const nsString& aDeviceId,
+                                   const char** aOutBadConstraint)
 {
+  MOZ_ASSERT(!aHandle);
+
   // scrollWithPage is not proper a constraint, so just read it.
   // It has no well-defined behavior in advanced, so ignore it there.
 
@@ -178,8 +184,9 @@ MediaEngineTabVideoSource::Restart(const dom::MediaTrackConstraints& aConstraint
 }
 
 nsresult
-MediaEngineTabVideoSource::Deallocate()
+MediaEngineTabVideoSource::Deallocate(AllocationHandle* aHandle)
 {
+  MOZ_ASSERT(!aHandle);
   return NS_OK;
 }
 
@@ -299,7 +306,7 @@ MediaEngineTabVideoSource::Draw() {
   if (!dt || !dt->IsValid()) {
     return;
   }
-  RefPtr<gfxContext> context = gfxContext::ForDrawTarget(dt);
+  RefPtr<gfxContext> context = gfxContext::CreateOrNull(dt);
   MOZ_ASSERT(context); // already checked the draw target above
   context->SetMatrix(context->CurrentMatrix().Scale((((float) size.width)/mViewportWidth),
                                                     (((float) size.height)/mViewportHeight)));

@@ -3,6 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "WebGLContextUtils.h"
 #include "WebGLContext.h"
 
 #include "GLContext.h"
@@ -23,7 +24,6 @@
 #include "WebGLProgram.h"
 #include "WebGLTexture.h"
 #include "WebGLVertexArray.h"
-#include "WebGLContextUtils.h"
 
 namespace mozilla {
 
@@ -204,6 +204,22 @@ WebGLContext::ErrorOutOfMemory(const char* fmt, ...)
     GenerateWarning(fmt, va);
     va_end(va);
 
+    return SynthesizeGLError(LOCAL_GL_OUT_OF_MEMORY);
+}
+
+void
+WebGLContext::ErrorImplementationBug(const char* fmt, ...)
+{
+    const nsPrintfCString warning("Implementation bug, please file at %s! %s",
+                                  "https://bugzilla.mozilla.org/", fmt);
+
+    va_list va;
+    va_start(va, fmt);
+    GenerateWarning(warning.BeginReading(), va);
+    va_end(va);
+
+    MOZ_ASSERT(false, "WebGLContext::ErrorImplementationBug");
+    NS_ERROR("WebGLContext::ErrorImplementationBug");
     return SynthesizeGLError(LOCAL_GL_OUT_OF_MEMORY);
 }
 
@@ -831,7 +847,7 @@ InfoFrom(WebGLTexImageFunc func, WebGLTexDimensions dims)
         case WebGLTexImageFunc::CompTexImage:    return "compressedTexImage2D";
         case WebGLTexImageFunc::CompTexSubImage: return "compressedTexSubImage2D";
         default:
-            MOZ_CRASH();
+            MOZ_CRASH("GFX: invalid 2D TexDimensions");
         }
     case WebGLTexDimensions::Tex3D:
         switch (func) {
@@ -840,10 +856,10 @@ InfoFrom(WebGLTexImageFunc func, WebGLTexDimensions dims)
         case WebGLTexImageFunc::CopyTexSubImage: return "copyTexSubImage3D";
         case WebGLTexImageFunc::CompTexSubImage: return "compressedTexSubImage3D";
         default:
-            MOZ_CRASH();
+            MOZ_CRASH("GFX: invalid 3D TexDimensions");
         }
     default:
-        MOZ_CRASH();
+        MOZ_CRASH("GFX: invalid TexDimensions");
     }
 }
 

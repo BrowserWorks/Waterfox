@@ -96,6 +96,25 @@ function findRcdNode(apzcTree) {
   return null;
 }
 
+// Return whether an element whose id includes |elementId| has been layerized.
+// Assumes |elementId| will be present in the content description for the
+// element, and not in the content descriptions of other elements.
+function isLayerized(elementId) {
+  var contentTestData = SpecialPowers.getDOMWindowUtils(window).getContentAPZTestData();
+  ok(contentTestData.paints.length > 0, "expected at least one paint");
+  var seqno = contentTestData.paints[contentTestData.paints.length - 1].sequenceNumber;
+  contentTestData = convertTestData(contentTestData);
+  var paint = contentTestData.paints[seqno];
+  for (var scrollId in paint) {
+    if ("contentDescription" in paint[scrollId]) {
+      if (paint[scrollId]["contentDescription"].includes(elementId)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function flushApzRepaints(aCallback, aWindow = window) {
   if (!aCallback) {
     throw "A callback must be provided!";
@@ -145,10 +164,14 @@ function waitForApzFlushedRepaints(aCallback) {
 //   prefs: optional, an array of arrays containing key-value prefs to set.
 //   dp_suppression: optional, a boolean on whether or not to respect displayport
 //                   suppression during the test.
+//   onload: optional, a function that will be registered as a load event listener
+//           for the child window that will hold the subtest. the function will be
+//           passed exactly one argument, which will be the child window.
 // An example of an array is:
 //   aSubtests = [
 //     { 'file': 'test_file_name.html' },
 //     { 'file': 'test_file_2.html', 'prefs': [['pref.name', true], ['other.pref', 1000]], 'dp_suppression': false }
+//     { 'file': 'file_3.html', 'onload': function(w) { w.subtestDone(); } }
 //   ];
 //
 // Each subtest should call the subtestDone() function when it is done, to
@@ -162,10 +185,6 @@ function runSubtestsSeriallyInFreshWindows(aSubtests) {
   return new Promise(function(resolve, reject) {
     var testIndex = -1;
     var w = null;
-
-    // Some state that persists across subtests. This is made available to
-    // subtests to put things into / read things out of.
-    var statePersistentAcrossSubtests = {};
 
     function advanceSubtestExecution() {
       var test = aSubtests[testIndex];
@@ -208,9 +227,11 @@ function runSubtestsSeriallyInFreshWindows(aSubtests) {
         w = window.open('', "_blank");
         w.subtestDone = advanceSubtestExecution;
         w.SimpleTest = SimpleTest;
-        w.statePersistentAcrossSubtests = statePersistentAcrossSubtests;
         w.is = function(a, b, msg) { return is(a, b, aFile + " | " + msg); };
         w.ok = function(cond, name, diag) { return ok(cond, aFile + " | " + name, diag); };
+        if (test.onload) {
+          w.addEventListener('load', function(e) { test.onload(w); }, { once: true });
+        }
         w.location = location.href.substring(0, location.href.lastIndexOf('/') + 1) + aFile;
         return w;
       }
@@ -331,4 +352,52 @@ function getSnapshot(rect) {
   }
 
   return getSnapshot.chromeHelper.sendSyncMessage('snapshot', JSON.stringify(rect)).toString();
+}
+
+// Takes the document's query string and parses it, assuming the query string
+// is composed of key-value pairs where the value is in JSON format. The object
+// returned contains the various values indexed by their respective keys. In
+// case of duplicate keys, the last value be used.
+// Examples:
+//   ?key="value"&key2=false&key3=500
+//     produces { "key": "value", "key2": false, "key3": 500 }
+//   ?key={"x":0,"y":50}&key2=[1,2,true]
+//     produces { "key": { "x": 0, "y": 0 }, "key2": [1, 2, true] }
+function getQueryArgs() {
+  var args = {};
+  if (location.search.length > 0) {
+    var params = location.search.substr(1).split('&');
+    for (var p of params) {
+      var [k, v] = p.split('=');
+      args[k] = JSON.parse(v);
+    }
+  }
+  return args;
+}
+
+// Return a function that returns a promise to create a script element with the
+// given URI and append it to the head of the document in the given window.
+// As with runContinuation(), the extra function wrapper is for convenience
+// at the call site, so that this can be chained with other promises:
+//   waitUntilApzStable().then(injectScript('foo'))
+//                       .then(injectScript('bar'));
+// If you want to do the injection right away, run the function returned by
+// this function:
+//   injectScript('foo')();
+function injectScript(aScript, aWindow = window) {
+  return function() {
+    return new Promise(function(resolve, reject) {
+      var e = aWindow.document.createElement('script');
+      e.type = 'text/javascript';
+      e.onload = function() {
+        resolve();
+      };
+      e.onerror = function() {
+        dump('Script [' + aScript + '] errored out\n');
+        reject();
+      };
+      e.src = aScript;
+      aWindow.document.getElementsByTagName('head')[0].appendChild(e);
+    });
+  };
 }

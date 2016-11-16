@@ -38,6 +38,12 @@ add_task(function* test() {
   info("Checking the image thumbnail after a reload.");
   yield showTooltipAndVerify(RequestsMenu.tooltip, RequestsMenu.items[6]);
 
+  info("Checking if the image thumbnail is hidden when mouse leaves the menu widget");
+  let requestsMenuEl = $("#requests-menu-contents");
+  let onHidden = RequestsMenu.tooltip.once("hidden");
+  EventUtils.synthesizeMouse(requestsMenuEl, 0, 0, {type: "mouseout"}, monitor.panelWin);
+  yield onHidden;
+
   yield teardown(monitor);
   finish();
 
@@ -50,7 +56,7 @@ add_task(function* test() {
     yield showTooltipOn(tooltip, anchor);
 
     info("Tooltip was successfully opened for the image request.");
-    is(tooltip.content.querySelector("image").src, TEST_IMAGE_DATA_URI,
+    is(tooltip.panel.querySelector("img").src, TEST_IMAGE_DATA_URI,
       "The tooltip's image content is displayed correctly.");
   }
 

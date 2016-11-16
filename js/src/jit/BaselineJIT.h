@@ -22,7 +22,7 @@ namespace js {
 namespace jit {
 
 class StackValue;
-class ICEntry;
+class BaselineICEntry;
 class ICStub;
 
 class PCMappingSlotInfo
@@ -94,15 +94,15 @@ struct PCMappingIndexEntry
     uint32_t bufferOffset;
 };
 
-// Describes a single wasm::Module::ImportExit which jumps (via an import with
+// Describes a single wasm::ImportExit which jumps (via an import with
 // the given index) directly to a BaselineScript or IonScript.
-struct DependentWasmModuleImport
+struct DependentWasmImport
 {
-    wasm::Module* module;
+    wasm::Instance* instance;
     size_t importIndex;
 
-    DependentWasmModuleImport(wasm::Module* module, size_t importIndex)
-      : module(module),
+    DependentWasmImport(wasm::Instance& instance, size_t importIndex)
+      : instance(&instance),
         importIndex(importIndex)
     { }
 };
@@ -139,7 +139,7 @@ struct BaselineScript
 
     // If non-null, the list of wasm::Modules that contain an optimized call
     // directly to this script.
-    Vector<DependentWasmModuleImport>* dependentWasmModules_;
+    Vector<DependentWasmImport>* dependentWasmImports_;
 
     // Native code offset right before the scope chain is initialized.
     uint32_t prologueOffset_;
@@ -338,8 +338,8 @@ struct BaselineScript
         return method_->raw() + postDebugPrologueOffset_;
     }
 
-    ICEntry* icEntryList() {
-        return (ICEntry*)(reinterpret_cast<uint8_t*>(this) + icEntriesOffset_);
+    BaselineICEntry* icEntryList() {
+        return (BaselineICEntry*)(reinterpret_cast<uint8_t*>(this) + icEntriesOffset_);
     }
     uint8_t** yieldEntryList() {
         return (uint8_t**)(reinterpret_cast<uint8_t*>(this) + yieldEntriesOffset_);
@@ -378,21 +378,21 @@ struct BaselineScript
         return method()->raw() <= addr && addr <= method()->raw() + method()->instructionsSize();
     }
 
-    ICEntry& icEntry(size_t index);
-    ICEntry& icEntryFromReturnOffset(CodeOffset returnOffset);
-    ICEntry& icEntryFromPCOffset(uint32_t pcOffset);
-    ICEntry& icEntryFromPCOffset(uint32_t pcOffset, ICEntry* prevLookedUpEntry);
-    ICEntry& callVMEntryFromPCOffset(uint32_t pcOffset);
-    ICEntry& stackCheckICEntry(bool earlyCheck);
-    ICEntry& warmupCountICEntry();
-    ICEntry& icEntryFromReturnAddress(uint8_t* returnAddr);
-    uint8_t* returnAddressForIC(const ICEntry& ent);
+    BaselineICEntry& icEntry(size_t index);
+    BaselineICEntry& icEntryFromReturnOffset(CodeOffset returnOffset);
+    BaselineICEntry& icEntryFromPCOffset(uint32_t pcOffset);
+    BaselineICEntry& icEntryFromPCOffset(uint32_t pcOffset, BaselineICEntry* prevLookedUpEntry);
+    BaselineICEntry& callVMEntryFromPCOffset(uint32_t pcOffset);
+    BaselineICEntry& stackCheckICEntry(bool earlyCheck);
+    BaselineICEntry& warmupCountICEntry();
+    BaselineICEntry& icEntryFromReturnAddress(uint8_t* returnAddr);
+    uint8_t* returnAddressForIC(const BaselineICEntry& ent);
 
     size_t numICEntries() const {
         return icEntries_;
     }
 
-    void copyICEntries(JSScript* script, const ICEntry* entries, MacroAssembler& masm);
+    void copyICEntries(JSScript* script, const BaselineICEntry* entries, MacroAssembler& masm);
     void adoptFallbackStubs(FallbackICStubSpace* stubSpace);
 
     void copyYieldEntries(JSScript* script, Vector<uint32_t>& yieldOffsets);
@@ -415,11 +415,10 @@ struct BaselineScript
     // the result may not be accurate.
     jsbytecode* approximatePcForNativeAddress(JSScript* script, uint8_t* nativeAddress);
 
-    MOZ_MUST_USE bool addDependentWasmModule(JSContext* cx, wasm::Module& module,
-                                             uint32_t importIndex);
-    void unlinkDependentWasmModules(FreeOp* fop);
-    void clearDependentWasmModules();
-    void removeDependentWasmModule(wasm::Module& module, uint32_t importIndex);
+    MOZ_MUST_USE bool addDependentWasmImport(JSContext* cx, wasm::Instance& instance, uint32_t idx);
+    void removeDependentWasmImport(wasm::Instance& instance, uint32_t idx);
+    void unlinkDependentWasmImports(FreeOp* fop);
+    void clearDependentWasmImports();
 
     // Toggle debug traps (used for breakpoints and step mode) in the script.
     // If |pc| is nullptr, toggle traps for all ops in the script. Else, only
@@ -496,7 +495,7 @@ struct BaselineScript
         pendingBuilder_ = builder;
 
         // lazy linking cannot happen during asmjs to ion.
-        clearDependentWasmModules();
+        clearDependentWasmImports();
 
         script->updateBaselineOrIonRaw(maybeRuntime);
     }
@@ -516,7 +515,7 @@ IsBaselineEnabled(JSContext* cx)
 #ifdef JS_CODEGEN_NONE
     return false;
 #else
-    return cx->runtime()->options().baseline();
+    return cx->options().baseline();
 #endif
 }
 

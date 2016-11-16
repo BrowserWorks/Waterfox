@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,11 +89,6 @@ USE_LIBS += [
     'zlib',
 ]
 
-if CONFIG['BUILD_ARM_NEON']:
-    USE_LIBS += [
-        'yuv_neon',
-    ]
-
 if CONFIG['JS_SHARED_LIBRARY']:
     USE_LIBS += [
         'js',
@@ -130,11 +125,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk3':
     USE_LIBS += [
         'freetype',
     ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
-    OS_LIBS += CONFIG['XLIBS']
-    OS_LIBS += CONFIG['TK_LIBS']
-    OS_LIBS += CONFIG['MOZ_PANGO_LIBS']
 
 if CONFIG['OS_TARGET'] in ('Linux', 'DragonFly', 'FreeBSD', 'NetBSD',
         'OpenBSD'):

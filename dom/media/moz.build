@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -108,7 +108,6 @@ EXPORTS += [
     'Intervals.h',
     'Latency.h',
     'MediaCache.h',
-    'MediaCallbackID.h',
     'MediaData.h',
     'MediaDataDemuxer.h',
     'MediaDecoder.h',
@@ -127,6 +126,7 @@ EXPORTS += [
     'MediaSegment.h',
     'MediaStatistics.h',
     'MediaStreamGraph.h',
+    'MediaStreamListener.h',
     'MediaTimer.h',
     'MediaTrack.h',
     'MediaTrackList.h',
@@ -221,7 +221,6 @@ UNIFIED_SOURCES += [
     'GraphDriver.cpp',
     'Latency.cpp',
     'MediaCache.cpp',
-    'MediaCallbackID.cpp',
     'MediaData.cpp',
     'MediaDecoder.cpp',
     'MediaDecoderReader.cpp',
@@ -238,6 +237,7 @@ UNIFIED_SOURCES += [
     'MediaShutdownManager.cpp',
     'MediaStreamError.cpp',
     'MediaStreamGraph.cpp',
+    'MediaStreamListener.cpp',
     'MediaStreamTrack.cpp',
     'MediaTimer.cpp',
     'MediaTrack.cpp',

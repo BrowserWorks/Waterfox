@@ -7,6 +7,7 @@
 #define NSSVGFOREIGNOBJECTFRAME_H__
 
 #include "mozilla/Attributes.h"
+#include "nsAutoPtr.h"
 #include "nsContainerFrame.h"
 #include "nsIPresShell.h"
 #include "nsISVGChildFrame.h"
@@ -41,8 +42,8 @@ public:
   }
 
   virtual void Reflow(nsPresContext*           aPresContext,
-                      nsHTMLReflowMetrics&     aDesiredSize,
-                      const nsHTMLReflowState& aReflowState,
+                      ReflowOutput&     aDesiredSize,
+                      const ReflowInput& aReflowInput,
                       nsReflowStatus&          aStatus) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
@@ -73,9 +74,9 @@ public:
 #endif
 
   // nsISVGChildFrame interface:
-  virtual nsresult PaintSVG(gfxContext& aContext,
-                            const gfxMatrix& aTransform,
-                            const nsIntRect* aDirtyRect = nullptr) override;
+  virtual DrawResult PaintSVG(gfxContext& aContext,
+                              const gfxMatrix& aTransform,
+                              const nsIntRect* aDirtyRect = nullptr) override;
   virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) override;
   virtual nsRect GetCoveredRegion() override;
   virtual void ReflowSVG() override;

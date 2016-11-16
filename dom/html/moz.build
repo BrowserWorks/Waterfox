@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,7 +28,6 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'content_html'
 
 EXPORTS += [
-    'nsFormSubmission.h',
     'nsGenericHTMLElement.h',
     'nsHTMLDNSPrefetch.h',
     'nsIConstraintValidation.h',
@@ -61,6 +60,7 @@ EXPORTS.mozilla.dom += [
     'HTMLFontElement.h',
     'HTMLFormControlsCollection.h',
     'HTMLFormElement.h',
+    'HTMLFormSubmission.h',
     'HTMLFrameElement.h',
     'HTMLFrameSetElement.h',
     'HTMLHeadingElement.h',
@@ -140,6 +140,7 @@ UNIFIED_SOURCES += [
     'HTMLFontElement.cpp',
     'HTMLFormControlsCollection.cpp',
     'HTMLFormElement.cpp',
+    'HTMLFormSubmission.cpp',
     'HTMLFrameElement.cpp',
     'HTMLFrameSetElement.cpp',
     'HTMLHeadingElement.cpp',
@@ -195,7 +196,6 @@ UNIFIED_SOURCES += [
     'MediaError.cpp',
     'nsBrowserElement.cpp',
     'nsDOMStringMap.cpp',
-    'nsFormSubmission.cpp',
     'nsGenericHTMLElement.cpp',
     'nsGenericHTMLFrameElement.cpp',
     'nsHTMLContentSink.cpp',
@@ -232,7 +232,6 @@ LOCAL_INCLUDES += [
     '/dom/media/',
     '/dom/xbl',
     '/dom/xul',
-    '/editor/libeditor',
     '/editor/txmgr',
     '/image',
     '/layout/forms',

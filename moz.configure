@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,20 +85,20 @@ set_define('GTEST_USE_OWN_TR1_TUPLE',
 set_define('GTEST_HAS_CLONE',
            delayed_getattr(linux_gtest_defines, 'has_clone'))
 
-@depends('--disable-compile-environment', '--help')
-def toolchain_include(compile_env, help):
-    if compile_env:
-        return 'build/moz.configure/toolchain.configure'
+js_option('--enable-debug',
+          nargs='?',
+          help='Enable building with developer debug info '
+               '(using the given compiler flags).')
 
-include(toolchain_include)
+add_old_configure_assignment('MOZ_DEBUG',
+                             depends('--enable-debug')(lambda v: bool(v)))
 
-@depends('--disable-compile-environment', '--help')
-def memory_include(compile_env, help):
-    if compile_env:
-        return 'build/moz.configure/memory.configure'
-
-include(memory_include)
-
+include_when('build/moz.configure/toolchain.configure',
+             when='--enable-compile-environment')
+include_when('build/moz.configure/memory.configure',
+             when='--enable-compile-environment')
+include_when('build/moz.configure/headers.configure',
+             when='--enable-compile-environment')
 
 @depends('--help')
 @imports(_from='mozbuild.backend', _import='backends')

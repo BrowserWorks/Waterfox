@@ -58,6 +58,8 @@ for patch in \
  bug-1172609-icu-fix.diff \
  bug-1172609-timezone-recreateDefault.diff \
  bug-1198952-workaround-make-3.82-bug.diff \
+ icu-release-56-1-flagparser-fix.patch \
+ bug-1228227-bug-1263325-libc++-gcc_hidden.diff \
 ; do
   echo "Applying local patch $patch"
   patch -d ${icu_dir}/../../ -p1 --no-backup-if-mismatch < ${icu_dir}/../icu-patches/$patch
@@ -69,3 +71,5 @@ python ${topsrcdir}/js/src/tests/ecma_6/String/make-normalize-generateddata-inpu
 # Update our moz.build files in config/external/icu, and
 # build a new ICU data file.
 python `dirname $0`/icu_sources_data.py $topsrcdir
+
+hg addremove ${icu_dir} ${topsrcdir}/config/external/icu

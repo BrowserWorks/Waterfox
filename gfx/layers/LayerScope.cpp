@@ -1129,7 +1129,7 @@ SenderHelper::SendGraphicBuffer(GLContext* aGLContext,
     auto packet = MakeUnique<layerscope::Packet>();
     layerscope::TexturePacket* texturePacket = packet->mutable_texture();
     texturePacket->set_mpremultiplied(aEffect->mPremultiplied);
-    DumpFilter(texturePacket, aEffect->mFilter);
+    DumpFilter(texturePacket, aEffect->mSamplingFilter);
     DumpRect(texturePacket->mutable_mtexturecoords(), aEffect->mTextureCoords);
 
     GLenum target = aSource->GetTextureTarget();
@@ -1477,8 +1477,10 @@ LayerScopeWebSocketManager::SocketHandler::WebSocketHandshake(nsTArray<nsCString
     uint8_t digest[SHA1Sum::kHashSize]; // SHA1 digests are 20 bytes long.
     sha1.finish(digest);
     nsCString newString(reinterpret_cast<char*>(digest), SHA1Sum::kHashSize);
-    Base64Encode(newString, res);
-
+    rv = Base64Encode(newString, res);
+    if (NS_FAILED(rv)) {
+        return false;
+    }
     nsCString response("HTTP/1.1 101 Switching Protocols\r\n");
     response.AppendLiteral("Upgrade: websocket\r\n");
     response.AppendLiteral("Connection: Upgrade\r\n");

@@ -104,6 +104,33 @@ LogToConsole(const nsAString& aMsg)
 namespace {
 
 nsresult
+GetOriginFromPrincipal(nsIPrincipal* aPrincipal, nsACString& aOrigin)
+{
+  nsresult rv = aPrincipal->GetOriginNoSuffix(aOrigin);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsAutoCString suffix;
+  rv = aPrincipal->GetOriginSuffix(suffix);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  mozilla::PrincipalOriginAttributes attrs;
+  if (!attrs.PopulateFromSuffix(suffix)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // mPrivateBrowsingId must be set to false because PermissionManager is not supposed to have
+  // any knowledge of private browsing. Allowing it to be true changes the suffix being hashed.
+  attrs.mPrivateBrowsingId = 0;
+
+  // set to default to disable user context isolation for permissions
+  attrs.mUserContextId = nsIScriptSecurityManager::DEFAULT_USER_CONTEXT_ID;
+
+  attrs.CreateSuffix(suffix);
+  aOrigin.Append(suffix);
+  return NS_OK;
+}
+
+nsresult
 GetPrincipalFromOrigin(const nsACString& aOrigin, nsIPrincipal** aPrincipal)
 {
   nsAutoCString originNoSuffix;
@@ -394,7 +421,7 @@ UpgradeHostToOriginAndInsert(const nsACString& aHost, const nsAFlatCString& aTyp
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsAutoCString origin;
-    rv = principal->GetOrigin(origin);
+    rv = GetOriginFromPrincipal(principal, origin);
     NS_ENSURE_SUCCESS(rv, rv);
 
     return aHelper->Insert(origin, aType, aPermission,
@@ -502,7 +529,7 @@ UpgradeHostToOriginAndInsert(const nsACString& aHost, const nsAFlatCString& aTyp
       if (NS_WARN_IF(NS_FAILED(rv))) continue;
 
       nsAutoCString origin;
-      rv = principal->GetOrigin(origin);
+      rv = GetOriginFromPrincipal(principal, origin);
       if (NS_WARN_IF(NS_FAILED(rv))) continue;
 
       // Ensure that we don't insert the same origin repeatedly
@@ -547,7 +574,7 @@ UpgradeHostToOriginAndInsert(const nsACString& aHost, const nsAFlatCString& aTyp
     rv = GetPrincipal(uri, aAppId, aIsInIsolatedMozBrowserElement, getter_AddRefs(principal));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = principal->GetOrigin(origin);
+    rv = GetOriginFromPrincipal(principal, origin);
     NS_ENSURE_SUCCESS(rv, rv);
 
     aHelper->Insert(origin, aType, aPermission,
@@ -560,7 +587,7 @@ UpgradeHostToOriginAndInsert(const nsACString& aHost, const nsAFlatCString& aTyp
     rv = GetPrincipal(uri, aAppId, aIsInIsolatedMozBrowserElement, getter_AddRefs(principal));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = principal->GetOrigin(origin);
+    rv = GetOriginFromPrincipal(principal, origin);
     NS_ENSURE_SUCCESS(rv, rv);
 
     aHelper->Insert(origin, aType, aPermission,
@@ -583,7 +610,7 @@ IsExpandedPrincipal(nsIPrincipal* aPrincipal)
 
 nsPermissionManager::PermissionKey::PermissionKey(nsIPrincipal* aPrincipal)
 {
-  MOZ_ALWAYS_SUCCEEDS(aPrincipal->GetOrigin(mOrigin));
+  MOZ_ALWAYS_SUCCEEDS(GetOriginFromPrincipal(aPrincipal, mOrigin));
 }
 
 /**
@@ -1542,7 +1569,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
                                  const bool            aIgnoreSessionPermissions)
 {
   nsAutoCString origin;
-  nsresult rv = aPrincipal->GetOrigin(origin);
+  nsresult rv = GetOriginFromPrincipal(aPrincipal, origin);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (!IsChildProcess()) {
@@ -1668,7 +1695,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
                                       aPermission,
                                       aExpireType,
                                       aExpireTime,
-                                      MOZ_UTF16("added"));
+                                      u"added");
       }
 
       break;
@@ -1692,7 +1719,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
                                       oldPermissionEntry.mPermission,
                                       oldPermissionEntry.mExpireType,
                                       oldPermissionEntry.mExpireTime,
-                                      MOZ_UTF16("deleted"));
+                                      u"deleted");
       }
 
       // If there are no more permissions stored for that entry, clear it.
@@ -1738,7 +1765,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
                                       aPermission,
                                       aExpireType,
                                       aExpireTime,
-                                      MOZ_UTF16("changed"));
+                                      u"changed");
       }
 
       break;
@@ -1786,7 +1813,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
                                       aPermission,
                                       aExpireType,
                                       aExpireTime,
-                                      MOZ_UTF16("changed"));
+                                      u"changed");
       }
 
     }
@@ -1842,6 +1869,9 @@ nsPermissionManager::RemoveFromPrincipal(nsIPrincipal* aPrincipal,
 NS_IMETHODIMP
 nsPermissionManager::RemovePermission(nsIPermission* aPerm)
 {
+  if (!aPerm) {
+    return NS_OK;
+  }
   nsCOMPtr<nsIPrincipal> principal;
   nsresult rv = aPerm->GetPrincipal(getter_AddRefs(principal));
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1897,7 +1927,7 @@ nsPermissionManager::RemoveAllInternal(bool aNotifyObservers)
   ImportDefaults();
 
   if (aNotifyObservers) {
-    NotifyObservers(nullptr, MOZ_UTF16("cleared"));
+    NotifyObservers(nullptr, u"cleared");
   }
 
   // clear the db
@@ -2218,6 +2248,36 @@ NS_IMETHODIMP nsPermissionManager::GetEnumerator(nsISimpleEnumerator **aEnum)
   return NS_NewArrayEnumerator(aEnum, array);
 }
 
+NS_IMETHODIMP nsPermissionManager::GetAllForURI(nsIURI* aURI, nsISimpleEnumerator **aEnum)
+{
+  nsCOMArray<nsIPermission> array;
+
+  nsCOMPtr<nsIPrincipal> principal;
+  nsresult rv = GetPrincipal(aURI, getter_AddRefs(principal));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  RefPtr<PermissionKey> key = new PermissionKey(principal);
+  PermissionHashKey* entry = mPermissionTable.GetEntry(key);
+
+  if (entry) {
+    for (const auto& permEntry : entry->GetPermissions()) {
+      // Only return custom permissions
+      if (permEntry.mPermission == nsIPermissionManager::UNKNOWN_ACTION) {
+        continue;
+      }
+
+      array.AppendObject(
+        new nsPermission(principal,
+                         mTypeArray.ElementAt(permEntry.mType),
+                         permEntry.mPermission,
+                         permEntry.mExpireType,
+                         permEntry.mExpireTime));
+    }
+  }
+
+  return NS_NewArrayEnumerator(aEnum, array);
+}
+
 NS_IMETHODIMP nsPermissionManager::Observe(nsISupports *aSubject, const char *aTopic, const char16_t *someData)
 {
   ENSURE_NOT_CHILD_PROCESS;
@@ -2396,7 +2456,7 @@ nsPermissionManager::RemoveExpiredPermissionsForApp(uint32_t aAppId)
                                       oldPermEntry.mPermission,
                                       oldPermEntry.mExpireType,
                                       oldPermEntry.mExpireTime,
-                                      MOZ_UTF16("deleted"));
+                                      u"deleted");
 
         --i;
         continue;
@@ -2411,7 +2471,7 @@ nsPermissionManager::RemoveExpiredPermissionsForApp(uint32_t aAppId)
                                     permEntry.mPermission,
                                     permEntry.mExpireType,
                                     permEntry.mExpireTime,
-                                    MOZ_UTF16("changed"));
+                                    u"changed");
     }
   }
 

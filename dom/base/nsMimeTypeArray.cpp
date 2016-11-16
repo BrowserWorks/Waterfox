@@ -15,6 +15,7 @@
 #include "nsIMIMEInfo.h"
 #include "Navigator.h"
 #include "nsServiceManagerUtils.h"
+#include "nsContentUtils.h"
 #include "nsPluginTags.h"
 
 using namespace mozilla;
@@ -29,7 +30,8 @@ NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsMimeTypeArray,
                                       mWindow,
-                                      mMimeTypes)
+                                      mMimeTypes,
+                                      mCTPMimeTypes)
 
 nsMimeTypeArray::nsMimeTypeArray(nsPIDOMWindowInner* aWindow)
   : mWindow(aWindow)
@@ -38,6 +40,12 @@ nsMimeTypeArray::nsMimeTypeArray(nsPIDOMWindowInner* aWindow)
 
 nsMimeTypeArray::~nsMimeTypeArray()
 {
+}
+
+static bool
+ResistFingerprinting() {
+  return !nsContentUtils::ThreadsafeIsCallerChrome() &&
+         nsContentUtils::ResistFingerprinting();
 }
 
 JSObject*
@@ -50,6 +58,7 @@ void
 nsMimeTypeArray::Refresh()
 {
   mMimeTypes.Clear();
+  mCTPMimeTypes.Clear();
 }
 
 nsPIDOMWindowInner*
@@ -77,6 +86,10 @@ nsMimeType*
 nsMimeTypeArray::IndexedGetter(uint32_t aIndex, bool &aFound)
 {
   aFound = false;
+
+  if (ResistFingerprinting()) {
+    return nullptr;
+  }
 
   EnsurePluginMimeTypes();
 
@@ -108,6 +121,10 @@ nsMimeTypeArray::NamedGetter(const nsAString& aName, bool &aFound)
 {
   aFound = false;
 
+  if (ResistFingerprinting()) {
+    return nullptr;
+  }
+
   EnsurePluginMimeTypes();
 
   nsString lowerName(aName);
@@ -118,6 +135,10 @@ nsMimeTypeArray::NamedGetter(const nsAString& aName, bool &aFound)
     aFound = true;
     return mimeType;
   }
+  nsMimeType* hiddenType = FindMimeType(mCTPMimeTypes, lowerName);
+  if (hiddenType) {
+    nsPluginArray::NotifyHiddenPluginTouched(hiddenType->GetEnabledPlugin());
+  }
 
   return nullptr;
 }
@@ -125,6 +146,10 @@ nsMimeTypeArray::NamedGetter(const nsAString& aName, bool &aFound)
 uint32_t
 nsMimeTypeArray::Length()
 {
+  if (ResistFingerprinting()) {
+    return 0;
+  }
+
   EnsurePluginMimeTypes();
 
   return mMimeTypes.Length();
@@ -161,6 +186,7 @@ nsMimeTypeArray::EnsurePluginMimeTypes()
   }
 
   pluginArray->GetMimeTypes(mMimeTypes);
+  pluginArray->GetCTPMimeTypes(mCTPMimeTypes);
 }
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(nsMimeType, AddRef)

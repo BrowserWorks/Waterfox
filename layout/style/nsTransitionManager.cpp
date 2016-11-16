@@ -39,6 +39,8 @@
 using mozilla::TimeStamp;
 using mozilla::TimeDuration;
 using mozilla::dom::Animation;
+using mozilla::dom::AnimationPlayState;
+using mozilla::dom::CSSTransition;
 using mozilla::dom::KeyframeEffectReadOnly;
 
 using namespace mozilla;
@@ -105,6 +107,18 @@ ElementPropertyTransition::UpdateStartValueFromReplacedTransition()
                  mProperties[0].mSegments.Length() == 1,
                  "The transition should have one property and one segment");
       mProperties[0].mSegments[0].mFromValue = Move(startValue);
+      nsCSSValue cssValue;
+      DebugOnly<bool> uncomputeResult =
+        StyleAnimationValue::UncomputeValue(mProperties[0].mProperty,
+                                            startValue,
+                                            cssValue);
+      MOZ_ASSERT(uncomputeResult, "UncomputeValue should not fail");
+      MOZ_ASSERT(mKeyframes.Length() == 2,
+          "Transitions should have exactly two animation keyframes");
+      MOZ_ASSERT(mKeyframes[0].mPropertyValues.Length() == 1,
+          "Transitions should have exactly one property in their first "
+          "frame");
+      mKeyframes[0].mPropertyValues[0].mValue = cssValue;
     }
   }
 
@@ -406,13 +420,11 @@ nsTransitionManager::StyleContextChanged(dom::Element *aElement,
     EffectCompositor::CascadeLevel::Transitions;
 
   if (collection) {
-    EffectCompositor::UpdateCascadeResults(aElement, pseudoType,
-                                           newStyleContext);
-
     collection->UpdateCheckGeneration(mPresContext);
     mPresContext->EffectCompositor()->MaybeUpdateAnimationRule(aElement,
                                                                pseudoType,
-                                                               cascadeLevel);
+                                                               cascadeLevel,
+                                                               newStyleContext);
   }
 
   // We want to replace the new style context with the after-change style.
@@ -750,9 +762,11 @@ nsTransitionManager::ConsiderStartingTransition(
   // aElement is non-null here, so we emplace it directly.
   Maybe<OwningAnimationTarget> target;
   target.emplace(aElement, aNewStyleContext->GetPseudoType());
+  KeyframeEffectParams effectOptions;
   RefPtr<ElementPropertyTransition> pt =
     new ElementPropertyTransition(aElement->OwnerDoc(), target, timing,
-                                  startForReversingTest, reversePortion);
+                                  startForReversingTest, reversePortion,
+                                  effectOptions);
 
   pt->SetKeyframes(GetTransitionKeyframes(aNewStyleContext, aProperty,
                                           Move(startValue), Move(endValue), tf),

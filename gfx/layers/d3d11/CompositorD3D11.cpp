@@ -12,6 +12,7 @@
 #include "gfxWindowsPlatform.h"
 #include "nsIWidget.h"
 #include "nsIGfxInfo.h"
+#include "mozilla/gfx/DeviceManagerD3D11.h"
 #include "mozilla/layers/ImageHost.h"
 #include "mozilla/layers/ContentHost.h"
 #include "mozilla/layers/Effects.h"
@@ -22,7 +23,7 @@
 #include "gfxVR.h"
 #include "mozilla/gfx/StackArray.h"
 #include "mozilla/Services.h"
-#include "mozilla/widget/WinCompositorWidgetProxy.h"
+#include "mozilla/widget/WinCompositorWidget.h"
 
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/Telemetry.h"
@@ -160,7 +161,7 @@ private:
   bool mInitOkay;
 };
 
-CompositorD3D11::CompositorD3D11(CompositorBridgeParent* aParent, widget::CompositorWidgetProxy* aWidget)
+CompositorD3D11::CompositorD3D11(CompositorBridgeParent* aParent, widget::CompositorWidget* aWidget)
   : Compositor(aWidget, aParent)
   , mAttachments(nullptr)
   , mHwnd(nullptr)
@@ -195,7 +196,7 @@ CompositorD3D11::~CompositorD3D11()
 }
 
 bool
-CompositorD3D11::Initialize()
+CompositorD3D11::Initialize(nsCString* const out_failureReason)
 {
   ScopedGfxFeatureReporter reporter("D3D11 Layers");
 
@@ -203,7 +204,9 @@ CompositorD3D11::Initialize()
 
   HRESULT hr;
 
-  if (!gfxWindowsPlatform::GetPlatform()->GetD3D11Device(&mDevice)) {
+  mDevice = DeviceManagerD3D11::Get()->GetCompositorDevice();
+  if (!mDevice) {
+    *out_failureReason = "FEATURE_FAILURE_D3D11_NO_DEVICE";
     return false;
   }
 
@@ -211,12 +214,13 @@ CompositorD3D11::Initialize()
 
   if (!mContext) {
     gfxCriticalNote << "[D3D11] failed to get immediate context";
+    *out_failureReason = "FEATURE_FAILURE_D3D11_CONTEXT";
     return false;
   }
 
   mFeatureLevel = mDevice->GetFeatureLevel();
 
-  mHwnd = mWidget->AsWindowsProxy()->GetHwnd();
+  mHwnd = mWidget->AsWindows()->GetHwnd();
 
   memset(&mVSConstants, 0, sizeof(VertexShaderConstants));
 
@@ -250,6 +254,7 @@ CompositorD3D11::Initialize()
                                     getter_AddRefs(mAttachments->mInputLayout));
 
     if (Failed(hr, "CreateInputLayout")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_INPUT_LAYOUT";
       return false;
     }
 
@@ -261,10 +266,12 @@ CompositorD3D11::Initialize()
     hr = mDevice->CreateBuffer(&bufferDesc, &data, getter_AddRefs(mAttachments->mVertexBuffer));
 
     if (Failed(hr, "create vertex buffer")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_VERTEX_BUFFER";
       return false;
     }
 
     if (!mAttachments->CreateShaders()) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_CREATE_SHADERS";
       return false;
     }
 
@@ -275,12 +282,14 @@ CompositorD3D11::Initialize()
 
     hr = mDevice->CreateBuffer(&cBufferDesc, nullptr, getter_AddRefs(mAttachments->mVSConstantBuffer));
     if (Failed(hr, "create vs buffer")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_VS_BUFFER";
       return false;
     }
 
     cBufferDesc.ByteWidth = sizeof(PixelShaderConstants);
     hr = mDevice->CreateBuffer(&cBufferDesc, nullptr, getter_AddRefs(mAttachments->mPSConstantBuffer));
     if (Failed(hr, "create ps buffer")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_PS_BUFFER";
       return false;
     }
 
@@ -290,18 +299,21 @@ CompositorD3D11::Initialize()
 
     hr = mDevice->CreateRasterizerState(&rastDesc, getter_AddRefs(mAttachments->mRasterizerState));
     if (Failed(hr, "create rasterizer")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_RASTERIZER";
       return false;
     }
 
     CD3D11_SAMPLER_DESC samplerDesc(D3D11_DEFAULT);
     hr = mDevice->CreateSamplerState(&samplerDesc, getter_AddRefs(mAttachments->mLinearSamplerState));
     if (Failed(hr, "create linear sampler")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_LINEAR_SAMPLER";
       return false;
     }
 
     samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     hr = mDevice->CreateSamplerState(&samplerDesc, getter_AddRefs(mAttachments->mPointSamplerState));
     if (Failed(hr, "create point sampler")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_POINT_SAMPLER";
       return false;
     }
 
@@ -315,6 +327,7 @@ CompositorD3D11::Initialize()
     blendDesc.RenderTarget[0] = rtBlendPremul;
     hr = mDevice->CreateBlendState(&blendDesc, getter_AddRefs(mAttachments->mPremulBlendState));
     if (Failed(hr, "create pm blender")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_PM_BLENDER";
       return false;
     }
 
@@ -327,6 +340,7 @@ CompositorD3D11::Initialize()
     blendDesc.RenderTarget[0] = rtBlendNonPremul;
     hr = mDevice->CreateBlendState(&blendDesc, getter_AddRefs(mAttachments->mNonPremulBlendState));
     if (Failed(hr, "create npm blender")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_NPM_BLENDER";
       return false;
     }
 
@@ -344,6 +358,7 @@ CompositorD3D11::Initialize()
       blendDesc.RenderTarget[0] = rtBlendComponent;
       hr = mDevice->CreateBlendState(&blendDesc, getter_AddRefs(mAttachments->mComponentBlendState));
       if (Failed(hr, "create component blender")) {
+        *out_failureReason = "FEATURE_FAILURE_D3D11_COMP_BLENDER";
         return false;
       }
     }
@@ -357,13 +372,15 @@ CompositorD3D11::Initialize()
     blendDesc.RenderTarget[0] = rtBlendDisabled;
     hr = mDevice->CreateBlendState(&blendDesc, getter_AddRefs(mAttachments->mDisabledBlendState));
     if (Failed(hr, "create null blender")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_NULL_BLENDER";
       return false;
     }
 
     if (!mAttachments->InitSyncObject()) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_OBJ_SYNC";
       return false;
     }
-    
+
     //
     // VR additions
     //
@@ -389,6 +406,7 @@ CompositorD3D11::Initialize()
     cBufferDesc.ByteWidth = sizeof(gfx::VRDistortionConstants);
     hr = mDevice->CreateBuffer(&cBufferDesc, nullptr, getter_AddRefs(mAttachments->mVRDistortionConstants));
     if (Failed(hr, "create vr buffer ")) {
+      *out_failureReason = "FEATURE_FAILURE_D3D11_VR_BUFFER";
       return false;
     }
   }
@@ -427,7 +445,8 @@ CompositorD3D11::Initialize()
      */
     hr = dxgiFactory->CreateSwapChain(dxgiDevice, &swapDesc, getter_AddRefs(mSwapChain));
     if (Failed(hr, "create swap chain")) {
-     return false;
+      *out_failureReason = "FEATURE_FAILURE_D3D11_SWAP_CHAIN";
+      return false;
     }
 
     // We need this because we don't want DXGI to respond to Alt+Enter.
@@ -436,10 +455,12 @@ CompositorD3D11::Initialize()
   }
 
   if (!mWidget->InitCompositor(this)) {
+    *out_failureReason = "FEATURE_FAILURE_D3D11_INIT_COMPOSITOR";
     return false;
   }
 
   reporter.SetSuccessful();
+
   return true;
 }
 
@@ -1126,7 +1147,17 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   // this is important because resizing our buffers when mimised will fail and
   // cause a crash when we're restored.
   NS_ASSERTION(mHwnd, "Couldn't find an HWND when initialising?");
-  if (::IsIconic(mHwnd) || mDevice->GetDeviceRemovedReason() != S_OK) {
+  if (::IsIconic(mHwnd)) {
+    // We are not going to render, and not going to call EndFrame so we have to
+    // read-unlock our textures to prevent them from accumulating.
+    ReadUnlockTextures();
+    *aRenderBoundsOut = IntRect();
+    return;
+  }
+
+  if (mDevice->GetDeviceRemovedReason() != S_OK) {
+    gfxCriticalNote << "GFX: D3D11 skip BeginFrame with device-removed.";
+    ReadUnlockTextures();
     *aRenderBoundsOut = IntRect();
     return;
   }
@@ -1136,6 +1167,7 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   // Failed to create a render target or the view.
   if (!UpdateRenderTarget() || !mDefaultRT || !mDefaultRT->mRTView ||
       mSize.width <= 0 || mSize.height <= 0) {
+    ReadUnlockTextures();
     *aRenderBoundsOut = IntRect();
     return;
   }
@@ -1195,7 +1227,19 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
     MOZ_ASSERT(mutex);
     HRESULT hr = mutex->AcquireSync(0, 10000);
     if (hr == WAIT_TIMEOUT) {
-      MOZ_CRASH("GFX: D3D11 timeout");
+      hr = mDevice->GetDeviceRemovedReason();
+      if (hr == S_OK) {
+        // There is no driver-removed event. Crash with this timeout.
+        MOZ_CRASH("GFX: D3D11 normal status timeout");
+      }
+
+      // Since the timeout is related to the driver-removed, clear the
+      // render-bounding size to skip this frame.
+      gfxCriticalNote << "GFX: D3D11 timeout with device-removed:" << gfx::hexa(hr);
+      *aRenderBoundsOut = IntRect();
+      return;
+    } else if (hr == WAIT_ABANDONED) {
+      gfxCriticalNote << "GFX: D3D11 abandoned sync";
     }
 
     mutex->ReleaseSync(0);
@@ -1208,6 +1252,12 @@ CompositorD3D11::EndFrame()
   Compositor::EndFrame();
 
   if (!mDefaultRT) {
+    return;
+  }
+
+  if (mDevice->GetDeviceRemovedReason() != S_OK) {
+    gfxCriticalNote << "GFX: D3D11 skip EndFrame with device-removed.";
+    mCurrentRT = nullptr;
     return;
   }
 
@@ -1226,7 +1276,8 @@ CompositorD3D11::EndFrame()
 
   UINT presentInterval = 0;
 
-  if (gfxWindowsPlatform::GetPlatform()->IsWARP()) {
+  bool isWARP = DeviceManagerD3D11::Get()->IsWARP();
+  if (isWARP) {
     // When we're using WARP we cannot present immediately as it causes us
     // to tear when rendering. When not using WARP it appears the DWM takes
     // care of tearing for us.
@@ -1249,8 +1300,7 @@ CompositorD3D11::EndFrame()
       nsString vendorID;
       nsCOMPtr<nsIGfxInfo> gfxInfo = services::GetGfxInfo();
       gfxInfo->GetAdapterVendorID(vendorID);
-      allowPartialPresent = !vendorID.EqualsLiteral("0x10de") ||
-                            gfxWindowsPlatform::GetPlatform()->IsWARP();
+      allowPartialPresent = !vendorID.EqualsLiteral("0x10de") || isWARP;
     }
 
     if (SUCCEEDED(hr) && chain && allowPartialPresent) {
@@ -1474,7 +1524,7 @@ bool
 DeviceAttachmentsD3D11::InitSyncObject()
 {
   // Sync object is not supported on WARP.
-  if (gfxWindowsPlatform::GetPlatform()->IsWARP()) {
+  if (DeviceManagerD3D11::Get()->IsWARP()) {
     return true;
   }
 
@@ -1676,9 +1726,8 @@ CompositorD3D11::HandleError(HRESULT hr, Severity aSeverity)
     MOZ_CRASH("GFX: Unrecoverable D3D11 error");
   }
 
-  RefPtr<ID3D11Device> device;
-  if (!gfxWindowsPlatform::GetPlatform()->GetD3D11Device(&device) || device != mDevice) {
-    gfxCriticalError() << "Out of sync D3D11 devices in HandleError, " << (int)mVerifyBuffersFailed;
+  if (mDevice && DeviceManagerD3D11::Get()->GetCompositorDevice() != mDevice) {
+    gfxCriticalNote << "Out of sync D3D11 devices in HandleError, " << (int)mVerifyBuffersFailed;
   }
 
   HRESULT hrOnReset = S_OK;

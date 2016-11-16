@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2009-2016, International Business Machines Corporation and
+* Copyright (C) 2009-2011, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 */
@@ -15,8 +15,6 @@
 #include "unicode/utypes.h"
 
 #if !UCONFIG_NO_FORMATTING
-
-#include "unicode/uobject.h"
 
 #ifndef UCNV_H
 

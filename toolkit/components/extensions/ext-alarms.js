@@ -83,15 +83,17 @@ extensions.on("startup", (type, extension) => {
 });
 
 extensions.on("shutdown", (type, extension) => {
-  for (let alarm of alarmsMap.get(extension).values()) {
-    alarm.clear();
+  if (alarmsMap.has(extension)) {
+    for (let alarm of alarmsMap.get(extension).values()) {
+      alarm.clear();
+    }
+    alarmsMap.delete(extension);
+    alarmCallbacksMap.delete(extension);
   }
-  alarmsMap.delete(extension);
-  alarmCallbacksMap.delete(extension);
 });
 /* eslint-enable mozilla/balanced-listeners */
 
-extensions.registerSchemaAPI("alarms", "alarms", (extension, context) => {
+extensions.registerSchemaAPI("alarms", (extension, context) => {
   return {
     alarms: {
       create: function(name, alarmInfo) {

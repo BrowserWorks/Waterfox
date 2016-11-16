@@ -962,17 +962,19 @@ Connection::internalClose(sqlite3 *aNativeConnection)
                                 stmt);
       NS_WARNING(msg);
       ::PR_smprintf_free(msg);
+      msg = nullptr;
 #endif // DEBUG
 
       srv = ::sqlite3_finalize(stmt);
 
 #ifdef DEBUG
       if (srv != SQLITE_OK) {
-        char *msg = ::PR_smprintf("Could not finalize SQL statement '%s' (%x)",
-                                  ::sqlite3_sql(stmt),
-                                  stmt);
+        msg = ::PR_smprintf("Could not finalize SQL statement '%s' (%x)",
+                            ::sqlite3_sql(stmt),
+                            stmt);
         NS_WARNING(msg);
         ::PR_smprintf_free(msg);
+        msg = nullptr;
       }
 #endif // DEBUG
 
@@ -1330,6 +1332,29 @@ Connection::initializeClone(Connection* aClone, bool aReadOnly)
                          : aClone->initialize(mDatabaseFile);
   if (NS_FAILED(rv)) {
     return rv;
+  }
+
+  // Re-attach on-disk databases that were attached to the original connection.
+  {
+    nsCOMPtr<mozIStorageStatement> stmt;
+    rv = CreateStatement(NS_LITERAL_CSTRING("PRAGMA database_list"),
+                         getter_AddRefs(stmt));
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+    bool hasResult = false;
+    while (stmt && NS_SUCCEEDED(stmt->ExecuteStep(&hasResult)) && hasResult) {
+      nsAutoCString name;
+      rv = stmt->GetUTF8String(1, name);
+      if (NS_SUCCEEDED(rv) && !name.Equals(NS_LITERAL_CSTRING("main")) &&
+                              !name.Equals(NS_LITERAL_CSTRING("temp"))) {
+        nsCString path;
+        rv = stmt->GetUTF8String(2, path);
+        if (NS_SUCCEEDED(rv) && !path.IsEmpty()) {
+          rv = aClone->ExecuteSimpleSQL(NS_LITERAL_CSTRING("ATTACH DATABASE '") +
+            path + NS_LITERAL_CSTRING("' AS ") + name);
+          MOZ_ASSERT(NS_SUCCEEDED(rv), "couldn't re-attach database to cloned connection");
+        }
+      }
+    }
   }
 
   // Copy over pragmas from the original connection.

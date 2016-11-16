@@ -17,6 +17,7 @@
 #include "nsWeakReference.h"
 #include "mozilla/SHA1.h"
 #include "mozilla/StaticMutex.h"
+#include "mozilla/StaticPtr.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/TimeStamp.h"
 
@@ -771,7 +772,8 @@ private:
   // cleared.
   nsresult GetFile(const nsACString &aName, nsIFile **_retval);
   nsresult RemoveFile(const nsACString &aName);
-  void     RemoveIndexFromDisk();
+  void     RemoveAllIndexFiles();
+  void     RemoveJournalAndTempFile();
   // Writes journal to the disk and clears dirty flag in index header.
   nsresult WriteLogToDisk();
 
@@ -934,7 +936,7 @@ private:
 
   void ReportHashStats();
 
-  static CacheIndex *gInstance;
+  static mozilla::StaticRefPtr<CacheIndex> gInstance;
   static StaticMutex sLock;
 
   nsCOMPtr<nsIFile> mCacheDirectory;

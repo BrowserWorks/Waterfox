@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/collation/ko.xml
@@ -289,7 +289,7 @@ ko{
                 "&ᅩᅣᅵ"
                 "=ᆧ"
             }
-            Version{"29"}
+            Version{"28"}
         }
         searchjl{
             Sequence{
@@ -384,7 +384,7 @@ ko{
                 "&\u1109\u1109=\u110A<<<\u3146"
                 "&\u110C\u110C=\u110D<<<\u3149"
             }
-            Version{"29"}
+            Version{"28"}
         }
         standard{
             Sequence{
@@ -868,14 +868,14 @@ ko{
                 "&희<<*僖凞喜噫囍姬嬉希憙憘戱晞曦熙熹熺犧禧稀羲咥唏嘻悕戲暿欷燹爔豨餼"
                 "&힐<<*詰犵纈襭頡黠"
             }
-            Version{"29"}
+            Version{"28"}
         }
         unihan{
             Sequence{
                 "[import und-u-co-private-unihan]"
                 "[reorder Hang Hani]"
             }
-            Version{"29"}
+            Version{"28"}
         }
     }
 }

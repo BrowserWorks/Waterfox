@@ -928,7 +928,7 @@ nsXMLContentSink::HandleStartElement(const char16_t *aName,
   // XXX Hopefully the parser will flag this before we get
   // here. If we're in the epilog, there should be no
   // new elements
-  PR_ASSERT(eXMLContentSinkState_InEpilog != mState);
+  MOZ_ASSERT(eXMLContentSinkState_InEpilog != mState);
 
   FlushText();
   DidAddContent();
@@ -1021,7 +1021,7 @@ nsXMLContentSink::HandleEndElement(const char16_t *aName,
   // XXX Hopefully the parser will flag this before we get
   // here. If we're in the prolog or epilog, there should be
   // no close tags for elements.
-  PR_ASSERT(eXMLContentSinkState_InDocumentElement == mState);
+  MOZ_ASSERT(eXMLContentSinkState_InDocumentElement == mState);
 
   FlushText();
 
@@ -1329,8 +1329,8 @@ nsXMLContentSink::ReportError(const char16_t* aErrorText,
   mContentStack.Clear();
   mNotifyLevel = 0;
 
-  rv = HandleProcessingInstruction(MOZ_UTF16("xml-stylesheet"),
-                                   MOZ_UTF16("href=\"chrome://global/locale/intl.css\" type=\"text/css\""));
+  rv = HandleProcessingInstruction(u"xml-stylesheet",
+                                   u"href=\"chrome://global/locale/intl.css\" type=\"text/css\"");
   NS_ENSURE_SUCCESS(rv, rv);
 
   const char16_t* noAtts[] = { 0, 0 };

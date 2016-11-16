@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@ if CONFIG['MOZ_WEBRTC']:
     EXPORTS += [
         'CamerasChild.h',
         'CamerasParent.h',
-        'CamerasUtils.h',
         'LoadManager.h',
         'LoadManagerFactory.h',
         'LoadMonitor.h',
@@ -16,7 +15,6 @@ if CONFIG['MOZ_WEBRTC']:
     UNIFIED_SOURCES += [
         'CamerasChild.cpp',
         'CamerasParent.cpp',
-        'CamerasUtils.cpp',
         'LoadManager.cpp',
         'LoadManagerFactory.cpp',
         'LoadMonitor.cpp',
@@ -32,7 +30,7 @@ else:
     DEFINES['WEBRTC_POSIX'] = True
 
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gonk'):
+if CONFIG['OS_TARGET'] == 'Android':
     EXPORTS += [
         'OpenSLESProvider.h'
     ]
@@ -73,6 +71,7 @@ EXPORTS.mozilla.media += ['MediaChild.h',
                           'MediaSystemResourceMessageUtils.h',
                           'MediaSystemResourceService.h',
                           'MediaSystemResourceTypes.h',
+                          'MediaTaskUtils.h',
                           'MediaUtils.h',
 ]
 UNIFIED_SOURCES += [

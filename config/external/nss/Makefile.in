@@ -117,6 +117,7 @@ export MOZ_DEBUG_SYMBOLS
 
 DEFAULT_GMAKE_FLAGS =
 DEFAULT_GMAKE_FLAGS += CC='$(CC)'
+DEFAULT_GMAKE_FLAGS += MT='$(MT)'
 DEFAULT_GMAKE_FLAGS += SOURCE_MD_DIR=$(ABS_DIST)
 DEFAULT_GMAKE_FLAGS += SOURCE_MDHEADERS_DIR=$(NSPR_INCLUDE_DIR)
 DEFAULT_GMAKE_FLAGS += DIST=$(ABS_DIST)
@@ -240,6 +241,7 @@ DEFAULT_GMAKE_FLAGS += \
 endif
 
 DEFAULT_GMAKE_FLAGS += FREEBL_NO_DEPEND=0 $(FREEBL_LOWHASH_FLAG)
+DEFAULT_GMAKE_FLAGS += NSS_ALLOW_SSLKEYLOGFILE=1
 
 ifdef MOZ_NO_WLZDEFS
 DEFAULT_GMAKE_FLAGS += ZDEFS_FLAG=
@@ -322,7 +324,10 @@ NSS_DIRS += $(NSS_STATIC_DIRS)
 # TODO: The following can be replaced by something simpler when bug 844884
 # is fixed.
 # Remaining nss/lib directories
-NSS_DIRS += nss/lib/freebl nss/lib/softoken nss/lib/jar nss/lib/crmf nss/lib/ckfw nss/lib/libpkix
+NSS_DIRS += nss/lib/freebl nss/lib/softoken nss/lib/jar nss/lib/crmf nss/lib/ckfw
+
+DEFAULT_GMAKE_FLAGS += NSS_DISABLE_LIBPKIX=1
+
 ifeq (WINNT,$(OS_TARGET))
 NSS_DIRS += nss/lib/zlib
 endif
@@ -367,12 +372,7 @@ endif
 # Can't pass this in DEFAULT_GMAKE_FLAGS because that overrides
 # definitions in NSS, so just export it into the sub-make's environment.
 ifeq (WINNT_1,$(OS_TARGET)_$(MOZ_MEMORY))
-ifdef MOZ_CRT
-# OS_LIBS comes from having mozcrt as a dependency in moz.build.
-DLLFLAGS := $(OS_LIBS)
-else
 DLLFLAGS := -LIBPATH:$(ABS_DIST)/../mozglue/build -DEFAULTLIB:mozglue
-endif
 export DLLFLAGS
 endif
 

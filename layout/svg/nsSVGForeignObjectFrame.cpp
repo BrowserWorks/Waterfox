@@ -124,8 +124,8 @@ nsSVGForeignObjectFrame::AttributeChanged(int32_t  aNameSpaceID,
 
 void
 nsSVGForeignObjectFrame::Reflow(nsPresContext*           aPresContext,
-                                nsHTMLReflowMetrics&     aDesiredSize,
-                                const nsHTMLReflowState& aReflowState,
+                                ReflowOutput&     aDesiredSize,
+                                const ReflowInput& aReflowInput,
                                 nsReflowStatus&          aStatus)
 {
   MOZ_ASSERT(!(GetStateBits() & NS_FRAME_IS_NONDISPLAY),
@@ -141,18 +141,18 @@ nsSVGForeignObjectFrame::Reflow(nsPresContext*           aPresContext,
 
   // ReflowSVG makes sure mRect is up to date before we're called.
 
-  NS_ASSERTION(!aReflowState.mParentReflowState,
+  NS_ASSERTION(!aReflowInput.mParentReflowInput,
                "should only get reflow from being reflow root");
-  NS_ASSERTION(aReflowState.ComputedWidth() == GetSize().width &&
-               aReflowState.ComputedHeight() == GetSize().height,
+  NS_ASSERTION(aReflowInput.ComputedWidth() == GetSize().width &&
+               aReflowInput.ComputedHeight() == GetSize().height,
                "reflow roots should be reflowed at existing size and "
                "svg.css should ensure we have no padding/border/margin");
 
   DoReflow();
 
-  WritingMode wm = aReflowState.GetWritingMode();
-  LogicalSize finalSize(wm, aReflowState.ComputedISize(),
-                        aReflowState.ComputedBSize());
+  WritingMode wm = aReflowInput.GetWritingMode();
+  LogicalSize finalSize(wm, aReflowInput.ComputedISize(),
+                        aReflowInput.ComputedBSize());
   aDesiredSize.SetSize(wm, finalSize);
   aDesiredSize.SetOverflowAreasToDesiredBounds();
   aStatus = NS_FRAME_COMPLETE;
@@ -198,7 +198,7 @@ nsSVGForeignObjectFrame::IsSVGTransformed(Matrix *aOwnTransform,
   return foundTransform;
 }
 
-nsresult
+DrawResult
 nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
                                   const gfxMatrix& aTransform,
                                   const nsIntRect* aDirtyRect)
@@ -209,15 +209,15 @@ nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
                "SVG should take this code path");
 
   if (IsDisabled())
-    return NS_OK;
+    return DrawResult::SUCCESS;
 
   nsIFrame* kid = PrincipalChildList().FirstChild();
   if (!kid)
-    return NS_OK;
+    return DrawResult::SUCCESS;
 
   if (aTransform.IsSingular()) {
     NS_WARNING("Can't render foreignObject element!");
-    return NS_ERROR_FAILURE;
+    return DrawResult::BAD_ARGS;
   }
 
   nsRect kidDirtyRect = kid->GetVisualOverflowRect();
@@ -245,7 +245,7 @@ nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
     // int32_t appUnitsPerDevPx = PresContext()->AppUnitsPerDevPixel();
     // mRect.ToOutsidePixels(appUnitsPerDevPx).Intersects(*aDirtyRect)
     if (kidDirtyRect.IsEmpty())
-      return NS_OK;
+      return DrawResult::SUCCESS;
   }
 
   aContext.Save();
@@ -277,13 +277,13 @@ nsSVGForeignObjectFrame::PaintSVG(gfxContext& aContext,
   }
   nsRenderingContext rendCtx(&aContext);
   nsresult rv = nsLayoutUtils::PaintFrame(&rendCtx, kid, nsRegion(kidDirtyRect),
-                                          NS_RGBA(0,0,0,0),
-                                          nsDisplayListBuilderMode::PAINTING,
-                                          flags);
+                                         NS_RGBA(0,0,0,0),
+                                         nsDisplayListBuilderMode::PAINTING,
+                                         flags);
 
   aContext.Restore();
 
-  return rv;
+  return NS_FAILED(rv) ? DrawResult::BAD_ARGS : DrawResult::SUCCESS;
 }
 
 nsIFrame*
@@ -541,28 +541,28 @@ nsSVGForeignObjectFrame::DoReflow()
   mInReflow = true;
 
   WritingMode wm = kid->GetWritingMode();
-  nsHTMLReflowState reflowState(presContext, kid,
+  ReflowInput reflowInput(presContext, kid,
                                 &renderingContext,
                                 LogicalSize(wm, ISize(wm),
                                             NS_UNCONSTRAINEDSIZE));
-  nsHTMLReflowMetrics desiredSize(reflowState);
+  ReflowOutput desiredSize(reflowInput);
   nsReflowStatus status;
 
   // We don't use mRect.height above because that tells the child to do
   // page/column breaking at that height.
-  NS_ASSERTION(reflowState.ComputedPhysicalBorderPadding() == nsMargin(0, 0, 0, 0) &&
-               reflowState.ComputedPhysicalMargin() == nsMargin(0, 0, 0, 0),
+  NS_ASSERTION(reflowInput.ComputedPhysicalBorderPadding() == nsMargin(0, 0, 0, 0) &&
+               reflowInput.ComputedPhysicalMargin() == nsMargin(0, 0, 0, 0),
                "style system should ensure that :-moz-svg-foreign-content "
                "does not get styled");
-  NS_ASSERTION(reflowState.ComputedISize() == ISize(wm),
+  NS_ASSERTION(reflowInput.ComputedISize() == ISize(wm),
                "reflow state made child wrong size");
-  reflowState.SetComputedBSize(BSize(wm));
+  reflowInput.SetComputedBSize(BSize(wm));
 
-  ReflowChild(kid, presContext, desiredSize, reflowState, 0, 0,
+  ReflowChild(kid, presContext, desiredSize, reflowInput, 0, 0,
               NS_FRAME_NO_MOVE_FRAME, status);
   NS_ASSERTION(mRect.width == desiredSize.Width() &&
                mRect.height == desiredSize.Height(), "unexpected size");
-  FinishReflowChild(kid, presContext, desiredSize, &reflowState, 0, 0,
+  FinishReflowChild(kid, presContext, desiredSize, &reflowInput, 0, 0,
                     NS_FRAME_NO_MOVE_FRAME);
   
   mInReflow = false;

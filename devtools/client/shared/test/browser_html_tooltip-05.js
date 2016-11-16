@@ -12,7 +12,7 @@
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const TEST_URI = `data:text/xml;charset=UTF-8,<?xml version="1.0"?>
   <?xml-stylesheet href="chrome://global/skin/global.css"?>
-  <?xml-stylesheet href="chrome://devtools/skin/common.css"?>
+  <?xml-stylesheet href="chrome://devtools/skin/tooltips.css"?>
   <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
    title="Tooltip test">
     <vbox flex="1">
@@ -32,15 +32,14 @@ const TOOLTIP_WIDTH = 200;
 add_task(function* () {
   // Force the toolbox to be 200px high;
   yield pushPref("devtools.toolbox.footer.height", 200);
-
   yield addTab("about:blank");
   let [,, doc] = yield createHost("bottom", TEST_URI);
 
   info("Create HTML tooltip");
-  let tooltip = new HTMLTooltip({doc}, {});
+  let tooltip = new HTMLTooltip({doc}, {useXulWrapper: false});
   let div = doc.createElementNS(HTML_NS, "div");
   div.style.height = "100%";
-  yield tooltip.setContent(div, TOOLTIP_WIDTH, TOOLTIP_HEIGHT);
+  tooltip.setContent(div, {width: TOOLTIP_WIDTH, height: TOOLTIP_HEIGHT});
 
   let box1 = doc.getElementById("box1");
   let box2 = doc.getElementById("box2");
@@ -57,7 +56,7 @@ add_task(function* () {
   yield hideTooltip(tooltip);
 
   info("Try to display the tooltip on top of box1.");
-  yield showTooltip(tooltip, box1, "top");
+  yield showTooltip(tooltip, box1, {position: "top"});
   expectedTooltipGeometry = {position: "bottom", height: 150, width};
   checkTooltipGeometry(tooltip, box1, expectedTooltipGeometry);
   yield hideTooltip(tooltip);
@@ -71,7 +70,7 @@ add_task(function* () {
   yield hideTooltip(tooltip);
 
   info("Try to display the tooltip on top of box2.");
-  yield showTooltip(tooltip, box2, "top");
+  yield showTooltip(tooltip, box2, {position: "top"});
   expectedTooltipGeometry = {position: "bottom", height: 100, width};
   checkTooltipGeometry(tooltip, box2, expectedTooltipGeometry);
   yield hideTooltip(tooltip);
@@ -85,7 +84,7 @@ add_task(function* () {
   yield hideTooltip(tooltip);
 
   info("Try to display the tooltip on bottom of box3.");
-  yield showTooltip(tooltip, box3, "bottom");
+  yield showTooltip(tooltip, box3, {position: "bottom"});
   expectedTooltipGeometry = {position: "top", height: 100, width};
   checkTooltipGeometry(tooltip, box3, expectedTooltipGeometry);
   yield hideTooltip(tooltip);
@@ -99,10 +98,12 @@ add_task(function* () {
   yield hideTooltip(tooltip);
 
   info("Try to display the tooltip on bottom of box4.");
-  yield showTooltip(tooltip, box4, "bottom");
+  yield showTooltip(tooltip, box4, {position: "bottom"});
   expectedTooltipGeometry = {position: "top", height: 150, width};
   checkTooltipGeometry(tooltip, box4, expectedTooltipGeometry);
   yield hideTooltip(tooltip);
 
   is(tooltip.isVisible(), false, "Tooltip is not visible");
+
+  tooltip.destroy();
 });

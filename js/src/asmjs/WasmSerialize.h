@@ -19,7 +19,7 @@
 #ifndef wasm_serialize_h
 #define wasm_serialize_h
 
-#include "jit/MacroAssembler.h"
+#include "js/Vector.h"
 
 namespace js {
 namespace wasm {
@@ -57,77 +57,6 @@ ReadScalar(const uint8_t* src, T* dst)
     return src + sizeof(*dst);
 }
 
-static inline size_t
-SerializedNameSize(PropertyName* name)
-{
-    size_t s = sizeof(uint32_t);
-    if (name)
-        s += name->length() * (name->hasLatin1Chars() ? sizeof(Latin1Char) : sizeof(char16_t));
-    return s;
-}
-
-static inline uint8_t*
-SerializeName(uint8_t* cursor, PropertyName* name)
-{
-    MOZ_ASSERT_IF(name, !name->empty());
-    if (name) {
-        static_assert(JSString::MAX_LENGTH <= INT32_MAX, "String length must fit in 31 bits");
-        uint32_t length = name->length();
-        uint32_t lengthAndEncoding = (length << 1) | uint32_t(name->hasLatin1Chars());
-        cursor = WriteScalar<uint32_t>(cursor, lengthAndEncoding);
-        JS::AutoCheckCannotGC nogc;
-        if (name->hasLatin1Chars())
-            cursor = WriteBytes(cursor, name->latin1Chars(nogc), length * sizeof(Latin1Char));
-        else
-            cursor = WriteBytes(cursor, name->twoByteChars(nogc), length * sizeof(char16_t));
-    } else {
-        cursor = WriteScalar<uint32_t>(cursor, 0);
-    }
-    return cursor;
-}
-
-template <typename CharT>
-static inline const uint8_t*
-DeserializeChars(ExclusiveContext* cx, const uint8_t* cursor, size_t length, PropertyName** name)
-{
-    Vector<CharT> tmp(cx);
-    CharT* src;
-    if ((size_t(cursor) & (sizeof(CharT) - 1)) != 0) {
-        // Align 'src' for AtomizeChars.
-        if (!tmp.resize(length))
-            return nullptr;
-        memcpy(tmp.begin(), cursor, length * sizeof(CharT));
-        src = tmp.begin();
-    } else {
-        src = (CharT*)cursor;
-    }
-
-    JSAtom* atom = AtomizeChars(cx, src, length);
-    if (!atom)
-        return nullptr;
-
-    *name = atom->asPropertyName();
-    return cursor + length * sizeof(CharT);
-}
-
-static inline const uint8_t*
-DeserializeName(ExclusiveContext* cx, const uint8_t* cursor, PropertyName** name)
-{
-    uint32_t lengthAndEncoding;
-    cursor = ReadScalar<uint32_t>(cursor, &lengthAndEncoding);
-
-    uint32_t length = lengthAndEncoding >> 1;
-    if (length == 0) {
-        *name = nullptr;
-        return cursor;
-    }
-
-    bool latin1 = lengthAndEncoding & 0x1;
-    return latin1
-           ? DeserializeChars<Latin1Char>(cx, cursor, length, name)
-           : DeserializeChars<char16_t>(cx, cursor, length, name);
-}
-
 template <class T, size_t N>
 static inline size_t
 SerializedVectorSize(const mozilla::Vector<T, N, SystemAllocPolicy>& vec)
@@ -150,32 +79,17 @@ SerializeVector(uint8_t* cursor, const mozilla::Vector<T, N, SystemAllocPolicy>&
 
 template <class T, size_t N>
 static inline const uint8_t*
-DeserializeVector(ExclusiveContext* cx, const uint8_t* cursor,
-                  mozilla::Vector<T, N, SystemAllocPolicy>* vec)
+DeserializeVector(const uint8_t* cursor, mozilla::Vector<T, N, SystemAllocPolicy>* vec)
 {
     uint32_t length;
     cursor = ReadScalar<uint32_t>(cursor, &length);
     if (!vec->resize(length))
         return nullptr;
     for (size_t i = 0; i < vec->length(); i++) {
-        if (!(cursor = (*vec)[i].deserialize(cx, cursor)))
+        if (!(cursor = (*vec)[i].deserialize(cursor)))
             return nullptr;
     }
     return cursor;
-}
-
-template <class T, size_t N>
-static inline MOZ_MUST_USE bool
-CloneVector(JSContext* cx, const mozilla::Vector<T, N, SystemAllocPolicy>& in,
-            mozilla::Vector<T, N, SystemAllocPolicy>* out)
-{
-    if (!out->resize(in.length()))
-        return false;
-    for (size_t i = 0; i < in.length(); i++) {
-        if (!in[i].clone(cx, &(*out)[i]))
-            return false;
-    }
-    return true;
 }
 
 template <class T, size_t N>
@@ -208,141 +122,15 @@ SerializePodVector(uint8_t* cursor, const mozilla::Vector<T, N, SystemAllocPolic
 
 template <class T, size_t N>
 static inline const uint8_t*
-DeserializePodVector(ExclusiveContext* cx, const uint8_t* cursor,
-                     mozilla::Vector<T, N, SystemAllocPolicy>* vec)
+DeserializePodVector(const uint8_t* cursor, mozilla::Vector<T, N, SystemAllocPolicy>* vec)
 {
     uint32_t length;
     cursor = ReadScalar<uint32_t>(cursor, &length);
-    if (!vec->resize(length))
+    if (!vec->initLengthUninitialized(length))
         return nullptr;
     cursor = ReadBytes(cursor, vec->begin(), length * sizeof(T));
     return cursor;
 }
-
-template <class T, size_t N>
-static inline MOZ_MUST_USE bool
-ClonePodVector(JSContext* cx, const mozilla::Vector<T, N, SystemAllocPolicy>& in,
-               mozilla::Vector<T, N, SystemAllocPolicy>* out)
-{
-    if (!out->resize(in.length()))
-        return false;
-    mozilla::PodCopy(out->begin(), in.begin(), in.length());
-    return true;
-}
-
-static inline MOZ_MUST_USE bool
-GetCPUID(uint32_t* cpuId)
-{
-    enum Arch {
-        X86 = 0x1,
-        X64 = 0x2,
-        ARM = 0x3,
-        MIPS = 0x4,
-        MIPS64 = 0x5,
-        ARCH_BITS = 3
-    };
-
-#if defined(JS_CODEGEN_X86)
-    MOZ_ASSERT(uint32_t(jit::CPUInfo::GetSSEVersion()) <= (UINT32_MAX >> ARCH_BITS));
-    *cpuId = X86 | (uint32_t(jit::CPUInfo::GetSSEVersion()) << ARCH_BITS);
-    return true;
-#elif defined(JS_CODEGEN_X64)
-    MOZ_ASSERT(uint32_t(jit::CPUInfo::GetSSEVersion()) <= (UINT32_MAX >> ARCH_BITS));
-    *cpuId = X64 | (uint32_t(jit::CPUInfo::GetSSEVersion()) << ARCH_BITS);
-    return true;
-#elif defined(JS_CODEGEN_ARM)
-    MOZ_ASSERT(jit::GetARMFlags() <= (UINT32_MAX >> ARCH_BITS));
-    *cpuId = ARM | (jit::GetARMFlags() << ARCH_BITS);
-    return true;
-#elif defined(JS_CODEGEN_MIPS32)
-    MOZ_ASSERT(jit::GetMIPSFlags() <= (UINT32_MAX >> ARCH_BITS));
-    *cpuId = MIPS | (jit::GetMIPSFlags() << ARCH_BITS);
-    return true;
-#elif defined(JS_CODEGEN_MIPS64)
-    MOZ_ASSERT(jit::GetMIPSFlags() <= (UINT32_MAX >> ARCH_BITS));
-    *cpuId = MIPS64 | (jit::GetMIPSFlags() << ARCH_BITS);
-    return true;
-#else
-    return false;
-#endif
-}
-
-class MachineId
-{
-    uint32_t cpuId_;
-    JS::BuildIdCharVector buildId_;
-
-  public:
-    MOZ_MUST_USE bool extractCurrentState(ExclusiveContext* cx) {
-        if (!cx->buildIdOp())
-            return false;
-        if (!cx->buildIdOp()(&buildId_))
-            return false;
-        if (!GetCPUID(&cpuId_))
-            return false;
-        return true;
-    }
-
-    size_t serializedSize() const {
-        return sizeof(uint32_t) +
-               SerializedPodVectorSize(buildId_);
-    }
-
-    uint8_t* serialize(uint8_t* cursor) const {
-        cursor = WriteScalar<uint32_t>(cursor, cpuId_);
-        cursor = SerializePodVector(cursor, buildId_);
-        return cursor;
-    }
-
-    const uint8_t* deserialize(ExclusiveContext* cx, const uint8_t* cursor) {
-        (cursor = ReadScalar<uint32_t>(cursor, &cpuId_)) &&
-        (cursor = DeserializePodVector(cx, cursor, &buildId_));
-        return cursor;
-    }
-
-    bool operator==(const MachineId& rhs) const {
-        return cpuId_ == rhs.cpuId_ &&
-               buildId_.length() == rhs.buildId_.length() &&
-               mozilla::PodEqual(buildId_.begin(), rhs.buildId_.begin(), buildId_.length());
-    }
-    bool operator!=(const MachineId& rhs) const {
-        return !(*this == rhs);
-    }
-};
-
-struct ScopedCacheEntryOpenedForWrite
-{
-    ExclusiveContext* cx;
-    const size_t serializedSize;
-    uint8_t* memory;
-    intptr_t handle;
-
-    ScopedCacheEntryOpenedForWrite(ExclusiveContext* cx, size_t serializedSize)
-      : cx(cx), serializedSize(serializedSize), memory(nullptr), handle(-1)
-    {}
-
-    ~ScopedCacheEntryOpenedForWrite() {
-        if (memory)
-            cx->asmJSCacheOps().closeEntryForWrite(serializedSize, memory, handle);
-    }
-};
-
-struct ScopedCacheEntryOpenedForRead
-{
-    ExclusiveContext* cx;
-    size_t serializedSize;
-    const uint8_t* memory;
-    intptr_t handle;
-
-    explicit ScopedCacheEntryOpenedForRead(ExclusiveContext* cx)
-      : cx(cx), serializedSize(0), memory(nullptr), handle(0)
-    {}
-
-    ~ScopedCacheEntryOpenedForRead() {
-        if (memory)
-            cx->asmJSCacheOps().closeEntryForRead(serializedSize, memory, handle);
-    }
-};
 
 } // namespace wasm
 } // namespace js

@@ -8,6 +8,7 @@
 #include "Decoder.h"
 #include "DecoderFactory.h"
 #include "decoders/nsBMPDecoder.h"
+#include "IDecodingTask.h"
 #include "imgIContainer.h"
 #include "imgITools.h"
 #include "ImageFactory.h"
@@ -28,16 +29,6 @@ using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::image;
 
-TEST(ImageMetadata, ImageModuleAvailable)
-{
-  // We can run into problems if XPCOM modules get initialized in the wrong
-  // order. It's important that this test run first, both as a sanity check and
-  // to ensure we get the module initialization order we want.
-  nsCOMPtr<imgITools> imgTools =
-    do_CreateInstance("@mozilla.org/image/tools;1");
-  EXPECT_TRUE(imgTools != nullptr);
-}
-
 enum class BMPWithinICO
 {
   NO,
@@ -57,7 +48,7 @@ CheckMetadata(const ImageTestCase& aTestCase,
   ASSERT_TRUE(NS_SUCCEEDED(rv));
 
   // Write the data into a SourceBuffer.
-  RefPtr<SourceBuffer> sourceBuffer = new SourceBuffer();
+  NotNull<RefPtr<SourceBuffer>> sourceBuffer = WrapNotNull(new SourceBuffer());
   sourceBuffer->ExpectLength(length);
   rv = sourceBuffer->AppendFromInputStream(inputStream, length);
   ASSERT_TRUE(NS_SUCCEEDED(rv));
@@ -69,13 +60,14 @@ CheckMetadata(const ImageTestCase& aTestCase,
   RefPtr<Decoder> decoder =
     DecoderFactory::CreateAnonymousMetadataDecoder(decoderType, sourceBuffer);
   ASSERT_TRUE(decoder != nullptr);
+  RefPtr<IDecodingTask> task = new AnonymousDecodingTask(WrapNotNull(decoder));
 
   if (aBMPWithinICO == BMPWithinICO::YES) {
     static_cast<nsBMPDecoder*>(decoder.get())->SetIsWithinICO();
   }
 
   // Run the metadata decoder synchronously.
-  decoder->Decode();
+  task->Run();
 
   // Ensure that the metadata decoder didn't make progress it shouldn't have
   // (which would indicate that it decoded past the header of the image).
@@ -113,13 +105,14 @@ CheckMetadata(const ImageTestCase& aTestCase,
     DecoderFactory::CreateAnonymousDecoder(decoderType, sourceBuffer, Nothing(),
                                            DefaultSurfaceFlags());
   ASSERT_TRUE(decoder != nullptr);
+  task = new AnonymousDecodingTask(WrapNotNull(decoder));
 
   if (aBMPWithinICO == BMPWithinICO::YES) {
     static_cast<nsBMPDecoder*>(decoder.get())->SetIsWithinICO();
   }
 
   // Run the full decoder synchronously.
-  decoder->Decode();
+  task->Run();
 
   EXPECT_TRUE(decoder->GetDecodeDone() && !decoder->HasError());
   Progress fullProgress = decoder->TakeProgress();
@@ -140,53 +133,59 @@ CheckMetadata(const ImageTestCase& aTestCase,
               (fullProgress & FLAG_IS_ANIMATED));
 }
 
-TEST(ImageMetadata, PNG) { CheckMetadata(GreenPNGTestCase()); }
-TEST(ImageMetadata, TransparentPNG) { CheckMetadata(TransparentPNGTestCase()); }
-TEST(ImageMetadata, GIF) { CheckMetadata(GreenGIFTestCase()); }
-TEST(ImageMetadata, TransparentGIF) { CheckMetadata(TransparentGIFTestCase()); }
-TEST(ImageMetadata, JPG) { CheckMetadata(GreenJPGTestCase()); }
-TEST(ImageMetadata, BMP) { CheckMetadata(GreenBMPTestCase()); }
-TEST(ImageMetadata, ICO) { CheckMetadata(GreenICOTestCase()); }
-TEST(ImageMetadata, Icon) { CheckMetadata(GreenIconTestCase()); }
+class ImageDecoderMetadata : public ::testing::Test
+{
+protected:
+  AutoInitializeImageLib mInit;
+};
 
-TEST(ImageMetadata, AnimatedGIF)
+TEST_F(ImageDecoderMetadata, PNG) { CheckMetadata(GreenPNGTestCase()); }
+TEST_F(ImageDecoderMetadata, TransparentPNG) { CheckMetadata(TransparentPNGTestCase()); }
+TEST_F(ImageDecoderMetadata, GIF) { CheckMetadata(GreenGIFTestCase()); }
+TEST_F(ImageDecoderMetadata, TransparentGIF) { CheckMetadata(TransparentGIFTestCase()); }
+TEST_F(ImageDecoderMetadata, JPG) { CheckMetadata(GreenJPGTestCase()); }
+TEST_F(ImageDecoderMetadata, BMP) { CheckMetadata(GreenBMPTestCase()); }
+TEST_F(ImageDecoderMetadata, ICO) { CheckMetadata(GreenICOTestCase()); }
+TEST_F(ImageDecoderMetadata, Icon) { CheckMetadata(GreenIconTestCase()); }
+
+TEST_F(ImageDecoderMetadata, AnimatedGIF)
 {
   CheckMetadata(GreenFirstFrameAnimatedGIFTestCase());
 }
 
-TEST(ImageMetadata, AnimatedPNG)
+TEST_F(ImageDecoderMetadata, AnimatedPNG)
 {
   CheckMetadata(GreenFirstFrameAnimatedPNGTestCase());
 }
 
-TEST(ImageMetadata, FirstFramePaddingGIF)
+TEST_F(ImageDecoderMetadata, FirstFramePaddingGIF)
 {
   CheckMetadata(FirstFramePaddingGIFTestCase());
 }
 
-TEST(ImageMetadata, TransparentIfWithinICOBMPNotWithinICO)
+TEST_F(ImageDecoderMetadata, TransparentIfWithinICOBMPNotWithinICO)
 {
   CheckMetadata(TransparentIfWithinICOBMPTestCase(TEST_CASE_DEFAULT_FLAGS),
                 BMPWithinICO::NO);
 }
 
-TEST(ImageMetadata, TransparentIfWithinICOBMPWithinICO)
+TEST_F(ImageDecoderMetadata, TransparentIfWithinICOBMPWithinICO)
 {
   CheckMetadata(TransparentIfWithinICOBMPTestCase(TEST_CASE_IS_TRANSPARENT),
                 BMPWithinICO::YES);
 }
 
-TEST(ImageMetadata, RLE4BMP) { CheckMetadata(RLE4BMPTestCase()); }
-TEST(ImageMetadata, RLE8BMP) { CheckMetadata(RLE8BMPTestCase()); }
+TEST_F(ImageDecoderMetadata, RLE4BMP) { CheckMetadata(RLE4BMPTestCase()); }
+TEST_F(ImageDecoderMetadata, RLE8BMP) { CheckMetadata(RLE8BMPTestCase()); }
 
-TEST(ImageMetadata, Corrupt) { CheckMetadata(CorruptTestCase()); }
+TEST_F(ImageDecoderMetadata, Corrupt) { CheckMetadata(CorruptTestCase()); }
 
-TEST(ImageMetadata, NoFrameDelayGIF)
+TEST_F(ImageDecoderMetadata, NoFrameDelayGIF)
 {
   CheckMetadata(NoFrameDelayGIFTestCase());
 }
 
-TEST(ImageMetadata, NoFrameDelayGIFFullDecode)
+TEST_F(ImageDecoderMetadata, NoFrameDelayGIFFullDecode)
 {
   ImageTestCase testCase = NoFrameDelayGIFTestCase();
 

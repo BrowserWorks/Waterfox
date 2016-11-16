@@ -114,16 +114,23 @@ struct ZoneGCStats
     /* Total number of zones in the Runtime at the start of this GC. */
     int zoneCount;
 
-    /* Total number of comaprtments in all zones collected. */
+    /* Number of zones swept in this GC. */
+    int sweptZoneCount;
+
+    /* Total number of compartments in all zones collected. */
     int collectedCompartmentCount;
 
     /* Total number of compartments in the Runtime at the start of this GC. */
     int compartmentCount;
 
+    /* Total number of compartments swept by this GC. */
+    int sweptCompartmentCount;
+
     bool isCollectingAllZones() const { return collectedZoneCount == zoneCount; }
 
     ZoneGCStats()
-      : collectedZoneCount(0), zoneCount(0), collectedCompartmentCount(0), compartmentCount(0)
+      : collectedZoneCount(0), zoneCount(0), sweptZoneCount(0),
+        collectedCompartmentCount(0), compartmentCount(0), sweptCompartmentCount(0)
     {}
 };
 
@@ -190,10 +197,13 @@ struct Statistics
     void beginSlice(const ZoneGCStats& zoneStats, JSGCInvocationKind gckind,
                     SliceBudget budget, JS::gcreason::Reason reason);
     void endSlice();
-    void setSliceCycleCount(unsigned cycleCount);
 
     MOZ_MUST_USE bool startTimingMutator();
     MOZ_MUST_USE bool stopTimingMutator(double& mutator_ms, double& gc_ms);
+
+    // Note when we sweep a zone or compartment.
+    void sweptZone() { ++zoneStats.sweptZoneCount; }
+    void sweptCompartment() { ++zoneStats.sweptCompartmentCount; }
 
     void reset(const char* reason) {
         if (!aborted)
@@ -209,22 +219,8 @@ struct Statistics
         counts[s]++;
     }
 
-    void beginNurseryCollection(JS::gcreason::Reason reason) {
-        count(STAT_MINOR_GC);
-        if (nurseryCollectionCallback) {
-            (*nurseryCollectionCallback)(runtime,
-                                         JS::GCNurseryProgress::GC_NURSERY_COLLECTION_START,
-                                         reason);
-        }
-    }
-
-    void endNurseryCollection(JS::gcreason::Reason reason) {
-        if (nurseryCollectionCallback) {
-            (*nurseryCollectionCallback)(runtime,
-                                         JS::GCNurseryProgress::GC_NURSERY_COLLECTION_END,
-                                         reason);
-        }
-    }
+    void beginNurseryCollection(JS::gcreason::Reason reason);
+    void endNurseryCollection(JS::gcreason::Reason reason);
 
     int64_t beginSCC();
     void endSCC(unsigned scc, int64_t start);
@@ -257,11 +253,10 @@ struct Statistics
                   double startTimestamp, size_t startFaults, gc::State initialState)
           : budget(budget), reason(reason),
             initialState(initialState),
-            finalState(gc::NO_INCREMENTAL),
+            finalState(gc::State::NotActive),
             resetReason(nullptr),
             start(start), startTimestamp(startTimestamp),
-            startFaults(startFaults),
-            cycleCount(0)
+            startFaults(startFaults)
         {
             for (auto i : mozilla::MakeRange(NumTimingArrays))
                 mozilla::PodArrayZero(phaseTimes[i]);
@@ -275,7 +270,6 @@ struct Statistics
         double startTimestamp, endTimestamp;
         size_t startFaults, endFaults;
         PhaseTimeTable phaseTimes;
-        unsigned cycleCount;
 
         int64_t duration() const { return end - start; }
     };
@@ -389,10 +383,6 @@ struct MOZ_RAII AutoGCSlice
         stats.beginSlice(zoneStats, gckind, budget, reason);
     }
     ~AutoGCSlice() { stats.endSlice(); }
-
-    void setCycleCount(unsigned cycleCount) {
-        stats.setSliceCycleCount(cycleCount);
-    }
 
     Statistics& stats;
 };

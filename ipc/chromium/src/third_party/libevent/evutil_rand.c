@@ -58,8 +58,8 @@ evutil_secure_rng_global_setup_locks_(const int enable_locks)
 static void
 ev_arc4random_buf(void *buf, size_t n)
 {
-#if defined(_EVENT_HAVE_ARC4RANDOM_BUF) && !defined(__APPLE__)
-	return arc4random_buf(buf, n);
+#if defined(_EVENT_HAVE_ARC4RANDOM_BUF) && !(defined(__APPLE__) || defined(__ANDROID__))
+	arc4random_buf(buf, n);
 #else
 	unsigned char *b = buf;
 

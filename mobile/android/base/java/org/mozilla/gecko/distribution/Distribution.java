@@ -229,7 +229,7 @@ public class Distribution {
                         final File descFile = distribution.getDistributionFile("preferences.json");
                         preferencesJSON = FileUtils.readStringFromFile(descFile);
                     } catch (IOException e) {
-                        // Just send empty string
+                        Log.e(LOGTAG, "Error getting distribution descriptor file.", e);
                     }
                     GeckoAppShell.notifyObservers("Distribution:Set", preferencesJSON);
                 }

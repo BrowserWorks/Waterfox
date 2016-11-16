@@ -64,29 +64,30 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
     }
   };
 
-  // Try to parse input as a time stamp.
-  function parseTimeStamp(input) {
-
+  // See spec, https://w3c.github.io/webvtt/#collect-a-webvtt-timestamp.
+  function collectTimeStamp(input) {
     function computeSeconds(h, m, s, f) {
+      if (m > 59 || s > 59) {
+        return null;
+      }
+      // The attribute of the milli-seconds can only be three digits.
+      if (f.length !== 3) {
+        return null;
+      }
       return (h | 0) * 3600 + (m | 0) * 60 + (s | 0) + (f | 0) / 1000;
     }
 
-    var m = input.match(/^(\d+):(\d{2})(:\d{2})?\.(\d{3})/);
-    if (!m) {
+    var timestamp = input.match(/^(\d+:)?(\d{2}):(\d{2})\.(\d+)/);
+    if (!timestamp || timestamp.length !== 5) {
       return null;
     }
 
-    if (m[3]) {
-      // Timestamp takes the form of [hours]:[minutes]:[seconds].[milliseconds]
-      return computeSeconds(m[1], m[2], m[3].replace(":", ""), m[4]);
-    } else if (m[1] > 59) {
-      // Timestamp takes the form of [hours]:[minutes].[milliseconds]
-      // First position is hours as it's over 59.
-      return computeSeconds(m[1], m[2], 0,  m[4]);
-    } else {
-      // Timestamp takes the form of [minutes]:[seconds].[milliseconds]
-      return computeSeconds(0, m[1], m[2], m[4]);
-    }
+    let hours = timestamp[1]? timestamp[1].replace(":", "") : 0;
+    let minutes = timestamp[2];
+    let seconds = timestamp[3];
+    let milliSeconds = timestamp[4];
+
+    return computeSeconds(hours, minutes, seconds, milliSeconds);
   }
 
   // A settings object holds key/value pairs and will ignore anything but the first
@@ -96,9 +97,8 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
   }
 
   Settings.prototype = {
-    // Only accept the first assignment to any key.
     set: function(k, v) {
-      if (!this.get(k) && v !== "") {
+      if (v !== "") {
         this.values[k] = v;
       }
     },
@@ -126,10 +126,12 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
         }
       }
     },
-    // Accept a setting if its a valid (signed) integer.
-    integer: function(k, v) {
-      if (/^-?\d+$/.test(v)) { // integer
-        this.set(k, parseInt(v, 10));
+    // Accept a setting if its a valid digits value (int or float)
+    digitsValue: function(k, v) {
+      if (/^-0+(\.[0]*)?$/.test(v)) { // special case for -0.0
+        this.set(k, 0.0);
+      } else if (/^-?\d+(\.[\d]*)?$/.test(v)) {
+        this.set(k, parseFloat(v));
       }
     },
     // Accept a setting if its a valid percentage.
@@ -169,13 +171,13 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
     var oInput = input;
     // 4.1 WebVTT timestamp
     function consumeTimeStamp() {
-      var ts = parseTimeStamp(input);
+      var ts = collectTimeStamp(input);
       if (ts === null) {
         throw new ParsingError(ParsingError.Errors.BadTimeStamp,
                               "Malformed timestamp: " + oInput);
       }
       // Remove time stamp from input.
-      input = input.replace(/^[^\sa-zA-Z-]+/, "");
+      input = input.replace(/^[^\s\uFFFDa-zA-Z-]+/, "");
       return ts;
     }
 
@@ -200,7 +202,7 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
         case "line":
           var vals = v.split(","),
               vals0 = vals[0];
-          settings.integer(k, vals0);
+          settings.digitsValue(k, vals0);
           settings.percent(k, vals0) ? settings.set("snapToLines", false) : null;
           settings.alt(k, vals0, ["auto"]);
           if (vals.length === 2) {
@@ -218,7 +220,7 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
           settings.percent(k, v);
           break;
         case "align":
-          settings.alt(k, v, ["start", "middle", "end", "left", "right"]);
+          settings.alt(k, v, ["start", "center", "end", "left", "right"]);
           break;
         }
       }, /:/, /\s/);
@@ -230,19 +232,13 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
       cue.lineAlign = settings.get("lineAlign", "start");
       cue.snapToLines = settings.get("snapToLines", true);
       cue.size = settings.get("size", 100);
-      cue.align = settings.get("align", "middle");
-      cue.position = settings.get("position", {
-        start: 0,
-        left: 0,
-        middle: 50,
-        end: 100,
-        right: 100
-      }, cue.align);
+      cue.align = settings.get("align", "center");
+      cue.position = settings.get("position", "auto");
       cue.positionAlign = settings.get("positionAlign", "center");
     }
 
     function skipWhitespace() {
-      input = input.replace(/^\s+/, "");
+      input = input.replace(/^[ \f\n\r\t]+/, "");
     }
 
     // 4.1 WebVTT cue timings.
@@ -261,6 +257,18 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
     // 4.1 WebVTT cue settings list.
     skipWhitespace();
     consumeCueSettings(input, cue);
+  }
+
+  function onlyContainsWhiteSpaces(input) {
+    return /^[ \f\n\r\t]+$/.test(input);
+  }
+
+  function containsTimeDirectionSymbol(input) {
+    return input.indexOf("-->") !== -1;
+  }
+
+  function maybeIsTimeStampFormat(input) {
+    return /^\s*(\d+:)?(\d{2}):(\d{2})\.(\d+)\s*-->\s*(\d+:)?(\d{2}):(\d{2})\.(\d+)\s*/.test(input);
   }
 
   var ESCAPE = {
@@ -360,7 +368,7 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
           // Otherwise just ignore the end tag.
           continue;
         }
-        var ts = parseTimeStamp(t.substr(1, t.length - 2));
+        var ts = collectTimeStamp(t.substr(1, t.length - 2));
         var node;
         if (ts) {
           // Timestamps are lead nodes as well.
@@ -679,26 +687,6 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
     return "ltr";
   }
 
-  function computeLinePos(cue) {
-    if (typeof cue.line === "number" &&
-        (cue.snapToLines || (cue.line >= 0 && cue.line <= 100))) {
-      return cue.line;
-    }
-    if (!cue.track || !cue.track.textTrackList ||
-        !cue.track.textTrackList.mediaElement) {
-      return -1;
-    }
-    var track = cue.track,
-        trackList = track.textTrackList,
-        count = 0;
-    for (var i = 0; i < trackList.length && trackList[i] !== track; i++) {
-      if (trackList[i].mode === "showing") {
-        count++;
-      }
-    }
-    return ++count * -1;
-  }
-
   function StyleBox() {
   }
 
@@ -756,11 +744,10 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
     this.applyStyles(styles, this.cueDiv);
 
     // Create an absolutely positioned div that will be used to position the cue
-    // div. Note, all WebVTT cue-setting alignments are equivalent to the CSS
-    // mirrors of them except "middle" which is "center" in CSS.
+    // div.
     this.div = window.document.createElement("div");
     styles = {
-      textAlign: cue.align === "middle" ? "center" : cue.align,
+      textAlign: cue.align,
       font: styleOptions.font,
       whiteSpace: "pre-line",
       position: "absolute"
@@ -1020,7 +1007,7 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
 
     var boxPosition = new BoxPosition(styleBox),
         cue = styleBox.cue,
-        linePos = computeLinePos(cue),
+        linePos = cue.computedLine,
         axis = [];
 
     // If we have a line number to align the cue to.
@@ -1147,7 +1134,9 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
   // Runs the processing model over the cues and regions passed to it.
   // @param overlay A block level element (usually a div) that the computed cues
   //                and regions will be placed into.
-  WebVTT.processCues = function(window, cues, overlay) {
+  // @param controls  A Control bar element. Cues' position will be
+  //                 affected and repositioned according to it.
+  WebVTT.processCues = function(window, cues, overlay, controls) {
     if (!window || !cues || !overlay) {
       return null;
     }
@@ -1155,6 +1144,15 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
     // Remove all previous children.
     while (overlay.firstChild) {
       overlay.removeChild(overlay.firstChild);
+    }
+
+    var controlBar;
+    var controlBarShown;
+
+    if (controls) {
+      controlBar = controls.ownerDocument.getAnonymousElementByAttribute(
+        controls, "class", "controlBar");
+      controlBarShown = controlBar ? !!controlBar.clientHeight : false;
     }
 
     var paddedOverlay = window.document.createElement("div");
@@ -1170,6 +1168,10 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
     // be the case if a cue's state has been changed since the last computation or
     // if it has not been computed yet.
     function shouldCompute(cues) {
+      if (controlBarShown) {
+        return true;
+      }
+
       for (var i = 0; i < cues.length; i++) {
         if (cues[i].hasBeenReset || !cues[i].displayState) {
           return true;
@@ -1195,6 +1197,11 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
 
     (function() {
       var styleBox, cue;
+
+      if (controlBarShown) {
+        // Add an empty output box that cover the same region as video control bar.
+        boxPositions.push(BoxPosition.getSimpleBoxPosition(controlBar));
+      }
 
       for (var i = 0; i < cues.length; i++) {
         cue = cues[i];
@@ -1259,7 +1266,44 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
           ++pos;
         }
         self.buffer = buffer.substr(pos);
-        return line;
+        // Spec defined replacement.
+        return line.replace(/[\u0000]/g, "\uFFFD");
+      }
+
+      function createCueIfNeeded() {
+        if (!self.cue) {
+          self.cue = new self.window.VTTCue(0, 0, "");
+        }
+      }
+
+      // Parsing cue identifier and the identifier should be unique.
+      // Return true if the input is a cue identifier.
+      function parseCueIdentifier(input) {
+        if (maybeIsTimeStampFormat(line)) {
+          self.state = "CUE";
+          return false;
+        }
+
+        createCueIfNeeded();
+        // TODO : ensure the cue identifier is unique among all cue identifiers.
+        self.cue.id = containsTimeDirectionSymbol(input) ? "" : input;
+        self.state = "CUE";
+        return true;
+      }
+
+      // Parsing the timestamp and cue settings.
+      // See spec, https://w3c.github.io/webvtt/#collect-webvtt-cue-timings-and-settings
+      function parseCueMayThrow(input) {
+        try {
+          createCueIfNeeded();
+          parseCue(input, self.cue, self.regionList);
+          self.state = "CUETEXT";
+        } catch (e) {
+          self.reportOrThrowError(e);
+          // In case of an error ignore rest of the cue.
+          self.cue = null;
+          self.state = "BADCUE";
+        }
       }
 
       // 3.4 WebVTT region and WebVTT region settings syntax
@@ -1275,7 +1319,7 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
             settings.percent(k, v);
             break;
           case "lines":
-            settings.integer(k, v);
+            settings.digitsValue(k, v);
             break;
           case "regionanchor":
           case "viewportanchor":
@@ -1322,123 +1366,124 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
         }
       }
 
-      // 3.2 WebVTT metadata header syntax
-      function parseHeader(input) {
-        parseOptions(input, function (k, v) {
-          switch (k) {
-          case "Region":
-            // 3.3 WebVTT region metadata header syntax
-            parseRegion(v);
+      // Parsing the WebVTT signature, it contains parsing algo step1 to step9.
+      // See spec, https://w3c.github.io/webvtt/#file-parsing
+      function parseSignatureMayThrow(input) {
+        let signature = collectNextLine();
+        if (!/^WEBVTT([ \t].*)?$/.test(signature)) {
+          throw new ParsingError(ParsingError.Errors.BadSignature);
+        } else {
+          self.state = "HEADER";
+        }
+      }
+
+      // Parsing the region and style information.
+      // See spec, https://w3c.github.io/webvtt/#collect-a-webvtt-block
+      //
+      // There are sereval things would appear in header,
+      //   1. Region or Style setting
+      //   2. Garbage (meaningless string)
+      //   3. Empty line
+      //   4. Cue's timestamp
+      // The case 4 happens when there is no line interval between the header
+      // and the cue blocks. In this case, we should preserve the line and
+      // return it for the next phase parsing.
+      function parseHeader() {
+        let line = null;
+        while (self.buffer && self.state === "HEADER") {
+          line = collectNextLine();
+
+          if (/^REGION|^STYLE/i.test(line)) {
+            parseOptions(line, function (k, v) {
+              switch (k.toUpperCase()) {
+              case "REGION":
+                parseRegion(v);
+                break;
+              case "STYLE":
+                // TODO : not supported yet.
+                break;
+              }
+            }, ":");
+          } else if (maybeIsTimeStampFormat(line)) {
+            self.state = "CUE";
+            break;
+          } else if (!line ||
+                     onlyContainsWhiteSpaces(line) ||
+                     containsTimeDirectionSymbol(line)) {
+            // empty line, whitespaces or string contains "-->"
             break;
           }
-        }, /:/);
+        }
+
+        // End parsing header part and doesn't see the timestamp.
+        if (self.state === "HEADER") {
+          self.state = "ID";
+          line = null
+        }
+        return line;
       }
 
       // 5.1 WebVTT file parsing.
       try {
-        var line;
         if (self.state === "INITIAL") {
-          // We can't start parsing until we have the first line.
-          if (!/\r\n|\n/.test(self.buffer)) {
-            return this;
-          }
-
-          line = collectNextLine();
-
-          var m = line.match(/^WEBVTT([ \t].*)?$/);
-          if (!m || !m[0]) {
-            throw new ParsingError(ParsingError.Errors.BadSignature);
-          }
-
-          self.state = "HEADER";
+          parseSignatureMayThrow();
         }
 
-        var alreadyCollectedLine = false;
-        while (self.buffer) {
-          // We can't parse a line until we have the full line.
-          if (!/\r\n|\n/.test(self.buffer)) {
-            return this;
-          }
+        var line;
+        if (self.state === "HEADER") {
+          line = parseHeader();
+        }
 
-          if (!alreadyCollectedLine) {
+        while (self.buffer) {
+          if (!line) {
+            // Since the data receiving is async, we need to wait until the
+            // buffer gets the full line.
+            if (!/\r\n|\n/.test(self.buffer)) {
+              return this;
+            }
             line = collectNextLine();
-          } else {
-            alreadyCollectedLine = false;
           }
 
           switch (self.state) {
-          case "HEADER":
-            // 13-18 - Allow a header (metadata) under the WEBVTT line.
-            if (/:/.test(line)) {
-              parseHeader(line);
-            } else if (!line) {
-              // An empty line terminates the header and starts the body (cues).
-              self.state = "ID";
-            }
-            continue;
-          case "NOTE":
-            // Ignore NOTE blocks.
-            if (!line) {
-              self.state = "ID";
-            }
-            continue;
           case "ID":
-            // Check for the start of NOTE blocks.
-            if (/^NOTE($|[ \t])/.test(line)) {
-              self.state = "NOTE";
+            // Ignore NOTE and line terminator
+            if (/^NOTE($|[ \t])/.test(line) || !line) {
               break;
             }
-            // 19-29 - Allow any number of line terminators, then initialize new cue values.
-            if (!line) {
+            // If there is no cue identifier, keep the line and reuse this line
+            // in next iteration.
+            if (!parseCueIdentifier(line)) {
               continue;
             }
-            self.cue = new self.window.VTTCue(0, 0, "");
-            self.state = "CUE";
-            // 30-39 - Check if self line contains an optional identifier or timing data.
-            if (line.indexOf("-->") === -1) {
-              self.cue.id = line;
-              continue;
-            }
-            // Process line as start of a cue.
-            /*falls through*/
+            break;
           case "CUE":
-            // 40 - Collect cue timings and settings.
-            try {
-              parseCue(line, self.cue, self.regionList);
-            } catch (e) {
-              self.reportOrThrowError(e);
-              // In case of an error ignore rest of the cue.
-              self.cue = null;
-              self.state = "BADCUE";
-              continue;
-            }
-            self.state = "CUETEXT";
-            continue;
+            parseCueMayThrow(line);
+            break;
           case "CUETEXT":
-            var hasSubstring = line.indexOf("-->") !== -1;
-            // 34 - If we have an empty line then report the cue.
-            // 35 - If we have the special substring '-->' then report the cue,
-            // but do not collect the line as we need to process the current
-            // one as a new cue.
-            if (!line || hasSubstring && (alreadyCollectedLine = true)) {
+            // Report the cue when (1) get an empty line (2) get the "-->""
+            if (!line || containsTimeDirectionSymbol(line)) {
               // We are done parsing self cue.
               self.oncue && self.oncue(self.cue);
               self.cue = null;
               self.state = "ID";
+              // Keep the line and reuse this line in next iteration.
               continue;
             }
             if (self.cue.text) {
               self.cue.text += "\n";
             }
             self.cue.text += line;
-            continue;
+            break;
           case "BADCUE": // BADCUE
             // 54-62 - Collect and discard the remaining cue.
             if (!line) {
               self.state = "ID";
             }
-            continue;
+            break;
           }
+          // The line was already parsed, empty it to ensure we can get the
+          // new line in next iteration.
+          line = null;
         }
       } catch (e) {
         self.reportOrThrowError(e);

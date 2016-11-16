@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,17 +94,13 @@ if CONFIG['MOZ_ENABLE_PROFILER_SPS']:
         '/xpcom/base',
     ]
 
-    # We need access to Breakpad's getcontext(3) which is suitable for Android
-    if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+    if CONFIG['OS_TARGET'] == 'Android':
         LOCAL_INCLUDES += [
-            '/toolkit/crashreporter/gonk-include',
-        ]
-    elif CONFIG['OS_TARGET'] == 'Android':
-        LOCAL_INCLUDES += [
+            # We need access to Breakpad's getcontext(3) which is suitable for Android
             '/toolkit/crashreporter/google-breakpad/src/common/android/include',
         ]
 
-    if not CONFIG['MOZ_CRASHREPORTER'] and CONFIG['OS_TARGET'] in ('Android', 'gonk'):
+    if not CONFIG['MOZ_CRASHREPORTER'] and CONFIG['OS_TARGET'] == 'Android':
         SOURCES += ['/toolkit/crashreporter/google-breakpad/src/common/android/breakpad_getcontext.S']
 
     if CONFIG['ANDROID_CPU_ARCH'] == 'armeabi':

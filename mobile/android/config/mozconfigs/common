@@ -17,7 +17,7 @@ MOZ_AUTOMATION_L10N_CHECK=0
 if [ ! -f /etc/redhat-release ] || [ "$(< /etc/redhat-release)" != "CentOS release 6.2 (Final)" ]; then
     # set JAVA_HOME to find the JRE/JDK from tooltool.  Several scripts in the JDK
     # assume `java` is in PATH, so set that too.  To see how this tarball is built,
-    # see testing/taskcluster/scripts/misc/repackage-jdk.sh
+    # see taskcluster/scripts/misc/repackage-jdk.sh
     export JAVA_HOME="$topsrcdir/java_home"
     export PATH="$PATH:$topsrcdir/java_home/bin"
 
@@ -44,7 +44,6 @@ if [ -z "$NO_NDK" ]; then
     ac_add_options --with-android-gnu-compiler-version=4.9
 fi
 
-ac_add_options --with-android-version=9
 ac_add_options --with-system-zlib
 ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
 
@@ -52,18 +51,25 @@ ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
 ac_add_options --enable-warnings-as-errors
 
 ac_add_options --with-mozilla-api-keyfile=/builds/mozilla-fennec-geoloc-api.key
+
+# MOZ_INSTALL_TRACKING does not guarantee MOZ_UPDATE_CHANNEL will be set so we
+# provide a default state. Currently, the default state provides a default
+# keyfile because an assertion will be thrown if MOZ_INSTALL_TRACKING is
+# specified but a keyfile is not. This assertion can catch if we misconfigure a
+# release or beta build and it does not have a valid keyfile.
+#
+# However, by providing a default keyfile, if we misconfigure beta or release,
+# the default keyfile may be used instead and the assertion won't catch the
+# error.  Therefore, it would be ideal to have MOZ_INSTALL_TRACKING guarantee
+# MOZ_UPDATE_CHANNEL was set so we can remove the default case. This may occur
+# when release promotion is implemented on Android.
+#
+# In all cases, we don't upload Adjust pings in automation.
 if test "$MOZ_UPDATE_CHANNEL" = "release" ; then
     ac_add_options --with-adjust-sdk-keyfile=/builds/adjust-sdk.token
 elif test "$MOZ_UPDATE_CHANNEL" = "beta" ; then
     ac_add_options --with-adjust-sdk-keyfile=/builds/adjust-sdk-beta.token
 else
-    # (bug 1277553) In Aurora -> Beta simulation builds, no update channel is
-    # specified, causing an assertion to throw that MOZ_INSTALL_TRACKING is
-    # specified but the keyfile is not. In this case, we add a default keyfile.
-    # This has the disadvantage that if our beta/release checks above ever
-    # fail, we'll come to this default case and the compile-time check to
-    # specify a valid keyfile will be broken. I don't have any better
-    # alternatives.
     ac_add_options --with-adjust-sdk-keyfile="$topsrcdir/mobile/android/base/adjust-sdk-sandbox.token"
 fi
 export SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE=/builds/crash-stats-api.token
@@ -77,8 +83,7 @@ export MOZ_PACKAGE_JSSHELL=1
 HOST_CC="$topsrcdir/gcc/bin/gcc"
 HOST_CXX="$topsrcdir/gcc/bin/g++"
 
-# Avoid dependency on libstdc++ 4.7
-ac_add_options --enable-stdcxx-compat
+. "$topsrcdir/build/unix/mozconfig.stdcxx"
 
 # Use libc++ as our C++ standard library
 ac_add_options --with-android-cxx-stl=libc++

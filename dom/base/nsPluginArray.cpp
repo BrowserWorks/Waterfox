@@ -8,6 +8,7 @@
 
 #include "mozilla/dom/PluginArrayBinding.h"
 #include "mozilla/dom/PluginBinding.h"
+#include "mozilla/dom/HiddenPluginEvent.h"
 
 #include "nsMimeTypeArray.h"
 #include "Navigator.h"
@@ -19,6 +20,9 @@
 #include "nsIWeakReference.h"
 #include "mozilla/Services.h"
 #include "nsIInterfaceRequestorUtils.h"
+#include "nsContentUtils.h"
+#include "nsIPermissionManager.h"
+#include "nsIDocument.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -40,6 +44,12 @@ nsPluginArray::Init()
 
 nsPluginArray::~nsPluginArray()
 {
+}
+
+static bool
+ResistFingerprinting() {
+  return !nsContentUtils::ThreadsafeIsCallerChrome() &&
+         nsContentUtils::ResistFingerprinting();
 }
 
 nsPIDOMWindowInner*
@@ -66,7 +76,8 @@ NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsPluginArray,
                                       mWindow,
-                                      mPlugins)
+                                      mPlugins,
+                                      mCTPPlugins)
 
 static void
 GetPluginMimeTypes(const nsTArray<RefPtr<nsPluginElement> >& aPlugins,
@@ -97,6 +108,24 @@ nsPluginArray::GetMimeTypes(nsTArray<RefPtr<nsMimeType>>& aMimeTypes)
   EnsurePlugins();
 
   GetPluginMimeTypes(mPlugins, aMimeTypes);
+
+  // Alphabetize the enumeration order of non-hidden MIME types to reduce
+  // fingerprintable entropy based on plugins' installation file times.
+  aMimeTypes.Sort();
+}
+
+void
+nsPluginArray::GetCTPMimeTypes(nsTArray<RefPtr<nsMimeType>>& aMimeTypes)
+{
+  aMimeTypes.Clear();
+
+  if (!AllowPlugins()) {
+    return;
+  }
+
+  EnsurePlugins();
+
+  GetPluginMimeTypes(mCTPPlugins, aMimeTypes);
 
   // Alphabetize the enumeration order of non-hidden MIME types to reduce
   // fingerprintable entropy based on plugins' installation file times.
@@ -146,6 +175,7 @@ nsPluginArray::Refresh(bool aReloadDocuments)
   }
 
   mPlugins.Clear();
+  mCTPPlugins.Clear();
 
   nsCOMPtr<nsIDOMNavigator> navigator = mWindow->GetNavigator();
 
@@ -166,7 +196,7 @@ nsPluginArray::IndexedGetter(uint32_t aIndex, bool &aFound)
 {
   aFound = false;
 
-  if (!AllowPlugins()) {
+  if (!AllowPlugins() || ResistFingerprinting()) {
     return nullptr;
   }
 
@@ -213,7 +243,7 @@ nsPluginArray::NamedGetter(const nsAString& aName, bool &aFound)
 {
   aFound = false;
 
-  if (!AllowPlugins()) {
+  if (!AllowPlugins() || ResistFingerprinting()) {
     return nullptr;
   }
 
@@ -221,13 +251,33 @@ nsPluginArray::NamedGetter(const nsAString& aName, bool &aFound)
 
   nsPluginElement* plugin = FindPlugin(mPlugins, aName);
   aFound = (plugin != nullptr);
+  if (!aFound) {
+    nsPluginElement* hiddenPlugin = FindPlugin(mCTPPlugins, aName);
+    if (hiddenPlugin) {
+      NotifyHiddenPluginTouched(hiddenPlugin);
+    }
+  }
   return plugin;
+}
+
+void nsPluginArray::NotifyHiddenPluginTouched(nsPluginElement* aHiddenElement)
+{
+  HiddenPluginEventInit init;
+  init.mTag = aHiddenElement->PluginTag();
+  nsCOMPtr<nsIDocument> doc = aHiddenElement->GetParentObject()->GetDoc();
+  RefPtr<HiddenPluginEvent> event =
+    HiddenPluginEvent::Constructor(doc, NS_LITERAL_STRING("HiddenPlugin"), init);
+  event->SetTarget(doc);
+  event->SetTrusted(true);
+  event->WidgetEventPtr()->mFlags.mOnlyChromeDispatch = true;
+  bool dummy;
+  doc->DispatchEvent(event, &dummy);
 }
 
 uint32_t
 nsPluginArray::Length()
 {
-  if (!AllowPlugins()) {
+  if (!AllowPlugins() || ResistFingerprinting()) {
     return 0;
   }
 
@@ -282,7 +332,7 @@ operator<(const RefPtr<nsPluginElement>& lhs,
 void
 nsPluginArray::EnsurePlugins()
 {
-  if (!mPlugins.IsEmpty()) {
+  if (!mPlugins.IsEmpty() || !mCTPPlugins.IsEmpty()) {
     // We already have an array of plugin elements.
     return;
   }
@@ -299,7 +349,32 @@ nsPluginArray::EnsurePlugins()
   // need to wrap each of these with a nsPluginElement, which is
   // scriptable.
   for (uint32_t i = 0; i < pluginTags.Length(); ++i) {
-    mPlugins.AppendElement(new nsPluginElement(mWindow, pluginTags[i]));
+    nsCOMPtr<nsPluginTag> pluginTag = do_QueryInterface(pluginTags[i]);
+    if (!pluginTag) {
+      mPlugins.AppendElement(new nsPluginElement(mWindow, pluginTags[i]));
+    } else if (pluginTag->IsActive()) {
+      uint32_t permission = nsIPermissionManager::ALLOW_ACTION;
+      if (pluginTag->IsClicktoplay()) {
+        nsCString name;
+        pluginTag->GetName(name);
+        if (name.EqualsLiteral("Shockwave Flash") &&
+            Preferences::GetBool("plugins.navigator_hide_disabled_flash", false)) {
+          RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
+          nsCString permString;
+          nsresult rv = pluginHost->GetPermissionStringForTag(pluginTag, 0, permString);
+          if (rv == NS_OK) {
+            nsIPrincipal* principal = mWindow->GetExtantDoc()->NodePrincipal();
+            nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
+            permMgr->TestPermissionFromPrincipal(principal, permString.get(), &permission);
+          }
+        }
+      }
+      if (permission == nsIPermissionManager::ALLOW_ACTION) {
+        mPlugins.AppendElement(new nsPluginElement(mWindow, pluginTags[i]));
+      } else {
+        mCTPPlugins.AppendElement(new nsPluginElement(mWindow, pluginTags[i]));
+      }
+    }
   }
 
   // Alphabetize the enumeration order of non-hidden plugins to reduce

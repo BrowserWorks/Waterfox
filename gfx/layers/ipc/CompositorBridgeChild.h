@@ -12,7 +12,7 @@
 #include "mozilla/Attributes.h"         // for override
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/layers/PCompositorBridgeChild.h"
-#include "nsAutoPtr.h"                  // for nsRefPtr
+#include "mozilla/layers/TextureForwarder.h" // for TextureForwarder
 #include "nsClassHashtable.h"           // for nsClassHashtable
 #include "nsCOMPtr.h"                   // for nsCOMPtr
 #include "nsHashKeys.h"                 // for nsUint64HashKey
@@ -23,8 +23,12 @@
 namespace mozilla {
 
 namespace dom {
-  class TabChild;
+class TabChild;
 } // namespace dom
+
+namespace widget {
+class CompositorWidget;
+} // namespace widget
 
 namespace layers {
 
@@ -32,11 +36,15 @@ using mozilla::dom::TabChild;
 
 class ClientLayerManager;
 class CompositorBridgeParent;
+class TextureClient;
+class TextureClientPool;
 struct FrameMetrics;
 
-class CompositorBridgeChild final : public PCompositorBridgeChild
+class CompositorBridgeChild final : public PCompositorBridgeChild,
+                                    public TextureForwarder,
+                                    public ShmemAllocator
 {
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(CompositorBridgeChild)
+  typedef InfallibleTArray<AsyncParentMessageData> AsyncParentMessageArray;
 
 public:
   explicit CompositorBridgeChild(ClientLayerManager *aLayerManager);
@@ -51,18 +59,26 @@ public:
   bool LookupCompositorFrameMetrics(const FrameMetrics::ViewID aId, FrameMetrics&);
 
   /**
-   * We're asked to create a new Compositor in response to an Opens()
-   * or Bridge() request from our parent process.  The Transport is to
-   * the compositor's context.
+   * Initialize the singleton compositor bridge for a content process.
    */
-  static PCompositorBridgeChild*
-  Create(Transport* aTransport, ProcessId aOtherProcess);
+  static bool InitForContent(Endpoint<PCompositorBridgeChild>&& aEndpoint);
+
+  static RefPtr<CompositorBridgeChild> CreateRemote(
+    const uint64_t& aProcessToken,
+    ClientLayerManager* aLayerManager,
+    Endpoint<PCompositorBridgeChild>&& aEndpoint);
 
   /**
-   * Initialize the CompositorBridgeChild and open the connection in the non-multi-process
-   * case.
+   * Initialize the CompositorBridgeChild, create CompositorBridgeParent, and
+   * open a same-process connection.
    */
-  bool OpenSameProcess(CompositorBridgeParent* aParent);
+  CompositorBridgeParent* InitSameProcess(
+    widget::CompositorWidget* aWidget,
+    const uint64_t& aLayerTreeId,
+    CSSToLayoutDeviceScale aScale,
+    bool aUseAPZ,
+    bool aUseExternalSurface,
+    const gfx::IntSize& aSurfaceSize);
 
   static CompositorBridgeChild* Get();
 
@@ -94,14 +110,25 @@ public:
                                  nsTArray<PluginWindowData>&& aPlugins) override;
 
   virtual bool
+  RecvCaptureAllPlugins(const uintptr_t& aParentWidget) override;
+
+  virtual bool
   RecvHideAllPlugins(const uintptr_t& aParentWidget) override;
 
   virtual PTextureChild* AllocPTextureChild(const SurfaceDescriptor& aSharedData,
                                             const LayersBackend& aLayersBackend,
                                             const TextureFlags& aFlags,
-                                            const uint64_t& aId) override;
+                                            const uint64_t& aId,
+                                            const uint64_t& aSerial) override;
 
   virtual bool DeallocPTextureChild(PTextureChild* actor) override;
+
+  virtual bool
+  RecvParentAsyncMessages(InfallibleTArray<AsyncParentMessageData>&& aMessages) override;
+  virtual PTextureChild* CreateTexture(const SurfaceDescriptor& aSharedData,
+                                       LayersBackend aLayersBackend,
+                                       TextureFlags aFlags,
+                                       uint64_t aSerial) override;
 
   /**
    * Request that the parent tell us when graphics are ready on GPU.
@@ -122,8 +149,6 @@ public:
   bool SendWillClose();
   bool SendPause();
   bool SendResume();
-  bool SendNotifyHidden(const uint64_t& id);
-  bool SendNotifyVisible(const uint64_t& id);
   bool SendNotifyChildCreated(const uint64_t& id);
   bool SendAdoptChild(const uint64_t& id);
   bool SendMakeSnapshot(const SurfaceDescriptor& inSnapshot, const gfx::IntRect& dirtyRect);
@@ -136,9 +161,56 @@ public:
   bool SendClearApproximatelyVisibleRegions(uint64_t aLayersId, uint32_t aPresShellId);
   bool SendNotifyApproximatelyVisibleRegion(const ScrollableLayerGuid& aGuid,
                                             const mozilla::CSSIntRegion& aRegion);
-  bool IsSameProcess() const;
+  bool IsSameProcess() const override;
+
+  virtual bool IPCOpen() const override { return mCanSend; }
 
   static void ShutDown();
+
+  void UpdateFwdTransactionId() { ++mFwdTransactionId; }
+  uint64_t GetFwdTransactionId() { return mFwdTransactionId; }
+
+  /**
+   * Hold TextureClient ref until end of usage on host side if TextureFlags::RECYCLE is set.
+   * Host side's usage is checked via CompositableRef.
+   */
+  void HoldUntilCompositableRefReleasedIfNecessary(TextureClient* aClient);
+
+  /**
+   * Notify id of Texture When host side end its use. Transaction id is used to
+   * make sure if there is no newer usage.
+   */
+  void NotifyNotUsed(uint64_t aTextureId, uint64_t aFwdTransactionId);
+
+  void DeliverFence(uint64_t aTextureId, FenceHandle& aReleaseFenceHandle);
+
+  virtual void CancelWaitForRecycle(uint64_t aTextureId) override;
+
+  TextureClientPool* GetTexturePool(LayersBackend aBackend,
+                                    gfx::SurfaceFormat aFormat,
+                                    TextureFlags aFlags);
+  void ClearTexturePool();
+
+  void HandleMemoryPressure();
+
+  virtual MessageLoop* GetMessageLoop() const override { return mMessageLoop; }
+
+  virtual base::ProcessId GetParentPid() const override { return OtherPid(); }
+
+  virtual bool AllocUnsafeShmem(size_t aSize,
+                                mozilla::ipc::SharedMemory::SharedMemoryType aShmType,
+                                mozilla::ipc::Shmem* aShmem) override;
+  virtual bool AllocShmem(size_t aSize,
+                          mozilla::ipc::SharedMemory::SharedMemoryType aShmType,
+                          mozilla::ipc::Shmem* aShmem) override;
+  virtual void DeallocShmem(mozilla::ipc::Shmem& aShmem) override;
+
+  PCompositorWidgetChild* AllocPCompositorWidgetChild(const CompositorWidgetInitData& aInitData) override;
+  bool DeallocPCompositorWidgetChild(PCompositorWidgetChild* aActor) override;
+
+  virtual ShmemAllocator* AsShmemAllocator() override { return this; }
+
+  void ProcessingError(Result aCode, const char* aReason) override;
 
 private:
   // Private destructor, to discourage deletion outside of Release():
@@ -211,6 +283,24 @@ private:
 
   // True until the beginning of the two-step shutdown sequence of this actor.
   bool mCanSend;
+
+  /**
+   * Transaction id of ShadowLayerForwarder.
+   * It is incrementaed by UpdateFwdTransactionId() in each BeginTransaction() call.
+   */
+  uint64_t mFwdTransactionId;
+
+  /**
+   * Hold TextureClients refs until end of their usages on host side.
+   * It defer calling of TextureClient recycle callback.
+   */
+  nsDataHashtable<nsUint64HashKey, RefPtr<TextureClient> > mTexturesWaitingRecycled;
+
+  MessageLoop* mMessageLoop;
+
+  AutoTArray<RefPtr<TextureClientPool>,2> mTexturePools;
+
+  uint64_t mProcessToken;
 };
 
 } // namespace layers

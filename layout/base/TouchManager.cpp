@@ -15,8 +15,6 @@
 
 namespace mozilla {
 
-using EventTarget = ::mozilla::dom::EventTarget;
-
 nsRefPtrHashtable<nsUint32HashKey, dom::Touch>* TouchManager::gCaptureTouchList;
 
 /*static*/ void
@@ -69,14 +67,12 @@ EvictTouchPoint(RefPtr<dom::Touch>& aTouch,
             event.mTouches.AppendElement(aTouch);
             nsEventStatus status;
             widget->DispatchEvent(&event, status);
-            return;
           }
         }
       }
     }
   }
   if (!node || !aLimitToDocument || node->OwnerDoc() == aLimitToDocument) {
-    // We couldn't dispatch touchend. Remove the touch from gCaptureTouchList explicitly.
     TouchManager::gCaptureTouchList->Remove(aTouch->Identifier());
   }
 }

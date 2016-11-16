@@ -77,7 +77,7 @@ add_task(function* () {
  * not `state`.
  */
 function* setBooleanPref(pref, state) {
-  let oncePrefChanged = promise.defer();
+  let oncePrefChanged = defer();
   let prefObserver = new PrefObserver("devtools.");
   prefObserver.on(pref, oncePrefChanged.resolve);
 
@@ -103,11 +103,11 @@ function* testMdnContextMenuItemVisibility(view, shouldBeVisible) {
   info("Set a CSS property name as popupNode");
   let root = rootElement(view);
   let node = root.querySelector("." + PROPERTY_NAME_CLASS).firstChild;
-  view.styleDocument.popupNode = node;
+  let allMenuItems = openStyleContextMenuAndGetAllItems(view, node);
+  let menuitemShowMdnDocs = allMenuItems.find(item => item.label ===
+    _STRINGS.GetStringFromName("styleinspector.contextmenu.showMdnDocs"));
 
-  info("Update context menu state");
-  view._contextmenu._updateMenuItems();
-  let isVisible = !view._contextmenu.menuitemShowMdnDocs.hidden;
+  let isVisible = menuitemShowMdnDocs.visible;
   is(isVisible, shouldBeVisible,
      "The MDN context menu item is " + message);
 }

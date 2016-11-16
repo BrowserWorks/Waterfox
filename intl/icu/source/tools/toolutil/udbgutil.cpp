@@ -1,13 +1,12 @@
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 2007-2016, International Business Machines Corporation and
+ * Copyright (c) 2007-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
 #include "udbgutil.h"
 #include <string.h>
 #include "ustr_imp.h"
-#include "cmemory.h"
 #include "cstring.h"
 #include "putilimp.h"
 #include "unicode/ulocdata.h"
@@ -60,6 +59,11 @@ struct Field {
 	const char *str;  /**< The actual string value */
 	int32_t num;      /**< The numeric value */
 };
+
+/**
+ * Calculate the size of an array.
+ */
+#define DBG_ARRAY_COUNT(x) (sizeof(x)/sizeof(x[0]))
 
 /**
  * Define another field name. Used in an array of Field s
@@ -226,7 +230,7 @@ static const Field names_UDebugEnumType[] =
 
 // --- Add new enum types above this line ---
 
-#define COUNT_CASE(x)  case UDBG_##x: return (actual?count_##x:UPRV_LENGTHOF(names_##x));
+#define COUNT_CASE(x)  case UDBG_##x: return (actual?count_##x:DBG_ARRAY_COUNT(names_##x));
 #define COUNT_FAIL_CASE(x) case UDBG_##x: return -1;
 
 #define FIELD_CASE(x)  case UDBG_##x: return names_##x;
@@ -554,7 +558,7 @@ static const USystemParams systemParams[] = {
 
 };
 
-#define U_SYSPARAM_COUNT UPRV_LENGTHOF(systemParams)
+#define U_SYSPARAM_COUNT (sizeof(systemParams)/sizeof(systemParams[0]))
 
 U_CAPI const char *udbg_getSystemParameterNameByIndex(int32_t i) {
   if(i>=0 && i < (int32_t)U_SYSPARAM_COUNT) {

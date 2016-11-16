@@ -59,6 +59,7 @@ class FloatRegisters : public FloatRegistersMIPSShared
 
     static const SetType AllPhysMask = ((SetType(1) << TotalPhys) - 1);
     static const SetType AllMask = AllPhysMask * Spread;
+    static const SetType AllSingleMask = AllPhysMask * SpreadSingle;
     static const SetType AllDoubleMask = AllPhysMask * SpreadDouble;
 
     static const SetType NonVolatileMask =
@@ -105,10 +106,10 @@ class FloatRegister : public FloatRegisterMIPSShared
     ContentType kind_ : 3;
 
   public:
-    MOZ_CONSTEXPR FloatRegister(uint32_t r, ContentType kind = Codes::Double)
+    constexpr FloatRegister(uint32_t r, ContentType kind = Codes::Double)
       : reg_(Encoding(r)), kind_(kind)
     { }
-    MOZ_CONSTEXPR FloatRegister()
+    constexpr FloatRegister()
       : reg_(Encoding(FloatRegisters::invalid_freg)), kind_(Codes::Double)
     { }
 

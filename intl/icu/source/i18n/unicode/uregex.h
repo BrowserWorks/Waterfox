@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2004-2016, International Business Machines
+*   Copyright (C) 2004-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  uregex.h
@@ -607,6 +607,7 @@ U_STABLE int32_t U_EXPORT2
 uregex_groupCount(URegularExpression *regexp,
                   UErrorCode         *status);
 
+#ifndef U_HIDE_DRAFT_API
 /**
   * Get the group number corresponding to a named capture group.
   * The returned number can be used with any function that access
@@ -621,9 +622,9 @@ uregex_groupCount(URegularExpression *regexp,
   *                     nul-terminated string.
   * @param  status      A pointer to a UErrorCode to receive any errors.
   *
-  * @stable ICU 55
+  * @draft ICU 55
   */
-U_STABLE int32_t U_EXPORT2
+U_DRAFT int32_t U_EXPORT2
 uregex_groupNumberFromName(URegularExpression *regexp,
                            const UChar        *groupName,
                            int32_t             nameLength,
@@ -645,13 +646,14 @@ uregex_groupNumberFromName(URegularExpression *regexp,
   *                     nul-terminated.
   * @param  status      A pointer to a UErrorCode to receive any errors.
   *
-  * @stable ICU 55
+  * @draft ICU 55
   */
-U_STABLE int32_t U_EXPORT2
+U_DRAFT int32_t U_EXPORT2
 uregex_groupNumberFromCName(URegularExpression *regexp,
                             const char         *groupName,
                             int32_t             nameLength,
                             UErrorCode          *status);
+#endif  /* U_HIDE_DRAFT_API */
 
 /** Extract the string for the specified matching expression or subexpression.
   * Group #0 is the complete string of matched text.

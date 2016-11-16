@@ -64,7 +64,7 @@ public:
 
     NS_IMETHOD Run()
     {
-        nsCacheServiceAutoLock lock(LOCK_TELEM(NSDISKCACHEDEVICEDEACTIVATEENTRYEVENT_RUN));
+        nsCacheServiceAutoLock lock;
         CACHE_LOG_DEBUG(("nsDiskCacheDeviceDeactivateEntryEvent[%p]\n", this));
         if (!mCanceled) {
             (void) mDevice->DeactivateEntry_Private(mEntry, mBinding);
@@ -87,7 +87,7 @@ public:
 
     NS_IMETHOD Run()
     {
-        nsCacheServiceAutoLock lock(LOCK_TELEM(NSEVICTDISKCACHEENTRIESEVENT_RUN));
+        nsCacheServiceAutoLock lock;
         mDevice->EvictDiskCacheEntries(mDevice->mCacheCapacity);
         return NS_OK;
     }
@@ -965,17 +965,12 @@ nsDiskCacheDevice::OpenDiskCache()
     if (exists) {
         // Try opening cache map file.
         nsDiskCache::CorruptCacheInfo corruptInfo;
-        rv = mCacheMap.Open(mCacheDirectory, &corruptInfo, true);
+        rv = mCacheMap.Open(mCacheDirectory, &corruptInfo);
 
-        if (NS_SUCCEEDED(rv)) {
-            Telemetry::Accumulate(Telemetry::DISK_CACHE_CORRUPT_DETAILS,
-                                  corruptInfo);
-        } else if (rv == NS_ERROR_ALREADY_INITIALIZED) {
+        if (rv == NS_ERROR_ALREADY_INITIALIZED) {
           NS_WARNING("nsDiskCacheDevice::OpenDiskCache: already open!");
-        } else {
+        } else if (NS_FAILED(rv)) {
             // Consider cache corrupt: delete it
-            Telemetry::Accumulate(Telemetry::DISK_CACHE_CORRUPT_DETAILS,
-                                  corruptInfo);
             // delay delete by 1 minute to avoid IO thrash at startup
             rv = nsDeleteDir::DeleteDir(mCacheDirectory, true, 60000);
             if (NS_FAILED(rv))
@@ -995,7 +990,7 @@ nsDiskCacheDevice::OpenDiskCache()
     
         // reopen the cache map     
         nsDiskCache::CorruptCacheInfo corruptInfo;
-        rv = mCacheMap.Open(mCacheDirectory, &corruptInfo, false);
+        rv = mCacheMap.Open(mCacheDirectory, &corruptInfo);
         if (NS_FAILED(rv))
             return rv;
     }

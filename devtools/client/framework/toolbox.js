@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,9 +11,11 @@ const OS_HISTOGRAM = "DEVTOOLS_OS_ENUMERATED_PER_USER";
 const OS_IS_64_BITS = "DEVTOOLS_OS_IS_64_BITS_PER_USER";
 const SCREENSIZE_HISTOGRAM = "DEVTOOLS_SCREEN_RESOLUTION_ENUMERATED_PER_USER";
 const HTML_NS = "http://www.w3.org/1999/xhtml";
+const { SourceMapService } = require("./source-map-service");
 
 var {Cc, Ci, Cu} = require("chrome");
 var promise = require("promise");
+var defer = require("devtools/shared/defer");
 var Services = require("Services");
 var {Task} = require("devtools/shared/task");
 var {gDevTools} = require("devtools/client/framework/devtools");
@@ -26,9 +26,7 @@ var viewSource = require("devtools/client/shared/view-source");
 var { attachThread, detachThread } = require("./attach-thread");
 var Menu = require("devtools/client/framework/menu");
 var MenuItem = require("devtools/client/framework/menu-item");
-
-Cu.import("resource://devtools/client/scratchpad/scratchpad-manager.jsm");
-Cu.import("resource://devtools/client/shared/DOMHelpers.jsm");
+var { DOMHelpers } = require("resource://devtools/client/shared/DOMHelpers.jsm");
 
 const { BrowserLoader } =
   Cu.import("resource://devtools/client/shared/browser-loader.js", {});
@@ -63,7 +61,7 @@ loader.lazyRequireGetter(this, "DevToolsUtils",
 loader.lazyRequireGetter(this, "showDoorhanger",
   "devtools/client/shared/doorhanger", true);
 loader.lazyRequireGetter(this, "createPerformanceFront",
-  "devtools/server/actors/performance", true);
+  "devtools/shared/fronts/performance", true);
 loader.lazyRequireGetter(this, "system",
   "devtools/shared/system");
 loader.lazyRequireGetter(this, "getPreferenceFront",
@@ -73,9 +71,6 @@ loader.lazyRequireGetter(this, "KeyShortcuts",
 loader.lazyRequireGetter(this, "ZoomKeys",
   "devtools/client/shared/zoom-keys");
 
-loader.lazyGetter(this, "osString", () => {
-  return Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).OS;
-});
 loader.lazyGetter(this, "registerHarOverlay", () => {
   return require("devtools/client/netmonitor/har/toolbox-overlay").register;
 });
@@ -98,7 +93,6 @@ const ToolboxButtons = exports.ToolboxButtons = [
   { id: "command-button-responsive" },
   { id: "command-button-paintflashing" },
   { id: "command-button-scratchpad" },
-  { id: "command-button-eyedropper" },
   { id: "command-button-screenshot" },
   { id: "command-button-rulers" },
   { id: "command-button-measure" },
@@ -124,6 +118,9 @@ function Toolbox(target, selectedTool, hostType, hostOptions) {
   this._target = target;
   this._toolPanels = new Map();
   this._telemetry = new Telemetry();
+  if (Services.prefs.getBoolPref("devtools.sourcemap.locations.enabled")) {
+    this._sourceMapService = new SourceMapService(this._target);
+  }
 
   this._initInspector = null;
   this._inspector = null;
@@ -238,7 +235,7 @@ Toolbox.prototype = {
    *          A promise that resolves once the panel is ready.
    */
   getPanelWhenReady: function (id) {
-    let deferred = promise.defer();
+    let deferred = defer();
     let panel = this.getPanel(id);
     if (panel) {
       deferred.resolve(panel);
@@ -368,7 +365,7 @@ Toolbox.prototype = {
   open: function () {
     return Task.spawn(function* () {
       let iframe = yield this._host.create();
-      let domReady = promise.defer();
+      let domReady = defer();
 
       // Prevent reloading the document when the toolbox is opened in a tab
       let location = iframe.contentWindow.location.href;
@@ -498,7 +495,8 @@ Toolbox.prototype = {
     this._telemetry.toolOpened("toolbox");
 
     this._telemetry.logOncePerBrowserVersion(OS_HISTOGRAM, system.getOSCPU());
-    this._telemetry.logOncePerBrowserVersion(OS_IS_64_BITS, system.is64Bit ? 1 : 0);
+    this._telemetry.logOncePerBrowserVersion(OS_IS_64_BITS,
+                                             Services.appinfo.is64Bit ? 1 : 0);
     this._telemetry.logOncePerBrowserVersion(SCREENSIZE_HISTOGRAM, system.getScreenDimensions());
   },
 
@@ -935,7 +933,7 @@ Toolbox.prototype = {
    * Add buttons to the UI as specified in the devtools.toolbox.toolbarSpec pref
    */
   _buildButtons: function () {
-    if (!this.target.isAddon) {
+    if (!this.target.isAddon || this.target.isWebExtension) {
       this._buildPickerButton();
     }
 
@@ -1109,7 +1107,9 @@ Toolbox.prototype = {
     radio.setAttribute("ordinal", toolDefinition.ordinal);
     radio.setAttribute("tooltiptext", toolDefinition.tooltip);
     if (toolDefinition.invertIconForLightTheme) {
-      radio.setAttribute("icon-invertable", "true");
+      radio.setAttribute("icon-invertable", "light-theme");
+    } else if (toolDefinition.invertIconForDarkTheme) {
+      radio.setAttribute("icon-invertable", "dark-theme");
     }
 
     radio.addEventListener("command", () => {
@@ -1198,7 +1198,7 @@ Toolbox.prototype = {
       });
     }
 
-    let deferred = promise.defer();
+    let deferred = defer();
     let iframe = this.doc.getElementById("toolbox-panel-iframe-" + id);
 
     if (iframe) {
@@ -1245,7 +1245,7 @@ Toolbox.prototype = {
       // backward compatibility with existing extensions do a check
       // for a promise return value.
       let built = definition.build(iframe.contentWindow, this);
-      if (!(built instanceof Promise)) {
+      if (!(typeof built.then == "function")) {
         let panel = built;
         iframe.panel = panel;
 
@@ -1266,7 +1266,7 @@ Toolbox.prototype = {
         if (typeof panel.open == "function") {
           built = panel.open();
         } else {
-          let buildDeferred = promise.defer();
+          let buildDeferred = defer();
           buildDeferred.resolve(panel);
           built = buildDeferred.promise;
         }
@@ -2046,6 +2046,10 @@ Toolbox.prototype = {
     gDevTools.off("pref-changed", this._prefChanged);
 
     this._lastFocusedElement = null;
+    if (this._sourceMapService) {
+      this._sourceMapService.destroy();
+      this._sourceMapService = null;
+    }
 
     if (this.webconsolePanel) {
       this._saveSplitConsoleHeight();
@@ -2098,7 +2102,7 @@ Toolbox.prototype = {
     this._threadClient = null;
 
     // We need to grab a reference to win before this._host is destroyed.
-    let win = this.frame.ownerGlobal;
+    let win = this.frame.ownerDocument.defaultView;
 
     if (this._requisition) {
       CommandUtils.destroyRequisition(this._requisition, this.target);
@@ -2202,7 +2206,7 @@ Toolbox.prototype = {
       return this._performanceFrontConnection.promise;
     }
 
-    this._performanceFrontConnection = promise.defer();
+    this._performanceFrontConnection = defer();
     this._performance = createPerformanceFront(this._target);
     yield this.performance.connect();
 

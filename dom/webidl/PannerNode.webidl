@@ -4,7 +4,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * https://dvcs.w3.org/hg/audio/raw-file/tip/webaudio/specification.html
+ * https://webaudio.github.io/web-audio-api/
  *
  * Copyright © 2012 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
  * liability, trademark and document use rules apply.
@@ -31,6 +31,16 @@ interface PannerNode : AudioNode {
     void setOrientation(double x, double y, double z);
     [Deprecated="PannerNodeDoppler"]
     void setVelocity(double x, double y, double z);
+
+    // Cartesian coordinate for position
+    readonly attribute AudioParam positionX;
+    readonly attribute AudioParam positionY;
+    readonly attribute AudioParam positionZ;
+
+    // Cartesian coordinate for orientation
+    readonly attribute AudioParam orientationX;
+    readonly attribute AudioParam orientationY;
+    readonly attribute AudioParam orientationZ;
 
     // Distance model and attributes
     attribute DistanceModelType distanceModel;

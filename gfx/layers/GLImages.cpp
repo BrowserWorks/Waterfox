@@ -53,7 +53,7 @@ GLImage::GetAsSourceSurface()
   if (!sSnapshotContext) {
     nsCString discardFailureId;
     sSnapshotContext = GLContextProvider::CreateHeadless(CreateContextFlags::NONE,
-                                                         discardFailureId);
+                                                         &discardFailureId);
     if (!sSnapshotContext) {
       NS_WARNING("Failed to create snapshot GLContext");
       return nullptr;
@@ -73,7 +73,8 @@ GLImage::GetAsSourceSurface()
 
   ScopedFramebufferForTexture autoFBForTex(sSnapshotContext, scopedTex.Texture());
   if (!autoFBForTex.IsComplete()) {
-      MOZ_CRASH("GFX: ScopedFramebufferForTexture failed.");
+      gfxCriticalError() << "GetAsSourceSurface: ScopedFramebufferForTexture failed.";
+      return nullptr;
   }
 
   const gl::OriginPos destOrigin = gl::OriginPos::TopLeft;

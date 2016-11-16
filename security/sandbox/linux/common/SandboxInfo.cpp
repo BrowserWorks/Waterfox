@@ -23,6 +23,19 @@
 #include "sandbox/linux/seccomp-bpf/linux_seccomp.h"
 #include "sandbox/linux/services/linux_syscalls.h"
 
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#include "nsICrashReporter.h"
+#define NS_CRASHREPORTER_CONTRACTID "@mozilla.org/toolkit/crash-reporter;1"
+#include "nsIPrefService.h"
+#include "nsIMemoryInfoDumper.h"
+#endif
+
+#ifdef MOZ_VALGRIND
+#include <valgrind/valgrind.h>
+#endif
+
+
 // A note about assertions: in general, the worst thing this module
 // should be able to do is disable sandboxing features, so release
 // asserts or MOZ_CRASH should be avoided, even for seeming
@@ -70,6 +83,16 @@ HasSeccompBPF()
   if (getenv("MOZ_FAKE_NO_SANDBOX")) {
     return false;
   }
+
+  // Valgrind and the sandbox don't interact well, probably because Valgrind
+  // does various system calls which aren't allowed, even if Firefox itself
+  // is playing by the rules.
+# if defined(MOZ_VALGRIND)
+  if (RUNNING_ON_VALGRIND) {
+    return false;
+  }
+# endif
+
   // Determine whether seccomp-bpf is supported by trying to
   // enable it with an invalid pointer for the filter.  This will
   // fail with EFAULT if supported and EINVAL if not, without
@@ -272,5 +295,17 @@ SandboxInfo::SubmitTelemetry()
   Telemetry::Accumulate(Telemetry::SANDBOX_MEDIA_ENABLED,
                         sandboxInfo.Test(SandboxInfo::kEnabledForMedia));
 }
+
+#ifdef MOZ_CRASHREPORTER
+void
+SandboxInfo::AnnotateCrashReport() const
+{
+  nsAutoCString flagsString;
+  flagsString.AppendInt(mFlags);
+
+  CrashReporter::AnnotateCrashReport(
+    NS_LITERAL_CSTRING("ContentSandboxCapabilities"), flagsString);
+}
+#endif
 
 } // namespace mozilla

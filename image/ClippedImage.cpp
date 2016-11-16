@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "ClippedImage.h"
+
 #include <algorithm>
 #include <new>      // Workaround for bug in VS10; see bug 981264.
 #include <cmath>
@@ -20,8 +22,6 @@
 #include "ImageRegion.h"
 #include "Orientation.h"
 #include "SVGImageContext.h"
-
-#include "ClippedImage.h"
 
 namespace mozilla {
 
@@ -297,7 +297,7 @@ ClippedImage::GetFrameInternal(const nsIntSize& aSize,
       return MakePair(DrawResult::TEMPORARY_ERROR, RefPtr<SourceSurface>());
     }
 
-    RefPtr<gfxContext> ctx = gfxContext::ForDrawTarget(target);
+    RefPtr<gfxContext> ctx = gfxContext::CreateOrNull(target);
     MOZ_ASSERT(ctx); // already checked the draw target above
 
     // Create our callback.
@@ -407,24 +407,6 @@ ClippedImage::Draw(gfxContext* aContext,
                         aSamplingFilter, aSVGContext, aFlags);
 }
 
-static SVGImageContext
-UnclipViewport(const SVGImageContext& aOldContext,
-               const pair<nsIntSize, nsIntSize>& aInnerAndClipSize)
-{
-  nsIntSize innerSize(aInnerAndClipSize.first);
-  nsIntSize clipSize(aInnerAndClipSize.second);
-
-  // Map the viewport to the inner image. (Note that we don't take the aSize
-  // parameter of Draw into account, just the clipping region.)
-  CSSIntSize vSize(aOldContext.GetViewportSize());
-  vSize.width = ceil(vSize.width * double(innerSize.width) / clipSize.width);
-  vSize.height =
-    ceil(vSize.height * double(innerSize.height) / clipSize.height);
-
-  return SVGImageContext(vSize,
-                         aOldContext.GetPreserveAspectRatio());
-}
-
 DrawResult
 ClippedImage::DrawSingleTile(gfxContext* aContext,
                              const nsIntSize& aSize,
@@ -470,10 +452,24 @@ ClippedImage::DrawSingleTile(gfxContext* aContext,
   gfxContextMatrixAutoSaveRestore saveMatrix(aContext);
   aContext->Multiply(gfxMatrix::Translation(-clip.x, -clip.y));
 
+  auto unclipViewport = [&](const SVGImageContext& aOldContext) {
+    // Map the viewport to the inner image. Note that we don't take the aSize
+    // parameter of imgIContainer::Draw into account, just the clipping region.
+    // The size in pixels at which the output will ultimately be drawn is
+    // irrelevant here since the purpose of the SVG viewport size is to
+    // determine what *region* of the SVG document will be drawn.
+    CSSIntSize vSize(aOldContext.GetViewportSize());
+    vSize.width = ceil(vSize.width * double(innerSize.width) / mClip.width);
+    vSize.height =
+      ceil(vSize.height * double(innerSize.height) / mClip.height);
+
+    return SVGImageContext(vSize,
+                           aOldContext.GetPreserveAspectRatio());
+  };
+
   return InnerImage()->Draw(aContext, size, region,
                             aWhichFrame, aSamplingFilter,
-                            aSVGContext.map(UnclipViewport,
-                                            make_pair(innerSize, mClip.Size())),
+                            aSVGContext.map(unclipViewport),
                             aFlags);
 }
 
@@ -524,8 +520,8 @@ ClippedImage::OptimalImageSizeForDest(const gfxSize& aDest,
 
     // First, we select a scale that's good for ClippedImage. An integer
     // multiple of the size of the clipping region is always fine.
-    nsIntSize scale(ceil(aDest.width / mClip.width),
-                    ceil(aDest.height / mClip.height));
+    IntSize scale = IntSize::Ceil(aDest.width / mClip.width,
+                                  aDest.height / mClip.height);
 
     if (forceUniformScaling) {
       scale.width = scale.height = max(scale.height, scale.width);
@@ -541,8 +537,8 @@ ClippedImage::OptimalImageSizeForDest(const gfxSize& aDest,
     // To get our final result, we take the inner image's desired size and
     // determine how large the clipped region would be at that scale. (Again, we
     // ensure an integer multiple of the size of the clipping region.)
-    nsIntSize finalScale(ceil(double(innerDesiredSize.width) / imgWidth),
-                         ceil(double(innerDesiredSize.height) / imgHeight));
+    IntSize finalScale = IntSize::Ceil(double(innerDesiredSize.width) / imgWidth,
+                                       double(innerDesiredSize.height) / imgHeight);
     return mClip.Size() * finalScale;
   }
 

@@ -147,7 +147,7 @@ var openInspectorSideBar = Task.async(function* (id) {
   return {
     toolbox: toolbox,
     inspector: inspector,
-    view: inspector[id].view
+    view: inspector[id].view || inspector[id].computedView
   };
 });
 
@@ -195,17 +195,11 @@ var addTab = Task.async(function* (url) {
   let tab = gBrowser.selectedTab = gBrowser.addTab(url);
   let browser = tab.linkedBrowser;
 
-  yield once(browser, "load", true);
+  yield BrowserTestUtils.browserLoaded(browser);
   info("URL '" + url + "' loading complete");
 
   return tab;
 });
-
-function wait(ms) {
-  let def = promise.defer();
-  setTimeout(def.resolve, ms);
-  return def.promise;
-}
 
 /**
  * Waits for the next load to complete in the current browser.

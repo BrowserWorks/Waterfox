@@ -27,12 +27,11 @@
     - fips
     - gtests
     - lowhash
+    - memleak
     - merge
-    - ocsp
-    - pkits
-    - pkix
     - sdr
     - smime
+    - ssl
     - tools
 
 - task:
@@ -42,7 +41,6 @@
 
     payload:
       env:
-        NSS_TESTS: ssl
         USE_64: 1
 
     extra:
@@ -57,9 +55,6 @@
         groupName: Various builds
         symbol: noTLSv1.3
 
-  tests:
-    - ssl
-
 - task:
     metadata:
       name: "Linux 64 (debug, clang-3.8)"
@@ -68,8 +63,8 @@
     payload:
       env:
         NSS_ENABLE_TLS_1_3: 1
-        GCC_VERSION: clang-3.8
-        GXX_VERSION: clang++-3.8
+        GCC_VERSION: clang
+        GXX_VERSION: clang++
         USE_64: 1
 
     extra:
@@ -134,13 +129,13 @@
 
 - task:
     metadata:
-      name: "Linux 64 (debug, NO_PKCS11_BYPASS=1)"
-      description: "Linux 64 (debug, NO_PKCS11_BYPASS=1)"
+      name: "Linux 64 (debug, NSS_NO_PKCS11_BYPASS=1)"
+      description: "Linux 64 (debug, NSS_NO_PKCS11_BYPASS=1)"
 
     payload:
       env:
+        NSS_NO_PKCS11_BYPASS: 1
         NSS_ENABLE_TLS_1_3: 1
-        NO_PKCS11_BYPASS: 1
         USE_64: 1
 
     extra:
@@ -154,3 +149,26 @@
         groupSymbol: Builds
         groupName: Various builds
         symbol: noPkcs11Bypass
+
+- task:
+    metadata:
+      name: "Linux 64 (debug, NSS_DISABLE_LIBPKIX=1)"
+      description: "Linux 64 (debug, NSS_DISABLE_LIBPKIX=1)"
+
+    payload:
+      env:
+        NSS_ENABLE_TLS_1_3: 1
+        NSS_DISABLE_LIBPKIX: 1
+        USE_64: 1
+
+    extra:
+      treeherder:
+        build:
+          platform: linux64
+        machine:
+          platform: linux64
+        collection:
+          debug: true
+        groupSymbol: Builds
+        groupName: Various builds
+        symbol: noLibpkix

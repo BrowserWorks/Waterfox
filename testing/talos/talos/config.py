@@ -106,7 +106,7 @@ DEFAULTS = dict(
             'http://127.0.0.1/safebrowsing-dummy/update',
         'privacy.trackingprotection.introURL':
             'http://127.0.0.1/trackingprotection/tour',
-        'browser.safebrowsing.enabled': False,
+        'browser.safebrowsing.phishing.enabled': False,
         'browser.safebrowsing.malware.enabled': False,
         'browser.safebrowsing.forbiddenURIs.enabled': False,
         'browser.safebrowsing.blockedURIs.enabled': False,
@@ -138,8 +138,6 @@ DEFAULTS = dict(
             'http://127.0.0.1/extensions-dummy/repositoryBrowseURL',
         'extensions.getAddons.search.url':
             'http://127.0.0.1/extensions-dummy/repositorySearchURL',
-        'plugins.update.url':
-            'http://127.0.0.1/plugins-dummy/updateCheckURL',
         'media.gmp-manager.url':
             'http://127.0.0.1/gmpmanager-dummy/update.xml',
         'extensions.systemAddon.update.url':
@@ -177,7 +175,8 @@ DEFAULTS = dict(
         'devtools.debugger.remote-enabled': False,
         'devtools.theme': "light",
         'devtools.timeline.enabled': False,
-        'identity.fxaccounts.migrateToDevEdition': False
+        'identity.fxaccounts.migrateToDevEdition': False,
+        'media.libavcodec.allow-obsolete': True
     }
 )
 
@@ -311,9 +310,11 @@ def get_global_overrides(config):
     global_overrides = {}
     for key in GLOBAL_OVERRIDES:
         # get global overrides for all tests
-        value = config.pop(key)
+        value = config[key]
         if value is not None:
             global_overrides[key] = value
+        if key != 'sps_profile':
+            config.pop(key)
 
     # add noChrome to global overrides (HACK)
     noChrome = config.pop('noChrome')
@@ -465,6 +466,6 @@ def get_configs(argv=None):
 
 if __name__ == '__main__':
     cfgs = get_configs()
-    print cfgs[0]
+    print(cfgs[0])
     print
-    print cfgs[1]
+    print(cfgs[1])

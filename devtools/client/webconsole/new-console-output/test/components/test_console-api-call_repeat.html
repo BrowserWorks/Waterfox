@@ -17,13 +17,13 @@ window.onload = Task.async(function* () {
   const { ConsoleApiCall } = require("devtools/client/webconsole/new-console-output/components/message-types/console-api-call");
 
   const packet = yield getPacket("console.log('foobar', 'test')", "consoleAPICall");
-  const message = prepareMessage(packet);
-  message.repeat = 107;
+  const message = prepareMessage(packet).set("repeat", 107);
   const rendered = renderComponent(ConsoleApiCall, {message});
 
   const messageBodyPath = "span > span.message-flex-body > span.message-body.devtools-monospace";
   const messageBody = rendered.querySelectorAll(messageBodyPath);
-  is(messageBody[0].textContent, "foobar test", "ConsoleApiCall outputs expected text for repeated message");
+  // @TODO Expected output should be: foobar test
+  is(messageBody[0].textContent, "\"foobar\"\"test\"", "ConsoleApiCall outputs expected text for repeated message");
 
   const repeatPath = "span > span.message-flex-body > span.message-body.devtools-monospace + span.message-repeats";
   const repeat = rendered.querySelectorAll(repeatPath);

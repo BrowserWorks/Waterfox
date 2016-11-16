@@ -21,6 +21,7 @@
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/WorkerRunnable.h"
 #include "mozilla/dom/WorkerScope.h"
+#include "nsAutoPtr.h"
 #include "nsGlobalWindow.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIDOMWindow.h"
@@ -97,7 +98,7 @@ public:
   , mInnerWindowID(0)
   , mWorkerPrivate(nullptr)
 #ifdef DEBUG
-  , mHasFeatureRegistered(false)
+  , mHasWorkerHolderRegistered(false)
 #endif
   , mIsMainThread(true)
   , mMutex("WebSocketImpl::mMutex")
@@ -164,8 +165,8 @@ public:
   void AddRefObject();
   void ReleaseObject();
 
-  bool RegisterFeature();
-  void UnregisterFeature();
+  bool RegisterWorkerHolder();
+  void UnregisterWorkerHolder();
 
   nsresult CancelInternal();
 
@@ -211,24 +212,24 @@ public:
   uint64_t mInnerWindowID;
 
   WorkerPrivate* mWorkerPrivate;
-  nsAutoPtr<WorkerFeature> mWorkerFeature;
+  nsAutoPtr<WorkerHolder> mWorkerHolder;
 
 #ifdef DEBUG
   // This is protected by mutex.
-  bool mHasFeatureRegistered;
+  bool mHasWorkerHolderRegistered;
 
-  bool HasFeatureRegistered()
+  bool HasWorkerHolderRegistered()
   {
     MOZ_ASSERT(mWebSocket);
     MutexAutoLock lock(mWebSocket->mMutex);
-    return mHasFeatureRegistered;
+    return mHasWorkerHolderRegistered;
   }
 
-  void SetHasFeatureRegistered(bool aValue)
+  void SetHasWorkerHolderRegistered(bool aValue)
   {
     MOZ_ASSERT(mWebSocket);
     MutexAutoLock lock(mWebSocket->mMutex);
-    mHasFeatureRegistered = aValue;
+    mHasWorkerHolderRegistered = aValue;
   }
 #endif
 
@@ -487,7 +488,7 @@ WebSocketImpl::CloseConnection(uint16_t aReasonCode,
 
   // If this method is called because the worker is going away, we will not
   // receive the OnStop() method and we have to disconnect the WebSocket and
-  // release the WorkerFeature.
+  // release the WorkerHolder.
   MaybeDisconnect md(this);
 
   uint16_t readyState = mWebSocket->ReadyState();
@@ -548,11 +549,11 @@ WebSocketImpl::ConsoleError()
 
   if (mWebSocket->ReadyState() < WebSocket::OPEN) {
     PrintErrorOnConsole("chrome://global/locale/appstrings.properties",
-                        MOZ_UTF16("connectionFailure"),
+                        u"connectionFailure",
                         formatStrings, ArrayLength(formatStrings));
   } else {
     PrintErrorOnConsole("chrome://global/locale/appstrings.properties",
-                        MOZ_UTF16("netInterrupt"),
+                        u"netInterrupt",
                         formatStrings, ArrayLength(formatStrings));
   }
   /// todo some specific errors - like for message too large
@@ -608,7 +609,7 @@ WebSocketImpl::Disconnect()
   AssertIsOnTargetThread();
 
   // Disconnect can be called from some control event (such as Notify() of
-  // WorkerFeature). This will be schedulated before any other sync/async
+  // WorkerHolder). This will be schedulated before any other sync/async
   // runnable. In order to prevent some double Disconnect() calls, we use this
   // boolean.
   mDisconnectingOrDisconnected = true;
@@ -638,8 +639,8 @@ WebSocketImpl::Disconnect()
   mWebSocket->DontKeepAliveAnyMore();
   mWebSocket->mImpl = nullptr;
 
-  if (mWorkerPrivate && mWorkerFeature) {
-    UnregisterFeature();
+  if (mWorkerPrivate && mWorkerHolder) {
+    UnregisterWorkerHolder();
   }
 
   // We want to release the WebSocket in the correct thread.
@@ -1251,18 +1252,18 @@ WebSocket::ConstructorCommon(const GlobalObject& aGlobal,
   }
 
   RefPtr<WebSocket> webSocket = new WebSocket(ownerWindow);
-  RefPtr<WebSocketImpl> kungfuDeathGrip = webSocket->mImpl;
+  RefPtr<WebSocketImpl> webSocketImpl = webSocket->mImpl;
 
   bool connectionFailed = true;
 
   if (NS_IsMainThread()) {
-    webSocket->mImpl->Init(aGlobal.Context(), principal, !!aTransportProvider,
-                           aUrl, protocolArray, EmptyCString(),
-                           0, 0, aRv, &connectionFailed);
+    webSocketImpl->Init(aGlobal.Context(), principal, !!aTransportProvider,
+                        aUrl, protocolArray, EmptyCString(),
+                        0, 0, aRv, &connectionFailed);
   } else {
-    // In workers we have to keep the worker alive using a feature in order to
-    // dispatch messages correctly.
-    if (!webSocket->mImpl->RegisterFeature()) {
+    // In workers we have to keep the worker alive using a workerHolder in order
+    // to dispatch messages correctly.
+    if (!webSocketImpl->RegisterWorkerHolder()) {
       aRv.Throw(NS_ERROR_FAILURE);
       return nullptr;
     }
@@ -1275,7 +1276,7 @@ WebSocket::ConstructorCommon(const GlobalObject& aGlobal,
     }
 
     RefPtr<InitRunnable> runnable =
-      new InitRunnable(webSocket->mImpl, !!aTransportProvider, aUrl,
+      new InitRunnable(webSocketImpl, !!aTransportProvider, aUrl,
                        protocolArray, nsDependentCString(file.get()), lineno,
                        column, aRv, &connectionFailed);
     runnable->Dispatch(aRv);
@@ -1553,7 +1554,12 @@ WebSocketImpl::Init(JSContext* aCx,
       }
     }
 
-    // Check content policy.
+    // The 'real' nsHttpChannel of the websocket gets opened in the parent.
+    // Since we don't serialize the CSP within child and parent and also not
+    // the context, we have to perform content policy checks here instead of
+    // AsyncOpen2().
+    // Please note that websockets can't follow redirects, hence there is no
+    // need to perform a CSP check after redirects.
     int16_t shouldLoad = nsIContentPolicy::ACCEPT;
     aRv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_WEBSOCKET,
                                     uri,
@@ -1564,12 +1570,13 @@ WebSocketImpl::Init(JSContext* aCx,
                                     &shouldLoad,
                                     nsContentUtils::GetContentPolicy(),
                                     nsContentUtils::GetSecurityManager());
+
     if (NS_WARN_IF(aRv.Failed())) {
       return;
     }
 
     if (NS_CP_REJECTED(shouldLoad)) {
-      // Disallowed by content policy.
+      // Disallowed by content policy
       aRv.Throw(NS_ERROR_CONTENT_BLOCKED);
       return;
     }
@@ -1592,8 +1599,8 @@ WebSocketImpl::Init(JSContext* aCx,
     }
     mSecure = true;
 
-    const char16_t* params[] = { reportSpec.get(), MOZ_UTF16("wss") };
-    CSP_LogLocalizedStr(MOZ_UTF16("upgradeInsecureRequest"),
+    const char16_t* params[] = { reportSpec.get(), u"wss" };
+    CSP_LogLocalizedStr(u"upgradeInsecureRequest",
                         params, ArrayLength(params),
                         EmptyString(), // aSourceFile
                         EmptyString(), // aScriptSample
@@ -1771,6 +1778,7 @@ WebSocketImpl::AsyncOpen(nsIPrincipal* aPrincipal, uint64_t aInnerWindowID,
 
   aRv = mChannel->AsyncOpen(uri, asciiOrigin, aInnerWindowID, this, nullptr);
   if (NS_WARN_IF(aRv.Failed())) {
+    aRv.Throw(NS_ERROR_CONTENT_BLOCKED);
     return;
   }
 
@@ -1838,10 +1846,16 @@ WebSocketImpl::InitializeConnection(nsIPrincipal* aPrincipal)
   // are not thread-safe.
   mOriginDocument = nullptr;
 
+
+  // The TriggeringPrincipal for websockets must always be a script.
+  // Let's make sure that the doc's principal (if a doc exists)
+  // and aPrincipal are same origin.
+  MOZ_ASSERT(!doc || doc->NodePrincipal()->Equals(aPrincipal));
+
   wsChannel->InitLoadInfo(doc ? doc->AsDOMNode() : nullptr,
                           doc ? doc->NodePrincipal() : aPrincipal,
                           aPrincipal,
-                          nsILoadInfo::SEC_NORMAL,
+                          nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                           nsIContentPolicy::TYPE_WEBSOCKET);
 
   if (!mRequestedProtocolList.IsEmpty()) {
@@ -2196,10 +2210,10 @@ WebSocket::DontKeepAliveAnyMore()
 
 namespace {
 
-class WebSocketWorkerFeature final : public WorkerFeature
+class WebSocketWorkerHolder final : public WorkerHolder
 {
 public:
-  explicit WebSocketWorkerFeature(WebSocketImpl* aWebSocketImpl)
+  explicit WebSocketWorkerHolder(WebSocketImpl* aWebSocketImpl)
     : mWebSocketImpl(aWebSocketImpl)
   {
   }
@@ -2242,39 +2256,39 @@ WebSocketImpl::ReleaseObject()
 }
 
 bool
-WebSocketImpl::RegisterFeature()
+WebSocketImpl::RegisterWorkerHolder()
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
-  MOZ_ASSERT(!mWorkerFeature);
-  mWorkerFeature = new WebSocketWorkerFeature(this);
+  MOZ_ASSERT(!mWorkerHolder);
+  mWorkerHolder = new WebSocketWorkerHolder(this);
 
-  if (!mWorkerPrivate->AddFeature(mWorkerFeature)) {
-    NS_WARNING("Failed to register a feature.");
-    mWorkerFeature = nullptr;
+  if (NS_WARN_IF(!mWorkerHolder->HoldWorker(mWorkerPrivate))) {
+    mWorkerHolder = nullptr;
     return false;
   }
 
 #ifdef DEBUG
-  SetHasFeatureRegistered(true);
+  SetHasWorkerHolderRegistered(true);
 #endif
 
   return true;
 }
 
 void
-WebSocketImpl::UnregisterFeature()
+WebSocketImpl::UnregisterWorkerHolder()
 {
   MOZ_ASSERT(mDisconnectingOrDisconnected);
   MOZ_ASSERT(mWorkerPrivate);
   mWorkerPrivate->AssertIsOnWorkerThread();
-  MOZ_ASSERT(mWorkerFeature);
+  MOZ_ASSERT(mWorkerHolder);
 
-  mWorkerPrivate->RemoveFeature(mWorkerFeature);
-  mWorkerFeature = nullptr;
+  // The DTOR of this WorkerHolder will release the worker for us.
+  mWorkerHolder = nullptr;
+
   mWorkerPrivate = nullptr;
 
 #ifdef DEBUG
-  SetHasFeatureRegistered(false);
+  SetHasWorkerHolderRegistered(false);
 #endif
 }
 
@@ -2607,11 +2621,11 @@ WebSocketImpl::GetStatus(nsresult* aStatus)
 
 namespace {
 
-class CancelRunnable final : public WorkerRunnable
+class CancelRunnable final : public MainThreadWorkerRunnable
 {
 public:
   CancelRunnable(WorkerPrivate* aWorkerPrivate, WebSocketImpl* aImpl)
-    : WorkerRunnable(aWorkerPrivate, WorkerThreadUnchangedBusyCount)
+    : MainThreadWorkerRunnable(aWorkerPrivate)
     , mImpl(aImpl)
   {
   }
@@ -2619,31 +2633,7 @@ public:
   bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->AssertIsOnWorkerThread();
-    aWorkerPrivate->ModifyBusyCountFromWorker(true);
     return !NS_FAILED(mImpl->CancelInternal());
-  }
-
-  void PostRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aRunResult) override
-  {
-    aWorkerPrivate->ModifyBusyCountFromWorker(false);
-  }
-
-  bool
-  PreDispatch(WorkerPrivate* aWorkerPrivate) override
-  {
-    // We don't call WorkerRunnable::PreDispatch because it would assert the
-    // wrong thing about which thread we're on.
-    AssertIsOnMainThread();
-    return true;
-  }
-
-  void
-  PostDispatch(WorkerPrivate* aWorkerPrivate, bool aDispatchResult) override
-  {
-    // We don't call WorkerRunnable::PostDispatch because it would assert the
-    // wrong thing about which thread we're on.
-    AssertIsOnMainThread();
   }
 
 private:
@@ -2785,7 +2775,6 @@ public:
   bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->AssertIsOnWorkerThread();
-    aWorkerPrivate->ModifyBusyCountFromWorker(true);
 
     // No messages when disconnected.
     if (mWebSocketImpl->mDisconnectingOrDisconnected) {
@@ -2799,7 +2788,6 @@ public:
   void PostRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
                bool aRunResult) override
   {
-    aWorkerPrivate->ModifyBusyCountFromWorker(false);
   }
 
   bool
@@ -2851,7 +2839,7 @@ WebSocketImpl::Dispatch(already_AddRefed<nsIRunnable> aEvent, uint32_t aFlags)
   MOZ_ASSERT(mWorkerPrivate);
 
 #ifdef DEBUG
-  MOZ_ASSERT(HasFeatureRegistered());
+  MOZ_ASSERT(HasWorkerHolderRegistered());
 #endif
 
   // If the target is a worker, we have to use a custom WorkerRunnableDispatcher

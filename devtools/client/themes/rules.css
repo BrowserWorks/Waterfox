@@ -5,17 +5,14 @@
 /* CSS Variables specific to this panel that aren't defined by the themes */
 .theme-light {
   --rule-highlight-background-color: #ffee99;
-  --rule-filter-icon: url(images/magnifying-glass-light.png);
 }
 
 .theme-dark {
   --rule-highlight-background-color: #594724;
-  --rule-filter-icon: url(images/magnifying-glass.png);
 }
 
 .theme-firebug {
   --rule-highlight-background-color: #ffee99;
-  --rule-filter-icon: url(images/magnifying-glass-light.png);
   --rule-property-name: darkgreen;
   --rule-property-value: darkblue;
 }
@@ -32,10 +29,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  /* Bug 1243598 - Reduce the container height by the tab height to make room
-     for the tabs above. */
-  height: calc(100% - 24px);
-  position: absolute;
+  height: 100%;
 }
 
 /* Rule View Toolbar */
@@ -48,7 +42,6 @@
 
 #ruleview-toolbar {
   display: flex;
-  height: 23px;
 }
 
 #ruleview-toolbar > .devtools-searchbox:first-child {
@@ -83,6 +76,17 @@
   -moz-user-select: text;
   overflow: auto;
   flex: auto;
+  height: 100%;
+}
+
+/* This extra wrapper only serves as a way to get the content of the view focusable.
+   So that when the user reaches it either via keyboard or mouse, we know that the view
+   is focused and therefore can handle shortcuts.
+   However, for accessibility reasons, tabindex is set to -1 to avoid having to tab
+   through it, and the outline is hidden. */
+#ruleview-container-focusable {
+  height: 100%;
+  outline: none;
 }
 
 #ruleview-container.non-interactive {
@@ -198,8 +202,7 @@
   border-left: solid 10px;
 }
 
-.ruleview-rule,
-#noResults {
+.ruleview-rule {
   padding: 2px 4px;
 }
 
@@ -239,7 +242,7 @@
 }
 
 .theme-firebug .ruleview-namecontainer > .ruleview-propertyname,
-.theme-firebug .ruleview-propertycontainer > .ruleview-propertyvalue {
+.theme-firebug .ruleview-propertyvaluecontainer > .ruleview-propertyvalue {
   border-bottom: none;
 }
 
@@ -247,7 +250,7 @@
   color: var(--rule-property-name);
 }
 
-.theme-firebug .ruleview-propertycontainer > .ruleview-propertyvalue {
+.theme-firebug .ruleview-propertyvaluecontainer > .ruleview-propertyvalue {
   color: var(--rule-property-value);
 }
 
@@ -258,18 +261,11 @@
 
 .theme-firebug .ruleview-enableproperty:not([checked]) ~ .ruleview-namecontainer,
 .theme-firebug .ruleview-enableproperty:not([checked]) ~ .ruleview-namecontainer *,
-.theme-firebug .ruleview-enableproperty:not([checked]) ~ .ruleview-propertycontainer,
-.theme-firebug .ruleview-enableproperty:not([checked]) ~ .ruleview-propertycontainer * {
+.theme-firebug .ruleview-enableproperty:not([checked]) ~ .ruleview-propertyvaluecontainer,
+.theme-firebug .ruleview-enableproperty:not([checked]) ~ .ruleview-propertyvaluecontainer *,
+.theme-firebug .ruleview-overridden > * > .ruleview-computed:not(.ruleview-overridden),
+.theme-firebug .ruleview-overridden > * > .ruleview-computed:not(.ruleview-overridden) * {
   color: #CCCCCC;
-}
-
-.theme-firebug .ruleview-enableproperty:not([checked]) ~ .ruleview-computedlist * {
-  color: #CCCCCC;
-}
-
-#noResults {
-  font: message-box;
-  color: GrayText;
 }
 
 .ruleview-rule + .ruleview-rule {
@@ -297,7 +293,7 @@
 }
 
 .ruleview-overridden-rule-filter {
-  background-image: var(--rule-filter-icon);
+  background-image: url(images/filter.svg#filterinput);
   background-size: 11px 11px;
   margin-inline-start: 5px;
   display: inline-block;

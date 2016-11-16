@@ -6,7 +6,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionManagement",
                                   "resource://gre/modules/ExtensionManagement.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "MatchPattern",
+XPCOMUtils.defineLazyModuleGetter(this, "MatchURLFilters",
                                   "resource://gre/modules/MatchPattern.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "WebNavigation",
                                   "resource://gre/modules/WebNavigation.jsm");
@@ -99,7 +99,11 @@ function fillTransitionProperties(eventName, src, dst) {
 // Similar to WebRequestEventManager but for WebNavigation.
 function WebNavigationEventManager(context, eventName) {
   let name = `webNavigation.${eventName}`;
-  let register = callback => {
+  let register = (callback, urlFilters) => {
+    // Don't create a MatchURLFilters instance if the listener does not include any filter.
+    let filters = urlFilters ?
+          new MatchURLFilters(urlFilters.url) : null;
+
     let listener = data => {
       if (!data.browser) {
         return;
@@ -117,6 +121,10 @@ function WebNavigationEventManager(context, eventName) {
         parentFrameId: ExtensionManagement.getParentFrameId(data.parentWindowId, data.windowId),
       };
 
+      if (eventName == "onErrorOccurred") {
+        data2.error = data.error;
+      }
+
       // Fills in tabId typically.
       let result = {};
       extensions.emit("fill-browser-data", data.browser, data2, result);
@@ -129,7 +137,7 @@ function WebNavigationEventManager(context, eventName) {
       runSafe(context, callback, data2);
     };
 
-    WebNavigation[eventName].addListener(listener);
+    WebNavigation[eventName].addListener(listener, filters);
     return () => {
       WebNavigation[eventName].removeListener(listener);
     };
@@ -150,7 +158,7 @@ function convertGetFrameResult(tabId, data) {
   };
 }
 
-extensions.registerSchemaAPI("webNavigation", "webNavigation", (extension, context) => {
+extensions.registerSchemaAPI("webNavigation", (extension, context) => {
   return {
     webNavigation: {
       onBeforeNavigate: new WebNavigationEventManager(context, "onBeforeNavigate").api(),

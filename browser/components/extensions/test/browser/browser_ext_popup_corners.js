@@ -7,10 +7,6 @@ function* awaitPanel(extension, win = window) {
     return event.target.location && event.target.location.href.endsWith("popup.html");
   });
 
-  // Wait for the browser resize code, which is triggered asynchronously by the
-  // load event, to run.
-  yield new Promise(resolve => setTimeout(resolve, 10));
-
   return target.defaultView
                .QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDocShell)
                .chromeEventHandler;
@@ -56,12 +52,17 @@ add_task(function* testPopupBorderRadius() {
     let viewNode = browser.parentNode === panel ? browser : browser.parentNode;
     let viewStyle = getComputedStyle(viewNode);
 
+    let win = browser.contentWindow;
+    let bodyStyle = win.getComputedStyle(win.document.body);
+
     for (let prop of ["borderTopLeftRadius", "borderTopRightRadius",
                       "borderBottomRightRadius", "borderBottomLeftRadius"]) {
       if (standAlone) {
         is(viewStyle[prop], panelStyle[prop], `Panel and view ${prop} should be the same`);
+        is(bodyStyle[prop], panelStyle[prop], `Panel and body ${prop} should be the same`);
       } else {
         is(viewStyle[prop], "0px", `View node ${prop} should be 0px`);
+        is(bodyStyle[prop], "0px", `Body node ${prop} should be 0px`);
       }
     }
   }

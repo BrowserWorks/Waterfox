@@ -161,7 +161,7 @@ PrintUsageHeader(const char *progName)
             "         [-f password_file] [-L [seconds]] [-M maxProcs] [-P dbprefix]\n"
             "         [-V [min-version]:[max-version]] [-a sni_name]\n"
             "         [ T <good|revoked|unknown|badsig|corrupted|none|ocsp>] [-A ca]\n"
-            "         [-C SSLCacheEntries] [-S dsa_nickname]"
+            "         [-C SSLCacheEntries] [-S dsa_nickname] -Q"
 #ifndef NSS_DISABLE_ECC
             " [-e ec_nickname]"
 #endif /* NSS_DISABLE_ECC */
@@ -224,7 +224,8 @@ PrintParameterUsage()
         "-W override default DHE server weak parameters support, 0: disable, 1: enable\n"
         "-c Restrict ciphers\n"
         "-Y prints cipher values allowed for parameter -c and exits\n"
-        "-G enables the extended master secret extension [RFC7627]\n",
+        "-G enables the extended master secret extension [RFC7627]\n"
+        "-Q enables ALPN for HTTP/1.1 [RFC7301]\n",
         stderr);
 }
 
@@ -694,7 +695,7 @@ launch_threads(
                                           local)
                                              ? PR_LOCAL_THREAD
                                              : PR_GLOBAL_THREAD,
-                                         PR_UNJOINABLE_THREAD, 0);
+                                         PR_JOINABLE_THREAD, 0);
         if (slot->prThread == NULL) {
             printf("selfserv: Failed to launch thread!\n");
             slot->state = rs_idle;
@@ -723,13 +724,24 @@ launch_threads(
 void
 terminateWorkerThreads(void)
 {
-    VLOG(("selfserv: server_thead: waiting on stopping"));
+    int i;
+
+    VLOG(("selfserv: server_thread: waiting on stopping"));
     PZ_Lock(qLock);
     PZ_NotifyAllCondVar(jobQNotEmptyCv);
-    while (threadCount > 0) {
-        PZ_WaitCondVar(threadCountChangeCv, PR_INTERVAL_NO_TIMEOUT);
+    PZ_Unlock(qLock);
+
+    /* Wait for worker threads to terminate. */
+    for (i = 0; i < maxThreads; ++i) {
+        perThread *slot = threads + i;
+        if (slot->prThread) {
+            PR_JoinThread(slot->prThread);
+        }
     }
+
     /* The worker threads empty the jobQ before they terminate. */
+    PZ_Lock(qLock);
+    PORT_Assert(threadCount == 0);
     PORT_Assert(PR_CLIST_IS_EMPTY(&jobQ));
     PZ_Unlock(qLock);
 
@@ -836,6 +848,8 @@ PRBool enableSessionTickets = PR_FALSE;
 PRBool enableCompression = PR_FALSE;
 PRBool failedToNegotiateName = PR_FALSE;
 PRBool enableExtendedMasterSecret = PR_FALSE;
+PRBool zeroRTT = PR_FALSE;
+PRBool enableALPN = PR_FALSE;
 
 static char *virtServerNameArray[MAX_VIRT_SERVER_NAME_ARRAY_INDEX];
 static int virtServerNameIndex = 1;
@@ -1842,6 +1856,9 @@ handshakeCallback(PRFileDesc *fd, void *client_data)
                                       hostInfo->len)) {
             failedToNegotiateName = PR_TRUE;
         }
+        if (hostInfo) {
+            SECITEM_FreeItem(hostInfo, PR_TRUE);
+        }
     }
 }
 
@@ -1984,6 +2001,30 @@ server_main(
         rv = SSL_OptionSet(model_sock, SSL_NO_CACHE, 1);
         if (rv < 0) {
             errExit("SSL_OptionSet SSL_NO_CACHE");
+        }
+    }
+
+    if (zeroRTT) {
+        if (enabledVersions.max < SSL_LIBRARY_VERSION_TLS_1_3) {
+            errExit("You tried enabling 0RTT without enabling TLS 1.3!");
+        }
+        rv = SSL_OptionSet(model_sock, SSL_ENABLE_0RTT_DATA, PR_TRUE);
+        if (rv != SECSuccess) {
+            errExit("error enabling 0RTT ");
+        }
+    }
+
+    if (enableALPN) {
+        PRUint8 alpnVal[] = {0x08,
+                             0x68, 0x74, 0x74, 0x70, 0x2f, 0x31, 0x2e, 0x31};
+        rv = SSL_OptionSet(model_sock, SSL_ENABLE_ALPN, PR_TRUE);
+        if (rv != SECSuccess) {
+            errExit("error enabling ALPN");
+        }
+
+        rv = SSL_SetNextProtoNego(model_sock, alpnVal, sizeof(alpnVal));
+        if (rv != SECSuccess) {
+            errExit("error enabling ALPN");
         }
     }
 
@@ -2239,7 +2280,7 @@ main(int argc, char **argv)
     ** numbers, then capital letters, then lower case, alphabetical.
     */
     optstate = PL_CreateOptState(argc, argv,
-                                 "2:A:BC:DEGH:L:M:NP:RS:T:U:V:W:Ya:bc:d:e:f:g:hi:jk:lmn:op:qrst:uvw:xyz");
+                                 "2:A:BC:DEGH:L:M:NP:QRS:T:U:V:W:YZa:bc:d:e:f:g:hi:jk:lmn:op:qrst:uvw:xyz");
     while ((status = PL_GetNextOpt(optstate)) == PL_OPT_OK) {
         ++optionsFound;
         switch (optstate->option) {
@@ -2460,6 +2501,14 @@ main(int argc, char **argv)
 
             case 'z':
                 enableCompression = PR_TRUE;
+                break;
+
+            case 'Z':
+                zeroRTT = PR_TRUE;
+                break;
+
+            case 'Q':
+                enableALPN = PR_TRUE;
                 break;
 
             default:
@@ -2879,6 +2928,9 @@ cleanup:
         PORT_Free(ecNickName);
     }
 #endif
+    if (dsaNickName) {
+        PORT_Free(dsaNickName);
+    }
 
     if (hasSidCache) {
         SSL_ShutdownServerSessionIDCache();

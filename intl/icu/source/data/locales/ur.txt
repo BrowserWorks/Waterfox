@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ur.xml
@@ -227,7 +227,7 @@ ur{
         minimumGroupingDigits{"1"}
         native{"arabext"}
     }
-    Version{"2.1.23.11"}
+    Version{"2.1.19.17"}
     calendar{
         generic{
             DateTimePatterns{
@@ -874,10 +874,7 @@ ur{
         day-narrow{
             dn{"دن"}
             relative{
-                "-1"{"گزشتہ کل"}
                 "-2"{"گزشتہ پرسوں"}
-                "0"{"آج"}
-                "1"{"آئندہ کل"}
                 "2"{"آنے والا پرسوں"}
             }
             relativeTime{
@@ -894,10 +891,7 @@ ur{
         day-short{
             dn{"دن"}
             relative{
-                "-1"{"گزشتہ کل"}
                 "-2"{"گزشتہ پرسوں"}
-                "0"{"آج"}
-                "1"{"آئندہ کل"}
                 "2"{"آنے والا پرسوں"}
             }
             relativeTime{

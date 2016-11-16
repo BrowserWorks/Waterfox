@@ -58,9 +58,8 @@ BroadcastChannelChild::RecvNotify(const ClonedMessageData& aData)
   nsCOMPtr<DOMEventTargetHelper> helper = mBC;
   nsCOMPtr<EventTarget> eventTarget = do_QueryInterface(helper);
 
-  // This object has been already closed by content or is going to be deleted
-  // soon. No notify is required.
-  if (!eventTarget || mBC->IsClosed()) {
+  // The object is going to be deleted soon. No notify is required.
+  if (!eventTarget) {
     return true;
   }
 
@@ -100,6 +99,7 @@ BroadcastChannelChild::RecvNotify(const ClonedMessageData& aData)
     ErrorResult rv;
     cloneData.Read(cx, &value, rv);
     if (NS_WARN_IF(rv.Failed())) {
+      rv.SuppressException();
       return true;
     }
   }
@@ -113,8 +113,8 @@ BroadcastChannelChild::RecvNotify(const ClonedMessageData& aData)
   ErrorResult rv;
   RefPtr<MessageEvent> event =
     MessageEvent::Constructor(mBC, NS_LITERAL_STRING("message"), init, rv);
-  if (rv.Failed()) {
-    NS_WARNING("Failed to create a MessageEvent object.");
+  if (NS_WARN_IF(rv.Failed())) {
+    rv.SuppressException();
     return true;
   }
 

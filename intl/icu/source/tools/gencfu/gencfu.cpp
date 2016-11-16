@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2009-2016, International Business Machines
+*   Copyright (C) 2009-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -142,7 +142,7 @@ int  main(int argc, char **argv) {
     //
     U_MAIN_INIT_ARGS(argc, argv);
     progName = argv[0];
-    argc=u_parseArgs(argc, argv, UPRV_LENGTHOF(options), options);
+    argc=u_parseArgs(argc, argv, sizeof(options)/sizeof(options[0]), options);
     if(argc<0) {
         // Unrecognized option
         fprintf(stderr, "error in command line argument \"%s\"\n", argv[-argc]);

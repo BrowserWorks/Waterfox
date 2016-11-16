@@ -27,7 +27,7 @@
 #include "nsFlexContainerFrame.h"
 #include "nsGridContainerFrame.h"
 #include "nsGkAtoms.h"
-#include "nsHTMLReflowState.h"
+#include "mozilla/ReflowInput.h"
 #include "nsStyleUtil.h"
 #include "nsStyleStructInlines.h"
 #include "nsROCSSPrimitiveValue.h"
@@ -221,12 +221,14 @@ nsComputedDOMStyle::nsComputedDOMStyle(dom::Element* aElement,
                                        const nsAString& aPseudoElt,
                                        nsIPresShell* aPresShell,
                                        StyleType aStyleType)
-  : mDocumentWeak(nullptr), mOuterFrame(nullptr),
-    mInnerFrame(nullptr), mPresShell(nullptr),
-    mStyleType(aStyleType),
-    mStyleContextGeneration(0),
-    mExposeVisitedStyle(false),
-    mResolvedStyleContext(false)
+  : mDocumentWeak(nullptr)
+  , mOuterFrame(nullptr)
+  , mInnerFrame(nullptr)
+  , mPresShell(nullptr)
+  , mStyleType(aStyleType)
+  , mStyleContextGeneration(0)
+  , mExposeVisitedStyle(false)
+  , mResolvedStyleContext(false)
 {
   MOZ_ASSERT(aElement && aPresShell);
 
@@ -262,7 +264,6 @@ nsComputedDOMStyle::nsComputedDOMStyle(dom::Element* aElement,
 
   MOZ_ASSERT(aPresShell->GetPresContext());
 }
-
 
 nsComputedDOMStyle::~nsComputedDOMStyle()
 {
@@ -325,7 +326,6 @@ nsComputedDOMStyle::SetPropertyValue(const nsCSSProperty aPropID,
   return NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR;
 }
 
-
 NS_IMETHODIMP
 nsComputedDOMStyle::GetCssText(nsAString& aCssText)
 {
@@ -334,13 +334,11 @@ nsComputedDOMStyle::GetCssText(nsAString& aCssText)
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsComputedDOMStyle::SetCssText(const nsAString& aCssText)
 {
   return NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR;
 }
-
 
 NS_IMETHODIMP
 nsComputedDOMStyle::GetLength(uint32_t* aLength)
@@ -363,7 +361,6 @@ nsComputedDOMStyle::GetLength(uint32_t* aLength)
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsComputedDOMStyle::GetParentRule(nsIDOMCSSRule** aParentRule)
 {
@@ -371,7 +368,6 @@ nsComputedDOMStyle::GetParentRule(nsIDOMCSSRule** aParentRule)
 
   return NS_OK;
 }
-
 
 NS_IMETHODIMP
 nsComputedDOMStyle::GetPropertyValue(const nsAString& aPropertyName,
@@ -527,7 +523,7 @@ nsComputedDOMStyle::GetStyleContextForElementNoFlush(Element* aElement,
          i < stop; ++i) {
       rules[i].swap(rules[length - i - 1]);
     }
-    
+
     sc = styleSet->AsGecko()->ResolveStyleForRules(parentContext, rules);
   }
 
@@ -542,16 +538,8 @@ nsComputedDOMStyle::GetAdjustedValuesForBoxSizing()
   const nsStylePosition* stylePos = StylePosition();
 
   nsMargin adjustment;
-  switch(stylePos->mBoxSizing) {
-    case StyleBoxSizing::Border:
-      adjustment += mInnerFrame->GetUsedBorder();
-      MOZ_FALLTHROUGH;
-    case StyleBoxSizing::Padding:
-      adjustment += mInnerFrame->GetUsedPadding();
-      MOZ_FALLTHROUGH;
-    case StyleBoxSizing::Content:
-      // nothing
-      break;
+  if (stylePos->mBoxSizing == StyleBoxSizing::Border) {
+    adjustment = mInnerFrame->GetUsedBorderAndPadding();
   }
 
   return adjustment;
@@ -676,13 +664,13 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
     mInnerFrame = mOuterFrame;
     if (mOuterFrame) {
       nsIAtom* type = mOuterFrame->GetType();
-      if (type == nsGkAtoms::tableOuterFrame) {
-        // If the frame is an outer table frame then we should get the style
+      if (type == nsGkAtoms::tableWrapperFrame) {
+        // If the frame is a table wrapper frame then we should get the style
         // from the inner table frame.
         mInnerFrame = mOuterFrame->PrincipalChildList().FirstChild();
-        NS_ASSERTION(mInnerFrame, "Outer table must have an inner");
+        NS_ASSERTION(mInnerFrame, "table wrapper must have an inner");
         NS_ASSERTION(!mInnerFrame->GetNextSibling(),
-                     "Outer table frames should have just one child, "
+                     "table wrapper frames should have just one child, "
                      "the inner table");
       }
 
@@ -824,7 +812,6 @@ nsComputedDOMStyle::GetPropertyCSSValue(const nsAString& aPropertyName, ErrorRes
   return val.forget();
 }
 
-
 NS_IMETHODIMP
 nsComputedDOMStyle::RemoveProperty(const nsAString& aPropertyName,
                                    nsAString& aReturn)
@@ -842,7 +829,6 @@ nsComputedDOMStyle::GetPropertyPriority(const nsAString& aPropertyName,
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsComputedDOMStyle::SetProperty(const nsAString& aPropertyName,
                                 const nsAString& aValue,
@@ -851,7 +837,6 @@ nsComputedDOMStyle::SetProperty(const nsAString& aPropertyName,
   return NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR;
 }
 
-
 NS_IMETHODIMP
 nsComputedDOMStyle::Item(uint32_t aIndex, nsAString& aReturn)
 {
@@ -859,7 +844,8 @@ nsComputedDOMStyle::Item(uint32_t aIndex, nsAString& aReturn)
 }
 
 void
-nsComputedDOMStyle::IndexedGetter(uint32_t aIndex, bool& aFound,
+nsComputedDOMStyle::IndexedGetter(uint32_t   aIndex,
+                                  bool&      aFound,
                                   nsAString& aPropName)
 {
   nsComputedStyleMap* map = GetComputedStyleMap();
@@ -925,7 +911,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetFloat()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  val->SetIdent(nsCSSProps::ValueToKeywordEnum(StyleDisplay()->mFloats,
+  val->SetIdent(nsCSSProps::ValueToKeywordEnum(StyleDisplay()->mFloat,
                                                nsCSSProps::kFloatKTable));
   return val.forget();
 }
@@ -1856,9 +1842,9 @@ nsComputedDOMStyle::DoGetBackgroundColor()
   return val.forget();
 }
 
-
 static void
-SetValueToCalc(const nsStyleCoord::CalcValue *aCalc, nsROCSSPrimitiveValue *aValue)
+SetValueToCalc(const nsStyleCoord::CalcValue* aCalc,
+               nsROCSSPrimitiveValue*         aValue)
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsAutoString tmp, result;
@@ -1883,9 +1869,9 @@ SetValueToCalc(const nsStyleCoord::CalcValue *aCalc, nsROCSSPrimitiveValue *aVal
 }
 
 static void
-AppendCSSGradientLength(const nsStyleCoord& aValue,
+AppendCSSGradientLength(const nsStyleCoord&    aValue,
                         nsROCSSPrimitiveValue* aPrimitive,
-                        nsAString& aString)
+                        nsAString&             aString)
 {
   nsAutoString tokenString;
   if (aValue.IsCalcUnit())
@@ -1900,8 +1886,8 @@ AppendCSSGradientLength(const nsStyleCoord& aValue,
 
 static void
 AppendCSSGradientToBoxPosition(const nsStyleGradient* aGradient,
-                               nsAString& aString,
-                               bool& aNeedSep)
+                               nsAString&             aString,
+                               bool&                  aNeedSep)
 {
   float xValue = aGradient->mBgPosX.GetPercentValue();
   float yValue = aGradient->mBgPosY.GetPercentValue();
@@ -2102,7 +2088,7 @@ nsComputedDOMStyle::SetValueToStyleImage(const nsStyleImage& aStyleImage,
       nsCOMPtr<nsIURI> uri;
       req->GetURI(getter_AddRefs(uri));
 
-      const nsStyleSides* cropRect = aStyleImage.GetCropRect();
+      const UniquePtr<nsStyleSides>& cropRect = aStyleImage.GetCropRect();
       if (cropRect) {
         nsAutoString imageRectString;
         GetImageRectString(uri, *cropRect, imageRectString);
@@ -2149,7 +2135,26 @@ nsComputedDOMStyle::DoGetImageLayerImage(const nsStyleImageLayers& aLayers)
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
     const nsStyleImage& image = aLayers.mLayers[i].mImage;
-    SetValueToStyleImage(image, val);
+    // Layer::mImage::GetType() returns eStyleImageType_Null in two conditions:
+    // 1. The value of mask-image/bg-image is 'none'.
+    //    Since this layer does not refer to any source, Layer::mSourceURI must
+    //    be nullptr too.
+    // 2. This layer refers to a local resource, e.g. mask-image:url(#mymask).
+    //    For local references, there is no need to download any external
+    //    resource, so Layer::mImage is not used.
+    //    Instead, we store the local URI in one place -- on Layer::mSourceURI.
+    //    Hence, we must serialize using mSourceURI (instead of
+    //    SetValueToStyleImage()/mImage) in this case.
+    bool isLocalURI = image.GetType() == eStyleImageType_Null &&
+                      aLayers.mLayers[i].mSourceURI;
+    if (isLocalURI) {
+      // This is how we represent a 'mask-image' reference for a local URI,
+      // such as 'mask-image:url(#mymask)' or 'mask:url(#mymask)'
+      val->SetURI(aLayers.mLayers[i].mSourceURI);
+    } else {
+      SetValueToStyleImage(image, val);
+    }
+
     valueList->AppendCSSValue(val.forget());
   }
 
@@ -2234,7 +2239,7 @@ nsComputedDOMStyle::DoGetImageLayerRepeat(const nsStyleImageLayers& aLayers)
                                          nsCSSProps::kImageLayerRepeatKTable));
     } else {
       valY = new nsROCSSPrimitiveValue;
-      
+
       valX->SetIdent(nsCSSProps::ValueToKeywordEnum(xRepeat,
                                           nsCSSProps::kImageLayerRepeatKTable));
       valY->SetIdent(nsCSSProps::ValueToKeywordEnum(yRepeat,
@@ -2746,14 +2751,15 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetGridTemplateColumns()
 {
   const ComputedGridTrackInfo* info = nullptr;
-  if (mInnerFrame) {
-    nsIFrame* gridContainerCandidate = mInnerFrame->GetContentInsertionFrame();
-    if (gridContainerCandidate &&
-        gridContainerCandidate->GetType() == nsGkAtoms::gridContainerFrame) {
-      info = static_cast<nsGridContainerFrame*>(gridContainerCandidate)->
-        GetComputedTemplateColumns();
-    }
+
+  nsGridContainerFrame* gridFrame =
+    nsGridContainerFrame::GetGridFrameWithComputedInfo(
+      mContent->GetPrimaryFrame());
+
+  if (gridFrame) {
+    info = gridFrame->GetComputedTemplateColumns();
   }
+
   return GetGridTemplateColumnsRows(StylePosition()->mGridTemplateColumns, info);
 }
 
@@ -2761,14 +2767,15 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetGridTemplateRows()
 {
   const ComputedGridTrackInfo* info = nullptr;
-  if (mInnerFrame) {
-    nsIFrame* gridContainerCandidate = mInnerFrame->GetContentInsertionFrame();
-    if (gridContainerCandidate &&
-        gridContainerCandidate->GetType() == nsGkAtoms::gridContainerFrame) {
-      info = static_cast<nsGridContainerFrame*>(gridContainerCandidate)->
-        GetComputedTemplateRows();
-     }
+
+  nsGridContainerFrame* gridFrame =
+    nsGridContainerFrame::GetGridFrameWithComputedInfo(
+      mContent->GetPrimaryFrame());
+
+  if (gridFrame) {
+    info = gridFrame->GetComputedTemplateRows();
   }
+
   return GetGridTemplateColumnsRows(StylePosition()->mGridTemplateRows, info);
 }
 
@@ -3397,8 +3404,9 @@ nsComputedDOMStyle::GetCSSShadowArray(nsCSSShadowArray* aArray,
       // This is an inset box-shadow
       val = new nsROCSSPrimitiveValue;
       val->SetIdent(
-        nsCSSProps::ValueToKeywordEnum(NS_STYLE_BOX_SHADOW_INSET,
-                                       nsCSSProps::kBoxShadowTypeKTable));
+        nsCSSProps::ValueToKeywordEnum(
+            uint8_t(StyleBoxShadowType::Inset),
+            nsCSSProps::kBoxShadowTypeKTable));
       itemList->AppendCSSValue(val.forget());
     }
     valueList->AppendCSSValue(itemList.forget());
@@ -3533,6 +3541,25 @@ nsComputedDOMStyle::DoGetImageRegion()
   }
 
   return val.forget();
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetInitialLetter()
+{
+  const nsStyleTextReset* textReset = StyleTextReset();
+  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+  if (textReset->mInitialLetterSink == 0) {
+    val->SetIdent(eCSSKeyword_normal);
+    return val.forget();
+  } else {
+    RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
+    val->SetNumber(textReset->mInitialLetterSize);
+    valueList->AppendCSSValue(val.forget());
+    RefPtr<nsROCSSPrimitiveValue> second = new nsROCSSPrimitiveValue;
+    second->SetNumber(textReset->mInitialLetterSink);
+    valueList->AppendCSSValue(second.forget());
+    return valueList.forget();
+  }
 }
 
 already_AddRefed<CSSValue>
@@ -4148,7 +4175,7 @@ nsComputedDOMStyle::DoGetBoxSizing()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(uint8_t(StylePosition()->mBoxSizing),
+    nsCSSProps::ValueToKeywordEnum(StylePosition()->mBoxSizing,
                                    nsCSSProps::kBoxSizingKTable));
   return val.forget();
 }
@@ -4396,7 +4423,7 @@ nsComputedDOMStyle::DoGetFloatEdge()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(StyleBorder()->mFloatEdge,
+    nsCSSProps::ValueToKeywordEnum(uint8_t(StyleBorder()->mFloatEdge),
                                    nsCSSProps::kFloatEdgeKTable));
   return val.forget();
 }
@@ -4445,7 +4472,7 @@ nsComputedDOMStyle::DoGetUserFocus()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(StyleUserInterface()->mUserFocus,
+    nsCSSProps::ValueToKeywordEnum(uint8_t(StyleUserInterface()->mUserFocus),
                                    nsCSSProps::kUserFocusKTable));
   return val.forget();
 }
@@ -4722,7 +4749,7 @@ nsComputedDOMStyle::DoGetHeight()
         !(mInnerFrame->IsFrameOfType(nsIFrame::eReplaced)) &&
         // An outer SVG frame should behave the same as eReplaced in this case
         mInnerFrame->GetType() != nsGkAtoms::svgOuterSVGFrame) {
-      
+
       calcHeight = false;
     }
   }
@@ -4766,7 +4793,7 @@ nsComputedDOMStyle::DoGetWidth()
         !(mInnerFrame->IsFrameOfType(nsIFrame::eReplaced)) &&
         // An outer SVG frame should behave the same as eReplaced in this case
         mInnerFrame->GetType() != nsGkAtoms::svgOuterSVGFrame) {
-      
+
       calcWidth = false;
     }
   }
@@ -5118,7 +5145,7 @@ nsComputedDOMStyle::GetLineHeightCoord(nscoord& aCoord)
 
   // lie about font size inflation since we lie about font size (since
   // the inflation only applies to text)
-  aCoord = nsHTMLReflowState::CalcLineHeight(mContent, mStyleContext,
+  aCoord = ReflowInput::CalcLineHeight(mContent, mStyleContext,
                                              blockHeight, 1.0f);
 
   // CalcLineHeight uses font->mFont.size, but we want to use
@@ -5209,7 +5236,7 @@ nsComputedDOMStyle::GetMarginWidthFor(mozilla::css::Side aSide)
     AssertFlushedPendingReflows();
 
     // For tables, GetUsedMargin always returns an empty margin, so we
-    // should read the margin from the outer table frame instead.
+    // should read the margin from the table wrapper frame instead.
     val->SetAppUnits(mOuterFrame->GetUsedMargin().Side(aSide));
     NS_ASSERTION(mOuterFrame == mInnerFrame ||
                  mInnerFrame->GetUsedMargin() == nsMargin(0, 0, 0, 0),
@@ -5968,7 +5995,8 @@ nsComputedDOMStyle::CreatePrimitiveValueForBasicShape(
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::CreatePrimitiveValueForClipPath(
-  const nsStyleBasicShape* aStyleBasicShape, uint8_t aSizingBox)
+  const nsStyleBasicShape* aStyleBasicShape,
+  StyleClipShapeSizing aSizingBox)
 {
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
   if (aStyleBasicShape) {
@@ -5976,7 +6004,7 @@ nsComputedDOMStyle::CreatePrimitiveValueForClipPath(
       CreatePrimitiveValueForBasicShape(aStyleBasicShape));
   }
 
-  if (aSizingBox == NS_STYLE_CLIP_SHAPE_SIZING_NOBOX) {
+  if (aSizingBox == StyleClipShapeSizing::NoBox) {
     return valueList.forget();
   }
 
@@ -5997,18 +6025,18 @@ nsComputedDOMStyle::DoGetClipPath()
 {
   const nsStyleSVGReset* svg = StyleSVGReset();
   switch (svg->mClipPath.GetType()) {
-    case NS_STYLE_CLIP_PATH_SHAPE:
+    case StyleClipPathType::Shape:
       return CreatePrimitiveValueForClipPath(svg->mClipPath.GetBasicShape(),
                                              svg->mClipPath.GetSizingBox());
-    case NS_STYLE_CLIP_PATH_BOX:
+    case StyleClipPathType::Box:
       return CreatePrimitiveValueForClipPath(nullptr,
                                              svg->mClipPath.GetSizingBox());
-    case NS_STYLE_CLIP_PATH_URL: {
+    case StyleClipPathType::URL: {
       RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
       val->SetURI(svg->mClipPath.GetURL());
       return val.forget();
     }
-    case NS_STYLE_CLIP_PATH_NONE: {
+    case StyleClipPathType::None_: {
       RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
       val->SetIdent(eCSSKeyword_none);
       return val.forget();
@@ -6318,7 +6346,6 @@ nsComputedDOMStyle::AppendTimingFunction(nsDOMCSSValueList *aValueList,
     case nsTimingFunction::Type::StepEnd:
       nsStyleUtil::AppendStepsTimingFunction(aTimingFunction.mType,
                                              aTimingFunction.mSteps,
-                                             aTimingFunction.mStepSyntax,
                                              tmp);
       break;
     default:

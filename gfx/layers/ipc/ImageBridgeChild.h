@@ -17,6 +17,7 @@
 #include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/PImageBridgeChild.h"
+#include "mozilla/Mutex.h"
 #include "nsDebug.h"                    // for NS_RUNTIMEABORT
 #include "nsRegion.h"                   // for nsIntRegion
 #include "mozilla/gfx/Rect.h"
@@ -104,7 +105,6 @@ bool InImageBridgeChildThread();
  */
 class ImageBridgeChild final : public PImageBridgeChild
                              , public CompositableForwarder
-                             , public AsyncTransactionTrackersHolder
                              , public ShmemAllocator
 {
   friend class ImageContainer;
@@ -119,10 +119,10 @@ public:
    * We may want to use a specifi thread in the future. In this case, use
    * CreateWithThread instead.
    */
-  static void StartUp();
+  static void InitSameProcess();
 
-  static PImageBridgeChild*
-  StartUpInChildProcess(Transport* aTransport, ProcessId aOtherProcess);
+  static void InitWithGPUProcess(Endpoint<PImageBridgeChild>&& aEndpoint);
+  static bool InitForContent(Endpoint<PImageBridgeChild>&& aEndpoint);
 
   /**
    * Destroys the image bridge by calling DestroyBridge, and destroys the
@@ -132,11 +132,6 @@ public:
    * instead.
    */
   static void ShutDown();
-
-  /**
-   * Creates the ImageBridgeChild manager protocol.
-   */
-  static bool StartUpOnThread(base::Thread* aThread);
 
   /**
    * Returns true if the singleton has been created.
@@ -189,6 +184,8 @@ public:
    */
   virtual MessageLoop * GetMessageLoop() const override;
 
+  virtual base::ProcessId GetParentPid() const override { return OtherPid(); }
+
   PCompositableChild* AllocPCompositableChild(const TextureInfo& aInfo,
                                               PImageContainerChild* aChild, uint64_t* aID) override;
   bool DeallocPCompositableChild(PCompositableChild* aActor) override;
@@ -200,7 +197,7 @@ public:
   ~ImageBridgeChild();
 
   virtual PTextureChild*
-  AllocPTextureChild(const SurfaceDescriptor& aSharedData, const LayersBackend& aLayersBackend, const TextureFlags& aFlags) override;
+  AllocPTextureChild(const SurfaceDescriptor& aSharedData, const LayersBackend& aLayersBackend, const TextureFlags& aFlags, const uint64_t& aSerial) override;
 
   virtual bool
   DeallocPTextureChild(PTextureChild* actor) override;
@@ -265,6 +262,30 @@ public:
                                 const nsIntRect& aPictureRect) override;
 #endif
 
+  /**
+   * Hold TextureClient ref until end of usage on host side if TextureFlags::RECYCLE is set.
+   * Host side's usage is checked via CompositableRef.
+   */
+  void HoldUntilCompositableRefReleasedIfNecessary(TextureClient* aClient);
+
+  /**
+   * Notify id of Texture When host side end its use. Transaction id is used to
+   * make sure if there is no newer usage.
+   */
+  void NotifyNotUsed(uint64_t aTextureId, uint64_t aFwdTransactionId);
+
+  void DeliverFence(uint64_t aTextureId, FenceHandle& aReleaseFenceHandle);
+
+  void HoldUntilFenceHandleDelivery(TextureClient* aClient, uint64_t aTransactionId);
+
+  void DeliverFenceToNonRecycle(uint64_t aTextureId, FenceHandle& aReleaseFenceHandle);
+
+  void NotifyNotUsedToNonRecycle(uint64_t aTextureId, uint64_t aTransactionId);
+
+  void CancelWaitFenceHandle(TextureClient* aClient);
+
+  virtual void CancelWaitForRecycle(uint64_t aTextureId) override;
+
   virtual bool DestroyInTransaction(PTextureChild* aTexture, bool synchronously) override;
   virtual bool DestroyInTransaction(PCompositableChild* aCompositable, bool synchronously) override;
 
@@ -312,15 +333,18 @@ public:
 
   virtual PTextureChild* CreateTexture(const SurfaceDescriptor& aSharedData,
                                        LayersBackend aLayersBackend,
-                                       TextureFlags aFlags) override;
+                                       TextureFlags aFlags,
+                                       uint64_t aSerial) override;
 
   virtual bool IsSameProcess() const override;
 
-  virtual void SendPendingAsyncMessges() override;
+  virtual void UpdateFwdTransactionId() override { ++mFwdTransactionId; }
+  virtual uint64_t GetFwdTransactionId() override { return mFwdTransactionId; }
 
   void MarkShutDown();
 
   void FallbackDestroyActors();
+
 protected:
   ImageBridgeChild();
   bool DispatchAllocShmemInternal(size_t aSize,
@@ -328,9 +352,31 @@ protected:
                                   Shmem* aShmem,
                                   bool aUnsafe);
 
+  void Bind(Endpoint<PImageBridgeChild>&& aEndpoint);
+
+private:
   CompositableTransaction* mTxn;
   Atomic<bool> mShuttingDown;
   static Atomic<bool> sIsShutDown;
+
+  /**
+   * Transaction id of CompositableForwarder.
+   * It is incrementaed by UpdateFwdTransactionId() in each BeginTransaction() call.
+   */
+  uint64_t mFwdTransactionId;
+
+  /**
+   * Hold TextureClients refs until end of their usages on host side.
+   * It defer calling of TextureClient recycle callback.
+   */
+  nsDataHashtable<nsUint64HashKey, RefPtr<TextureClient> > mTexturesWaitingRecycled;
+
+  AsyncTransactionTrackersHolder mTrackersHolder;
+
+#ifdef MOZ_WIDGET_GONK
+  Mutex mWaitingFenceHandleMutex;
+  nsDataHashtable<nsUint64HashKey, RefPtr<TextureClient> > mTexturesWaitingFenceHandle;
+#endif
 };
 
 } // namespace layers

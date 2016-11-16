@@ -24,7 +24,6 @@
 #include "mozilla/layers/Compositor.h"  // for SurfaceInitMode, Compositor, etc
 #include "mozilla/layers/CompositorTypes.h"  // for MaskType::MaskType::NumMaskTypes, etc
 #include "mozilla/layers/LayersTypes.h"
-#include "nsAutoPtr.h"                  // for nsRefPtr, nsAutoPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_ASSERTION, NS_WARNING
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
@@ -194,7 +193,7 @@ class CompositorOGL final : public Compositor
   std::map<ShaderConfigOGL, ShaderProgramOGL*> mPrograms;
 public:
   explicit CompositorOGL(CompositorBridgeParent* aParent,
-                         widget::CompositorWidgetProxy* aWidget,
+                         widget::CompositorWidget* aWidget,
                          int aSurfaceWidth = -1, int aSurfaceHeight = -1,
                          bool aUseExternalSurfaceSize = false);
 
@@ -207,7 +206,7 @@ public:
   virtual already_AddRefed<DataTextureSource>
   CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
 
-  virtual bool Initialize() override;
+  virtual bool Initialize(nsCString* const out_failureReason) override;
 
   virtual void Destroy() override;
 

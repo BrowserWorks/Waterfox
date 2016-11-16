@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (c) 2004-2016, International Business Machines
+* Copyright (c) 2004-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 * Author: Alan Liu
@@ -17,8 +17,7 @@
 #include "unicode/numfmt.h"
 #include "currfmt.h"
 #include "unicode/localpointer.h"
-#include "resource.h"
-#include "unicode/simpleformatter.h"
+#include "simplepatternformatter.h"
 #include "quantityformatter.h"
 #include "unicode/plurrule.h"
 #include "unicode/decimfmt.h"
@@ -36,10 +35,9 @@
 
 #include "sharednumberformat.h"
 #include "sharedpluralrules.h"
-#include "standardplural.h"
 #include "unifiedcache.h"
 
-#define MEAS_UNIT_COUNT 134
+#define MEAS_UNIT_COUNT 129
 #define WIDTH_INDEX_COUNT (UMEASFMT_WIDTH_NARROW + 1)
 
 U_NAMESPACE_BEGIN
@@ -78,53 +76,20 @@ private:
     NumericDateFormatters &operator=(const NumericDateFormatters &other);
 };
 
-static UMeasureFormatWidth getRegularWidth(UMeasureFormatWidth width) {
-    if (width >= WIDTH_INDEX_COUNT) {
-        return UMEASFMT_WIDTH_NARROW;
-    }
-    return width;
-}
-
-/**
- * Instances contain all MeasureFormat specific data for a particular locale.
- * This data is cached. It is never copied, but is shared via shared pointers.
- *
- * Note: We might change the cache data to have an array[WIDTH_INDEX_COUNT] of
- * complete sets of unit & per patterns,
- * to correspond to the resource data and its aliases.
- *
- * TODO: Maybe store more sparsely in general, with pointers rather than potentially-empty objects.
- */
+// Instances contain all MeasureFormat specific data for a particular locale.
+// This data is cached. It is never copied, but is shared via shared pointers.
 class MeasureFormatCacheData : public SharedObject {
 public:
-    static const int32_t PER_UNIT_INDEX = StandardPlural::COUNT;
-    static const int32_t PATTERN_COUNT = PER_UNIT_INDEX + 1;
-
-    /**
-     * Redirection data from root-bundle, top-level sideways aliases.
-     * - UMEASFMT_WIDTH_COUNT: initial value, just fall back to root
-     * - UMEASFMT_WIDTH_WIDE/SHORT/NARROW: sideways alias for missing data
-     */
-    UMeasureFormatWidth widthFallback[WIDTH_INDEX_COUNT];
-    /** Measure unit -> format width -> array of patterns ("{0} meters") (plurals + PER_UNIT_INDEX) */
-    SimpleFormatter *patterns[MEAS_UNIT_COUNT][WIDTH_INDEX_COUNT][PATTERN_COUNT];
-    SimpleFormatter perFormatters[WIDTH_INDEX_COUNT];
+    QuantityFormatter formatters[MEAS_UNIT_COUNT][WIDTH_INDEX_COUNT];
+    SimplePatternFormatter perFormatters[WIDTH_INDEX_COUNT];
 
     MeasureFormatCacheData();
-    virtual ~MeasureFormatCacheData();
-
-    UBool hasPerFormatter(int32_t width) const {
-        // TODO: Create a more obvious way to test if the per-formatter has been set?
-        // Use pointers, check for NULL? Or add an isValid() method?
-        return perFormatters[width].getArgumentLimit() == 2;
-    }
-
     void adoptCurrencyFormat(int32_t widthIndex, NumberFormat *nfToAdopt) {
         delete currencyFormats[widthIndex];
         currencyFormats[widthIndex] = nfToAdopt;
     }
-    const NumberFormat *getCurrencyFormat(UMeasureFormatWidth width) const {
-        return currencyFormats[getRegularWidth(width)];
+    const NumberFormat *getCurrencyFormat(int32_t widthIndex) const {
+        return currencyFormats[widthIndex];
     }
     void adoptIntegerFormat(NumberFormat *nfToAdopt) {
         delete integerFormat;
@@ -140,23 +105,36 @@ public:
     const NumericDateFormatters *getNumericDateFormatters() const {
         return numericDateFormatters;
     }
-
+    void adoptPerUnitFormatter(
+            int32_t index,
+            int32_t widthIndex,
+            SimplePatternFormatter *formatterToAdopt) {
+        delete perUnitFormatters[index][widthIndex];
+        perUnitFormatters[index][widthIndex] = formatterToAdopt;
+    }
+    const SimplePatternFormatter * const * getPerUnitFormattersByIndex(
+            int32_t index) const {
+        return perUnitFormatters[index];
+    }
+    virtual ~MeasureFormatCacheData();
 private:
     NumberFormat *currencyFormats[WIDTH_INDEX_COUNT];
     NumberFormat *integerFormat;
     NumericDateFormatters *numericDateFormatters;
+    SimplePatternFormatter *perUnitFormatters[MEAS_UNIT_COUNT][WIDTH_INDEX_COUNT];
     MeasureFormatCacheData(const MeasureFormatCacheData &other);
     MeasureFormatCacheData &operator=(const MeasureFormatCacheData &other);
 };
 
 MeasureFormatCacheData::MeasureFormatCacheData() {
-    for (int32_t i = 0; i < WIDTH_INDEX_COUNT; ++i) {
-        widthFallback[i] = UMEASFMT_WIDTH_COUNT;
-    }
     for (int32_t i = 0; i < UPRV_LENGTHOF(currencyFormats); ++i) {
         currencyFormats[i] = NULL;
     }
-    uprv_memset(patterns, 0, sizeof(patterns));
+    for (int32_t i = 0; i < MEAS_UNIT_COUNT; ++i) {
+        for (int32_t j = 0; j < WIDTH_INDEX_COUNT; ++j) {
+            perUnitFormatters[i][j] = NULL;
+        }
+    }
     integerFormat = NULL;
     numericDateFormatters = NULL;
 }
@@ -167,13 +145,18 @@ MeasureFormatCacheData::~MeasureFormatCacheData() {
     }
     for (int32_t i = 0; i < MEAS_UNIT_COUNT; ++i) {
         for (int32_t j = 0; j < WIDTH_INDEX_COUNT; ++j) {
-            for (int32_t k = 0; k < PATTERN_COUNT; ++k) {
-                delete patterns[i][j][k];
-            }
+            delete perUnitFormatters[i][j];
         }
     }
     delete integerFormat;
     delete numericDateFormatters;
+}
+
+static int32_t widthToIndex(UMeasureFormatWidth width) {
+    if (width >= WIDTH_INDEX_COUNT) {
+        return WIDTH_INDEX_COUNT - 1;
+    }
+    return width;
 }
 
 static UBool isCurrency(const MeasureUnit &unit) {
@@ -193,219 +176,118 @@ static UBool getString(
     return TRUE;
 }
 
-namespace {
-
-static const UChar g_LOCALE_units[] = {
-    0x2F, 0x4C, 0x4F, 0x43, 0x41, 0x4C, 0x45, 0x2F,
-    0x75, 0x6E, 0x69, 0x74, 0x73
-};
-static const UChar gShort[] = { 0x53, 0x68, 0x6F, 0x72, 0x74 };
-static const UChar gNarrow[] = { 0x4E, 0x61, 0x72, 0x72, 0x6F, 0x77 };
-
-/**
- * Sink for enumerating all of the measurement unit display names.
- * Contains inner sink classes, each one corresponding to a type of resource table.
- * The outer sink handles the top-level units, unitsNarrow, and unitsShort tables.
- *
- * More specific bundles (en_GB) are enumerated before their parents (en_001, en, root):
- * Only store a value if it is still missing, that is, it has not been overridden.
- *
- * C++: Each inner sink class has a reference to the main outer sink.
- * Java: Use non-static inner classes instead.
- */
-struct UnitDataSink : public ResourceTableSink {
-    /**
-     * Sink for a table of display patterns. For example,
-     * unitsShort/duration/hour contains other{"{0} hrs"}.
-     */
-    struct UnitPatternSink : public ResourceTableSink {
-        UnitPatternSink(UnitDataSink &sink) : outer(sink) {}
-        ~UnitPatternSink();
-
-        void setFormatterIfAbsent(int32_t index, const ResourceValue &value,
-                                  int32_t minPlaceholders, UErrorCode &errorCode) {
-            SimpleFormatter **patterns =
-                &outer.cacheData.patterns[outer.unitIndex][outer.width][0];
-            if (U_SUCCESS(errorCode) && patterns[index] == NULL) {
-                patterns[index] = new SimpleFormatter(
-                       value.getUnicodeString(errorCode), minPlaceholders, 1, errorCode);
-                if (U_SUCCESS(errorCode) && patterns[index] == NULL) {
-                    errorCode = U_MEMORY_ALLOCATION_ERROR;
-                }
-            }
-        }
-
-        virtual void put(const char *key, const ResourceValue &value, UErrorCode &errorCode) {
-            if (U_FAILURE(errorCode)) { return; }
-            if (uprv_strcmp(key, "dnam") == 0) {
-                // Skip the unit display name for now.
-            } else if (uprv_strcmp(key, "per") == 0) {
-                // For example, "{0}/h".
-                setFormatterIfAbsent(MeasureFormatCacheData::PER_UNIT_INDEX, value, 1, errorCode);
-            } else {
-                // The key must be one of the plural form strings. For example:
-                // one{"{0} hr"}
-                // other{"{0} hrs"}
-                setFormatterIfAbsent(StandardPlural::indexFromString(key, errorCode), value, 0,
-                                     errorCode);
-            }
-        }
-        UnitDataSink &outer;
-    } patternSink;
-
-    /**
-     * Sink for a table of per-unit tables. For example,
-     * unitsShort/duration contains tables for duration-unit subtypes day & hour.
-     */
-    struct UnitSubtypeSink : public ResourceTableSink {
-        UnitSubtypeSink(UnitDataSink &sink) : outer(sink) {}
-        ~UnitSubtypeSink();
-        virtual ResourceTableSink *getOrCreateTableSink(
-                const char *key, int32_t /* initialSize */, UErrorCode &errorCode) {
-            if (U_FAILURE(errorCode)) { return NULL; }
-            outer.unitIndex = MeasureUnit::internalGetIndexForTypeAndSubtype(outer.type, key);
-            if (outer.unitIndex >= 0) {
-                return &outer.patternSink;
-            }
-            return NULL;
-        }
-        UnitDataSink &outer;
-    } subtypeSink;
-
-    /**
-     * Sink for compound x-per-y display pattern. For example,
-     * unitsShort/compound/per may be "{0}/{1}".
-     */
-    struct UnitCompoundSink : public ResourceTableSink {
-        UnitCompoundSink(UnitDataSink &sink) : outer(sink) {}
-        ~UnitCompoundSink();
-        virtual void put(const char *key, const ResourceValue &value, UErrorCode &errorCode) {
-            if (U_SUCCESS(errorCode) && uprv_strcmp(key, "per") == 0) {
-                outer.cacheData.perFormatters[outer.width].
-                        applyPatternMinMaxArguments(value.getUnicodeString(errorCode), 2, 2, errorCode);
-            }
-        }
-        UnitDataSink &outer;
-    } compoundSink;
-
-    /**
-     * Sink for a table of unit type tables. For example,
-     * unitsShort contains tables for area & duration.
-     * It also contains a table for the compound/per pattern.
-     */
-    struct UnitTypeSink : public ResourceTableSink {
-        UnitTypeSink(UnitDataSink &sink) : outer(sink) {}
-        ~UnitTypeSink();
-        virtual ResourceTableSink *getOrCreateTableSink(
-                const char *key, int32_t /* initialSize */, UErrorCode &errorCode) {
-            if (U_FAILURE(errorCode)) { return NULL; }
-            if (uprv_strcmp(key, "currency") == 0) {
-                // Skip.
-            } else if (uprv_strcmp(key, "compound") == 0) {
-                if (!outer.cacheData.hasPerFormatter(outer.width)) {
-                    return &outer.compoundSink;
-                }
-            } else {
-                outer.type = key;
-                return &outer.subtypeSink;
-            }
-            return NULL;
-        }
-        UnitDataSink &outer;
-    } typeSink;
-
-    UnitDataSink(MeasureFormatCacheData &outputData)
-            : patternSink(*this), subtypeSink(*this), compoundSink(*this), typeSink(*this),
-              cacheData(outputData),
-              width(UMEASFMT_WIDTH_COUNT), type(NULL), unitIndex(0) {}
-    ~UnitDataSink();
-    virtual void put(const char *key, const ResourceValue &value, UErrorCode &errorCode) {
-        // Handle aliases like
-        // units:alias{"/LOCALE/unitsShort"}
-        // which should only occur in the root bundle.
-        if (U_FAILURE(errorCode) || value.getType() != URES_ALIAS) { return; }
-        UMeasureFormatWidth sourceWidth = widthFromKey(key);
-        if (sourceWidth == UMEASFMT_WIDTH_COUNT) {
-            // Alias from something we don't care about.
-            return;
-        }
-        UMeasureFormatWidth targetWidth = widthFromAlias(value, errorCode);
-        if (targetWidth == UMEASFMT_WIDTH_COUNT) {
-            // We do not recognize what to fall back to.
-            errorCode = U_INVALID_FORMAT_ERROR;
-            return;
-        }
-        // Check that we do not fall back to another fallback.
-        if (cacheData.widthFallback[targetWidth] != UMEASFMT_WIDTH_COUNT) {
-            errorCode = U_INVALID_FORMAT_ERROR;
-            return;
-        }
-        cacheData.widthFallback[sourceWidth] = targetWidth;
-    }
-    virtual ResourceTableSink *getOrCreateTableSink(
-            const char *key, int32_t /* initialSize */, UErrorCode &errorCode) {
-        if (U_SUCCESS(errorCode) && (width = widthFromKey(key)) != UMEASFMT_WIDTH_COUNT) {
-            return &typeSink;
-        }
-        return NULL;
-    }
-
-    static UMeasureFormatWidth widthFromKey(const char *key) {
-        if (uprv_strncmp(key, "units", 5) == 0) {
-            key += 5;
-            if (*key == 0) {
-                return UMEASFMT_WIDTH_WIDE;
-            } else if (uprv_strcmp(key, "Short") == 0) {
-                return UMEASFMT_WIDTH_SHORT;
-            } else if (uprv_strcmp(key, "Narrow") == 0) {
-                return UMEASFMT_WIDTH_NARROW;
-            }
-        }
-        return UMEASFMT_WIDTH_COUNT;
-    }
-
-    static UMeasureFormatWidth widthFromAlias(const ResourceValue &value, UErrorCode &errorCode) {
-        int32_t length;
-        const UChar *s = value.getAliasString(length, errorCode);
-        // For example: "/LOCALE/unitsShort"
-        if (U_SUCCESS(errorCode) && length >= 13 && u_memcmp(s, g_LOCALE_units, 13) == 0) {
-            s += 13;
-            length -= 13;
-            if (*s == 0) {
-                return UMEASFMT_WIDTH_WIDE;
-            } else if (u_strCompare(s, length, gShort, 5, FALSE) == 0) {
-                return UMEASFMT_WIDTH_SHORT;
-            } else if (u_strCompare(s, length, gNarrow, 6, FALSE) == 0) {
-                return UMEASFMT_WIDTH_NARROW;
-            }
-        }
-        return UMEASFMT_WIDTH_COUNT;
-    }
-
-    // Output data.
-    MeasureFormatCacheData &cacheData;
-
-    // Path to current data.
-    UMeasureFormatWidth width;
-    const char *type;
-    int32_t unitIndex;
-};
-
-// Virtual destructors must be defined out of line.
-UnitDataSink::UnitPatternSink::~UnitPatternSink() {}
-UnitDataSink::UnitSubtypeSink::~UnitSubtypeSink() {}
-UnitDataSink::UnitCompoundSink::~UnitCompoundSink() {}
-UnitDataSink::UnitTypeSink::~UnitTypeSink() {}
-UnitDataSink::~UnitDataSink() {}
-
-}  // namespace
 
 static UBool loadMeasureUnitData(
         const UResourceBundle *resource,
         MeasureFormatCacheData &cacheData,
         UErrorCode &status) {
-    UnitDataSink sink(cacheData);
-    ures_getAllTableItemsWithFallback(resource, "", sink, status);
+    if (U_FAILURE(status)) {
+        return FALSE;
+    }
+    static const char *widthPath[] = {"units", "unitsShort", "unitsNarrow"};
+    MeasureUnit *units = NULL;
+    int32_t unitCount = MeasureUnit::getAvailable(units, 0, status);
+    while (status == U_BUFFER_OVERFLOW_ERROR) {
+        status = U_ZERO_ERROR;
+        delete [] units;
+        units = new MeasureUnit[unitCount];
+        if (units == NULL) {
+            status = U_MEMORY_ALLOCATION_ERROR;
+            return FALSE;
+        }
+        unitCount = MeasureUnit::getAvailable(units, unitCount, status);
+    }
+    for (int32_t currentWidth = 0; currentWidth < WIDTH_INDEX_COUNT; ++currentWidth) {
+        // Be sure status is clear since next resource bundle lookup may fail.
+        if (U_FAILURE(status)) {
+            delete [] units;
+            return FALSE;
+        }
+        LocalUResourceBundlePointer widthBundle(
+                ures_getByKeyWithFallback(
+                        resource, widthPath[currentWidth], NULL, &status));
+        // We may not have data for all widths in all locales.
+        if (status == U_MISSING_RESOURCE_ERROR) {
+            status = U_ZERO_ERROR;
+            continue;
+        }
+        {
+            // compound per
+            LocalUResourceBundlePointer compoundPerBundle(
+                    ures_getByKeyWithFallback(
+                            widthBundle.getAlias(),
+                            "compound/per",
+                            NULL,
+                            &status));
+            if (U_FAILURE(status)) {
+                status = U_ZERO_ERROR;
+            } else {
+                UnicodeString perPattern;
+                getString(compoundPerBundle.getAlias(), perPattern, status);
+                cacheData.perFormatters[currentWidth].compile(perPattern, status);
+            }
+        }
+        for (int32_t currentUnit = 0; currentUnit < unitCount; ++currentUnit) {
+            // Be sure status is clear next lookup may fail.
+            if (U_FAILURE(status)) {
+                delete [] units;
+                return FALSE;
+            }
+            if (isCurrency(units[currentUnit])) {
+                continue;
+            }
+            CharString pathBuffer;
+            pathBuffer.append(units[currentUnit].getType(), status)
+                    .append("/", status)
+                    .append(units[currentUnit].getSubtype(), status);
+            LocalUResourceBundlePointer unitBundle(
+                    ures_getByKeyWithFallback(
+                            widthBundle.getAlias(),
+                            pathBuffer.data(),
+                            NULL,
+                            &status));
+            // We may not have data for all units in all widths
+            if (status == U_MISSING_RESOURCE_ERROR) {
+                status = U_ZERO_ERROR;
+                continue;
+            }
+            // We must have the unit bundle to proceed
+            if (U_FAILURE(status)) {
+                delete [] units;
+                return FALSE;
+            }
+            int32_t size = ures_getSize(unitBundle.getAlias());
+            for (int32_t plIndex = 0; plIndex < size; ++plIndex) {
+                LocalUResourceBundlePointer pluralBundle(
+                        ures_getByIndex(
+                                unitBundle.getAlias(), plIndex, NULL, &status));
+                if (U_FAILURE(status)) {
+                    delete [] units;
+                    return FALSE;
+                }
+                const char * resKey = ures_getKey(pluralBundle.getAlias());
+                if (uprv_strcmp(resKey, "dnam") == 0) {
+                    continue; // skip display name & per pattern (new in CLDR 26 / ICU 54) for now, not part of plurals
+                }
+                if (uprv_strcmp(resKey, "per") == 0) {
+                    UnicodeString perPattern;
+                    getString(pluralBundle.getAlias(), perPattern, status);
+                    cacheData.adoptPerUnitFormatter(
+                            units[currentUnit].getIndex(),
+                            currentWidth, 
+                            new SimplePatternFormatter(perPattern));
+                    continue;
+                }
+                UnicodeString rawPattern;
+                getString(pluralBundle.getAlias(), rawPattern, status);
+                cacheData.formatters[units[currentUnit].getIndex()][currentWidth].add(
+                        resKey,
+                        rawPattern,
+                        status);
+            }
+        }
+    }
+    delete [] units;
     return U_SUCCESS(status);
 }
 
@@ -604,9 +486,7 @@ MeasureFormat::MeasureFormat(const MeasureFormat &other) :
     cache->addRef();
     numberFormat->addRef();
     pluralRules->addRef();
-    if (other.listFormatter != NULL) {
-        listFormatter = new ListFormatter(*other.listFormatter);
-    }
+    listFormatter = new ListFormatter(*other.listFormatter);
 }
 
 MeasureFormat &MeasureFormat::operator=(const MeasureFormat &other) {
@@ -619,11 +499,7 @@ MeasureFormat &MeasureFormat::operator=(const MeasureFormat &other) {
     SharedObject::copyPtr(other.pluralRules, pluralRules);
     width = other.width;
     delete listFormatter;
-    if (other.listFormatter != NULL) {
-        listFormatter = new ListFormatter(*other.listFormatter);
-    } else {
-        listFormatter = NULL;
-    }
+    listFormatter = new ListFormatter(*other.listFormatter);
     return *this;
 }
 
@@ -838,7 +714,7 @@ void MeasureFormat::initMeasureFormat(
     delete listFormatter;
     listFormatter = ListFormatter::createInstance(
             locale,
-            listStyles[getRegularWidth(width)],
+            listStyles[widthToIndex(width)],
             status);
 }
 
@@ -895,17 +771,24 @@ UnicodeString &MeasureFormat::formatMeasure(
     if (isCurrency(amtUnit)) {
         UChar isoCode[4];
         u_charsToUChars(amtUnit.getSubtype(), isoCode, 4);
-        return cache->getCurrencyFormat(width)->format(
+        return cache->getCurrencyFormat(widthToIndex(width))->format(
                 new CurrencyAmount(amtNumber, isoCode, status),
                 appendTo,
                 pos,
                 status);
     }
-    UnicodeString formattedNumber;
-    StandardPlural::Form pluralForm = QuantityFormatter::selectPlural(
-            amtNumber, nf, **pluralRules, formattedNumber, pos, status);
-    const SimpleFormatter *formatter = getPluralFormatter(amtUnit, width, pluralForm, status);
-    return QuantityFormatter::format(*formatter, formattedNumber, appendTo, pos, status);
+    const QuantityFormatter *quantityFormatter = getQuantityFormatter(
+            amtUnit.getIndex(), widthToIndex(width), status);
+    if (U_FAILURE(status)) {
+        return appendTo;
+    }
+    return quantityFormatter->format(
+            amtNumber,
+            nf,
+            **pluralRules,
+            appendTo,
+            pos,
+            status);
 }
 
 // Formats hours-minutes-seconds as 5:37:23 or similar.
@@ -1037,67 +920,62 @@ UnicodeString &MeasureFormat::formatNumeric(
     return appendTo;
 }
 
-const SimpleFormatter *MeasureFormat::getFormatterOrNull(
-        const MeasureUnit &unit, UMeasureFormatWidth width, int32_t index) const {
-    width = getRegularWidth(width);
-    SimpleFormatter *const (*unitPatterns)[MeasureFormatCacheData::PATTERN_COUNT] =
-            &cache->patterns[unit.getIndex()][0];
-    if (unitPatterns[width][index] != NULL) {
-        return unitPatterns[width][index];
-    }
-    int32_t fallbackWidth = cache->widthFallback[width];
-    if (fallbackWidth != UMEASFMT_WIDTH_COUNT && unitPatterns[fallbackWidth][index] != NULL) {
-        return unitPatterns[fallbackWidth][index];
-    }
-    return NULL;
-}
-
-const SimpleFormatter *MeasureFormat::getFormatter(
-        const MeasureUnit &unit, UMeasureFormatWidth width, int32_t index,
-        UErrorCode &errorCode) const {
-    if (U_FAILURE(errorCode)) {
-        return NULL;
-    }
-    const SimpleFormatter *pattern = getFormatterOrNull(unit, width, index);
-    if (pattern == NULL) {
-        errorCode = U_MISSING_RESOURCE_ERROR;
-    }
-    return pattern;
-}
-
-const SimpleFormatter *MeasureFormat::getPluralFormatter(
-        const MeasureUnit &unit, UMeasureFormatWidth width, int32_t index,
-        UErrorCode &errorCode) const {
-    if (U_FAILURE(errorCode)) {
-        return NULL;
-    }
-    if (index != StandardPlural::OTHER) {
-        const SimpleFormatter *pattern = getFormatterOrNull(unit, width, index);
-        if (pattern != NULL) {
-            return pattern;
-        }
-    }
-    return getFormatter(unit, width, StandardPlural::OTHER, errorCode);
-}
-
-const SimpleFormatter *MeasureFormat::getPerFormatter(
-        UMeasureFormatWidth width,
+const QuantityFormatter *MeasureFormat::getQuantityFormatter(
+        int32_t index,
+        int32_t widthIndex,
         UErrorCode &status) const {
     if (U_FAILURE(status)) {
         return NULL;
     }
-    width = getRegularWidth(width);
-    const SimpleFormatter * perFormatters = cache->perFormatters;
-    if (perFormatters[width].getArgumentLimit() == 2) {
-        return &perFormatters[width];
+    const QuantityFormatter *formatters =
+            cache->formatters[index];
+    if (formatters[widthIndex].isValid()) {
+        return &formatters[widthIndex];
     }
-    int32_t fallbackWidth = cache->widthFallback[width];
-    if (fallbackWidth != UMEASFMT_WIDTH_COUNT &&
-            perFormatters[fallbackWidth].getArgumentLimit() == 2) {
-        return &perFormatters[fallbackWidth];
+    if (formatters[UMEASFMT_WIDTH_SHORT].isValid()) {
+        return &formatters[UMEASFMT_WIDTH_SHORT];
     }
     status = U_MISSING_RESOURCE_ERROR;
     return NULL;
+}
+
+const SimplePatternFormatter *MeasureFormat::getPerUnitFormatter(
+        int32_t index,
+        int32_t widthIndex) const {
+    const SimplePatternFormatter * const * perUnitFormatters =
+            cache->getPerUnitFormattersByIndex(index);
+    if (perUnitFormatters[widthIndex] != NULL) {
+        return perUnitFormatters[widthIndex];
+    }
+    if (perUnitFormatters[UMEASFMT_WIDTH_SHORT] != NULL) {
+        return perUnitFormatters[UMEASFMT_WIDTH_SHORT];
+    }
+    return NULL;
+}
+
+const SimplePatternFormatter *MeasureFormat::getPerFormatter(
+        int32_t widthIndex,
+        UErrorCode &status) const {
+    if (U_FAILURE(status)) {
+        return NULL;
+    }
+    const SimplePatternFormatter * perFormatters = cache->perFormatters;
+    
+    if (perFormatters[widthIndex].getPlaceholderCount() == 2) {
+        return &perFormatters[widthIndex];
+    }
+    if (perFormatters[UMEASFMT_WIDTH_SHORT].getPlaceholderCount() == 2) {
+        return &perFormatters[UMEASFMT_WIDTH_SHORT];
+    }
+    status = U_MISSING_RESOURCE_ERROR;
+    return NULL;
+}
+
+static void getPerUnitString(
+        const QuantityFormatter &formatter,
+        UnicodeString &result) {
+    result = formatter.getByVariant("one")->getPatternWithNoPlaceholders();
+    result.trim();
 }
 
 int32_t MeasureFormat::withPerUnitAndAppend(
@@ -1109,8 +987,8 @@ int32_t MeasureFormat::withPerUnitAndAppend(
     if (U_FAILURE(status)) {
         return offset;
     }
-    const SimpleFormatter *perUnitFormatter =
-            getFormatterOrNull(perUnit, width, MeasureFormatCacheData::PER_UNIT_INDEX);
+    const SimplePatternFormatter *perUnitFormatter = getPerUnitFormatter(
+            perUnit.getIndex(), widthToIndex(width));
     if (perUnitFormatter != NULL) {
         const UnicodeString *params[] = {&formatted};
         perUnitFormatter->formatAndAppend(
@@ -1122,14 +1000,15 @@ int32_t MeasureFormat::withPerUnitAndAppend(
                 status);
         return offset;
     }
-    const SimpleFormatter *perFormatter = getPerFormatter(width, status);
-    const SimpleFormatter *pattern =
-            getPluralFormatter(perUnit, width, StandardPlural::ONE, status);
+    const SimplePatternFormatter *perFormatter = getPerFormatter(
+            widthToIndex(width), status);
+    const QuantityFormatter *qf = getQuantityFormatter(
+            perUnit.getIndex(), widthToIndex(width), status);
     if (U_FAILURE(status)) {
         return offset;
     }
-    UnicodeString perUnitString = pattern->getTextWithNoArguments();
-    perUnitString.trim();
+    UnicodeString perUnitString;
+    getPerUnitString(*qf, perUnitString);
     const UnicodeString *params[] = {&formatted, &perUnitString};
     perFormatter->formatAndAppend(
             params,

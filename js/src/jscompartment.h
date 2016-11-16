@@ -14,6 +14,7 @@
 #include "mozilla/Variant.h"
 #include "mozilla/XorShift128PlusRNG.h"
 
+#include "asmjs/WasmJS.h"
 #include "builtin/RegExp.h"
 #include "gc/Barrier.h"
 #include "gc/Zone.h"
@@ -32,13 +33,8 @@ namespace gc {
 template <typename Node, typename Derived> class ComponentFinder;
 } // namespace gc
 
-namespace wasm {
-class Module;
-} // namespace wasm
-
 class ClonedBlockObject;
 class ScriptSourceObject;
-class WasmModuleObject;
 struct NativeIterator;
 
 /*
@@ -110,9 +106,9 @@ struct CrossCompartmentKey
     template <typename T> const T& as() const { return wrapped.as<T>(); }
 
     template <typename F>
-    auto applyToWrapped(F f) -> typename F::ReturnType {
+    auto applyToWrapped(F f) -> decltype(f(static_cast<JSObject**>(nullptr))) {
+        using ReturnType = decltype(f(static_cast<JSObject**>(nullptr)));
         struct WrappedMatcher {
-            using ReturnType = typename F::ReturnType;
             F f_;
             explicit WrappedMatcher(F f) : f_(f) {}
             ReturnType match(JSObject*& obj) { return f_(&obj); }
@@ -124,9 +120,9 @@ struct CrossCompartmentKey
     }
 
     template <typename F>
-    auto applyToDebugger(F f) -> typename F::ReturnType {
+    auto applyToDebugger(F f) -> decltype(f(static_cast<NativeObject**>(nullptr))) {
+        using ReturnType = decltype(f(static_cast<NativeObject**>(nullptr)));
         struct DebuggerMatcher {
-            using ReturnType = typename F::ReturnType;
             F f_;
             explicit DebuggerMatcher(F f) : f_(f) {}
             ReturnType match(JSObject*& obj) { return ReturnType(); }
@@ -141,10 +137,9 @@ struct CrossCompartmentKey
     // JSString* key.
     JSCompartment* compartment() {
         struct GetCompartmentFunctor {
-            using ReturnType = JSCompartment*;
-            ReturnType operator()(JSObject** tp) const { return (*tp)->compartment(); }
-            ReturnType operator()(JSScript** tp) const { return (*tp)->compartment(); }
-            ReturnType operator()(JSString** tp) const {
+            JSCompartment* operator()(JSObject** tp) const { return (*tp)->compartment(); }
+            JSCompartment* operator()(JSScript** tp) const { return (*tp)->compartment(); }
+            JSCompartment* operator()(JSString** tp) const {
                 MOZ_CRASH("invalid ccw key"); return nullptr;
             }
         };
@@ -154,14 +149,13 @@ struct CrossCompartmentKey
     struct Hasher : public DefaultHasher<CrossCompartmentKey>
     {
         struct HashFunctor {
-            using ReturnType = HashNumber;
-            ReturnType match(JSObject* obj) { return DefaultHasher<JSObject*>::hash(obj); }
-            ReturnType match(JSString* str) { return DefaultHasher<JSString*>::hash(str); }
-            ReturnType match(const DebuggerAndScript& tpl) {
+            HashNumber match(JSObject* obj) { return DefaultHasher<JSObject*>::hash(obj); }
+            HashNumber match(JSString* str) { return DefaultHasher<JSString*>::hash(str); }
+            HashNumber match(const DebuggerAndScript& tpl) {
                 return DefaultHasher<NativeObject*>::hash(mozilla::Get<0>(tpl)) ^
                        DefaultHasher<JSScript*>::hash(mozilla::Get<1>(tpl));
             }
-            ReturnType match(const DebuggerAndObject& tpl) {
+            HashNumber match(const DebuggerAndObject& tpl) {
                 return DefaultHasher<NativeObject*>::hash(mozilla::Get<0>(tpl)) ^
                        DefaultHasher<JSObject*>::hash(mozilla::Get<1>(tpl)) ^
                        (mozilla::Get<2>(tpl) << 5);
@@ -389,6 +383,10 @@ struct JSCompartment
         return runtime_;
     }
 
+    JSContext* contextFromMainThread() const {
+        return runtime_->contextFromMainThread();
+    }
+
     /*
      * Nb: global_ might be nullptr, if (a) it's the atoms compartment, or
      * (b) the compartment's global has been collected.  The latter can happen
@@ -417,6 +415,9 @@ struct JSCompartment
 
     js::WrapperMap               crossCompartmentWrappers;
 
+    using CCKeyVector = mozilla::Vector<js::CrossCompartmentKey, 0, js::SystemAllocPolicy>;
+    CCKeyVector                  nurseryCCKeys;
+
   public:
     /* Last time at which an animation was played for a global in this compartment. */
     int64_t                      lastAnimationTime;
@@ -427,10 +428,10 @@ struct JSCompartment
      * For generational GC, record whether a write barrier has added this
      * compartment's global to the store buffer since the last minor GC.
      *
-     * This is used to avoid adding it to the store buffer on every write, which
-     * can quickly fill the buffer and also cause performance problems.
+     * This is used to avoid calling into the VM every time a nursery object is
+     * written to a property of the global.
      */
-    bool                         globalWriteBarriered;
+    uint32_t                     globalWriteBarriered;
 
     // Non-zero if the storage underlying any typed object in this compartment
     // might be detached.
@@ -508,7 +509,7 @@ struct JSCompartment
     js::ObjectWeakMap* objectMetadataTable;
 
     // Map from array buffers to views sharing that storage.
-    js::InnerViewTable innerViews;
+    JS::WeakCache<js::InnerViewTable> innerViews;
 
     // Inline transparent typed objects do not initially have an array buffer,
     // but can have that buffer created lazily if it is accessed later. This
@@ -518,10 +519,11 @@ struct JSCompartment
     // All unboxed layouts in the compartment.
     mozilla::LinkedList<js::UnboxedLayout> unboxedLayouts;
 
-    // All wasm modules in the compartment. Weakly held.
-    //
-    // The caller needs to call wasm::Module::readBarrier() manually!
-    mozilla::LinkedList<js::wasm::Module> wasmModuleWeakList;
+    // All wasm live instances in the compartment.
+    using WasmInstanceObjectSet = js::GCHashSet<js::ReadBarriered<js::WasmInstanceObject*>,
+                                                js::MovableCellHasher<js::ReadBarriered<js::WasmInstanceObject*>>,
+                                                js::SystemAllocPolicy>;
+    JS::WeakCache<WasmInstanceObjectSet> wasmInstances;
 
   private:
     // All non-syntactic lexical scopes in the compartment. These are kept in
@@ -620,7 +622,6 @@ struct JSCompartment
 
     void sweepAfterMinorGC();
 
-    void sweepInnerViews();
     void sweepCrossCompartmentWrappers();
     void sweepSavedStacks();
     void sweepGlobalObject(js::FreeOp* fop);
@@ -849,6 +850,8 @@ struct JSCompartment
     };
 
     js::ArgumentsObject* getOrCreateArgumentsTemplateObject(JSContext* cx, bool mapped);
+
+    js::ArgumentsObject* maybeArgumentsTemplateObject(bool mapped) const;
 
   private:
     // Used for collecting telemetry on SpiderMonkey's deprecated language extensions.

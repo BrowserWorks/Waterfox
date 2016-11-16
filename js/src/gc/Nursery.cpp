@@ -41,11 +41,14 @@ using mozilla::DebugOnly;
 using mozilla::PodCopy;
 using mozilla::PodZero;
 
+static const uintptr_t CanaryMagicValue = 0xDEADB15D;
+
 struct js::Nursery::FreeMallocedBuffersTask : public GCParallelTask
 {
     explicit FreeMallocedBuffersTask(FreeOp* fop) : fop_(fop) {}
     bool init() { return buffers_.init(); }
-    void transferBuffersToFree(MallocedBuffersSet& buffersToFree);
+    void transferBuffersToFree(MallocedBuffersSet& buffersToFree,
+                               const AutoLockHelperThreadState& lock);
     ~FreeMallocedBuffersTask() override { join(); }
 
   private:
@@ -70,6 +73,27 @@ struct js::Nursery::SweepAction
     uint32_t padding;
 #endif
 };
+
+js::Nursery::Nursery(JSRuntime* rt)
+  : runtime_(rt)
+  , position_(0)
+  , currentStart_(0)
+  , currentEnd_(0)
+  , heapStart_(0)
+  , heapEnd_(0)
+  , currentChunk_(0)
+  , numActiveChunks_(0)
+  , numNurseryChunks_(0)
+  , previousPromotionRate_(0)
+  , profileThreshold_(0)
+  , enableProfiling_(false)
+  , minorGcCount_(0)
+  , freeMallocedBuffersTask(nullptr)
+  , sweepActions_(nullptr)
+#ifdef JS_GC_ZEAL
+  , lastCanary_(nullptr)
+#endif
+{}
 
 bool
 js::Nursery::init(uint32_t maxNurseryBytes)
@@ -113,6 +137,10 @@ js::Nursery::init(uint32_t maxNurseryBytes)
         enableProfiling_ = true;
         profileThreshold_ = atoi(env);
     }
+
+    PodZero(&startTimes_);
+    PodZero(&profileTimes_);
+    PodZero(&totalTimes_);
 
     MOZ_ASSERT(isEnabled());
     return true;
@@ -225,6 +253,14 @@ js::Nursery::allocate(size_t size)
     MOZ_ASSERT(isEnabled());
     MOZ_ASSERT(!runtime()->isHeapBusy());
     MOZ_ASSERT(position() >= currentStart_);
+    MOZ_ASSERT(position() % gc::CellSize == 0);
+    MOZ_ASSERT(size % gc::CellSize == 0);
+
+#ifdef JS_GC_ZEAL
+    static const size_t CanarySize = (sizeof(Nursery::Canary) + CellSize - 1) & ~CellMask;
+    if (runtime()->gc.hasZealMode(ZealMode::CheckNursery))
+        size += CanarySize;
+#endif
 
     if (currentEnd() < position() + size) {
         if (currentChunk_ + 1 == numActiveChunks_)
@@ -236,6 +272,20 @@ js::Nursery::allocate(size_t size)
     position_ = position() + size;
 
     JS_EXTRA_POISON(thing, JS_ALLOCATED_NURSERY_PATTERN, size);
+
+#ifdef JS_GC_ZEAL
+    if (runtime()->gc.hasZealMode(ZealMode::CheckNursery)) {
+        auto canary = reinterpret_cast<Canary*>(position() - CanarySize);
+        canary->magicValue = CanaryMagicValue;
+        canary->next = nullptr;
+        if (lastCanary_) {
+            MOZ_ASSERT(!lastCanary_->next);
+            lastCanary_->next = canary;
+        }
+        lastCanary_ = canary;
+    }
+#endif
+
     MemProfiler::SampleNursery(reinterpret_cast<void*>(thing), size);
     return thing;
 }
@@ -389,15 +439,65 @@ js::TenuringTracer::TenuringTracer(JSRuntime* rt, Nursery* nursery)
 {
 }
 
-#define TIME_START(name) int64_t timestampStart_##name = enableProfiling_ ? PRMJ_Now() : 0
-#define TIME_END(name) int64_t timestampEnd_##name = enableProfiling_ ? PRMJ_Now() : 0
-#define TIME_TOTAL(name) (timestampEnd_##name - timestampStart_##name)
+/* static */ void
+js::Nursery::printProfileHeader()
+{
+#define PRINT_HEADER(name, text)                                              \
+    fprintf(stderr, " %6s", text);
+FOR_EACH_NURSERY_PROFILE_TIME(PRINT_HEADER)
+#undef PRINT_HEADER
+    fprintf(stderr, "\n");
+}
+
+/* static */ void
+js::Nursery::printProfileTimes(const ProfileTimes& times)
+{
+    for (auto time : times)
+        fprintf(stderr, " %6" PRIi64, time);
+    fprintf(stderr, "\n");
+}
+
+void
+js::Nursery::printTotalProfileTimes()
+{
+    if (enableProfiling_) {
+        fprintf(stderr, "MinorGC TOTALS: %7" PRIu64 " collections:      ", minorGcCount_);
+        printProfileTimes(totalTimes_);
+    }
+}
+
+inline void
+js::Nursery::startProfile(ProfileKey key)
+{
+    startTimes_[key] = PRMJ_Now();
+}
+
+inline void
+js::Nursery::endProfile(ProfileKey key)
+{
+    profileTimes_[key] = PRMJ_Now() - startTimes_[key];
+    totalTimes_[key] += profileTimes_[key];
+}
+
+inline void
+js::Nursery::maybeStartProfile(ProfileKey key)
+{
+    if (enableProfiling_)
+        startProfile(key);
+}
+
+inline void
+js::Nursery::maybeEndProfile(ProfileKey key)
+{
+    if (enableProfiling_)
+        endProfile(key);
+}
 
 void
 js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList* pretenureGroups)
 {
     MOZ_ASSERT(!rt->mainThread.suppressGC);
-    JS_AbortIfWrongThread(rt);
+    MOZ_RELEASE_ASSERT(CurrentThreadCanAccessRuntime(rt));
 
     StoreBuffer& sb = rt->gc.storeBuffer;
     if (!isEnabled() || isEmpty()) {
@@ -413,10 +513,18 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
 
     rt->gc.incMinorGcNumber();
 
+#ifdef JS_GC_ZEAL
+    if (rt->gc.hasZealMode(ZealMode::CheckNursery)) {
+        for (auto canary = lastCanary_; canary; canary = canary->next)
+            MOZ_ASSERT(canary->magicValue == CanaryMagicValue);
+    }
+    lastCanary_ = nullptr;
+#endif
+
     rt->gc.stats.beginNurseryCollection(reason);
     TraceMinorGCStart();
 
-    int64_t timestampStart_total = PRMJ_Now();
+    startProfile(ProfileKey::Total);
 
     AutoTraceSession session(rt, JS::HeapState::MinorCollecting);
     AutoStopVerifyingBarriers av(rt, false);
@@ -428,108 +536,111 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
 
     // Mark the store buffer. This must happen first.
 
-    TIME_START(cancelIonCompilations);
+    maybeStartProfile(ProfileKey::CancelIonCompilations);
     if (sb.cancelIonCompilations()) {
         for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next())
             jit::StopAllOffThreadCompilations(c);
     }
-    TIME_END(cancelIonCompilations);
+    maybeEndProfile(ProfileKey::CancelIonCompilations);
 
-    TIME_START(traceValues);
+    maybeStartProfile(ProfileKey::TraceValues);
     sb.traceValues(mover);
-    TIME_END(traceValues);
+    maybeEndProfile(ProfileKey::TraceValues);
 
-    TIME_START(traceCells);
+    maybeStartProfile(ProfileKey::TraceCells);
     sb.traceCells(mover);
-    TIME_END(traceCells);
+    maybeEndProfile(ProfileKey::TraceCells);
 
-    TIME_START(traceSlots);
+    maybeStartProfile(ProfileKey::TraceSlots);
     sb.traceSlots(mover);
-    TIME_END(traceSlots);
+    maybeEndProfile(ProfileKey::TraceSlots);
 
-    TIME_START(traceWholeCells);
+    maybeStartProfile(ProfileKey::TraceWholeCells);
     sb.traceWholeCells(mover);
-    TIME_END(traceWholeCells);
+    maybeEndProfile(ProfileKey::TraceWholeCells);
 
-    TIME_START(traceGenericEntries);
+    maybeStartProfile(ProfileKey::TraceGenericEntries);
     sb.traceGenericEntries(&mover);
-    TIME_END(traceGenericEntries);
+    maybeEndProfile(ProfileKey::TraceGenericEntries);
 
-    TIME_START(markRuntime);
+    maybeStartProfile(ProfileKey::MarkRuntime);
     rt->gc.markRuntime(&mover, GCRuntime::TraceRuntime, session.lock);
-    TIME_END(markRuntime);
+    maybeEndProfile(ProfileKey::MarkRuntime);
 
-    TIME_START(markDebugger);
+    maybeStartProfile(ProfileKey::MarkDebugger);
     {
         gcstats::AutoPhase ap(rt->gc.stats, gcstats::PHASE_MARK_ROOTS);
         Debugger::markAll(&mover);
     }
-    TIME_END(markDebugger);
+    maybeEndProfile(ProfileKey::MarkDebugger);
 
-    TIME_START(clearNewObjectCache);
-    rt->newObjectCache.clearNurseryObjects(rt);
-    TIME_END(clearNewObjectCache);
+    maybeStartProfile(ProfileKey::ClearNewObjectCache);
+    rt->contextFromMainThread()->caches.newObjectCache.clearNurseryObjects(rt);
+    maybeEndProfile(ProfileKey::ClearNewObjectCache);
 
     // Most of the work is done here. This loop iterates over objects that have
     // been moved to the major heap. If these objects have any outgoing pointers
     // to the nursery, then those nursery objects get moved as well, until no
     // objects are left to move. That is, we iterate to a fixed point.
-    TIME_START(collectToFP);
+    maybeStartProfile(ProfileKey::CollectToFP);
     TenureCountCache tenureCounts;
     collectToFixedPoint(mover, tenureCounts);
-    TIME_END(collectToFP);
+    maybeEndProfile(ProfileKey::CollectToFP);
 
     // Sweep compartments to update the array buffer object's view lists.
-    TIME_START(sweepArrayBufferViewList);
+    maybeStartProfile(ProfileKey::SweepArrayBufferViewList);
     for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next())
         c->sweepAfterMinorGC();
-    TIME_END(sweepArrayBufferViewList);
+    maybeEndProfile(ProfileKey::SweepArrayBufferViewList);
 
     // Update any slot or element pointers whose destination has been tenured.
-    TIME_START(updateJitActivations);
+    maybeStartProfile(ProfileKey::UpdateJitActivations);
     js::jit::UpdateJitActivationsForMinorGC(rt, &mover);
     forwardedBuffers.finish();
-    TIME_END(updateJitActivations);
+    maybeEndProfile(ProfileKey::UpdateJitActivations);
 
-    TIME_START(objectsTenuredCallback);
+    maybeStartProfile(ProfileKey::ObjectsTenuredCallback);
     rt->gc.callObjectsTenuredCallback();
-    TIME_END(objectsTenuredCallback);
+    maybeEndProfile(ProfileKey::ObjectsTenuredCallback);
 
     // Sweep.
-    TIME_START(freeMallocedBuffers);
+    maybeStartProfile(ProfileKey::FreeMallocedBuffers);
     freeMallocedBuffers();
-    TIME_END(freeMallocedBuffers);
+    maybeEndProfile(ProfileKey::FreeMallocedBuffers);
 
-    TIME_START(sweep);
+    maybeStartProfile(ProfileKey::Sweep);
     sweep();
-    TIME_END(sweep);
+    maybeEndProfile(ProfileKey::Sweep);
 
-    TIME_START(clearStoreBuffer);
+    maybeStartProfile(ProfileKey::ClearStoreBuffer);
     rt->gc.storeBuffer.clear();
-    TIME_END(clearStoreBuffer);
+    maybeEndProfile(ProfileKey::ClearStoreBuffer);
 
     // Make sure hashtables have been updated after the collection.
-    TIME_START(checkHashTables);
+    maybeStartProfile(ProfileKey::CheckHashTables);
 #ifdef JS_GC_ZEAL
     if (rt->hasZealMode(ZealMode::CheckHashTablesOnMinorGC))
         CheckHashTablesAfterMovingGC(rt);
 #endif
-    TIME_END(checkHashTables);
+    maybeEndProfile(ProfileKey::CheckHashTables);
 
     // Resize the nursery.
-    TIME_START(resize);
+    static const double GrowThreshold   = 0.05;
+    static const double ShrinkThreshold = 0.01;
+    maybeStartProfile(ProfileKey::Resize);
     double promotionRate = mover.tenuredSize / double(allocationEnd() - start());
-    if (promotionRate > 0.05)
+    if (promotionRate > GrowThreshold)
         growAllocableSpace();
-    else if (promotionRate < 0.01)
+    else if (promotionRate < ShrinkThreshold && previousPromotionRate_ < ShrinkThreshold)
         shrinkAllocableSpace();
-    TIME_END(resize);
+    previousPromotionRate_ = promotionRate;
+    maybeEndProfile(ProfileKey::Resize);
 
     // If we are promoting the nursery, or exhausted the store buffer with
     // pointers to nursery things, which will force a collection well before
     // the nursery is full, look for object groups that are getting promoted
     // excessively and try to pretenure them.
-    TIME_START(pretenure);
+    maybeStartProfile(ProfileKey::Pretenure);
     if (pretenureGroups && (promotionRate > 0.8 || reason == JS::gcreason::FULL_STORE_BUFFER)) {
         for (size_t i = 0; i < ArrayLength(tenureCounts.entries); i++) {
             const TenureCount& entry = tenureCounts.entries[i];
@@ -537,7 +648,7 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
                 mozilla::Unused << pretenureGroups->append(entry.group); // ignore alloc failure
         }
     }
-    TIME_END(pretenure);
+    maybeEndProfile(ProfileKey::Pretenure);
 
     // We ignore gcMaxBytes when allocating for minor collection. However, if we
     // overflowed, we disable the nursery. The next time we allocate, we'll fail
@@ -545,7 +656,10 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
     if (rt->gc.usage.gcBytes() >= rt->gc.tunables.gcMaxBytes())
         disable();
 
-    int64_t totalTime = PRMJ_Now() - timestampStart_total;
+    endProfile(ProfileKey::Total);
+    minorGcCount_++;
+
+    int64_t totalTime = profileTimes_[ProfileKey::Total];
     rt->addTelemetry(JS_TELEMETRY_GC_MINOR_US, totalTime);
     rt->addTelemetry(JS_TELEMETRY_GC_MINOR_REASON, reason);
     if (totalTime > 1000)
@@ -555,59 +669,27 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
     TraceMinorGCEnd();
 
     if (enableProfiling_ && totalTime >= profileThreshold_) {
-        struct {
-            const char* name;
-            int64_t time;
-        } PrintList[] = {
-            {"canIon", TIME_TOTAL(cancelIonCompilations)},
-            {"mkVals", TIME_TOTAL(traceValues)},
-            {"mkClls", TIME_TOTAL(traceCells)},
-            {"mkSlts", TIME_TOTAL(traceSlots)},
-            {"mcWCll", TIME_TOTAL(traceWholeCells)},
-            {"mkGnrc", TIME_TOTAL(traceGenericEntries)},
-            {"ckTbls", TIME_TOTAL(checkHashTables)},
-            {"mkRntm", TIME_TOTAL(markRuntime)},
-            {"mkDbgr", TIME_TOTAL(markDebugger)},
-            {"clrNOC", TIME_TOTAL(clearNewObjectCache)},
-            {"collct", TIME_TOTAL(collectToFP)},
-            {" tenCB", TIME_TOTAL(objectsTenuredCallback)},
-            {"swpABO", TIME_TOTAL(sweepArrayBufferViewList)},
-            {"updtIn", TIME_TOTAL(updateJitActivations)},
-            {"frSlts", TIME_TOTAL(freeMallocedBuffers)},
-            {" clrSB", TIME_TOTAL(clearStoreBuffer)},
-            {" sweep", TIME_TOTAL(sweep)},
-            {"resize", TIME_TOTAL(resize)},
-            {"pretnr", TIME_TOTAL(pretenure)}
-        };
         static int printedHeader = 0;
         if ((printedHeader++ % 200) == 0) {
-            fprintf(stderr, "MinorGC:               Reason  PRate Size    Time");
-            for (auto &entry : PrintList)
-                fprintf(stderr, " %s", entry.name);
-            fprintf(stderr, "\n");
+            fprintf(stderr, "MinorGC:               Reason  PRate Size ");
+            printProfileHeader();
         }
 
-#define FMT " %6" PRIu64
-        fprintf(stderr, "MinorGC: %20s %5.1f%% %4d " FMT, JS::gcreason::ExplainReason(reason),
-                promotionRate * 100, numActiveChunks_, totalTime);
-        for (auto &entry : PrintList) {
-            fprintf(stderr, FMT, entry.time);
-        }
-        fprintf(stderr, "\n");
-#undef FMT
+        fprintf(stderr, "MinorGC: %20s %5.1f%% %4d ",
+                JS::gcreason::ExplainReason(reason),
+                promotionRate * 100,
+                numActiveChunks_);
+        printProfileTimes(profileTimes_);
     }
 }
 
-#undef TIME_START
-#undef TIME_END
-#undef TIME_TOTAL
-
 void
-js::Nursery::FreeMallocedBuffersTask::transferBuffersToFree(MallocedBuffersSet& buffersToFree)
+js::Nursery::FreeMallocedBuffersTask::transferBuffersToFree(MallocedBuffersSet& buffersToFree,
+                                                            const AutoLockHelperThreadState& lock)
 {
     // Transfer the contents of the source set to the task's buffers_ member by
     // swapping the sets, which also clears the source.
-    MOZ_ASSERT(!isRunning());
+    MOZ_ASSERT(!isRunningWithLockHeld(lock));
     MOZ_ASSERT(buffers_.empty());
     mozilla::Swap(buffers_, buffersToFree);
 }
@@ -629,8 +711,8 @@ js::Nursery::freeMallocedBuffers()
     bool started;
     {
         AutoLockHelperThreadState lock;
-        freeMallocedBuffersTask->joinWithLockHeld();
-        freeMallocedBuffersTask->transferBuffersToFree(mallocedBuffers);
+        freeMallocedBuffersTask->joinWithLockHeld(lock);
+        freeMallocedBuffersTask->transferBuffersToFree(mallocedBuffers, lock);
         started = freeMallocedBuffersTask->startWithLockHeld();
     }
 

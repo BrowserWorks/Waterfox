@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,8 +18,8 @@ DIRS += [
     'apppicker',
     'asyncshutdown',
     'commandlines',
-    'console',
     'contentprefs',
+    'contextualidentity',
     'cookie',
     'crashmonitor',
     'diskspacewatcher',
@@ -98,7 +98,7 @@ if CONFIG['MOZ_URL_CLASSIFIER']:
 
 DIRS += ['captivedetect']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] != "gonk" and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
+if CONFIG['OS_TARGET'] != 'Android':
     DIRS += ['terminator']
 
 DIRS += ['build']

@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,6 @@
 DIRS += ['test']
 
 EXTRA_COMPONENTS += [
-    'ActivitiesGlue.js',
     'AlertsService.js',
     'B2GAboutRedirector.js',
     'B2GAppMigrator.js',
@@ -17,7 +16,6 @@ EXTRA_COMPONENTS += [
     'FilePicker.js',
     'FxAccountsUIGlue.js',
     'HelperAppDialog.js',
-    'KillSwitch.js',
     'MailtoProtocolHandler.js',
     'MobileIdentityUIGlue.js',
     'OMAContentHandler.js',
@@ -26,12 +24,12 @@ EXTRA_COMPONENTS += [
     'PresentationRequestUIGlue.js',
     'ProcessGlobal.js',
     'SmsProtocolHandler.js',
-    'SystemMessageGlue.js',
+    'SystemMessageInternal.js',
     'TelProtocolHandler.js',
     'WebappsUpdateTimer.js',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
+if CONFIG['OS_TARGET'] != 'Android':
     EXTRA_COMPONENTS += [
       'CommandLine.js',
       'OopCommandLine.js',
@@ -63,12 +61,10 @@ EXTRA_JS_MODULES += [
     'ErrorPage.jsm',
     'Frames.jsm',
     'FxAccountsMgmtService.jsm',
-    'KillSwitchMain.jsm',
     'LogCapture.jsm',
     'LogParser.jsm',
     'LogShake.jsm',
     'OrientationChangeHandler.jsm',
-    'PersistentDataBlock.jsm',
     'SafeMode.jsm',
     'Screenshot.jsm',
     'SignInToWebsite.jsm',
@@ -81,3 +77,20 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
     EXTRA_JS_MODULES += [
       'GlobalSimulatorScreen.jsm'
     ]
+
+XPIDL_SOURCES += [
+    'nsIGaiaChrome.idl',
+    'nsISystemMessagesInternal.idl'
+]
+
+XPIDL_MODULE = 'gaia_chrome'
+
+UNIFIED_SOURCES += [
+    'GaiaChrome.cpp'
+]
+
+LOCAL_INCLUDES += [
+    '/chrome'
+]
+
+FINAL_LIBRARY = 'xul'

@@ -11,12 +11,12 @@
 
 class nsIDOMHTMLFormElement;
 class nsPresState;
-class nsFormSubmission;
 
 namespace mozilla {
 namespace dom {
 class Element;
 class HTMLFieldSetElement;
+class HTMLFormSubmission;
 } // namespace dom
 } // namespace mozilla
 
@@ -55,6 +55,7 @@ enum InputElementTypes {
   NS_FORM_INPUT_HIDDEN,
   NS_FORM_INPUT_RESET,
   NS_FORM_INPUT_IMAGE,
+  NS_FORM_INPUT_MONTH,
   NS_FORM_INPUT_NUMBER,
   NS_FORM_INPUT_PASSWORD,
   NS_FORM_INPUT_RADIO,
@@ -141,7 +142,8 @@ public:
    * @param aFormSubmission the form submission to notify of names/values/files
    *                       to submit
    */
-  NS_IMETHOD SubmitNamesValues(nsFormSubmission* aFormSubmission) = 0;
+  NS_IMETHOD
+  SubmitNamesValues(mozilla::dom::HTMLFormSubmission* aFormSubmission) = 0;
 
   /**
    * Save to presentation state.  The form control will determine whether it
@@ -265,6 +267,7 @@ nsIFormControl::IsSingleLineTextControl(bool aExcludePassword, uint32_t aType)
          // TODO: those are temporary until bug 773205 is fixed.
          aType == NS_FORM_INPUT_DATE ||
          aType == NS_FORM_INPUT_TIME ||
+         aType == NS_FORM_INPUT_MONTH ||
          (!aExcludePassword && aType == NS_FORM_INPUT_PASSWORD);
 }
 

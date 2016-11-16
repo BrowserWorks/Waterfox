@@ -22,6 +22,7 @@
 #include "nsScriptSecurityManager.h"
 #include "nsServiceManagerUtils.h"
 
+#include "mozilla/dom/ChromeUtils.h"
 #include "mozilla/dom/CSPDictionariesBinding.h"
 #include "mozilla/dom/quota/QuotaManager.h"
 #include "mozilla/dom/ToJSValue.h"
@@ -45,6 +46,8 @@ PrincipalOriginAttributes::InheritFromDocShellToDoc(const DocShellOriginAttribut
   // Bug 1225349 - PrincipalOriginAttributes should inherit mSignedPkg
   // accordingly by URI
   mSignedPkg = aAttrs.mSignedPkg;
+
+  mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
 }
 
 void
@@ -56,6 +59,8 @@ PrincipalOriginAttributes::InheritFromNecko(const NeckoOriginAttributes& aAttrs)
   // addonId is computed from the principal URI and never propagated
   mUserContextId = aAttrs.mUserContextId;
   mSignedPkg = aAttrs.mSignedPkg;
+
+  mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
 }
 
 void
@@ -71,6 +76,8 @@ DocShellOriginAttributes::InheritFromDocToChildDocShell(const PrincipalOriginAtt
   // Bug 1225353 - DocShell/NeckoOriginAttributes should inherit
   // mSignedPkg accordingly by mSignedPkgInBrowser
   mSignedPkg = aAttrs.mSignedPkg;
+
+  mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
 }
 
 void
@@ -85,6 +92,8 @@ NeckoOriginAttributes::InheritFromDocToNecko(const PrincipalOriginAttributes& aA
   // TODO:
   // Bug 1225353 - DocShell/NeckoOriginAttributes should inherit
   // mSignedPkg accordingly by mSignedPkgInBrowser
+
+  mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
 }
 
 void
@@ -99,6 +108,8 @@ NeckoOriginAttributes::InheritFromDocShellToNecko(const DocShellOriginAttributes
   // TODO:
   // Bug 1225353 - DocShell/NeckoOriginAttributes should inherit
   // mSignedPkg accordingly by mSignedPkgInBrowser
+
+  mPrivateBrowsingId = aAttrs.mPrivateBrowsingId;
 }
 
 void
@@ -145,6 +156,12 @@ OriginAttributes::CreateSuffix(nsACString& aStr) const
     params->Set(NS_LITERAL_STRING("signedPkg"), mSignedPkg);
   }
 
+  if (mPrivateBrowsingId) {
+    value.Truncate();
+    value.AppendInt(mPrivateBrowsingId);
+    params->Set(NS_LITERAL_STRING("privateBrowsingId"), value);
+  }
+
   aStr.Truncate();
 
   params->Serialize(value);
@@ -171,6 +188,10 @@ public:
     : mOriginAttributes(aOriginAttributes)
   {
     MOZ_ASSERT(aOriginAttributes);
+    // If mPrivateBrowsingId is passed in as >0 and is not present in the suffix,
+    // then it will remain >0 when it should be 0 according to the suffix. Set to 0 before
+    // iterating to fix this.
+    mOriginAttributes->mPrivateBrowsingId = 0;
   }
 
   bool URLParamsIterator(const nsString& aName,
@@ -214,6 +235,16 @@ public:
     if (aName.EqualsLiteral("signedPkg")) {
       MOZ_RELEASE_ASSERT(mOriginAttributes->mSignedPkg.IsEmpty());
       mOriginAttributes->mSignedPkg.Assign(aValue);
+      return true;
+    }
+
+    if (aName.EqualsLiteral("privateBrowsingId")) {
+      nsresult rv;
+      int64_t val = aValue.ToInteger64(&rv);
+      NS_ENSURE_SUCCESS(rv, false);
+      NS_ENSURE_TRUE(val >= 0 && val <= UINT32_MAX, false);
+      mOriginAttributes->mPrivateBrowsingId = static_cast<uint32_t>(val);
+
       return true;
     }
 
@@ -262,6 +293,12 @@ OriginAttributes::PopulateFromOrigin(const nsACString& aOrigin,
   return PopulateFromSuffix(Substring(origin, pos));
 }
 
+void
+OriginAttributes::SyncAttributesWithPrivateBrowsing(bool aInPrivateBrowsing)
+{
+  mPrivateBrowsingId = aInPrivateBrowsing ? 1 : 0;
+}
+
 BasePrincipal::BasePrincipal()
 {}
 
@@ -290,6 +327,16 @@ bool
 BasePrincipal::Subsumes(nsIPrincipal* aOther, DocumentDomainConsideration aConsideration)
 {
   MOZ_ASSERT(aOther);
+
+  // Expanded principals handle origin attributes for each of their
+  // sub-principals individually, null principals do only simple checks for
+  // pointer equality, and system principals are immune to origin attributes
+  // checks, so only do this check for codebase principals.
+  if (Kind() == eCodebasePrincipal &&
+      OriginAttributesRef() != Cast(aOther)->OriginAttributesRef()) {
+    return false;
+  }
+
   return SubsumesInternal(aOther, aConsideration);
 }
 
@@ -309,6 +356,22 @@ BasePrincipal::EqualsConsideringDomain(nsIPrincipal *aOther, bool *aResult)
   *aResult = Subsumes(aOther, ConsiderDocumentDomain) &&
              Cast(aOther)->Subsumes(this, ConsiderDocumentDomain);
   return NS_OK;
+}
+
+bool
+BasePrincipal::EqualsIgnoringAddonId(nsIPrincipal *aOther)
+{
+  MOZ_ASSERT(aOther);
+
+  // Note that this will not work for expanded principals, nor is it intended
+  // to.
+  if (!dom::ChromeUtils::IsOriginAttributesEqualIgnoringAddonId(
+          OriginAttributesRef(), Cast(aOther)->OriginAttributesRef())) {
+    return false;
+  }
+
+  return SubsumesInternal(aOther, DontConsiderDocumentDomain) &&
+         Cast(aOther)->SubsumesInternal(this, DontConsiderDocumentDomain);
 }
 
 NS_IMETHODIMP

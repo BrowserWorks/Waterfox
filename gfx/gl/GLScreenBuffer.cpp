@@ -21,7 +21,7 @@
 #ifdef XP_WIN
 #include "SharedSurfaceANGLE.h"         // for SurfaceFactory_ANGLEShareHandle
 #include "SharedSurfaceD3D11Interop.h"  // for SurfaceFactory_D3D11Interop
-#include "gfxWindowsPlatform.h"
+#include "mozilla/gfx/DeviceManagerD3D11.h"
 #endif
 
 #ifdef MOZ_WIDGET_GONK
@@ -72,23 +72,33 @@ GLScreenBuffer::CreateFactory(GLContext* gl,
                               const RefPtr<layers::CompositableForwarder>& forwarder,
                               const layers::TextureFlags& flags)
 {
+  return CreateFactory(gl, caps, forwarder, forwarder->GetCompositorBackendType(), flags);
+}
+
+/* static */ UniquePtr<SurfaceFactory>
+GLScreenBuffer::CreateFactory(GLContext* gl,
+                              const SurfaceCaps& caps,
+                              const RefPtr<layers::ClientIPCAllocator>& allocator,
+                              const mozilla::layers::LayersBackend backend,
+                              const layers::TextureFlags& flags)
+{
     UniquePtr<SurfaceFactory> factory = nullptr;
     if (!gfxPrefs::WebGLForceLayersReadback()) {
-        switch (forwarder->GetCompositorBackendType()) {
+        switch (backend) {
             case mozilla::layers::LayersBackend::LAYERS_OPENGL: {
 #if defined(XP_MACOSX)
-                factory = SurfaceFactory_IOSurface::Create(gl, caps, forwarder, flags);
+                factory = SurfaceFactory_IOSurface::Create(gl, caps, allocator, flags);
 #elif defined(MOZ_WIDGET_GONK)
-                factory = MakeUnique<SurfaceFactory_Gralloc>(gl, caps, forwarder, flags);
+                factory = MakeUnique<SurfaceFactory_Gralloc>(gl, caps, allocator, flags);
 #elif defined(GL_PROVIDER_GLX)
                 if (sGLXLibrary.UseTextureFromPixmap())
-                  factory = SurfaceFactory_GLXDrawable::Create(gl, caps, forwarder, flags);
+                  factory = SurfaceFactory_GLXDrawable::Create(gl, caps, allocator, flags);
 #elif defined(MOZ_WIDGET_UIKIT)
-                factory = MakeUnique<SurfaceFactory_GLTexture>(mGLContext, caps, forwarder, mFlags);
+                factory = MakeUnique<SurfaceFactory_GLTexture>(mGLContext, caps, allocator, mFlags);
 #else
                 if (gl->GetContextType() == GLContextType::EGL) {
                     if (XRE_IsParentProcess()) {
-                        factory = SurfaceFactory_EGLImage::Create(gl, caps, forwarder, flags);
+                        factory = SurfaceFactory_EGLImage::Create(gl, caps, allocator, flags);
                     }
                 }
 #endif
@@ -98,15 +108,16 @@ GLScreenBuffer::CreateFactory(GLContext* gl,
 #ifdef XP_WIN
                 // Enable surface sharing only if ANGLE and compositing devices
                 // are both WARP or both not WARP
+                gfx::DeviceManagerD3D11* dm = gfx::DeviceManagerD3D11::Get();
                 if (gl->IsANGLE() &&
-                    (gl->IsWARP() == gfxWindowsPlatform::GetPlatform()->IsWARP()) &&
-                    gfxWindowsPlatform::GetPlatform()->CompositorD3D11TextureSharingWorks())
+                    (gl->IsWARP() == dm->IsWARP()) &&
+                    dm->TextureSharingWorks())
                 {
-                    factory = SurfaceFactory_ANGLEShareHandle::Create(gl, caps, forwarder, flags);
+                    factory = SurfaceFactory_ANGLEShareHandle::Create(gl, caps, allocator, flags);
                 }
 
                 if (!factory && gfxPrefs::WebGLDXGLEnabled()) {
-                  factory = SurfaceFactory_D3D11Interop::Create(gl, caps, forwarder, flags);
+                  factory = SurfaceFactory_D3D11Interop::Create(gl, caps, allocator, flags);
                 }
 #endif
               break;
@@ -117,7 +128,7 @@ GLScreenBuffer::CreateFactory(GLContext* gl,
 
 #ifdef GL_PROVIDER_GLX
         if (!factory && sGLXLibrary.UseTextureFromPixmap()) {
-            factory = SurfaceFactory_GLXDrawable::Create(gl, caps, forwarder, flags);
+            factory = SurfaceFactory_GLXDrawable::Create(gl, caps, allocator, flags);
         }
 #endif
     }
@@ -149,6 +160,12 @@ GLScreenBuffer::~GLScreenBuffer()
     mFactory = nullptr;
     mDraw = nullptr;
     mRead = nullptr;
+
+    if (!mBack)
+        return;
+
+    // Detach mBack cleanly.
+    mBack->Surf()->ProducerRelease();
 }
 
 void
@@ -469,8 +486,10 @@ GLScreenBuffer::Attach(SharedSurface* surf, const gfx::IntSize& size)
 {
     ScopedBindFramebuffer autoFB(mGL);
 
-    if (mRead && SharedSurf())
+    const bool readNeedsUnlock = (mRead && SharedSurf());
+    if (readNeedsUnlock) {
         SharedSurf()->UnlockProd();
+    }
 
     surf->LockProd();
 
@@ -501,7 +520,9 @@ GLScreenBuffer::Attach(SharedSurface* surf, const gfx::IntSize& size)
 
         if (!drawOk || !readOk) {
             surf->UnlockProd();
-
+            if (readNeedsUnlock) {
+                SharedSurf()->LockProd();
+            }
             return false;
         }
 
@@ -544,8 +565,10 @@ GLScreenBuffer::Swap(const gfx::IntSize& size)
     // attachment to framebuffer succeeds in Attach() call.
     newBack->Surf()->ProducerAcquire();
 
-    if (!Attach(newBack->Surf(), size))
+    if (!Attach(newBack->Surf(), size)) {
+        newBack->Surf()->ProducerRelease();
         return false;
+    }
     // Attach was successful.
 
     mFront = mBack;

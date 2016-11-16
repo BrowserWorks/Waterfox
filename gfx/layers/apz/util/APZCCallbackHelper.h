@@ -66,6 +66,9 @@ public:
        given presShell. */
     static void InitializeRootDisplayport(nsIPresShell* aPresShell);
 
+    /* Get the pres context associated with the document enclosing |aContent|. */
+    static nsPresContext* GetPresContextForContent(nsIContent* aContent);
+
     /* Get the pres shell associated with the root content document enclosing |aContent|. */
     static nsIPresShell* GetRootContentDocumentPresShellForContent(nsIContent* aContent);
 
@@ -141,6 +144,7 @@ public:
     /* Figure out the allowed touch behaviors of each touch point in |aEvent|
      * and send that information to the provided callback. */
     static void SendSetAllowedTouchBehaviorNotification(nsIWidget* aWidget,
+                                                        nsIDocument* aDocument,
                                                         const WidgetTouchEvent& aEvent,
                                                         uint64_t aInputBlockId,
                                                         const SetAllowedTouchBehaviorCallback& aCallback);

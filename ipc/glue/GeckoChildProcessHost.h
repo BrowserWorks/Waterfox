@@ -12,7 +12,6 @@
 #include "base/waitable_event.h"
 #include "chrome/common/child_process_host.h"
 
-#include "mozilla/Atomics.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ipc/FileDescriptor.h"
 #include "mozilla/Monitor.h"
@@ -93,14 +92,8 @@ public:
 
   virtual bool CanShutdown() { return true; }
 
-  virtual void OnWaitableEventSignaled(base::WaitableEvent *event);
-
   IPC::Channel* GetChannel() {
     return channelp();
-  }
-
-  base::WaitableEvent* GetShutDownEvent() {
-    return GetProcessEvent();
   }
 
   // Returns a "borrowed" handle to the child process - the handle returned
@@ -128,13 +121,7 @@ public:
   // For bug 943174: Skip the EnsureProcessTerminated call in the destructor.
   void SetAlreadyDead();
 
-  // This associates an actor telling the process host to stay alive at least
-  // until DissociateActor has been called.
-  void AssociateActor() { mAssociatedActors++; }
-
-  // This gets called when actors get destroyed and will schedule the object
-  // for deletion when all actors have cleared their associations.
-  void DissociateActor();
+  static void EnableSameExecutableForContentProc() { sRunSelfAsContentProc = true; }
 
 protected:
   GeckoProcessType mProcessType;
@@ -181,8 +168,6 @@ protected:
   base::file_handle_mapping_vector mFileMap;
 #endif
 
-  base::WaitableEventWatcher::Delegate* mDelegate;
-
   ProcessHandle mChildProcessHandle;
 #if defined(OS_MACOSX)
   task_t mChildTask;
@@ -200,7 +185,7 @@ private:
   bool RunPerformAsyncLaunch(StringVector aExtraOpts=StringVector(),
                              base::ProcessArchitecture aArch=base::GetCurrentProcessArchitecture());
 
-  static void GetPathToBinary(FilePath& exePath);
+  static void GetPathToBinary(FilePath& exePath, GeckoProcessType processType);
 
   // The buffer is passed to preserve its lifetime until we are done
   // with launching the sub-process.
@@ -216,10 +201,6 @@ private:
   // FIXME/cjones: this strongly indicates bad design.  Shame on us.
   std::queue<IPC::Message> mQueue;
 
-  // This tracks how many actors are associated with this process that require
-  // it to stay alive and have not yet been destroyed.
-  Atomic<int32_t> mAssociatedActors;
-
   // Remember original env values so we can restore it (there is no other
   // simple way how to change environment of a child process than to modify
   // the current environment).
@@ -227,6 +208,8 @@ private:
   nsCString mRestoreOrigMozLogName;
 
   static uint32_t sNextUniqueID;
+
+  static bool sRunSelfAsContentProc;
 };
 
 #ifdef MOZ_NUWA_PROCESS

@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,7 @@ USE_EXTENSION_MANIFEST = True
 
 FINAL_TARGET_PP_FILES += ['install.rdf']
 
-if CONFIG['MOZ_BUILD_APP'] != 'mobile/android' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
+if CONFIG['OS_TARGET'] != 'Android':
     DEFINES['MOCHITEST_BOOTSTRAP'] = True
     FINAL_TARGET_FILES += ['bootstrap.js']
 
@@ -45,7 +45,6 @@ TEST_HARNESS_FILES.testing.mochitest += [
     'browser-harness.xul',
     'browser-test-overlay.xul',
     'browser-test.js',
-    'cc-analyzer.js',
     'chrome-harness.js',
     'chunkifyTests.js',
     'gen_template.pl',

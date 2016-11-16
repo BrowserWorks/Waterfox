@@ -125,21 +125,22 @@ const CLOSED_MESSAGES = new Set([
 
 // These are tab events that we listen to.
 const TAB_EVENTS = [
-  "TabOpen", "TabClose", "TabSelect", "TabShow", "TabHide", "TabPinned",
+  "TabOpen", "TabBrowserCreated", "TabClose", "TabSelect", "TabShow", "TabHide", "TabPinned",
   "TabUnpinned"
 ];
 
 const NS_XUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
-Cu.import("resource://gre/modules/Services.jsm", this);
-Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
-Cu.import("resource://gre/modules/TelemetryTimestamps.jsm", this);
-Cu.import("resource://gre/modules/TelemetryStopwatch.jsm", this);
-Cu.import("resource://gre/modules/osfile.jsm", this);
 Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm", this);
 Cu.import("resource://gre/modules/Promise.jsm", this);
+Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
+Cu.import("resource://gre/modules/TelemetryStopwatch.jsm", this);
+Cu.import("resource://gre/modules/TelemetryTimestamps.jsm", this);
+Cu.import("resource://gre/modules/Timer.jsm", this);
+Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/debug.js", this);
+Cu.import("resource://gre/modules/osfile.jsm", this);
 
 XPCOMUtils.defineLazyServiceGetter(this, "gSessionStartup",
   "@mozilla.org/browser/sessionstartup;1", "nsISessionStartup");
@@ -677,7 +678,7 @@ var SessionStoreInternal = {
     // If we got here, that means we're dealing with a frame message
     // manager message, so the target will be a <xul:browser>.
     var browser = aMessage.target;
-    let win = browser.ownerDocument.defaultView;
+    let win = browser.ownerGlobal;
     let tab = win ? win.gBrowser.getTabForBrowser(browser) : null;
 
     // Ensure we receive only specific messages from <xul:browser>s that
@@ -890,11 +891,14 @@ var SessionStoreInternal = {
    * Implement nsIDOMEventListener for handling various window and tab events
    */
   handleEvent: function ssi_handleEvent(aEvent) {
-    let win = aEvent.currentTarget.ownerDocument.defaultView;
+    let win = aEvent.currentTarget.ownerGlobal;
     let target = aEvent.originalTarget;
     switch (aEvent.type) {
       case "TabOpen":
-        this.onTabAdd(win, target);
+        this.onTabAdd(win);
+        break;
+      case "TabBrowserCreated":
+        this.onTabBrowserCreated(win, target);
         break;
       case "TabClose":
         // `adoptedBy` will be set if the tab was closed because it is being
@@ -986,7 +990,7 @@ var SessionStoreInternal = {
 
     // add tab change listeners to all already existing tabs
     for (let i = 0; i < tabbrowser.tabs.length; i++) {
-      this.onTabAdd(aWindow, tabbrowser.tabs[i], true);
+      this.onTabBrowserCreated(aWindow, tabbrowser.tabs[i]);
     }
     // notification of tab add/remove/selection/show/hide
     TAB_EVENTS.forEach(function(aEvent) {
@@ -1459,9 +1463,37 @@ var SessionStoreInternal = {
 
     if (!syncShutdown) {
       // We've got some time to shut down, so let's do this properly.
+      // To prevent blocker from breaking the 60 sec limit(which will cause a
+      // crash) of async shutdown during flushing all windows, we resolve the
+      // promise passed to blocker once:
+      // 1. the flushing exceed 50 sec, or
+      // 2. 'oop-frameloader-crashed' or 'ipc:content-shutdown' is observed.
+      // Thus, Firefox still can open the last session on next startup.
       AsyncShutdown.quitApplicationGranted.addBlocker(
         "SessionStore: flushing all windows",
-        this.flushAllWindowsAsync(progress),
+        () => {
+          var promises = [];
+          promises.push(this.flushAllWindowsAsync(progress));
+          promises.push(this.looseTimer(50000));
+
+          var promiseOFC = new Promise(resolve => {
+            Services.obs.addObserver(function obs(subject, topic) {
+              Services.obs.removeObserver(obs, topic);
+              resolve();
+            }, "oop-frameloader-crashed", false);
+          });
+          promises.push(promiseOFC);
+
+          var promiseICS = new Promise(resolve => {
+            Services.obs.addObserver(function obs(subject, topic) {
+              Services.obs.removeObserver(obs, topic);
+              resolve();
+            }, "ipc:content-shutdown", false);
+          });
+          promises.push(promiseICS);
+
+          return Promise.race(promises);
+        },
         () => progress);
     } else {
       // We have to shut down NOW, which means we only get to save whatever
@@ -1680,25 +1712,28 @@ var SessionStoreInternal = {
   },
 
   /**
+   * save state when new tab is added
+   * @param aWindow
+   *        Window reference
+   */
+  onTabAdd: function ssi_onTabAdd(aWindow) {
+    this.saveStateDelayed(aWindow);
+  },
+
+  /**
    * set up listeners for a new tab
    * @param aWindow
    *        Window reference
    * @param aTab
    *        Tab reference
-   * @param aNoNotification
-   *        bool Do not save state if we're updating an existing tab
    */
-  onTabAdd: function ssi_onTabAdd(aWindow, aTab, aNoNotification) {
+  onTabBrowserCreated: function ssi_onTabBrowserCreated(aWindow, aTab) {
     let browser = aTab.linkedBrowser;
     browser.addEventListener("SwapDocShells", this);
     browser.addEventListener("oop-browser-crashed", this);
 
     if (browser.frameLoader) {
       this._lastKnownFrameLoader.set(browser.permanentKey, browser.frameLoader);
-    }
-
-    if (!aNoNotification) {
-      this.saveStateDelayed(aWindow);
     }
   },
 
@@ -2045,7 +2080,7 @@ var SessionStoreInternal = {
   },
 
   getTabState: function ssi_getTabState(aTab) {
-    if (!aTab.ownerDocument.defaultView.__SSi) {
+    if (!aTab.ownerGlobal.__SSi) {
       throw Components.Exception("Default view is not tracked", Cr.NS_ERROR_INVALID_ARG);
     }
 
@@ -2070,7 +2105,7 @@ var SessionStoreInternal = {
       throw Components.Exception("Invalid state object: no entries", Cr.NS_ERROR_INVALID_ARG);
     }
 
-    let window = aTab.ownerDocument.defaultView;
+    let window = aTab.ownerGlobal;
     if (!("__SSi" in window)) {
       throw Components.Exception("Window is not tracked", Cr.NS_ERROR_INVALID_ARG);
     }
@@ -2083,7 +2118,7 @@ var SessionStoreInternal = {
   },
 
   duplicateTab: function ssi_duplicateTab(aWindow, aTab, aDelta = 0) {
-    if (!aTab.ownerDocument.defaultView.__SSi) {
+    if (!aTab.ownerGlobal.__SSi) {
       throw Components.Exception("Default view is not tracked", Cr.NS_ERROR_INVALID_ARG);
     }
     if (!aWindow.gBrowser) {
@@ -2112,7 +2147,7 @@ var SessionStoreInternal = {
         return;
       }
 
-      let window = newTab.ownerDocument && newTab.ownerDocument.defaultView;
+      let window = newTab.ownerGlobal;
 
       // The tab or its window might be gone.
       if (!window || !window.__SSi) {
@@ -2299,13 +2334,13 @@ var SessionStoreInternal = {
     }
 
     aTab.__SS_extdata[aKey] = aStringValue;
-    this.saveStateDelayed(aTab.ownerDocument.defaultView);
+    this.saveStateDelayed(aTab.ownerGlobal);
   },
 
   deleteTabValue: function ssi_deleteTabValue(aTab, aKey) {
     if (aTab.__SS_extdata && aKey in aTab.__SS_extdata) {
       delete aTab.__SS_extdata[aKey];
-      this.saveStateDelayed(aTab.ownerDocument.defaultView);
+      this.saveStateDelayed(aTab.ownerGlobal);
     }
   },
 
@@ -2503,7 +2538,7 @@ var SessionStoreInternal = {
    * flush has finished.
    */
   navigateAndRestore(tab, loadArguments, historyIndex) {
-    let window = tab.ownerDocument.defaultView;
+    let window = tab.ownerGlobal;
     NS_ASSERT(window.__SSi, "tab's window must be tracked");
     let browser = tab.linkedBrowser;
 
@@ -2541,7 +2576,7 @@ var SessionStoreInternal = {
         return;
       }
 
-      let window = tab.ownerDocument && tab.ownerDocument.defaultView;
+      let window = tab.ownerGlobal;
 
       // The tab or its window might be gone.
       if (!window || !window.__SSi || window.closed) {
@@ -2944,10 +2979,14 @@ var SessionStoreInternal = {
       let userContextId = winData.tabs[t].userContextId;
       let reuseExisting = t < openTabCount &&
                           (tabbrowser.tabs[t].getAttribute("usercontextid") == (userContextId || ""));
+      // If the tab is pinned, then we'll be loading it right away, and
+      // there's no need to cause a remoteness flip by loading it initially
+      // non-remote.
+      let forceNotRemote = !winData.tabs[t].pinned;
       let tab = reuseExisting ? tabbrowser.tabs[t] :
                                 tabbrowser.addTab("about:blank",
                                                   {skipAnimation: true,
-                                                   forceNotRemote: true,
+                                                   forceNotRemote,
                                                    userContextId});
 
       // If we inserted a new tab because the userContextId didn't match with the
@@ -3200,9 +3239,20 @@ var SessionStoreInternal = {
     let restoreImmediately = options.restoreImmediately;
     let loadArguments = options.loadArguments;
     let browser = tab.linkedBrowser;
-    let window = tab.ownerDocument.defaultView;
+    let window = tab.ownerGlobal;
     let tabbrowser = window.gBrowser;
     let forceOnDemand = options.forceOnDemand;
+
+    let willRestoreImmediately = restoreImmediately ||
+                                 tabbrowser.selectedBrowser == browser ||
+                                 loadArguments;
+
+    if (!willRestoreImmediately && !forceOnDemand) {
+      TabRestoreQueue.add(tab);
+    }
+
+    this._maybeUpdateBrowserRemoteness({ tabbrowser, tab,
+                                         willRestoreImmediately });
 
     // Increase the busy state counter before modifying the tab.
     this._setWindowStateBusy(window);
@@ -3242,7 +3292,7 @@ var SessionStoreInternal = {
     }
 
     if (tabData.lastAccessed) {
-      tab.lastAccessed = tabData.lastAccessed;
+      tab.updateLastAccessed(tabData.lastAccessed);
     }
 
     if ("attributes" in tabData) {
@@ -3312,10 +3362,9 @@ var SessionStoreInternal = {
 
     // This could cause us to ignore MAX_CONCURRENT_TAB_RESTORES a bit, but
     // it ensures each window will have its selected tab loaded.
-    if (restoreImmediately || tabbrowser.selectedBrowser == browser || loadArguments) {
+    if (willRestoreImmediately) {
       this.restoreTabContent(tab, loadArguments);
     } else if (!forceOnDemand) {
-      TabRestoreQueue.add(tab);
       this.restoreNextTab();
     }
 
@@ -3340,7 +3389,7 @@ var SessionStoreInternal = {
     }
 
     let browser = aTab.linkedBrowser;
-    let window = aTab.ownerDocument.defaultView;
+    let window = aTab.ownerGlobal;
     let tabbrowser = window.gBrowser;
     let tabData = TabState.clone(aTab);
     let activeIndex = tabData.index - 1;
@@ -3348,6 +3397,9 @@ var SessionStoreInternal = {
     let uri = activePageData ? activePageData.url || null : null;
     if (aLoadArguments) {
       uri = aLoadArguments.uri;
+      if (aLoadArguments.userContextId) {
+        browser.setAttribute("usercontextid", aLoadArguments.userContextId);
+      }
     }
 
     // We have to mark this tab as restoring first, otherwise
@@ -3592,6 +3644,52 @@ var SessionStoreInternal = {
   },
 
   /* ........ Auxiliary Functions .............. */
+
+  /**
+   * Determines whether or not a tab that is being restored needs
+   * to have its remoteness flipped first.
+   *
+   * @param (object) with the following properties:
+   *
+   *        tabbrowser (<xul:tabbrowser>):
+   *          The tabbrowser that the browser belongs to.
+   *
+   *        tab (<xul:tab>):
+   *          The tab being restored
+   *
+   *        willRestoreImmediately (bool):
+   *          true if the tab is going to have its content
+   *          restored immediately by the caller.
+   *
+   */
+  _maybeUpdateBrowserRemoteness({ tabbrowser, tab,
+                                  willRestoreImmediately }) {
+    // If the browser we're attempting to restore happens to be
+    // remote, we need to flip it back to non-remote if it's going
+    // to go into the pending background tab state. This is to make
+    // sure that a background tab can't crash if it hasn't yet
+    // been restored.
+    //
+    // Normally, when a window is restored, the tabs that SessionStore
+    // inserts are non-remote - but the initial browser is, by default,
+    // remote, so this check and flip covers this case. The other case
+    // is when window state is overwriting the state of an existing
+    // window with some remote tabs.
+    let browser = tab.linkedBrowser;
+
+    // There are two ways that a tab might start restoring its content
+    // very soon - either the caller is going to restore the content
+    // immediately, or the TabRestoreQueue is set up so that the tab
+    // content is going to be restored in the very near future. In
+    // either case, we don't want to flip remoteness, since the browser
+    // will soon be loading content.
+    let willRestore = willRestoreImmediately ||
+                      TabRestoreQueue.willRestoreSoon(tab);
+
+    if (browser.isRemoteBrowser && !willRestore) {
+      tabbrowser.updateBrowserRemoteness(browser, false);
+    }
+  },
 
   /**
    * Update the session start time and send a telemetry measurement
@@ -4135,7 +4233,7 @@ var SessionStoreInternal = {
     NS_ASSERT(aTab.linkedBrowser.__SS_restoreState,
               "given tab is not restoring");
 
-    let window = aTab.ownerDocument.defaultView;
+    let window = aTab.ownerGlobal;
     let browser = aTab.linkedBrowser;
 
     // Keep the tab's previous state for later in this method
@@ -4218,6 +4316,33 @@ var SessionStoreInternal = {
         histogram.add(data.telemetry[key]);
       }
     }
+  },
+
+  /**
+   * Countdown for a given duration, skipping beats if the computer is too busy,
+   * sleeping or otherwise unavailable.
+   *
+   * @param {number} delay An approximate delay to wait in milliseconds (rounded
+   * up to the closest second).
+   *
+   * @return Promise
+   */
+  looseTimer(delay) {
+    let DELAY_BEAT = 1000;
+    let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+    let beats = Math.ceil(delay / DELAY_BEAT);
+    let promise =  new Promise(resolve => {
+      timer.initWithCallback(function() {
+        if (beats <= 0) {
+          resolve();
+        }
+        --beats;
+      }, DELAY_BEAT, Ci.nsITimer.TYPE_REPEATING_PRECISE_CAN_SKIP);
+    });
+    // Ensure that the timer is both canceled once we are done with it
+    // and not garbage-collected until then.
+    promise.then(() => timer.cancel(), () => timer.cancel());
+    return promise;
   }
 };
 
@@ -4354,7 +4479,36 @@ var TabRestoreQueue = {
       visible.splice(index, 1);
       hidden.push(tab);
     }
-  }
+  },
+
+  /**
+   * Returns true if the passed tab is in one of the sets that we're
+   * restoring content in automatically.
+   *
+   * @param tab (<xul:tab>)
+   *        The tab to check
+   * @returns bool
+   */
+  willRestoreSoon: function (tab) {
+    let { priority, hidden, visible } = this.tabs;
+    let { restoreOnDemand, restorePinnedTabsOnDemand,
+          restoreHiddenTabs } = this.prefs;
+    let restorePinned = !(restoreOnDemand && restorePinnedTabsOnDemand);
+    let candidateSet = [];
+
+    if (restorePinned && priority.length)
+      candidateSet.push(...priority);
+
+    if (!restoreOnDemand) {
+      if (visible.length)
+        candidateSet.push(...visible);
+
+      if (restoreHiddenTabs && hidden.length)
+        candidateSet.push(...hidden);
+    }
+
+    return candidateSet.indexOf(tab) > -1;
+  },
 };
 
 // A map storing a closed window's state data until it goes aways (is GC'ed).

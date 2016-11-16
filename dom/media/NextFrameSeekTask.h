@@ -27,10 +27,10 @@ public:
   NextFrameSeekTask(const void* aDecoderID,
                    AbstractThread* aThread,
                    MediaDecoderReaderWrapper* aReader,
-                   SeekJob&& aSeekJob,
+                   const SeekTarget& aTarget,
                    const MediaInfo& aInfo,
                    const media::TimeUnit& aDuration,
-                   int64_t aCurrentMediaTime,
+                   int64_t aCurrentTime,
                    MediaQueue<MediaData>& aAudioQueue,
                    MediaQueue<MediaData>& aVideoQueue);
 
@@ -43,23 +43,17 @@ public:
 private:
   ~NextFrameSeekTask();
 
-  bool HasAudio() const;
-
-  bool HasVideo() const;
-
-  bool IsVideoDecoding() const;
-
-  nsresult EnsureVideoDecodeTaskQueued();
-
-  const char* VideoRequestStatus();
-
   void RequestVideoData();
 
-  bool IsAudioSeekComplete();
+  bool NeedMoreVideo() const;
 
-  bool IsVideoSeekComplete();
+  bool IsVideoRequestPending() const;
 
-  void CheckIfSeekComplete();
+  bool IsAudioSeekComplete() const;
+
+  bool IsVideoSeekComplete() const;
+
+  void MaybeFinishSeek();
 
   void OnAudioDecoded(MediaData* aAudioSample);
 
@@ -69,9 +63,9 @@ private:
 
   void OnVideoNotDecoded(MediaDecoderReader::NotDecodedReason aReason);
 
-  void SetMediaDecoderReaderWrapperCallback();
+  void SetCallbacks();
 
-  void CancelMediaDecoderReaderWrapperCallback();
+  void CancelCallbacks();
 
   // Update the seek target's time before resolving this seek task, the updated
   // time will be used in the MDSM::SeekCompleted() to update the MDSM's position.
@@ -86,18 +80,13 @@ private:
   /*
    * Internal state.
    */
-  const int64_t mCurrentTimeBeforeSeek;
-  const bool mHasAudio;
-  const bool mHasVideo;
+  const int64_t mCurrentTime;
   media::TimeUnit mDuration;
 
-  /*
-   * Track the current seek promise made by the reader.
-   */
-  CallbackID mAudioCallbackID;
-  CallbackID mVideoCallbackID;
-  CallbackID mWaitAudioCallbackID;
-  CallbackID mWaitVideoCallbackID;
+  MediaEventListener mAudioCallback;
+  MediaEventListener mVideoCallback;
+  MediaEventListener mAudioWaitCallback;
+  MediaEventListener mVideoWaitCallback;
 };
 
 } // namespace media

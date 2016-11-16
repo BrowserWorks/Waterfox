@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1997-2016, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -588,8 +588,6 @@ uloc_getDisplayScript(const char* locale,
 
 /**
  * Gets the country name suitable for display for the specified locale.
- * Warning: this is for the region part of a valid locale ID; it cannot just be the region code (like "FR").
- * To get the display name for a region alone, or for other options, use ULocaleDisplayNames instead.
  *
  * @param locale the locale to get the displayable country code with. NULL may be used to specify the default.
  * @param displayLocale Specifies the locale to be used to display the name.  In other words,

@@ -205,18 +205,15 @@ ObjectGroup::useSingletonForAllocationSite(JSScript* script, jsbytecode* pc, JSP
 
     /*
      * Objects created outside loops in global and eval scripts should have
-     * singleton types. For now this is only done for plain objects and typed
-     * arrays, but not normal arrays.
+     * singleton types. For now this is only done for plain objects, but not
+     * typed arrays or normal arrays.
      */
 
     if (script->functionNonDelazifying() && !script->treatAsRunOnce())
         return GenericObject;
 
-    if (key != JSProto_Object &&
-        !(key >= JSProto_Int8Array && key <= JSProto_Uint8ClampedArray))
-    {
+    if (key != JSProto_Object)
         return GenericObject;
-    }
 
     // All loops in the script will have a try note indicating their boundary.
 
@@ -1515,7 +1512,7 @@ ObjectGroup::allocationSiteGroup(JSContext* cx, JSScript* scriptArg, jsbytecode*
 
     if (kind == JSProto_Array &&
         (JSOp(*pc) == JSOP_NEWARRAY || IsCallPC(pc)) &&
-        cx->runtime()->options().unboxedArrays())
+        cx->options().unboxedArrays())
     {
         PreliminaryObjectArrayWithTemplate* preliminaryObjects =
             cx->new_<PreliminaryObjectArrayWithTemplate>(nullptr);

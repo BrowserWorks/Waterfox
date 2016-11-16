@@ -19,7 +19,6 @@ ComputedTimingFunction::Init(const nsTimingFunction &aFunction)
                          aFunction.mFunc.mX2, aFunction.mFunc.mY2);
   } else {
     mSteps = aFunction.mSteps;
-    mStepSyntax = aFunction.mStepSyntax;
   }
 }
 
@@ -70,6 +69,14 @@ ComputedTimingFunction::GetValue(
     if (mTimingFunction.X1() == mTimingFunction.Y1() &&
         mTimingFunction.X2() == mTimingFunction.Y2()) {
       return aPortion;
+    }
+
+    // Ensure that we return 0 or 1 on both edges.
+    if (aPortion == 0.0) {
+      return 0.0;
+    }
+    if (aPortion == 1.0) {
+      return 1.0;
     }
 
     // For negative values, try to extrapolate with tangent (p1 - p0) or,
@@ -133,9 +140,6 @@ ComputedTimingFunction::Compare(const ComputedTimingFunction& aRhs) const
     if (mSteps != aRhs.mSteps) {
       return int32_t(mSteps) - int32_t(aRhs.mSteps);
     }
-    if (mStepSyntax != aRhs.mStepSyntax) {
-      return int32_t(mStepSyntax) - int32_t(aRhs.mStepSyntax);
-    }
   }
 
   return 0;
@@ -154,8 +158,7 @@ ComputedTimingFunction::AppendToString(nsAString& aResult) const
       break;
     case nsTimingFunction::Type::StepStart:
     case nsTimingFunction::Type::StepEnd:
-      nsStyleUtil::AppendStepsTimingFunction(mType, mSteps, mStepSyntax,
-                                             aResult);
+      nsStyleUtil::AppendStepsTimingFunction(mType, mSteps, aResult);
       break;
     default:
       nsStyleUtil::AppendCubicBezierKeywordTimingFunction(mType, aResult);

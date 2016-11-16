@@ -138,8 +138,8 @@ void NodeIterator::NodePointer::MoveBackward(nsINode *aParent, nsINode *aNode)
 
 NodeIterator::NodeIterator(nsINode *aRoot,
                            uint32_t aWhatToShow,
-                           const NodeFilterHolder &aFilter) :
-    nsTraversal(aRoot, aWhatToShow, aFilter),
+                           NodeFilterHolder aFilter) :
+    nsTraversal(aRoot, aWhatToShow, Move(aFilter)),
     mPointer(mRoot, true)
 {
     aRoot->AddMutationObserver(this);
@@ -181,7 +181,8 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(NodeIterator)
 
 NS_IMETHODIMP NodeIterator::GetRoot(nsIDOMNode * *aRoot)
 {
-    NS_ADDREF(*aRoot = Root()->AsDOMNode());
+    nsCOMPtr<nsIDOMNode> root = Root()->AsDOMNode();
+    root.forget(aRoot);
     return NS_OK;
 }
 

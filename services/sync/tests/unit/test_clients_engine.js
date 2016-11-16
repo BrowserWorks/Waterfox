@@ -573,6 +573,7 @@ add_test(function test_filter_duplicate_names() {
               [recentID, dupeID, oldID, engine.localID].sort(),
               "Duplicate ID should remain in getAllIDs");
     ok(engine._store.itemExists(dupeID), "Dupe ID should be considered as existing for Sync methods.");
+    ok(!engine.remoteClientExists(dupeID), "Dupe ID should not be considered as existing for external methods.");
 
     // dupe desktop should not appear in .deviceTypes.
     equal(engine.deviceTypes.get("desktop"), 2);
@@ -584,6 +585,10 @@ add_test(function test_filter_duplicate_names() {
       names: [engine.localName, "My Phone", "My old desktop"],
       numClients: 3,
     });
+
+    ok(engine.remoteClientExists(oldID), "non-dupe ID should exist.");
+    ok(!engine.remoteClientExists(dupeID), "dupe ID should not exist");
+    equal(engine.remoteClients.length, 2, "dupe should not be in remoteClients");
 
     // Check that a subsequent Sync doesn't report anything as being processed.
     let counts;
@@ -633,6 +638,8 @@ add_test(function test_filter_duplicate_names() {
               [recentID, oldID, dupeID, engine.localID].sort(),
               "Stale client synced, so it should no longer be marked as a dupe");
 
+    ok(engine.remoteClientExists(dupeID), "Dupe ID should appear as it synced.");
+
     // Recently synced dupe desktop should appear in .deviceTypes.
     equal(engine.deviceTypes.get("desktop"), 3);
 
@@ -642,6 +649,9 @@ add_test(function test_filter_duplicate_names() {
       names: [engine.localName, "My Phone", engine.localName, "My old desktop"],
       numClients: 4,
     });
+
+    ok(engine.remoteClientExists(dupeID), "recently synced dupe ID should now exist");
+    equal(engine.remoteClients.length, 3, "recently synced dupe should now be in remoteClients");
 
   } finally {
     Svc.Prefs.resetBranch("");
@@ -804,14 +814,14 @@ add_test(function test_receive_display_uri() {
 
   // Received 'displayURI' command should result in the topic defined below
   // being called.
-  let ev = "weave:engine:clients:display-uri";
+  let ev = "weave:engine:clients:display-uris";
 
   let handler = function(subject, data) {
     Svc.Obs.remove(ev, handler);
 
-    do_check_eq(subject.uri, uri);
-    do_check_eq(subject.client, remoteId);
-    do_check_eq(subject.title, title);
+    do_check_eq(subject[0].uri, uri);
+    do_check_eq(subject[0].clientId, remoteId);
+    do_check_eq(subject[0].title, title);
     do_check_eq(data, null);
 
     run_next_test();

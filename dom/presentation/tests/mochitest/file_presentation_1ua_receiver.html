@@ -105,18 +105,16 @@ function testSendMessage() {
   });
 }
 
-// Currently, PresentationSessionInfo::NotifyTransportClosed only set the state to
-// STATE_CLOSED. So, when sender call connection.terminate(), we can only get STATE_CLOSED
-// at receiver side. This should be fixed in bu 1210340.
 function testConnectionClosed() {
   return new Promise(function(aResolve, aReject) {
     info('Receiver: --- testConnectionClosed ---');
     connection.onclose = function() {
       connection.onclose = null;
       is(connection.state, "closed", "Receiver: Connection should be closed.");
+      command('forward-command', JSON.stringify({ name: 'receiver-closed' }));
       aResolve();
     };
-    command('forward-command', JSON.stringify({ name: 'ready-to-terminate' }));
+    command('forward-command', JSON.stringify({ name: 'ready-to-close' }));
   });
 }
 
@@ -125,8 +123,7 @@ function runTests() {
   .then(testConnectionReady)
   .then(testIncomingMessage)
   .then(testSendMessage)
-  .then(testConnectionClosed)
-  .then(finish);
+  .then(testConnectionClosed);
 }
 
 runTests();

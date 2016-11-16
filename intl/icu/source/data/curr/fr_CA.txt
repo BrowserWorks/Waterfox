@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fr_CA.xml
@@ -158,6 +158,9 @@ fr_CA{
             one{"livre des Îles Malouines"}
             other{"livres des Îles Malouines"}
         }
+        GEL{
+            one{"lari géorgien"}
+        }
         TOP{
             one{"pa’anga"}
             other{"pa’angas"}
@@ -167,5 +170,5 @@ fr_CA{
             other{"(devise inconnue)"}
         }
     }
-    Version{"2.1.24.13"}
+    Version{"2.1.19.14"}
 }

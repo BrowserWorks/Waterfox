@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2007-2016, International Business Machines Corporation and    *
+* Copyright (C) 2007-2014, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 */
@@ -25,7 +25,7 @@ U_NAMESPACE_BEGIN
 
 // forward declarations
 class DateFormatSymbols;
-class SimpleFormatter;
+class MessageFormat;
 
 // internal structure used for caching strings
 struct URelativeString;
@@ -250,7 +250,7 @@ private:
     SimpleDateFormat *fDateTimeFormatter;
     UnicodeString fDatePattern;
     UnicodeString fTimePattern;
-    SimpleFormatter *fCombinedFormat;  // the {0} {1} format.
+    MessageFormat *fCombinedFormat; //  the {0} {1} format.
 
     UDateFormatStyle fDateStyle;
     Locale  fLocale;

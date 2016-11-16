@@ -1,7 +1,7 @@
 //
 //  file:  rbbiscan.cpp
 //
-//  Copyright (C) 2002-2016, International Business Machines Corporation and others.
+//  Copyright (C) 2002-2015, International Business Machines Corporation and others.
 //  All Rights Reserved.
 //
 //  This file contains the Rule Based Break Iterator Rule Builder functions for
@@ -87,27 +87,24 @@ U_NAMESPACE_BEGIN
 RBBIRuleScanner::RBBIRuleScanner(RBBIRuleBuilder *rb)
 {
     fRB                 = rb;
-    fScanIndex          = 0;
-    fNextIndex          = 0;
-    fQuoteMode          = FALSE;
-    fLineNum            = 1;
-    fCharNum            = 0;
-    fLastChar           = 0;
-    
-    fStateTable         = NULL;
-    fStack[0]           = 0;
     fStackPtr           = 0;
-    fNodeStack[0]       = NULL;
+    fStack[fStackPtr]   = 0;
     fNodeStackPtr       = 0;
+    fRuleNum            = 0;
+    fNodeStack[0]       = NULL;
+
+    fSymbolTable                            = NULL;
+    fSetTable                               = NULL;
+
+    fScanIndex = 0;
+    fNextIndex = 0;
 
     fReverseRule        = FALSE;
     fLookAheadRule      = FALSE;
-    fNoChainInRule      = FALSE;
 
-    fSymbolTable        = NULL;
-    fSetTable           = NULL;
-    fRuleNum            = 0;
-    fOptionStart        = 0;
+    fLineNum    = 1;
+    fCharNum    = 0;
+    fQuoteMode  = FALSE;
 
     // Do not check status until after all critical fields are sufficiently initialized
     //   that the destructor can run cleanly.
@@ -205,12 +202,6 @@ UBool RBBIRuleScanner::doParseActions(int32_t action)
     case doExprStart:
         pushNewNode(RBBINode::opStart);
         fRuleNum++;
-        break;
-
-
-    case doNoChain:
-        // Scanned a '^' while on the rule start state.
-        fNoChainInRule = TRUE;
         break;
 
 
@@ -327,11 +318,11 @@ UBool RBBIRuleScanner::doParseActions(int32_t action)
         if (fRB->fDebugEnv && uprv_strstr(fRB->fDebugEnv, "rtree")) {printNodeStack("end of rule");}
 #endif
         U_ASSERT(fNodeStackPtr == 1);
-        RBBINode *thisRule = fNodeStack[fNodeStackPtr];
 
         // If this rule includes a look-ahead '/', add a endMark node to the
         //   expression tree.
         if (fLookAheadRule) {
+            RBBINode  *thisRule       = fNodeStack[fNodeStackPtr];
             RBBINode  *endNode        = pushNewNode(RBBINode::endMark);
             RBBINode  *catNode        = pushNewNode(RBBINode::opCat);
             if (U_FAILURE(*fRB->fStatus)) {
@@ -343,23 +334,7 @@ UBool RBBIRuleScanner::doParseActions(int32_t action)
             fNodeStack[fNodeStackPtr] = catNode;
             endNode->fVal             = fRuleNum;
             endNode->fLookAheadEnd    = TRUE;
-            thisRule                  = catNode;
-
-            // TODO: Disable chaining out of look-ahead (hard break) rules.
-            //   The break on rule match is forced, so there is no point in building up
-            //   the state table to chain into another rule for a longer match.
         }
-
-        // Mark this node as being the root of a rule.
-        thisRule->fRuleRoot = TRUE;
-
-        // Flag if chaining into this rule is wanted.
-        //    
-        if (fRB->fChainRules &&         // If rule chaining is enabled globally via !!chain
-                !fNoChainInRule) {      //     and no '^' chain-in inhibit was on this rule
-            thisRule->fChainIn = TRUE;
-        }
-
 
         // All rule expressions are ORed together.
         // The ';' that terminates an expression really just functions as a '|' with
@@ -397,7 +372,6 @@ UBool RBBIRuleScanner::doParseActions(int32_t action)
         }
         fReverseRule   = FALSE;   // in preparation for the next rule.
         fLookAheadRule = FALSE;
-        fNoChainInRule = FALSE;
         fNodeStackPtr  = 0;
         }
         break;
@@ -1020,7 +994,7 @@ void RBBIRuleScanner::parse() {
 
         for (;;) {
             #ifdef RBBI_DEBUG
-                if (fRB->fDebugEnv && uprv_strstr(fRB->fDebugEnv, "scan")) { RBBIDebugPrintf("."); fflush(stdout);}
+                if (fRB->fDebugEnv && uprv_strstr(fRB->fDebugEnv, "scan")) { RBBIDebugPrintf(".");}
             #endif
             if (tableEl->fCharClass < 127 && fC.fEscaped == FALSE &&   tableEl->fCharClass == fC.fChar) {
                 // Table row specified an individual character, not a set, and

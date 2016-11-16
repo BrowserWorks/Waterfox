@@ -21,9 +21,11 @@ public:
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(VideoPlaybackQuality)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(VideoPlaybackQuality)
 
-  VideoPlaybackQuality(HTMLMediaElement* aElement, DOMHighResTimeStamp aCreationTime,
-                       uint64_t aTotalFrames, uint64_t aDroppedFrames,
-                       uint64_t aCorruptedFrames);
+  VideoPlaybackQuality(HTMLMediaElement* aElement,
+                       DOMHighResTimeStamp aCreationTime,
+                       uint32_t aTotalFrames,
+                       uint32_t aDroppedFrames,
+                       uint32_t aCorruptedFrames);
 
   HTMLMediaElement* GetParentObject() const;
 
@@ -34,17 +36,17 @@ public:
     return mCreationTime;
   }
 
-  uint64_t TotalVideoFrames()
+  uint32_t TotalVideoFrames() const
   {
     return mTotalFrames;
   }
 
-  uint64_t DroppedVideoFrames()
+  uint32_t DroppedVideoFrames() const
   {
     return mDroppedFrames;
   }
 
-  uint64_t CorruptedVideoFrames()
+  uint32_t CorruptedVideoFrames() const
   {
     return mCorruptedFrames;
   }
@@ -54,12 +56,12 @@ private:
 
   RefPtr<HTMLMediaElement> mElement;
   DOMHighResTimeStamp mCreationTime;
-  uint64_t mTotalFrames;
-  uint64_t mDroppedFrames;
-  uint64_t mCorruptedFrames;
+  uint32_t mTotalFrames;
+  uint32_t mDroppedFrames;
+  uint32_t mCorruptedFrames;
 };
 
 } // namespace dom
 } // namespace mozilla
 
-#endif /* mozilla_dom_VideoPlaybackQuality_h_ */
+#endif // mozilla_dom_VideoPlaybackQuality_h_

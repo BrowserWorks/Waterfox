@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ga.xml
@@ -311,7 +311,7 @@ ga{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.17"}
     calendar{
         generic{
             DateTimePatterns{
@@ -875,10 +875,7 @@ ga{
         day-narrow{
             dn{"Lá"}
             relative{
-                "-1"{"inné"}
                 "-2"{"arú inné"}
-                "0"{"inniu"}
-                "1"{"amárach"}
                 "2"{"arú amárach"}
             }
             relativeTime{
@@ -901,10 +898,7 @@ ga{
         day-short{
             dn{"Lá"}
             relative{
-                "-1"{"inné"}
                 "-2"{"arú inné"}
-                "0"{"inniu"}
-                "1"{"amárach"}
                 "2"{"arú amárach"}
             }
             relativeTime{

@@ -68,6 +68,7 @@
 #include "jsfriendapi.h"
 #include "ImportManager.h"
 #include "mozilla/LinkedList.h"
+#include "CustomElementsRegistry.h"
 
 #define XML_DECLARATION_BITS_DECLARATION_EXISTS   (1 << 0)
 #define XML_DECLARATION_BITS_ENCODING_EXISTS      (1 << 1)
@@ -132,7 +133,7 @@ public:
  * and 'id' mappings of a given string. This is so that
  * nsHTMLDocument::ResolveName only has to do one hash lookup instead
  * of two. It's not clear whether this still matters for performance.
- * 
+ *
  * We also store the document.all result list here. This is mainly so that
  * when all elements with the given ID are removed and we remove
  * the ID's nsIdentifierMapEntry, the document.all result is released too.
@@ -263,48 +264,6 @@ private:
 
 namespace mozilla {
 namespace dom {
-
-class CustomElementHashKey : public PLDHashEntryHdr
-{
-public:
-  typedef CustomElementHashKey *KeyType;
-  typedef const CustomElementHashKey *KeyTypePointer;
-
-  CustomElementHashKey(int32_t aNamespaceID, nsIAtom *aAtom)
-    : mNamespaceID(aNamespaceID),
-      mAtom(aAtom)
-  {}
-  explicit CustomElementHashKey(const CustomElementHashKey* aKey)
-    : mNamespaceID(aKey->mNamespaceID),
-      mAtom(aKey->mAtom)
-  {}
-  ~CustomElementHashKey()
-  {}
-
-  KeyType GetKey() const { return const_cast<KeyType>(this); }
-  bool KeyEquals(const KeyTypePointer aKey) const
-  {
-    MOZ_ASSERT(mNamespaceID != kNameSpaceID_Unknown,
-               "This equals method is not transitive, nor symmetric. "
-               "A key with a namespace of kNamespaceID_Unknown should "
-               "not be stored in a hashtable.");
-    return (kNameSpaceID_Unknown == aKey->mNamespaceID ||
-            mNamespaceID == aKey->mNamespaceID) &&
-           aKey->mAtom == mAtom;
-  }
-
-  static KeyTypePointer KeyToPointer(KeyType aKey) { return aKey; }
-  static PLDHashNumber HashKey(const KeyTypePointer aKey)
-  {
-    return aKey->mAtom->hash();
-  }
-  enum { ALLOW_MEMMOVE = true };
-
-private:
-  int32_t mNamespaceID;
-  nsCOMPtr<nsIAtom> mAtom;
-};
-
 struct LifecycleCallbackArgs
 {
   nsString name;
@@ -374,40 +333,6 @@ struct CustomElementData
 
 private:
   virtual ~CustomElementData() {}
-};
-
-// The required information for a custom element as defined in:
-// https://dvcs.w3.org/hg/webcomponents/raw-file/tip/spec/custom/index.html
-struct CustomElementDefinition
-{
-  CustomElementDefinition(JSObject* aPrototype,
-                          nsIAtom* aType,
-                          nsIAtom* aLocalName,
-                          mozilla::dom::LifecycleCallbacks* aCallbacks,
-                          uint32_t aNamespaceID,
-                          uint32_t aDocOrder);
-
-  // The prototype to use for new custom elements of this type.
-  JS::Heap<JSObject *> mPrototype;
-
-  // The type (name) for this custom element.
-  nsCOMPtr<nsIAtom> mType;
-
-  // The localname to (e.g. <button is=type> -- this would be button).
-  nsCOMPtr<nsIAtom> mLocalName;
-
-  // The lifecycle callbacks to call for this custom element.
-  nsAutoPtr<mozilla::dom::LifecycleCallbacks> mCallbacks;
-
-  // Whether we're currently calling the created callback for a custom element
-  // of this type.
-  bool mElementIsBeingCreated;
-
-  // Element namespace.
-  int32_t mNamespaceID;
-
-  // The document custom element order.
-  uint32_t mDocOrder;
 };
 
 class Registry : public nsISupports
@@ -616,7 +541,7 @@ protected:
     // don't hand out references to the docshell.  The shims should all allow
     // getInterface back on us, but other than that each one should only
     // implement one interface.
-    
+
     // XXXbz I wish we could just derive the _allcaps thing from _i
 #define DECL_SHIM(_i, _allcaps)                                              \
     class _i##Shim final : public nsIInterfaceRequestor,                     \
@@ -655,7 +580,7 @@ protected:
   nsresult AddExternalResource(nsIURI* aURI, nsIContentViewer* aViewer,
                                nsILoadGroup* aLoadGroup,
                                nsIDocument* aDisplayDocument);
-  
+
   nsClassHashtable<nsURIHashKey, ExternalResource> mMap;
   nsRefPtrHashtable<nsURIHashKey, PendingLoad> mPendingLoads;
   bool mHaveShutDown;
@@ -791,6 +716,10 @@ public:
   virtual mozilla::dom::DocumentTimeline* Timeline() override;
   virtual void GetAnimations(
       nsTArray<RefPtr<mozilla::dom::Animation>>& aAnimations) override;
+  mozilla::LinkedList<mozilla::dom::DocumentTimeline>& Timelines() override
+  {
+    return mTimelines;
+  }
 
   virtual nsresult SetSubDocumentFor(Element* aContent,
                                      nsIDocument* aSubDoc) override;
@@ -1004,7 +933,8 @@ public:
 
   virtual already_AddRefed<Element> CreateElem(const nsAString& aName,
                                                nsIAtom* aPrefix,
-                                               int32_t aNamespaceID) override;
+                                               int32_t aNamespaceID,
+                                               const nsAString* aIs = nullptr) override;
 
   virtual void Sanitize() override;
 
@@ -1268,8 +1198,6 @@ public:
   Element* GetFullscreenElement() override;
 
   void RequestPointerLock(Element* aElement) override;
-  bool ShouldLockPointer(Element* aElement, Element* aCurrentLock,
-                         bool aNoFocusCheck = false);
   bool SetPointerLock(Element* aElement, int aCursorStyle);
   static void UnlockPointer(nsIDocument* aDoc = nullptr);
 
@@ -1334,14 +1262,12 @@ public:
   virtual void GetLastStyleSheetSet(nsString& aSheetSet) override;
   virtual mozilla::dom::DOMStringList* StyleSheetSets() override;
   virtual void EnableStyleSheetsForSet(const nsAString& aSheetSet) override;
-  using nsIDocument::CreateElement;
-  using nsIDocument::CreateElementNS;
   virtual already_AddRefed<Element> CreateElement(const nsAString& aTagName,
-                                                  const nsAString& aTypeExtension,
-                                                  mozilla::ErrorResult& rv) override;
+                                                  const mozilla::dom::ElementCreationOptionsOrString& aOptions,
+                                                  ErrorResult& rv) override;
   virtual already_AddRefed<Element> CreateElementNS(const nsAString& aNamespaceURI,
                                                     const nsAString& aQualifiedName,
-                                                    const nsAString& aTypeExtension,
+                                                    const mozilla::dom::ElementCreationOptions& aOptions,
                                                     mozilla::ErrorResult& rv) override;
   virtual void UseRegistryFromDocument(nsIDocument* aDocument) override;
 
@@ -1588,6 +1514,27 @@ private:
 
   static bool CustomElementConstructor(JSContext* aCx, unsigned aArgc, JS::Value* aVp);
 
+  /**
+   * Looking up a custom element definition.
+   * https://html.spec.whatwg.org/#look-up-a-custom-element-definition
+   */
+  mozilla::dom::CustomElementDefinition* LookupCustomElementDefinition(
+    const nsAString& aLocalName, uint32_t aNameSpaceID, const nsAString* aIs);
+
+  /**
+   * Check if the passed custom element name, aOptions.mIs, is a registered
+   * custom element type or not, then return the custom element name for future
+   * usage.
+   *
+   * If there is no existing custom element definition for this name, throw a
+   * NotFoundError.
+   */
+  const nsString* CheckCustomElementName(
+    const mozilla::dom::ElementCreationOptions& aOptions,
+    const nsAString& aLocalName,
+    uint32_t aNamespaceID,
+    ErrorResult& rv);
+
 public:
   // Enqueue created callback or register upgrade candidate for
   // newly created custom elements, possibly extending an existing type.
@@ -1651,11 +1598,7 @@ public:
   // terminated instead of letting it finish at its own pace.
   bool mParserAborted:1;
 
-  friend class nsPointerLockPermissionRequest;
   friend class nsCallRequestFullScreen;
-  // When set, trying to lock the pointer doesn't require permission from the
-  // user.
-  bool mAllowRelocking:1;
 
   // ScreenOrientation "pending promise" as described by
   // http://www.w3.org/TR/screen-orientation/
@@ -1673,10 +1616,6 @@ public:
   // Keeps track of whether we have a pending
   // 'style-sheet-applicable-state-changed' notification.
   bool mSSApplicableStateNotificationPending:1;
-
-  // The number of pointer lock requests which are cancelled by the user.
-  // The value is saturated to kPointerLockRequestLimit+1 = 3.
-  uint8_t mCancelledPointerLockRequests:2;
 
   // Whether we have reported use counters for this document with Telemetry yet.
   // Normally this is only done at document destruction time, but for image
@@ -1829,6 +1768,7 @@ private:
   RefPtr<mozilla::dom::UndoManager> mUndoManager;
 
   RefPtr<mozilla::dom::DocumentTimeline> mDocumentTimeline;
+  mozilla::LinkedList<mozilla::dom::DocumentTimeline> mTimelines;
 
   enum ViewportType {
     DisplayWidthHeight,

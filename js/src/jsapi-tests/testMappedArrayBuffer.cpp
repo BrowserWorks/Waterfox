@@ -126,7 +126,7 @@ bool TestCloneObject()
 {
     JS::RootedObject obj1(cx, CreateNewObject(8, 12));
     CHECK(obj1);
-    JSAutoStructuredCloneBuffer cloned_buffer;
+    JSAutoStructuredCloneBuffer cloned_buffer(JS::StructuredCloneScope::SameProcessSameThread, nullptr, nullptr);
     JS::RootedValue v1(cx, JS::ObjectValue(*obj1));
     CHECK(cloned_buffer.write(cx, v1, nullptr, nullptr));
     JS::RootedValue v2(cx);
@@ -164,7 +164,7 @@ bool TestTransferObject()
     CHECK(obj);
     JS::RootedValue transferable(cx, JS::ObjectValue(*obj));
 
-    JSAutoStructuredCloneBuffer cloned_buffer;
+    JSAutoStructuredCloneBuffer cloned_buffer(JS::StructuredCloneScope::SameProcessSameThread, nullptr, nullptr);
     CHECK(cloned_buffer.write(cx, v1, transferable, nullptr, nullptr));
     JS::RootedValue v2(cx);
     CHECK(cloned_buffer.read(cx, &v2, nullptr, nullptr));
@@ -177,9 +177,9 @@ bool TestTransferObject()
 
 static void GC(JSContext* cx)
 {
-    JS_GC(JS_GetRuntime(cx));
+    JS_GC(cx);
     // Trigger another to wait for background finalization to end.
-    JS_GC(JS_GetRuntime(cx));
+    JS_GC(cx);
 }
 
 END_TEST(testMappedArrayBuffer_bug945152)

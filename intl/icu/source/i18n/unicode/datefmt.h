@@ -1,6 +1,6 @@
 /*
  ********************************************************************************
- *   Copyright (C) 1997-2016, International Business Machines
+ *   Copyright (C) 1997-2015, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  ********************************************************************************
  *
@@ -586,6 +586,7 @@ public:
             UErrorCode &status);
 #endif  /* U_HIDE_INTERNAL_API */
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Creates a date/time formatter for the given skeleton and 
      * default locale.
@@ -597,7 +598,7 @@ public:
      *                 order for that locale.
      * @param status   Any error returned here.
      * @return         A date/time formatter which the caller owns.
-     * @stable ICU 55
+     * @draft ICU 55
      */
     static DateFormat* U_EXPORT2 createInstanceForSkeleton(
             const UnicodeString& skeleton,
@@ -614,7 +615,7 @@ public:
      * @param locale  The given locale.
      * @param status   Any error returned here.
      * @return         A date/time formatter which the caller owns.
-     * @stable ICU 55
+     * @draft ICU 55
      */
     static DateFormat* U_EXPORT2 createInstanceForSkeleton(
             const UnicodeString& skeleton,
@@ -633,7 +634,7 @@ public:
      * @param locale  The given locale.
      * @param status   Any error returned here.
      * @return         A date/time formatter which the caller owns.
-     * @stable ICU 55
+     * @draft ICU 55
      */
     static DateFormat* U_EXPORT2 createInstanceForSkeleton(
             Calendar *calendarToAdopt,
@@ -641,6 +642,7 @@ public:
             const Locale &locale,
             UErrorCode &status);
 
+#endif /* U_HIDE_DRAFT_API */
 
     /**
      * Gets the set of locales for which DateFormats are installed.

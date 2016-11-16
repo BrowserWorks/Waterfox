@@ -106,7 +106,11 @@
     },
 
     onUnregister(request) {
-      // Do nothing.
+      this.serverSendMsg(JSON.stringify({
+        messageType: "unregister",
+        channelID: request.channelID,
+        status: 200,
+      }));
     },
 
     onAck(request) {
@@ -170,6 +174,7 @@ function setupPrefs() {
   return SpecialPowers.pushPrefEnv({"set": [
     ["dom.push.enabled", true],
     ["dom.push.connection.enabled", true],
+    ["dom.push.maxRecentMessageIDsPerSubscription", 0],
     ["dom.serviceWorkers.exemptFromPerDomainMax", true],
     ["dom.serviceWorkers.enabled", true],
     ["dom.serviceWorkers.testing.enabled", true]

@@ -79,7 +79,7 @@ typedef HashMap<void*, VerifyNode*, DefaultHasher<void*>, SystemAllocPolicy> Nod
  * The nodemap field is a hashtable that maps from the address of the GC thing
  * to the VerifyNode that represents it.
  */
-class js::VerifyPreTracer : public JS::CallbackTracer
+class js::VerifyPreTracer final : public JS::CallbackTracer
 {
     JS::AutoDisableGenerationalGC noggc;
 
@@ -183,7 +183,7 @@ gc::GCRuntime::startVerifyPreBarriers()
     if (!trc)
         return;
 
-    AutoPrepareForTracing prep(rt, WithAtoms);
+    AutoPrepareForTracing prep(rt->contextFromMainThread(), WithAtoms);
 
     for (auto chunk = allNonEmptyChunks(); !chunk.done(); chunk.next())
         chunk->bitmap.clear();
@@ -203,7 +203,7 @@ gc::GCRuntime::startVerifyPreBarriers()
     /* Create the root node. */
     trc->curnode = MakeNode(trc, nullptr, JS::TraceKind(0));
 
-    incrementalState = MARK_ROOTS;
+    incrementalState = State::MarkRoots;
 
     /* Make all the roots be edges emanating from the root node. */
     markRuntime(trc, TraceRuntime, prep.session().lock);
@@ -230,19 +230,21 @@ gc::GCRuntime::startVerifyPreBarriers()
     }
 
     verifyPreData = trc;
-    incrementalState = MARK;
+    incrementalState = State::Mark;
     marker.start();
 
     for (ZonesIter zone(rt, WithAtoms); !zone.done(); zone.next()) {
         PurgeJITCaches(zone);
-        zone->setNeedsIncrementalBarrier(true, Zone::UpdateJit);
-        zone->arenas.purge();
+        if (!zone->usedByExclusiveThread) {
+            zone->setNeedsIncrementalBarrier(true, Zone::UpdateJit);
+            zone->arenas.purge();
+        }
     }
 
     return;
 
 oom:
-    incrementalState = NO_INCREMENTAL;
+    incrementalState = State::NotActive;
     js_delete(trc);
     verifyPreData = nullptr;
 }
@@ -284,6 +286,13 @@ CheckEdgeTracer::onChild(const JS::GCCellPtr& thing)
     }
 }
 
+void
+js::gc::AssertSafeToSkipBarrier(TenuredCell* thing)
+{
+    Zone* zone = thing->zoneFromAnyThread();
+    MOZ_ASSERT(!zone->needsIncrementalBarrier() || zone->isAtomsZone());
+}
+
 static void
 AssertMarkedOrAllocated(const EdgeValue& edge)
 {
@@ -312,7 +321,7 @@ gc::GCRuntime::endVerifyPreBarriers()
 
     MOZ_ASSERT(!JS::IsGenerationalGCEnabled(rt));
 
-    AutoPrepareForTracing prep(rt, SkipAtoms);
+    AutoPrepareForTracing prep(rt->contextFromMainThread(), SkipAtoms);
 
     bool compartmentCreated = false;
 
@@ -333,7 +342,7 @@ gc::GCRuntime::endVerifyPreBarriers()
     number++;
 
     verifyPreData = nullptr;
-    incrementalState = NO_INCREMENTAL;
+    incrementalState = State::NotActive;
 
     if (!compartmentCreated && IsIncrementalGCSafe(rt)) {
         CheckEdgeTracer cetrc(rt);
@@ -499,7 +508,7 @@ bool
 CheckHeapTracer::check(AutoLockForExclusiveAccess& lock)
 {
     // The analysis thinks that markRuntime might GC by calling a GC callback.
-    JS::AutoSuppressGCAnalysis nogc(rt);
+    JS::AutoSuppressGCAnalysis nogc;
     rt->gc.markRuntime(this, GCRuntime::TraceRuntime, lock);
 
     while (!stack.empty()) {

@@ -6,7 +6,7 @@
 /* import-globals-from ../../framework/test/shared-head.js */
 /* import-globals-from ../../commandline/test/helpers.js */
 /* import-globals-from ../../shared/test/test-actor-registry.js */
-/* globals registerTestActor, getTestActor */
+/* import-globals-from ../../inspector/test/shared-head.js */
 "use strict";
 
 // Load the shared-head file first.
@@ -27,6 +27,11 @@ Services.scriptloader.loadSubScript(
 // Import helpers registering the test-actor in remote targets
 Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/shared/test/test-actor-registry.js",
+  this);
+
+// Import helpers for the inspector that are also shared with others
+Services.scriptloader.loadSubScript(
+  "chrome://mochitests/content/browser/devtools/client/inspector/test/shared-head.js",
   this);
 
 DevToolsUtils.testing = true;
@@ -59,41 +64,6 @@ var navigateTo = function (toolbox, url) {
 };
 
 /**
- * Simple DOM node accesor function that takes either a node or a string css
- * selector as argument and returns the corresponding node
- * @param {String|DOMNode} nodeOrSelector
- * @param {Object} options
- *        An object containing any of the following options:
- *        - document: HTMLDocument that should be queried for the selector.
- *                    Default: content.document.
- *        - expectNoMatch: If true and a node matches the given selector, a
- *                         failure is logged for an unexpected match.
- *                         If false and nothing matches the given selector, a
- *                         failure is logged for a missing match.
- *                         Default: false.
- * @return {DOMNode}
- */
-function getNode(nodeOrSelector, options = {}) {
-  let document = options.document || content.document;
-  let noMatches = !!options.expectNoMatch;
-
-  if (typeof nodeOrSelector === "string") {
-    info("Looking for a node that matches selector " + nodeOrSelector);
-    let node = document.querySelector(nodeOrSelector);
-    if (noMatches) {
-      ok(!node, "Selector " + nodeOrSelector + " didn't match any nodes.");
-    } else {
-      ok(node, "Selector " + nodeOrSelector + " matched a node.");
-    }
-
-    return node;
-  }
-
-  info("Looking for a node but selector was not a string.");
-  return nodeOrSelector;
-}
-
-/**
  * Start the element picker and focus the content window.
  * @param {Toolbox} toolbox
  */
@@ -120,24 +90,6 @@ function selectAndHighlightNode(selector, inspector) {
   info("Highlighting and selecting the node " + selector);
   return selectNode(selector, inspector, "test-highlight");
 }
-
-/**
- * Set the inspector's current selection to the first match of the given css
- * selector
- * @param {String|NodeFront} selector
- * @param {InspectorPanel} inspector The instance of InspectorPanel currently
- * loaded in the toolbox
- * @param {String} reason Defaults to "test" which instructs the inspector not
- * to highlight the node upon selection
- * @return {Promise} Resolves when the inspector is updated with the new node
- */
-var selectNode = Task.async(function* (selector, inspector, reason = "test") {
-  info("Selecting the node for '" + selector + "'");
-  let nodeFront = yield getNodeFront(selector, inspector);
-  let updated = inspector.once("inspector-updated");
-  inspector.selection.setNodeFront(nodeFront, reason);
-  yield updated;
-});
 
 /**
  * Select node for a given selector, make it focusable and set focus in its
@@ -182,29 +134,6 @@ var openInspectorForURL = Task.async(function* (url, hostType) {
   return { tab, inspector, toolbox, testActor };
 });
 
-/**
- * Open the toolbox, with the inspector tool visible.
- * @param {String} hostType Optional hostType, as defined in Toolbox.HostType
- * @return a promise that resolves when the inspector is ready
- */
-var openInspector = Task.async(function* (hostType) {
-  info("Opening the inspector");
-
-  let toolbox = yield openToolboxForTab(gBrowser.selectedTab, "inspector",
-                                        hostType);
-  let inspector = toolbox.getPanel("inspector");
-
-  info("Waiting for the inspector to update");
-  if (inspector._updateProgress) {
-    yield inspector.once("inspector-updated");
-  }
-
-  yield registerTestActor(toolbox.target.client);
-  let testActor = yield getTestActor(toolbox);
-
-  return {toolbox, inspector, testActor};
-});
-
 function getActiveInspector() {
   let target = TargetFactory.forTab(gBrowser.selectedTab);
   return gDevTools.getToolbox(target).getPanel("inspector");
@@ -240,103 +169,6 @@ var clickOnInspectMenuItem = Task.async(function* (testActor, selector) {
 
   return getActiveInspector();
 });
-
-/**
- * Open the toolbox, with the inspector tool visible, and the one of the sidebar
- * tabs selected.
- *
- * @param {String} id
- *        The ID of the sidebar tab to be opened
- * @return a promise that resolves when the inspector is ready and the tab is
- * visible and ready
- */
-var openInspectorSidebarTab = Task.async(function* (id) {
-  let {toolbox, inspector, testActor} = yield openInspector();
-
-  info("Selecting the " + id + " sidebar");
-  inspector.sidebar.select(id);
-
-  return {
-    toolbox,
-    inspector,
-    testActor
-  };
-});
-
-/**
- * Open the toolbox, with the inspector tool visible, and the rule-view
- * sidebar tab selected.
- *
- * @return a promise that resolves when the inspector is ready and the rule view
- * is visible and ready
- */
-function openRuleView() {
-  return openInspectorSidebarTab("ruleview").then(data => {
-    return {
-      toolbox: data.toolbox,
-      inspector: data.inspector,
-      testActor: data.testActor,
-      view: data.inspector.ruleview.view
-    };
-  });
-}
-
-/**
- * Open the toolbox, with the inspector tool visible, and the computed-view
- * sidebar tab selected.
- *
- * @return a promise that resolves when the inspector is ready and the computed
- * view is visible and ready
- */
-function openComputedView() {
-  return openInspectorSidebarTab("computedview").then(data => {
-    return {
-      toolbox: data.toolbox,
-      inspector: data.inspector,
-      testActor: data.testActor,
-      view: data.inspector.computedview.view
-    };
-  });
-}
-
-/**
- * Select the rule view sidebar tab on an already opened inspector panel.
- *
- * @param {InspectorPanel} inspector
- *        The opened inspector panel
- * @return {CssRuleView} the rule view
- */
-function selectRuleView(inspector) {
-  inspector.sidebar.select("ruleview");
-  return inspector.ruleview.view;
-}
-
-/**
- * Select the computed view sidebar tab on an already opened inspector panel.
- *
- * @param {InspectorPanel} inspector
- *        The opened inspector panel
- * @return {CssComputedView} the computed view
- */
-function selectComputedView(inspector) {
-  inspector.sidebar.select("computedview");
-  return inspector.computedview.view;
-}
-
-/**
- * Get the NodeFront for a node that matches a given css selector, via the
- * protocol.
- * @param {String|NodeFront} selector
- * @param {InspectorPanel} inspector The instance of InspectorPanel currently
- * loaded in the toolbox
- * @return {Promise} Resolves to the NodeFront instance
- */
-function getNodeFront(selector, {walker}) {
-  if (selector._form) {
-    return selector;
-  }
-  return walker.querySelector(walker.rootNode, selector);
-}
 
 /**
  * Get the NodeFront for a node that matches a given css selector inside a
@@ -451,7 +283,7 @@ var clickContainer = Task.async(function* (selector, inspector) {
  */
 function mouseLeaveMarkupView(inspector) {
   info("Leaving the markup-view area");
-  let def = promise.defer();
+  let def = defer();
 
   // Find another element to mouseover over in order to leave the markup-view
   let btn = inspector.toolbox.doc.querySelector("#toolbox-controls");
@@ -513,32 +345,6 @@ function redoChange(inspector) {
 }
 
 /**
- * Dispatch a command event on a node (e.g. click on a contextual menu item).
- * @param {DOMNode} node
- */
-function dispatchCommandEvent(node) {
-  info("Dispatching command event on " + node);
-  let commandEvent = document.createEvent("XULCommandEvent");
-  commandEvent.initCommandEvent("command", true, true, window, 0, false, false,
-                                false, false, null);
-  node.dispatchEvent(commandEvent);
-}
-
-/**
- * A helper that simulates a contextmenu event on the given chrome DOM element.
- */
-function contextMenuClick(element) {
-  let evt = element.ownerDocument.createEvent("MouseEvents");
-  let button = 2;
-
-  evt.initMouseEvent("contextmenu", true, true,
-       element.ownerDocument.defaultView, 1, 0, 0, 0, 0, false,
-       false, false, false, button, null);
-
-  element.dispatchEvent(evt);
-}
-
-/**
  * A helper that fetches a front for a node that matches the given selector or
  * doctype node if the selector is falsy.
  */
@@ -551,6 +357,28 @@ function* getNodeFrontForSelector(selector, inspector) {
   info("Retrieving front for doctype node");
   let {nodes} = yield inspector.walker.children(inspector.walker.rootNode);
   return nodes[0];
+}
+
+/**
+ * A simple polling helper that executes a given function until it returns true.
+ * @param {Function} check A generator function that is expected to return true at some
+ * stage.
+ * @param {String} desc A text description to be displayed when the polling starts.
+ * @param {Number} attemptes Optional number of times we poll. Defaults to 10.
+ * @param {Number} timeBetweenAttempts Optional time to wait between each attempt.
+ * Defaults to 200ms.
+ */
+function* poll(check, desc, attempts = 10, timeBetweenAttempts = 200) {
+  info(desc);
+
+  for (let i = 0; i < attempts; i++) {
+    if (yield check()) {
+      return;
+    }
+    yield new Promise(resolve => setTimeout(resolve, timeBetweenAttempts));
+  }
+
+  throw new Error(`Timeout while: ${desc}`);
 }
 
 /**
@@ -581,6 +409,7 @@ const getHighlighterHelperFor = (type) => Task.async(
       set prefix(value) {
         prefix = value;
       },
+
       get highlightedNode() {
         if (!highlightedNode) {
           return null;
@@ -594,9 +423,9 @@ const getHighlighterHelperFor = (type) => Task.async(
         };
       },
 
-      show: function* (selector = ":root") {
+      show: function* (selector = ":root", options) {
         highlightedNode = yield getNodeFront(selector, inspector);
-        return yield highlighter.show(highlightedNode);
+        return yield highlighter.show(highlightedNode, options);
       },
 
       hide: function* () {
@@ -616,6 +445,22 @@ const getHighlighterHelperFor = (type) => Task.async(
       getElementAttribute: function* (id, name) {
         return yield testActor.getHighlighterNodeAttribute(
           prefix + id, name, highlighter);
+      },
+
+      waitForElementAttributeSet: function* (id, name) {
+        yield poll(function* () {
+          let value = yield testActor.getHighlighterNodeAttribute(
+            prefix + id, name, highlighter);
+          return !!value;
+        }, `Waiting for element ${id} to have attribute ${name} set`);
+      },
+
+      waitForElementAttributeRemoved: function* (id, name) {
+        yield poll(function* () {
+          let value = yield testActor.getHighlighterNodeAttribute(
+            prefix + id, name, highlighter);
+          return !value;
+        }, `Waiting for element ${id} to have attribute ${name} removed`);
       },
 
       synthesizeMouse: function* (options) {
@@ -678,7 +523,7 @@ function* waitForMultipleChildrenUpdates(inspector) {
  */
 function waitForChildrenUpdated({markup}) {
   info("Waiting for queued children updates to be handled");
-  let def = promise.defer();
+  let def = defer();
   markup._waitForChildren().then(() => {
     executeSoon(def.resolve);
   });
@@ -697,7 +542,7 @@ function waitForChildrenUpdated({markup}) {
  * ready
  */
 function waitForStyleEditor(toolbox, href) {
-  let def = promise.defer();
+  let def = defer();
 
   info("Waiting for the toolbox to switch to the styleeditor");
   toolbox.once("styleeditor-selected").then(() => {
@@ -748,7 +593,7 @@ function waitForStyleEditor(toolbox, href) {
  * the validator function has returned true, rejects otherwise.
  */
 function waitForClipboard(setup, expected) {
-  let def = promise.defer();
+  let def = defer();
   SimpleTest.waitForClipboard(expected, setup, def.resolve, def.reject);
   return def.promise;
 }
@@ -780,8 +625,7 @@ var waitForTab = Task.async(function* () {
   info("Waiting for a tab to open");
   yield once(gBrowser.tabContainer, "TabOpen");
   let tab = gBrowser.selectedTab;
-  let browser = tab.linkedBrowser;
-  yield once(browser, "load", true);
+  yield BrowserTestUtils.browserLoaded(tab.linkedBrowser);
   info("The tab load completed");
   return tab;
 });
@@ -828,4 +672,41 @@ function assertHoverTooltipOn(tooltip, element) {
   }, () => {
     ok(false, "No tooltip is defined on hover of the given element");
   });
+}
+
+/**
+ * Open the inspector menu and return all of it's items in a flat array
+ * @param {InspectorPanel} inspector
+ * @param {Object} options to pass into openMenu
+ * @return An array of MenuItems
+ */
+function openContextMenuAndGetAllItems(inspector, options) {
+  let menu = inspector._openMenu(options);
+
+  // Flatten all menu items into a single array to make searching through it easier
+  let allItems = [].concat.apply([], menu.items.map(function addItem(item) {
+    if (item.submenu) {
+      return addItem(item.submenu.items);
+    }
+    return item;
+  }));
+
+  return allItems;
+}
+
+/**
+ * Get the rule editor from the rule-view given its index
+ *
+ * @param {CssRuleView} view
+ *        The instance of the rule-view panel
+ * @param {Number} childrenIndex
+ *        The children index of the element to get
+ * @param {Number} nodeIndex
+ *        The child node index of the element to get
+ * @return {DOMNode} The rule editor if any at this index
+ */
+function getRuleViewRuleEditor(view, childrenIndex, nodeIndex) {
+  return nodeIndex !== undefined ?
+    view.element.children[childrenIndex].childNodes[nodeIndex]._ruleEditor :
+    view.element.children[childrenIndex]._ruleEditor;
 }

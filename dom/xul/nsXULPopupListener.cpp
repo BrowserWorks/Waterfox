@@ -27,7 +27,7 @@
 #include "nsIPrincipal.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsLayoutUtils.h"
-#include "nsHTMLReflowState.h"
+#include "mozilla/ReflowInput.h"
 #include "nsIObjectLoadingContent.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
@@ -242,7 +242,7 @@ nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode, bool aIsTo
     if (!targetFrame) return NS_ERROR_FAILURE;
 
     const nsStyleUserInterface* ui = targetFrame->StyleUserInterface();
-    bool suppressBlur = (ui->mUserFocus == NS_STYLE_USER_FOCUS_IGNORE);
+    bool suppressBlur = (ui->mUserFocus == StyleUserFocus::Ignore);
 
     nsCOMPtr<nsIDOMElement> element;
     nsCOMPtr<nsIContent> newFocus = do_QueryInterface(content);

@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/collation/se.xml
@@ -14,7 +14,7 @@ se{
                 "[import und-u-co-search]"
                 "[import se-u-co-standard]"
             }
-            Version{"29"}
+            Version{"28"}
         }
         standard{
             Sequence{
@@ -59,7 +59,7 @@ se{
                 "<<<Ô<<ǫ"
                 "<<<Ǫ"
             }
-            Version{"29"}
+            Version{"28"}
         }
     }
 }

@@ -166,7 +166,8 @@ class LIRGeneratorShared : public MDefinitionVisitor
                        const LDefinition& def);
 
     template <size_t Ops, size_t Temps>
-    inline void defineReuseInput(LInstructionHelper<1, Ops, Temps>* lir, MDefinition* mir, uint32_t operand);
+    inline void defineReuseInput(LInstructionHelper<1, Ops, Temps>* lir, MDefinition* mir,
+                                 uint32_t operand);
 
     template <size_t Ops, size_t Temps>
     inline void defineInt64ReuseInput(LInstructionHelper<INT64_PIECES, Ops, Temps>* lir,
@@ -186,6 +187,7 @@ class LIRGeneratorShared : public MDefinitionVisitor
     inline LInt64Allocation useInt64AtStart(MDefinition* mir);
     inline LInt64Allocation useInt64OrConstant(MDefinition* mir, bool useAtStart = false);
     inline LInt64Allocation useInt64Register(MDefinition* mir, bool useAtStart = false);
+    inline LInt64Allocation useInt64Fixed(MDefinition* mir, Register64 regs, bool useAtStart = false);
 
     LInt64Allocation useInt64RegisterAtStart(MDefinition* mir) {
         return useInt64Register(mir, /* useAtStart = */ true);

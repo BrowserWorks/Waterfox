@@ -236,8 +236,8 @@ GLBlitHelper::InitTexQuadProgram(BlitType target)
 
     bool success = false;
 
-    GLuint *programPtr;
-    GLuint *fragShaderPtr;
+    GLuint* programPtr;
+    GLuint* fragShaderPtr;
     const char* fragShaderSource;
     switch (target) {
     case ConvertEGLImage:
@@ -329,7 +329,7 @@ GLBlitHelper::InitTexQuadProgram(BlitType target)
         mGL->fBindAttribLocation(program, 0, "aPosition");
         mGL->fLinkProgram(program);
 
-        if (mGL->DebugMode()) {
+        if (GLContext::ShouldSpew()) {
             GLint status = 0;
             mGL->fGetShaderiv(mTexBlit_VertShader, LOCAL_GL_COMPILE_STATUS, &status);
             if (status != LOCAL_GL_TRUE) {
@@ -372,7 +372,7 @@ GLBlitHelper::InitTexQuadProgram(BlitType target)
         GLint status = 0;
         mGL->fGetProgramiv(program, LOCAL_GL_LINK_STATUS, &status);
         if (status != LOCAL_GL_TRUE) {
-            if (mGL->DebugMode()) {
+            if (GLContext::ShouldSpew()) {
                 NS_ERROR("Linking blit program failed.");
                 GLint length = 0;
                 mGL->fGetProgramiv(program, LOCAL_GL_INFO_LOG_LENGTH, &length);
@@ -903,9 +903,13 @@ GLBlitHelper::BlitImageToFramebuffer(layers::Image* srcImage,
         return BlitGrallocImage(static_cast<layers::GrallocImage*>(srcImage));
 #endif
 
-    case ConvertPlanarYCbCr:
-        mGL->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT, 1);
-        return BlitPlanarYCbCrImage(static_cast<PlanarYCbCrImage*>(srcImage));
+    case ConvertPlanarYCbCr: {
+            const auto saved = mGL->GetIntAs<GLint>(LOCAL_GL_UNPACK_ALIGNMENT);
+            mGL->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT, 1);
+            const auto ret = BlitPlanarYCbCrImage(static_cast<PlanarYCbCrImage*>(srcImage));
+            mGL->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT, saved);
+            return ret;
+        }
 
 #ifdef MOZ_WIDGET_ANDROID
     case ConvertSurfaceTexture:

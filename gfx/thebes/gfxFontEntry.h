@@ -265,6 +265,7 @@ public:
 
     bool     TryGetColorGlyphs();
     bool     GetColorLayersInfo(uint32_t aGlyphId,
+                                const mozilla::gfx::Color& aDefaultColor,
                                 nsTArray<uint16_t>& layerGlyphs,
                                 nsTArray<mozilla::gfx::Color>& layerColors);
 
@@ -479,14 +480,6 @@ protected:
         NS_NOTREACHED("forgot to override either GetFontTable or CopyFontTable?");
         return NS_ERROR_FAILURE;
     }
-
-    // Return a blob that wraps a table found within a buffer of font data.
-    // The blob does NOT own its data; caller guarantees that the buffer
-    // will remain valid at least as long as the blob.
-    // Returns null if the specified table is not found.
-    // This method assumes aFontData is valid 'sfnt' data; before using this,
-    // caller is responsible to do any sanitization/validation necessary.
-    hb_blob_t* GetTableFromFontData(const void* aFontData, uint32_t aTableTag);
 
     // lookup the cmap in cached font data
     virtual already_AddRefed<gfxCharacterMap>

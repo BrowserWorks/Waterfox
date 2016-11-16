@@ -14,7 +14,7 @@ import time
 import mozfile
 
 from .runner import BaseRunner
-from ..devices import Emulator
+from ..devices import BaseEmulator
 
 class DeviceRunner(BaseRunner):
     """
@@ -25,7 +25,7 @@ class DeviceRunner(BaseRunner):
             'MOZ_CRASHREPORTER_NO_REPORT': '1',
             'MOZ_CRASHREPORTER_SHUTDOWN': '1',
             'MOZ_HIDE_RESULTS_TABLE': '1',
-            'NSPR_LOG_MODULES': 'signaling:5,mtransport:5,datachannel:5,jsep:5,MediaPipelineFactory:5',
+            'MOZ_LOG': 'signaling:5,mtransport:5,datachannel:5,jsep:5,MediaPipelineFactory:5',
             'R_LOG_LEVEL': '6',
             'R_LOG_DESTINATION': 'stderr',
             'R_LOG_VERBOSE': '1',
@@ -65,7 +65,7 @@ class DeviceRunner(BaseRunner):
         return cmd
 
     def start(self, *args, **kwargs):
-        if isinstance(self.device, Emulator) and not self.device.connected:
+        if isinstance(self.device, BaseEmulator) and not self.device.connected:
             self.device.start()
         self.device.connect()
         self.device.setup_profile(self.profile)
@@ -78,7 +78,7 @@ class DeviceRunner(BaseRunner):
         if not self.device.wait_for_net():
             raise Exception("Network did not come up when starting device")
 
-        BaseRunner.start(self, *args, **kwargs)
+        pid = BaseRunner.start(self, *args, **kwargs)
 
         timeout = 10 # seconds
         starttime = datetime.datetime.now()
@@ -91,6 +91,7 @@ class DeviceRunner(BaseRunner):
 
         if not self.device.wait_for_net():
             raise Exception("Failed to get a network connection")
+        return pid
 
     def stop(self, sig=None):
         def _wait_for_shutdown(pid, timeout=10):
@@ -142,17 +143,41 @@ class DeviceRunner(BaseRunner):
     def on_finish(self):
         self.check_for_crashes()
 
-    def check_for_crashes(self, dump_save_path=None, test_name=None):
+    def check_for_crashes(self, dump_save_path=None, test_name=None, **kwargs):
         test_name = test_name or self.last_test
         dump_dir = self.device.pull_minidumps()
         crashed = BaseRunner.check_for_crashes(
             self,
             dump_directory=dump_dir,
             dump_save_path=dump_save_path,
-            test_name=test_name)
+            test_name=test_name,
+            **kwargs)
         mozfile.remove(dump_dir)
         return crashed
 
     def cleanup(self, *args, **kwargs):
         BaseRunner.cleanup(self, *args, **kwargs)
         self.device.cleanup()
+
+
+class FennecRunner(DeviceRunner):
+    def __init__(self, cmdargs=None, **kwargs):
+        super(FennecRunner, self).__init__(**kwargs)
+        self.cmdargs = cmdargs or []
+
+    @property
+    def command(self):
+        cmd = [self.app_ctx.adb]
+        if self.app_ctx.dm._deviceSerial:
+            cmd.extend(['-s', self.app_ctx.dm._deviceSerial])
+        cmd.append('shell')
+        app = "%s/org.mozilla.gecko.BrowserApp" % self.app_ctx.remote_process
+        cmd.extend(['am', 'start', '-a', 'android.activity.MAIN', '-n', app])
+        params = ['-no-remote', '-profile', self.app_ctx.remote_profile]
+        params.extend(self.cmdargs)
+        cmd.extend(['--es', 'args', '"%s"' % ' '.join(params)])
+        # Append env variables in the form "--es env0 MOZ_CRASHREPORTER=1"
+        for (count, (k, v)) in enumerate(self._device_env.iteritems()):
+            cmd.extend(["--es", "env" + str(count), k + "=" + v])
+
+        return cmd

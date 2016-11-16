@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en.xml
@@ -198,7 +198,7 @@ en{
             }
         }
     }
-    Version{"2.1.24.18"}
+    Version{"2.1.19.72"}
     calendar{
         buddhist{
             eras{
@@ -398,18 +398,18 @@ en{
                         "Mo12",
                     }
                     wide{
-                        "First Month",
-                        "Second Month",
-                        "Third Month",
-                        "Fourth Month",
-                        "Fifth Month",
-                        "Sixth Month",
-                        "Seventh Month",
-                        "Eighth Month",
-                        "Ninth Month",
-                        "Tenth Month",
-                        "Eleventh Month",
-                        "Twelfth Month",
+                        "Month1",
+                        "Month2",
+                        "Month3",
+                        "Month4",
+                        "Month5",
+                        "Month6",
+                        "Month7",
+                        "Month8",
+                        "Month9",
+                        "Month10",
+                        "Month11",
+                        "Month12",
                     }
                 }
             }

@@ -53,8 +53,6 @@
 #  define MOZ_HAVE_NEVER_INLINE          __declspec(noinline)
 #  define MOZ_HAVE_NORETURN              __declspec(noreturn)
 #  if _MSC_VER >= 1900
-#    define MOZ_HAVE_CXX11_CONSTEXPR
-#    define MOZ_HAVE_CXX11_CONSTEXPR_IN_TEMPLATES
 #    define MOZ_HAVE_EXPLICIT_CONVERSION
 #  endif
 #  ifdef __clang__
@@ -72,9 +70,6 @@
 #  ifndef __has_extension
 #    define __has_extension __has_feature /* compatibility, for older versions of clang */
 #  endif
-#  if __has_extension(cxx_constexpr)
-#    define MOZ_HAVE_CXX11_CONSTEXPR
-#  endif
 #  if __has_extension(cxx_explicit_conversions)
 #    define MOZ_HAVE_EXPLICIT_CONVERSION
 #  endif
@@ -86,8 +81,6 @@
 #  endif
 #elif defined(__GNUC__)
 #  if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
-#    define MOZ_HAVE_CXX11_CONSTEXPR
-#    define MOZ_HAVE_CXX11_CONSTEXPR_IN_TEMPLATES
 #    define MOZ_HAVE_EXPLICIT_CONVERSION
 #  endif
 #  define MOZ_HAVE_NEVER_INLINE          __attribute__((noinline))
@@ -102,30 +95,6 @@
 #  if __has_extension(attribute_analyzer_noreturn)
 #    define MOZ_HAVE_ANALYZER_NORETURN __attribute__((analyzer_noreturn))
 #  endif
-#endif
-
-/*
- * The MOZ_CONSTEXPR specifier declares that a C++11 compiler can evaluate a
- * function at compile time. A constexpr function cannot examine any values
- * except its arguments and can have no side effects except its return value.
- * The MOZ_CONSTEXPR_VAR specifier tells a C++11 compiler that a variable's
- * value may be computed at compile time.  It should be prefered to just
- * marking variables as MOZ_CONSTEXPR because if the compiler does not support
- * constexpr it will fall back to making the variable const, and some compilers
- * do not accept variables being marked both const and constexpr.
- */
-#ifdef MOZ_HAVE_CXX11_CONSTEXPR
-#  define MOZ_CONSTEXPR         constexpr
-#  define MOZ_CONSTEXPR_VAR     constexpr
-#  ifdef MOZ_HAVE_CXX11_CONSTEXPR_IN_TEMPLATES
-#    define MOZ_CONSTEXPR_TMPL  constexpr
-#  else
-#    define MOZ_CONSTEXPR_TMPL
-#  endif
-#else
-#  define MOZ_CONSTEXPR         /* no support */
-#  define MOZ_CONSTEXPR_VAR     const
-#  define MOZ_CONSTEXPR_TMPL
 #endif
 
 /*
@@ -527,6 +496,12 @@
  *   declarations where an instance of the template should be considered, for
  *   static analysis purposes, to inherit any type annotations (such as
  *   MOZ_MUST_USE_TYPE and MOZ_STACK_CLASS) from its template arguments.
+ * MOZ_INIT_OUTSIDE_CTOR: Applies to class member declarations. Occasionally
+ *   there are class members that are not initialized in the constructor,
+ *   but logic elsewhere in the class ensures they are initialized prior to use.
+ *   Using this attribute on a member disables the check that this member must be
+ *   initialized in constructors via list-initialization, in the constructor body,
+ *   or via functions called from the constructor body.
  * MOZ_NON_AUTOABLE: Applies to class declarations. Makes it a compile time error to
  *   use `auto` in place of this type in variable declarations.  This is intended to
  *   be used with types which are intended to be implicitly constructed into other
@@ -560,6 +535,8 @@
 #  define MOZ_INHERIT_TYPE_ANNOTATIONS_FROM_TEMPLATE_ARGS \
     __attribute__((annotate("moz_inherit_type_annotations_from_template_args")))
 #  define MOZ_NON_AUTOABLE __attribute__((annotate("moz_non_autoable")))
+#  define MOZ_INIT_OUTSIDE_CTOR \
+    __attribute__((annotate("moz_ignore_ctor_initialization")))
 /*
  * It turns out that clang doesn't like void func() __attribute__ {} without a
  * warning, so use pragmas to disable the warning. This code won't work on GCC
@@ -591,6 +568,7 @@
 #  define MOZ_NEEDS_MEMMOVABLE_TYPE /* nothing */
 #  define MOZ_NEEDS_MEMMOVABLE_MEMBERS /* nothing */
 #  define MOZ_INHERIT_TYPE_ANNOTATIONS_FROM_TEMPLATE_ARGS /* nothing */
+#  define MOZ_INIT_OUTSIDE_CTOR /* nothing */
 #  define MOZ_NON_AUTOABLE /* nothing */
 #endif /* MOZ_CLANG_PLUGIN */
 

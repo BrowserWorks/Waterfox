@@ -129,6 +129,7 @@ enum class MaybeAdding { Adding = true, NotAdding = false };
 class ShapeTable {
   public:
     friend class NativeObject;
+    friend class BaseShape;
     static const uint32_t MIN_ENTRIES   = 11;
 
     class Entry {
@@ -145,6 +146,7 @@ class ShapeTable {
       public:
         bool isFree() const { return shape_ == nullptr; }
         bool isRemoved() const { return shape_ == SHAPE_REMOVED; }
+        bool isLive() const { return !isFree() && !isRemoved(); }
         bool hadCollision() const { return uintptr_t(shape_) & SHAPE_COLLISION; }
 
         void setFree() { shape_ = nullptr; }
@@ -454,6 +456,10 @@ class BaseShape : public gc::TenuredCell
     void traceChildren(JSTracer* trc);
     void traceChildrenSkipShapeTable(JSTracer* trc);
 
+#ifdef DEBUG
+    bool canSkipMarkingShapeTable(Shape* lastShape);
+#endif
+
   private:
     static void staticAsserts() {
         JS_STATIC_ASSERT(offsetof(BaseShape, clasp_) == offsetof(js::shadow::BaseShape, clasp_));
@@ -538,7 +544,7 @@ class Shape : public gc::TenuredCell
     friend class TenuringTracer;
     friend struct StackBaseShape;
     friend struct StackShape;
-    friend struct JS::ubi::Concrete<Shape>;
+    friend class JS::ubi::Concrete<Shape>;
     friend class js::gc::RelocationOverlay;
 
   protected:
@@ -945,8 +951,8 @@ class Shape : public gc::TenuredCell
     }
 
 #ifdef DEBUG
-    void dump(JSContext* cx, FILE* fp) const;
-    void dumpSubtree(JSContext* cx, int level, FILE* fp) const;
+    void dump(FILE* fp) const;
+    void dumpSubtree(int level, FILE* fp) const;
 #endif
 
     void sweep();
@@ -1459,24 +1465,32 @@ ReshapeForAllocKind(JSContext* cx, Shape* shape, TaggedProto proto,
 namespace JS {
 namespace ubi {
 
-template<> struct Concrete<js::Shape> : TracerConcreteWithCompartment<js::Shape> {
-    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
-
+template<>
+class Concrete<js::Shape> : TracerConcreteWithCompartment<js::Shape> {
   protected:
     explicit Concrete(js::Shape *ptr) : TracerConcreteWithCompartment<js::Shape>(ptr) { }
 
   public:
     static void construct(void *storage, js::Shape *ptr) { new (storage) Concrete(ptr); }
-};
 
-template<> struct Concrete<js::BaseShape> : TracerConcreteWithCompartment<js::BaseShape> {
     Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
 
+    const char16_t* typeName() const override { return concreteTypeName; }
+    static const char16_t concreteTypeName[];
+};
+
+template<>
+class Concrete<js::BaseShape> : TracerConcreteWithCompartment<js::BaseShape> {
   protected:
     explicit Concrete(js::BaseShape *ptr) : TracerConcreteWithCompartment<js::BaseShape>(ptr) { }
 
   public:
     static void construct(void *storage, js::BaseShape *ptr) { new (storage) Concrete(ptr); }
+
+    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
+
+    const char16_t* typeName() const override { return concreteTypeName; }
+    static const char16_t concreteTypeName[];
 };
 
 } // namespace ubi

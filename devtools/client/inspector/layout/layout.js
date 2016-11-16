@@ -6,11 +6,13 @@
 
 "use strict";
 
+/* eslint-disable mozilla/reject-some-requires */
 const {Cc, Ci} = require("chrome");
+/* eslint-enable mozilla/reject-some-requires */
 const {Task} = require("devtools/shared/task");
 const {InplaceEditor, editableItem} =
       require("devtools/client/shared/inplace-editor");
-const {ReflowFront} = require("devtools/server/actors/layout");
+const {ReflowFront} = require("devtools/shared/fronts/layout");
 const {LocalizationHelper} = require("devtools/client/shared/l10n");
 const {getCssProperties} = require("devtools/shared/fronts/css-properties");
 
@@ -68,7 +70,7 @@ EditingSession.prototype = {
     // Create a hidden element for getPropertyFromRule to use
     let div = this._doc.createElement("div");
     div.setAttribute("style", "display: none");
-    this._doc.getElementById("sidebar-panel-layoutview").appendChild(div);
+    this._doc.getElementById("sidebar-panel-computedview").appendChild(div);
     this._element = this._doc.createElement("p");
     div.appendChild(this._element);
 
@@ -183,13 +185,17 @@ EditingSession.prototype = {
 
 /**
  * The layout-view panel
- * @param {InspectorPanel} inspector An instance of the inspector-panel
- * currently loaded in the toolbox
- * @param {Window} win The window containing the panel
+ * @param {InspectorPanel} inspector
+ *        An instance of the inspector-panel currently loaded in the toolbox
+ * @param {Document} document
+ *        The document that will contain the layout view.
  */
-function LayoutView(inspector, win) {
+function LayoutView(inspector, document) {
   this.inspector = inspector;
-  this.doc = win.document;
+  this.doc = document;
+  this.wrapper = this.doc.getElementById("layout-wrapper");
+  this.container = this.doc.getElementById("layout-container");
+  this.expander = this.doc.getElementById("layout-expander");
   this.sizeLabel = this.doc.querySelector(".layout-size > span");
   this.sizeHeadingLabel = this.doc.getElementById("layout-element-size");
   this._geometryEditorHighlighter = null;
@@ -205,10 +211,19 @@ LayoutView.prototype = {
     this.inspector.selection.on("new-node-front", this.onNewSelection);
 
     this.onNewNode = this.onNewNode.bind(this);
-    this.inspector.sidebar.on("layoutview-selected", this.onNewNode);
+    this.inspector.sidebar.on("computedview-selected", this.onNewNode);
 
     this.onSidebarSelect = this.onSidebarSelect.bind(this);
     this.inspector.sidebar.on("select", this.onSidebarSelect);
+
+    this.onToggleExpander = this.onToggleExpander.bind(this);
+    this.expander.addEventListener("click", this.onToggleExpander);
+    let header = this.doc.getElementById("layout-header");
+    header.addEventListener("dblclick", this.onToggleExpander);
+
+    this.onFilterComputedView = this.onFilterComputedView.bind(this);
+    this.inspector.on("computed-view-filtered",
+      this.onFilterComputedView);
 
     this.onPickerStarted = this.onPickerStarted.bind(this);
     this.onMarkupViewLeave = this.onMarkupViewLeave.bind(this);
@@ -313,7 +328,6 @@ LayoutView.prototype = {
     container.setAttribute("dir", dir ? "rtl" : "ltr");
 
     let nodeGeometry = this.doc.getElementById("layout-geometry-editor");
-
     this.onGeometryButtonClick = this.onGeometryButtonClick.bind(this);
     nodeGeometry.addEventListener("click", this.onGeometryButtonClick);
   },
@@ -415,7 +429,7 @@ LayoutView.prototype = {
    */
   isViewVisible: function () {
     return this.inspector &&
-           this.inspector.sidebar.getCurrentTabID() == "layoutview";
+           this.inspector.sidebar.getCurrentTabID() == "computedview";
   },
 
   /**
@@ -440,6 +454,10 @@ LayoutView.prototype = {
       element.removeEventListener("mouseout", this.onHighlightMouseOut, true);
     }
 
+    this.expander.removeEventListener("click", this.onToggleExpander);
+    let header = this.doc.getElementById("layout-header");
+    header.removeEventListener("dblclick", this.onToggleExpander);
+
     let nodeGeometry = this.doc.getElementById("layout-geometry-editor");
     nodeGeometry.removeEventListener("click", this.onGeometryButtonClick);
 
@@ -453,15 +471,19 @@ LayoutView.prototype = {
       this.inspector.markup.off("node-hover", this.onMarkupViewNodeHover);
     }
 
-    this.inspector.sidebar.off("layoutview-selected", this.onNewNode);
+    this.inspector.sidebar.off("computedview-selected", this.onNewNode);
     this.inspector.selection.off("new-node-front", this.onNewSelection);
     this.inspector.sidebar.off("select", this.onSidebarSelect);
     this.inspector._target.off("will-navigate", this.onWillNavigate);
+    this.inspector.off("computed-view-filtered", this.onFilterComputedView);
 
-    this.sizeHeadingLabel = null;
-    this.sizeLabel = null;
     this.inspector = null;
     this.doc = null;
+    this.wrapper = null;
+    this.container = null;
+    this.expander = null;
+    this.sizeLabel = null;
+    this.sizeHeadingLabel = null;
 
     if (this.reflowFront) {
       this.untrackReflows();
@@ -471,14 +493,14 @@ LayoutView.prototype = {
   },
 
   onSidebarSelect: function (e, sidebar) {
-    this.setActive(sidebar === "layoutview");
+    this.setActive(sidebar === "computedview");
   },
 
   /**
    * Selection 'new-node-front' event handler.
    */
   onNewSelection: function () {
-    let done = this.inspector.updating("layoutview");
+    let done = this.inspector.updating("computed-view");
     this.onNewNode()
       .then(() => this.hideGeometryEditor())
       .then(done, (err) => {
@@ -526,6 +548,18 @@ LayoutView.prototype = {
     this.hideGeometryEditor();
   },
 
+  onToggleExpander: function () {
+    let isOpen = this.expander.hasAttribute("open");
+
+    if (isOpen) {
+      this.container.hidden = true;
+      this.expander.removeAttribute("open");
+    } else {
+      this.container.hidden = false;
+      this.expander.setAttribute("open", "");
+    }
+  },
+
   onMarkupViewLeave: function () {
     this.showGeometryEditor(true);
   },
@@ -540,6 +574,16 @@ LayoutView.prototype = {
   },
 
   /**
+   * Event handler that responds to the computed view being filtered
+   * @param {String} reason
+   * @param {Boolean} hidden
+   *        Whether or not to hide the layout wrapper
+   */
+  onFilterComputedView: function (reason, hidden) {
+    this.wrapper.hidden = hidden;
+  },
+
+  /**
    * Stop tracking reflows and hide all values when no node is selected or the
    * layout-view is hidden, otherwise track reflows and show values.
    * @param {Boolean} isActive
@@ -550,9 +594,6 @@ LayoutView.prototype = {
     }
     this.isActive = isActive;
 
-    let panel = this.doc.getElementById("sidebar-panel-layoutview");
-    panel.classList.toggle("inactive", !isActive);
-
     if (isActive) {
       this.trackReflows();
     } else {
@@ -562,12 +603,14 @@ LayoutView.prototype = {
 
   /**
    * Compute the dimensions of the node and update the values in
-   * the layoutview/view.xhtml document.
+   * the inspector.xul document.
    * @return a promise that will be resolved when complete.
    */
   update: function () {
     let lastRequest = Task.spawn((function* () {
       if (!this.isViewVisibleAndNodeValid()) {
+        this.wrapper.hidden = true;
+        this.inspector.emit("layoutview-updated");
         return null;
       }
 
@@ -591,12 +634,6 @@ LayoutView.prototype = {
 
       if (this.sizeHeadingLabel.textContent != newLabel) {
         this.sizeHeadingLabel.textContent = newLabel;
-      }
-
-      // If the view isn't active, no need to do anything more.
-      if (!this.isActive) {
-        this.inspector.emit("layoutview-updated");
-        return null;
       }
 
       for (let i in this.map) {
@@ -656,8 +693,10 @@ LayoutView.prototype = {
 
       this.elementRules = styleEntries.map(e => e.rule);
 
+      this.wrapper.hidden = false;
+
       this.inspector.emit("layoutview-updated");
-      return undefined;
+      return null;
     }).bind(this)).catch(console.error);
 
     this._lastRequest = lastRequest;

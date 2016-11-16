@@ -7,11 +7,11 @@ export CC="$topsrcdir/clang/bin/clang -fgnu89-inline"
 export CXX="$topsrcdir/clang/bin/clang++"
 export LLVM_SYMBOLIZER="$topsrcdir/clang/bin/llvm-symbolizer"
 
-# Mandatory flags for ASan
-export ASANFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fPIC"
-export CFLAGS="$ASANFLAGS"
-export CXXFLAGS="$ASANFLAGS"
-export LDFLAGS="-fsanitize=address"
+# Use a newer binutils, from the tooltool gcc package, if it's there
+if [ -e "$topsrcdir/gcc/bin/ld" ]; then
+    export CC="$CC -B $topsrcdir/gcc/bin"
+    export CXX="$CXX -B $topsrcdir/gcc/bin"
+fi
 
 # Enable ASan specific code and build workarounds
 ac_add_options --enable-address-sanitizer
@@ -24,5 +24,4 @@ ac_add_options --disable-jemalloc
 ac_add_options --disable-crashreporter
 ac_add_options --disable-elf-hack
 
-# Avoid dependency on libstdc++ 4.7
-ac_add_options --enable-stdcxx-compat
+. "$topsrcdir/build/unix/mozconfig.stdcxx"

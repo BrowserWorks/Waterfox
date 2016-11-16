@@ -2,14 +2,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import pytest
-from mock import patch, Mock, DEFAULT, mock_open
+from mock import patch, Mock, DEFAULT, mock_open, MagicMock
 
 from marionette.runtests import (
     MarionetteTestRunner,
     MarionetteHarness,
+    MarionetteArguments,
     cli
 )
 from marionette.runner import MarionetteTestResult
+from marionette_driver.marionette import Marionette
 
 # avoid importing MarionetteJSTestCase to prevent pytest from
 # collecting and running it as part of this test suite
@@ -27,8 +29,7 @@ def _check_crash_counts(has_crashed, runner, mock_marionette):
 @pytest.fixture()
 def mock_marionette(request):
     """ Mock marionette instance """
-    import marionette_driver
-    marionette = Mock(spec=marionette_driver.marionette.Marionette)
+    marionette = MagicMock(spec=Marionette)
     if 'has_crashed' in request.funcargnames:
         marionette.check_for_crash.return_value = request.getfuncargvalue(
             'has_crashed'
@@ -67,57 +68,61 @@ def mach_parsed_kwargs(logger):
     call to mach marionette-test
     """
     return {
-         'addon': None,
-         'address': None,
-         'app': None,
-         'app_args': [],
-         'binary': u'/path/to/firefox',
-         'device_serial': None,
-         'e10s': False,
-         'gecko_log': None,
-         'homedir': None,
-         'jsdebugger': False,
-         'log_errorsummary': None,
-         'log_html': None,
-         'log_mach': None,
-         'log_mach_buffer': None,
-         'log_mach_level': None,
-         'log_mach_verbose': None,
-         'log_raw': None,
-         'log_raw_level': None,
-         'log_tbpl': None,
-         'log_tbpl_buffer': None,
-         'log_tbpl_level': None,
-         'log_unittest': None,
-         'log_xunit': None,
-         'logdir': None,
-         'logger_name': 'Marionette-based Tests',
-         'no_window': False,
-         'prefs': {},
-         'prefs_args': None,
-         'prefs_files': None,
-         'profile': None,
-         'pydebugger': None,
-         'repeat': 0,
-         'sdcard': None,
-         'server_root': None,
-         'shuffle': False,
-         'shuffle_seed': 2276870381009474531,
-         'socket_timeout': 360.0,
-         'sources': None,
-         'startup_timeout': 60,
-         'symbols_path': None,
-         'test_tags': None,
-         'tests': [u'/path/to/unit-tests.ini'],
-         'testvars': None,
-         'this_chunk': None,
-         'timeout': None,
-         'total_chunks': None,
-         'tree': 'b2g',
-         'type': None,
-         'verbose': None,
-         'workspace': None,
-         'logger': logger,
+        'adb_path': None,
+        'addon': None,
+        'address': None,
+        'app': None,
+        'app_args': [],
+        'avd': None,
+        'avd_home': None,
+        'binary': u'/path/to/firefox',
+        'device_serial': None,
+        'e10s': True,
+        'emulator': False,
+        'emulator_bin': None,
+        'gecko_log': None,
+        'jsdebugger': False,
+        'log_errorsummary': None,
+        'log_html': None,
+        'log_mach': None,
+        'log_mach_buffer': None,
+        'log_mach_level': None,
+        'log_mach_verbose': None,
+        'log_raw': None,
+        'log_raw_level': None,
+        'log_tbpl': None,
+        'log_tbpl_buffer': None,
+        'log_tbpl_compact': None,
+        'log_tbpl_level': None,
+        'log_unittest': None,
+        'log_xunit': None,
+        'logger_name': 'Marionette-based Tests',
+        'prefs': {
+            'browser.tabs.remote.autostart': True,
+            'browser.tabs.remote.force-enable': True,
+            'extensions.e10sBlocksEnabling': False,
+        },
+        'prefs_args': None,
+        'prefs_files': None,
+        'profile': None,
+        'pydebugger': None,
+        'repeat': 0,
+        'server_root': None,
+        'shuffle': False,
+        'shuffle_seed': 2276870381009474531,
+        'socket_timeout': 60.0,
+        'sources': None,
+        'startup_timeout': 60,
+        'symbols_path': None,
+        'test_tags': None,
+        'tests': [u'/path/to/unit-tests.ini'],
+        'testvars': None,
+        'this_chunk': None,
+        'timeout': None,
+        'total_chunks': None,
+        'verbose': None,
+        'workspace': None,
+        'logger': logger,
     }
 
 
@@ -127,6 +132,18 @@ def runner(mach_parsed_kwargs):
     MarionetteTestRunner instance initialized with default options.
     """
     return MarionetteTestRunner(**mach_parsed_kwargs)
+
+
+@pytest.fixture()
+def mock_runner(runner, mock_marionette):
+    """
+    MarionetteTestRunner instance with mocked-out
+    self.marionette and other properties.
+    """
+    runner.driverclass = mock_marionette
+    runner._set_baseurl = Mock()
+    runner.run_test_set = Mock()
+    return runner
 
 
 @pytest.fixture
@@ -187,6 +204,29 @@ def test_call_harness_with_parsed_args_yields_num_failures(mach_parsed_kwargs,
                                               args=mach_parsed_kwargs).run()
         parse_args.assert_not_called()
     assert failed_or_crashed == sum(num_fails_crashed)
+
+
+@pytest.mark.parametrize("sock_timeout_value", ['A', '10', '1B-', '1C2', '44.35'])
+def test_parse_arg_socket_timeout_with_multiple_values(sock_timeout_value):
+    argv = ['marionette', '--socket-timeout', sock_timeout_value]
+    parser = MarionetteArguments()
+
+    def _is_float_convertible(value):
+        try:
+            float(value)
+            return True
+        except:
+            return False
+
+    if not _is_float_convertible(sock_timeout_value):
+        # should raising exception, since sock_timeout must be convertible to float.
+        with pytest.raises(SystemExit) as ex:
+            parser.parse_args(args=argv)
+        assert ex.value.code == 2
+    else:
+        # should pass without raising exception.
+        args = parser.parse_args(args=argv)
+        assert hasattr(args, 'socket_timeout') and args.socket_timeout == float(sock_timeout_value)
 
 
 def test_call_harness_with_no_args_yields_num_failures(runner_class):
@@ -292,6 +332,127 @@ def test_record_crash(runner, has_crashed, mock_marionette):
     with patch.object(runner, 'marionette', mock_marionette):
         assert runner.record_crash() == has_crashed
         _check_crash_counts(has_crashed, runner, runner.marionette)
+
+
+def test_add_test_module(runner):
+    tests = ['test_something.py', 'testSomething.js', 'bad_test.py']
+    assert len(runner.tests) == 0
+    for test in tests:
+        with patch ('os.path.abspath') as abspath:
+            abspath.return_value = test
+            runner.add_test(test)
+        assert abspath.called
+        assert {'filepath': test,
+                'expected': 'pass',
+                'test_container': None} in runner.tests
+    # add_test doesn't validate module names; 'bad_test.py' gets through
+    assert len(runner.tests) == 3
+
+def test_add_test_directory(runner):
+    test_dir = 'path/to/tests'
+    dir_contents = [
+        (test_dir, ('subdir',), ('test_a.py', 'test_a.js', 'bad_test_a.py', 'bad_test_a.js')),
+        (test_dir + '/subdir', (), ('test_b.py', 'test_b.js', 'bad_test_a.py', 'bad_test_b.js')),
+    ]
+    tests = list(dir_contents[0][2] + dir_contents[1][2])
+    assert len(runner.tests) == 0
+    with patch('os.path.isdir') as isdir:
+        # Need to use side effect to make isdir return True for test_dir and False for tests
+        isdir.side_effect = [True] + [False for i in tests]
+        with patch('os.walk') as walk:
+            walk.return_value = dir_contents
+            runner.add_test(test_dir)
+    assert isdir.called and walk.called
+    for test in runner.tests:
+        assert test_dir in test['filepath']
+    assert len(runner.tests) == 4
+
+def test_add_test_manifest(runner):
+    runner._appName = 'fake_app'
+    manifest = "/path/to/fake/manifest.ini"
+    active_tests = [{'expected': 'pass',
+                     'path': u'/path/to/fake/test_expected_pass.py'},
+                    {'expected': 'fail',
+                     'path': u'/path/to/fake/test_expected_fail.py'},
+                    {'disabled': 'skip-if: true # "testing disabled test"',
+                     'expected': 'pass',
+                     'path': u'/path/to/fake/test_disabled.py'}]
+    with patch.multiple('marionette.runner.base.TestManifest',
+                        read=DEFAULT, active_tests=DEFAULT) as mocks:
+            mocks['active_tests'].return_value = active_tests
+            with pytest.raises(IOError) as err:
+                runner.add_test(manifest)
+            assert "does not exist" in err.value.message
+            assert mocks['read'].call_count == mocks['active_tests'].call_count == 1
+            args, kwargs = mocks['active_tests'].call_args
+            assert kwargs['app'] == runner._appName
+            runner.tests, runner.manifest_skipped_tests = [], []
+            with patch('marionette.runner.base.os.path.exists', return_value=True):
+                runner.add_test(manifest)
+            assert mocks['read'].call_count == mocks['active_tests'].call_count == 2
+    assert len(runner.tests) == 2
+    assert len(runner.manifest_skipped_tests) == 1
+    for test in runner.tests:
+        assert test['filepath'].endswith(('test_expected_pass.py', 'test_expected_fail.py'))
+        if test['filepath'].endswith('test_expected_fail.py'):
+            assert test['expected'] == 'fail'
+        else:
+            assert test['expected'] == 'pass'
+
+
+def test_reset_test_stats(runner):
+    def reset_successful(runner):
+        stats = ['passed', 'failed', 'unexpected_successes', 'todo', 'skipped', 'failures']
+        return all([((s in vars(runner)) and (not vars(runner)[s])) for s in stats])
+    assert reset_successful(runner)
+    runner.passed = 1
+    runner.failed = 1
+    runner.failures.append(['TEST-UNEXPECTED-FAIL'])
+    assert not reset_successful(runner)
+    with pytest.raises(Exception):
+        runner.run_tests([u'test_fake_thing.py'])
+    assert reset_successful(runner)
+
+
+def test_initialize_test_run(mock_runner):
+    tests = [u'test_fake_thing.py']
+    mock_runner.reset_test_stats = Mock()
+    with patch('marionette.runner.base.mozversion.get_version'):
+        mock_runner.run_tests(tests)
+    assert mock_runner.reset_test_stats.called
+    with pytest.raises(AssertionError) as test_exc:
+        mock_runner.run_tests([])
+    assert "len(tests)" in str(test_exc.traceback[-1].statement)
+    with pytest.raises(AssertionError) as hndl_exc:
+        mock_runner.test_handlers = []
+        mock_runner.run_tests(tests)
+    assert "test_handlers" in str(hndl_exc.traceback[-1].statement)
+    assert mock_runner.reset_test_stats.call_count == 1
+
+
+def test_add_tests(mock_runner):
+    assert len(mock_runner.tests) == 0
+    fake_tests = ["test_" + i + ".py" for i in "abc"]
+    with patch('marionette.runner.base.mozversion.get_version'):
+        mock_runner.run_tests(fake_tests)
+    assert len(mock_runner.tests) == 3
+    for (test_name, added_test) in zip(fake_tests, mock_runner.tests):
+        assert added_test['filepath'].endswith(test_name)
+
+
+def test_catch_invalid_test_names(runner):
+    good_tests = [u'test_ok.py', u'test_is_ok.py', u'test_is_ok.js', u'testIsOk.js']
+    bad_tests = [u'bad_test.py', u'testbad.py', u'_test_bad.py', u'testBad.notjs',
+                 u'test_bad.notpy', u'test_bad', u'testbad.js', u'badtest.js',
+                 u'test.py', u'test_.py', u'test.js', u'test_.js']
+    with pytest.raises(Exception) as exc:
+        runner._add_tests(good_tests + bad_tests)
+    msg = exc.value.message
+    assert "Test file names must be of the form" in msg
+    for bad_name in bad_tests:
+        assert bad_name in msg
+    for good_name in good_tests:
+        assert good_name not in msg
 
 
 if __name__ == '__main__':

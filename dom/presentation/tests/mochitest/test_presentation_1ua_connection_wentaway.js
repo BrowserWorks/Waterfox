@@ -1,6 +1,7 @@
 'use strict';
 
 SimpleTest.waitForExplicitFinish();
+SimpleTest.requestFlakyTimeout('Test for guarantee not firing async event');
 
 function debug(str) {
   // info(str);
@@ -26,9 +27,15 @@ function setup() {
   });
 
   gScript.addMessageListener('control-channel-established', function controlChannelEstablishedHandler() {
-    debug('Got message: control-channel-established');
     gScript.removeMessageListener('control-channel-established',
                                   controlChannelEstablishedHandler);
+    gScript.sendAsyncMessage("trigger-control-channel-open");
+  });
+
+  gScript.addMessageListener('sender-launch', function senderLaunchHandler(url) {
+    debug('Got message: sender-launch');
+    gScript.removeMessageListener('sender-launch', senderLaunchHandler);
+    is(url, receiverUrl, 'Receiver: should receive the same url');
     receiverIframe = document.createElement('iframe');
     receiverIframe.setAttribute("mozbrowser", "true");
     receiverIframe.setAttribute("mozpresentation", receiverUrl);
@@ -39,7 +46,6 @@ function setup() {
     receiverIframe.addEventListener("mozbrowserloadend", function mozbrowserloadendHander() {
       receiverIframe.removeEventListener("mozbrowserloadend", mozbrowserloadendHander);
       info("Receiver loaded.");
-      gScript.sendAsyncMessage("trigger-control-channel-open");
     });
 
     // This event is triggered when the iframe calls "alert".
@@ -96,7 +102,7 @@ function setup() {
 function testCreateRequest() {
   return new Promise(function(aResolve, aReject) {
     info('Sender: --- testCreateRequest ---');
-    request = new PresentationRequest("http://example.com");
+    request = new PresentationRequest(receiverUrl);
     request.getAvailability().then((aAvailability) => {
       aAvailability.onchange = function() {
         aAvailability.onchange = null;
@@ -139,7 +145,11 @@ function testConnectionWentaway() {
     connection.onclose = function() {
       connection.onclose = null;
       is(connection.state, "closed", "Sender: Connection should be closed.");
-      aResolve();
+      receiverIframe.addEventListener('mozbrowserclose', function closeHandler() {
+        ok(false, 'wentaway should not trigger receiver close');
+        aResolve();
+      });
+      setTimeout(aResolve, 3000);
     };
     gScript.addMessageListener('ready-to-remove-receiverFrame', function onReadyToRemove() {
       gScript.removeMessageListener('ready-to-remove-receiverFrame', onReadyToRemove);

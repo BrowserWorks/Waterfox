@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -21,6 +19,12 @@ const { PlainTextConsole } = require("sdk/console/plain-text");
 
 const { DirectorRegistry } = require("./director-registry");
 
+const {
+  messagePortSpec,
+  directorManagerSpec,
+  directorScriptSpec,
+} = require("devtools/shared/specs/director-manager");
+
 /**
  * Error Messages
  */
@@ -31,24 +35,10 @@ const ERR_DIRECTOR_UNKNOWN_SCRIPTID = "unkown director-script id";
 const ERR_DIRECTOR_UNINSTALLED_SCRIPTID = "uninstalled director-script id";
 
 /**
- * Type describing a messageport event
- */
-types.addDictType("messageportevent", {
-  isTrusted: "boolean",
-  data: "nullable:primitive",
-  origin: "nullable:string",
-  lastEventId: "nullable:string",
-  source: "messageport",
-  ports: "nullable:array:messageport"
-});
-
-/**
  * A MessagePort Actor allowing communication through messageport events
  * over the remote debugging protocol.
  */
-var MessagePortActor = exports.MessagePortActor = protocol.ActorClass({
-  typeName: "messageport",
-
+var MessagePortActor = exports.MessagePortActor = protocol.ActorClassWithSpec(messagePortSpec, {
   /**
    * Create a MessagePort actor.
    *
@@ -76,24 +66,19 @@ var MessagePortActor = exports.MessagePortActor = protocol.ActorClass({
    * @param Object msg
    *        The JSON serializable message event payload
    */
-  postMessage: method(function (msg) {
+  postMessage: function (msg) {
     if (!this.port) {
       console.error(ERR_MESSAGEPORT_FINALIZED);
       return;
     }
 
     this.port.postMessage(msg);
-  }, {
-    oneway: true,
-    request: {
-      msg: Arg(0, "nullable:json")
-    }
-  }),
+  },
 
   /**
    * Starts to receive and send queued messages on this message port.
    */
-  start: method(function () {
+  start: function () {
     if (!this.port) {
       console.error(ERR_MESSAGEPORT_FINALIZED);
       return;
@@ -126,84 +111,31 @@ var MessagePortActor = exports.MessagePortActor = protocol.ActorClass({
         ports: ports
       });
     };
-  }, {
-    oneway: true,
-    request: {}
-  }),
+  },
 
   /**
    * Starts to receive and send queued messages on this message port, or
    * raise an exception if the port is null
    */
-  close: method(function () {
+  close: function () {
     if (!this.port) {
       console.error(ERR_MESSAGEPORT_FINALIZED);
       return;
     }
 
-    this.port.onmessage = null;
-    this.port.close();
-  }, {
-    oneway: true,
-    request: {}
-  }),
+    try {
+      this.port.onmessage = null;
+      this.port.close();
+    } catch (e) {
+      // The port might be a dead object
+      console.error(e);
+    }
+  },
 
-  finalize: method(function () {
+  finalize: function () {
     this.close();
     this.port = null;
-  }, {
-    oneway: true
-  }),
-
-  /**
-   * Events emitted by this actor.
-   */
-  events: {
-    "message": {
-      type: "message",
-      msg: Arg(0, "nullable:messageportevent")
-    }
-  }
-});
-
-/**
- * The corresponding Front object for the MessagePortActor.
- */
-var MessagePortFront = exports.MessagePortFront = protocol.FrontClass(MessagePortActor, {
-  initialize: function (client, form) {
-    protocol.Front.prototype.initialize.call(this, client, form);
-  }
-});
-
-
-/**
- * Type describing a director-script error
- */
-types.addDictType("director-script-error", {
-  directorScriptId: "string",
-  message: "nullable:string",
-  stack: "nullable:string",
-  fileName: "nullable:string",
-  lineNumber: "nullable:number",
-  columnNumber: "nullable:number"
-});
-
-/**
- * Type describing a director-script attach event
- */
-types.addDictType("director-script-attach", {
-  directorScriptId: "string",
-  url: "string",
-  innerId: "number",
-  port: "nullable:messageport"
-});
-
-/**
- * Type describing a director-script detach event
- */
-types.addDictType("director-script-detach", {
-  directorScriptId: "string",
-  innerId: "number"
+  },
 });
 
 /**
@@ -217,27 +149,7 @@ types.addDictType("director-script-detach", {
  * directly connect the debugger client and the content script using a MessageChannel) on tab
  * navigation.
  */
-var DirectorScriptActor = exports.DirectorScriptActor = protocol.ActorClass({
-  typeName: "director-script",
-
-  /**
-   * Events emitted by this actor.
-   */
-  events: {
-    "error": {
-      type: "error",
-      data: Arg(0, "director-script-error")
-    },
-    "attach": {
-      type: "attach",
-      data: Arg(0, "director-script-attach")
-    },
-    "detach": {
-      type: "detach",
-      data: Arg(0, "director-script-detach")
-    }
-  },
-
+var DirectorScriptActor = exports.DirectorScriptActor = protocol.ActorClassWithSpec(directorScriptSpec, {
   /**
    * Creates the director script actor
    *
@@ -281,7 +193,7 @@ var DirectorScriptActor = exports.DirectorScriptActor = protocol.ActorClass({
    * @param Boolean skipAttach
    *        skip the attach
    */
-  setup: method(function ({ reload, skipAttach }) {
+  setup: function ({ reload, skipAttach }) {
     if (this._setupCalled) {
       // do nothing
       return;
@@ -303,31 +215,20 @@ var DirectorScriptActor = exports.DirectorScriptActor = protocol.ActorClass({
       // fake a global created event to attach without reload
       this._onGlobalCreated({ id: getWindowID(this.window), window: this.window, isTopLevel: true });
     }
-  }, {
-    request: {
-      reload: Option(0, "boolean"),
-      skipAttach: Option(0, "boolean")
-    },
-    oneway: true
-  }),
+  },
 
   /**
    * Get the attached MessagePort actor if any
    */
-  getMessagePort: method(function () {
+  getMessagePort: function () {
     return this._messagePortActor;
-  }, {
-    request: { },
-    response: {
-      port: RetVal("nullable:messageport")
-    }
-  }),
+  },
 
   /**
    * Stop listening for document global changes, destroy the content worker and puts
    * this actor to hibernation.
    */
-  finalize: method(function () {
+  finalize: function () {
     if (!this._setupCalled) {
       return;
     }
@@ -338,9 +239,7 @@ var DirectorScriptActor = exports.DirectorScriptActor = protocol.ActorClass({
     this._onGlobalDestroyed({ id: this._lastAttachedWinId });
 
     this._setupCalled = false;
-  }, {
-    oneway: true
-  }),
+  },
 
   // local helpers
   get window() {
@@ -436,38 +335,9 @@ var DirectorScriptActor = exports.DirectorScriptActor = protocol.ActorClass({
 });
 
 /**
- * The corresponding Front object for the DirectorScriptActor.
- */
-var DirectorScriptFront = exports.DirectorScriptFront = protocol.FrontClass(DirectorScriptActor, {
-  initialize: function (client, form) {
-    protocol.Front.prototype.initialize.call(this, client, form);
-  }
-});
-
-/**
  * The DirectorManager Actor is a tab actor which manages enabling/disabling director scripts.
  */
-const DirectorManagerActor = exports.DirectorManagerActor = protocol.ActorClass({
-  typeName: "director-manager",
-
-  /**
-   * Events emitted by this actor.
-   */
-  events: {
-    "director-script-error": {
-      type: "error",
-      data: Arg(0, "director-script-error")
-    },
-    "director-script-attach": {
-      type: "attach",
-      data: Arg(0, "director-script-attach")
-    },
-    "director-script-detach": {
-      type: "detach",
-      data: Arg(0, "director-script-detach")
-    }
-  },
-
+const DirectorManagerActor = exports.DirectorManagerActor = protocol.ActorClassWithSpec(directorManagerSpec, {
   /* init & destroy methods */
   initialize: function (conn, tabActor) {
     protocol.Actor.prototype.initialize.call(this, conn);
@@ -482,18 +352,14 @@ const DirectorManagerActor = exports.DirectorManagerActor = protocol.ActorClass(
   /**
    * Retrieves the list of installed director-scripts.
    */
-  list: method(function () {
+  list: function () {
     let enabledScriptIds = [...this._directorScriptActorsMap.keys()];
 
     return {
       installed: DirectorRegistry.list(),
       enabled: enabledScriptIds
     };
-  }, {
-    response: {
-      directorScripts: RetVal("json")
-    }
-  }),
+  },
 
   /**
    * Bulk enabling director-scripts.
@@ -504,7 +370,7 @@ const DirectorManagerActor = exports.DirectorManagerActor = protocol.ActorClass(
    * @param Boolean reload
    *        optionally reload the target window
    */
-  enableByScriptIds: method(function (selectedIds, { reload }) {
+  enableByScriptIds: function (selectedIds, { reload }) {
     if (selectedIds && selectedIds.length === 0) {
       // filtered all director scripts ids
       return;
@@ -527,13 +393,7 @@ const DirectorManagerActor = exports.DirectorManagerActor = protocol.ActorClass(
     if (reload) {
       this.tabActor.window.location.reload();
     }
-  }, {
-    oneway: true,
-    request: {
-      selectedIds: Arg(0, "array:string"),
-      reload: Option(1, "boolean")
-    }
-  }),
+  },
 
   /**
    * Bulk disabling director-scripts.
@@ -544,7 +404,7 @@ const DirectorManagerActor = exports.DirectorManagerActor = protocol.ActorClass(
    * @param Boolean reload
    *        optionally reload the target window
    */
-  disableByScriptIds: method(function (selectedIds, { reload }) {
+  disableByScriptIds: function (selectedIds, { reload }) {
     if (selectedIds && selectedIds.length === 0) {
       // filtered all director scripts ids
       return;
@@ -571,19 +431,13 @@ const DirectorManagerActor = exports.DirectorManagerActor = protocol.ActorClass(
     if (reload) {
       this.tabActor.window.location.reload();
     }
-  }, {
-    oneway: true,
-    request: {
-      selectedIds: Arg(0, "array:string"),
-      reload: Option(1, "boolean")
-    }
-  }),
+  },
 
   /**
    * Retrieves the actor instance of an installed director-script
    * (and create the actor instance if it doesn't exists yet).
    */
-  getByScriptId: method(function (scriptId) {
+  getByScriptId: function (scriptId) {
     var id = scriptId;
     // raise an unknown director-script id exception
     if (!DirectorRegistry.checkInstalled(id)) {
@@ -616,31 +470,10 @@ const DirectorManagerActor = exports.DirectorManagerActor = protocol.ActorClass(
     }
 
     return actor;
-  }, {
-    request: {
-      scriptId: Arg(0, "string")
-    },
-    response: {
-      directorScript: RetVal("director-script")
-    }
-  }),
+  },
 
-  finalize: method(function () {
+  finalize: function () {
     this.disableByScriptIds(["*"], false);
-  }, {
-    oneway: true
-  })
-});
-
-/**
- * The corresponding Front object for the DirectorManagerActor.
- */
-exports.DirectorManagerFront = protocol.FrontClass(DirectorManagerActor, {
-  initialize: function (client, { directorManagerActor }) {
-    protocol.Front.prototype.initialize.call(this, client, {
-      actor: directorManagerActor
-    });
-    this.manage(this);
   }
 });
 

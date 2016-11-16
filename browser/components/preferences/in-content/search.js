@@ -106,6 +106,23 @@ var gSearchPane = {
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
       case "click":
+        if (aEvent.target.id != "engineChildren" &&
+            !aEvent.target.classList.contains("searchEngineAction")) {
+          let engineList = document.getElementById("engineList");
+          // We don't want to toggle off selection while editing keyword
+          // so proceed only when the input field is hidden.
+          // We need to check that engineList.view is defined here
+          // because the "click" event listener is on <window> and the
+          // view might have been destroyed if the pane has been navigated
+          // away from.
+          if (engineList.inputField.hidden && engineList.view) {
+            let selection = engineList.view.selection;
+            if (selection.count > 0) {
+              selection.toggleSelect(selection.currentIndex);
+            }
+            engineList.blur();
+          }
+        }
         if (aEvent.target.id == "addEngines" && aEvent.button == 0) {
           Services.wm.getMostRecentWindow('navigator:browser')
                      .BrowserSearch.loadAddEngines();
@@ -209,8 +226,13 @@ var gSearchPane = {
     else {
       let isMac = Services.appinfo.OS == "Darwin";
       if ((isMac && aEvent.keyCode == KeyEvent.DOM_VK_RETURN) ||
-          (!isMac && aEvent.keyCode == KeyEvent.DOM_VK_F2))
+          (!isMac && aEvent.keyCode == KeyEvent.DOM_VK_F2)) {
         tree.startEditing(index, tree.columns.getLastColumn());
+      } else if (aEvent.keyCode == KeyEvent.DOM_VK_DELETE ||
+                 isMac && aEvent.shiftKey && aEvent.keyCode == KeyEvent.DOM_VK_BACK_SPACE) {
+        // Delete and Shift+Backspace (Mac) removes selected engine.
+        Services.search.removeEngine(gEngineView.selectedEngine.originalEngine);
+     }
     }
   },
 

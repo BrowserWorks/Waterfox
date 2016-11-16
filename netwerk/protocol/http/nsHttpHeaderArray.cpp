@@ -286,6 +286,8 @@ nsresult
 nsHttpHeaderArray::VisitHeaders(nsIHttpHeaderVisitor *visitor, nsHttpHeaderArray::VisitorFilter filter)
 {
     NS_ENSURE_ARG_POINTER(visitor);
+    nsresult rv;
+
     uint32_t i, count = mHeaders.Length();
     for (i = 0; i < count; ++i) {
         const nsEntry &entry = mHeaders[i];
@@ -296,18 +298,19 @@ nsHttpHeaderArray::VisitHeaders(nsIHttpHeaderVisitor *visitor, nsHttpHeaderArray
         } else if (filter == eFilterResponseOriginal && entry.variety == eVarietyResponse) {
             continue;
         }
-        if (NS_FAILED(visitor->VisitHeader(nsDependentCString(entry.header),
-                                           entry.value))) {
-            break;
+        rv = visitor->VisitHeader(
+            nsDependentCString(entry.header), entry.value);
+        if NS_FAILED(rv) {
+            return rv;
         }
     }
     return NS_OK;
 }
 
 /*static*/ nsresult
-nsHttpHeaderArray::ParseHeaderLine(const char *line,
+nsHttpHeaderArray::ParseHeaderLine(const nsACString& line,
                                    nsHttpAtom *hdr,
-                                   char **val)
+                                   nsACString *val)
 {
     //
     // BNF from section 4.2 of RFC 2616:
@@ -322,39 +325,41 @@ nsHttpHeaderArray::ParseHeaderLine(const char *line,
 
     // We skip over mal-formed headers in the hope that we'll still be able to
     // do something useful with the response.
-    char *p = (char *) strchr(line, ':');
-    if (!p) {
-        LOG(("malformed header [%s]: no colon\n", line));
+    int32_t split = line.FindChar(':');
+
+    if (split == kNotFound) {
+        LOG(("malformed header [%s]: no colon\n",
+            PromiseFlatCString(line).get()));
         return NS_ERROR_FAILURE;
     }
+
+    const nsACString& sub = Substring(line, 0, split);
+    const nsACString& sub2 = Substring(
+        line, split + 1, line.Length() - split - 1);
 
     // make sure we have a valid token for the field-name
-    if (!nsHttp::IsValidToken(line, p)) {
-        LOG(("malformed header [%s]: field-name not a token\n", line));
+    if (!nsHttp::IsValidToken(sub)) {
+        LOG(("malformed header [%s]: field-name not a token\n",
+            PromiseFlatCString(line).get()));
         return NS_ERROR_FAILURE;
     }
 
-    *p = 0; // null terminate field-name
-
-    nsHttpAtom atom = nsHttp::ResolveAtom(line);
+    nsHttpAtom atom = nsHttp::ResolveAtom(sub);
     if (!atom) {
-        LOG(("failed to resolve atom [%s]\n", line));
+        LOG(("failed to resolve atom [%s]\n", PromiseFlatCString(line).get()));
         return NS_ERROR_FAILURE;
     }
 
     // skip over whitespace
-    p = net_FindCharNotInSet(++p, HTTP_LWS);
+    char *p = net_FindCharNotInSet(
+        sub2.BeginReading(), sub2.EndReading(), HTTP_LWS);
 
     // trim trailing whitespace - bug 86608
-    char *p2 = net_RFindCharNotInSet(p, HTTP_LWS);
-
-    *++p2 = 0; // null terminate header value; if all chars starting at |p|
-               // consisted of LWS, then p2 would have pointed at |p-1|, so
-               // the prefix increment is always valid.
+    char *p2 = net_RFindCharNotInSet(p, sub2.EndReading(), HTTP_LWS);
 
     // assign return values
     if (hdr) *hdr = atom;
-    if (val) *val = p;
+    if (val) val->Assign(p, p2 - p + 1);
 
     return NS_OK;
 }

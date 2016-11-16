@@ -5,9 +5,11 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2002-2009 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2009-2011, D. R. Commander.
+ * Copyright (C) 2009-2011, 2016, D. R. Commander.
  * Copyright (C) 2013, Linaro Limited.
- * For conditions of distribution and use, see the accompanying README file.
+ * Copyright (C) 2015, Google, Inc.
+ * For conditions of distribution and use, see the accompanying README.ijg
+ * file.
  *
  * This file contains master control logic for the JPEG decompressor.
  * These routines are concerned with selecting the modules to be executed
@@ -19,25 +21,8 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jpegcomp.h"
-
-
-/* Private state */
-
-typedef struct {
-  struct jpeg_decomp_master pub; /* public fields */
-
-  int pass_number;              /* # of passes completed */
-
-  boolean using_merged_upsample; /* TRUE if using merged upsample/cconvert */
-
-  /* Saved references to initialized quantizer modules,
-   * in case we need to switch modes.
-   */
-  struct jpeg_color_quantizer * quantizer_1pass;
-  struct jpeg_color_quantizer * quantizer_2pass;
-} my_decomp_master;
-
-typedef my_decomp_master * my_master_ptr;
+#include "jdmaster.h"
+#include "jsimd.h"
 
 
 /*
@@ -85,6 +70,17 @@ use_merged_upsample (j_decompress_ptr cinfo)
       cinfo->comp_info[1]._DCT_scaled_size != cinfo->_min_DCT_scaled_size ||
       cinfo->comp_info[2]._DCT_scaled_size != cinfo->_min_DCT_scaled_size)
     return FALSE;
+#ifdef WITH_SIMD
+  /* If YCbCr-to-RGB color conversion is SIMD-accelerated but merged upsampling
+     isn't, then disabling merged upsampling is likely to be faster when
+     decompressing YCbCr JPEG images. */
+  if (!jsimd_can_h2v2_merged_upsample() && !jsimd_can_h2v1_merged_upsample() &&
+      jsimd_can_ycc_rgb() && cinfo->jpeg_color_space == JCS_YCbCr &&
+      (cinfo->out_color_space == JCS_RGB ||
+       (cinfo->out_color_space >= JCS_EXT_RGB &&
+        cinfo->out_color_space <= JCS_EXT_ARGB)))
+    return FALSE;
+#endif
   /* ??? also need to test for upsample-time rescaling, when & if supported */
   return TRUE;                  /* by golly, it'll work... */
 #else
@@ -424,7 +420,7 @@ LOCAL(void)
 prepare_range_limit_table (j_decompress_ptr cinfo)
 /* Allocate and fill in the sample_range_limit table */
 {
-  JSAMPLE * table;
+  JSAMPLE *table;
   int i;
 
   table = (JSAMPLE *)
@@ -578,6 +574,12 @@ master_selection (j_decompress_ptr cinfo)
   /* Initialize input side of decompressor to consume first scan. */
   (*cinfo->inputctl->start_input_pass) (cinfo);
 
+  /* Set the first and last iMCU columns to decompress from single-scan images.
+   * By default, decompress all of the iMCU columns.
+   */
+  cinfo->master->first_iMCU_col = 0;
+  cinfo->master->last_iMCU_col = cinfo->MCUs_per_row - 1;
+
 #ifdef D_MULTISCAN_FILES_SUPPORTED
   /* If jpeg_start_decompress will read the whole file, initialize
    * progress monitoring appropriately.  The input step is counted
@@ -722,16 +724,13 @@ jpeg_new_colormap (j_decompress_ptr cinfo)
 GLOBAL(void)
 jinit_master_decompress (j_decompress_ptr cinfo)
 {
-  my_master_ptr master;
+  my_master_ptr master = (my_master_ptr) cinfo->master;
 
-  master = (my_master_ptr)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-                                  sizeof(my_decomp_master));
-  cinfo->master = (struct jpeg_decomp_master *) master;
   master->pub.prepare_for_output_pass = prepare_for_output_pass;
   master->pub.finish_output_pass = finish_output_pass;
 
   master->pub.is_dummy_pass = FALSE;
+  master->pub.jinit_upsampler_no_alloc = FALSE;
 
   master_selection(cinfo);
 }

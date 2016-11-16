@@ -9,6 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/DOMEventTargetHelper.h"
+#include "nsAutoPtr.h"
 #include "nsIIPCBackgroundChildCreateCallback.h"
 #include "nsIObserver.h"
 #include "nsTArray.h"
@@ -25,7 +26,7 @@ class PrincipalInfo;
 namespace dom {
 
 namespace workers {
-class WorkerFeature;
+class WorkerHolder;
 } // namespace workers
 
 class BroadcastChannelChild;
@@ -88,8 +89,7 @@ private:
   BroadcastChannel(nsPIDOMWindowInner* aWindow,
                    const PrincipalInfo& aPrincipalInfo,
                    const nsACString& aOrigin,
-                   const nsAString& aChannel,
-                   bool aPrivateBrowsing);
+                   const nsAString& aChannel);
 
   ~BroadcastChannel();
 
@@ -105,23 +105,17 @@ private:
     return mIsKeptAlive;
   }
 
-  bool IsClosed() const
-  {
-    return mState != StateActive;
-  }
-
   void RemoveDocFromBFCache();
 
   RefPtr<BroadcastChannelChild> mActor;
   nsTArray<RefPtr<BroadcastChannelMessage>> mPendingMessages;
 
-  nsAutoPtr<workers::WorkerFeature> mWorkerFeature;
+  nsAutoPtr<workers::WorkerHolder> mWorkerHolder;
 
   nsAutoPtr<PrincipalInfo> mPrincipalInfo;
 
   nsCString mOrigin;
   nsString mChannel;
-  bool mPrivateBrowsing;
 
   bool mIsKeptAlive;
 

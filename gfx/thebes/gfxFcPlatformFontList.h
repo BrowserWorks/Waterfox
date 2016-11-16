@@ -93,7 +93,8 @@ class gfxFontconfigFontEntry : public gfxFontEntry {
 public:
     // used for system fonts with explicit patterns
     explicit gfxFontconfigFontEntry(const nsAString& aFaceName,
-                                    FcPattern* aFontPattern);
+                                    FcPattern* aFontPattern,
+                                    bool aIgnoreFcCharmap);
 
     // used for data fonts where the fontentry takes ownership
     // of the font data and the FT_Face
@@ -154,6 +155,14 @@ protected:
     // FTFace - initialized when needed
     FT_Face   mFTFace;
     bool      mFTFaceInitialized;
+
+    // Whether TestCharacterMap should check the actual cmap rather than asking
+    // fontconfig about character coverage.
+    // We do this for app-bundled (rather than system) fonts, as they may
+    // include color glyphs that fontconfig would overlook, and for fonts
+    // loaded via @font-face.
+    bool      mIgnoreFcCharmap;
+
     double    mAspect;
 
     // data font
@@ -163,7 +172,9 @@ protected:
 class gfxFontconfigFontFamily : public gfxFontFamily {
 public:
     explicit gfxFontconfigFontFamily(const nsAString& aName) :
-        gfxFontFamily(aName) { }
+        gfxFontFamily(aName),
+        mContainsAppFonts(false)
+    { }
 
     void FindStyleVariations(FontInfoData *aFontInfoData = nullptr) override;
 
@@ -171,32 +182,29 @@ public:
     // When necessary, these are enumerated within FindStyleVariations.
     void AddFontPattern(FcPattern* aFontPattern);
 
+    void SetFamilyContainsAppFonts(bool aContainsAppFonts)
+    {
+        mContainsAppFonts = aContainsAppFonts;
+    }
+
 protected:
     virtual ~gfxFontconfigFontFamily() { }
 
     nsTArray<nsCountedRef<FcPattern> > mFontPatterns;
+
+    bool      mContainsAppFonts;
 };
 
-class gfxFontconfigFont : public gfxFT2FontBase {
+class gfxFontconfigFont : public gfxFontconfigFontBase {
 public:
     gfxFontconfigFont(cairo_scaled_font_t *aScaledFont,
+                      FcPattern *aPattern,
                       gfxFontEntry *aFontEntry,
                       const gfxFontStyle *aFontStyle,
-                      bool aNeedsBold,
-                      bool aAutoHinting = false);
-
-    bool GetAutoHinting() const { return mAutoHinting; }
-
-#ifdef USE_SKIA
-    virtual already_AddRefed<mozilla::gfx::GlyphRenderingOptions>
-    GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams = nullptr) override;
-#endif
+                      bool aNeedsBold);
 
 protected:
     virtual ~gfxFontconfigFont();
-
-private:
-    bool mAutoHinting;
 };
 
 class nsILanguageAtomService;
@@ -258,8 +266,9 @@ public:
 protected:
     virtual ~gfxFcPlatformFontList();
 
-    // add all the font families found in a font set
-    void AddFontSetFamilies(FcFontSet* aFontSet);
+    // Add all the font families found in a font set.
+    // aAppFonts indicates whether this is the system or application fontset.
+    void AddFontSetFamilies(FcFontSet* aFontSet, bool aAppFonts);
 
     // figure out which families fontconfig maps a generic to
     // (aGeneric assumed already lowercase)

@@ -386,9 +386,9 @@ nsXULElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
         nsAttrValue attrValue;
 
         // Style rules need to be cloned.
-        if (originalValue->Type() == nsAttrValue::eCSSDeclaration) {
-            RefPtr<css::Declaration> declClone =
-              new css::Declaration(*originalValue->GetCSSDeclarationValue());
+        if (originalValue->Type() == nsAttrValue::eGeckoCSSDeclaration) {
+            RefPtr<css::Declaration> declClone = new css::Declaration(
+                *originalValue->GetGeckoCSSDeclarationValue());
 
             nsString stringValue;
             originalValue->ToString(stringValue);
@@ -1280,8 +1280,7 @@ nsXULElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
          aVisitor.mEvent->mMessage == eMouseDoubleClick ||
          aVisitor.mEvent->mMessage == eXULCommand ||
          aVisitor.mEvent->mMessage == eContextMenu ||
-         aVisitor.mEvent->mMessage == eDragStart ||
-         aVisitor.mEvent->mMessage == eLegacyDragGesture)) {
+         aVisitor.mEvent->mMessage == eDragStart)) {
         // Don't propagate these events from native anonymous scrollbar.
         aVisitor.mCanHandle = true;
         aVisitor.mParentTarget = nullptr;
@@ -1433,7 +1432,7 @@ nsChangeHint
 nsXULElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
                                      int32_t aModType) const
 {
-    nsChangeHint retval(NS_STYLE_HINT_NONE);
+    nsChangeHint retval(nsChangeHint(0));
 
     if (aAttribute == nsGkAtoms::value &&
         (aModType == nsIDOMMutationEvent::REMOVAL ||
@@ -1444,7 +1443,7 @@ nsXULElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
         // value attribute is being added or removed, then we need to
         // return a hint of frame change.  (See bugzilla bug 95475 for
         // details.)
-        retval = NS_STYLE_HINT_FRAMECHANGE;
+        retval = nsChangeHint_ReconstructFrame;
     } else {
         // if left or top changes we reflow. This will happen in xul
         // containers that manage positioned children such as a stack.
@@ -1714,7 +1713,7 @@ void
 nsXULElement::Focus(ErrorResult& rv)
 {
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
-    nsCOMPtr<nsIDOMElement> elem = do_QueryObject(this);
+    RefPtr<nsXULElement> kungFuDeathGrip(this);
     if (fm) {
         rv = fm->SetFocus(this, 0);
     }
@@ -1885,9 +1884,9 @@ nsXULElement::MakeHeavyweight(nsXULPrototypeElement* aPrototype)
         nsAttrValue attrValue;
 
         // Style rules need to be cloned.
-        if (protoattr->mValue.Type() == nsAttrValue::eCSSDeclaration) {
+        if (protoattr->mValue.Type() == nsAttrValue::eGeckoCSSDeclaration) {
             RefPtr<css::Declaration> declClone = new css::Declaration(
-              *protoattr->mValue.GetCSSDeclarationValue());
+              *protoattr->mValue.GetGeckoCSSDeclarationValue());
 
             nsString stringValue;
             protoattr->mValue.ToString(stringValue);
@@ -2769,7 +2768,7 @@ NotifyOffThreadScriptCompletedRunnable::Run()
             return NS_ERROR_UNEXPECTED;
         }
         JSContext* cx = jsapi.cx();
-        script = JS::FinishOffThreadScript(cx, JS_GetRuntime(cx), mToken);
+        script = JS::FinishOffThreadScript(cx, mToken);
     }
 
     if (!sReceivers) {

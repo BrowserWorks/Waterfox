@@ -10,6 +10,7 @@
 #include "nsIContentPolicy.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIDocShell.h"
+#include "nsIDOMDocument.h"
 #include "nsIHttpChannel.h"
 #include "nsIHttpChannelInternal.h"
 #include "nsIInputStreamPump.h"
@@ -52,13 +53,15 @@
 #include "mozilla/dom/ChannelInfo.h"
 #include "mozilla/dom/Exceptions.h"
 #include "mozilla/dom/InternalResponse.h"
+#include "mozilla/dom/nsCSPService.h"
+#include "mozilla/dom/nsCSPUtils.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
 #include "mozilla/dom/Response.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/UniquePtr.h"
 #include "Principal.h"
-#include "WorkerFeature.h"
+#include "WorkerHolder.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
 #include "WorkerScope.h"
@@ -538,10 +541,12 @@ private:
 
 NS_IMPL_ISUPPORTS(LoaderListener, nsIStreamLoaderObserver, nsIRequestObserver)
 
-class ScriptLoaderRunnable final : public WorkerFeature
-                                 , public nsIRunnable
+class ScriptLoaderHolder;
+
+class ScriptLoaderRunnable final : public nsIRunnable
 {
   friend class ScriptExecutorRunnable;
+  friend class ScriptLoaderHolder;
   friend class CachePromiseHandler;
   friend class CacheScriptLoader;
   friend class LoaderListener;
@@ -715,8 +720,8 @@ private:
     return NS_OK;
   }
 
-  virtual bool
-  Notify(Status aStatus) override
+  bool
+  Notify(Status aStatus)
   {
     mWorkerPrivate->AssertIsOnWorkerThread();
 
@@ -1036,12 +1041,14 @@ private:
     // Note that for data: url, where we allow it through the same-origin check
     // but then give it a different origin.
     aLoadInfo.mMutedErrorFlag.emplace(IsMainWorkerScript()
-                                        ? false 
+                                        ? false
                                         : !principal->Subsumes(channelPrincipal));
 
     // Make sure we're not seeing the result of a 404 or something by checking
     // the 'requestSucceeded' attribute on the http channel.
     nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(request);
+    nsAutoCString tCspHeaderValue, tCspROHeaderValue, tRPHeaderCValue;
+
     if (httpChannel) {
       bool requestSucceeded;
       rv = httpChannel->GetRequestSucceeded(&requestSucceeded);
@@ -1050,6 +1057,18 @@ private:
       if (!requestSucceeded) {
         return NS_ERROR_NOT_AVAILABLE;
       }
+
+      httpChannel->GetResponseHeader(
+        NS_LITERAL_CSTRING("content-security-policy"),
+        tCspHeaderValue);
+
+      httpChannel->GetResponseHeader(
+        NS_LITERAL_CSTRING("content-security-policy-report-only"),
+        tCspROHeaderValue);
+
+      httpChannel->GetResponseHeader(
+        NS_LITERAL_CSTRING("referrer-policy"),
+        tRPHeaderCValue);
     }
 
     // May be null.
@@ -1155,9 +1174,68 @@ private:
       MOZ_ASSERT(NS_LoadGroupMatchesPrincipal(channelLoadGroup, channelPrincipal));
 
       mWorkerPrivate->SetPrincipal(channelPrincipal, channelLoadGroup);
+
+      // We did inherit CSP in bug 1223647. If we do not already have a CSP, we
+      // should get it from the HTTP headers on the worker script.
+      if (!mWorkerPrivate->GetCSP() && CSPService::sCSPEnabled) {
+        NS_ConvertASCIItoUTF16 cspHeaderValue(tCspHeaderValue);
+        NS_ConvertASCIItoUTF16 cspROHeaderValue(tCspROHeaderValue);
+
+        nsIPrincipal* principal = mWorkerPrivate->GetPrincipal();
+        MOZ_ASSERT(principal, "Should not be null");
+
+        nsCOMPtr<nsIContentSecurityPolicy> csp;
+        rv = principal->EnsureCSP(nullptr, getter_AddRefs(csp));
+
+        if (csp) {
+          // If there's a CSP header, apply it.
+          if (!cspHeaderValue.IsEmpty()) {
+            rv = CSP_AppendCSPFromHeader(csp, cspHeaderValue, false);
+            NS_ENSURE_SUCCESS(rv, rv);
+          }
+          // If there's a report-only CSP header, apply it.
+          if (!cspROHeaderValue.IsEmpty()) {
+            rv = CSP_AppendCSPFromHeader(csp, cspROHeaderValue, true);
+            NS_ENSURE_SUCCESS(rv, rv);
+          }
+
+          // Set evalAllowed, default value is set in GetAllowsEval
+          bool evalAllowed = false;
+          bool reportEvalViolations = false;
+          rv = csp->GetAllowsEval(&reportEvalViolations, &evalAllowed);
+          NS_ENSURE_SUCCESS(rv, rv);
+
+          mWorkerPrivate->SetCSP(csp);
+          mWorkerPrivate->SetEvalAllowed(evalAllowed);
+          mWorkerPrivate->SetReportCSPViolations(reportEvalViolations);
+
+          // Set ReferrerPolicy, default value is set in GetReferrerPolicy
+          bool hasReferrerPolicy = false;
+          uint32_t rp = mozilla::net::RP_Default;
+          rv = csp->GetReferrerPolicy(&rp, &hasReferrerPolicy);
+          NS_ENSURE_SUCCESS(rv, rv);
+
+          if (hasReferrerPolicy) {
+            mWorkerPrivate->SetReferrerPolicy(static_cast<net::ReferrerPolicy>(rp));
+          }
+        }
+      }
+      if (parent) {
+        // XHR Params Allowed
+        mWorkerPrivate->SetXHRParamsAllowed(parent->XHRParamsAllowed());
+      }
     }
 
-    DataReceived();
+    NS_ConvertUTF8toUTF16 tRPHeaderValue(tRPHeaderCValue);
+    // If there's a Referrer-Policy header, apply it.
+    if (!tRPHeaderValue.IsEmpty()) {
+      net::ReferrerPolicy policy =
+        nsContentUtils::GetReferrerPolicyFromHeader(tRPHeaderValue);
+      if (policy != net::RP_Unset) {
+        mWorkerPrivate->SetReferrerPolicy(policy);
+      }
+    }
+
     return NS_OK;
   }
 
@@ -1293,6 +1371,26 @@ private:
 };
 
 NS_IMPL_ISUPPORTS(ScriptLoaderRunnable, nsIRunnable)
+
+class MOZ_STACK_CLASS ScriptLoaderHolder final : public WorkerHolder
+{
+  // Raw pointer because this holder object follows the mRunnable life-time.
+  ScriptLoaderRunnable* mRunnable;
+
+public:
+  explicit ScriptLoaderHolder(ScriptLoaderRunnable* aRunnable)
+    : mRunnable(aRunnable)
+  {
+    MOZ_ASSERT(aRunnable);
+  }
+
+  virtual bool
+  Notify(Status aStatus) override
+  {
+    mRunnable->Notify(aStatus);
+    return true;
+  }
+};
 
 NS_IMETHODIMP
 LoaderListener::OnStreamComplete(nsIStreamLoader* aLoader, nsISupports* aContext,
@@ -1467,6 +1565,7 @@ CacheCreator::DeleteCache()
   // running.
   RefPtr<Promise> promise = mCacheStorage->Delete(mCacheName, rv);
   if (NS_WARN_IF(rv.Failed())) {
+    rv.SuppressException();
     return;
   }
 
@@ -1946,7 +2045,6 @@ ScriptExecutorRunnable::ShutdownScriptLoader(JSContext* aCx,
     }
   }
 
-  aWorkerPrivate->RemoveFeature(&mScriptLoader);
   aWorkerPrivate->StopSyncLoop(mSyncLoopTarget, aResult);
 }
 
@@ -1998,15 +2096,15 @@ LoadAllScripts(WorkerPrivate* aWorkerPrivate,
 
   NS_ASSERTION(aLoadInfos.IsEmpty(), "Should have swapped!");
 
-  if (!aWorkerPrivate->AddFeature(loader)) {
+  ScriptLoaderHolder workerHolder(loader);
+
+  if (NS_WARN_IF(!workerHolder.HoldWorker(aWorkerPrivate))) {
     aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
 
   if (NS_FAILED(NS_DispatchToMainThread(loader))) {
     NS_ERROR("Failed to dispatch!");
-
-    aWorkerPrivate->RemoveFeature(loader);
     aRv.Throw(NS_ERROR_FAILURE);
     return;
   }

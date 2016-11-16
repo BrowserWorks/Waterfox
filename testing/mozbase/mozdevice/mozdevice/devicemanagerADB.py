@@ -184,6 +184,19 @@ class DeviceManagerADB(DeviceManager):
         if not self._checkCmd(['forward', local, remote], timeout=self.short_timeout) == 0:
             raise DMError("Failed to forward socket connection.")
 
+    def remove_forward(self, local=None):
+        """
+        Turn off forwarding of socket connection.
+        """
+        cmd = ['forward']
+        if local is None:
+            cmd.extend(['--remove-all'])
+        else:
+            cmd.extend(['--remove', local])
+        if not self._checkCmd(cmd, timeout=self.short_timeout) == 0:
+            raise DMError("Failed to remove connection forwarding.")
+
+
     def remount(self):
         "Remounts the /system partition on the device read-write."
         return self._checkCmd(['remount'], timeout=self.short_timeout)
@@ -233,9 +246,9 @@ class DeviceManagerADB(DeviceManager):
         # files; we either zip/unzip or re-copy the directory into a temporary
         # one to get around this limitation
         retryLimit = retryLimit or self.retryLimit
-        if not self.dirExists(remoteDir):
-            self.mkDirs(remoteDir+"/x")
         if self._useZip:
+            self.removeDir(remoteDir)
+            self.mkDirs(remoteDir+"/x")
             try:
                 localZip = tempfile.mktemp() + ".zip"
                 remoteZip = remoteDir + "/adbdmtmp.zip"
@@ -257,6 +270,11 @@ class DeviceManagerADB(DeviceManager):
                 self._useZip = False
                 self.pushDir(localDir, remoteDir, retryLimit=retryLimit, timeout=timeout)
         else:
+            # If the remote directory exists, newer implementations of
+            # "adb push" will create a sub-directory, while older versions
+            # will not! Bug 1285040
+            self.mkDirs(remoteDir+"/x")
+            self.removeDir(remoteDir)
             tmpDir = tempfile.mkdtemp()
             # copytree's target dir must not already exist, so create a subdir
             tmpDirTarget = os.path.join(tmpDir, "tmp")
@@ -634,16 +652,19 @@ class DeviceManagerADB(DeviceManager):
 
     def chmodDir(self, remoteDir, mask="777"):
         if (self.dirExists(remoteDir)):
-            files = self.listFiles(remoteDir.strip())
-            for f in files:
-                remoteEntry = remoteDir.strip() + "/" + f.strip()
-                if (self.dirExists(remoteEntry)):
-                    self.chmodDir(remoteEntry)
-                else:
-                    self._checkCmd(["shell", "chmod", mask, remoteEntry], timeout=self.short_timeout)
-                    self._logger.info("chmod %s" % remoteEntry)
-            self._checkCmd(["shell", "chmod", mask, remoteDir], timeout=self.short_timeout)
-            self._logger.debug("chmod %s" % remoteDir)
+            if '/sdcard' in remoteDir:
+                self._logger.debug("chmod %s -- skipped (/sdcard)" % remoteDir)
+            else:
+                files = self.listFiles(remoteDir.strip())
+                for f in files:
+                    remoteEntry = remoteDir.strip() + "/" + f.strip()
+                    if (self.dirExists(remoteEntry)):
+                        self.chmodDir(remoteEntry)
+                    else:
+                        self._checkCmd(["shell", "chmod", mask, remoteEntry], timeout=self.short_timeout)
+                        self._logger.info("chmod %s" % remoteEntry)
+                self._checkCmd(["shell", "chmod", mask, remoteDir], timeout=self.short_timeout)
+                self._logger.debug("chmod %s" % remoteDir)
         else:
             self._checkCmd(["shell", "chmod", mask, remoteDir.strip()], timeout=self.short_timeout)
             self._logger.debug("chmod %s" % remoteDir.strip())

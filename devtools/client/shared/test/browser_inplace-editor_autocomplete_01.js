@@ -13,6 +13,13 @@ loadHelperScript("helper_inplace_editor.js");
 // Using a mocked list of CSS properties to avoid test failures linked to
 // engine changes (new property, removed property, ...).
 
+// format :
+//  [
+//    what key to press,
+//    expected input box value after keypress,
+//    selected suggestion index (-1 if popup is hidden),
+//    number of suggestions in the popup (0 if popup is hidden),
+//  ]
 const testData = [
   ["b", "border", 1, 3],
   ["VK_DOWN", "box-sizing", 2, 3],
@@ -41,7 +48,7 @@ add_task(function* () {
   let [host, win, doc] = yield createHost();
 
   let xulDocument = win.top.document;
-  let popup = new AutocompletePopup(xulDocument, { autoSelect: true });
+  let popup = new AutocompletePopup({ doc: xulDocument }, { autoSelect: true });
   yield new Promise(resolve => {
     createInplaceEditorAndClick({
       start: runPropertyAutocompletionTest,
@@ -51,6 +58,7 @@ add_task(function* () {
     }, doc);
   });
 
+  popup.destroy();
   host.destroy();
   gBrowser.removeCurrentTab();
 });

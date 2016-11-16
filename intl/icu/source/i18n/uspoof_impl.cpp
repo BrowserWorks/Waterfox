@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2008-2016, International Business Machines
+*   Copyright (C) 2008-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 */
@@ -356,7 +356,7 @@ const char * SpoofImpl::getAllowedLocales(UErrorCode &/*status*/) {
 void SpoofImpl::addScriptChars(const char *locale, UnicodeSet *allowedChars, UErrorCode &status) {
     UScriptCode scripts[30];
 
-    int32_t numScripts = uscript_getCode(locale, scripts, UPRV_LENGTHOF(scripts), &status);
+    int32_t numScripts = uscript_getCode(locale, scripts, sizeof(scripts)/sizeof(UScriptCode), &status);
     if (U_FAILURE(status)) {
         return;
     }

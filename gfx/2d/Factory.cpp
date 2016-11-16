@@ -29,6 +29,9 @@
 #include "ScaledFontMac.h"
 #endif
 
+#ifdef MOZ_WIDGET_GTK
+#include "ScaledFontFontconfig.h"
+#endif
 
 #ifdef XP_DARWIN
 #include "DrawTargetCG.h"
@@ -50,7 +53,6 @@
 
 #include "DrawEventRecorder.h"
 
-#include "Preferences.h"
 #include "Logging.h"
 
 #include "mozilla/CheckedInt.h"
@@ -154,9 +156,8 @@ HasCPUIDBit(unsigned int level, CPUIDRegister reg, unsigned int bit)
 namespace mozilla {
 namespace gfx {
 
-int32_t LoggingPrefs::sGfxLogLevel =
-  PreferenceAccess::RegisterLivePref("gfx.logging.level", &sGfxLogLevel,
-                                     LOG_DEFAULT);
+// In Gecko, this value is managed by gfx.logging.level in gfxPrefs.
+int32_t LoggingPrefs::sGfxLogLevel = LOG_DEFAULT;
 
 #ifdef WIN32
 ID3D11Device *Factory::mD3D11Device;
@@ -265,29 +266,28 @@ Factory::CheckSurfaceSize(const IntSize &sz,
     return false;
   }
 
-  // make sure the surface area doesn't overflow a int32_t
-  CheckedInt<int32_t> tmp = sz.width;
-  tmp *= sz.height;
-  if (!tmp.isValid()) {
-    gfxDebug() << "Surface size too large (would overflow)!";
+#if defined(XP_MACOSX)
+  // CoreGraphics is limited to images < 32K in *height*,
+  // so clamp all surfaces on the Mac to that height
+  if (sz.height > SHRT_MAX) {
+    gfxDebug() << "Surface size too large (exceeds CoreGraphics limit)!";
     return false;
   }
+#endif
 
   // assuming 4 bytes per pixel, make sure the allocation size
   // doesn't overflow a int32_t either
   CheckedInt<int32_t> stride = sz.width;
   stride *= 4;
-
-  // When aligning the stride to 16 bytes, it can grow by up to 15 bytes.
-  stride += 16 - 1;
-
+  if (stride.isValid()) {
+    stride = GetAlignedStride<16>(stride.value());
+  }
   if (!stride.isValid()) {
     gfxDebug() << "Surface size too large (stride overflows int32_t)!";
     return false;
   }
 
-  CheckedInt<int32_t> numBytes = GetAlignedStride<16>(sz.width * 4);
-  numBytes *= sz.height;
+  CheckedInt<int32_t> numBytes = stride * sz.height;
   if (!numBytes.isValid()) {
     gfxDebug() << "Surface size too large (allocation size would overflow int32_t)!";
     return false;
@@ -578,6 +578,14 @@ Factory::CreateScaledFontWithCairo(const NativeFont& aNativeFont, Float aSize, c
 #endif
 }
 
+#ifdef MOZ_WIDGET_GTK
+already_AddRefed<ScaledFont>
+Factory::CreateScaledFontForFontconfigFont(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern, Float aSize)
+{
+  return MakeAndAddRef<ScaledFontFontconfig>(aScaledFont, aPattern, aSize);
+}
+#endif
+
 already_AddRefed<DrawTarget>
 Factory::CreateDualDrawTarget(DrawTarget *targetA, DrawTarget *targetB)
 {
@@ -727,20 +735,6 @@ Factory::PurgeAllCaches()
 {
 }
 
-#ifdef USE_SKIA_FREETYPE
-already_AddRefed<GlyphRenderingOptions>
-Factory::CreateCairoGlyphRenderingOptions(FontHinting aHinting, bool aAutoHinting, AntialiasMode aAntialiasMode)
-{
-  RefPtr<GlyphRenderingOptionsCairo> options =
-    new GlyphRenderingOptionsCairo();
-
-  options->SetHinting(aHinting);
-  options->SetAutoHinting(aAutoHinting);
-  options->SetAntialiasMode(aAntialiasMode);
-  return options.forget();
-}
-#endif
-
 already_AddRefed<DrawTarget>
 Factory::CreateDrawTargetForCairoSurface(cairo_surface_t* aSurface, const IntSize& aSize, SurfaceFormat* aFormat)
 {
@@ -833,8 +827,12 @@ Factory::CreateDataSourceSurface(const IntSize &aSize,
     return nullptr;
   }
 
+  // Skia doesn't support RGBX, so memset RGBX to 0xFF
+  bool clearSurface = aZero || aFormat == SurfaceFormat::B8G8R8X8;
+  uint8_t clearValue = aFormat == SurfaceFormat::B8G8R8X8 ? 0xFF : 0;
+
   RefPtr<SourceSurfaceAlignedRawData> newSurf = new SourceSurfaceAlignedRawData();
-  if (newSurf->Init(aSize, aFormat, aZero)) {
+  if (newSurf->Init(aSize, aFormat, clearSurface, clearValue)) {
     return newSurf.forget();
   }
 
@@ -853,8 +851,12 @@ Factory::CreateDataSourceSurfaceWithStride(const IntSize &aSize,
     return nullptr;
   }
 
+  // Skia doesn't support RGBX, so memset RGBX to 0xFF
+  bool clearSurface = aZero || aFormat == SurfaceFormat::B8G8R8X8;
+  uint8_t clearValue = aFormat == SurfaceFormat::B8G8R8X8 ? 0xFF : 0;
+
   RefPtr<SourceSurfaceAlignedRawData> newSurf = new SourceSurfaceAlignedRawData();
-  if (newSurf->InitWithStride(aSize, aFormat, aStride, aZero)) {
+  if (newSurf->Init(aSize, aFormat, clearSurface, clearValue, aStride)) {
     return newSurf.forget();
   }
 

@@ -9,6 +9,7 @@
 #include "inDOMUtils.h"
 #include "inLayoutUtils.h"
 
+#include "nsAutoPtr.h"
 #include "nsIServiceManager.h"
 #include "nsISupportsArray.h"
 #include "nsString.h"
@@ -843,6 +844,7 @@ PropertySupportsVariant(nsCSSProperty aPropertyID, uint32_t aVariant)
       case eCSSProperty_grid_row_start:
       case eCSSProperty_grid_row_end:
       case eCSSProperty_font_weight:
+      case eCSSProperty_initial_letter:
         supported = VARIANT_NUMBER;
         break;
 
@@ -1215,9 +1217,10 @@ GetStatesForPseudoClass(const nsAString& aStatePseudo)
   CSSPseudoClassType type = nsCSSPseudoClasses::
     GetPseudoType(atom, CSSEnabledState::eIgnoreEnabledState);
 
-  // Ignore :moz-any-link so we don't give the element simultaneous
+  // Ignore :any-link so we don't give the element simultaneous
   // visited and unvisited style state
-  if (type == CSSPseudoClassType::mozAnyLink) {
+  if (type == CSSPseudoClassType::anyLink ||
+      type == CSSPseudoClassType::mozAnyLink) {
     return EventStates();
   }
   // Our array above is long enough that indexing into it with

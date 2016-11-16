@@ -1,6 +1,6 @@
 /*
 ******************************************************************************
-* Copyright (C) 2015-2016, International Business Machines
+* Copyright (C) 2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 ******************************************************************************
 * sharedobject.h
@@ -21,7 +21,7 @@ U_NAMESPACE_BEGIN
  * update cache metrics. No other part of ICU, except for SharedObject,
  * should directly call the methods of this base class.
  */
-class U_COMMON_API UnifiedCacheBase : public UObject {
+class UnifiedCacheBase : public UObject {
 public:
     UnifiedCacheBase() { }
 

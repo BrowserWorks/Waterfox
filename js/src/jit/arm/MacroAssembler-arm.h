@@ -262,6 +262,9 @@ class MacroAssemblerARM : public Assembler
     Condition ma_check_mul(Register src1, Register src2, Register dest, Condition cond);
     Condition ma_check_mul(Register src1, Imm32 imm, Register dest, Condition cond);
 
+    void ma_umull(Register src1, Register src2, Register destHigh, Register destLow);
+    void ma_umull(Register src1, Imm32 imm, Register destHigh, Register destLow);
+
     // Fast mod, uses scratch registers, and thus needs to be in the assembler
     // implicitly assumes that we can overwrite dest at the beginning of the
     // sequence.
@@ -277,6 +280,7 @@ class MacroAssemblerARM : public Assembler
     void ma_udiv(Register num, Register div, Register dest, Condition cond = Always);
     // Misc operations
     void ma_clz(Register src, Register dest, Condition cond = Always);
+    void ma_ctz(Register src, Register dest);
     // Memory:
     // Shortcut for when we know we're transferring 32 bits of data.
     void ma_dtr(LoadStore ls, Register rn, Imm32 offset, Register rt,
@@ -301,14 +305,16 @@ class MacroAssemblerARM : public Assembler
     void ma_strb(Register rt, DTRAddr addr, Index mode = Offset, Condition cc = Always);
     void ma_strh(Register rt, EDtrAddr addr, Index mode = Offset, Condition cc = Always);
     void ma_strd(Register rt, DebugOnly<Register> rt2, EDtrAddr addr, Index mode = Offset, Condition cc = Always);
+
     // Specialty for moving N bits of data, where n == 8,16,32,64.
     BufferOffset ma_dataTransferN(LoadStore ls, int size, bool IsSigned,
-                          Register rn, Register rm, Register rt,
-                          Index mode = Offset, Condition cc = Always, unsigned scale = TimesOne);
+                                  Register rn, Register rm, Register rt,
+                                  Index mode = Offset, Condition cc = Always, unsigned scale = TimesOne);
 
     BufferOffset ma_dataTransferN(LoadStore ls, int size, bool IsSigned,
-                          Register rn, Imm32 offset, Register rt,
-                          Index mode = Offset, Condition cc = Always);
+                                  Register rn, Imm32 offset, Register rt,
+                                  Index mode = Offset, Condition cc = Always);
+
     void ma_pop(Register r);
     void ma_push(Register r);
 
@@ -392,14 +398,13 @@ class MacroAssemblerARM : public Assembler
 
     BufferOffset ma_vdtr(LoadStore ls, const Address& addr, VFPRegister dest, Condition cc = Always);
 
-
     BufferOffset ma_vldr(VFPAddr addr, VFPRegister dest, Condition cc = Always);
     BufferOffset ma_vldr(const Address& addr, VFPRegister dest, Condition cc = Always);
-    BufferOffset ma_vldr(VFPRegister src, Register base, Register index, int32_t shift = defaultShift, Condition cc = Always);
+    BufferOffset ma_vldr(VFPRegister src, Register base, Register index,
+                         int32_t shift = defaultShift, Condition cc = Always);
 
     BufferOffset ma_vstr(VFPRegister src, VFPAddr addr, Condition cc = Always);
     BufferOffset ma_vstr(VFPRegister src, const Address& addr, Condition cc = Always);
-
     BufferOffset ma_vstr(VFPRegister src, Register base, Register index, int32_t shift,
                          int32_t offset, Condition cc = Always);
 
@@ -961,6 +966,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void loadFloat32(const Address& addr, FloatRegister dest);
     void loadFloat32(const BaseIndex& src, FloatRegister dest);
 
+    void ma_loadHeapAsmJS(Register ptrReg, int size, bool needsBoundsCheck, bool faultOnOOB,
+                          FloatRegister output);
+    void ma_loadHeapAsmJS(Register ptrReg, int size, bool isSigned, bool needsBoundsCheck,
+                          bool faultOnOOB, Register output);
+
     void store8(Register src, const Address& address);
     void store8(Imm32 imm, const Address& address);
     void store8(Register src, const BaseIndex& address);
@@ -978,8 +988,13 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void store32(Imm32 src, const BaseIndex& address);
 
     void store64(Register64 src, Address address) {
-        store32(src.low, address);
-        store32(src.high, Address(address.base, address.offset + 4));
+        store32(src.low, Address(address.base, address.offset + INT64LOW_OFFSET));
+        store32(src.high, Address(address.base, address.offset + INT64HIGH_OFFSET));
+    }
+
+    void store64(Imm64 imm, Address address) {
+        store32(imm.low(), Address(address.base, address.offset + INT64LOW_OFFSET));
+        store32(imm.hi(), Address(address.base, address.offset + INT64HIGH_OFFSET));
     }
 
     template <typename T> void storePtr(ImmWord imm, T address);
@@ -991,6 +1006,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void moveDouble(FloatRegister src, FloatRegister dest, Condition cc = Always) {
         ma_vmov(src, dest, cc);
     }
+
+    void ma_storeHeapAsmJS(Register ptrReg, int size, bool needsBoundsCheck, bool faultOnOOB,
+                           FloatRegister value);
+    void ma_storeHeapAsmJS(Register ptrReg, int size, bool isSigned, bool needsBoundsCheck,
+                           bool faultOnOOB, Register value);
 
   private:
     template<typename T>
@@ -1323,6 +1343,11 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     // (On non-simulator builds, does nothing.)
     void simulatorStop(const char* msg);
 
+    // Evaluate srcDest = minmax<isMax>{Float32,Double}(srcDest, other).
+    // Handle NaN specially if handleNaN is true.
+    void minMaxDouble(FloatRegister srcDest, FloatRegister other, bool handleNaN, bool isMax);
+    void minMaxFloat32(FloatRegister srcDest, FloatRegister other, bool handleNaN, bool isMax);
+
     void compareDouble(FloatRegister lhs, FloatRegister rhs);
 
     void compareFloat(FloatRegister lhs, FloatRegister rhs);
@@ -1421,12 +1446,13 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         as_vmov(VFPRegister(dest).singleOverlay(), VFPRegister(src).singleOverlay(), cc);
     }
 
-    void loadWasmActivation(Register dest) {
-        loadPtr(Address(GlobalReg, wasm::ActivationGlobalDataOffset - AsmJSGlobalRegBias), dest);
+    void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
+        loadPtr(Address(GlobalReg, globalDataOffset - AsmJSGlobalRegBias), dest);
     }
     void loadAsmJSHeapRegisterFromGlobalData() {
-        loadPtr(Address(GlobalReg, wasm::HeapGlobalDataOffset - AsmJSGlobalRegBias), HeapReg);
+        loadWasmGlobalPtr(wasm::HeapGlobalDataOffset, HeapReg);
     }
+
     // Instrumentation for entering and leaving the profiler.
     void profilerEnterFrame(Register framePtr, Register scratch);
     void profilerExitFrame();

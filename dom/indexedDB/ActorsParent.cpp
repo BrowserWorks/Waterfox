@@ -58,6 +58,7 @@
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/ipc/PBackground.h"
 #include "mozilla/storage/Variant.h"
+#include "nsAutoPtr.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "nsClassHashtable.h"
 #include "nsCOMPtr.h"
@@ -147,11 +148,11 @@ class VersionChangeTransaction;
 
 // If JS_STRUCTURED_CLONE_VERSION changes then we need to update our major
 // schema version.
-static_assert(JS_STRUCTURED_CLONE_VERSION == 6,
+static_assert(JS_STRUCTURED_CLONE_VERSION == 7,
               "Need to update the major schema version.");
 
 // Major schema version. Bump for almost everything.
-const uint32_t kMajorSchemaVersion = 23;
+const uint32_t kMajorSchemaVersion = 24;
 
 // Minor schema version. Should almost always be 0 (maybe bump on release
 // branches if we have to).
@@ -255,7 +256,7 @@ const uint32_t kDEBUGTransactionThreadSleepMS = 0;
 #endif
 
 template <size_t N>
-MOZ_CONSTEXPR size_t
+constexpr size_t
 LiteralStringLength(const char (&aArr)[N])
 {
   static_assert(N, "Zero-length string literal?!");
@@ -2887,11 +2888,11 @@ UpgradeKeyFunction::CopyAndUpgradeKeyBufferInternal(const uint8_t*& aSource,
   MOZ_ASSERT(aDestination);
   MOZ_ASSERT(aTagOffset <=  Key::kMaxArrayCollapse);
 
-  static MOZ_CONSTEXPR_VAR uint8_t kOldNumberTag = 0x1;
-  static MOZ_CONSTEXPR_VAR uint8_t kOldDateTag = 0x2;
-  static MOZ_CONSTEXPR_VAR uint8_t kOldStringTag = 0x3;
-  static MOZ_CONSTEXPR_VAR uint8_t kOldArrayTag = 0x4;
-  static MOZ_CONSTEXPR_VAR uint8_t kOldMaxType = kOldArrayTag;
+  static constexpr uint8_t kOldNumberTag = 0x1;
+  static constexpr uint8_t kOldDateTag = 0x2;
+  static constexpr uint8_t kOldStringTag = 0x3;
+  static constexpr uint8_t kOldArrayTag = 0x4;
+  static constexpr uint8_t kOldMaxType = kOldArrayTag;
 
   if (NS_WARN_IF(aRecursionDepth > Key::kMaxRecursionDepth)) {
     IDB_REPORT_INTERNAL_ERR();
@@ -3673,13 +3674,13 @@ UpgradeSchemaFrom18_0To19_0(mozIStorageConnection* aConnection)
 
 #if !defined(MOZ_B2G)
 
-class NormalJSRuntime;
+class NormalJSContext;
 
 class UpgradeFileIdsFunction final
   : public mozIStorageFunction
 {
   RefPtr<FileManager> mFileManager;
-  nsAutoPtr<NormalJSRuntime> mRuntime;
+  nsAutoPtr<NormalJSContext> mContext;
 
 public:
   UpgradeFileIdsFunction()
@@ -4092,6 +4093,19 @@ UpgradeSchemaFrom22_0To23_0(mozIStorageConnection* aConnection,
   }
 
   rv = aConnection->SetSchemaVersion(MakeSchemaVersion(23, 0));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  return NS_OK;
+}
+
+nsresult
+UpgradeSchemaFrom23_0To24_0(mozIStorageConnection* aConnection)
+{
+  // The only change between 23 and 24 was a different structured clone format,
+  // but it's backwards-compatible.
+  nsresult rv = aConnection->SetSchemaVersion(MakeSchemaVersion(24, 0));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -4591,7 +4605,7 @@ CreateStorageConnection(nsIFile* aDBFile,
       }
     } else  {
       // This logic needs to change next time we change the schema!
-      static_assert(kSQLiteSchemaVersion == int32_t((23 << 4) + 0),
+      static_assert(kSQLiteSchemaVersion == int32_t((24 << 4) + 0),
                     "Upgrade function needed due to schema version increase.");
 
       while (schemaVersion != kSQLiteSchemaVersion) {
@@ -4635,6 +4649,8 @@ CreateStorageConnection(nsIFile* aDBFile,
           rv = UpgradeSchemaFrom21_0To22_0(connection);
         } else if (schemaVersion == MakeSchemaVersion(22, 0)) {
           rv = UpgradeSchemaFrom22_0To23_0(connection, aOrigin);
+        } else if (schemaVersion == MakeSchemaVersion(23, 0)) {
+          rv = UpgradeSchemaFrom23_0To24_0(connection);
         } else {
           IDB_WARNING("Unable to open IndexedDB database, no upgrade path is "
                       "available!");
@@ -6057,9 +6073,6 @@ private:
 class Factory final
   : public PBackgroundIDBFactoryParent
 {
-  // Counts the number of "live" Factory instances that have not yet had
-  // ActorDestroy called.
-  static uint64_t sFactoryInstanceCount;
 
   RefPtr<DatabaseLoggingInfo> mLoggingInfo;
 
@@ -7834,7 +7847,7 @@ class CreateIndexOp final
 {
   friend class VersionChangeTransaction;
 
-  class ThreadLocalJSRuntime;
+  class ThreadLocalJSContext;
   class UpdateIndexDataValuesFunction;
 
   static const unsigned int kBadThreadLocalIndex =
@@ -7870,19 +7883,18 @@ private:
   DoDatabaseWork(DatabaseConnection* aConnection) override;
 };
 
-class NormalJSRuntime
+class NormalJSContext
 {
-  friend class nsAutoPtr<NormalJSRuntime>;
+  friend class nsAutoPtr<NormalJSContext>;
 
   static const JSClass sGlobalClass;
-  static const uint32_t kRuntimeHeapSize = 768 * 1024;
+  static const uint32_t kContextHeapSize = 768 * 1024;
 
-  JSRuntime* mRuntime;
   JSContext* mContext;
   JSObject* mGlobal;
 
 public:
-  static NormalJSRuntime*
+  static NormalJSContext*
   Create();
 
   JSContext*
@@ -7898,24 +7910,19 @@ public:
   }
 
 protected:
-  NormalJSRuntime()
-    : mRuntime(nullptr)
-    , mContext(nullptr)
+  NormalJSContext()
+    : mContext(nullptr)
     , mGlobal(nullptr)
   {
-    MOZ_COUNT_CTOR(NormalJSRuntime);
+    MOZ_COUNT_CTOR(NormalJSContext);
   }
 
-  ~NormalJSRuntime()
+  ~NormalJSContext()
   {
-    MOZ_COUNT_DTOR(NormalJSRuntime);
+    MOZ_COUNT_DTOR(NormalJSContext);
 
     if (mContext) {
       JS_DestroyContext(mContext);
-    }
-
-    if (mRuntime) {
-      JS_DestroyRuntime(mRuntime);
     }
   }
 
@@ -7923,25 +7930,25 @@ protected:
   Init();
 };
 
-class CreateIndexOp::ThreadLocalJSRuntime final
-  : public NormalJSRuntime
+class CreateIndexOp::ThreadLocalJSContext final
+  : public NormalJSContext
 {
   friend class CreateIndexOp;
-  friend class nsAutoPtr<ThreadLocalJSRuntime>;
+  friend class nsAutoPtr<ThreadLocalJSContext>;
 
 public:
-  static ThreadLocalJSRuntime*
+  static ThreadLocalJSContext*
   GetOrCreate();
 
 private:
-  ThreadLocalJSRuntime()
+  ThreadLocalJSContext()
   {
-    MOZ_COUNT_CTOR(CreateIndexOp::ThreadLocalJSRuntime);
+    MOZ_COUNT_CTOR(CreateIndexOp::ThreadLocalJSContext);
   }
 
-  ~ThreadLocalJSRuntime()
+  ~ThreadLocalJSContext()
   {
-    MOZ_COUNT_DTOR(CreateIndexOp::ThreadLocalJSRuntime);
+    MOZ_COUNT_DTOR(CreateIndexOp::ThreadLocalJSContext);
   }
 };
 
@@ -8952,7 +8959,7 @@ public:
   {
     AssertIsOnBackgroundThread();
     MOZ_ASSERT(aMaintenance);
-    MOZ_ASSERT(mCurrentMaintenance = aMaintenance);
+    MOZ_ASSERT(mCurrentMaintenance == aMaintenance);
 
     mCurrentMaintenance = nullptr;
     ProcessMaintenanceQueue();
@@ -9000,6 +9007,12 @@ public:
 
   virtual void
   ShutdownWorkThreads() override;
+
+  virtual void
+  DidInitialize(QuotaManager* aQuotaManager) override;
+
+  virtual void
+  WillShutdown() override;
 
 private:
   ~QuotaClient();
@@ -9638,6 +9651,9 @@ GetFileForFileInfo(FileInfo* aFileInfo)
  * Globals
  ******************************************************************************/
 
+// Counts the number of "live" Factory, FactoryOp and Database instances.
+uint64_t gBusyCount = 0;
+
 typedef nsTArray<RefPtr<FactoryOp>> FactoryOpArray;
 
 StaticAutoPtr<FactoryOpArray> gFactoryOps;
@@ -9670,6 +9686,94 @@ StaticRefPtr<DEBUGThreadSlower> gDEBUGThreadSlower;
 
 #endif // DEBUG
 
+
+void
+IncreaseBusyCount()
+{
+  AssertIsOnBackgroundThread();
+
+  // If this is the first instance then we need to do some initialization.
+  if (!gBusyCount) {
+    MOZ_ASSERT(!gFactoryOps);
+    gFactoryOps = new FactoryOpArray();
+
+    MOZ_ASSERT(!gLiveDatabaseHashtable);
+    gLiveDatabaseHashtable = new DatabaseActorHashtable();
+
+    MOZ_ASSERT(!gLoggingInfoHashtable);
+    gLoggingInfoHashtable = new DatabaseLoggingInfoHashtable();
+
+#ifdef DEBUG
+    if (kDEBUGThreadPriority != nsISupportsPriority::PRIORITY_NORMAL) {
+      NS_WARNING("PBackground thread debugging enabled, priority has been "
+                 "modified!");
+      nsCOMPtr<nsISupportsPriority> thread =
+        do_QueryInterface(NS_GetCurrentThread());
+      MOZ_ASSERT(thread);
+
+      MOZ_ALWAYS_SUCCEEDS(thread->SetPriority(kDEBUGThreadPriority));
+    }
+
+    if (kDEBUGThreadSleepMS) {
+      NS_WARNING("PBackground thread debugging enabled, sleeping after every "
+                 "event!");
+      nsCOMPtr<nsIThreadInternal> thread =
+        do_QueryInterface(NS_GetCurrentThread());
+      MOZ_ASSERT(thread);
+
+      gDEBUGThreadSlower = new DEBUGThreadSlower();
+
+      MOZ_ALWAYS_SUCCEEDS(thread->AddObserver(gDEBUGThreadSlower));
+    }
+#endif // DEBUG
+  }
+
+  gBusyCount++;
+}
+
+void
+DecreaseBusyCount()
+{
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(gBusyCount);
+
+  // Clean up if there are no more instances.
+  if (--gBusyCount == 0) {
+    MOZ_ASSERT(gLoggingInfoHashtable);
+    gLoggingInfoHashtable = nullptr;
+
+    MOZ_ASSERT(gLiveDatabaseHashtable);
+    MOZ_ASSERT(!gLiveDatabaseHashtable->Count());
+    gLiveDatabaseHashtable = nullptr;
+
+    MOZ_ASSERT(gFactoryOps);
+    MOZ_ASSERT(gFactoryOps->IsEmpty());
+    gFactoryOps = nullptr;
+
+#ifdef DEBUG
+    if (kDEBUGThreadPriority != nsISupportsPriority::PRIORITY_NORMAL) {
+      nsCOMPtr<nsISupportsPriority> thread =
+        do_QueryInterface(NS_GetCurrentThread());
+      MOZ_ASSERT(thread);
+
+      MOZ_ALWAYS_SUCCEEDS(
+        thread->SetPriority(nsISupportsPriority::PRIORITY_NORMAL));
+    }
+
+    if (kDEBUGThreadSleepMS) {
+      MOZ_ASSERT(gDEBUGThreadSlower);
+
+      nsCOMPtr<nsIThreadInternal> thread =
+        do_QueryInterface(NS_GetCurrentThread());
+      MOZ_ASSERT(thread);
+
+      MOZ_ALWAYS_SUCCEEDS(thread->RemoveObserver(gDEBUGThreadSlower));
+
+      gDEBUGThreadSlower = nullptr;
+    }
+#endif // DEBUG
+  }
+}
 
 uint32_t
 TelemetryIdForFile(nsIFile* aFile)
@@ -9830,7 +9934,7 @@ RecvFlushPendingFileDeletions()
   RefPtr<FlushPendingFileDeletionsRunnable> runnable =
     new FlushPendingFileDeletionsRunnable();
 
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(runnable.forget()));
 
   return true;
 }
@@ -11929,11 +12033,11 @@ ConnectionPool::ShutdownThread(ThreadInfo& aThreadInfo)
                  runnable->SerialNumber()));
 
   // This should clean up the thread with the profiler.
-  MOZ_ALWAYS_SUCCEEDS(thread->Dispatch(runnable, NS_DISPATCH_NORMAL));
+  MOZ_ALWAYS_SUCCEEDS(thread->Dispatch(runnable.forget(),
+                                       NS_DISPATCH_NORMAL));
 
-  nsCOMPtr<nsIRunnable> shutdownRunnable =
-    NewRunnableMethod(thread, &nsIThread::Shutdown);
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(shutdownRunnable));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(
+                        NewRunnableMethod(thread, &nsIThread::Shutdown)));
 
   mTotalThreadCount--;
 }
@@ -12048,7 +12152,7 @@ ConnectionPool::ScheduleTransaction(TransactionInfo* aTransactionInfo,
           MOZ_ASSERT(dbInfo->mThreadInfo.mThread);
 
           MOZ_ALWAYS_SUCCEEDS(
-            dbInfo->mThreadInfo.mThread->Dispatch(runnable,
+            dbInfo->mThreadInfo.mThread->Dispatch(runnable.forget(),
                                                   NS_DISPATCH_NORMAL));
         }
       }
@@ -12106,7 +12210,8 @@ ConnectionPool::ScheduleTransaction(TransactionInfo* aTransactionInfo,
       queuedRunnables[index].swap(runnable);
 
       MOZ_ALWAYS_SUCCEEDS(
-        dbInfo->mThreadInfo.mThread->Dispatch(runnable, NS_DISPATCH_NORMAL));
+        dbInfo->mThreadInfo.mThread->Dispatch(runnable.forget(),
+                                              NS_DISPATCH_NORMAL));
     }
 
     queuedRunnables.Clear();
@@ -12440,7 +12545,7 @@ ConnectionPool::PerformIdleDatabaseMaintenance(DatabaseInfo* aDatabaseInfo)
   mDatabasesPerformingIdleMaintenance.AppendElement(aDatabaseInfo);
 
   MOZ_ALWAYS_SUCCEEDS(
-    aDatabaseInfo->mThreadInfo.mThread->Dispatch(runnable,
+    aDatabaseInfo->mThreadInfo.mThread->Dispatch(runnable.forget(),
                                                  NS_DISPATCH_NORMAL));
 }
 
@@ -12461,7 +12566,7 @@ ConnectionPool::CloseDatabase(DatabaseInfo* aDatabaseInfo)
   nsCOMPtr<nsIRunnable> runnable = new CloseConnectionRunnable(aDatabaseInfo);
 
   MOZ_ALWAYS_SUCCEEDS(
-    aDatabaseInfo->mThreadInfo.mThread->Dispatch(runnable,
+    aDatabaseInfo->mThreadInfo.mThread->Dispatch(runnable.forget(),
                                                  NS_DISPATCH_NORMAL));
 }
 
@@ -13107,8 +13212,6 @@ DatabaseLoggingInfo::~DatabaseLoggingInfo()
  * Factory
  ******************************************************************************/
 
-uint64_t Factory::sFactoryInstanceCount = 0;
-
 Factory::Factory(already_AddRefed<DatabaseLoggingInfo> aLoggingInfo)
   : mLoggingInfo(Move(aLoggingInfo))
 #ifdef DEBUG
@@ -13131,42 +13234,10 @@ Factory::Create(const LoggingInfo& aLoggingInfo)
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(!QuotaClient::IsShuttingDownOnBackgroundThread());
 
-  // If this is the first instance then we need to do some initialization.
-  if (!sFactoryInstanceCount) {
-    MOZ_ASSERT(!gFactoryOps);
-    gFactoryOps = new FactoryOpArray();
+  // Balanced in ActoryDestroy().
+  IncreaseBusyCount();
 
-    MOZ_ASSERT(!gLiveDatabaseHashtable);
-    gLiveDatabaseHashtable = new DatabaseActorHashtable();
-
-    MOZ_ASSERT(!gLoggingInfoHashtable);
-    gLoggingInfoHashtable = new DatabaseLoggingInfoHashtable();
-
-#ifdef DEBUG
-    if (kDEBUGThreadPriority != nsISupportsPriority::PRIORITY_NORMAL) {
-      NS_WARNING("PBackground thread debugging enabled, priority has been "
-                 "modified!");
-      nsCOMPtr<nsISupportsPriority> thread =
-        do_QueryInterface(NS_GetCurrentThread());
-      MOZ_ASSERT(thread);
-
-      MOZ_ALWAYS_SUCCEEDS(thread->SetPriority(kDEBUGThreadPriority));
-    }
-
-    if (kDEBUGThreadSleepMS) {
-      NS_WARNING("PBackground thread debugging enabled, sleeping after every "
-                 "event!");
-      nsCOMPtr<nsIThreadInternal> thread =
-        do_QueryInterface(NS_GetCurrentThread());
-      MOZ_ASSERT(thread);
-
-      gDEBUGThreadSlower = new DEBUGThreadSlower();
-
-      MOZ_ALWAYS_SUCCEEDS(thread->AddObserver(gDEBUGThreadSlower));
-    }
-#endif // DEBUG
-  }
-
+  MOZ_ASSERT(gLoggingInfoHashtable);
   RefPtr<DatabaseLoggingInfo> loggingInfo =
     gLoggingInfoHashtable->Get(aLoggingInfo.backgroundChildLoggingId());
   if (loggingInfo) {
@@ -13191,8 +13262,6 @@ Factory::Create(const LoggingInfo& aLoggingInfo)
 
   RefPtr<Factory> actor = new Factory(loggingInfo.forget());
 
-  sFactoryInstanceCount++;
-
   return actor.forget();
 }
 
@@ -13206,42 +13275,8 @@ Factory::ActorDestroy(ActorDestroyReason aWhy)
   mActorDestroyed = true;
 #endif
 
-  // Clean up if there are no more instances.
-  if (!(--sFactoryInstanceCount)) {
-    MOZ_ASSERT(gLoggingInfoHashtable);
-    gLoggingInfoHashtable = nullptr;
-
-    MOZ_ASSERT(gLiveDatabaseHashtable);
-    MOZ_ASSERT(!gLiveDatabaseHashtable->Count());
-    gLiveDatabaseHashtable = nullptr;
-
-    MOZ_ASSERT(gFactoryOps);
-    MOZ_ASSERT(gFactoryOps->IsEmpty());
-    gFactoryOps = nullptr;
-
-#ifdef DEBUG
-    if (kDEBUGThreadPriority != nsISupportsPriority::PRIORITY_NORMAL) {
-      nsCOMPtr<nsISupportsPriority> thread =
-        do_QueryInterface(NS_GetCurrentThread());
-      MOZ_ASSERT(thread);
-
-      MOZ_ALWAYS_SUCCEEDS(
-        thread->SetPriority(nsISupportsPriority::PRIORITY_NORMAL));
-    }
-
-    if (kDEBUGThreadSleepMS) {
-      MOZ_ASSERT(gDEBUGThreadSlower);
-
-      nsCOMPtr<nsIThreadInternal> thread =
-        do_QueryInterface(NS_GetCurrentThread());
-      MOZ_ASSERT(thread);
-
-      MOZ_ALWAYS_SUCCEEDS(thread->RemoveObserver(gDEBUGThreadSlower));
-
-      gDEBUGThreadSlower = nullptr;
-    }
-#endif // DEBUG
-  }
+  // Match the IncreaseBusyCount in Create().
+  DecreaseBusyCount();
 }
 
 bool
@@ -13802,6 +13837,14 @@ Database::ConnectionClosedCallback()
   mDirectoryLock = nullptr;
 
   CleanupMetadata();
+
+  if (IsInvalidated() && IsActorAlive()) {
+    // Step 3 and 4 of "5.2 Closing a Database":
+    // 1. Wait for all transactions to complete.
+    // 2. Fire a close event if forced flag is set, i.e., IsInvalidated() in our
+    //    implementation.
+    Unused << SendCloseAfterInvalidationComplete();
+  }
 }
 
 void
@@ -13821,6 +13864,9 @@ Database::CleanupMetadata()
                  !info->mWaitingFactoryOp->HasBlockedDatabases());
       gLiveDatabaseHashtable->Remove(Id());
     }
+
+    // Match the IncreaseBusyCount in OpenDatabaseOp::EnsureDatabaseActor().
+    DecreaseBusyCount();
   }
 }
 
@@ -14925,7 +14971,7 @@ TransactionBase::Invalidate()
     mInvalidated = true;
     mInvalidatedOnAnyThread = true;
 
-    Abort(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR, /* aForce */ true);
+    Abort(NS_ERROR_DOM_INDEXEDDB_ABORT_ERR, /* aForce */ false);
   }
 }
 
@@ -15503,7 +15549,11 @@ VersionChangeTransaction::SendCompleteNotification(nsresult aResult)
   }
 
   if (NS_FAILED(aResult) && NS_SUCCEEDED(openDatabaseOp->mResultCode)) {
-    openDatabaseOp->mResultCode = aResult;
+    // 3.3.1 Opening a database:
+    // "If the upgrade transaction was aborted, run the steps for closing a
+    //  database connection with connection, create and return a new AbortError
+    //  exception and abort these steps."
+    openDatabaseOp->mResultCode = NS_ERROR_DOM_INDEXEDDB_ABORT_ERR;
   }
 
   openDatabaseOp->mState = OpenDatabaseOp::State::SendingResults;
@@ -16170,10 +16220,6 @@ Cursor::Start(const OpenCursorParams& aParams)
       aParams.get_IndexOpenCursorParams().optionalKeyRange() :
       aParams.get_IndexOpenKeyCursorParams().optionalKeyRange();
 
-  if (mTransaction->IsInvalidated()) {
-    return true;
-  }
-
   RefPtr<OpenOp> openOp = new OpenOp(this, optionalKeyRange);
 
   if (NS_WARN_IF(!openOp->Init(mTransaction))) {
@@ -16331,10 +16377,6 @@ Cursor::RecvContinue(const CursorRequestParams& aParams, const Key& aKey)
   if (NS_WARN_IF(mTransaction->mCommitOrAbortReceived)) {
     ASSERT_UNLESS_FUZZING();
     return false;
-  }
-
-  if (mTransaction->IsInvalidated()) {
-    return true;
   }
 
   RefPtr<ContinueOp> continueOp = new ContinueOp(this, aParams, aKey);
@@ -17394,6 +17436,26 @@ QuotaClient::ShutdownWorkThreads()
     fileHandleThreadPool->Shutdown();
 
     gFileHandleThreadPool = nullptr;
+  }
+}
+
+void
+QuotaClient::DidInitialize(QuotaManager* aQuotaManager)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (IndexedDatabaseManager* mgr = IndexedDatabaseManager::Get()) {
+    mgr->NoteLiveQuotaManager(aQuotaManager);
+  }
+}
+
+void
+QuotaClient::WillShutdown()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (IndexedDatabaseManager* mgr = IndexedDatabaseManager::Get()) {
+    mgr->NoteShuttingDownQuotaManager();
   }
 }
 
@@ -18567,8 +18629,7 @@ DatabaseMaintenance::RunOnOwningThread()
   AssertIsOnBackgroundThread();
 
   if (mCompleteCallback) {
-    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToCurrentThread(mCompleteCallback));
-    mCompleteCallback = nullptr;
+    MOZ_ALWAYS_SUCCEEDS(NS_DispatchToCurrentThread(mCompleteCallback.forget()));
   }
 
   mMaintenance->UnregisterDatabaseMaintenance(this);
@@ -18709,13 +18770,13 @@ UpgradeFileIdsFunction::Init(nsIFile* aFMDirectory,
     return rv;
   }
 
-  nsAutoPtr<NormalJSRuntime> runtime(NormalJSRuntime::Create());
-  if (NS_WARN_IF(!runtime)) {
+  nsAutoPtr<NormalJSContext> context(NormalJSContext::Create());
+  if (NS_WARN_IF(!context)) {
     return NS_ERROR_FAILURE;
   }
 
   mFileManager.swap(fileManager);
-  mRuntime = runtime;
+  mContext = context;
   return NS_OK;
 }
 
@@ -18728,7 +18789,7 @@ UpgradeFileIdsFunction::OnFunctionCall(mozIStorageValueArray* aArguments,
   MOZ_ASSERT(aArguments);
   MOZ_ASSERT(aResult);
   MOZ_ASSERT(mFileManager);
-  MOZ_ASSERT(mRuntime);
+  MOZ_ASSERT(mContext);
 
   PROFILER_LABEL("IndexedDB",
                  "UpgradeFileIdsFunction::OnFunctionCall",
@@ -18752,9 +18813,9 @@ UpgradeFileIdsFunction::OnFunctionCall(mozIStorageValueArray* aArguments,
                                                                   mFileManager,
                                                                   &cloneInfo);
 
-  JSContext* cx = mRuntime->Context();
+  JSContext* cx = mContext->Context();
   JSAutoRequest ar(cx);
-  JSAutoCompartment ac(cx, mRuntime->Global());
+  JSAutoCompartment ac(cx, mContext->Global());
 
   JS::Rooted<JS::Value> clone(cx);
   if (NS_WARN_IF(!IDBObjectStore::DeserializeUpgradeValue(cx, cloneInfo,
@@ -19914,13 +19975,11 @@ FactoryOp::Open()
   {
     // These services have to be started on the main thread currently.
 
-    IndexedDatabaseManager* mgr = IndexedDatabaseManager::GetOrCreate();
-    if (NS_WARN_IF(!mgr)) {
+    IndexedDatabaseManager* mgr;
+    if (NS_WARN_IF(!(mgr = IndexedDatabaseManager::GetOrCreate()))) {
       IDB_REPORT_INTERNAL_ERR();
       return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
     }
-
-    mgr->NoteBackgroundThread(mOwningThread);
 
     nsCOMPtr<mozIStorageService> ss;
     if (NS_WARN_IF(!(ss = do_GetService(MOZ_STORAGE_SERVICE_CONTRACTID)))) {
@@ -20057,6 +20116,9 @@ FactoryOp::DirectoryOpen()
 
   mBlockedDatabaseOpen = true;
 
+  // Balanced in FinishSendResults().
+  IncreaseBusyCount();
+
   mState = State::DatabaseOpenPending;
   if (!delayed) {
     nsresult rv = DatabaseOpen();
@@ -20124,12 +20186,14 @@ FactoryOp::FinishSendResults()
 
   if (mBlockedDatabaseOpen) {
     if (mDelayedOp) {
-      MOZ_ALWAYS_SUCCEEDS(NS_DispatchToCurrentThread(mDelayedOp));
-      mDelayedOp = nullptr;
+      MOZ_ALWAYS_SUCCEEDS(NS_DispatchToCurrentThread(mDelayedOp.forget()));
     }
 
     MOZ_ASSERT(gFactoryOps);
     gFactoryOps->RemoveElement(this);
+
+    // Match the IncreaseBusyCount in DirectoryOpen().
+    DecreaseBusyCount();
   }
 
   mState = State::Completed;
@@ -20261,25 +20325,9 @@ FactoryOp::CheckPermission(ContentParent* aContentParent,
   PermissionRequestBase::PermissionValue permission;
 
   if (QuotaManager::IsFirstPromptRequired(persistenceType, origin, isApp)) {
-#ifdef MOZ_CHILD_PERMISSIONS
-    if (aContentParent) {
-      if (NS_WARN_IF(!AssertAppPrincipal(aContentParent, principal))) {
-        IDB_REPORT_INTERNAL_ERR();
-        return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-      }
-
-      uint32_t intPermission =
-        mozilla::CheckPermission(aContentParent, principal, IDB_PREFIX);
-
-      permission =
-        PermissionRequestBase::PermissionValueForIntPermission(intPermission);
-    } else
-#endif // MOZ_CHILD_PERMISSIONS
-    {
-      rv = PermissionRequestBase::GetCurrentPermission(principal, &permission);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
-      }
+    rv = PermissionRequestBase::GetCurrentPermission(principal, &permission);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
     }
   } else {
     permission = PermissionRequestBase::kPermissionAllowed;
@@ -20358,65 +20406,7 @@ FactoryOp::CheckAtLeastOneAppHasPermission(ContentParent* aContentParent,
   MOZ_ASSERT(aContentParent);
   MOZ_ASSERT(!aPermissionString.IsEmpty());
 
-#ifdef MOZ_CHILD_PERMISSIONS
-  const ManagedContainer<PBrowserParent>& browsers =
-    aContentParent->ManagedPBrowserParent();
-
-  if (!browsers.IsEmpty()) {
-    nsCOMPtr<nsIAppsService> appsService =
-      do_GetService(APPS_SERVICE_CONTRACTID);
-    if (NS_WARN_IF(!appsService)) {
-      return false;
-    }
-
-    nsCOMPtr<nsIIOService> ioService = do_GetIOService();
-    if (NS_WARN_IF(!ioService)) {
-      return false;
-    }
-
-    nsCOMPtr<nsIPermissionManager> permMan =
-      mozilla::services::GetPermissionManager();
-    if (NS_WARN_IF(!permMan)) {
-      return false;
-    }
-
-    const nsPromiseFlatCString permissionString =
-      PromiseFlatCString(aPermissionString);
-
-    for (auto iter = browsers.ConstIter(); !iter.Done(); iter.Next()) {
-      uint32_t appId =
-        TabParent::GetFrom(iter.Get()->GetKey())->OwnOrContainingAppId();
-      MOZ_ASSERT(appId != nsIScriptSecurityManager::UNKNOWN_APP_ID &&
-                 appId != nsIScriptSecurityManager::NO_APP_ID);
-
-      nsCOMPtr<mozIApplication> app;
-      nsresult rv = appsService->GetAppByLocalId(appId, getter_AddRefs(app));
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return false;
-      }
-
-      nsCOMPtr<nsIPrincipal> principal;
-      app->GetPrincipal(getter_AddRefs(principal));
-      NS_ENSURE_TRUE(principal, false);
-
-      uint32_t permission;
-      rv = permMan->TestExactPermissionFromPrincipal(principal,
-                                                     permissionString.get(),
-                                                     &permission);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return false;
-      }
-
-      if (permission == nsIPermissionManager::ALLOW_ACTION) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-#else
   return true;
-#endif // MOZ_CHILD_PERMISSIONS
 }
 
 nsresult
@@ -21735,6 +21725,9 @@ OpenDatabaseOp::EnsureDatabaseActor()
     info = new DatabaseActorInfo(mMetadata, mDatabase);
     gLiveDatabaseHashtable->Put(mDatabaseId, info);
   }
+
+  // Balanced in Database::CleanupMetadata().
+  IncreaseBusyCount();
 }
 
 nsresult
@@ -22251,7 +22244,8 @@ DeleteDatabaseOp::DispatchToWorkThread()
   MOZ_ASSERT(quotaManager);
 
   nsresult rv =
-    quotaManager->IOThread()->Dispatch(versionChangeOp, NS_DISPATCH_NORMAL);
+    quotaManager->IOThread()->Dispatch(versionChangeOp.forget(),
+                                       NS_DISPATCH_NORMAL);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -22719,12 +22713,9 @@ TransactionDatabaseOperationBase::RunOnConnectionThread()
 
   // There are several cases where we don't actually have to to any work here.
 
-  if (mTransactionIsAborted) {
-    // This transaction is already set to be aborted.
+  if (mTransactionIsAborted || mTransaction->IsInvalidatedOnAnyThread()) {
+    // This transaction is already set to be aborted or invalidated.
     mResultCode = NS_ERROR_DOM_INDEXEDDB_ABORT_ERR;
-  } else if (mTransaction->IsInvalidatedOnAnyThread()) {
-    // This transaction is being invalidated.
-    mResultCode = NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
   } else if (!OperationMayProceed()) {
     // The operation was canceled in some way, likely because the child process
     // has crashed.
@@ -22795,9 +22786,7 @@ TransactionDatabaseOperationBase::RunOnOwningThread()
       mResultCode = NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
     }
   } else {
-    if (mTransaction->IsInvalidated()) {
-      mResultCode = NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-    } else if (mTransaction->IsAborted()) {
+    if (mTransaction->IsInvalidated() || mTransaction->IsAborted()) {
       // Aborted transactions always see their requests fail with ABORT_ERR,
       // even if the request succeeded or failed with another error.
       mResultCode = NS_ERROR_DOM_INDEXEDDB_ABORT_ERR;
@@ -23856,15 +23845,15 @@ CreateIndexOp::InsertDataFromObjectStore(DatabaseConnection* aConnection)
     aConnection->GetStorageConnection();
   MOZ_ASSERT(storageConnection);
 
-  ThreadLocalJSRuntime* runtime = ThreadLocalJSRuntime::GetOrCreate();
-  if (NS_WARN_IF(!runtime)) {
+  ThreadLocalJSContext* context = ThreadLocalJSContext::GetOrCreate();
+  if (NS_WARN_IF(!context)) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
   }
 
-  JSContext* cx = runtime->Context();
+  JSContext* cx = context->Context();
   JSAutoRequest ar(cx);
-  JSAutoCompartment ac(cx, runtime->Global());
+  JSAutoCompartment ac(cx, context->Global());
 
   RefPtr<UpdateIndexDataValuesFunction> updateFunction =
     new UpdateIndexDataValuesFunction(this, aConnection, cx);
@@ -23899,8 +23888,7 @@ CreateIndexOp::InsertDataFromObjectStoreInternal(
   MOZ_ASSERT(!IndexedDatabaseManager::InLowDiskSpaceMode());
   MOZ_ASSERT(mMaybeUniqueIndexTable);
 
-  nsCOMPtr<mozIStorageConnection> storageConnection =
-    aConnection->GetStorageConnection();
+  DebugOnly<void*> storageConnection = aConnection->GetStorageConnection();
   MOZ_ASSERT(storageConnection);
 
   DatabaseConnection::CachedStatement stmt;
@@ -23939,7 +23927,7 @@ CreateIndexOp::Init(TransactionBase* aTransaction)
     static void
     Destroy(void* aThreadLocal)
     {
-      delete static_cast<ThreadLocalJSRuntime*>(aThreadLocal);
+      delete static_cast<ThreadLocalJSContext*>(aThreadLocal);
     }
   };
 
@@ -24099,7 +24087,7 @@ CreateIndexOp::DoDatabaseWork(DatabaseConnection* aConnection)
   return NS_OK;
 }
 
-static const JSClassOps sNormalJSRuntimeGlobalClassOps = {
+static const JSClassOps sNormalJSContextGlobalClassOps = {
   /* addProperty */ nullptr,
   /* delProperty */ nullptr,
   /* getProperty */ nullptr,
@@ -24114,27 +24102,26 @@ static const JSClassOps sNormalJSRuntimeGlobalClassOps = {
   /* trace */ JS_GlobalObjectTraceHook
 };
 
-const JSClass NormalJSRuntime::sGlobalClass = {
+const JSClass NormalJSContext::sGlobalClass = {
   "IndexedDBTransactionThreadGlobal",
   JSCLASS_GLOBAL_FLAGS,
-  &sNormalJSRuntimeGlobalClassOps
+  &sNormalJSContextGlobalClassOps
 };
 
 bool
-NormalJSRuntime::Init()
+NormalJSContext::Init()
 {
   MOZ_ASSERT(!IsOnBackgroundThread());
 
-  mRuntime = JS_NewRuntime(kRuntimeHeapSize);
-  if (NS_WARN_IF(!mRuntime)) {
+  mContext = JS_NewContext(kContextHeapSize);
+  if (NS_WARN_IF(!mContext)) {
     return false;
   }
 
   // Not setting this will cause JS_CHECK_RECURSION to report false positives.
-  JS_SetNativeStackQuota(mRuntime, 128 * sizeof(size_t) * 1024);
+  JS_SetNativeStackQuota(mContext, 128 * sizeof(size_t) * 1024);
 
-  mContext = JS_NewContext(mRuntime, 0);
-  if (NS_WARN_IF(!mContext)) {
+  if (NS_WARN_IF(!JS::InitSelfHostedCode(mContext))) {
     return false;
   }
 
@@ -24151,46 +24138,46 @@ NormalJSRuntime::Init()
 }
 
 // static
-NormalJSRuntime*
-NormalJSRuntime::Create()
+NormalJSContext*
+NormalJSContext::Create()
 {
   MOZ_ASSERT(!IsOnBackgroundThread());
 
-  nsAutoPtr<NormalJSRuntime> newRuntime(new NormalJSRuntime());
+  nsAutoPtr<NormalJSContext> newContext(new NormalJSContext());
 
-  if (NS_WARN_IF(!newRuntime->Init())) {
+  if (NS_WARN_IF(!newContext->Init())) {
     return nullptr;
   }
 
-  return newRuntime.forget();
+  return newContext.forget();
 }
 
 // static
 auto
 CreateIndexOp::
-ThreadLocalJSRuntime::GetOrCreate() -> ThreadLocalJSRuntime*
+ThreadLocalJSContext::GetOrCreate() -> ThreadLocalJSContext*
 {
   MOZ_ASSERT(!IsOnBackgroundThread());
   MOZ_ASSERT(CreateIndexOp::kBadThreadLocalIndex !=
              CreateIndexOp::sThreadLocalIndex);
 
-  auto* runtime = static_cast<ThreadLocalJSRuntime*>(
+  auto* context = static_cast<ThreadLocalJSContext*>(
     PR_GetThreadPrivate(CreateIndexOp::sThreadLocalIndex));
-  if (runtime) {
-    return runtime;
+  if (context) {
+    return context;
   }
 
-  nsAutoPtr<ThreadLocalJSRuntime> newRuntime(new ThreadLocalJSRuntime());
+  nsAutoPtr<ThreadLocalJSContext> newContext(new ThreadLocalJSContext());
 
-  if (NS_WARN_IF(!newRuntime->Init())) {
+  if (NS_WARN_IF(!newContext->Init())) {
     return nullptr;
   }
 
   DebugOnly<PRStatus> status =
-    PR_SetThreadPrivate(CreateIndexOp::sThreadLocalIndex, newRuntime);
+    PR_SetThreadPrivate(CreateIndexOp::sThreadLocalIndex, newContext);
   MOZ_ASSERT(status == PR_SUCCESS);
 
-  return newRuntime.forget();
+  return newContext.forget();
 }
 
 NS_IMPL_ISUPPORTS(CreateIndexOp::UpdateIndexDataValuesFunction,
@@ -26714,6 +26701,14 @@ CursorOpBase::SendFailureResult(nsresult aResultCode)
 
   if (!IsActorDestroyed()) {
     mResponse = ClampResultCode(aResultCode);
+
+    // This is an expected race when the transaction is invalidated after
+    // data is retrieved from database. We clear the retrieved files to prevent
+    // the assertion failure in SendResponseInternal when mResponse.type() is
+    // CursorResponse::Tnsresult.
+    if (Transaction()->IsInvalidated() && !mFiles.IsEmpty()) {
+      mFiles.Clear();
+    }
 
     mCursor->SendResponseInternal(mResponse, mFiles);
   }

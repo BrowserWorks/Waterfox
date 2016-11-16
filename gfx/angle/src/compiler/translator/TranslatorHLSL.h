@@ -18,11 +18,11 @@ class TranslatorHLSL : public TCompiler
     bool hasInterfaceBlock(const std::string &interfaceBlockName) const;
     unsigned int getInterfaceBlockRegister(const std::string &interfaceBlockName) const;
 
-    bool hasUniform(const std::string &uniformName) const;
-    unsigned int getUniformRegister(const std::string &uniformName) const;
+    const std::map<std::string, unsigned int> *getUniformRegisterMap() const;
 
   protected:
     void translate(TIntermNode *root, int compileOptions) override;
+    bool shouldFlattenPragmaStdglInvariantAll() override;
 
     // collectVariables needs to be run always so registers can be assigned.
     bool shouldCollectVariables(int compileOptions) override { return true; }

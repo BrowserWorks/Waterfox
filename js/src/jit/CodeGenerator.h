@@ -53,7 +53,7 @@ class OutOfLineRegExpPrototypeOptimizable;
 class OutOfLineRegExpInstanceOptimizable;
 class OutOfLineLambdaArrow;
 
-class CodeGenerator : public CodeGeneratorSpecific
+class CodeGenerator final : public CodeGeneratorSpecific
 {
     void generateArgumentsChecks(bool bailout = true);
     MOZ_MUST_USE bool generateBody();
@@ -66,7 +66,7 @@ class CodeGenerator : public CodeGeneratorSpecific
 
   public:
     MOZ_MUST_USE bool generate();
-    MOZ_MUST_USE bool generateWasm(uint32_t sigIndex, wasm::FuncOffsets *offsets);
+    MOZ_MUST_USE bool generateWasm(wasm::SigIdDesc sigId, wasm::FuncOffsets *offsets);
     MOZ_MUST_USE bool link(JSContext* cx, CompilerConstraintList* constraints);
     MOZ_MUST_USE bool linkSharedStubs(JSContext* cx);
 
@@ -194,6 +194,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     void visitOutOfLineNewArray(OutOfLineNewArray* ool);
     void visitNewArrayCopyOnWrite(LNewArrayCopyOnWrite* lir);
     void visitNewArrayDynamicLength(LNewArrayDynamicLength* lir);
+    void visitNewTypedArray(LNewTypedArray* lir);
     void visitNewObjectVMCall(LNewObject* lir);
     void visitNewObject(LNewObject* lir);
     void visitOutOfLineNewObject(OutOfLineNewObject* ool);
@@ -360,8 +361,12 @@ class CodeGenerator : public CodeGeneratorSpecific
     void visitIsObjectAndBranch(LIsObjectAndBranch* lir);
     void visitHasClass(LHasClass* lir);
     void visitAsmJSParameter(LAsmJSParameter* lir);
+    void visitAsmJSParameterI64(LAsmJSParameterI64* lir);
     void visitAsmJSReturn(LAsmJSReturn* ret);
+    void visitAsmJSReturnI64(LAsmJSReturnI64* ret);
     void visitAsmJSVoidReturn(LAsmJSVoidReturn* ret);
+    void visitAsmJSLoadFuncPtr(LAsmJSLoadFuncPtr* ins);
+    void visitAsmJSLoadFFIFunc(LAsmJSLoadFFIFunc* ins);
     void visitLexicalCheck(LLexicalCheck* ins);
     void visitThrowRuntimeLexicalError(LThrowRuntimeLexicalError* ins);
     void visitGlobalNameConflictsCheck(LGlobalNameConflictsCheck* ins);
@@ -504,10 +509,6 @@ class CodeGenerator : public CodeGeneratorSpecific
     // elements pointer.
     void branchIfNotEmptyObjectElements(Register obj, Label* target);
 
-    // Get a label for the start of block which can be used for jumping, in
-    // place of jumpToBlock.
-    Label* getJumpLabelForBranch(MBasicBlock* block);
-
     void emitStoreElementTyped(const LAllocation* value, MIRType valueType, MIRType elementType,
                                Register elements, const LAllocation* index,
                                int32_t offsetAdjustment);
@@ -518,6 +519,8 @@ class CodeGenerator : public CodeGeneratorSpecific
 
     void emitAssertRangeI(const Range* r, Register input);
     void emitAssertRangeD(const Range* r, FloatRegister input, FloatRegister temp);
+
+    void maybeEmitGlobalBarrierCheck(const LAllocation* maybeGlobal, OutOfLineCode* ool);
 
     Vector<CodeOffset, 0, JitAllocPolicy> ionScriptLabels_;
 

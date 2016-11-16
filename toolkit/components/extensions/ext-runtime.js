@@ -2,13 +2,18 @@
 
 var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   EventManager,
   ignoreEvent,
 } = ExtensionUtils;
 
-extensions.registerSchemaAPI("runtime", null, (extension, context) => {
+XPCOMUtils.defineLazyModuleGetter(this, "NativeApp",
+                                  "resource://gre/modules/NativeMessaging.jsm");
+
+extensions.registerSchemaAPI("runtime", (extension, context) => {
   return {
     runtime: {
       onStartup: new EventManager(context, "runtime.onStartup", fire => {
@@ -48,6 +53,16 @@ extensions.registerSchemaAPI("runtime", null, (extension, context) => {
                                      responseCallback);
         }
         return context.messenger.sendMessage(Services.cpmm, message, recipient, responseCallback);
+      },
+
+      connectNative(application) {
+        let app = new NativeApp(extension, context, application);
+        return app.portAPI();
+      },
+
+      sendNativeMessage(application, message) {
+        let app = new NativeApp(extension, context, application);
+        return app.sendMessage(message);
       },
 
       get lastError() {

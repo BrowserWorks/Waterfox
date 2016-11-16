@@ -276,8 +276,7 @@ NumberFormat::operator=(const NumberFormat& rhs)
         fMaxFractionDigits = rhs.fMaxFractionDigits;
         fMinFractionDigits = rhs.fMinFractionDigits;
         fParseIntegerOnly = rhs.fParseIntegerOnly;
-        u_strncpy(fCurrency, rhs.fCurrency, 3);
-        fCurrency[3] = 0;
+        u_strncpy(fCurrency, rhs.fCurrency, 4);
         fLenient = rhs.fLenient;
         fCapitalizationContext = rhs.fCapitalizationContext;
     }

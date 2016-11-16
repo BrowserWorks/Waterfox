@@ -14,6 +14,12 @@
 #include "nsCOMPtr.h"
 
 class nsIDOMDataTransfer;
+class nsIDOMFileList;
+namespace mozilla {
+namespace dom {
+class BlobImpl;
+} // namespace dom
+} // namespace mozilla
 
 class nsFileControlFrame : public nsBlockFrame,
                            public nsIFormControlFrame,
@@ -116,8 +122,11 @@ protected:
 
     NS_DECL_NSIDOMEVENTLISTENER
 
-    static bool IsValidDropData(nsIDOMDataTransfer* aDOMDataTransfer);
-    static bool CanDropTheseFiles(nsIDOMDataTransfer* aDOMDataTransfer, bool aSupportsMultiple);
+    nsresult GetBlobImplForWebkitDirectory(nsIDOMFileList* aFileList,
+                                           mozilla::dom::BlobImpl** aBlobImpl);
+
+    bool IsValidDropData(nsIDOMDataTransfer* aDOMDataTransfer);
+    bool CanDropTheseFiles(nsIDOMDataTransfer* aDOMDataTransfer, bool aSupportsMultiple);
   };
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
@@ -132,15 +141,10 @@ protected:
    */
   nsCOMPtr<nsIContent> mTextContent;
   /**
-   * The button to open a directory picker.
+   * The button to open a file or directory picker.
    * @see nsFileControlFrame::CreateAnonymousContent
    */
-  nsCOMPtr<nsIContent> mBrowseDirs;
-  /**
-   * The button to open a file picker.
-   * @see nsFileControlFrame::CreateAnonymousContent
-   */
-  nsCOMPtr<nsIContent> mBrowseFiles;
+  nsCOMPtr<nsIContent> mBrowseFilesOrDirs;
 
   /**
    * Drag and drop mouse listener.

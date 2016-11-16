@@ -4,7 +4,6 @@ This directory contains the harfbuzz source from the 'master' branch of
 https://github.com/behdad/harfbuzz.
 
 Current version: 1.2.6
-  + relevant part of https://github.com/behdad/harfbuzz/pull/334.
 
 
 UPDATING:

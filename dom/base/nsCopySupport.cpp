@@ -511,7 +511,8 @@ static nsresult AppendDOMNode(nsITransferable *aTransferable,
   // Note that XHTML is not counted as HTML here, because we can't copy it
   // properly (all the copy code for non-plaintext assumes using HTML
   // serializers and parsers is OK, and those mess up XHTML).
-  nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(document, &rv);
+  DebugOnly<nsCOMPtr<nsIHTMLDocument>> htmlDoc =
+    nsCOMPtr<nsIHTMLDocument>(do_QueryInterface(document, &rv));
   NS_ENSURE_SUCCESS(rv, NS_OK);
 
   NS_ENSURE_TRUE(document->IsHTMLDocument(), NS_OK);
@@ -554,26 +555,17 @@ nsCopySupport::GetSelectionForCopy(nsIDocument* aDocument, nsISelection** aSelec
   if (!presShell)
     return nullptr;
 
-  // check if the focused node in the window has a selection
-  nsCOMPtr<nsPIDOMWindowOuter> focusedWindow;
-  nsIContent* content =
-    nsFocusManager::GetFocusedDescendant(aDocument->GetWindow(), false,
-                                         getter_AddRefs(focusedWindow));
-  if (content) {
-    nsIFrame* frame = content->GetPrimaryFrame();
-    if (frame) {
-      nsCOMPtr<nsISelectionController> selCon;
-      frame->GetSelectionController(presShell->GetPresContext(), getter_AddRefs(selCon));
-      if (selCon) {
-        selCon->GetSelection(nsISelectionController::SELECTION_NORMAL, aSelection);
-        return content;
-      }
-    }
+  nsCOMPtr<nsIContent> focusedContent;
+  nsCOMPtr<nsISelectionController> selectionController =
+    presShell->GetSelectionControllerForFocusedContent(
+      getter_AddRefs(focusedContent));
+  if (!selectionController) {
+    return nullptr;
   }
 
-  // if no selection was found, use the main selection for the window
-  NS_IF_ADDREF(*aSelection = presShell->GetCurrentSelection(nsISelectionController::SELECTION_NORMAL));
-  return nullptr;
+  selectionController->GetSelection(nsISelectionController::SELECTION_NORMAL,
+                                    aSelection);
+  return focusedContent;
 }
 
 bool
@@ -691,8 +683,8 @@ nsCopySupport::FireClipboardEvent(EventMessage aEventMessage,
   RefPtr<DataTransfer> clipboardData;
   if (chromeShell || Preferences::GetBool("dom.event.clipboardevents.enabled", true)) {
     clipboardData =
-      new DataTransfer(piWindow, aEventMessage, aEventMessage == ePaste,
-                       aClipboardType);
+      new DataTransfer(doc->GetScopeObject(), aEventMessage,
+                       aEventMessage == ePaste, aClipboardType);
 
     nsEventStatus status = nsEventStatus_eIgnore;
     InternalClipboardEvent evt(true, aEventMessage);

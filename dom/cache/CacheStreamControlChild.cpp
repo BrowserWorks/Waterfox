@@ -20,10 +20,10 @@ namespace mozilla {
 namespace dom {
 namespace cache {
 
+using mozilla::dom::OptionalFileDescriptorSet;
 using mozilla::ipc::AutoIPCStream;
 using mozilla::ipc::FileDescriptor;
 using mozilla::ipc::FileDescriptorSetChild;
-using mozilla::ipc::OptionalFileDescriptorSet;
 using mozilla::ipc::PFileDescriptorSetChild;
 
 // declared in ActorUtils.h
@@ -58,8 +58,8 @@ CacheStreamControlChild::StartDestroy()
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlChild);
   // This can get called twice under some circumstances.  For example, if the
-  // actor is added to a Feature that has already been notified and the Cache
-  // actor has no mListener.
+  // actor is added to a CacheWorkerHolder that has already been notified and
+  // the Cache actor has no mListener.
   if (mDestroyStarted) {
     return;
   }
@@ -135,7 +135,7 @@ CacheStreamControlChild::ActorDestroy(ActorDestroyReason aReason)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStreamControlChild);
   CloseAllReadStreamsWithoutReporting();
-  RemoveFeature();
+  RemoveWorkerHolder();
 }
 
 bool
