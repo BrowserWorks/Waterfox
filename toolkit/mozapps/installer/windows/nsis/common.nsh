@@ -5870,7 +5870,7 @@
       Push $0
 
 !ifndef NONADMIN_ELEVATE
-        ${If} ${AtLeastWinVista}
+        ${If} ${AtLeastWinXP}
           UAC::IsAdmin
           ; If the user is not an admin already
           ${If} "$0" != "1"
@@ -5901,7 +5901,7 @@
           ${EndIf}
         ${EndIf}
 !else
-      ${If} ${AtLeastWinVista}
+      ${If} ${AtLeastWinXP}
         UAC::IsAdmin
         ; If the user is not an admin already
         ${If} "$0" != "1"
@@ -6014,7 +6014,7 @@
     !define ${_MOZFUNC_UN}UnloadUAC "!insertmacro ${_MOZFUNC_UN}UnloadUACCall"
 
     Function ${_MOZFUNC_UN}UnloadUAC
-      ${Unless} ${AtLeastWinVista}
+      ${Unless} ${AtLeastWinXP}
         Return
       ${EndUnless}
 
@@ -6667,7 +6667,7 @@
     !define ${_MOZFUNC_UN}SetAppLSPCategories "!insertmacro ${_MOZFUNC_UN}SetAppLSPCategoriesCall"
 
     Function ${_MOZFUNC_UN}SetAppLSPCategories
-      ${Unless} ${AtLeastWinVista}
+      ${Unless} ${AtLeastWinXP}
         Return
       ${EndUnless}
 

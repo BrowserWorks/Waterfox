@@ -45,6 +45,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "ContentClick",
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "UserAgentOverrides",
+                                  "resource://gre/modules/UserAgentOverrides.jsm");
+
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
 
@@ -757,6 +760,7 @@ BrowserGlue.prototype = {
     PageThumbs.init();
     webrtcUI.init();
     AboutHome.init();
+    UserAgentOverrides.init();
 
     DirectoryLinksProvider.init();
     NewTabUtils.init();
@@ -1169,6 +1173,7 @@ BrowserGlue.prototype = {
     BrowserUsageTelemetry.uninit();
     SelfSupportBackend.uninit();
     NewTabMessages.uninit();
+    UserAgentOverrides.uninit();
 
     CaptivePortalWatcher.uninit();
 

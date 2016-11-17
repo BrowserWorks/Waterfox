@@ -386,7 +386,7 @@ Function .onInit
 ; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
 ; removed after we require NSIS 3.0a2 or greater.
 !ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinVista}
+  ${If} ${AtLeastWinXP}
     System::Call 'user32::SetProcessDPIAware()'
   ${EndIf}
 !endif
@@ -443,7 +443,7 @@ Function .onInit
   ${EndIf}
 
   ; The interval in MS used for the progress bars set as marquee.
-  ${If} ${AtLeastWinVista}
+  ${If} ${AtLeastWinXP}
     StrCpy $ProgressbarMarqueeIntervalMS "10"
   ${Else}
     StrCpy $ProgressbarMarqueeIntervalMS "50"
@@ -688,7 +688,7 @@ Function SendPing
     ${EndIf}
 
     ${If} "$R2" == "0"
-    ${AndIf} ${AtLeastWinVista}
+    ${AndIf} ${AtLeastWinXP}
       ; Check to see if this install location is currently set as the default
       ; browser by Default Programs which is only available on Vista and above.
       ClearErrors

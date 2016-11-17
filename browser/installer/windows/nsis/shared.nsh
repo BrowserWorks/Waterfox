@@ -1294,7 +1294,7 @@ Function SetAsDefaultAppUserHKCU
 
   ${SetHandlers}
 
-  ${If} ${AtLeastWinVista}
+  ${If} ${AtLeastWinXP}
     ; Only register as the handler on Vista and above if the app registry name
     ; exists under the RegisteredApplications registry key. The protocol and
     ; file handlers set previously at the user level will associate this install

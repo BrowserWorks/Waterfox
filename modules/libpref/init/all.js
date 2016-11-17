@@ -21,11 +21,15 @@
 
 pref("keyword.enabled", false);
 pref("general.useragent.locale", "chrome://global/locale/intl.properties");
-pref("general.useragent.compatMode.firefox", false);
+pref("general.useragent.compatMode.firefox", true);
 
 // This pref exists only for testing purposes. In order to disable all
 // overrides by default, don't initialize UserAgentOverrides.jsm.
 pref("general.useragent.site_specific_overrides", true);
+pref("general.useragent.override.netflix.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
+pref("general.useragent.override.chase.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
+pref("general.useragent.override.amazon.com", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
+pref("general.useragent.override.amazon.co.uk", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
 
@@ -530,10 +534,10 @@ pref("media.getusermedia.screensharing.allow_on_old_platforms", false);
 pref("media.getusermedia.audiocapture.enabled", false);
 
 // TextTrack WebVTT Region extension support.
-pref("media.webvtt.regions.enabled", false);
+pref("media.webvtt.regions.enabled", true);
 
 // AudioTrack and VideoTrack support
-pref("media.track.enabled", false);
+pref("media.track.enabled", true);
 
 // Whether to enable MediaSource support.
 pref("media.mediasource.enabled", true);
@@ -555,8 +559,8 @@ pref("media.benchmark.frames", 300);
 pref("media.benchmark.timeout", 1000);
 
 #ifdef MOZ_WEBSPEECH
-pref("media.webspeech.recognition.enable", false);
-pref("media.webspeech.synth.enabled", false);
+pref("media.webspeech.recognition.enable", true);
+pref("media.webspeech.synth.enabled", true);
 #endif
 #ifdef MOZ_WEBM_ENCODER
 pref("media.encoder.webm.enabled", true);
@@ -800,8 +804,8 @@ pref("ui.scrollToClick", 0);
 
 // provide ability to turn on support for canvas focus rings
 pref("canvas.focusring.enabled", true);
-pref("canvas.customfocusring.enabled", false);
-pref("canvas.hitregions.enabled", false);
+pref("canvas.customfocusring.enabled", true);
+pref("canvas.hitregions.enabled", true);
 pref("canvas.filters.enabled", true);
 // Add support for canvas path objects
 pref("canvas.path.enabled", true);
@@ -888,7 +892,7 @@ pref("toolkit.scrollbox.clickToScroll.scrollDelay", 150);
 
 // Telemetry settings.
 // Server to submit telemetry pings to.
-pref("toolkit.telemetry.server", "https://incoming.telemetry.mozilla.org");
+pref("toolkit.telemetry.server", "");
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
 pref("toolkit.telemetry.server_owner", "Mozilla");
 // Information page about telemetry (temporary ; will be about:telemetry in the end)
@@ -1135,7 +1139,7 @@ pref("dom.min_timeout_value", 4);
 pref("dom.min_background_timeout_value", 1000);
 
 // Don't use new input types
-pref("dom.experimental_forms", false);
+pref("dom.experimental_forms", true);
 
 // Enable <input type=number>:
 pref("dom.forms.number", true);
@@ -2129,7 +2133,7 @@ pref("security.cert_pinning.process_headers_from_non_builtin_roots", false);
 pref("security.view-source.reachable-from-inner-protocol", false);
 
 // Services security settings
-pref("services.settings.server", "https://firefox.settings.services.mozilla.com/v1");
+pref("services.settings.server", "");
 
 // Blocklist preferences
 pref("extensions.blocklist.enabled", true);
@@ -2773,7 +2777,7 @@ pref("dom.ipc.plugins.hangUIMinDisplaySecs", 0);
 pref("dom.ipc.tabs.shutdownTimeoutSecs", 0);
 #endif
 
-pref("dom.ipc.plugins.flash.disable-protected-mode", false);
+pref("dom.ipc.plugins.flash.disable-protected-mode", true);
 
 pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", true);
 pref("dom.ipc.plugins.reportCrashURL", true);
@@ -4429,7 +4433,7 @@ pref("webgl.disable-fail-if-major-performance-caveat", false);
 pref("webgl.disable-DOM-blit-uploads", false);
 pref("webgl.webgl2-compat-mode", false);
 
-pref("webgl.enable-webgl2", false);
+pref("webgl.enable-webgl2", true);
 
 #ifdef RELEASE_BUILD
 // Keep this disabled on Release and Beta for now. (see bug 1171228)
@@ -4636,7 +4640,7 @@ pref("browser.history.maxStateObjectSize", 655360);
 pref("browser.meta_refresh_when_inactive.disabled", false);
 
 // XPInstall prefs
-pref("xpinstall.whitelist.required", true);
+pref("xpinstall.whitelist.required", false);
 // Only Firefox requires add-on signatures
 pref("xpinstall.signatures.required", false);
 pref("extensions.alwaysUnpack", false);
@@ -4735,7 +4739,7 @@ pref("dom.push.enabled", false);
 
 pref("dom.push.loglevel", "error");
 
-pref("dom.push.serverURL", "wss://push.services.mozilla.com/");
+pref("dom.push.serverURL", "");
 pref("dom.push.userAgentID", "");
 
 // The maximum number of push messages that a service worker can receive
@@ -4790,10 +4794,10 @@ pref("dom.w3c_touch_events.enabled", 2);
 #endif
 
 // W3C draft pointer events
-pref("dom.w3c_pointer_events.enabled", false);
+pref("dom.w3c_pointer_events.enabled", true);
 
 // W3C draft ImageCapture API
-pref("dom.imagecapture.enabled", false);
+pref("dom.imagecapture.enabled", true);
 
 // W3C touch-action css property (related to touch and pointer events)
 // Note that we turn this on even on platforms/configurations where touch
@@ -5013,7 +5017,7 @@ pref("captivedetect.pollingTime", 3000);
 pref("captivedetect.maxRetryCount", 5);
 
 #ifdef RELEASE_BUILD
-pref("dom.forms.inputmode", false);
+pref("dom.forms.inputmode", true);
 #else
 pref("dom.forms.inputmode", true);
 #endif
