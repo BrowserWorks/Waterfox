@@ -2049,7 +2049,6 @@ struct CompareFilesByTime
 bool
 nsPluginHost::ShouldAddPlugin(nsPluginTag* aPluginTag)
 {
-#if defined(XP_WIN) && (defined(__x86_64__) || defined(_M_X64))
 // allow all plugins to run
   return true;
 }
