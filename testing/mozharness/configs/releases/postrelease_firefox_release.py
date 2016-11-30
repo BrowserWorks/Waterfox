@@ -7,7 +7,7 @@ config = {
     ],
     "repo": {
         "repo": "https://hg.mozilla.org/releases/mozilla-release",
-        "branch": "default",
+        "branch": "FIREFOX_50_0_1_RELBRANCH",
         "dest": "mozilla-release",
         "vcs": "hg",
     },

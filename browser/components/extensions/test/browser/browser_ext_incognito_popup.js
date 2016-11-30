@@ -2,19 +2,18 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(function* testIncognitoPopup() {
+add_task(function* testIncognitoViews() {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       "permissions": ["tabs"],
       "browser_action": {
         "default_popup": "popup.html",
       },
-      "page_action": {
-        "default_popup": "popup.html",
-      },
     },
 
     background() {
+      window.isBackgroundPage = true;
+
       let resolveMessage;
       browser.runtime.onMessage.addListener(msg => {
         if (resolveMessage && msg.message == "popup-details") {
@@ -32,19 +31,9 @@ add_task(function* testIncognitoPopup() {
       };
 
       let testWindow = window => {
-        return browser.tabs.query({active: true, windowId: window.id}).then(([tab]) => {
-          return browser.pageAction.show(tab.id);
-        }).then(() => {
-          browser.test.sendMessage("click-pageAction");
+        browser.test.sendMessage("click-browserAction");
 
-          return awaitPopup(window.id);
-        }).then(msg => {
-          browser.test.assertEq(window.incognito, msg.incognito, "Correct incognito status in pageAction popup");
-
-          browser.test.sendMessage("click-browserAction");
-
-          return awaitPopup(window.id);
-        }).then(msg => {
+        return awaitPopup(window.id).then(msg => {
           browser.test.assertEq(window.incognito, msg.incognito, "Correct incognito status in browserAction popup");
         });
       };
@@ -70,10 +59,10 @@ add_task(function* testIncognitoPopup() {
           return browser.windows.remove(window.id);
         });
       }).then(() => {
-        browser.test.notifyPass("incognito");
+        browser.test.notifyPass("incognito-views");
       }).catch(error => {
         browser.test.fail(`Error: ${error} :: ${error.stack}`);
-        browser.test.notifyFail("incognito");
+        browser.test.notifyFail("incognito-views");
       });
     },
 
@@ -81,12 +70,38 @@ add_task(function* testIncognitoPopup() {
       "popup.html": '<html><head><meta charset="utf-8"><script src="popup.js"></script></head></html>',
 
       "popup.js": function() {
-        browser.windows.getCurrent().then(win => {
+        let views = browser.extension.getViews();
+
+        browser.runtime.getBackgroundPage().then(bgPage => {
+          if (browser.extension.inIncognitoContext) {
+            browser.test.assertEq(null, bgPage, "Should not be able to access background page in incognito context");
+
+            bgPage = browser.extension.getBackgroundPage();
+            browser.test.assertEq(null, bgPage, "Should not be able to access background page in incognito context");
+
+            browser.test.assertEq(1, views.length, "Should only see one view in incognito popup");
+            browser.test.assertEq(window, views[0], "This window should be the only view");
+          } else {
+            browser.test.assertEq(true, bgPage.isBackgroundPage,
+                                  "Should be able to access background page in non-incognito context");
+
+            bgPage = browser.extension.getBackgroundPage();
+            browser.test.assertEq(true, bgPage.isBackgroundPage,
+                                  "Should be able to access background page in non-incognito context");
+
+            browser.test.assertEq(2, views.length, "Should only two views in non-incognito popup");
+            browser.test.assertEq(bgPage, views[0], "The background page should be the first view");
+            browser.test.assertEq(window, views[1], "This window should be the second view");
+          }
+        }).then(() => {
+          return browser.windows.getCurrent();
+        }).then(win => {
           browser.runtime.sendMessage({
             message: "popup-details",
             windowId: win.id,
             incognito: browser.extension.inIncognitoContext,
           });
+
           window.close();
         });
       },
@@ -97,11 +112,7 @@ add_task(function* testIncognitoPopup() {
     clickBrowserAction(extension, Services.wm.getMostRecentWindow("navigator:browser"));
   });
 
-  extension.onMessage("click-pageAction", () => {
-    clickPageAction(extension, Services.wm.getMostRecentWindow("navigator:browser"));
-  });
-
   yield extension.startup();
-  yield extension.awaitFinish("incognito");
+  yield extension.awaitFinish("incognito-views");
   yield extension.unload();
 });
