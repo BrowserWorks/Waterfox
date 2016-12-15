@@ -290,11 +290,11 @@ js::IsRegExp(JSContext* cx, HandleValue value, bool* result)
     }
 
     /* Steps 5-6. */
-    ESClassValue cls;
+    ESClass cls;
     if (!GetClassOfValue(cx, value, &cls))
         return false;
 
-    *result = cls == ESClass_RegExp;
+    *result = cls == ESClass::RegExp;
     return true;
 }
 
@@ -308,10 +308,10 @@ regexp_compile_impl(JSContext* cx, const CallArgs& args)
 
     // Step 3.
     RootedValue patternValue(cx, args.get(0));
-    ESClassValue cls;
+    ESClass cls;
     if (!GetClassOfValue(cx, patternValue, &cls))
         return false;
-    if (cls == ESClass_RegExp) {
+    if (cls == ESClass::RegExp) {
         // Step 3a.
         if (args.hasDefined(1)) {
             JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NEWREGEXP_FLAGGED);
@@ -405,10 +405,10 @@ js::regexp_construct(JSContext* cx, unsigned argc, Value* vp)
     RootedValue patternValue(cx, args.get(0));
 
     // Step 4.
-    ESClassValue cls;
+    ESClass cls;
     if (!GetClassOfValue(cx, patternValue, &cls))
         return false;
-    if (cls == ESClass_RegExp) {
+    if (cls == ESClass::RegExp) {
         // Beware!  |patternObj| might be a proxy into another compartment, so
         // don't assume |patternObj.is<RegExpObject>()|.  For the same reason,
         // don't reuse the RegExpShared below.
@@ -1559,6 +1559,15 @@ js::RegExpPrototypeOptimizableRaw(JSContext* cx, JSObject* proto, uint8_t* resul
         return true;
     }
 
+    JSNative unicodeGetter;
+    if (!GetOwnNativeGetterPure(cx, proto, NameToId(cx->names().unicode), &unicodeGetter))
+        return false;
+
+    if (unicodeGetter != regexp_unicode) {
+        *result = false;
+        return true;
+    }
+
     // Check if @@match, @@search, and exec are own data properties,
     // those values should be tested in selfhosted JS.
     bool has = false;
@@ -1604,18 +1613,14 @@ js::RegExpInstanceOptimizable(JSContext* cx, unsigned argc, Value* vp)
 }
 
 bool
-js::RegExpInstanceOptimizableRaw(JSContext* cx, JSObject* rx, JSObject* proto, uint8_t* result)
+js::RegExpInstanceOptimizableRaw(JSContext* cx, JSObject* obj, JSObject* proto, uint8_t* result)
 {
     JS::AutoCheckCannotGC nogc;
-    if (!rx->isNative()) {
-        *result = false;
-        return true;
-    }
 
-    NativeObject* nobj = static_cast<NativeObject*>(rx);
+    RegExpObject* rx = &obj->as<RegExpObject>();
 
     Shape* shape = cx->compartment()->regExps.getOptimizableRegExpInstanceShape();
-    if (shape == nobj->lastProperty()) {
+    if (shape == rx->lastProperty()) {
         *result = true;
         return true;
     }
@@ -1630,12 +1635,12 @@ js::RegExpInstanceOptimizableRaw(JSContext* cx, JSObject* rx, JSObject* proto, u
         return true;
     }
 
-    if (!RegExpObject::isInitialShape(nobj)) {
+    if (!RegExpObject::isInitialShape(rx)) {
         *result = false;
         return true;
     }
 
-    cx->compartment()->regExps.setOptimizableRegExpInstanceShape(nobj->lastProperty());
+    cx->compartment()->regExps.setOptimizableRegExpInstanceShape(rx->lastProperty());
     *result = true;
     return true;
 }

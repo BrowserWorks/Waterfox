@@ -5,13 +5,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+const { utils: Cu } = Components;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://devtools/client/shared/widgets/VariablesView.jsm");
 var {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+var {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
+var {VariablesView} = require("resource://devtools/client/shared/widgets/VariablesView.jsm");
 var Services = require("Services");
 var promise = require("promise");
+var defer = require("devtools/shared/defer");
 var {LocalizationHelper} = require("devtools/client/shared/l10n");
 
 Object.defineProperty(this, "WebConsoleUtils", {
@@ -142,7 +143,7 @@ VariablesViewController.prototype = {
    *         The promise that will be resolved when the string is retrieved.
    */
   _populateFromLongString: function (aTarget, aGrip) {
-    let deferred = promise.defer();
+    let deferred = defer();
 
     let from = aGrip.initial.length;
     let to = Math.min(aGrip.length, MAX_LONG_STRING_LENGTH);
@@ -193,7 +194,7 @@ VariablesViewController.prototype = {
       };
 
       // Query the name of the first and last items for this slice
-      let deferred = promise.defer();
+      let deferred = defer();
       iterator.names([start, start + count - 1], ({ names }) => {
         let label = "[" + names[0] + L10N.ellipsis + names[1] + "]";
         let item = aTarget.addItem(label, {}, { internalItem: true });
@@ -222,7 +223,7 @@ VariablesViewController.prototype = {
       return this._populatePropertySlices(aTarget, aGrip);
     }
     // We started slicing properties, and the slice is now small enough to be displayed
-    let deferred = promise.defer();
+    let deferred = defer();
     aGrip.propertyIterator.slice(aGrip.start, aGrip.count,
       ({ ownProperties }) => {
         // Add all the variable properties.
@@ -252,7 +253,7 @@ VariablesViewController.prototype = {
   _populateFromObjectWithIterator: function (aTarget, aGrip, aQuery) {
     // FF40+ starts exposing `ownPropertyLength` on ObjectActor's grip,
     // as well as `enumProperties` request.
-    let deferred = promise.defer();
+    let deferred = defer();
     let objectClient = this._getObjectClient(aGrip);
     let isArray = aGrip.preview && aGrip.preview.kind === "ArrayLike";
     if (isArray) {
@@ -329,6 +330,20 @@ VariablesViewController.prototype = {
    *        The grip to use to populate the target.
    */
   _populateFromObject: function (aTarget, aGrip) {
+    if (aGrip.class === "Proxy") {
+      this.addExpander(
+        aTarget.addItem("<target>", { value: aGrip.proxyTarget }, { internalItem: true }),
+        aGrip.proxyTarget);
+      this.addExpander(
+        aTarget.addItem("<handler>", { value: aGrip.proxyHandler }, { internalItem: true }),
+        aGrip.proxyHandler);
+
+      // Refuse to play the proxy's stupid game and return immediately
+      let deferred = defer();
+      deferred.resolve();
+      return deferred.promise;
+    }
+    
     if (aGrip.class === "Promise" && aGrip.promiseState) {
       const { state, value, reason } = aGrip.promiseState;
       aTarget.addItem("<state>", { value: state }, { internalItem: true });
@@ -354,7 +369,7 @@ VariablesViewController.prototype = {
     if ("ownPropertyLength" in aGrip && aGrip.ownPropertyLength >= MAX_PROPERTY_ITEMS) {
       return this._populateFromObjectWithIterator(aTarget, aGrip)
                  .then(() => {
-                   let deferred = promise.defer();
+                   let deferred = defer();
                    let objectClient = this._getObjectClient(aGrip);
                    objectClient.getPrototype(({ prototype }) => {
                      this._populateObjectPrototype(aTarget, prototype);
@@ -368,7 +383,7 @@ VariablesViewController.prototype = {
   },
 
   _populateProperties: function (aTarget, aGrip, aOptions) {
-    let deferred = promise.defer();
+    let deferred = defer();
 
     let objectClient = this._getObjectClient(aGrip);
     objectClient.getPrototypeAndProperties(aResponse => {
@@ -450,7 +465,7 @@ VariablesViewController.prototype = {
       if (environment.bindings) {
         this._populateWithEnvironmentBindings(closure, environment.bindings);
       } else {
-        let deferred = promise.defer();
+        let deferred = defer();
         objectScopes.push(deferred.promise);
         this._getEnvironmentClient(environment).getBindings(response => {
           this._populateWithEnvironmentBindings(closure, response.bindings);
@@ -595,7 +610,7 @@ VariablesViewController.prototype = {
       return promise.reject(new Error("No actor grip was given for the variable."));
     }
 
-    let deferred = promise.defer();
+    let deferred = defer();
     aTarget._fetched = deferred.promise;
 
     if (aSource.type === "property-iterator") {

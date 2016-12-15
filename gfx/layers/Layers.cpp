@@ -177,17 +177,12 @@ LayerManager::CreatePersistentBufferProvider(const mozilla::gfx::IntSize &aSize,
                                              mozilla::gfx::SurfaceFormat aFormat)
 {
   RefPtr<PersistentBufferProviderBasic> bufferProvider =
-    new PersistentBufferProviderBasic(aSize, aFormat,
-                                      gfxPlatform::GetPlatform()->GetPreferredCanvasBackend());
+    PersistentBufferProviderBasic::Create(aSize, aFormat,
+      gfxPlatform::GetPlatform()->GetPreferredCanvasBackend());
 
-  if (!bufferProvider->IsValid()) {
-    bufferProvider =
-      new PersistentBufferProviderBasic(aSize, aFormat,
-                                        gfxPlatform::GetPlatform()->GetFallbackCanvasBackend());
-  }
-
-  if (!bufferProvider->IsValid()) {
-    return nullptr;
+  if (!bufferProvider) {
+    bufferProvider = PersistentBufferProviderBasic::Create(aSize, aFormat,
+      gfxPlatform::GetPlatform()->GetFallbackCanvasBackend());
   }
 
   return bufferProvider.forget();
@@ -636,7 +631,7 @@ Layer::SnapTransformTranslation(const Matrix4x4& aTransform,
   if (aTransform.CanDraw2D(&matrix2D) &&
       !matrix2D.HasNonTranslation() &&
       matrix2D.HasNonIntegerTranslation()) {
-    IntPoint snappedTranslation = RoundedToInt(matrix2D.GetTranslation());
+    auto snappedTranslation = IntPoint::Round(matrix2D.GetTranslation());
     Matrix snappedMatrix = Matrix::Translation(snappedTranslation.x,
                                                snappedTranslation.y);
     result = Matrix4x4::From2D(snappedMatrix);
@@ -668,8 +663,7 @@ Layer::SnapTransformTranslation(const Matrix4x4& aTransform,
 
   // Compute the transformed snap by rounding the values of
   // transformed origin.
-  IntPoint transformedSnapXY =
-    RoundedToInt(Point(transformedOrigin.x, transformedOrigin.y));
+  auto transformedSnapXY = IntPoint::Round(transformedOrigin.x, transformedOrigin.y);
   Matrix4x4 inverse = aTransform;
   inverse.Invert();
   // see Matrix4x4::ProjectPoint()
@@ -727,9 +721,9 @@ Layer::SnapTransform(const Matrix4x4& aTransform,
       aTransform.Is2D(&matrix2D) &&
       gfxSize(1.0, 1.0) <= aSnapRect.Size() &&
       matrix2D.PreservesAxisAlignedRectangles()) {
-    IntPoint transformedTopLeft = RoundedToInt(matrix2D * ToPoint(aSnapRect.TopLeft()));
-    IntPoint transformedTopRight = RoundedToInt(matrix2D * ToPoint(aSnapRect.TopRight()));
-    IntPoint transformedBottomRight = RoundedToInt(matrix2D * ToPoint(aSnapRect.BottomRight()));
+    auto transformedTopLeft = IntPoint::Round(matrix2D * ToPoint(aSnapRect.TopLeft()));
+    auto transformedTopRight = IntPoint::Round(matrix2D * ToPoint(aSnapRect.TopRight()));
+    auto transformedBottomRight = IntPoint::Round(matrix2D * ToPoint(aSnapRect.BottomRight()));
 
     Matrix snappedMatrix = gfxUtils::TransformRectToRect(aSnapRect,
       transformedTopLeft, transformedTopRight, transformedBottomRight);
@@ -1033,7 +1027,7 @@ Layer::TransformRectToRenderTarget(const LayerIntRect& aRect)
 
 bool
 Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
-                                           nsIntPoint* aLayerOffset)
+                                           IntPoint* aLayerOffset)
 {
   MOZ_ASSERT(aLayerOffset, "invalid offset pointer");
 
@@ -1051,7 +1045,7 @@ Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
     }
 
     // The offset of |layer| to its parent.
-    IntPoint currentLayerOffset = RoundedToInt(matrix.GetTranslation());
+    auto currentLayerOffset = IntPoint::Round(matrix.GetTranslation());
 
     // Translate the accumulated visible region of |this| by the offset of
     // |layer|.
@@ -1078,7 +1072,7 @@ Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
 
       // Retreive the translation from sibling to |layer|. The accumulated
       // visible region is currently oriented with |layer|.
-      IntPoint siblingOffset = RoundedToInt(siblingMatrix.GetTranslation());
+      auto siblingOffset = IntPoint::Round(siblingMatrix.GetTranslation());
       nsIntRegion siblingVisibleRegion(sibling->GetLocalVisibleRegion().ToUnknownRegion());
       // Translate the siblings region to |layer|'s origin.
       siblingVisibleRegion.MoveBy(-siblingOffset.x, -siblingOffset.y);
@@ -1097,7 +1091,7 @@ Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
     offset += currentLayerOffset;
   }
 
-  *aLayerOffset = nsIntPoint(offset.x, offset.y);
+  *aLayerOffset = IntPoint(offset.x, offset.y);
   return true;
 }
 
@@ -1982,12 +1976,12 @@ Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
                      ToString(anchor).c_str()).get();
   }
   if (GetIsStickyPosition()) {
-    aStream << nsPrintfCString(" [isStickyPosition scrollId=%d outer=%f,%f %fx%f "
-                     "inner=%f,%f %fx%f]", mStickyPositionData->mScrollId,
+    aStream << nsPrintfCString(" [isStickyPosition scrollId=%d outer=(%.3f,%.3f)-(%.3f,%.3f) "
+                     "inner=(%.3f,%.3f)-(%.3f,%.3f)]", mStickyPositionData->mScrollId,
                      mStickyPositionData->mOuter.x, mStickyPositionData->mOuter.y,
-                     mStickyPositionData->mOuter.width, mStickyPositionData->mOuter.height,
+                     mStickyPositionData->mOuter.XMost(), mStickyPositionData->mOuter.YMost(),
                      mStickyPositionData->mInner.x, mStickyPositionData->mInner.y,
-                     mStickyPositionData->mInner.width, mStickyPositionData->mInner.height).get();
+                     mStickyPositionData->mInner.XMost(), mStickyPositionData->mInner.YMost()).get();
   }
   if (mMaskLayer) {
     aStream << nsPrintfCString(" [mMaskLayer=%p]", mMaskLayer.get()).get();

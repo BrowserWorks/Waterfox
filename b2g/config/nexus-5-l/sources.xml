@@ -6,23 +6,21 @@
   <remote fetch="https://git.mozilla.org/external/aosp" name="aosp"/>
   <!--original fetch url was git://github.com/apitrace/-->
   <remote fetch="https://git.mozilla.org/external/apitrace" name="apitrace"/>
-  <!--original fetch url was git://github.com/mozilla-b2g/-->
-  <remote fetch="https://git.mozilla.org/b2g" name="b2g"/>
+  <remote fetch="git://github.com/mozilla-b2g/" name="b2g"/>
   <!--original fetch url was https://git.mozilla.org/b2g-->
   <remote fetch="https://git.mozilla.org/b2g" name="b2gmozilla"/>
   <!--original fetch url was git://codeaurora.org/-->
   <remote fetch="https://git.mozilla.org/external/caf" name="caf"/>
   <!--original fetch url was http://android.git.linaro.org/git-ro/-->
   <remote fetch="https://git.mozilla.org/external/linaro" name="linaro"/>
-  <!--original fetch url was git://github.com/mozilla/-->
-  <remote fetch="https://git.mozilla.org/b2g" name="mozilla"/>
+  <remote fetch="git://github.com/mozilla/" name="mozilla"/>
   <!--original fetch url was https://git.mozilla.org/releases-->
   <remote fetch="https://git.mozilla.org/releases" name="mozillaorg"/>
   <!--
     B2G repositories for all targets
     -->
-  <project name="gaia" path="gaia" remote="mozillaorg" revision="a954bd2954c422b7d24d92cfd73000cb455dce44"/>
-  <project name="gonk-misc" path="gonk-misc" remote="b2g" revision="19150d320e6802ec211ccc5e74c254ae9992312d"/>
+  <project name="gaia" path="gaia" remote="b2g" revision="99c01f5646b2d8aa5ebf1968114ab2f5db5ac6a8"/>
+  <project name="gonk-misc" path="gonk-misc" remote="b2g" revision="99003a6e7ecee880330a3fb8b5e49fefdb762374"/>
   <project name="moztt" path="external/moztt" remote="b2g" revision="99c333dab00ed79baff9e1cf76b320aee8e1c123"/>
   <project name="platform_hardware_libhardware_moz" path="hardware/libhardware_moz" remote="b2g" revision="fdf3a143dc777e5f9d33a88373af7ea161d3b440"/>
   <project name="platform_system_libfdio" path="system/libfdio" remote="b2g" revision="34adfb400e031f3dd3353d92413572db5e3a7376"/>
@@ -131,7 +129,7 @@
   <project name="platform/external/yaffs2" path="external/yaffs2" revision="b2aadfdf9482777530efac1fb13a25ff401e78ee"/>
   <project name="platform/external/zlib" path="external/zlib" revision="a9dc8ffc4b43f0ff455d52fc5a889e92794962a4"/>
   <project name="platform/external/zopfli" path="external/zopfli" revision="8b994159cf3fc74a58e42fca72bc6849e6027912"/>
-  <project name="platform/frameworks/native" path="frameworks/native" revision="c39bd4ee1f4b3ef92bf7a45824b77703f40a5fd4"/>
+  <project name="platform_frameworks_native" path="frameworks/native" remote="b2g" revision="77c23f8067bca84476f96d663efaae636817edd5"/>
   <project name="platform/frameworks/opt/emoji" path="frameworks/opt/emoji" revision="2293192ed15b88ebe962fb5377dd197200e6472b"/>
   <project name="platform/hardware/libhardware" path="hardware/libhardware" revision="f5feb2aa2047fbaf13be448fe8d06bff3ccf7b84"/>
   <project name="platform/hardware/libhardware_legacy" path="hardware/libhardware_legacy" revision="8d075b4d5e9e032b18fbc8b5def63827d1b4a30d"/>
@@ -142,7 +140,7 @@
   <project name="platform/prebuilts/ndk" path="prebuilts/ndk" revision="1d080491f26dfdfd76d5bbc3e6b40c660e8565af"/>
   <project name="platform/prebuilts/sdk" path="prebuilts/sdk" revision="61a10cbd19d6b7fc052a8cb92dfa1b37b93754f3"/>
   <project name="platform/prebuilts/tools" path="prebuilts/tools" revision="9e892a67a01671f312c76b0880dedaa6ba478148"/>
-  <project name="platform_system_bluetoothd" path="system/bluetoothd" remote="b2g" revision="6c9cebe5892c69e8b4bb2ea4e202f36ad095a4f0"/>
+  <project name="platform_system_bluetoothd" path="system/bluetoothd" remote="b2g" revision="0a5aa7225129b792c19e91be88eac97a89c089b6"/>
   <project name="platform/system/extras" path="system/extras" revision="47fa016e2248b80aebd5928402c7409f8e0ca64e"/>
   <project name="platform/system/media" path="system/media" revision="70bfebc66d9c6a4c614a8c7efde90e8e7e1d8641"/>
   <project name="platform/system/netd" path="system/netd" revision="d113f0ceefa9ce29eb3c86e2d23c7417a70b4048"/>

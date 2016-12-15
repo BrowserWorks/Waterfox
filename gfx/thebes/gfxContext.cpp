@@ -17,7 +17,6 @@
 #include "gfxASurface.h"
 #include "gfxPattern.h"
 #include "gfxPlatform.h"
-#include "gfxTeeSurface.h"
 #include "gfxPrefs.h"
 #include "GeckoProfiler.h"
 #include "gfx2DGlue.h"
@@ -27,6 +26,7 @@
 
 #if XP_WIN
 #include "gfxWindowsPlatform.h"
+#include "mozilla/gfx/DeviceManagerD3D11.h"
 #endif
 
 using namespace mozilla;
@@ -85,11 +85,11 @@ gfxContext::gfxContext(DrawTarget *aTarget, const Point& aDeviceOffset)
 }
 
 /* static */ already_AddRefed<gfxContext>
-gfxContext::ForDrawTarget(DrawTarget* aTarget,
-                          const mozilla::gfx::Point& aDeviceOffset)
+gfxContext::CreateOrNull(DrawTarget* aTarget,
+                         const mozilla::gfx::Point& aDeviceOffset)
 {
   if (!aTarget || !aTarget->IsValid()) {
-    gfxCriticalNote << "Invalid target in gfxContext::ForDrawTarget " << hexa(aTarget);
+    gfxCriticalNote << "Invalid target in gfxContext::CreateOrNull " << hexa(aTarget);
     return nullptr;
   }
 
@@ -98,10 +98,10 @@ gfxContext::ForDrawTarget(DrawTarget* aTarget,
 }
 
 /* static */ already_AddRefed<gfxContext>
-gfxContext::ForDrawTargetWithTransform(DrawTarget* aTarget)
+gfxContext::CreatePreservingTransformOrNull(DrawTarget* aTarget)
 {
   if (!aTarget || !aTarget->IsValid()) {
-    gfxCriticalNote << "Invalid target in gfxContext::ForDrawTargetWithTransform " << hexa(aTarget);
+    gfxCriticalNote << "Invalid target in gfxContext::CreatePreservingTransformOrNull " << hexa(aTarget);
     return nullptr;
   }
 
@@ -733,25 +733,6 @@ gfxContext::Mask(SourceSurface* aSurface, Float aAlpha, const Matrix& aTransform
 }
 
 void
-gfxContext::Mask(gfxASurface *surface, const gfxPoint& offset)
-{
-  PROFILER_LABEL("gfxContext", "Mask",
-    js::ProfileEntry::Category::GRAPHICS);
-
-  // Lifetime needs to be limited here as we may simply wrap surface's data.
-  RefPtr<SourceSurface> sourceSurf =
-  gfxPlatform::GetPlatform()->GetSourceSurfaceForSurface(mDT, surface);
-
-  if (!sourceSurf) {
-    return;
-  }
-
-  gfxPoint pt = surface->GetDeviceOffset();
-
-  Mask(sourceSurf, 1.0f, Point(offset.x - pt.x, offset.y - pt.y));
-}
-
-void
 gfxContext::Mask(SourceSurface *surface, float alpha, const Point& offset)
 {
   // We clip here to bind to the mask surface bounds, see above.
@@ -1262,7 +1243,8 @@ gfxContext::PushNewDT(gfxContentType content)
     if (!newDT) {
       if (!gfxPlatform::GetPlatform()->DidRenderingDeviceReset()
 #ifdef XP_WIN
-          && !(mDT->GetBackendType() == BackendType::DIRECT2D1_1 && !gfxWindowsPlatform::GetPlatform()->GetD3D11ContentDevice())
+          && !(mDT->GetBackendType() == BackendType::DIRECT2D1_1 &&
+               !DeviceManagerD3D11::Get()->GetContentDevice())
 #endif
           ) {
         // If even this fails.. we're most likely just out of memory!

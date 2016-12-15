@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+<link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css" />
+<style>
+body {
+	margin: 40px;
+}
+.wrapper {
+	display: grid;
+	width: 600px;
+	grid-gap: 0px;
+	grid-template-columns: 50px repeat(auto-fit, 100px);
+	background-color: #f00;
+}
+.wrapper2 {
+	display: grid;
+	width: 600px;
+	grid-gap: 0px;
+	grid-template-columns: repeat(2, 100px) repeat(auto-fill, 50px);
+	background-color: #f00;
+}
+.box {
+	background-color: #444;
+	color: #fff;
+}
+.a {
+	grid-column: 3;
+}
+</style>
+
+<script>
+'use strict';
+
+SimpleTest.waitForExplicitFinish();
+
+function runTests() {
+	var wrapper = document.getElementById("wrapper");
+	var grid = wrapper.getGridFragments()[0];
+	
+	// test auto-fit count after removal
+	is(grid.cols.tracks.length, 2, "Grid column track array compensates for removed auto-fit columns.");
+	
+	var wrapper2 = document.getElementById("wrapper2");
+	var grid2 = wrapper2.getGridFragments()[0];
+	
+	// test auto-fill count of tracks
+	is(grid2.cols.tracks.length, 10, "Grid column track array respects auto-fill columns.");
+	
+	if (grid2.cols.tracks.length == 10) {
+		// test for static and repeat
+		is(grid2.cols.tracks[1].state, "static", "Grid column track 2 is marked as static.");
+		is(grid2.cols.tracks[2].state, "repeat", "Grid column track 3 is marked as repeat.");
+	}
+	
+	SimpleTest.finish();
+}
+</script>
+</head>
+<body onLoad="runTests();">
+
+	<div id="wrapper" class="wrapper">
+		<div id="boxA" class="box a">A</div>
+	</div>
+	
+	<div id="wrapper2" class="wrapper2">
+		<div id="boxB" class="box b">B</div>
+	</div>
+	
+</body>
+</html>

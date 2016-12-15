@@ -223,18 +223,17 @@ AutoGCRooter::trace(JSTracer* trc)
 /* static */ void
 AutoGCRooter::traceAll(JSTracer* trc)
 {
-    for (ContextIter cx(trc->runtime()); !cx.done(); cx.next())
-        traceAllInContext(&*cx, trc);
+    traceAllInContext(trc->runtime()->contextFromMainThread(), trc);
 }
 
 /* static */ void
 AutoGCRooter::traceAllWrappers(JSTracer* trc)
 {
-    for (ContextIter cx(trc->runtime()); !cx.done(); cx.next()) {
-        for (AutoGCRooter* gcr = cx->roots.autoGCRooters_; gcr; gcr = gcr->down) {
-            if (gcr->tag_ == WRAPVECTOR || gcr->tag_ == WRAPPER)
-                gcr->trace(trc);
-        }
+    JSContext* cx = trc->runtime()->contextFromMainThread();
+
+    for (AutoGCRooter* gcr = cx->roots.autoGCRooters_; gcr; gcr = gcr->down) {
+        if (gcr->tag_ == WRAPVECTOR || gcr->tag_ == WRAPPER)
+            gcr->trace(trc);
     }
 }
 
@@ -318,8 +317,7 @@ js::gc::GCRuntime::markRuntime(JSTracer* trc, TraceOrMarkRuntime traceOrMark,
     if (rt->isHeapMinorCollecting())
         jit::JitRuntime::MarkJitcodeGlobalTableUnconditionally(trc);
 
-    for (ContextIter acx(rt); !acx.done(); acx.next())
-        acx->mark(trc);
+    rt->contextFromMainThread()->mark(trc);
 
     for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next())
         c->traceRoots(trc, traceOrMark);
@@ -329,6 +327,8 @@ js::gc::GCRuntime::markRuntime(JSTracer* trc, TraceOrMarkRuntime traceOrMark,
     jit::MarkJitActivations(rt, trc);
 
     rt->spsProfiler.trace(trc);
+
+    HelperThreadState().trace(trc);
 
     if (!rt->isHeapMinorCollecting()) {
         gcstats::AutoPhase ap(stats, gcstats::PHASE_MARK_EMBEDDING);
@@ -416,6 +416,9 @@ void
 BufferGrayRootsTracer::onChild(const JS::GCCellPtr& thing)
 {
     MOZ_ASSERT(runtime()->isHeapBusy());
+    MOZ_RELEASE_ASSERT(thing);
+    // Check if |thing| is corrupt by calling a method that touches the heap.
+    MOZ_RELEASE_ASSERT(thing.asCell()->getTraceKind() <= JS::TraceKind::Null);
 
     if (bufferingGrayRootsFailed)
         return;

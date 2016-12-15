@@ -23,7 +23,6 @@
 #include "mozilla/unused.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsCRT.h"
-#include "nsCertVerificationThread.h"
 #include "nsClientAuthRemember.h"
 #include "nsComponentManagerUtils.h"
 #include "nsDirectoryServiceDefs.h"
@@ -250,12 +249,11 @@ GetRevocationBehaviorFromPrefs(/*out*/ CertVerifier::OcspDownloadConfig* odc,
 }
 
 nsNSSComponent::nsNSSComponent()
-  :mutex("nsNSSComponent.mutex"),
-   mNSSInitialized(false),
+  : mutex("nsNSSComponent.mutex")
+  , mNSSInitialized(false)
 #ifndef MOZ_NO_SMART_CARDS
-   mThreadList(nullptr),
+  , mThreadList(nullptr)
 #endif
-   mCertVerificationThread(nullptr)
 {
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("nsNSSComponent::ctor\n"));
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
@@ -264,41 +262,10 @@ nsNSSComponent::nsNSSComponent()
   ++mInstanceCount;
 }
 
-void
-nsNSSComponent::deleteBackgroundThreads()
-{
-  if (mCertVerificationThread)
-  {
-    mCertVerificationThread->requestExit();
-    delete mCertVerificationThread;
-    mCertVerificationThread = nullptr;
-  }
-}
-
-void
-nsNSSComponent::createBackgroundThreads()
-{
-  NS_ASSERTION(!mCertVerificationThread,
-               "Cert verification thread already created.");
-
-  mCertVerificationThread = new nsCertVerificationThread;
-  nsresult rv = mCertVerificationThread->startThread(
-    NS_LITERAL_CSTRING("Cert Verify"));
-
-  if (NS_FAILED(rv)) {
-    delete mCertVerificationThread;
-    mCertVerificationThread = nullptr;
-  }
-}
-
 nsNSSComponent::~nsNSSComponent()
 {
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("nsNSSComponent::dtor\n"));
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
-  NS_ASSERTION(!mCertVerificationThread,
-               "Cert verification thread should have been cleaned up.");
-
-  deleteBackgroundThreads();
 
   // All cleanup code requiring services needs to happen in xpcom_shutdown
 
@@ -1323,11 +1290,10 @@ static const CipherPref sCipherPrefs[] = {
 
  { "security.ssl3.ecdhe_psk_aes_128_gcm_sha256",
    TLS_ECDHE_PSK_WITH_AES_128_GCM_SHA256, true },
-
- { "security.ssl3.ecdhe_rsa_rc4_128_sha",
-   TLS_ECDHE_RSA_WITH_RC4_128_SHA, true, true }, // deprecated (RC4)
- { "security.ssl3.ecdhe_ecdsa_rc4_128_sha",
-   TLS_ECDHE_ECDSA_WITH_RC4_128_SHA, true, true }, // deprecated (RC4)
+ { "security.ssl3.ecdhe_psk_chacha20_poly1305_sha256",
+   TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256, true },
+ { "security.ssl3.ecdhe_psk_aes_256_gcm_sha384",
+   TLS_ECDHE_PSK_WITH_AES_256_GCM_SHA384, true },
 
  { "security.ssl3.rsa_aes_128_sha",
    TLS_RSA_WITH_AES_128_CBC_SHA, true }, // deprecated (RSA key exchange)
@@ -1336,12 +1302,7 @@ static const CipherPref sCipherPrefs[] = {
  { "security.ssl3.rsa_des_ede3_sha",
    TLS_RSA_WITH_3DES_EDE_CBC_SHA, true }, // deprecated (RSA key exchange, 3DES)
 
- { "security.ssl3.rsa_rc4_128_sha",
-   TLS_RSA_WITH_RC4_128_SHA, true, true }, // deprecated (RSA key exchange, RC4)
- { "security.ssl3.rsa_rc4_128_md5",
-   TLS_RSA_WITH_RC4_128_MD5, true, true }, // deprecated (RSA key exchange, RC4, HMAC-MD5)
-
- // All the rest are disabled by default
+ // All the rest are disabled
 
  { nullptr, 0 } // end marker
 };
@@ -1760,6 +1721,10 @@ nsNSSComponent::InitializeNSS()
     return NS_ERROR_NOT_AVAILABLE;
   }
 
+  // ensure we have an initial value for the content signer root
+  mContentSigningRootHash =
+    Preferences::GetString("security.content.signature.root_hash");
+
   mNSSInitialized = true;
 
   PK11_SetPasswordFunc(PK11PasswordPrompt);
@@ -1954,13 +1919,6 @@ nsNSSComponent::Init()
 
   RememberCertErrorsTable::Init();
 
-  createBackgroundThreads();
-  if (!mCertVerificationThread) {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-            ("nsNSSComponent::createBackgroundThreads() failed\n"));
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
   return RegisterObservers();
 }
 
@@ -1978,14 +1936,7 @@ nsNSSComponent::Observe(nsISupports* aSubject, const char* aTopic,
   if (nsCRT::strcmp(aTopic, PROFILE_BEFORE_CHANGE_TOPIC) == 0) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("receiving profile change topic\n"));
     DoProfileBeforeChange();
-  } else if (nsCRT::strcmp(aTopic, NS_XPCOM_SHUTDOWN_OBSERVER_ID) == 0) {
-
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("nsNSSComponent: XPCom shutdown observed\n"));
-
-    // Cleanup code that requires services, it's too late in destructor.
-    deleteBackgroundThreads();
-  }
-  else if (nsCRT::strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) == 0) {
+  } else if (nsCRT::strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) == 0) {
     nsNSSShutDownPreventionLock locker;
     bool clearSessionCache = true;
     NS_ConvertUTF16toUTF8  prefName(someData);
@@ -2126,7 +2077,6 @@ nsNSSComponent::RegisterObservers()
   // Using false for the ownsweak parameter means the observer service will
   // keep a strong reference to this component. As a result, this will live at
   // least as long as the observer service.
-  observerService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
   observerService->AddObserver(this, PROFILE_BEFORE_CHANGE_TOPIC, false);
 
   return NS_OK;
@@ -2198,16 +2148,19 @@ nsNSSComponent::IsCertContentSigningRoot(CERTCertificate* cert, bool& result)
   result = false;
 
   if (mContentSigningRootHash.IsEmpty()) {
-    return NS_OK;
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("mContentSigningRootHash is empty"));
+    return NS_ERROR_FAILURE;
   }
 
   RefPtr<nsNSSCertificate> nsc = nsNSSCertificate::Create(cert);
   if (!nsc) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("creating nsNSSCertificate failed"));
     return NS_ERROR_FAILURE;
   }
   nsAutoString certHash;
   nsresult rv = nsc->GetSha256Fingerprint(certHash);
   if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("getting cert fingerprint failed"));
     return rv;
   }
 
@@ -2234,7 +2187,6 @@ GetDefaultCertVerifier()
   static NS_DEFINE_CID(kNSSComponentCID, NS_NSSCOMPONENT_CID);
 
   nsCOMPtr<nsINSSComponent> nssComponent(do_GetService(kNSSComponentCID));
-  RefPtr<SharedCertVerifier> certVerifier;
   if (nssComponent) {
     return nssComponent->GetDefaultCertVerifier();
   }

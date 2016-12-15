@@ -7,14 +7,12 @@
 
 SimpleTest.waitForExplicitFinish();
 browserElementTestHelpers.setEnabledPref(true);
-browserElementTestHelpers.addPermission();
 
 function noaudio() {
   info("Test : no-audio");
   var iframe = document.createElement('iframe');
   iframe.setAttribute('mozbrowser', 'true');
-  iframe.setAttribute('mozapp', 'http://example.org/manifest.webapp');
-  iframe.src = 'http://example.org/tests/dom/browser-element/mochitest/file_empty.html';
+  iframe.src = 'chrome://mochitests/content/chrome/dom/browser-element/mochitest/file_empty.html';
 
   function noaudio_loadend() {
     ok("mute" in iframe, "iframe.mute exists");
@@ -25,7 +23,7 @@ function noaudio() {
 
     ok("allowedAudioChannels" in iframe, "allowedAudioChannels exist");
     var channels = iframe.allowedAudioChannels;
-    is(channels.length, 1, "1 audio channel by default");
+    is(channels.length, 9, "9 audio channel by default");
 
     var ac = channels[0];
 
@@ -147,8 +145,7 @@ function audio() {
   info("Test : audio");
   var iframe = document.createElement('iframe');
   iframe.setAttribute('mozbrowser', 'true');
-  iframe.setAttribute('mozapp', 'http://example.org/manifest.webapp');
-  iframe.src = 'http://example.org/tests/dom/browser-element/mochitest/iframe_file_audio.html';
+  iframe.src = 'chrome://mochitests/content/chrome/dom/browser-element/mochitest/iframe_file_audio.html';
 
   function audio_loadend() {
     ok("mute" in iframe, "iframe.mute exists");
@@ -159,7 +156,7 @@ function audio() {
 
     ok("allowedAudioChannels" in iframe, "allowedAudioChannels exist");
     var channels = iframe.allowedAudioChannels;
-    is(channels.length, 1, "1 audio channel by default");
+    is(channels.length, 9, "9 audio channel by default");
 
     var ac = channels[0];
 
@@ -171,7 +168,7 @@ function audio() {
     ok("isActive" in ac, "ac.isActive exists");
 
     ac.onactivestatechanged = function() {
-      ok("activestatechanged event received.");
+      ok(true, "activestatechanged event received.");
       ac.onactivestatechanged = null;
       document.body.removeChild(iframe);
       runTests();
@@ -195,7 +192,7 @@ function runTests() {
 }
 
 addEventListener('testready', function() {
-  SpecialPowers.pushPrefEnv({'set': [["b2g.system_manifest_url", "http://mochi.test:8888/manifest.webapp"]]},
+  SpecialPowers.pushPrefEnv({'set': [["b2g.system_startup_url", window.location.href]]},
                             function() {
     SimpleTest.executeSoon(runTests);
   });

@@ -28,11 +28,7 @@ function enterFunc (funcName) {
   var lastFunc = callStack.pop();
       reportCompare(funcName, lastFunc, "Test driver failure wrong exit function ");
 }
-function getTestCaseResult(expected, actual)
-function getFailedCases() {
-  for ( var i = 0; i < gTestcases.length; i++ ) {}
-};
-function jit(on) {}
+function getTestCaseResult(expected, actual) {}
 var lfcode = new Array();
 lfcode.push("\
 var summary = 'decompilation of \"let with with\" ';\
@@ -47,7 +43,6 @@ function test() {\
     var w = 'r'.match(/r/);\
     new Function('for (var j = 0; j < 1; ++j) { } ')();\
   }\
-  jit(('Math.log'));\
   reportCompare(expect, actual, summary);\
 }\
 ");

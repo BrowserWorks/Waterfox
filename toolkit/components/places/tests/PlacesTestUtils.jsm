@@ -57,10 +57,15 @@ this.PlacesTestUtils = Object.freeze({
       if (typeof place.uri == "string") {
         place.uri = NetUtil.newURI(place.uri);
       } else if (place.uri instanceof URL) {
-        place.uri = NetUtil.newURI(place.href);
+        place.uri = NetUtil.newURI(place.uri.href);
       }
       if (typeof place.title != "string") {
         place.title = "test visit for " + place.uri.spec;
+      }
+      if (typeof place.referrer == "string") {
+        place.referrer = NetUtil.newURI(place.referrer);
+      } else if (place.referrer && place.referrer instanceof URL) {
+        place.referrer = NetUtil.newURI(place.referrer.href);
       }
       place.visits = [{
         transitionType: place.transition === undefined ? Ci.nsINavHistoryService.TRANSITION_LINK
@@ -120,23 +125,15 @@ this.PlacesTestUtils = Object.freeze({
    *       this is a problem only across different connections.
    */
   promiseAsyncUpdates() {
-    return new Promise(resolve => {
-      let db = PlacesUtils.history.DBConnection;
-      let begin = db.createAsyncStatement("BEGIN EXCLUSIVE");
-      begin.executeAsync();
-      begin.finalize();
-
-      let commit = db.createAsyncStatement("COMMIT");
-      commit.executeAsync({
-        handleResult: function () {},
-        handleError: function () {},
-        handleCompletion: function(aReason)
-        {
-          resolve();
-        }
-      });
-      commit.finalize();
-    });
+    return PlacesUtils.withConnectionWrapper("promiseAsyncUpdates", Task.async(function* (db) {
+      try {
+        yield db.executeCached("BEGIN EXCLUSIVE");
+        yield db.executeCached("COMMIT");
+      } catch (ex) {
+        // If we fail to start a transaction, it's because there is already one.
+        // In such a case we should not try to commit the existing transaction.
+      }
+    }));
   },
 
   /**
@@ -152,7 +149,7 @@ this.PlacesTestUtils = Object.freeze({
     let url = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
     let db = yield PlacesUtils.promiseDBConnection();
     let rows = yield db.executeCached(
-      "SELECT id FROM moz_places WHERE url = :url",
+      "SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url",
       { url });
     return rows.length > 0;
   }),
@@ -172,7 +169,7 @@ this.PlacesTestUtils = Object.freeze({
     let rows = yield db.executeCached(
       `SELECT count(*) FROM moz_historyvisits v
        JOIN moz_places h ON h.id = v.place_id
-       WHERE url = :url`,
+       WHERE url_hash = hash(:url) AND url = :url`,
       { url });
     return rows[0].getResultByIndex(0);
   })

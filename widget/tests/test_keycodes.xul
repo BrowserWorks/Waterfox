@@ -2040,6 +2040,20 @@ function* runKeyEventTests()
                   nsIDOMKeyEvent.DOM_VK_SLEEP, "", SHOULD_DELIVER_ALL, KeyboardEvent.DOM_KEY_LOCATION_STANDARD);
     // XXX TODO: we cannot test Home, Up, PageUp, Left, Right, End, Down, PageDown, Ins and Del.
 
+    // Backspace and Enter are handled with special path in mozilla::widget::NativeKey.  So, let's test them with modifiers too.
+    yield testKey({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_BACK,
+                   modifiers:{ctrlKey:1}, chars:"\u007F"},
+                  nsIDOMKeyEvent.DOM_VK_BACK_SPACE, "", SHOULD_DELIVER_ALL, KeyboardEvent.DOM_KEY_LOCATION_STANDARD);
+    yield testKey({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_BACK,
+                   modifiers:{altKey:1}, chars:"\u0008"},
+                  nsIDOMKeyEvent.DOM_VK_BACK_SPACE, "", SHOULD_DELIVER_ALL, KeyboardEvent.DOM_KEY_LOCATION_STANDARD);
+    yield testKey({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_RETURN,
+                   modifiers:{ctrlKey:1}, chars:"\n"},
+                  nsIDOMKeyEvent.DOM_VK_RETURN, "", SHOULD_DELIVER_ALL, KeyboardEvent.DOM_KEY_LOCATION_STANDARD);
+    yield testKey({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_RETURN,
+                   modifiers:{altKey:1}, chars:"\r"},
+                  nsIDOMKeyEvent.DOM_VK_RETURN, "", SHOULD_DELIVER_ALL, KeyboardEvent.DOM_KEY_LOCATION_STANDARD);
+
     // US
     // Alphabet
     yield testKey({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_A,
@@ -3244,16 +3258,16 @@ function* runXULKeyTests()
   }
   else if (IS_WIN) {
     yield testKeyElement({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_OEM_1,
-                          modifiers:{ctrlKey:1}, chars:";"},
+                          modifiers:{ctrlKey:1}, chars:""},
                          "unshiftedKey");
     yield testKeyElement({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_OEM_1,
-                          modifiers:{ctrlKey:1, shiftKey:1}, chars:";"},
+                          modifiers:{ctrlKey:1, shiftKey:1}, chars:""},
                          "shiftedKey");
     yield testKeyElement({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_OEM_7,
-                          modifiers:{ctrlKey:1}, chars:"'"},
+                          modifiers:{ctrlKey:1}, chars:""},
                          "reservedUnshiftedKey");
     yield testKeyElement({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_OEM_7,
-                          modifiers:{ctrlKey:1, shiftKey:1}, chars:"'"},
+                          modifiers:{ctrlKey:1, shiftKey:1}, chars:""},
                          "reservedShiftedKey");
   }
 
@@ -3439,7 +3453,9 @@ function* runReservedKeyTests()
   } else if (IS_WIN) {
     // Ctrl+T is reserved for opening new tab.
     yield testReservedKey({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_T,
-                           modifiers:{ctrlKey:1}, chars:"t"});
+                           modifiers:{ctrlKey:1}, chars:"\u0014"});
+    yield testReservedKey({layout:KEYBOARD_LAYOUT_ARABIC, keyCode:WIN_VK_T,
+                           modifiers:{ctrlKey:1}, chars:"\u0014"});
   }
 
   finializeKeyElementTest();
@@ -3463,7 +3479,20 @@ function* runTextInputTests()
     });
   }
 
-  if (IS_WIN) {
+  if (IS_MAC) {
+    yield testKey({layout:KEYBOARD_LAYOUT_ARABIC_PC, keyCode:MAC_VK_ANSI_G,
+                   modifiers:{shiftKey:1}, chars:"\u0644\u0623", unmodifiedChars:"\u0644\u0623"},
+                  "\u0644\u0623");
+    yield testKey({layout:KEYBOARD_LAYOUT_ARABIC_PC, keyCode:MAC_VK_ANSI_T,
+                   modifiers:{shiftKey:1}, chars:"\u0644\u0625", unmodifiedChars:"\u0644\u0625"},
+                  "\u0644\u0625");
+    yield testKey({layout:KEYBOARD_LAYOUT_ARABIC_PC, keyCode:MAC_VK_ANSI_B,
+                   modifiers:{shiftKey:1}, chars:"\u0644\u0622", unmodifiedChars:"\u0644\u0622"},
+                  "\u0644\u0622");
+    yield testKey({layout:KEYBOARD_LAYOUT_ARABIC_PC, keyCode:MAC_VK_ANSI_B,
+                   modifiers:{}, chars:"\u0644\u0627", unmodifiedChars:"\u0644\u0627"},
+                  "\u0644\u0627");
+  } else if (IS_WIN) {
     // Basic sanity checks
     yield testKey({layout:KEYBOARD_LAYOUT_EN_US, keyCode:WIN_VK_A,
                    modifiers:{}, chars:"a"},
@@ -3496,8 +3525,6 @@ function* runTextInputTests()
                    modifiers:{ctrlKey:1, altKey:1}, chars:"0"},
                   "0");
   }
-  else
-    todo(false, "runTextInputTests() checks Windows only");
 
   // XXX We need to move focus for canceling to search the autocomplete
   // result. If we don't do here, Fx will crash at end of this tests.

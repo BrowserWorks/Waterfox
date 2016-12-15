@@ -27,11 +27,13 @@
 #include "nsThreadUtils.h"
 #include "DecodePool.h"
 #include "DecoderFactory.h"
+#include "FrameAnimator.h"
 #include "Orientation.h"
 #include "nsIObserver.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/NotNull.h"
 #include "mozilla/Pair.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/WeakPtr.h"
@@ -132,7 +134,6 @@ class Image;
 namespace image {
 
 class Decoder;
-class FrameAnimator;
 class ImageMetadata;
 class SourceBuffer;
 
@@ -161,9 +162,6 @@ public:
   // Methods inherited from Image
   virtual void OnSurfaceDiscarded() override;
 
-  /* The total number of frames in this image. */
-  uint32_t GetNumFrames() const { return mFrameCount; }
-
   virtual size_t SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf)
     const override;
   virtual void CollectSizeOfSurfaces(nsTArray<SurfaceMemoryCounter>& aCounters,
@@ -177,8 +175,6 @@ public:
   // Decoder callbacks.
   //////////////////////////////////////////////////////////////////////////////
 
-  void OnAddedFrame(uint32_t aNewFrameCount, const nsIntRect& aNewRefreshArea);
-
   /**
    * Sends the provided progress notifications to ProgressTracker.
    *
@@ -186,12 +182,17 @@ public:
    *
    * @param aProgress    The progress notifications to send.
    * @param aInvalidRect An invalidation rect to send.
+   * @param aFrameCount  If Some(), an updated count of the number of frames of
+   *                     animation the decoder has finished decoding so far. This
+   *                     is a lower bound for the total number of animation
+   *                     frames this image has.
    * @param aFlags       The surface flags used by the decoder that generated
    *                     these notifications, or DefaultSurfaceFlags() if the
    *                     notifications don't come from a decoder.
    */
   void NotifyProgress(Progress aProgress,
-                      const nsIntRect& aInvalidRect = nsIntRect(),
+                      const gfx::IntRect& aInvalidRect = nsIntRect(),
+                      const Maybe<uint32_t>& aFrameCount = Nothing(),
                       SurfaceFlags aSurfaceFlags = DefaultSurfaceFlags());
 
   /**
@@ -274,8 +275,6 @@ private:
   uint32_t GetCurrentFrameIndex() const;
   uint32_t GetRequestedFrameIndex(uint32_t aWhichFrame) const;
 
-  nsIntRect GetFirstFrameRect();
-
   Pair<DrawResult, RefPtr<layers::Image>>
     GetCurrentImage(layers::ImageContainer* aContainer, uint32_t aFlags);
 
@@ -286,7 +285,7 @@ private:
   // never unlock so that animated images always have their lock count >= 1. In
   // that case we use our animation consumers count as a proxy for lock count.
   bool IsUnlocked() {
-    return (mLockCount == 0 || (mAnim && mAnimationConsumers == 0));
+    return (mLockCount == 0 || (mAnimationState && mAnimationConsumers == 0));
   }
 
 
@@ -349,7 +348,10 @@ private: // data
   nsCOMPtr<nsIProperties>   mProperties;
 
   /// If this image is animated, a FrameAnimator which manages its animation.
-  UniquePtr<FrameAnimator> mAnim;
+  UniquePtr<FrameAnimator> mFrameAnimator;
+
+  /// Animation timeline and other state for animation images.
+  Maybe<AnimationState> mAnimationState;
 
   // Image locking.
   uint32_t                   mLockCount;
@@ -380,10 +382,7 @@ private: // data
 #endif
 
   // The source data for this image.
-  RefPtr<SourceBuffer>     mSourceBuffer;
-
-  // The number of frames this image has.
-  uint32_t                   mFrameCount;
+  NotNull<RefPtr<SourceBuffer>>  mSourceBuffer;
 
   // Boolean flags (clustered together to conserve space):
   bool                       mHasSize:1;       // Has SetSize() been called?
@@ -442,6 +441,8 @@ private: // data
   // Helpers
   bool CanDiscard();
 
+  bool IsOpaque();
+
 protected:
   explicit RasterImage(ImageURL* aURI = nullptr);
 
@@ -457,5 +458,14 @@ RasterImage::GetAnimationMode(uint16_t* aAnimationMode) {
 
 } // namespace image
 } // namespace mozilla
+
+/**
+ * Casting RasterImage to nsISupports is ambiguous. This method handles that.
+ */
+inline nsISupports*
+ToSupports(mozilla::image::RasterImage* p)
+{
+  return NS_ISUPPORTS_CAST(mozilla::image::ImageResource*, p);
+}
 
 #endif /* mozilla_image_RasterImage_h */

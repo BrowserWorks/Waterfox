@@ -74,18 +74,6 @@ typedef bool
                            JS::Handle<JSObject*> obj,
                            JS::AutoIdVector& props);
 
-// Returns true if aObj's global has any of the permissions named in
-// aPermissions set to nsIPermissionManager::ALLOW_ACTION. aPermissions must be
-// null-terminated.
-bool
-CheckAnyPermissions(JSContext* aCx, JSObject* aObj, const char* const aPermissions[]);
-
-// Returns true if aObj's global has all of the permissions named in
-// aPermissions set to nsIPermissionManager::ALLOW_ACTION. aPermissions must be
-// null-terminated.
-bool
-CheckAllPermissions(JSContext* aCx, JSObject* aObj, const char* const aPermissions[]);
-
 // Returns true if the given global is of a type whose bit is set in
 // aNonExposedGlobals.
 bool
@@ -138,20 +126,6 @@ struct PrefableDisablers {
         !enabledFunc(cx, js::GetGlobalForObjectCrossCompartment(obj))) {
       return false;
     }
-    if (availableFunc &&
-        !availableFunc(cx, js::GetGlobalForObjectCrossCompartment(obj))) {
-      return false;
-    }
-    if (checkAnyPermissions &&
-        !CheckAnyPermissions(cx, js::GetGlobalForObjectCrossCompartment(obj),
-                             checkAnyPermissions)) {
-      return false;
-    }
-    if (checkAllPermissions &&
-        !CheckAllPermissions(cx, js::GetGlobalForObjectCrossCompartment(obj),
-                             checkAllPermissions)) {
-      return false;
-    }
     return true;
   }
 
@@ -167,16 +141,8 @@ struct PrefableDisablers {
 
   // A function pointer to a function that can say the property is disabled
   // even if "enabled" is set to true.  If the pointer is null the value of
-  // "enabled" is used as-is unless availableFunc overrides.
+  // "enabled" is used as-is.
   const PropertyEnabled enabledFunc;
-
-  // A function pointer to a function that can be used to disable a
-  // property even if "enabled" is true and enabledFunc allowed.  This
-  // is basically a hack to avoid having to codegen PropertyEnabled
-  // implementations in case when we need to do two separate checks.
-  const PropertyEnabled availableFunc;
-  const char* const* const checkAnyPermissions;
-  const char* const* const checkAllPermissions;
 };
 
 template<typename T>
@@ -238,7 +204,7 @@ struct NativePropertiesN {
 
   const int32_t iteratorAliasMethodIndex;
 
-  MOZ_CONSTEXPR const NativePropertiesN<7>* Upcast() const {
+  constexpr const NativePropertiesN<7>* Upcast() const {
     return reinterpret_cast<const NativePropertiesN<7>*>(this);
   }
 
@@ -352,18 +318,19 @@ IsInterfacePrototype(DOMObjectType type)
   return type == eInterfacePrototype || type == eGlobalInterfacePrototype;
 }
 
-typedef JSObject* (*ParentGetter)(JSContext* aCx, JS::Handle<JSObject*> aObj);
+typedef JSObject* (*AssociatedGlobalGetter)(JSContext* aCx,
+                                            JS::Handle<JSObject*> aObj);
 
-typedef JSObject* (*ProtoGetter)(JSContext* aCx,
-                                 JS::Handle<JSObject*> aGlobal);
+typedef JSObject* (*ProtoGetter)(JSContext* aCx);
+
 /**
- * Returns a handle to the relevent WebIDL prototype object for the given global
- * (which may be a handle to null on out of memory).  Once allocated, the
- * prototype object is guaranteed to exist as long as the global does, since the
- * global traces its array of WebIDL prototypes and constructors.
+ * Returns a handle to the relevant WebIDL prototype object for the current
+ * compartment global (which may be a handle to null on out of memory).  Once
+ * allocated, the prototype object is guaranteed to exist as long as the global
+ * does, since the global traces its array of WebIDL prototypes and
+ * constructors.
  */
-typedef JS::Handle<JSObject*> (*ProtoHandleGetter)(JSContext* aCx,
-                                                   JS::Handle<JSObject*> aGlobal);
+typedef JS::Handle<JSObject*> (*ProtoHandleGetter)(JSContext* aCx);
 
 // Special JSClass for reflected DOM objects.
 struct DOMJSClass
@@ -385,7 +352,10 @@ struct DOMJSClass
 
   const NativePropertyHooks* mNativeHooks;
 
-  ParentGetter mGetParent;
+  // A callback to find the associated global for our C++ object.  Note that
+  // this is used in cases when that global is _changing_, so it will not match
+  // the global of the JSObject* passed in to this function!
+  AssociatedGlobalGetter mGetAssociatedGlobal;
   ProtoHandleGetter mGetProto;
 
   // This stores the CC participant for the native, null if this class does not

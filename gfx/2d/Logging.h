@@ -22,6 +22,7 @@
 #include "Point.h"
 #include "BaseRect.h"
 #include "Matrix.h"
+#include "LoggingConstants.h"
 
 #if defined(MOZ_LOGGING)
 extern GFX2D_API mozilla::LogModule* GetGFX2DLog();
@@ -29,21 +30,6 @@ extern GFX2D_API mozilla::LogModule* GetGFX2DLog();
 
 namespace mozilla {
 namespace gfx {
-
-// Attempting to be consistent with prlog values, but that isn't critical
-// (and note that 5 has a special meaning - see the description
-// with sGfxLogLevel)
-const int LOG_CRITICAL = 1;
-const int LOG_WARNING = 2;
-const int LOG_DEBUG = 3;
-const int LOG_DEBUG_PRLOG = 4;
-const int LOG_EVERYTHING = 5; // This needs to be the highest value
-
-#if defined(DEBUG)
-const int LOG_DEFAULT = LOG_EVERYTHING;
-#else
-const int LOG_DEFAULT = LOG_CRITICAL;
-#endif
 
 #if defined(MOZ_LOGGING)
 inline mozilla::LogLevel PRLogLevelForLevel(int aLevel) {
@@ -68,11 +54,9 @@ class LoggingPrefs
 public:
   // Used to choose the level of logging we get.  The higher the number,
   // the more logging we get.  Value of zero will give you no logging,
-  // 1 just errors, 2 adds warnings and 3 adds logging/debug.  4 is used to
-  // selectively enable logging on the configurations that
-  // support prlog (on other systems, 3 and 4 are the same.)  For prlog,
-  // in addition to setting the value to 4, you will need to set an
-  // environment variable NSPR_LOG_MODULES to gfx:4. See prlog.h for details.
+  // 1 just errors, 2 adds warnings and 3 or 4 add debug logging.
+  // In addition to setting the value to 4, you will need to set the
+  // environment variable MOZ_LOG to gfx:4. See mozilla/Logging.h for details.
   static int32_t sGfxLogLevel;
 };
 
@@ -142,6 +126,7 @@ enum class LogReason : int {
   AsyncTransactionTimeout, // 30
   TextureCreation,
   InvalidCacheSurface,
+  AlphaWithBasicClient,
   // End
   MustBeLessThanThis = 101,
 };
@@ -517,9 +502,14 @@ private:
   void WriteLog(const std::string &aString) {
     if (MOZ_UNLIKELY(LogIt())) {
       Logger::OutputMessage(aString, L, NoNewline());
+      // Assert if required.  We don't have a three parameter MOZ_ASSERT
+      // so use the underlying functions instead (see bug 1281702):
+#ifdef DEBUG
       if (mOptions & int(LogOptions::AssertOnCall)) {
-        MOZ_ASSERT(false, "An assert from the graphics logger");
+        MOZ_ReportAssertionFailure(aString.c_str(), __FILE__, __LINE__);
+        MOZ_CRASH("GFX: An assert from the graphics logger");
       }
+#endif
       if ((mOptions & int(LogOptions::CrashAction)) && ValidReason()) {
         Logger::CrashAction(mReason);
       }

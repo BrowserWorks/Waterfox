@@ -8,13 +8,13 @@
 #define nsDOMMutationObserver_h
 
 #include "mozilla/Attributes.h"
+#include "mozilla/Move.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsPIDOMWindow.h"
 #include "nsIScriptContext.h"
 #include "nsStubAnimationObserver.h"
 #include "nsCOMArray.h"
 #include "nsTArray.h"
-#include "nsAutoPtr.h"
 #include "nsIVariant.h"
 #include "nsContentList.h"
 #include "mozilla/dom/Element.h"
@@ -218,11 +218,11 @@ public:
   }
 
   nsCOMArray<nsIAtom>& AttributeFilter() { return mAttributeFilter; }
-  void SetAttributeFilter(nsCOMArray<nsIAtom>& aFilter)
+  void SetAttributeFilter(nsCOMArray<nsIAtom>&& aFilter)
   {
     NS_ASSERTION(!mParent, "Shouldn't have parent");
     mAttributeFilter.Clear();
-    mAttributeFilter.AppendObjects(aFilter);
+    mAttributeFilter = mozilla::Move(aFilter);
   }
 
   void AddClone(nsMutationReceiverBase* aClone)

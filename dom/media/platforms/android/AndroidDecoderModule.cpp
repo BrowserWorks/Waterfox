@@ -12,7 +12,6 @@
 #include "VPXDecoder.h"
 
 #include "nsThreadUtils.h"
-#include "nsAutoPtr.h"
 #include "nsPromiseFlatString.h"
 #include "nsIGfxInfo.h"
 
@@ -36,7 +35,7 @@ static PRLogModuleInfo* AndroidDecoderModuleLog()
 
 using namespace mozilla;
 using namespace mozilla::gl;
-using namespace mozilla::widget::sdk;
+using namespace mozilla::java::sdk;
 using media::TimeUnit;
 
 namespace mozilla {
@@ -175,14 +174,14 @@ public:
   {
     JNIEnv* const env = jni::GetEnvForThread();
 
-    jni::Object::LocalRef buffer(env);
+    jni::ByteBuffer::LocalRef buffer(env);
     NS_ENSURE_SUCCESS_VOID(aFormat->GetByteBuffer(NS_LITERAL_STRING("csd-0"),
                                                   &buffer));
 
     if (!buffer && aConfig.mCodecSpecificConfig->Length() >= 2) {
-      buffer = jni::Object::LocalRef::Adopt(
-          env, env->NewDirectByteBuffer(aConfig.mCodecSpecificConfig->Elements(),
-          aConfig.mCodecSpecificConfig->Length()));
+      buffer = jni::ByteBuffer::New(
+          aConfig.mCodecSpecificConfig->Elements(),
+          aConfig.mCodecSpecificConfig->Length());
       NS_ENSURE_SUCCESS_VOID(aFormat->SetByteBuffer(NS_LITERAL_STRING("csd-0"),
                                                     buffer));
     }
@@ -194,7 +193,7 @@ public:
   }
 
   nsresult Output(BufferInfo::Param aInfo, void* aBuffer,
-                  MediaFormat::Param aFormat, const TimeUnit& aDuration)
+                  MediaFormat::Param aFormat, const TimeUnit& aDuration) override
   {
     // The output on Android is always 16-bit signed
     nsresult rv;
@@ -278,52 +277,50 @@ AndroidDecoderModule::SupportsMimeType(const nsACString& aMimeType,
     return false;
   }
 
-  return widget::HardwareCodecCapabilityUtils::FindDecoderCodecInfoForMimeType(
+  return java::HardwareCodecCapabilityUtils::FindDecoderCodecInfoForMimeType(
       nsCString(TranslateMimeType(aMimeType)));
 }
 
 already_AddRefed<MediaDataDecoder>
-AndroidDecoderModule::CreateVideoDecoder(
-    const VideoInfo& aConfig, layers::LayersBackend aLayersBackend,
-    layers::ImageContainer* aImageContainer, TaskQueue* aTaskQueue,
-    MediaDataDecoderCallback* aCallback,
-    DecoderDoctorDiagnostics* aDiagnostics)
+AndroidDecoderModule::CreateVideoDecoder(const CreateDecoderParams& aParams)
 {
   MediaFormat::LocalRef format;
 
+  const VideoInfo& config = aParams.VideoConfig();
   NS_ENSURE_SUCCESS(MediaFormat::CreateVideoFormat(
-      TranslateMimeType(aConfig.mMimeType),
-      aConfig.mDisplay.width,
-      aConfig.mDisplay.height,
+      TranslateMimeType(config.mMimeType),
+      config.mDisplay.width,
+      config.mDisplay.height,
       &format), nullptr);
 
   RefPtr<MediaDataDecoder> decoder =
-    new VideoDataDecoder(aConfig, format, aCallback, aImageContainer);
+    new VideoDataDecoder(config,
+                         format,
+                         aParams.mCallback,
+                         aParams.mImageContainer);
 
   return decoder.forget();
 }
 
 already_AddRefed<MediaDataDecoder>
-AndroidDecoderModule::CreateAudioDecoder(
-    const AudioInfo& aConfig, TaskQueue* aTaskQueue,
-    MediaDataDecoderCallback* aCallback,
-    DecoderDoctorDiagnostics* aDiagnostics)
+AndroidDecoderModule::CreateAudioDecoder(const CreateDecoderParams& aParams)
 {
-  MOZ_ASSERT(aConfig.mBitDepth == 16, "We only handle 16-bit audio!");
+  const AudioInfo& config = aParams.AudioConfig();
+  MOZ_ASSERT(config.mBitDepth == 16, "We only handle 16-bit audio!");
 
   MediaFormat::LocalRef format;
 
   LOG("CreateAudioFormat with mimeType=%s, mRate=%d, channels=%d",
-      aConfig.mMimeType.Data(), aConfig.mRate, aConfig.mChannels);
+      config.mMimeType.Data(), config.mRate, config.mChannels);
 
   NS_ENSURE_SUCCESS(MediaFormat::CreateAudioFormat(
-      aConfig.mMimeType,
-      aConfig.mRate,
-      aConfig.mChannels,
+      config.mMimeType,
+      config.mRate,
+      config.mChannels,
       &format), nullptr);
 
   RefPtr<MediaDataDecoder> decoder =
-    new AudioDataDecoder(aConfig, format, aCallback);
+    new AudioDataDecoder(config, format, aParams.mCallback);
 
   return decoder.forget();
 }

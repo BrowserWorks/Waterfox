@@ -459,16 +459,21 @@ load 936988-1.html
 load 942690.html
 load 973390-1.html
 load 1001237.html
+load 1009036.html
 load 1043163-1.html
 load 1061028.html
 load 1107508-1.html
 load 1116104.html
 load 1127198-1.html
 load 1140198.html
+load 1143535.html
 pref(layout.css.grid.enabled,true) load 1156588.html
 load 1162813.xul
 load 1163583.html
 load 1234622-1.html
 load 1235467-1.html
+pref(dom.webcomponents.enabled,true) load 1261351.html
 load 1270797-1.html
+load 1278455-1.html
 load 1286889.html
+load 1288608.html

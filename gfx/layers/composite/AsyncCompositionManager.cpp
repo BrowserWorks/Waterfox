@@ -54,8 +54,6 @@ namespace layers {
 
 using namespace mozilla::gfx;
 
-enum Op { Resolve, Detach };
-
 static bool
 IsSameDimension(dom::ScreenOrientationInternal o1, dom::ScreenOrientationInternal o2)
 {
@@ -68,55 +66,6 @@ static bool
 ContentMightReflowOnOrientationChange(const IntRect& rect)
 {
   return rect.width != rect.height;
-}
-
-template<Op OP>
-static void
-WalkTheTree(Layer* aLayer,
-            bool& aReady,
-            const TargetConfig& aTargetConfig,
-            CompositorBridgeParent* aCompositor,
-            bool& aHasRemote,
-            bool aWillResolvePlugins,
-            bool& aDidResolvePlugins)
-{
-
-  ForEachNode<ForwardIterator>(
-      aLayer,
-      [&](Layer* layer)
-      {
-        if (RefLayer* ref = layer->AsRefLayer()) {
-          aHasRemote = true;
-          if (const CompositorBridgeParent::LayerTreeState* state = CompositorBridgeParent::GetIndirectShadowTree(ref->GetReferentId())) {
-            if (Layer* referent = state->mRoot) {
-              if (!ref->GetLocalVisibleRegion().IsEmpty()) {
-                dom::ScreenOrientationInternal chromeOrientation = aTargetConfig.orientation();
-                dom::ScreenOrientationInternal contentOrientation = state->mTargetConfig.orientation();
-                if (!IsSameDimension(chromeOrientation, contentOrientation) &&
-                    ContentMightReflowOnOrientationChange(aTargetConfig.naturalBounds())) {
-                  aReady = false;
-                }
-              }
-
-              if (OP == Resolve) {
-                ref->ConnectReferentLayer(referent);
-      #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-                if (aCompositor && aWillResolvePlugins) {
-                  aDidResolvePlugins |=
-                    aCompositor->UpdatePluginWindowState(ref->GetReferentId());
-                }
-      #endif
-              } else {
-                ref->DetachReferentLayer(referent);
-                WalkTheTree<OP>(referent, aReady, aTargetConfig,
-                                aCompositor, aHasRemote, aWillResolvePlugins,
-                                aDidResolvePlugins);
-              }
-            }
-          }
-        }
-        return TraversalFlag::Continue;
-      });
 }
 
 AsyncCompositionManager::AsyncCompositionManager(LayerManagerComposite* aManager)
@@ -141,9 +90,12 @@ AsyncCompositionManager::ResolveRefLayers(CompositorBridgeParent* aCompositor,
     *aHasRemoteContent = false;
   }
 
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
   // If valid *aResolvePlugins indicates if we need to update plugin geometry
   // when we walk the tree.
-  bool willResolvePlugins = (aResolvePlugins && *aResolvePlugins);
+  bool resolvePlugins = (aCompositor && aResolvePlugins && *aResolvePlugins);
+#endif
+
   if (!mLayerManager->GetRoot()) {
     // Updated the return value since this result controls completing composition.
     if (aResolvePlugins) {
@@ -155,13 +107,49 @@ AsyncCompositionManager::ResolveRefLayers(CompositorBridgeParent* aCompositor,
   mReadyForCompose = true;
   bool hasRemoteContent = false;
   bool didResolvePlugins = false;
-  WalkTheTree<Resolve>(mLayerManager->GetRoot(),
-                       mReadyForCompose,
-                       mTargetConfig,
-                       aCompositor,
-                       hasRemoteContent,
-                       willResolvePlugins,
-                       didResolvePlugins);
+
+  ForEachNode<ForwardIterator>(
+    mLayerManager->GetRoot(),
+    [&](Layer* layer)
+    {
+      RefLayer* refLayer = layer->AsRefLayer();
+      if (!refLayer) {
+        return;
+      }
+
+      hasRemoteContent = true;
+      const CompositorBridgeParent::LayerTreeState* state =
+        CompositorBridgeParent::GetIndirectShadowTree(refLayer->GetReferentId());
+      if (!state) {
+        return;
+      }
+
+      Layer* referent = state->mRoot;
+      if (!referent) {
+        return;
+      }
+
+      if (!refLayer->GetLocalVisibleRegion().IsEmpty()) {
+        dom::ScreenOrientationInternal chromeOrientation =
+          mTargetConfig.orientation();
+        dom::ScreenOrientationInternal contentOrientation =
+          state->mTargetConfig.orientation();
+        if (!IsSameDimension(chromeOrientation, contentOrientation) &&
+            ContentMightReflowOnOrientationChange(mTargetConfig.naturalBounds())) {
+          mReadyForCompose = false;
+        }
+      }
+
+      refLayer->ConnectReferentLayer(referent);
+
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+      if (resolvePlugins) {
+        didResolvePlugins |=
+          aCompositor->UpdatePluginWindowState(refLayer->GetReferentId());
+      }
+#endif
+    });
+
   if (aHasRemoteContent) {
     *aHasRemoteContent = hasRemoteContent;
   }
@@ -176,13 +164,28 @@ AsyncCompositionManager::DetachRefLayers()
   if (!mLayerManager->GetRoot()) {
     return;
   }
-  CompositorBridgeParent* dummy = nullptr;
-  bool ignored = false;
-  WalkTheTree<Detach>(mLayerManager->GetRoot(),
-                      mReadyForCompose,
-                      mTargetConfig,
-                      dummy,
-                      ignored, ignored, ignored);
+
+  mReadyForCompose = false;
+
+  ForEachNodePostOrder<ForwardIterator>(mLayerManager->GetRoot(),
+    [&](Layer* layer)
+    {
+      RefLayer* refLayer = layer->AsRefLayer();
+      if (!refLayer) {
+        return;
+      }
+
+      const CompositorBridgeParent::LayerTreeState* state =
+        CompositorBridgeParent::GetIndirectShadowTree(refLayer->GetReferentId());
+      if (!state) {
+        return;
+      }
+
+      Layer* referent = state->mRoot;
+      if (referent) {
+        refLayer->DetachReferentLayer(referent);
+      }
+    });
 }
 
 void
@@ -505,6 +508,11 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aTransformedSubtreeRoo
         ParentLayerPoint translation = TransformBy(localTransformTyped, transformedAnchor)
                                      - TransformBy(localTransformTyped, anchor);
 
+        // A fixed layer will "consume" (be unadjusted by) the entire translation
+        // calculated above. A sticky layer may consume all, part, or none of it,
+        // depending on where we are relative to its sticky scroll range.
+        bool translationConsumed = true;
+
         if (layer->GetIsStickyPosition()) {
           // For sticky positioned layers, the difference between the two rectangles
           // defines a pair of translation intervals in each dimension through which
@@ -516,10 +524,14 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aTransformedSubtreeRoo
 
           // TODO: There's a unit mismatch here, as |translation| is in ParentLayer
           //       space while |stickyOuter| and |stickyInner| are in Layer space.
+          ParentLayerPoint originalTranslation = translation;
           translation.y = IntervalOverlap(translation.y, stickyOuter.y, stickyOuter.YMost()) -
                           IntervalOverlap(translation.y, stickyInner.y, stickyInner.YMost());
           translation.x = IntervalOverlap(translation.x, stickyOuter.x, stickyOuter.XMost()) -
                           IntervalOverlap(translation.x, stickyInner.x, stickyInner.XMost());
+          if (translation != originalTranslation) {
+            translationConsumed = false;
+          }
         }
 
         // Finally, apply the translation to the layer transform. Note that in cases
@@ -530,7 +542,13 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aTransformedSubtreeRoo
         TranslateShadowLayer(layer, ThebesPoint(translation.ToUnknownPoint()),
             true, aClipPartsCache);
 
-        return TraversalFlag::Skip;
+        // If we didn't consume the entire translation, continue the traversal
+        // to allow a descendant fixed or sticky layer to consume the rest.
+        // TODO: We curently don't handle the case where we consume part but not
+        //       all of the translation correctly. In such a case,
+        //       |a[Previous|Current]TransformForRoot| would need to be adjusted
+        //       to reflect only the unconsumed part of the translation.
+        return translationConsumed ? TraversalFlag::Skip : TraversalFlag::Continue;
       });
 }
 
@@ -1103,6 +1121,7 @@ ApplyAsyncTransformToScrollbarForContent(Layer* aScrollbar,
 
   const FrameMetrics& metrics = aContent.Metrics();
   AsyncPanZoomController* apzc = aContent.GetApzc();
+  MOZ_RELEASE_ASSERT(apzc);
 
   AsyncTransformComponentMatrix asyncTransform =
     apzc->GetCurrentAsyncTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
@@ -1446,6 +1465,7 @@ AsyncCompositionManager::GetFrameUniformity(FrameUniformityData* aOutData)
 
 bool
 AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
+                                             TimeDuration aVsyncRate,
                                              TransformsToSkip aSkip)
 {
   PROFILER_LABEL("AsyncCompositionManager", "TransformShadowTree",
@@ -1459,7 +1479,18 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
   // First, compute and set the shadow transforms from OMT animations.
   // NB: we must sample animations *before* sampling pan/zoom
   // transforms.
-  bool wantNextFrame = SampleAnimations(root, aCurrentFrame);
+  // Use a previous vsync time to make main thread animations and compositor
+  // more in sync with each other.
+  // On the initial frame we use aVsyncTimestamp here so the timestamp on the
+  // second frame are the same as the initial frame, but it does not matter.
+  bool wantNextFrame = SampleAnimations(root,
+    !mPreviousFrameTimeStamp.IsNull() ?
+      mPreviousFrameTimeStamp : aCurrentFrame);
+
+  // Reset the previous time stamp if we don't already have any running
+  // animations to avoid using the time which is far behind for newly
+  // started animations.
+  mPreviousFrameTimeStamp = wantNextFrame ? aCurrentFrame : TimeStamp();
 
   if (!(aSkip & TransformsToSkip::APZ)) {
     // FIXME/bug 775437: unify this interface with the ~native-fennec
@@ -1499,10 +1530,12 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
     // Advance APZ animations to the next expected vsync timestamp, if we can
     // get it.
     TimeStamp nextFrame = aCurrentFrame;
-    TimeDuration vsyncrate = gfxPlatform::GetPlatform()->GetHardwareVsync()->GetGlobalDisplay().GetVsyncRate();
-    if (vsyncrate != TimeDuration::Forever()) {
-      nextFrame += vsyncrate;
+
+    MOZ_ASSERT(aVsyncRate != TimeDuration::Forever());
+    if (aVsyncRate != TimeDuration::Forever()) {
+      nextFrame += aVsyncRate;
     }
+
     wantNextFrame |= SampleAPZAnimations(LayerMetricsWrapper(root), nextFrame);
   }
 

@@ -51,6 +51,15 @@ static nscolor GetColorFromNSColor(NSColor* aColor)
                 (unsigned int)([deviceColor blueComponent] * 255.0));
 }
 
+static nscolor GetColorFromNSColorWithAlpha(NSColor* aColor, float alpha)
+{
+  NSColor* deviceColor = [aColor colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+  return NS_RGBA((unsigned int)([deviceColor redComponent] * 255.0),
+                 (unsigned int)([deviceColor greenComponent] * 255.0),
+                 (unsigned int)([deviceColor blueComponent] * 255.0),
+                 (unsigned int)(alpha * 255.0));
+}
+
 nsresult
 nsLookAndFeel::NativeGetColor(ColorID aID, nscolor &aColor)
 {
@@ -253,7 +262,7 @@ nsLookAndFeel::NativeGetColor(ColorID aID, nscolor &aColor)
     }
       break;
     case eColorID__moz_mac_focusring:
-      aColor = GetColorFromNSColor([NSColor keyboardFocusIndicatorColor]);
+      aColor = GetColorFromNSColorWithAlpha([NSColor keyboardFocusIndicatorColor], 0.48);
       break;
     case eColorID__moz_mac_menushadow:
       aColor = NS_RGB(0xA3,0xA3,0xA3);
@@ -346,21 +355,7 @@ nsLookAndFeel::GetIntImpl(IntID aID, int32_t &aResult)
       aResult = 4;
       break;
     case eIntID_ScrollArrowStyle:
-      if (nsCocoaFeatures::OnLionOrLater()) {
-        // OS X Lion's scrollbars have no arrows
-        aResult = eScrollArrow_None;
-      } else {
-        NSString *buttonPlacement = [[NSUserDefaults standardUserDefaults] objectForKey:@"AppleScrollBarVariant"];
-        if ([buttonPlacement isEqualToString:@"Single"]) {
-          aResult = eScrollArrowStyle_Single;
-        } else if ([buttonPlacement isEqualToString:@"DoubleMin"]) {
-          aResult = eScrollArrowStyle_BothAtTop;
-        } else if ([buttonPlacement isEqualToString:@"DoubleBoth"]) {
-          aResult = eScrollArrowStyle_BothAtEachEnd;
-        } else {
-          aResult = eScrollArrowStyle_BothAtBottom; // The default is BothAtBottom.
-        }
-      }
+      aResult = eScrollArrow_None;
       break;
     case eIntID_ScrollSliderStyle:
       aResult = eScrollThumbStyle_Proportional;
@@ -416,7 +411,7 @@ nsLookAndFeel::GetIntImpl(IntID aID, int32_t &aResult)
       aResult = [NSColor currentControlTint] == NSGraphiteControlTint;
       break;
     case eIntID_MacLionTheme:
-      aResult = nsCocoaFeatures::OnLionOrLater();
+      aResult = 1;
       break;
     case eIntID_MacYosemiteTheme:
       aResult = nsCocoaFeatures::OnYosemiteOrLater();
@@ -525,7 +520,7 @@ bool nsLookAndFeel::SystemWantsOverlayScrollbars()
 
 bool nsLookAndFeel::AllowOverlayScrollbarsOverlap()
 {
-  return (UseOverlayScrollbars() && nsCocoaFeatures::OnMountainLionOrLater());
+  return (UseOverlayScrollbars());
 }
 
 bool

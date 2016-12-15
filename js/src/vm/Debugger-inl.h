@@ -67,13 +67,37 @@ js::Debugger::onExceptionUnwind(JSContext* cx, AbstractFramePtr frame)
 }
 
 /* static */ void
-js::Debugger::onNewWasmModule(JSContext* cx, Handle<WasmModuleObject*> wasmModule)
+js::Debugger::onNewWasmInstance(JSContext* cx, Handle<WasmInstanceObject*> wasmInstance)
 {
-    // Insert the wasm::Module into a compartment-wide list for discovery
-    // later without a heap walk.
-    cx->compartment()->wasmModuleWeakList.insertBack(&wasmModule->module());
+    auto& wasmInstances = cx->compartment()->wasmInstances;
+    if (!wasmInstances.initialized() && !wasmInstances.init())
+        return;
+    if (!wasmInstances.putNew(wasmInstance))
+        return;
+
     if (cx->compartment()->isDebuggee())
-        slowPathOnNewWasmModule(cx, wasmModule);
+        slowPathOnNewWasmInstance(cx, wasmInstance);
+}
+
+inline bool
+js::Debugger::getScriptFrame(JSContext* cx, const ScriptFrameIter& iter,
+                             MutableHandle<DebuggerFrame*> result)
+{
+    return getScriptFrameWithIter(cx, iter.abstractFramePtr(), &iter, result);
+}
+
+inline js::Debugger*
+js::DebuggerEnvironment::owner() const
+{
+    JSObject* dbgobj = &getReservedSlot(OWNER_SLOT).toObject();
+    return Debugger::fromJSObject(dbgobj);
+}
+
+inline js::Debugger*
+js::DebuggerFrame::owner() const
+{
+    JSObject* dbgobj = &getReservedSlot(OWNER_SLOT).toObject();
+    return Debugger::fromJSObject(dbgobj);
 }
 
 inline js::Debugger*

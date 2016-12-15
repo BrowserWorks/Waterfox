@@ -8,7 +8,7 @@ const React = require("devtools/client/shared/vendor/react");
 const ReactDOM = require("devtools/client/shared/vendor/react-dom");
 
 // Reps
-const { parseURLParams } = require("devtools/client/shared/components/reps/url");
+const { parseURLParams } = require("devtools/client/shared/components/reps/rep-utils");
 
 // Network
 const { cancelEvent, isLeftClick } = require("./utils/events");
@@ -39,7 +39,8 @@ function NetRequest(log) {
 
 NetRequest.prototype = {
   initialize: function (log) {
-    this.client = log.client;
+    this.client = log.consoleFrame.webConsoleClient;
+    this.owner = log.consoleFrame.owner;
 
     // 'this.file' field is following HAR spec.
     // http://www.softwareishard.com/blog/har-12-spec/
@@ -275,6 +276,10 @@ NetRequest.prototype = {
   onResponseCookies: function (response) {
     this.file.response.cookies = response.cookies;
     return this.resolveHeaders(this.file.response.cookies);
+  },
+
+  onViewSourceInDebugger: function (frame) {
+    this.owner.viewSourceInDebugger(frame.source, frame.line);
   },
 
   resolveHeaders: function (headers) {

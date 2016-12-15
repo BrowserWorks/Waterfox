@@ -41,6 +41,33 @@ function ObjectStaticAssign(target, firstSource) {
     return to;
 }
 
+// ES stage 4 proposal
+function ObjectGetOwnPropertyDescriptors(O) {
+    // Step 1.
+    var obj = ToObject(O);
+
+    // Step 2.
+    var keys = OwnPropertyKeys(obj, JSITER_OWNONLY | JSITER_HIDDEN | JSITER_SYMBOLS);
+
+    // Step 3.
+    var descriptors = {};
+
+    // Step 4.
+    for (var index = 0, len = keys.length; index < len; index++) {
+        var key = keys[index];
+
+        // Steps 4.a-b.
+        var desc = std_Object_getOwnPropertyDescriptor(obj, key);
+
+        // Step 4.c.
+        if (typeof desc !== "undefined")
+            _DefineDataProperty(descriptors, key, desc);
+    }
+
+    // Step 5.
+    return descriptors;
+}
+
 /* ES6 draft rev 32 (2015 Feb 2) 19.1.2.9. */
 function ObjectGetPrototypeOf(obj) {
     return std_Reflect_getPrototypeOf(ToObject(obj));
@@ -62,11 +89,6 @@ function Object_toLocaleString() {
 
 // ES7 draft (2016 March 8) B.2.2.3
 function ObjectDefineSetter(name, setter) {
-    if (this === null || this === undefined)
-        AddContentTelemetry(TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED, 1);
-    else
-        AddContentTelemetry(TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED, 0);
-
     // Step 1.
     var object = ToObject(this);
 
@@ -93,11 +115,6 @@ function ObjectDefineSetter(name, setter) {
 
 // ES7 draft (2016 March 8) B.2.2.2
 function ObjectDefineGetter(name, getter) {
-    if (this === null || this === undefined)
-        AddContentTelemetry(TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED, 1);
-    else
-        AddContentTelemetry(TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED, 0);
-
     // Step 1.
     var object = ToObject(this);
 

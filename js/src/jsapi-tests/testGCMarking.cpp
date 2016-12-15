@@ -86,7 +86,7 @@ BEGIN_TEST(testIncrementalRoots)
 
 #ifdef JS_GC_ZEAL
     // Disable zeal modes because this test needs to control exactly when the GC happens.
-    JS_SetGCZeal(rt, 0, 100);
+    JS_SetGCZeal(cx, 0, 100);
 #endif
 
     // Construct a big object graph to mark. In JS, the resulting object graph
@@ -162,13 +162,13 @@ BEGIN_TEST(testIncrementalRoots)
     // descendants. It shouldn't make it all the way through (it gets a budget
     // of 1000, and the graph is about 3000 objects deep).
     js::SliceBudget budget(js::WorkBudget(1000));
-    JS_SetGCParameter(rt, JSGC_MODE, JSGC_MODE_INCREMENTAL);
+    JS_SetGCParameter(cx, JSGC_MODE, JSGC_MODE_INCREMENTAL);
     rt->gc.startDebugGC(GC_NORMAL, budget);
 
     // We'd better be between iGC slices now. There's always a risk that
     // something will decide that we need to do a full GC (such as gczeal, but
     // that is turned off.)
-    MOZ_ASSERT(JS::IsIncrementalGCInProgress(rt));
+    MOZ_ASSERT(JS::IsIncrementalGCInProgress(cx));
 
     // And assert that the mark bits are as we expect them to be.
     MOZ_ASSERT(vec[0]->asTenured().isMarked());

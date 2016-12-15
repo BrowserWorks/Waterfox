@@ -739,17 +739,15 @@ class ScriptSource
     size_t length() const {
         struct LengthMatcher
         {
-            using ReturnType = size_t;
-
-            ReturnType match(const Uncompressed& u) {
+            size_t match(const Uncompressed& u) {
                 return u.string.length();
             }
 
-            ReturnType match(const Compressed& c) {
+            size_t match(const Compressed& c) {
                 return c.uncompressedLength;
             }
 
-            ReturnType match(const Missing& m) {
+            size_t match(const Missing& m) {
                 MOZ_CRASH("ScriptSource::length on a missing source");
                 return 0;
             }
@@ -2552,16 +2550,19 @@ CloneGlobalScript(JSContext* cx, Handle<StaticScope*> enclosingScope, HandleScri
 namespace JS {
 namespace ubi {
 template<>
-struct Concrete<js::LazyScript> : TracerConcrete<js::LazyScript> {
-    CoarseType coarseType() const final { return CoarseType::Script; }
-    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
-    const char* scriptFilename() const final;
-
+class Concrete<js::LazyScript> : TracerConcrete<js::LazyScript> {
   protected:
     explicit Concrete(js::LazyScript *ptr) : TracerConcrete<js::LazyScript>(ptr) { }
 
   public:
     static void construct(void *storage, js::LazyScript *ptr) { new (storage) Concrete(ptr); }
+
+    CoarseType coarseType() const final { return CoarseType::Script; }
+    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
+    const char* scriptFilename() const final;
+
+    const char16_t* typeName() const override { return concreteTypeName; }
+    static const char16_t concreteTypeName[];
 };
 } // namespace ubi
 } // namespace JS

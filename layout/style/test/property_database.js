@@ -1063,6 +1063,7 @@ var gCSSProperties = {
             "repeat url('border.png') 27 27 27 27",
             "url('border.png') repeat 27 27 27 27",
             "url('border.png') fill 27 27 27 27 repeat",
+            "url('border.png') fill 27 27 27 27 repeat space",
             "url('border.png') 27 27 27 27 / 1em",
             "27 27 27 27 / 1em url('border.png') ",
             "url('border.png') 27 27 27 27 / 10 10 10 / 10 10 repeat",
@@ -1130,7 +1131,8 @@ var gCSSProperties = {
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "stretch", "stretch stretch" ],
-    other_values: [ "round", "repeat", "stretch round", "repeat round", "stretch repeat", "round round", "repeat repeat" ],
+    other_values: [ "round", "repeat", "stretch round", "repeat round", "stretch repeat", "round round", "repeat repeat",
+                    "space", "stretch space", "repeat space", "round space", "space space" ],
     invalid_values: [ "none", "stretch stretch stretch", "0", "10", "0%", "0px" ]
   },
   "-moz-border-left-colors": {
@@ -1359,7 +1361,7 @@ var gCSSProperties = {
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "content-box" ],
     other_values: [ "border-box" ],
-    invalid_values: [ "margin-box", "content", "padding", "border", "margin" ]
+    invalid_values: [ "padding-box", "margin-box", "content", "padding", "border", "margin" ]
   },
   "-moz-box-sizing": {
     domProp: "MozBoxSizing",
@@ -2143,7 +2145,8 @@ var gCSSProperties = {
     subproperties: [ "background-attachment", "background-color", "background-image", "background-position-x", "background-position-y", "background-repeat", "background-clip", "background-origin", "background-size" ],
     initial_values: [ "transparent", "none", "repeat", "scroll", "0% 0%", "top left", "left top", "0% 0% / auto", "top left / auto", "left top / auto", "0% 0% / auto auto",
       "transparent none", "top left none", "left top none", "none left top", "none top left", "none 0% 0%", "left top / auto none", "left top / auto auto none",
-      "transparent none repeat scroll top left", "left top repeat none scroll transparent", "transparent none repeat scroll top left / auto", "left top / auto repeat none scroll transparent", "none repeat scroll 0% 0% / auto auto transparent" ],
+      "transparent none repeat scroll top left", "left top repeat none scroll transparent", "transparent none repeat scroll top left / auto", "left top / auto repeat none scroll transparent", "none repeat scroll 0% 0% / auto auto transparent",
+      "padding-box border-box" ],
     other_values: [
         /* without multiple backgrounds */
       "green",
@@ -3903,7 +3906,7 @@ var gCSSProperties = {
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "normal" ],
-    other_values: [ "embed", "bidi-override", "-moz-isolate", "-moz-plaintext", "-moz-isolate-override" ],
+    other_values: [ "embed", "bidi-override", "isolate", "plaintext", "isolate-override", "-moz-isolate", "-moz-plaintext", "-moz-isolate-override" ],
     invalid_values: [ "auto", "none" ]
   },
   "vertical-align": {
@@ -6130,18 +6133,19 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
       "-40px",
       "-12%",
       "-2fr",
-      "(foo)",
-      "(inherit) 40px",
-      "(initial) 40px",
-      "(unset) 40px",
-      "(default) 40px",
-      "(6%) 40px",
-      "(5th) 40px",
-      "(foo() bar) 40px",
-      "(foo)) 40px",
+      "[foo]",
+      "[inherit] 40px",
+      "[initial] 40px",
+      "[unset] 40px",
+      "[default] 40px",
+      "[span] 40px",
+      "[6%] 40px",
+      "[5th] 40px",
+      "[foo[] bar] 40px",
+      "[foo]] 40px",
       "(foo) 40px",
-      "(foo) (bar) 40px",
-      "40px (foo) (bar)",
+      "[foo] [bar] 40px",
+      "40px [foo] [bar]",
       "minmax()",
       "minmax(20px)",
       "mİnmax(20px, 100px)",
@@ -6199,18 +6203,23 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
       "subgrid [x] repeat(auto-fill, []) [y z]"
     );
     gCSSProperties["grid-template-columns"].invalid_values.push(
-      "subgrid (foo) 40px",
-      "subgrid (foo 40px)",
-      "(foo) subgrid",
-      "subgrid rêpeat(1, ())",
-      "subgrid repeat(0, ())",
-      "subgrid repeat(-3, ())",
-      "subgrid repeat(2.0, ())",
-      "subgrid repeat(2.5, ())",
-      "subgrid repeat(3px, ())",
+      "subgrid [inherit]",
+      "subgrid [initial]",
+      "subgrid [unset]",
+      "subgrid [default]",
+      "subgrid [span]",
+      "subgrid [foo] 40px",
+      "subgrid [foo 40px]",
+      "[foo] subgrid",
+      "subgrid rêpeat(1, [])",
+      "subgrid repeat(0, [])",
+      "subgrid repeat(-3, [])",
+      "subgrid repeat(2.0, [])",
+      "subgrid repeat(2.5, [])",
+      "subgrid repeat(3px, [])",
       "subgrid repeat(1)",
       "subgrid repeat(1, )",
-      "subgrid repeat(2, (40px))",
+      "subgrid repeat(2, [40px])",
       "subgrid repeat(2, foo)",
       "subgrid repeat(1, repeat(1, []))",
       "subgrid repeat(auto-fit,[])",
@@ -6652,6 +6661,17 @@ if (IsCSSPropertyPrefEnabled("layout.css.image-orientation.enabled")) {
   };
 }
 
+if (IsCSSPropertyPrefEnabled("layout.css.initial-letter.enabled")) {
+  gCSSProperties["initial-letter"] = {
+    domProp: "initialLetter",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "normal" ],
+    other_values: [ "2", "2.5", "3.7 2", "4 3" ],
+    invalid_values: [ "-3", "3.7 -2", "25%", "16px", "1 0", "0", "0 1" ]
+  };
+}
+
 if (IsCSSPropertyPrefEnabled("layout.css.osx-font-smoothing.enabled")) {
   gCSSProperties["-moz-osx-font-smoothing"] = {
     domProp: "MozOsxFontSmoothing",
@@ -6875,7 +6895,8 @@ if (SupportsMaskShorthand()) {
     subproperties: ["mask-clip", "mask-image", "mask-mode", "mask-origin", "mask-position-x", "mask-position-y", "mask-repeat", "mask-size" , "mask-composite"],
     initial_values: [ "match-source", "none", "repeat", "add", "0% 0%", "top left", "left top", "0% 0% / auto", "top left / auto", "left top / auto", "0% 0% / auto auto",
       "top left none", "left top none", "none left top", "none top left", "none 0% 0%", "left top / auto none", "left top / auto auto none",
-      "match-source none repeat add top left", "left top repeat none add", "none repeat add top left / auto", "left top / auto repeat none add match-source", "none repeat add 0% 0% / auto auto match-source" ],
+      "match-source none repeat add top left", "left top repeat none add", "none repeat add top left / auto", "left top / auto repeat none add match-source", "none repeat add 0% 0% / auto auto match-source",
+      "border-box", "border-box border-box" ],
     other_values: [
       "none alpha repeat add left top",
       "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==)",
@@ -6884,8 +6905,8 @@ if (SupportsMaskShorthand()) {
       "repeat-y",
       "no-repeat",
       "none repeat-y alpha add 0% 0%",
-      "substract",
-      "0% top substract alpha repeat none",
+      "subtract",
+      "0% top subtract alpha repeat none",
       "top",
       "left",
       "50% 50%",
@@ -6912,9 +6933,9 @@ if (SupportsMaskShorthand()) {
       "-moz-element(#test) alpha",
       /* multiple mask-image */
       "url(404.png), url(404.png)",
-      "repeat-x, substract, none",
+      "repeat-x, subtract, none",
       "0% top url(404.png), url(404.png) 0% top",
-      "substract repeat-y top left url(404.png), repeat-x alpha",
+      "subtract repeat-y top left url(404.png), repeat-x alpha",
       "url(404.png), -moz-linear-gradient(20px 20px -45deg, blue, green), -moz-element(#a) alpha",
       "top left / contain, bottom right / cover",
       /* test cases with clip+origin in the shorthand */
@@ -6982,8 +7003,8 @@ if (SupportsMaskShorthand()) {
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "add" ],
-    other_values: [ "substract", "intersect", "exclude", "add, add", "substract, intersect", "substract, substract, add"],
-    invalid_values: [ "add substract", "intersect exclude" ]
+    other_values: [ "subtract", "intersect", "exclude", "add, add", "subtract, intersect", "subtract, subtract, add"],
+    invalid_values: [ "add subtract", "intersect exclude" ]
   };
   gCSSProperties["mask-origin"] = {
     domProp: "maskOrigin",

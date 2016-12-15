@@ -10,7 +10,6 @@
 #include "gfxEnv.h"                     // for gfxEnv
 #include "gfxPrefs.h"                   // for gfxPrefs
 #include "gfxPoint.h"                   // for IntSize, gfxPoint
-#include "gfxTeeSurface.h"              // for gfxTeeSurface
 #include "gfxUtils.h"                   // for gfxUtils
 #include "ipc/ShadowLayers.h"           // for ShadowLayerForwarder
 #include "mozilla/ArrayUtils.h"         // for ArrayLength
@@ -24,7 +23,6 @@
 #include "mozilla/layers/LayerManagerComposite.h"
 #include "mozilla/layers/LayersMessages.h"  // for ThebesBufferData
 #include "mozilla/layers/LayersTypes.h"
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsDebug.h"                    // for NS_ASSERTION, NS_WARNING, etc
 #include "nsISupportsImpl.h"            // for gfxContext::Release, etc
 #include "nsIWidget.h"                  // for nsIWidget
@@ -129,6 +127,9 @@ ContentClientBasic::CreateBuffer(ContentType aType,
                                  RefPtr<gfx::DrawTarget>* aWhiteDT)
 {
   MOZ_ASSERT(!(aFlags & BUFFER_COMPONENT_ALPHA));
+  if (aFlags & BUFFER_COMPONENT_ALPHA) {
+    gfxDevCrash(LogReason::AlphaWithBasicClient) << "Asking basic content client for component alpha";
+  }
 
   *aBlackDT = gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
     IntSize(aRect.width, aRect.height),
@@ -447,14 +448,6 @@ ContentClientDoubleBuffered::Updated(const nsIntRegion& aRegionToDraw,
                                      bool aDidSelfCopy)
 {
   ContentClientRemoteBuffer::Updated(aRegionToDraw, aVisibleRegion, aDidSelfCopy);
-
-  if (mFrontClient) {
-    mFrontClient->RemoveFromCompositable(this);
-  }
-
-  if (mFrontClientOnWhite) {
-    mFrontClientOnWhite->RemoveFromCompositable(this);
-  }
 }
 
 void

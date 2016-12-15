@@ -64,7 +64,17 @@ Menu.prototype.insert = function (pos, menuItem) {
  */
 Menu.prototype.popup = function (screenX, screenY, toolbox) {
   let doc = toolbox.doc;
-  let popup = doc.createElement("menupopup");
+  let popupset = doc.querySelector("popupset");
+  // See bug 1285229, on Windows, opening the same popup multiple times in a
+  // row ends up duplicating the popup. The newly inserted popup doesn't
+  // dismiss the old one. So remove any previously displayed popup before
+  // opening a new one.
+  let popup = popupset.querySelector("menupopup[menu-api=\"true\"]");
+  if (popup) {
+    popup.hidePopup();
+  }
+
+  popup = doc.createElement("menupopup");
   popup.setAttribute("menu-api", "true");
 
   if (this.id) {
@@ -86,7 +96,7 @@ Menu.prototype.popup = function (screenX, screenY, toolbox) {
     }
   });
 
-  doc.querySelector("popupset").appendChild(popup);
+  popupset.appendChild(popup);
   popup.openPopupAtScreen(screenX, screenY, true);
 };
 
@@ -104,6 +114,15 @@ Menu.prototype._createMenuItems = function (parent) {
       let menu = doc.createElement("menu");
       menu.appendChild(menupopup);
       menu.setAttribute("label", item.label);
+      if (item.disabled) {
+        menu.setAttribute("disabled", "true");
+      }
+      if (item.accesskey) {
+        menu.setAttribute("accesskey", item.accesskey);
+      }
+      if (item.id) {
+        menu.id = item.id;
+      }
       parent.appendChild(menu);
     } else if (item.type === "separator") {
       let menusep = doc.createElement("menuseparator");

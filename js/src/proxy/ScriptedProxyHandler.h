@@ -15,7 +15,7 @@ namespace js {
 class ScriptedProxyHandler : public BaseProxyHandler
 {
   public:
-    MOZ_CONSTEXPR ScriptedProxyHandler()
+    constexpr ScriptedProxyHandler()
       : BaseProxyHandler(&family)
     { }
 
@@ -63,8 +63,7 @@ class ScriptedProxyHandler : public BaseProxyHandler
                             const CallArgs& args) const override;
     virtual bool hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v,
                              bool* bp) const override;
-    virtual bool getBuiltinClass(JSContext* cx, HandleObject proxy,
-                                 ESClassValue* classValue) const override;
+    virtual bool getBuiltinClass(JSContext* cx, HandleObject proxy, ESClass* cls) const override;
     virtual bool isArray(JSContext* cx, HandleObject proxy,
                          JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
@@ -93,6 +92,8 @@ class ScriptedProxyHandler : public BaseProxyHandler
     // The "function extended" slot index in which the revocation object is stored. Per spec, this
     // is to be cleared during the first revocation.
     static const int REVOKE_SLOT = 0;
+
+    static JSObject* handlerObject(const JSObject* proxy);
 };
 
 bool

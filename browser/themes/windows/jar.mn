@@ -18,12 +18,9 @@ browser.jar:
   skin/classic/browser/caption-buttons.svg
   skin/classic/browser/click-to-play-warning-stripes.png
   skin/classic/browser/content-contextmenu.svg
-  skin/classic/browser/Geolocation-16.png
-  skin/classic/browser/Geolocation-64.png
   skin/classic/browser/Info.png
   skin/classic/browser/Info-XP.png
   skin/classic/browser/keyhole-forward-mask.svg
-  skin/classic/browser/KUI-background.png
   skin/classic/browser/livemark-folder.png
   skin/classic/browser/livemark-folder-XP.png
   skin/classic/browser/menu-back.png
@@ -49,8 +46,6 @@ browser.jar:
   skin/classic/browser/pageInfo.css
   skin/classic/browser/pageInfo.png
   skin/classic/browser/pageInfo-XP.png
-  skin/classic/browser/pointerLock-16.png
-  skin/classic/browser/pointerLock-64.png
   skin/classic/browser/privatebrowsing-mask-tabstrip.png
   skin/classic/browser/privatebrowsing-mask-tabstrip-XPVista7.png
   skin/classic/browser/privatebrowsing-mask-titlebar.png
@@ -90,7 +85,7 @@ browser.jar:
   skin/classic/browser/customizableui/customizeMode-separatorHorizontal.png  (customizableui/customizeMode-separatorHorizontal.png)
   skin/classic/browser/customizableui/customizeMode-separatorVertical.png  (customizableui/customizeMode-separatorVertical.png)
   skin/classic/browser/customizableui/menu-arrow.svg           (customizableui/menu-arrow.svg)
-* skin/classic/browser/customizableui/panelUIOverlay.css       (customizableui/panelUIOverlay.css)
+* skin/classic/browser/customizableui/panelUI.css       (customizableui/panelUI.css)
 * skin/classic/browser/downloads/allDownloadsViewOverlay.css   (downloads/allDownloadsViewOverlay.css)
   skin/classic/browser/downloads/buttons.png                   (downloads/buttons.png)
   skin/classic/browser/downloads/buttons-XP.png                (downloads/buttons-XP.png)
@@ -145,29 +140,18 @@ browser.jar:
   skin/classic/browser/preferences/alwaysAsk-XP.png            (preferences/alwaysAsk-XP.png)
   skin/classic/browser/preferences/application.png             (preferences/application.png)
   skin/classic/browser/preferences/application-XP.png          (preferences/application-XP.png)
-  skin/classic/browser/preferences/mail.png                    (preferences/mail.png)
-  skin/classic/browser/preferences/mail-XP.png                 (preferences/mail-XP.png)
-  skin/classic/browser/preferences/Options.png                 (preferences/Options.png)
-  skin/classic/browser/preferences/Options-XP.png              (preferences/Options-XP.png)
-  skin/classic/browser/preferences/Options-sync.png            (preferences/Options-sync.png)
   skin/classic/browser/preferences/saveFile.png                (preferences/saveFile.png)
   skin/classic/browser/preferences/saveFile-XP.png             (preferences/saveFile-XP.png)
   skin/classic/browser/preferences/preferences.css             (preferences/preferences.css)
 * skin/classic/browser/preferences/in-content/preferences.css  (preferences/in-content/preferences.css)
 * skin/classic/browser/preferences/in-content/dialog.css       (preferences/in-content/dialog.css)
   skin/classic/browser/preferences/applications.css            (preferences/applications.css)
-  skin/classic/browser/preferences/checkbox.png                (preferences/checkbox.png)
-  skin/classic/browser/preferences/checkbox-aero.png           (preferences/checkbox-aero.png)
-  skin/classic/browser/preferences/checkbox-classic.png        (preferences/checkbox-classic.png)
-  skin/classic/browser/preferences/checkbox-xp.png             (preferences/checkbox-xp.png)
   skin/classic/browser/social/services-16.png                  (social/services-16.png)
   skin/classic/browser/social/services-64.png                  (social/services-64.png)
   skin/classic/browser/tabbrowser/newtab.svg                   (tabbrowser/newtab.svg)
   skin/classic/browser/tabbrowser/newtab-XPVista7.svg          (tabbrowser/newtab-XPVista7.svg)
   skin/classic/browser/tabbrowser/newtab-inverted.svg          (tabbrowser/newtab-inverted.svg)
   skin/classic/browser/tabbrowser/newtab-inverted-XPVista7.svg (tabbrowser/newtab-inverted-XPVista7.svg)
-  skin/classic/browser/tabbrowser/connecting.png               (tabbrowser/connecting.png)
-  skin/classic/browser/tabbrowser/connecting@2x.png            (tabbrowser/connecting@2x.png)
   skin/classic/browser/tabbrowser/tab-active-middle.png        (tabbrowser/tab-active-middle.png)
   skin/classic/browser/tabbrowser/tab-active-middle@2x.png     (tabbrowser/tab-active-middle@2x.png)
   skin/classic/browser/tabbrowser/tab-arrow-left.svg           (tabbrowser/tab-arrow-left.svg)
@@ -258,8 +242,6 @@ browser.jar:
 % override chrome://browser/skin/places/unsortedBookmarks.png         chrome://browser/skin/places/unsortedBookmarks-XP.png             os=WINNT osversion<6
 % override chrome://browser/skin/preferences/alwaysAsk.png            chrome://browser/skin/preferences/alwaysAsk-XP.png                os=WINNT osversion<6
 % override chrome://browser/skin/preferences/application.png          chrome://browser/skin/preferences/application-XP.png              os=WINNT osversion<6
-% override chrome://browser/skin/preferences/mail.png                 chrome://browser/skin/preferences/mail-XP.png                     os=WINNT osversion<6
-% override chrome://browser/skin/preferences/Options.png              chrome://browser/skin/preferences/Options-XP.png                  os=WINNT osversion<6
 % override chrome://browser/skin/preferences/saveFile.png             chrome://browser/skin/preferences/saveFile-XP.png                 os=WINNT osversion<6
 
 % override chrome://browser/skin/actionicon-tab.png                   chrome://browser/skin/actionicon-tab-XPVista7.png                 os=WINNT osversion<=6.1
@@ -299,9 +281,6 @@ browser.jar:
 % override chrome://browser/skin/Toolbar.png                          chrome://browser/skin/Toolbar-aero.png                            os=WINNT osversion=6.1
 % override chrome://browser/skin/Toolbar.png                          chrome://browser/skin/Toolbar-win8.png                            os=WINNT osversion=6.2
 % override chrome://browser/skin/Toolbar.png                          chrome://browser/skin/Toolbar-win8.png                            os=WINNT osversion=6.3
-% override chrome://browser/skin/preferences/checkbox.png             chrome://browser/skin/preferences/checkbox-aero.png               os=WINNT osversion=6
-% override chrome://browser/skin/preferences/checkbox.png             chrome://browser/skin/preferences/checkbox-aero.png               os=WINNT osversion=6.1
-% override chrome://browser/skin/preferences/checkbox.png             chrome://browser/skin/preferences/checkbox-xp.png                 os=WINNT osversion<6
 
 % override chrome://browser/skin/tabbrowser/tab-background-start.png     chrome://browser/skin/tabbrowser/tab-background-start-preWin10.png     os=WINNT osversion<=6.3
 % override chrome://browser/skin/tabbrowser/tab-background-start@2x.png  chrome://browser/skin/tabbrowser/tab-background-start-preWin10@2x.png  os=WINNT osversion<=6.3

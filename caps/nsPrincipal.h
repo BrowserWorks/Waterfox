@@ -6,11 +6,9 @@
 #ifndef nsPrincipal_h__
 #define nsPrincipal_h__
 
-#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsJSPrincipals.h"
 #include "nsTArray.h"
-#include "nsAutoPtr.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIProtocolHandler.h"
 #include "nsNetUtil.h"
@@ -69,7 +67,8 @@ protected:
 class nsExpandedPrincipal : public nsIExpandedPrincipal, public mozilla::BasePrincipal
 {
 public:
-  explicit nsExpandedPrincipal(nsTArray< nsCOMPtr<nsIPrincipal> > &aWhiteList);
+  nsExpandedPrincipal(nsTArray<nsCOMPtr<nsIPrincipal>> &aWhiteList,
+                      const mozilla::PrincipalOriginAttributes& aAttrs);
 
   NS_DECL_NSIEXPANDEDPRINCIPAL
   NS_DECL_NSISERIALIZABLE

@@ -840,9 +840,9 @@ PopupNotifications.prototype = {
     }
 
     if (notificationsToShow.length > 0) {
-      for (let anchorElement of anchors) {
+      let anchorElement = anchors.values().next().value;
+      if (anchorElement) {
         this._showPanel(notificationsToShow, anchorElement);
-        break;
       }
     } else {
       // Notify observers that we're not showing the popup (useful for testing)
@@ -954,6 +954,8 @@ PopupNotifications.prototype = {
 
     if (this._currentNotifications.length == 0)
       return;
+
+    event.stopPropagation();
 
     // Get the anchor that is the immediate child of the icon box
     let anchor = event.target;

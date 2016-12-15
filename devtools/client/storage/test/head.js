@@ -84,6 +84,17 @@ function* openTabAndSetupStorage(url) {
 
     let windows = getAllWindows(content);
     for (let win of windows) {
+      let readyState = win.document.readyState;
+      info(`Found a window: ${readyState}`);
+      if (readyState != "complete") {
+        yield new Promise(resolve => {
+          let onLoad = () => {
+            win.removeEventListener("load", onLoad);
+            resolve();
+          };
+          win.addEventListener("load", onLoad);
+        });
+      }
       if (win.setup) {
         yield win.setup();
       }
@@ -213,8 +224,13 @@ function* finishTests() {
 
     let windows = getAllWindows(content);
     for (let win of windows) {
-      win.localStorage.clear();
-      win.sessionStorage.clear();
+      // Some windows (e.g., about: URLs) don't have storage available
+      try {
+        win.localStorage.clear();
+        win.sessionStorage.clear();
+      } catch (ex) {
+        // ignore
+      }
 
       if (win.clear) {
         yield win.clear();
@@ -788,3 +804,37 @@ function* checkState(state) {
     }
   }
 }
+
+/**
+ * Checks if document's active element is within the given element.
+ * @param  {HTMLDocument}  doc document with active element in question
+ * @param  {DOMNode}       container element tested on focus containment
+ * @return {Boolean}
+ */
+function containsFocus(doc, container) {
+  let elm = doc.activeElement;
+  while (elm) {
+    if (elm === container) {
+      return true;
+    }
+    elm = elm.parentNode;
+  }
+  return false;
+}
+
+var focusSearchBoxUsingShortcut = Task.async(function* (panelWin, callback) {
+  info("Focusing search box");
+  let searchBox = panelWin.document.getElementById("storage-searchbox");
+  let focused = once(searchBox, "focus");
+
+  panelWin.focus();
+  let strings = Services.strings.createBundle(
+    "chrome://devtools/locale/storage.properties");
+  synthesizeKeyShortcut(strings.GetStringFromName("storage.filter.key"));
+
+  yield focused;
+
+  if (callback) {
+    callback();
+  }
+});

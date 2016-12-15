@@ -63,9 +63,9 @@ GetCurrentThreadDebuggerMallocSizeOf()
 {
   auto ccrt = CycleCollectedJSRuntime::Get();
   MOZ_ASSERT(ccrt);
-  auto rt = ccrt->Runtime();
-  MOZ_ASSERT(rt);
-  auto mallocSizeOf = JS::dbg::GetDebuggerMallocSizeOf(rt);
+  auto cx = ccrt->Context();
+  MOZ_ASSERT(cx);
+  auto mallocSizeOf = JS::dbg::GetDebuggerMallocSizeOf(cx);
   MOZ_ASSERT(mallocSizeOf);
   return mallocSizeOf;
 }
@@ -137,8 +137,6 @@ parseMessage(ZeroCopyInputStream& stream, uint32_t sizeOfMessage, MessageType& m
 template<typename CharT, typename InternedStringSet>
 struct GetOrInternStringMatcher
 {
-  using ReturnType = const CharT*;
-
   InternedStringSet& internedStrings;
 
   explicit GetOrInternStringMatcher(InternedStringSet& strings) : internedStrings(strings) { }
@@ -491,7 +489,7 @@ HeapSnapshot::TakeCensus(JSContext* cx, JS::HandleObject options,
   {
     JS::AutoCheckCannotGC nogc;
 
-    JS::ubi::CensusTraversal traversal(JS_GetRuntime(cx), handler, nogc);
+    JS::ubi::CensusTraversal traversal(cx, handler, nogc);
     if (NS_WARN_IF(!traversal.init())) {
       rv.Throw(NS_ERROR_OUT_OF_MEMORY);
       return;
@@ -558,10 +556,10 @@ HeapSnapshot::ComputeDominatorTree(ErrorResult& rv)
   {
     auto ccrt = CycleCollectedJSRuntime::Get();
     MOZ_ASSERT(ccrt);
-    auto rt = ccrt->Runtime();
-    MOZ_ASSERT(rt);
-    JS::AutoCheckCannotGC nogc(rt);
-    maybeTree = JS::ubi::DominatorTree::Create(rt, nogc, getRoot());
+    auto cx = ccrt->Context();
+    MOZ_ASSERT(cx);
+    JS::AutoCheckCannotGC nogc(cx);
+    maybeTree = JS::ubi::DominatorTree::Create(cx, nogc, getRoot());
   }
 
   if (NS_WARN_IF(maybeTree.isNothing())) {
@@ -623,12 +621,8 @@ HeapSnapshot::ComputeShortestPaths(JSContext*cx, uint64_t start,
 
   Maybe<ShortestPaths> maybeShortestPaths;
   {
-    auto ccrt = CycleCollectedJSRuntime::Get();
-    MOZ_ASSERT(ccrt);
-    auto rt = ccrt->Runtime();
-    MOZ_ASSERT(rt);
-    JS::AutoCheckCannotGC nogc(rt);
-    maybeShortestPaths = ShortestPaths::Create(rt, nogc, maxNumPaths, *startNode,
+    JS::AutoCheckCannotGC nogc(cx);
+    maybeShortestPaths = ShortestPaths::Create(cx, nogc, maxNumPaths, *startNode,
                                                Move(targetsSet));
   }
 
@@ -737,7 +731,7 @@ AddGlobalsAsRoots(AutoObjectVector& globals, ubi::RootList& roots)
   unsigned length = globals.length();
   for (unsigned i = 0; i < length; i++) {
     if (!roots.addRoot(ubi::Node(globals[i].get()),
-                       MOZ_UTF16("heap snapshot global")))
+                       u"heap snapshot global"))
     {
       return false;
     }
@@ -860,8 +854,6 @@ class TwoByteString : public Variant<JSAtom*, const char16_t*, JS::ubi::EdgeName
 
   struct AsTwoByteStringMatcher
   {
-    using ReturnType = TwoByteString;
-
     TwoByteString match(JSAtom* atom) {
       return TwoByteString(atom);
     }
@@ -873,16 +865,12 @@ class TwoByteString : public Variant<JSAtom*, const char16_t*, JS::ubi::EdgeName
 
   struct IsNonNullMatcher
   {
-    using ReturnType = bool;
-
     template<typename T>
     bool match(const T& t) { return t != nullptr; }
   };
 
   struct LengthMatcher
   {
-    using ReturnType = size_t;
-
     size_t match(JSAtom* atom) {
       MOZ_ASSERT(atom);
       JS::ubi::AtomOrTwoByteChars s(atom);
@@ -902,8 +890,6 @@ class TwoByteString : public Variant<JSAtom*, const char16_t*, JS::ubi::EdgeName
 
   struct CopyToBufferMatcher
   {
-    using ReturnType = size_t;
-
     RangedPtr<char16_t> destination;
     size_t              maxLength;
 
@@ -985,8 +971,6 @@ struct TwoByteString::HashPolicy {
   using Lookup = TwoByteString;
 
   struct HashingMatcher {
-    using ReturnType  = js::HashNumber;
-
     js::HashNumber match(const JSAtom* atom) {
       return js::DefaultHasher<const JSAtom*>::hash(atom);
     }
@@ -1009,7 +993,6 @@ struct TwoByteString::HashPolicy {
   }
 
   struct EqualityMatcher {
-    using ReturnType = bool;
     const TwoByteString& rhs;
     explicit EqualityMatcher(const TwoByteString& rhs) : rhs(rhs) { }
 
@@ -1165,7 +1148,7 @@ class MOZ_STACK_CLASS StreamWriter : public CoreDumpWriter
     data->set_line(frame.line());
     data->set_column(frame.column());
     data->set_issystem(frame.isSystem());
-    data->set_isselfhosted(frame.isSelfHosted());
+    data->set_isselfhosted(frame.isSelfHosted(cx));
 
     auto dupeSource = TwoByteString::from(frame.source());
     if (!attachTwoByteString(dupeSource,
@@ -1228,7 +1211,7 @@ public:
   }
 
   virtual bool writeNode(const JS::ubi::Node& ubiNode,
-                         EdgePolicy includeEdges) final {
+                         EdgePolicy includeEdges) override final {
     // NB: de-duplicated string properties must be written in the same order
     // here as they are read in `HeapSnapshot::saveNode` or else indices in
     // references to already serialized strings will be off.
@@ -1246,13 +1229,12 @@ public:
       return false;
     }
 
-    JSRuntime* rt = JS_GetRuntime(cx);
-    mozilla::MallocSizeOf mallocSizeOf = dbg::GetDebuggerMallocSizeOf(rt);
+    mozilla::MallocSizeOf mallocSizeOf = dbg::GetDebuggerMallocSizeOf(cx);
     MOZ_ASSERT(mallocSizeOf);
     protobufNode.set_size(ubiNode.size(mallocSizeOf));
 
     if (includeEdges) {
-      auto edges = ubiNode.edges(JS_GetRuntime(cx), wantNames);
+      auto edges = ubiNode.edges(cx, wantNames);
       if (NS_WARN_IF(!edges))
         return false;
 
@@ -1394,7 +1376,7 @@ WriteHeapGraph(JSContext* cx,
   // core dump.
 
   HeapSnapshotHandler handler(writer, compartments);
-  HeapSnapshotHandler::Traversal traversal(JS_GetRuntime(cx), handler, noGC);
+  HeapSnapshotHandler::Traversal traversal(cx, handler, noGC);
   if (!traversal.init())
     return false;
   traversal.wantNames = wantNames;
@@ -1448,7 +1430,7 @@ HeapSnapshot::CreateUniqueCoreDumpFile(ErrorResult& rv,
 class DeleteHeapSnapshotTempFileHelperChild
 {
 public:
-  MOZ_CONSTEXPR DeleteHeapSnapshotTempFileHelperChild() { }
+  constexpr DeleteHeapSnapshotTempFileHelperChild() { }
 
   void operator()(PHeapSnapshotTempFileHelperChild* ptr) const {
     NS_WARN_IF(!HeapSnapshotTempFileHelperChild::Send__delete__(ptr));
@@ -1559,7 +1541,7 @@ ThreadSafeChromeUtils::SaveHeapSnapshot(GlobalObject& global,
 
   {
     Maybe<AutoCheckCannotGC> maybeNoGC;
-    ubi::RootList rootList(JS_GetRuntime(cx), maybeNoGC, wantNames);
+    ubi::RootList rootList(cx, maybeNoGC, wantNames);
     if (!EstablishBoundaries(cx, rv, boundaries, rootList, compartments))
       return;
 

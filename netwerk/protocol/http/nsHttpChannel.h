@@ -279,6 +279,7 @@ private:
     nsresult ProcessNormal();
     nsresult ContinueProcessNormal(nsresult);
     void     ProcessAltService();
+    bool     ShouldBypassProcessNotModified();
     nsresult ProcessNotModified();
     nsresult AsyncProcessRedirection(uint32_t httpStatus);
     nsresult ContinueProcessRedirection(nsresult);
@@ -526,7 +527,7 @@ private:
     // when true, after we finish read from cache we must check all data
     // had been loaded from cache. If not, then an error has to be propagated
     // to the consumer.
-    uint32_t                          mConcurentCacheAccess : 1;
+    uint32_t                          mConcurrentCacheAccess : 1;
     // whether the request is setup be byte-range
     uint32_t                          mIsPartialRequest : 1;
     // true iff there is AutoRedirectVetoNotifier on the stack

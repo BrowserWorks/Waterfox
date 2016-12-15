@@ -116,7 +116,12 @@ IF_SIMD(real,imaginary)(SIMD,                   42,     InitSimdClass, OCLASP(Si
 IF_SAB(real,imaginary)(Atomics, 45,     InitAtomicsClass, OCLASP(Atomics)) \
     real(SavedFrame,            46,     InitViaClassSpec,       &js::SavedFrame::class_) \
     real(Wasm,                  47,     InitWasmClass,          CLASP(Wasm)) \
-IF_PROMISE(real,imaginary)(Promise,             48,     InitViaClassSpec, OCLASP(Promise)) \
+    real(WebAssembly,           48,     InitWebAssemblyClass,   CLASP(WebAssembly)) \
+    imaginary(WasmModule,       49,     dummy,                  dummy) \
+    imaginary(WasmInstance,     50,     dummy,                  dummy) \
+    imaginary(WasmMemory,       51,     dummy,                  dummy) \
+    imaginary(WasmTable,        52,     dummy,                  dummy) \
+IF_PROMISE(real,imaginary)(Promise,             53,     InitViaClassSpec, OCLASP(Promise)) \
 
 #define JS_FOR_EACH_PROTOTYPE(macro) JS_FOR_PROTOTYPES(macro,macro)
 

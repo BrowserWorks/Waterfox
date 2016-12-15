@@ -24,19 +24,7 @@ public:
 
   static void ResetStatistics();
 
-  static void DemangleSymbol(const char* aSymbol, char* aBuffer, int aBufLen);
-
   static void WalkTheStack(FILE* aStream);
-
-  /**
-   * This is a variant of |WalkTheStack| that uses |CodeAddressService| to cache
-   * the results of |NS_DescribeCodeAddress|. If |WalkTheStackCached| is being
-   * called frequently, it will be a few orders of magnitude faster than
-   * |WalkTheStack|. However, the cache uses a lot of memory, which can cause
-   * OOM crashes. Therefore, this should only be used for things like refcount
-   * logging which walk the stack extremely frequently.
-   */
-  static void WalkTheStackCached(FILE* aStream);
 
   /**
    * Tell nsTraceRefcnt whether refcounting, allocation, and destruction
@@ -45,15 +33,6 @@ public:
    */
   static void SetActivityIsLegal(bool aLegal);
 };
-
-#define NS_TRACE_REFCNT_CONTRACTID "@mozilla.org/xpcom/trace-refcnt;1"
-#define NS_TRACE_REFCNT_CID                          \
-{ /* e3e7511e-a395-4924-94b1-d527861cded4 */         \
-    0xe3e7511e,                                      \
-    0xa395,                                          \
-    0x4924,                                          \
-    {0x94, 0xb1, 0xd5, 0x27, 0x86, 0x1c, 0xde, 0xd4} \
-}                                                    \
 
 ////////////////////////////////////////////////////////////////////////////////
 // And now for that utility that you've all been asking for...

@@ -77,9 +77,6 @@ public:
   explicit nsRefreshDriver(nsPresContext *aPresContext);
   ~nsRefreshDriver();
 
-  static void InitializeStatics();
-  static void Shutdown();
-
   /**
    * Methods for testing, exposed via nsIDOMWindowUtils.  See
    * nsIDOMWindowUtils.advanceTimeAndRefresh for description.
@@ -158,7 +155,7 @@ public:
    */
   bool AddStyleFlushObserver(nsIPresShell* aShell) {
     NS_ASSERTION(!mStyleFlushObservers.Contains(aShell),
-		 "Double-adding style flush observer");
+                 "Double-adding style flush observer");
     // We only get the cause for the first observer each frame because capturing
     // a stack is expensive. This is still useful if (1) you're trying to remove
     // all flushes for a particial frame or (2) the costly flush is triggered
@@ -176,7 +173,7 @@ public:
   }
   bool AddLayoutFlushObserver(nsIPresShell* aShell) {
     NS_ASSERTION(!IsLayoutFlushObserver(aShell),
-		 "Double-adding layout flush observer");
+                 "Double-adding layout flush observer");
     // We only get the cause for the first observer each frame because capturing
     // a stack is expensive. This is still useful if (1) you're trying to remove
     // all flushes for a particial frame or (2) the costly flush is triggered
@@ -196,7 +193,7 @@ public:
   }
   bool AddPresShellToInvalidateIfHidden(nsIPresShell* aShell) {
     NS_ASSERTION(!mPresShellsToInvalidateIfHidden.Contains(aShell),
-		 "Double-adding style flush observer");
+                 "Double-adding style flush observer");
     bool appended = mPresShellsToInvalidateIfHidden.AppendElement(aShell) != nullptr;
     EnsureTimerStarted();
     return appended;
@@ -248,10 +245,7 @@ public:
    * should stop its timer and forget about its pres context.  This may
    * be called from within a refresh.
    */
-  void Disconnect() {
-    StopTimer();
-    mPresContext = nullptr;
-  }
+  void Disconnect();
 
   bool IsFrozen() { return mFreezeCount > 0; }
 
@@ -294,7 +288,7 @@ public:
    * Check whether the given observer is an observer for the given flush type
    */
   bool IsRefreshObserver(nsARefreshObserver *aObserver,
-			   mozFlushType aFlushType);
+                         mozFlushType aFlushType);
 #endif
 
   /**
@@ -334,6 +328,7 @@ public:
   NS_IMETHOD_(MozExternalRefCountType) AddRef(void) override { return TransactionIdAllocator::AddRef(); }
   NS_IMETHOD_(MozExternalRefCountType) Release(void) override { return TransactionIdAllocator::Release(); }
   virtual void WillRefresh(mozilla::TimeStamp aTime) override;
+
 private:
   typedef nsTObserverArray<nsARefreshObserver*> ObserverArray;
   typedef nsTHashtable<nsISupportsHashKey> RequestTable;
@@ -462,6 +457,8 @@ private:
   // turn on or turn off high precision based on various factors
   void ConfigureHighPrecision();
   void SetHighPrecisionTimersEnabled(bool aEnable);
+
+  static void Shutdown();
 
   // `true` if we are currently in jank-critical mode.
   //

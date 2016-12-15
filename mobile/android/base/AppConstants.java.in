@@ -72,6 +72,7 @@ public class AppConstants {
         public static final boolean preJBMR2 = MAX_SDK_VERSION < 18 || (MIN_SDK_VERSION < 18 && Build.VERSION.SDK_INT < 18);
         public static final boolean preJBMR1 = MAX_SDK_VERSION < 17 || (MIN_SDK_VERSION < 17 && Build.VERSION.SDK_INT < 17);
         public static final boolean preJB = MAX_SDK_VERSION < 16 || (MIN_SDK_VERSION < 16 && Build.VERSION.SDK_INT < 16);
+        public static final boolean preN = MAX_SDK_VERSION < 24 || (MIN_SDK_VERSION < 24 && Build.VERSION.SDK_INT < 24);
     }
 
     /**
@@ -338,6 +339,13 @@ public class AppConstants {
     false;
 //#endif
 
+    public static final boolean MOZ_ANDROID_CUSTOM_TABS =
+//#ifdef MOZ_ANDROID_CUSTOM_TABS
+    true;
+//#else
+    false;
+//#endif
+
     // (bug 1266820) Temporarily disabled since no one is working on it.
     public static final boolean SCREENSHOTS_IN_BOOKMARKS_ENABLED = false;
 
@@ -357,4 +365,11 @@ public class AppConstants {
         // Do nothing.
 //#endif
     }
+
+    public static final boolean MOZ_ANDROID_ACTIVITY_STREAM =
+//#ifdef MOZ_ANDROID_ACTIVITY_STREAM
+        true;
+//#else
+        false;
+//#endif
 }

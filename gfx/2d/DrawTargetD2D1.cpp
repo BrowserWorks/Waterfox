@@ -41,6 +41,7 @@ ID2D1Factory1 *D2DFactory1()
 DrawTargetD2D1::DrawTargetD2D1()
   : mPushedLayers(1)
   , mUsedCommandListsSincePurge(0)
+  , mDidComplexBlendWithListInList(false)
 {
 }
 
@@ -339,7 +340,7 @@ DrawTargetD2D1::MaskSurface(const Pattern &aSource,
     return;
   }
 
-  IntSize size = IntSize(bitmap->GetSize().width, bitmap->GetSize().height);
+  IntSize size = IntSize::Truncate(bitmap->GetSize().width, bitmap->GetSize().height);
 
   Rect maskRect = Rect(0.f, 0.f, Float(size.width), Float(size.height));
 
@@ -944,6 +945,7 @@ DrawTargetD2D1::Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat)
 
   ID2D1Device* device = Factory::GetD2D1Device();
   if (!device) {
+    gfxCriticalNote << "[D2D1.1] Failed to obtain a device for DrawTargetD2D1::Init(ID3D11Texture2D*, SurfaceFormat).";
     return false;
   }
 
@@ -1008,6 +1010,7 @@ DrawTargetD2D1::Init(const IntSize &aSize, SurfaceFormat aFormat)
 
   ID2D1Device* device = Factory::GetD2D1Device();
   if (!device) {
+    gfxCriticalNote << "[D2D1.1] Failed to obtain a device for DrawTargetD2D1::Init(IntSize, SurfaceFormat).";
     return false;
   }
 
@@ -1300,6 +1303,13 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
     blendEffect->SetValue(D2D1_BLEND_PROP_MODE, D2DBlendMode(aOp));
 
     mDC->DrawImage(blendEffect, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_BOUNDED_SOURCE_COPY);
+
+    // This may seem a little counter intuitive. If this is false, we go through the regular
+    // codepaths and set it to true. When this was true, GetImageForLayerContent will return
+    // a bitmap for the current command list and we will no longer have a complex blend
+    // with a list for tmpImage. Therefore we can set it to false again.
+    mDidComplexBlendWithListInList = !mDidComplexBlendWithListInList;
+
     return;
   }
 
@@ -1377,6 +1387,8 @@ DrawTargetD2D1::GetDeviceSpaceClipRect(D2D1_RECT_F& aClipRect, bool& aIsPixelAli
 already_AddRefed<ID2D1Image>
 DrawTargetD2D1::GetImageForLayerContent()
 {
+  PopAllClips();
+
   if (!CurrentLayer().mCurrentList) {
     RefPtr<ID2D1Bitmap> tmpBitmap;
     HRESULT hr = mDC->CreateBitmap(D2DIntSize(mSize), D2D1::BitmapProperties(D2DPixelFormat(mFormat)), getter_AddRefs(tmpBitmap));
@@ -1391,17 +1403,28 @@ DrawTargetD2D1::GetImageForLayerContent()
     tmpBitmap->CopyFromBitmap(nullptr, mBitmap, nullptr);
     return tmpBitmap.forget();
   } else {
-    PopAllClips();
-
     RefPtr<ID2D1CommandList> list = CurrentLayer().mCurrentList;
     mDC->CreateCommandList(getter_AddRefs(CurrentLayer().mCurrentList));
     mDC->SetTarget(CurrentTarget());
     list->Close();
 
+    RefPtr<ID2D1Bitmap1> tmpBitmap;
+    if (mDidComplexBlendWithListInList) {
+      mDC->CreateBitmap(mBitmap->GetPixelSize(), nullptr, 0, &D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET, D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)), getter_AddRefs(tmpBitmap));
+      mDC->SetTransform(D2D1::IdentityMatrix());
+      mDC->SetTarget(tmpBitmap);
+      mDC->DrawImage(list, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_BOUNDED_SOURCE_COPY);
+      mDC->SetTarget(CurrentTarget());
+    }
+
     DCCommandSink sink(mDC);
     list->Stream(&sink);
 
     PushAllClips();
+
+    if (mDidComplexBlendWithListInList) {
+      return tmpBitmap.forget();
+    }
 
     return list.forget();
   }

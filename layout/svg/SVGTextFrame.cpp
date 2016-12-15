@@ -51,6 +51,7 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
+using namespace mozilla::image;
 
 // ============================================================================
 // Utility functions
@@ -3149,6 +3150,10 @@ public:
                        nsTArray<nsIFrame*> *aOutFrames) override;
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      nsRenderingContext* aCtx) override;
+  nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override
+  {
+    return new nsDisplayItemGenericImageGeometry(this, aBuilder);
+  }
   virtual nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) override {
     bool snap;
     return GetBounds(aBuilder, &snap);
@@ -3199,7 +3204,8 @@ nsDisplaySVGText::Paint(nsDisplayListBuilder* aBuilder,
 
   gfxContext* ctx = aCtx->ThebesContext();
   ctx->Save();
-  static_cast<SVGTextFrame*>(mFrame)->PaintSVG(*ctx, tm);
+  DrawResult result = static_cast<SVGTextFrame*>(mFrame)->PaintSVG(*ctx, tm);
+  nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
   ctx->Restore();
 }
 
@@ -3469,7 +3475,8 @@ SVGTextFrame::HandleAttributeChangeInDescendant(Element* aElement,
       // Blow away our reference, if any
       nsIFrame* childElementFrame = aElement->GetPrimaryFrame();
       if (childElementFrame) {
-        childElementFrame->Properties().Delete(nsSVGEffects::HrefProperty());
+        childElementFrame->Properties().Delete(
+          nsSVGEffects::HrefAsTextPathProperty());
         NotifyGlyphMetricsChange();
       }
     }
@@ -3634,7 +3641,7 @@ ShouldPaintCaret(const TextRenderedRun& aThisRun, nsCaret* aCaret)
   return false;
 }
 
-nsresult
+DrawResult
 SVGTextFrame::PaintSVG(gfxContext& aContext,
                        const gfxMatrix& aTransform,
                        const nsIntRect *aDirtyRect)
@@ -3643,7 +3650,7 @@ SVGTextFrame::PaintSVG(gfxContext& aContext,
 
   nsIFrame* kid = PrincipalChildList().FirstChild();
   if (!kid)
-    return NS_OK;
+    return DrawResult::SUCCESS;
 
   nsPresContext* presContext = PresContext();
 
@@ -3656,7 +3663,7 @@ SVGTextFrame::PaintSVG(gfxContext& aContext,
     // dirty.
     if (presContext->PresShell()->InDrawWindowNotFlushing() &&
         NS_SUBTREE_DIRTY(this)) {
-      return NS_OK;
+      return DrawResult::SUCCESS;
     }
     // Text frames inside <clipPath>, <mask>, etc. will never have had
     // ReflowSVG called on them, so call UpdateGlyphPositioning to do this now.
@@ -3665,12 +3672,12 @@ SVGTextFrame::PaintSVG(gfxContext& aContext,
     // If we are asked to paint before reflow has recomputed mPositions etc.
     // directly via PaintSVG, rather than via a display list, then we need
     // to bail out here too.
-    return NS_OK;
+    return DrawResult::SUCCESS;
   }
 
   if (aTransform.IsSingular()) {
     NS_WARNING("Can't render text element!");
-    return NS_ERROR_FAILURE;
+    return DrawResult::BAD_ARGS;
   }
 
   gfxMatrix matrixForPaintServers = aTransform * initialMatrix;
@@ -3692,7 +3699,7 @@ SVGTextFrame::PaintSVG(gfxContext& aContext,
     nsRect canvasRect = nsLayoutUtils::RoundGfxRectToAppRect(
         GetCanvasTM().TransformBounds(frameRect), 1);
     if (!canvasRect.Intersects(dirtyRect)) {
-      return NS_OK;
+      return DrawResult::SUCCESS;
     }
   }
 
@@ -3779,7 +3786,7 @@ SVGTextFrame::PaintSVG(gfxContext& aContext,
     run = it.Next();
   }
 
-  return NS_OK;
+  return DrawResult::SUCCESS;
 }
 
 nsIFrame*
@@ -4893,8 +4900,8 @@ SVGTextFrame::AdjustPositionsForClusters()
 SVGPathElement*
 SVGTextFrame::GetTextPathPathElement(nsIFrame* aTextPathFrame)
 {
-  nsSVGTextPathProperty *property = static_cast<nsSVGTextPathProperty*>
-    (aTextPathFrame->Properties().Get(nsSVGEffects::HrefProperty()));
+  nsSVGTextPathProperty *property =
+    aTextPathFrame->Properties().Get(nsSVGEffects::HrefAsTextPathProperty());
 
   if (!property) {
     nsIContent* content = aTextPathFrame->GetContent();
@@ -4910,8 +4917,10 @@ SVGTextFrame::GetTextPathPathElement(nsIFrame* aTextPathFrame)
     nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(targetURI), href,
                                               content->GetUncomposedDoc(), base);
 
-    property = nsSVGEffects::GetTextPathProperty(targetURI, aTextPathFrame,
-                                                 nsSVGEffects::HrefProperty());
+    property = nsSVGEffects::GetTextPathProperty(
+      targetURI,
+      aTextPathFrame,
+      nsSVGEffects::HrefAsTextPathProperty());
     if (!property)
       return nullptr;
   }
@@ -5380,20 +5389,20 @@ SVGTextFrame::DoReflow()
 
   nscoord inlineSize = kid->GetPrefISize(&renderingContext);
   WritingMode wm = kid->GetWritingMode();
-  nsHTMLReflowState reflowState(presContext, kid,
+  ReflowInput reflowInput(presContext, kid,
                                 &renderingContext,
                                 LogicalSize(wm, inlineSize,
                                             NS_UNCONSTRAINEDSIZE));
-  nsHTMLReflowMetrics desiredSize(reflowState);
+  ReflowOutput desiredSize(reflowInput);
   nsReflowStatus status;
 
-  NS_ASSERTION(reflowState.ComputedPhysicalBorderPadding() == nsMargin(0, 0, 0, 0) &&
-               reflowState.ComputedPhysicalMargin() == nsMargin(0, 0, 0, 0),
+  NS_ASSERTION(reflowInput.ComputedPhysicalBorderPadding() == nsMargin(0, 0, 0, 0) &&
+               reflowInput.ComputedPhysicalMargin() == nsMargin(0, 0, 0, 0),
                "style system should ensure that :-moz-svg-text "
                "does not get styled");
 
-  kid->Reflow(presContext, desiredSize, reflowState, status);
-  kid->DidReflow(presContext, &reflowState, nsDidReflowStatus::FINISHED);
+  kid->Reflow(presContext, desiredSize, reflowInput, status);
+  kid->DidReflow(presContext, &reflowInput, nsDidReflowStatus::FINISHED);
   kid->SetSize(wm, desiredSize.Size(wm));
 
   mState &= ~NS_STATE_SVG_TEXT_IN_REFLOW;

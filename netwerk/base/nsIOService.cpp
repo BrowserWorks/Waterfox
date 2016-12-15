@@ -56,6 +56,7 @@
 #include "ReferrerPolicy.h"
 #include "nsContentSecurityManager.h"
 #include "nsContentUtils.h"
+#include "xpcpublic.h"
 
 #ifdef MOZ_WIDGET_GONK
 #include "nsINetworkManager.h"
@@ -497,6 +498,24 @@ nsIOService::GetCachedProtocolHandler(const char *scheme, nsIProtocolHandler **r
     return NS_ERROR_FAILURE;
 }
  
+static bool
+UsesExternalProtocolHandler(const char* aScheme)
+{
+    if (NS_LITERAL_CSTRING("file").Equals(aScheme) ||
+        NS_LITERAL_CSTRING("chrome").Equals(aScheme) ||
+        NS_LITERAL_CSTRING("resource").Equals(aScheme)) {
+        // Don't allow file:, chrome: or resource: URIs to be handled with
+        // nsExternalProtocolHandler, since internally we rely on being able to
+        // use and read from these URIs.
+        return false;
+    }
+
+    nsAutoCString pref("network.protocol-handler.external.");
+    pref += aScheme;
+
+    return Preferences::GetBool(pref.get(), false);
+}
+
 NS_IMETHODIMP
 nsIOService::GetProtocolHandler(const char* scheme, nsIProtocolHandler* *result)
 {
@@ -511,19 +530,7 @@ nsIOService::GetProtocolHandler(const char* scheme, nsIProtocolHandler* *result)
     if (NS_SUCCEEDED(rv))
         return rv;
 
-    bool externalProtocol = false;
-    nsCOMPtr<nsIPrefBranch> prefBranch;
-    GetPrefBranch(getter_AddRefs(prefBranch));
-    if (prefBranch) {
-        nsAutoCString externalProtocolPref("network.protocol-handler.external.");
-        externalProtocolPref += scheme;
-        rv = prefBranch->GetBoolPref(externalProtocolPref.get(), &externalProtocol);
-        if (NS_FAILED(rv)) {
-            externalProtocol = false;
-        }
-    }
-
-    if (!externalProtocol) {
+    if (!UsesExternalProtocolHandler(scheme)) {
         nsAutoCString contractID(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX);
         contractID += scheme;
         ToLowerCase(contractID);
@@ -623,6 +630,12 @@ nsIOService::NewURI(const nsACString &aSpec, const char *aCharset, nsIURI *aBase
         if (!aBaseURI)
             return NS_ERROR_MALFORMED_URI;
 
+        if (!aSpec.IsEmpty() && aSpec[0] == '#') {
+            // Looks like a reference instead of a fully-specified URI.
+            // --> initialize |uri| as a clone of |aBaseURI|, with ref appended.
+            return aBaseURI->CloneWithNewRef(aSpec, result);
+        }
+
         rv = aBaseURI->GetScheme(scheme);
         if (NS_FAILED(rv)) return rv;
     }
@@ -689,8 +702,8 @@ nsIOService::NewChannelFromURI(nsIURI *aURI, nsIChannel **result)
   NS_ASSERTION(false, "Deprecated, use NewChannelFromURI2 providing loadInfo arguments!");
 
   const char16_t* params[] = {
-    MOZ_UTF16("nsIOService::NewChannelFromURI()"),
-    MOZ_UTF16("nsIOService::NewChannelFromURI2()")
+    u"nsIOService::NewChannelFromURI()",
+    u"nsIOService::NewChannelFromURI2()"
   };
   nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
                                   NS_LITERAL_CSTRING("Security by Default"),
@@ -734,28 +747,6 @@ nsIOService::NewChannelFromURIWithProxyFlagsInternal(nsIURI* aURI,
     rv = aURI->GetScheme(scheme);
     if (NS_FAILED(rv))
         return rv;
-
-    if (sTelemetryEnabled) {
-        nsAutoCString path;
-        aURI->GetPath(path);
-
-        bool endsInExcl = StringEndsWith(path, NS_LITERAL_CSTRING("!"));
-        int32_t bangSlashPos = path.Find("!/");
-
-        bool hasBangSlash = bangSlashPos != kNotFound;
-        bool hasBangDoubleSlash = false;
-
-        if (bangSlashPos != kNotFound) {
-            nsDependentCSubstring substr(path, bangSlashPos);
-            hasBangDoubleSlash = StringBeginsWith(substr, NS_LITERAL_CSTRING("!//"));
-        }
-
-        Telemetry::Accumulate(Telemetry::URL_PATH_ENDS_IN_EXCLAMATION, endsInExcl);
-        Telemetry::Accumulate(Telemetry::URL_PATH_CONTAINS_EXCLAMATION_SLASH,
-                              hasBangSlash);
-        Telemetry::Accumulate(Telemetry::URL_PATH_CONTAINS_EXCLAMATION_DOUBLE_SLASH,
-                              hasBangDoubleSlash);
-    }
 
     nsCOMPtr<nsIProtocolHandler> handler;
     rv = GetProtocolHandler(scheme.get(), getter_AddRefs(handler));
@@ -911,8 +902,8 @@ nsIOService::NewChannelFromURIWithProxyFlags(nsIURI *aURI,
   NS_ASSERTION(false, "Deprecated, use NewChannelFromURIWithProxyFlags2 providing loadInfo arguments!");
 
   const char16_t* params[] = {
-    MOZ_UTF16("nsIOService::NewChannelFromURIWithProxyFlags()"),
-    MOZ_UTF16("nsIOService::NewChannelFromURIWithProxyFlags2()")
+    u"nsIOService::NewChannelFromURIWithProxyFlags()",
+    u"nsIOService::NewChannelFromURIWithProxyFlags2()"
   };
   nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
                                   NS_LITERAL_CSTRING("Security by Default"),
@@ -973,8 +964,8 @@ nsIOService::NewChannel(const nsACString &aSpec, const char *aCharset, nsIURI *a
   NS_ASSERTION(false, "Deprecated, use NewChannel2 providing loadInfo arguments!");
 
   const char16_t* params[] = {
-    MOZ_UTF16("nsIOService::NewChannel()"),
-    MOZ_UTF16("nsIOService::NewChannel2()")
+    u"nsIOService::NewChannel()",
+    u"nsIOService::NewChannel2()"
   };
   nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
                                   NS_LITERAL_CSTRING("Security by Default"),
@@ -1054,8 +1045,8 @@ nsIOService::SetOffline(bool offline)
         if (observerService) {
             (void)observerService->NotifyObservers(nullptr,
                 NS_IPC_IOSERVICE_SET_OFFLINE_TOPIC, offline ? 
-                MOZ_UTF16("true") :
-                MOZ_UTF16("false"));
+                u"true" :
+                u"false");
         }
     }
 
@@ -1102,7 +1093,7 @@ nsIOService::SetOffline(bool offline)
             if (observerService && mConnectivity) {
                 observerService->NotifyObservers(subject,
                                                  NS_IOSERVICE_OFFLINE_STATUS_TOPIC,
-                                                 MOZ_UTF16(NS_IOSERVICE_ONLINE));
+                                                 (u"" NS_IOSERVICE_ONLINE));
             }
         }
     }
@@ -1167,8 +1158,8 @@ nsIOService::SetConnectivityInternal(bool aConnectivity)
     if (XRE_IsParentProcess()) {
         observerService->NotifyObservers(nullptr,
             NS_IPC_IOSERVICE_SET_CONNECTIVITY_TOPIC, aConnectivity ?
-            MOZ_UTF16("true") :
-            MOZ_UTF16("false"));
+            u"true" :
+            u"false");
     }
 
     if (mOffline) {
@@ -1182,11 +1173,11 @@ nsIOService::SetConnectivityInternal(bool aConnectivity)
         observerService->NotifyObservers(
             static_cast<nsIIOService *>(this),
             NS_IOSERVICE_OFFLINE_STATUS_TOPIC,
-            MOZ_UTF16(NS_IOSERVICE_ONLINE));
+            (u"" NS_IOSERVICE_ONLINE));
     } else {
         // If we were previously online and lost connectivity
         // send the OFFLINE notification
-        const nsLiteralString offlineString(MOZ_UTF16(NS_IOSERVICE_OFFLINE));
+        const nsLiteralString offlineString(u"" NS_IOSERVICE_OFFLINE);
         observerService->NotifyObservers(static_cast<nsIIOService *>(this),
                                          NS_IOSERVICE_GOING_OFFLINE_TOPIC,
                                          offlineString.get());
@@ -1293,20 +1284,10 @@ nsIOService::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
     }
 
     if (!pref || strcmp(pref, NETWORK_CAPTIVE_PORTAL_PREF) == 0) {
-        static int disabledForTest = -1;
-        if (disabledForTest == -1) {
-            char *s = getenv("MOZ_DISABLE_NONLOCAL_CONNECTIONS");
-            if (s) {
-                disabledForTest = (strncmp(s, "0", 1) == 0) ? 0 : 1;
-            } else {
-                disabledForTest = 0;
-            }
-        }
-
         bool captivePortalEnabled;
         nsresult rv = prefs->GetBoolPref(NETWORK_CAPTIVE_PORTAL_PREF, &captivePortalEnabled);
         if (NS_SUCCEEDED(rv) && mCaptivePortalService) {
-            if (captivePortalEnabled && !disabledForTest) {
+            if (captivePortalEnabled && !xpc::AreNonLocalConnectionsDisabled()) {
                 static_cast<CaptivePortalService*>(mCaptivePortalService.get())->Start();
             } else {
                 static_cast<CaptivePortalService*>(mCaptivePortalService.get())->Stop();
@@ -1431,7 +1412,7 @@ nsIOService::NotifyWakeup()
         (void)observerService->
             NotifyObservers(nullptr,
                             NS_NETWORK_LINK_TOPIC,
-                            MOZ_UTF16(NS_NETWORK_LINK_DATA_CHANGED));
+                            (u"" NS_NETWORK_LINK_DATA_CHANGED));
     }
 
     RecheckCaptivePortal();
@@ -1941,7 +1922,7 @@ nsIOService::NotifyAppOfflineStatus(uint32_t appId, int32_t state)
         observerService->NotifyObservers(
             info,
             NS_IOSERVICE_APP_OFFLINE_STATUS_TOPIC,
-            MOZ_UTF16("all data in nsIAppOfflineInfo subject argument"));
+            u"all data in nsIAppOfflineInfo subject argument");
     }
 }
 

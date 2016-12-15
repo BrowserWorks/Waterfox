@@ -31,58 +31,6 @@ void ExpandUserDefinedVariable(const ShaderVariable &variable,
                                const std::string &name,
                                const std::string &mappedName,
                                bool markStaticUse,
-                               std::vector<ShaderVariable> *expanded);
-
-void ExpandVariable(const ShaderVariable &variable,
-                    const std::string &name,
-                    const std::string &mappedName,
-                    bool markStaticUse,
-                    std::vector<ShaderVariable> *expanded)
-{
-    if (variable.isStruct())
-    {
-        if (variable.isArray())
-        {
-            for (unsigned int elementIndex = 0; elementIndex < variable.elementCount();
-                 elementIndex++)
-            {
-                std::string lname = name + ::ArrayString(elementIndex);
-                std::string lmappedName = mappedName + ::ArrayString(elementIndex);
-                ExpandUserDefinedVariable(variable, lname, lmappedName, markStaticUse, expanded);
-            }
-        }
-        else
-        {
-            ExpandUserDefinedVariable(variable, name, mappedName, markStaticUse, expanded);
-        }
-    }
-    else
-    {
-        ShaderVariable expandedVar = variable;
-
-        expandedVar.name = name;
-        expandedVar.mappedName = mappedName;
-
-        // Mark all expanded fields as used if the parent is used
-        if (markStaticUse)
-        {
-            expandedVar.staticUse = true;
-        }
-
-        if (expandedVar.isArray())
-        {
-            expandedVar.name += "[0]";
-            expandedVar.mappedName += "[0]";
-        }
-
-        expanded->push_back(expandedVar);
-    }
-}
-
-void ExpandUserDefinedVariable(const ShaderVariable &variable,
-                               const std::string &name,
-                               const std::string &mappedName,
-                               bool markStaticUse,
                                std::vector<ShaderVariable> *expanded)
 {
     ASSERT(variable.isStruct());
@@ -122,7 +70,8 @@ CollectVariables::CollectVariables(std::vector<sh::Attribute> *attribs,
                                    std::vector<sh::Varying> *varyings,
                                    std::vector<sh::InterfaceBlock> *interfaceBlocks,
                                    ShHashFunction64 hashFunction,
-                                   const TSymbolTable &symbolTable)
+                                   const TSymbolTable &symbolTable,
+                                   const TExtensionBehavior &extensionBehavior)
     : TIntermTraverser(true, false, false),
       mAttribs(attribs),
       mOutputVariables(outputVariables),
@@ -134,6 +83,7 @@ CollectVariables::CollectVariables(std::vector<sh::Attribute> *attribs,
       mFrontFacingAdded(false),
       mFragCoordAdded(false),
       mInstanceIDAdded(false),
+      mVertexIDAdded(false),
       mPositionAdded(false),
       mPointSizeAdded(false),
       mLastFragDataAdded(false),
@@ -144,7 +94,8 @@ CollectVariables::CollectVariables(std::vector<sh::Attribute> *attribs,
       mSecondaryFragColorEXTAdded(false),
       mSecondaryFragDataEXTAdded(false),
       mHashFunction(hashFunction),
-      mSymbolTable(symbolTable)
+      mSymbolTable(symbolTable),
+      mExtensionBehavior(extensionBehavior)
 {
 }
 
@@ -313,6 +264,22 @@ void CollectVariables::visitSymbol(TIntermSymbol *symbol)
                 mInstanceIDAdded = true;
             }
             return;
+          case EvqVertexID:
+              if (!mVertexIDAdded)
+              {
+                  Attribute info;
+                  const char kName[] = "gl_VertexID";
+                  info.name          = kName;
+                  info.mappedName    = kName;
+                  info.type          = GL_INT;
+                  info.arraySize     = 0;
+                  info.precision     = GL_HIGH_INT;  // Defined by spec.
+                  info.staticUse     = true;
+                  info.location      = -1;
+                  mAttribs->push_back(info);
+                  mVertexIDAdded = true;
+              }
+              return;
           case EvqPosition:
             if (!mPositionAdded)
             {
@@ -384,10 +351,17 @@ void CollectVariables::visitSymbol(TIntermSymbol *symbol)
                   info.name          = kName;
                   info.mappedName    = kName;
                   info.type          = GL_FLOAT_VEC4;
-                  info.arraySize = static_cast<const TVariable *>(
-                                       mSymbolTable.findBuiltIn("gl_MaxDrawBuffers", 100))
-                                       ->getConstPointer()
-                                       ->getIConst();
+                  if (::IsExtensionEnabled(mExtensionBehavior, "GL_EXT_draw_buffers"))
+                  {
+                      info.arraySize = static_cast<const TVariable *>(
+                                           mSymbolTable.findBuiltIn("gl_MaxDrawBuffers", 100))
+                                           ->getConstPointer()
+                                           ->getIConst();
+                  }
+                  else
+                  {
+                      info.arraySize = 1;
+                  }
                   info.precision = GL_MEDIUM_FLOAT;  // Defined by spec.
                   info.staticUse = true;
                   mOutputVariables->push_back(info);
@@ -503,7 +477,7 @@ void CollectVariables::visitVariable(const TIntermSymbol *variable,
     attribute.type = GLVariableType(type);
     attribute.precision = GLVariablePrecision(type);
     attribute.name = variable->getSymbol().c_str();
-    attribute.arraySize = static_cast<unsigned int>(type.getArraySize());
+    attribute.arraySize  = type.getArraySize();
     attribute.mappedName = TIntermTraverser::hash(variable->getSymbol(), mHashFunction).c_str();
     attribute.location = variable->getType().getLayoutQualifier().location;
 
@@ -523,7 +497,7 @@ void CollectVariables::visitVariable(const TIntermSymbol *variable,
     attribute.type       = GLVariableType(type);
     attribute.precision  = GLVariablePrecision(type);
     attribute.name       = variable->getSymbol().c_str();
-    attribute.arraySize  = static_cast<unsigned int>(type.getArraySize());
+    attribute.arraySize  = type.getArraySize();
     attribute.mappedName = TIntermTraverser::hash(variable->getSymbol(), mHashFunction).c_str();
     attribute.location   = variable->getType().getLayoutQualifier().location;
 
@@ -658,6 +632,52 @@ bool CollectVariables::visitBinary(Visit, TIntermBinary *binaryNode)
     }
 
     return true;
+}
+
+void ExpandVariable(const ShaderVariable &variable,
+                    const std::string &name,
+                    const std::string &mappedName,
+                    bool markStaticUse,
+                    std::vector<ShaderVariable> *expanded)
+{
+    if (variable.isStruct())
+    {
+        if (variable.isArray())
+        {
+            for (unsigned int elementIndex = 0; elementIndex < variable.elementCount();
+                 elementIndex++)
+            {
+                std::string lname       = name + ::ArrayString(elementIndex);
+                std::string lmappedName = mappedName + ::ArrayString(elementIndex);
+                ExpandUserDefinedVariable(variable, lname, lmappedName, markStaticUse, expanded);
+            }
+        }
+        else
+        {
+            ExpandUserDefinedVariable(variable, name, mappedName, markStaticUse, expanded);
+        }
+    }
+    else
+    {
+        ShaderVariable expandedVar = variable;
+
+        expandedVar.name       = name;
+        expandedVar.mappedName = mappedName;
+
+        // Mark all expanded fields as used if the parent is used
+        if (markStaticUse)
+        {
+            expandedVar.staticUse = true;
+        }
+
+        if (expandedVar.isArray())
+        {
+            expandedVar.name += "[0]";
+            expandedVar.mappedName += "[0]";
+        }
+
+        expanded->push_back(expandedVar);
+    }
 }
 
 void ExpandUniforms(const std::vector<Uniform> &compact,

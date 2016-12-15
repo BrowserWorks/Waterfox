@@ -52,6 +52,11 @@ public:
   nsresult Init();
 
   /**
+   * Returns true if the Preferences service is available, false otherwise.
+   */
+  static bool IsServiceAvailable();
+
+  /**
    * Reset loaded user prefs then read them
    */
   static nsresult ResetAndReadUserPrefs();
@@ -363,6 +368,8 @@ public:
 
   static int64_t SizeOfIncludingThisAndOtherStuff(mozilla::MallocSizeOf aMallocSizeOf);
 
+  static void DirtyCallback();
+
 protected:
   virtual ~Preferences();
 
@@ -383,6 +390,7 @@ protected:
 
 private:
   nsCOMPtr<nsIFile>        mCurrentFile;
+  bool                     mDirty;
 
   static Preferences*      sPreferences;
   static nsIPrefBranch*    sRootBranch;

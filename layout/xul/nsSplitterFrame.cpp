@@ -28,7 +28,6 @@
 #include "nsBoxLayoutState.h"
 #include "nsIServiceManager.h"
 #include "nsContainerFrame.h"
-#include "nsAutoPtr.h"
 #include "nsContentCID.h"
 #include "mozilla/StyleSetHandle.h"
 #include "mozilla/StyleSetHandleInlines.h"
@@ -385,15 +384,15 @@ nsSplitterFrame::HandleEvent(nsPresContext* aPresContext,
   }
 
   nsWeakFrame weakFrame(this);
-  RefPtr<nsSplitterFrameInner> kungFuDeathGrip(mInner);
+  RefPtr<nsSplitterFrameInner> inner(mInner);
   switch (aEvent->mMessage) {
     case eMouseMove: 
-      mInner->MouseDrag(aPresContext, aEvent);
+      inner->MouseDrag(aPresContext, aEvent);
       break;
   
     case eMouseUp:
       if (aEvent->AsMouseEvent()->button == WidgetMouseEvent::eLeftButton) {
-        mInner->MouseUp(aPresContext, aEvent);
+        inner->MouseUp(aPresContext, aEvent);
       }
       break;
 

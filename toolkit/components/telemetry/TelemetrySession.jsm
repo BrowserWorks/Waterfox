@@ -964,6 +964,31 @@ var Impl = {
     return ret;
   },
 
+  getScalars: function (subsession, clearSubsession) {
+    this._log.trace("getScalars - subsession: " + subsession + ", clearSubsession: " + clearSubsession);
+
+    if (!subsession) {
+      // We only support scalars for subsessions.
+      this._log.trace("getScalars - We only support scalars in subsessions.");
+      return {};
+    }
+
+    let scalarsSnapshot =
+      Telemetry.snapshotScalars(this.getDatasetType(), clearSubsession);
+
+    // Don't return the test scalars.
+    let ret = {};
+    for (let name in scalarsSnapshot) {
+      if (name.startsWith('telemetry.test') && this._testing == false) {
+        this._log.trace("getScalars - Skipping test scalar: " + name);
+      } else {
+        ret[name] = scalarsSnapshot[name];
+      }
+    }
+
+    return ret;
+  },
+
   getThreadHangStats: function getThreadHangStats(stats) {
     this._log.trace("getThreadHangStats");
 
@@ -1120,9 +1145,16 @@ var Impl = {
           TOTAL_MEMORY_COLLECTOR_TIMEOUT);
         this._childrenToHearFrom = new Set();
         for (let i = 1; i < ppmm.childCount; i++) {
-          ppmm.getChildAt(i).sendAsyncMessage(MESSAGE_TELEMETRY_GET_CHILD_USS, {id: this._nextTotalMemoryId});
-          this._childrenToHearFrom.add(this._nextTotalMemoryId);
-          this._nextTotalMemoryId++;
+          let child = ppmm.getChildAt(i);
+          try {
+            child.sendAsyncMessage(MESSAGE_TELEMETRY_GET_CHILD_USS, {id: this._nextTotalMemoryId});
+            this._childrenToHearFrom.add(this._nextTotalMemoryId);
+            this._nextTotalMemoryId++;
+          } catch (ex) {
+            // If a content process has just crashed, then attempting to send it
+            // an async message will throw an exception.
+            Cu.reportError(ex);
+          }
         }
       } else {
         boundHandleMemoryReport(
@@ -1247,6 +1279,13 @@ var Impl = {
       return payloadObj;
     }
 
+    // Set the scalars for the parent process.
+    payloadObj.processes = {
+      parent: {
+        scalars: protect(() => this.getScalars(isSubsession, clearSubsession)),
+      }
+    };
+
     // Additional payload for chrome process.
     payloadObj.info = info;
 
@@ -1319,6 +1358,10 @@ var Impl = {
         // Persist session data to disk (don't wait until it completes).
         let sessionData = this._getSessionDataObject();
         TelemetryStorage.saveSessionData(sessionData);
+
+        // Notify that there was a subsession split in the parent process. This is an
+        // internal topic and is only meant for internal Telemetry usage.
+        Services.obs.notifyObservers(null, "internal-telemetry-after-subsession-split", null);
       }
     }
 

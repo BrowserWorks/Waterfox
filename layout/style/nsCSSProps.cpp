@@ -29,9 +29,6 @@ using namespace mozilla;
 
 typedef nsCSSProps::KTableEntry KTableEntry;
 
-// MSVC before 2015 doesn't consider string literal as a constant
-// expression, thus we are not able to do this check here.
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
 // By wrapping internal-only properties in this macro, we are not
 // exposing them in the CSSOM. Since currently it is not necessary to
 // allow accessing them in that way, it is easier and cheaper to just
@@ -46,7 +43,6 @@ typedef nsCSSProps::KTableEntry KTableEntry;
 #undef CSS_PROP_LIST_EXCLUDE_INTERNAL
 #undef CSS_PROP_LIST_INCLUDE_LOGICAL
 #undef CSS_PROP
-#endif
 
 #define CSS_PROP(name_, id_, method_, flags_, pref_, ...) \
   static_assert(!((flags_) & CSS_PROPERTY_ENABLED_IN_CHROME) || \
@@ -963,7 +959,7 @@ const KTableEntry nsCSSProps::kImageLayerModeKTable[] = {
 
 const KTableEntry nsCSSProps::kImageLayerCompositeKTable[] = {
   { eCSSKeyword_add, NS_STYLE_MASK_COMPOSITE_ADD },
-  { eCSSKeyword_substract, NS_STYLE_MASK_COMPOSITE_SUBSTRACT },
+  { eCSSKeyword_subtract, NS_STYLE_MASK_COMPOSITE_SUBTRACT },
   { eCSSKeyword_intersect, NS_STYLE_MASK_COMPOSITE_INTERSECT },
   { eCSSKeyword_exclude, NS_STYLE_MASK_COMPOSITE_EXCLUDE },
   { eCSSKeyword_UNKNOWN, -1 }
@@ -1004,6 +1000,7 @@ const KTableEntry nsCSSProps::kBorderImageRepeatKTable[] = {
   { eCSSKeyword_stretch, NS_STYLE_BORDER_IMAGE_REPEAT_STRETCH },
   { eCSSKeyword_repeat, NS_STYLE_BORDER_IMAGE_REPEAT_REPEAT },
   { eCSSKeyword_round, NS_STYLE_BORDER_IMAGE_REPEAT_ROUND },
+  { eCSSKeyword_space, NS_STYLE_BORDER_IMAGE_REPEAT_SPACE },
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
@@ -1040,14 +1037,13 @@ const KTableEntry nsCSSProps::kBoxDecorationBreakKTable[] = {
 };
 
 const KTableEntry nsCSSProps::kBoxShadowTypeKTable[] = {
-  { eCSSKeyword_inset, NS_STYLE_BOX_SHADOW_INSET },
+  { eCSSKeyword_inset, uint8_t(StyleBoxShadowType::Inset) },
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
 const KTableEntry nsCSSProps::kBoxSizingKTable[] = {
-  { eCSSKeyword_content_box,  uint8_t(StyleBoxSizing::Content) },
-  { eCSSKeyword_border_box,   uint8_t(StyleBoxSizing::Border) },
-  { eCSSKeyword_padding_box,  uint8_t(StyleBoxSizing::Padding) },
+  { eCSSKeyword_content_box,  StyleBoxSizing::Content },
+  { eCSSKeyword_border_box,   StyleBoxSizing::Border },
   { eCSSKeyword_UNKNOWN,      -1 }
 };
 
@@ -1492,8 +1488,8 @@ KTableEntry nsCSSProps::kFloatKTable[] = {
 };
 
 const KTableEntry nsCSSProps::kFloatEdgeKTable[] = {
-  { eCSSKeyword_content_box, NS_STYLE_FLOAT_EDGE_CONTENT_BOX },
-  { eCSSKeyword_margin_box, NS_STYLE_FLOAT_EDGE_MARGIN_BOX },
+  { eCSSKeyword_content_box, uint8_t(StyleFloatEdge::ContentBox) },
+  { eCSSKeyword_margin_box, uint8_t(StyleFloatEdge::MarginBox) },
   { eCSSKeyword_UNKNOWN, -1 }
 };
 
@@ -2111,6 +2107,9 @@ const KTableEntry nsCSSProps::kUnicodeBidiKTable[] = {
   { eCSSKeyword_normal, NS_STYLE_UNICODE_BIDI_NORMAL },
   { eCSSKeyword_embed, NS_STYLE_UNICODE_BIDI_EMBED },
   { eCSSKeyword_bidi_override, NS_STYLE_UNICODE_BIDI_BIDI_OVERRIDE },
+  { eCSSKeyword_isolate, NS_STYLE_UNICODE_BIDI_ISOLATE },
+  { eCSSKeyword_isolate_override, NS_STYLE_UNICODE_BIDI_ISOLATE_OVERRIDE },
+  { eCSSKeyword_plaintext, NS_STYLE_UNICODE_BIDI_PLAINTEXT },
   { eCSSKeyword__moz_isolate, NS_STYLE_UNICODE_BIDI_ISOLATE },
   { eCSSKeyword__moz_isolate_override, NS_STYLE_UNICODE_BIDI_ISOLATE_OVERRIDE },
   { eCSSKeyword__moz_plaintext, NS_STYLE_UNICODE_BIDI_PLAINTEXT },
@@ -2118,14 +2117,14 @@ const KTableEntry nsCSSProps::kUnicodeBidiKTable[] = {
 };
 
 const KTableEntry nsCSSProps::kUserFocusKTable[] = {
-  { eCSSKeyword_none,           NS_STYLE_USER_FOCUS_NONE },
-  { eCSSKeyword_normal,         NS_STYLE_USER_FOCUS_NORMAL },
-  { eCSSKeyword_ignore,         NS_STYLE_USER_FOCUS_IGNORE },
-  { eCSSKeyword_select_all,     NS_STYLE_USER_FOCUS_SELECT_ALL },
-  { eCSSKeyword_select_before,  NS_STYLE_USER_FOCUS_SELECT_BEFORE },
-  { eCSSKeyword_select_after,   NS_STYLE_USER_FOCUS_SELECT_AFTER },
-  { eCSSKeyword_select_same,    NS_STYLE_USER_FOCUS_SELECT_SAME },
-  { eCSSKeyword_select_menu,    NS_STYLE_USER_FOCUS_SELECT_MENU },
+  { eCSSKeyword_none,           uint8_t(StyleUserFocus::None_) },
+  { eCSSKeyword_normal,         uint8_t(StyleUserFocus::Normal) },
+  { eCSSKeyword_ignore,         uint8_t(StyleUserFocus::Ignore) },
+  { eCSSKeyword_select_all,     uint8_t(StyleUserFocus::SelectAll) },
+  { eCSSKeyword_select_before,  uint8_t(StyleUserFocus::SelectBefore) },
+  { eCSSKeyword_select_after,   uint8_t(StyleUserFocus::SelectAfter) },
+  { eCSSKeyword_select_same,    uint8_t(StyleUserFocus::SelectSame) },
+  { eCSSKeyword_select_menu,    uint8_t(StyleUserFocus::SelectMenu) },
   { eCSSKeyword_UNKNOWN,        -1 }
 };
 
@@ -2298,13 +2297,13 @@ const KTableEntry nsCSSProps::kFillRuleKTable[] = {
 };
 
 const KTableEntry nsCSSProps::kClipShapeSizingKTable[] = {
-  { eCSSKeyword_content_box,   NS_STYLE_CLIP_SHAPE_SIZING_CONTENT },
-  { eCSSKeyword_padding_box,   NS_STYLE_CLIP_SHAPE_SIZING_PADDING },
-  { eCSSKeyword_border_box,    NS_STYLE_CLIP_SHAPE_SIZING_BORDER },
-  { eCSSKeyword_margin_box,    NS_STYLE_CLIP_SHAPE_SIZING_MARGIN },
-  { eCSSKeyword_fill_box,      NS_STYLE_CLIP_SHAPE_SIZING_FILL },
-  { eCSSKeyword_stroke_box,    NS_STYLE_CLIP_SHAPE_SIZING_STROKE },
-  { eCSSKeyword_view_box,      NS_STYLE_CLIP_SHAPE_SIZING_VIEW },
+  { eCSSKeyword_content_box,   StyleClipShapeSizing::Content },
+  { eCSSKeyword_padding_box,   StyleClipShapeSizing::Padding },
+  { eCSSKeyword_border_box,    StyleClipShapeSizing::Border },
+  { eCSSKeyword_margin_box,    StyleClipShapeSizing::Margin },
+  { eCSSKeyword_fill_box,      StyleClipShapeSizing::Fill },
+  { eCSSKeyword_stroke_box,    StyleClipShapeSizing::Stroke },
+  { eCSSKeyword_view_box,      StyleClipShapeSizing::View },
   { eCSSKeyword_UNKNOWN,       -1 }
 };
 

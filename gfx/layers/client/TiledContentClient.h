@@ -27,7 +27,6 @@
 #include "mozilla/layers/TextureClientPool.h"
 #include "ClientLayerManager.h"
 #include "mozilla/mozalloc.h"           // for operator delete
-#include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_DTOR
 #include "nsPoint.h"                    // for nsIntPoint
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
@@ -444,9 +443,6 @@ private:
   // completed then this is identical to mValidRegion.
   nsIntRegion mNewValidRegion;
 
-  // The DrawTarget we use when UseSinglePaintBuffer() above is true.
-  RefPtr<gfx::DrawTarget>       mSinglePaintDrawTarget;
-  nsIntPoint                    mSinglePaintBufferOffset;
   SharedFrameMetricsHelper*  mSharedFrameMetricsHelper;
   // When using Moz2D's CreateTiledDrawTarget we maintain a list of gfx::Tiles
   std::vector<gfx::Tile> mMoz2DTiles;

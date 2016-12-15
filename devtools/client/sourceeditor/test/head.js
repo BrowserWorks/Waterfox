@@ -4,9 +4,8 @@
 
 "use strict";
 
-Cu.import("resource://gre/modules/NetUtil.jsm");
-
 const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
+const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
 const Editor = require("devtools/client/sourceeditor/editor");
 const promise = require("promise");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
@@ -22,18 +21,16 @@ SimpleTest.registerCleanupFunction(() => {
 function addTab(url, callback) {
   waitForExplicitFinish();
 
-  gBrowser.selectedTab = gBrowser.addTab();
-  content.location = url;
-
+  gBrowser.selectedTab = gBrowser.addTab(url);
   let tab = gBrowser.selectedTab;
   let browser = gBrowser.getBrowserForTab(tab);
 
-  function onTabLoad() {
-    browser.removeEventListener("load", onTabLoad, true);
-    callback(browser, tab, browser.contentDocument);
-  }
-
-  browser.addEventListener("load", onTabLoad, true);
+  return BrowserTestUtils.browserLoaded(browser).then(function () {
+    if (typeof(callback) == "function") {
+      callback(browser, tab, browser.contentDocument);
+    }
+    return tab;
+  });
 }
 
 function promiseTab(url) {

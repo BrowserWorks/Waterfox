@@ -5,37 +5,37 @@
 
 /* General Partial MAR File Staged Patch Apply Failure Test */
 
+const STATE_AFTER_STAGE = STATE_FAILED;
+gStagingRemovedUpdate = true;
+
 function run_test() {
-  if (!shouldRunServiceTest()) {
+  if (!setupTestCommon()) {
     return;
   }
-
-  gStageUpdate = true;
-  setupTestCommon();
   gTestFiles = gTestFilesPartialSuccess;
   gTestFiles[11].originalFile = "partial.png";
   gTestDirs = gTestDirsPartialSuccess;
   setTestFilesAndDirsForFailure();
-  setupUpdaterTest(FILE_PARTIAL_MAR);
-
-  createUpdaterINI(true);
-
-  setupAppFilesAsync();
-}
-
-function setupAppFilesFinished() {
-  runUpdateUsingService(STATE_PENDING_SVC,
-                        STATE_FAILED_LOADSOURCE_ERROR_WRONG_SIZE);
+  setupUpdaterTest(FILE_PARTIAL_MAR, false);
 }
 
 /**
- * Checks if the update has finished and if it has finished performs checks for
- * the test.
+ * Called after the call to setupUpdaterTest finishes.
  */
-function checkUpdateFinished() {
+function setupUpdaterTestFinished() {
+  stageUpdate();
+}
+
+/**
+ * Called after the call to stageUpdate finishes.
+ */
+function stageUpdateFinished() {
+  Assert.equal(readStatusState(), STATE_NONE,
+               "the status file state" + MSG_SHOULD_EQUAL);
+  Assert.equal(gUpdateManager.getUpdateAt(0).errorCode, LOADSOURCE_ERROR_WRONG_SIZE,
+               "the update errorCode" + MSG_SHOULD_EQUAL);
   checkPostUpdateRunningFile(false);
-  checkFilesAfterUpdateFailure(getApplyDirFile, true, false);
-  checkUpdateLogContents(LOG_PARTIAL_FAILURE);
-  standardInit();
+  checkFilesAfterUpdateFailure(getApplyDirFile);
+  checkUpdateLogContains(ERR_LOADSOURCEFILE_FAILED);
   waitForFilesInUse();
 }

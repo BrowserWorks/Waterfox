@@ -138,7 +138,7 @@ MediaOmxCommonDecoder::ResumeStateMachine()
   MOZ_ASSERT(NS_IsMainThread());
   DECODER_LOG(LogLevel::Debug, ("%s current time %f", __PRETTY_FUNCTION__, mLogicalPosition));
 
-  if (mShuttingDown) {
+  if (IsShutdown()) {
     return;
   }
 
@@ -156,8 +156,6 @@ MediaOmxCommonDecoder::ResumeStateMachine()
   // Call Seek of MediaDecoderStateMachine to suppress seek events.
   GetStateMachine()->InvokeSeek(target);
 
-  mNextState = mPlayState;
-  ChangeState(PLAY_STATE_LOADING);
   // exit dormant state
   GetStateMachine()->DispatchSetDormant(false);
   UpdateLogicalPosition();
@@ -167,6 +165,7 @@ void
 MediaOmxCommonDecoder::AudioOffloadTearDown()
 {
   MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(!IsShutdown());
   DECODER_LOG(LogLevel::Debug, ("%s", __PRETTY_FUNCTION__));
 
   // mAudioOffloadPlayer can be null here if ResumeStateMachine was called
@@ -225,13 +224,14 @@ MediaOmxCommonDecoder::ChangeState(PlayState aState)
 }
 
 void
-MediaOmxCommonDecoder::CallSeek(const SeekTarget& aTarget)
+MediaOmxCommonDecoder::CallSeek(const SeekTarget& aTarget, dom::Promise* aPromise)
 {
   if (!mAudioOffloadPlayer) {
-    MediaDecoder::CallSeek(aTarget);
+    MediaDecoder::CallSeek(aTarget, aPromise);
     return;
   }
 
+  mSeekDOMPromise = aPromise;
   mSeekRequest.DisconnectIfExists();
   mSeekRequest.Begin(mAudioOffloadPlayer->Seek(aTarget)
     ->Then(AbstractThread::MainThread(), __func__, static_cast<MediaDecoder*>(this),
@@ -285,6 +285,13 @@ MediaOmxCommonDecoder::CreateStateMachine()
     mReader->SetAudioChannel(GetAudioChannel());
   }
   return CreateStateMachineFromReader(mReader);
+}
+
+void
+MediaOmxCommonDecoder::Shutdown()
+{
+  mAudioOffloadPlayer = nullptr;
+  MediaDecoder::Shutdown();
 }
 
 } // namespace mozilla

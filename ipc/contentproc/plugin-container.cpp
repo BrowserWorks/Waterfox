@@ -8,11 +8,6 @@
 #include "nsXULAppAPI.h"
 #include "nsAutoPtr.h"
 
-// FIXME/cjones testing
-#if !defined(OS_WIN)
-#include <unistd.h>
-#endif
-
 #ifdef XP_WIN
 #include <windows.h>
 // we want a wmain entry point
@@ -20,6 +15,9 @@
 #define XRE_DONT_PROTECT_DLL_LOAD
 #include "nsWindowsWMain.cpp"
 #include "nsSetDllDirectory.h"
+#else
+// FIXME/cjones testing
+#include <unistd.h>
 #endif
 
 #include "GMPLoader.h"
@@ -79,12 +77,10 @@ InitializeBinder(void *aDummy) {
 #endif
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
-static bool gIsSandboxEnabled = false;
-
 class WinSandboxStarter : public mozilla::gmp::SandboxStarter {
 public:
     virtual bool Start(const char *aLibPath) override {
-        if (gIsSandboxEnabled) {
+        if (IsSandboxedProcess()) {
             mozilla::sandboxing::LowerSandbox();
         }
         return true;
@@ -157,15 +153,12 @@ content_process_main(int argc, char* argv[])
     bool isNuwa = false;
     for (int i = 1; i < argc; i++) {
         isNuwa |= strcmp(argv[i], "-nuwa") == 0;
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-        gIsSandboxEnabled |= strcmp(argv[i], "-sandbox") == 0;
-#endif
     }
 
     XREChildData childData;
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
-    if (gIsSandboxEnabled) {
+    if (IsSandboxedProcess()) {
         childData.sandboxTargetServices =
             mozilla::sandboxing::GetInitializedTargetServices();
         if (!childData.sandboxTargetServices) {
@@ -217,10 +210,10 @@ content_process_main(int argc, char* argv[])
     // the details.
     if (XRE_GetProcessType() != GeckoProcessType_Plugin) {
         mozilla::SanitizeEnvironmentVariables();
-        SetDllDirectory(L"");
+        SetDllDirectoryW(L"");
     }
 #endif
-#if !defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_GONK)
+#if !defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_GONK) && defined(MOZ_PLUGIN_CONTAINER)
     // On desktop, the GMPLoader lives in plugin-container, so that its
     // code can be covered by an EME/GMP vendor's voucher.
     nsAutoPtr<mozilla::gmp::SandboxStarter> starter(MakeSandboxStarter());

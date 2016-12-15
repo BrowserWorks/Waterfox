@@ -466,7 +466,7 @@ var Printing = {
       }
 
       case "Printing:Print": {
-        this.print(Services.wm.getOuterWindowWithId(data.windowID));
+        this.print(Services.wm.getOuterWindowWithId(data.windowID), data.simplifiedMode);
         break;
       }
     }
@@ -631,19 +631,37 @@ var Printing = {
     docShell.printPreview.exitPrintPreview();
   },
 
-  print(contentWindow) {
+  print(contentWindow, simplifiedMode) {
     let printSettings = this.getPrintSettings();
     let rv = Cr.NS_OK;
+
+    // If we happen to be on simplified mode, we need to set docURL in order
+    // to generate header/footer content correctly, since simplified tab has
+    // "about:blank" as its URI.
+    if (printSettings && simplifiedMode) {
+      printSettings.docURL = contentWindow.document.baseURI;
+    }
+
     try {
       let print = contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                                .getInterface(Ci.nsIWebBrowserPrint);
+
+      if (print.doingPrintPreview) {
+        this.logKeyedTelemetry("PRINT_DIALOG_OPENED_COUNT", "FROM_PREVIEW");
+      } else {
+        this.logKeyedTelemetry("PRINT_DIALOG_OPENED_COUNT", "FROM_PAGE");
+      }
+
       print.print(printSettings, null);
 
-      let histogram = Services.telemetry.getKeyedHistogramById("PRINT_COUNT");
       if (print.doingPrintPreview) {
-        histogram.add("WITH_PREVIEW");
+        if (simplifiedMode) {
+          this.logKeyedTelemetry("PRINT_COUNT", "SIMPLIFIED");
+        } else {
+          this.logKeyedTelemetry("PRINT_COUNT", "WITH_PREVIEW");
+        }
       } else {
-        histogram.add("WITHOUT_PREVIEW");
+        this.logKeyedTelemetry("PRINT_COUNT", "WITHOUT_PREVIEW");
       }
     } catch(e) {
       // Pressing cancel is expressed as an NS_ERROR_ABORT return value,
@@ -667,6 +685,11 @@ var Printing = {
       PSSVC.savePrintSettingsToPrefs(printSettings, false,
                                      printSettings.kInitSavePrinterName);
     }
+  },
+
+  logKeyedTelemetry(id, key) {
+    let histogram = Services.telemetry.getKeyedHistogramById(id);
+    histogram.add(key);
   },
 
   updatePageCount() {
@@ -813,17 +836,56 @@ var FindBar = {
 };
 FindBar.init();
 
-// An event listener for custom "WebChannelMessageToChrome" events on pages.
-addEventListener("WebChannelMessageToChrome", function (e) {
-  // If target is window then we want the document principal, otherwise fallback to target itself.
-  let principal = e.target.nodePrincipal ? e.target.nodePrincipal : e.target.document.nodePrincipal;
+let WebChannelMessageToChromeListener = {
+  // Preference containing the list (space separated) of origins that are
+  // allowed to send non-string values through a WebChannel, mainly for
+  // backwards compatability. See bug 1238128 for more information.
+  URL_WHITELIST_PREF: "webchannel.allowObject.urlWhitelist",
 
-  if (e.detail) {
-    sendAsyncMessage("WebChannelMessageToChrome", e.detail, { eventTarget: e.target }, principal);
-  } else  {
-    Cu.reportError("WebChannel message failed. No message detail.");
+  // Cached list of whitelisted principals, we avoid constructing this if the
+  // value in `_lastWhitelistValue` hasn't changed since we constructed it last.
+  _cachedWhitelist: [],
+  _lastWhitelistValue: "",
+
+  init() {
+    addEventListener("WebChannelMessageToChrome", e => {
+      this._onMessageToChrome(e);
+    }, true, true);
+  },
+
+  _getWhitelistedPrincipals() {
+    let whitelist = Services.prefs.getCharPref(this.URL_WHITELIST_PREF);
+    if (whitelist != this._lastWhitelistValue) {
+      let urls = whitelist.split(/\s+/);
+      this._cachedWhitelist = urls.map(origin =>
+        Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(origin));
+    }
+    return this._cachedWhitelist;
+  },
+
+  _onMessageToChrome(e) {
+    // If target is window then we want the document principal, otherwise fallback to target itself.
+    let principal = e.target.nodePrincipal ? e.target.nodePrincipal : e.target.document.nodePrincipal;
+
+    if (e.detail) {
+      if (typeof e.detail != 'string') {
+        // Check if the principal is one of the ones that's allowed to send
+        // non-string values for e.detail.
+        let objectsAllowed = this._getWhitelistedPrincipals().some(whitelisted =>
+          principal.originNoSuffix == whitelisted.originNoSuffix);
+        if (!objectsAllowed) {
+          Cu.reportError("WebChannelMessageToChrome sent with an object from a non-whitelisted principal");
+          return;
+        }
+      }
+      sendAsyncMessage("WebChannelMessageToChrome", e.detail, { eventTarget: e.target }, principal);
+    } else  {
+      Cu.reportError("WebChannel message failed. No message detail.");
+    }
   }
-}, true, true);
+};
+
+WebChannelMessageToChromeListener.init();
 
 // This should be kept in sync with /browser/base/content.js.
 // Add message listener for "WebChannelMessageToContent" messages from chrome scripts.

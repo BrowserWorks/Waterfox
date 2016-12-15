@@ -26,10 +26,10 @@
 // that need to be removed once clients have been put together
 // to take advantage of the new mechanism. New code should not
 // depend on code #ifdefed to this #define.
-#define DOM_PROMISE_DEPRECATED_REPORTING 1
+#define DOM_PROMISE_DEPRECATED_REPORTING !SPIDERMONKEY_PROMISE
 
 #if defined(DOM_PROMISE_DEPRECATED_REPORTING)
-#include "mozilla/dom/workers/bindings/WorkerFeature.h"
+#include "mozilla/dom/workers/bindings/WorkerHolder.h"
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
 
 class nsIGlobalObject;
@@ -48,14 +48,15 @@ class PromiseDebugging;
 class Promise;
 
 #if defined(DOM_PROMISE_DEPRECATED_REPORTING)
-class PromiseReportRejectFeature : public workers::WorkerFeature
+class PromiseReportRejectWorkerHolder : public workers::WorkerHolder
 {
-  // PromiseReportRejectFeature is held by an nsAutoPtr on the Promise which
-  // means that this object will be destroyed before the Promise is destroyed.
+  // PromiseReportRejectWorkerHolder is held by an nsAutoPtr on the Promise
+  // which means that this object will be destroyed before the Promise is
+  // destroyed.
   Promise* MOZ_NON_OWNING_REF mPromise;
 
 public:
-  explicit PromiseReportRejectFeature(Promise* aPromise)
+  explicit PromiseReportRejectWorkerHolder(Promise* aPromise)
     : mPromise(aPromise)
   {
     MOZ_ASSERT(mPromise);
@@ -84,7 +85,7 @@ class Promise : public nsISupports,
   friend class PromiseResolverTask;
   friend class PromiseTask;
 #if defined(DOM_PROMISE_DEPRECATED_REPORTING)
-  friend class PromiseReportRejectFeature;
+  friend class PromiseReportRejectWorkerHolder;
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
   friend class PromiseWorkerProxy;
   friend class PromiseWorkerProxyRunnable;
@@ -112,6 +113,9 @@ public:
 #ifdef SPIDERMONKEY_PROMISE
   static already_AddRefed<Promise>
   Create(nsIGlobalObject* aGlobal, ErrorResult& aRv);
+
+  // Reports a rejected Promise by sending an error report.
+  static void ReportRejectedPromise(JSContext* aCx, JS::HandleObject aPromise);
 #else
   static already_AddRefed<Promise>
   Create(nsIGlobalObject* aGlobal, ErrorResult& aRv,
@@ -149,6 +153,8 @@ public:
   void MaybeReject(const RefPtr<MediaStreamError>& aArg);
 
   void MaybeRejectWithNull();
+
+  void MaybeRejectWithUndefined();
 
   // DO NOT USE MaybeRejectBrokenly with in new code.  Promises should be
   // rejected with Error instances.
@@ -404,7 +410,7 @@ private:
 
   void MaybeReportRejectedOnce() {
     MaybeReportRejected();
-    RemoveFeature();
+    RemoveWorkerHolder();
     mResult.setUndefined();
   }
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
@@ -424,11 +430,8 @@ private:
   void MaybeSomething(T& aArgument, MaybeFunc aFunc) {
     MOZ_ASSERT(PromiseObj()); // It was preserved!
 
-    AutoJSAPI jsapi;
-    if (!jsapi.Init(mGlobal)) {
-      return;
-    }
-    JSContext* cx = jsapi.cx();
+    AutoEntryScript aes(mGlobal, "Promise resolution or rejection");
+    JSContext* cx = aes.cx();
 
     JS::Rooted<JS::Value> val(cx);
     if (!ToJSValue(cx, aArgument, &val)) {
@@ -459,7 +462,7 @@ private:
   CreateThenableFunction(JSContext* aCx, Promise* aPromise, uint32_t aTask);
 
 #if defined(DOM_PROMISE_DEPRECATED_REPORTING)
-  void RemoveFeature();
+  void RemoveWorkerHolder();
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
 
   // Capture the current stack and store it in aTarget.  If false is
@@ -498,7 +501,7 @@ private:
   // needs to know when the worker is shutting down, to report the error on the
   // console before the worker's context is deleted. This feature is used for
   // that purpose.
-  nsAutoPtr<PromiseReportRejectFeature> mFeature;
+  nsAutoPtr<PromiseReportRejectWorkerHolder> mWorkerHolder;
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
 
   bool mTaskPending;

@@ -141,7 +141,6 @@ static const uint32_t kMaxICCDuration = 2000; // ms
 // if you add statics here, add them to the list in StartupJSEnvironment
 
 static nsITimer *sGCTimer;
-static nsITimer *sShrinkGCBuffersTimer;
 static nsITimer *sShrinkingGCTimer;
 static nsITimer *sCCTimer;
 static nsITimer *sICCTimer;
@@ -189,7 +188,8 @@ static nsScriptNameSpaceManager *gNameSpaceManager;
 
 static PRTime sFirstCollectionTime;
 
-static JSRuntime *sRuntime;
+static JSRuntime* sRuntime;
+static JSContext* sContext;
 
 static bool sIsInitialized;
 static bool sDidShutdown;
@@ -246,8 +246,8 @@ FindExceptionStackForConsoleReport(nsPIDOMWindowInner* win,
     return nullptr;
   }
 
-  JSContext* cx = nsContentUtils::RootingCxForThread();
-  JS::RootedObject exceptionObject(cx, &exceptionValue.toObject());
+  JSRuntime* rt = GetJSRuntime();
+  JS::RootedObject exceptionObject(rt, &exceptionValue.toObject());
   JSObject* stackObject = ExceptionStackOrNull(exceptionObject);
   if (stackObject) {
     return stackObject;
@@ -268,7 +268,7 @@ FindExceptionStackForConsoleReport(nsPIDOMWindowInner* win,
   if (!stack) {
     return nullptr;
   }
-  JS::RootedValue value(cx);
+  JS::RootedValue value(rt);
   stack->GetNativeSavedFrame(&value);
   if (value.isObject()) {
     return &value.toObject();
@@ -294,7 +294,6 @@ KillTimers()
 {
   nsJSContext::KillGCTimer();
   nsJSContext::KillShrinkingGCTimer();
-  nsJSContext::KillShrinkGCBuffersTimer();
   nsJSContext::KillCCTimer();
   nsJSContext::KillICCTimer();
   nsJSContext::KillFullGCTimer();
@@ -351,7 +350,7 @@ nsJSEnvironmentObserver::Observe(nsISupports* aSubject, const char* aTopic,
   } else if (!nsCRT::strcmp(aTopic, "user-interaction-active")) {
     nsJSContext::KillShrinkingGCTimer();
     if (sIsCompactingOnUserInactive) {
-      JS::AbortIncrementalGC(sRuntime);
+      JS::AbortIncrementalGC(sContext);
     }
     MOZ_ASSERT(!sIsCompactingOnUserInactive);
   } else if (!nsCRT::strcmp(aTopic, "quit-application") ||
@@ -1187,7 +1186,6 @@ nsJSContext::GarbageCollectNow(JS::gcreason::Reason aReason,
   MOZ_ASSERT_IF(aSliceMillis, aIncremental == IncrementalGC);
 
   KillGCTimer();
-  KillShrinkGCBuffersTimer();
 
   // Reset sPendingLoadCount in case the timer that fired was a
   // timer we scheduled due to a normal GC timer firing while
@@ -1204,8 +1202,8 @@ nsJSContext::GarbageCollectNow(JS::gcreason::Reason aReason,
 
   if (sCCLockedOut && aIncremental == IncrementalGC) {
     // We're in the middle of incremental GC. Do another slice.
-    JS::PrepareForIncrementalGC(sRuntime);
-    JS::IncrementalGCSlice(sRuntime, aReason, aSliceMillis);
+    JS::PrepareForIncrementalGC(sContext);
+    JS::IncrementalGCSlice(sContext, aReason, aSliceMillis);
     return;
   }
 
@@ -1213,28 +1211,16 @@ nsJSContext::GarbageCollectNow(JS::gcreason::Reason aReason,
 
   if (sNeedsFullGC || aReason != JS::gcreason::CC_WAITING) {
     sNeedsFullGC = false;
-    JS::PrepareForFullGC(sRuntime);
+    JS::PrepareForFullGC(sContext);
   } else {
     CycleCollectedJSRuntime::Get()->PrepareWaitingZonesForGC();
   }
 
   if (aIncremental == IncrementalGC) {
-    JS::StartIncrementalGC(sRuntime, gckind, aReason, aSliceMillis);
+    JS::StartIncrementalGC(sContext, gckind, aReason, aSliceMillis);
   } else {
-    JS::GCForReason(sRuntime, gckind, aReason);
+    JS::GCForReason(sContext, gckind, aReason);
   }
-}
-
-//static
-void
-nsJSContext::ShrinkGCBuffersNow()
-{
-  PROFILER_LABEL("nsJSContext", "ShrinkGCBuffersNow",
-    js::ProfileEntry::Category::GC);
-
-  KillShrinkGCBuffersTimer();
-
-  JS::ShrinkGCBuffers(sRuntime);
 }
 
 static void
@@ -1244,8 +1230,8 @@ FinishAnyIncrementalGC()
 
   if (sCCLockedOut) {
     // We're in the middle of an incremental GC, so finish it.
-    JS::PrepareForIncrementalGC(sRuntime);
-    JS::FinishIncrementalGC(sRuntime, JS::gcreason::CC_FORCED);
+    JS::PrepareForIncrementalGC(sContext);
+    JS::FinishIncrementalGC(sContext, JS::gcreason::CC_FORCED);
   }
 }
 
@@ -1290,7 +1276,7 @@ TimeUntilNow(TimeStamp start)
 
 struct CycleCollectorStats
 {
-  MOZ_CONSTEXPR CycleCollectorStats() :
+  constexpr CycleCollectorStats() :
     mMaxGCDuration(0), mRanSyncForgetSkippable(false), mSuspected(0),
     mMaxSkippableDuration(0), mMaxSliceTime(0), mMaxSliceTimeSinceClear(0),
     mTotalSliceTime(0), mAnyLockedOut(false), mExtraForgetSkippableCalls(0) {}
@@ -1620,8 +1606,8 @@ nsJSContext::EndCycleCollectionCallback(CycleCollectorResults &aResults)
     }
 
     NS_NAMED_MULTILINE_LITERAL_STRING(kFmt,
-      MOZ_UTF16("CC(T+%.1f)[%s] max pause: %lums, total time: %lums, slices: %lu, suspected: %lu, visited: %lu RCed and %lu%s GCed, collected: %lu RCed and %lu GCed (%lu|%lu|%lu waiting for GC)%s\n")
-      MOZ_UTF16("ForgetSkippable %lu times before CC, min: %lu ms, max: %lu ms, avg: %lu ms, total: %lu ms, max sync: %lu ms, removed: %lu"));
+      u"CC(T+%.1f)[%s] max pause: %lums, total time: %lums, slices: %lu, suspected: %lu, visited: %lu RCed and %lu%s GCed, collected: %lu RCed and %lu GCed (%lu|%lu|%lu waiting for GC)%s\n"
+      u"ForgetSkippable %lu times before CC, min: %lu ms, max: %lu ms, avg: %lu ms, total: %lu ms, max sync: %lu ms, removed: %lu");
     nsString msg;
     msg.Adopt(nsTextFormatter::smprintf(kFmt.get(), double(delta) / PR_USEC_PER_SEC,
                                         ProcessNameForCollectorLog(),
@@ -1647,31 +1633,31 @@ nsJSContext::EndCycleCollectionCallback(CycleCollectorResults &aResults)
 
   if (sPostGCEventsToObserver) {
     NS_NAMED_MULTILINE_LITERAL_STRING(kJSONFmt,
-       MOZ_UTF16("{ \"timestamp\": %llu, ")
-         MOZ_UTF16("\"duration\": %lu, ")
-         MOZ_UTF16("\"max_slice_pause\": %lu, ")
-         MOZ_UTF16("\"total_slice_pause\": %lu, ")
-         MOZ_UTF16("\"max_finish_gc_duration\": %lu, ")
-         MOZ_UTF16("\"max_sync_skippable_duration\": %lu, ")
-         MOZ_UTF16("\"suspected\": %lu, ")
-         MOZ_UTF16("\"visited\": { ")
-             MOZ_UTF16("\"RCed\": %lu, ")
-             MOZ_UTF16("\"GCed\": %lu }, ")
-         MOZ_UTF16("\"collected\": { ")
-             MOZ_UTF16("\"RCed\": %lu, ")
-             MOZ_UTF16("\"GCed\": %lu }, ")
-         MOZ_UTF16("\"waiting_for_gc\": %lu, ")
-         MOZ_UTF16("\"zones_waiting_for_gc\": %lu, ")
-         MOZ_UTF16("\"short_living_objects_waiting_for_gc\": %lu, ")
-         MOZ_UTF16("\"forced_gc\": %d, ")
-         MOZ_UTF16("\"forget_skippable\": { ")
-             MOZ_UTF16("\"times_before_cc\": %lu, ")
-             MOZ_UTF16("\"min\": %lu, ")
-             MOZ_UTF16("\"max\": %lu, ")
-             MOZ_UTF16("\"avg\": %lu, ")
-             MOZ_UTF16("\"total\": %lu, ")
-             MOZ_UTF16("\"removed\": %lu } ")
-       MOZ_UTF16("}"));
+       u"{ \"timestamp\": %llu, "
+         u"\"duration\": %lu, "
+         u"\"max_slice_pause\": %lu, "
+         u"\"total_slice_pause\": %lu, "
+         u"\"max_finish_gc_duration\": %lu, "
+         u"\"max_sync_skippable_duration\": %lu, "
+         u"\"suspected\": %lu, "
+         u"\"visited\": { "
+             u"\"RCed\": %lu, "
+             u"\"GCed\": %lu }, "
+         u"\"collected\": { "
+             u"\"RCed\": %lu, "
+             u"\"GCed\": %lu }, "
+         u"\"waiting_for_gc\": %lu, "
+         u"\"zones_waiting_for_gc\": %lu, "
+         u"\"short_living_objects_waiting_for_gc\": %lu, "
+         u"\"forced_gc\": %d, "
+         u"\"forget_skippable\": { "
+             u"\"times_before_cc\": %lu, "
+             u"\"min\": %lu, "
+             u"\"max\": %lu, "
+             u"\"avg\": %lu, "
+             u"\"total\": %lu, "
+             u"\"removed\": %lu } "
+       u"}");
     nsString json;
     json.Adopt(nsTextFormatter::smprintf(kJSONFmt.get(), endCCTime, ccNowDuration,
                                          gCCStats.mMaxSliceTime,
@@ -1728,13 +1714,6 @@ GCTimerFired(nsITimer *aTimer, void *aClosure)
   uintptr_t reason = reinterpret_cast<uintptr_t>(aClosure);
   nsJSContext::GarbageCollectNow(static_cast<JS::gcreason::Reason>(reason),
                                  nsJSContext::IncrementalGC);
-}
-
-void
-ShrinkGCBuffersTimerFired(nsITimer *aTimer, void *aClosure)
-{
-  nsJSContext::KillShrinkGCBuffersTimer();
-  nsJSContext::ShrinkGCBuffersNow();
 }
 
 // static
@@ -1965,28 +1944,6 @@ nsJSContext::PokeGC(JS::gcreason::Reason aReason, int aDelay)
 
 // static
 void
-nsJSContext::PokeShrinkGCBuffers()
-{
-  if (sShrinkGCBuffersTimer || sShuttingDown) {
-    return;
-  }
-
-  CallCreateInstance("@mozilla.org/timer;1", &sShrinkGCBuffersTimer);
-
-  if (!sShrinkGCBuffersTimer) {
-    // Failed to create timer (probably because we're in XPCOM shutdown)
-    return;
-  }
-
-  sShrinkGCBuffersTimer->InitWithNamedFuncCallback(ShrinkGCBuffersTimerFired,
-                                                   nullptr,
-                                                   NS_SHRINK_GC_BUFFERS_DELAY,
-                                                   nsITimer::TYPE_ONE_SHOT,
-                                                   "ShrinkGCBuffersTimerFired");
-}
-
-// static
-void
 nsJSContext::PokeShrinkingGC()
 {
   if (sShrinkingGCTimer || sShuttingDown) {
@@ -2060,16 +2017,6 @@ nsJSContext::KillInterSliceGCTimer()
 
 //static
 void
-nsJSContext::KillShrinkGCBuffersTimer()
-{
-  if (sShrinkGCBuffersTimer) {
-    sShrinkGCBuffersTimer->Cancel();
-    NS_RELEASE(sShrinkGCBuffersTimer);
-  }
-}
-
-//static
-void
 nsJSContext::KillShrinkingGCTimer()
 {
   if (sShrinkingGCTimer) {
@@ -2129,7 +2076,7 @@ NotifyGCEndRunnable::Run()
 }
 
 static void
-DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescription &aDesc)
+DOMGCSliceCallback(JSContext* aCx, JS::GCProgress aProgress, const JS::GCDescription &aDesc)
 {
   NS_ASSERTION(NS_IsMainThread(), "GCs must run on the main thread");
 
@@ -2137,9 +2084,6 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
     case JS::GC_CYCLE_BEGIN: {
       // Prevent cycle collections and shrinking during incremental GC.
       sCCLockedOut = true;
-
-      nsJSContext::KillShrinkGCBuffersTimer();
-
       break;
     }
 
@@ -2149,7 +2093,7 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
       if (sPostGCEventsToConsole) {
         NS_NAMED_LITERAL_STRING(kFmt, "GC(T+%.1f)[%s] ");
         nsString prefix, gcstats;
-        gcstats.Adopt(aDesc.formatSummaryMessage(aRt));
+        gcstats.Adopt(aDesc.formatSummaryMessage(aCx));
         prefix.Adopt(nsTextFormatter::smprintf(kFmt.get(),
                                                double(delta) / PR_USEC_PER_SEC,
                                                ProcessNameForCollectorLog()));
@@ -2162,7 +2106,7 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
 
       if (sPostGCEventsToObserver) {
         nsString json;
-        json.Adopt(aDesc.formatJSON(aRt, PR_Now()));
+        json.Adopt(aDesc.formatJSON(aCx, PR_Now()));
         RefPtr<NotifyGCEndRunnable> notify = new NotifyGCEndRunnable(json);
         NS_DispatchToMainThread(notify);
       }
@@ -2194,10 +2138,6 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
         nsJSContext::KillFullGCTimer();
       }
 
-      if (aDesc.invocationKind_ == GC_NORMAL) {
-        nsJSContext::PokeShrinkGCBuffers();
-      }
-
       if (ShouldTriggerCC(nsCycleCollector_suspectedCount())) {
         nsCycleCollector_dispatchDeferredDeletion();
       }
@@ -2227,7 +2167,7 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
 
       if (sPostGCEventsToConsole) {
         nsString gcstats;
-        gcstats.Adopt(aDesc.formatSliceMessage(aRt));
+        gcstats.Adopt(aDesc.formatSliceMessage(aCx));
         nsCOMPtr<nsIConsoleService> cs = do_GetService(NS_CONSOLESERVICE_CONTRACTID);
         if (cs) {
           cs->LogStringMessage(gcstats.get());
@@ -2241,7 +2181,7 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
   }
 
   if (sPrevGCSliceCallback) {
-    (*sPrevGCSliceCallback)(aRt, aProgress, aDesc);
+    (*sPrevGCSliceCallback)(aCx, aProgress, aDesc);
   }
 
 }
@@ -2295,6 +2235,7 @@ mozilla::dom::StartupJSEnvironment()
   sNeedsGCAfterCC = false;
   gNameSpaceManager = nullptr;
   sRuntime = nullptr;
+  sContext = nullptr;
   sIsInitialized = false;
   sDidShutdown = false;
   sShuttingDown = false;
@@ -2309,7 +2250,7 @@ SetMemoryHighWaterMarkPrefChangedCallback(const char* aPrefName, void* aClosure)
 {
   int32_t highwatermark = Preferences::GetInt(aPrefName, 128);
 
-  JS_SetGCParameter(sRuntime, JSGC_MAX_MALLOC_BYTES,
+  JS_SetGCParameter(sContext, JSGC_MAX_MALLOC_BYTES,
                     highwatermark * 1024L * 1024L);
 }
 
@@ -2319,7 +2260,7 @@ SetMemoryMaxPrefChangedCallback(const char* aPrefName, void* aClosure)
   int32_t pref = Preferences::GetInt(aPrefName, -1);
   // handle overflow and negative pref values
   uint32_t max = (pref <= 0 || pref >= 0x1000) ? -1 : (uint32_t)pref * 1024 * 1024;
-  JS_SetGCParameter(sRuntime, JSGC_MAX_BYTES, max);
+  JS_SetGCParameter(sContext, JSGC_MAX_BYTES, max);
 }
 
 static void
@@ -2335,7 +2276,7 @@ SetMemoryGCModePrefChangedCallback(const char* aPrefName, void* aClosure)
   } else {
     mode = JSGC_MODE_GLOBAL;
   }
-  JS_SetGCParameter(sRuntime, JSGC_MODE, mode);
+  JS_SetGCParameter(sContext, JSGC_MODE, mode);
 }
 
 static void
@@ -2344,14 +2285,14 @@ SetMemoryGCSliceTimePrefChangedCallback(const char* aPrefName, void* aClosure)
   int32_t pref = Preferences::GetInt(aPrefName, -1);
   // handle overflow and negative pref values
   if (pref > 0 && pref < 100000)
-    JS_SetGCParameter(sRuntime, JSGC_SLICE_TIME_BUDGET, pref);
+    JS_SetGCParameter(sContext, JSGC_SLICE_TIME_BUDGET, pref);
 }
 
 static void
 SetMemoryGCCompactingPrefChangedCallback(const char* aPrefName, void* aClosure)
 {
   bool pref = Preferences::GetBool(aPrefName);
-  JS_SetGCParameter(sRuntime, JSGC_COMPACTING_ENABLED, pref);
+  JS_SetGCParameter(sContext, JSGC_COMPACTING_ENABLED, pref);
 }
 
 static void
@@ -2360,28 +2301,28 @@ SetMemoryGCPrefChangedCallback(const char* aPrefName, void* aClosure)
   int32_t pref = Preferences::GetInt(aPrefName, -1);
   // handle overflow and negative pref values
   if (pref >= 0 && pref < 10000)
-    JS_SetGCParameter(sRuntime, (JSGCParamKey)(intptr_t)aClosure, pref);
+    JS_SetGCParameter(sContext, (JSGCParamKey)(intptr_t)aClosure, pref);
 }
 
 static void
 SetMemoryGCDynamicHeapGrowthPrefChangedCallback(const char* aPrefName, void* aClosure)
 {
   bool pref = Preferences::GetBool(aPrefName);
-  JS_SetGCParameter(sRuntime, JSGC_DYNAMIC_HEAP_GROWTH, pref);
+  JS_SetGCParameter(sContext, JSGC_DYNAMIC_HEAP_GROWTH, pref);
 }
 
 static void
 SetMemoryGCDynamicMarkSlicePrefChangedCallback(const char* aPrefName, void* aClosure)
 {
   bool pref = Preferences::GetBool(aPrefName);
-  JS_SetGCParameter(sRuntime, JSGC_DYNAMIC_MARK_SLICE, pref);
+  JS_SetGCParameter(sContext, JSGC_DYNAMIC_MARK_SLICE, pref);
 }
 
 static void
 SetMemoryGCRefreshFrameSlicesEnabledPrefChangedCallback(const char* aPrefName, void* aClosure)
 {
   bool pref = Preferences::GetBool(aPrefName);
-  JS_SetGCParameter(sRuntime, JSGC_REFRESH_FRAME_SLICES_ENABLED, pref);
+  JS_SetGCParameter(sContext, JSGC_REFRESH_FRAME_SLICES_ENABLED, pref);
 }
 
 
@@ -2442,10 +2383,12 @@ nsJSContext::EnsureStatics()
     MOZ_CRASH();
   }
 
+  sContext = JS_GetContext(sRuntime);
+
   // Let's make sure that our main thread is the same as the xpcom main thread.
   MOZ_ASSERT(NS_IsMainThread());
 
-  sPrevGCSliceCallback = JS::SetGCSliceCallback(sRuntime, DOMGCSliceCallback);
+  sPrevGCSliceCallback = JS::SetGCSliceCallback(sContext, DOMGCSliceCallback);
 
   // Set up the asm.js cache callbacks
   static const JS::AsmJSCacheOps asmJSCacheOps = {
@@ -2454,7 +2397,7 @@ nsJSContext::EnsureStatics()
     AsmJSCacheOpenEntryForWrite,
     asmjscache::CloseEntryForWrite
   };
-  JS::SetAsmJSCacheOps(sRuntime, &asmJSCacheOps);
+  JS::SetAsmJSCacheOps(sContext, &asmJSCacheOps);
 
   // Set these global xpconnect options...
   Preferences::RegisterCallbackAndCall(SetMemoryHighWaterMarkPrefChangedCallback,

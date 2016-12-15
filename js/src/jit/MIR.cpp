@@ -410,12 +410,6 @@ AliasSet::Name(size_t flag)
 }
 
 MTest*
-MTest::New(TempAllocator& alloc, MDefinition* ins, MBasicBlock* ifTrue, MBasicBlock* ifFalse)
-{
-    return new(alloc) MTest(ins, ifTrue, ifFalse);
-}
-
-MTest*
 MTest::NewAsm(TempAllocator& alloc, MDefinition* ins, MBasicBlock* ifFalse)
 {
     return new(alloc) MTest(ins, nullptr, ifFalse);
@@ -774,7 +768,7 @@ MakeSingletonTypeSetFromKey(CompilerConstraintList* constraints, TypeSet::Object
     // we want to invalidate and mark this TypeSet as containing AnyObject
     // (because mutating __proto__ will change an object's ObjectGroup).
     MOZ_ASSERT(constraints);
-    key->hasStableClassAndProto(constraints);
+    (void)key->hasStableClassAndProto(constraints);
 
     LifoAlloc* alloc = GetJitContext()->temp->lifoAlloc();
     return alloc->new_<TemporaryTypeSet>(alloc, TypeSet::ObjectType(key));
@@ -1190,6 +1184,16 @@ MSimdSplat::foldsTo(TempAllocator& alloc)
 
     SimdConstant cst;
     switch (type()) {
+      case MIRType::Bool8x16: {
+        int8_t v = op->toConstant()->valueToBooleanInfallible() ? -1 : 0;
+        cst = SimdConstant::SplatX16(v);
+        break;
+      }
+      case MIRType::Bool16x8: {
+        int16_t v = op->toConstant()->valueToBooleanInfallible() ? -1 : 0;
+        cst = SimdConstant::SplatX8(v);
+        break;
+      }
       case MIRType::Bool32x4: {
         int32_t v = op->toConstant()->valueToBooleanInfallible() ? -1 : 0;
         cst = SimdConstant::SplatX4(v);
@@ -1636,12 +1640,6 @@ MSimdUnbox::printOpcode(GenericPrinter& out) const
     out.printf(" (%s)", SimdTypeToString(simdType()));
 }
 
-MCloneLiteral*
-MCloneLiteral::New(TempAllocator& alloc, MDefinition* obj)
-{
-    return new(alloc) MCloneLiteral(obj);
-}
-
 void
 MControlInstruction::printOpcode(GenericPrinter& out) const
 {
@@ -1858,17 +1856,27 @@ MParameter::congruentTo(const MDefinition* ins) const
     return ins->toParameter()->index() == index_;
 }
 
+WrappedFunction::WrappedFunction(JSFunction* fun)
+  : fun_(fun),
+    nargs_(fun->nargs()),
+    isNative_(fun->isNative()),
+    isConstructor_(fun->isConstructor()),
+    isClassConstructor_(fun->isClassConstructor()),
+    isSelfHostedBuiltin_(fun->isSelfHostedBuiltin())
+{}
+
 MCall*
 MCall::New(TempAllocator& alloc, JSFunction* target, size_t maxArgc, size_t numActualArgs,
            bool construct, bool isDOMCall)
 {
+    WrappedFunction* wrappedTarget = target ? new(alloc) WrappedFunction(target) : nullptr;
     MOZ_ASSERT(maxArgc >= numActualArgs);
     MCall* ins;
     if (isDOMCall) {
         MOZ_ASSERT(!construct);
-        ins = new(alloc) MCallDOMNative(target, numActualArgs);
+        ins = new(alloc) MCallDOMNative(wrappedTarget, numActualArgs);
     } else {
-        ins = new(alloc) MCall(target, numActualArgs, construct);
+        ins = new(alloc) MCall(wrappedTarget, numActualArgs, construct);
     }
     if (!ins->init(alloc, maxArgc + NumNonArgumentOperands))
         return nullptr;
@@ -1990,20 +1998,6 @@ MCallDOMNative::getJitInfo() const
     return jitInfo;
 }
 
-MApplyArgs*
-MApplyArgs::New(TempAllocator& alloc, JSFunction* target, MDefinition* fun, MDefinition* argc,
-                MDefinition* self)
-{
-    return new(alloc) MApplyArgs(target, fun, argc, self);
-}
-
-MApplyArray*
-MApplyArray::New(TempAllocator& alloc, JSFunction* target, MDefinition* fun, MDefinition* elements,
-                 MDefinition* self)
-{
-    return new(alloc) MApplyArray(target, fun, elements, self);
-}
-
 MDefinition*
 MStringLength::foldsTo(TempAllocator& alloc)
 {
@@ -2064,12 +2058,6 @@ MRound::trySpecializeFloat32(TempAllocator& alloc)
 }
 
 MCompare*
-MCompare::New(TempAllocator& alloc, MDefinition* left, MDefinition* right, JSOp op)
-{
-    return new(alloc) MCompare(left, right, op);
-}
-
-MCompare*
 MCompare::NewAsmJS(TempAllocator& alloc, MDefinition* left, MDefinition* right, JSOp op,
                    CompareType compareType)
 {
@@ -2091,6 +2079,13 @@ MTableSwitch::New(TempAllocator& alloc, MDefinition* ins, int32_t low, int32_t h
 
 MGoto*
 MGoto::New(TempAllocator& alloc, MBasicBlock* target)
+{
+    MOZ_ASSERT(target);
+    return new(alloc) MGoto(target);
+}
+
+MGoto*
+MGoto::New(TempAllocator::Fallible alloc, MBasicBlock* target)
 {
     MOZ_ASSERT(target);
     return new(alloc) MGoto(target);
@@ -3647,12 +3642,6 @@ MCompare::cacheOperandMightEmulateUndefined(CompilerConstraintList* constraints)
 }
 
 MBitNot*
-MBitNot::New(TempAllocator& alloc, MDefinition* input)
-{
-    return new(alloc) MBitNot(input);
-}
-
-MBitNot*
 MBitNot::NewAsmJS(TempAllocator& alloc, MDefinition* input)
 {
     MBitNot* ins = new(alloc) MBitNot(input);
@@ -4081,8 +4070,9 @@ MWrapInt64ToInt32::foldsTo(TempAllocator& alloc)
 {
     MDefinition* input = this->input();
     if (input->isConstant()) {
-        int64_t c = input->toConstant()->toInt64();
-        return MConstant::New(alloc, Int32Value(int32_t(c)));
+        uint64_t c = input->toConstant()->toInt64();
+        int32_t output = bottomHalf() ? int32_t(c) : int32_t(c >> 32);
+        return MConstant::New(alloc, Int32Value(output));
     }
 
     return this;
@@ -4558,10 +4548,8 @@ MNot::foldsTo(TempAllocator& alloc)
     if (MConstant* inputConst = input()->maybeConstantValue()) {
         bool b;
         if (inputConst->valueToBoolean(&b)) {
-            if (type() == MIRType::Int32)
+            if (type() == MIRType::Int32 || type() == MIRType::Int64)
                 return MConstant::New(alloc, Int32Value(!b));
-            if (type() == MIRType::Int64)
-                return MConstant::NewInt64(alloc, int64_t(!b));
             return MConstant::New(alloc, BooleanValue(!b));
         }
     }
@@ -4912,10 +4900,11 @@ MAsmJSLoadHeap::congruentTo(const MDefinition* ins) const
 }
 
 MDefinition::AliasType
-MAsmJSLoadGlobalVar::mightAlias(const MDefinition* def) const
+MWasmLoadGlobalVar::mightAlias(const MDefinition* def) const
 {
-    if (def->isAsmJSStoreGlobalVar()) {
-        const MAsmJSStoreGlobalVar* store = def->toAsmJSStoreGlobalVar();
+    if (def->isWasmStoreGlobalVar()) {
+        const MWasmStoreGlobalVar* store = def->toWasmStoreGlobalVar();
+        // Global variables can't alias each other or be type-reinterpreted.
         return (store->globalDataOffset() == globalDataOffset_) ? AliasType::MayAlias :
                                                                   AliasType::NoAlias;
     }
@@ -4923,7 +4912,7 @@ MAsmJSLoadGlobalVar::mightAlias(const MDefinition* def) const
 }
 
 HashNumber
-MAsmJSLoadGlobalVar::valueHash() const
+MWasmLoadGlobalVar::valueHash() const
 {
     HashNumber hash = MDefinition::valueHash();
     hash = addU32ToHash(hash, globalDataOffset_);
@@ -4931,22 +4920,20 @@ MAsmJSLoadGlobalVar::valueHash() const
 }
 
 bool
-MAsmJSLoadGlobalVar::congruentTo(const MDefinition* ins) const
+MWasmLoadGlobalVar::congruentTo(const MDefinition* ins) const
 {
-    if (ins->isAsmJSLoadGlobalVar()) {
-        const MAsmJSLoadGlobalVar* load = ins->toAsmJSLoadGlobalVar();
-        return globalDataOffset_ == load->globalDataOffset_;
-    }
+    if (ins->isWasmLoadGlobalVar())
+        return globalDataOffset_ == ins->toWasmLoadGlobalVar()->globalDataOffset_;
     return false;
 }
 
 MDefinition*
-MAsmJSLoadGlobalVar::foldsTo(TempAllocator& alloc)
+MWasmLoadGlobalVar::foldsTo(TempAllocator& alloc)
 {
-    if (!dependency() || !dependency()->isAsmJSStoreGlobalVar())
+    if (!dependency() || !dependency()->isWasmStoreGlobalVar())
         return this;
 
-    MAsmJSStoreGlobalVar* store = dependency()->toAsmJSStoreGlobalVar();
+    MWasmStoreGlobalVar* store = dependency()->toWasmStoreGlobalVar();
     if (!store->block()->dominates(block()))
         return this;
 
@@ -5247,6 +5234,16 @@ InlinePropertyTable::buildTypeSetForFunction(JSFunction* func) const
     return types;
 }
 
+bool
+InlinePropertyTable::appendRoots(MRootList& roots) const
+{
+    for (const Entry* entry : entries_) {
+        if (!entry->appendRoots(roots))
+            return false;
+    }
+    return true;
+}
+
 SharedMem<void*>
 MLoadTypedArrayElementStatic::base() const
 {
@@ -5332,6 +5329,95 @@ MGetPropertyPolymorphic::mightAlias(const MDefinition* store) const
     return AliasType::NoAlias;
 }
 
+bool
+MGetPropertyPolymorphic::appendRoots(MRootList& roots) const
+{
+    if (!roots.append(name_))
+        return false;
+
+    for (const PolymorphicEntry& entry : receivers_) {
+        if (!entry.appendRoots(roots))
+            return false;
+    }
+
+    return true;
+}
+
+bool
+MSetPropertyPolymorphic::appendRoots(MRootList& roots) const
+{
+    if (!roots.append(name_))
+        return false;
+
+    for (const PolymorphicEntry& entry : receivers_) {
+        if (!entry.appendRoots(roots))
+            return false;
+    }
+
+    return true;
+}
+
+bool
+MGuardReceiverPolymorphic::appendRoots(MRootList& roots) const
+{
+    for (const ReceiverGuard& guard : receivers_) {
+        if (!roots.append(guard))
+            return false;
+    }
+    return true;
+}
+
+bool
+MDispatchInstruction::appendRoots(MRootList& roots) const
+{
+    for (const Entry& entry : map_) {
+        if (!entry.appendRoots(roots))
+            return false;
+    }
+    return true;
+}
+
+bool
+MObjectGroupDispatch::appendRoots(MRootList& roots) const
+{
+    if (inlinePropertyTable_ && !inlinePropertyTable_->appendRoots(roots))
+        return false;
+    return MDispatchInstruction::appendRoots(roots);
+}
+
+bool
+MFunctionDispatch::appendRoots(MRootList& roots) const
+{
+    return MDispatchInstruction::appendRoots(roots);
+}
+
+bool
+MConstant::appendRoots(MRootList& roots) const
+{
+    switch (type()) {
+      case MIRType::String:
+        return roots.append(toString());
+      case MIRType::Symbol:
+        return roots.append(toSymbol());
+      case MIRType::Object:
+        return roots.append(&toObject());
+      case MIRType::Undefined:
+      case MIRType::Null:
+      case MIRType::Boolean:
+      case MIRType::Int32:
+      case MIRType::Double:
+      case MIRType::Float32:
+      case MIRType::MagicOptimizedArguments:
+      case MIRType::MagicOptimizedOut:
+      case MIRType::MagicHole:
+      case MIRType::MagicIsConstructing:
+      case MIRType::MagicUninitializedLexical:
+        return true;
+      default:
+        MOZ_CRASH("Unexpected type");
+    }
+}
+
 void
 MGetPropertyCache::setBlock(MBasicBlock* block)
 {
@@ -5374,9 +5460,10 @@ MAsmJSUnsignedToFloat32::foldsTo(TempAllocator& alloc)
 
 MAsmJSCall*
 MAsmJSCall::New(TempAllocator& alloc, const wasm::CallSiteDesc& desc, Callee callee,
-                const Args& args, MIRType resultType, size_t spIncrement)
+                const Args& args, MIRType resultType, size_t spIncrement,
+                bool preservesTlsReg)
 {
-    MAsmJSCall* call = new(alloc) MAsmJSCall(desc, callee, spIncrement);
+    MAsmJSCall* call = new(alloc) MAsmJSCall(desc, callee, spIncrement, preservesTlsReg);
     call->setResultType(resultType);
 
     if (!call->argRegs_.init(alloc, args.length()))
@@ -5894,17 +5981,17 @@ jit::PropertyReadNeedsTypeBarrier(JSContext* propertycx,
     return res;
 }
 
-BarrierKind
+ResultWithOOM<BarrierKind>
 jit::PropertyReadOnPrototypeNeedsTypeBarrier(IonBuilder* builder,
                                              MDefinition* obj, PropertyName* name,
                                              TemporaryTypeSet* observed)
 {
     if (observed->unknown())
-        return BarrierKind::NoBarrier;
+        return ResultWithOOM<BarrierKind>::ok(BarrierKind::NoBarrier);
 
     TypeSet* types = obj->resultTypeSet();
     if (!types || types->unknownObject())
-        return BarrierKind::TypeSet;
+        return ResultWithOOM<BarrierKind>::ok(BarrierKind::TypeSet);
 
     BarrierKind res = BarrierKind::NoBarrier;
 
@@ -5913,8 +6000,10 @@ jit::PropertyReadOnPrototypeNeedsTypeBarrier(IonBuilder* builder,
         if (!key)
             continue;
         while (true) {
+            if (!builder->alloc().ensureBallast())
+                return ResultWithOOM<BarrierKind>::fail();
             if (!key->hasStableClassAndProto(builder->constraints()))
-                return BarrierKind::TypeSet;
+                return ResultWithOOM<BarrierKind>::ok(BarrierKind::TypeSet);
             if (!key->proto().isObject())
                 break;
             JSObject* proto = builder->checkNurseryObject(key->proto().toObject());
@@ -5922,7 +6011,7 @@ jit::PropertyReadOnPrototypeNeedsTypeBarrier(IonBuilder* builder,
             BarrierKind kind = PropertyReadNeedsTypeBarrier(builder->constraints(),
                                                             key, name, observed);
             if (kind == BarrierKind::TypeSet)
-                return BarrierKind::TypeSet;
+                return ResultWithOOM<BarrierKind>::ok(BarrierKind::TypeSet);
 
             if (kind == BarrierKind::TypeTagOnly) {
                 MOZ_ASSERT(res == BarrierKind::NoBarrier || res == BarrierKind::TypeTagOnly);
@@ -5933,7 +6022,7 @@ jit::PropertyReadOnPrototypeNeedsTypeBarrier(IonBuilder* builder,
         }
     }
 
-    return res;
+    return ResultWithOOM<BarrierKind>::ok(res);
 }
 
 bool
@@ -6070,6 +6159,9 @@ PropertyTypeIncludes(TempAllocator& alloc, HeapTypeSetKey property,
             types = types->clone(alloc.lifoAlloc());
         else
             types = alloc.lifoAlloc()->new_<TemporaryTypeSet>();
+        if (!types) {
+            return false;
+        }
         types->addType(newType, alloc.lifoAlloc());
     }
 

@@ -84,7 +84,7 @@ var ignoreCallees = {
     "GrGLInterface.fCallback" : true,
     "std::strstreambuf._M_alloc_fun" : true,
     "std::strstreambuf._M_free_fun" : true,
-    "struct js::gc::Callback<void (*)(JSRuntime*, void*)>.op" : true,
+    "struct js::gc::Callback<void (*)(JSContext*, void*)>.op" : true,
     "mozilla::ThreadSharedFloatArrayBufferList::Storage.mFree" : true,
 };
 
@@ -192,18 +192,6 @@ var ignoreFunctions = {
     // up wrapping a pending exception. See bug 898815 for the heavyweight fix.
     "void js::AutoCompartment::~AutoCompartment(int32)" : true,
     "void JSAutoCompartment::~JSAutoCompartment(int32)" : true,
-    "void js::AutoClearTypeInferenceStateOnOOM::~AutoClearTypeInferenceStateOnOOM()" : true,
-
-    // Bug 948646 - the only thing AutoJSContext's constructor calls
-    // is an Init() routine whose entire body is covered with an
-    // AutoSuppressGCAnalysis. AutoSafeJSContext is the same thing, just with
-    // a different value for the 'aSafe' parameter.
-    "void mozilla::AutoJSContext::AutoJSContext(mozilla::detail::GuardObjectNotifier*)" : true,
-    "void mozilla::AutoSafeJSContext::~AutoSafeJSContext(int32)" : true,
-
-    // And these are workarounds to avoid even more analysis work,
-    // which would sadly still be needed even with bug 898815.
-    "void js::AutoCompartment::AutoCompartment(js::ExclusiveContext*, JSCompartment*)": true,
 
     // The nsScriptNameSpaceManager functions can't actually GC.  They
     // just use a PLDHashTable which has function pointers, which makes the
@@ -318,6 +306,8 @@ function isRootedGCPointerTypeName(name)
     if (name == "ErrorResult" ||
         name == "JSErrorResult" ||
         name == "WrappableJSErrorResult" ||
+        name == "binding_detail::FastErrorResult" ||
+        name == "IgnoredErrorResult" ||
         name == "frontend::TokenStream" ||
         name == "frontend::TokenStream::Position" ||
         name == "ModuleValidator")

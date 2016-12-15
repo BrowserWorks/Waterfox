@@ -11,28 +11,12 @@
   --searchbox-border-color: #ffbf00;
   --searcbox-no-match-background-color: #ffe5e5;
   --searcbox-no-match-border-color: #e52e2e;
-  --magnifying-glass-image: url(images/magnifying-glass-light.png);
-  --magnifying-glass-image-2x: url(images/magnifying-glass-light@2x.png);
+  --magnifying-glass-image: url(images/search.svg);
+  --filter-image: url(images/filter.svg);
   --tool-options-image: url(images/tool-options.svg);
-  --close-button-image: url(chrome://devtools/skin/images/close.svg);
-  --icon-filter: invert(1);
-  --dock-bottom-image: url(chrome://devtools/skin/images/dock-bottom.svg);
-  --dock-side-image: url(chrome://devtools/skin/images/dock-side.svg);
-  --dock-undock-image: url(chrome://devtools/skin/images/dock-undock.svg);
+  --icon-filter: none;
+  --checked-icon-filter: url(images/filters.svg#checked-icon-state);
   --toolbar-button-border-color: rgba(170, 170, 170, .5);
-
-  /* Toolbox buttons */
-  --command-paintflashing-image: url(images/command-paintflashing.svg);
-  --command-screenshot-image: url(images/command-screenshot.svg);
-  --command-responsive-image: url(images/command-responsivemode.svg);
-  --command-scratchpad-image: url(images/command-scratchpad.svg);
-  --command-pick-image: url(images/command-pick.svg);
-  --command-frames-image: url(images/command-frames.svg);
-  --command-splitconsole-image: url(images/command-console.svg);
-  --command-noautohide-image: url(images/command-noautohide.svg);
-  --command-eyedropper-image: url(images/command-eyedropper.svg);
-  --command-rulers-image: url(images/command-rulers.svg);
-  --command-measure-image: url(images/command-measure.svg);
 }
 
 .theme-dark {
@@ -42,53 +26,20 @@
   --searchbox-border-color: #d99f2b;
   --searcbox-no-match-background-color: #402325;
   --searcbox-no-match-border-color: #cc3d3d;
-  --magnifying-glass-image: url(images/magnifying-glass.png);
-  --magnifying-glass-image-2x: url(images/magnifying-glass@2x.png);
+  --magnifying-glass-image: url(images/search.svg);
+  --filter-image: url(images/filter.svg);
   --tool-options-image: url(images/tool-options.svg);
-  --close-button-image: url(chrome://devtools/skin/images/close.svg);
-  --icon-filter: none;
-  --dock-bottom-image: url(chrome://devtools/skin/images/dock-bottom.svg);
-  --dock-side-image: url(chrome://devtools/skin/images/dock-side.svg);
-  --dock-undock-image: url(chrome://devtools/skin/images/dock-undock.svg);
+  --icon-filter: invert(1);
+  --checked-icon-filter: url(images/filters.svg#checked-icon-state);
   --toolbar-button-border-color: rgba(0, 0, 0, .4);
-
-  /* Toolbox buttons */
-  --command-paintflashing-image: url(images/command-paintflashing.svg);
-  --command-screenshot-image: url(images/command-screenshot.svg);
-  --command-responsive-image: url(images/command-responsivemode.svg);
-  --command-scratchpad-image: url(images/command-scratchpad.svg);
-  --command-pick-image: url(images/command-pick.svg);
-  --command-frames-image: url(images/command-frames.svg);
-  --command-splitconsole-image: url(images/command-console.svg);
-  --command-noautohide-image: url(images/command-noautohide.svg);
-  --command-eyedropper-image: url(images/command-eyedropper.svg);
-  --command-rulers-image: url(images/command-rulers.svg);
-  --command-measure-image: url(images/command-measure.svg);
 }
 
 .theme-firebug {
-  --magnifying-glass-image: url(images/firebug/filter.svg);
-  --magnifying-glass-image-2x: url(images/firebug/filter.svg);
+  --magnifying-glass-image: url(images/search.svg);
   --tool-options-image: url(images/firebug/tool-options.svg);
-  --close-button-image: url(chrome://devtools/skin/images/firebug/close.svg);
-  --icon-filter: invert(1);
-  --dock-bottom-image: url(chrome://devtools/skin/images/firebug/dock-bottom.svg);
-  --dock-side-image: url(chrome://devtools/skin/images/firebug/dock-side.svg);
-  --dock-undock-image: url(chrome://devtools/skin/images/firebug/dock-undock.svg);
+  --icon-filter: none;
+  --checked-icon-filter: none;
   --toolbar-button-border-color: rgba(170, 170, 170, .5);
-
-  /* Toolbox buttons */
-  --command-paintflashing-image: url(images/firebug/command-paintflashing.svg);
-  --command-screenshot-image: url(images/firebug/command-screenshot.svg);
-  --command-responsive-image: url(images/firebug/command-responsivemode.svg);
-  --command-scratchpad-image: url(images/firebug/command-scratchpad.svg);
-  --command-pick-image: url(images/firebug/command-pick.svg);
-  --command-frames-image: url(images/firebug/command-frames.svg);
-  --command-splitconsole-image: url(images/firebug/command-console.svg);
-  --command-noautohide-image: url(images/firebug/command-noautohide.svg);
-  --command-eyedropper-image: url(images/firebug/command-eyedropper.svg);
-  --command-rulers-image: url(images/firebug/command-rulers.svg);
-  --command-measure-image: url(images/firebug/command-measure.svg);
 }
 
 
@@ -125,6 +76,15 @@
 .devtools-toolbar checkbox .checkbox-label-box .checkbox-label {
   margin: 0 6px !important; /* overrides .checkbox-label from checkbox.css */
   padding: 0;
+}
+
+.devtools-separator {
+  margin: 0 2px;
+  width: 2px;
+  background-image: linear-gradient(transparent 15%, var(--theme-splitter-color) 15%, var(--theme-splitter-color) 85%, transparent 85%);
+  background-size: 1px 100%;
+  background-repeat: no-repeat;
+  background-position: 0, 1px, 2px;
 }
 
 /* Toolbar buttons */
@@ -223,11 +183,6 @@
   display: flex;
 }
 
-/* Invert toolbox button icons in Firebug theme. */
-.theme-firebug #toolbox-buttons toolbarbutton image {
-  filter: invert(1);
-}
-
 .devtools-toolbarbutton:not([label]) > .toolbarbutton-text {
   display: none;
 }
@@ -295,7 +250,7 @@
 .devtools-button[open]:empty::before,
 .devtools-toolbarbutton:not([label])[checked=true] > image,
 .devtools-toolbarbutton:not([label])[open=true] > image {
-  filter: url(images/filters.svg#checked-icon-state);
+  filter: var(--checked-icon-filter);
 }
 
 /* Icon-and-text buttons */
@@ -376,57 +331,79 @@
 /* Text input */
 
 .devtools-textinput,
-.devtools-searchinput {
+.devtools-searchinput,
+.devtools-filterinput {
   -moz-appearance: none;
   margin: 1px 3px;
   border: 1px solid;
   border-radius: 2px;
   padding: 4px 6px;
   border-color: var(--theme-splitter-color);
+  font: message-box;
 }
 
 :root[platform="mac"] .devtools-textinput,
-:root[platform="mac"] .devtools-searchinput {
+:root[platform="mac"] .devtools-searchinput,
+:root[platform="mac"] .devtools-filterinput {
   border-radius: 20px;
 }
 
-.devtools-searchinput {
+.devtools-searchinput,
+.devtools-filterinput {
   padding: 0;
   padding-inline-start: 22px;
   padding-inline-end: 4px;
-  background-image: var(--magnifying-glass-image);
   background-position: 8px center;
   background-size: 11px 11px;
   background-repeat: no-repeat;
   font-size: inherit;
 }
 
+.devtools-searchinput {
+  background-image: var(--magnifying-glass-image);
+}
+
+.devtools-filterinput {
+  background-image: url(images/filter.svg#filterinput);
+}
+
 .devtools-searchinput:-moz-locale-dir(rtl),
-.devtools-searchinput:dir(rtl) {
+.devtools-searchinput:dir(rtl),
+.devtools-filterinput:-moz-locale-dir(rtl),
+.devtools-filterinput:dir(rtl) {
   background-position: calc(100% - 8px) center;
 }
 
-.devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-icon {
+.devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-icon,
+.devtools-filterinput > .textbox-input-box > .textbox-search-icons > .textbox-search-icon {
   visibility: hidden;
+}
+
+.devtools-searchinput .textbox-input::-moz-placeholder,
+.devtools-filterinput .textbox-input::-moz-placeholder {
+  font-style: normal;
 }
 
 /* Searchbox is a div container element for a search input element */
 .devtools-searchbox {
   display: flex;
   flex: 1;
+  height: 23px;
   position: relative;
   padding: 0 3px;
 }
 
 /* The spacing is accomplished with a padding on the searchbox */
 .devtools-searchbox > .devtools-textinput,
-.devtools-searchbox > .devtools-searchinput {
+.devtools-searchbox > .devtools-searchinput,
+.devtools-searchbox > .devtools-filterinput {
   margin-left: 0;
   margin-right: 0;
 }
 
-.devtools-searchbox > .devtools-textinput:-moz-focusring,
-.devtools-searchbox > .devtools-searchinput:-moz-focusring {
+.devtools-textinput:focus,
+.devtools-searchinput:focus,
+.devtools-filterinput:focus {
   border-color: var(--theme-focus-border-color-textbox);
   box-shadow: var(--theme-focus-box-shadow-textbox);
   transition: all 0.2s ease-in-out;
@@ -436,11 +413,13 @@
 /* Don't add 'double spacing' for inputs that are at beginning / end
    of a toolbar (since the toolbar has it's own spacing). */
 .devtools-toolbar > .devtools-textinput:first-child,
-.devtools-toolbar > .devtools-searchinput:first-child {
+.devtools-toolbar > .devtools-searchinput:first-child,
+.devtools-toolbar > .devtools-filterinput:first-child {
   margin-inline-start: 0;
 }
 .devtools-toolbar > .devtools-textinput:last-child,
-.devtools-toolbar > .devtools-searchinput:last-child {
+.devtools-toolbar > .devtools-searchinput:last-child,
+.devtools-toolbar > .devtools-filterinput:last-child {
   margin-inline-end: 0;
 }
 .devtools-toolbar > .devtools-searchbox:first-child {
@@ -453,7 +432,6 @@
 .devtools-rule-searchbox {
   -moz-box-flex: 1;
   width: 100%;
-  font: inherit;
 }
 
 .devtools-rule-searchbox[filled] {
@@ -465,10 +443,6 @@
 .devtools-style-searchbox-no-match {
   background-color: var(--searcbox-no-match-background-color) !important;
   border-color: var(--searcbox-no-match-border-color) !important;
-}
-
-.devtools-no-search-result {
-  border-color: var(--theme-highlight-red) !important;
 }
 
 .devtools-searchinput-clear {
@@ -505,40 +479,33 @@
   background-position: -16px 0;
 }
 
-.theme-dark .devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear {
+.theme-dark .devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear,
+.theme-dark .devtools-filterinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear {
   list-style-image: url("chrome://devtools/skin/images/search-clear-dark.svg");
   -moz-image-region: rect(0, 16px, 16px, 0);
 }
 
-.theme-light .devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear {
+.theme-light .devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear,
+.theme-light .devtools-filterinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear {
   list-style-image: url("chrome://devtools/skin/images/search-clear-light.svg");
   -moz-image-region: rect(0, 16px, 16px, 0);
 }
 
-.devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear {
+.devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear,
+.devtools-filterinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear {
   margin-bottom: 0;
 }
 
-.devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear:hover {
+.devtools-searchinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear:hover,
+.devtools-filterinput > .textbox-input-box > .textbox-search-icons > .textbox-search-clear:hover {
   -moz-image-region: rect(0, 32px, 16px, 16px);
-}
-
-@media (min-resolution: 1.1dppx) {
-  .devtools-searchinput {
-    background-image: var(--magnifying-glass-image-2x);
-  }
-}
-
-/* Close button */
-
-#toolbox-close::before {
-  background-image: var(--close-button-image);
 }
 
 /* In-tools sidebar */
 .devtools-sidebar-tabs {
   -moz-appearance: none;
   margin: 0;
+  height: 100%;
 }
 
 .devtools-sidebar-tabs > tabpanels {
@@ -628,375 +595,21 @@
   background: var(--theme-selection-background);
 }
 
-/* Toolbox - moved from toolbox.css.
- * Rules that apply to the global toolbox like command buttons,
- * devtools tabs, docking buttons, etc. */
-
-#toolbox-controls > button,
-#toolbox-dock-buttons > button {
-  -moz-appearance: none;
-  -moz-user-focus: normal;
-  border: none;
-  margin: 0 4px;
-  min-width: 16px;
-  width: 16px;
-}
-
-/* Save space in Firebug theme */
-.theme-firebug #toolbox-controls button {
-  margin-inline-start: 0 !important;
-  min-width: 12px;
-  margin: 0 1px;
-}
-
-#toolbox-dock-bottom::before {
-  background-image: var(--dock-bottom-image);
-}
-
-#toolbox-dock-side::before {
-  background-image: var(--dock-side-image);
-}
-
-#toolbox-dock-window::before {
-  background-image: var(--dock-undock-image);
-}
-
-#toolbox-dock-bottom-minimize {
-  /* Bug 1177463 - The minimize button is currently hidden until we agree on
-     the UI for it, and until bug 1173849 is fixed too. */
-  display: none;
-}
-
-#toolbox-dock-bottom-minimize::before {
-  background-image: url("chrome://devtools/skin/images/dock-bottom-minimize@2x.png");
-}
-
-#toolbox-dock-bottom-minimize.minimized::before {
-  background-image: url("chrome://devtools/skin/images/dock-bottom-maximize@2x.png");
-}
-
-#toolbox-dock-window,
-#toolbox-dock-bottom,
-#toolbox-dock-side {
-  opacity: 0.8;
-}
-
-#toolbox-dock-window:hover,
-#toolbox-dock-bottom:hover,
-#toolbox-dock-side:hover {
-  opacity: 1;
-}
-
-.devtools-separator {
-  margin: 0 2px;
-  width: 2px;
-  background-image: linear-gradient(transparent 15%, var(--theme-splitter-color) 15%, var(--theme-splitter-color) 85%, transparent 85%);
-  background-size: 1px 100%;
-  background-repeat: no-repeat;
-  background-position: 0, 1px, 2px;
-}
-
-#toolbox-buttons:empty + .devtools-separator,
-.devtools-separator[invisible] {
-  visibility: hidden;
-}
-
-#toolbox-controls-separator {
-  margin: 0;
-}
-
-/* Command buttons */
-
-.command-button {
-  padding: 0;
-  margin: 0;
-  position: relative;
-  -moz-user-focus: normal;
-}
-
-.command-button::before {
-  opacity: 0.7;
-}
-
-.command-button:hover {
-  background-color: var(--toolbar-tab-hover);
-}
-
-.command-button:hover:active,
-.command-button[checked=true]:not(:hover) {
-  background-color: var(--toolbar-tab-hover-active)
-}
-
-.command-button:hover::before {
-  opacity: 0.85;
-}
-
-.command-button:hover:active::before,
-.command-button[checked=true]::before,
-.command-button[open=true]::before {
-  opacity: 1;
-}
-
-/* Toolbox command buttons */
-
-#command-button-paintflashing::before {
-  background-image: var(--command-paintflashing-image);
-}
-
-#command-button-screenshot::before {
-  background-image: var(--command-screenshot-image);
-}
-
-#command-button-responsive::before {
-  background-image: var(--command-responsive-image);
-}
-
-#command-button-scratchpad::before {
-  background-image: var(--command-scratchpad-image);
-}
-
-#command-button-pick::before {
-  background-image: var(--command-pick-image);
-}
-
-#command-button-splitconsole::before {
-  background-image: var(--command-splitconsole-image);
-}
-
-#command-button-noautohide::before {
-  background-image: var(--command-noautohide-image);
-}
-
-#command-button-eyedropper::before {
-  background-image: var(--command-eyedropper-image);
-}
-
-#command-button-rulers::before {
-  background-image: var(--command-rulers-image);
-}
-
-#command-button-measure::before {
-  background-image: var(--command-measure-image);
-}
-
-#command-button-frames::before {
-  background-image: var(--command-frames-image);
-}
-
-#command-button-frames {
-  background: url("chrome://devtools/skin/images/dropmarker.svg") no-repeat right;
-
-  /* Override background-size from the command-button.
-    The drop down arrow is smaller */
-  background-size: 8px 4px !important;
-}
-
-#command-button-frames:-moz-dir(rtl) {
-  background-position: left;
-}
-
-/* Tabs */
-
-.devtools-tabbar {
-  -moz-appearance: none;
-  min-height: 24px;
-  border: 0px solid;
-  border-bottom-width: 1px;
-  padding: 0;
-  background: var(--theme-tab-toolbar-background);
-  border-bottom-color: var(--theme-splitter-color);
-}
-
-#toolbox-tabs {
-  margin: 0;
-}
-
-.toolbox-panel {
-  display: -moz-box;
-  -moz-box-flex: 1;
-  visibility: collapse;
-}
-
-.toolbox-panel[selected] {
-  visibility: visible;
-}
-
-.devtools-tab {
-  -moz-appearance: none;
-  -moz-binding: url("chrome://global/content/bindings/general.xml#control-item");
-  -moz-box-align: center;
-  min-width: 32px;
-  min-height: 24px;
-  max-width: 100px;
-  margin: 0;
-  padding: 0;
-  border-style: solid;
-  border-width: 0;
-  border-inline-start-width: 1px;
-  -moz-box-align: center;
-  -moz-user-focus: normal;
-  -moz-box-flex: 1;
-}
-
-/* Save space on the tab-strip in Firebug theme */
-.theme-firebug .devtools-tab {
-  -moz-box-flex: initial;
-}
-
-.theme-dark .devtools-tab {
-  color: var(--theme-body-color-alt);
-  border-color: #42484f;
-}
-
-.theme-light .devtools-tab {
-  color: var(--theme-body-color);
-  border-color: var(--theme-splitter-color);
-}
-
-.theme-dark .devtools-tab:hover {
-  color: #ced3d9;
-}
-
-.devtools-tab:hover {
-  background-color: var(--toolbar-tab-hover);
-}
-
-.theme-dark .devtools-tab:hover:active {
-  color: var(--theme-selection-color);
-}
-
-.devtools-tab:hover:active {
-  background-color: var(--toolbar-tab-hover-active);
-}
-
-.theme-dark .devtools-tab:not([selected])[highlighted] {
-  background-color: hsla(99, 100%, 14%, .3);
-}
-
-.theme-light .devtools-tab:not([selected])[highlighted] {
-  background-color: rgba(44, 187, 15, .2);
-}
-
-/* Display execution pointer in the Debugger tab to indicate
-   that the debugger is paused. */
-.theme-firebug #toolbox-tab-jsdebugger.devtools-tab:not([selected])[highlighted] {
-  background-color: rgba(89, 178, 234, .2);
-  background-image: url(chrome://devtools/skin/images/firebug/tool-debugger-paused.svg);
-  background-repeat: no-repeat;
-  padding-left: 13px !important;
-  background-position: 3px 6px;
-}
-
-.devtools-tab > image {
-  border: none;
-  margin: 0;
-  margin-inline-start: 4px;
-  opacity: 0.6;
-  max-height: 16px;
-  width: 16px; /* Prevents collapse during theme switching */
-}
-
-.devtools-tab > label {
-  white-space: nowrap;
-  margin: 0 4px;
-}
-
-.devtools-tab:hover > image {
-  opacity: 0.8;
-}
-
-.devtools-tab:active > image,
-.devtools-tab[selected] > image {
-  opacity: 1;
-}
-
-.devtools-tabbar .devtools-tab[selected],
-.devtools-tabbar .devtools-tab[selected]:hover:active {
-  color: var(--theme-selection-color);
-  background-color: var(--theme-selection-background);
-}
-
-#toolbox-tabs .devtools-tab[selected],
-#toolbox-tabs .devtools-tab[highlighted] {
-  border-width: 0;
-  padding-inline-start: 1px;
-}
-
-#toolbox-tabs .devtools-tab[selected]:last-child,
-#toolbox-tabs .devtools-tab[highlighted]:last-child {
-  padding-inline-end: 1px;
-}
-
-#toolbox-tabs .devtools-tab[selected] + .devtools-tab,
-#toolbox-tabs .devtools-tab[highlighted] + .devtools-tab {
-  border-inline-start-width: 0;
-  padding-inline-start: 1px;
-}
-
-#toolbox-tabs .devtools-tab:first-child[selected] {
-  border-inline-start-width: 0;
-}
-
-#toolbox-tabs .devtools-tab:last-child {
-  border-inline-end-width: 1px;
-}
-
-.devtools-tab:not([highlighted]) > .highlighted-icon,
-.devtools-tab[selected] > .highlighted-icon,
-.devtools-tab:not([selected])[highlighted] > .default-icon {
-  visibility: collapse;
-}
-
-/* The options tab is special - it doesn't have the same parent
-   as the other tabs (toolbox-option-container vs toolbox-tabs) */
-#toolbox-option-container .devtools-tab:not([selected]) {
-  background-color: transparent;
-}
-#toolbox-option-container .devtools-tab {
-  border-color: transparent;
-  border-width: 0;
-  padding-inline-start: 1px;
-}
-#toolbox-tab-options > image {
-  margin: 0 8px;
-}
-
-/* Invert the colors of certain dark theme images for displaying
- * inside of the light theme.
+/* Invert the colors of certain light theme images for displaying
+ * inside of the dark theme.
  */
-.theme-light .devtools-tab[icon-invertable] > image,
-.theme-light .devtools-toolbarbutton > image,
-.theme-light .devtools-button::before,
-.theme-light #breadcrumb-separator-normal,
-.theme-light .scrollbutton-up > .toolbarbutton-icon,
-.theme-light .scrollbutton-down > .toolbarbutton-icon,
-.theme-light #black-boxed-message-button .button-icon,
-.theme-light #requests-menu-perf-notice-button .button-icon,
-.theme-light #requests-menu-network-summary-button .button-icon,
-.theme-light #toggle-breakpoints[checked] > image,
-.theme-light .event-tooltip-debugger-icon {
+.devtools-tab[icon-invertable] > image,
+.devtools-toolbarbutton > image,
+.devtools-button::before,
+#breadcrumb-separator-normal,
+.scrollbutton-up > .toolbarbutton-icon,
+.scrollbutton-down > .toolbarbutton-icon,
+#black-boxed-message-button .button-icon,
+#requests-menu-perf-notice-button .button-icon,
+#canvas-debugging-empty-notice-button .button-icon,
+#toggle-breakpoints[checked] > image,
+.event-tooltip-debugger-icon {
   filter: var(--icon-filter);
-}
-
-/* Reset the filter defined above */
-.theme-light .command-button:not(.command-button-invertable) {
-  filter: none !important;
-}
-
-/* Since selected backgrounds are blue, we want to use the normal
- * (light) icons. */
-.theme-light .devtools-tab[icon-invertable][selected] > image,
-.theme-light .devtools-tab[icon-invertable][highlighted] > image {
-  filter: none !important;
-}
-
-.theme-light .command-button:hover {
-  background-color: inherit;
-}
-
-.theme-light .command-button:hover:active,
-.theme-light .command-button[checked=true]:not(:hover) {
-  background-color: inherit;
 }
 
 .hidden-labels-box:not(.visible) > label,
@@ -1013,7 +626,6 @@
 .devtools-side-splitter {
   background-color: var(--theme-splitter-color);
 }
-
 
 /* Throbbers */
 .devtools-throbber::before {

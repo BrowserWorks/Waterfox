@@ -10,6 +10,7 @@
 #include "Accessible.h"
 
 #include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 namespace a11y {
@@ -38,6 +39,10 @@ private:
     { return mParent->Document()->Controller(); }
 
   static EventTree* const kNoEventTree;
+
+#ifdef A11Y_LOG
+  static const char* PrefixLog(void* aData, Accessible*);
+#endif
 
   Accessible* mParent;
   uint32_t mStartIdx;
@@ -97,8 +102,8 @@ private:
   void Mutated(AccMutationEvent* aEv);
   void Clear();
 
-  nsAutoPtr<EventTree> mFirst;
-  nsAutoPtr<EventTree> mNext;
+  UniquePtr<EventTree> mFirst;
+  UniquePtr<EventTree> mNext;
 
   Accessible* mContainer;
   nsTArray<RefPtr<AccMutationEvent>> mDependentEvents;

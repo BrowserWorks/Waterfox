@@ -3,13 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef MOZ_WIDGET_QT
-#include <QString>
-#include <QtCore/QLocale>
-#endif
-
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsILocale.h"
 #include "nsILocaleService.h"
 #include "nsLocale.h"
@@ -123,12 +117,8 @@ nsLocaleService::nsLocaleService(void)
     RefPtr<nsLocale> resultLocale(new nsLocale());
     NS_ENSURE_TRUE_VOID(resultLocale);
 
-#ifdef MOZ_WIDGET_QT
-    const char* lang = QLocale::system().name().toUtf8();
-#else
     // Get system configuration
     const char* lang = getenv("LANG");
-#endif
 
     nsAutoString xpLocale, platformLocale;
     nsAutoString category, category_platform;

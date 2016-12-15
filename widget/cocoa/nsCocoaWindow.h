@@ -20,36 +20,6 @@ class nsChildView;
 class nsMenuBarX;
 @class ChildView;
 
-// If we are using an SDK older than 10.7, define bits we need that are missing
-// from it.
-#if !defined(MAC_OS_X_VERSION_10_7) || \
-    MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
-
-enum {
-    NSWindowAnimationBehaviorDefault = 0,
-    NSWindowAnimationBehaviorNone = 2,
-    NSWindowAnimationBehaviorDocumentWindow = 3,
-    NSWindowAnimationBehaviorUtilityWindow = 4,
-    NSWindowAnimationBehaviorAlertPanel = 5,
-    NSWindowCollectionBehaviorFullScreenPrimary = 128, // 1 << 7
-};
-
-typedef NSInteger NSWindowAnimationBehavior;
-
-@interface NSWindow (LionWindowFeatures)
-- (void)setAnimationBehavior:(NSWindowAnimationBehavior)newAnimationBehavior;
-- (void)toggleFullScreen:(id)sender;
-@end
-
-typedef struct NSEdgeInsets {
-    CGFloat top;
-    CGFloat left;
-    CGFloat bottom;
-    CGFloat right;
-} NSEdgeInsets;
-
-#endif
-
 typedef struct _nsCocoaWindowList {
   _nsCocoaWindowList() : prev(nullptr), window(nullptr) {}
   struct _nsCocoaWindowList *prev;
@@ -182,11 +152,7 @@ typedef struct _nsCocoaWindowList {
 
 @end
 
-#if defined( MAC_OS_X_VERSION_10_6 ) && ( MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6 )
 @interface WindowDelegate : NSObject <NSWindowDelegate>
-#else
-@interface WindowDelegate : NSObject
-#endif
 {
   nsCocoaWindow* mGeckoWindow; // [WEAK] (we are owned by the window)
   // Used to avoid duplication when we send NS_ACTIVATE and
@@ -206,7 +172,7 @@ typedef struct _nsCocoaWindowList {
 
 @class ToolbarWindow;
 
-// NSColor subclass that allows us to draw separate colors both in the titlebar 
+// NSColor subclass that allows us to draw separate colors both in the titlebar
 // and for background of the window.
 @interface TitlebarAndBackgroundColor : NSColor
 {
@@ -336,8 +302,7 @@ public:
     virtual nsresult ConfigureChildren(const nsTArray<Configuration>& aConfigurations) override;
     virtual LayerManager* GetLayerManager(PLayerTransactionChild* aShadowManager = nullptr,
                                           LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
-                                          LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT,
-                                          bool* aAllowRetaining = nullptr) override;
+                                          LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT) override;
     NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                              nsEventStatus& aStatus) override;
     NS_IMETHOD CaptureRollupEvents(nsIRollupListener * aListener, bool aDoCapture) override;
@@ -363,7 +328,7 @@ public:
     void DispatchSizeModeEvent();
 
     // be notified that a some form of drag event needs to go into Gecko
-    virtual bool DragEvent(unsigned int aMessage, Point aMouseGlobal, UInt16 aKeyModifiers);
+    virtual bool DragEvent(unsigned int aMessage, mozilla::gfx::Point aMouseGlobal, UInt16 aKeyModifiers);
 
     bool HasModalDescendents() { return mNumModalDescendents > 0; }
     NSWindow *GetCocoaWindow() { return mWindow; }
@@ -387,10 +352,6 @@ public:
     void SetPopupWindowLevel();
 
     NS_IMETHOD         ReparentNativeWidget(nsIWidget* aNewParent) override;
-
-    CompositorWidgetProxy* NewCompositorWidgetProxy() override {
-      return nullptr;
-    }
 
 protected:
   virtual ~nsCocoaWindow();
@@ -446,9 +407,8 @@ protected:
 
   // Only true on 10.7+ if SetShowsFullScreenButton(true) is called.
   bool                 mSupportsNativeFullScreen;
-  // Whether we are currently using Lion native fullscreen. It could be
-  // false either because we are not on Lion, or we are in the DOM
-  // fullscreen where we do not use the native fullscreen.
+  // Whether we are currently using native fullscreen. It could be false because
+  // we are in the DOM fullscreen where we do not use the native fullscreen.
   bool                 mInNativeFullScreenMode;
 
   bool                 mIsAnimationSuppressed;

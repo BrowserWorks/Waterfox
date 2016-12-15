@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -104,3 +104,8 @@ if CONFIG['GNU_AS']:
             '-march=armv7-a',
             '-mfpu=neon',
         ]
+
+        if CONFIG['CLANG_CXX']:
+            ASFLAGS += [
+                '-no-integrated-as',
+            ]

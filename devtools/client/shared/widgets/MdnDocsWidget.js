@@ -25,8 +25,12 @@
 "use strict";
 
 const Services = require("Services");
-const Promise = require("promise");
+const defer = require("devtools/shared/defer");
 const {getCSSLexer} = require("devtools/shared/css-lexer");
+const EventEmitter = require("devtools/shared/event-emitter");
+const {gDevTools} = require("devtools/client/framework/devtools");
+
+const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
 // Parameters for the XHR request
 // see https://developer.mozilla.org/en-US/docs/MDN/Kuma/API#Document_parameters
@@ -41,8 +45,6 @@ const PAGE_LINK_PARAMS =
 // URL for the page link omits locale, so a locale-specific page will be loaded
 var PAGE_LINK_URL = "https://developer.mozilla.org/docs/Web/CSS/";
 exports.PAGE_LINK_URL = PAGE_LINK_URL;
-
-const BROWSER_WINDOW = "navigator:browser";
 
 const PROPERTY_NAME_COLOR = "theme-fg-color5";
 const PROPERTY_VALUE_COLOR = "theme-fg-color1";
@@ -88,7 +90,7 @@ function appendSyntaxHighlightedCSS(cssText, parentElement) {
    * Create a SPAN node with the given text content and class.
    */
   function createStyledNode(textContent, className) {
-    let newNode = doc.createElement("span");
+    let newNode = doc.createElementNS(XHTML_NS, "span");
     newNode.classList.add(className);
     newNode.textContent = textContent;
     return newNode;
@@ -155,7 +157,7 @@ exports.appendSyntaxHighlightedCSS = appendSyntaxHighlightedCSS;
  * we could not load the page.
  */
 function getMdnPage(pageUrl) {
-  let deferred = Promise.defer();
+  let deferred = defer();
 
   let xhr = new XMLHttpRequest();
 
@@ -198,7 +200,7 @@ function getMdnPage(pageUrl) {
  * we could not load the page.
  */
 function getCssDocs(cssProperty) {
-  let deferred = Promise.defer();
+  let deferred = defer();
   let pageUrl = XHR_CSS_URL + cssProperty + XHR_PARAMS;
 
   getMdnPage(pageUrl).then(parseDocsFromResponse, handleRejection);
@@ -225,9 +227,7 @@ exports.getCssDocs = getCssDocs;
 
 /**
  * The MdnDocsWidget is used by tooltip code that needs to display docs
- * from MDN in a tooltip. The tooltip code loads a document that contains the
- * basic structure of a docs tooltip (loaded from mdn-docs-frame.xhtml),
- * and passes this document into the widget's constructor.
+ * from MDN in a tooltip.
  *
  * In the constructor, the widget does some general setup that's not
  * dependent on the particular item we need docs for.
@@ -235,33 +235,44 @@ exports.getCssDocs = getCssDocs;
  * After that, when the tooltip code needs to display docs for an item, it
  * asks the widget to retrieve the docs and update the document with them.
  *
- * @param {Document} tooltipDocument
- * A DOM document. The widget expects the document to have a particular
- * structure.
+ * @param {Element} tooltipContainer
+ * A DOM element where the MdnDocs widget markup should be created.
  */
-function MdnDocsWidget(tooltipDocument) {
+function MdnDocsWidget(tooltipContainer) {
+  EventEmitter.decorate(this);
+
+  tooltipContainer.innerHTML =
+    `<header>
+       <h1 class="mdn-property-name theme-fg-color5"></h1>
+     </header>
+     <div class="mdn-property-info">
+       <div class="mdn-summary"></div>
+       <pre class="mdn-syntax devtools-monospace"></pre>
+     </div>
+     <footer>
+       <a class="mdn-visit-page theme-link" href="#">Visit MDN (placeholder)</a>
+     </footer>`;
+
   // fetch all the bits of the document that we will manipulate later
   this.elements = {
-    heading: tooltipDocument.getElementById("property-name"),
-    summary: tooltipDocument.getElementById("summary"),
-    syntax: tooltipDocument.getElementById("syntax"),
-    info: tooltipDocument.getElementById("property-info"),
-    linkToMdn: tooltipDocument.getElementById("visit-mdn-page")
+    heading: tooltipContainer.querySelector(".mdn-property-name"),
+    summary: tooltipContainer.querySelector(".mdn-summary"),
+    syntax: tooltipContainer.querySelector(".mdn-syntax"),
+    info: tooltipContainer.querySelector(".mdn-property-info"),
+    linkToMdn: tooltipContainer.querySelector(".mdn-visit-page")
   };
-
-  this.doc = tooltipDocument;
 
   // get the localized string for the link text
   this.elements.linkToMdn.textContent =
     l10n.strings.GetStringFromName("docsTooltip.visitMDN");
 
   // listen for clicks and open in the browser window instead
-  let browserWindow = Services.wm.getMostRecentWindow(BROWSER_WINDOW);
-  this.elements.linkToMdn.addEventListener("click", function (e) {
+  let mainWindow = Services.wm.getMostRecentWindow(gDevTools.chromeWindowType);
+  this.elements.linkToMdn.addEventListener("click", (e) => {
     e.stopPropagation();
     e.preventDefault();
-    let link = e.target.href;
-    browserWindow.gBrowser.addTab(link);
+    mainWindow.openUILinkIn(e.target.href, "tab");
+    this.emit("visitlink");
   });
 }
 
@@ -348,7 +359,7 @@ MdnDocsWidget.prototype = {
       deferred.resolve(this);
     }
 
-    let deferred = Promise.defer();
+    let deferred = defer();
     let elements = this.elements;
 
     initializeDocument(propertyName);
@@ -359,7 +370,6 @@ MdnDocsWidget.prototype = {
 
   destroy: function () {
     this.elements = null;
-    this.doc = null;
   }
 };
 

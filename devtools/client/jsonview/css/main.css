@@ -5,10 +5,10 @@
 
 @import "resource://devtools/client/shared/components/reps/reps.css";
 @import "resource://devtools/client/shared/components/tree/tree-view.css";
+@import "resource://devtools/client/shared/components/tabs/tabs.css";
 
 @import "general.css";
 @import "search-box.css";
-@import "tabs.css";
 @import "toolbar.css";
 @import "json-panel.css";
 @import "text-panel.css";
@@ -40,6 +40,12 @@
 
 .theme-firebug .panelContent {
   height: calc(100% - 30px);
+}
+
+/* JSON View is using bigger font-size for the main tabs so,
+  let's overwrite the default value. */
+.theme-firebug .tabs .tabs-navigation {
+  font-size: 14px;
 }
 
 /******************************************************************************/

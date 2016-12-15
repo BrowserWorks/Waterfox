@@ -2111,9 +2111,24 @@ BytecodeEmitter::checkSideEffects(ParseNode* pn, bool* answer)
       case PNK_TYPEOFEXPR:
       case PNK_VOID:
       case PNK_NOT:
-      case PNK_COMPUTED_NAME:
         MOZ_ASSERT(pn->isArity(PN_UNARY));
         return checkSideEffects(pn->pn_kid, answer);
+
+      // Even if the name expression is effect-free, performing ToPropertyKey on
+      // it might not be effect-free:
+      //
+      //   RegExp.prototype.toString = () => { throw 42; };
+      //   ({ [/regex/]: 0 }); // ToPropertyKey(/regex/) throws 42
+      //
+      //   function Q() {
+      //     ({ [new.target]: 0 });
+      //   }
+      //   Q.toString = () => { throw 17; };
+      //   new Q; // new.target will be Q, ToPropertyKey(Q) throws 17
+      case PNK_COMPUTED_NAME:
+        MOZ_ASSERT(pn->isArity(PN_UNARY));
+        *answer = true;
+        return true;
 
       // Looking up or evaluating the associated name could throw.
       case PNK_TYPEOFNAME:
@@ -7693,13 +7708,21 @@ BytecodeEmitter::emitCallOrNew(ParseNode* pn)
         callop = false;             /* trigger JSOP_UNDEFINED after */
         break;
     }
-    if (!callop) {
-        if (!emit1(JSOP_UNDEFINED))
-            return false;
-    }
 
     bool isNewOp = pn->getOp() == JSOP_NEW || pn->getOp() == JSOP_SPREADNEW ||
-                   pn->getOp() == JSOP_SUPERCALL || pn->getOp() == JSOP_SPREADSUPERCALL;;
+                   pn->getOp() == JSOP_SUPERCALL || pn->getOp() == JSOP_SPREADSUPERCALL;
+
+
+    // Emit room for |this|.
+    if (!callop) {
+        if (isNewOp) {
+            if (!emit1(JSOP_IS_CONSTRUCTING))
+                return false;
+        } else {
+            if (!emit1(JSOP_UNDEFINED))
+                return false;
+        }
+    }
 
     /*
      * Emit code for each argument in order, then emit the JSOP_*CALL or
@@ -8593,7 +8616,7 @@ BytecodeEmitter::emitClass(ParseNode* pn)
         ClassMethod& method = mn->as<ClassMethod>();
         ParseNode& methodName = method.name();
         if (!method.isStatic() &&
-            methodName.isKind(PNK_OBJECT_PROPERTY_NAME) &&
+            (methodName.isKind(PNK_OBJECT_PROPERTY_NAME) || methodName.isKind(PNK_STRING)) &&
             methodName.pn_atom == cx->names().constructor)
         {
             constructor = &method.method();

@@ -78,8 +78,9 @@ class TlsAgent : public PollTarget {
   }
 
 
-  void StartConnect();
-  void CheckKEAType(SSLKEAType type) const;
+  void StartConnect(PRFileDesc *model = nullptr);
+  void CheckKEA(SSLKEAType type) const;
+  void CheckKEA(SSLKEAType type, size_t kea_size) const;
   void CheckAuthType(SSLAuthType type) const;
 
   void DisableAllCiphers();
@@ -93,7 +94,7 @@ class TlsAgent : public PollTarget {
   // Prepares for renegotiation, then actually triggers it.
   void StartRenegotiate();
   bool ConfigServerCert(const std::string& name, bool updateKeyBits = false);
-  bool EnsureTlsSetup();
+  bool EnsureTlsSetup(PRFileDesc *modelSocket = nullptr);
 
   void SetupClientAuth();
   void RequestClientAuth(bool requireAuth);
@@ -103,6 +104,7 @@ class TlsAgent : public PollTarget {
   void ConfigureSessionCache(SessionResumptionMode mode);
   void SetSessionTicketsEnabled(bool en);
   void SetSessionCacheEnabled(bool en);
+  void Set0RttEnabled(bool en);
   void SetVersionRange(uint16_t minver, uint16_t maxver);
   void GetVersionRange(uint16_t* minver, uint16_t* maxver);
   void CheckPreliminaryInfo();
@@ -115,7 +117,7 @@ class TlsAgent : public PollTarget {
                               size_t count);
   void EnableAlpn(const uint8_t* val, size_t len);
   void CheckAlpn(SSLNextProtoState expected_state,
-                 const std::string& expected) const;
+                 const std::string& expected = "") const;
   void EnableSrtp();
   void CheckSrtp() const;
   void CheckErrorCode(int32_t expected) const;
@@ -127,9 +129,11 @@ class TlsAgent : public PollTarget {
   void ResetSentBytes(); // Hack to test drops.
   void EnableExtendedMasterSecret();
   void CheckExtendedMasterSecret(bool expected);
+  void CheckEarlyDataAccepted(bool expected);
   void DisableRollbackDetection();
   void EnableCompression();
   void SetDowngradeCheckVersion(uint16_t version);
+  void CheckSecretsDestroyed();
 
   const std::string& name() const { return name_; }
 
@@ -403,6 +407,11 @@ class TlsAgentTestClient : public TlsAgentTestBase,
 class TlsAgentStreamTestClient : public TlsAgentTestBase {
  public:
   TlsAgentStreamTestClient() : TlsAgentTestBase(TlsAgent::CLIENT, STREAM) {}
+};
+
+class TlsAgentStreamTestServer : public TlsAgentTestBase {
+ public:
+  TlsAgentStreamTestServer() : TlsAgentTestBase(TlsAgent::SERVER, STREAM) {}
 };
 
 class TlsAgentDgramTestClient : public TlsAgentTestBase {

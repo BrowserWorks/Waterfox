@@ -32,6 +32,7 @@
 #include "vm/Opcodes.h"
 #include "vm/SelfHosting.h"
 #include "vm/TypedArrayCommon.h"
+#include "vm/TypedArrayObject.h"
 
 #include "jsboolinlines.h"
 #include "jsscriptinlines.h"
@@ -290,7 +291,7 @@ DoTypeUpdateFallback(JSContext* cx, BaselineFrame* frame, ICUpdatedStub* stub, H
         MOZ_ASSERT(obj->isNative() || obj->is<UnboxedPlainObject>());
         jsbytecode* pc = stub->getChainFallback()->icEntry()->pc(script);
         if (*pc == JSOP_SETALIASEDVAR || *pc == JSOP_INITALIASEDLEXICAL)
-            id = NameToId(ScopeCoordinateName(cx->runtime()->scopeCoordinateNameCache, script, pc));
+            id = NameToId(ScopeCoordinateName(cx->caches.scopeCoordinateNameCache, script, pc));
         else
             id = NameToId(script->getName(pc));
         AddTypePropertyId(cx, obj, id, value);
@@ -2298,28 +2299,19 @@ ICGetElem_Arguments::Compiler::generateStubCode(MacroAssembler& masm)
     regs.takeUnchecked(idxReg);
     regs.take(scratchReg);
     Register argData = regs.takeAny();
-    Register tempReg = regs.takeAny();
 
     // Load ArgumentsData
     masm.loadPrivate(Address(objReg, ArgumentsObject::getDataSlotOffset()), argData);
 
-    // Load deletedBits bitArray pointer into scratchReg
-    masm.loadPtr(Address(argData, offsetof(ArgumentsData, deletedBits)), scratchReg);
+    // Fail if we have a RareArgumentsData (elements were deleted).
+    masm.branchPtr(Assembler::NotEqual,
+                   Address(argData, offsetof(ArgumentsData, rareData)),
+                   ImmWord(0),
+                   &failureReconstructInputs);
 
-    // In tempReg, calculate index of word containing bit: (idx >> logBitsPerWord)
-    masm.movePtr(idxReg, tempReg);
-    const uint32_t shift = mozilla::tl::FloorLog2<(sizeof(size_t) * JS_BITS_PER_BYTE)>::value;
-    MOZ_ASSERT(shift == 5 || shift == 6);
-    masm.rshiftPtr(Imm32(shift), tempReg);
-    masm.loadPtr(BaseIndex(scratchReg, tempReg, ScaleFromElemWidth(sizeof(size_t))), scratchReg);
-
-    // Don't bother testing specific bit, if any bit is set in the word, fail.
-    masm.branchPtr(Assembler::NotEqual, scratchReg, ImmPtr(nullptr), &failureReconstructInputs);
-
-    // Load the value.  use scratchReg and tempReg to form a ValueOperand to load into.
+    // Load the value. Use scratchReg to form a ValueOperand to load into.
     masm.addPtr(Imm32(ArgumentsData::offsetOfArgs()), argData);
     regs.add(scratchReg);
-    regs.add(tempReg);
     ValueOperand tempVal = regs.takeAnyValue();
     masm.loadValue(BaseValueIndex(argData, idxReg), tempVal);
 
@@ -3193,7 +3185,7 @@ StoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type, Addres
         if (cx->runtime()->jitSupportsFloatingPoint) {
             masm.branchTestDouble(Assembler::NotEqual, value, failure);
             masm.unboxDouble(value, FloatReg0);
-            masm.branchTruncateDouble(FloatReg0, scratch, failureModifiedScratch);
+            masm.branchTruncateDoubleMaybeModUint32(FloatReg0, scratch, failureModifiedScratch);
             masm.jump(&isInt32);
         } else {
             masm.jump(failure);
@@ -4504,7 +4496,7 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
 
     RootedPropertyName name(cx);
     if (op == JSOP_SETALIASEDVAR || op == JSOP_INITALIASEDLEXICAL)
-        name = ScopeCoordinateName(cx->runtime()->scopeCoordinateNameCache, script, pc);
+        name = ScopeCoordinateName(cx->caches.scopeCoordinateNameCache, script, pc);
     else
         name = script->getName(pc);
     RootedId id(cx, NameToId(name));
@@ -4886,7 +4878,7 @@ ICSetPropNativeAddCompiler::generateStubCode(MacroAssembler& masm)
         masm.loadPtr(Address(objReg, UnboxedPlainObject::offsetOfExpando()), holderReg);
 
         // Write the expando object's new shape.
-        Address shapeAddr(holderReg, JSObject::offsetOfShape());
+        Address shapeAddr(holderReg, ShapedObject::offsetOfShape());
         EmitPreBarrier(masm, shapeAddr, MIRType::Shape);
         masm.loadPtr(Address(ICStubReg, ICSetProp_NativeAdd::offsetOfNewShape()), scratch);
         masm.storePtr(scratch, shapeAddr);
@@ -4895,7 +4887,7 @@ ICSetPropNativeAddCompiler::generateStubCode(MacroAssembler& masm)
             masm.loadPtr(Address(holderReg, NativeObject::offsetOfSlots()), holderReg);
     } else {
         // Write the object's new shape.
-        Address shapeAddr(objReg, JSObject::offsetOfShape());
+        Address shapeAddr(objReg, ShapedObject::offsetOfShape());
         EmitPreBarrier(masm, shapeAddr, MIRType::Shape);
         masm.loadPtr(Address(ICStubReg, ICSetProp_NativeAdd::offsetOfNewShape()), scratch);
         masm.storePtr(scratch, shapeAddr);
@@ -5474,7 +5466,7 @@ GetTemplateObjectForSimd(JSContext* cx, JSFunction* target, MutableHandleObject 
 }
 
 static bool
-GetTemplateObjectForNative(JSContext* cx, JSFunction* target, const CallArgs& args,
+GetTemplateObjectForNative(JSContext* cx, HandleFunction target, const CallArgs& args,
                            MutableHandleObject res, bool* skipAttach)
 {
     Native native = target->native();
@@ -5508,6 +5500,14 @@ GetTemplateObjectForNative(JSContext* cx, JSFunction* target, const CallArgs& ar
                 return false;
             return true;
         }
+    }
+
+    if (args.length() == 1 && args[0].isInt32() && args[0].toInt32() >= 0) {
+        uint32_t len = args[0].toInt32();
+        if (!TypedArrayObject::GetTemplateObjectForNative(cx, native, len, res))
+            return false;
+        if (res)
+            return true;
     }
 
     if (native == js::array_slice) {
@@ -6193,11 +6193,6 @@ ICCallStubCompiler::pushSpreadCallArguments(MacroAssembler& masm,
     masm.pushValue(Address(BaselineFrameReg, STUB_FRAME_SIZE + (2 + isConstructing) * sizeof(Value)));
 }
 
-// (see Bug 1149377 comment 31) MSVC 2013 PGO miss-compiles branchTestObjClass
-// calls from this function.
-#if defined(_MSC_VER) && _MSC_VER == 1800
-# pragma optimize("g", off)
-#endif
 Register
 ICCallStubCompiler::guardFunApply(MacroAssembler& masm, AllocatableGeneralRegisterSet regs,
                                   Register argcReg, bool checkNative, FunApplyThing applyThing,
@@ -6312,9 +6307,6 @@ ICCallStubCompiler::guardFunApply(MacroAssembler& masm, AllocatableGeneralRegist
     }
     return target;
 }
-#if defined(_MSC_VER) && _MSC_VER == 1800
-# pragma optimize("", on)
-#endif
 
 void
 ICCallStubCompiler::pushCallerArguments(MacroAssembler& masm, AllocatableGeneralRegisterSet regs)
@@ -6981,12 +6973,6 @@ ICCall_Native::Compiler::generateStubCode(MacroAssembler& masm)
     else
         pushCallArguments(masm, regs, argcReg, /* isJitCall = */ false, isConstructing_);
 
-    if (isConstructing_) {
-        // Stack looks like: [ ..., Arg0Val, ThisVal, CalleeVal ]
-        // Replace ThisVal with MagicValue(JS_IS_CONSTRUCTING)
-        masm.storeValue(MagicValue(JS_IS_CONSTRUCTING), Address(masm.getStackPointer(), sizeof(Value)));
-    }
-
 
     // Native functions have the signature:
     //
@@ -7078,12 +7064,6 @@ ICCall_ClassHook::Compiler::generateStubCode(MacroAssembler& masm)
     regs.add(scratch);
     pushCallArguments(masm, regs, argcReg, /* isJitCall = */ false, isConstructing_);
     regs.take(scratch);
-
-    if (isConstructing_) {
-        // Stack looks like: [ ..., Arg0Val, ThisVal, CalleeVal ]
-        // Replace ThisVal with MagicValue(JS_IS_CONSTRUCTING)
-        masm.storeValue(MagicValue(JS_IS_CONSTRUCTING), Address(masm.getStackPointer(), sizeof(Value)));
-    }
 
     masm.checkStackAlignment();
 
@@ -7761,6 +7741,20 @@ TryAttachInstanceOfStub(JSContext* cx, BaselineFrame* frame, ICInstanceOf_Fallba
 {
     MOZ_ASSERT(!*attached);
     if (fun->isBoundFunction())
+        return true;
+
+    // If the user has supplied their own @@hasInstance method we shouldn't
+    // clobber it.
+    if (!js::FunctionHasDefaultHasInstance(fun, cx->wellKnownSymbols()))
+        return true;
+
+    // Refuse to optimize any function whose [[Prototype]] isn't
+    // Function.prototype.
+    if (!fun->hasStaticPrototype() || fun->hasUncacheableProto())
+        return true;
+
+    Value funProto = cx->global()->getPrototype(JSProto_Function);
+    if (funProto.isObject() && fun->staticPrototype() != &funProto.toObject())
         return true;
 
     Shape* shape = fun->lookupPure(cx->names().prototype);

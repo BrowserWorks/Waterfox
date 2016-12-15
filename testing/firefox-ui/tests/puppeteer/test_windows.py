@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from marionette_driver import By, Wait
-from marionette_driver.errors import NoSuchWindowException, TimeoutException
+from marionette_driver.errors import NoSuchWindowException
 
 import firefox_puppeteer.errors as errors
 
@@ -11,15 +11,34 @@ from firefox_puppeteer.ui.windows import BaseWindow
 from firefox_ui_harness.testcases import FirefoxTestCase
 
 
-class TestWindows(FirefoxTestCase):
+class BaseWindowTestCase(FirefoxTestCase):
+    def setUp(self):
+        """
+        These tests open and close windows pretty rapidly, which
+        (since bug 1261842) can cause content processes to be
+        spawned and discarded in large numbers. By default, Firefox
+        has a 5 second timeout for shutting down content processes,
+        but we can get into cases where the content process just
+        doesn't have enough time to get itself all sorted before
+        the timeout gets hit, which results in the parent killing
+        the content process manually, which generates a crash report,
+        which causes these tests to orange. We side-step this by
+        setting dom.ipc.tabs.shutdownTimeoutSecs to 0, which disables
+        the shutdown timer.
+        """
+        FirefoxTestCase.setUp(self)
+        self.prefs.set_pref('dom.ipc.tabs.shutdownTimeoutSecs', 0)
+
+
+class TestWindows(BaseWindowTestCase):
 
     def tearDown(self):
         try:
             self.windows.close_all([self.browser])
         finally:
-            FirefoxTestCase.tearDown(self)
+            BaseWindowTestCase.tearDown(self)
 
-    def test_windows(self):
+    def test_switch_to(self):
         url = self.marionette.absolute_url('layout/mozilla.html')
 
         # Open two more windows
@@ -62,14 +81,26 @@ class TestWindows(FirefoxTestCase):
 
         self.assertEqual(len(self.windows.all), 1)
 
+    def test_switch_to_unknown_window_type(self):
+        def open_by_js(_):
+            with self.marionette.using_context('chrome'):
+                self.marionette.execute_script("""
+                  window.open('chrome://browser/content/safeMode.xul', '_blank',
+                              'chrome,centerscreen,resizable=no');
+                """)
 
-class TestBaseWindow(FirefoxTestCase):
+        win = self.browser.open_window(callback=open_by_js, expected_window_class=BaseWindow)
+        win.close()
+        self.browser.switch_to()
+
+
+class TestBaseWindow(BaseWindowTestCase):
 
     def tearDown(self):
         try:
             self.windows.close_all([self.browser])
         finally:
-            FirefoxTestCase.tearDown(self)
+            BaseWindowTestCase.tearDown(self)
 
     def test_basics(self):
         # force BaseWindow instance
@@ -173,13 +204,13 @@ class TestBaseWindow(FirefoxTestCase):
         win1.switch_to()
 
 
-class TestBrowserWindow(FirefoxTestCase):
+class TestBrowserWindow(BaseWindowTestCase):
 
     def tearDown(self):
         try:
             self.windows.close_all([self.browser])
         finally:
-            FirefoxTestCase.tearDown(self)
+            BaseWindowTestCase.tearDown(self)
 
     def test_basic(self):
         self.assertNotEqual(self.browser.dtds, [])

@@ -561,8 +561,7 @@ PuppetWidget::ExecuteNativeKeyBinding(NativeKeyBindingsType aType,
 LayerManager*
 PuppetWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
                               LayersBackend aBackendHint,
-                              LayerManagerPersistence aPersistence,
-                              bool* aAllowRetaining)
+                              LayerManagerPersistence aPersistence)
 {
   if (!mLayerManager) {
     mLayerManager = new ClientLayerManager(this);
@@ -570,9 +569,6 @@ PuppetWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
   ShadowLayerForwarder* lf = mLayerManager->AsShadowForwarder();
   if (!lf->HasShadowManager() && aShadowManager) {
     lf->SetShadowManager(aShadowManager);
-  }
-  if (aAllowRetaining) {
-    *aAllowRetaining = true;
   }
   return mLayerManager;
 }
@@ -821,7 +817,6 @@ PuppetWidget::GetIMEUpdatePreference()
                                  nsIMEUpdatePreference::NOTIFY_POSITION_CHANGE);
   }
   return nsIMEUpdatePreference(mIMEPreferenceOfParent.mWantUpdates |
-                               nsIMEUpdatePreference::NOTIFY_SELECTION_CHANGE |
                                nsIMEUpdatePreference::NOTIFY_TEXT_CHANGE |
                                nsIMEUpdatePreference::NOTIFY_POSITION_CHANGE );
 #else
@@ -858,9 +853,7 @@ PuppetWidget::NotifyIMEOfTextChange(const IMENotification& aIMENotification)
 
   // TabParent doesn't this this to cache.  we don't send the notification
   // if parent process doesn't request NOTIFY_TEXT_CHANGE.
-  if (mIMEPreferenceOfParent.WantTextChange() &&
-      (mIMEPreferenceOfParent.WantChangesCausedByComposition() ||
-       !aIMENotification.mTextChangeData.mCausedOnlyByComposition)) {
+  if (mIMEPreferenceOfParent.WantTextChange()) {
     mTabChild->SendNotifyIMETextChange(mContentCache, aIMENotification);
   } else {
     mTabChild->SendUpdateContentCache(mContentCache);
@@ -897,13 +890,8 @@ PuppetWidget::NotifyIMEOfSelectionChange(
     aIMENotification.mSelectionChangeData.mReversed,
     aIMENotification.mSelectionChangeData.GetWritingMode());
 
-  if (mIMEPreferenceOfParent.WantSelectionChange() &&
-      (mIMEPreferenceOfParent.WantChangesCausedByComposition() ||
-       !aIMENotification.mSelectionChangeData.mCausedByComposition)) {
-    mTabChild->SendNotifyIMESelection(mContentCache, aIMENotification);
-  } else {
-    mTabChild->SendUpdateContentCache(mContentCache);
-  }
+  mTabChild->SendNotifyIMESelection(mContentCache, aIMENotification);
+
   return NS_OK;
 }
 
@@ -1070,7 +1058,7 @@ PuppetWidget::Paint()
         mTabChild->NotifyPainted();
       }
     } else {
-      RefPtr<gfxContext> ctx = gfxContext::ForDrawTarget(mDrawTarget);
+      RefPtr<gfxContext> ctx = gfxContext::CreateOrNull(mDrawTarget);
       if (!ctx) {
         gfxDevCrash(LogReason::InvalidContext) << "PuppetWidget context problem " << gfx::hexa(mDrawTarget);
         return NS_ERROR_FAILURE;

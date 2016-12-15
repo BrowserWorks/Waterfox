@@ -235,17 +235,7 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       } else if (this.download.error.becauseBlockedByParentalControls) {
         stateLabel = s.stateBlockedParentalControls;
       } else if (this.download.error.becauseBlockedByReputationCheck) {
-        switch (this.download.error.reputationCheckVerdict) {
-          case Downloads.Error.BLOCK_VERDICT_UNCOMMON:
-            stateLabel = s.blockedUncommon2;
-            break;
-          case Downloads.Error.BLOCK_VERDICT_POTENTIALLY_UNWANTED:
-            stateLabel = s.blockedPotentiallyUnwanted;
-            break;
-          default: // Assume Downloads.Error.BLOCK_VERDICT_MALWARE
-            stateLabel = s.blockedMalware;
-            break;
-        }
+        stateLabel = this.rawBlockedTitleAndDetails[0];
       } else {
         stateLabel = s.stateFailed;
       }
@@ -265,6 +255,30 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
   },
 
   /**
+   * Returns [title, [details1, details2]] for blocked downloads.
+   */
+  get rawBlockedTitleAndDetails() {
+    let s = DownloadsCommon.strings;
+    if (!this.download.error ||
+        !this.download.error.becauseBlockedByReputationCheck) {
+      return [null, null];
+    }
+    switch (this.download.error.reputationCheckVerdict) {
+      case Downloads.Error.BLOCK_VERDICT_UNCOMMON:
+        return [s.blockedUncommon2, [s.unblockTypeUncommon2, s.unblockTip2]];
+      case Downloads.Error.BLOCK_VERDICT_POTENTIALLY_UNWANTED:
+        return [s.blockedPotentiallyUnwanted,
+                [s.unblockTypePotentiallyUnwanted2, s.unblockTip2]];
+      case Downloads.Error.BLOCK_VERDICT_MALWARE:
+        return [s.blockedMalware, [s.unblockTypeMalware, s.unblockTip2]];
+    }
+    throw new Error("Unexpected reputationCheckVerdict: " +
+                    this.download.error.reputationCheckVerdict);
+    // return anyway to avoid a JS strict warning.
+    return [null, null];
+  },
+
+  /**
    * Shows the appropriate unblock dialog based on the verdict, and executes the
    * action selected by the user in the dialog, which may involve unblocking,
    * opening or removing the file.
@@ -281,13 +295,22 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       dialogType,
     }).then(action => {
       if (action == "open") {
-        return this.download.unblock().then(() => this.downloadsCmd_open());
+        return this.unblockAndOpenDownload();
       } else if (action == "unblock") {
         return this.download.unblock();
       } else if (action == "confirmBlock") {
         return this.download.confirmBlock();
       }
     }).catch(Cu.reportError);
+  },
+
+  /**
+   * Unblocks the downloaded file and opens it.
+   *
+   * @return A promise that's resolved after the file has been opened.
+   */
+  unblockAndOpenDownload() {
+    return this.download.unblock().then(() => this.downloadsCmd_open());
   },
 
   /**
@@ -308,8 +331,9 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       case Ci.nsIDownloadManager.DOWNLOAD_FINISHED:
         return "downloadsCmd_open";
       case Ci.nsIDownloadManager.DOWNLOAD_BLOCKED_PARENTAL:
-      case Ci.nsIDownloadManager.DOWNLOAD_DIRTY:
         return "downloadsCmd_openReferrer";
+      case Ci.nsIDownloadManager.DOWNLOAD_DIRTY:
+        return "downloadsCmd_showBlockedInfo";
     }
     return "";
   },
@@ -333,6 +357,7 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
       case "downloadsCmd_chooseUnblock":
       case "downloadsCmd_chooseOpen":
       case "downloadsCmd_unblock":
+      case "downloadsCmd_unblockAndOpen":
         return this.download.hasBlockedData;
     }
     return false;

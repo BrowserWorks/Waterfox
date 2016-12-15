@@ -33,6 +33,7 @@ import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.gfx.LayerView;
 import org.mozilla.gecko.gfx.PanZoomController;
+import org.mozilla.gecko.notifications.NotificationClient;
 import org.mozilla.gecko.permissions.Permissions;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.GeckoRequest;
@@ -70,6 +71,7 @@ import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Criteria;
@@ -134,7 +136,8 @@ public class GeckoAppShell
 
         @Override
         public void uncaughtException(final Thread thread, final Throwable exc) {
-            if (GeckoThread.isStateAtLeast(GeckoThread.State.EXITING)) {
+            if (GeckoThread.isState(GeckoThread.State.EXITING) ||
+                    GeckoThread.isState(GeckoThread.State.EXITED)) {
                 // We've called System.exit. All exceptions after this point are Android
                 // berating us for being nasty to it.
                 return;
@@ -182,6 +185,10 @@ public class GeckoAppShell
 
     // Accessed by NotificationHelper. This should be encapsulated.
     /* package */ static NotificationClient notificationClient;
+
+    public static NotificationClient getNotificationClient() {
+        return notificationClient;
+    }
 
     // See also HardwareUtils.LOW_MEMORY_THRESHOLD_MB.
     private static final int HIGH_MEMORY_DEVICE_THRESHOLD_MB = 768;
@@ -247,17 +254,14 @@ public class GeckoAppShell
 
     private static native void reportJavaCrash(String stackTrace);
 
-    public static void notifyUriVisited(String uri) {
-        sendEventToGecko(GeckoEvent.createVisitedEvent(uri));
-    }
+    @WrapForJNI
+    public static native void notifyUriVisited(String uri);
 
     public static native void notifyBatteryChange(double aLevel, boolean aCharging, double aRemainingTime);
 
     public static native void invalidateAndScheduleComposite();
 
     public static native float computeRenderIntegrity();
-
-    public static native SurfaceBits getSurfaceBits(Surface surface);
 
     public static native void addPresentationSurface(Surface surface);
     public static native void removePresentationSurface(Surface surface);
@@ -440,50 +444,53 @@ public class GeckoAppShell
     @WrapForJNI
     @SuppressLint("MissingPermission") // Permissions are explicitly checked for within this method
     public static void enableLocation(final boolean enable) {
+        final Runnable requestLocation = new Runnable() {
+            @Override
+            public void run() {
+                LocationManager lm = getLocationManager(getApplicationContext());
+                if (lm == null) {
+                    return;
+                }
+
+                if (!enable) {
+                    lm.removeUpdates(getLocationListener());
+                    return;
+                }
+
+                Location lastKnownLocation = getLastKnownLocation(lm);
+                if (lastKnownLocation != null) {
+                    getLocationListener().onLocationChanged(lastKnownLocation);
+                }
+
+                Criteria criteria = new Criteria();
+                criteria.setSpeedRequired(false);
+                criteria.setBearingRequired(false);
+                criteria.setAltitudeRequired(false);
+                if (locationHighAccuracyEnabled) {
+                    criteria.setAccuracy(Criteria.ACCURACY_FINE);
+                    criteria.setCostAllowed(true);
+                    criteria.setPowerRequirement(Criteria.POWER_HIGH);
+                } else {
+                    criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+                    criteria.setCostAllowed(false);
+                    criteria.setPowerRequirement(Criteria.POWER_LOW);
+                }
+
+                String provider = lm.getBestProvider(criteria, true);
+                if (provider == null)
+                    return;
+
+                Looper l = Looper.getMainLooper();
+                lm.requestLocationUpdates(provider, 100, 0.5f, getLocationListener(), l);
+            }
+        };
+
         Permissions
                 .from((Activity) getContext())
                 .withPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
                 .onUIThread()
                 .doNotPromptIf(!enable)
-                .run(new Runnable() {
-                    @Override
-                    public void run() {
-                        LocationManager lm = getLocationManager(getApplicationContext());
-                        if (lm == null) {
-                            return;
-                        }
-
-                        if (enable) {
-                            Location lastKnownLocation = getLastKnownLocation(lm);
-                            if (lastKnownLocation != null) {
-                                getGeckoInterface().getLocationListener().onLocationChanged(lastKnownLocation);
-                            }
-
-                            Criteria criteria = new Criteria();
-                            criteria.setSpeedRequired(false);
-                            criteria.setBearingRequired(false);
-                            criteria.setAltitudeRequired(false);
-                            if (locationHighAccuracyEnabled) {
-                                criteria.setAccuracy(Criteria.ACCURACY_FINE);
-                                criteria.setCostAllowed(true);
-                                criteria.setPowerRequirement(Criteria.POWER_HIGH);
-                            } else {
-                                criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-                                criteria.setCostAllowed(false);
-                                criteria.setPowerRequirement(Criteria.POWER_LOW);
-                            }
-
-                            String provider = lm.getBestProvider(criteria, true);
-                            if (provider == null)
-                                return;
-
-                            Looper l = Looper.getMainLooper();
-                            lm.requestLocationUpdates(provider, 100, (float) .5, getGeckoInterface().getLocationListener(), l);
-                        } else {
-                            lm.removeUpdates(getGeckoInterface().getLocationListener());
-                        }
-                    }
-                });
+                .run(requestLocation);
     }
 
     private static LocationManager getLocationManager(Context context) {
@@ -533,6 +540,147 @@ public class GeckoAppShell
     }
 
     @WrapForJNI
+    /* package */ static native void onSensorChanged(int hal_type, float x, float y, float z,
+                                                     float w, int accuracy, long time);
+
+    @WrapForJNI
+    /* package */ static native void onLocationChanged(double latitude, double longitude,
+                                                       double altitude, float accuracy,
+                                                       float bearing, float speed, long time);
+
+    private static class DefaultListeners implements SensorEventListener, LocationListener {
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        }
+
+        private static int HalSensorAccuracyFor(int androidAccuracy) {
+            switch (androidAccuracy) {
+            case SensorManager.SENSOR_STATUS_UNRELIABLE:
+                return GeckoHalDefines.SENSOR_ACCURACY_UNRELIABLE;
+            case SensorManager.SENSOR_STATUS_ACCURACY_LOW:
+                return GeckoHalDefines.SENSOR_ACCURACY_LOW;
+            case SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM:
+                return GeckoHalDefines.SENSOR_ACCURACY_MED;
+            case SensorManager.SENSOR_STATUS_ACCURACY_HIGH:
+                return GeckoHalDefines.SENSOR_ACCURACY_HIGH;
+            }
+            return GeckoHalDefines.SENSOR_ACCURACY_UNKNOWN;
+        }
+
+        @Override
+        public void onSensorChanged(SensorEvent s) {
+            int sensor_type = s.sensor.getType();
+            int hal_type = 0;
+            float x = 0.0f, y = 0.0f, z = 0.0f, w = 0.0f;
+            final int accuracy = HalSensorAccuracyFor(s.accuracy);
+            // SensorEvent timestamp is in nanoseconds, Gecko expects microseconds.
+            final long time = s.timestamp / 1000;
+
+            switch (sensor_type) {
+            case Sensor.TYPE_ACCELEROMETER:
+            case Sensor.TYPE_LINEAR_ACCELERATION:
+            case Sensor.TYPE_ORIENTATION:
+                if (sensor_type == Sensor.TYPE_ACCELEROMETER) {
+                    hal_type = GeckoHalDefines.SENSOR_ACCELERATION;
+                } else if (sensor_type == Sensor.TYPE_LINEAR_ACCELERATION) {
+                    hal_type = GeckoHalDefines.SENSOR_LINEAR_ACCELERATION;
+                } else {
+                    hal_type = GeckoHalDefines.SENSOR_ORIENTATION;
+                }
+                x = s.values[0];
+                y = s.values[1];
+                z = s.values[2];
+                break;
+
+            case Sensor.TYPE_GYROSCOPE:
+                hal_type = GeckoHalDefines.SENSOR_GYROSCOPE;
+                x = (float) Math.toDegrees(s.values[0]);
+                y = (float) Math.toDegrees(s.values[1]);
+                z = (float) Math.toDegrees(s.values[2]);
+                break;
+
+            case Sensor.TYPE_PROXIMITY:
+                hal_type = GeckoHalDefines.SENSOR_PROXIMITY;
+                x = s.values[0];
+                z = s.sensor.getMaximumRange();
+                break;
+
+            case Sensor.TYPE_LIGHT:
+                hal_type = GeckoHalDefines.SENSOR_LIGHT;
+                x = s.values[0];
+                break;
+
+            case Sensor.TYPE_ROTATION_VECTOR:
+            case Sensor.TYPE_GAME_ROTATION_VECTOR: // API >= 18
+                hal_type = (sensor_type == Sensor.TYPE_ROTATION_VECTOR ?
+                        GeckoHalDefines.SENSOR_ROTATION_VECTOR :
+                        GeckoHalDefines.SENSOR_GAME_ROTATION_VECTOR);
+                x = s.values[0];
+                y = s.values[1];
+                z = s.values[2];
+                if (s.values.length >= 4) {
+                    w = s.values[3];
+                } else {
+                    // s.values[3] was optional in API <= 18, so we need to compute it
+                    // The values form a unit quaternion, so we can compute the angle of
+                    // rotation purely based on the given 3 values.
+                    w = 1.0f - s.values[0] * s.values[0] -
+                            s.values[1] * s.values[1] - s.values[2] * s.values[2];
+                    w = (w > 0.0f) ? (float) Math.sqrt(w) : 0.0f;
+                }
+                break;
+            }
+
+            GeckoAppShell.onSensorChanged(hal_type, x, y, z, w, accuracy, time);
+        }
+
+        // Geolocation.
+        @Override
+        public void onLocationChanged(Location location) {
+            // No logging here: user-identifying information.
+            GeckoAppShell.onLocationChanged(location.getLatitude(), location.getLongitude(),
+                                            location.getAltitude(), location.getAccuracy(),
+                                            location.getBearing(), location.getSpeed(),
+                                            location.getTime());
+        }
+
+        @Override
+        public void onProviderDisabled(String provider)
+        {
+        }
+
+        @Override
+        public void onProviderEnabled(String provider)
+        {
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras)
+        {
+        }
+    }
+
+    private static final DefaultListeners DEFAULT_LISTENERS = new DefaultListeners();
+    private static SensorEventListener sSensorListener = DEFAULT_LISTENERS;
+    private static LocationListener sLocationListener = DEFAULT_LISTENERS;
+
+    public static SensorEventListener getSensorListener() {
+        return sSensorListener;
+    }
+
+    public static void setSensorListener(final SensorEventListener listener) {
+        sSensorListener = listener;
+    }
+
+    public static LocationListener getLocationListener() {
+        return sLocationListener;
+    }
+
+    public static void setLocationListener(final LocationListener listener) {
+        sLocationListener = listener;
+    }
+
+    @WrapForJNI
     public static void enableSensor(int aSensortype) {
         GeckoInterface gi = getGeckoInterface();
         if (gi == null) {
@@ -549,7 +697,7 @@ public class GeckoAppShell
                     //     Sensor.TYPE_GAME_ROTATION_VECTOR); // API >= 18
             }
             if (gGameRotationVectorSensor != null) {
-                sm.registerListener(gi.getSensorEventListener(),
+                sm.registerListener(getSensorListener(),
                                     gGameRotationVectorSensor,
                                     SensorManager.SENSOR_DELAY_FASTEST);
             }
@@ -564,7 +712,7 @@ public class GeckoAppShell
                     Sensor.TYPE_ROTATION_VECTOR);
             }
             if (gRotationVectorSensor != null) {
-                sm.registerListener(gi.getSensorEventListener(),
+                sm.registerListener(getSensorListener(),
                                     gRotationVectorSensor,
                                     SensorManager.SENSOR_DELAY_FASTEST);
             }
@@ -579,7 +727,7 @@ public class GeckoAppShell
                     Sensor.TYPE_ORIENTATION);
             }
             if (gOrientationSensor != null) {
-                sm.registerListener(gi.getSensorEventListener(),
+                sm.registerListener(getSensorListener(),
                                     gOrientationSensor,
                                     SensorManager.SENSOR_DELAY_FASTEST);
             }
@@ -591,7 +739,7 @@ public class GeckoAppShell
                     Sensor.TYPE_ACCELEROMETER);
             }
             if (gAccelerometerSensor != null) {
-                sm.registerListener(gi.getSensorEventListener(),
+                sm.registerListener(getSensorListener(),
                                     gAccelerometerSensor,
                                     SensorManager.SENSOR_DELAY_FASTEST);
             }
@@ -602,7 +750,7 @@ public class GeckoAppShell
                 gProximitySensor = sm.getDefaultSensor(Sensor.TYPE_PROXIMITY);
             }
             if (gProximitySensor != null) {
-                sm.registerListener(gi.getSensorEventListener(),
+                sm.registerListener(getSensorListener(),
                                     gProximitySensor,
                                     SensorManager.SENSOR_DELAY_NORMAL);
             }
@@ -613,7 +761,7 @@ public class GeckoAppShell
                 gLightSensor = sm.getDefaultSensor(Sensor.TYPE_LIGHT);
             }
             if (gLightSensor != null) {
-                sm.registerListener(gi.getSensorEventListener(),
+                sm.registerListener(getSensorListener(),
                                     gLightSensor,
                                     SensorManager.SENSOR_DELAY_NORMAL);
             }
@@ -625,7 +773,7 @@ public class GeckoAppShell
                     Sensor.TYPE_LINEAR_ACCELERATION);
             }
             if (gLinearAccelerometerSensor != null) {
-                sm.registerListener(gi.getSensorEventListener(),
+                sm.registerListener(getSensorListener(),
                                     gLinearAccelerometerSensor,
                                     SensorManager.SENSOR_DELAY_FASTEST);
             }
@@ -636,7 +784,7 @@ public class GeckoAppShell
                 gGyroscopeSensor = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
             }
             if (gGyroscopeSensor != null) {
-                sm.registerListener(gi.getSensorEventListener(),
+                sm.registerListener(getSensorListener(),
                                     gGyroscopeSensor,
                                     SensorManager.SENSOR_DELAY_FASTEST);
             }
@@ -660,51 +808,51 @@ public class GeckoAppShell
         switch (aSensortype) {
         case GeckoHalDefines.SENSOR_GAME_ROTATION_VECTOR:
             if (gGameRotationVectorSensor != null) {
-                sm.unregisterListener(gi.getSensorEventListener(), gGameRotationVectorSensor);
+                sm.unregisterListener(getSensorListener(), gGameRotationVectorSensor);
               break;
             }
             // Fallthrough
 
         case GeckoHalDefines.SENSOR_ROTATION_VECTOR:
             if (gRotationVectorSensor != null) {
-                sm.unregisterListener(gi.getSensorEventListener(), gRotationVectorSensor);
+                sm.unregisterListener(getSensorListener(), gRotationVectorSensor);
               break;
             }
             // Fallthrough
 
         case GeckoHalDefines.SENSOR_ORIENTATION:
             if (gOrientationSensor != null) {
-                sm.unregisterListener(gi.getSensorEventListener(), gOrientationSensor);
+                sm.unregisterListener(getSensorListener(), gOrientationSensor);
             }
             break;
 
         case GeckoHalDefines.SENSOR_ACCELERATION:
             if (gAccelerometerSensor != null) {
-                sm.unregisterListener(gi.getSensorEventListener(), gAccelerometerSensor);
+                sm.unregisterListener(getSensorListener(), gAccelerometerSensor);
             }
             break;
 
         case GeckoHalDefines.SENSOR_PROXIMITY:
             if (gProximitySensor != null) {
-                sm.unregisterListener(gi.getSensorEventListener(), gProximitySensor);
+                sm.unregisterListener(getSensorListener(), gProximitySensor);
             }
             break;
 
         case GeckoHalDefines.SENSOR_LIGHT:
             if (gLightSensor != null) {
-                sm.unregisterListener(gi.getSensorEventListener(), gLightSensor);
+                sm.unregisterListener(getSensorListener(), gLightSensor);
             }
             break;
 
         case GeckoHalDefines.SENSOR_LINEAR_ACCELERATION:
             if (gLinearAccelerometerSensor != null) {
-                sm.unregisterListener(gi.getSensorEventListener(), gLinearAccelerometerSensor);
+                sm.unregisterListener(getSensorListener(), gLinearAccelerometerSensor);
             }
             break;
 
         case GeckoHalDefines.SENSOR_GYROSCOPE:
             if (gGyroscopeSensor != null) {
-                sm.unregisterListener(gi.getSensorEventListener(), gGyroscopeSensor);
+                sm.unregisterListener(getSensorListener(), gGyroscopeSensor);
             }
             break;
         default:
@@ -749,7 +897,7 @@ public class GeckoAppShell
     }
 
     @WrapForJNI
-    static void scheduleRestart() {
+    public static void scheduleRestart() {
         getGeckoInterface().doRestart();
     }
 
@@ -895,6 +1043,30 @@ public class GeckoAppShell
         }
     }
 
+    private static PendingIntent makePersistentNotificationIntent(
+            int aNotificationID, String aType, String aPersistentData) {
+        Uri.Builder b = new Uri.Builder();
+        Uri u = b.scheme("notification-event").path(Integer.toString(aNotificationID))
+                .appendQueryParameter("type", aType)
+                .build();
+        Intent intent = GeckoService.getIntentToCreateServices(
+                getApplicationContext(), aType, aPersistentData);
+        intent.setData(u);
+        return PendingIntent.getService(
+                getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    @WrapForJNI(stubName = "ShowPersistentAlertNotificationWrapper")
+    public static void showPersistentAlertNotification(
+            String aPersistentData,
+            String aImageUrl, String aAlertTitle, String aAlertText,
+            String aAlertCookie, String aAlertName, String aHost) {
+        int notificationID = aAlertName.hashCode();
+        PendingIntent clickIntent = makePersistentNotificationIntent(notificationID, "persistent-notification-click", aPersistentData);
+        PendingIntent closeIntent = makePersistentNotificationIntent(notificationID, "persistent-notification-close", aPersistentData);
+        notificationClient.add(notificationID, aImageUrl, aHost, aAlertTitle, aAlertText, clickIntent, closeIntent);
+    }
+
     @WrapForJNI(stubName = "ShowAlertNotificationWrapper")
     public static void showAlertNotification(String aImageUrl, String aAlertTitle, String aAlertText, String aAlertCookie, String aAlertName, String aHost) {
         // The intent to launch when the user clicks the expanded notification
@@ -917,7 +1089,7 @@ public class GeckoAppShell
         ALERT_COOKIES.put(aAlertName, aAlertCookie);
         callObserver(aAlertName, "alertshow", aAlertCookie);
 
-        notificationClient.add(notificationID, aImageUrl, aHost, aAlertTitle, aAlertText, contentIntent);
+        notificationClient.add(notificationID, aImageUrl, aHost, aAlertTitle, aAlertText, contentIntent, null);
     }
 
     @WrapForJNI
@@ -1490,7 +1662,7 @@ public class GeckoAppShell
         ArrayList<String> directories = new ArrayList<String>();
         PackageManager pm = getApplicationContext().getPackageManager();
         List<ResolveInfo> plugins = pm.queryIntentServices(new Intent(PLUGIN_ACTION),
-                PackageManager.GET_SERVICES | PackageManager.GET_META_DATA);
+                PackageManager.GET_META_DATA);
 
         synchronized (mPackageInfoCache) {
 
@@ -1697,8 +1869,6 @@ public class GeckoAppShell
         public GeckoProfile getProfile();
         public Activity getActivity();
         public String getDefaultUAString();
-        public LocationListener getLocationListener();
-        public SensorEventListener getSensorEventListener();
         public void doRestart();
         public void setFullScreen(boolean fullscreen);
         public void addPluginView(View view, final RectF rect, final boolean isFullScreen);
@@ -1765,6 +1935,15 @@ public class GeckoAppShell
 
         public String[] getHandlersForMimeType(String mimeType, String action);
         public String[] getHandlersForURL(String url, String action);
+
+        /**
+         * URI of the underlying chrome window to be opened, or null to use the default GeckoView
+         * XUL container <tt>chrome://browser/content/geckoview.xul</tt>.  See
+         * <a href="https://developer.mozilla.org/en/docs/toolkit.defaultChromeURI">https://developer.mozilla.org/en/docs/toolkit.defaultChromeURI</a>
+         *
+         * @return URI or null.
+         */
+        String getDefaultChromeURI();
     };
 
     private static GeckoInterface sGeckoInterface;

@@ -254,8 +254,8 @@ public:
    */
   void ReflowChild(nsIFrame*                      aChildFrame,
                    nsPresContext*                 aPresContext,
-                   nsHTMLReflowMetrics&           aDesiredSize,
-                   const nsHTMLReflowState&       aReflowState,
+                   ReflowOutput&           aDesiredSize,
+                   const ReflowInput&       aReflowInput,
                    const mozilla::WritingMode&    aWM,
                    const mozilla::LogicalPoint&   aPos,
                    const nsSize&                  aContainerSize,
@@ -284,8 +284,8 @@ public:
    */
   static void FinishReflowChild(nsIFrame*                    aKidFrame,
                                 nsPresContext*               aPresContext,
-                                const nsHTMLReflowMetrics&   aDesiredSize,
-                                const nsHTMLReflowState*     aReflowState,
+                                const ReflowOutput&   aDesiredSize,
+                                const ReflowInput*     aReflowInput,
                                 const mozilla::WritingMode&  aWM,
                                 const mozilla::LogicalPoint& aPos,
                                 const nsSize&                aContainerSize,
@@ -296,8 +296,8 @@ public:
   //    incrementally.
   void ReflowChild(nsIFrame*                      aKidFrame,
                    nsPresContext*                 aPresContext,
-                   nsHTMLReflowMetrics&           aDesiredSize,
-                   const nsHTMLReflowState&       aReflowState,
+                   ReflowOutput&           aDesiredSize,
+                   const ReflowInput&       aReflowInput,
                    nscoord                        aX,
                    nscoord                        aY,
                    uint32_t                       aFlags,
@@ -306,8 +306,8 @@ public:
 
   static void FinishReflowChild(nsIFrame*                  aKidFrame,
                                 nsPresContext*             aPresContext,
-                                const nsHTMLReflowMetrics& aDesiredSize,
-                                const nsHTMLReflowState*   aReflowState,
+                                const ReflowOutput& aDesiredSize,
+                                const ReflowInput*   aReflowInput,
                                 nscoord                    aX,
                                 nscoord                    aY,
                                 uint32_t                   aFlags);
@@ -388,7 +388,7 @@ public:
    * @param aMergeFunc is passed to DrainExcessOverflowContainersList
    */
   void ReflowOverflowContainerChildren(nsPresContext*           aPresContext,
-                                       const nsHTMLReflowState& aReflowState,
+                                       const ReflowInput& aReflowInput,
                                        nsOverflowAreas&         aOverflowRects,
                                        uint32_t                 aFlags,
                                        nsReflowStatus&          aStatus,
@@ -413,17 +413,13 @@ public:
 
   /**
    * Removes aChild without destroying it and without requesting reflow.
-   * Continuations are not affected. Checks the primary and overflow
-   * or overflow containers and excess overflow containers lists, depending
-   * on whether the NS_FRAME_IS_OVERFLOW_CONTAINER flag is set. Does not
-   * check any other auxiliary lists.
-   * Returns NS_ERROR_UNEXPECTED if we failed to remove aChild.
-   * Returns other error codes if we failed to put back a proptable list.
-   * If aForceNormal is true, only checks the primary and overflow lists
-   * even when the NS_FRAME_IS_OVERFLOW_CONTAINER flag is set.
+   * Continuations are not affected.  Checks the principal and overflow lists,
+   * and also the [excess] overflow containers lists if the frame bit
+   * NS_FRAME_IS_OVERFLOW_CONTAINER is set.  It does not check any other lists.
+   * Returns NS_ERROR_UNEXPECTED if aChild wasn't found on any of the lists
+   * mentioned above.
    */
-  virtual nsresult StealFrame(nsIFrame* aChild,
-                              bool      aForceNormal = false);
+  virtual nsresult StealFrame(nsIFrame* aChild);
 
   /**
    * Removes the next-siblings of aChild without destroying them and without
@@ -493,6 +489,11 @@ protected:
    * See nsBlockFrame::DestroyFrom for an example.
    */
   void DestroyAbsoluteFrames(nsIFrame* aDestructRoot);
+
+  /**
+   * Helper for StealFrame.  Returns true if aChild was removed from its list.
+   */
+  bool MaybeStealOverflowContainerFrame(nsIFrame* aChild);
 
   /**
    * Builds a display list for non-block children that behave like

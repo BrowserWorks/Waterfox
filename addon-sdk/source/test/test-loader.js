@@ -4,7 +4,7 @@
 'use strict';
 
 var {
-  Loader, main, unload, parseStack, generateMap, resolve, join,
+  Loader, main, unload, parseStack, resolve, join,
   Require, Module
 } = require('toolkit/loader');
 var { readURI } = require('sdk/net/url');
@@ -35,8 +35,8 @@ exports['test resolve'] = function (assert) {
   assert.equal(resolve('./utils/file.js', cuddlefish_id), 'sdk/loader/utils/file.js');
 
   assert.equal(resolve('..//index.js', './dir/c.js'), './index.js');
-  assert.equal(resolve('../../gre/modules/XPCOMUtils.jsm', 'resource://thing/utils/file.js'), 'resource://gre/modules/XPCOMUtils.jsm');
-  assert.equal(resolve('../../gre/modules/XPCOMUtils.jsm', 'chrome://thing/utils/file.js'), 'chrome://gre/modules/XPCOMUtils.jsm');
+  assert.equal(resolve('../modules/XPCOMUtils.jsm', 'resource://gre/utils/file.js'), 'resource://gre/modules/XPCOMUtils.jsm');
+  assert.equal(resolve('../modules/XPCOMUtils.jsm', 'chrome://gre/utils/file.js'), 'chrome://gre/modules/XPCOMUtils.jsm');
   assert.equal(resolve('../../a/b/c.json', 'file:///thing/utils/file.js'), 'file:///a/b/c.json');
 
   // Does not change absolute paths

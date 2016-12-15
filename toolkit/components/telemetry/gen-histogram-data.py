@@ -6,6 +6,7 @@
 # in a file provided as a command-line argument.
 
 from __future__ import print_function
+from shared_telemetry_utils import StringTable, static_assert
 
 import sys
 import histogram_tools
@@ -13,83 +14,62 @@ import itertools
 
 banner = """/* This file is auto-generated, see gen-histogram-data.py.  */
 """
-
-# Write out the gHistograms array.
 
-class StringTable:
-    def __init__(self):
-        self.current_index = 0;
-        self.table = {}
-
-    def c_strlen(self, string):
-        return len(string) + 1
-
-    def stringIndex(self, string):
-        if string in self.table:
-            return self.table[string]
-        else:
-            result = self.current_index
-            self.table[string] = result
-            self.current_index += self.c_strlen(string)
-            return result
-
-    def writeDefinition(self, f, name):
-        entries = self.table.items()
-        entries.sort(key=lambda x:x[1])
-        # Avoid null-in-string warnings with GCC and potentially
-        # overlong string constants; write everything out the long way.
-        def explodeToCharArray(string):
-            def toCChar(s):
-                if s == "'":
-                    return "'\\''"
-                else:
-                    return "'%s'" % s
-            return ", ".join(map(toCChar, string))
-        f.write("const char %s[] = {\n" % name)
-        for (string, offset) in entries[:-1]:
-            e = explodeToCharArray(string)
-            if e:
-                f.write("  /* %5d */ %s, '\\0',\n"
-                        % (offset, explodeToCharArray(string)))
-            else:
-                f.write("  /* %5d */ '\\0',\n" % offset)
-        f.write("  /* %5d */ %s, '\\0' };\n\n"
-                % (entries[-1][1], explodeToCharArray(entries[-1][0])))
-
-def print_array_entry(output, histogram, name_index, exp_index):
+def print_array_entry(output, histogram, name_index, exp_index, label_index, label_count):
     cpp_guard = histogram.cpp_guard()
     if cpp_guard:
         print("#if defined(%s)" % cpp_guard, file=output)
-    print("  { %s, %s, %s, %s, %d, %d, %s, %s }," \
-        % (histogram.low(), histogram.high(),
-           histogram.n_buckets(), histogram.nsITelemetry_kind(),
-           name_index, exp_index, histogram.dataset(),
+    print("  { %s, %s, %s, %s, %d, %d, %s, %d, %d, %s }," \
+        % (histogram.low(),
+           histogram.high(),
+           histogram.n_buckets(),
+           histogram.nsITelemetry_kind(),
+           name_index,
+           exp_index,
+           histogram.dataset(),
+           label_index,
+           label_count,
            "true" if histogram.keyed() else "false"), file=output)
     if cpp_guard:
         print("#endif", file=output)
 
 def write_histogram_table(output, histograms):
-    table = StringTable()
+    string_table = StringTable()
+    label_table = []
+    label_count = 0
 
     print("const HistogramInfo gHistograms[] = {", file=output)
     for histogram in histograms:
-        name_index = table.stringIndex(histogram.name())
-        exp_index = table.stringIndex(histogram.expiration())
-        print_array_entry(output, histogram, name_index, exp_index)
-    print("};", file=output)
+        name_index = string_table.stringIndex(histogram.name())
+        exp_index = string_table.stringIndex(histogram.expiration())
+
+        labels = histogram.labels()
+        label_index = 0
+        if len(labels) > 0:
+            label_index = label_count
+            label_table.append((histogram.name(), string_table.stringIndexes(labels)))
+            label_count += len(labels)
+
+        print_array_entry(output, histogram,
+                          name_index, exp_index,
+                          label_index, len(labels))
+    print("};\n", file=output)
 
     strtab_name = "gHistogramStringTable"
-    table.writeDefinition(output, strtab_name)
+    string_table.writeDefinition(output, strtab_name)
     static_assert(output, "sizeof(%s) <= UINT32_MAX" % strtab_name,
                   "index overflow")
-
+
+    print("\nconst uint32_t gHistogramLabelTable[] = {", file=output)
+    for name,indexes in label_table:
+        print("/* %s */ %s," % (name, ", ".join(map(str, indexes))), file=output)
+    print("};", file=output)
+
+
 # Write out static asserts for histogram data.  We'd prefer to perform
 # these checks in this script itself, but since several histograms
 # (generally enumerated histograms) use compile-time constants for
 # their upper bounds, we have to let the compiler do the checking.
-
-def static_assert(output, expression, message):
-    print("static_assert(%s, \"%s\");" % (expression, message), file=output)
 
 def static_asserts_for_boolean(output, histogram):
     pass
@@ -133,6 +113,7 @@ def write_histogram_static_asserts(output, histograms):
         'flag' : static_asserts_for_flag,
         'count': static_asserts_for_count,
         'enumerated' : static_asserts_for_enumerated,
+        'categorical' : static_asserts_for_enumerated,
         'linear' : static_asserts_for_linear,
         'exponential' : static_asserts_for_exponential,
         }

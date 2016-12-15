@@ -13,6 +13,7 @@
 #include "libANGLE/Shader.h"
 #include "libANGLE/features.h"
 #include "libANGLE/renderer/d3d/RendererD3D.h"
+#include "libANGLE/renderer/d3d/ProgramD3D.h"
 
 // Definitions local to the translation unit
 namespace
@@ -39,9 +40,25 @@ const char *GetShaderTypeString(GLenum type)
 namespace rx
 {
 
-ShaderD3D::ShaderD3D(const gl::Shader::Data &data) : ShaderImpl(data)
+ShaderD3D::ShaderD3D(const gl::ShaderState &data, const WorkaroundsD3D &workarounds)
+    : ShaderImpl(data), mAdditionalOptions(0)
 {
     uncompile();
+
+    if (workarounds.expandIntegerPowExpressions)
+    {
+        mAdditionalOptions |= SH_EXPAND_SELECT_HLSL_INTEGER_POW_EXPRESSIONS;
+    }
+
+    if (workarounds.getDimensionsIgnoresBaseLevel)
+    {
+        mAdditionalOptions |= SH_HLSL_GET_DIMENSIONS_IGNORES_BASE_LEVEL;
+    }
+
+    if (workarounds.preAddTexelFetchOffsets)
+    {
+        mAdditionalOptions |= SH_REWRITE_TEXELFETCHOFFSET_TO_TEXELFETCH;
+    }
 }
 
 ShaderD3D::~ShaderD3D()
@@ -71,7 +88,6 @@ void ShaderD3D::uncompile()
     mUsesFragDepth = false;
     mUsesDiscardRewriting = false;
     mUsesNestedBreak = false;
-    mUsesDeferredInit = false;
     mRequiresIEEEStrictCompiling = false;
 
     mDebugInfo.clear();
@@ -135,8 +151,22 @@ int ShaderD3D::prepareSourceAndReturnOptions(std::stringstream *shaderSourceStre
     }
 #endif
 
+    additionalOptions |= mAdditionalOptions;
+
     *shaderSourceStream << source;
     return additionalOptions;
+}
+
+bool ShaderD3D::hasUniform(const D3DUniform *d3dUniform) const
+{
+    return mUniformRegisterMap.find(d3dUniform->name) != mUniformRegisterMap.end();
+}
+
+const std::map<std::string, unsigned int> &GetUniformRegisterMap(
+    const std::map<std::string, unsigned int> *uniformRegisterMap)
+{
+    ASSERT(uniformRegisterMap);
+    return *uniformRegisterMap;
 }
 
 bool ShaderD3D::postTranslateCompile(gl::Compiler *compiler, std::string *infoLog)
@@ -158,25 +188,12 @@ bool ShaderD3D::postTranslateCompile(gl::Compiler *compiler, std::string *infoLo
     mUsesDiscardRewriting =
         translatedSource.find("ANGLE_USES_DISCARD_REWRITING") != std::string::npos;
     mUsesNestedBreak  = translatedSource.find("ANGLE_USES_NESTED_BREAK") != std::string::npos;
-    mUsesDeferredInit = translatedSource.find("ANGLE_USES_DEFERRED_INIT") != std::string::npos;
     mRequiresIEEEStrictCompiling =
         translatedSource.find("ANGLE_REQUIRES_IEEE_STRICT_COMPILING") != std::string::npos;
 
     ShHandle compilerHandle = compiler->getCompilerHandle(mData.getShaderType());
 
-    for (const sh::Uniform &uniform : mData.getUniforms())
-    {
-        if (uniform.staticUse && !uniform.isBuiltIn())
-        {
-            unsigned int index = static_cast<unsigned int>(-1);
-            bool getUniformRegisterResult =
-                ShGetUniformRegister(compilerHandle, uniform.name, &index);
-            UNUSED_ASSERTION_VARIABLE(getUniformRegisterResult);
-            ASSERT(getUniformRegisterResult);
-
-            mUniformRegisterMap[uniform.name] = index;
-        }
-    }
+    mUniformRegisterMap = GetUniformRegisterMap(ShGetUniformRegisterMap(compilerHandle));
 
     for (const sh::InterfaceBlock &interfaceBlock : mData.getInterfaceBlocks())
     {

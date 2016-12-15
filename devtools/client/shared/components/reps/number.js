@@ -10,8 +10,9 @@
 define(function (require, exports, module) {
   // Dependencies
   const React = require("devtools/client/shared/vendor/react");
-  const { createFactories } = require("./rep-utils");
-  const { ObjectBox } = createFactories(require("./object-box"));
+
+  // Shortcuts
+  const { span } = React.DOM;
 
   /**
    * Renders a number
@@ -20,13 +21,17 @@ define(function (require, exports, module) {
     displayName: "Number",
 
     stringify: function (object) {
-      return (Object.is(object, -0) ? "-0" : String(object));
+      let isNegativeZero = Object.is(object, -0) ||
+        (object.type && object.type == "-0");
+
+      return (isNegativeZero ? "-0" : String(object));
     },
 
     render: function () {
       let value = this.props.object;
+
       return (
-        ObjectBox({className: "number"},
+        span({className: "objectBox objectBox-number"},
           this.stringify(value)
         )
       );
@@ -34,7 +39,8 @@ define(function (require, exports, module) {
   });
 
   function supportsObject(object, type) {
-    return type == "boolean" || type == "number";
+    return type == "boolean" || type == "number" ||
+      (type == "object" && object.type == "-0");
   }
 
   // Exports from this module

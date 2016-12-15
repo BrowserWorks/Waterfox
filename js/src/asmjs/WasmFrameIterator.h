@@ -32,9 +32,11 @@ namespace wasm {
 
 class CallSite;
 class CodeRange;
-class Module;
+class Instance;
+class SigIdDesc;
 struct CallThunk;
 struct FuncOffsets;
+struct Metadata;
 struct ProfilingOffsets;
 
 // Iterates over the frames of a single WasmActivation, called synchronously
@@ -48,7 +50,7 @@ struct ProfilingOffsets;
 class FrameIterator
 {
     JSContext* cx_;
-    const Module* module_;
+    const Instance* instance_;
     const CallSite* callsite_;
     const CodeRange* codeRange_;
     uint8_t* fp_;
@@ -72,7 +74,6 @@ enum class ExitReason : uint32_t
     None,          // default state, the pc is in wasm code
     ImportJit,     // fast-path call directly into JIT code
     ImportInterp,  // slow-path call into C++ Invoke()
-    Error,         // call to error generation
     Native         // call to native C++ code (e.g., Math.sin, ToInt32(), interrupt)
 };
 
@@ -81,7 +82,7 @@ enum class ExitReason : uint32_t
 // module is not in profiling mode, the activation is skipped.
 class ProfilingFrameIterator
 {
-    const Module* module_;
+    const Instance* instance_;
     const CodeRange* codeRange_;
     uint8_t* callerFP_;
     void* callerPC_;
@@ -111,7 +112,7 @@ void
 GenerateExitEpilogue(jit::MacroAssembler& masm, unsigned framePushed, ExitReason reason,
                      ProfilingOffsets* offsets);
 void
-GenerateFunctionPrologue(jit::MacroAssembler& masm, unsigned framePushed, uint32_t sigIndex,
+GenerateFunctionPrologue(jit::MacroAssembler& masm, unsigned framePushed, const SigIdDesc& sigId,
                          FuncOffsets* offsets);
 void
 GenerateFunctionEpilogue(jit::MacroAssembler& masm, unsigned framePushed, FuncOffsets* offsets);
@@ -119,13 +120,13 @@ GenerateFunctionEpilogue(jit::MacroAssembler& masm, unsigned framePushed, FuncOf
 // Runtime patching to enable/disable profiling
 
 void
-ToggleProfiling(const Module& module, const CallSite& callSite, bool enabled);
+ToggleProfiling(const Instance& instance, const CallSite& callSite, bool enabled);
 
 void
-ToggleProfiling(const Module& module, const CallThunk& callThunk, bool enabled);
+ToggleProfiling(const Instance& instance, const CallThunk& callThunk, bool enabled);
 
 void
-ToggleProfiling(const Module& module, const CodeRange& codeRange, bool enabled);
+ToggleProfiling(const Instance& instance, const CodeRange& codeRange, bool enabled);
 
 } // namespace wasm
 } // namespace js

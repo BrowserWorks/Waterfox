@@ -27,13 +27,14 @@ public:
 
   int GetInputFrameID();
   bool GetVRDevices(nsTArray<RefPtr<VRDeviceProxy> >& aDevices);
-  bool RefreshVRDevicesWithCallback(dom::Navigator* aNavigator);
-  static VRManagerChild* StartUpInChildProcess(Transport* aTransport,
-                                               ProcessId aOtherProcess);
+  bool RefreshVRDevicesWithCallback(uint64_t aWindowId);
 
-  static void StartUpSameProcess();
+  static void InitSameProcess();
+  static void InitWithGPUProcess(Endpoint<PVRManagerChild>&& aEndpoint);
+  static bool InitForContent(Endpoint<PVRManagerChild>&& aEndpoint);
   static void ShutDown();
 
+  static bool IsCreated();
 
   static VRManagerChild* Get();
 
@@ -51,7 +52,7 @@ protected:
 private:
 
   nsTArray<RefPtr<VRDeviceProxy> > mDevices;
-  nsTArray<dom::Navigator*> mNavigatorCallbacks;
+  nsTArray<uint64_t> mNavigatorCallbacks;
 
   int32_t mInputFrameID;
 };

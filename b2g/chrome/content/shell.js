@@ -8,7 +8,6 @@ window.performance.mark('gecko-shell-loadstart');
 
 Cu.import('resource://gre/modules/ContactService.jsm');
 Cu.import('resource://gre/modules/AlarmService.jsm');
-Cu.import('resource://gre/modules/ActivitiesService.jsm');
 Cu.import('resource://gre/modules/NotificationDB.jsm');
 Cu.import('resource://gre/modules/Payment.jsm');
 Cu.import("resource://gre/modules/AppsUtils.jsm");
@@ -22,8 +21,6 @@ if (isGonk) {
   Cu.import('resource://gre/modules/NetworkStatsService.jsm');
   Cu.import('resource://gre/modules/ResourceStatsService.jsm');
 }
-
-Cu.import('resource://gre/modules/KillSwitchMain.jsm');
 
 // Identity
 Cu.import('resource://gre/modules/SignInToWebsite.jsm');
@@ -40,8 +37,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "SystemAppProxy",
 
 XPCOMUtils.defineLazyModuleGetter(this, "Screenshot",
                                   "resource://gre/modules/Screenshot.jsm");
-
-Cu.import('resource://gre/modules/Webapps.jsm');
 
 XPCOMUtils.defineLazyServiceGetter(Services, 'env',
                                    '@mozilla.org/process/environment;1',
@@ -359,6 +354,7 @@ var shell = {
       alert(msg);
       return;
     }
+
     let manifestURL = this.manifestURL;
     // <html:iframe id="systemapp"
     //              mozbrowser="true" allowfullscreen="true"
@@ -425,11 +421,11 @@ var shell = {
     this.contentBrowser.addEventListener('mozbrowsercaretstatechanged', this);
 
     CustomEventManager.init();
-    WebappsHelper.init();
     UserAgentOverrides.init();
     CaptivePortalLoginHelper.init();
 
     this.contentBrowser.src = homeURL;
+
     this._isEventListenerReady = false;
 
     window.performance.mark('gecko-shell-system-frame-set');
@@ -784,15 +780,6 @@ Services.obs.addObserver(function onFullscreenOriginChange(subject, topic, data)
                           fullscreenorigin: data });
 }, "fullscreen-origin-change", false);
 
-DOMApplicationRegistry.registryReady.then(function () {
-  // This event should be sent before System app returns with
-  // system-message-listener-ready mozContentEvent, because it's on
-  // the critical launch path of the app.
-  SystemAppProxy._sendCustomEvent('mozChromeEvent', {
-    type: 'webapps-registry-ready'
-  }, /* noPending */ true);
-});
-
 Services.obs.addObserver(function onBluetoothVolumeChange(subject, topic, data) {
   shell.sendChromeEvent({
     type: "bluetooth-volumeset",
@@ -829,12 +816,6 @@ var CustomEventManager = {
     dump('XXX FIXME : Got a mozContentEvent: ' + detail.type + "\n");
 
     switch(detail.type) {
-      case 'webapps-install-granted':
-      case 'webapps-install-denied':
-      case 'webapps-uninstall-granted':
-      case 'webapps-uninstall-denied':
-        WebappsHelper.handleEvent(detail);
-        break;
       case 'system-message-listener-ready':
         Services.obs.notifyObservers(null, 'system-message-listener-ready', null);
         break;
@@ -888,92 +869,6 @@ var CustomEventManager = {
         break;
       case 'restart':
         restart();
-        break;
-    }
-  }
-}
-
-var WebappsHelper = {
-  _installers: {},
-  _count: 0,
-
-  init: function webapps_init() {
-    Services.obs.addObserver(this, "webapps-launch", false);
-    Services.obs.addObserver(this, "webapps-ask-install", false);
-    Services.obs.addObserver(this, "webapps-ask-uninstall", false);
-    Services.obs.addObserver(this, "webapps-close", false);
-  },
-
-  registerInstaller: function webapps_registerInstaller(data) {
-    let id = "installer" + this._count++;
-    this._installers[id] = data;
-    return id;
-  },
-
-  handleEvent: function webapps_handleEvent(detail) {
-    if (!detail || !detail.id)
-      return;
-
-    let installer = this._installers[detail.id];
-    delete this._installers[detail.id];
-    switch (detail.type) {
-      case "webapps-install-granted":
-        DOMApplicationRegistry.confirmInstall(installer);
-        break;
-      case "webapps-install-denied":
-        DOMApplicationRegistry.denyInstall(installer);
-        break;
-      case "webapps-uninstall-granted":
-        DOMApplicationRegistry.confirmUninstall(installer);
-        break;
-      case "webapps-uninstall-denied":
-        DOMApplicationRegistry.denyUninstall(installer);
-        break;
-    }
-  },
-
-  observe: function webapps_observe(subject, topic, data) {
-    let json = JSON.parse(data);
-    json.mm = subject;
-
-    let id;
-
-    switch(topic) {
-      case "webapps-launch":
-        DOMApplicationRegistry.getManifestFor(json.manifestURL).then((aManifest) => {
-          if (!aManifest)
-            return;
-
-          let manifest = new ManifestHelper(aManifest, json.origin,
-                                            json.manifestURL);
-          let payload = {
-            timestamp: json.timestamp,
-            url: manifest.fullLaunchPath(json.startPoint),
-            manifestURL: json.manifestURL
-          };
-          shell.sendCustomEvent("webapps-launch", payload);
-        });
-        break;
-      case "webapps-ask-install":
-        id = this.registerInstaller(json);
-        shell.sendChromeEvent({
-          type: "webapps-ask-install",
-          id: id,
-          app: json.app
-        });
-        break;
-      case "webapps-ask-uninstall":
-        id = this.registerInstaller(json);
-        shell.sendChromeEvent({
-          type: "webapps-ask-uninstall",
-          id: id,
-          app: json.app
-        });
-        break;
-      case "webapps-close":
-        shell.sendCustomEvent("webapps-close", {
-          "manifestURL": json.manifestURL
-        });
         break;
     }
   }
@@ -1316,8 +1211,8 @@ if (isGonk) {
 Services.obs.addObserver(function resetProfile(subject, topic, data) {
   Services.obs.removeObserver(resetProfile, topic);
 
-  // Listening for 'profile-before-change2' which is late in the shutdown
-  // sequence, but still has xpcom access.
+  // Listening for 'profile-before-change-telemetry' which is late in the
+  // shutdown sequence, but still has xpcom access.
   Services.obs.addObserver(function clearProfile(subject, topic, data) {
     Services.obs.removeObserver(clearProfile, topic);
     if (isGonk) {
@@ -1357,7 +1252,7 @@ Services.obs.addObserver(function resetProfile(subject, topic, data) {
       }
     }
   },
-  'profile-before-change2', false);
+  'profile-before-change-telemetry', false);
 
   let appStartup = Cc['@mozilla.org/toolkit/app-startup;1']
                      .getService(Ci.nsIAppStartup);

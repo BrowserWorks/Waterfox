@@ -41,6 +41,9 @@ protected:
   // Whole text in the target
   nsString mText;
 
+  // Start offset of the composition string.
+  uint32_t mCompositionStart;
+
   struct Selection final
   {
     // Following values are offset in "flat text".
@@ -105,6 +108,18 @@ protected:
                    "The caller should check if the selection is valid");
       return Reversed() ? mAnchor - mFocus : mFocus - mAnchor;
     }
+    LayoutDeviceIntRect StartCharRect() const
+    {
+      NS_ASSERTION(IsValid(),
+                   "The caller should check if the selection is valid");
+      return Reversed() ? mFocusCharRect : mAnchorCharRect;
+    }
+    LayoutDeviceIntRect EndCharRect() const
+    {
+      NS_ASSERTION(IsValid(),
+                   "The caller should check if the selection is valid");
+      return Reversed() ? mAnchorCharRect : mFocusCharRect;
+    }
   } mSelection;
 
   bool IsSelectionValid() const
@@ -167,6 +182,10 @@ protected:
         CheckedInt<uint32_t>(mStart) + mRects.Length();
       return endOffset.isValid();
     }
+    bool HasRects() const
+    {
+      return IsValid() && !mRects.IsEmpty();
+    }
     uint32_t StartOffset() const
     {
       NS_ASSERTION(IsValid(),
@@ -198,7 +217,7 @@ protected:
     }
     bool IsOverlappingWith(uint32_t aOffset, uint32_t aLength) const
     {
-      if (!IsValid() || aOffset == UINT32_MAX) {
+      if (!HasRects() || aOffset == UINT32_MAX || !aLength) {
         return false;
       }
       CheckedInt<uint32_t> endOffset =
@@ -206,12 +225,13 @@ protected:
       if (NS_WARN_IF(!endOffset.isValid())) {
         return false;
       }
-      return aOffset <= EndOffset() && endOffset.value() >= mStart;
+      return aOffset < EndOffset() && endOffset.value() > mStart;
     }
     LayoutDeviceIntRect GetRect(uint32_t aOffset) const;
     LayoutDeviceIntRect GetUnionRect(uint32_t aOffset, uint32_t aLength) const;
-    LayoutDeviceIntRect GetUnionRectAsFarAsPossible(uint32_t aOffset,
-                                                    uint32_t aLength) const;
+    LayoutDeviceIntRect GetUnionRectAsFarAsPossible(
+                          uint32_t aOffset, uint32_t aLength,
+                          bool aRoundToExistingOffset) const;
   } mTextRectArray;
 
   LayoutDeviceIntRect mEditorRect;
@@ -277,6 +297,7 @@ public:
    * it's managed by TabParent itself.
    */
   void AssignContent(const ContentCache& aOther,
+                     nsIWidget* aWidget,
                      const IMENotification* aNotification = nullptr);
 
   /**
@@ -360,8 +381,6 @@ private:
   // composition.  Then, data value of dispatched composition events should
   // be stored into the instance.
   nsAString* mCommitStringByRequest;
-  // Start offset of the composition string.
-  uint32_t mCompositionStart;
   // mPendingEventsNeedingAck is increased before sending a composition event or
   // a selection event and decreased after they are received in the child
   // process.
@@ -369,11 +388,20 @@ private:
 
   bool mIsComposing;
 
-  bool GetCaretRect(uint32_t aOffset, LayoutDeviceIntRect& aCaretRect) const;
+  /**
+   * When following methods' aRoundToExistingOffset is true, even if specified
+   * offset or range is out of bounds, the result is computed with the existing
+   * cache forcibly.
+   */
+  bool GetCaretRect(uint32_t aOffset,
+                    bool aRoundToExistingOffset,
+                    LayoutDeviceIntRect& aCaretRect) const;
   bool GetTextRect(uint32_t aOffset,
+                   bool aRoundToExistingOffset,
                    LayoutDeviceIntRect& aTextRect) const;
   bool GetUnionTextRects(uint32_t aOffset,
                          uint32_t aLength,
+                         bool aRoundToExistingOffset,
                          LayoutDeviceIntRect& aUnionTextRect) const;
 
   void FlushPendingNotifications(nsIWidget* aWidget);

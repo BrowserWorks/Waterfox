@@ -7,6 +7,7 @@
 #include "signaling/src/jsep/JsepSessionImpl.h"
 #include <string>
 #include <set>
+#include <bitset>
 #include <stdlib.h>
 
 #include "nspr.h"
@@ -36,6 +37,17 @@ MOZ_MTLOG_MODULE("jsep")
     mLastError = os.str();                                                     \
     MOZ_MTLOG(ML_ERROR, mLastError);                                           \
   } while (0);
+
+static std::bitset<128> GetForbiddenSdpPayloadTypes() {
+  std::bitset<128> forbidden(0);
+  forbidden[1] = true;
+  forbidden[2] = true;
+  forbidden[19] = true;
+  for (uint16_t i = 64; i < 96; ++i) {
+    forbidden[i] = true;
+  }
+  return forbidden;
+}
 
 nsresult
 JsepSessionImpl::Init()
@@ -1658,6 +1670,7 @@ JsepSessionImpl::ParseSdp(const std::string& sdp, UniquePtr<Sdp>* parsedp)
       return rv;
     }
 
+    static const std::bitset<128> forbidden = GetForbiddenSdpPayloadTypes();
     if (msection.GetMediaType() == SdpMediaSection::kAudio ||
         msection.GetMediaType() == SdpMediaSection::kVideo) {
       // Sanity-check that payload type can work with RTP
@@ -1668,6 +1681,10 @@ JsepSessionImpl::ParseSdp(const std::string& sdp, UniquePtr<Sdp>* parsedp)
           JSEP_SET_ERROR("audio/video payload type is too large: " << fmt);
           return NS_ERROR_INVALID_ARG;
         }
+	if (forbidden.test(payloadType)) {
+	  JSEP_SET_ERROR("Illegal audio/video payload type: " << fmt);
+          return NS_ERROR_INVALID_ARG;
+	}
       }
     }
   }
@@ -2165,11 +2182,29 @@ JsepSessionImpl::SetupDefaultCodecs()
   h264_0->mProfileLevelId = 0x42E00D;
   mSupportedCodecs.values.push_back(h264_0);
 
+  JsepVideoCodecDescription* red = new JsepVideoCodecDescription(
+      "122", // payload type
+      "red", // codec name
+      90000  // clock rate (match other video codecs)
+      );
+  mSupportedCodecs.values.push_back(red);
+
+  JsepVideoCodecDescription* ulpfec = new JsepVideoCodecDescription(
+      "123",    // payload type
+      "ulpfec", // codec name
+      90000     // clock rate (match other video codecs)
+      );
+  mSupportedCodecs.values.push_back(ulpfec);
+
   mSupportedCodecs.values.push_back(new JsepApplicationCodecDescription(
       "5000",
       "webrtc-datachannel",
       WEBRTC_DATACHANNEL_STREAMS_DEFAULT
       ));
+
+  // Update the redundant encodings for the RED codec with the supported
+  // codecs.  Note: only uses the video codecs.
+  red->UpdateRedundantEncodings(mSupportedCodecs.values);
 }
 
 void

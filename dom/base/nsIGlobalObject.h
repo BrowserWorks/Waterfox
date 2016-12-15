@@ -53,6 +53,12 @@ public:
     return mIsDying;
   }
 
+  // GetGlobalJSObject may return a gray object.  If this ever changes so that
+  // it stops doing that, please simplify the code in FindAssociatedGlobal in
+  // BindingUtils.h that does JS::ExposeObjectToActiveJS on the return value of
+  // GetGlobalJSObject.  Also, in that case the JS::ExposeObjectToActiveJS in
+  // AutoJSAPI::InitInternal can probably be removed.  And also the similar
+  // calls in XrayWrapper and nsGlobalWindow.
   virtual JSObject* GetGlobalJSObject() = 0;
 
   // This method is not meant to be overridden.

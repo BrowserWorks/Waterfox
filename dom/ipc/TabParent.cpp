@@ -80,6 +80,7 @@
 #include "PermissionMessageUtils.h"
 #include "StructuredCloneData.h"
 #include "ColorPickerParent.h"
+#include "DatePickerParent.h"
 #include "FilePickerParent.h"
 #include "TabChild.h"
 #include "LoadContext.h"
@@ -340,6 +341,27 @@ TabParent::CacheFrameLoader(nsFrameLoader* aFrameLoader)
   mFrameLoader = aFrameLoader;
 }
 
+/**
+ * Will return nullptr if there is no outer window available for the
+ * document hosting the owner element of this TabParent. Also will return
+ * nullptr if that outer window is in the process of closing.
+ */
+already_AddRefed<nsPIDOMWindowOuter>
+TabParent::GetParentWindowOuter()
+{
+  nsCOMPtr<nsIContent> frame = do_QueryInterface(GetOwnerElement());
+  if (!frame) {
+    return nullptr;
+  }
+
+  nsCOMPtr<nsPIDOMWindowOuter> parent = frame->OwnerDoc()->GetWindow();
+  if (!parent || parent->Closed()) {
+    return nullptr;
+  }
+
+  return parent.forget();
+}
+
 void
 TabParent::SetOwnerElement(Element* aElement)
 {
@@ -595,9 +617,19 @@ TabParent::ActorDestroy(ActorDestroyReason why)
     if (why == AbnormalShutdown && os) {
       os->NotifyObservers(NS_ISUPPORTS_CAST(nsIFrameLoader*, frameLoader),
                           "oop-frameloader-crashed", nullptr);
-      nsContentUtils::DispatchTrustedEvent(frameElement->OwnerDoc(), frameElement,
-                                           NS_LITERAL_STRING("oop-browser-crashed"),
-                                           true, true);
+      nsCOMPtr<nsIFrameLoaderOwner> owner = do_QueryInterface(frameElement);
+      if (owner) {
+        RefPtr<nsFrameLoader> currentFrameLoader = owner->GetFrameLoader();
+        // It's possible that the frameloader owner has already moved on
+        // and created a new frameloader. If so, we don't fire the event,
+        // since the frameloader owner has clearly moved on.
+        if (currentFrameLoader == frameLoader) {
+          nsContentUtils::DispatchTrustedEvent(frameElement->OwnerDoc(), frameElement,
+                                               NS_LITERAL_STRING("oop-browser-crashed"),
+                                               true, true);
+
+        }
+      }
     }
 
     mFrameLoader = nullptr;
@@ -1276,9 +1308,9 @@ TabParent::SendRealDragEvent(WidgetDragEvent& event, uint32_t aDragAction,
   return PBrowserParent::SendRealDragEvent(event, aDragAction, aDropEffect);
 }
 
-CSSPoint TabParent::AdjustTapToChildWidget(const CSSPoint& aPoint)
+LayoutDevicePoint TabParent::AdjustTapToChildWidget(const LayoutDevicePoint& aPoint)
 {
-  return aPoint + (LayoutDevicePoint(GetChildProcessOffset()) * GetLayoutDeviceToCSSScale());
+  return aPoint + LayoutDevicePoint(GetChildProcessOffset());
 }
 
 bool TabParent::SendMouseWheelEvent(WidgetWheelEvent& event)
@@ -1832,7 +1864,7 @@ TabParent::RecvNotifyIMEFocus(const ContentCache& aContentCache,
     return true;
   }
 
-  mContentCache.AssignContent(aContentCache, &aIMENotification);
+  mContentCache.AssignContent(aContentCache, widget, &aIMENotification);
   IMEStateManager::NotifyIME(aIMENotification, widget, true);
 
   if (aIMENotification.mMessage == NOTIFY_IME_OF_FOCUS) {
@@ -1853,12 +1885,9 @@ TabParent::RecvNotifyIMETextChange(const ContentCache& aContentCache,
   nsIMEUpdatePreference updatePreference = widget->GetIMEUpdatePreference();
   NS_ASSERTION(updatePreference.WantTextChange(),
                "Don't call Send/RecvNotifyIMETextChange without NOTIFY_TEXT_CHANGE");
-  MOZ_ASSERT(!aIMENotification.mTextChangeData.mCausedOnlyByComposition ||
-               updatePreference.WantChangesCausedByComposition(),
-    "The widget doesn't want text change notification caused by composition");
 #endif
 
-  mContentCache.AssignContent(aContentCache, &aIMENotification);
+  mContentCache.AssignContent(aContentCache, widget, &aIMENotification);
   mContentCache.MaybeNotifyIME(widget, aIMENotification);
   return true;
 }
@@ -1873,7 +1902,7 @@ TabParent::RecvNotifyIMECompositionUpdate(
     return true;
   }
 
-  mContentCache.AssignContent(aContentCache, &aIMENotification);
+  mContentCache.AssignContent(aContentCache, widget, &aIMENotification);
   mContentCache.MaybeNotifyIME(widget, aIMENotification);
   return true;
 }
@@ -1886,7 +1915,7 @@ TabParent::RecvNotifyIMESelection(const ContentCache& aContentCache,
   if (!widget)
     return true;
 
-  mContentCache.AssignContent(aContentCache, &aIMENotification);
+  mContentCache.AssignContent(aContentCache, widget, &aIMENotification);
   mContentCache.MaybeNotifyIME(widget, aIMENotification);
   return true;
 }
@@ -1899,7 +1928,7 @@ TabParent::RecvUpdateContentCache(const ContentCache& aContentCache)
     return true;
   }
 
-  mContentCache.AssignContent(aContentCache);
+  mContentCache.AssignContent(aContentCache, widget);
   return true;
 }
 
@@ -1928,7 +1957,7 @@ TabParent::RecvNotifyIMEPositionChange(const ContentCache& aContentCache,
     return true;
   }
 
-  mContentCache.AssignContent(aContentCache, &aIMENotification);
+  mContentCache.AssignContent(aContentCache, widget, &aIMENotification);
   mContentCache.MaybeNotifyIME(widget, aIMENotification);
   return true;
 }
@@ -2098,6 +2127,9 @@ TabParent::RecvReplyKeyEvent(const WidgetKeyboardEvent& event)
   NS_ENSURE_TRUE(presShell, true);
   nsPresContext* presContext = presShell->GetPresContext();
   NS_ENSURE_TRUE(presContext, true);
+
+  AutoHandlingUserInputStatePusher userInpStatePusher(localEvent.IsTrusted(),
+                                                      &localEvent, doc);
 
   EventDispatcher::Dispatch(mFrameElement, presContext, &localEvent);
   return true;
@@ -2553,6 +2585,20 @@ TabParent::DeallocPColorPickerParent(PColorPickerParent* actor)
   return true;
 }
 
+PDatePickerParent*
+TabParent::AllocPDatePickerParent(const nsString& aTitle,
+                                  const nsString& aInitialDate)
+{
+  return new DatePickerParent(aTitle, aInitialDate);
+}
+
+bool
+TabParent::DeallocPDatePickerParent(PDatePickerParent* actor)
+{
+  delete actor;
+  return true;
+}
+
 PRenderFrameParent*
 TabParent::AllocPRenderFrameParent()
 {
@@ -2638,7 +2684,7 @@ TabParent::RecvAudioChannelActivityNotification(const uint32_t& aAudioChannel,
 
     os->NotifyObservers(NS_ISUPPORTS_CAST(nsITabParent*, this),
                         topic.get(),
-                        aActive ? MOZ_UTF16("active") : MOZ_UTF16("inactive"));
+                        aActive ? u"active" : u"inactive");
   }
 
   return true;
@@ -2764,9 +2810,11 @@ TabParent::GetLoadContext()
   if (mLoadContext) {
     loadContext = mLoadContext;
   } else {
+    bool isPrivate = mChromeFlags & nsIWebBrowserChrome::CHROME_PRIVATE_WINDOW;
+    SetPrivateBrowsingAttributes(isPrivate);
     loadContext = new LoadContext(GetOwnerElement(),
                                   true /* aIsContent */,
-                                  mChromeFlags & nsIWebBrowserChrome::CHROME_PRIVATE_WINDOW,
+                                  isPrivate,
                                   mChromeFlags & nsIWebBrowserChrome::CHROME_REMOTE_WINDOW,
                                   OriginAttributesRef());
     mLoadContext = loadContext;
@@ -3309,9 +3357,14 @@ TabParent::AddInitialDnDDataTo(DataTransfer* aDataTransfer)
 
       // Using system principal here, since once the data is on parent process
       // side, it can be handled as being from browser chrome or OS.
+
+      // We set aHidden to false, as we don't need to worry about hiding data
+      // from content in the parent process where there is no content.
+      // XXX: Nested Content Processes may change this
       aDataTransfer->SetDataWithPrincipalFromOtherProcess(NS_ConvertUTF8toUTF16(item.flavor()),
                                                           variant, i,
-                                                          nsContentUtils::GetSystemPrincipal());
+                                                          nsContentUtils::GetSystemPrincipal(),
+                                                          /* aHidden = */ false);
     }
   }
   mInitialDataTransferItems.Clear();

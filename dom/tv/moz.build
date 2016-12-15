@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,9 @@ EXTRA_COMPONENTS += [
 
 XPIDL_MODULE = 'dom_tv'
 
-MOCHITEST_MANIFESTS += ['test/mochitest/mochitest.ini']
+MOCHITEST_MANIFESTS  += ['test/mochitest/mochitest.ini']
+
+MOCHITEST_CHROME_MANIFESTS  += ['test/mochitest/chrome.ini']
 
 XPCSHELL_TESTS_MANIFESTS += ['test/xpcshell/xpcshell.ini']
 

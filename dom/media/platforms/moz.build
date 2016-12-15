@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 EXPORTS += [
     'agnostic/AgnosticDecoderModule.h',
     'agnostic/OpusDecoder.h',
+    'agnostic/TheoraDecoder.h',
     'agnostic/VorbisDecoder.h',
     'agnostic/VPXDecoder.h',
     'MediaTelemetryConstants.h',
@@ -20,6 +21,7 @@ UNIFIED_SOURCES += [
     'agnostic/AgnosticDecoderModule.cpp',
     'agnostic/BlankDecoderModule.cpp',
     'agnostic/OpusDecoder.cpp',
+    'agnostic/TheoraDecoder.cpp',
     'agnostic/VorbisDecoder.cpp',
     'agnostic/VPXDecoder.cpp',
     'agnostic/WAVDecoder.cpp',
@@ -63,8 +65,6 @@ if CONFIG['MOZ_APPLEMEDIA']:
       'apple/AppleATDecoder.cpp',
       'apple/AppleCMLinker.cpp',
       'apple/AppleDecoderModule.cpp',
-      'apple/AppleVDADecoder.cpp',
-      'apple/AppleVDALinker.cpp',
       'apple/AppleVTDecoder.cpp',
       'apple/AppleVTLinker.cpp',
   ]

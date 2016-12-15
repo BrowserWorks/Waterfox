@@ -32,7 +32,10 @@
 %endif
 
 .downloadTypeIcon {
-  margin-inline-end: 8px;
+  margin-top: 8px;
+  margin-inline-end: 12px;
+  margin-bottom: 8px;
+  margin-inline-start: 0;
   width: 32px;
   height: 32px;
 }
@@ -45,8 +48,21 @@
 }
 %endif
 
-.blockedIcon {
-  list-style-image: url("chrome://global/skin/icons/Error.png");
+.downloadBlockedBadge {
+  margin: 0 4px;
+  background: url("chrome://browser/skin/downloads/download-blocked.svg") top right / 16px no-repeat;
+}
+
+.downloadBlockedBadge:-moz-locale-dir(rtl) {
+  background-position-x: left;
+}
+
+@item@[verdict="PotentiallyUnwanted"] .downloadBlockedBadge {
+  background-image: url("chrome://browser/skin/warning.svg");
+}
+
+@item@[verdict="Uncommon"] .downloadBlockedBadge {
+  background-image: url("chrome://browser/skin/info.svg");
 }
 
 .downloadTarget {

@@ -26,6 +26,8 @@ chrome.jar:
   content/languages.properties         (content/languages.properties)
   content/browser.xul                  (content/browser.xul)
   content/browser.js                   (content/browser.js)
+  content/geckoview.xul                (content/geckoview.xul)
+  content/geckoview.js                 (content/geckoview.js)
   content/bindings/checkbox.xml        (content/bindings/checkbox.xml)
   content/bindings/settings.xml        (content/bindings/settings.xml)
   content/netError.xhtml               (content/netError.xhtml)
@@ -57,7 +59,7 @@ chrome.jar:
   content/aboutAccounts.js             (content/aboutAccounts.js)
   content/aboutLogins.xhtml            (content/aboutLogins.xhtml)
   content/aboutLogins.js               (content/aboutLogins.js)
-#ifdef NIGHTLY_BUILD
+#ifndef RELEASE_BUILD
   content/WebcompatReporter.js         (content/WebcompatReporter.js)
 #endif
 

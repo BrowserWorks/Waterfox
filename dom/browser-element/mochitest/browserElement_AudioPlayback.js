@@ -8,7 +8,6 @@ const { Services } = SpecialPowers.Cu.import('resource://gre/modules/Services.js
 
 SimpleTest.waitForExplicitFinish();
 browserElementTestHelpers.setEnabledPref(true);
-browserElementTestHelpers.addPermission();
 
 /**
  * Content script passed to the child iframe
@@ -65,11 +64,11 @@ function runTest() {
   });
 
   // Load a simple page to get the process started.
-  iframe.src = browserElementTestHelpers.emptyPage1;
+  iframe.src = browserElementTestHelpers.fileEmptyPage1;
 }
 
 addEventListener('testready', function() {
-  SpecialPowers.pushPrefEnv({'set': [["b2g.system_manifest_url", "http://mochi.test:8888/manifest.webapp"]]},
+  SpecialPowers.pushPrefEnv({'set': [["b2g.system_startup_url", window.location.href]]},
                             function() {
     SimpleTest.executeSoon(runTest);
   });

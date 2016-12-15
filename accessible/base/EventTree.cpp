@@ -12,6 +12,8 @@
 #include "Logging.h"
 #endif
 
+#include "mozilla/UniquePtr.h"
+
 using namespace mozilla;
 using namespace mozilla::a11y;
 
@@ -36,52 +38,10 @@ TreeMutation::TreeMutation(Accessible* aParent, bool aNoEvents) :
     Controller()->RootEventTree().Log();
     logging::MsgEnd();
 
-    logging::MsgBegin("EVENTS_TREE", "Container tree");
     if (logging::IsEnabled(logging::eVerbose)) {
-      nsAutoString level;
-      Accessible* root = mParent->Document();
-      do {
-        const char* prefix = "";
-        if (mParent == root) {
-          prefix = "_X_";
-        }
-        else {
-          const EventTree& ret = Controller()->RootEventTree();
-          if (ret.Find(root)) {
-            prefix = "_с_";
-          }
-        }
-
-        printf("%s", NS_ConvertUTF16toUTF8(level).get());
-        logging::AccessibleInfo(prefix, root);
-        if (root->FirstChild() && !root->FirstChild()->IsDoc()) {
-          level.Append(NS_LITERAL_STRING("  "));
-          root = root->FirstChild();
-          continue;
-        }
-        int32_t idxInParent = root->mParent ?
-          root->mParent->mChildren.IndexOf(root) : -1;
-        if (idxInParent != -1 &&
-            idxInParent < static_cast<int32_t>(root->mParent->mChildren.Length() - 1)) {
-          root = root->mParent->mChildren.ElementAt(idxInParent + 1);
-          continue;
-        }
-
-        while ((root = root->Parent()) && !root->IsDoc()) {
-          level.Cut(0, 2);
-
-          int32_t idxInParent = root->mParent ?
-          root->mParent->mChildren.IndexOf(root) : -1;
-          if (idxInParent != -1 &&
-              idxInParent < static_cast<int32_t>(root->mParent->mChildren.Length() - 1)) {
-            root = root->mParent->mChildren.ElementAt(idxInParent + 1);
-            break;
-          }
-        }
-      }
-      while (root && !root->IsDoc());
+      logging::Tree("EVENTS_TREE", "Container tree", mParent->Document(),
+                    PrefixLog, static_cast<void*>(this));
     }
-    logging::MsgEnd();
   }
 #endif
 
@@ -173,6 +133,22 @@ TreeMutation::Done()
 #endif
 }
 
+#ifdef A11Y_LOG
+const char*
+TreeMutation::PrefixLog(void* aData, Accessible* aAcc)
+{
+  TreeMutation* thisObj = reinterpret_cast<TreeMutation*>(aData);
+  if (thisObj->mParent == aAcc) {
+    return "_X_";
+  }
+  const EventTree& ret = thisObj->Controller()->RootEventTree();
+  if (ret.Find(aAcc)) {
+    return "_с_";
+  }
+  return "";
+}
+#endif
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // EventTree
@@ -188,7 +164,7 @@ EventTree::Process(const RefPtr<DocAccessible>& aDeathGrip)
         return;
       }
     }
-    mFirst = mFirst->mNext.forget();
+    mFirst = Move(mFirst->mNext);
   }
 
   MOZ_ASSERT(mContainer || mDependentEvents.IsEmpty(),
@@ -255,11 +231,12 @@ EventTree*
 EventTree::FindOrInsert(Accessible* aContainer)
 {
   if (!mFirst) {
-    return mFirst = new EventTree(aContainer, true);
+    mFirst.reset(new EventTree(aContainer, true));
+    return mFirst.get();
   }
 
   EventTree* prevNode = nullptr;
-  EventTree* node = mFirst;
+  EventTree* node = mFirst.get();
   do {
     MOZ_ASSERT(!node->mContainer->IsApplication(),
                "No event for application accessible is expected here");
@@ -303,18 +280,18 @@ EventTree::FindOrInsert(Accessible* aContainer)
       // Insert the tail node into the hierarchy between the current node and
       // its parent.
       node->mFireReorder = false;
-      nsAutoPtr<EventTree>& nodeOwnerRef = prevNode ? prevNode->mNext : mFirst;
-      nsAutoPtr<EventTree> newNode(new EventTree(aContainer, mDependentEvents.IsEmpty()));
+      UniquePtr<EventTree>& nodeOwnerRef = prevNode ? prevNode->mNext : mFirst;
+      UniquePtr<EventTree> newNode(new EventTree(aContainer, mDependentEvents.IsEmpty()));
       newNode->mFirst = Move(nodeOwnerRef);
       nodeOwnerRef = Move(newNode);
       nodeOwnerRef->mNext = Move(node->mNext);
 
       // Check if a next node is contained by the given node too, and move them
       // under the given node if so.
-      prevNode = nodeOwnerRef;
-      node = nodeOwnerRef->mNext;
-      nsAutoPtr<EventTree>* nodeRef = &nodeOwnerRef->mNext;
-      EventTree* insNode = nodeOwnerRef->mFirst;
+      prevNode = nodeOwnerRef.get();
+      node = nodeOwnerRef->mNext.get();
+      UniquePtr<EventTree>* nodeRef = &nodeOwnerRef->mNext;
+      EventTree* insNode = nodeOwnerRef->mFirst.get();
       while (node) {
         Accessible* curParent = node->mContainer;
         while (curParent && !curParent->IsDoc()) {
@@ -327,7 +304,7 @@ EventTree::FindOrInsert(Accessible* aContainer)
 
           node->mFireReorder = false;
           insNode->mNext = Move(*nodeRef);
-          insNode = insNode->mNext;
+          insNode = insNode->mNext.get();
 
           prevNode->mNext = Move(node->mNext);
           node = prevNode;
@@ -336,14 +313,14 @@ EventTree::FindOrInsert(Accessible* aContainer)
 
         prevNode = node;
         nodeRef = &node->mNext;
-        node = node->mNext;
+        node = node->mNext.get();
       }
 
-      return nodeOwnerRef;
+      return nodeOwnerRef.get();
     }
 
     prevNode = node;
-  } while ((node = node->mNext));
+  } while ((node = node->mNext.get()));
 
   MOZ_ASSERT(prevNode, "Nowhere to insert");
   MOZ_ASSERT(!prevNode->mNext, "Taken by another node");
@@ -353,7 +330,8 @@ EventTree::FindOrInsert(Accessible* aContainer)
   //   if a dependent show event target contains the given container then do not
   //   emit show / hide events (see Process() method)
 
-  return prevNode->mNext = new EventTree(aContainer, mDependentEvents.IsEmpty());
+  prevNode->mNext.reset(new EventTree(aContainer, mDependentEvents.IsEmpty()));
+  return prevNode->mNext.get();
 }
 
 void
@@ -383,14 +361,14 @@ EventTree::Find(const Accessible* aContainer) const
     }
 
     if (et->mFirst) {
-      et = et->mFirst;
+      et = et->mFirst.get();
       const EventTree* cet = et->Find(aContainer);
       if (cet) {
         return cet;
       }
     }
 
-    et = et->mNext;
+    et = et->mNext.get();
     const EventTree* cet = et->Find(aContainer);
     if (cet) {
       return cet;
@@ -447,7 +425,7 @@ EventTree::Mutated(AccMutationEvent* aEv)
 {
   // If shown or hidden node is a root of previously mutated subtree, then
   // discard those subtree mutations as we are no longer interested in them.
-  nsAutoPtr<EventTree>* node = &mFirst;
+  UniquePtr<EventTree>* node = &mFirst;
   while (*node) {
     if ((*node)->mContainer == aEv->mAccessible) {
       *node = Move((*node)->mNext);

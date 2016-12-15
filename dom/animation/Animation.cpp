@@ -159,13 +159,13 @@ Animation::SetTimeline(AnimationTimeline* aTimeline)
 void
 Animation::SetTimelineNoUpdate(AnimationTimeline* aTimeline)
 {
-  RefPtr<AnimationTimeline> oldTimeline = mTimeline;
   if (mTimeline == aTimeline) {
     return;
   }
 
-  if (mTimeline) {
-    mTimeline->RemoveAnimation(this);
+  RefPtr<AnimationTimeline> oldTimeline = mTimeline;
+  if (oldTimeline) {
+    oldTimeline->RemoveAnimation(this);
   }
 
   mTimeline = aTimeline;
@@ -1252,8 +1252,8 @@ Animation::DoFinishNotification(SyncNotifyFlag aSyncNotifyFlag)
   } else if (!mFinishNotificationTask.IsPending()) {
     RefPtr<nsRunnableMethod<Animation>> runnable =
       NewRunnableMethod(this, &Animation::DoFinishNotificationImmediately);
-    runtime->DispatchToMicroTask(runnable);
-    mFinishNotificationTask = runnable;
+    runtime->DispatchToMicroTask(do_AddRef(runnable));
+    mFinishNotificationTask = runnable.forget();
   }
 }
 

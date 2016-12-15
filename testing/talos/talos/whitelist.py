@@ -1,4 +1,4 @@
-# -*- Mode: python; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+# -*- Mode: python; tab-width: 8; indent-tabs-mode: nil -*-
 # vim: set ts=8 sts=4 et sw=4 tw=80:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,7 +38,7 @@ class Whitelist:
                 self.listmap[whitelist_name.lower()] = temp[whitelist_name]
 
         except IOError as e:
-            print "%s: %s" % (e.filename, e.strerror)
+            print("%s: %s" % (e.filename, e.strerror))
             return False
         return True
 
@@ -136,8 +136,8 @@ class Whitelist:
 
     def print_errors(self, error_strs):
         for error_msg in error_strs:
-            print "TEST-UNEXPECTED-FAIL | %s | %s" % (self.test_name,
-                                                      error_msg)
+            print("TEST-UNEXPECTED-FAIL | %s | %s" % (self.test_name,
+                                                      error_msg))
 
     # Note that we don't store dependent libs in listmap. This makes
     # save_baseline cleaner. Since a baseline whitelist should not include
@@ -154,5 +154,5 @@ class Whitelist:
                     {'ignore': True} for lib in libs}
             return True
         except IOError as e:
-            print "%s: %s" % (e.filename, e.strerror)
+            print("%s: %s" % (e.filename, e.strerror))
             return False

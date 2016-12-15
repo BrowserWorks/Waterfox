@@ -17,14 +17,15 @@ add_task(function* () {
 
   info("Set the popupNode to the node that contains the uri");
   let {editor} = yield getContainerForSelector("video", inspector);
-  let popupNode = editor.attrElements.get("poster").querySelector(".link");
-  inspector.panelDoc.popupNode = popupNode;
+  openContextMenuAndGetAllItems(inspector, {
+    target: editor.attrElements.get("poster").querySelector(".link"),
+  });
 
   info("Follow the link and wait for the new tab to open");
   let onTabOpened = once(gBrowser.tabContainer, "TabOpen");
   inspector.onFollowLink();
   let {target: tab} = yield onTabOpened;
-  yield waitForTabLoad(tab);
+  yield BrowserTestUtils.browserLoaded(tab.linkedBrowser);
 
   ok(true, "A new tab opened");
   is(tab.linkedBrowser.currentURI.spec, URL_ROOT + "doc_markup_tooltip.png",
@@ -36,8 +37,9 @@ add_task(function* () {
 
   info("Set the popupNode to the node that contains the ref");
   ({editor} = yield getContainerForSelector("label", inspector));
-  popupNode = editor.attrElements.get("for").querySelector(".link");
-  inspector.panelDoc.popupNode = popupNode;
+  openContextMenuAndGetAllItems(inspector, {
+    target: editor.attrElements.get("for").querySelector(".link"),
+  });
 
   info("Follow the link and wait for the new node to be selected");
   let onSelection = inspector.selection.once("new-node-front");
@@ -52,8 +54,9 @@ add_task(function* () {
 
   info("Set the popupNode to the node that contains the ref");
   ({editor} = yield getContainerForSelector("output", inspector));
-  popupNode = editor.attrElements.get("for").querySelectorAll(".link")[2];
-  inspector.panelDoc.popupNode = popupNode;
+  openContextMenuAndGetAllItems(inspector, {
+    target: editor.attrElements.get("for").querySelectorAll(".link")[2],
+  });
 
   info("Try to follow the link and check that no new node were selected");
   let onFailed = inspector.once("idref-attribute-link-failed");
@@ -64,16 +67,3 @@ add_task(function* () {
   is(inspector.selection.nodeFront.tagName.toLowerCase(), "output",
     "The <output> node is still selected");
 });
-
-function waitForTabLoad(tab) {
-  let def = promise.defer();
-  tab.addEventListener("load", function onLoad(e) {
-    // Skip load event for about:blank
-    if (tab.linkedBrowser.currentURI.spec === "about:blank") {
-      return;
-    }
-    tab.removeEventListener("load", onLoad);
-    def.resolve();
-  });
-  return def.promise;
-}

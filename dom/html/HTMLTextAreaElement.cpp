@@ -9,6 +9,7 @@
 #include "mozAutoDocUpdate.h"
 #include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/HTMLFormSubmission.h"
 #include "mozilla/dom/HTMLTextAreaElementBinding.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventStates.h"
@@ -18,7 +19,6 @@
 #include "nsContentCreatorFunctions.h"
 #include "nsError.h"
 #include "nsFocusManager.h"
-#include "nsFormSubmission.h"
 #include "nsIComponentManager.h"
 #include "nsIConstraintValidation.h"
 #include "nsIControllers.h"
@@ -440,7 +440,7 @@ HTMLTextAreaElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
   } else if (aAttribute == nsGkAtoms::wrap) {
     retval |= nsChangeHint_ReconstructFrame;
   } else if (aAttribute == nsGkAtoms::placeholder) {
-    retval |= NS_STYLE_HINT_FRAMECHANGE;
+    retval |= nsChangeHint_ReconstructFrame;
   }
   return retval;
 }
@@ -1040,7 +1040,7 @@ HTMLTextAreaElement::Reset()
 }
 
 NS_IMETHODIMP
-HTMLTextAreaElement::SubmitNamesValues(nsFormSubmission* aFormSubmission)
+HTMLTextAreaElement::SubmitNamesValues(HTMLFormSubmission* aFormSubmission)
 {
   // Disabled elements don't submit
   if (IsDisabled()) {
@@ -1085,7 +1085,11 @@ HTMLTextAreaElement::SaveState()
                value,
                nsLinebreakConverter::eLinebreakPlatform,
                nsLinebreakConverter::eLinebreakContent);
-      NS_ASSERTION(NS_SUCCEEDED(rv), "Converting linebreaks failed!");
+
+      if (NS_FAILED(rv)) {
+        NS_ERROR("Converting linebreaks failed!");
+        return rv;
+      }
 
       nsCOMPtr<nsISupportsString> pState =
         do_CreateInstance(NS_SUPPORTS_STRING_CONTRACTID);

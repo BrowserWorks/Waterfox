@@ -14,11 +14,11 @@
 #include <set>
 #include <vector>
 
-#include "libANGLE/Error.h"
+#include "libANGLE/AttributeMap.h"
 #include "libANGLE/Caps.h"
 #include "libANGLE/Config.h"
-#include "libANGLE/AttributeMap.h"
-#include "libANGLE/renderer/Renderer.h"
+#include "libANGLE/Error.h"
+#include "libANGLE/Version.h"
 
 namespace gl
 {
@@ -35,6 +35,7 @@ namespace egl
 class Device;
 class Image;
 class Surface;
+class Stream;
 
 class Display final : angle::NonCopyable
 {
@@ -67,6 +68,8 @@ class Display final : angle::NonCopyable
                       const AttributeMap &attribs,
                       Image **outImage);
 
+    Error createStream(const AttributeMap &attribs, Stream **outStream);
+
     Error createContext(const Config *configuration, gl::Context *shareContext, const AttributeMap &attribs,
                         gl::Context **outContext);
 
@@ -74,6 +77,7 @@ class Display final : angle::NonCopyable
 
     void destroySurface(egl::Surface *surface);
     void destroyImage(egl::Image *image);
+    void destroyStream(egl::Stream *stream);
     void destroyContext(gl::Context *context);
 
     bool isInitialized() const;
@@ -81,6 +85,7 @@ class Display final : angle::NonCopyable
     bool isValidContext(gl::Context *context) const;
     bool isValidSurface(egl::Surface *surface) const;
     bool isValidImage(const Image *image) const;
+    bool isValidStream(const Stream *stream) const;
     bool isValidNativeWindow(EGLNativeWindowType window) const;
 
     static bool isValidDisplay(const egl::Display *display);
@@ -107,6 +112,8 @@ class Display final : angle::NonCopyable
     Device *getDevice() const;
     EGLenum getPlatform() const { return mPlatform; }
 
+    gl::Version getMaxSupportedESVersion() const;
+
   private:
     Display(EGLenum platform, EGLNativeDisplayType displayId, Device *eglDevice);
 
@@ -130,7 +137,11 @@ class Display final : angle::NonCopyable
     typedef std::set<Image *> ImageSet;
     ImageSet mImageSet;
 
+    typedef std::set<Stream *> StreamSet;
+    StreamSet mStreamSet;
+
     bool mInitialized;
+    bool mDeviceLost;
 
     Caps mCaps;
 

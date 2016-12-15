@@ -339,37 +339,7 @@ struct DomainPolicyClone
     URIParams[] superWhitelist;
 };
 
-struct GamepadAdded {
-    nsString id;
-    uint32_t index;
-    uint32_t mapping;
-    uint32_t num_buttons;
-    uint32_t num_axes;
-};
 
-struct GamepadRemoved {
-    uint32_t index;
-};
-
-struct GamepadAxisInformation {
-    uint32_t index;
-    uint32_t axis;
-    double value;
-};
-
-struct GamepadButtonInformation {
-    uint32_t index;
-    uint32_t button;
-    bool pressed;
-    double value;
-};
-
-union GamepadChangeEvent {
-    GamepadAdded;
-    GamepadRemoved;
-    GamepadAxisInformation;
-    GamepadButtonInformation;
-};
 
 struct FrameScriptInfo
 {
@@ -387,16 +357,36 @@ struct AndroidSystemInfo
     bool     isTablet;
 };
 
+struct GetFilesResponseSuccess
+{
+  PBlob[] blobs;
+};
+
+struct GetFilesResponseFailure
+{
+  nsresult errorCode;
+};
+
+union GetFilesResponseResult
+{
+  GetFilesResponseSuccess;
+  GetFilesResponseFailure;
+};
+
+struct BlobURLRegistrationData
+{
+    nsCString url;
+    PBlob blob;
+    Principal principal;
+};
+
 prio(normal upto urgent) sync protocol PContent
 {
     parent spawns PPluginModule;
 
-    parent opens PCompositorBridge;
     parent opens PProcessHangMonitor;
     parent opens PSharedBufferManager;
-    parent opens PImageBridge;
     parent opens PGMPService;
-    parent opens PVRManager;
     child opens PBackground;
 
     manages PAPZ;
@@ -478,6 +468,11 @@ both:
                                      uint64_t aOuterWindowID);
 
 child:
+    // Give the content process its endpoints to the compositor.
+    async InitCompositor(Endpoint<PCompositorBridgeChild> compositor);
+    async InitImageBridge(Endpoint<PImageBridgeChild> bridge);
+    async InitVRManager(Endpoint<PVRManagerChild> endpoint);
+
     /**
      * Enable system-level sandboxing features, if available.  Can
      * usually only be performed zero or one times.  The child may
@@ -494,7 +489,7 @@ child:
      * Communication between the PuppetBidiKeyboard and the actual
      * BidiKeyboard hosted by the parent
      */
-    async BidiKeyboardNotify(bool isLangRTL);
+    async BidiKeyboardNotify(bool isLangRTL, bool haveBidiKeyboards);
 
     /**
      * Dump this process's GC and CC logs to the provided files.
@@ -560,6 +555,11 @@ child:
      * Send ServiceWorkerRegistrationData to child process.
      */
     async InitServiceWorkers(ServiceWorkerConfiguration aConfig);
+
+    /**
+     * Send BlobURLRegistrationData to child process.
+     */
+    async InitBlobURLs(BlobURLRegistrationData[] registrations);
 
     // Notify child that last-pb-context-exited notification was observed
     async LastPrivateDocShellDestroyed();
@@ -642,11 +642,6 @@ child:
     async UpdateWindow(uintptr_t aChildId);
 
     /**
-     * Send gamepad status update to child.
-     */
-    async GamepadUpdate(GamepadChangeEvent aGamepadEvent);
-
-    /**
      * Notify the child that presentation receiver has been launched with the
      * correspondent iframe.
      */
@@ -697,6 +692,14 @@ child:
     async SetAudioSessionData(nsID aID,
                               nsString aDisplayName,
                               nsString aIconPath);
+
+    async GetFilesResponse(nsID aID, GetFilesResponseResult aResult);
+
+    async BlobURLRegistration(nsCString aURI, PBlob aBlob,
+                              Principal aPrincipal);
+
+    async BlobURLUnregistration(nsCString aURI);
+
 parent:
     /**
      * Tell the content process some attributes of itself.  This is
@@ -714,7 +717,8 @@ parent:
     sync GetProcessAttributes()
         returns (ContentParentId cpId, bool isForApp, bool isForBrowser);
     sync GetXPCOMProcessAttributes()
-        returns (bool isOffline, bool isConnected, bool isLangRTL, nsString[] dictionaries,
+        returns (bool isOffline, bool isConnected, bool isLangRTL,
+                 bool haveBidiKeyboards, nsString[] dictionaries,
                  ClipboardCapabilities clipboardCaps,
                  DomainPolicyClone domainPolicy,
                  StructuredCloneData initialData);
@@ -877,9 +881,10 @@ parent:
     async SetURITitle(URIParams uri, nsString title);
 
     async LoadURIExternal(URIParams uri, PBrowser windowContext);
+    async ExtProtocolChannelConnectParent(uint32_t registrarId);
 
     // PrefService message
-    sync ReadPrefsArray() returns (PrefSetting[] prefs);
+    sync ReadPrefsArray() returns (PrefSetting[] prefs) verify;
 
     sync ReadFontList() returns (FontListEntry[] retValue);
 
@@ -970,9 +975,6 @@ parent:
                                nsString aStorageName,
                                nsString aFilepath,
                                nsCString aReason);
-
-    // Notify the parent that the child has finished handling a system message.
-    async SystemMessageHandled();
 
     // called by the child (test code only) to propagate volume changes to the parent
     async CreateFakeVolume(nsString fsName, nsString mountPoint);
@@ -1130,16 +1132,6 @@ parent:
     async PContentPermissionRequest(PermissionRequest[] aRequests, Principal aPrincipal,
                                     TabId tabId);
 
-    /*
-     * Tells the parent to start the gamepad listening service if it hasn't already.
-     */
-    async GamepadListenerAdded();
-
-    /**
-     * Tells the parent to stop the gamepad listening service if it hasn't already.
-     */
-    async GamepadListenerRemoved();
-
     async Profile(nsCString aProfile);
 
     /**
@@ -1155,7 +1147,6 @@ parent:
                       bool aCalledFromJS,
                       bool aPositionSpecified,
                       bool aSizeSpecified,
-                      nsString aName,
                       nsCString aFeatures,
                       nsCString aBaseURI,
                       DocShellOriginAttributes aOpenerOriginAttributes,
@@ -1216,6 +1207,14 @@ parent:
      * sent with a crash report from the content process.
      */
      async NotifyLowMemory();
+
+     async GetFilesRequest(nsID aID, nsString aDirectory, bool aRecursiveFlag);
+     async DeleteGetFilesRequest(nsID aID);
+
+     async StoreAndBroadcastBlobURLRegistration(nsCString url, PBlob blob,
+                                                Principal principal);
+
+     async UnstoreAndBroadcastBlobURLUnregistration(nsCString url);
 
 both:
      async AsyncMessage(nsString aMessage, CpowEntry[] aCpows,

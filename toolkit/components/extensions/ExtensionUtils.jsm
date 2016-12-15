@@ -11,9 +11,13 @@ const Cc = Components.classes;
 const Cu = Components.utils;
 const Cr = Components.results;
 
+const INTEGER = /^[1-9]\d*$/;
+
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
+                                  "resource://gre/modules/AddonManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
                                   "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LanguageDetector",
@@ -86,6 +90,12 @@ function runSafe(context, f, ...args) {
   return runSafeWithoutClone(f, ...args);
 }
 
+function getInnerWindowID(window) {
+  return window.QueryInterface(Ci.nsIInterfaceRequestor)
+    .getInterface(Ci.nsIDOMWindowUtils)
+    .currentInnerWindowID;
+}
+
 // Return true if the given value is an instance of the given
 // native type.
 function instanceOf(value, type) {
@@ -148,6 +158,51 @@ class BaseContext {
     this.contextId = ++gContextId;
     this.unloaded = false;
     this.extensionId = extensionId;
+    this.jsonSandbox = null;
+    this.active = true;
+
+    this.docShell = null;
+    this.contentWindow = null;
+    this.innerWindowID = 0;
+  }
+
+  setContentWindow(contentWindow) {
+    let {document} = contentWindow;
+    let docShell = contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIDocShell);
+
+    this.innerWindowID = getInnerWindowID(contentWindow);
+
+    let onPageShow = event => {
+      if (!event || event.target === document) {
+        this.docShell = docShell;
+        this.contentWindow = contentWindow;
+        this.active = true;
+      }
+    };
+    let onPageHide = event => {
+      if (!event || event.target === document) {
+        // Put this off until the next tick.
+        Promise.resolve().then(() => {
+          this.docShell = null;
+          this.contentWindow = null;
+          this.active = false;
+        });
+      }
+    };
+
+    onPageShow();
+    contentWindow.addEventListener("pagehide", onPageHide, true);
+    contentWindow.addEventListener("pageshow", onPageShow, true);
+    this.callOnClose({
+      close: () => {
+        onPageHide();
+        if (this.active) {
+          contentWindow.removeEventListener("pagehide", onPageHide, true);
+          contentWindow.removeEventListener("pageshow", onPageShow, true);
+        }
+      },
+    });
   }
 
   get cloneScope() {
@@ -196,6 +251,24 @@ class BaseContext {
     return true;
   }
 
+  /**
+   * Safely call JSON.stringify() on an object that comes from an
+   * extension.
+   *
+   * @param {array<any>} args Arguments for JSON.stringify()
+   * @returns {string} The stringified representation of obj
+   */
+  jsonStringify(...args) {
+    if (!this.jsonSandbox) {
+      this.jsonSandbox = Cu.Sandbox(this.principal, {
+        sameZoneAs: this.cloneScope,
+        wantXrays: false,
+      });
+    }
+
+    return Cu.waiveXrays(this.jsonSandbox.JSON).stringify(...args);
+  }
+
   callOnClose(obj) {
     this.onClose.add(obj);
   }
@@ -208,6 +281,15 @@ class BaseContext {
    * A wrapper around MessageChannel.sendMessage which adds the extension ID
    * to the recipient object, and ensures replies are not processed after the
    * context has been unloaded.
+   *
+   * @param {nsIMessageManager} target
+   * @param {string} messageName
+   * @param {object} data
+   * @param {object} [options]
+   * @param {object} [options.sender]
+   * @param {object} [options.recipient]
+   *
+   * @returns {Promise}
    */
   sendMessage(target, messageName, data, options = {}) {
     options.recipient = options.recipient || {};
@@ -238,6 +320,9 @@ class BaseContext {
    * scope. If it is an Error object which does *not* belong to the
    * clone scope, it is reported, and converted to an unexpected
    * exception error.
+   *
+   * @param {Error|object} error
+   * @returns {Error}
    */
   normalizeError(error) {
     if (error instanceof this.cloneScope.Error) {
@@ -298,10 +383,8 @@ class BaseContext {
    *     belonging to the target scope. Otherwise, undefined.
    */
   wrapPromise(promise, callback = null) {
-    // Note: `promise instanceof this.cloneScope.Promise` returns true
-    // here even for promises that do not belong to the content scope.
     let runSafe = this.runSafe.bind(this);
-    if (promise.constructor === this.cloneScope.Promise) {
+    if (promise instanceof this.cloneScope.Promise) {
       runSafe = this.runSafeWithoutClone.bind(this);
     }
 
@@ -360,6 +443,219 @@ class BaseContext {
   }
 }
 
+// Manages icon details for toolbar buttons in the |pageAction| and
+// |browserAction| APIs.
+let IconDetails = {
+  // Normalizes the various acceptable input formats into an object
+  // with icon size as key and icon URL as value.
+  //
+  // If a context is specified (function is called from an extension):
+  // Throws an error if an invalid icon size was provided or the
+  // extension is not allowed to load the specified resources.
+  //
+  // If no context is specified, instead of throwing an error, this
+  // function simply logs a warning message.
+  normalize(details, extension, context = null) {
+    let result = {};
+
+    try {
+      if (details.imageData) {
+        let imageData = details.imageData;
+
+        // The global might actually be from Schema.jsm, which
+        // normalizes most of our arguments. In that case it won't have
+        // an ImageData property. But Schema.jsm doesn't normalize
+        // actual ImageData objects, so they will come from a global
+        // with the right property.
+        if (instanceOf(imageData, "ImageData")) {
+          imageData = {"19": imageData};
+        }
+
+        for (let size of Object.keys(imageData)) {
+          if (!INTEGER.test(size)) {
+            throw new Error(`Invalid icon size ${size}, must be an integer`);
+          }
+          result[size] = this.convertImageDataToDataURL(imageData[size], context);
+        }
+      }
+
+      if (details.path) {
+        let path = details.path;
+        if (typeof path != "object") {
+          path = {"19": path};
+        }
+
+        let baseURI = context ? context.uri : extension.baseURI;
+
+        for (let size of Object.keys(path)) {
+          if (!INTEGER.test(size)) {
+            throw new Error(`Invalid icon size ${size}, must be an integer`);
+          }
+
+          let url = baseURI.resolve(path[size]);
+
+          // The Chrome documentation specifies these parameters as
+          // relative paths. We currently accept absolute URLs as well,
+          // which means we need to check that the extension is allowed
+          // to load them. This will throw an error if it's not allowed.
+          Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
+            extension.principal, url,
+            Services.scriptSecurityManager.DISALLOW_SCRIPT);
+
+          result[size] = url;
+        }
+      }
+    } catch (e) {
+      // Function is called from extension code, delegate error.
+      if (context) {
+        throw e;
+      }
+      // If there's no context, it's because we're handling this
+      // as a manifest directive. Log a warning rather than
+      // raising an error.
+      extension.manifestError(`Invalid icon data: ${e}`);
+    }
+
+    return result;
+  },
+
+  // Returns the appropriate icon URL for the given icons object and the
+  // screen resolution of the given window.
+  getPreferredIcon(icons, extension = null, size = 16) {
+    const DEFAULT = "chrome://browser/content/extension.svg";
+
+    let bestSize = null;
+    if (icons[size]) {
+      bestSize = size;
+    } else if (icons[2 * size]) {
+      bestSize = 2 * size;
+    } else {
+      let sizes = Object.keys(icons)
+                        .map(key => parseInt(key, 10))
+                        .sort((a, b) => a - b);
+
+      bestSize = sizes.find(candidate => candidate > size) || sizes.pop();
+    }
+
+    if (bestSize) {
+      return {size: bestSize, icon: icons[bestSize]};
+    }
+
+    return {size, icon: DEFAULT};
+  },
+
+  convertImageURLToDataURL(imageURL, context, browserWindow, size = 18) {
+    return new Promise((resolve, reject) => {
+      let image = new context.contentWindow.Image();
+      image.onload = function() {
+        let canvas = context.contentWindow.document.createElement("canvas");
+        let ctx = canvas.getContext("2d");
+        let dSize = size * browserWindow.devicePixelRatio;
+
+        // Scales the image while maintaing width to height ratio.
+        // If the width and height differ, the image is centered using the
+        // smaller of the two dimensions.
+        let dWidth, dHeight, dx, dy;
+        if (this.width > this.height) {
+          dWidth = dSize;
+          dHeight = image.height * (dSize / image.width);
+          dx = 0;
+          dy = (dSize - dHeight) / 2;
+        } else {
+          dWidth = image.width * (dSize / image.height);
+          dHeight = dSize;
+          dx = (dSize - dWidth) / 2;
+          dy = 0;
+        }
+
+        ctx.drawImage(this, 0, 0, this.width, this.height, dx, dy, dWidth, dHeight);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      image.onerror = reject;
+      image.src = imageURL;
+    });
+  },
+
+  convertImageDataToDataURL(imageData, context) {
+    let document = context.contentWindow.document;
+    let canvas = document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
+    canvas.width = imageData.width;
+    canvas.height = imageData.height;
+    canvas.getContext("2d").putImageData(imageData, 0, 0);
+
+    return canvas.toDataURL("image/png");
+  },
+};
+
+const LISTENERS = Symbol("listeners");
+
+class EventEmitter {
+  constructor() {
+    this[LISTENERS] = new Map();
+  }
+
+  /**
+   * Adds the given function as a listener for the given event.
+   *
+   * The listener function may optionally return a Promise which
+   * resolves when it has completed all operations which event
+   * dispatchers may need to block on.
+   *
+   * @param {string} event
+   *       The name of the event to listen for.
+   * @param {function(string, ...any)} listener
+   *        The listener to call when events are emitted.
+   */
+  on(event, listener) {
+    if (!this[LISTENERS].has(event)) {
+      this[LISTENERS].set(event, new Set());
+    }
+
+    this[LISTENERS].get(event).add(listener);
+  }
+
+  /**
+   * Removes the given function as a listener for the given event.
+   *
+   * @param {string} event
+   *       The name of the event to stop listening for.
+   * @param {function(string, ...any)} listener
+   *        The listener function to remove.
+   */
+  off(event, listener) {
+    if (this[LISTENERS].has(event)) {
+      let set = this[LISTENERS].get(event);
+
+      set.delete(listener);
+      if (!set.size) {
+        this[LISTENERS].delete(event);
+      }
+    }
+  }
+
+  /**
+   * Triggers all listeners for the given event, and returns a promise
+   * which resolves when all listeners have been called, and any
+   * promises they have returned have likewise resolved.
+   *
+   * @param {string} event
+   *       The name of the event to emit.
+   * @param {any} args
+   *        Arbitrary arguments to pass to the listener functions, after
+   *        the event name.
+   * @returns {Promise}
+   */
+  emit(event, ...args) {
+    let listeners = this[LISTENERS].get(event) || new Set();
+
+    let promises = Array.from(listeners, listener => {
+      return runSafeSyncWithoutClone(listener, event, ...args);
+    });
+
+    return Promise.all(promises);
+  }
+}
+
 function LocaleData(data) {
   this.defaultLocale = data.defaultLocale;
   this.selectedLocale = data.selectedLocale;
@@ -376,6 +672,7 @@ function LocaleData(data) {
     this.messages.set(this.BUILTIN, data.builtinMessages);
   }
 }
+
 
 LocaleData.prototype = {
   // Representation of the object to send to content processes. This
@@ -769,6 +1066,51 @@ function promiseDocumentReady(doc) {
   });
 }
 
+/**
+ * Returns a Promise which resolves when the given document is fully
+ * loaded.
+ *
+ * @param {Document} doc The document to await the load of.
+ * @returns {Promise<Document>}
+ */
+function promiseDocumentLoaded(doc) {
+  if (doc.readyState == "complete") {
+    return Promise.resolve(doc);
+  }
+
+  return new Promise(resolve => {
+    doc.defaultView.addEventListener("load", function onReady(event) {
+      doc.defaultView.removeEventListener("load", onReady);
+      resolve(doc);
+    });
+  });
+}
+
+/**
+ * Returns a Promise which resolves the given observer topic has been
+ * observed.
+ *
+ * @param {string} topic
+ *        The topic to observe.
+ * @param {function(nsISupports, string)} [test]
+ *        An optional test function which, when called with the
+ *        observer's subject and data, should return true if this is the
+ *        expected notification, false otherwise.
+ * @returns {Promise<object>}
+ */
+function promiseObserved(topic, test = () => true) {
+  return new Promise(resolve => {
+    let observer = (subject, topic, data) => {
+      if (test(subject, data)) {
+        Services.obs.removeObserver(observer, topic);
+        resolve({subject, data});
+      }
+    };
+    Services.obs.addObserver(observer, topic, false);
+  });
+}
+
+
 /*
  * Messaging primitives.
  */
@@ -822,7 +1164,10 @@ Port.prototype = {
       }).api(),
       onMessage: new EventManager(this.context, "Port.onMessage", fire => {
         let listener = ({data}) => {
-          if (!this.disconnected) {
+          if (!this.context.active) {
+            // TODO: Send error as a response.
+            Cu.reportError("Message received on port for an inactive content script");
+          } else if (!this.disconnected) {
             fire(data);
           }
         };
@@ -864,7 +1209,9 @@ Port.prototype = {
 
   disconnect() {
     if (this.disconnected) {
-      throw new this.context.contentWindow.Error("Attempt to disconnect() a disconnected port");
+      // disconnect() may be called without side effects even after the port is
+      // closed - https://developer.chrome.com/extensions/runtime#type-Port
+      return;
     }
     this.handleDisconnection();
     this.messageManager.sendAsyncMessage(this.disconnectName);
@@ -937,6 +1284,10 @@ Messenger.prototype = {
         messageFilterPermissive: this.filter,
 
         receiveMessage: ({target, data: message, sender, recipient}) => {
+          if (!this.context.active) {
+            return;
+          }
+
           if (this.delegate) {
             this.delegate.getSender(this.context, target, sender);
           }
@@ -1138,6 +1489,10 @@ class ChildAPIManager {
     return this.namespaces.includes(namespace);
   }
 
+  hasPermission(permission) {
+    return this.context.extension.permissions.has(permission);
+  }
+
   getProperty(path, name) {
     throw new Error("Not implemented");
   }
@@ -1194,9 +1549,9 @@ class ChildAPIManager {
  * a Date object, an ISO8601 string, or a number of milliseconds since the epoch as
  * either a number or a string.
  *
- * @param date: (Date) or (String) or (Number)
+ * @param {Date|string|number} date
  *      The date to convert.
- * @returns (Date)
+ * @returns {Date}
  *      A Date object
  */
 function normalizeTime(date) {
@@ -1210,18 +1565,23 @@ this.ExtensionUtils = {
   detectLanguage,
   extend,
   flushJarCache,
+  getInnerWindowID,
   ignoreEvent,
   injectAPI,
   instanceOf,
   normalizeTime,
+  promiseDocumentLoaded,
   promiseDocumentReady,
+  promiseObserved,
   runSafe,
   runSafeSync,
   runSafeSyncWithoutClone,
   runSafeWithoutClone,
   BaseContext,
   DefaultWeakMap,
+  EventEmitter,
   EventManager,
+  IconDetails,
   LocaleData,
   Messenger,
   PlatformInfo,

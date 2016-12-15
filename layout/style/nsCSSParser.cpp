@@ -13,8 +13,10 @@
 #include "mozilla/TypedEnumBits.h"
 
 #include <algorithm> // for std::stable_sort
+#include <limits> // for std::numeric_limits
 
 #include "nsCSSParser.h"
+#include "nsAlgorithm.h"
 #include "nsCSSProps.h"
 #include "nsCSSKeywords.h"
 #include "nsCSSScanner.h"
@@ -1002,6 +1004,8 @@ protected:
   bool ParseGridArea();
   bool ParseGridGap();
 
+  bool ParseInitialLetter();
+
   // parsing 'align/justify-items/self' from the css-align spec
   bool ParseAlignJustifyPosition(nsCSSValue& aResult,
                                  const KTableEntry aTable[]);
@@ -1067,7 +1071,7 @@ protected:
   bool ParseTransitionTimingFunctionValues(nsCSSValue& aValue);
   bool ParseTransitionTimingFunctionValueComponent(float& aComponent,
                                                      char aStop,
-                                                     bool aCheckRange);
+                                                     bool aIsXPoint);
   bool ParseTransitionStepTimingFunctionValues(nsCSSValue& aValue);
   enum ParseAnimationOrTransitionShorthandResult {
     eParseAnimationOrTransitionShorthand_Values,
@@ -1241,6 +1245,16 @@ protected:
   bool ParseNonNegativeNumber(nsCSSValue& aValue)
   {
     return ParseSingleTokenNonNegativeVariant(aValue, VARIANT_NUMBER, nullptr);
+  }
+
+  // Helpers for some common ParseSingleTokenOneOrLargerVariant calls.
+  bool ParseOneOrLargerInteger(nsCSSValue& aValue)
+  {
+    return ParseSingleTokenOneOrLargerVariant(aValue, VARIANT_INTEGER, nullptr);
+  }
+  bool ParseOneOrLargerNumber(nsCSSValue& aValue)
+  {
+    return ParseSingleTokenOneOrLargerVariant(aValue, VARIANT_NUMBER, nullptr);
   }
 
   // http://dev.w3.org/csswg/css-values/#custom-idents
@@ -2116,62 +2130,71 @@ CSSParserImpl::ParseSourceSizeList(const nsAString& aBuffer,
   // See ParseMediaList comment about HTML mode
   mHTMLMediaMode = aHTMLMode;
 
-  bool hitError = false;
-  for (;;) {
-    nsAutoPtr<nsMediaQuery> query;
-    nsCSSValue value;
+  // https://html.spec.whatwg.org/multipage/embedded-content.html#parse-a-sizes-attribute
+  bool hitEnd = false;
+  do {
+    bool hitError = false;
+    // Parse single <media-condition> <source-size-value>
+    do {
+      nsAutoPtr<nsMediaQuery> query;
+      nsCSSValue value;
 
-    bool hitStop;
-    if (!ParseMediaQuery(eMediaQuerySingleCondition, getter_Transfers(query),
-                         &hitStop)) {
-      NS_ASSERTION(!hitStop, "should return true when hit stop");
-      hitError = true;
-      break;
-    }
-
-    if (!query) {
-      REPORT_UNEXPECTED_EOF(PEParseSourceSizeListEOF);
-      NS_ASSERTION(hitStop,
-                   "should return hitStop or an error if returning no query");
-      hitError = true;
-      break;
-    }
-
-    if (hitStop) {
-      // Empty conditions (e.g. just a bare value) should be treated as always
-      // matching (a query with no expressions fails to match, so a negated one
-      // always matches.)
-      query->SetNegated();
-    }
-
-    // https://html.spec.whatwg.org/multipage/embedded-content.html#source-size-value
-    // Percentages are not allowed in a <source-size-value>, to avoid
-    // confusion about what it would be relative to.
-    if (ParseNonNegativeVariant(value, VARIANT_LCALC, nullptr) !=
-        CSSParseResult::Ok) {
-      hitError = true;
-      break;
-    }
-
-    if (GetToken(true)) {
-      if (!mToken.IsSymbol(',')) {
-        REPORT_UNEXPECTED_TOKEN(PEParseSourceSizeListNotComma);
+      bool hitStop;
+      if (!ParseMediaQuery(eMediaQuerySingleCondition, getter_Transfers(query),
+                           &hitStop)) {
+        NS_ASSERTION(!hitStop, "should return true when hit stop");
         hitError = true;
         break;
       }
+
+      if (!query) {
+        REPORT_UNEXPECTED_EOF(PEParseSourceSizeListEOF);
+        NS_ASSERTION(hitStop,
+                     "should return hitStop or an error if returning no query");
+        hitError = true;
+        break;
+      }
+
+      if (hitStop) {
+        // Empty conditions (e.g. just a bare value) should be treated as always
+        // matching (a query with no expressions fails to match, so a negated one
+        // always matches.)
+        query->SetNegated();
+      }
+
+      // https://html.spec.whatwg.org/multipage/embedded-content.html#source-size-value
+      // Percentages are not allowed in a <source-size-value>, to avoid
+      // confusion about what it would be relative to.
+      if (ParseNonNegativeVariant(value, VARIANT_LCALC, nullptr) !=
+          CSSParseResult::Ok) {
+        hitError = true;
+        break;
+      }
+
+      if (GetToken(true)) {
+        if (!mToken.IsSymbol(',')) {
+          REPORT_UNEXPECTED_TOKEN(PEParseSourceSizeListNotComma);
+          hitError = true;
+          break;
+        }
+      } else {
+        hitEnd = true;
+      }
+
+      aQueries.AppendElement(query.forget());
+      aValues.AppendElement(value);
+    } while(0);
+
+    if (hitError) {
+      OUTPUT_ERROR();
+
+      // Per spec, we just skip the current entry if there was a parse error.
+      // Jumps to next entry of <source-size-list> which is a comma-separated list.
+      if (!SkipUntil(',')) {
+        hitEnd = true;
+      }
     }
-
-    aQueries.AppendElement(query.forget());
-    aValues.AppendElement(value);
-  }
-
-  if (hitError) {
-    // Per spec, a parse failure in this list invalidates it
-    // entirely. Currently, this grammar is specified standalone and not part of
-    // any larger grammar, so it doesn't make sense to try to advance the token
-    // beyond it.
-    OUTPUT_ERROR();
-  }
+  } while (!hitEnd);
 
   CLEAR_ERROR();
   ReleaseScanner();
@@ -3290,7 +3313,7 @@ CSSParserImpl::ParseAtRule(RuleAppendFunc aAppendFunc,
   if (unnestable) {
     REPORT_UNEXPECTED_TOKEN(PEGroupRuleNestedAtRule);
   }
-  
+
   if (unnestable || !(this->*parseFunc)(aAppendFunc, aData)) {
     // Skip over invalid at rule, don't advance section
     OUTPUT_ERROR();
@@ -3301,7 +3324,7 @@ CSSParserImpl::ParseAtRule(RuleAppendFunc aAppendFunc,
   if (!aInAtRule) {
     mSection = newSection;
   }
-  
+
   return true;
 }
 
@@ -3825,7 +3848,7 @@ CSSParserImpl::ParseMozDocumentRule(RuleAppendFunc aAppendFunc, void* aData)
       delete urls;
       return false;
     }
-        
+
     if (!(eCSSToken_URL == mToken.mType ||
           (eCSSToken_Function == mToken.mType &&
            (mToken.mIdent.LowerCaseEqualsLiteral("url-prefix") ||
@@ -7797,9 +7820,9 @@ CSSParserImpl::ParseVariant(nsCSSValue& aValue,
       ((aVariantMask & (VARIANT_LENGTH | VARIANT_ZERO_ANGLE)) != 0 &&
        eCSSToken_Number == tk->mType &&
        tk->mNumber == 0.0f)) {
-    if (((aVariantMask & VARIANT_POSITIVE_DIMENSION) != 0 && 
+    if (((aVariantMask & VARIANT_POSITIVE_DIMENSION) != 0 &&
          tk->mNumber <= 0.0) ||
-        ((aVariantMask & VARIANT_NONNEGATIVE_DIMENSION) != 0 && 
+        ((aVariantMask & VARIANT_NONNEGATIVE_DIMENSION) != 0 &&
          tk->mNumber < 0.0)) {
         UngetToken();
         AssertNextTokenAt(lineBefore, colBefore);
@@ -8251,7 +8274,7 @@ CSSParserImpl::ParseImageOrientation(nsCSSValue& aValue)
     } else {
       aValue = angle;
     }
-    
+
     return true;
   }
 
@@ -8427,7 +8450,7 @@ CSSParserImpl::ParseFlex()
     if (ParseNonNegativeNumber(tmpVal)) {
       flexShrink = tmpVal;
     }
- 
+
     // d) Finally: If we didn't get flex-basis at the beginning, try to parse
     //    it now, at the end.
     //
@@ -8527,6 +8550,11 @@ CSSParserImpl::ParseGridAutoFlow()
   return true;
 }
 
+static const nsCSSKeyword kGridLineKeywords[] = {
+  eCSSKeyword_span,
+  eCSSKeyword_UNKNOWN  // End-of-array marker
+};
+
 CSSParseResult
 CSSParserImpl::ParseGridLineNames(nsCSSValue& aValue)
 {
@@ -8558,7 +8586,7 @@ CSSParserImpl::ParseGridLineNames(nsCSSValue& aValue)
   }
   for (;;) {
     if (!(eCSSToken_Ident == mToken.mType &&
-          ParseCustomIdent(item->mValue, mToken.mIdent))) {
+          ParseCustomIdent(item->mValue, mToken.mIdent, kGridLineKeywords))) {
       UngetToken();
       SkipUntil(']');
       return CSSParseResult::Error;
@@ -9566,10 +9594,6 @@ CSSParserImpl::ParseGridLine(nsCSSValue& aValue)
     return true;
   }
 
-  static const nsCSSKeyword kGridLineKeywords[] = {
-    eCSSKeyword_span,
-    eCSSKeyword_UNKNOWN  // End-of-array marker
-  };
   bool hasSpan = false;
   bool hasIdent = false;
   Maybe<int32_t> integer;
@@ -9773,6 +9797,33 @@ CSSParserImpl::ParseGridGap()
   return true;
 }
 
+// normal | [<number> <integer>?]
+bool
+CSSParserImpl::ParseInitialLetter()
+{
+  nsCSSValue value;
+  // 'inherit', 'initial', 'unset', 'none', and 'normal' must be alone
+  if (!ParseSingleTokenVariant(value, VARIANT_INHERIT | VARIANT_NORMAL,
+                               nullptr)) {
+    nsCSSValue first, second;
+    if (!ParseOneOrLargerNumber(first)) {
+      return false;
+    }
+
+    if (!ParseOneOrLargerInteger(second)) {
+      AppendValue(eCSSProperty_initial_letter, first);
+      return true;
+    } else {
+      RefPtr<nsCSSValue::Array> val = nsCSSValue::Array::Create(2);
+      val->Item(0) = first;
+      val->Item(1) = second;
+      value.SetArrayValue(val, eCSSUnit_Array);
+    }
+  }
+  AppendValue(eCSSProperty_initial_letter, value);
+  return true;
+}
+
 // [ $aTable && <overflow-position>? ] ?
 // $aTable is for <content-position> or <self-position>
 bool
@@ -9839,7 +9890,7 @@ CSSParserImpl::ParseJustifyItems()
 }
 
 // normal | stretch | <baseline-position> |
-// [ <overflow-position>? && <self-position> ] 
+// [ <overflow-position>? && <self-position> ]
 bool
 CSSParserImpl::ParseAlignItems()
 {
@@ -9857,7 +9908,7 @@ CSSParserImpl::ParseAlignItems()
 }
 
 // auto | normal | stretch | <baseline-position> |
-// [ <overflow-position>? && <self-position> ] 
+// [ <overflow-position>? && <self-position> ]
 bool
 CSSParserImpl::ParseAlignJustifySelf(nsCSSProperty aPropID)
 {
@@ -11557,17 +11608,17 @@ CSSParserImpl::ParsePropertyByFunction(nsCSSProperty aPropID)
   case eCSSProperty_image_region:
     return ParseRect(eCSSProperty_image_region);
   case eCSSProperty_align_content:
+  case eCSSProperty_justify_content:
     return ParseAlignJustifyContent(aPropID);
   case eCSSProperty_align_items:
     return ParseAlignItems();
   case eCSSProperty_align_self:
-    return ParseAlignJustifySelf(aPropID);
-  case eCSSProperty_justify_content:
-    return ParseAlignJustifyContent(aPropID);
-  case eCSSProperty_justify_items:
-    return ParseJustifyItems();
   case eCSSProperty_justify_self:
     return ParseAlignJustifySelf(aPropID);
+  case eCSSProperty_initial_letter:
+    return ParseInitialLetter();
+  case eCSSProperty_justify_items:
+    return ParseJustifyItems();
   case eCSSProperty_list_style:
     return ParseListStyle();
   case eCSSProperty_margin:
@@ -13097,7 +13148,7 @@ CSSParserImpl::ParseBorderImage()
               return false;
             }
           } else if (!foundBorderImageWidth) {
-            // If this part has an trailing slash, the whole declaration is 
+            // If this part has an trailing slash, the whole declaration is
             // invalid.
             return false;
           }
@@ -15090,11 +15141,11 @@ CSSParserImpl::ParseTextDecoration()
 bool
 CSSParserImpl::ParseTextEmphasis()
 {
-  static MOZ_CONSTEXPR_VAR nsCSSProperty kTextEmphasisIDs[] = {
+  static constexpr nsCSSProperty kTextEmphasisIDs[] = {
     eCSSProperty_text_emphasis_style,
     eCSSProperty_text_emphasis_color
   };
-  MOZ_CONSTEXPR_VAR int32_t numProps = MOZ_ARRAY_LENGTH(kTextEmphasisIDs);
+  constexpr int32_t numProps = MOZ_ARRAY_LENGTH(kTextEmphasisIDs);
   nsCSSValue values[numProps];
 
   int32_t found = ParseChoice(values, kTextEmphasisIDs, numProps);
@@ -15409,6 +15460,16 @@ CSSParserImpl::ParseFunctionInternals(const uint32_t aVariantMask[],
     uint32_t m = aVariantMaskAll ? aVariantMaskAll : aVariantMask[index];
     if (ParseVariant(newValue, m, nullptr) != CSSParseResult::Ok) {
       break;
+    }
+
+    if (nsCSSValue::IsFloatUnit(newValue.GetUnit())) {
+      // Clamp infinity or -infinity values to max float or -max float to avoid
+      // calculations with infinity.
+      newValue.SetFloatValue(
+        mozilla::clamped(newValue.GetFloatValue(),
+                         -std::numeric_limits<float>::max(),
+                          std::numeric_limits<float>::max()),
+        newValue.GetUnit());
     }
 
     aOutput.AppendElement(newValue);
@@ -16377,7 +16438,7 @@ CSSParserImpl::ParseTransitionTimingFunctionValues(nsCSSValue& aValue)
 bool
 CSSParserImpl::ParseTransitionTimingFunctionValueComponent(float& aComponent,
                                                            char aStop,
-                                                           bool aCheckRange)
+                                                           bool aIsXPoint)
 {
   if (!GetToken(true)) {
     return false;
@@ -16385,7 +16446,14 @@ CSSParserImpl::ParseTransitionTimingFunctionValueComponent(float& aComponent,
   nsCSSToken* tk = &mToken;
   if (tk->mType == eCSSToken_Number) {
     float num = tk->mNumber;
-    if (aCheckRange && (num < 0.0 || num > 1.0)) {
+
+    // Clamp infinity or -infinity values to max float or -max float to avoid
+    // calculations with infinity.
+    num = mozilla::clamped(num, -std::numeric_limits<float>::max(),
+                                 std::numeric_limits<float>::max());
+
+    // X control point should be inside [0, 1] range.
+    if (aIsXPoint && (num < 0.0 || num > 1.0)) {
       return false;
     }
     aComponent = num;

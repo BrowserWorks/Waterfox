@@ -31,6 +31,7 @@ class IonBuilder;
 class IonICEntry;
 
 typedef Vector<JSObject*, 4, JitAllocPolicy> ObjectVector;
+typedef Vector<TraceLoggerEvent, 0, SystemAllocPolicy> TraceLoggerEventVector;
 
 class JitCode : public gc::TenuredCell
 {
@@ -283,8 +284,8 @@ struct IonScript
     // Allocated space for fallback stubs.
     FallbackICStubSpace fallbackStubSpace_;
 
-    // The tracelogger event used to log the start/stop of this IonScript.
-    TraceLoggerEvent traceLoggerScriptEvent_;
+    // TraceLogger events that are baked into the IonScript.
+    TraceLoggerEventVector traceLoggerEvents_;
 
   private:
     inline uint8_t* bottomBuffer() {
@@ -435,8 +436,9 @@ struct IonScript
     bool hasProfilingInstrumentation() const {
         return hasProfilingInstrumentation_;
     }
-    void setTraceLoggerEvent(TraceLoggerEvent& event) {
-        traceLoggerScriptEvent_ = event;
+    MOZ_MUST_USE bool addTraceLoggerEvent(TraceLoggerEvent& event) {
+        MOZ_ASSERT(event.hasPayload());
+        return traceLoggerEvents_.append(Move(event));
     }
     const uint8_t* snapshots() const {
         return reinterpret_cast<const uint8_t*>(this) + snapshots_;
@@ -749,7 +751,7 @@ struct VMFunction;
 struct AutoFlushICache
 {
   private:
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64) || defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     uintptr_t start_;
     uintptr_t stop_;
     const char* name_;
@@ -786,7 +788,13 @@ IsMarked(const jit::VMFunction*)
 namespace JS {
 namespace ubi {
 template<>
-struct Concrete<js::jit::JitCode> : TracerConcrete<js::jit::JitCode> {
+class Concrete<js::jit::JitCode> : TracerConcrete<js::jit::JitCode> {
+  protected:
+    explicit Concrete(js::jit::JitCode *ptr) : TracerConcrete<js::jit::JitCode>(ptr) { }
+
+  public:
+    static void construct(void *storage, js::jit::JitCode *ptr) { new (storage) Concrete(ptr); }
+
     CoarseType coarseType() const final { return CoarseType::Script; }
 
     Size size(mozilla::MallocSizeOf mallocSizeOf) const override {
@@ -796,11 +804,8 @@ struct Concrete<js::jit::JitCode> : TracerConcrete<js::jit::JitCode> {
         return size;
     }
 
-  protected:
-    explicit Concrete(js::jit::JitCode *ptr) : TracerConcrete<js::jit::JitCode>(ptr) { }
-
-  public:
-    static void construct(void *storage, js::jit::JitCode *ptr) { new (storage) Concrete(ptr); }
+    const char16_t* typeName() const override { return concreteTypeName; }
+    static const char16_t concreteTypeName[];
 };
 
 } // namespace ubi

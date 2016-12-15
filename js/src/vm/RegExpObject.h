@@ -326,6 +326,7 @@ class RegExpCompartment
      * The shape of RegExp.prototype object that satisfies following:
      *   * RegExp.prototype.global getter is not modified
      *   * RegExp.prototype.sticky getter is not modified
+     *   * RegExp.prototype.unicode getter is not modified
      *   * RegExp.prototype.exec is an own data property
      *   * RegExp.prototype[@@match] is an own data property
      *   * RegExp.prototype[@@search] is an own data property
@@ -424,8 +425,8 @@ class RegExpObject : public NativeObject
 
     static unsigned lastIndexSlot() { return LAST_INDEX_SLOT; }
 
-    static bool isInitialShape(NativeObject* nobj) {
-        Shape* shape = nobj->lastProperty();
+    static bool isInitialShape(RegExpObject* rx) {
+        Shape* shape = rx->lastProperty();
         if (!shape->hasSlot())
             return false;
         if (shape->maybeSlot() != LAST_INDEX_SLOT)
@@ -509,7 +510,7 @@ class RegExpObject : public NativeObject
 bool
 ParseRegExpFlags(JSContext* cx, JSString* flagStr, RegExpFlag* flagsOut);
 
-/* Assuming GetBuiltinClass(obj) is ESClass_RegExp, return a RegExpShared for obj. */
+/* Assuming GetBuiltinClass(obj) is ESClass::RegExp, return a RegExpShared for obj. */
 inline bool
 RegExpToShared(JSContext* cx, HandleObject obj, RegExpGuard* g)
 {

@@ -142,7 +142,6 @@ CERT_NewCertList
 CERT_NewTempCertificate
 CERT_NicknameStringsFromCertList
 CERT_OCSPCacheSettings
-CERT_PKIXVerifyCert
 CERT_RemoveCertListNode
 CERT_RFC1485_EscapeAndQuote
 CERT_SaveSMimeProfile
@@ -557,7 +556,6 @@ SECMOD_DeleteInternalModule
 SECMOD_DeleteModule
 SECMOD_DestroyModule
 SECMOD_FindModule
-SECMOD_FindSlot
 SECMOD_GetDeadModuleList
 SECMOD_GetDefaultModuleList
 SECMOD_GetDefaultModuleListLock

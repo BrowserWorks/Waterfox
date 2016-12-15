@@ -15,8 +15,12 @@
 #include "mozilla/layers/ISurfaceAllocator.h"  // for ISurfaceAllocator
 #include "mozilla/layers/LayersTypes.h"  // for LayersBackend
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
+#include "mozilla/layers/TextureForwarder.h"  // for TextureForwarder
 #include "nsRegion.h"                   // for nsIntRegion
 #include "mozilla/gfx/Rect.h"
+#include "nsExpirationTracker.h"
+#include "nsHashKeys.h"
+#include "nsTHashtable.h"
 
 namespace mozilla {
 namespace layers {
@@ -31,6 +35,36 @@ class ThebesBufferData;
 class PTextureChild;
 
 /**
+ * See ActiveResourceTracker below.
+ */
+class ActiveResource
+{
+public:
+ virtual void NotifyInactive() = 0;
+  nsExpirationState* GetExpirationState() { return &mExpirationState; }
+  bool IsActivityTracked() { return mExpirationState.IsTracked(); }
+private:
+  nsExpirationState mExpirationState;
+};
+
+/**
+ * A convenience class on top of nsExpirationTracker
+ */
+class ActiveResourceTracker : public nsExpirationTracker<ActiveResource, 3>
+{
+public:
+  ActiveResourceTracker(uint32_t aExpirationCycle, const char* aName)
+  : nsExpirationTracker(aExpirationCycle, aName)
+  {}
+
+  virtual void NotifyExpired(ActiveResource* aResource) override
+  {
+    RemoveObject(aResource);
+    aResource->NotifyInactive();
+  }
+};
+
+/**
  * A transaction is a set of changes that happenned on the content side, that
  * should be sent to the compositor side.
  * CompositableForwarder is an interface to manage a transaction of
@@ -40,12 +74,13 @@ class PTextureChild;
  * additionally forward modifications of the Layer tree).
  * ImageBridgeChild is another CompositableForwarder.
  */
-class CompositableForwarder : public ClientIPCAllocator
+class CompositableForwarder : public TextureForwarder
 {
 public:
 
   CompositableForwarder()
-    : mSerial(++sSerialCounter)
+    : mActiveResourceTracker(1000, "CompositableForwarder")
+    , mSerial(++sSerialCounter)
   {}
 
   /**
@@ -61,14 +96,6 @@ public:
    */
   virtual void UseTiledLayerBuffer(CompositableClient* aCompositable,
                                    const SurfaceDescriptorTiles& aTiledDescriptor) = 0;
-
-  /**
-   * Create a TextureChild/Parent pair as as well as the TextureHost on the parent side.
-   */
-  virtual PTextureChild* CreateTexture(
-    const SurfaceDescriptor& aSharedData,
-    LayersBackend aLayersBackend,
-    TextureFlags aFlags) = 0;
 
   /**
    * Communicate to the compositor that aRegion in the texture identified by
@@ -132,9 +159,16 @@ public:
                                          TextureClient* aClientOnBlack,
                                          TextureClient* aClientOnWhite) = 0;
 
-  virtual void SendPendingAsyncMessges() = 0;
-
   void IdentifyTextureHost(const TextureFactoryIdentifier& aIdentifier);
+
+  virtual void UpdateFwdTransactionId() = 0;
+  virtual uint64_t GetFwdTransactionId() = 0;
+
+  int32_t GetSerial() { return mSerial; }
+
+  SyncObject* GetSyncObject() { return mSyncObject; }
+
+  virtual CompositableForwarder* AsCompositableForwarder() override { return this; }
 
   virtual int32_t GetMaxTextureSize() const override
   {
@@ -166,17 +200,17 @@ public:
     return mTextureFactoryIdentifier;
   }
 
-  int32_t GetSerial() { return mSerial; }
-
-  SyncObject* GetSyncObject() { return mSyncObject; }
-
-  virtual CompositableForwarder* AsCompositableForwarder() override { return this; }
+  ActiveResourceTracker& GetActiveResourceTracker() { return mActiveResourceTracker; }
 
 protected:
   TextureFactoryIdentifier mTextureFactoryIdentifier;
+
   nsTArray<RefPtr<TextureClient> > mTexturesToRemove;
   nsTArray<RefPtr<CompositableClient>> mCompositableClientsToRemove;
   RefPtr<SyncObject> mSyncObject;
+
+  ActiveResourceTracker mActiveResourceTracker;
+
   const int32_t mSerial;
   static mozilla::Atomic<int32_t> sSerialCounter;
 };

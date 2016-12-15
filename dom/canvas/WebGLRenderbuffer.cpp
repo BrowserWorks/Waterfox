@@ -115,7 +115,7 @@ DoRenderbufferStorageMaybeMultisample(gl::GLContext* gl, GLsizei samples,
         break;
 
     case LOCAL_GL_DEPTH_STENCIL:
-        MOZ_CRASH("GL_DEPTH_STENCIL is not valid here.");
+        MOZ_CRASH("GFX: GL_DEPTH_STENCIL is not valid here.");
         break;
 
     default:
@@ -228,22 +228,20 @@ WebGLRenderbuffer::RenderbufferStorage(const char* funcName, uint32_t samples,
 }
 
 void
-WebGLRenderbuffer::DoFramebufferRenderbuffer(GLenum attachment) const
+WebGLRenderbuffer::DoFramebufferRenderbuffer(FBTarget target, GLenum attachment) const
 {
     gl::GLContext* gl = mContext->gl;
 
     if (attachment == LOCAL_GL_DEPTH_STENCIL_ATTACHMENT) {
         const GLuint stencilRB = (mSecondaryRB ? mSecondaryRB : mPrimaryRB);
-        gl->fFramebufferRenderbuffer(LOCAL_GL_FRAMEBUFFER,
-                                     LOCAL_GL_DEPTH_ATTACHMENT,
+        gl->fFramebufferRenderbuffer(target.get(), LOCAL_GL_DEPTH_ATTACHMENT,
                                      LOCAL_GL_RENDERBUFFER, mPrimaryRB);
-        gl->fFramebufferRenderbuffer(LOCAL_GL_FRAMEBUFFER,
-                                     LOCAL_GL_STENCIL_ATTACHMENT,
+        gl->fFramebufferRenderbuffer(target.get(), LOCAL_GL_STENCIL_ATTACHMENT,
                                      LOCAL_GL_RENDERBUFFER, stencilRB);
         return;
     }
 
-    gl->fFramebufferRenderbuffer(LOCAL_GL_FRAMEBUFFER, attachment,
+    gl->fFramebufferRenderbuffer(target.get(), attachment,
                                  LOCAL_GL_RENDERBUFFER, mPrimaryRB);
 }
 
@@ -258,7 +256,7 @@ WebGLRenderbuffer::GetRenderbufferParameter(RBTarget target,
         if (!mFormat)
             return 0;
 
-        if (!mFormat->format->hasStencil)
+        if (!mFormat->format->s)
             return 0;
 
         return 8;

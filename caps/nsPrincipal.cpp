@@ -198,10 +198,6 @@ nsPrincipal::SubsumesInternal(nsIPrincipal* aOther,
     return true;
   }
 
-  if (OriginAttributesRef() != Cast(aOther)->OriginAttributesRef()) {
-    return false;
-  }
-
   // If either the subject or the object has changed its principal by
   // explicitly setting document.domain then the other must also have
   // done so in order to be considered the same origin. This prevents
@@ -674,7 +670,8 @@ struct OriginComparator
   }
 };
 
-nsExpandedPrincipal::nsExpandedPrincipal(nsTArray<nsCOMPtr <nsIPrincipal> > &aWhiteList)
+nsExpandedPrincipal::nsExpandedPrincipal(nsTArray<nsCOMPtr<nsIPrincipal>> &aWhiteList,
+                                         const PrincipalOriginAttributes& aAttrs)
 {
   // We force the principals to be sorted by origin so that nsExpandedPrincipal
   // origins can have a canonical form.
@@ -682,6 +679,7 @@ nsExpandedPrincipal::nsExpandedPrincipal(nsTArray<nsCOMPtr <nsIPrincipal> > &aWh
   for (size_t i = 0; i < aWhiteList.Length(); ++i) {
     mPrincipals.InsertElementSorted(aWhiteList[i], c);
   }
+  mOriginAttributes = aAttrs;
 }
 
 nsExpandedPrincipal::~nsExpandedPrincipal()
@@ -730,6 +728,9 @@ nsExpandedPrincipal::SubsumesInternal(nsIPrincipal* aOther,
     nsTArray< nsCOMPtr<nsIPrincipal> >* otherList;
     expanded->GetWhiteList(&otherList);
     for (uint32_t i = 0; i < otherList->Length(); ++i){
+      // Use SubsumesInternal rather than Subsumes here, since OriginAttribute
+      // checks are only done between non-expanded sub-principals, and we don't
+      // need to incur the extra virtual call overhead.
       if (!SubsumesInternal((*otherList)[i], aConsideration)) {
         return false;
       }

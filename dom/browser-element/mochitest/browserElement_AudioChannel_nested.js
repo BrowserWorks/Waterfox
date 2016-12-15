@@ -7,12 +7,10 @@
 
 SimpleTest.waitForExplicitFinish();
 browserElementTestHelpers.setEnabledPref(true);
-browserElementTestHelpers.addPermission();
 
 function runTests() {
   var iframe = document.createElement('iframe');
   iframe.setAttribute('mozbrowser', 'true');
-  iframe.setAttribute('mozapp', 'http://example.org/manifest.webapp');
 
   var listener = function(e) {
     var message = e.detail.message;
@@ -23,6 +21,7 @@ function runTests() {
     } else if (/DONE/.exec(message)) {
       ok(true, "Messaging from app complete");
       iframe.removeEventListener('mozbrowsershowmodalprompt', listener);
+      SimpleTest.finish();
     }
   }
 
@@ -35,7 +34,7 @@ function runTests() {
 
     ok("allowedAudioChannels" in iframe, "allowedAudioChannels exist");
     var channels = iframe.allowedAudioChannels;
-    is(channels.length, 1, "1 audio channel by default");
+    is(channels.length, 9, "9 audio channel by default");
 
     var ac = channels[0];
 
@@ -52,7 +51,6 @@ function runTests() {
     ac.onactivestatechanged = function() {
       ok(true, "activestatechanged event received.");
       ac.onactivestatechanged = null;
-      SimpleTest.finish();
     }
   }
 
@@ -60,19 +58,11 @@ function runTests() {
   iframe.addEventListener('mozbrowsershowmodalprompt', listener, false);
   document.body.appendChild(iframe);
 
-  var context = { 'url': 'http://example.org',
-                  'appId': SpecialPowers.Ci.nsIScriptSecurityManager.NO_APP_ID,
-                  'isInIsolatedMozBrowserElement': true };
-  SpecialPowers.pushPermissions([
-    {'type': 'browser', 'allow': 1, 'context': context},
-    {'type': 'embed-apps', 'allow': 1, 'context': context}
-  ], function() {
-    iframe.src = 'http://example.org/tests/dom/browser-element/mochitest/file_browserElement_AudioChannel_nested.html';
-  });
+  iframe.src = 'chrome://mochitests/content/chrome/dom/browser-element/mochitest/file_browserElement_AudioChannel_nested.html';
 }
 
 addEventListener('testready', function() {
-  SpecialPowers.pushPrefEnv({'set': [["b2g.system_manifest_url", "http://mochi.test:8888/manifest.webapp"]]},
+  SpecialPowers.pushPrefEnv({'set': [["b2g.system_startup_url", window.location.href]]},
                             function() {
     SimpleTest.executeSoon(runTests);
   });

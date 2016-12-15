@@ -28,13 +28,9 @@ pref("security.ssl3.ecdhe_rsa_aes_256_sha", true);
 pref("security.ssl3.ecdhe_ecdsa_aes_256_sha", true);
 pref("security.ssl3.dhe_rsa_aes_128_sha", true);
 pref("security.ssl3.dhe_rsa_aes_256_sha", true);
-pref("security.ssl3.ecdhe_rsa_rc4_128_sha", true);
-pref("security.ssl3.ecdhe_ecdsa_rc4_128_sha", true);
 pref("security.ssl3.rsa_aes_128_sha", true);
 pref("security.ssl3.rsa_aes_256_sha", true);
 pref("security.ssl3.rsa_des_ede3_sha", true);
-pref("security.ssl3.rsa_rc4_128_sha", true);
-pref("security.ssl3.rsa_rc4_128_md5", true);
 
 pref("security.content.signature.root_hash",
      "97:E8:BA:9C:F1:2F:B3:DE:53:CC:42:A4:E6:57:7E:D6:4D:F4:93:C2:47:B4:14:FE:A0:36:81:8D:38:23:56:0E");
@@ -43,6 +39,13 @@ pref("security.default_personal_cert",   "Ask Every Time");
 pref("security.remember_cert_checkbox_default_setting", true);
 pref("security.ask_for_password",        0);
 pref("security.password_lifetime",       30);
+
+// The supported values of this pref are:
+// 0: disable detecting Family Safety mode and importing the root
+// 1: only attempt to detect Family Safety mode (don't import the root)
+// 2: detect Family Safety mode and import the root
+// (This is only relevant to Windows 8.1)
+pref("security.family_safety.mode", 2);
 
 pref("security.OCSP.enabled", 1);
 pref("security.OCSP.require", false);
@@ -87,7 +90,7 @@ pref("security.webauth.u2f_enable_softtoken", false);
 pref("security.webauth.u2f_enable_usbtoken", false);
 
 pref("security.ssl.errorReporting.enabled", true);
-pref("security.ssl.errorReporting.url", "https://data.mozilla.com/submit/sslreports");
+pref("security.ssl.errorReporting.url", "https://incoming.telemetry.mozilla.org/submit/sslreports/");
 pref("security.ssl.errorReporting.automatic", false);
 
 // Impose a maximum age on HPKP headers, to avoid sites getting permanently

@@ -31,7 +31,9 @@ var PKT_SAVED_OVERLAY = function (options)
         var newtagleft = 0;
         container.children().remove();
         for (var i = 0; i < tags.length; i++) {
-            var newtag = $('<li><a href="#" class="token_tag ' + tagclass + '">' + tags[i] + '</a></li>');
+            var newtag = $('<li><a href="#" class="token_tag"></a></li>');
+            newtag.find('a').text(tags[i]);
+            newtag.addClass(tagclass);
             container.append(newtag);
             var templeft = newtag.position().left;
             this.cxt_suggested_available++;
@@ -602,8 +604,14 @@ $(function()
         thePKT_SAVED.init();
     }
 
+    var pocketHost = thePKT_SAVED.overlay.pockethost;
     // send an async message to get string data
-    thePKT_SAVED.sendMessage("initL10N", {}, function(resp) {
+    thePKT_SAVED.sendMessage("initL10N", {
+            tos: [
+                'https://'+ pocketHost +'/tos?s=ffi&t=tos&tv=panel_tryit',
+                'https://'+ pocketHost +'/privacy?s=ffi&t=privacypolicy&tv=panel_tryit'
+            ]
+        }, function(resp) {
         window.pocketStrings = resp.strings;
         window.thePKT_SAVED.create();
     });

@@ -115,16 +115,14 @@ html, body, #app, #memory-tool {
   background-image: url(chrome://devtools/skin/images/diff.svg);
 }
 
+#import-snapshot::before {
+  background-image: url(chrome://devtools/skin/images/import.svg);
+}
+
 #record-allocation-stacks-label,
 #pop-view-button-label {
   border-inline-end: 1px solid var(--theme-splitter-color);
   padding-inline-end: 5px;
-}
-
-#import-snapshot,
-#clear-snapshots {
-  -moz-box-align: center;
-  flex-grow: 1;
 }
 
 .spacer {
@@ -214,8 +212,8 @@ html, body, #app, #memory-tool {
   min-width: 1.3em;
 }
 
-.theme-light .snapshot-list-item.selected .delete {
-  filter: invert(100%);
+.snapshot-list-item.selected .delete::before {
+  filter: invert(1);
 }
 
 .snapshot-list-item .delete::before {

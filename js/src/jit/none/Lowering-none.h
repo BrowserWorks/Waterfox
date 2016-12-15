@@ -29,7 +29,9 @@ class LIRGeneratorNone : public LIRGeneratorShared
     LDefinition tempToUnbox() { MOZ_CRASH(); }
     bool needTempForPostBarrier() { MOZ_CRASH(); }
     void lowerUntypedPhiInput(MPhi*, uint32_t, LBlock*, size_t) { MOZ_CRASH(); }
+    void lowerInt64PhiInput(MPhi*, uint32_t, LBlock*, size_t) { MOZ_CRASH(); }
     void defineUntypedPhi(MPhi*, size_t) { MOZ_CRASH(); }
+    void defineInt64Phi(MPhi*, size_t) { MOZ_CRASH(); }
     void lowerForShift(LInstructionHelper<1, 2, 0>*, MDefinition*, MDefinition*, MDefinition*) {
         MOZ_CRASH();
     }
@@ -40,6 +42,7 @@ class LIRGeneratorNone : public LIRGeneratorShared
     void lowerForFPU(T, MDefinition*, MDefinition*, MDefinition* v = nullptr) { MOZ_CRASH(); }
     template <typename T>
     void lowerForALUInt64(T, MDefinition*, MDefinition*, MDefinition* v = nullptr) { MOZ_CRASH(); }
+    void lowerForMulInt64(LMulI64*, MMul*, MDefinition*, MDefinition* v = nullptr) { MOZ_CRASH(); }
     template <typename T>
     void lowerForShiftInt64(T, MDefinition*, MDefinition*, MDefinition* v = nullptr) { MOZ_CRASH(); }
     void lowerForCompIx4(LSimdBinaryCompIx4* ins, MSimdBinaryComp* mir,
@@ -86,6 +89,9 @@ class LIRGeneratorNone : public LIRGeneratorShared
     void visitAsmJSAtomicExchangeHeap(MAsmJSAtomicExchangeHeap* ins) { MOZ_CRASH(); }
     void visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins) { MOZ_CRASH(); }
     void visitAsmSelect(MAsmSelect*) { MOZ_CRASH(); }
+    void visitWasmBoundsCheck(MWasmBoundsCheck* ins) { MOZ_CRASH(); }
+    void visitWasmLoad(MWasmLoad* ins) { MOZ_CRASH(); }
+    void visitWasmStore(MWasmStore* ins) { MOZ_CRASH(); }
 
     LTableSwitch* newLTableSwitch(LAllocation, LDefinition, MTableSwitch*) { MOZ_CRASH(); }
     LTableSwitchV* newLTableSwitchV(MTableSwitch*) { MOZ_CRASH(); }
@@ -98,8 +104,10 @@ class LIRGeneratorNone : public LIRGeneratorShared
     void visitSimdBinaryArith(js::jit::MSimdBinaryArith*) { MOZ_CRASH(); }
     void visitSimdBinarySaturating(MSimdBinarySaturating* ins) { MOZ_CRASH(); }
     void visitRandom(js::jit::MRandom*) { MOZ_CRASH(); }
+    void visitCopySign(js::jit::MCopySign*) { MOZ_CRASH(); }
     void visitWasmTruncateToInt64(MWasmTruncateToInt64*) { MOZ_CRASH(); }
     void visitInt64ToFloatingPoint(MInt64ToFloatingPoint*) { MOZ_CRASH(); }
+    void visitExtendInt32ToInt64(MExtendInt32ToInt64* ins) { MOZ_CRASH(); }
 };
 
 typedef LIRGeneratorNone LIRGeneratorSpecific;

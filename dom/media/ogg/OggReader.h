@@ -19,27 +19,9 @@
 #include "VideoUtils.h"
 #include "mozilla/Monitor.h"
 #include "OggDecoder.h"
+#include "OggCodecStore.h"
 
 namespace mozilla {
-
-// Thread safe container to store the codec information and the serial for each
-// streams.
-class OggCodecStore
-{
-  public:
-    OggCodecStore();
-    void Add(uint32_t serial, OggCodecState* codecState);
-    bool Contains(uint32_t serial);
-    OggCodecState* Get(uint32_t serial);
-    bool IsKnownStream(uint32_t aSerial);
-
-  private:
-    // Maps Ogg serialnos to OggStreams.
-    nsClassHashtable<nsUint32HashKey, OggCodecState> mCodecStates;
-
-    // Protects the |mCodecStates| and the |mKnownStreams| members.
-    Monitor mMonitor;
-};
 
 class OggReader final : public MediaDecoderReader
 {
@@ -50,8 +32,8 @@ protected:
   ~OggReader();
 
 public:
-  nsresult Init() override;
-  nsresult ResetDecode(TargetQueues aQueues = AUDIO_VIDEO) override;
+  nsresult ResetDecode(TrackSet aTracks = TrackSet(TrackInfo::kAudioTrack,
+                                                   TrackInfo::kVideoTrack)) override;
   bool DecodeAudioData() override;
 
   // If the Theora granulepos has not been captured, it may read several packets
@@ -64,6 +46,8 @@ public:
   media::TimeIntervals GetBuffered() override;
 
 private:
+  nsresult InitInternal() override;
+
   bool HasAudio() {
     return (mVorbisState != 0 && mVorbisState->mActive) ||
            (mOpusState != 0 && mOpusState->mActive);
@@ -86,7 +70,9 @@ private:
 
   // Specialized Reset() method to signal if the seek is
   // to the start of the stream.
-  nsresult ResetDecode(bool start, TargetQueues aQueues = AUDIO_VIDEO);
+  nsresult ResetDecode(bool start,
+                       TrackSet aTracks = TrackSet(TrackInfo::kAudioTrack,
+                                                   TrackInfo::kVideoTrack));
 
   nsresult SeekInternal(int64_t aTime, int64_t aEndTime);
 

@@ -412,9 +412,12 @@ nsCacheProfilePrefObserver::Observe(nsISupports *     subject,
         // profile after change
         mHaveProfile = true;
         nsCOMPtr<nsIPrefBranch> branch = do_GetService(NS_PREFSERVICE_CONTRACTID);
-        ReadPrefs(branch);
+        if (!branch) {
+            return NS_ERROR_FAILURE;
+        }
+        (void)ReadPrefs(branch);
         nsCacheService::OnProfileChanged();
-    
+
     } else if (!strcmp(NS_PREFBRANCH_PREFCHANGE_TOPIC_ID, topic)) {
 
         // ignore pref changes until we're done switch profiles
@@ -1030,7 +1033,7 @@ public:
 
     NS_IMETHOD Run()
     {
-        nsCacheServiceAutoLock lock(LOCK_TELEM(NSDOOMEVENT_RUN));
+        nsCacheServiceAutoLock lock;
 
         bool foundActive = true;
         nsresult status = NS_ERROR_NOT_AVAILABLE;
@@ -1616,9 +1619,6 @@ nsCacheService::CreateDiskDevice()
         mDiskDevice = nullptr;
         return rv;
     }
-
-    Telemetry::Accumulate(Telemetry::DISK_CACHE_SMART_SIZE_USING_OLD_MAX,
-                          mObserver->ShouldUseOldMaxSmartSize());
 
     NS_ASSERTION(!mSmartSizeTimer, "Smartsize timer was already fired!");
 

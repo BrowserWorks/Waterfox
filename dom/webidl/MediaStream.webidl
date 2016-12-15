@@ -20,10 +20,6 @@ dictionary MediaStreamConstraints {
     boolean fake;       // For testing purpose. Generates frames of solid
                         // colors if video is enabled, and sound of 1Khz sine
                         // wave if audio is enabled.
-    boolean fakeTracks; // For testing purpose, works only if fake is
-                        // enabled. Enable fakeTracks returns a stream
-                        // with two extra empty video tracks and three
-                        // extra empty audio tracks.
     DOMString? peerIdentity = null;
 };
 
@@ -43,7 +39,7 @@ interface MediaStream : EventTarget {
     // readonly    attribute boolean      active;
     //             attribute EventHandler onactive;
     //             attribute EventHandler oninactive;
-    //             attribute EventHandler onaddtrack;
+                attribute EventHandler onaddtrack;
     //             attribute EventHandler onremovetrack;
     readonly attribute double currentTime;
 };

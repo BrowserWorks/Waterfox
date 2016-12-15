@@ -113,7 +113,7 @@ var AboutHome = {
   },
 
   receiveMessage: function(aMessage) {
-    let window = aMessage.target.ownerDocument.defaultView;
+    let window = aMessage.target.ownerGlobal;
 
     switch (aMessage.name) {
       case "AboutHome:RestorePreviousSession":

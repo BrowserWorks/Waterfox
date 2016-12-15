@@ -6,6 +6,7 @@
 
 #include "mozilla/ServoStyleSet.h"
 
+#include "mozilla/ServoRestyleManager.h"
 #include "nsCSSAnonBoxes.h"
 #include "nsCSSPseudoElements.h"
 #include "nsIDocumentInlines.h"
@@ -19,6 +20,7 @@ ServoStyleSet::ServoStyleSet()
   : mPresContext(nullptr)
   , mRawSet(Servo_InitStyleSet())
   , mBatching(0)
+  , mStylingStarted(false)
 {
 }
 
@@ -67,6 +69,16 @@ ServoStyleSet::EndUpdate()
 
   // ... do something ...
   return NS_OK;
+}
+
+void
+ServoStyleSet::StartStyling(nsPresContext* aPresContext)
+{
+  Element* root = aPresContext->Document()->GetRootElement();
+  if (root) {
+    RestyleSubtree(root);
+  }
+  mStylingStarted = true;
 }
 
 already_AddRefed<nsStyleContext>
@@ -366,7 +378,8 @@ nsRestyleHint
 ServoStyleSet::HasStateDependentStyle(dom::Element* aElement,
                                       EventStates aStateMask)
 {
-  MOZ_CRASH("stylo: not implemented");
+  NS_WARNING("stylo: HasStateDependentStyle always returns zero!");
+  return nsRestyleHint(0);
 }
 
 nsRestyleHint
@@ -375,11 +388,20 @@ ServoStyleSet::HasStateDependentStyle(dom::Element* aElement,
                                      dom::Element* aPseudoElement,
                                      EventStates aStateMask)
 {
-  MOZ_CRASH("stylo: not implemented");
+  NS_WARNING("stylo: HasStateDependentStyle always returns zero!");
+  return nsRestyleHint(0);
+}
+
+nsRestyleHint
+ServoStyleSet::ComputeRestyleHint(dom::Element* aElement,
+                                  ServoElementSnapshot* aSnapshot)
+{
+  return Servo_ComputeRestyleHint(aElement, aSnapshot, mRawSet.get());
 }
 
 void
 ServoStyleSet::RestyleSubtree(nsINode* aNode)
 {
+  MOZ_ASSERT(aNode->IsDirtyForServo() || aNode->HasDirtyDescendantsForServo());
   Servo_RestyleSubtree(aNode, mRawSet.get());
 }

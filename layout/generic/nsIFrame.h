@@ -31,7 +31,7 @@
 #include "nsDirection.h"
 #include "nsFrameList.h"
 #include "nsFrameState.h"
-#include "nsHTMLReflowMetrics.h"
+#include "mozilla/ReflowOutput.h"
 #include "nsITheme.h"
 #include "nsLayoutUtils.h"
 #include "nsQueryFrame.h"
@@ -61,7 +61,6 @@
  * 5. the view system handles moving of widgets, i.e., it's not our problem
  */
 
-struct nsHTMLReflowState;
 class nsIAtom;
 class nsPresContext;
 class nsIPresShell;
@@ -94,6 +93,8 @@ namespace mozilla {
 
 enum class CSSPseudoElementType : uint8_t;
 class EventStates;
+struct ReflowInput;
+class ReflowOutput;
 
 namespace layers {
 class Layer;
@@ -312,8 +313,8 @@ typedef uint32_t nsReflowStatus;
 #define NS_FRAME_TRUNCATED  0x0010
 #define NS_FRAME_IS_TRUNCATED(status) \
   (0 != ((status) & NS_FRAME_TRUNCATED))
-#define NS_FRAME_SET_TRUNCATION(status, aReflowState, aMetrics) \
-  aReflowState.SetTruncated(aMetrics, &status);
+#define NS_FRAME_SET_TRUNCATION(status, aReflowInput, aMetrics) \
+  aReflowInput.SetTruncated(aMetrics, &status);
 
 // Merge the incompleteness, truncation and NS_FRAME_REFLOW_NEXTINFLOW
 // status from aSecondary into aPrimary.
@@ -423,6 +424,8 @@ public:
   using OnNonvisible = mozilla::OnNonvisible;
   template<typename T=void>
   using PropertyDescriptor = const mozilla::FramePropertyDescriptor<T>*;
+  using ReflowInput = mozilla::ReflowInput;
+  using ReflowOutput = mozilla::ReflowOutput;
   using Visibility = mozilla::Visibility;
 
   typedef mozilla::FrameProperties FrameProperties;
@@ -810,9 +813,9 @@ public:
    * saved normal position (see GetNormalPosition below).
    *
    * This must be used only when moving a frame *after*
-   * nsHTMLReflowState::ApplyRelativePositioning is called.  When moving
+   * ReflowInput::ApplyRelativePositioning is called.  When moving
    * a frame during the reflow process prior to calling
-   * nsHTMLReflowState::ApplyRelativePositioning, the position should
+   * ReflowInput::ApplyRelativePositioning, the position should
    * simply be adjusted directly (e.g., using SetPosition()).
    */
   void MovePositionBy(const nsPoint& aTranslation);
@@ -862,7 +865,7 @@ public:
 
 #define NS_DECLARE_FRAME_PROPERTY_WITH_DTOR(prop, type, dtor)             \
   static const mozilla::FramePropertyDescriptor<type>* prop() {           \
-    /* Use of MOZ_CONSTEXPR caused startup crashes with MSVC2015u1 PGO. */\
+    /* Use of constexpr caused startup crashes with MSVC2015u1 PGO. */    \
     static const auto descriptor =                                        \
       mozilla::FramePropertyDescriptor<type>::NewWithDestructor<dtor>();  \
     return &descriptor;                                                   \
@@ -871,7 +874,7 @@ public:
 // Don't use this unless you really know what you're doing!
 #define NS_DECLARE_FRAME_PROPERTY_WITH_FRAME_IN_DTOR(prop, type, dtor)    \
   static const mozilla::FramePropertyDescriptor<type>* prop() {           \
-    /* Use of MOZ_CONSTEXPR caused startup crashes with MSVC2015u1 PGO. */\
+    /* Use of constexpr caused startup crashes with MSVC2015u1 PGO. */    \
     static const auto descriptor = mozilla::                              \
       FramePropertyDescriptor<type>::NewWithDestructorWithFrame<dtor>();  \
     return &descriptor;                                                   \
@@ -879,7 +882,7 @@ public:
 
 #define NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(prop, type)                \
   static const mozilla::FramePropertyDescriptor<type>* prop() {           \
-    /* Use of MOZ_CONSTEXPR caused startup crashes with MSVC2015u1 PGO. */\
+    /* Use of constexpr caused startup crashes with MSVC2015u1 PGO. */    \
     static const auto descriptor =                                        \
       mozilla::FramePropertyDescriptor<type>::NewWithoutDestructor();     \
     return &descriptor;                                                   \
@@ -935,7 +938,6 @@ public:
   // or height), imposed by its flex container.
   NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(FlexItemMainSizeOverride, nscoord)
 
-  NS_DECLARE_FRAME_PROPERTY_RELEASABLE(CachedBackgroundImage, gfxASurface)
   NS_DECLARE_FRAME_PROPERTY_RELEASABLE(CachedBackgroundImageDT, DrawTarget)
 
   NS_DECLARE_FRAME_PROPERTY_DELETABLE(InvalidationRect, nsRect)
@@ -1336,13 +1338,14 @@ public:
   /**
    * Returns true if this frame is transformed (e.g. has CSS or SVG transforms)
    * or if its parent is an SVG frame that has children-only transforms (e.g.
-   * an SVG viewBox attribute) or if its transform-style is preserve-3d.
+   * an SVG viewBox attribute) or if its transform-style is preserve-3d or
+   * the frame has transform animations.
    */
   bool IsTransformed() const;
 
   /**
-   * Returns true if the frame is translucent for the purposes of creating a
-   * stacking context.
+   * Returns true if the frame is translucent or the frame has opacity
+   * animations for the purposes of creating a stacking context.
    */
   bool HasOpacity() const
   {
@@ -1519,6 +1522,14 @@ public:
    */
   virtual nsresult  GetPointFromOffset(int32_t                  inOffset,
                                        nsPoint*                 outPoint) = 0;
+
+  /**
+   * Get a list of character rects in a given range.
+   * This is similar version of GetPointFromOffset.
+   */
+  virtual nsresult  GetCharacterRectsInRange(int32_t aInOffset,
+                                             int32_t aLength,
+                                             nsTArray<nsRect>& aRects) = 0;
   
   /**
    * Get the child frame of this frame which contains the given
@@ -1884,7 +1895,7 @@ public:
 
   /**
    * Compute the size that a frame will occupy.  Called while
-   * constructing the nsHTMLReflowState to be used to Reflow the frame,
+   * constructing the ReflowInput to be used to Reflow the frame,
    * in order to fill its mComputedWidth and mComputedHeight member
    * variables.
    *
@@ -1983,7 +1994,7 @@ public:
    * If a difference in available size from the previous reflow causes
    * the frame's size to change, it should reflow descendants as needed.
    *
-   * @param aReflowMetrics <i>out</i> parameter where you should return the
+   * @param aReflowOutput <i>out</i> parameter where you should return the
    *          desired size and ascent/descent info. You should include any
    *          space you want for border/padding in the desired size you return.
    *
@@ -1997,7 +2008,7 @@ public:
    *          size, then your parent frame is responsible for making sure that
    *          the difference between the two rects is repainted
    *
-   * @param aReflowState information about your reflow including the reason
+   * @param aReflowInput information about your reflow including the reason
    *          for the reflow and the available space in which to lay out. Each
    *          dimension of the available space can either be constrained or
    *          unconstrained (a value of NS_UNCONSTRAINEDSIZE).
@@ -2011,8 +2022,8 @@ public:
    *          and whether the next-in-flow is dirty and needs to be reflowed
    */
   virtual void Reflow(nsPresContext*           aPresContext,
-                      nsHTMLReflowMetrics&     aReflowMetrics,
-                      const nsHTMLReflowState& aReflowState,
+                      ReflowOutput&     aReflowOutput,
+                      const ReflowInput& aReflowInput,
                       nsReflowStatus&          aStatus) = 0;
 
   /**
@@ -2031,7 +2042,7 @@ public:
    * a given reflow?
    */
   virtual void DidReflow(nsPresContext*           aPresContext,
-                         const nsHTMLReflowState* aReflowState,
+                         const ReflowInput* aReflowInput,
                          nsDidReflowStatus        aStatus) = 0;
 
   /**
@@ -2259,7 +2270,7 @@ public:
     // from the outside
     eReplacedContainsBlock =            1 << 8,
     // A frame that participates in inline reflow, i.e., one that
-    // requires nsHTMLReflowState::mLineLayout.
+    // requires ReflowInput::mLineLayout.
     eLineParticipant =                  1 << 9,
     eXULBox =                           1 << 10,
     eCanContainOverflowContainers =     1 << 11,
@@ -2599,7 +2610,7 @@ public:
   bool FinishAndStoreOverflow(nsOverflowAreas& aOverflowAreas,
                               nsSize aNewSize, nsSize* aOldSize = nullptr);
 
-  bool FinishAndStoreOverflow(nsHTMLReflowMetrics* aMetrics) {
+  bool FinishAndStoreOverflow(ReflowOutput* aMetrics) {
     return FinishAndStoreOverflow(aMetrics->mOverflowAreas,
                                   nsSize(aMetrics->Width(), aMetrics->Height()));
   }
@@ -2628,13 +2639,13 @@ public:
    *       if this frame has a previous or next continuation to determine
    *       if a side should be skipped.
    *       Unfortunately, this only works after reflow has been completed. In
-   *       lieu of this, during reflow, an nsHTMLReflowState parameter can be
+   *       lieu of this, during reflow, an ReflowInput parameter can be
    *       passed in, indicating that it should be used to determine if sides
    *       should be skipped during reflow.
    */
-  Sides GetSkipSides(const nsHTMLReflowState* aReflowState = nullptr) const;
+  Sides GetSkipSides(const ReflowInput* aReflowInput = nullptr) const;
   virtual LogicalSides
-  GetLogicalSkipSides(const nsHTMLReflowState* aReflowState = nullptr) const {
+  GetLogicalSkipSides(const ReflowInput* aReflowInput = nullptr) const {
     return LogicalSides();
   }
 
@@ -3227,7 +3238,7 @@ public:
   virtual mozilla::dom::Element*
   GetPseudoElement(mozilla::CSSPseudoElementType aType);
 
-  bool BackfaceIsHidden() {
+  bool BackfaceIsHidden() const {
     return StyleDisplay()->BackfaceIsHidden();
   }
 
@@ -3261,9 +3272,7 @@ private:
                                       DestroyPaintedPresShellList)
   
   nsTArray<nsWeakPtr>* PaintedPresShellList() {
-    nsTArray<nsWeakPtr>* list = static_cast<nsTArray<nsWeakPtr>*>(
-      Properties().Get(PaintedPresShellsProperty())
-    );
+    nsTArray<nsWeakPtr>* list = Properties().Get(PaintedPresShellsProperty());
     
     if (!list) {
       list = new nsTArray<nsWeakPtr>();

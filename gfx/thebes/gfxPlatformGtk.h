@@ -16,6 +16,11 @@ extern "C" {
 }
 #endif
 
+#ifdef MOZ_X11
+struct _XDisplay;
+typedef struct _XDisplay Display;
+#endif // MOZ_X11
+
 class gfxFontconfigUtils;
 
 class gfxPlatformGtk : public gfxPlatform {
@@ -123,6 +128,8 @@ public:
       return true;
     }
 
+    bool SupportsApzTouchInput() const override;
+
     void FontsPrefsChanged(const char *aPref) override;
 
     // maximum number of fonts to substitute for a generic
@@ -131,6 +138,16 @@ public:
     bool SupportsPluginDirectBitmapDrawing() override {
       return true;
     }
+
+#ifdef GL_PROVIDER_GLX
+    already_AddRefed<mozilla::gfx::VsyncSource> CreateHardwareVsyncSource() override;
+#endif
+
+#ifdef MOZ_X11
+    Display* GetCompositorDisplay() {
+      return mCompositorDisplay;
+    }
+#endif // MOZ_X11
 
 protected:
     static gfxFontconfigUtils *sFontconfigUtils;
@@ -143,6 +160,8 @@ private:
 
 #ifdef MOZ_X11
     static bool sUseXRender;
+
+    Display* mCompositorDisplay;
 #endif
 
     // xxx - this will be removed once the new fontconfig platform font list

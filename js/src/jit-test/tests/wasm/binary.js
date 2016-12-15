@@ -1,3 +1,4 @@
+// |jit-test| test-also-wasm-baseline
 load(libdir + "wasm.js");
 
 // MagicNumber = 0x6d736100;
@@ -103,7 +104,8 @@ function string(name) {
 }
 
 function encodedString(name, len) {
-    var nameBytes = name.split('').map(c => c.charCodeAt(0));
+    var name = unescape(encodeURIComponent(name)); // break into string of utf8 code points
+    var nameBytes = name.split('').map(c => c.charCodeAt(0)); // map to array of numbers
     return varU32(len === undefined ? nameBytes.length : len).concat(nameBytes);
 }
 
@@ -252,8 +254,15 @@ for (var i = 0; i < 20000; i++)
     manyBlocks.push(Block, End);
 wasmEval(moduleWithSections([sigSection([v2vSig]), declSection([0]), bodySection([funcBody({locals:[], body:manyBlocks})])]));
 
+// Ignore errors in name section.
+var tooBigNameSection = {
+    name: nameId,
+    body: [...varU32(Math.pow(2, 31))] // declare 2**31 functions.
+};
+wasmEval(moduleWithSections([tooBigNameSection]));
+
 // Checking stack trace.
-function runStartTraceTest(namesContent, expectedName) {
+function runStackTraceTest(namesContent, expectedName) {
     var sections = [
         sigSection([v2vSig]),
         importSection([{sigIndex:0, module:"env", func:"callback"}]),
@@ -272,14 +281,15 @@ function runStartTraceTest(namesContent, expectedName) {
     assertEq(result, expectedName);
 };
 
-runStartTraceTest(null, 'wasm-function[0]');
-runStartTraceTest([{name: 'test'}], 'test');
-runStartTraceTest([{name: 'test', locals: [{name: 'var1'}, {name: 'var2'}]}], 'test');
-runStartTraceTest([{name: 'test', locals: [{name: 'var1'}, {name: 'var2'}]}], 'test');
-runStartTraceTest([{name: 'test1'}, {name: 'test2'}], 'test1');
-runStartTraceTest([], 'wasm-function[0]');
+runStackTraceTest(null, 'wasm-function[0]');
+runStackTraceTest([{name: 'test'}], 'test');
+runStackTraceTest([{name: 'test', locals: [{name: 'var1'}, {name: 'var2'}]}], 'test');
+runStackTraceTest([{name: 'test', locals: [{name: 'var1'}, {name: 'var2'}]}], 'test');
+runStackTraceTest([{name: 'test1'}, {name: 'test2'}], 'test1');
+runStackTraceTest([{name: 'test☃'}], 'test☃');
+runStackTraceTest([{name: 'te\xE0\xFF'}], 'te\xE0\xFF');
+runStackTraceTest([], 'wasm-function[0]');
 // Notice that invalid names section content shall not fail the parsing
-runStartTraceTest([{nameLen: 100, name: 'test'}], 'wasm-function[0]'); // invalid name size
-runStartTraceTest([{name: 'test', locals: [{nameLen: 40, name: 'var1'}]}], 'wasm-function[0]'); // invalid variable name size
-runStartTraceTest([{name: ''}], 'wasm-function[0]'); // empty name
-runStartTraceTest([{name: 'te\xE0\xFF'}], 'wasm-function[0]'); // invalid UTF8 name
+runStackTraceTest([{nameLen: 100, name: 'test'}], 'wasm-function[0]'); // invalid name size
+runStackTraceTest([{name: 'test', locals: [{nameLen: 40, name: 'var1'}]}], 'wasm-function[0]'); // invalid variable name size
+runStackTraceTest([{name: ''}], 'wasm-function[0]'); // empty name

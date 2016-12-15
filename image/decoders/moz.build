@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +10,6 @@ toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
 # fix that another time.
 if 'gtk' in toolkit:
     DIRS += ['icon/gtk', 'icon']
-elif toolkit == 'qt':
-    DIRS += ['icon/qt', 'icon']
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     DIRS += ['icon/win', 'icon']

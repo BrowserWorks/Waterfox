@@ -21,12 +21,12 @@ namespace layers {
 class CompositorD3D9 : public Compositor
 {
 public:
-  CompositorD3D9(CompositorBridgeParent* aParent, widget::CompositorWidgetProxy* aWidget);
+  CompositorD3D9(CompositorBridgeParent* aParent, widget::CompositorWidget* aWidget);
   ~CompositorD3D9();
 
   virtual CompositorD3D9* AsCompositorD3D9() override { return this; }
 
-  virtual bool Initialize() override;
+  virtual bool Initialize(nsCString* const out_failureReason) override;
 
   virtual TextureFactoryIdentifier
     GetTextureFactoryIdentifier() override;

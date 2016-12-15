@@ -51,18 +51,6 @@ public class BaseGeckoInterface implements GeckoAppShell.GeckoInterface {
                                           AppConstants.USER_AGENT_FENNEC_MOBILE;
     }
 
-    // Bug 908772: Implement this
-    @Override
-    public LocationListener getLocationListener() {
-        return null;
-    }
-
-    // Bug 908773: Implement this
-    @Override
-    public SensorEventListener getSensorEventListener() {
-        return null;
-    }
-
     // Bug 908775: Implement this
     @Override
     public void doRestart() {}
@@ -178,5 +166,11 @@ public class BaseGeckoInterface implements GeckoAppShell.GeckoInterface {
     public String[] getHandlersForURL(String url, String action) {
         // By default, offer no handlers for any URL.
         return new String[] {};
+    }
+
+    @Override
+    public String getDefaultChromeURI() {
+        // By default, use the GeckoView-specific chrome URI.
+        return "chrome://browser/content/geckoview.xul";
     }
 }

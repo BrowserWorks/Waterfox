@@ -27,7 +27,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "_focusManager",
 
 
 // Constants
-const TAB_EVENTS = ["TabOpen", "TabSelect", "TabRemotenessChange"];
+const TAB_EVENTS = ["TabBrowserCreated", "TabSelect", "TabRemotenessChange"];
 const WINDOW_EVENTS = ["activate", "unload"];
 // lower value means higher priority
 const PRIORITY_DELTA = Ci.nsISupportsPriority.PRIORITY_NORMAL - Ci.nsISupportsPriority.PRIORITY_LOW;
@@ -49,7 +49,7 @@ this.trackBrowserWindow = function trackBrowserWindow(aWindow) {
 // Global methods
 function _handleEvent(aEvent) {
   switch (aEvent.type) {
-    case "TabOpen":
+    case "TabBrowserCreated":
       BrowserHelper.onOpen(aEvent.target.linkedBrowser);
       break;
     case "TabSelect":
@@ -74,12 +74,12 @@ var BrowserHelper = {
     _priorityBackup.set(aBrowser.permanentKey, Ci.nsISupportsPriority.PRIORITY_NORMAL);
 
     // If the tab is in the focused window, leave priority as it is
-    if (aBrowser.ownerDocument.defaultView != _lastFocusedWindow)
+    if (aBrowser.ownerGlobal != _lastFocusedWindow)
       this.decreasePriority(aBrowser);
   },
 
   onSelect: function NP_BH_onSelect(aBrowser) {
-    let windowEntry = WindowHelper.getEntry(aBrowser.ownerDocument.defaultView);
+    let windowEntry = WindowHelper.getEntry(aBrowser.ownerGlobal);
     if (windowEntry.lastSelectedBrowser)
       this.decreasePriority(windowEntry.lastSelectedBrowser);
     this.increasePriority(aBrowser);

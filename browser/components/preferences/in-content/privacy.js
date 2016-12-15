@@ -54,6 +54,20 @@ var gPrivacyPane = {
   },
 
   /**
+   * Show the Containers UI depending on the privacy.userContext.ui.enabled pref.
+   */
+  _initBrowserContainers: function () {
+    if (!Services.prefs.getBoolPref("privacy.userContext.ui.enabled")) {
+      return;
+    }
+
+    let link = document.getElementById("browserContainersLearnMore");
+    link.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "containers";
+
+    document.getElementById("browserContainersbox").hidden = false;
+  },
+
+  /**
    * Sets up the UI for the number of days of history to keep, and updates the
    * label of the "Clear Now..." button.
    */
@@ -73,6 +87,7 @@ var gPrivacyPane = {
     this._initTrackingProtection();
     this._initTrackingProtectionPBM();
     this._initAutocomplete();
+    this._initBrowserContainers();
 
     setEventListener("privacy.sanitize.sanitizeOnShutdown", "change",
                      gPrivacyPane._updateSanitizeSettingsButton);
@@ -370,27 +385,10 @@ var gPrivacyPane = {
         return;
       }
 
-      const Cc = Components.classes, Ci = Components.interfaces;
-      let brandName = document.getElementById("bundleBrand").getString("brandShortName");
-      let bundle = document.getElementById("bundlePreferences");
-      let msg = bundle.getFormattedString(autoStart.checked ?
-                                          "featureEnableRequiresRestart" : "featureDisableRequiresRestart",
-                                          [brandName]);
-      let restartText = bundle.getFormattedString("okToRestartButton", [brandName]);
-      let revertText = bundle.getString("revertNoRestartButton");
-
-      let title = bundle.getFormattedString("shouldRestartTitle", [brandName]);
-      let prompts = Cc["@mozilla.org/embedcomp/prompt-service;1"].getService(Ci.nsIPromptService);
-      let buttonFlags = (Services.prompt.BUTTON_POS_0 *
-			 Services.prompt.BUTTON_TITLE_IS_STRING) +
-                        (Services.prompt.BUTTON_POS_1 *
-			 Services.prompt.BUTTON_TITLE_IS_STRING) +
-                        Services.prompt.BUTTON_POS_1_DEFAULT;
-
-      let buttonIndex = prompts.confirmEx(window, title, msg,
-             buttonFlags, restartText, revertText,
-             null, null, {});
-      if (buttonIndex == 0) {
+      let buttonIndex = confirmRestartPrompt(autoStart.checked, 1,
+                                             true, false);
+      if (buttonIndex == CONFIRM_RESTART_PROMPT_RESTART_NOW) {
+        const Cc = Components.classes, Ci = Components.interfaces;
         let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
                            .createInstance(Ci.nsISupportsPRBool);
         Services.obs.notifyObservers(cancelQuit, "quit-application-requested",

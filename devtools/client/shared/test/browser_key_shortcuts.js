@@ -18,6 +18,8 @@ add_task(function* () {
   yield testAltModifier(shortcuts);
   yield testCommandOrControlModifier(shortcuts);
   yield testCtrlModifier(shortcuts);
+  yield testInvalidShortcutString(shortcuts);
+  yield testCmdShiftShortcut(shortcuts);
   shortcuts.destroy();
 
   yield testTarget();
@@ -339,6 +341,40 @@ function testCtrlModifier(shortcuts) {
   yield onKeyAlias;
 }
 
+function testCmdShiftShortcut(shortcuts) {
+  if (!isOSX) {
+    // This test is OSX only (Bug 1300458).
+    return;
+  }
+
+  let onCmdKey = once(shortcuts, "CmdOrCtrl+[", (key, event) => {
+    is(event.key, "[");
+    ok(!event.altKey);
+    ok(!event.ctrlKey);
+    ok(event.metaKey);
+    ok(!event.shiftKey);
+  });
+  let onCmdShiftKey = once(shortcuts, "CmdOrCtrl+Shift+[", (key, event) => {
+    is(event.key, "[");
+    ok(!event.altKey);
+    ok(!event.ctrlKey);
+    ok(event.metaKey);
+    ok(event.shiftKey);
+  });
+
+  EventUtils.synthesizeKey(
+    "[",
+    { metaKey: true, shiftKey: true },
+    window);
+  EventUtils.synthesizeKey(
+    "[",
+    { metaKey: true },
+    window);
+
+  yield onCmdKey;
+  yield onCmdShiftKey;
+}
+
 function testTarget() {
   info("Test KeyShortcuts with target argument");
 
@@ -361,4 +397,14 @@ function testTarget() {
   target.remove();
 
   shortcuts.destroy();
+}
+
+function testInvalidShortcutString(shortcuts) {
+  info("Test wrong shortcut string");
+
+  let shortcut = KeyShortcuts.parseElectronKey(window, "Cmmd+F");
+  ok(!shortcut, "Passing a invalid shortcut string should return a null object");
+
+  shortcuts.on("Cmmd+F", function () {});
+  ok(true, "on() shouldn't throw when passing invalid shortcut string");
 }

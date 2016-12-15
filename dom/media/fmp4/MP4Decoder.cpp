@@ -22,7 +22,6 @@
 #endif
 #ifdef MOZ_WIDGET_ANDROID
 #include "nsIGfxInfo.h"
-#include "AndroidBridge.h"
 #endif
 #include "mozilla/layers/LayersTypes.h"
 
@@ -93,7 +92,8 @@ MP4Decoder::CanHandleMediaType(const nsACString& aMIMETypeExcludingCodecs,
   // the web, as opposed to what we use internally (i.e. what our demuxers
   // etc output).
   const bool isMP4Audio = aMIMETypeExcludingCodecs.EqualsASCII("audio/mp4") ||
-                          aMIMETypeExcludingCodecs.EqualsASCII("audio/x-m4a");
+                          aMIMETypeExcludingCodecs.EqualsASCII("audio/x-m4a") ||
+                          aMIMETypeExcludingCodecs.EqualsASCII("audio/opus");
   const bool isMP4Video =
   // On B2G, treat 3GPP as MP4 when Gonk PDM is available.
 #ifdef MOZ_GONK_MEDIACODEC
@@ -222,10 +222,7 @@ CreateTestH264Decoder(layers::LayersBackend aBackend,
                                      MOZ_ARRAY_LENGTH(sTestH264ExtraData));
 
   RefPtr<PDMFactory> platform = new PDMFactory();
-  RefPtr<MediaDataDecoder> decoder(
-    platform->CreateDecoder(aConfig, aTaskQueue, nullptr,
-                            /* DecoderDoctorDiagnostics* */ nullptr,
-                            aBackend, nullptr));
+  RefPtr<MediaDataDecoder> decoder(platform->CreateDecoder({ aConfig, aTaskQueue, aBackend }));
 
   return decoder.forget();
 }

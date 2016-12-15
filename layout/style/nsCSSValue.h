@@ -8,6 +8,8 @@
 #ifndef nsCSSValue_h___
 #define nsCSSValue_h___
 
+#include <type_traits>
+
 #include "mozilla/Attributes.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/SheetType.h"
@@ -18,6 +20,7 @@
 #include "nsCOMPtr.h"
 #include "nsCSSKeywords.h"
 #include "nsCSSProperty.h"
+#include "nsCSSProps.h"
 #include "nsColor.h"
 #include "nsCoord.h"
 #include "nsProxyRelease.h"
@@ -516,6 +519,8 @@ public:
     { return eCSSUnit_Point <= aUnit && aUnit <= eCSSUnit_Pixel; }
   bool      IsPixelLengthUnit() const
     { return IsPixelLengthUnit(mUnit); }
+  static bool IsFloatUnit(nsCSSUnit aUnit)
+    { return eCSSUnit_Number <= aUnit; }
   bool      IsAngularUnit() const  
     { return eCSSUnit_Degree <= mUnit && mUnit <= eCSSUnit_Turn; }
   bool      IsFrequencyUnit() const  
@@ -723,6 +728,14 @@ private:
 
 public:
   void SetIntValue(int32_t aValue, nsCSSUnit aUnit);
+  template<typename T,
+           typename = typename std::enable_if<std::is_enum<T>::value>::type>
+  void SetIntValue(T aValue, nsCSSUnit aUnit)
+  {
+    static_assert(mozilla::IsEnumFittingWithin<T, int32_t>::value,
+                  "aValue must be an enum that fits within mValue.mInt");
+    SetIntValue(static_cast<int32_t>(aValue), aUnit);
+  }
   void SetPercentValue(float aValue);
   void SetFloatValue(float aValue, nsCSSUnit aUnit);
   void SetStringValue(const nsString& aValue, nsCSSUnit aUnit);
@@ -1554,6 +1567,21 @@ private:
   nsCSSValueGradient& operator=(const nsCSSValueGradient& aOther) = delete;
 };
 
+// A string value used primarily to represent variable references.
+//
+// Animation code, specifically the KeyframeUtils class, also uses this
+// type as a container for various string values including:
+//
+// * Shorthand property values
+// * Shorthand sentinel values used for testing failure conditions
+// * Invalid longhand property values
+//
+// For the most part, the above values are not passed to functions that
+// manipulate nsCSSValue objects in a generic fashion. Instead KeyframeUtils
+// extracts the string from the nsCSSValueTokenStream and passes that around
+// instead. The single exception is nsCSSValue::AppendToString which we use
+// to serialize the string contained in the nsCSSValueTokenStream by ensuring
+// the mShorthandPropertyID is set to eCSSProperty_UNKNOWN.
 struct nsCSSValueTokenStream final {
   nsCSSValueTokenStream();
 

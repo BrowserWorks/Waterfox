@@ -6,15 +6,16 @@
 
 const { Cc, Ci, Cu } = require("chrome");
 const promise = require("promise");
+const defer = require("devtools/shared/defer");
 const Services = require("Services");
 const { TargetFactory } = require("devtools/client/framework/target");
 const Telemetry = require("devtools/client/shared/telemetry");
+const {ViewHelpers} = require("devtools/client/shared/widgets/view-helpers");
 
 const NS_XHTML = "http://www.w3.org/1999/xhtml";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 loader.lazyImporter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
-loader.lazyImporter(this, "EventEmitter", "resource://devtools/shared/event-emitter.js");
 
 loader.lazyGetter(this, "prefBranch", function () {
   return Services.prefs.getBranch(null)
@@ -29,7 +30,8 @@ loader.lazyRequireGetter(this, "util", "gcli/util/util");
 loader.lazyRequireGetter(this, "ConsoleServiceListener", "devtools/shared/webconsole/utils", true);
 loader.lazyRequireGetter(this, "gDevTools", "devtools/client/framework/devtools", true);
 loader.lazyRequireGetter(this, "gDevToolsBrowser", "devtools/client/framework/devtools-browser", true);
-loader.lazyRequireGetter(this, "nodeConstants", "devtools/shared/dom-node-constants", true);
+loader.lazyRequireGetter(this, "nodeConstants", "devtools/shared/dom-node-constants");
+loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
 
 /**
  * A collection of utilities to help working with commands
@@ -106,6 +108,13 @@ var CommandUtils = {
 
         button.addEventListener("click", () => {
           requisition.updateExec(typed);
+        }, false);
+
+        button.addEventListener("keypress", (event) => {
+          if (ViewHelpers.isSpaceOrReturn(event)) {
+            event.preventDefault();
+            requisition.updateExec(typed);
+          }
         }, false);
 
         // Allow the command button to be toggleable
@@ -214,15 +223,10 @@ exports.CommandUtils = CommandUtils;
  * to using panels.
  */
 loader.lazyGetter(this, "isLinux", function () {
-  return OS == "Linux";
+  return Services.appinfo.OS == "Linux";
 });
 loader.lazyGetter(this, "isMac", function () {
-  return OS == "Darwin";
-});
-
-loader.lazyGetter(this, "OS", function () {
-  let os = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).OS;
-  return os;
+  return Services.appinfo.OS == "Darwin";
 });
 
 /**
@@ -921,7 +925,7 @@ OutputPanel.prototype._init = function (devtoolbar) {
   this._update = this._update.bind(this);
 
   // Wire up the element from the iframe, and resolve the promise
-  let deferred = promise.defer();
+  let deferred = defer();
   let onload = () => {
     this._frame.removeEventListener("load", onload, true);
 
@@ -1001,7 +1005,7 @@ OutputPanel.prototype._resize = function () {
   // We'd like to put this in CSS but we can't:
   //   body { width: calc(min(-5px, max-content)); }
   //   #_panel { max-width: -5px; }
-  switch (OS) {
+  switch (Services.appinfo.OS) {
     case "Linux":
       maxWidth -= 5;
       break;
@@ -1190,7 +1194,7 @@ TooltipPanel.create = function (devtoolbar) {
  * @private See TooltipPanel.create
  */
 TooltipPanel.prototype._init = function (devtoolbar) {
-  let deferred = promise.defer();
+  let deferred = defer();
 
   let chromeDocument = devtoolbar._doc;
   this._devtoolbar = devtoolbar;

@@ -12,7 +12,7 @@ import sys
 
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.join(base_dir, 'python', 'mozbuild'))
+sys.path.insert(0, os.path.join(base_dir, 'python', 'mozbuild'))
 from mozbuild.configure import ConfigureSandbox
 
 
@@ -50,6 +50,7 @@ def config_status(config):
     sanitized_config['non_global_defines'] = config['non_global_defines']
     sanitized_config['topsrcdir'] = config['TOPSRCDIR']
     sanitized_config['topobjdir'] = config['TOPOBJDIR']
+    sanitized_config['mozconfig'] = config.get('MOZCONFIG')
 
     # Create config.status. Eventually, we'll want to just do the work it does
     # here, when we're able to skip configure tests/use cached results/not rely
@@ -68,7 +69,7 @@ def config_status(config):
             json.dump(v, fh, sort_keys=True, indent=4, ensure_ascii=False)
             fh.write('\n')
         fh.write("__all__ = ['topobjdir', 'topsrcdir', 'defines', "
-                 "'non_global_defines', 'substs']")
+                 "'non_global_defines', 'substs', 'mozconfig']")
 
         if config.get('MOZ_BUILD_APP') != 'js' or config.get('JS_STANDALONE'):
             fh.write('''
@@ -82,8 +83,7 @@ if __name__ == '__main__':
     # executable permissions.
     os.chmod('config.status', 0755)
     if config.get('MOZ_BUILD_APP') != 'js' or config.get('JS_STANDALONE'):
-        if not config.get('JS_STANDALONE'):
-            os.environ['WRITE_MOZINFO'] = '1'
+        os.environ['WRITE_MOZINFO'] = '1'
         # Until we have access to the virtualenv from this script, execute
         # config.status externally, with the virtualenv python.
         return subprocess.call([config['PYTHON'], 'config.status'])

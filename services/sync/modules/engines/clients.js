@@ -75,6 +75,16 @@ ClientEngine.prototype = {
     Svc.Prefs.set(this.name + ".lastRecordUpload", Math.floor(value));
   },
 
+  get remoteClients() {
+    // return all non-stale clients for external consumption.
+    return Object.values(this._store._remoteClients).filter(v => !v.stale);
+  },
+
+  remoteClientExists(id) {
+    let client = this._store._remoteClients[id];
+    return !!(client && !client.stale);
+  },
+
   // Aggregate some stats on the composition of clients on this account
   get stats() {
     let stats = {
@@ -156,11 +166,6 @@ ClientEngine.prototype = {
   },
   set localType(value) {
     Svc.Prefs.set("client.type", value);
-  },
-
-  remoteClientExists(id) {
-    let client = this._store._remoteClients[id];
-    return !!(client && !client.stale);
   },
 
   getClientName(id) {
@@ -390,6 +395,7 @@ ClientEngine.prototype = {
       if (!commands) {
         return true;
       }
+      let URIsToDisplay = [];
       for (let key in commands) {
         let {command, args} = commands[key];
         this._log.debug("Processing command: " + command + "(" + args + ")");
@@ -412,12 +418,16 @@ ClientEngine.prototype = {
             this.service.logout();
             return false;
           case "displayURI":
-            this._handleDisplayURI.apply(this, args);
+            let [uri, clientId, title] = args;
+            URIsToDisplay.push({ uri, clientId, title });
             break;
           default:
             this._log.debug("Received an unknown command: " + command);
             break;
         }
+      }
+      if (URIsToDisplay.length) {
+        this._handleDisplayURIs(URIsToDisplay);
       }
 
       return true;
@@ -490,11 +500,11 @@ ClientEngine.prototype = {
   },
 
   /**
-   * Handle a single received 'displayURI' command.
+   * Handle a bunch of received 'displayURI' commands.
    *
-   * Interested parties should observe the "weave:engine:clients:display-uri"
-   * topic. The callback will receive an object as the subject parameter with
-   * the following keys:
+   * Interested parties should observe the "weave:engine:clients:display-uris"
+   * topic. The callback will receive an array as the subject parameter
+   * containing objects with the following keys:
    *
    *   uri       URI (string) that is requested for display.
    *   clientId  ID of client that sent the command.
@@ -502,20 +512,18 @@ ClientEngine.prototype = {
    *
    * The 'data' parameter to the callback will not be defined.
    *
-   * @param uri
+   * @param uris
+   *        An array containing URI objects to display
+   * @param uris[].uri
    *        String URI that was received
-   * @param clientId
+   * @param uris[].clientId
    *        ID of client that sent URI
-   * @param title
+   * @param uris[].title
    *        String title of page that URI corresponds to. Older clients may not
    *        send this.
    */
-  _handleDisplayURI: function _handleDisplayURI(uri, clientId, title) {
-    this._log.info("Received a URI for display: " + uri + " (" + title +
-                   ") from " + clientId);
-
-    let subject = {uri: uri, client: clientId, title: title};
-    Svc.Obs.notify("weave:engine:clients:display-uri", subject);
+  _handleDisplayURIs: function _handleDisplayURIs(uris) {
+    Svc.Obs.notify("weave:engine:clients:display-uris", uris);
   },
 
   _removeRemoteClient(id) {
@@ -663,7 +671,7 @@ ClientsTracker.prototype = {
         break;
       case "weave:engine:stop-tracking":
         if (this._enabled) {
-          Svc.Prefs.ignore("clients.name", this);
+          Svc.Prefs.ignore("client.name", this);
           this._enabled = false;
         }
         break;

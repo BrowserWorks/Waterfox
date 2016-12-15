@@ -56,18 +56,18 @@ nsScrollbarFrame::Init(nsIContent*       aContent,
 
 void
 nsScrollbarFrame::Reflow(nsPresContext*          aPresContext,
-                         nsHTMLReflowMetrics&     aDesiredSize,
-                         const nsHTMLReflowState& aReflowState,
+                         ReflowOutput&     aDesiredSize,
+                         const ReflowInput& aReflowInput,
                          nsReflowStatus&          aStatus)
 {
-  nsBoxFrame::Reflow(aPresContext, aDesiredSize, aReflowState, aStatus);
+  nsBoxFrame::Reflow(aPresContext, aDesiredSize, aReflowInput, aStatus);
 
   // nsGfxScrollFrame may have told us to shrink to nothing. If so, make sure our
   // desired size agrees.
-  if (aReflowState.AvailableWidth() == 0) {
+  if (aReflowInput.AvailableWidth() == 0) {
     aDesiredSize.Width() = 0;
   }
-  if (aReflowState.AvailableHeight() == 0) {
+  if (aReflowInput.AvailableHeight() == 0) {
     aDesiredSize.Height() = 0;
   }
 }
@@ -95,8 +95,8 @@ nsScrollbarFrame::AttributeChanged(int32_t aNameSpaceID,
   if (!scrollable)
     return rv;
 
-  nsCOMPtr<nsIContent> kungFuDeathGrip(mContent);
-  scrollable->CurPosAttributeChanged(mContent);
+  nsCOMPtr<nsIContent> content(mContent);
+  scrollable->CurPosAttributeChanged(content);
   return rv;
 }
 

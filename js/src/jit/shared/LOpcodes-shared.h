@@ -67,6 +67,7 @@
     _(NewArray)                     \
     _(NewArrayCopyOnWrite)          \
     _(NewArrayDynamicLength)        \
+    _(NewTypedArray)                \
     _(ArraySplice)                  \
     _(NewObject)                    \
     _(NewTypedObject)               \
@@ -116,6 +117,7 @@
     _(Throw)                        \
     _(Phi)                          \
     _(TestIAndBranch)               \
+    _(TestI64AndBranch)             \
     _(TestDAndBranch)               \
     _(TestFAndBranch)               \
     _(TestVAndBranch)               \
@@ -124,8 +126,8 @@
     _(ObjectGroupDispatch)          \
     _(Compare)                      \
     _(CompareAndBranch)             \
-    _(Compare64)                    \
-    _(Compare64AndBranch)           \
+    _(CompareI64)                   \
+    _(CompareI64AndBranch)          \
     _(CompareD)                     \
     _(CompareDAndBranch)            \
     _(CompareF)                     \
@@ -159,6 +161,8 @@
     _(PopcntI64)                    \
     _(SqrtD)                        \
     _(SqrtF)                        \
+    _(CopySignD)                    \
+    _(CopySignF)                    \
     _(Atan2D)                       \
     _(Hypot)                        \
     _(PowI)                         \
@@ -368,7 +372,7 @@
     _(AsmReinterpretToI64)          \
     _(AsmReinterpretFromI64)        \
     _(Rotate)                       \
-    _(Rotate64)                     \
+    _(RotateI64)                    \
     _(GetDOMProperty)               \
     _(GetDOMMemberV)                \
     _(GetDOMMemberT)                \
@@ -381,17 +385,28 @@
     _(HasClass)                     \
     _(AsmSelect)                    \
     _(AsmSelectI64)                 \
+    _(WasmLoad)                     \
+    _(WasmLoadI64)                  \
+    _(WasmStore)                    \
+    _(WasmStoreI64)                 \
+    _(WasmBoundsCheck)              \
+    _(WasmLoadGlobalVar)            \
+    _(WasmLoadGlobalVarI64)         \
+    _(WasmStoreGlobalVar)           \
+    _(WasmStoreGlobalVarI64)        \
     _(AsmJSLoadHeap)                \
     _(AsmJSStoreHeap)               \
     _(AsmJSLoadFuncPtr)             \
-    _(AsmJSLoadGlobalVar)           \
-    _(AsmJSStoreGlobalVar)          \
     _(AsmJSLoadFFIFunc)             \
     _(AsmJSParameter)               \
+    _(AsmJSParameterI64)            \
     _(AsmJSReturn)                  \
+    _(AsmJSReturnI64)               \
     _(AsmJSVoidReturn)              \
     _(AsmJSPassStackArg)            \
+    _(AsmJSPassStackArgI64)         \
     _(AsmJSCall)                    \
+    _(AsmJSCallI64)                 \
     _(AsmJSCompareExchangeHeap)     \
     _(AsmJSAtomicExchangeHeap)      \
     _(AsmJSAtomicBinopHeap)         \

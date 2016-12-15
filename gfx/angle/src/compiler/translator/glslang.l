@@ -390,6 +390,10 @@ O           [0-7]
     return FIELD_SELECTION;
 }
 <FIELDS>[ \t\v\f\r] {}
+<FIELDS>. {
+    yyextra->error(*yylloc, "Illegal character at fieldname start", yytext, "");
+    return 0;
+}
 
 [ \t\v\n\f\r] { }
 <*><<EOF>>    { yyterminate(); }
@@ -432,7 +436,6 @@ int reserved_word(yyscan_t yyscanner) {
     struct yyguts_t* yyg = (struct yyguts_t*) yyscanner;
 
     yyextra->error(*yylloc, "Illegal use of reserved word", yytext, "");
-    yyextra->recover();
     return 0;
 }
 
@@ -482,7 +485,6 @@ int uint_constant(TParseContext *context)
     if (context->getShaderVersion() < 300)
     {
         context->error(*yylloc, "Unsigned integers are unsupported prior to GLSL ES 3.00", yytext, "");
-        context->recover();
         return 0;
     }
 
@@ -499,7 +501,6 @@ int floatsuffix_check(TParseContext* context)
     if (context->getShaderVersion() < 300)
     {
         context->error(*yylloc, "Floating-point suffix unsupported prior to GLSL ES 3.00", yytext);
-        context->recover();
         return 0;
     }
 
@@ -513,7 +514,6 @@ int floatsuffix_check(TParseContext* context)
 
 void yyerror(YYLTYPE* lloc, TParseContext* context, void *scanner, const char* reason) {
     context->error(*lloc, reason, yyget_text(scanner));
-    context->recover();
 }
 
 int int_constant(TParseContext *context) {

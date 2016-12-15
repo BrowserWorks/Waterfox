@@ -18,9 +18,7 @@ thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: this.doc is undefine
 const toolId1 = "test-tool-1";
 const toolId2 = "test-tool-2";
 
-var tempScope = {};
-Cu.import("resource://devtools/shared/event-emitter.js", tempScope);
-var EventEmitter = tempScope.EventEmitter;
+var EventEmitter = require("devtools/shared/event-emitter");
 
 function test() {
   addTab("about:blank").then(runTests1);
@@ -209,7 +207,6 @@ function destroyToolbox(toolbox) {
 }
 
 function finishUp() {
-  tempScope = null;
   gBrowser.removeCurrentTab();
   finish();
 }
@@ -237,7 +234,7 @@ function DevToolPanel(iframeWindow, toolbox) {
 
 DevToolPanel.prototype = {
   open: function () {
-    let deferred = promise.defer();
+    let deferred = defer();
 
     executeSoon(() => {
       this._isReady = true;
@@ -263,6 +260,6 @@ DevToolPanel.prototype = {
   _isReady: false,
 
   destroy: function DTI_destroy() {
-    return promise.defer(null);
+    return defer(null);
   },
 };

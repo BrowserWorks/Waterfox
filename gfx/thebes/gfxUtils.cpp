@@ -31,8 +31,6 @@
 #include "nsPresContext.h"
 #include "nsRegion.h"
 #include "nsServiceManagerUtils.h"
-#include "yuv_convert.h"
-#include "ycbcr_to_rgb565.h"
 #include "GeckoProfiler.h"
 #include "ImageContainer.h"
 #include "ImageRegion.h"
@@ -449,7 +447,7 @@ CreateSamplingRestrictedDrawable(gfxDrawable* aDrawable,
       return nullptr;
     }
 
-    RefPtr<gfxContext> tmpCtx = gfxContext::ForDrawTarget(target);
+    RefPtr<gfxContext> tmpCtx = gfxContext::CreateOrNull(target);
     MOZ_ASSERT(tmpCtx); // already checked the target above
 
     tmpCtx->SetOp(OptimalFillOp());
@@ -599,7 +597,7 @@ PrescaleAndTileDrawable(gfxDrawable* aDrawable,
     return false;
   }
 
-  RefPtr<gfxContext> tmpCtx = gfxContext::ForDrawTarget(scaledDT);
+  RefPtr<gfxContext> tmpCtx = gfxContext::CreateOrNull(scaledDT);
   MOZ_ASSERT(tmpCtx); // already checked the target above
 
   scaledDT->SetTransform(ToMatrix(scaleMatrix));
@@ -1214,7 +1212,7 @@ gfxUtils::WriteAsPNG(nsIPresShell* aShell, const char* aFile)
                                      SurfaceFormat::B8G8R8A8);
   NS_ENSURE_TRUE(dt && dt->IsValid(), /*void*/);
 
-  RefPtr<gfxContext> context = gfxContext::ForDrawTarget(dt);
+  RefPtr<gfxContext> context = gfxContext::CreateOrNull(dt);
   MOZ_ASSERT(context); // already checked the draw target above
   aShell->RenderDocument(r, 0, NS_RGB(255, 255, 0), context);
   WriteAsPNG(dt.get(), aFile);

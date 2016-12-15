@@ -128,11 +128,13 @@ void ParseFuaNalu(RtpDepacketizer::ParsedPayload* parsed_payload,
 }  // namespace
 
 RtpPacketizerH264::RtpPacketizerH264(FrameType frame_type,
-                                     size_t max_payload_len)
+                                     size_t max_payload_len,
+                                     uint8_t packetization_mode)
     : payload_data_(NULL),
       payload_size_(0),
       max_payload_len_(max_payload_len),
-      frame_type_(frame_type) {
+      frame_type_(frame_type),
+      packetization_mode_(packetization_mode) {
 }
 
 RtpPacketizerH264::~RtpPacketizerH264() {
@@ -154,13 +156,28 @@ void RtpPacketizerH264::GeneratePackets() {
   for (size_t i = 0; i < fragmentation_.fragmentationVectorSize;) {
     size_t fragment_offset = fragmentation_.fragmentationOffset[i];
     size_t fragment_length = fragmentation_.fragmentationLength[i];
-    if (fragment_length > max_payload_len_) {
+    if (packetization_mode_ == 0) {
+      PacketizeMode0(fragment_offset, fragment_length);
+      ++i;
+    } else if (fragment_length > max_payload_len_) {
       PacketizeFuA(fragment_offset, fragment_length);
       ++i;
     } else {
       i = PacketizeStapA(i, fragment_offset, fragment_length);
     }
   }
+}
+
+void RtpPacketizerH264::PacketizeMode0(size_t fragment_offset,
+                                       size_t fragment_length) {
+
+  uint8_t header = payload_data_[fragment_offset];
+  packets_.push(Packet(fragment_offset,
+                       fragment_length,
+                       true,
+                       true,
+                       false,
+                       header));
 }
 
 void RtpPacketizerH264::PacketizeFuA(size_t fragment_offset,

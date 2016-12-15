@@ -87,6 +87,10 @@ typedef enum {
   MOZ_GTK_BUTTON,
   /* Paints a button with image and no text */
   MOZ_GTK_TOOLBAR_BUTTON,
+  /* Paints a toggle button */
+  MOZ_GTK_TOGGLE_BUTTON,
+  /* Paints a button arrow */
+  MOZ_GTK_BUTTON_ARROW,
 
   /* Paints the container part of a GtkCheckButton. */
   MOZ_GTK_CHECKBUTTON_CONTAINER,
@@ -109,6 +113,7 @@ typedef enum {
 
   /* Horizontal GtkScrollbar counterparts */
   MOZ_GTK_SCROLLBAR_HORIZONTAL,
+  MOZ_GTK_SCROLLBAR_CONTENTS_HORIZONTAL,
   /* Paints the trough (track) of a GtkScrollbar. */
   MOZ_GTK_SCROLLBAR_TROUGH_HORIZONTAL,
   /* Paints the slider (thumb) of a GtkScrollbar. */
@@ -116,6 +121,7 @@ typedef enum {
 
   /* Vertical GtkScrollbar counterparts */
   MOZ_GTK_SCROLLBAR_VERTICAL,
+  MOZ_GTK_SCROLLBAR_CONTENTS_VERTICAL,
   MOZ_GTK_SCROLLBAR_TROUGH_VERTICAL,
   MOZ_GTK_SCROLLBAR_THUMB_VERTICAL,
 
@@ -134,6 +140,8 @@ typedef enum {
   MOZ_GTK_GRIPPER,
   /* Paints a GtkEntry. */
   MOZ_GTK_ENTRY,
+  /* Paints a GtkExpander. */
+  MOZ_GTK_EXPANDER,
   /* Paints a GtkTextView. */
   MOZ_GTK_TEXT_VIEW,
   /* Paints a GtkOptionMenu. */
@@ -151,6 +159,8 @@ typedef enum {
   MOZ_GTK_TOOLTIP,
   /* Paints a GtkFrame (e.g. a status bar panel). */
   MOZ_GTK_FRAME,
+  /* Paints the border of a GtkFrame */
+  MOZ_GTK_FRAME_BORDER,
   /* Paints a resize grip for a GtkWindow */
   MOZ_GTK_RESIZER,
   /* Paints a GtkProgressBar. */
@@ -202,6 +212,8 @@ typedef enum {
   MOZ_GTK_WINDOW_CONTAINER,
   /* Paints a GtkInfoBar, for notifications. */
   MOZ_GTK_INFO_BAR,
+  /* Used for scrolled window shell. */
+  MOZ_GTK_SCROLLED_WINDOW,
 
   MOZ_GTK_WIDGET_NODE_COUNT
 } WidgetNodeType;

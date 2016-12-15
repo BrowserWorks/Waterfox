@@ -35,7 +35,6 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/BlobBinding.h"
-#include "mozilla/dom/BlobSet.h"
 #include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/FileBinding.h"
 #include "mozilla/dom/WorkerPrivate.h"
@@ -561,7 +560,7 @@ File::Constructor(const GlobalObject& aGlobal,
                   ErrorResult& aRv)
 {
   if (!nsContentUtils::ThreadsafeIsCallerChrome()) {
-    aRv.Throw(NS_ERROR_FAILURE);
+    aRv.ThrowTypeError<MSG_NOT_SEQUENCE>(NS_LITERAL_STRING("Argument 1 of File.constructor"));
     return nullptr;
   }
 
@@ -777,7 +776,11 @@ BlobImplBase::GetSendInfo(nsIInputStream** aBody, uint64_t* aContentLength,
   nsAutoString contentType;
   GetType(contentType);
 
-  CopyUTF16toUTF8(contentType, aContentType);
+  if (contentType.IsEmpty()) {
+    aContentType.SetIsVoid(true);
+  } else {
+    CopyUTF16toUTF8(contentType, aContentType);
+  }
 
   aCharset.Truncate();
 
@@ -921,7 +924,9 @@ BlobImplFile::GetType(nsAString& aType)
 
       ErrorResult rv;
       runnable->Dispatch(rv);
-      NS_WARN_IF(rv.Failed());
+      if (NS_WARN_IF(rv.Failed())) {
+        rv.SuppressException();
+      }
       return;
     }
 
@@ -984,6 +989,16 @@ BlobImplFile::GetInternalStream(nsIInputStream** aStream, ErrorResult& aRv)
 
   aRv = NS_NewPartialLocalFileInputStream(aStream, mFile, mStart, mLength,
                                           -1, -1, sFileStreamFlags);
+}
+
+bool
+BlobImplFile::IsDirectory() const
+{
+  bool isDirectory = false;
+  if (mFile) {
+    mFile->IsDirectory(&isDirectory);
+  }
+  return isDirectory;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1178,79 +1193,6 @@ BlobImplTemporaryBlob::GetInternalStream(nsIInputStream** aStream,
   nsCOMPtr<nsIInputStream> stream =
     new nsTemporaryFileInputStream(mFileDescOwner, mStartPos, mStartPos + mLength);
   stream.forget(aStream);
-}
-
-////////////////////////////////////////////////////////////////////////////
-// BlobSet implementation
-
-already_AddRefed<Blob>
-BlobSet::GetBlobInternal(nsISupports* aParent,
-                         const nsACString& aContentType,
-                         ErrorResult& aRv)
-{
-  RefPtr<BlobImpl> blobImpl =
-    MultipartBlobImpl::Create(GetBlobImpls(),
-                              NS_ConvertASCIItoUTF16(aContentType),
-                              aRv);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return nullptr;
-  }
-
-  RefPtr<Blob> blob = Blob::Create(aParent, blobImpl);
-  return blob.forget();
-}
-
-nsresult
-BlobSet::AppendVoidPtr(const void* aData, uint32_t aLength)
-{
-  NS_ENSURE_ARG_POINTER(aData);
-
-  uint64_t offset = mDataLen;
-
-  if (!ExpandBufferSize(aLength))
-    return NS_ERROR_OUT_OF_MEMORY;
-
-  memcpy((char*)mData + offset, aData, aLength);
-  return NS_OK;
-}
-
-nsresult
-BlobSet::AppendString(const nsAString& aString, bool nativeEOL, JSContext* aCx)
-{
-  nsCString utf8Str = NS_ConvertUTF16toUTF8(aString);
-
-  if (nativeEOL) {
-    if (utf8Str.Contains('\r')) {
-      utf8Str.ReplaceSubstring("\r\n", "\n");
-      utf8Str.ReplaceSubstring("\r", "\n");
-    }
-#ifdef XP_WIN
-    utf8Str.ReplaceSubstring("\n", "\r\n");
-#endif
-  }
-
-  return AppendVoidPtr((void*)utf8Str.Data(),
-                       utf8Str.Length());
-}
-
-nsresult
-BlobSet::AppendBlobImpl(BlobImpl* aBlobImpl)
-{
-  NS_ENSURE_ARG_POINTER(aBlobImpl);
-
-  Flush();
-  mBlobImpls.AppendElement(aBlobImpl);
-
-  return NS_OK;
-}
-
-nsresult
-BlobSet::AppendBlobImpls(const nsTArray<RefPtr<BlobImpl>>& aBlobImpls)
-{
-  Flush();
-  mBlobImpls.AppendElements(aBlobImpls);
-
-  return NS_OK;
 }
 
 } // namespace dom

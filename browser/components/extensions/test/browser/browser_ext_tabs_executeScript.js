@@ -21,7 +21,8 @@ add_task(function* testExecuteScript() {
         browser.tabs.executeScript({
           code: "42",
         }).then(result => {
-          browser.test.assertEq(42, result, "Expected callback result");
+          browser.test.assertEq(1, result.length, "Expected one callback result");
+          browser.test.assertEq(42, result[0], "Expected callback result");
         }),
 
         browser.tabs.executeScript({
@@ -37,13 +38,15 @@ add_task(function* testExecuteScript() {
         browser.tabs.executeScript({
           file: "script.js",
         }).then(result => {
-          browser.test.assertEq(undefined, result, "Expected callback result");
+          browser.test.assertEq(1, result.length, "Expected one callback result");
+          browser.test.assertEq(undefined, result[0], "Expected callback result");
         }),
 
         browser.tabs.executeScript({
           file: "script2.js",
         }).then(result => {
-          browser.test.assertEq(27, result, "Expected callback result");
+          browser.test.assertEq(1, result.length, "Expected one callback result");
+          browser.test.assertEq(27, result[0], "Expected callback result");
         }),
 
         browser.tabs.executeScript({
@@ -62,9 +65,10 @@ add_task(function* testExecuteScript() {
           code: "location.href;",
           runAt: "document_end",
         }).then(result => {
-          browser.test.assertTrue(typeof(result) == "string", "Result is a string");
+          browser.test.assertEq(1, result.length, "Expected callback result");
+          browser.test.assertEq("string", typeof result[0], "Result is a string");
 
-          browser.test.assertTrue(/\/file_iframe_document\.html$/.test(result), "Result is correct");
+          browser.test.assertTrue(/\/file_iframe_document\.html$/.test(result[0]), "Result is correct");
         }),
 
         browser.tabs.executeScript({
@@ -86,9 +90,39 @@ add_task(function* testExecuteScript() {
         }),
 
         browser.tabs.executeScript({
+          frameId: Number.MAX_SAFE_INTEGER,
+          code: "42",
+        }).then(result => {
+          browser.test.fail("Expected error when specifying invalid frame ID");
+        }, error => {
+          let details = {
+            frame_id: Number.MAX_SAFE_INTEGER,
+            matchesHost: ["http://mochi.test/", "http://example.com/"],
+          };
+          browser.test.assertEq(`No window matching ${JSON.stringify(details)}`,
+                                error.message, "Got expected error");
+        }),
+
+        browser.tabs.create({url: "http://example.net/", active: false}).then(tab => {
+          return browser.tabs.executeScript(tab.id, {
+            code: "42",
+          }).then(result => {
+            browser.test.fail("Expected error when trying to execute on invalid domain");
+          }, error => {
+            let details = {
+              matchesHost: ["http://mochi.test/", "http://example.com/"],
+            };
+            browser.test.assertEq(`No window matching ${JSON.stringify(details)}`,
+                                  error.message, "Got expected error");
+          }).then(() => {
+            return browser.tabs.remove(tab.id);
+          });
+        }),
+
+        browser.tabs.executeScript({
           code: "Promise.resolve(42)",
         }).then(result => {
-          browser.test.assertEq(42, result, "Got expected promise resolution value as result");
+          browser.test.assertEq(42, result[0], "Got expected promise resolution value as result");
         }),
 
         browser.tabs.executeScript({
@@ -108,19 +142,21 @@ add_task(function* testExecuteScript() {
           code: "location.href;",
           frameId: frames[0].frameId,
         }).then(result => {
-          browser.test.assertTrue(/\/file_iframe_document\.html$/.test(result), `Result for frameId[0] is correct: ${result}`);
+          browser.test.assertEq(1, result.length, "Expected one result");
+          browser.test.assertTrue(/\/file_iframe_document\.html$/.test(result[0]), `Result for frameId[0] is correct: ${result[0]}`);
         }),
 
         browser.tabs.executeScript({
           code: "location.href;",
           frameId: frames[1].frameId,
         }).then(result => {
-          browser.test.assertEq("http://mochi.test:8888/", result, "Result for frameId[1] is correct");
+          browser.test.assertEq(1, result.length, "Expected one result");
+          browser.test.assertEq("http://mochi.test:8888/", result[0], "Result for frameId[1] is correct");
         }),
 
         browser.tabs.create({url: "http://example.com/"}).then(tab => {
           return browser.tabs.executeScript(tab.id, {code: "location.href"}).then(result => {
-            browser.test.assertEq("http://example.com/", result, "Script executed correctly in new tab");
+            browser.test.assertEq("http://example.com/", result[0], "Script executed correctly in new tab");
 
             return browser.tabs.remove(tab.id);
           });

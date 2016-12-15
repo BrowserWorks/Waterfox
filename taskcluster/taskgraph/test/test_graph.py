@@ -86,7 +86,7 @@ class TestGraph(unittest.TestCase):
                              ('3', '2', 'green'),
                          }))
 
-    def test_transitive_closure_disjoint(self):
+    def test_transitive_closure_disjoint_edges(self):
         "transitive closure of a disjoint graph keeps those edges"
         self.assertEqual(self.disjoint.transitive_closure(set(['3', 'β'])),
                          Graph(set(['1', '2', '3', 'β', 'γ']), {
@@ -135,6 +135,14 @@ class TestGraph(unittest.TestCase):
             '2': set(['1']),
             '3': set(['1', '2']),
             '4': set(['3']),
+        })
+
+    def test_named_links_dict(self):
+        "named link dict for a graph with multiple edges is correct"
+        self.assertEqual(self.multi_edges.named_links_dict(), {
+            '2': dict(red='1', blue='1'),
+            '3': dict(red='1', blue='2', green='2'),
+            '4': dict(green='3'),
         })
 
     def test_reverse_links_dict(self):

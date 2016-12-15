@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@ TEST_HARNESS_FILES.reftest += [
     '/testing/mochitest/server.js',
     'b2g_start_script.js',
     'gaia_lock_screen.js',
+    'mach_test_package_commands.py',
     'output.py',
     'reftest-preferences.js',
     'reftestcommandline.py',

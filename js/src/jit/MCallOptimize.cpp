@@ -4,6 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/Casting.h"
+
 #include "jsmath.h"
 #include "jsobj.h"
 #include "jsstr.h"
@@ -21,6 +23,7 @@
 #include "vm/ArgumentsObject.h"
 #include "vm/ProxyObject.h"
 #include "vm/SelfHosting.h"
+#include "vm/TypedArrayObject.h"
 
 #include "jsscriptinlines.h"
 
@@ -30,6 +33,7 @@
 #include "vm/UnboxedObject-inl.h"
 
 using mozilla::ArrayLength;
+using mozilla::AssertedCast;
 
 using JS::DoubleNaNValue;
 using JS::TrackedOutcome;
@@ -298,6 +302,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlinePossiblyWrappedArrayBufferByteLength(callInfo);
 
       // TypedArray intrinsics.
+      case InlinableNative::TypedArrayConstructor:
+        return inlineTypedArray(callInfo, target->native());
       case InlinableNative::IntrinsicIsTypedArray:
         return inlineIsTypedArray(callInfo);
       case InlinableNative::IntrinsicIsPossiblyWrappedTypedArray:
@@ -431,7 +437,7 @@ IonBuilder::inlineMathFunction(CallInfo& callInfo, MMathFunction::Function funct
     if (!IsNumberType(callInfo.getArg(0)->type()))
         return InliningStatus_NotInlined;
 
-    const MathCache* cache = compartment->runtime()->maybeGetMathCache();
+    const MathCache* cache = GetJSContextFromMainThread()->caches.maybeGetMathCache();
 
     callInfo.fun()->setImplicitlyUsedUnchecked();
     callInfo.thisArg()->setImplicitlyUsedUnchecked();
@@ -526,6 +532,8 @@ IonBuilder::inlineArray(CallInfo& callInfo)
     if (callInfo.argc() >= 2) {
         JSValueType unboxedType = GetBoxedOrUnboxedType(templateObject);
         for (uint32_t i = 0; i < initLength; i++) {
+            if (!alloc().ensureBallast())
+                return InliningStatus_Error;
             MDefinition* value = callInfo.getArg(i);
             if (!initializeArrayElement(array, i, value, unboxedType, /* addResumePoint = */ false))
                 return InliningStatus_Error;
@@ -1484,11 +1492,14 @@ IonBuilder::inlineConstantStringSplitString(CallInfo& callInfo)
     // jsop_initelem_array is doing because we do not expect to bailout
     // because the memory is supposed to be allocated by now.
     for (uint32_t i = 0; i < initLength; i++) {
-       MConstant* value = arrayValues[i];
-       current->add(value);
+        if (!alloc().ensureBallast())
+            return InliningStatus_Error;
 
-       if (!initializeArrayElement(array, i, value, unboxedType, /* addResumePoint = */ false))
-           return InliningStatus_Error;
+        MConstant* value = arrayValues[i];
+        current->add(value);
+
+        if (!initializeArrayElement(array, i, value, unboxedType, /* addResumePoint = */ false))
+            return InliningStatus_Error;
     }
 
     MInstruction* setLength = setInitializedLength(array, unboxedType, initLength);
@@ -2270,6 +2281,67 @@ IonBuilder::inlinePossiblyWrappedArrayBufferByteLength(CallInfo& callInfo)
     current->push(ins);
 
     callInfo.setImplicitlyUsedUnchecked();
+    return InliningStatus_Inlined;
+}
+
+IonBuilder::InliningStatus
+IonBuilder::inlineTypedArray(CallInfo& callInfo, Native native)
+{
+    if (!callInfo.constructing()) {
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
+        return InliningStatus_NotInlined;
+    }
+
+    if (getInlineReturnType() != MIRType::Object)
+        return InliningStatus_NotInlined;
+    if (callInfo.argc() != 1)
+        return InliningStatus_NotInlined;
+
+    MDefinition* arg = callInfo.getArg(0);
+
+    if (arg->type() != MIRType::Int32)
+        return InliningStatus_NotInlined;
+
+    if (!arg->maybeConstantValue())
+        return InliningStatus_NotInlined;
+
+    JSObject* templateObject = inspector->getTemplateObjectForNative(pc, native);
+
+    if (!templateObject) {
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeNoTemplateObj);
+        return InliningStatus_NotInlined;
+    }
+
+    MOZ_ASSERT(templateObject->is<TypedArrayObject>());
+    TypedArrayObject* obj = &templateObject->as<TypedArrayObject>();
+
+    // Do not optimize when we see a template object with a singleton type,
+    // since it hits at most once.
+    if (templateObject->isSingleton())
+        return InliningStatus_NotInlined;
+
+    // Negative lengths must throw a RangeError.  (We don't track that this
+    // might have previously thrown, when determining whether to inline, so we
+    // have to deal with this error case when inlining.)
+    int32_t providedLen = arg->maybeConstantValue()->toInt32();
+    if (providedLen < 0)
+        return InliningStatus_NotInlined;
+
+    uint32_t len = AssertedCast<uint32_t>(providedLen);
+
+    if (obj->length() != len)
+        return InliningStatus_NotInlined;
+
+    callInfo.setImplicitlyUsedUnchecked();
+
+    MInstruction* ins = MNewTypedArray::New(alloc(), constraints(), obj,
+                                            obj->group()->initialHeap(constraints()));
+
+    current->add(ins);
+    current->push(ins);
+    if (!resumeAfter(ins))
+        return InliningStatus_Error;
+
     return InliningStatus_Inlined;
 }
 
@@ -3428,10 +3500,13 @@ IonBuilder::inlineConstructSimdObject(CallInfo& callInfo, SimdTypeDescr* descr)
     MIRType laneType = SimdTypeToLaneType(simdType);
     unsigned lanes = SimdTypeToLength(simdType);
     if (lanes != 4 || callInfo.argc() < lanes) {
-        if (laneType == MIRType::Int32) {
+        if (laneType == MIRType::Int32 || laneType == MIRType::Boolean) {
+            // The default lane for a boolean vector is |false|, but
+            // |MSimdSplat|, |MSimdValueX4|, and |MSimdInsertElement| all
+            // require an Int32 argument with the value 0 or 01 to initialize a
+            // boolean lane. See also convertToBooleanSimdLane() which is
+            // idempotent with a 0 argument after constant folding.
             defVal = constant(Int32Value(0));
-        } else if (laneType == MIRType::Boolean) {
-            defVal = constant(BooleanValue(false));
         } else if (laneType == MIRType::Double) {
             defVal = constant(DoubleNaNValue());
         } else {

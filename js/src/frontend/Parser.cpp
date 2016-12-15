@@ -8359,8 +8359,10 @@ Parser<ParseHandler>::generatorComprehensionLambda(unsigned begin)
      * kid and could be removed from pc->sc.
      */
     genFunbox->anyCxFlags = outerpc->sc->anyCxFlags;
-    if (outerpc->sc->isFunctionBox())
-        genFunbox->funCxFlags = outerpc->sc->asFunctionBox()->funCxFlags;
+    if (outerpc->sc->isFunctionBox()) {
+        genFunbox->funCxFlags =
+            outerpc->sc->asFunctionBox()->flagsForNestedGeneratorComprehensionLambda();
+    }
 
     handler.setBlockId(genfn, genpc.bodyid);
 
@@ -9355,7 +9357,12 @@ Parser<ParseHandler>::objectLiteral(YieldHandling yieldHandling, PossibleError* 
                 return null();
 
             tokenStream.consumeKnownToken(TOK_ASSIGN);
+            bool saved = pc->inDeclDestructuring;
+            // Setting `inDeclDestructuring` to false allows name use to be noted
+            // in `identifierName` See Bug: 1255167.
+            pc->inDeclDestructuring = false;
             Node rhs = assignExpr(InAllowed, yieldHandling, TripledotProhibited);
+            pc->inDeclDestructuring = saved;
             if (!rhs)
                 return null();
 

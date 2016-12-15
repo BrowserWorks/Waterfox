@@ -10,6 +10,7 @@ import mozfile
 
 from marionette import MarionetteTestCase
 from marionette_driver import Wait
+from marionette_driver.errors import NoSuchWindowException
 
 from firefox_puppeteer.api.prefs import Preferences
 from firefox_puppeteer.api.software_update import SoftwareUpdate
@@ -167,7 +168,11 @@ class UpdateTestCase(FirefoxTestCase):
 
         about_window = self.browser.open_about_window()
         try:
+            # Bug 604364 - We do not support watershed releases yet.
             update_available = self.check_for_updates(about_window)
+            self.assertFalse(update_available,
+                             'Additional update found due to watershed release {}'.format(
+                                 update['build_post']['version']))
 
             # The upgraded version should be identical with the version given by
             # the update and we shouldn't have run a downgrade
@@ -197,17 +202,6 @@ class UpdateTestCase(FirefoxTestCase):
             # Check that no application-wide add-ons have been disabled
             self.assertEqual(update['build_post']['disabled_addons'],
                              update['build_pre']['disabled_addons'])
-
-            # Bug 604364 - We do not support watershed releases yet.
-            if update_available:
-                self.download_update(about_window, wait_for_finish=False)
-                self.assertNotEqual(self.software_update.active_update.type,
-                                    update['patch']['type'],
-                                    'No further update of the same type gets offered: '
-                                    '{0} != {1}'.format(
-                                        self.software_update.active_update.type,
-                                        update['patch']['type']
-                                    ))
 
             update['success'] = True
 
@@ -335,8 +329,10 @@ class UpdateTestCase(FirefoxTestCase):
         self.restart()
 
     def download_and_apply_forced_update(self):
-        # The update wizard dialog opens automatically after the restart
-        dialog = self.windows.switch_to(lambda win: type(win) is UpdateWizardDialog)
+        # The update wizard dialog opens automatically after the restart but with a short delay
+        dialog = Wait(self.marionette, ignored_exceptions=[NoSuchWindowException]).until(
+            lambda _: self.windows.switch_to(lambda win: type(win) is UpdateWizardDialog)
+        )
 
         # In case of a broken complete update the about window has to be used
         if self.updates[self.current_update_index]['patch']['is_complete']:

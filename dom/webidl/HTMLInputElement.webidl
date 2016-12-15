@@ -86,9 +86,9 @@ interface HTMLInputElement : HTMLElement {
            attribute DOMString type;
   [Pure, SetterThrows]
            attribute DOMString defaultValue;
-  [Pure, TreatNullAs=EmptyString, SetterThrows]
+  [Pure, TreatNullAs=EmptyString, Throws]
            attribute DOMString value;
-  [Throws, Pref="dom.experimental_forms"]
+  [Throws, Func="HTMLInputElement::ValueAsDateEnabled"]
            attribute Date? valueAsDate;
   [Pure, SetterThrows]
            attribute unrestricted double valueAsNumber;
@@ -160,6 +160,10 @@ partial interface HTMLInputElement {
   [ChromeOnly, Throws]
   void mozSetDirectory(DOMString directoryPath);
 
+  // This method is meant to use for testing only.
+  [ChromeOnly]
+  void mozSetDndFilesAndDirectories(sequence<(File or Directory)> list);
+
   // Number controls (<input type=number>) have an anonymous text control
   // (<input type=text>) in the anonymous shadow tree that they contain. On
   // such an anonymous text control this property provides access to the
@@ -195,8 +199,8 @@ partial interface HTMLInputElement {
 };
 
 partial interface HTMLInputElement {
-  [Pref="dom.input.dirpicker", BinaryName="DirectoryAttr", SetterThrows]
-  attribute boolean directory;
+  [Pref="dom.input.dirpicker", SetterThrows]
+  attribute boolean allowdirs;
 
   [Pref="dom.input.dirpicker"]
   readonly attribute boolean isFilesAndDirectoriesSupported;
@@ -209,9 +213,6 @@ partial interface HTMLInputElement {
 
   [Throws, Pref="dom.input.dirpicker"]
   void chooseDirectory();
-
-  [Pref="dom.webkitBlink.dirPicker.enabled", BinaryName="WebkitDirectoryAttr", SetterThrows]
-  attribute boolean webkitdirectory;
 };
 
 [NoInterfaceObject]
@@ -222,3 +223,12 @@ interface MozPhonetic {
 
 HTMLInputElement implements MozImageLoadingContent;
 HTMLInputElement implements MozPhonetic;
+
+// Webkit/Blink
+partial interface HTMLInputElement {
+  [Pref="dom.webkitBlink.filesystem.enabled", Frozen, Cached, Pure]
+  readonly attribute sequence<Entry> webkitEntries;
+
+  [Pref="dom.webkitBlink.dirPicker.enabled", BinaryName="WebkitDirectoryAttr", SetterThrows]
+          attribute boolean webkitdirectory;
+};

@@ -8,15 +8,13 @@
 #define SEEK_TASK_H
 
 #include "mozilla/MozPromise.h"
-#include "MediaCallbackID.h"
-#include "SeekJob.h"
+#include "SeekTarget.h"
 
 namespace mozilla {
 
 class AbstractThread;
 class MediaData;
 class MediaDecoderReaderWrapper;
-class MediaInfo;
 
 namespace media {
 class TimeUnit;
@@ -28,16 +26,12 @@ struct SeekTaskResolveValue
   RefPtr<MediaData> mSeekedVideoData;
   bool mIsAudioQueueFinished;
   bool mIsVideoQueueFinished;
-  bool mNeedToStopPrerollingAudio;
-  bool mNeedToStopPrerollingVideo;
 };
 
 struct SeekTaskRejectValue
 {
   bool mIsAudioQueueFinished;
   bool mIsVideoQueueFinished;
-  bool mNeedToStopPrerollingAudio;
-  bool mNeedToStopPrerollingVideo;
 };
 
 class SeekTask {
@@ -56,15 +50,13 @@ public:
 
   virtual bool NeedToResetMDSM() const = 0;
 
-  SeekJob& GetSeekJob();
-
-  bool Exists() const;
+  const SeekTarget& GetSeekTarget();
 
 protected:
   SeekTask(const void* aDecoderID,
            AbstractThread* aThread,
            MediaDecoderReaderWrapper* aReader,
-           SeekJob&& aSeekJob);
+           const SeekTarget& aTarget);
 
   virtual ~SeekTask();
 
@@ -86,7 +78,7 @@ protected:
   /*
    * Internal state.
    */
-  SeekJob mSeekJob;
+  SeekTarget mTarget;
   MozPromiseHolder<SeekTaskPromise> mSeekTaskPromise;
   bool mIsDiscarded;
 
@@ -97,8 +89,6 @@ protected:
   RefPtr<MediaData> mSeekedVideoData;
   bool mIsAudioQueueFinished;
   bool mIsVideoQueueFinished;
-  bool mNeedToStopPrerollingAudio;
-  bool mNeedToStopPrerollingVideo;
 };
 
 } // namespace mozilla

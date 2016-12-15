@@ -16,7 +16,6 @@
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/LayersTypes.h"  // for LayersBackend, TextureDumpMode
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
-#include "mozilla/layers/TextureClientRecycleAllocator.h" // for TextureClientRecycleAllocator
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 
 namespace mozilla {
@@ -28,6 +27,7 @@ class ImageContainer;
 class CompositableForwarder;
 class CompositableChild;
 class PCompositableChild;
+class TextureClientRecycleAllocator;
 
 /**
  * Handle RemoveTextureFromCompositableAsync() transaction.
@@ -226,15 +226,11 @@ public:
 
   void InitIPDLActor(PCompositableChild* aActor, uint64_t aAsyncID = 0);
 
-  static void TransactionCompleteted(PCompositableChild* aActor, uint64_t aTransactionId);
-
-  static void HoldUntilComplete(PCompositableChild* aActor, AsyncTransactionTracker* aTracker);
-
-  static uint64_t GetTrackersHolderId(PCompositableChild* aActor);
-
   TextureFlags GetTextureFlags() const { return mTextureFlags; }
 
   TextureClientRecycleAllocator* GetTextureClientRecycler();
+
+  bool HasTextureClientRecycler() { return !!mTextureClientRecycler; }
 
   static void DumpTextureClient(std::stringstream& aStream,
                                 TextureClient* aTexture,

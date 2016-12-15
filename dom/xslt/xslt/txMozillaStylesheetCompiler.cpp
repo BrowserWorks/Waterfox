@@ -34,7 +34,6 @@
 #include "nsAttrName.h"
 #include "nsIScriptError.h"
 #include "nsIURL.h"
-#include "nsCORSListenerProxy.h"
 #include "nsError.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/Element.h"
@@ -356,9 +355,7 @@ txStylesheetSink::GetInterface(const nsIID& aIID, void** aResult)
         rv = wwatcher->GetNewAuthPrompter(nullptr, getter_AddRefs(prompt));
         NS_ENSURE_SUCCESS(rv, rv);
 
-        nsIAuthPrompt* rawPtr = nullptr;
-        prompt.swap(rawPtr);
-        *aResult = rawPtr;
+        prompt.forget(aResult);
 
         return NS_OK;
     }

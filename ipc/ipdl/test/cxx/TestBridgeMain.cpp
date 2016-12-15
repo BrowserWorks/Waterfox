@@ -4,6 +4,8 @@
 #include "IPDLUnitTests.h"      // fail etc.
 #include "IPDLUnitTestSubprocess.h"
 
+#include "nsAutoPtr.h"
+
 using namespace std;
 
 namespace mozilla {
@@ -68,8 +70,6 @@ TestBridgeMainSubParent::ActorDestroy(ActorDestroyReason why)
     // longer so other things can be cleaned up.
     MessageLoop::current()->PostTask(
         do_AddRef(new DeleteTask<TestBridgeMainSubParent>(this)));
-    XRE_GetIOMessageLoop()->PostTask(
-        do_AddRef(new DeleteTask<Transport>(mTransport)));
 }
 
 //-----------------------------------------------------------------------------
@@ -221,8 +221,6 @@ TestBridgeMainSubChild::ActorDestroy(ActorDestroyReason why)
     // longer so other things can be cleaned up.
     MessageLoop::current()->PostTask(
         do_AddRef(new DeleteTask<TestBridgeMainSubChild>(this)));
-    XRE_GetIOMessageLoop()->PostTask(
-        do_AddRef(new DeleteTask<Transport>(mTransport)));
 }
 
 } // namespace mozilla

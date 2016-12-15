@@ -8,8 +8,9 @@
 
 var { Cc, Ci, Cu, Cr } = require("chrome");
 const {getRect, getElementFromPoint, getAdjustedQuads} = require("devtools/shared/layout/utils");
-const promise = require("promise");
+const defer = require("devtools/shared/defer");
 const {Task} = require("devtools/shared/task");
+const {isContentStylesheet} = require("devtools/shared/inspector/css-logic");
 var DOMUtils = Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);
 var loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
             .getService(Ci.mozIJSSubScriptLoader);
@@ -187,7 +188,7 @@ var TestActor = exports.TestActor = protocol.ActorClass({
    * @param {String} actorID The highlighter actor ID
    */
   changeHighlightedNodeWaitForUpdate: protocol.method(function (name, value, actorID) {
-    let deferred = promise.defer();
+    let deferred = defer();
 
     let highlighter = this.conn.getActor(actorID);
     let {_highlighter: h} = highlighter;
@@ -257,7 +258,7 @@ var TestActor = exports.TestActor = protocol.ActorClass({
    */
   changeZoomLevel: protocol.method(function (level, actorID) {
     dumpn("Zooming page to " + level);
-    let deferred = promise.defer();
+    let deferred = defer();
 
     if (actorID) {
       let actor = this.conn.getActor(actorID);
@@ -367,6 +368,20 @@ var TestActor = exports.TestActor = protocol.ActorClass({
   }),
 
   /**
+   * Scroll an element into view.
+   * @param {String} selector The selector for the node to scroll into view.
+   */
+  scrollIntoView: protocol.method(function (selector) {
+    let node = this._querySelector(selector);
+    node.scrollIntoView();
+  }, {
+    request: {
+      args: Arg(0, "string")
+    },
+    response: {}
+  }),
+
+  /**
    * Check that an element currently has a pseudo-class lock.
    * @param {String} selector The node selector to get the pseudo-class from
    * @param {String} pseudo The pseudoclass to check for
@@ -386,7 +401,7 @@ var TestActor = exports.TestActor = protocol.ActorClass({
   }),
 
   loadAndWaitForCustomEvent: protocol.method(function (url) {
-    let deferred = promise.defer();
+    let deferred = defer();
     let self = this;
     // Wait for DOMWindowCreated first, as listening on the current outerwindow
     // doesn't allow receiving test-page-processing-done.
@@ -431,7 +446,18 @@ var TestActor = exports.TestActor = protocol.ActorClass({
    */
   getBoundingClientRect: protocol.method(function (selector) {
     let node = this._querySelector(selector);
-    return node.getBoundingClientRect();
+    let rect = node.getBoundingClientRect();
+    // DOMRect can't be stringified directly, so return a simple object instead.
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      left: rect.left
+    };
   }, {
     request: {
       selector: Arg(0, "string"),
@@ -548,7 +574,7 @@ var TestActor = exports.TestActor = protocol.ActorClass({
   reloadFrame: protocol.method(function (selector) {
     let node = this._querySelector(selector);
 
-    let deferred = promise.defer();
+    let deferred = defer();
 
     let onLoad = function () {
       node.removeEventListener("load", onLoad);
@@ -599,7 +625,7 @@ var TestActor = exports.TestActor = protocol.ActorClass({
       return {};
     }
 
-    let deferred = promise.defer();
+    let deferred = defer();
     this.content.addEventListener("scroll", function onScroll(event) {
       this.removeEventListener("scroll", onScroll);
 
@@ -625,7 +651,7 @@ var TestActor = exports.TestActor = protocol.ActorClass({
    * Forces the reflow and waits for the next repaint.
    */
   reflow: protocol.method(function () {
-    let deferred = promise.defer();
+    let deferred = defer();
     this.content.document.documentElement.offsetWidth;
     this.content.requestAnimationFrame(deferred.resolve);
 
@@ -676,6 +702,39 @@ var TestActor = exports.TestActor = protocol.ActorClass({
     }
 
     return info;
+  }, {
+    request: {
+      selector: Arg(0, "string")
+    },
+    response: {
+      value: RetVal("json")
+    }
+  }),
+
+  /**
+   * Get information about the stylesheets which have CSS rules that apply to a given DOM
+   * element, identified by a selector.
+   * @param {String} selector The CSS selector to get the node (can be an array
+   * of selectors to get elements in an iframe).
+   * @return {Array} A list of stylesheet objects, each having the following properties:
+   * - {String} href.
+   * - {Boolean} isContentSheet.
+   */
+  getStyleSheetsInfoForNode: protocol.method(function (selector) {
+    let node = this._querySelector(selector);
+    let domRules = DOMUtils.getCSSStyleRules(node);
+
+    let sheets = [];
+
+    for (let i = 0, n = domRules.Count(); i < n; i++) {
+      let sheet = domRules.GetElementAt(i).parentStyleSheet;
+      sheets.push({
+        href: sheet.href,
+        isContentSheet: isContentStylesheet(sheet)
+      });
+    }
+
+    return sheets;
   }, {
     request: {
       selector: Arg(0, "string")

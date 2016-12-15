@@ -18,7 +18,6 @@
 #include "npapi.h"
 #include "npruntime.h"
 #include "npfunctions.h"
-#include "nsAutoPtr.h"
 #include "nsString.h"
 #include "nsTArray.h"
 #include "mozilla/Logging.h"
@@ -103,7 +102,7 @@ struct NPRemoteWindow
 typedef HWND NativeWindowHandle;
 #elif defined(MOZ_X11)
 typedef XID NativeWindowHandle;
-#elif defined(XP_DARWIN) || defined(ANDROID) || defined(MOZ_WIDGET_QT)
+#elif defined(XP_DARWIN) || defined(ANDROID)
 typedef intptr_t NativeWindowHandle; // never actually used, will always be 0
 #else
 #error Need NativeWindowHandle for this platform

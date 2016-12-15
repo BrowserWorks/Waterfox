@@ -877,12 +877,9 @@ js::num_valueOf(JSContext* cx, unsigned argc, Value* vp)
 static const unsigned MAX_PRECISION = 100;
 
 static bool
-ComputePrecisionInRange(JSContext* cx, int minPrecision, int maxPrecision, HandleValue v,
+ComputePrecisionInRange(JSContext* cx, int minPrecision, int maxPrecision, double prec,
                         int* precision)
 {
-    double prec;
-    if (!ToInteger(cx, v, &prec))
-        return false;
     if (minPrecision <= prec && prec <= maxPrecision) {
         *precision = int(prec);
         return true;
@@ -914,19 +911,45 @@ DToStrResult(JSContext* cx, double d, JSDToStrMode mode, int precision, const Ca
  * In the following three implementations, we allow a larger range of precision
  * than ECMA requires; this is permitted by ECMA-262.
  */
+// ES 2017 draft rev f8a9be8ea4bd97237d176907a1e3080dce20c68f 20.1.3.3.
 MOZ_ALWAYS_INLINE bool
 num_toFixed_impl(JSContext* cx, const CallArgs& args)
 {
+    // Step 1.
     MOZ_ASSERT(IsNumber(args.thisv()));
+    double d = Extract(args.thisv());
 
+    // Steps 2-3.
     int precision;
     if (args.length() == 0) {
         precision = 0;
     } else {
-        if (!ComputePrecisionInRange(cx, -20, MAX_PRECISION, args[0], &precision))
+        double prec = 0;
+        if (!ToInteger(cx, args[0], &prec))
+            return false;
+
+        if (!ComputePrecisionInRange(cx, -20, MAX_PRECISION, prec, &precision))
             return false;
     }
 
+    // Step 4.
+    if (mozilla::IsNaN(d)) {
+        args.rval().setString(cx->names().NaN);
+        return true;
+    }
+
+    // Steps 5-7, 9 (optimized path for Infinity).
+    if (mozilla::IsInfinite(d)) {
+        if(d > 0) {
+            args.rval().setString(cx->names().Infinity);
+            return true;
+        }
+
+        args.rval().setString(cx->names().NegativeInfinity);
+        return true;
+    }
+
+    // Steps 5-9.
     return DToStrResult(cx, Extract(args.thisv()), DTOSTR_FIXED, precision, args);
 }
 
@@ -937,23 +960,51 @@ num_toFixed(JSContext* cx, unsigned argc, Value* vp)
     return CallNonGenericMethod<IsNumber, num_toFixed_impl>(cx, args);
 }
 
+// ES 2017 draft rev f8a9be8ea4bd97237d176907a1e3080dce20c68f 20.1.3.2.
 MOZ_ALWAYS_INLINE bool
 num_toExponential_impl(JSContext* cx, const CallArgs& args)
 {
+    // Step 1.
     MOZ_ASSERT(IsNumber(args.thisv()));
+    double d = Extract(args.thisv());
 
-    JSDToStrMode mode;
-    int precision;
-    if (!args.hasDefined(0)) {
-        mode = DTOSTR_STANDARD_EXPONENTIAL;
-        precision = 0;
-    } else {
+    // Step 2.
+    double prec = 0;
+    JSDToStrMode mode = DTOSTR_STANDARD_EXPONENTIAL;
+    if (args.hasDefined(0)) {
         mode = DTOSTR_EXPONENTIAL;
-        if (!ComputePrecisionInRange(cx, 0, MAX_PRECISION, args[0], &precision))
+        if (!ToInteger(cx, args[0], &prec))
             return false;
     }
 
-    return DToStrResult(cx, Extract(args.thisv()), mode, precision + 1, args);
+    // Step 3.
+    MOZ_ASSERT_IF(!args.hasDefined(0), prec == 0);
+
+    // Step 4.
+    if (mozilla::IsNaN(d)) {
+        args.rval().setString(cx->names().NaN);
+        return true;
+    }
+
+    // Steps 5-7.
+    if (mozilla::IsInfinite(d)) {
+        if (d > 0) {
+            args.rval().setString(cx->names().Infinity);
+            return true;
+        }
+
+        args.rval().setString(cx->names().NegativeInfinity);
+        return true;
+    }
+
+    // Steps 5-6, 8-15.
+    int precision = 0;
+    if (mode == DTOSTR_EXPONENTIAL) {
+        if (!ComputePrecisionInRange(cx, 0, MAX_PRECISION, prec, &precision))
+            return false;
+    }
+
+    return DToStrResult(cx, d, mode, precision + 1, args);
 }
 
 static bool
@@ -963,13 +1014,15 @@ num_toExponential(JSContext* cx, unsigned argc, Value* vp)
     return CallNonGenericMethod<IsNumber, num_toExponential_impl>(cx, args);
 }
 
+// ES 2017 draft rev f8a9be8ea4bd97237d176907a1e3080dce20c68f 20.1.3.5.
 MOZ_ALWAYS_INLINE bool
 num_toPrecision_impl(JSContext* cx, const CallArgs& args)
 {
+    // Step 1.
     MOZ_ASSERT(IsNumber(args.thisv()));
-
     double d = Extract(args.thisv());
 
+    // Step 2.
     if (!args.hasDefined(0)) {
         JSString* str = NumberToStringWithBase<CanGC>(cx, d, 10);
         if (!str) {
@@ -980,8 +1033,31 @@ num_toPrecision_impl(JSContext* cx, const CallArgs& args)
         return true;
     }
 
-    int precision;
-    if (!ComputePrecisionInRange(cx, 1, MAX_PRECISION, args[0], &precision))
+    // Step 3.
+    double prec = 0;
+    if (!ToInteger(cx, args[0], &prec))
+        return false;
+
+    // Step 4.
+    if (mozilla::IsNaN(d)) {
+        args.rval().setString(cx->names().NaN);
+        return true;
+    }
+
+    // Steps 5-7.
+    if (mozilla::IsInfinite(d)) {
+        if (d > 0) {
+            args.rval().setString(cx->names().Infinity);
+            return true;
+        }
+
+        args.rval().setString(cx->names().NegativeInfinity);
+        return true;
+    }
+
+    // Steps 5-6, 8-14.
+    int precision = 0;
+    if (!ComputePrecisionInRange(cx, 1, MAX_PRECISION, prec, &precision))
         return false;
 
     return DToStrResult(cx, d, DTOSTR_PRECISION, precision, args);

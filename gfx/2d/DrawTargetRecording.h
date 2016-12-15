@@ -19,16 +19,6 @@ public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DrawTargetRecording, override)
   DrawTargetRecording(DrawEventRecorder *aRecorder, DrawTarget *aDT, bool aHasData = false);
 
-  /**
-   * Used for creating a DrawTargetRecording for a CreateSimilarDrawTarget call.
-   *
-   * @param aDT DrawTargetRecording on which CreateSimilarDrawTarget  was called
-   * @param aSize size for the similar DrawTarget
-   * @param aFormat format for the similar DrawTarget
-   */
-  DrawTargetRecording(const DrawTargetRecording *aDT, const IntSize &aSize,
-                      SurfaceFormat aFormat);
-
   ~DrawTargetRecording();
 
   virtual DrawTargetType GetType() const override { return mFinalDT->GetType(); }
@@ -36,6 +26,8 @@ public:
   virtual bool IsRecording() const override { return true; }
 
   virtual already_AddRefed<SourceSurface> Snapshot() override;
+
+  virtual void DetachAllSnapshots() override;
 
   virtual IntSize GetSize() override { return mFinalDT->GetSize(); }
 
@@ -320,6 +312,17 @@ public:
   }
 
 private:
+  /**
+   * Used for creating a DrawTargetRecording for a CreateSimilarDrawTarget call.
+   * We have to call CreateSimilarDrawTarget on mFinalDT up front and pass it in
+   * as it can fail.
+   *
+   * @param aDT DrawTargetRecording on which CreateSimilarDrawTarget was called
+   * @param aSimilarDT Similar DrawTarget created from aDT.mFinalDT.
+   */
+  DrawTargetRecording(const DrawTargetRecording *aDT,
+                      DrawTarget *aSimilarDT);
+
   Path *GetPathForPathRecording(const Path *aPath) const;
   already_AddRefed<PathRecording> EnsurePathStored(const Path *aPath);
   void EnsurePatternDependenciesStored(const Pattern &aPattern);

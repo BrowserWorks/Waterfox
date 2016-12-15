@@ -17,6 +17,7 @@
 #include "nsNavHistory.h"
 #include "mozilla/Likely.h"
 #include "nsVariant.h"
+#include "mozilla/HashFunctions.h"
 
 // Maximum number of chars to search through.
 // MatchAutoCompleteFunction won't look for matches over this threshold.
@@ -194,13 +195,6 @@ namespace places {
 ////////////////////////////////////////////////////////////////////////////////
 //// AutoComplete Matching Function
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// MatchAutoCompleteFunction
-
-  MatchAutoCompleteFunction::~MatchAutoCompleteFunction()
-  {
-  }
-
   /* static */
   nsresult
   MatchAutoCompleteFunction::create(mozIStorageConnection *aDBConn)
@@ -343,9 +337,6 @@ namespace places {
     mozIStorageFunction
   )
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// mozIStorageFunction
-
   NS_IMETHODIMP
   MatchAutoCompleteFunction::OnFunctionCall(mozIStorageValueArray *aArguments,
                                             nsIVariant **_result)
@@ -452,13 +443,6 @@ namespace places {
 ////////////////////////////////////////////////////////////////////////////////
 //// Frecency Calculation Function
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// CalculateFrecencyFunction
-
-  CalculateFrecencyFunction::~CalculateFrecencyFunction()
-  {
-  }
-
   /* static */
   nsresult
   CalculateFrecencyFunction::create(mozIStorageConnection *aDBConn)
@@ -479,9 +463,6 @@ namespace places {
     mozIStorageFunction
   )
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// mozIStorageFunction
-
   NS_IMETHODIMP
   CalculateFrecencyFunction::OnFunctionCall(mozIStorageValueArray *aArguments,
                                             nsIVariant **_result)
@@ -490,16 +471,22 @@ namespace places {
     uint32_t numEntries;
     nsresult rv = aArguments->GetNumEntries(&numEntries);
     NS_ENSURE_SUCCESS(rv, rv);
-    NS_ASSERTION(numEntries > 0, "unexpected number of arguments");
+    MOZ_ASSERT(numEntries == 1, "unexpected number of arguments");
 
     int64_t pageId = aArguments->AsInt64(0);
-    int32_t typed = numEntries > 1 ? aArguments->AsInt32(1) : 0;
-    int32_t fullVisitCount = numEntries > 2 ? aArguments->AsInt32(2) : 0;
-    int64_t bookmarkId = numEntries > 3 ? aArguments->AsInt64(3) : 0;
+    MOZ_ASSERT(pageId > 0, "Should always pass a valid page id");
+    if (pageId <= 0) {
+      NS_ADDREF(*_result = new IntegerVariant(0));
+      return NS_OK;
+    }
+
+    int32_t typed = 0;
     int32_t visitCount = 0;
-    int32_t hidden = 0;
+    bool hasBookmark = false;
     int32_t isQuery = 0;
     float pointsForSampledVisits = 0.0;
+    int32_t numSampledVisits = 0;
+    int32_t bonus = 0;
 
     // This is a const version of the history object for thread-safety.
     const nsNavHistory* history = nsNavHistory::GetConstHistoryService();
@@ -507,14 +494,12 @@ namespace places {
     RefPtr<Database> DB = Database::GetDatabase();
     NS_ENSURE_STATE(DB);
 
-    if (pageId > 0) {
-      // The page is already in the database, and we can fetch current
-      // params from the database.
+
+    // Fetch the page stats from the database.
+    {
       RefPtr<mozIStorageStatement> getPageInfo = DB->GetStatement(
-        "SELECT typed, hidden, visit_count, "
-          "(SELECT count(*) FROM moz_historyvisits WHERE place_id = :page_id), "
-          "EXISTS (SELECT 1 FROM moz_bookmarks WHERE fk = :page_id), "
-          "(url > 'place:' AND url < 'place;') "
+        "SELECT typed, visit_count, foreign_count, "
+               "(substr(url, 0, 7) = 'place:') "
         "FROM moz_places "
         "WHERE id = :page_id "
       );
@@ -524,29 +509,26 @@ namespace places {
       rv = getPageInfo->BindInt64ByName(NS_LITERAL_CSTRING("page_id"), pageId);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      bool hasResult;
+      bool hasResult = false;
       rv = getPageInfo->ExecuteStep(&hasResult);
-      NS_ENSURE_SUCCESS(rv, rv);
-      NS_ENSURE_TRUE(hasResult, NS_ERROR_UNEXPECTED);
+      NS_ENSURE_TRUE(NS_SUCCEEDED(rv) && hasResult, NS_ERROR_UNEXPECTED);
+
       rv = getPageInfo->GetInt32(0, &typed);
       NS_ENSURE_SUCCESS(rv, rv);
-      rv = getPageInfo->GetInt32(1, &hidden);
+      rv = getPageInfo->GetInt32(1, &visitCount);
       NS_ENSURE_SUCCESS(rv, rv);
-      rv = getPageInfo->GetInt32(2, &visitCount);
+      int32_t foreignCount = 0;
+      rv = getPageInfo->GetInt32(2, &foreignCount);
       NS_ENSURE_SUCCESS(rv, rv);
-      rv = getPageInfo->GetInt32(3, &fullVisitCount);
+      hasBookmark = foreignCount > 0;
+      rv = getPageInfo->GetInt32(3, &isQuery);
       NS_ENSURE_SUCCESS(rv, rv);
-      rv = getPageInfo->GetInt64(4, &bookmarkId);
-      NS_ENSURE_SUCCESS(rv, rv);
-      rv = getPageInfo->GetInt32(5, &isQuery);
-      NS_ENSURE_SUCCESS(rv, rv);
+    }
 
-      // NOTE: This is not limited to visits with "visit_type NOT IN (0,4,7,8)"
-      // because otherwise it would not return any visit for those transitions
-      // causing an incorrect frecency, see CalculateFrecencyInternal().
+    if (visitCount > 0) {
+      // Get a sample of the last visits to the page, to calculate its weight.
       // In case of a temporary or permanent redirect, calculate the frecency
       // as if the original page was visited.
-      // Get a sample of the last visits to the page, to calculate its weight.
       nsCOMPtr<mozIStorageStatement> getVisits = DB->GetStatement(
         NS_LITERAL_CSTRING(
           "/* do not warn (bug 659740 - SQLite may ignore index if few visits exist) */"
@@ -565,12 +547,11 @@ namespace places {
       );
       NS_ENSURE_STATE(getVisits);
       mozStorageStatementScoper visitsScoper(getVisits);
-
       rv = getVisits->BindInt64ByName(NS_LITERAL_CSTRING("page_id"), pageId);
       NS_ENSURE_SUCCESS(rv, rv);
 
       // Fetch only a limited number of recent visits.
-      int32_t numSampledVisits = 0;
+      bool hasResult = false;
       for (int32_t maxVisits = history->GetNumVisitsForFrecency();
            numSampledVisits < maxVisits &&
            NS_SUCCEEDED(getVisits->ExecuteStep(&hasResult)) && hasResult;
@@ -578,10 +559,10 @@ namespace places {
         int32_t visitType;
         rv = getVisits->GetInt32(1, &visitType);
         NS_ENSURE_SUCCESS(rv, rv);
-        int32_t bonus = history->GetFrecencyTransitionBonus(visitType, true);
+        bonus = history->GetFrecencyTransitionBonus(visitType, true);
 
-        // Always add the bookmark visit bonus.
-        if (bookmarkId) {
+        // Add the bookmark visit bonus.
+        if (hasBookmark) {
           bonus += history->GetFrecencyTransitionBonus(nsINavHistoryService::TRANSITION_BOOKMARK, true);
         }
 
@@ -592,69 +573,55 @@ namespace places {
           pointsForSampledVisits += (float)(weight * (bonus / 100.0));
         }
       }
-
-      // If we found some visits for this page, use the calculated weight.
-      if (numSampledVisits) {
-        // fix for bug #412219
-        if (!pointsForSampledVisits) {
-          // For URIs with zero points in the sampled recent visits
-          // but "browsing" type visits outside the sampling range, set
-          // frecency to -visit_count, so they're still shown in autocomplete.
-          NS_ADDREF(*_result = new IntegerVariant(-visitCount));
-        }
-        else {
-          // Estimate frecency using the last few visits.
-          // Use ceilf() so that we don't round down to 0, which
-          // would cause us to completely ignore the place during autocomplete.
-          NS_ADDREF(*_result = new IntegerVariant((int32_t) ceilf(fullVisitCount * ceilf(pointsForSampledVisits) / numSampledVisits)));
-        }
-
-        return NS_OK;
-      }
     }
 
-    // This page is unknown or has no visits.  It could have just been added, so
-    // use passed in or default values.
+    // If we sampled some visits for this page, use the calculated weight.
+    if (numSampledVisits) {
+      // We were unable to calculate points, maybe cause all the visits in the
+      // sample had a zero bonus. Though, we know the page has some past valid
+      // visit, or visit_count would be zero. Thus we set the frecency to
+      // -1, so they are still shown in autocomplete.
+      if (!pointsForSampledVisits) {
+        NS_ADDREF(*_result = new IntegerVariant(-1));
+      }
+      else {
+        // Estimate frecency using the sampled visits.
+        // Use ceilf() so that we don't round down to 0, which
+        // would cause us to completely ignore the place during autocomplete.
+        NS_ADDREF(*_result = new IntegerVariant((int32_t) ceilf(visitCount * ceilf(pointsForSampledVisits) / numSampledVisits)));
+      }
+      return NS_OK;
+    }
 
-    // The code below works well for guessing the frecency on import, and we'll
-    // correct later once we have visits.
-    // TODO: What if we don't have visits and we never visit?  We could end up
-    // with a really high value that keeps coming up in ac results? Should we
-    // only do this on import?  Have to figure it out.
-    int32_t bonus = 0;
+    // Otherwise this page has no visits, it may be bookmarked.
+    if (!hasBookmark || isQuery) {
+      NS_ADDREF(*_result = new IntegerVariant(0));
+      return NS_OK;
+    }
+
+    // For unvisited bookmarks, produce a non-zero frecency, so that they show
+    // up in URL bar autocomplete.
+    visitCount = 1;
 
     // Make it so something bookmarked and typed will have a higher frecency
     // than something just typed or just bookmarked.
-    if (bookmarkId && !isQuery) {
-      bonus += history->GetFrecencyTransitionBonus(nsINavHistoryService::TRANSITION_BOOKMARK, false);;
-      // For unvisited bookmarks, produce a non-zero frecency, so that they show
-      // up in URL bar autocomplete.
-      fullVisitCount = 1;
-    }
-
+    bonus += history->GetFrecencyTransitionBonus(nsINavHistoryService::TRANSITION_BOOKMARK, false);
     if (typed) {
       bonus += history->GetFrecencyTransitionBonus(nsINavHistoryService::TRANSITION_TYPED, false);
     }
 
     // Assume "now" as our ageInDays, so use the first bucket.
-    pointsForSampledVisits = history->GetFrecencyBucketWeight(1) * (bonus / (float)100.0); 
+    pointsForSampledVisits = history->GetFrecencyBucketWeight(1) * (bonus / (float)100.0);
 
     // use ceilf() so that we don't round down to 0, which
     // would cause us to completely ignore the place during autocomplete
-    NS_ADDREF(*_result = new IntegerVariant((int32_t) ceilf(fullVisitCount * ceilf(pointsForSampledVisits))));
+    NS_ADDREF(*_result = new IntegerVariant((int32_t) ceilf(visitCount * ceilf(pointsForSampledVisits))));
 
     return NS_OK;
   }
 
 ////////////////////////////////////////////////////////////////////////////////
 //// GUID Creation Function
-
-  GenerateGUIDFunction::~GenerateGUIDFunction()
-  {
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  //// GenerateGUIDFunction
 
   /* static */
   nsresult
@@ -674,9 +641,6 @@ namespace places {
     mozIStorageFunction
   )
 
-  //////////////////////////////////////////////////////////////////////////////
-  //// mozIStorageFunction
-
   NS_IMETHODIMP
   GenerateGUIDFunction::OnFunctionCall(mozIStorageValueArray *aArguments,
                                        nsIVariant **_result)
@@ -691,13 +655,6 @@ namespace places {
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Get Unreversed Host Function
-
-  GetUnreversedHostFunction::~GetUnreversedHostFunction()
-  {
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  //// GetUnreversedHostFunction
 
   /* static */
   nsresult
@@ -716,9 +673,6 @@ namespace places {
     GetUnreversedHostFunction,
     mozIStorageFunction
   )
-
-  //////////////////////////////////////////////////////////////////////////////
-  //// mozIStorageFunction
 
   NS_IMETHODIMP
   GetUnreversedHostFunction::OnFunctionCall(mozIStorageValueArray *aArguments,
@@ -748,13 +702,6 @@ namespace places {
 ////////////////////////////////////////////////////////////////////////////////
 //// Fixup URL Function
 
-  FixupURLFunction::~FixupURLFunction()
-  {
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  //// FixupURLFunction
-
   /* static */
   nsresult
   FixupURLFunction::create(mozIStorageConnection *aDBConn)
@@ -772,9 +719,6 @@ namespace places {
     FixupURLFunction,
     mozIStorageFunction
   )
-
-  //////////////////////////////////////////////////////////////////////////////
-  //// mozIStorageFunction
 
   NS_IMETHODIMP
   FixupURLFunction::OnFunctionCall(mozIStorageValueArray *aArguments,
@@ -807,10 +751,6 @@ namespace places {
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Frecency Changed Notification Function
-
-  FrecencyNotificationFunction::~FrecencyNotificationFunction()
-  {
-  }
 
   /* static */
   nsresult
@@ -861,6 +801,130 @@ namespace places {
     RefPtr<nsVariant> result = new nsVariant();
     rv = result->SetAsInt32(newFrecency);
     NS_ENSURE_SUCCESS(rv, rv);
+    result.forget(_result);
+    return NS_OK;
+  }
+
+////////////////////////////////////////////////////////////////////////////////
+//// Store Last Inserted Id Function
+
+  /* static */
+  nsresult
+  StoreLastInsertedIdFunction::create(mozIStorageConnection *aDBConn)
+  {
+    RefPtr<StoreLastInsertedIdFunction> function =
+      new StoreLastInsertedIdFunction();
+    nsresult rv = aDBConn->CreateFunction(
+      NS_LITERAL_CSTRING("store_last_inserted_id"), 2, function
+    );
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    return NS_OK;
+  }
+
+  NS_IMPL_ISUPPORTS(
+    StoreLastInsertedIdFunction,
+    mozIStorageFunction
+  )
+
+  NS_IMETHODIMP
+  StoreLastInsertedIdFunction::OnFunctionCall(mozIStorageValueArray *aArgs,
+                                              nsIVariant **_result)
+  {
+    uint32_t numArgs;
+    nsresult rv = aArgs->GetNumEntries(&numArgs);
+    NS_ENSURE_SUCCESS(rv, rv);
+    MOZ_ASSERT(numArgs == 2);
+
+    nsAutoCString table;
+    rv = aArgs->GetUTF8String(0, table);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    int64_t lastInsertedId = aArgs->AsInt64(1);
+
+    nsNavHistory::StoreLastInsertedId(table, lastInsertedId);
+
+    RefPtr<nsVariant> result = new nsVariant();
+    rv = result->SetAsInt64(lastInsertedId);
+    NS_ENSURE_SUCCESS(rv, rv);
+    result.forget(_result);
+    return NS_OK;
+  }
+
+////////////////////////////////////////////////////////////////////////////////
+//// Hash Function
+
+  /* static */
+  nsresult
+  HashFunction::create(mozIStorageConnection *aDBConn)
+  {
+    RefPtr<HashFunction> function = new HashFunction();
+    return aDBConn->CreateFunction(
+      NS_LITERAL_CSTRING("hash"), -1, function
+    );
+  }
+
+  NS_IMPL_ISUPPORTS(
+    HashFunction,
+    mozIStorageFunction
+  )
+
+  NS_IMETHODIMP
+  HashFunction::OnFunctionCall(mozIStorageValueArray *aArguments,
+                               nsIVariant **_result)
+  {
+    // Must have non-null function arguments.
+    MOZ_ASSERT(aArguments);
+
+    // Fetch arguments.  Use default values if they were omitted.
+    uint32_t numEntries;
+    nsresult rv = aArguments->GetNumEntries(&numEntries);
+    NS_ENSURE_SUCCESS(rv, rv);
+    NS_ENSURE_TRUE(numEntries >= 1  && numEntries <= 2, NS_ERROR_FAILURE);
+
+    nsString str;
+    aArguments->GetString(0, str);
+    nsAutoCString mode;
+    if (numEntries > 1) {
+      aArguments->GetUTF8String(1, mode);
+    }
+
+    RefPtr<nsVariant> result = new nsVariant();
+    if (mode.IsEmpty()) {
+      // URI-like strings (having a prefix before a colon), are handled specially,
+      // as a 48 bit hash, where first 16 bits are the prefix hash, while the
+      // other 32 are the string hash.
+      // The 16 bits have been decided based on the fact hashing all of the IANA
+      // known schemes, plus "places", does not generate collisions.
+      nsAString::const_iterator start, tip, end;
+      str.BeginReading(tip);
+      start = tip;
+      str.EndReading(end);
+      if (FindInReadable(NS_LITERAL_STRING(":"), tip, end)) {
+        const nsDependentSubstring& prefix = Substring(start, tip);
+        uint64_t prefixHash = static_cast<uint64_t>(HashString(prefix) & 0x0000FFFF);
+        // The second half of the url is more likely to be unique, so we add it.
+        uint32_t srcHash = HashString(str);
+        uint64_t hash = (prefixHash << 32) + srcHash;
+        result->SetAsInt64(hash);
+      } else {
+        uint32_t hash = HashString(str);
+        result->SetAsInt64(hash);
+      }
+    } else if (mode.Equals(NS_LITERAL_CSTRING("prefix_lo"))) {
+      // Keep only 16 bits.
+      uint64_t hash = static_cast<uint64_t>(HashString(str) & 0x0000FFFF) << 32;
+      result->SetAsInt64(hash);
+    } else if (mode.Equals(NS_LITERAL_CSTRING("prefix_hi"))) {
+      // Keep only 16 bits.
+      uint64_t hash = static_cast<uint64_t>(HashString(str) & 0x0000FFFF) << 32;
+      // Make this a prefix upper bound by filling the lowest 32 bits.
+      hash +=  0xFFFFFFFF;
+      result->SetAsInt64(hash);
+    } else {
+      return NS_ERROR_FAILURE;
+    }
+
     result.forget(_result);
     return NS_OK;
   }

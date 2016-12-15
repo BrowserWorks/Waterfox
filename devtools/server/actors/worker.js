@@ -1,14 +1,23 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
-var { Ci, Cu } = require("chrome");
-var { DebuggerServer } = require("devtools/server/main");
-var Services = require("Services");
+const { Ci } = require("chrome");
+const { DebuggerServer } = require("devtools/server/main");
+const Services = require("Services");
+const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 const protocol = require("devtools/shared/protocol");
 const { Arg, method, RetVal } = protocol;
+const {
+  workerSpec,
+  pushSubscriptionSpec,
+  serviceWorkerRegistrationSpec,
+} = require("devtools/shared/specs/worker");
 
 loader.lazyRequireGetter(this, "ChromeUtils");
-
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+loader.lazyRequireGetter(this, "events", "sdk/event/core");
 
 XPCOMUtils.defineLazyServiceGetter(
   this, "wdm",
@@ -20,6 +29,12 @@ XPCOMUtils.defineLazyServiceGetter(
   this, "swm",
   "@mozilla.org/serviceworkers/manager;1",
   "nsIServiceWorkerManager"
+);
+
+XPCOMUtils.defineLazyServiceGetter(
+  this, "PushService",
+  "@mozilla.org/push/Service;1",
+  "nsIPushService"
 );
 
 function matchWorkerDebugger(dbg, options) {
@@ -40,19 +55,16 @@ function matchWorkerDebugger(dbg, options) {
   return true;
 }
 
-let WorkerActor = protocol.ActorClass({
-  typeName: "worker",
-
-  initialize: function (conn, dbg) {
+let WorkerActor = protocol.ActorClassWithSpec(workerSpec, {
+  initialize(conn, dbg) {
     protocol.Actor.prototype.initialize.call(this, conn);
     this._dbg = dbg;
     this._attached = false;
     this._threadActor = null;
     this._transport = null;
-    this.manage(this);
   },
 
-  form: function (detail) {
+  form(detail) {
     if (detail === "actorid") {
       return this.actorID;
     }
@@ -69,7 +81,7 @@ let WorkerActor = protocol.ActorClass({
     return form;
   },
 
-  attach: method(function () {
+  attach() {
     if (this._dbg.isClosed) {
       return { error: "closed" };
     }
@@ -91,12 +103,9 @@ let WorkerActor = protocol.ActorClass({
       type: "attached",
       url: this._dbg.url
     };
-  }, {
-    request: {},
-    response: RetVal("json")
-  }),
+  },
 
-  detach: method(function () {
+  detach() {
     if (!this._attached) {
       return { error: "wrongState" };
     }
@@ -104,12 +113,20 @@ let WorkerActor = protocol.ActorClass({
     this._detach();
 
     return { type: "detached" };
-  }, {
-    request: {},
-    response: RetVal("json")
-  }),
+  },
 
-  connect: method(function (options) {
+  destroy() {
+    protocol.Actor.prototype.destroy.call(this);
+    if (this._attached) {
+      this._detach();
+    }
+  },
+
+  disconnect() {
+    this.destroy();
+  },
+
+  connect(options) {
     if (!this._attached) {
       return { error: "wrongState" };
     }
@@ -136,14 +153,9 @@ let WorkerActor = protocol.ActorClass({
     }, (error) => {
       return { error: error.toString() };
     });
-  }, {
-    request: {
-      options: Arg(0, "json"),
-    },
-    response: RetVal("json")
-  }),
+  },
 
-  push: method(function () {
+  push() {
     if (this._dbg.type !== Ci.nsIWorkerDebugger.TYPE_SERVICE) {
       return { error: "wrongType" };
     }
@@ -152,12 +164,9 @@ let WorkerActor = protocol.ActorClass({
       this._dbg.principal.originAttributes);
     swm.sendPushEvent(originAttributes, registration.scope);
     return { type: "pushed" };
-  }, {
-    request: {},
-    response: RetVal("json")
-  }),
+  },
 
-  onClose: function () {
+  onClose() {
     if (this._attached) {
       this._detach();
     }
@@ -165,7 +174,7 @@ let WorkerActor = protocol.ActorClass({
     this.conn.sendActorEvent(this.actorID, "close");
   },
 
-  onError: function (filename, lineno, message) {
+  onError(filename, lineno, message) {
     reportError("ERROR:" + filename + ":" + lineno + ":" + message + "\n");
   },
 
@@ -173,12 +182,12 @@ let WorkerActor = protocol.ActorClass({
     return swm.getRegistrationByPrincipal(this._dbg.principal, this._dbg.url);
   },
 
-  _getServiceWorkerInfo: function () {
+  _getServiceWorkerInfo() {
     let registration = this._getServiceWorkerRegistrationInfo();
     return registration.getWorkerByID(this._dbg.serviceWorkerID);
   },
 
-  _detach: function () {
+  _detach() {
     if (this._threadActor !== null) {
       this._transport.close();
       this._transport = null;
@@ -217,7 +226,7 @@ function WorkerActorList(conn, options) {
 }
 
 WorkerActorList.prototype = {
-  getList: function () {
+  getList() {
     // Create a set of debuggers.
     let dbgs = new Set();
     let e = wdm.getWorkerDebuggerEnumerator();
@@ -280,7 +289,7 @@ WorkerActorList.prototype = {
     this._onListChanged = onListChanged;
   },
 
-  _notifyListChanged: function () {
+  _notifyListChanged() {
     this._onListChanged();
 
     if (this._onListChanged !== null) {
@@ -289,13 +298,13 @@ WorkerActorList.prototype = {
     this._mustNotify = false;
   },
 
-  onRegister: function (dbg) {
+  onRegister(dbg) {
     if (matchWorkerDebugger(dbg, this._options)) {
       this._notifyListChanged();
     }
   },
 
-  onUnregister: function (dbg) {
+  onUnregister(dbg) {
     if (matchWorkerDebugger(dbg, this._options)) {
       this._notifyListChanged();
     }
@@ -304,30 +313,99 @@ WorkerActorList.prototype = {
 
 exports.WorkerActorList = WorkerActorList;
 
-// Lazily load the service-worker-child.js process script only once.
-let _serviceWorkerProcessScriptLoaded = false;
-
-let ServiceWorkerRegistrationActor = protocol.ActorClass({
-  typeName: "serviceWorkerRegistration",
-
-  initialize: function (conn, registration) {
+let PushSubscriptionActor = protocol.ActorClassWithSpec(pushSubscriptionSpec, {
+  initialize(conn, subscription) {
     protocol.Actor.prototype.initialize.call(this, conn);
-    this._registration = registration;
-    this.manage(this);
+    this._subscription = subscription;
   },
 
-  form: function (detail) {
+  form(detail) {
     if (detail === "actorid") {
       return this.actorID;
     }
+    let subscription = this._subscription;
     return {
       actor: this.actorID,
-      scope: this._registration.scope,
-      url: this._registration.scriptSpec
+      endpoint: subscription.endpoint,
+      pushCount: subscription.pushCount,
+      lastPush: subscription.lastPush,
+      quota: subscription.quota
     };
   },
 
-  start: method(function () {
+  destroy() {
+    protocol.Actor.prototype.destroy.call(this);
+    this._subscription = null;
+  },
+});
+
+// Lazily load the service-worker-child.js process script only once.
+let _serviceWorkerProcessScriptLoaded = false;
+
+let ServiceWorkerRegistrationActor =
+protocol.ActorClassWithSpec(serviceWorkerRegistrationSpec, {
+  /**
+   * Create the ServiceWorkerRegistrationActor
+   * @param DebuggerServerConnection conn
+   *   The server connection.
+   * @param ServiceWorkerRegistrationInfo registration
+   *   The registration's information.
+   */
+  initialize(conn, registration) {
+    protocol.Actor.prototype.initialize.call(this, conn);
+    this._conn = conn;
+    this._registration = registration;
+    this._pushSubscriptionActor = null;
+    Services.obs.addObserver(this, PushService.subscriptionModifiedTopic, false);
+  },
+
+  form(detail) {
+    if (detail === "actorid") {
+      return this.actorID;
+    }
+    let registration = this._registration;
+    return {
+      actor: this.actorID,
+      scope: registration.scope,
+      url: registration.scriptSpec
+    };
+  },
+
+  destroy() {
+    protocol.Actor.prototype.destroy.call(this);
+    Services.obs.removeObserver(this, PushService.subscriptionModifiedTopic, false);
+    this._registration = null;
+    if (this._pushSubscriptionActor) {
+      this._pushSubscriptionActor.destroy();
+    }
+    this._pushSubscriptionActor = null;
+  },
+
+  disconnect() {
+    this.destroy();
+  },
+
+  /**
+   * Standard observer interface to listen to push messages and changes.
+   */
+  observe(subject, topic, data) {
+    let scope = this._registration.scope;
+    if (data !== scope) {
+      // This event doesn't concern us, pretend nothing happened.
+      return;
+    }
+    switch (topic) {
+      case PushService.subscriptionModifiedTopic:
+        if (this._pushSubscriptionActor) {
+          this._pushSubscriptionActor.destroy();
+          this._pushSubscriptionActor = null;
+        }
+        events.emit(this, "push-subscription-modified");
+        break;
+    }
+  },
+
+  start() {
     if (!_serviceWorkerProcessScriptLoaded) {
       Services.ppmm.loadProcessScript(
         "resource://devtools/server/service-worker-child.js", true);
@@ -337,12 +415,9 @@ let ServiceWorkerRegistrationActor = protocol.ActorClass({
       scope: this._registration.scope
     });
     return { type: "started" };
-  }, {
-    request: {},
-    response: RetVal("json")
-  }),
+  },
 
-  unregister: method(function () {
+  unregister() {
     let { principal, scope } = this._registration;
     let unregisterCallback = {
       unregisterSucceeded: function () {},
@@ -355,10 +430,30 @@ let ServiceWorkerRegistrationActor = protocol.ActorClass({
     swm.propagateUnregister(principal, unregisterCallback, scope);
 
     return { type: "unregistered" };
-  }, {
-    request: {},
-    response: RetVal("json")
-  }),
+  },
+
+  getPushSubscription() {
+    let registration = this._registration;
+    let pushSubscriptionActor = this._pushSubscriptionActor;
+    if (pushSubscriptionActor) {
+      return Promise.resolve(pushSubscriptionActor);
+    }
+    return new Promise((resolve, reject) => {
+      PushService.getSubscription(
+        registration.scope,
+        registration.principal,
+        (result, subscription) => {
+          if (!subscription) {
+            resolve(null);
+            return;
+          }
+          pushSubscriptionActor = new PushSubscriptionActor(this._conn, subscription);
+          this._pushSubscriptionActor = pushSubscriptionActor;
+          resolve(pushSubscriptionActor);
+        }
+      );
+    });
+  },
 });
 
 function ServiceWorkerRegistrationActorList(conn) {
@@ -371,7 +466,7 @@ function ServiceWorkerRegistrationActorList(conn) {
 }
 
 ServiceWorkerRegistrationActorList.prototype = {
-  getList: function () {
+  getList() {
     // Create a set of registrations.
     let registrations = new Set();
     let array = swm.getAllRegistrations();
@@ -430,7 +525,7 @@ ServiceWorkerRegistrationActorList.prototype = {
     this._onListChanged = onListChanged;
   },
 
-  _notifyListChanged: function () {
+  _notifyListChanged() {
     this._onListChanged();
 
     if (this._onListChanged !== null) {
@@ -439,11 +534,11 @@ ServiceWorkerRegistrationActorList.prototype = {
     this._mustNotify = false;
   },
 
-  onRegister: function (registration) {
+  onRegister(registration) {
     this._notifyListChanged();
   },
 
-  onUnregister: function (registration) {
+  onUnregister(registration) {
     this._notifyListChanged();
   }
 };

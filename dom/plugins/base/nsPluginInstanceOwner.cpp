@@ -181,7 +181,7 @@ AttachToContainerAsSurfaceTexture(ImageContainer* container,
 
   RefPtr<Image> img = new SurfaceTextureImage(
     surfTex,
-    gfx::IntSize(rect.width, rect.height),
+    gfx::IntSize::Truncate(rect.width, rect.height),
     instance->OriginPos());
   *out_image = img;
 }
@@ -222,16 +222,18 @@ nsPluginInstanceOwner::GetImageContainer()
   // into, set y-flip flags, etc, so we do this at the beginning.
   float resolution = mPluginFrame->PresContext()->PresShell()->GetCumulativeResolution();
   ScreenSize screenSize = (r * LayoutDeviceToScreenScale(resolution)).Size();
-  mInstance->NotifySize(nsIntSize(screenSize.width, screenSize.height));
+  mInstance->NotifySize(nsIntSize::Truncate(screenSize.width, screenSize.height));
 
   container = LayerManager::CreateImageContainer();
 
-  // Try to get it as an EGLImage first.
-  RefPtr<Image> img;
-  AttachToContainerAsSurfaceTexture(container, mInstance, r, &img);
+  if (r.width && r.height) {
+    // Try to get it as an EGLImage first.
+    RefPtr<Image> img;
+    AttachToContainerAsSurfaceTexture(container, mInstance, r, &img);
 
-  if (img) {
-    container->SetCurrentImageInTransaction(img);
+    if (img) {
+      container->SetCurrentImageInTransaction(img);
+    }
   }
 #else
   if (NeedsScrollImageLayer()) {
@@ -322,21 +324,6 @@ nsPluginInstanceOwner::GetCurrentImageSize()
   return size;
 }
 
-bool
-nsPluginInstanceOwner::UpdateScrollState(bool aIsScrolling)
-{
-#if defined(XP_WIN)
-  if (!mInstance) {
-    return false;
-  }
-  mScrollState = aIsScrolling;
-  nsresult rv = mInstance->UpdateScrollState(aIsScrolling);
-  return NS_SUCCEEDED(rv);
-#else
-  return false;
-#endif
-}
-
 nsPluginInstanceOwner::nsPluginInstanceOwner()
   : mPluginWindow(nullptr)
 {
@@ -384,7 +371,6 @@ nsPluginInstanceOwner::nsPluginInstanceOwner()
   mGotCompositionData = false;
   mSentStartComposition = false;
   mPluginDidNotHandleIMEComposition = false;
-  mScrollState = false;
 #endif
 }
 
@@ -763,7 +749,7 @@ NS_IMETHODIMP nsPluginInstanceOwner::GetNetscapeWindow(void *value)
   }
 
   return NS_OK;
-#elif (defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_QT)) && defined(MOZ_X11)
+#elif defined(MOZ_WIDGET_GTK) && defined(MOZ_X11)
   // X11 window managers want the toplevel window for WM_TRANSIENT_FOR.
   nsIWidget* win = mPluginFrame->GetNearestWidget();
   if (!win)
@@ -1575,7 +1561,7 @@ void nsPluginInstanceOwner::RemovePluginView()
   if (!mInstance || !mJavaView)
     return;
 
-  widget::GeckoAppShell::RemovePluginView(
+  java::GeckoAppShell::RemovePluginView(
       jni::Object::Ref::From(jobject(mJavaView)), mFullScreen);
   jni::GetGeckoThreadEnv()->DeleteGlobalRef((jobject)mJavaView);
   mJavaView = nullptr;
@@ -1598,11 +1584,13 @@ nsPluginInstanceOwner::GetImageContainerForVideo(nsNPAPIPluginInstance::VideoInf
 {
   RefPtr<ImageContainer> container = LayerManager::CreateImageContainer();
 
-  RefPtr<Image> img = new SurfaceTextureImage(
-    aVideoInfo->mSurfaceTexture,
-    gfx::IntSize(aVideoInfo->mDimensions.width, aVideoInfo->mDimensions.height),
-    gl::OriginPos::BottomLeft);
-  container->SetCurrentImageInTransaction(img);
+  if (aVideoInfo->mDimensions.width && aVideoInfo->mDimensions.height) {
+    RefPtr<Image> img = new SurfaceTextureImage(
+      aVideoInfo->mSurfaceTexture,
+      gfx::IntSize::Truncate(aVideoInfo->mDimensions.width, aVideoInfo->mDimensions.height),
+      gl::OriginPos::BottomLeft);
+    container->SetCurrentImageInTransaction(img);
+  }
 
   return container.forget();
 }
@@ -2616,8 +2604,6 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
         }
 #ifdef MOZ_WIDGET_GTK
         Window root = GDK_ROOT_WINDOW();
-#elif defined(MOZ_WIDGET_QT)
-        Window root = RootWindowOfScreen(DefaultScreenOfDisplay(mozilla::DefaultXDisplay()));
 #else
         Window root = None; // Could XQueryTree, but this is not important.
 #endif
@@ -2906,14 +2892,12 @@ nsPluginInstanceOwner::Destroy()
   content->RemoveEventListener(NS_LITERAL_STRING("keydown"), this, true);
   content->RemoveEventListener(NS_LITERAL_STRING("keyup"), this, true);
   content->RemoveEventListener(NS_LITERAL_STRING("drop"), this, true);
-  content->RemoveEventListener(NS_LITERAL_STRING("dragdrop"), this, true);
   content->RemoveEventListener(NS_LITERAL_STRING("drag"), this, true);
   content->RemoveEventListener(NS_LITERAL_STRING("dragenter"), this, true);
   content->RemoveEventListener(NS_LITERAL_STRING("dragover"), this, true);
   content->RemoveEventListener(NS_LITERAL_STRING("dragleave"), this, true);
   content->RemoveEventListener(NS_LITERAL_STRING("dragexit"), this, true);
   content->RemoveEventListener(NS_LITERAL_STRING("dragstart"), this, true);
-  content->RemoveEventListener(NS_LITERAL_STRING("draggesture"), this, true);
   content->RemoveEventListener(NS_LITERAL_STRING("dragend"), this, true);
   content->RemoveSystemEventListener(NS_LITERAL_STRING("compositionstart"),
                                      this, true);
@@ -3306,14 +3290,12 @@ nsresult nsPluginInstanceOwner::Init(nsIContent* aContent)
   aContent->AddEventListener(NS_LITERAL_STRING("keydown"), this, true);
   aContent->AddEventListener(NS_LITERAL_STRING("keyup"), this, true);
   aContent->AddEventListener(NS_LITERAL_STRING("drop"), this, true);
-  aContent->AddEventListener(NS_LITERAL_STRING("dragdrop"), this, true);
   aContent->AddEventListener(NS_LITERAL_STRING("drag"), this, true);
   aContent->AddEventListener(NS_LITERAL_STRING("dragenter"), this, true);
   aContent->AddEventListener(NS_LITERAL_STRING("dragover"), this, true);
   aContent->AddEventListener(NS_LITERAL_STRING("dragleave"), this, true);
   aContent->AddEventListener(NS_LITERAL_STRING("dragexit"), this, true);
   aContent->AddEventListener(NS_LITERAL_STRING("dragstart"), this, true);
-  aContent->AddEventListener(NS_LITERAL_STRING("draggesture"), this, true);
   aContent->AddEventListener(NS_LITERAL_STRING("dragend"), this, true);
   aContent->AddSystemEventListener(NS_LITERAL_STRING("compositionstart"),
     this, true);

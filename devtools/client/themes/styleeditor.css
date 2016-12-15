@@ -3,6 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+.style-editor-newButton {
+  list-style-image: url(images/add.svg);
+}
+
+.style-editor-importButton {
+  list-style-image: url(images/import.svg);
+}
+
 .stylesheet-title,
 .stylesheet-name {
   text-decoration: none;
@@ -100,27 +108,22 @@
 .stylesheet-enabled {
   padding: 8px 0;
   margin: 0 8px;
-  background-image: url(images/itemToggle.png);
+  background-image: url(images/itemToggle.svg);
   background-repeat: no-repeat;
   background-clip: content-box;
-  background-position: 0 8px;
-  background-size: 48px 24px;
+  background-position: center;
+  background-size: 16px;
   width: 24px;
   height: 40px;
-}
-
-@media (min-resolution: 1.1dppx) {
-  .stylesheet-enabled {
-    background-image: url(images/itemToggle@2x.png);
-  }
+  filter: var(--icon-filter);
 }
 
 .disabled > .stylesheet-enabled {
-  background-position: -24px 8px;
+  opacity: 0.3;
 }
 
-/* Invert all toggle icons but the one in the active row for light theme */
-.theme-light .splitview-nav > li:not(.splitview-active) .stylesheet-enabled {
+/* Invert the toggle icon in the active row for light theme */
+.theme-light .splitview-nav > li.splitview-active .stylesheet-enabled {
   filter: invert(1);
 }
 
@@ -146,7 +149,8 @@ li.linked-file-error .stylesheet-linked-file:after {
   margin-inline-end: 2px;
 }
 
-.devtools-searchinput {
+.devtools-searchinput,
+.devtools-filterinput {
   max-width: 25ex;
   font-size: 11px;
 }
@@ -199,19 +203,48 @@ h3 {
   }
 }
 
+/* CSS coverage */
 .csscoverage-report {
   background-color: var(--theme-toolbar-background);
+  -moz-box-orient: horizontal;
 }
 
 .csscoverage-report-container {
   height: 100vh;
-  padding: 0 30px;
+  padding: 0 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -moz-box-flex: 1;
 }
 
 .csscoverage-report-content {
   margin: 20px auto;
   -moz-column-width: 300px;
   font-size: 13px;
+  -moz-user-select: text;
+}
+
+.csscoverage-report-summary,
+.csscoverage-report-unused,
+.csscoverage-report-optimize {
+  display: inline-block;
+}
+
+.csscoverage-report-unused,
+.csscoverage-report-optimize {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 950px) {
+  .csscoverage-report-content {
+    display: block;
+  }
+
+  .csscoverage-report-summary {
+    display: block;
+    text-align: center;
+  }
 }
 
 .csscoverage-report h1 {
@@ -227,6 +260,12 @@ h3 {
 .csscoverage-report h3 {
   font-weight: bold;
   margin: 10px 0;
+}
+
+.csscoverage-report code,
+.csscoverage-report textarea {
+  font-family: var(--monospace-font-family);
+  font-size: inherit;
 }
 
 .csscoverage-list:after {
@@ -264,9 +303,14 @@ h3 {
   border-inline-start: none;
 }
 
+.csscoverage-report .pie-table-chart-container {
+  -moz-box-orient: vertical;
+  text-align: start;
+}
+
 .chart-colored-blob[name="Used Preload"] {
   fill: var(--theme-highlight-pink);
-  background: var(--theme-highlight-pink);;
+  background: var(--theme-highlight-pink);
 }
 
 .chart-colored-blob[name=Used] {
@@ -295,5 +339,5 @@ h3 {
 }
 
 .csscoverage-report-chart {
-  margin: 0 50px;
+  margin: 0 20px;
 }

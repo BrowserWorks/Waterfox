@@ -1,5 +1,19 @@
+// |jit-test| test-also-wasm-baseline
 load(libdir + "wasm.js");
-load(scriptdir + "spec/list.js");
+
+// This is meant to be a small and dumb interpreter for wast files. Either it
+// is imported by another script, which needs to define an array of arguments
+// called importedArgs, or args need to be passed to the command line.
+//
+// Possible arguments include:
+// -d           enable debug verbose mode
+// -c           computes line numbers in wast files (disabled by default as it
+//              slows down the parser a lot)
+// -s           soft fail mode: if a test fails, don't abort but continue to
+//              the next one.
+// *            anything else is considered a relative path to the wast file to
+//              load and run. The path is relative to to the runner script,
+//              i.e. this file..
 
 if (typeof assert === 'undefined') {
     var assert = function(c, msg) {
@@ -201,7 +215,8 @@ function exec(e) {
 
     if (exprName === "module") {
         let moduleText = e.toString();
-        module = wasmEvalText(moduleText, imports);
+        var m = new WebAssembly.Module(wasmTextToBinary(moduleText, 'new-format'));
+        module = new WebAssembly.Instance(m, imports).exports;
         return;
     }
 
@@ -217,9 +232,6 @@ function exec(e) {
 
         if (typeof module[name] === "function") {
             fn = module[name];
-        } else if (name === "") {
-            fn = module;
-            assert(typeof fn === "function", "Default exported function not found: " + e);
         } else {
             assert(false, "Exported function not found: " + e);
         }
@@ -265,7 +277,10 @@ function exec(e) {
         }
         let caught = false;
         try {
-            wasmEvalText(moduleText, imports);
+            new WebAssembly.Instance(
+                new WebAssembly.Module(
+                    wasmTextToBinary(moduleText, 'new-format')),
+                imports);
         } catch(e) {
             if (errMsg && e.toString().indexOf(errMsg) === -1)
                 warn(`expected error message "${errMsg}", got "${e}"`);
@@ -284,7 +299,8 @@ function exec(e) {
             exec(e.list[1]);
         } catch(err) {
             caught = true;
-            assert(err.toString().indexOf(errMsg) !== -1, `expected error message "${errMsg}", got "${err}"`);
+            if (err.toString().indexOf(errMsg) === -1)
+                warn(`expected error message "${errMsg}", got "${err}"`);
         }
         assert(caught, "assert_trap exception not caught");
         return;
@@ -295,7 +311,7 @@ function exec(e) {
     }
 }
 
-var args = scriptArgs;
+var args = typeof importedArgs !== 'undefined' ? importedArgs : scriptArgs;
 
 // Whether we should keep on executing tests if one of them failed or throw.
 var softFail = false;
@@ -331,16 +347,13 @@ for (let arg of args) {
     }
 }
 
-if (targets.length)
-    specTests = targets;
-
 top_loop:
-for (var test of specTests) {
+for (var test of targets) {
     module = null;
 
     debug(`Running test ${test}...`);
 
-    let source = read(scriptdir + "spec/" + test);
+    let source = read(scriptdir + test);
 
     let root = new parseSExpression(source);
 

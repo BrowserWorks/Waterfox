@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,17 +55,20 @@ set_config('HAVE_YASM', have_yasm)
 # Until the YASM variable is not necessary in old-configure.
 add_old_configure_assignment('YASM', have_yasm)
 
+@depends('--help')
+def extra_toolchain_flags(_):
+    # This value will be overriden for android builds, where
+    # extra flags are required to do basic checks.
+    return []
 
 # Android NDK
 # ==============================================================
 
-@depends('--disable-compile-environment', build_project, '--help')
-def android_ndk_include(compile_env, build_project, _):
-    if compile_env and build_project in ('mobile/android', 'js'):
-        return 'android-ndk.configure'
+@depends('--disable-compile-environment', build_project, gonkdir, '--help')
+def compiling_android(compile_env, build_project, gonkdir, _):
+    return compile_env and (gonkdir or build_project in ('mobile/android', 'js'))
 
-include(android_ndk_include)
-
+include_when('android-ndk.configure', when=compiling_android)
 
 # MacOS deployment target version
 # ==============================================================
@@ -168,33 +171,14 @@ add_old_configure_assignment('TOOLCHAIN_PREFIX', toolchain_prefix)
 
 # Compilers
 # ==============================================================
-@imports('os')
-@imports('subprocess')
-@imports(_from='mozbuild.configure.util', _import='LineIO')
-@imports(_from='tempfile', _import='mkstemp')
 def try_preprocess(compiler, language, source):
-    suffix = {
-        'C': '.c',
-        'C++': '.cpp',
-    }[language]
-
-    fd, path = mkstemp(prefix='conftest.', suffix=suffix)
-    try:
-        source = source.encode('ascii', 'replace')
-
-        log.debug('Creating `%s` with content:', path)
-        with LineIO(lambda l: log.debug('| %s', l)) as out:
-            out.write(source)
-
-        os.write(fd, source)
-        os.close(fd)
-        cmd = compiler + ['-E', path]
-        return check_cmd_output(*cmd)
-    finally:
-        os.remove(path)
-
+    return try_invoke_compiler(compiler, language, source, ['-E'])
 
 @imports(_from='mozbuild.configure.constants', _import='CompilerType')
+@imports(_from='mozbuild.configure.constants',
+         _import='CPU_preprocessor_checks')
+@imports(_from='mozbuild.configure.constants',
+         _import='kernel_preprocessor_checks')
 @imports(_from='textwrap', _import='dedent')
 def get_compiler_info(compiler, language):
     '''Returns information about the given `compiler` (command line in the
@@ -213,11 +197,7 @@ def get_compiler_info(compiler, language):
     # in Xcode have a completely different versioning scheme despite exposing
     # the version with the same defines.
     # So instead, we make things such that the version is missing when the
-    # clang used is below the minimum supported version (currently clang 3.4).
-    # Normally, we'd use __has_feature, but there are unfortunately no C++11
-    # differences in clang 3.4. However, it supports the 2013-08-28 draft of
-    # the ISO WG21 SG10 feature test macro recommendations, and thus exposes
-    # new __cpp_* macros that older clang versions didn't.
+    # clang used is below the minimum supported version (currently clang 3.6).
     # We then only include the version information when the C++ compiler
     # matches the feature check, so that an unsupported version of clang would
     # have no version number.
@@ -232,7 +212,7 @@ def get_compiler_info(compiler, language):
         #endif
         #elif defined(__clang__)
         %COMPILER clang
-        #  if !__cplusplus || __cpp_static_assert
+        #  if !__cplusplus || __has_feature(cxx_alignof)
         %VERSION __clang_major__.__clang_minor__.__clang_patchlevel__
         #  endif
         #elif defined(__GNUC__)
@@ -246,6 +226,36 @@ def get_compiler_info(compiler, language):
         %STDC_VERSION __STDC_VERSION__
         #elif __STDC__
         %STDC_VERSION 198900L
+        #endif
+    ''')
+
+    # While we're doing some preprocessing, we might as well do some more
+    # preprocessor-based tests at the same time, to check the toolchain
+    # matches what we want.
+    for name, preprocessor_checks in (
+        ('CPU', CPU_preprocessor_checks),
+        ('KERNEL', kernel_preprocessor_checks),
+    ):
+        for n, (value, condition) in enumerate(preprocessor_checks.iteritems()):
+            check += dedent('''\
+                #%(if)s %(condition)s
+                %%%(name)s %(value)s
+            ''' % {
+                'if': 'elif' if n else 'if',
+                'condition': condition,
+                'name': name,
+                'value': value,
+            })
+        check += '#endif\n'
+
+    # Also check for endianness. The advantage of living in modern times is
+    # that all the modern compilers we support now have __BYTE_ORDER__ defined
+    # by the preprocessor, except MSVC, which only supports little endian.
+    check += dedent('''\
+        #if _MSC_VER || __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        %ENDIANNESS little
+        #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+        %ENDIANNESS big
         #endif
     ''')
 
@@ -287,13 +297,16 @@ def get_compiler_info(compiler, language):
     return namespace(
         type=type,
         version=version,
+        cpu=data.get('CPU'),
+        kernel=data.get('KERNEL'),
+        endianness=data.get('ENDIANNESS'),
         language='C++' if cplusplus else 'C',
         language_version=cplusplus if cplusplus else stdc_version,
     )
 
 
 @imports(_from='mozbuild.shellutil', _import='quote')
-def check_compiler(compiler, language):
+def check_compiler(compiler, language, target):
     info = get_compiler_info(compiler, language)
 
     flags = []
@@ -333,11 +346,103 @@ def check_compiler(compiler, language):
         flags.append('-fms-compatibility-version=18.00.30723')
         flags.append('-fallback')
 
+    # Check compiler target
+    # --------------------------------------------------------------------
+    if not info.cpu or info.cpu != target.cpu:
+        if info.type == 'clang':
+            append_flag('--target=%s' % target.toolchain)
+        elif info.type == 'gcc':
+            same_arch_different_bits = (
+                ('x86', 'x86_64'),
+                ('ppc', 'ppc64'),
+                ('sparc', 'sparc64'),
+            )
+            if (target.cpu, info.cpu) in same_arch_different_bits:
+                append_flag('-m32')
+            elif (info.cpu, target.cpu) in same_arch_different_bits:
+                append_flag('-m64')
+
+    if not info.kernel or info.kernel != target.kernel:
+        if info.type == 'clang':
+            append_flag('--target=%s' % target.toolchain)
+
+    if not info.endianness or info.endianness != target.endianness:
+        if info.type == 'clang':
+            append_flag('--target=%s' % target.toolchain)
+
     return namespace(
         type=info.type,
         version=info.version,
+        target_cpu=info.cpu,
+        target_kernel=info.kernel,
+        target_endianness=info.endianness,
         flags=flags,
     )
+
+
+@imports(_from='collections', _import='defaultdict')
+@imports(_from='__builtin__', _import='sorted')
+def get_vc_paths(base):
+    vc = defaultdict(lambda: defaultdict(dict))
+    subkey = r'Microsoft\VisualStudio\VC\*\*\*\Compiler'
+    for v, h, t, p in get_registry_values(base + '\\' + subkey):
+        vc[v][h][t] = p
+    if not vc:
+        return
+    version, data = sorted(vc.iteritems(), key=lambda x: Version(x[0]))[-1]
+    return data
+
+
+@depends(host)
+@imports('platform')
+def vc_compiler_path(host):
+    if host.kernel != 'WINNT':
+        return
+    vc_host = {
+        'x86': 'x86',
+        'AMD64': 'x64',
+    }.get(platform.machine())
+    if vc_host is None:
+        return
+    vc_target = {
+        'x86': 'x86',
+        'x86_64': 'x64',
+        'arm': 'arm',
+    }.get(host.cpu)
+    if vc_target is None:
+        return
+
+    base_key = r'HKEY_LOCAL_MACHINE\SOFTWARE'
+    data = get_vc_paths(base_key)
+    if not data:
+        data = get_vc_paths(base_key + r'\Wow6432Node')
+    if not data:
+        return
+
+    path = data.get(vc_host, {}).get(vc_target)
+    if not path and vc_host == 'x64':
+        vc_host = 'x86'
+        path = data.get(vc_host, {}).get(vc_target)
+    if not path:
+        return
+    path = os.path.dirname(path)
+    if vc_host != vc_target:
+        other_path = data.get(vc_host, {}).get(vc_host)
+        if other_path:
+            return (path, os.path.dirname(other_path))
+    return (path,)
+
+
+@depends(vc_compiler_path)
+@imports('os')
+def toolchain_search_path(vc_compiler_path):
+    if vc_compiler_path:
+        result = [os.environ.get('PATH')]
+        result.extend(vc_compiler_path)
+        # We're going to alter PATH for good in windows.configure, but we also
+        # need to do it for the valid_compiler() check below.
+        os.environ['PATH'] = os.pathsep.join(result)
+        return result
 
 
 @template
@@ -457,6 +562,9 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
     # explicit compiler was given and we're not cross compiling. For the C++
     # compiler, though, prefer to derive from the host C compiler when it
     # doesn't match the target C compiler.
+    # As a special case, since clang supports all kinds of targets in the same
+    # executable, when cross compiling with clang, default to the same compiler
+    # as the target compiler, resetting flags.
     if host_or_target == host:
         args = (c_compiler, other_c_compiler) if other_c_compiler else ()
 
@@ -467,18 +575,25 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
             c_compiler, other_c_compiler = args if args else (None, None)
             if not cross_compiling and c_compiler == other_c_compiler:
                 return other_compiler
+            if cross_compiling and other_compiler.type == 'clang':
+                return namespace(**{
+                    k: [] if k == 'flags' else v
+                    for k, v in other_compiler.__dict__.iteritems()
+                })
 
     # Normally, we'd use `var` instead of `_var`, but the interaction with
     # old-configure complicates things, and for now, we a) can't take the plain
     # result from check_prog as CC/CXX/HOST_CC/HOST_CXX and b) have to let
     # old-configure AC_SUBST it (because it's autoconf doing it, not us)
     compiler = check_prog('_%s' % var, what=what, progs=default_compilers,
-                          input=delayed_getattr(provided_compiler, 'compiler'))
+                          input=delayed_getattr(provided_compiler, 'compiler'),
+                          paths=toolchain_search_path)
 
-    @depends(compiler, provided_compiler, compiler_wrapper)
+    @depends(compiler, provided_compiler, compiler_wrapper, host_or_target)
     @checking('whether %s can be used' % what, lambda x: bool(x))
     @imports(_from='mozbuild.shellutil', _import='quote')
-    def valid_compiler(compiler, provided_compiler, compiler_wrapper):
+    def valid_compiler(compiler, provided_compiler, compiler_wrapper,
+                       host_or_target):
         wrapper = list(compiler_wrapper or ())
         if provided_compiler:
             provided_wrapper = list(provided_compiler.wrapper)
@@ -512,13 +627,39 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
                     quote(os.path.dirname(found_compiler)),
                     quote(os.path.dirname(full_path)))
 
-        info = check_compiler(wrapper + [compiler] + flags, language)
+        info = check_compiler(wrapper + [compiler] + flags, language,
+                              host_or_target)
 
         # Check that the additional flags we got are enough to not require any
         # more flags.
         if info.flags:
             flags += info.flags
-            info = check_compiler(wrapper + [compiler] + flags, language)
+            info = check_compiler(wrapper + [compiler] + flags, language,
+                                  host_or_target)
+
+        if not info.target_cpu or info.target_cpu != host_or_target.cpu:
+            raise FatalCheckError(
+                '%s %s compiler target CPU (%s) does not match --%s CPU (%s)'
+                % (host_or_target_str.capitalize(), language,
+                   info.target_cpu or 'unknown', host_or_target_str,
+                   host_or_target.raw_cpu))
+
+        if not info.target_kernel or (info.target_kernel !=
+                                      host_or_target.kernel):
+            raise FatalCheckError(
+                '%s %s compiler target kernel (%s) does not match --%s kernel (%s)'
+                % (host_or_target_str.capitalize(), language,
+                   info.target_kernel or 'unknown', host_or_target_str,
+                   host_or_target.kernel))
+
+        if not info.target_endianness or (info.target_endianness !=
+                                          host_or_target.endianness):
+            raise FatalCheckError(
+                '%s %s compiler target endianness (%s) does not match --%s '
+                'endianness (%s)'
+                % (host_or_target_str.capitalize(), language,
+                   info.target_endianness or 'unknown', host_or_target_str,
+                   host_or_target.endianness))
 
         if info.flags:
             raise FatalCheckError(
@@ -538,16 +679,15 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
         # __cpp_static_assert above, and see the associated comment.
         if info.type == 'clang' and not info.version:
             raise FatalCheckError(
-                'Only clang/llvm 3.4 or newer is supported.')
+                'Only clang/llvm 3.6 or newer is supported.')
 
         if info.type == 'msvc':
-            if info.version < '18.00.30723' or (
-                    '19' < info.version < '19.00.23506'):
+            if info.version < '19.00.23918':
                 raise FatalCheckError(
                     'This version (%s) of the MSVC compiler is not '
                     'supported.\n'
-                    'You must install Visual C++ 2013 Update 3, Visual '
-                    'C++ 2015 Update 1, or newer in order to build.\n'
+                    'You must install Visual C++ 2015 Update 2 or newer in '
+                    'order to build.\n'
                     'See https://developer.mozilla.org/en/'
                     'Windows_Build_Prerequisites' % info.version)
 
@@ -604,3 +744,88 @@ host_c_compiler = compiler('C', host, other_compiler=c_compiler)
 host_cxx_compiler = compiler('C++', host, c_compiler=host_c_compiler,
                              other_compiler=cxx_compiler,
                              other_c_compiler=c_compiler)
+
+include('compilechecks.configure')
+
+@depends(c_compiler)
+def default_debug_flags(compiler_info):
+    # Debug info is ON by default.
+    if compiler_info.type == 'msvc':
+        return '-Zi'
+    return '-g'
+
+option(env='MOZ_DEBUG_FLAGS',
+       nargs=1,
+       help='Debug compiler flags')
+
+imply_option('--enable-debug-symbols',
+             depends_if('--enable-debug')(lambda v: v))
+
+js_option('--enable-debug-symbols',
+          nargs='?',
+          default=True,
+          help='Enable debug symbols using the given compiler flags')
+
+set_config('MOZ_DEBUG_SYMBOLS',
+           depends_if('--enable-debug-symbols')(lambda _: True))
+
+@depends('MOZ_DEBUG_FLAGS', '--enable-debug-symbols', default_debug_flags)
+def debug_flags(env_debug_flags, enable_debug_flags, default_debug_flags):
+    # If MOZ_DEBUG_FLAGS is set, and --enable-debug-symbols is set to a value,
+    # --enable-debug-symbols takes precedence. Note, the value of
+    # --enable-debug-symbols may be implied by --enable-debug.
+    if len(enable_debug_flags):
+        return enable_debug_flags[0]
+    if env_debug_flags:
+        return env_debug_flags[0]
+    return default_debug_flags
+
+set_config('MOZ_DEBUG_FLAGS', debug_flags)
+add_old_configure_assignment('MOZ_DEBUG_FLAGS', debug_flags)
+
+# Some standard library headers (notably bionic on Android) declare standard
+# functions (e.g. getchar()) and also #define macros for those standard
+# functions.  libc++ deals with this by doing something like the following
+# (explanatory comments added):
+#
+#   #ifdef FUNC
+#   // Capture the definition of FUNC.
+#   inline _LIBCPP_INLINE_VISIBILITY int __libcpp_FUNC(...) { return FUNC(...); }
+#   #undef FUNC
+#   // Use a real inline definition.
+#   inline _LIBCPP_INLINE_VISIBILITY int FUNC(...) { return _libcpp_FUNC(...); }
+#   #endif
+#
+# _LIBCPP_INLINE_VISIBILITY is typically defined as:
+#
+#   __attribute__((__visibility__("hidden"), __always_inline__))
+#
+# Unfortunately, this interacts badly with our system header wrappers, as the:
+#
+#   #pragma GCC visibility push(default)
+#
+# that they do prior to including the actual system header is treated by the
+# compiler as an explicit declaration of visibility on every function declared
+# in the header.  Therefore, when the libc++ code above is encountered, it is
+# as though the compiler has effectively seen:
+#
+#   int FUNC(...) __attribute__((__visibility__("default")));
+#   int FUNC(...) __attribute__((__visibility__("hidden")));
+#
+# and the compiler complains about the mismatched visibility declarations.
+#
+# However, libc++ will only define _LIBCPP_INLINE_VISIBILITY if there is no
+# existing definition.  We can therefore define it to the empty string (since
+# we are properly managing visibility ourselves) and avoid this whole mess.
+# Note that we don't need to do this with gcc, as libc++ detects gcc and
+# effectively does the same thing we are doing here.
+@depends(c_compiler, target)
+def libcxx_inline_visibility(c_compiler, target):
+    if c_compiler.type == 'clang' and target.os == 'Android':
+        return ''
+
+set_define('_LIBCPP_INLINE_VISIBILITY', libcxx_inline_visibility)
+set_define('_LIBCPP_INLINE_VISIBILITY_EXCEPT_GCC49', libcxx_inline_visibility)
+
+include('windows.configure')
+include('rust.configure')

@@ -19,6 +19,7 @@
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/RecordErrorEvent.h"
 #include "mozilla/dom/VideoStreamTrack.h"
+#include "nsAutoPtr.h"
 #include "nsContentUtils.h"
 #include "nsError.h"
 #include "nsIDocument.h"
@@ -110,8 +111,22 @@ private:
 };
 NS_IMPL_ISUPPORTS(MediaRecorderReporter, nsIMemoryReporter);
 
-NS_IMPL_CYCLE_COLLECTION_INHERITED(MediaRecorder, DOMEventTargetHelper,
-                                   mDOMStream, mAudioNode)
+NS_IMPL_CYCLE_COLLECTION_CLASS(MediaRecorder)
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(MediaRecorder,
+                                                  DOMEventTargetHelper)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDOMStream)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mAudioNode)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDocument)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(MediaRecorder,
+                                                DOMEventTargetHelper)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mDOMStream)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mAudioNode)
+  tmp->UnRegisterActivityObserver();
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mDocument)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(MediaRecorder)
   NS_INTERFACE_MAP_ENTRY(nsIDocumentActivity)
@@ -466,7 +481,7 @@ public:
 
     // Create a Track Union Stream
     MediaStreamGraph* gm = mRecorder->GetSourceMediaStream()->Graph();
-    mTrackUnionStream = gm->CreateTrackUnionStream(nullptr);
+    mTrackUnionStream = gm->CreateTrackUnionStream();
     MOZ_ASSERT(mTrackUnionStream, "CreateTrackUnionStream failed");
 
     mTrackUnionStream->SetAutofinish(true);
@@ -1010,9 +1025,9 @@ void
 MediaRecorder::RegisterActivityObserver()
 {
   if (nsPIDOMWindowInner* window = GetOwner()) {
-    nsIDocument* doc = window->GetExtantDoc();
-    if (doc) {
-      doc->RegisterActivityObserver(
+    mDocument = window->GetExtantDoc();
+    if (mDocument) {
+      mDocument->RegisterActivityObserver(
         NS_ISUPPORTS_CAST(nsIDocumentActivity*, this));
     }
   }
@@ -1021,12 +1036,9 @@ MediaRecorder::RegisterActivityObserver()
 void
 MediaRecorder::UnRegisterActivityObserver()
 {
-  if (nsPIDOMWindowInner* window = GetOwner()) {
-    nsIDocument* doc = window->GetExtantDoc();
-    if (doc) {
-      doc->UnregisterActivityObserver(
-        NS_ISUPPORTS_CAST(nsIDocumentActivity*, this));
-    }
+  if (mDocument) {
+    mDocument->UnregisterActivityObserver(
+      NS_ISUPPORTS_CAST(nsIDocumentActivity*, this));
   }
 }
 

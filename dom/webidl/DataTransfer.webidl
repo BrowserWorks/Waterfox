@@ -12,11 +12,12 @@ interface DataTransfer {
            attribute DOMString dropEffect;
            attribute DOMString effectAllowed;
 
-  //readonly attribute DataTransferItemList items;
+  readonly attribute DataTransferItemList items;
 
   [Throws]
   void setDragImage(Element image, long x, long y);
 
+  [Throws]
   readonly attribute DOMStringList types;
   [Throws]
   DOMString getData(DOMString format);
@@ -31,6 +32,9 @@ interface DataTransfer {
 partial interface DataTransfer {
   [Throws, Pref="dom.input.dirpicker"]
   Promise<sequence<(File or Directory)>> getFilesAndDirectories();
+
+  [Throws, Pref="dom.input.dirpicker"]
+  Promise<sequence<File>>                getFiles(optional boolean recursiveFlag = false);
 };
 
 // Mozilla specific stuff

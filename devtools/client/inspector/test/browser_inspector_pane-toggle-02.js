@@ -11,32 +11,32 @@ add_task(function* () {
   info("Open the inspector in a side toolbox host");
   let {toolbox, inspector} = yield openInspectorForURL("about:blank", "side");
 
-  let panel = inspector.panelDoc.querySelector("#inspector-sidebar");
-  let button = inspector.panelDoc.getElementById("inspector-pane-toggle");
-  ok(!panel.hasAttribute("pane-collapsed"), "The panel is in expanded state");
+  let panel = inspector.panelDoc.querySelector("#inspector-sidebar-container");
+  let button = inspector.panelDoc.querySelector(".sidebar-toggle");
+  ok(!panel.classList.contains("pane-collapsed"), "The panel is in expanded state");
 
   info("Listen to the end of the animation on the sidebar panel");
   let onTransitionEnd = once(panel, "transitionend");
 
   info("Click on the toggle button");
-  EventUtils.synthesizeMouseAtCenter(button, {type: "mousedown"},
+  EventUtils.synthesizeMouseAtCenter(button, {},
     inspector.panelDoc.defaultView);
 
   yield onTransitionEnd;
-  ok(panel.hasAttribute("pane-collapsed"), "The panel is in collapsed state");
+  ok(panel.classList.contains("pane-collapsed"), "The panel is in collapsed state");
   ok(!panel.hasAttribute("animated"),
     "The collapsed panel will not perform unwanted animations");
 
   info("Switch the host to bottom type");
   yield toolbox.switchHost("bottom");
-  ok(panel.hasAttribute("pane-collapsed"), "The panel is in collapsed state");
+  ok(panel.classList.contains("pane-collapsed"), "The panel is in collapsed state");
 
   info("Click on the toggle button to expand the panel again");
 
   onTransitionEnd = once(panel, "transitionend");
-  EventUtils.synthesizeMouseAtCenter(button, {type: "mousedown"},
+  EventUtils.synthesizeMouseAtCenter(button, {},
     inspector.panelDoc.defaultView);
   yield onTransitionEnd;
 
-  ok(!panel.hasAttribute("pane-collapsed"), "The panel is in expanded state");
+  ok(!panel.classList.contains("pane-collapsed"), "The panel is in expanded state");
 });

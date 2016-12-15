@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,19 +8,40 @@ DevToolsModules(
     'actor-registry.js',
     'addons.js',
     'animation.js',
+    'breakpoint.js',
     'call-watcher.js',
     'canvas.js',
     'css-properties.js',
+    'csscoverage.js',
+    'device.js',
+    'director-manager.js',
+    'director-registry.js',
+    'environment.js',
+    'eventlooplag.js',
+    'frame.js',
+    'framerate.js',
+    'gcli.js',
     'heap-snapshot-file.js',
     'highlighters.js',
     'inspector.js',
+    'layout.js',
+    'memory.js',
     'node.js',
+    'performance-recording.js',
+    'performance.js',
     'preference.js',
+    'profiler.js',
+    'promises.js',
+    'script.js',
     'settings.js',
+    'source.js',
     'storage.js',
+    'string.js',
     'styleeditor.js',
     'styles.js',
     'stylesheets.js',
+    'timeline.js',
     'webaudio.js',
-    'webgl.js'
+    'webgl.js',
+    'worker.js'
 )

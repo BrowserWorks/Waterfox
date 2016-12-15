@@ -15,11 +15,16 @@
 namespace mozilla {
 namespace layers {
 
+bool ComputeHasIntermediateBuffer(gfx::SurfaceFormat aFormat,
+                                  LayersBackend aLayersBackend);
+
 class BufferTextureData : public TextureData
 {
 public:
   static BufferTextureData* Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
-                                   gfx::BackendType aMoz2DBackend,TextureFlags aFlags,
+                                   gfx::BackendType aMoz2DBackend,
+                                   LayersBackend aLayersBackend,
+                                   TextureFlags aFlags,
                                    TextureAllocationFlags aAllocFlags,
                                    ClientIPCAllocator* aAllocator);
 
@@ -33,7 +38,6 @@ public:
   // This creates a half-initialized texture since we don't know the sizes and
   // offsets in the buffer.
   static BufferTextureData* CreateForYCbCrWithBufferSize(ClientIPCAllocator* aAllocator,
-                                                         gfx::SurfaceFormat aFormat,
                                                          int32_t aSize,
                                                          TextureFlags aTextureFlags);
 
@@ -52,8 +56,14 @@ public:
   // use TextureClient's default implementation
   virtual bool UpdateFromSurface(gfx::SourceSurface* aSurface) override;
 
+  virtual BufferTextureData* AsBufferTextureData() override { return this; }
+
   // Don't use this.
   void SetDesciptor(const BufferDescriptor& aDesc);
+
+  Maybe<gfx::IntSize> GetCbCrSize() const;
+
+  Maybe<StereoMode> GetStereoMode() const;
 
 protected:
   gfx::IntSize GetSize() const;

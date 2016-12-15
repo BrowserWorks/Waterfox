@@ -114,18 +114,11 @@ PROT_ListManager.prototype.registerTable = function(tableName,
   // Keep track of all of our update URLs.
   if (!this.needsUpdate_[updateUrl]) {
     this.needsUpdate_[updateUrl] = {};
-    /* Backoff interval should be between 30 and 60 minutes. */
-    var backoffInterval = 30 * 60 * 1000;
-    backoffInterval += Math.floor(Math.random() * (30 * 60 * 1000));
 
-    log("Creating request backoff for " + updateUrl);
-    this.requestBackoffs_[updateUrl] = new RequestBackoff(2 /* max errors */,
-                                      60*1000 /* retry interval, 1 min */,
+    // Using the V4 backoff algorithm for both V2 and V4. See bug 1273398.
+    this.requestBackoffs_[updateUrl] = new RequestBackoffV4(
                                             4 /* num requests */,
-                                   60*60*1000 /* request time, 60 min */,
-                              backoffInterval /* backoff interval, 60 min */,
-                                 8*60*60*1000 /* max backoff, 8hr */);
-
+                                   60*60*1000 /* request time, 60 min */);
   }
   this.needsUpdate_[updateUrl][tableName] = false;
 
@@ -360,11 +353,23 @@ PROT_ListManager.prototype.makeUpdateRequest_ = function(updateUrl, tableData) {
   //   request: list of tables and existing chunk ranges from tableData
   // }
   var streamerMap = { tableList: null, tableNames: {}, request: "" };
+  let useProtobuf = false;
   for (var tableName in this.tablesData) {
     // Skip tables not matching this update url
     if (this.tablesData[tableName].updateUrl != updateUrl) {
       continue;
     }
+
+    // Check if |updateURL| is for 'proto'. (only v4 uses protobuf for now.)
+    // We use the table name 'goog-*-proto' and an additional provider "google4"
+    // to describe the v4 settings.
+    let isCurTableProto = tableName.endsWith('-proto');
+    if (useProtobuf && !isCurTableProto) {
+      log('ERROR: Tables for the same updateURL should all be "proto" or none. ' +
+          'Check "browser.safebrowsing.provider.google4.lists"');
+    }
+    useProtobuf = isCurTableProto;
+
     if (this.needsUpdate_[this.tablesData[tableName].updateUrl][tableName]) {
       streamerMap.tableNames[tableName] = true;
     }
@@ -374,21 +379,27 @@ PROT_ListManager.prototype.makeUpdateRequest_ = function(updateUrl, tableData) {
       streamerMap.tableList += "," + tableName;
     }
   }
-  // Build the request. For each table already in the database, include the
-  // chunk data from the database
-  var lines = tableData.split("\n");
-  for (var i = 0; i < lines.length; i++) {
-    var fields = lines[i].split(";");
-    var name = fields[0];
-    if (streamerMap.tableNames[name]) {
-      streamerMap.request += lines[i] + "\n";
-      delete streamerMap.tableNames[name];
+
+  if (useProtobuf) {
+    // TODO: Bug 1275507 - XPCOM API to build v4 update request.
+    streamerMap.request = "";
+  } else {
+    // Build the request. For each table already in the database, include the
+    // chunk data from the database
+    var lines = tableData.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      var fields = lines[i].split(";");
+      var name = fields[0];
+      if (streamerMap.tableNames[name]) {
+        streamerMap.request += lines[i] + "\n";
+        delete streamerMap.tableNames[name];
+      }
     }
-  }
-  // For each requested table that didn't have chunk data in the database,
-  // request it fresh
-  for (let tableName in streamerMap.tableNames) {
-    streamerMap.request += tableName + ";\n";
+    // For each requested table that didn't have chunk data in the database,
+    // request it fresh
+    for (let tableName in streamerMap.tableNames) {
+      streamerMap.request += tableName + ";\n";
+    }
   }
 
   log("update request: " + JSON.stringify(streamerMap, undefined, 2) + "\n");

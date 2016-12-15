@@ -2,9 +2,8 @@
 
 SimpleTest.waitForExplicitFinish();
 browserElementTestHelpers.setEnabledPref(true);
-browserElementTestHelpers.addPermission();
 
-var fileURL = 'http://example.org/tests/dom/browser-element/mochitest/file_browserElement_NoAudioTrack.html';
+var fileURL = 'chrome://mochitests/content/chrome/dom/browser-element/mochitest/file_browserElement_NoAudioTrack.html';
 var generator = runTests();
 var testFrame;
 
@@ -61,14 +60,13 @@ function runTests() {
 function setupTestFrame() {
   testFrame = document.createElement('iframe');
   testFrame.setAttribute('mozbrowser', 'true');
-  testFrame.setAttribute('mozapp', 'http://example.org/manifest.webapp');
   testFrame.src = fileURL;
 
   function loadend() {
     testFrame.removeEventListener('mozbrowserloadend', loadend);
     ok("allowedAudioChannels" in testFrame, "allowedAudioChannels exist");
     var channels = testFrame.allowedAudioChannels;
-    is(channels.length, 1, "1 audio channel by default");
+    is(channels.length, 9, "9 audio channel by default");
 
     var ac = channels[0];
     ok(ac instanceof BrowserElementAudioChannel, "Correct class");
@@ -91,7 +89,7 @@ function setupTestFrame() {
 }
 
 addEventListener('testready', function() {
-  SpecialPowers.pushPrefEnv({'set': [["b2g.system_manifest_url", "http://mochi.test:8888/manifest.webapp"]]},
+  SpecialPowers.pushPrefEnv({'set': [["b2g.system_startup_url", window.location.href]]},
                             function() {
     SimpleTest.executeSoon(setupTestFrame);
   });

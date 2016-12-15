@@ -12,6 +12,7 @@
 #define mozilla_RestyleTracker_h
 
 #include "mozilla/dom/Element.h"
+#include "nsAutoPtr.h"
 #include "nsClassHashtable.h"
 #include "nsContainerFrame.h"
 #include "mozilla/SplayTree.h"
@@ -133,7 +134,7 @@ public:
                      "InitialOverflowProperty must be set first.");
 
         nsOverflowAreas* overflow = 
-          static_cast<nsOverflowAreas*>(frame->Properties().Get(nsIFrame::InitialOverflowProperty()));
+          frame->Properties().Get(nsIFrame::InitialOverflowProperty());
         if (overflow) {
           // FinishAndStoreOverflow will change the overflow areas passed in,
           // so make a copy.
@@ -298,7 +299,7 @@ public:
   struct RestyleData : Hints {
     RestyleData() {
       mRestyleHint = nsRestyleHint(0);
-      mChangeHint = NS_STYLE_HINT_NONE;
+      mChangeHint = nsChangeHint(0);
     }
 
     RestyleData(nsRestyleHint aRestyleHint, nsChangeHint aChangeHint,
@@ -346,7 +347,7 @@ public:
    * that we did not add as restyle roots initially (due to there being
    * an ancestor with the restyle root bit set), but which we might
    * not have got around to restyling due to the restyle process
-   * terminating early with eRestyleResult_Stop (see ElementRestyler::Restyle).
+   * terminating early with RestyleResul::eStop (see ElementRestyler::Restyle).
    *
    * This function must be called with elements in order such that
    * appending them to mRestyleRoots maintains its ordering invariant that

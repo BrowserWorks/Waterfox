@@ -71,7 +71,7 @@
 // One can construct a ubi::Node value given a pointer to a type that ubi::Node
 // supports. In the other direction, one can convert a ubi::Node back to a
 // pointer; these downcasts are checked dynamically. In particular, one can
-// convert a 'JSRuntime*' to a ubi::Node, yielding a node with an outgoing edge
+// convert a 'JSContext*' to a ubi::Node, yielding a node with an outgoing edge
 // for every root registered with the runtime; starting from this, one can walk
 // the entire heap. (Of course, one could also start traversal at any other kind
 // of type to which one has a pointer.)
@@ -183,6 +183,9 @@ using mozilla::Move;
 using mozilla::RangedPtr;
 using mozilla::Variant;
 
+template <typename T>
+using Vector = mozilla::Vector<T, 0, js::SystemAllocPolicy>;
+
 /*** ubi::StackFrame ******************************************************************************/
 
 // Concrete JS::ubi::StackFrame instances backed by a live SavedFrame object
@@ -256,7 +259,7 @@ class BaseStackFrame {
 
     // Return true if this frame's function is a self-hosted JavaScript builtin,
     // false otherwise.
-    virtual bool isSelfHosted() const = 0;
+    virtual bool isSelfHosted(JSContext* cx) const = 0;
 
     // Construct a SavedFrame stack for the stack starting with this frame and
     // containing all of its parents. The SavedFrame objects will be placed into
@@ -283,8 +286,9 @@ class BaseStackFrame {
     // simplifies the principals check into the boolean isSystem() state. This
     // is fine because we only expose JS::ubi::Stack to devtools and chrome
     // code, and not to the web platform.
-    virtual bool constructSavedFrameStack(JSContext* cx,
-                                          MutableHandleObject outSavedFrameStack) const = 0;
+    virtual MOZ_MUST_USE bool constructSavedFrameStack(JSContext* cx,
+                                                       MutableHandleObject outSavedFrameStack)
+        const = 0;
 
     // Trace the concrete implementation of JS::ubi::StackFrame.
     virtual void trace(JSTracer* trc) = 0;
@@ -412,9 +416,9 @@ class StackFrame {
     AtomOrTwoByteChars functionDisplayName() const { return base()->functionDisplayName(); }
     StackFrame parent() const { return base()->parent(); }
     bool isSystem() const { return base()->isSystem(); }
-    bool isSelfHosted() const { return base()->isSelfHosted(); }
-    bool constructSavedFrameStack(JSContext* cx,
-                                  MutableHandleObject outSavedFrameStack) const {
+    bool isSelfHosted(JSContext* cx) const { return base()->isSelfHosted(cx); }
+    MOZ_MUST_USE bool constructSavedFrameStack(JSContext* cx,
+                                               MutableHandleObject outSavedFrameStack) const {
         return base()->constructSavedFrameStack(cx, outSavedFrameStack);
     }
 
@@ -446,7 +450,9 @@ class ConcreteStackFrame<void> : public BaseStackFrame {
 
     uint64_t identifier() const override { return 0; }
     void trace(JSTracer* trc) override { }
-    bool constructSavedFrameStack(JSContext* cx, MutableHandleObject out) const override {
+    MOZ_MUST_USE bool constructSavedFrameStack(JSContext* cx, MutableHandleObject out)
+        const override
+    {
         out.set(nullptr);
         return true;
     }
@@ -457,11 +463,11 @@ class ConcreteStackFrame<void> : public BaseStackFrame {
     AtomOrTwoByteChars functionDisplayName() const override { MOZ_CRASH("null JS::ubi::StackFrame"); }
     StackFrame parent() const override { MOZ_CRASH("null JS::ubi::StackFrame"); }
     bool isSystem() const override { MOZ_CRASH("null JS::ubi::StackFrame"); }
-    bool isSelfHosted() const override { MOZ_CRASH("null JS::ubi::StackFrame"); }
+    bool isSelfHosted(JSContext* cx) const override { MOZ_CRASH("null JS::ubi::StackFrame"); }
 };
 
-bool ConstructSavedFrameStackSlow(JSContext* cx, JS::ubi::StackFrame& frame,
-                                  MutableHandleObject outSavedFrameStack);
+MOZ_MUST_USE bool ConstructSavedFrameStackSlow(JSContext* cx, JS::ubi::StackFrame& frame,
+                                               MutableHandleObject outSavedFrameStack);
 
 
 /*** ubi::Node ************************************************************************************/
@@ -562,7 +568,7 @@ class Base {
     virtual CoarseType coarseType() const { return CoarseType::Other; }
 
     // Return a human-readable name for the referent's type. The result should
-    // be statically allocated. (You can use MOZ_UTF16("strings") for this.)
+    // be statically allocated. (You can use u"strings" for this.)
     //
     // This must always return Concrete<T>::concreteTypeName; we use that
     // pointer as a tag for this particular referent type.
@@ -572,6 +578,11 @@ class Base {
     // node owns exclusively that are not exposed as their own ubi::Nodes.
     // |mallocSizeOf| should be a malloc block sizing function; see
     // |mfbt/MemoryReporting.h|.
+    //
+    // Because we can use |JS::ubi::Node|s backed by a snapshot that was taken
+    // on a 64-bit platform when we are currently on a 32-bit platform, we
+    // cannot rely on |size_t| for node sizes. Instead, |Size| is uint64_t on
+    // all platforms.
     using Size = uint64_t;
     virtual Size size(mozilla::MallocSizeOf mallocSizeof) const { return 1; }
 
@@ -580,7 +591,7 @@ class Base {
     //
     // If wantNames is true, compute names for edges. Doing so can be expensive
     // in time and memory.
-    virtual js::UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames) const = 0;
+    virtual js::UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames) const = 0;
 
     // Return the Zone to which this node's referent belongs, or nullptr if the
     // referent is not of a type allocated in SpiderMonkey Zones.
@@ -616,7 +627,9 @@ class Base {
     // Otherwise, place nullptr in the out parameter. Caller maintains ownership
     // of the out parameter. True is returned on success, false is returned on
     // OOM.
-    virtual bool jsObjectConstructorName(JSContext* cx, UniqueTwoByteChars& outName) const {
+    virtual MOZ_MUST_USE bool jsObjectConstructorName(JSContext* cx, UniqueTwoByteChars& outName)
+        const
+    {
         outName.reset(nullptr);
         return true;
     }
@@ -633,28 +646,28 @@ class Base {
 };
 
 // A traits template with a specialization for each referent type that
-// ubi::Node supports. The specialization must be the concrete subclass of
-// Base that represents a pointer to the referent type. It must also
-// include the members described here.
+// ubi::Node supports. The specialization must be the concrete subclass of Base
+// that represents a pointer to the referent type. It must include these
+// members:
+//
+//    // The specific char16_t array returned by Concrete<T>::typeName().
+//    static const char16_t concreteTypeName[];
+//
+//    // Construct an instance of this concrete class in |storage| referring
+//    // to |referent|. Implementations typically use a placement 'new'.
+//    //
+//    // In some cases, |referent| will contain dynamic type information that
+//    // identifies it a some more specific subclass of |Referent|. For
+//    // example, when |Referent| is |JSObject|, then |referent->getClass()|
+//    // could tell us that it's actually a JSFunction. Similarly, if
+//    // |Referent| is |nsISupports|, we would like a ubi::Node that knows its
+//    // final implementation type.
+//    //
+//    // So we delegate the actual construction to this specialization, which
+//    // knows Referent's details.
+//    static void construct(void* storage, Referent* referent);
 template<typename Referent>
-struct Concrete {
-    // The specific char16_t array returned by Concrete<T>::typeName.
-    static const char16_t concreteTypeName[];
-
-    // Construct an instance of this concrete class in |storage| referring
-    // to |referent|. Implementations typically use a placement 'new'.
-    //
-    // In some cases, |referent| will contain dynamic type information that
-    // identifies it a some more specific subclass of |Referent|. For example,
-    // when |Referent| is |JSObject|, then |referent->getClass()| could tell us
-    // that it's actually a JSFunction. Similarly, if |Referent| is
-    // |nsISupports|, we would like a ubi::Node that knows its final
-    // implementation type.
-    //
-    // So, we delegate the actual construction to this specialization, which
-    // knows Referent's details.
-    static void construct(void* storage, Referent* referent);
-};
+class Concrete;
 
 // A container for a Base instance; all members simply forward to the contained
 // instance.  This container allows us to pass ubi::Node instances by value.
@@ -668,6 +681,8 @@ class Node {
     void construct(T* ptr) {
         static_assert(sizeof(Concrete<T>) == sizeof(*base()),
                       "ubi::Base specializations must be the same size as ubi::Base");
+        static_assert(mozilla::IsBaseOf<Base, Concrete<T>>::value,
+                      "ubi::Concrete<T> must inherit from ubi::Base");
         Concrete<T>::construct(base(), ptr);
     }
     struct ConstructFunctor;
@@ -762,7 +777,7 @@ class Node {
     JS::Zone* zone()                const { return base()->zone(); }
     JSCompartment* compartment()    const { return base()->compartment(); }
     const char* jsObjectClassName() const { return base()->jsObjectClassName(); }
-    bool jsObjectConstructorName(JSContext* cx, UniqueTwoByteChars& outName) const {
+    MOZ_MUST_USE bool jsObjectConstructorName(JSContext* cx, UniqueTwoByteChars& outName) const {
         return base()->jsObjectConstructorName(cx, outName);
     }
 
@@ -777,8 +792,8 @@ class Node {
         return size;
     }
 
-    js::UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames = true) const {
-        return base()->edges(rt, wantNames);
+    js::UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames = true) const {
+        return base()->edges(cx, wantNames);
     }
 
     bool hasAllocationStack() const { return base()->hasAllocationStack(); }
@@ -943,7 +958,7 @@ class PreComputedEdgeRange : public EdgeRange {
 //
 //    {
 //        mozilla::Maybe<JS::AutoCheckCannotGC> maybeNoGC;
-//        JS::ubi::RootList rootList(rt, maybeNoGC);
+//        JS::ubi::RootList rootList(cx, maybeNoGC);
 //        if (!rootList.init())
 //            return false;
 //
@@ -958,19 +973,19 @@ class MOZ_STACK_CLASS RootList {
     Maybe<AutoCheckCannotGC>& noGC;
 
   public:
-    JSRuntime* rt;
+    JSContext* cx;
     EdgeVector edges;
     bool       wantNames;
 
-    RootList(JSRuntime* rt, Maybe<AutoCheckCannotGC>& noGC, bool wantNames = false);
+    RootList(JSContext* cx, Maybe<AutoCheckCannotGC>& noGC, bool wantNames = false);
 
     // Find all GC roots.
-    bool init();
+    MOZ_MUST_USE bool init();
     // Find only GC roots in the provided set of |JSCompartment|s.
-    bool init(CompartmentSet& debuggees);
+    MOZ_MUST_USE bool init(CompartmentSet& debuggees);
     // Find only GC roots in the given Debugger object's set of debuggee
     // compartments.
-    bool init(HandleObject debuggees);
+    MOZ_MUST_USE bool init(HandleObject debuggees);
 
     // Returns true if the RootList has been initialized successfully, false
     // otherwise.
@@ -979,41 +994,37 @@ class MOZ_STACK_CLASS RootList {
     // Explicitly add the given Node as a root in this RootList. If wantNames is
     // true, you must pass an edgeName. The RootList does not take ownership of
     // edgeName.
-    bool addRoot(Node node, const char16_t* edgeName = nullptr);
+    MOZ_MUST_USE bool addRoot(Node node, const char16_t* edgeName = nullptr);
 };
 
 
 /*** Concrete classes for ubi::Node referent types ************************************************/
 
 template<>
-struct Concrete<RootList> : public Base {
-    js::UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames) const override;
-    const char16_t* typeName() const override { return concreteTypeName; }
-
+class Concrete<RootList> : public Base {
   protected:
     explicit Concrete(RootList* ptr) : Base(ptr) { }
     RootList& get() const { return *static_cast<RootList*>(ptr); }
 
   public:
-    static const char16_t concreteTypeName[];
     static void construct(void* storage, RootList* ptr) { new (storage) Concrete(ptr); }
+
+    js::UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames) const override;
+
+    const char16_t* typeName() const override { return concreteTypeName; }
+    static const char16_t concreteTypeName[];
 };
 
 // A reusable ubi::Concrete specialization base class for types supported by
 // JS::TraceChildren.
 template<typename Referent>
 class TracerConcrete : public Base {
-    const char16_t* typeName() const override { return concreteTypeName; }
-    js::UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames) const override;
+    js::UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames) const override;
     JS::Zone* zone() const override;
 
   protected:
     explicit TracerConcrete(Referent* ptr) : Base(ptr) { }
     Referent& get() const { return *static_cast<Referent*>(ptr); }
-
-  public:
-    static const char16_t concreteTypeName[];
-    static void construct(void* storage, Referent* ptr) { new (storage) TracerConcrete(ptr); }
 };
 
 // For JS::TraceChildren-based types that have a 'compartment' method.
@@ -1024,19 +1035,12 @@ class TracerConcreteWithCompartment : public TracerConcrete<Referent> {
 
   protected:
     explicit TracerConcreteWithCompartment(Referent* ptr) : TracerBase(ptr) { }
-
-  public:
-    static void construct(void* storage, Referent* ptr) {
-        new (storage) TracerConcreteWithCompartment(ptr);
-    }
 };
 
 // Define specializations for some commonly-used public JSAPI types.
 // These can use the generic templates above.
 template<>
-struct Concrete<JS::Symbol> : TracerConcrete<JS::Symbol> {
-    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
-
+class Concrete<JS::Symbol> : TracerConcrete<JS::Symbol> {
   protected:
     explicit Concrete(JS::Symbol* ptr) : TracerConcrete(ptr) { }
 
@@ -1044,32 +1048,32 @@ struct Concrete<JS::Symbol> : TracerConcrete<JS::Symbol> {
     static void construct(void* storage, JS::Symbol* ptr) {
         new (storage) Concrete(ptr);
     }
+
+    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
+
+    const char16_t* typeName() const override { return concreteTypeName; }
+    static const char16_t concreteTypeName[];
 };
 
-template<> struct Concrete<JSScript> : TracerConcreteWithCompartment<JSScript> {
-    CoarseType coarseType() const final { return CoarseType::Script; }
-    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
-    const char* scriptFilename() const final;
-
+template<>
+class Concrete<JSScript> : TracerConcreteWithCompartment<JSScript> {
   protected:
     explicit Concrete(JSScript *ptr) : TracerConcreteWithCompartment<JSScript>(ptr) { }
 
   public:
     static void construct(void *storage, JSScript *ptr) { new (storage) Concrete(ptr); }
+
+    CoarseType coarseType() const final { return CoarseType::Script; }
+    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
+    const char* scriptFilename() const final;
+
+    const char16_t* typeName() const override { return concreteTypeName; }
+    static const char16_t concreteTypeName[];
 };
 
 // The JSObject specialization.
 template<>
 class Concrete<JSObject> : public TracerConcreteWithCompartment<JSObject> {
-    const char* jsObjectClassName() const override;
-    bool jsObjectConstructorName(JSContext* cx, UniqueTwoByteChars& outName) const override;
-    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
-
-    bool hasAllocationStack() const override;
-    StackFrame allocationStack() const override;
-
-    CoarseType coarseType() const final { return CoarseType::Object; }
-
   protected:
     explicit Concrete(JSObject* ptr) : TracerConcreteWithCompartment(ptr) { }
 
@@ -1077,19 +1081,36 @@ class Concrete<JSObject> : public TracerConcreteWithCompartment<JSObject> {
     static void construct(void* storage, JSObject* ptr) {
         new (storage) Concrete(ptr);
     }
+
+    const char* jsObjectClassName() const override;
+    MOZ_MUST_USE bool jsObjectConstructorName(JSContext* cx, UniqueTwoByteChars& outName)
+        const override;
+    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
+
+    bool hasAllocationStack() const override;
+    StackFrame allocationStack() const override;
+
+    CoarseType coarseType() const final { return CoarseType::Object; }
+
+    const char16_t* typeName() const override { return concreteTypeName; }
+    static const char16_t concreteTypeName[];
 };
 
 // For JSString, we extend the generic template with a 'size' implementation.
-template<> struct Concrete<JSString> : TracerConcrete<JSString> {
-    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
-
-    CoarseType coarseType() const final { return CoarseType::String; }
-
+template<>
+class Concrete<JSString> : TracerConcrete<JSString> {
   protected:
     explicit Concrete(JSString *ptr) : TracerConcrete<JSString>(ptr) { }
 
   public:
     static void construct(void *storage, JSString *ptr) { new (storage) Concrete(ptr); }
+
+    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
+
+    CoarseType coarseType() const final { return CoarseType::String; }
+
+    const char16_t* typeName() const override { return concreteTypeName; }
+    static const char16_t concreteTypeName[];
 };
 
 // The ubi::Node null pointer. Any attempt to operate on a null ubi::Node asserts.
@@ -1097,7 +1118,7 @@ template<>
 class Concrete<void> : public Base {
     const char16_t* typeName() const override;
     Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
-    js::UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames) const override;
+    js::UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames) const override;
     JS::Zone* zone() const override;
     JSCompartment* compartment() const override;
     CoarseType coarseType() const final;
@@ -1106,7 +1127,6 @@ class Concrete<void> : public Base {
 
   public:
     static void construct(void* storage, void* ptr) { new (storage) Concrete(ptr); }
-    static const char16_t concreteTypeName[];
 };
 
 

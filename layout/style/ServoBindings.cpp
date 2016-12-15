@@ -6,6 +6,8 @@
 
 #include "mozilla/ServoBindings.h"
 
+#include "StyleStructContext.h"
+#include "gfxFontFamilyList.h"
 #include "nsAttrValueInlines.h"
 #include "nsCSSRuleProcessor.h"
 #include "nsContentUtils.h"
@@ -17,9 +19,11 @@
 #include "nsNameSpaceManager.h"
 #include "nsString.h"
 #include "nsStyleStruct.h"
-#include "StyleStructContext.h"
+#include "nsStyleUtil.h"
+#include "nsTArray.h"
 
 #include "mozilla/EventStates.h"
+#include "mozilla/ServoElementSnapshot.h"
 #include "mozilla/dom/Element.h"
 
 uint32_t
@@ -99,11 +103,10 @@ Gecko_GetDocumentElement(RawGeckoDocument* aDoc)
   return aDoc->GetDocumentElement();
 }
 
-uint8_t
+EventStates::ServoType
 Gecko_ElementState(RawGeckoElement* aElement)
 {
-  return aElement->StyleState().GetInternalValue() &
-         ((1 << (NS_EVENT_STATE_HIGHEST_SERVO_BIT + 1)) - 1);
+  return aElement->StyleState().ServoValue();
 }
 
 bool
@@ -162,9 +165,208 @@ Gecko_GetElementId(RawGeckoElement* aElement)
   return attr ? attr->GetAtomValue() : nullptr;
 }
 
+// Dirtiness tracking.
 uint32_t
-Gecko_ClassOrClassList(RawGeckoElement* aElement,
-                       nsIAtom** aClass, nsIAtom*** aClassList)
+Gecko_GetNodeFlags(RawGeckoNode* aNode)
+{
+  return aNode->GetFlags();
+}
+
+void
+Gecko_SetNodeFlags(RawGeckoNode* aNode, uint32_t aFlags)
+{
+  aNode->SetFlags(aFlags);
+}
+
+void
+Gecko_UnsetNodeFlags(RawGeckoNode* aNode, uint32_t aFlags)
+{
+  aNode->UnsetFlags(aFlags);
+}
+
+nsChangeHint
+Gecko_CalcAndStoreStyleDifference(RawGeckoElement* aElement,
+                                  ServoComputedValues* aComputedValues)
+{
+#ifdef MOZ_STYLO
+  nsStyleContext* oldContext = aElement->GetPrimaryFrame()->StyleContext();
+
+  // Pass the safe thing, which causes us to miss a potential optimization. See
+  // bug 1289863.
+  nsChangeHint forDescendants = nsChangeHint_Hints_NotHandledForDescendants;
+
+  // Eventually, we should compute things out of these flags like
+  // ElementRestyler::RestyleSelf does and pass the result to the caller to
+  // potentially halt traversal. See bug 1289868.
+  uint32_t equalStructs, samePointerStructs;
+  nsChangeHint result =
+    oldContext->CalcStyleDifference(aComputedValues, forDescendants,
+                                    &equalStructs, &samePointerStructs);
+  return result;
+#else
+  MOZ_CRASH("stylo: Shouldn't call Gecko_CalcAndStoreStyleDifference in "
+            "non-stylo build");
+#endif
+}
+
+ServoDeclarationBlock*
+Gecko_GetServoDeclarationBlock(RawGeckoElement* aElement)
+{
+  const nsAttrValue* attr = aElement->GetParsedAttr(nsGkAtoms::style);
+  if (!attr || attr->Type() != nsAttrValue::eServoCSSDeclaration) {
+    return nullptr;
+  }
+  return attr->GetServoCSSDeclarationValue();
+}
+
+template <typename Implementor>
+static nsIAtom*
+AtomAttrValue(Implementor* aElement, nsIAtom* aName)
+{
+  const nsAttrValue* attr = aElement->GetParsedAttr(aName);
+  return attr ? attr->GetAtomValue() : nullptr;
+}
+
+template <typename Implementor, typename MatchFn>
+static bool
+DoMatch(Implementor* aElement, nsIAtom* aNS, nsIAtom* aName, MatchFn aMatch)
+{
+  if (aNS) {
+    int32_t ns = nsContentUtils::NameSpaceManager()->GetNameSpaceID(aNS);
+    NS_ENSURE_TRUE(ns != kNameSpaceID_Unknown, false);
+    const nsAttrValue* value = aElement->GetParsedAttr(aName, ns);
+    return value && aMatch(value);
+  }
+  // No namespace means any namespace - we have to check them all. :-(
+  BorrowedAttrInfo attrInfo;
+  for (uint32_t i = 0; (attrInfo = aElement->GetAttrInfoAt(i)); ++i) {
+    if (attrInfo.mName->LocalName() != aName) {
+      continue;
+    }
+    if (aMatch(attrInfo.mValue)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Work around our overly-restrictive static analysis. This can be removed once
+// bug 1281935 lands.
+template<typename T>
+struct FakeRef {
+  MOZ_IMPLICIT FakeRef(T* aPtr) : mPtr(aPtr) {}
+  operator T*() const { return mPtr; }
+  T* mPtr;
+};
+
+template <typename Implementor>
+static bool
+HasAttr(Implementor* aElement, nsIAtom* aNS, nsIAtom* aName)
+{
+  auto match = [](const nsAttrValue* aValue) { return true; };
+  return DoMatch(aElement, aNS, aName, match);
+}
+
+template <typename Implementor>
+static bool
+AttrEquals(Implementor* aElement, nsIAtom* aNS, nsIAtom* aName, nsIAtom* aStr_,
+           bool aIgnoreCase)
+{
+  FakeRef<nsIAtom> aStr(aStr_);
+  auto match = [aStr, aIgnoreCase](const nsAttrValue* aValue) {
+    return aValue->Equals(aStr, aIgnoreCase ? eIgnoreCase : eCaseMatters);
+  };
+  return DoMatch(aElement, aNS, aName, match);
+}
+
+template <typename Implementor>
+static bool
+AttrDashEquals(Implementor* aElement, nsIAtom* aNS, nsIAtom* aName,
+               nsIAtom* aStr_)
+{
+  FakeRef<nsIAtom> aStr(aStr_);
+  auto match = [aStr](const nsAttrValue* aValue) {
+    nsAutoString str;
+    aValue->ToString(str);
+    const nsDefaultStringComparator c;
+    return nsStyleUtil::DashMatchCompare(str, nsDependentAtomString(aStr), c);
+  };
+  return DoMatch(aElement, aNS, aName, match);
+}
+
+template <typename Implementor>
+static bool
+AttrIncludes(Implementor* aElement, nsIAtom* aNS, nsIAtom* aName,
+             nsIAtom* aStr_)
+{
+  FakeRef<nsIAtom> aStr(aStr_);
+  auto match = [aStr](const nsAttrValue* aValue) {
+    nsAutoString str;
+    aValue->ToString(str);
+    const nsDefaultStringComparator c;
+    return nsStyleUtil::ValueIncludes(str, nsDependentAtomString(aStr), c);
+  };
+  return DoMatch(aElement, aNS, aName, match);
+}
+
+template <typename Implementor>
+static bool
+AttrHasSubstring(Implementor* aElement, nsIAtom* aNS, nsIAtom* aName,
+                 nsIAtom* aStr_)
+{
+  FakeRef<nsIAtom> aStr(aStr_);
+  auto match = [aStr](const nsAttrValue* aValue) {
+    nsAutoString str;
+    aValue->ToString(str);
+    return FindInReadable(str, nsDependentAtomString(aStr));
+  };
+  return DoMatch(aElement, aNS, aName, match);
+}
+
+template <typename Implementor>
+static bool
+AttrHasPrefix(Implementor* aElement, nsIAtom* aNS, nsIAtom* aName,
+              nsIAtom* aStr_)
+{
+  FakeRef<nsIAtom> aStr(aStr_);
+  auto match = [aStr](const nsAttrValue* aValue) {
+    nsAutoString str;
+    aValue->ToString(str);
+    return StringBeginsWith(str, nsDependentAtomString(aStr));
+  };
+  return DoMatch(aElement, aNS, aName, match);
+}
+
+template <typename Implementor>
+static bool
+AttrHasSuffix(Implementor* aElement, nsIAtom* aNS, nsIAtom* aName,
+              nsIAtom* aStr_)
+{
+  FakeRef<nsIAtom> aStr(aStr_);
+  auto match = [aStr](const nsAttrValue* aValue) {
+    nsAutoString str;
+    aValue->ToString(str);
+    return StringEndsWith(str, nsDependentAtomString(aStr));
+  };
+  return DoMatch(aElement, aNS, aName, match);
+}
+
+/**
+ * Gets the class or class list (if any) of the implementor. The calling
+ * convention here is rather hairy, and is optimized for getting Servo the
+ * information it needs for hot calls.
+ *
+ * The return value indicates the number of classes. If zero, neither outparam
+ * is valid. If one, the class_ outparam is filled with the atom of the class.
+ * If two or more, the classList outparam is set to point to an array of atoms
+ * representing the class list.
+ *
+ * The array is borrowed and the atoms are not addrefed. These values can be
+ * invalidated by any DOM mutation. Use them in a tight scope.
+ */
+template <typename Implementor>
+static uint32_t
+ClassOrClassList(Implementor* aElement, nsIAtom** aClass, nsIAtom*** aClassList)
 {
   const nsAttrValue* attr = aElement->GetParsedAttr(nsGkAtoms::_class);
   if (!attr) {
@@ -216,16 +418,67 @@ Gecko_ClassOrClassList(RawGeckoElement* aElement,
   return atomArray->Length();
 }
 
+#define SERVO_IMPL_ELEMENT_ATTR_MATCHING_FUNCTIONS(prefix_, implementor_)      \
+  nsIAtom* prefix_##AtomAttrValue(implementor_* aElement, nsIAtom* aName)      \
+  {                                                                            \
+    return AtomAttrValue(aElement, aName);                                     \
+  }                                                                            \
+  bool prefix_##HasAttr(implementor_* aElement, nsIAtom* aNS, nsIAtom* aName)  \
+  {                                                                            \
+    return HasAttr(aElement, aNS, aName);                                      \
+  }                                                                            \
+  bool prefix_##AttrEquals(implementor_* aElement, nsIAtom* aNS,               \
+                           nsIAtom* aName, nsIAtom* aStr, bool aIgnoreCase)    \
+  {                                                                            \
+    return AttrEquals(aElement, aNS, aName, aStr, aIgnoreCase);                \
+  }                                                                            \
+  bool prefix_##AttrDashEquals(implementor_* aElement, nsIAtom* aNS,           \
+                               nsIAtom* aName, nsIAtom* aStr)                  \
+  {                                                                            \
+    return AttrDashEquals(aElement, aNS, aName, aStr);                         \
+  }                                                                            \
+  bool prefix_##AttrIncludes(implementor_* aElement, nsIAtom* aNS,             \
+                             nsIAtom* aName, nsIAtom* aStr)                    \
+  {                                                                            \
+    return AttrIncludes(aElement, aNS, aName, aStr);                           \
+  }                                                                            \
+  bool prefix_##AttrHasSubstring(implementor_* aElement, nsIAtom* aNS,         \
+                                 nsIAtom* aName, nsIAtom* aStr)                \
+  {                                                                            \
+    return AttrHasSubstring(aElement, aNS, aName, aStr);                       \
+  }                                                                            \
+  bool prefix_##AttrHasPrefix(implementor_* aElement, nsIAtom* aNS,            \
+                              nsIAtom* aName, nsIAtom* aStr)                   \
+  {                                                                            \
+    return AttrHasPrefix(aElement, aNS, aName, aStr);                          \
+  }                                                                            \
+  bool prefix_##AttrHasSuffix(implementor_* aElement, nsIAtom* aNS,            \
+                              nsIAtom* aName, nsIAtom* aStr)                   \
+  {                                                                            \
+    return AttrHasSuffix(aElement, aNS, aName, aStr);                          \
+  }                                                                            \
+  uint32_t prefix_##ClassOrClassList(implementor_* aElement, nsIAtom** aClass, \
+                                     nsIAtom*** aClassList)                    \
+  {                                                                            \
+    return ClassOrClassList(aElement, aClass, aClassList);                     \
+  }
+
+SERVO_IMPL_ELEMENT_ATTR_MATCHING_FUNCTIONS(Gecko_, RawGeckoElement)
+SERVO_IMPL_ELEMENT_ATTR_MATCHING_FUNCTIONS(Gecko_Snapshot, ServoElementSnapshot)
+
+#undef SERVO_IMPL_ELEMENT_ATTR_MATCHING_FUNCTIONS
+
 ServoNodeData*
 Gecko_GetNodeData(RawGeckoNode* aNode)
 {
-  return aNode->GetServoNodeData();
+  return aNode->ServoData().get();
 }
 
 void
 Gecko_SetNodeData(RawGeckoNode* aNode, ServoNodeData* aData)
 {
-  aNode->SetServoNodeData(aData);
+  MOZ_ASSERT(!aNode->ServoData());
+  aNode->ServoData().reset(aData);
 }
 
 nsIAtom*
@@ -244,12 +497,6 @@ void
 Gecko_ReleaseAtom(nsIAtom* aAtom)
 {
   NS_RELEASE(aAtom);
-}
-
-uint32_t
-Gecko_HashAtom(nsIAtom* aAtom)
-{
-  return aAtom->hash();
 }
 
 const uint16_t*
@@ -284,6 +531,33 @@ Gecko_AtomEqualsUTF8IgnoreCase(nsIAtom* aAtom, const char* aString, uint32_t aLe
   aAtom->ToString(atomStr);
   NS_ConvertUTF8toUTF16 inStr(nsDependentCSubstring(aString, aLength));
   return nsContentUtils::EqualsIgnoreASCIICase(atomStr, inStr);
+}
+
+void
+Gecko_FontFamilyList_Clear(FontFamilyList* aList) {
+  aList->Clear();
+}
+
+void
+Gecko_FontFamilyList_AppendNamed(FontFamilyList* aList, nsIAtom* aName)
+{
+  // Servo doesn't record whether the name was quoted or unquoted, so just
+  // assume unquoted for now.
+  FontFamilyName family;
+  aName->ToString(family.mName);
+  aList->Append(family);
+}
+
+void
+Gecko_FontFamilyList_AppendGeneric(FontFamilyList* aList, FontFamilyType aType)
+{
+  aList->Append(FontFamilyName(aType));
+}
+
+void
+Gecko_CopyFontFamilyFrom(nsFont* dst, const nsFont* src)
+{
+  dst->fontlist = src->fontlist;
 }
 
 void
@@ -390,20 +664,46 @@ Gecko_CreateGradient(uint8_t aShape,
 }
 
 void
-Gecko_SetGradientStop(nsStyleGradient* aGradient,
-                      uint32_t aIndex,
-                      const nsStyleCoord* aLocation,
-                      nscolor aColor,
-                      bool aIsInterpolationHint)
+Gecko_EnsureTArrayCapacity(void* aArray, size_t aCapacity, size_t aElemSize)
 {
-  MOZ_ASSERT(aGradient);
-  MOZ_ASSERT(aLocation);
-  MOZ_ASSERT(aIndex < aGradient->mStops.Length());
-
-  aGradient->mStops[aIndex].mColor = aColor;
-  aGradient->mStops[aIndex].mLocation = *aLocation;
-  aGradient->mStops[aIndex].mIsInterpolationHint = aIsInterpolationHint;
+  auto base = reinterpret_cast<nsTArray_base<nsTArrayInfallibleAllocator, nsTArray_CopyWithMemutils> *>(aArray);
+  base->EnsureCapacity<nsTArrayInfallibleAllocator>(aCapacity, aElemSize);
 }
+
+void
+Gecko_EnsureImageLayersLength(nsStyleImageLayers* aLayers, size_t aLen)
+{
+  aLayers->mLayers.EnsureLengthAtLeast(aLen);
+}
+
+void
+Gecko_InitializeImageLayer(nsStyleImageLayers::Layer* aLayer,
+                                nsStyleImageLayers::LayerType aLayerType)
+{
+  aLayer->Initialize(aLayerType);
+}
+
+void
+Gecko_ResetStyleCoord(nsStyleUnit* aUnit, nsStyleUnion* aValue)
+{
+  nsStyleCoord::Reset(*aUnit, *aValue);
+}
+
+void
+Gecko_SetStyleCoordCalcValue(nsStyleUnit* aUnit, nsStyleUnion* aValue, nsStyleCoord::CalcValue aCalc)
+{
+  // Calc units should be cleaned up first
+  MOZ_ASSERT(*aUnit != nsStyleUnit::eStyleUnit_Calc);
+  nsStyleCoord::Calc* calcRef = new nsStyleCoord::Calc();
+  calcRef->mLength = aCalc.mLength;
+  calcRef->mPercent = aCalc.mPercent;
+  calcRef->mHasPercent = aCalc.mHasPercent;
+  *aUnit = nsStyleUnit::eStyleUnit_Calc;
+  aValue->mPointer = calcRef;
+  calcRef->AddRef();
+}
+
+NS_IMPL_THREADSAFE_FFI_REFCOUNTING(nsStyleCoord::Calc, Calc);
 
 #define STYLE_STRUCT(name, checkdata_cb)                                      \
                                                                               \
@@ -512,6 +812,50 @@ Servo_DropStyleSet(RawServoStyleSet* set)
             "non-MOZ_STYLO build");
 }
 
+ServoDeclarationBlock*
+Servo_ParseStyleAttribute(const uint8_t* bytes, uint32_t length,
+                          nsHTMLCSSStyleSheet* cache)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_ParseStyleAttribute in a "
+            "non-MOZ_STYLO build");
+}
+
+void
+Servo_DropDeclarationBlock(ServoDeclarationBlock* declarations)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_DropDeclarationBlock in a "
+            "non-MOZ_STYLO build");
+}
+
+nsHTMLCSSStyleSheet*
+Servo_GetDeclarationBlockCache(ServoDeclarationBlock* declarations)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_GetDeclarationBlockCache in a "
+            "non-MOZ_STYLO build");
+}
+
+void
+Servo_SetDeclarationBlockImmutable(ServoDeclarationBlock* declarations)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_SetDeclarationBlockImmutable in a "
+            "non-MOZ_STYLO build");
+}
+
+void
+Servo_ClearDeclarationBlockCachePointer(ServoDeclarationBlock* declarations)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_ClearDeclarationBlockCachePointer in a "
+            "non-MOZ_STYLO build");
+}
+
+bool
+Servo_CSSSupports(const uint8_t* name, uint32_t name_length,
+                  const uint8_t* value, uint32_t value_length)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_CSSSupports in a "
+            "non-MOZ_STYLO build");
+}
+
 ServoComputedValues*
 Servo_GetComputedValues(RawGeckoNode* node)
 {
@@ -564,6 +908,15 @@ void
 Servo_Initialize()
 {
   MOZ_CRASH("stylo: shouldn't be calling Servo_Initialize in a "
+            "non-MOZ_STYLO build");
+}
+
+// Restyle hints.
+nsRestyleHint
+Servo_ComputeRestyleHint(RawGeckoElement* element,
+                         ServoElementSnapshot* snapshot, RawServoStyleSet* set)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_ComputeRestyleHint in a "
             "non-MOZ_STYLO build");
 }
 

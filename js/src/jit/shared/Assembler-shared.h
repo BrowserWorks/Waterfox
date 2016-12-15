@@ -131,7 +131,7 @@ struct Imm64
 {
     uint64_t value;
 
-    explicit Imm64(uint64_t value) : value(value)
+    explicit Imm64(int64_t value) : value(value)
     { }
 
     Imm32 low() const {
@@ -680,16 +680,6 @@ struct AsmJSFrame
 static_assert(sizeof(AsmJSFrame) == 2 * sizeof(void*), "?!");
 static const uint32_t AsmJSFrameBytesAfterReturnAddress = sizeof(void*);
 
-struct AsmJSGlobalAccess
-{
-    CodeOffset patchAt;
-    unsigned globalDataOffset;
-
-    AsmJSGlobalAccess(CodeOffset patchAt, unsigned globalDataOffset)
-      : patchAt(patchAt), globalDataOffset(globalDataOffset)
-    {}
-};
-
 // Represents an instruction to be patched and the intended pointee. These
 // links are accumulated in the MacroAssembler, but patching is done outside
 // the MacroAssembler (in Module::staticallyLink).
@@ -702,13 +692,37 @@ struct AsmJSAbsoluteAddress
     wasm::SymbolicAddress target;
 };
 
+} // namespace jit
+
+namespace wasm {
+
+// Summarizes a global access for a mutable (in asm.js) or immutable value (in
+// asm.js or the MVP) that needs to get patched later.
+
+struct GlobalAccess
+{
+    GlobalAccess(jit::CodeOffset patchAt, unsigned globalDataOffset)
+      : patchAt(patchAt), globalDataOffset(globalDataOffset)
+    {}
+
+    jit::CodeOffset patchAt;
+    unsigned globalDataOffset;
+};
+
+typedef Vector<GlobalAccess, 0, SystemAllocPolicy> GlobalAccessVector;
+
+} // namespace wasm
+
+namespace jit {
+
 // The base class of all Assemblers for all archs.
 class AssemblerShared
 {
     wasm::CallSiteAndTargetVector callsites_;
     wasm::JumpSiteArray jumpsites_;
-    wasm::HeapAccessVector heapAccesses_;
-    Vector<AsmJSGlobalAccess, 0, SystemAllocPolicy> asmJSGlobalAccesses_;
+    wasm::MemoryAccessVector memoryAccesses_;
+    wasm::BoundsCheckVector boundsChecks_;
+    wasm::GlobalAccessVector globalAccesses_;
     Vector<AsmJSAbsoluteAddress, 0, SystemAllocPolicy> asmJSAbsoluteAddresses_;
 
   protected:
@@ -755,12 +769,14 @@ class AssemblerShared
     const wasm::JumpSiteArray& jumpSites() { return jumpsites_; }
     void clearJumpSites() { for (auto& v : jumpsites_) v.clear(); }
 
-    void append(wasm::HeapAccess access) { enoughMemory_ &= heapAccesses_.append(access); }
-    wasm::HeapAccessVector&& extractHeapAccesses() { return Move(heapAccesses_); }
+    void append(wasm::MemoryAccess access) { enoughMemory_ &= memoryAccesses_.append(access); }
+    wasm::MemoryAccessVector&& extractMemoryAccesses() { return Move(memoryAccesses_); }
 
-    void append(AsmJSGlobalAccess access) { enoughMemory_ &= asmJSGlobalAccesses_.append(access); }
-    size_t numAsmJSGlobalAccesses() const { return asmJSGlobalAccesses_.length(); }
-    AsmJSGlobalAccess asmJSGlobalAccess(size_t i) const { return asmJSGlobalAccesses_[i]; }
+    void append(wasm::BoundsCheck check) { enoughMemory_ &= boundsChecks_.append(check); }
+    wasm::BoundsCheckVector&& extractBoundsChecks() { return Move(boundsChecks_); }
+
+    void append(wasm::GlobalAccess access) { enoughMemory_ &= globalAccesses_.append(access); }
+    const wasm::GlobalAccessVector& globalAccesses() const { return globalAccesses_; }
 
     void append(AsmJSAbsoluteAddress link) { enoughMemory_ &= asmJSAbsoluteAddresses_.append(link); }
     size_t numAsmJSAbsoluteAddresses() const { return asmJSAbsoluteAddresses_.length(); }
@@ -794,15 +810,20 @@ class AssemblerShared
                 offsets[i] += delta;
         }
 
-        i = heapAccesses_.length();
-        enoughMemory_ &= heapAccesses_.appendAll(other.heapAccesses_);
-        for (; i < heapAccesses_.length(); i++)
-            heapAccesses_[i].offsetInsnOffsetBy(delta);
+        i = memoryAccesses_.length();
+        enoughMemory_ &= memoryAccesses_.appendAll(other.memoryAccesses_);
+        for (; i < memoryAccesses_.length(); i++)
+            memoryAccesses_[i].offsetBy(delta);
 
-        i = asmJSGlobalAccesses_.length();
-        enoughMemory_ &= asmJSGlobalAccesses_.appendAll(other.asmJSGlobalAccesses_);
-        for (; i < asmJSGlobalAccesses_.length(); i++)
-            asmJSGlobalAccesses_[i].patchAt.offsetBy(delta);
+        i = boundsChecks_.length();
+        enoughMemory_ &= boundsChecks_.appendAll(other.boundsChecks_);
+        for (; i < boundsChecks_.length(); i++)
+            boundsChecks_[i].offsetBy(delta);
+
+        i = globalAccesses_.length();
+        enoughMemory_ &= globalAccesses_.appendAll(other.globalAccesses_);
+        for (; i < globalAccesses_.length(); i++)
+            globalAccesses_[i].patchAt.offsetBy(delta);
 
         i = asmJSAbsoluteAddresses_.length();
         enoughMemory_ &= asmJSAbsoluteAddresses_.appendAll(other.asmJSAbsoluteAddresses_);

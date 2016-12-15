@@ -16,6 +16,7 @@
 #include "gfxTypes.h"
 #include "gfxFontFamilyList.h"
 #include "gfxBlur.h"
+#include "gfxSkipChars.h"
 #include "nsRect.h"
 
 #include "qcms.h"
@@ -67,8 +68,6 @@ BackendTypeBit(BackendType b)
       printf_stderr("[" module "] " __VA_ARGS__); \
     } \
   } while (0)
-
-extern cairo_user_data_key_t kDrawTarget;
 
 enum eCMSMode {
     eCMSMode_Off          = 0,     // No color management
@@ -175,6 +174,11 @@ public:
     static void ShutdownLayersIPC();
 
     /**
+     * Initialize ScrollMetadata statics. Does not depend on gfxPlatform.
+     */
+    static void InitNullMetadata();
+
+    /**
      * Create an offscreen surface of the given dimensions
      * and image format.
      */
@@ -221,6 +225,9 @@ public:
 
     already_AddRefed<DrawTarget>
       CreateOffscreenCanvasDrawTarget(const mozilla::gfx::IntSize& aSize, mozilla::gfx::SurfaceFormat aFormat);
+
+    already_AddRefed<DrawTarget>
+      CreateSimilarSoftwareDrawTarget(DrawTarget* aDT, const IntSize &aSize, mozilla::gfx::SurfaceFormat aFormat);
 
     virtual already_AddRefed<DrawTarget>
       CreateDrawTargetForData(unsigned char* aData, const mozilla::gfx::IntSize& aSize, 
@@ -271,6 +278,7 @@ public:
       aObj.DefineProperty("AzureContentBackend", GetBackendName(mContentBackend));
     }
     void GetApzSupportInfo(mozilla::widget::InfoObject& aObj);
+    void GetTilesSupportInfo(mozilla::widget::InfoObject& aObj);
 
     // Get the default content backend that will be used with the default
     // compositor. If the compositor is known when calling this function,
@@ -656,11 +664,25 @@ public:
       return mDeviceCounter;
     }
 
+    /**
+     * Check the blocklist for a feature. Returns false if the feature is blocked
+     * with an appropriate message and failure ID.
+     * */
+    static bool IsGfxInfoStatusOkay(int32_t aFeature, nsCString* aOutMessage,
+                                    nsCString& aFailureId);
+
+    const gfxSkipChars& EmptySkipChars() const { return kEmptySkipChars; }
+
 protected:
     gfxPlatform();
     virtual ~gfxPlatform();
 
     virtual void InitAcceleration();
+
+    /**
+     * Called immediately before deleting the gfxPlatform object.
+     */
+    virtual void WillShutdown();
 
     /**
      * Initialized hardware vsync based on each platform.
@@ -752,6 +774,7 @@ private:
      */
     static void Init();
 
+    static void InitOpenGLConfig();
     static void CreateCMSOutputProfile();
 
     static void GetCMSOutputProfileData(void *&mem, size_t &size);
@@ -793,6 +816,7 @@ private:
 
     mozilla::widget::GfxInfoCollector<gfxPlatform> mAzureCanvasBackendCollector;
     mozilla::widget::GfxInfoCollector<gfxPlatform> mApzSupportCollector;
+    mozilla::widget::GfxInfoCollector<gfxPlatform> mTilesInfoCollector;
 
     RefPtr<mozilla::gfx::DrawEventRecorder> mRecorder;
     RefPtr<mozilla::gl::SkiaGLGlue> mSkiaGlue;
@@ -806,6 +830,10 @@ private:
 
     // Generation number for devices that ClientLayerManagers might depend on.
     uint64_t mDeviceCounter;
+
+    // An instance of gfxSkipChars which is empty. It is used as the
+    // basis for error-case iterators.
+    const gfxSkipChars kEmptySkipChars;
 };
 
 #endif /* GFX_PLATFORM_H */

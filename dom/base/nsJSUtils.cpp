@@ -27,6 +27,7 @@
 #include "nsGlobalWindow.h"
 
 #include "mozilla/dom/BindingUtils.h"
+#include "mozilla/dom/Date.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ScriptSettings.h"
 
@@ -149,10 +150,9 @@ nsJSUtils::EvaluateString(JSContext* aCx,
   PROFILER_LABEL("nsJSUtils", "EvaluateString",
     js::ProfileEntry::Category::JS);
 
-  MOZ_ASSERT(JS::ContextOptionsRef(aCx).autoJSAPIOwnsErrorReporting(),
-             "Caller must own error reporting");
   MOZ_ASSERT_IF(aCompileOptions.versionSet,
                 aCompileOptions.version != JSVERSION_UNKNOWN);
+  MOZ_ASSERT_IF(aEvaluateOptions.coerceToString, !aCompileOptions.noScriptRval);
   MOZ_ASSERT(aCx == nsContentUtils::GetCurrentJSContext());
   MOZ_ASSERT(aSrcBuf.get());
   MOZ_ASSERT(js::GetGlobalForObjectCrossCompartment(aEvaluationGlobal) ==
@@ -196,7 +196,7 @@ nsJSUtils::EvaluateString(JSContext* aCx,
 
     if (ok && aOffThreadToken) {
       JS::Rooted<JSScript*>
-        script(aCx, JS::FinishOffThreadScript(aCx, JS_GetRuntime(aCx), *aOffThreadToken));
+        script(aCx, JS::FinishOffThreadScript(aCx, *aOffThreadToken));
       *aOffThreadToken = nullptr; // Mark the token as having been finished.
       if (script) {
         ok = JS_ExecuteScript(aCx, scopeChain, script);
@@ -205,6 +205,13 @@ nsJSUtils::EvaluateString(JSContext* aCx,
       }
     } else if (ok) {
       ok = JS::Evaluate(aCx, scopeChain, aCompileOptions, aSrcBuf, aRetValue);
+    }
+
+    if (ok && aEvaluateOptions.coerceToString && !aRetValue.isUndefined()) {
+      JS::Rooted<JS::Value> value(aCx, aRetValue);
+      JSString* str = JS::ToString(aCx, value);
+      ok = !!str;
+      aRetValue.set(ok ? JS::StringValue(str) : JS::UndefinedValue());
     }
   }
 
@@ -278,8 +285,6 @@ nsJSUtils::CompileModule(JSContext* aCx,
   PROFILER_LABEL("nsJSUtils", "CompileModule",
     js::ProfileEntry::Category::JS);
 
-  MOZ_ASSERT(JS::ContextOptionsRef(aCx).autoJSAPIOwnsErrorReporting(),
-             "Caller must own error reporting");
   MOZ_ASSERT_IF(aCompileOptions.versionSet,
                 aCompileOptions.version != JSVERSION_UNKNOWN);
   MOZ_ASSERT(aCx == nsContentUtils::GetCurrentJSContext());
@@ -305,8 +310,6 @@ nsJSUtils::ModuleDeclarationInstantiation(JSContext* aCx, JS::Handle<JSObject*> 
   PROFILER_LABEL("nsJSUtils", "ModuleDeclarationInstantiation",
     js::ProfileEntry::Category::JS);
 
-  MOZ_ASSERT(JS::ContextOptionsRef(aCx).autoJSAPIOwnsErrorReporting(),
-             "Caller must own error reporting");
   MOZ_ASSERT(aCx == nsContentUtils::GetCurrentJSContext());
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(nsContentUtils::IsInMicroTask());
@@ -326,8 +329,6 @@ nsJSUtils::ModuleEvaluation(JSContext* aCx, JS::Handle<JSObject*> aModule)
   PROFILER_LABEL("nsJSUtils", "ModuleEvaluation",
     js::ProfileEntry::Category::JS);
 
-  MOZ_ASSERT(JS::ContextOptionsRef(aCx).autoJSAPIOwnsErrorReporting(),
-             "Caller must own error reporting");
   MOZ_ASSERT(aCx == nsContentUtils::GetCurrentJSContext());
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(nsContentUtils::IsInMicroTask());
@@ -374,8 +375,8 @@ nsJSUtils::ResetTimeZone()
 
 bool nsAutoJSString::init(const JS::Value &v)
 {
-  JSContext* cx = nsContentUtils::RootingCxForThread();
-  if (!init(nsContentUtils::RootingCxForThread(), v)) {
+  JSContext* cx = nsContentUtils::RootingCx();
+  if (!init(cx, v)) {
     JS_ClearPendingException(cx);
     return false;
   }

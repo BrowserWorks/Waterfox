@@ -29,6 +29,9 @@ def add_common_arguments(parser):
     parser.add_argument("--sequential",
                         action="store_true", dest="sequential", default=False,
                         help="Run all tests sequentially")
+    parser.add_argument("--temp-dir",
+                        dest="tempDir", default=None,
+                        help="Directory to use for temporary files")
     parser.add_argument("--testing-modules-dir",
                         dest="testingModulesDir", default=None,
                         help="Directory where testing modules are located.")
@@ -61,6 +64,10 @@ def add_common_arguments(parser):
                         action="store", type=str, dest="symbolsPath",
                         default=None,
                         help="absolute path to directory containing breakpad symbols, or the URL of a zip file containing symbols")
+    parser.add_argument("--jscov-dir-prefix",
+                        action="store", type=str, dest="jscovdir",
+                        default=argparse.SUPPRESS,
+                        help="Directory to store per-test javascript line coverage data as json.")
     parser.add_argument("--debugger",
                         action="store", dest="debugger",
                         help="use the given debugger to launch the application")

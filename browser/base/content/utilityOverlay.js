@@ -5,6 +5,7 @@
 
 // Services = object with smart getters for common XPCOM services
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
+Components.utils.import("resource://gre/modules/ContextualIdentityService.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
@@ -12,9 +13,6 @@ Components.utils.import("resource:///modules/RecentWindow.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ShellService",
                                   "resource:///modules/ShellService.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
-                                  "resource:///modules/ContextualIdentityService.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
                                    "@mozilla.org/browser/aboutnewtab-service;1",
@@ -337,12 +335,12 @@ function openLinkIn(url, where, params) {
       flags |= Ci.nsIWebNavigation.LOAD_FLAGS_FIXUP_SCHEME_TYPOS;
     }
 
-    // LOAD_FLAGS_DISALLOW_INHERIT_OWNER isn't supported for javascript URIs,
+    // LOAD_FLAGS_DISALLOW_INHERIT_PRINCIPAL isn't supported for javascript URIs,
     // i.e. it causes them not to load at all. Callers should strip
     // "javascript:" from pasted strings to protect users from malicious URIs
     // (see stripUnsafeProtocolOnPaste).
     if (aDisallowInheritPrincipal && !(uriObj && uriObj.schemeIs("javascript"))) {
-      flags |= Ci.nsIWebNavigation.LOAD_FLAGS_DISALLOW_INHERIT_OWNER;
+      flags |= Ci.nsIWebNavigation.LOAD_FLAGS_DISALLOW_INHERIT_PRINCIPAL;
     }
 
     if (aAllowPopups) {
@@ -423,15 +421,15 @@ function createUserContextMenu(event, addCommandAttribute = true, excludeUserCon
   let bundle = document.getElementById("bundle_browser");
   let docfrag = document.createDocumentFragment();
 
-  // If we are exlucing a userContextId, we want to add a 'no-container' item.
+  // If we are excluding a userContextId, we want to add a 'no-container' item.
   if (excludeUserContextId) {
     let menuitem = document.createElement("menuitem");
     menuitem.setAttribute("usercontextid", "0");
-    menuitem.setAttribute("label", "No Container");
-    menuitem.setAttribute("accesskey", "N");
+    menuitem.setAttribute("label", bundle.getString("userContextNone.label"));
+    menuitem.setAttribute("accesskey", bundle.getString("userContextNone.accesskey"));
 
-    // We don't set oncommand/command attribute because if we have to exlclude
-    // a userContextId we are generating the contextMenu for the rightclick and
+    // We don't set an oncommand/command attribute attribute because if we have
+    // to exclude a userContextId we are generating the contextMenu and
     // addCommandAttribute will be false.
 
     docfrag.appendChild(menuitem);
@@ -447,8 +445,12 @@ function createUserContextMenu(event, addCommandAttribute = true, excludeUserCon
 
     let menuitem = document.createElement("menuitem");
     menuitem.setAttribute("usercontextid", identity.userContextId);
-    menuitem.setAttribute("label", bundle.getString(identity.label));
-    menuitem.setAttribute("accesskey", bundle.getString(identity.accessKey));
+    menuitem.setAttribute("label", ContextualIdentityService.getUserContextLabel(identity.userContextId));
+
+    if (identity.accessKey) {
+      menuitem.setAttribute("accesskey", bundle.getString(identity.accessKey));
+    }
+
     menuitem.classList.add("menuitem-iconic");
 
     if (addCommandAttribute) {
@@ -625,7 +627,7 @@ function openPreferences(paneID, extraArgs)
     win = Services.ww.openWindow(null, Services.prefs.getCharPref("browser.chromeURL"),
                                  "_blank", "chrome,dialog=no,all", windowArguments);
   } else {
-    newLoad = !win.switchToTabHavingURI(preferencesURL, true, {ignoreFragment: true});
+    newLoad = !win.switchToTabHavingURI(preferencesURL, true, { ignoreFragment: true, replaceQueryString: true });
     browser = win.gBrowser.selectedBrowser;
   }
 

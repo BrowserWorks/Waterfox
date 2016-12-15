@@ -41,12 +41,16 @@ namespace JS {
 namespace ubi {
 
 template<>
-struct Concrete<FakeNode> : public Base
+class Concrete<FakeNode> : public Base
 {
-    static const char16_t concreteTypeName[];
-    const char16_t* typeName() const override { return concreteTypeName; }
+  protected:
+    explicit Concrete(FakeNode* ptr) : Base(ptr) { }
+    FakeNode& get() const { return *static_cast<FakeNode*>(ptr); }
 
-    UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames) const override {
+  public:
+    static void construct(void* storage, FakeNode* ptr) { new (storage) Concrete(ptr); }
+
+    UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames) const override {
         return UniquePtr<EdgeRange>(js_new<PreComputedEdgeRange>(get().edges));
     }
 
@@ -54,14 +58,11 @@ struct Concrete<FakeNode> : public Base
         return 1;
     }
 
-    static void construct(void* storage, FakeNode* ptr) { new (storage) Concrete(ptr); }
-
-  protected:
-    explicit Concrete(FakeNode* ptr) : Base(ptr) { }
-    FakeNode& get() const { return *static_cast<FakeNode*>(ptr); }
+    static const char16_t concreteTypeName[];
+    const char16_t* typeName() const override { return concreteTypeName; }
 };
 
-const char16_t Concrete<FakeNode>::concreteTypeName[] = MOZ_UTF16("FakeNode");
+const char16_t Concrete<FakeNode>::concreteTypeName[] = u"FakeNode";
 
 } // namespace ubi
 } // namespace JS
@@ -156,7 +157,7 @@ BEGIN_TEST(test_ubiNodeJSObjectConstructorName)
     UniqueTwoByteChars ctorName;
     CHECK(JS::ubi::Node(&val.toObject()).jsObjectConstructorName(cx, ctorName));
     CHECK(ctorName);
-    CHECK(js_strcmp(ctorName.get(), MOZ_UTF16("Ctor")) == 0);
+    CHECK(js_strcmp(ctorName.get(), u"Ctor") == 0);
 
     return true;
 }
@@ -374,8 +375,8 @@ BEGIN_TEST(test_ubiPostOrder)
         // `expectedEdges` as we find them to ensure that we only find each edge
         // once.
 
-        JS::AutoCheckCannotGC nogc(rt);
-        JS::ubi::PostOrder traversal(rt, nogc);
+        JS::AutoCheckCannotGC nogc(cx);
+        JS::ubi::PostOrder traversal(cx, nogc);
         CHECK(traversal.init());
         CHECK(traversal.addStart(&r));
 
@@ -522,8 +523,8 @@ BEGIN_TEST(test_JS_ubi_DominatorTree)
 
     mozilla::Maybe<JS::ubi::DominatorTree> maybeTree;
     {
-        JS::AutoCheckCannotGC noGC(rt);
-        maybeTree = JS::ubi::DominatorTree::Create(rt, noGC, &r);
+        JS::AutoCheckCannotGC noGC(cx);
+        maybeTree = JS::ubi::DominatorTree::Create(cx, noGC, &r);
     }
 
     CHECK(maybeTree.isSome());
@@ -692,13 +693,13 @@ BEGIN_TEST(test_JS_ubi_ShortestPaths_no_path)
 
     mozilla::Maybe<JS::ubi::ShortestPaths> maybeShortestPaths;
     {
-        JS::AutoCheckCannotGC noGC(rt);
+        JS::AutoCheckCannotGC noGC(cx);
 
         JS::ubi::NodeSet targets;
         CHECK(targets.init());
         CHECK(targets.put(&b));
 
-        maybeShortestPaths = JS::ubi::ShortestPaths::Create(rt, noGC, 10, &a,
+        maybeShortestPaths = JS::ubi::ShortestPaths::Create(cx, noGC, 10, &a,
                                                             mozilla::Move(targets));
     }
 
@@ -734,13 +735,13 @@ BEGIN_TEST(test_JS_ubi_ShortestPaths_one_path)
 
     mozilla::Maybe<JS::ubi::ShortestPaths> maybeShortestPaths;
     {
-        JS::AutoCheckCannotGC noGC(rt);
+        JS::AutoCheckCannotGC noGC(cx);
 
         JS::ubi::NodeSet targets;
         CHECK(targets.init());
         CHECK(targets.put(&b));
 
-        maybeShortestPaths = JS::ubi::ShortestPaths::Create(rt, noGC, 10, &a,
+        maybeShortestPaths = JS::ubi::ShortestPaths::Create(cx, noGC, 10, &a,
                                                             mozilla::Move(targets));
     }
 
@@ -801,13 +802,13 @@ BEGIN_TEST(test_JS_ubi_ShortestPaths_multiple_paths)
 
     mozilla::Maybe<JS::ubi::ShortestPaths> maybeShortestPaths;
     {
-        JS::AutoCheckCannotGC noGC(rt);
+        JS::AutoCheckCannotGC noGC(cx);
 
         JS::ubi::NodeSet targets;
         CHECK(targets.init());
         CHECK(targets.put(&f));
 
-        maybeShortestPaths = JS::ubi::ShortestPaths::Create(rt, noGC, 10, &a,
+        maybeShortestPaths = JS::ubi::ShortestPaths::Create(cx, noGC, 10, &a,
                                                             mozilla::Move(targets));
     }
 
@@ -893,13 +894,13 @@ BEGIN_TEST(test_JS_ubi_ShortestPaths_more_paths_than_max)
 
     mozilla::Maybe<JS::ubi::ShortestPaths> maybeShortestPaths;
     {
-        JS::AutoCheckCannotGC noGC(rt);
+        JS::AutoCheckCannotGC noGC(cx);
 
         JS::ubi::NodeSet targets;
         CHECK(targets.init());
         CHECK(targets.put(&f));
 
-        maybeShortestPaths = JS::ubi::ShortestPaths::Create(rt, noGC, 1, &a,
+        maybeShortestPaths = JS::ubi::ShortestPaths::Create(cx, noGC, 1, &a,
                                                             mozilla::Move(targets));
     }
 
@@ -937,19 +938,19 @@ BEGIN_TEST(test_JS_ubi_ShortestPaths_multiple_edges_to_target)
     //                '---'
     FakeNode a('a');
     FakeNode b('b');
-    CHECK(a.addEdgeTo(b, MOZ_UTF16("x")));
-    CHECK(a.addEdgeTo(b, MOZ_UTF16("y")));
-    CHECK(a.addEdgeTo(b, MOZ_UTF16("z")));
+    CHECK(a.addEdgeTo(b, u"x"));
+    CHECK(a.addEdgeTo(b, u"y"));
+    CHECK(a.addEdgeTo(b, u"z"));
 
     mozilla::Maybe<JS::ubi::ShortestPaths> maybeShortestPaths;
     {
-        JS::AutoCheckCannotGC noGC(rt);
+        JS::AutoCheckCannotGC noGC(cx);
 
         JS::ubi::NodeSet targets;
         CHECK(targets.init());
         CHECK(targets.put(&b));
 
-        maybeShortestPaths = JS::ubi::ShortestPaths::Create(rt, noGC, 10, &a,
+        maybeShortestPaths = JS::ubi::ShortestPaths::Create(cx, noGC, 10, &a,
                                                             mozilla::Move(targets));
     }
 

@@ -11,6 +11,7 @@
 #include "libGLESv2/entry_points_gles_2_0.h"
 #include "libGLESv2/entry_points_gles_2_0_ext.h"
 #include "libGLESv2/entry_points_gles_3_0.h"
+#include "libGLESv2/entry_points_gles_3_1.h"
 #include "libGLESv2/global_state.h"
 
 #include "libANGLE/Context.h"
@@ -198,7 +199,8 @@ EGLBoolean EGLAPIENTRY ChooseConfig(EGLDisplay dpy, const EGLint *attrib_list, E
         return EGL_FALSE;
     }
 
-    std::vector<const Config*> filteredConfigs = display->getConfigs(AttributeMap(attrib_list));
+    std::vector<const Config *> filteredConfigs =
+        display->getConfigs(AttributeMap::CreateFromIntArray(attrib_list));
     if (configs)
     {
         filteredConfigs.resize(std::min<size_t>(filteredConfigs.size(), config_size));
@@ -245,7 +247,7 @@ EGLSurface EGLAPIENTRY CreateWindowSurface(EGLDisplay dpy, EGLConfig config, EGL
 
     Display *display = static_cast<Display*>(dpy);
     Config *configuration = static_cast<Config*>(config);
-    AttributeMap attributes(attrib_list);
+    AttributeMap attributes = AttributeMap::CreateFromIntArray(attrib_list);
 
     Error error = ValidateCreateWindowSurface(display, configuration, win, attributes);
     if (error.isError())
@@ -272,7 +274,7 @@ EGLSurface EGLAPIENTRY CreatePbufferSurface(EGLDisplay dpy, EGLConfig config, co
 
     Display *display = static_cast<Display*>(dpy);
     Config *configuration = static_cast<Config*>(config);
-    AttributeMap attributes(attrib_list);
+    AttributeMap attributes = AttributeMap::CreateFromIntArray(attrib_list);
 
     Error error = ValidateCreatePbufferSurface(display, configuration, attributes);
     if (error.isError())
@@ -474,7 +476,7 @@ EGLContext EGLAPIENTRY CreateContext(EGLDisplay dpy, EGLConfig config, EGLContex
     Display *display = static_cast<Display*>(dpy);
     Config *configuration = static_cast<Config*>(config);
     gl::Context* sharedGLContext = static_cast<gl::Context*>(share_context);
-    AttributeMap attributes(attrib_list);
+    AttributeMap attributes      = AttributeMap::CreateFromIntArray(attrib_list);
 
     Error error = ValidateCreateContext(display, configuration, sharedGLContext, attributes);
     if (error.isError())
@@ -581,19 +583,10 @@ EGLBoolean EGLAPIENTRY MakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface r
         }
     }
 
-    if (display->isInitialized())
+    if (display->isInitialized() && display->testDeviceLost())
     {
-        if (display->testDeviceLost())
-        {
-            display->notifyDeviceLost();
-            return EGL_FALSE;
-        }
-
-        if (display->isDeviceLost())
-        {
-            SetGlobalError(Error(EGL_CONTEXT_LOST));
-            return EGL_FALSE;
-        }
+        SetGlobalError(Error(EGL_CONTEXT_LOST));
+        return EGL_FALSE;
     }
 
     Surface *drawSurface = static_cast<Surface*>(draw);
@@ -727,8 +720,8 @@ EGLBoolean EGLAPIENTRY QueryContext(EGLDisplay dpy, EGLContext ctx, EGLint attri
         *value = context->getClientType();
         break;
       case EGL_CONTEXT_CLIENT_VERSION:
-        *value = context->getClientVersion();
-        break;
+          *value = context->getClientMajorVersion();
+          break;
       case EGL_RENDER_BUFFER:
         *value = context->getRenderBuffer();
         break;
@@ -811,7 +804,7 @@ EGLBoolean EGLAPIENTRY SwapBuffers(EGLDisplay dpy, EGLSurface surface)
         return EGL_FALSE;
     }
 
-    if (display->isDeviceLost())
+    if (display->testDeviceLost())
     {
         SetGlobalError(Error(EGL_CONTEXT_LOST));
         return EGL_FALSE;
@@ -848,7 +841,7 @@ EGLBoolean EGLAPIENTRY CopyBuffers(EGLDisplay dpy, EGLSurface surface, EGLNative
         return EGL_FALSE;
     }
 
-    if (display->isDeviceLost())
+    if (display->testDeviceLost())
     {
         SetGlobalError(Error(EGL_CONTEXT_LOST));
         return EGL_FALSE;
@@ -1065,7 +1058,7 @@ EGLSurface EGLAPIENTRY CreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buf
 
     Display *display = static_cast<Display*>(dpy);
     Config *configuration = static_cast<Config*>(config);
-    AttributeMap attributes(attrib_list);
+    AttributeMap attributes = AttributeMap::CreateFromIntArray(attrib_list);
 
     Error error = ValidateCreatePbufferFromClientBuffer(display, buftype, buffer, configuration, attributes);
     if (error.isError())
@@ -1410,6 +1403,19 @@ __eglMustCastToProperFunctionPointerType EGLAPIENTRY GetProcAddress(const char *
         INSERT_PROC_ADDRESS(gl, GetQueryivEXT);
         INSERT_PROC_ADDRESS(gl, GetQueryObjectuivEXT);
 
+        // GL_EXT_disjoint_timer_query
+        INSERT_PROC_ADDRESS(gl, GenQueriesEXT);
+        INSERT_PROC_ADDRESS(gl, DeleteQueriesEXT);
+        INSERT_PROC_ADDRESS(gl, IsQueryEXT);
+        INSERT_PROC_ADDRESS(gl, BeginQueryEXT);
+        INSERT_PROC_ADDRESS(gl, EndQueryEXT);
+        INSERT_PROC_ADDRESS(gl, QueryCounterEXT);
+        INSERT_PROC_ADDRESS(gl, GetQueryivEXT);
+        INSERT_PROC_ADDRESS(gl, GetQueryObjectivEXT);
+        INSERT_PROC_ADDRESS(gl, GetQueryObjectuivEXT);
+        INSERT_PROC_ADDRESS(gl, GetQueryObjecti64vEXT);
+        INSERT_PROC_ADDRESS(gl, GetQueryObjectui64vEXT);
+
         // GL_EXT_draw_buffers
         INSERT_PROC_ADDRESS(gl, DrawBuffersEXT);
 
@@ -1458,6 +1464,13 @@ __eglMustCastToProperFunctionPointerType EGLAPIENTRY GetProcAddress(const char *
         INSERT_PROC_ADDRESS(gl, ObjectPtrLabelKHR);
         INSERT_PROC_ADDRESS(gl, GetObjectPtrLabelKHR);
         INSERT_PROC_ADDRESS(gl, GetPointervKHR);
+
+        // GL_CHROMIUM_bind_uniform_location
+        INSERT_PROC_ADDRESS(gl, BindUniformLocationCHROMIUM);
+
+        // GL_CHROMIUM_copy_texture
+        INSERT_PROC_ADDRESS(gl, CopyTextureCHROMIUM);
+        INSERT_PROC_ADDRESS(gl, CopySubTextureCHROMIUM);
 
         // GLES3 core
         INSERT_PROC_ADDRESS(gl, ReadBuffer);
@@ -1566,6 +1579,76 @@ __eglMustCastToProperFunctionPointerType EGLAPIENTRY GetProcAddress(const char *
         INSERT_PROC_ADDRESS(gl, TexStorage3D);
         INSERT_PROC_ADDRESS(gl, GetInternalformativ);
 
+        // GLES31 core
+        INSERT_PROC_ADDRESS(gl, DispatchCompute);
+        INSERT_PROC_ADDRESS(gl, DispatchComputeIndirect);
+        INSERT_PROC_ADDRESS(gl, DrawArraysIndirect);
+        INSERT_PROC_ADDRESS(gl, DrawElementsIndirect);
+        INSERT_PROC_ADDRESS(gl, FramebufferParameteri);
+        INSERT_PROC_ADDRESS(gl, GetFramebufferParameteriv);
+        INSERT_PROC_ADDRESS(gl, GetProgramInterfaceiv);
+        INSERT_PROC_ADDRESS(gl, GetProgramResourceIndex);
+        INSERT_PROC_ADDRESS(gl, GetProgramResourceName);
+        INSERT_PROC_ADDRESS(gl, GetProgramResourceiv);
+        INSERT_PROC_ADDRESS(gl, GetProgramResourceLocation);
+        INSERT_PROC_ADDRESS(gl, UseProgramStages);
+        INSERT_PROC_ADDRESS(gl, ActiveShaderProgram);
+        INSERT_PROC_ADDRESS(gl, CreateShaderProgramv);
+        INSERT_PROC_ADDRESS(gl, BindProgramPipeline);
+        INSERT_PROC_ADDRESS(gl, DeleteProgramPipelines);
+        INSERT_PROC_ADDRESS(gl, GenProgramPipelines);
+        INSERT_PROC_ADDRESS(gl, IsProgramPipeline);
+        INSERT_PROC_ADDRESS(gl, GetProgramPipelineiv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform1i);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform2i);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform3i);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform4i);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform1ui);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform2ui);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform3ui);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform4ui);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform1f);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform2f);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform3f);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform4f);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform1iv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform2iv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform3iv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform4iv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform1uiv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform2uiv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform3uiv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform4uiv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform1fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform2fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform3fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniform4fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniformMatrix2fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniformMatrix3fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniformMatrix4fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniformMatrix2x3fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniformMatrix3x2fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniformMatrix2x4fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniformMatrix4x2fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniformMatrix3x4fv);
+        INSERT_PROC_ADDRESS(gl, ProgramUniformMatrix4x3fv);
+        INSERT_PROC_ADDRESS(gl, ValidateProgramPipeline);
+        INSERT_PROC_ADDRESS(gl, GetProgramPipelineInfoLog);
+        INSERT_PROC_ADDRESS(gl, BindImageTexture);
+        INSERT_PROC_ADDRESS(gl, GetBooleani_v);
+        INSERT_PROC_ADDRESS(gl, MemoryBarrier);
+        INSERT_PROC_ADDRESS(gl, MemoryBarrierByRegion);
+        INSERT_PROC_ADDRESS(gl, TexStorage2DMultisample);
+        INSERT_PROC_ADDRESS(gl, GetMultisamplefv);
+        INSERT_PROC_ADDRESS(gl, SampleMaski);
+        INSERT_PROC_ADDRESS(gl, GetTexLevelParameteriv);
+        INSERT_PROC_ADDRESS(gl, GetTexLevelParameterfv);
+        INSERT_PROC_ADDRESS(gl, BindVertexBuffer);
+        INSERT_PROC_ADDRESS(gl, VertexAttribFormat);
+        INSERT_PROC_ADDRESS(gl, VertexAttribIFormat);
+        INSERT_PROC_ADDRESS(gl, VertexAttribBinding);
+        INSERT_PROC_ADDRESS(gl, VertexBindingDivisor);
+
         // EGL 1.0
         INSERT_PROC_ADDRESS(egl, ChooseConfig);
         INSERT_PROC_ADDRESS(egl, CopyBuffers);
@@ -1641,6 +1724,25 @@ __eglMustCastToProperFunctionPointerType EGLAPIENTRY GetProcAddress(const char *
         // EGL_EXT_device_creation
         INSERT_PROC_ADDRESS(egl, CreateDeviceANGLE);
         INSERT_PROC_ADDRESS(egl, ReleaseDeviceANGLE);
+
+        // EGL_KHR_stream
+        INSERT_PROC_ADDRESS(egl, CreateStreamKHR);
+        INSERT_PROC_ADDRESS(egl, DestroyStreamKHR);
+        INSERT_PROC_ADDRESS(egl, StreamAttribKHR);
+        INSERT_PROC_ADDRESS(egl, QueryStreamKHR);
+        INSERT_PROC_ADDRESS(egl, QueryStreamu64KHR);
+
+        // EGL_KHR_stream_consumer_gltexture
+        INSERT_PROC_ADDRESS(egl, StreamConsumerGLTextureExternalKHR);
+        INSERT_PROC_ADDRESS(egl, StreamConsumerAcquireKHR);
+        INSERT_PROC_ADDRESS(egl, StreamConsumerReleaseKHR);
+
+        // EGL_NV_stream_consumer_gltexture_yuv
+        INSERT_PROC_ADDRESS(egl, StreamConsumerGLTextureExternalAttribsNV);
+
+        // EGL_ANGLE_stream_producer_d3d_texture_nv12
+        INSERT_PROC_ADDRESS(egl, CreateStreamProducerD3DTextureNV12ANGLE);
+        INSERT_PROC_ADDRESS(egl, StreamPostD3DTextureNV12ANGLE);
 
 #undef INSERT_PROC_ADDRESS
         return map;

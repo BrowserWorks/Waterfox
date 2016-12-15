@@ -27,7 +27,6 @@
 #include "nsITimer.h"
 
 #include "AbstractMediaDecoder.h"
-#include "FrameStatistics.h"
 #include "MediaDecoderOwner.h"
 #include "MediaEventSource.h"
 #include "MediaMetadataManager.h"
@@ -42,6 +41,10 @@ class nsIStreamListener;
 class nsIPrincipal;
 
 namespace mozilla {
+
+namespace dom {
+class Promise;
+}
 
 class VideoFrameContainer;
 class MediaDecoderStateMachine;
@@ -174,7 +177,8 @@ public:
   // Seek to the time position in (seconds) from the start of the video.
   // If aDoFastSeek is true, we'll seek to the sync point/keyframe preceeding
   // the seek target.
-  virtual nsresult Seek(double aTime, SeekTarget::Type aSeekType);
+  virtual nsresult Seek(double aTime, SeekTarget::Type aSeekType,
+                        dom::Promise* aPromise = nullptr);
 
   // Initialize state machine and schedule it.
   nsresult InitializeStateMachine();
@@ -223,7 +227,7 @@ public:
   virtual double GetDuration();
 
   // Return true if the stream is infinite (see SetInfinite).
-  virtual bool IsInfinite();
+  bool IsInfinite() const;
 
   // Called by MediaResource when some data has been received.
   // Call on the main thread only.
@@ -235,16 +239,18 @@ public:
 
   // Return true if we are currently seeking in the media resource.
   // Call on the main thread only.
-  virtual bool IsSeeking() const;
+  bool IsSeeking() const;
 
   // Return true if the decoder has reached the end of playback or the decoder
   // has shutdown.
   // Call on the main thread only.
-  virtual bool IsEndedOrShutdown() const;
+  bool IsEndedOrShutdown() const;
 
   // Return true if the MediaDecoderOwner's error attribute is not null.
   // If the MediaDecoder is shutting down, OwnerHasError will return true.
   bool OwnerHasError() const;
+
+  already_AddRefed<GMPCrashHelper> GetCrashHelper() override;
 
 protected:
   // Updates the media duration. This is called while the media is being
@@ -399,12 +405,7 @@ private:
   // Call on the main thread only.
   void PlaybackEnded();
 
-  void OnSeekRejected()
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    mSeekRequest.Complete();
-    mLogicallySeeking = false;
-  }
+  void OnSeekRejected();
   void OnSeekResolved(SeekResolveValue aVal);
 
   void SeekingChanged()
@@ -490,16 +491,15 @@ private:
 
   // Increments the parsed and decoded frame counters by the passed in counts.
   // Can be called on any thread.
-  virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
-                                   uint32_t aDropped) override
+  virtual void NotifyDecodedFrames(const FrameStatisticsData& aStats) override
   {
-    GetFrameStatistics().NotifyDecodedFrames(aParsed, aDecoded, aDropped);
+    GetFrameStatistics().NotifyDecodedFrames(aStats);
   }
 
   void UpdateReadyState()
   {
     MOZ_ASSERT(NS_IsMainThread());
-    if (!mShuttingDown) {
+    if (!IsShutdown()) {
       mOwner->UpdateReadyState();
     }
   }
@@ -533,6 +533,8 @@ protected:
 
   // Return true if the decoder has reached the end of playback
   bool IsEnded() const;
+
+  bool IsShutdown() const;
 
   // Called by the state machine to notify the decoder that the duration
   // has changed.
@@ -609,6 +611,9 @@ private:
 
   void FinishShutdown();
 
+  void ConnectMirrors(MediaDecoderStateMachine* aObject);
+  void DisconnectMirrors();
+
   MediaEventProducer<void> mDataArrivedEvent;
 
   // The state machine object for handling the decoding. It is safe to
@@ -628,12 +633,24 @@ private:
 #endif
 
 protected:
-  virtual void CallSeek(const SeekTarget& aTarget);
+  // The promise resolving/rejection is queued as a "micro-task" which will be
+  // handled immediately after the current JS task and before any pending JS
+  // tasks.
+  // At the time we are going to resolve/reject a promise, the "seeking" event
+  // task should already be queued but might yet be processed, so we queue one
+  // more task to file the promise resolving/rejection micro-tasks
+  // asynchronously to make sure that the micro-tasks are processed after the
+  // "seeking" event task.
+  void AsyncResolveSeekDOMPromiseIfExists();
+  void AsyncRejectSeekDOMPromiseIfExists();
+  void DiscardOngoingSeekIfExists();
+  virtual void CallSeek(const SeekTarget& aTarget, dom::Promise* aPromise);
 
   // Returns true if heuristic dormant is supported.
   bool IsHeuristicDormantSupported() const;
 
   MozPromiseRequestHolder<SeekPromise> mSeekRequest;
+  RefPtr<dom::Promise> mSeekDOMPromise;
 
   // True when seeking or otherwise moving the play position around in
   // such a manner that progress event data is inaccurate. This is set
@@ -662,7 +679,7 @@ protected:
   // Counters related to decode and presentation of frames.
   const RefPtr<FrameStatistics> mFrameStats;
 
-  const RefPtr<VideoFrameContainer> mVideoFrameContainer;
+  RefPtr<VideoFrameContainer> mVideoFrameContainer;
 
   // Data needed to estimate playback data rate. The timeline used for
   // this estimate is "decode time" (where the "current time" is the
@@ -672,12 +689,6 @@ protected:
   // True when our media stream has been pinned. We pin the stream
   // while seeking.
   bool mPinnedForSeek;
-
-  // True if the decoder is being shutdown. At this point all events that
-  // are currently queued need to return immediately to prevent javascript
-  // being run that operates on the element and decoder during shutdown.
-  // Read/Write from the main thread only.
-  bool mShuttingDown;
 
   // True if the playback is paused because the playback rate member is 0.0.
   bool mPausedForPlaybackRateNull;
@@ -705,12 +716,6 @@ protected:
 
   // True if MediaDecoder is in dormant state.
   bool mIsDormant;
-
-  // True if MediaDecoder was PLAY_STATE_ENDED state, when entering to dormant.
-  // When MediaCodec is in dormant during PLAY_STATE_ENDED state, PlayState
-  // becomes different from PLAY_STATE_ENDED. But the MediaDecoder need to act
-  // as in PLAY_STATE_ENDED state to MediaDecoderOwner.
-  bool mWasEndedWhenEnteredDormant;
 
   // True if heuristic dormant is supported.
   const bool mIsHeuristicDormantSupported;

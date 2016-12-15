@@ -6,6 +6,7 @@
 #define MOCK_MEDIA_DECODER_OWNER_H_
 
 #include "MediaDecoderOwner.h"
+#include "nsAutoPtr.h"
 
 namespace mozilla
 {
@@ -49,6 +50,7 @@ public:
   }
   void ResetConnectionState() override {}
   void SetAudibleState(bool aAudible) override {}
+  void NotifyXPCOMShutdown() override {}
 };
 }
 

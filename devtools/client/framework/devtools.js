@@ -6,6 +6,7 @@
 
 const Services = require("Services");
 const promise = require("promise");
+const defer = require("devtools/shared/defer");
 
 // Load gDevToolsBrowser toolbox lazily as they need gDevTools to be fully initialized
 loader.lazyRequireGetter(this, "Toolbox", "devtools/client/framework/toolbox", true);
@@ -49,6 +50,10 @@ this.DevTools = function DevTools() {
 };
 
 DevTools.prototype = {
+  // The windowtype of the main window, used in various tools. This may be set
+  // to something different by other gecko apps.
+  chromeWindowType: "navigator:browser",
+
   registerDefaults() {
     // Ensure registering items in the sorted order (getDefault* functions
     // return sorted lists)
@@ -393,7 +398,7 @@ DevTools.prototype = {
    *        The toolbox that was opened
    */
   showToolbox: function (target, toolId, hostType, hostOptions) {
-    let deferred = promise.defer();
+    let deferred = defer();
 
     let toolbox = this._toolboxes.get(target);
     if (toolbox) {

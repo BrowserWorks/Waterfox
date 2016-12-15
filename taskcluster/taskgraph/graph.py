@@ -6,6 +6,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import collections
 
+
 class Graph(object):
     """
     Generic representation of a directed acyclic graph with labeled edges
@@ -54,7 +55,9 @@ class Graph(object):
         nodes, edges = set(), set()
         while (new_nodes, new_edges) != (nodes, edges):
             nodes, edges = new_nodes, new_edges
-            add_edges = set((left, right, name) for (left, right, name) in self.edges if left in nodes)
+            add_edges = set((left, right, name)
+                            for (left, right, name) in self.edges
+                            if left in nodes)
             add_nodes = set(right for (_, right, _) in add_edges)
             new_nodes = nodes | add_nodes
             new_edges = edges | add_edges
@@ -85,18 +88,28 @@ class Graph(object):
 
     def links_dict(self):
         """
-        Return a dictionary mapping each node to a set of its downstream
-        nodes (omitting edge names)
+        Return a dictionary mapping each node to a set of the nodes it links to
+        (omitting edge names)
         """
         links = collections.defaultdict(set)
         for left, right, _ in self.edges:
             links[left].add(right)
         return links
 
+    def named_links_dict(self):
+        """
+        Return a two-level dictionary mapping each node to a dictionary mapping
+        edge names to labels.
+        """
+        links = collections.defaultdict(dict)
+        for left, right, name in self.edges:
+            links[left][name] = right
+        return links
+
     def reverse_links_dict(self):
         """
-        Return a dictionary mapping each node to a set of its upstream
-        nodes (omitting edge names)
+        Return a dictionary mapping each node to a set of the nodes linking to
+        it (omitting edge names)
         """
         links = collections.defaultdict(set)
         for left, right, _ in self.edges:

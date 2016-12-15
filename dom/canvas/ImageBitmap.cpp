@@ -91,6 +91,7 @@ CropAndCopyDataSourceSurface(DataSourceSurface* aSurface, const IntRect& aCropRe
   ErrorResult error;
   const IntRect positiveCropRect = FixUpNegativeDimension(aCropRect, error);
   if (NS_WARN_IF(error.Failed())) {
+    error.SuppressException();
     return nullptr;
   }
 
@@ -823,6 +824,10 @@ ImageBitmap::CreateInternal(nsIGlobalObject* aGlobal, HTMLVideoElement& aVideoEl
 
   AutoLockImage lockImage(container);
   layers::Image* data = lockImage.GetImage();
+  if (!data) {
+    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
+    return nullptr;
+  }
   RefPtr<ImageBitmap> ret = new ImageBitmap(aGlobal, data);
 
   // Set the picture rectangle.
@@ -1106,6 +1111,7 @@ DecodeBlob(Blob& aBlob)
   ErrorResult error;
   aBlob.Impl()->GetInternalStream(getter_AddRefs(stream), error);
   if (NS_WARN_IF(error.Failed())) {
+    error.SuppressException();
     return nullptr;
   }
 

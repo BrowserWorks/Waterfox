@@ -1,0 +1,57 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+include protocol PCompositorBridge;
+include protocol PImageBridge;
+include protocol PVRManager;
+include protocol PVsyncBridge;
+
+using mozilla::TimeDuration from "mozilla/TimeStamp.h";
+using mozilla::CSSToLayoutDeviceScale from "Units.h";
+using mozilla::gfx::IntSize from "mozilla/gfx/2D.h";
+
+namespace mozilla {
+namespace gfx {
+
+union GfxPrefValue {
+  bool;
+  int32_t;
+  uint32_t;
+  float;
+};
+
+struct GfxPrefSetting {
+  int32_t index;
+  GfxPrefValue value;
+};
+
+sync protocol PGPU
+{
+parent:
+  // Sent by the UI process to initiate core settings.
+  async Init(GfxPrefSetting[] prefs);
+
+  async InitVsyncBridge(Endpoint<PVsyncBridgeParent> endpoint);
+  async InitImageBridge(Endpoint<PImageBridgeParent> endpoint);
+  async InitVRManager(Endpoint<PVRManagerParent> endpoint);
+
+  // Called to update a gfx preference.
+  async UpdatePref(GfxPrefSetting pref);
+
+  // Create a new top-level compositor.
+  async NewWidgetCompositor(Endpoint<PCompositorBridgeParent> endpoint,
+                            CSSToLayoutDeviceScale scale,
+                            TimeDuration vsyncRate,
+                            bool useExternalSurface,
+                            IntSize surfaceSize);
+
+  // Create a new content-process compositor bridge.
+  async NewContentCompositorBridge(Endpoint<PCompositorBridgeParent> endpoint);
+  async NewContentImageBridge(Endpoint<PImageBridgeParent> endpoint);
+  async NewContentVRManager(Endpoint<PVRManagerParent> endpoint);
+};
+
+} // namespace gfx
+} // namespace mozilla

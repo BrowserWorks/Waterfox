@@ -168,6 +168,7 @@ RestyleTracker::DoProcessRestyles()
         AutoTArray<RefPtr<Element>, RESTYLE_ARRAY_STACKSIZE> laterSiblingArr;
         for (auto iter = mPendingRestyles.Iter(); !iter.Done(); iter.Next()) {
           auto element = static_cast<dom::Element*>(iter.Key());
+          MOZ_ASSERT(!element->IsStyledByServo(), "Should not have Servo-styled elements here");
           // Only collect the entries that actually need restyling by us (and
           // haven't, for example, already been restyled).
           // It's important to not mess with the flags on entries not in our
@@ -180,6 +181,7 @@ RestyleTracker::DoProcessRestyles()
         }
         for (uint32_t i = 0; i < laterSiblingArr.Length(); ++i) {
           Element* element = laterSiblingArr[i];
+          MOZ_ASSERT(!element->IsStyledByServo());
           for (nsIContent* sibling = element->GetNextSibling();
                sibling;
                sibling = sibling->GetNextSibling()) {
@@ -189,7 +191,7 @@ RestyleTracker::DoProcessRestyles()
                           FrameTagToString(sibling->AsElement()).get(),
                           FrameTagToString(element->AsElement()).get());
               if (AddPendingRestyle(sibling->AsElement(), eRestyle_Subtree,
-                                    NS_STYLE_HINT_NONE)) {
+                                    nsChangeHint(0))) {
                   // Nothing else to do here; we'll handle the following
                   // siblings when we get to |sibling| in laterSiblingArr.
                 break;
@@ -447,7 +449,7 @@ RestyleTracker::AddRestyleRootsIfAwaitingRestyle(
   // The RestyleData for a given element has stored in mDescendants
   // the list of descendants we need to end up restyling.  Since we
   // won't necessarily end up restyling them, due to the restyle
-  // process finishing early (see how eRestyleResult_Stop is handled
+  // process finishing early (see how RestyleResult::eStop is handled
   // in ElementRestyler::Restyle), we add them to the list of restyle
   // roots to handle the next time around the
   // RestyleTracker::DoProcessRestyles loop.

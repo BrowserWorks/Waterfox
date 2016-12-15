@@ -121,6 +121,15 @@ function waitForAll(it) {
   return Promise.all(promises);
 }
 
+/**
+ * Permanently intern the given string. This is mainly used for the ping.type
+ * strings that can be excessively duplicated in the _archivedPings map. Do not
+ * pass large or temporary strings to this function.
+ */
+function internString(str) {
+  return Symbol.keyFor(Symbol.for(str));
+}
+
 this.TelemetryStorage = {
   get pingDirectoryPath() {
     return OS.Path.join(OS.Constants.Path.profileDir, "saved-telemetry-pings");
@@ -668,7 +677,7 @@ var TelemetryStorageImpl = {
 
     this._archivedPings.set(ping.id, {
       timestampCreated: creationDate.getTime(),
-      type: ping.type,
+      type: internString(ping.type),
     });
 
     Telemetry.getHistogramById("TELEMETRY_ARCHIVE_SESSION_PING_COUNT").add();
@@ -823,6 +832,7 @@ var TelemetryStorageImpl = {
     const startTimeStamp = nowDate.getTime();
     let dirIterator = new OS.File.DirectoryIterator(gPingsArchivePath);
     let subdirs = (yield dirIterator.nextBatch()).filter(e => e.isDir);
+    dirIterator.close();
 
     // Keep track of the newest removed month to update the cache, if needed.
     let newestRemovedMonthTimestamp = null;
@@ -1189,12 +1199,14 @@ var TelemetryStorageImpl = {
     let dirIterator = new OS.File.DirectoryIterator(gPingsArchivePath);
     let subdirs =
       (yield dirIterator.nextBatch()).filter(e => e.isDir).filter(e => isValidArchiveDir(e.name));
+    dirIterator.close();
 
     // Walk through the monthly subdirs of the form <YYYY-MM>/
     for (let dir of subdirs) {
       this._log.trace("_scanArchive - checking in subdir: " + dir.path);
       let pingIterator = new OS.File.DirectoryIterator(dir.path);
       let pings = (yield pingIterator.nextBatch()).filter(e => !e.isDir);
+      pingIterator.close();
 
       // Now process any ping files of the form "<timestamp>.<uuid>.<type>.[json|jsonlz4]".
       for (let p of pings) {
@@ -1219,7 +1231,7 @@ var TelemetryStorageImpl = {
 
         this._archivedPings.set(data.id, {
           timestampCreated: data.timestamp,
-          type: data.type,
+          type: internString(data.type),
         });
       }
     }
@@ -1479,55 +1491,55 @@ var TelemetryStorageImpl = {
     let iter = new OS.File.DirectoryIterator(directory);
     let exists = yield iter.exists();
 
-    if (!exists) {
-      yield iter.close();
-      return [];
-    }
-
-    let files = (yield iter.nextBatch()).filter(e => !e.isDir);
-
-    for (let file of files) {
-      if (this._shutdown) {
-        yield iter.close();
+    try {
+      if (!exists) {
         return [];
       }
 
-      let info;
-      try {
-        info = yield OS.File.stat(file.path);
-      } catch (ex) {
-        this._log.error("_scanPendingPings - failed to stat file " + file.path, ex);
-        continue;
-      }
+      let files = (yield iter.nextBatch()).filter(e => !e.isDir);
 
-      // Enforce a maximum file size limit on pending pings.
-      if (info.size > PING_FILE_MAXIMUM_SIZE_BYTES) {
-        this._log.error("_scanPendingPings - removing file exceeding size limit " + file.path);
+      for (let file of files) {
+        if (this._shutdown) {
+          return [];
+        }
+
+        let info;
         try {
-          yield OS.File.remove(file.path);
+          info = yield OS.File.stat(file.path);
         } catch (ex) {
-          this._log.error("_scanPendingPings - failed to remove file " + file.path, ex);
-        } finally {
-          Telemetry.getHistogramById("TELEMETRY_DISCARDED_PENDING_PINGS_SIZE_MB")
-                   .add(Math.floor(info.size / 1024 / 1024));
-          Telemetry.getHistogramById("TELEMETRY_PING_SIZE_EXCEEDED_PENDING").add();
+          this._log.error("_scanPendingPings - failed to stat file " + file.path, ex);
           continue;
         }
-      }
 
-      let id = OS.Path.basename(file.path);
-      if (!UUID_REGEX.test(id)) {
-        this._log.trace("_scanPendingPings - filename is not a UUID: " + id);
-        id = Utils.generateUUID();
-      }
+        // Enforce a maximum file size limit on pending pings.
+        if (info.size > PING_FILE_MAXIMUM_SIZE_BYTES) {
+          this._log.error("_scanPendingPings - removing file exceeding size limit " + file.path);
+          try {
+            yield OS.File.remove(file.path);
+          } catch (ex) {
+            this._log.error("_scanPendingPings - failed to remove file " + file.path, ex);
+          } finally {
+            Telemetry.getHistogramById("TELEMETRY_DISCARDED_PENDING_PINGS_SIZE_MB")
+                     .add(Math.floor(info.size / 1024 / 1024));
+            Telemetry.getHistogramById("TELEMETRY_PING_SIZE_EXCEEDED_PENDING").add();
+            continue;
+          }
+        }
 
-      this._pendingPings.set(id, {
-        path: file.path,
-        lastModificationDate: info.lastModificationDate.getTime(),
-      });
+        let id = OS.Path.basename(file.path);
+        if (!UUID_REGEX.test(id)) {
+          this._log.trace("_scanPendingPings - filename is not a UUID: " + id);
+          id = Utils.generateUUID();
+        }
+
+        this._pendingPings.set(id, {
+          path: file.path,
+          lastModificationDate: info.lastModificationDate.getTime(),
+        });
+      }
+    } finally {
+      yield iter.close();
     }
-
-    yield iter.close();
 
     // Explicitly load the deletion ping from its known path, if it's there.
     if (yield OS.File.exists(gDeletionPingFilePath)) {

@@ -19,7 +19,7 @@ class TabParent;
 
 namespace layers {
 
-class APZCTreeManager;
+class IAPZCTreeManager;
 
 /**
  * RemoteContentController uses the PAPZ protocol to implement a
@@ -31,6 +31,7 @@ class APZCTreeManager;
 class RemoteContentController : public GeckoContentController
                               , public PAPZParent
 {
+  using GeckoContentController::TapType;
   using GeckoContentController::APZStateChange;
 
 public:
@@ -42,18 +43,11 @@ public:
   // Needs to be called on the main thread.
   virtual void RequestContentRepaint(const FrameMetrics& aFrameMetrics) override;
 
-  virtual void HandleDoubleTap(const CSSPoint& aPoint,
-                               Modifiers aModifiers,
-                               const ScrollableLayerGuid& aGuid) override;
-
-  virtual void HandleSingleTap(const CSSPoint& aPoint,
-                               Modifiers aModifiers,
-                               const ScrollableLayerGuid& aGuid) override;
-
-  virtual void HandleLongTap(const CSSPoint& aPoint,
-                             Modifiers aModifiers,
-                             const ScrollableLayerGuid& aGuid,
-                             uint64_t aInputBlockId) override;
+  virtual void HandleTap(TapType aTapType,
+                         const LayoutDevicePoint& aPoint,
+                         Modifiers aModifiers,
+                         const ScrollableLayerGuid& aGuid,
+                         uint64_t aInputBlockId) override;
 
   virtual void PostDelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs) override;
 
@@ -104,7 +98,7 @@ private:
     MOZ_ASSERT(NS_IsMainThread());
     return !!mBrowserParent;
   }
-  already_AddRefed<APZCTreeManager> GetApzcTreeManager();
+  already_AddRefed<IAPZCTreeManager> GetApzcTreeManager();
 
   MessageLoop* mUILoop;
   uint64_t mLayersId;
@@ -113,7 +107,7 @@ private:
   // Mutex protecting members below accessed from multiple threads.
   mozilla::Mutex mMutex;
 
-  RefPtr<APZCTreeManager> mApzcTreeManager;
+  RefPtr<IAPZCTreeManager> mApzcTreeManager;
   nsRegion mTouchSensitiveRegion;
 };
 

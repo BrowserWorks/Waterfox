@@ -107,6 +107,24 @@ ToChar(TextRangeType aTextRangeType)
   }
 }
 
+SelectionType
+ToSelectionType(TextRangeType aTextRangeType)
+{
+  switch (aTextRangeType) {
+    case TextRangeType::eRawClause:
+      return SelectionType::eIMERawClause;
+    case TextRangeType::eSelectedRawClause:
+      return SelectionType::eIMESelectedRawClause;
+    case TextRangeType::eConvertedClause:
+      return SelectionType::eIMEConvertedClause;
+    case TextRangeType::eSelectedClause:
+      return SelectionType::eIMESelectedClause;
+    default:
+      MOZ_CRASH("TextRangeType is invalid");
+      return SelectionType::eNormal;
+  }
+}
+
 /******************************************************************************
  * As*Event() implementation
  ******************************************************************************/
@@ -195,8 +213,6 @@ WidgetEvent::HasDragEventMessage() const
     case eDragEnter:
     case eDragOver:
     case eDragExit:
-    case eLegacyDragDrop:
-    case eLegacyDragGesture:
     case eDrag:
     case eDragEnd:
     case eDragStart:
@@ -456,14 +472,14 @@ WidgetWheelEvent::OverriddenDeltaY() const
  * mozilla::WidgetKeyboardEvent (TextEvents.h)
  ******************************************************************************/
 
-#define NS_DEFINE_KEYNAME(aCPPName, aDOMKeyName) MOZ_UTF16(aDOMKeyName),
+#define NS_DEFINE_KEYNAME(aCPPName, aDOMKeyName) (u"" aDOMKeyName),
 const char16_t* const WidgetKeyboardEvent::kKeyNames[] = {
 #include "mozilla/KeyNameList.h"
 };
 #undef NS_DEFINE_KEYNAME
 
 #define NS_DEFINE_PHYSICAL_KEY_CODE_NAME(aCPPName, aDOMCodeName) \
-    MOZ_UTF16(aDOMCodeName),
+    (u"" aDOMCodeName),
 const char16_t* const WidgetKeyboardEvent::kCodeNames[] = {
 #include "mozilla/PhysicalKeyCodeNameList.h"
 };

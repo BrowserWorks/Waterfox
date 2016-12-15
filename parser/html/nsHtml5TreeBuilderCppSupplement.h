@@ -955,36 +955,48 @@ nsHtml5TreeBuilder::elementPopped(int32_t aNamespace, nsIAtom* aName, nsIContent
 void
 nsHtml5TreeBuilder::accumulateCharacters(const char16_t* aBuf, int32_t aStart, int32_t aLength)
 {
-  MOZ_ASSERT(charBufferLen + aLength <= charBuffer.length,
-             "About to memcpy past the end of the buffer!");
+  MOZ_RELEASE_ASSERT(charBufferLen + aLength <= charBuffer.length,
+                     "About to memcpy past the end of the buffer!");
   memcpy(charBuffer + charBufferLen, aBuf + aStart, sizeof(char16_t) * aLength);
   charBufferLen += aLength;
 }
 
+// INT32_MAX is (2^31)-1. Therefore, the highest power-of-two that fits
+// is 2^30. Note that this is counting char16_t units. The underlying
+// bytes will be twice that, but they fit even in 32-bit size_t even
+// if a contiguous chunk of memory of that size is pretty unlikely to
+// be available on a 32-bit system.
+#define MAX_POWER_OF_TWO_IN_INT32 0x40000000
+
 bool
-nsHtml5TreeBuilder::EnsureBufferSpace(size_t aLength)
+nsHtml5TreeBuilder::EnsureBufferSpace(int32_t aLength)
 {
   // TODO: Unify nsHtml5Tokenizer::strBuf and nsHtml5TreeBuilder::charBuffer
   // so that this method becomes unnecessary.
-  size_t worstCase = size_t(charBufferLen) + aLength;
-  if (worstCase > INT32_MAX) {
-    // Since we index into the buffer using int32_t due to the Java heritage
-    // of the code, let's treat this as OOM.
+  CheckedInt<int32_t> worstCase(charBufferLen);
+  worstCase += aLength;
+  if (!worstCase.isValid()) {
+    return false;
+  }
+  if (worstCase.value() > MAX_POWER_OF_TWO_IN_INT32) {
     return false;
   }
   if (!charBuffer) {
-    // Add one to round to the next power of two to avoid immediate
-    // reallocation once there are a few characters in the buffer.
-    charBuffer = jArray<char16_t,int32_t>::newFallibleJArray(mozilla::RoundUpPow2(worstCase + 1));
+    if (worstCase.value() < MAX_POWER_OF_TWO_IN_INT32) {
+      // Add one to round to the next power of two to avoid immediate
+      // reallocation once there are a few characters in the buffer.
+      worstCase += 1;
+    }
+    charBuffer = jArray<char16_t,int32_t>::newFallibleJArray(mozilla::RoundUpPow2(worstCase.value()));
     if (!charBuffer) {
       return false;
     }
-  } else if (worstCase > size_t(charBuffer.length)) {
-    jArray<char16_t,int32_t> newBuf = jArray<char16_t,int32_t>::newFallibleJArray(mozilla::RoundUpPow2(worstCase));
+  } else if (worstCase.value() > charBuffer.length) {
+    jArray<char16_t,int32_t> newBuf = jArray<char16_t,int32_t>::newFallibleJArray(mozilla::RoundUpPow2(worstCase.value()));
     if (!newBuf) {
       return false;
     }
-    memcpy(newBuf, charBuffer, sizeof(char16_t) * charBufferLen);
+    memcpy(newBuf, charBuffer, sizeof(char16_t) * size_t(charBufferLen));
     charBuffer = newBuf;
   }
   return true;
@@ -1221,6 +1233,10 @@ nsHtml5TreeBuilder::documentMode(nsHtml5DocumentMode m)
 {
   if (mBuilder) {
     mBuilder->SetDocumentMode(m);
+    return;
+  }
+  if (mSpeculativeLoadStage) {
+    mSpeculativeLoadQueue.AppendElement()->InitSetDocumentMode(m);
     return;
   }
   nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();

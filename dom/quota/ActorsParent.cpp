@@ -94,7 +94,7 @@
 #define PREF_TESTING_FEATURES "dom.quotaManager.testing"
 
 // profile-before-change, when we need to shut down quota manager
-#define PROFILE_BEFORE_CHANGE_OBSERVER_ID "profile-before-change"
+#define PROFILE_BEFORE_CHANGE_QM_OBSERVER_ID "profile-before-change-qm"
 
 #define KB * 1024ULL
 #define MB * 1024ULL KB
@@ -1008,11 +1008,16 @@ class GetUsageOp final
   : public NormalOriginOperationBase
   , public PQuotaUsageRequestParent
 {
+  // If mGetGroupUsage is false, we use mUsageInfo to record the origin usage
+  // and the file usage. Otherwise, we use it to record the group usage and the
+  // limit.
   UsageInfo mUsageInfo;
 
   const UsageParams mParams;
+  nsCString mSuffix;
   nsCString mGroup;
   bool mIsApp;
+  bool mGetGroupUsage;
 
 public:
   explicit GetUsageOp(const UsageRequestParams& aParams);
@@ -1360,7 +1365,7 @@ class MOZ_STACK_CLASS OriginParser final
   enum SchemaType {
     eNone,
     eFile,
-    eMozSafeAbout
+    eAbout
   };
 
   enum State {
@@ -2262,9 +2267,10 @@ CreateRunnable::RegisterObserver()
 
   nsCOMPtr<nsIObserver> observer = new ShutdownObserver(mOwningThread);
 
-  nsresult rv = observerService->AddObserver(observer,
-                                             PROFILE_BEFORE_CHANGE_OBSERVER_ID,
-                                             false);
+  nsresult rv =
+    observerService->AddObserver(observer,
+                                 PROFILE_BEFORE_CHANGE_QM_OBSERVER_ID,
+                                 false);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -2282,6 +2288,10 @@ CreateRunnable::RegisterObserver()
   }
 
   qms->NoteLiveManager(mManager);
+
+  for (RefPtr<Client>& client : mManager->mClients) {
+    client->DidInitialize(mManager);
+  }
 
   return NS_OK;
 }
@@ -2386,11 +2396,6 @@ QuotaManager::
 ShutdownRunnable::Run()
 {
   if (NS_IsMainThread()) {
-    QuotaManagerService* qms = QuotaManagerService::Get();
-    MOZ_ASSERT(qms);
-
-    qms->NoteFinishedManager();
-
     mDone = true;
 
     return NS_OK;
@@ -2419,7 +2424,17 @@ ShutdownObserver::Observe(nsISupports* aSubject,
                           const char16_t* aData)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!strcmp(aTopic, PROFILE_BEFORE_CHANGE_OBSERVER_ID));
+  MOZ_ASSERT(!strcmp(aTopic, PROFILE_BEFORE_CHANGE_QM_OBSERVER_ID));
+  MOZ_ASSERT(gInstance);
+
+  QuotaManagerService* qms = QuotaManagerService::Get();
+  MOZ_ASSERT(qms);
+
+  qms->NoteShuttingDownManager();
+
+  for (RefPtr<Client>& client : gInstance->mClients) {
+    client->WillShutdown();
+  }
 
   bool done = false;
 
@@ -2750,8 +2765,6 @@ QuotaManager::GetOrCreate(nsIRunnable* aCallback)
 QuotaManager*
 QuotaManager::Get()
 {
-  MOZ_ASSERT(!NS_IsMainThread());
-
   // Does not return an owning reference.
   return gInstance;
 }
@@ -4575,6 +4588,40 @@ QuotaManager::GetGroupLimit() const
                             std::max<uint64_t>(x, 10 MB));
 }
 
+void
+QuotaManager::GetGroupUsageAndLimit(const nsACString& aGroup,
+                                    UsageInfo* aUsageInfo)
+{
+  AssertIsOnIOThread();
+  MOZ_ASSERT(aUsageInfo);
+
+  {
+    MutexAutoLock lock(mQuotaMutex);
+
+    aUsageInfo->SetLimit(GetGroupLimit());
+    aUsageInfo->ResetUsage();
+
+    GroupInfoPair* pair;
+    if (!mGroupInfoPairs.Get(aGroup, &pair)) {
+      return;
+    }
+
+    // Calculate temporary group usage
+    RefPtr<GroupInfo> temporaryGroupInfo =
+      pair->LockedGetGroupInfo(PERSISTENCE_TYPE_TEMPORARY);
+    if (temporaryGroupInfo) {
+      aUsageInfo->AppendToDatabaseUsage(temporaryGroupInfo->mUsage);
+    }
+
+    // Calculate default group usage
+    RefPtr<GroupInfo> defaultGroupInfo =
+      pair->LockedGetGroupInfo(PERSISTENCE_TYPE_DEFAULT);
+    if (defaultGroupInfo) {
+      aUsageInfo->AppendToDatabaseUsage(defaultGroupInfo->mUsage);
+    }
+  }
+}
+
 // static
 void
 QuotaManager::GetStorageId(PersistenceType aPersistenceType,
@@ -5837,6 +5884,7 @@ GetUsageOp::GetUsageOp(const UsageRequestParams& aParams)
                               OriginScope::FromNull(),
                               /* aExclusive */ false)
   , mParams(aParams.get_UsageParams())
+  , mGetGroupUsage(aParams.get_UsageParams().getGroupUsage())
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(aParams.type() == UsageRequestParams::TUsageParams);
@@ -5872,7 +5920,7 @@ GetUsageOp::DoInitOnMainThread()
 
   // Figure out which origin we're dealing with.
   nsCString origin;
-  rv = QuotaManager::GetInfoFromPrincipal(principal, nullptr, &mGroup, &origin,
+  rv = QuotaManager::GetInfoFromPrincipal(principal, &mSuffix, &mGroup, &origin,
                                           &mIsApp);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
@@ -5987,12 +6035,34 @@ nsresult
 GetUsageOp::DoDirectoryWork(QuotaManager* aQuotaManager)
 {
   AssertIsOnIOThread();
+  MOZ_ASSERT(mUsageInfo.TotalUsage() == 0);
 
   PROFILER_LABEL("Quota", "GetUsageOp::DoDirectoryWork",
                  js::ProfileEntry::Category::OTHER);
 
-  // Add all the persistent/temporary/default storage files we care about.
   nsresult rv;
+
+  if (mGetGroupUsage) {
+    nsCOMPtr<nsIFile> directory;
+
+    // Ensure origin is initialized first. It will initialize all origins for
+    // temporary storage including origins belonging to our group.
+    rv = aQuotaManager->EnsureOriginIsInitialized(PERSISTENCE_TYPE_TEMPORARY,
+                                                  mSuffix, mGroup,
+                                                  mOriginScope.GetOrigin(),
+                                                  mIsApp,
+                                                  getter_AddRefs(directory));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    // Get cached usage and limit (the method doesn't have to stat any files).
+    aQuotaManager->GetGroupUsageAndLimit(mGroup, &mUsageInfo);
+
+    return NS_OK;
+  }
+
+  // Add all the persistent/temporary/default storage files we care about.
   for (const PersistenceType type : kAllPersistenceTypes) {
     rv = AddToUsage(aQuotaManager, type);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -6021,8 +6091,17 @@ GetUsageOp::SendResults()
 
     if (NS_SUCCEEDED(mResultCode)) {
       UsageResponse usageResponse;
+
+      // We'll get the group usage when mGetGroupUsage is true and get the
+      // origin usage when mGetGroupUsage is false.
       usageResponse.usage() = mUsageInfo.TotalUsage();
-      usageResponse.fileUsage() = mUsageInfo.FileUsage();
+
+      if (mGetGroupUsage) {
+        usageResponse.limit() = mUsageInfo.Limit();
+      } else {
+        usageResponse.fileUsage() = mUsageInfo.FileUsage();
+      }
+
       response = usageResponse;
     } else {
       response = mResultCode;
@@ -6627,7 +6706,7 @@ OriginParser::Parse(nsACString& aSpec, PrincipalOriginAttributes* aAttrs)
     return true;
   }
 
-  if (mSchemaType == eMozSafeAbout) {
+  if (mSchemaType == eAbout) {
     spec.Append(':');
   } else {
     spec.AppendLiteral("://");
@@ -6651,19 +6730,20 @@ OriginParser::HandleSchema(const nsDependentCSubstring& aToken)
   MOZ_ASSERT(!aToken.IsEmpty());
   MOZ_ASSERT(mState == eExpectingAppIdOrSchema || mState == eExpectingSchema);
 
-  bool isMozSafeAbout = false;
+  bool isAbout = false;
   bool isFile = false;
   if (aToken.EqualsLiteral("http") ||
       aToken.EqualsLiteral("https") ||
-      (isMozSafeAbout = aToken.EqualsLiteral("moz-safe-about")) ||
+      (isAbout = aToken.EqualsLiteral("about") ||
+                 aToken.EqualsLiteral("moz-safe-about")) ||
       aToken.EqualsLiteral("indexeddb") ||
       (isFile = aToken.EqualsLiteral("file")) ||
       aToken.EqualsLiteral("app") ||
       aToken.EqualsLiteral("resource")) {
     mSchema = aToken;
 
-    if (isMozSafeAbout) {
-      mSchemaType = eMozSafeAbout;
+    if (isAbout) {
+      mSchemaType = eAbout;
       mState = eExpectingHost;
     } else {
       if (isFile) {

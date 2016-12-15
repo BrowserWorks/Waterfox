@@ -24,7 +24,6 @@
 #include "nsCOMArray.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsJSPrincipals.h"
 #include "xpcpublic.h"
 #include "xpcprivate.h"
@@ -245,7 +244,7 @@ ReadLine(JSContext* cx, unsigned argc, Value* vp)
         if (!str)
             return false;
     } else {
-        str = JS_GetEmptyString(JS_GetRuntime(cx));
+        str = JS_GetEmptyString(cx);
     }
 
     /* Get a line from the infile */
@@ -430,11 +429,9 @@ static bool
 GC(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    JSRuntime* rt = JS_GetRuntime(cx);
-    JS_GC(rt);
-#ifdef JS_GCMETER
-    js_DumpGCStats(rt, stdout);
-#endif
+
+    JS_GC(cx);
+
     args.rval().setUndefined();
     return true;
 }
@@ -448,7 +445,7 @@ GCZeal(JSContext* cx, unsigned argc, Value* vp)
     if (!ToUint32(cx, args.get(0), &zeal))
         return false;
 
-    JS_SetGCZeal(JS_GetRuntime(cx), uint8_t(zeal), JS_DEFAULT_ZEAL_FREQ);
+    JS_SetGCZeal(cx, uint8_t(zeal), JS_DEFAULT_ZEAL_FREQ);
     args.rval().setUndefined();
     return true;
 }
@@ -488,7 +485,7 @@ static bool
 Options(JSContext* cx, unsigned argc, Value* vp)
 {
     JS::CallArgs args = CallArgsFromVp(argc, vp);
-    RuntimeOptions oldRuntimeOptions = RuntimeOptionsRef(cx);
+    ContextOptions oldContextOptions = ContextOptionsRef(cx);
 
     for (unsigned i = 0; i < args.length(); ++i) {
         JSString* str = ToString(cx, args[i]);
@@ -500,11 +497,11 @@ Options(JSContext* cx, unsigned argc, Value* vp)
             return false;
 
         if (strcmp(opt.ptr(), "strict") == 0)
-            RuntimeOptionsRef(cx).toggleExtraWarnings();
+            ContextOptionsRef(cx).toggleExtraWarnings();
         else if (strcmp(opt.ptr(), "werror") == 0)
-            RuntimeOptionsRef(cx).toggleWerror();
+            ContextOptionsRef(cx).toggleWerror();
         else if (strcmp(opt.ptr(), "strict_mode") == 0)
-            RuntimeOptionsRef(cx).toggleStrictMode();
+            ContextOptionsRef(cx).toggleStrictMode();
         else {
             JS_ReportError(cx, "unknown option name '%s'. The valid names are "
                            "strict, werror, and strict_mode.", opt.ptr());
@@ -513,21 +510,21 @@ Options(JSContext* cx, unsigned argc, Value* vp)
     }
 
     char* names = nullptr;
-    if (oldRuntimeOptions.extraWarnings()) {
+    if (oldContextOptions.extraWarnings()) {
         names = JS_sprintf_append(names, "%s", "strict");
         if (!names) {
             JS_ReportOutOfMemory(cx);
             return false;
         }
     }
-    if (oldRuntimeOptions.werror()) {
+    if (oldContextOptions.werror()) {
         names = JS_sprintf_append(names, "%s%s", names ? "," : "", "werror");
         if (!names) {
             JS_ReportOutOfMemory(cx);
             return false;
         }
     }
-    if (names && oldRuntimeOptions.strictMode()) {
+    if (names && oldContextOptions.strictMode()) {
         names = JS_sprintf_append(names, "%s%s", names ? "," : "", "strict_mode");
         if (!names) {
             JS_ReportOutOfMemory(cx);
@@ -542,26 +539,6 @@ Options(JSContext* cx, unsigned argc, Value* vp)
 
     args.rval().setString(str);
     return true;
-}
-
-static bool
-Atob(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    if (!args.length())
-        return true;
-
-    return xpc::Base64Decode(cx, args[0], args.rval());
-}
-
-static bool
-Btoa(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    if (!args.length())
-        return true;
-
-  return xpc::Base64Encode(cx, args[0], args.rval());
 }
 
 static PersistentRootedValue *sScriptedInterruptCallback = nullptr;
@@ -674,8 +651,8 @@ static const JSFunctionSpec glob_functions[] = {
 #endif
     JS_FS("options",         Options,        0,0),
     JS_FS("sendCommand",     SendCommand,    1,0),
-    JS_FS("atob",            Atob,           1,0),
-    JS_FS("btoa",            Btoa,           1,0),
+    JS_FS("atob",            xpc::Atob,      1,0),
+    JS_FS("btoa",            xpc::Btoa,      1,0),
     JS_FS("setInterruptCallback", SetInterruptCallback, 1,0),
     JS_FS("simulateActivityCallback", SimulateActivityCallback, 1,0),
     JS_FS("registerAppManifest", RegisterAppManifest, 1, 0),
@@ -984,13 +961,13 @@ ProcessArgsForCompartment(JSContext* cx, char** argv, int argc)
                 return;
             break;
         case 'S':
-            RuntimeOptionsRef(cx).toggleWerror();
+            ContextOptionsRef(cx).toggleWerror();
             MOZ_FALLTHROUGH; // because -S implies -s
         case 's':
-            RuntimeOptionsRef(cx).toggleExtraWarnings();
+            ContextOptionsRef(cx).toggleExtraWarnings();
             break;
         case 'I':
-            RuntimeOptionsRef(cx).toggleIon()
+            ContextOptionsRef(cx).toggleIon()
                                  .toggleAsmJS()
                                  .toggleWasm();
             break;
@@ -1446,11 +1423,12 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
         // reason to bother.
         sScriptedInterruptCallback = new PersistentRootedValue;
         sScriptedInterruptCallback->init(rt, UndefinedValue());
-        JS_SetInterruptCallback(rt, XPCShellInterruptCallback);
 
         AutoJSAPI jsapi;
         jsapi.Init();
         cx = jsapi.cx();
+
+        JS_SetInterruptCallback(cx, XPCShellInterruptCallback);
 
         argc--;
         argv++;
@@ -1484,10 +1462,10 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
             }
         }
 
-        const JSSecurityCallbacks* scb = JS_GetSecurityCallbacks(rt);
+        const JSSecurityCallbacks* scb = JS_GetSecurityCallbacks(cx);
         MOZ_ASSERT(scb, "We are assuming that nsScriptSecurityManager::Init() has been run");
         shellSecurityCallbacks = *scb;
-        JS_SetSecurityCallbacks(rt, &shellSecurityCallbacks);
+        JS_SetSecurityCallbacks(cx, &shellSecurityCallbacks);
 
 #ifdef TEST_TranslateThis
         nsCOMPtr<nsIXPCFunctionThisTranslator>
@@ -1600,12 +1578,12 @@ XRE_XPCShellMain(int argc, char** argv, char** envp,
                 }
             }
 
-            JS_DropPrincipals(rt, gJSPrincipals);
+            JS_DropPrincipals(cx, gJSPrincipals);
             JS_SetAllNonReservedSlotsToUndefined(cx, glob);
             JS_SetAllNonReservedSlotsToUndefined(cx, JS_GlobalLexicalScope(glob));
-            JS_GC(rt);
+            JS_GC(cx);
         }
-        JS_GC(rt);
+        JS_GC(cx);
     } // this scopes the nsCOMPtrs
 
     if (!XRE_ShutdownTestShell())

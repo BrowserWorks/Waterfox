@@ -18,13 +18,14 @@ from mozprocess import ProcessHandler
 
 class Device(object):
     connected = False
+    logcat_proc = None
 
     def __init__(self, app_ctx, logdir=None, serial=None, restore=True):
         self.app_ctx = app_ctx
         self.dm = self.app_ctx.dm
         self.restore = restore
         self.serial = serial
-        self.logdir = logdir
+        self.logdir = os.path.abspath(os.path.expanduser(logdir))
         self.added_files = set()
         self.backup_files = set()
 
@@ -140,10 +141,22 @@ class Device(object):
             logcat_log = os.path.join(self.logdir, '%s.log' % serial)
             if os.path.isfile(logcat_log):
                 self._rotate_log(logcat_log)
-            logcat_args = [self.app_ctx.adb, '-s', '%s' % serial,
-                           'logcat', '-v', 'time', '-b', 'main', '-b', 'radio']
-            self.logcat_proc = ProcessHandler(logcat_args, logfile=logcat_log)
-            self.logcat_proc.run()
+            self.logcat_proc = self.start_logcat(serial, logfile=logcat_log)
+
+    def start_logcat(self, serial, logfile=None, stream=None, filterspec=None):
+        logcat_args = [self.app_ctx.adb, '-s', '%s' % serial,
+                       'logcat', '-v', 'time', '-b', 'main', '-b', 'radio']
+        # only log filterspec
+        if filterspec:
+            logcat_args.extend(['-s', filterspec])
+        process_args = {}
+        if logfile:
+            process_args['logfile'] = logfile
+        elif stream:
+            process_args['stream'] = stream
+        proc = ProcessHandler(logcat_args, **process_args)
+        proc.run()
+        return proc
 
     def reboot(self):
         """

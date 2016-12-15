@@ -196,7 +196,16 @@
                          oncommand="_setCaseSensitivity(this.checked ? 1 : 0);"
                          type="checkbox"
                          xbl:inherits="accesskey=matchcaseaccesskey"/>
+      <xul:toolbarbutton anonid="find-entire-word"
+                         class="findbar-entire-word findbar-button tabbable"
+                         label="&entireWord.label;"
+                         accesskey="&entireWord.accesskey;"
+                         tooltiptext="&entireWord.tooltiptext;"
+                         oncommand="_setEntireWord(this.checked);"
+                         type="checkbox"
+                         xbl:inherits="accesskey=entirewordaccesskey"/>
       <xul:label anonid="match-case-status" class="findbar-find-fast"/>
+      <xul:label anonid="entire-word-status" class="findbar-find-fast"/>
       <xul:label anonid="found-matches" class="findbar-find-fast found-matches" hidden="true"/>
       <xul:image anonid="find-status-icon" class="findbar-find-fast find-status-icon"/>
       <xul:description anonid="find-status"
@@ -290,10 +299,20 @@
             this._browser.finder.addResultListener(this);
 
             this._findField.value = this._browser._lastSearchString;
-            this.toggleHighlight(this.browser._lastSearchHighlight);
           }
           return val;
         ]]></setter>
+      </property>
+
+      <field name="__prefsvc">null</field>
+      <property name="_prefsvc">
+        <getter><![CDATA[
+          if (!this.__prefsvc) {
+            this.__prefsvc = Components.classes["@mozilla.org/preferences-service;1"]
+              .getService(Components.interfaces.nsIPrefBranch);
+          }
+          return this.__prefsvc;
+        ]]></getter>
       </property>
 
       <field name="_observer"><![CDATA[({
@@ -312,8 +331,7 @@
           if (aTopic != "nsPref:changed")
             return;
 
-          let prefsvc =
-            aSubject.QueryInterface(Components.interfaces.nsIPrefBranch);
+          let prefsvc = this._self._prefsvc;
 
           switch (aPrefName) {
             case "accessibility.typeaheadfind":
@@ -324,6 +342,18 @@
               break;
             case "accessibility.typeaheadfind.casesensitive":
               this._self._setCaseSensitivity(prefsvc.getIntPref(aPrefName));
+              break;
+            case "findbar.entireword":
+              this._self._entireWord = prefsvc.getBoolPref(aPrefName);
+              this._self._updateEntireWord();
+              break;
+            case "findbar.highlightAll":
+              this._self.toggleHighlight(prefsvc.getBoolPref(aPrefName), true);
+              break;
+            case "findbar.modalHighlight":
+              this._self._useModalHighlight = prefsvc.getBoolPref(aPrefName);
+              if (this._self.browser.finder)
+                this._self.browser.finder.onModalHighlightChange(this._self._useModalHighlight);
               break;
           }
         }
@@ -340,9 +370,7 @@
 
         this._foundURL = null;
 
-        let prefsvc =
-          Components.classes["@mozilla.org/preferences-service;1"]
-                    .getService(Components.interfaces.nsIPrefBranch);
+        let prefsvc = this._prefsvc;
 
         this._quickFindTimeoutLength =
           prefsvc.getIntPref("accessibility.typeaheadfind.timeout");
@@ -352,6 +380,7 @@
           prefsvc.getIntPref("accessibility.typeaheadfind.matchesCountTimeout");
         this._matchesCountLimit =
           prefsvc.getIntPref("accessibility.typeaheadfind.matchesCountLimit");
+        this._useModalHighlight = prefsvc.getBoolPref("findbar.modalHighlight");
 
         prefsvc.addObserver("accessibility.typeaheadfind",
                             this._observer, false);
@@ -359,6 +388,9 @@
                             this._observer, false);
         prefsvc.addObserver("accessibility.typeaheadfind.casesensitive",
                             this._observer, false);
+        prefsvc.addObserver("findbar.entireword", this._observer, false);
+        prefsvc.addObserver("findbar.highlightAll", this._observer, false);
+        prefsvc.addObserver("findbar.modalHighlight", this._observer, false);
 
         this._findAsYouType =
           prefsvc.getBoolPref("accessibility.typeaheadfind");
@@ -366,6 +398,8 @@
           prefsvc.getBoolPref("accessibility.typeaheadfind.linksonly");
         this._typeAheadCaseSensitive =
           prefsvc.getIntPref("accessibility.typeaheadfind.casesensitive");
+        this._entireWord = prefsvc.getBoolPref("findbar.entireword");
+        this._highlightAll = prefsvc.getBoolPref("findbar.highlightAll");
 
         // Convenience
         this.nsITypeAheadFind = Components.interfaces.nsITypeAheadFind;
@@ -393,17 +427,21 @@
             return;
           this._destroyed = true;
 
+          if (this.browser.finder)
+            this.browser.finder.destroy();
+
           this.browser = null;
 
-          let prefsvc =
-            Components.classes["@mozilla.org/preferences-service;1"]
-                      .getService(Components.interfaces.nsIPrefBranch);
+          let prefsvc = this._prefsvc;
           prefsvc.removeObserver("accessibility.typeaheadfind",
                                  this._observer);
           prefsvc.removeObserver("accessibility.typeaheadfind.linksonly",
                                  this._observer);
           prefsvc.removeObserver("accessibility.typeaheadfind.casesensitive",
                                  this._observer);
+          prefsvc.removeObserver("findbar.entireword", this._observer);
+          prefsvc.removeObserver("findbar.highlightAll", this._observer);
+          prefsvc.removeObserver("findbar.modalHighlight", this._observer);
 
           // Clear all timers that might still be running.
           this._cancelTimers();
@@ -491,23 +529,61 @@
         - Turns highlight on or off.
         - @param aHighlight (boolean)
         -        Whether to turn the highlight on or off
+        - @param aFromPrefObserver (boolean)
+        -        Whether the callee is the pref observer, which means we should
+        -        not set the same pref again.
         -->
       <method name="toggleHighlight">
         <parameter name="aHighlight"/>
+        <parameter name="aFromPrefObserver"/>
         <body><![CDATA[
-          if (!this._dispatchFindEvent("highlightallchange"))
+          if (aHighlight === this._highlightAll) {
             return;
+          }
+          this._highlightAll = aHighlight;
+
+          this.browser.finder.onHighlightAllChange(aHighlight);
+
+          if (!this._dispatchFindEvent("highlightallchange")) {
+            return;
+          }
+
+          this._setHighlightAll(aHighlight, aFromPrefObserver);
 
           let word = this._findField.value;
           // Bug 429723. Don't attempt to highlight ""
           if (aHighlight && !word)
             return;
 
-          this.browser._lastSearchHighlight = aHighlight;
-          this.browser.finder.highlight(aHighlight, word);
+          this.browser.finder.highlight(aHighlight, word,
+            this._findMode == this.FIND_LINKS);
 
           // Update the matches count
           this._updateMatchesCount(this.nsITypeAheadFind.FIND_FOUND);
+        ]]></body>
+      </method>
+
+      <!--
+        - Updates the highlight-all mode of the findbar and its UI.
+        - @param aHighlight (boolean)
+        -        Whether to turn the highlight on or off.
+        - @param aFromPrefObserver (boolean)
+        -        Whether the callee is the pref observer, which means we should
+        -        not set the same pref again.
+        -->
+      <method name="_setHighlightAll">
+        <parameter name="aHighlight"/>
+        <parameter name="aFromPrefObserver"/>
+        <body><![CDATA[
+          if (typeof aHighlight != "boolean") {
+            aHighlight = this._highlightAll;
+          }
+          if (aHighlight !== this._highlightAll && !aFromPrefObserver) {
+            this._prefsvc.setBoolPref("findbar.highlightAll", aHighlight);
+          }
+          this._highlightAll = aHighlight;
+          let checkbox = this.getElement("highlight");
+          checkbox.checked = this._highlightAll;
         ]]></body>
       </method>
 
@@ -565,6 +641,51 @@
         ]]></body>
       </method>
 
+      <!--
+        - Updates the entire-word mode of the findbar and its UI.
+        -->
+      <method name="_updateEntireWord">
+        <body><![CDATA[
+          let entireWord = this._entireWord;
+          let checkbox = this.getElement("find-entire-word");
+          let statusLabel = this.getElement("entire-word-status");
+          checkbox.checked = entireWord;
+
+          statusLabel.value = entireWord ? this._entireWordStr : "";
+
+          // Show the checkbox on the full Find bar in non-auto mode.
+          // Show the label in all other cases.
+          let hideCheckbox = this._findMode != this.FIND_NORMAL;
+          checkbox.hidden = hideCheckbox;
+          statusLabel.hidden = !hideCheckbox;
+
+          this.browser.finder.entireWord = entireWord;
+
+          // Update the matches count
+          this._updateMatchesCount(this.nsITypeAheadFind.FIND_FOUND);
+        ]]></body>
+      </method>
+
+      <!--
+        - Sets the findbar entire-word mode
+        - @param aEntireWord (boolean)
+        - Whether or not entire-word mode should be turned on.
+        -->
+      <method name="_setEntireWord">
+        <parameter name="aEntireWord"/>
+        <body><![CDATA[
+          let prefsvc =
+            Components.classes["@mozilla.org/preferences-service;1"]
+                      .getService(Components.interfaces.nsIPrefBranch);
+
+          // Just set the pref; our observer will change the find bar behavior.
+          prefsvc.setBoolPref("findbar.entireword", aEntireWord);
+
+          if (this.getElement("highlight").checked)
+            this._setHighlightTimeout();
+        ]]></body>
+      </method>
+
       <field name="_strBundle">null</field>
       <property name="strBundle">
         <getter><![CDATA[
@@ -608,6 +729,8 @@
               stringsBundle.GetStringFromName("FastFindLinks");
             this._caseSensitiveStr =
               stringsBundle.GetStringFromName("CaseSensitive");
+            this._entireWordStr =
+              stringsBundle.GetStringFromName("EntireWord");
           }
 
           this._findFailedString = null;
@@ -642,8 +765,10 @@
             this.setAttribute("noanim", true);
           this.hidden = true;
 
+          // 'focusContent()' iterates over all listeners in the chrome
+          // process, so we need to call it from here.
           this.browser.finder.focusContent();
-          this.browser.finder.enableSelection();
+          this.browser.finder.onFindbarClose();
 
           this._cancelTimers();
 
@@ -854,6 +979,8 @@
             this.getElement("find-previous").hidden = showMinimalUI;
           foundMatches.hidden = showMinimalUI || !foundMatches.value;
           this._updateCaseSensitivity();
+          this._updateEntireWord();
+          this._setHighlightAll();
 
           if (showMinimalUI)
             this._findField.classList.add("minimal");
@@ -884,9 +1011,13 @@
 
           // Only search on input if we don't have a last-failed string,
           // or if the current search string doesn't start with it.
+          // In entire-word mode we always attemp a find; since sequential matching
+          // is not guaranteed, the first character typed may not be a word (no
+          // match), but the with the second character it may well be a word,
+          // thus a match.
           if (!this._findFailedString ||
-              !val.startsWith(this._findFailedString))
-          {
+              !val.startsWith(this._findFailedString) ||
+              this._entireWord) {
             // Getting here means the user commanded a find op. Make sure any
             // initial prefilling is ignored if it hasn't happened yet.
             if (this._startFindDeferred) {
@@ -899,6 +1030,7 @@
               this._setHighlightTimeout();
 
             this._updateCaseSensitivity(val);
+            this._updateEntireWord();
 
             this.browser.finder.fastFind(val, this._findMode == this.FIND_LINKS,
                                          this._findMode != this.FIND_NORMAL);
@@ -1008,7 +1140,8 @@
           event.initCustomEvent("find" + aType, true, true, {
             query: this._findField.value,
             caseSensitive: !!this._typeAheadCaseSensitive,
-            highlightAll: this.getElement("highlight").checked,
+            entireWord: this._entireWord,
+            highlightAll: this._highlightAll,
             findPrevious: aFindPrevious
           });
           return this.dispatchEvent(event);
@@ -1027,9 +1160,7 @@
       <method name="startFind">
         <parameter name="aMode"/>
         <body><![CDATA[
-          let prefsvc =
-            Components.classes["@mozilla.org/preferences-service;1"]
-                      .getService(Components.interfaces.nsIPrefBranch);
+          let prefsvc = this._prefsvc;
           let userWantsPrefill = true;
           this.open(aMode);
 
@@ -1107,10 +1238,16 @@
           this._findFailedString = null;
 
           // Ensure the stored SearchString is in sync with what we want to find
-          if (this._findField.value != this._browser.finder.searchString)
+          if (this._findField.value != this._browser.finder.searchString) {
             this._find(this._findField.value);
-          else
+          } else {
             this._findAgain(aFindPrevious);
+            if (this._useModalHighlight) {
+              this.open();
+              this._findField.select();
+              this._findField.focus();
+            }
+          }
 
           return undefined;
         ]]></body>
@@ -1131,9 +1268,7 @@
 
       <method name="_onFindFieldFocus">
         <body><![CDATA[
-          let prefsvc =
-            Components.classes["@mozilla.org/preferences-service;1"]
-                      .getService(Components.interfaces.nsIPrefBranch);
+          let prefsvc = this._prefsvc;
           const kPref = "accessibility.typeaheadfind.prefillwithselection";
           if (this.prefillWithSelection && prefsvc.getBoolPref(kPref))
             return;
@@ -1214,6 +1349,13 @@
             this._foundMatches.hidden = true;
             this._foundMatches.value = "";
           }
+        ]]></body>
+      </method>
+
+      <method name="onHighlightFinished">
+        <parameter name="result"/>
+        <body><![CDATA[
+          // Noop.
         ]]></body>
       </method>
 

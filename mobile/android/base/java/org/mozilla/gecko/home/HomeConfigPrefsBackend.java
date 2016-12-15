@@ -35,7 +35,7 @@ public class HomeConfigPrefsBackend implements HomeConfigBackend {
     private static final String LOGTAG = "GeckoHomeConfigBackend";
 
     // Increment this to trigger a migration.
-    private static final int VERSION = 6;
+    private static final int VERSION = 8;
 
     // This key was originally used to store only an array of panel configs.
     public static final String PREFS_CONFIG_KEY_OLD = "home_panels";
@@ -74,8 +74,6 @@ public class HomeConfigPrefsBackend implements HomeConfigBackend {
         panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.BOOKMARKS));
         panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.COMBINED_HISTORY));
 
-
-        panelConfigs.add(createBuiltinPanelConfig(mContext, PanelType.RECENT_TABS));
 
         return new State(panelConfigs, true);
     }
@@ -213,8 +211,18 @@ public class HomeConfigPrefsBackend implements HomeConfigBackend {
         return newArray;
     }
 
-    private static void ensureDefaultPanelForV5(Context context, JSONArray jsonPanels) throws JSONException {
+    /**
+     * Iterate over all homepanels to verify that there is at least one default panel. If there is
+     * no default panel, set History as the default panel. (This is only relevant for two botched
+     * migrations where the history panel should have been made the default panel, but wasn't.)
+     */
+    private static void ensureDefaultPanelForV5orV8(Context context, JSONArray jsonPanels) throws JSONException {
         int historyIndex = -1;
+
+        // If all panels are disabled, there is no default panel - this is the only valid state
+        // that has no default. We can use this flag to track whether any visible panels have been
+        // found.
+        boolean enabledPanelsFound = false;
 
         for (int i = 0; i < jsonPanels.length(); i++) {
             final PanelConfig panelConfig = new PanelConfig(jsonPanels.getJSONObject(i));
@@ -222,9 +230,19 @@ public class HomeConfigPrefsBackend implements HomeConfigBackend {
                 return;
             }
 
+            if (!panelConfig.isDisabled()) {
+                enabledPanelsFound = true;
+            }
+
             if (panelConfig.getType() == PanelType.COMBINED_HISTORY) {
                 historyIndex = i;
             }
+        }
+
+        if (!enabledPanelsFound) {
+            // No panels are enabled, hence there can be no default (see noEnabledPanelsFound declaration
+            // for more information).
+            return;
         }
 
         // Make the History panel default. We can't modify existing PanelConfigs, so make a new one.
@@ -233,12 +251,25 @@ public class HomeConfigPrefsBackend implements HomeConfigBackend {
     }
 
     /**
-     * Remove the reading list panel.
-     * If the reading list panel used to be the default panel, we make bookmarks the new default.
+     * Removes a panel from the home panel config.
+     * If the removed panel was set as the default home panel, we provide a replacement for it.
+     *
+     * @param context Android context
+     * @param jsonPanels array of original JSON panels
+     * @param panelToRemove The home panel to be removed.
+     * @param replacementPanel The panel which will replace it if the removed panel
+     *                         was the default home panel.
+     * @param alwaysUnhide If true, the replacement panel will always be unhidden,
+     *                     otherwise only if we turn it into the new default panel.
+     * @return new array of updated JSON panels
+     * @throws JSONException
      */
-    private static JSONArray removeReadingListPanel(Context context, JSONArray jsonPanels) throws JSONException {
+    private static JSONArray removePanel(Context context, JSONArray jsonPanels,
+                                         PanelType panelToRemove, PanelType replacementPanel, boolean alwaysUnhide) throws JSONException {
         boolean wasDefault = false;
-        int bookmarksIndex = -1;
+        boolean wasDisabled = false;
+        int replacementPanelIndex = -1;
+        boolean replacementWasDefault = false;
 
         // JSONArrary doesn't provide remove() for API < 19, therefore we need to manually copy all
         // the items we don't want deleted into a new array.
@@ -248,26 +279,50 @@ public class HomeConfigPrefsBackend implements HomeConfigBackend {
             final JSONObject panelJSON = jsonPanels.getJSONObject(i);
             final PanelConfig panelConfig = new PanelConfig(panelJSON);
 
-            if (panelConfig.getType() == PanelType.DEPRECATED_READING_LIST) {
+            if (panelConfig.getType() == panelToRemove) {
                 // If this panel was the default we'll need to assign a new default:
                 wasDefault = panelConfig.isDefault();
+                wasDisabled = panelConfig.isDisabled();
             } else {
-                if (panelConfig.getType() == PanelType.BOOKMARKS) {
-                    bookmarksIndex = newJSONPanels.length();
+                if (panelConfig.getType() == replacementPanel) {
+                    replacementPanelIndex = newJSONPanels.length();
+                    if (panelConfig.isDefault()) {
+                        replacementWasDefault = true;
+                    }
                 }
 
                 newJSONPanels.put(panelJSON);
             }
         }
 
-        if (wasDefault) {
-            // This will make the bookmarks panel visible if it was previously hidden - this is desired
-            // since this will make the new equivalent of the reading list visible by default.
-            final JSONObject bookmarksPanelConfig = createBuiltinPanelConfig(context, PanelType.BOOKMARKS, EnumSet.of(PanelConfig.Flags.DEFAULT_PANEL)).toJSON();
-            if (bookmarksIndex != -1) {
-                newJSONPanels.put(bookmarksIndex, bookmarksPanelConfig);
+        // Unless alwaysUnhide is true, we make the replacement panel visible only if it is going
+        // to be the new default panel, since a hidden default panel doesn't make sense.
+        // This is to allow preserving the behaviour of the original reading list migration function.
+        if ((wasDefault || alwaysUnhide) && !wasDisabled) {
+            final JSONObject replacementPanelConfig;
+            if (wasDefault) {
+                // If the removed panel was the default, the replacement has to be made the new default
+                replacementPanelConfig = createBuiltinPanelConfig(context, replacementPanel, EnumSet.of(PanelConfig.Flags.DEFAULT_PANEL)).toJSON();
             } else {
-                newJSONPanels.put(bookmarksPanelConfig);
+                final EnumSet<HomeConfig.PanelConfig.Flags> flags;
+                if (replacementWasDefault) {
+                    // However if the replacement panel was already default, we need to preserve it's default status
+                    // (By rewriting the PanelConfig, we lose all existing flags, so we need to make sure desired
+                    // flags are retained - in this case there's only DEFAULT_PANEL, which is mutually
+                    // exclusive with the DISABLE_PANEL case).
+                    flags = EnumSet.of(PanelConfig.Flags.DEFAULT_PANEL);
+                } else {
+                    flags = EnumSet.noneOf(PanelConfig.Flags.class);
+                }
+
+                // The panel is visible since we don't set Flags.DISABLED_PANEL.
+                replacementPanelConfig = createBuiltinPanelConfig(context, replacementPanel, flags).toJSON();
+            }
+
+            if (replacementPanelIndex != -1) {
+                newJSONPanels.put(replacementPanelIndex, replacementPanelConfig);
+            } else {
+                newJSONPanels.put(replacementPanelConfig);
             }
         }
 
@@ -346,7 +401,7 @@ public class HomeConfigPrefsBackend implements HomeConfigBackend {
                 case 1:
                     // Add "Recent Tabs" panel.
                     addBuiltinPanelConfig(context, jsonPanels,
-                            PanelType.RECENT_TABS, Position.FRONT, Position.BACK);
+                            PanelType.DEPRECATED_RECENT_TABS, Position.FRONT, Position.BACK);
 
                     // Remove the old pref key.
                     prefsEditor.remove(PREFS_CONFIG_KEY_OLD);
@@ -380,11 +435,23 @@ public class HomeConfigPrefsBackend implements HomeConfigBackend {
 
                 case 5:
                     // This is the fix for bug 1264136 where we lost track of the default panel during some migrations.
-                    ensureDefaultPanelForV5(context, jsonPanels);
+                    ensureDefaultPanelForV5orV8(context, jsonPanels);
                     break;
 
                 case 6:
-                    jsonPanels = removeReadingListPanel(context, jsonPanels);
+                    jsonPanels = removePanel(context, jsonPanels,
+                            PanelType.DEPRECATED_READING_LIST, PanelType.BOOKMARKS, false);
+                    break;
+
+                case 7:
+                    jsonPanels = removePanel(context, jsonPanels,
+                            PanelType.DEPRECATED_RECENT_TABS, PanelType.COMBINED_HISTORY, true);
+                    break;
+
+                case 8:
+                    // Similar to "case 5" above, this time 1304777 - once again we lost track
+                    // of the history panel
+                    ensureDefaultPanelForV5orV8(context, jsonPanels);
                     break;
             }
         }

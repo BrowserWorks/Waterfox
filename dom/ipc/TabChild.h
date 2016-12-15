@@ -138,7 +138,6 @@ public:
     return NS_OK;
   }
 
-  virtual JSContext* GetJSContextForEventHandlers() override;
   virtual nsIPrincipal* GetPrincipal() override;
   virtual JSObject* GetGlobalJSObject() override;
 
@@ -452,6 +451,10 @@ public:
 
   virtual bool DeallocPColorPickerChild(PColorPickerChild* aActor) override;
 
+    virtual PDatePickerChild*
+    AllocPDatePickerChild(const nsString& title, const nsString& initialDate) override;
+    virtual bool DeallocPDatePickerChild(PDatePickerChild* actor) override;
+
   virtual PFilePickerChild*
   AllocPFilePickerChild(const nsString& aTitle, const int16_t& aMode) override;
 
@@ -619,17 +622,12 @@ public:
                                  bool aPreventDefault) const;
   void SetTargetAPZC(uint64_t aInputBlockId,
                     const nsTArray<ScrollableLayerGuid>& aTargets) const;
-  void HandleDoubleTap(const CSSPoint& aPoint,
-                       const Modifiers& aModifiers,
-                       const mozilla::layers::ScrollableLayerGuid& aGuid);
-  void HandleSingleTap(const CSSPoint& aPoint,
-                       const Modifiers& aModifiers,
-                       const mozilla::layers::ScrollableLayerGuid& aGuid,
-                       bool aCallTakeFocusForClickFromTap);
-  void HandleLongTap(const CSSPoint& aPoint,
-                     const Modifiers& aModifiers,
-                     const mozilla::layers::ScrollableLayerGuid& aGuid,
-                     const uint64_t& aInputBlockId);
+  void HandleTap(layers::GeckoContentController::TapType aType,
+                 const LayoutDevicePoint& aPoint,
+                 const Modifiers& aModifiers,
+                 const mozilla::layers::ScrollableLayerGuid& aGuid,
+                 const uint64_t& aInputBlockId,
+                 bool aCallTakeFocusForClickFromTap);
   void SetAllowedTouchBehavior(uint64_t aInputBlockId,
                                const nsTArray<TouchBehaviorFlags>& aFlags) const;
 
@@ -671,6 +669,9 @@ protected:
 
   virtual bool RecvParentActivated(const bool& aActivated) override;
 
+  virtual bool RecvSetKeyboardIndicators(const UIStateChangeType& aShowAccelerators,
+                                         const UIStateChangeType& aShowFocusRings) override;
+
   virtual bool RecvStopIMEStateManagement() override;
 
   virtual bool RecvMenuKeyboardListenerInstalled(
@@ -681,6 +682,9 @@ protected:
 #endif
 
 private:
+  void HandleDoubleTap(const CSSPoint& aPoint, const Modifiers& aModifiers,
+                       const ScrollableLayerGuid& aGuid);
+
   // Notify others that our TabContext has been updated.  (At the moment, this
   // sets the appropriate origin attributes on our docshell.)
   //

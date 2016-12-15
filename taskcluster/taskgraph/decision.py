@@ -16,21 +16,36 @@ from .create import create_tasks
 from .parameters import Parameters
 from .target_tasks import get_method
 
-logger = logging.getLogger(__name__)
-ARTIFACTS_DIR = 'artifacts'
+from taskgraph.util.templates import Templates
+from taskgraph.util.time import (
+    json_time_from_now,
+    current_json_time,
+)
 
 logger = logging.getLogger(__name__)
+
+ARTIFACTS_DIR = 'artifacts'
+GECKO = os.path.realpath(os.path.join(__file__, '..', '..', '..'))
 
 # For each project, this gives a set of parameters specific to the project.
 # See `taskcluster/docs/parameters.rst` for information on parameters.
 PER_PROJECT_PARAMETERS = {
     'try': {
         'target_tasks_method': 'try_option_syntax',
+        # for try, if a task was specified as a target, it should
+        # not be optimized away
+        'optimize_target_tasks': False,
+    },
+
+    'ash': {
+        'target_tasks_method': 'ash_tasks',
+        'optimize_target_tasks': True,
     },
 
     # the default parameters are used for projects that do not match above.
     'default': {
-        'target_tasks_method': 'all_tasks',
+        'target_tasks_method': 'all_builds_and_tests',
+        'optimize_target_tasks': True,
     }
 }
 
@@ -60,20 +75,22 @@ def taskgraph_decision(options):
     # write out the parameters used to generate this graph
     write_artifact('parameters.yml', dict(**parameters))
 
+    # write out the yml file for action tasks
+    write_artifact('action.yml', get_action_yml(parameters))
+
     # write out the full graph for reference
-    write_artifact('full-task-graph.json',
-                   taskgraph_to_json(tgg.full_task_graph))
+    write_artifact('full-task-graph.json', tgg.full_task_graph.to_json())
 
     # write out the target task set to allow reproducing this as input
-    write_artifact('target_tasks.json',
-                   tgg.target_task_set.tasks.keys())
+    write_artifact('target-tasks.json', tgg.target_task_set.tasks.keys())
 
-    # write out the optimized task graph to describe what will happen
-    write_artifact('task-graph.json',
-                   taskgraph_to_json(tgg.optimized_task_graph))
+    # write out the optimized task graph to describe what will actually happen,
+    # and the map of labels to taskids
+    write_artifact('task-graph.json', tgg.optimized_task_graph.to_json())
+    write_artifact('label-to-taskid.json', tgg.label_to_taskid)
 
     # actually create the graph
-    create_tasks(tgg.optimized_task_graph)
+    create_tasks(tgg.optimized_task_graph, tgg.label_to_taskid)
 
 
 def get_decision_parameters(options):
@@ -87,7 +104,6 @@ def get_decision_parameters(options):
         'head_repository',
         'head_rev',
         'head_ref',
-        'revision_hash',
         'message',
         'project',
         'pushlog_id',
@@ -96,34 +112,21 @@ def get_decision_parameters(options):
         'target_tasks_method',
     ] if n in options}
 
+    # owner must be an email, but sometimes (e.g., for ffxbld) it is not, in which
+    # case, fake it
+    if '@' not in parameters['owner']:
+        parameters['owner'] += '@noreply.mozilla.org'
+
     project = parameters['project']
     try:
         parameters.update(PER_PROJECT_PARAMETERS[project])
     except KeyError:
         logger.warning("using default project parameters; add {} to "
-              "PER_PROJECT_PARAMETERS in {} to customize behavior "
-              "for this project".format(project, __file__))
+                       "PER_PROJECT_PARAMETERS in {} to customize behavior "
+                       "for this project".format(project, __file__))
         parameters.update(PER_PROJECT_PARAMETERS['default'])
 
     return Parameters(parameters)
-
-
-def taskgraph_to_json(taskgraph):
-    tasks = taskgraph.tasks
-
-    def tojson(task):
-        return {
-            'task': task.task,
-            'attributes': task.attributes,
-            'dependencies': []
-        }
-    rv = {label: tojson(tasks[label]) for label in taskgraph.graph.nodes}
-
-    # add dependencies with one trip through the graph edges
-    for (left, right, name) in taskgraph.graph.edges:
-        rv[left]['dependencies'].append((name, right))
-
-    return rv
 
 
 def write_artifact(filename, data):
@@ -139,3 +142,15 @@ def write_artifact(filename, data):
             json.dump(data, f, sort_keys=True, indent=2, separators=(',', ': '))
     else:
         raise TypeError("Don't know how to write to {}".format(filename))
+
+
+def get_action_yml(parameters):
+    templates = Templates(os.path.join(GECKO, "taskcluster/taskgraph"))
+    action_parameters = parameters.copy()
+    action_parameters.update({
+        "decision_task_id": "{{decision_task_id}}",
+        "task_labels": "{{task_labels}}",
+        "from_now": json_time_from_now,
+        "now": current_json_time()
+    })
+    return templates.load('action.yml', action_parameters)

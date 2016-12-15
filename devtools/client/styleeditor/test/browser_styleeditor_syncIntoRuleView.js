@@ -8,7 +8,6 @@
 
 const TEST_URI = `
   <style type='text/css'>
-    div { background-color: seagreen; }
   </style>
   <div id='testid' class='testclass'>Styled Node</div>
 `;
@@ -34,7 +33,7 @@ add_task(function* () {
 });
 
 function typeInEditor(editor, panelWindow) {
-  let deferred = promise.defer();
+  let deferred = defer();
 
   waitForFocus(function () {
     for (let c of TESTCASE_CSS_SOURCE) {

@@ -565,10 +565,11 @@ GenerateAndPushTextMask(nsIFrame* aFrame, nsRenderingContext* aContext,
   RefPtr<DrawTarget> maskDT =
     sourceTarget->CreateSimilarDrawTarget(drawRect.Size(),
                                           SurfaceFormat::A8);
-  if (!maskDT) {
-    NS_ABORT_OOM(drawRect.width * drawRect.height);
+  if (!maskDT || !maskDT->IsValid()) {
+    return false;
   }
-  RefPtr<gfxContext> maskCtx = gfxContext::ForDrawTargetWithTransform(maskDT);
+  RefPtr<gfxContext> maskCtx = gfxContext::CreatePreservingTransformOrNull(maskDT);
+  MOZ_ASSERT(maskCtx);
   gfxMatrix currentMatrix = sourceCtx->CurrentMatrix();
   maskCtx->SetMatrix(gfxMatrix::Translation(bounds.TopLeft()) *
                      currentMatrix *
@@ -1007,7 +1008,10 @@ nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame,
   }
 
   nsPresContext* pc = aReferenceFrame->PresContext();
-  pc->GetDocShell()->GetWindowDraggingAllowed(&mWindowDraggingAllowed);
+  nsCOMPtr<nsIDocShell> docShell = pc->GetDocShell();
+  if (docShell) {
+    docShell->GetWindowDraggingAllowed(&mWindowDraggingAllowed);
+  }
   mIsInChromePresContext = pc->IsChrome();
 }
 
@@ -1023,7 +1027,10 @@ nsDisplayListBuilder::LeavePresShell(nsIFrame* aReferenceFrame)
 
   if (!mPresShellStates.IsEmpty()) {
     nsPresContext* pc = CurrentPresContext();
-    pc->GetDocShell()->GetWindowDraggingAllowed(&mWindowDraggingAllowed);
+    nsCOMPtr<nsIDocShell> docShell = pc->GetDocShell();
+    if (docShell) {
+      docShell->GetWindowDraggingAllowed(&mWindowDraggingAllowed);
+    }
     mIsInChromePresContext = pc->IsChrome();
   }
 }
@@ -1699,7 +1706,7 @@ TriggerPendingAnimations(nsIDocument* aDocument,
 }
 
 LayerManager*
-nsDisplayListBuilder::GetWidgetLayerManager(nsView** aView, bool* aAllowRetaining)
+nsDisplayListBuilder::GetWidgetLayerManager(nsView** aView)
 {
   nsView* view = RootReferenceFrame()->GetView();
   if (aView) {
@@ -1710,7 +1717,7 @@ nsDisplayListBuilder::GetWidgetLayerManager(nsView** aView, bool* aAllowRetainin
   }
   nsIWidget* window = RootReferenceFrame()->GetNearestWidget();
   if (window) {
-    return window->GetLayerManager(aAllowRetaining);
+    return window->GetLayerManager();
   }
   return nullptr;
 }
@@ -1728,11 +1735,10 @@ already_AddRefed<LayerManager> nsDisplayList::PaintRoot(nsDisplayListBuilder* aB
 
   RefPtr<LayerManager> layerManager;
   bool widgetTransaction = false;
-  bool allowRetaining = false;
   bool doBeginTransaction = true;
   nsView *view = nullptr;
   if (aFlags & PAINT_USE_WIDGET_LAYERS) {
-    layerManager = aBuilder->GetWidgetLayerManager(&view, &allowRetaining);
+    layerManager = aBuilder->GetWidgetLayerManager(&view);
     if (layerManager) {
       doBeginTransaction = !(aFlags & PAINT_EXISTING_TRANSACTION);
       widgetTransaction = true;
@@ -2095,8 +2101,7 @@ void nsDisplayList::HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
     bool same3DContext =
       (itemType == nsDisplayItem::TYPE_TRANSFORM &&
        static_cast<nsDisplayTransform*>(item)->IsParticipating3DContext()) ||
-      ((itemType == nsDisplayItem::TYPE_PERSPECTIVE ||
-        itemType == nsDisplayItem::TYPE_OPACITY) &&
+      (itemType == nsDisplayItem::TYPE_PERSPECTIVE &&
        item->Frame()->Extend3DContext());
     if (same3DContext &&
         (itemType != nsDisplayItem::TYPE_TRANSFORM ||
@@ -3676,15 +3681,37 @@ nsDisplayLayerEventRegions::AddFrame(nsDisplayListBuilder* aBuilder,
 
   // Touch action region
 
-  uint32_t touchAction = nsLayoutUtils::GetTouchActionFromFrame(aFrame);
-  if (touchAction & NS_STYLE_TOUCH_ACTION_NONE) {
-    mNoActionRegion.Or(mNoActionRegion, borderBox);
-  } else {
-    if ((touchAction & NS_STYLE_TOUCH_ACTION_PAN_X)) {
-      mHorizontalPanRegion.Or(mHorizontalPanRegion, borderBox);
+  nsIFrame* touchActionFrame = aFrame;
+  nsIScrollableFrame* scrollFrame = nsLayoutUtils::GetScrollableFrameFor(aFrame);
+  if (scrollFrame) {
+    touchActionFrame = do_QueryFrame(scrollFrame);
+  }
+  uint32_t touchAction = nsLayoutUtils::GetTouchActionFromFrame(touchActionFrame);
+  if (touchAction != NS_STYLE_TOUCH_ACTION_AUTO) {
+    // If this frame has touch-action areas, and there were already
+    // touch-action areas from some other element on this same event regions,
+    // then all we know is that there are multiple elements with touch-action
+    // properties. In particular, we don't know what the relationship is
+    // between those elements in terms of DOM ancestry, and so we don't know
+    // how to combine the regions properly. Instead, we just add all the areas
+    // to the dispatch-to-content region, so that the APZ knows to check with
+    // the main thread. XXX we need to come up with a better way to do this,
+    // see bug 1287829.
+    bool alreadyHadRegions = !mNoActionRegion.IsEmpty() ||
+        !mHorizontalPanRegion.IsEmpty() ||
+        !mVerticalPanRegion.IsEmpty();
+    if (touchAction & NS_STYLE_TOUCH_ACTION_NONE) {
+      mNoActionRegion.OrWith(borderBox);
+    } else {
+      if ((touchAction & NS_STYLE_TOUCH_ACTION_PAN_X)) {
+        mHorizontalPanRegion.OrWith(borderBox);
+      }
+      if ((touchAction & NS_STYLE_TOUCH_ACTION_PAN_Y)) {
+        mVerticalPanRegion.OrWith(borderBox);
+      }
     }
-    if ((touchAction & NS_STYLE_TOUCH_ACTION_PAN_Y)) {
-      mVerticalPanRegion.Or(mVerticalPanRegion, borderBox);
+    if (alreadyHadRegions) {
+      mDispatchToContentHitRegion.OrWith(CombinedTouchActionRegion());
     }
   }
 }
@@ -3711,6 +3738,15 @@ nsDisplayLayerEventRegions::IsEmpty() const
   return false;
 }
 
+nsRegion
+nsDisplayLayerEventRegions::CombinedTouchActionRegion()
+{
+  nsRegion result;
+  result.Or(mHorizontalPanRegion, mVerticalPanRegion);
+  result.OrWith(mNoActionRegion);
+  return result;
+}
+
 int32_t
 nsDisplayLayerEventRegions::ZIndex() const
 {
@@ -3734,6 +3770,15 @@ nsDisplayLayerEventRegions::WriteDebugInfo(std::stringstream& aStream)
   }
   if (!mDispatchToContentHitRegion.IsEmpty()) {
     AppendToString(aStream, mDispatchToContentHitRegion, " (dispatchToContentRegion ", ")");
+  }
+  if (!mNoActionRegion.IsEmpty()) {
+    AppendToString(aStream, mNoActionRegion, " (noActionRegion ", ")");
+  }
+  if (!mHorizontalPanRegion.IsEmpty()) {
+    AppendToString(aStream, mHorizontalPanRegion, " (horizPanRegion ", ")");
+  }
+  if (!mVerticalPanRegion.IsEmpty()) {
+    AppendToString(aStream, mVerticalPanRegion, " (vertPanRegion ", ")");
   }
 }
 
@@ -4340,7 +4385,6 @@ nsDisplayOpacity::nsDisplayOpacity(nsDisplayListBuilder* aBuilder,
     : nsDisplayWrapList(aBuilder, aFrame, aList, aScrollClip)
     , mOpacity(aFrame->StyleEffects()->mOpacity)
     , mForEventsOnly(aForEventsOnly)
-    , mParticipatesInPreserve3D(false)
 {
   MOZ_COUNT_CTOR(nsDisplayOpacity);
 }
@@ -4378,12 +4422,6 @@ nsDisplayOpacity::BuildLayer(nsDisplayListBuilder* aBuilder,
   nsDisplayListBuilder::AddAnimationsAndTransitionsToLayer(container, aBuilder,
                                                            this, mFrame,
                                                            eCSSProperty_opacity);
-
-  if (mParticipatesInPreserve3D) {
-    container->SetContentFlags(container->GetContentFlags() | Layer::CONTENT_EXTEND_3D_CONTEXT);
-  } else {
-    container->SetContentFlags(container->GetContentFlags() & ~Layer::CONTENT_EXTEND_3D_CONTEXT);
-  }
   return container.forget();
 }
 
@@ -4393,23 +4431,23 @@ nsDisplayOpacity::BuildLayer(nsDisplayListBuilder* aBuilder,
  * size --- but this should be good enough.
  */
 static bool
-IsItemTooSmallForActiveLayer(nsDisplayItem* aItem)
+IsItemTooSmallForActiveLayer(nsIFrame* aFrame)
 {
-  nsIntRect visibleDevPixels = aItem->Frame()->GetVisualOverflowRectRelativeToSelf().ToOutsidePixels(
-          aItem->Frame()->PresContext()->AppUnitsPerDevPixel());
+  nsIntRect visibleDevPixels = aFrame->GetVisualOverflowRectRelativeToSelf().ToOutsidePixels(
+          aFrame->PresContext()->AppUnitsPerDevPixel());
   static const int MIN_ACTIVE_LAYER_SIZE_DEV_PIXELS = 16;
   return visibleDevPixels.Size() <
     nsIntSize(MIN_ACTIVE_LAYER_SIZE_DEV_PIXELS, MIN_ACTIVE_LAYER_SIZE_DEV_PIXELS);
 }
 
 static void
-SetAnimationPerformanceWarningForTooSmallItem(nsDisplayItem* aItem,
+SetAnimationPerformanceWarningForTooSmallItem(nsIFrame* aFrame,
                                               nsCSSProperty aProperty)
 {
   // We use ToNearestPixels() here since ToOutsidePixels causes some sort of
   // errors. See https://bugzilla.mozilla.org/show_bug.cgi?id=1258904#c19
-  nsIntRect visibleDevPixels = aItem->Frame()->GetVisualOverflowRectRelativeToSelf().ToNearestPixels(
-          aItem->Frame()->PresContext()->AppUnitsPerDevPixel());
+  nsIntRect visibleDevPixels = aFrame->GetVisualOverflowRectRelativeToSelf().ToNearestPixels(
+          aFrame->PresContext()->AppUnitsPerDevPixel());
 
   // Set performance warning only if the visible dev pixels is not empty
   // because dev pixels is empty if the frame has 'preserve-3d' style.
@@ -4417,23 +4455,23 @@ SetAnimationPerformanceWarningForTooSmallItem(nsDisplayItem* aItem,
     return;
   }
 
-  EffectCompositor::SetPerformanceWarning(aItem->Frame(), aProperty,
+  EffectCompositor::SetPerformanceWarning(aFrame, aProperty,
       AnimationPerformanceWarning(
         AnimationPerformanceWarning::Type::ContentTooSmall,
         { visibleDevPixels.Width(), visibleDevPixels.Height() }));
 }
 
-bool
-nsDisplayOpacity::NeedsActiveLayer(nsDisplayListBuilder* aBuilder)
+/* static */ bool
+nsDisplayOpacity::NeedsActiveLayer(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame)
 {
-  if (ActiveLayerTracker::IsStyleAnimated(aBuilder, mFrame,
+  if (ActiveLayerTracker::IsStyleAnimated(aBuilder, aFrame,
                                           eCSSProperty_opacity) ||
-      EffectCompositor::HasAnimationsForCompositor(mFrame,
+      EffectCompositor::HasAnimationsForCompositor(aFrame,
                                                    eCSSProperty_opacity)) {
-    if (!IsItemTooSmallForActiveLayer(this)) {
+    if (!IsItemTooSmallForActiveLayer(aFrame)) {
       return true;
     }
-    SetAnimationPerformanceWarningForTooSmallItem(this, eCSSProperty_opacity);
+    SetAnimationPerformanceWarningForTooSmallItem(aFrame, eCSSProperty_opacity);
   }
   return false;
 }
@@ -4459,7 +4497,7 @@ nsDisplayOpacity::CanApplyOpacity() const
 bool
 nsDisplayOpacity::ShouldFlattenAway(nsDisplayListBuilder* aBuilder)
 {
-  if (NeedsActiveLayer(aBuilder) || mOpacity == 0.0) {
+  if (NeedsActiveLayer(aBuilder, mFrame) || mOpacity == 0.0) {
     // If our opacity is zero then we'll discard all descendant display items
     // except for layer event regions, so there's no point in doing this
     // optimization (and if we do do it, then invalidations of those descendants
@@ -4521,7 +4559,7 @@ nsDisplayOpacity::GetLayerState(nsDisplayListBuilder* aBuilder,
     return LAYER_INACTIVE;
   }
 
-  if (NeedsActiveLayer(aBuilder)) {
+  if (NeedsActiveLayer(aBuilder, mFrame)) {
     // Returns LAYER_ACTIVE_FORCE to avoid flatterning the layer for async
     // animations.
     return LAYER_ACTIVE_FORCE;
@@ -5505,7 +5543,7 @@ nsDisplayTransform::GetDeltaToTransformOrigin(const nsIFrame* aFrame,
 {
   NS_PRECONDITION(aFrame, "Can't get delta for a null frame!");
   NS_PRECONDITION(aFrame->IsTransformed() ||
-                  aFrame->StyleDisplay()->BackfaceIsHidden() ||
+                  aFrame->BackfaceIsHidden() ||
                   aFrame->Combines3DTransformWithAncestors(),
                   "Shouldn't get a delta for an untransformed frame!");
 
@@ -5578,7 +5616,7 @@ nsDisplayTransform::ComputePerspectiveMatrix(const nsIFrame* aFrame,
 {
   NS_PRECONDITION(aFrame, "Can't get delta for a null frame!");
   NS_PRECONDITION(aFrame->IsTransformed() ||
-                  aFrame->StyleDisplay()->BackfaceIsHidden() ||
+                  aFrame->BackfaceIsHidden() ||
                   aFrame->Combines3DTransformWithAncestors(),
                   "Shouldn't get a delta for an untransformed frame!");
   NS_PRECONDITION(aOutMatrix.IsIdentity(), "Must have a blank output matrix");
@@ -5913,8 +5951,7 @@ static bool IsFrameVisible(nsIFrame* aFrame, const Matrix4x4& aMatrix)
   if (aMatrix.IsSingular()) {
     return false;
   }
-  if (aFrame->StyleDisplay()->mBackfaceVisibility == NS_STYLE_BACKFACE_VISIBILITY_HIDDEN &&
-      aMatrix.IsBackfaceVisible()) {
+  if (aFrame->BackfaceIsHidden() && aMatrix.IsBackfaceVisible()) {
     return false;
   }
   return true;
@@ -6051,10 +6088,10 @@ nsDisplayTransform::MayBeAnimated(nsDisplayListBuilder* aBuilder)
                                           eCSSProperty_transform) ||
       EffectCompositor::HasAnimationsForCompositor(mFrame,
                                                    eCSSProperty_transform)) {
-    if (!IsItemTooSmallForActiveLayer(this)) {
+    if (!IsItemTooSmallForActiveLayer(mFrame)) {
       return true;
     }
-    SetAnimationPerformanceWarningForTooSmallItem(this, eCSSProperty_transform);
+    SetAnimationPerformanceWarningForTooSmallItem(mFrame, eCSSProperty_transform);
   }
   return false;
 }
@@ -6602,9 +6639,11 @@ nsCharClipDisplayItem::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
 }
 
 nsDisplaySVGEffects::nsDisplaySVGEffects(nsDisplayListBuilder* aBuilder,
-                                         nsIFrame* aFrame, nsDisplayList* aList)
-    : nsDisplayWrapList(aBuilder, aFrame, aList),
-      mEffectsBounds(aFrame->GetVisualOverflowRectRelativeToSelf())
+                                         nsIFrame* aFrame, nsDisplayList* aList,
+                                         bool aOpacityItemCreated)
+  : nsDisplayWrapList(aBuilder, aFrame, aList)
+  , mEffectsBounds(aFrame->GetVisualOverflowRectRelativeToSelf())
+  , mOpacityItemCreated(aOpacityItemCreated)
 {
   MOZ_COUNT_CTOR(nsDisplaySVGEffects);
 }
@@ -6668,9 +6707,12 @@ nsDisplaySVGEffects::PaintAsLayer(nsDisplayListBuilder* aBuilder,
   nsSVGIntegrationUtils::PaintFramesParams params(*aCtx->ThebesContext(),
                                                   mFrame,  mVisibleRect,
                                                   borderArea, aBuilder,
-                                                  aManager);
+                                                  aManager, mOpacityItemCreated);
 
-  nsSVGIntegrationUtils::PaintFramesWithEffects(params);
+  image::DrawResult result =
+    nsSVGIntegrationUtils::PaintFramesWithEffects(params);
+
+  nsDisplaySVGEffectsGeometry::UpdateDrawResult(this, result);
 }
 
 LayerState
@@ -6699,8 +6741,8 @@ nsDisplaySVGEffects::BuildLayer(nsDisplayListBuilder* aBuilder,
     }
   }
 
-  float opacity = mFrame->StyleEffects()->mOpacity;
-  if (opacity == 0.0f)
+  if (mFrame->StyleEffects()->mOpacity == 0.0f &&
+      !mOpacityItemCreated)
     return nullptr;
 
   nsIFrame* firstFrame =
@@ -6809,6 +6851,11 @@ nsDisplaySVGEffects::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
     // some of these cases because filters can produce output even if there's
     // nothing in the filter input.
     aInvalidRegion->Or(bounds, geometry->mBounds);
+  }
+
+  if (aBuilder->ShouldSyncDecodeImages() &&
+      geometry->ShouldInvalidateToSyncDecodeImages()) {
+    aInvalidRegion->Or(*aInvalidRegion, bounds);
   }
 }
 

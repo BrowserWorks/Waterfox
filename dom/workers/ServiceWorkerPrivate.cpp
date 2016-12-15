@@ -176,7 +176,7 @@ public:
   CheckScriptEvaluationWithCallback(WorkerPrivate* aWorkerPrivate,
                                     KeepAliveToken* aKeepAliveToken,
                                     LifeCycleEventCallback* aCallback)
-    : WorkerRunnable(aWorkerPrivate, WorkerThreadModifyBusyCount)
+    : WorkerRunnable(aWorkerPrivate)
     , mKeepAliveToken(new nsMainThreadPtrHolder<KeepAliveToken>(aKeepAliveToken))
     , mCallback(aCallback)
 #ifdef DEBUG
@@ -249,14 +249,14 @@ class KeepAliveHandler final
   // preemptively cleanup if the service worker is timed out and
   // terminated.
   class InternalHandler final : public PromiseNativeHandler
-                              , public WorkerFeature
+                              , public WorkerHolder
   {
     nsMainThreadPtrHandle<KeepAliveToken> mKeepAliveToken;
 
     // Worker thread only
     WorkerPrivate* mWorkerPrivate;
     RefPtr<Promise> mPromise;
-    bool mFeatureAdded;
+    bool mWorkerHolderAdded;
 
     ~InternalHandler()
     {
@@ -264,13 +264,13 @@ class KeepAliveHandler final
     }
 
     bool
-    AddFeature()
+    UseWorkerHolder()
     {
       MOZ_ASSERT(mWorkerPrivate);
       mWorkerPrivate->AssertIsOnWorkerThread();
-      MOZ_ASSERT(!mFeatureAdded);
-      mFeatureAdded = mWorkerPrivate->AddFeature(this);
-      return mFeatureAdded;
+      MOZ_ASSERT(!mWorkerHolderAdded);
+      mWorkerHolderAdded = HoldWorker(mWorkerPrivate);
+      return mWorkerHolderAdded;
     }
 
     void
@@ -281,8 +281,8 @@ class KeepAliveHandler final
       if (!mPromise) {
         return;
       }
-      if (mFeatureAdded) {
-        mWorkerPrivate->RemoveFeature(this);
+      if (mWorkerHolderAdded) {
+        ReleaseWorker();
       }
       mPromise = nullptr;
       mKeepAliveToken = nullptr;
@@ -322,7 +322,7 @@ class KeepAliveHandler final
       : mKeepAliveToken(aKeepAliveToken)
       , mWorkerPrivate(aWorkerPrivate)
       , mPromise(aPromise)
-      , mFeatureAdded(false)
+      , mWorkerHolderAdded(false)
     {
       MOZ_ASSERT(mKeepAliveToken);
       MOZ_ASSERT(mWorkerPrivate);
@@ -339,7 +339,7 @@ class KeepAliveHandler final
                                                         aWorkerPrivate,
                                                         aPromise);
 
-      if (NS_WARN_IF(!ref->AddFeature())) {
+      if (NS_WARN_IF(!ref->UseWorkerHolder())) {
         return nullptr;
       }
 
@@ -422,7 +422,7 @@ protected:
 public:
   ExtendableEventWorkerRunnable(WorkerPrivate* aWorkerPrivate,
                                 KeepAliveToken* aKeepAliveToken)
-    : WorkerRunnable(aWorkerPrivate, WorkerThreadModifyBusyCount)
+    : WorkerRunnable(aWorkerPrivate)
   {
     AssertIsOnMainThread();
     MOZ_ASSERT(aWorkerPrivate);
@@ -432,11 +432,11 @@ public:
       new nsMainThreadPtrHolder<KeepAliveToken>(aKeepAliveToken);
   }
 
-  void
+  bool
   DispatchExtendableEventOnWorkerScope(JSContext* aCx,
                                        WorkerGlobalScope* aWorkerScope,
                                        ExtendableEvent* aEvent,
-                                       Promise** aWaitUntilPromise)
+                                       PromiseNativeHandler* aPromiseHandler)
   {
     MOZ_ASSERT(aWorkerScope);
     MOZ_ASSERT(aEvent);
@@ -447,7 +447,7 @@ public:
     result = aWorkerScope->DispatchDOMEvent(nullptr, aEvent, nullptr, nullptr);
     if (NS_WARN_IF(result.Failed()) || internalEvent->mFlags.mExceptionWasRaised) {
       result.SuppressException();
-      return;
+      return false;
     }
 
     RefPtr<Promise> waitUntilPromise = aEvent->GetPromise();
@@ -458,12 +458,20 @@ public:
     }
 
     MOZ_ASSERT(waitUntilPromise);
+
+    // Make sure to append the caller's promise handler before attaching
+    // our keep alive handler.  This can avoid terminating the worker
+    // before a success result is delivered to the caller in cases where
+    // the idle timeout has been set to zero.  This low timeout value is
+    // sometimes set in tests.
+    if (aPromiseHandler) {
+      waitUntilPromise->AppendNativeHandler(aPromiseHandler);
+    }
+
     KeepAliveHandler::CreateAndAttachToPromise(mKeepAliveToken,
                                                waitUntilPromise);
 
-    if (aWaitUntilPromise) {
-      waitUntilPromise.forget(aWaitUntilPromise);
-    }
+    return true;
   }
 };
 
@@ -547,7 +555,7 @@ private:
  * with advancing the job queue for install/activate tasks.
  */
 class LifeCycleEventWatcher final : public PromiseNativeHandler,
-                                    public WorkerFeature
+                                    public WorkerHolder
 {
   WorkerPrivate* mWorkerPrivate;
   RefPtr<LifeCycleEventCallback> mCallback;
@@ -593,7 +601,7 @@ public:
     //    case the registration/update promise will be rejected
     // 2. A new service worker is registered which will terminate the current
     //    installing worker.
-    if (NS_WARN_IF(!mWorkerPrivate->AddFeature(this))) {
+    if (NS_WARN_IF(!HoldWorker(mWorkerPrivate))) {
       NS_WARNING("LifeCycleEventWatcher failed to add feature.");
       ReportResult(false);
       return false;
@@ -631,7 +639,7 @@ public:
       NS_RUNTIMEABORT("Failed to dispatch life cycle event handler.");
     }
 
-    mWorkerPrivate->RemoveFeature(this);
+    ReleaseWorker();
   }
 
   void
@@ -691,12 +699,8 @@ LifecycleEventWorkerRunnable::DispatchLifecycleEvent(JSContext* aCx,
     return true;
   }
 
-  RefPtr<Promise> waitUntil;
-  DispatchExtendableEventOnWorkerScope(aCx, aWorkerPrivate->GlobalScope(),
-                                       event, getter_AddRefs(waitUntil));
-  if (waitUntil) {
-    waitUntil->AppendNativeHandler(watcher);
-  } else {
+  if (!DispatchExtendableEventOnWorkerScope(aCx, aWorkerPrivate->GlobalScope(),
+                                       event, watcher)) {
     watcher->ReportResult(false);
   }
 
@@ -843,12 +847,8 @@ public:
     }
     event->SetTrusted(true);
 
-    RefPtr<Promise> waitUntil;
-    DispatchExtendableEventOnWorkerScope(aCx, aWorkerPrivate->GlobalScope(),
-                                         event, getter_AddRefs(waitUntil));
-    if (waitUntil) {
-      waitUntil->AppendNativeHandler(errorReporter);
-    } else {
+    if (!DispatchExtendableEventOnWorkerScope(aCx, aWorkerPrivate->GlobalScope(),
+                                              event, errorReporter)) {
       errorReporter->Report(nsIPushErrorReporter::DELIVERY_UNCAUGHT_EXCEPTION);
     }
 
@@ -1191,16 +1191,14 @@ public:
     }
 
     event->SetTrusted(true);
-    RefPtr<Promise> waitUntil;
     aWorkerPrivate->GlobalScope()->AllowWindowInteraction();
-    DispatchExtendableEventOnWorkerScope(aCx, aWorkerPrivate->GlobalScope(),
-                                         event, getter_AddRefs(waitUntil));
-      aWorkerPrivate->GlobalScope()->ConsumeWindowInteraction();
-    if (waitUntil) {
-      RefPtr<AllowWindowInteractionHandler> allowWindowInteraction =
-        new AllowWindowInteractionHandler(aWorkerPrivate);
-      waitUntil->AppendNativeHandler(allowWindowInteraction);
+    RefPtr<AllowWindowInteractionHandler> allowWindowInteraction =
+      new AllowWindowInteractionHandler(aWorkerPrivate);
+    if (!DispatchExtendableEventOnWorkerScope(aCx, aWorkerPrivate->GlobalScope(),
+                                              event, allowWindowInteraction)) {
+      allowWindowInteraction->RejectedCallback(aCx, JS::UndefinedHandleValue);
     }
+    aWorkerPrivate->GlobalScope()->ConsumeWindowInteraction();
 
     return true;
   }
@@ -1946,6 +1944,14 @@ ServiceWorkerPrivate::TerminateWorkerCallback(nsITimer* aTimer, void *aPrivate)
 
   MOZ_ASSERT(aTimer == serviceWorkerPrivate->mIdleWorkerTimer,
       "Invalid timer!");
+
+  // mInfo must be non-null at this point because NoteDeadServiceWorkerInfo
+  // which zeroes it calls TerminateWorker which cancels our timer which will
+  // ensure we don't get invoked even if the nsTimerEvent is in the event queue.
+  ServiceWorkerManager::LocalizeAndReportToAllClients(
+    serviceWorkerPrivate->mInfo->Scope(),
+    "ServiceWorkerGraceTimeoutTermination",
+    nsTArray<nsString> { NS_ConvertUTF8toUTF16(serviceWorkerPrivate->mInfo->Scope()) });
 
   serviceWorkerPrivate->TerminateWorker();
 }

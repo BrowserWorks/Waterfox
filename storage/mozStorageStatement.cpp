@@ -46,7 +46,7 @@ NS_IMPL_CI_INTERFACE_GETTER(Statement,
 class StatementClassInfo : public nsIClassInfo
 {
 public:
-  MOZ_CONSTEXPR StatementClassInfo() {}
+  constexpr StatementClassInfo() {}
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -446,9 +446,9 @@ Statement::GetParameterName(uint32_t aParamIndex,
                                                    aParamIndex + 1);
   if (name == nullptr) {
     // this thing had no name, so fake one
-    nsAutoCString name(":");
-    name.AppendInt(aParamIndex);
-    _name.Assign(name);
+    nsAutoCString fakeName(":");
+    fakeName.AppendInt(aParamIndex);
+    _name.Assign(fakeName);
   }
   else {
     _name.Assign(nsDependentCString(name));

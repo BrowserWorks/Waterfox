@@ -9,6 +9,7 @@
 
 #include "WMF.h"
 #include "MFTDecoder.h"
+#include "nsAutoPtr.h"
 #include "nsRect.h"
 #include "WMFMediaDataDecoder.h"
 #include "mozilla/RefPtr.h"
@@ -49,6 +50,8 @@ public:
   }
 
 private:
+
+  bool ValidateVideoInfo();
 
   bool InitializeDXVA(bool aForceD3D9);
 
@@ -100,6 +103,7 @@ private:
   uint32_t mNullOutputCount;
   bool mGotValidOutputAfterNullOutput;
   bool mGotExcessiveNullOutput;
+  bool mIsValid;
 };
 
 } // namespace mozilla

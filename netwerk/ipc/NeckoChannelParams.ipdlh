@@ -8,6 +8,7 @@
 include protocol PHttpChannel;
 include protocol PFTPChannel;
 include protocol PRtspChannel;
+include BlobTypes;
 include URIParams;
 include InputStreamParams;
 include PBackgroundSharedTypes;
@@ -35,9 +36,11 @@ struct LoadInfoArgs
   bool                  upgradeInsecureRequests;
   bool                  verifySignedContent;
   bool                  enforceSRI;
+  bool                  forceInheritPrincipalDropped;
   uint64_t              innerWindowID;
   uint64_t              outerWindowID;
   uint64_t              parentOuterWindowID;
+  uint64_t              frameOuterWindowID;
   bool                  enforceSecurity;
   bool                  initialSecurityCheckDone;
   bool                  isInThirdPartyContext;

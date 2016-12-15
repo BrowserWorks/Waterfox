@@ -46,10 +46,6 @@
 #include "TexturePoolOGL.h"
 #endif
 
-#ifdef XP_MACOSX
-#include "nsCocoaFeatures.h"
-#endif
-
 #include "GeckoProfiler.h"
 
 namespace mozilla {
@@ -84,7 +80,7 @@ CompositorOGL::BindBackdrop(ShaderProgramOGL* aProgram, GLuint aBackdrop, GLenum
 }
 
 CompositorOGL::CompositorOGL(CompositorBridgeParent* aParent,
-                             widget::CompositorWidgetProxy* aWidget,
+                             widget::CompositorWidget* aWidget,
                              int aSurfaceWidth, int aSurfaceHeight,
                              bool aUseExternalSurfaceSize)
   : Compositor(aWidget, aParent)
@@ -121,7 +117,7 @@ CompositorOGL::CreateContext()
 #ifdef XP_WIN
   if (gfxEnv::LayersPreferEGL()) {
     printf_stderr("Trying GL layers...\n");
-    context = gl::GLContextProviderEGL::CreateForWindow(mWidget->RealWidget(), false);
+    context = gl::GLContextProviderEGL::CreateForCompositorWidget(mWidget, false);
   }
 #endif
 
@@ -134,11 +130,11 @@ CompositorOGL::CreateContext()
     nsCString discardFailureId;
     context = GLContextProvider::CreateOffscreen(mSurfaceSize,
                                                  caps, CreateContextFlags::REQUIRE_COMPAT_PROFILE,
-                                                 discardFailureId);
+                                                 &discardFailureId);
   }
 
   if (!context) {
-    context = gl::GLContextProvider::CreateForWindow(mWidget->RealWidget(),
+    context = gl::GLContextProvider::CreateForCompositorWidget(mWidget,
                 gfxPlatform::GetPlatform()->RequiresAcceleratedGLContextForCompositorOGL());
   }
 
@@ -227,7 +223,7 @@ CompositorOGL::CleanupResources()
 }
 
 bool
-CompositorOGL::Initialize()
+CompositorOGL::Initialize(nsCString* const out_failureReason)
 {
   ScopedGfxFeatureReporter reporter("GL Layers");
 
@@ -237,12 +233,16 @@ CompositorOGL::Initialize()
   mGLContext = CreateContext();
 
 #ifdef MOZ_WIDGET_ANDROID
-  if (!mGLContext)
+  if (!mGLContext){
+    *out_failureReason = "FEATURE_FAILURE_OPENGL_NO_ANDROID_CONTEXT";
     NS_RUNTIMEABORT("We need a context on Android");
+  }
 #endif
 
-  if (!mGLContext)
+  if (!mGLContext){
+    *out_failureReason = "FEATURE_FAILURE_OPENGL_CREATE_CONTEXT";
     return false;
+  }
 
   MakeCurrent();
 
@@ -258,6 +258,7 @@ CompositorOGL::Initialize()
   RefPtr<EffectSolidColor> effect = new EffectSolidColor(Color(0, 0, 0, 0));
   ShaderConfigOGL config = GetShaderConfigFor(effect);
   if (!GetShaderProgramFor(config)) {
+    *out_failureReason = "FEATURE_FAILURE_OPENGL_COMPILE_SHADER";
     return false;
   }
 
@@ -332,6 +333,7 @@ CompositorOGL::Initialize()
 
     if (mFBOTextureTarget == LOCAL_GL_NONE) {
       /* Unable to find a texture target that works with FBOs and NPOT textures */
+      *out_failureReason = "FEATURE_FAILURE_OPENGL_NO_TEXTURE_TARGET";
       return false;
     }
   } else {
@@ -348,8 +350,10 @@ CompositorOGL::Initialize()
      * texture rectangle access inside GLSL (sampler2DRect,
      * texture2DRect).
      */
-    if (!mGLContext->IsExtensionSupported(gl::GLContext::ARB_texture_rectangle))
+    if (!mGLContext->IsExtensionSupported(gl::GLContext::ARB_texture_rectangle)){
+      *out_failureReason = "FEATURE_FAILURE_OPENGL_ARB_EXT";
       return false;
+    }
   }
 
   /* Create a simple quad VBO */
@@ -425,6 +429,7 @@ CompositorOGL::Initialize()
   }
 
   reporter.SetSuccessful();
+
   return true;
 }
 
@@ -440,7 +445,7 @@ CalculatePOTSize(const IntSize& aSize, GLContext* gl)
   if (CanUploadNonPowerOfTwo(gl))
     return aSize;
 
-  return IntSize(NextPowerOfTwo(aSize.width), NextPowerOfTwo(aSize.height));
+  return IntSize(RoundUpPow2(aSize.width), RoundUpPow2(aSize.height));
 }
 
 // |aRect| is the rectangle we want to draw to. We will draw it with
@@ -541,6 +546,11 @@ CompositorOGL::CreateRenderTarget(const IntRect &aRect, SurfaceInitMode aInit)
     return nullptr;
   }
 
+  if (!gl()) {
+    // CompositingRenderTargetOGL does not work without a gl context.
+    return nullptr;
+  }
+
   GLuint tex = 0;
   GLuint fbo = 0;
   CreateFBOWithTexture(aRect, false, 0, &fbo, &tex);
@@ -558,6 +568,10 @@ CompositorOGL::CreateRenderTargetFromSource(const IntRect &aRect,
   MOZ_ASSERT(aRect.width != 0 && aRect.height != 0, "Trying to create a render target of invalid size");
 
   if (aRect.width * aRect.height == 0) {
+    return nullptr;
+  }
+
+  if (!gl()) {
     return nullptr;
   }
 
@@ -609,7 +623,7 @@ CompositorOGL::GetCurrentRenderTarget() const
 static GLenum
 GetFrameBufferInternalFormat(GLContext* gl,
                              GLuint aFrameBuffer,
-                             mozilla::widget::CompositorWidgetProxy* aWidget)
+                             mozilla::widget::CompositorWidget* aWidget)
 {
   if (aFrameBuffer == 0) { // default framebuffer
     return aWidget->GetGLFrameBufferFormat();
@@ -689,19 +703,9 @@ CompositorOGL::BeginFrame(const nsIntRegion& aInvalidRegion,
                                  LOCAL_GL_ONE, LOCAL_GL_ONE_MINUS_SRC_ALPHA);
   mGLContext->fEnable(LOCAL_GL_BLEND);
 
-  // Make sure SCISSOR is enabled before setting the render target, since the RT
-  // assumes scissor is enabled while it does clears.
-  mGLContext->fEnable(LOCAL_GL_SCISSOR_TEST);
-
-  // Prefer the native windowing system's provided window size for the viewport.
-  IntSize viewportSize =
-    mGLContext->GetTargetSize().valueOr(mWidgetSize.ToUnknownSize());
-  if (viewportSize != mWidgetSize.ToUnknownSize()) {
-    mGLContext->fScissor(0, 0, viewportSize.width, viewportSize.height);
-  }
-
   RefPtr<CompositingRenderTargetOGL> rt =
-    CompositingRenderTargetOGL::RenderTargetForWindow(this, viewportSize);
+    CompositingRenderTargetOGL::RenderTargetForWindow(this,
+                                                      IntSize(width, height));
   SetRenderTarget(rt);
 
 #ifdef DEBUG
@@ -855,6 +859,8 @@ CompositorOGL::GetShaderConfigFor(Effect *aEffect,
     gfx::SurfaceFormat format = effectComponentAlpha->mOnWhite->GetFormat();
     config.SetRBSwap(format == gfx::SurfaceFormat::B8G8R8A8 ||
                      format == gfx::SurfaceFormat::B8G8R8X8);
+    TextureSourceOGL* source = effectComponentAlpha->mOnWhite->AsSourceOGL();
+    config.SetTextureTarget(source->GetTextureTarget());
     break;
   }
   case EffectTypes::RENDER_TARGET:
@@ -1044,8 +1050,9 @@ CompositorOGL::DrawQuad(const Rect& aRect,
     clipRect.MoveBy(mRenderOffset.x, mRenderOffset.y);
   }
 
-  gl()->fScissor(clipRect.x, FlipY(clipRect.y + clipRect.height),
-                 clipRect.width, clipRect.height);
+  ScopedGLState scopedScissorTestState(mGLContext, LOCAL_GL_SCISSOR_TEST, true);
+  ScopedScissorRect autoScissorRect(mGLContext, clipRect.x, FlipY(clipRect.y + clipRect.height),
+                                    clipRect.width, clipRect.height);
 
   MaskType maskType;
   EffectMask* effectMask;
@@ -1151,9 +1158,16 @@ CompositorOGL::DrawQuad(const Rect& aRect,
   if (aOpacity != 1.f)
     program->SetLayerOpacity(aOpacity);
   if (config.mFeatures & ENABLE_TEXTURE_RECT) {
-    TexturedEffect* texturedEffect =
+    TextureSourceOGL* source = nullptr;
+    if (aEffectChain.mPrimaryEffect->mType == EffectTypes::COMPONENT_ALPHA) {
+      EffectComponentAlpha* effectComponentAlpha =
+        static_cast<EffectComponentAlpha*>(aEffectChain.mPrimaryEffect.get());
+      source = effectComponentAlpha->mOnWhite->AsSourceOGL();
+    } else {
+      TexturedEffect* texturedEffect =
         static_cast<TexturedEffect*>(aEffectChain.mPrimaryEffect.get());
-    TextureSourceOGL* source = texturedEffect->mTexture->AsSourceOGL();
+      source = texturedEffect->mTexture->AsSourceOGL();
+    }
     // This is used by IOSurface that use 0,0...w,h coordinate rather then 0,0..1,1.
     program->SetTexCoordMultiplier(source->GetSize().width, source->GetSize().height);
   }
@@ -1413,21 +1427,6 @@ CompositorOGL::DrawQuad(const Rect& aRect,
       // Pass 2.
       gl()->fBlendFuncSeparate(LOCAL_GL_ONE, LOCAL_GL_ONE,
                                LOCAL_GL_ONE, LOCAL_GL_ONE);
-
-#ifdef XP_MACOSX
-      if (gl()->WorkAroundDriverBugs() &&
-          gl()->Vendor() == GLVendor::NVIDIA &&
-          !nsCocoaFeatures::OnMavericksOrLater()) {
-        // Bug 987497: With some GPUs the nvidia driver on 10.8 and below
-        // won't pick up the TexturePass2 uniform change below if we don't do
-        // something to force it. Re-activating the shader seems to be one way
-        // of achieving that.
-        GLint program;
-        mGLContext->fGetIntegerv(LOCAL_GL_CURRENT_PROGRAM, &program);
-        mGLContext->fUseProgram(program);
-      }
-#endif
-
       program->SetTexturePass2(true);
       BindAndDrawQuadWithTextureRect(program,
                                      aRect,
@@ -1493,21 +1492,13 @@ CompositorOGL::EndFrame()
     return;
   }
 
+  mCurrentRenderTarget = nullptr;
+
   if (mTexturePool) {
     mTexturePool->EndFrame();
   }
 
-  // If our window size changed during composition, we should discard the frame.
-  // We don't need to worry about rescheduling a composite, as widget
-  // implementations handle this in their expose event listeners.
-  // See bug 1184534. TODO: implement this for single-buffered targets?
-  IntSize targetSize = mGLContext->GetTargetSize().valueOr(mViewportSize);
-  if (!(mCurrentRenderTarget->IsWindow() && targetSize != mViewportSize)) {
-    mGLContext->SwapBuffers();
-  }
-
-  mCurrentRenderTarget = nullptr;
-
+  mGLContext->SwapBuffers();
   mGLContext->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, 0);
 
   // Unbind all textures

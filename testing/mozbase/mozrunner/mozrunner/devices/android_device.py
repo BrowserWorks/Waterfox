@@ -22,6 +22,8 @@ from mozprocess import ProcessHandler
 
 EMULATOR_HOME_DIR = os.path.join(os.path.expanduser('~'), '.mozbuild', 'android-device')
 
+EMULATOR_AUTH_FILE = os.path.join(os.path.expanduser('~'), '.emulator_console_auth_token')
+
 TOOLTOOL_URL = 'https://raw.githubusercontent.com/mozilla/build-tooltool/master/tooltool.py'
 
 TRY_URL = 'https://hg.mozilla.org/try/raw-file/default'
@@ -258,6 +260,7 @@ def grant_runtime_permissions(build_obj, app):
         if sdk_level and int(sdk_level) >= 23:
             _log_info("Granting important runtime permissions to %s" % app)
             dm.shellCheckOutput(['pm', 'grant', app, 'android.permission.WRITE_EXTERNAL_STORAGE'])
+            dm.shellCheckOutput(['pm', 'grant', app, 'android.permission.READ_EXTERNAL_STORAGE'])
             dm.shellCheckOutput(['pm', 'grant', app, 'android.permission.ACCESS_FINE_LOCATION'])
             dm.shellCheckOutput(['pm', 'grant', app, 'android.permission.CAMERA'])
             dm.shellCheckOutput(['pm', 'grant', app, 'android.permission.WRITE_CONTACTS'])
@@ -370,6 +373,13 @@ class AndroidEmulator(object):
         """
            Launch the emulator.
         """
+        if os.path.exists(EMULATOR_AUTH_FILE):
+            os.remove(EMULATOR_AUTH_FILE)
+            _log_debug("deleted %s" % EMULATOR_AUTH_FILE)
+        # create an empty auth file to disable emulator authentication
+        auth_file = open(EMULATOR_AUTH_FILE, 'w')
+        auth_file.close()
+
         def outputHandler(line):
             self.emulator_log.write("<%s>\n" % line)
         env = os.environ

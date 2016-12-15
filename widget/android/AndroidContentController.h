@@ -17,7 +17,7 @@
 namespace mozilla {
 namespace layers {
 class APZEventState;
-class APZCTreeManager;
+class IAPZCTreeManager;
 }
 namespace widget {
 
@@ -27,16 +27,15 @@ class AndroidContentController final
 public:
     AndroidContentController(nsWindow* aWindow,
                              mozilla::layers::APZEventState* aAPZEventState,
-                             mozilla::layers::APZCTreeManager* aAPZCTreeManager)
+                             mozilla::layers::IAPZCTreeManager* aAPZCTreeManager)
       : mozilla::layers::ChromeProcessController(aWindow, aAPZEventState, aAPZCTreeManager)
       , mAndroidWindow(aWindow)
     {}
 
     // ChromeProcessController methods
     virtual void Destroy() override;
-    void HandleSingleTap(const CSSPoint& aPoint,
-                         Modifiers aModifiers,
-                         const ScrollableLayerGuid& aGuid) override;
+    void HandleTap(TapType aType, const LayoutDevicePoint& aPoint, Modifiers aModifiers,
+                   const ScrollableLayerGuid& aGuid, uint64_t aInputBlockId) override;
     void PostDelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs) override;
     void UpdateOverscrollVelocity(const float aX, const float aY) override;
     void UpdateOverscrollOffset(const float aX, const float aY) override;
@@ -45,10 +44,13 @@ public:
                               APZStateChange aChange,
                               int aArg) override;
 
-    static void NotifyDefaultPrevented(mozilla::layers::APZCTreeManager* aManager,
+    static void NotifyDefaultPrevented(mozilla::layers::IAPZCTreeManager* aManager,
                                        uint64_t aInputBlockId, bool aDefaultPrevented);
 private:
     nsWindow* mAndroidWindow;
+
+    void DispatchSingleTapToObservers(const LayoutDevicePoint& aPoint,
+                                      const ScrollableLayerGuid& aGuid) const;
 };
 
 } // namespace widget

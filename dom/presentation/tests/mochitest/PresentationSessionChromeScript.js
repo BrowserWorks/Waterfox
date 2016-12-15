@@ -45,7 +45,7 @@ function registerOriginalFactory(contractId, mockedClassId, mockedFactory, origi
   }
 }
 
-const sessionId = 'test-session-id-' + uuidGenerator.generateUUID().toString();
+var sessionId = 'test-session-id-' + uuidGenerator.generateUUID().toString();
 
 const address = Cc["@mozilla.org/supports-cstring;1"]
                   .createInstance(Ci.nsISupportsCString);
@@ -141,9 +141,15 @@ const mockedControlChannel = {
     }
     return isValid;
   },
-  close: function(reason) {
+  launch: function(presentationId, url) {
+    sessionId = presentationId;
+  },
+  terminate: function(presentationId) {
+    sendAsyncMessage('sender-terminate', presentationId);
+  },
+  disconnect: function(reason) {
     sendAsyncMessage('control-channel-closed', reason);
-    this._listener.QueryInterface(Ci.nsIPresentationControlChannelListener).notifyClosed(reason);
+    this._listener.QueryInterface(Ci.nsIPresentationControlChannelListener).notifyDisconnected(reason);
   },
   simulateReceiverReady: function() {
     this._listener.QueryInterface(Ci.nsIPresentationControlChannelListener).notifyReceiverReady();
@@ -156,9 +162,9 @@ const mockedControlChannel = {
     sendAsyncMessage('answer-received');
     this._listener.QueryInterface(Ci.nsIPresentationControlChannelListener).onAnswer(mockedChannelDescription);
   },
-  simulateNotifyOpened: function() {
+  simulateNotifyConnected: function() {
     sendAsyncMessage('control-channel-opened');
-    this._listener.QueryInterface(Ci.nsIPresentationControlChannelListener).notifyOpened();
+    this._listener.QueryInterface(Ci.nsIPresentationControlChannelListener).notifyConnected();
   },
 };
 
@@ -222,19 +228,19 @@ const mockedSessionTransport = {
     return this._selfAddress;
   },
   buildTCPSenderTransport: function(transport, listener) {
-    sendAsyncMessage('data-transport-initialized');
     this._listener = listener;
     this._role = Ci.nsIPresentationService.ROLE_CONTROLLER;
+    this._listener.onSessionTransport(this);
+    this._listener = null;
+    sendAsyncMessage('data-transport-initialized');
 
     setTimeout(()=>{
-      this._listener.onSessionTransport(this);
-      this._listener = null;
       this.simulateTransportReady();
     }, 0);
   },
   buildTCPReceiverTransport: function(description, listener) {
     this._listener = listener;
-    this._role = Ci.nsIPresentationService.ROLE_CONTROLLER;
+    this._role = Ci.nsIPresentationService.ROLE_RECEIVER;
 
     var addresses = description.QueryInterface(Ci.nsIPresentationChannelDescription).tcpAddress;
     this._selfAddress = {
@@ -251,7 +257,6 @@ const mockedSessionTransport = {
   },
   // in-process case
   buildDataChannelTransport: function(role, window, listener) {
-    dump("PresentationSessionChromeScript: build data channel transport\n");
     this._listener = listener;
     this._role = role;
 
@@ -390,6 +395,13 @@ addMessageListener('trigger-incoming-session-request', function(url) {
 	       .onSessionRequest(mockedDevice, url, sessionId, mockedControlChannel);
 });
 
+addMessageListener('trigger-incoming-terminate-request', function() {
+  var deviceManager = Cc['@mozilla.org/presentation-device/manager;1']
+                      .getService(Ci.nsIPresentationDeviceManager);
+  deviceManager.QueryInterface(Ci.nsIPresentationDeviceListener)
+	       .onTerminateRequest(mockedDevice, sessionId, mockedControlChannel, true);
+});
+
 addMessageListener('trigger-incoming-offer', function() {
   mockedControlChannel.simulateOnOffer();
 });
@@ -403,11 +415,11 @@ addMessageListener('trigger-incoming-transport', function() {
 });
 
 addMessageListener('trigger-control-channel-open', function(reason) {
-  mockedControlChannel.simulateNotifyOpened();
+  mockedControlChannel.simulateNotifyConnected();
 });
 
 addMessageListener('trigger-control-channel-close', function(reason) {
-  mockedControlChannel.close(reason);
+  mockedControlChannel.disconnect(reason);
 });
 
 addMessageListener('trigger-data-transport-close', function(reason) {

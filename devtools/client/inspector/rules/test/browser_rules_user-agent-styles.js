@@ -86,7 +86,7 @@ function* setUserAgentStylesPref(val) {
 
   // Reset the pref and wait for PrefObserver to callback so UI
   // has a chance to get updated.
-  let oncePrefChanged = promise.defer();
+  let oncePrefChanged = defer();
   let prefObserver = new PrefObserver("devtools.");
   prefObserver.on(PREF_UA_STYLES, oncePrefChanged.resolve);
   Services.prefs.setBoolPref(PREF_UA_STYLES, val);
@@ -116,8 +116,8 @@ function* userAgentStylesVisible(inspector, view) {
   // These tests rely on the "a" selector being the last test in
   // TEST_DATA.
   ok(uaRules.some(rule => {
-    return rule.matchedSelectors.indexOf(":-moz-any-link") !== -1;
-  }), "There is a rule for :-moz-any-link");
+    return rule.matchedSelectors.indexOf(":any-link") !== -1;
+  }), "There is a rule for :any-link");
   ok(uaRules.some(rule => {
     return rule.matchedSelectors.indexOf("*|*:link") !== -1;
   }), "There is a rule for *|*:link");

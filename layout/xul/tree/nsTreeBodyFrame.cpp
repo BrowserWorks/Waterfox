@@ -10,9 +10,10 @@
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/PathHelpers.h"
+#include "mozilla/Likely.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MouseEvents.h"
-#include "mozilla/Likely.h"
+#include "mozilla/TextEditRules.h"
 
 #include "gfxUtils.h"
 #include "nsAlgorithm.h"
@@ -66,7 +67,6 @@
 #include "nsIScriptableRegion.h"
 #include <algorithm>
 #include "ScrollbarActivity.h"
-#include "../../editor/libeditor/nsTextEditRules.h"
 
 #ifdef ACCESSIBILITY
 #include "nsAccessibilityService.h"
@@ -361,8 +361,7 @@ nsTreeBodyFrame::EnsureView()
       mTreeBoxObject->GetView(getter_AddRefs(treeView));
       if (treeView && weakFrame.IsAlive()) {
         nsXPIDLString rowStr;
-        box->GetProperty(MOZ_UTF16("topRow"),
-                         getter_Copies(rowStr));
+        box->GetProperty(u"topRow", getter_Copies(rowStr));
         nsAutoString rowStr2(rowStr);
         nsresult error;
         int32_t rowIndex = rowStr2.ToInteger(&error);
@@ -378,7 +377,7 @@ nsTreeBodyFrame::EnsureView()
 
         // Clear out the property info for the top row, but we always keep the
         // view current.
-        box->RemoveProperty(MOZ_UTF16("topRow"));
+        box->RemoveProperty(u"topRow");
       }
     }
   }
@@ -3694,7 +3693,7 @@ nsTreeBodyFrame::PaintText(int32_t              aRowIndex,
   mView->GetCellText(aRowIndex, aColumn, text);
 
   if (aColumn->Type() == nsITreeColumn::TYPE_PASSWORD) {
-    nsTextEditRules::FillBufWithPWChars(&text, text.Length());
+    TextEditRules::FillBufWithPWChars(&text, text.Length());
   }
 
   // We're going to paint this text so we need to ensure bidi is enabled if

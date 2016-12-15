@@ -15,7 +15,6 @@
 #include "nsIURL.h"
 #include "nsArrayEnumerator.h"
 #include "nsIStringBundle.h"
-#include "nsCocoaFeatures.h"
 #include "nsCocoaUtils.h"
 #include "mozilla/Preferences.h"
 
@@ -121,8 +120,7 @@ NSView* nsFilePicker::GetAccessoryView()
   nsresult rv = sbs->CreateBundle("chrome://global/locale/filepicker.properties", getter_AddRefs(bundle));
   if (NS_SUCCEEDED(rv)) {
     nsXPIDLString locaLabel;
-    bundle->GetStringFromName(MOZ_UTF16("formatLabel"),
-			      getter_Copies(locaLabel));
+    bundle->GetStringFromName(u"formatLabel", getter_Copies(locaLabel));
     if (locaLabel) {
       label = [NSString stringWithCharacters:reinterpret_cast<const unichar*>(locaLabel.get())
                                       length:locaLabel.Length()];
@@ -460,6 +458,21 @@ nsFilePicker::PutLocalFile(const nsString& inTitle, const nsString& inDefaultNam
   // set up default file name
   NSString* defaultFilename = [NSString stringWithCharacters:(const unichar*)inDefaultName.get() length:inDefaultName.Length()];
 
+  // set up allowed types; this prevents the extension from being selected
+  // use the UTI for the file type to allow alternate extensions (e.g., jpg vs. jpeg)
+  NSString* extension = defaultFilename.pathExtension;
+  if (extension.length != 0) {
+    CFStringRef type = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (CFStringRef)extension, NULL);
+
+    if (type) {
+      thePanel.allowedFileTypes = @[(NSString*)type];
+      CFRelease(type);
+    } else {
+      // if there's no UTI for the file extension, use the extension itself.
+      thePanel.allowedFileTypes = @[extension];
+    }
+  }
+
   // set up default directory
   NSString *theDir = PanelDefaultDirectory();
   if (theDir) {
@@ -551,6 +564,10 @@ nsFilePicker::SetDialogTitle(const nsString& inTitle, id aPanel)
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
   [aPanel setTitle:[NSString stringWithCharacters:(const unichar*)inTitle.get() length:inTitle.Length()]];
+
+  if (!mOkButtonLabel.IsEmpty()) {
+    [aPanel setPrompt:[NSString stringWithCharacters:(const unichar*)mOkButtonLabel.get() length:mOkButtonLabel.Length()]];
+  }
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
 } 

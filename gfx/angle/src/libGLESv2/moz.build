@@ -14,6 +14,7 @@ UNIFIED_SOURCES += [
     'entry_points_gles_2_0.cpp',
     'entry_points_gles_2_0_ext.cpp',
     'entry_points_gles_3_0.cpp',
+    'entry_points_gles_3_1.cpp',
     'global_state.cpp',
     'libGLESv2.cpp',
 ]
@@ -62,7 +63,7 @@ DEFINES['EGLAPI'] = ""
 
 
 
-LOCAL_INCLUDES += [ '../../include', '../../src', '../../src/third_party/khronos' ]
+LOCAL_INCLUDES += [ '../../include', '../../src', '../../src/common/third_party/numerics', '../../src/third_party/khronos' ]
 
 DEFINES['LIBANGLE_IMPLEMENTATION'] = "1"
 DEFINES['ANGLE_ENABLE_HLSL'] = "1"

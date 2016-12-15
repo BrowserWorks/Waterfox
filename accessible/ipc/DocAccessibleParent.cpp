@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "DocAccessibleParent.h"
-#include "nsAutoPtr.h"
 #include "mozilla/a11y/Platform.h"
 #include "ProxyAccessible.h"
 #include "mozilla/dom/TabParent.h"
@@ -105,7 +104,8 @@ DocAccessibleParent::AddSubtree(ProxyAccessible* aParent,
 
   auto role = static_cast<a11y::role>(newChild.Role());
   ProxyAccessible* newProxy =
-    new ProxyAccessible(newChild.ID(), aParent, this, role);
+    new ProxyAccessible(newChild.ID(), aParent, this, role,
+                        newChild.Interfaces());
   aParent->AddChildAt(aIdxInParent, newProxy);
   mAccessibles.PutEntry(newChild.ID())->mProxy = newProxy;
   ProxyCreated(newProxy, newChild.Interfaces());
@@ -324,6 +324,18 @@ DocAccessibleParent::RecvSelectionEvent(const uint64_t& aID,
   nsCoreUtils::DispatchAccEvent(Move(event));
 
   return true;
+}
+
+bool
+DocAccessibleParent::RecvRoleChangedEvent(const uint32_t& aRole)
+{
+ if (aRole >= roles::LAST_ROLE) {
+   NS_ERROR("child sent bad role in RoleChangedEvent");
+   return false;
+ }
+
+ mRole = static_cast<a11y::role>(aRole);
+ return true;
 }
 
 bool

@@ -31,7 +31,7 @@ const uint32_t MAX_FILE_SIZE = (32 * 1024 * 1024);
 
 #undef LOG
 
-// NSPR_LOG_MODULES=UrlClassifierStreamUpdater:5
+// MOZ_LOG=UrlClassifierStreamUpdater:5
 static mozilla::LazyLogModule gUrlClassifierStreamUpdaterLog("UrlClassifierStreamUpdater");
 #define LOG(args) TrimAndLog args
 
@@ -378,8 +378,10 @@ nsUrlClassifierStreamUpdater::StreamFinished(nsresult status,
     return NS_OK;
   }
 
-  // Wait the requested amount of time before starting a new stream.
-  // This appears to be a duplicate timer (see bug 1110891)
+  // This timer is for fetching indirect updates ("forwards") from any "u:" lines
+  // that we encountered while processing the server response. It is NOT for
+  // scheduling the next time we pull the list from the server. That's a different
+  // timer in listmanager.js (see bug 1110891).
   nsresult rv;
   mTimer = do_CreateInstance("@mozilla.org/timer;1", &rv);
   if (NS_SUCCEEDED(rv)) {

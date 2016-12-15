@@ -20,7 +20,7 @@
 #include "mozilla/SizePrintfMacros.h"
 #include "mozilla/Snprintf.h"
 #include "mozilla/Telemetry.h"
-#include "nsCORSListenerProxy.h"
+#include "nsAutoPtr.h"
 #include "nsContentPolicyUtils.h"
 #include "nsCSSParser.h"
 #include "nsDeviceContext.h"

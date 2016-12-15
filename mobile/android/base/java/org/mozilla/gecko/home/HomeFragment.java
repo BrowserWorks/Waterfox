@@ -13,9 +13,10 @@ import org.mozilla.gecko.GeckoApplication;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.IntentHelper;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.SnackbarHelper;
+import org.mozilla.gecko.SnackbarBuilder;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
 import org.mozilla.gecko.distribution.PartnerBookmarksProviderProxy;
@@ -441,9 +442,10 @@ public abstract class HomeFragment extends Fragment {
 
         @Override
         public void onPostExecute(Void result) {
-            SnackbarHelper.showSnackbar((Activity) mContext,
-                    mContext.getString(R.string.page_removed),
-                    Snackbar.LENGTH_LONG);
+            SnackbarBuilder.builder((Activity) mContext)
+                    .message(R.string.page_removed)
+                    .duration(Snackbar.LENGTH_LONG)
+                    .buildAndShow();
         }
     }
 
@@ -471,9 +473,10 @@ public abstract class HomeFragment extends Fragment {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            SnackbarHelper.showSnackbar((Activity) context,
-                    context.getString(R.string.page_removed),
-                    Snackbar.LENGTH_LONG);
+            SnackbarBuilder.builder((Activity) context)
+                    .message(R.string.page_removed)
+                    .duration(Snackbar.LENGTH_LONG)
+                    .buildAndShow();
         }
     }
 }

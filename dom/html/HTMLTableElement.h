@@ -32,12 +32,11 @@ public:
   {
     return static_cast<HTMLTableCaptionElement*>(GetChild(nsGkAtoms::caption));
   }
-  void SetCaption(HTMLTableCaptionElement* aCaption)
+  void SetCaption(HTMLTableCaptionElement* aCaption, ErrorResult& aError)
   {
     DeleteCaption();
     if (aCaption) {
-      mozilla::ErrorResult rv;
-      nsINode::AppendChild(*aCaption, rv);
+      nsINode::AppendChild(*aCaption, aError);
     }
   }
 
@@ -60,7 +59,8 @@ public:
 
     DeleteTHead();
     if (aTHead) {
-      nsINode::InsertBefore(*aTHead, nsINode::GetFirstChild(), aError);
+      nsCOMPtr<nsINode> refNode = nsINode::GetFirstChild();
+      nsINode::InsertBefore(*aTHead, refNode, aError);
     }
   }
   already_AddRefed<nsGenericHTMLElement> CreateTHead();

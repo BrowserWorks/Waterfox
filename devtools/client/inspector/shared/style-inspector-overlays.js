@@ -20,9 +20,11 @@ const {
   setBrokenImageTooltip,
 } = require("devtools/client/shared/widgets/tooltip/ImageTooltipHelper");
 const {
+  CssDocsTooltip,
+} = require("devtools/client/shared/widgets/tooltip/CssDocsTooltip");
+const {
   SwatchColorPickerTooltip,
   SwatchCubicBezierTooltip,
-  CssDocsTooltip,
   SwatchFilterTooltip
 } = require("devtools/client/shared/widgets/Tooltip");
 const EventEmitter = require("devtools/shared/event-emitter");
@@ -63,7 +65,7 @@ function HighlightersOverlay(view) {
   this.highlighterUtils = this.view.inspector.toolbox.highlighterUtils;
 
   this._onMouseMove = this._onMouseMove.bind(this);
-  this._onMouseLeave = this._onMouseLeave.bind(this);
+  this._onMouseOut = this._onMouseOut.bind(this);
 
   this.highlighters = {};
 
@@ -89,7 +91,8 @@ HighlightersOverlay.prototype = {
 
     let el = this.view.element;
     el.addEventListener("mousemove", this._onMouseMove, false);
-    el.addEventListener("mouseleave", this._onMouseLeave, false);
+    el.addEventListener("mouseout", this._onMouseOut, false);
+    el.ownerDocument.defaultView.addEventListener("mouseout", this._onMouseOut, false);
 
     this._isStarted = true;
   },
@@ -107,7 +110,7 @@ HighlightersOverlay.prototype = {
 
     let el = this.view.element;
     el.removeEventListener("mousemove", this._onMouseMove, false);
-    el.removeEventListener("mouseleave", this._onMouseLeave, false);
+    el.removeEventListener("mouseout", this._onMouseOut, false);
 
     this._isStarted = false;
   },
@@ -148,7 +151,14 @@ HighlightersOverlay.prototype = {
     }
   },
 
-  _onMouseLeave: function () {
+  _onMouseOut: function (event) {
+    // Only hide the highlighter if the mouse leaves the currently hovered node.
+    if (!this._lastHovered ||
+        (event && this._lastHovered.contains(event.relatedTarget))) {
+      return;
+    }
+
+    // Otherwise, hide the highlighter.
     this._lastHovered = null;
     this._hideCurrent();
   },
@@ -261,10 +271,10 @@ exports.TooltipsOverlay = TooltipsOverlay;
 
 TooltipsOverlay.prototype = {
   get isEditing() {
-    return this.colorPicker.tooltip.isShown() ||
+    return this.colorPicker.tooltip.isVisible() ||
            this.colorPicker.eyedropperOpen ||
-           this.cubicBezier.tooltip.isShown() ||
-           this.filterEditor.tooltip.isShown();
+           this.cubicBezier.tooltip.isVisible() ||
+           this.filterEditor.tooltip.isVisible();
   },
 
   /**
@@ -276,25 +286,26 @@ TooltipsOverlay.prototype = {
       return;
     }
 
-    let panelDoc = this.view.inspector.panelDoc;
+    let { toolbox } = this.view.inspector;
 
     // Image, fonts, ... preview tooltip
-    this.previewTooltip = new HTMLTooltip(this.view.inspector.toolbox, {
-      type: "arrow"
+    this.previewTooltip = new HTMLTooltip(toolbox, {
+      type: "arrow",
+      useXulWrapper: true
     });
     this.previewTooltip.startTogglingOnHover(this.view.element,
       this._onPreviewTooltipTargetHover.bind(this));
 
     // MDN CSS help tooltip
-    this.cssDocs = new CssDocsTooltip(panelDoc);
+    this.cssDocs = new CssDocsTooltip(toolbox);
 
     if (this.isRuleView) {
       // Color picker tooltip
-      this.colorPicker = new SwatchColorPickerTooltip(panelDoc);
+      this.colorPicker = new SwatchColorPickerTooltip(toolbox, this.view.inspector);
       // Cubic bezier tooltip
-      this.cubicBezier = new SwatchCubicBezierTooltip(panelDoc);
+      this.cubicBezier = new SwatchCubicBezierTooltip(toolbox);
       // Filter editor tooltip
-      this.filterEditor = new SwatchFilterTooltip(panelDoc);
+      this.filterEditor = new SwatchFilterTooltip(toolbox);
     }
 
     this._isStarted = true;
@@ -381,21 +392,21 @@ TooltipsOverlay.prototype = {
       return false;
     }
 
-    if (this.isRuleView && this.colorPicker.tooltip.isShown()) {
+    if (this.isRuleView && this.colorPicker.tooltip.isVisible()) {
       this.colorPicker.revert();
       this.colorPicker.hide();
     }
 
-    if (this.isRuleView && this.cubicBezier.tooltip.isShown()) {
+    if (this.isRuleView && this.cubicBezier.tooltip.isVisible()) {
       this.cubicBezier.revert();
       this.cubicBezier.hide();
     }
 
-    if (this.isRuleView && this.cssDocs.tooltip.isShown()) {
+    if (this.isRuleView && this.cssDocs.tooltip.isVisible()) {
       this.cssDocs.hide();
     }
 
-    if (this.isRuleView && this.filterEditor.tooltip.isShown()) {
+    if (this.isRuleView && this.filterEditor.tooltip.isVisible()) {
       this.filterEditor.revert();
       this.filterEdtior.hide();
     }

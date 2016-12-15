@@ -6,6 +6,8 @@
 
 #include "jit/Ion.h"
 
+#include "jscompartmentinlines.h"
+
 using namespace js;
 using namespace js::jit;
 
@@ -67,12 +69,6 @@ CompileRuntime::addressOfIonBailAfter()
 #endif
 
 const void*
-CompileRuntime::addressOfJSContext()
-{
-    return &runtime()->jitJSContext;
-}
-
-const void*
 CompileRuntime::addressOfActivation()
 {
     return runtime()->addressOfActivation();
@@ -81,7 +77,7 @@ CompileRuntime::addressOfActivation()
 const void*
 CompileRuntime::addressOfLastCachedNativeIterator()
 {
-    return &runtime()->nativeIterCache.last;
+    return &static_cast<JSContext*>(runtime())->caches.nativeIterCache.last;
 }
 
 #ifdef JS_GC_ZEAL
@@ -98,6 +94,12 @@ CompileRuntime::addressOfInterruptUint32()
     return runtime()->addressOfInterruptUint32();
 }
 
+const void*
+CompileRuntime::getJSContext()
+{
+    return runtime()->unsafeContextFromAnyThread();
+}
+
 const JitRuntime*
 CompileRuntime::jitRuntime()
 {
@@ -108,12 +110,6 @@ SPSProfiler&
 CompileRuntime::spsProfiler()
 {
     return runtime()->spsProfiler;
-}
-
-bool
-CompileRuntime::canUseSignalHandlers()
-{
-    return runtime()->canUseSignalHandlers();
 }
 
 bool
@@ -182,13 +178,7 @@ CompileRuntime::isInsideNursery(gc::Cell* cell)
 const DOMCallbacks*
 CompileRuntime::DOMcallbacks()
 {
-    return GetDOMCallbacks(runtime());
-}
-
-const MathCache*
-CompileRuntime::maybeGetMathCache()
-{
-    return runtime()->maybeGetMathCache();
+    return runtime()->DOMcallbacks;
 }
 
 const Nursery&
@@ -202,6 +192,12 @@ CompileRuntime::setMinorGCShouldCancelIonCompilations()
 {
     MOZ_ASSERT(onMainThread());
     runtime()->gc.storeBuffer.setShouldCancelIonCompilations();
+}
+
+bool
+CompileRuntime::runtimeMatches(JSRuntime* rt)
+{
+    return rt == runtime();
 }
 
 Zone*
@@ -268,6 +264,15 @@ const JitCompartment*
 CompileCompartment::jitCompartment()
 {
     return compartment()->jitCompartment();
+}
+
+const GlobalObject*
+CompileCompartment::maybeGlobal()
+{
+    // This uses unsafeUnbarrieredMaybeGlobal() so as not to trigger the read
+    // barrier on the global from off the main thread.  This is safe because we
+    // abort Ion compilation when we GC.
+    return compartment()->unsafeUnbarrieredMaybeGlobal();
 }
 
 bool

@@ -9,6 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/DOMEventTargetHelper.h"
+#include "nsAutoPtr.h"
 #include "nsIIPCBackgroundChildCreateCallback.h"
 #include "nsTArray.h"
 
@@ -28,7 +29,7 @@ class PostMessageRunnable;
 class SharedMessagePortMessage;
 
 namespace workers {
-class WorkerFeature;
+class WorkerHolder;
 } // namespace workers
 
 class MessagePort final : public DOMEventTargetHelper
@@ -163,7 +164,7 @@ private:
     return mIsKeptAlive;
   }
 
-  nsAutoPtr<workers::WorkerFeature> mWorkerFeature;
+  nsAutoPtr<workers::WorkerHolder> mWorkerHolder;
 
   RefPtr<PostMessageRunnable> mPostMessageRunnable;
 

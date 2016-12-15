@@ -23,6 +23,9 @@ import org.mozilla.gecko.home.HomeConfig.PanelType;
 import org.mozilla.gecko.menu.GeckoMenu;
 import org.mozilla.gecko.menu.GeckoMenuInflater;
 import org.mozilla.gecko.menu.MenuPanel;
+import org.mozilla.gecko.notifications.AppNotificationClient;
+import org.mozilla.gecko.notifications.NotificationClient;
+import org.mozilla.gecko.notifications.NotificationHelper;
 import org.mozilla.gecko.util.IntentUtils;
 import org.mozilla.gecko.mozglue.SafeIntent;
 import org.mozilla.gecko.mozglue.GeckoLoader;
@@ -61,10 +64,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.location.Location;
-import android.location.LocationListener;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -132,9 +131,7 @@ public abstract class GeckoApp
     GeckoEventListener,
     GeckoMenu.Callback,
     GeckoMenu.MenuPresenter,
-    LocationListener,
     NativeEventListener,
-    SensorEventListener,
     Tabs.OnTabsChangedListener,
     ViewTreeObserver.OnGlobalLayoutListener {
 
@@ -147,6 +144,8 @@ public abstract class GeckoApp
     public static final String ACTION_LAUNCH_SETTINGS      = "org.mozilla.gecko.SETTINGS";
     public static final String ACTION_LOAD                 = "org.mozilla.gecko.LOAD";
     public static final String ACTION_INIT_PW              = "org.mozilla.gecko.INIT_PW";
+
+    public static final String INTENT_REGISTER_STUMBLER_LISTENER = "org.mozilla.gecko.STUMBLER_REGISTER_LOCAL_LISTENER";
 
     public static final String EXTRA_STATE_BUNDLE          = "stateBundle";
 
@@ -188,7 +187,7 @@ public abstract class GeckoApp
     protected FormAssistPopup mFormAssistPopup;
 
 
-    protected LayerView mLayerView;
+    protected GeckoView mLayerView;
     private AbsoluteLayout mPluginContainer;
 
     private FullScreenHolder mFullScreenPluginContainer;
@@ -328,16 +327,6 @@ public abstract class GeckoApp
 
     @Override
     public Activity getActivity() {
-        return this;
-    }
-
-    @Override
-    public LocationListener getLocationListener() {
-        return this;
-    }
-
-    @Override
-    public SensorEventListener getSensorEventListener() {
         return this;
     }
 
@@ -650,7 +639,10 @@ public abstract class GeckoApp
                     ThreadUtils.postToUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            SnackbarHelper.showSnackbar(GeckoApp.this, getString(resId), Snackbar.LENGTH_LONG);
+                            SnackbarBuilder.builder(GeckoApp.this)
+                                    .message(resId)
+                                    .duration(Snackbar.LENGTH_LONG)
+                                    .buildAndShow();
                         }
                     });
                 }
@@ -720,7 +712,11 @@ public abstract class GeckoApp
             Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.LIST, "text");
 
         } else if ("Snackbar:Show".equals(event)) {
-            SnackbarHelper.showSnackbar(this, message, callback);
+            SnackbarBuilder.builder(this)
+                    .fromEvent(message)
+                    .callback(callback)
+                    .buildAndShow();
+
         } else if ("SystemUI:Visibility".equals(event)) {
             setSystemUiVisible(message.getBoolean("visible"));
 
@@ -891,7 +887,7 @@ public abstract class GeckoApp
 
 
 
-    private void addFullScreenPluginView(View view) {
+    /* package */ void addFullScreenPluginView(View view) {
         if (mFullScreenPluginView != null) {
             Log.w(LOGTAG, "Already have a fullscreen plugin view");
             return;
@@ -946,7 +942,7 @@ public abstract class GeckoApp
         });
     }
 
-    private void removeFullScreenPluginView(View view) {
+    /* package */ void removeFullScreenPluginView(View view) {
         if (mFullScreenPluginView == null) {
             Log.w(LOGTAG, "Don't have a fullscreen plugin view");
             return;
@@ -1030,12 +1026,18 @@ public abstract class GeckoApp
                 File dcimDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
                 if (!dcimDir.mkdirs() && !dcimDir.isDirectory()) {
-                    SnackbarHelper.showSnackbar(this, getString(R.string.set_image_path_fail), Snackbar.LENGTH_LONG);
+                    SnackbarBuilder.builder(this)
+                            .message(R.string.set_image_path_fail)
+                            .duration(Snackbar.LENGTH_LONG)
+                            .buildAndShow();
                     return;
                 }
                 String path = Media.insertImage(getContentResolver(), image, null, null);
                 if (path == null) {
-                    SnackbarHelper.showSnackbar(this, getString(R.string.set_image_path_fail), Snackbar.LENGTH_LONG);
+                    SnackbarBuilder.builder(this)
+                            .message(R.string.set_image_path_fail)
+                            .duration(Snackbar.LENGTH_LONG)
+                            .buildAndShow();
                     return;
                 }
                 final Intent intent = new Intent(Intent.ACTION_ATTACH_DATA);
@@ -1052,7 +1054,10 @@ public abstract class GeckoApp
                 };
                 ActivityHandlerHelper.startIntentForActivity(this, chooser, handler);
             } else {
-                SnackbarHelper.showSnackbar(this, getString(R.string.set_image_fail), Snackbar.LENGTH_LONG);
+                SnackbarBuilder.builder(this)
+                        .message(R.string.set_image_fail)
+                        .duration(Snackbar.LENGTH_LONG)
+                        .buildAndShow();
             }
         } catch (OutOfMemoryError ome) {
             Log.e(LOGTAG, "Out of Memory when converting to byte array", ome);
@@ -1228,6 +1233,13 @@ public abstract class GeckoApp
             Log.e(LOGTAG, "Exception starting favicon cache. Corrupt resources?", e);
         }
 
+        // Tell Stumbler to register a local broadcast listener to listen for preference intents.
+        // We do this via intents since we can't easily access Stumbler directly,
+        // as it might be compiled outside of Fennec.
+        getApplicationContext().sendBroadcast(
+                new Intent(INTENT_REGISTER_STUMBLER_LISTENER)
+        );
+
         // Did the OS locale change while we were backgrounded? If so,
         // we need to die so that Gecko will re-init add-ons that touch
         // the UI.
@@ -1330,7 +1342,7 @@ public abstract class GeckoApp
         mRootLayout = (RelativeLayout) findViewById(R.id.root_layout);
         mGeckoLayout = (RelativeLayout) findViewById(R.id.gecko_layout);
         mMainLayout = (RelativeLayout) findViewById(R.id.main_layout);
-        mLayerView = (LayerView) findViewById(R.id.layer_view);
+        mLayerView = (GeckoView) findViewById(R.id.layer_view);
 
         // Use global layout state change to kick off additional initialization
         mMainLayout.getViewTreeObserver().addOnGlobalLayoutListener(this);
@@ -1547,14 +1559,17 @@ public abstract class GeckoApp
     /**
      * Loads the initial tab at Fennec startup. If we don't restore tabs, this
      * tab will be about:home, or the homepage if the user has set one.
-     * If we've temporarily disabled restoring to break out of a crash loop, we'll
-     * show the recent tabs panel so the user can manually restore tabs as needed.
+     * If we've temporarily disabled restoring to break out of a crash loop, we'll show
+     * the Recent Tabs folder of the Combined History panel, so the user can manually
+     * restore tabs as needed.
      * If we restore tabs, we don't need to create a new tab.
      */
     protected void loadStartupTab(final int flags) {
         if (!mShouldRestore) {
             if (mLastSessionCrashed) {
-                Tabs.getInstance().loadUrl(AboutPages.getURLForBuiltinPanelType(PanelType.RECENT_TABS), flags);
+                // The Recent Tabs panel no longer exists, but BrowserApp will redirect us
+                // to the Recent Tabs folder of the Combined History panel.
+                Tabs.getInstance().loadUrl(AboutPages.getURLForBuiltinPanelType(PanelType.DEPRECATED_RECENT_TABS), flags);
             } else {
                 final String homepage = getHomepage();
                 Tabs.getInstance().loadUrl(!TextUtils.isEmpty(homepage) ? homepage : AboutPages.HOME, flags);
@@ -1696,11 +1711,6 @@ public abstract class GeckoApp
                 if (rec != null) {
                     rec.recordJavaStartupTime(javaDuration);
                 }
-
-                // Kick off our background services. We do this by invoking the broadcast
-                // receiver, which uses the system alarm infrastructure to perform tasks at
-                // intervals.
-                GeckoPreferences.broadcastHealthReportUploadPref(GeckoApp.this);
             }
         }, 50);
 
@@ -1726,8 +1736,6 @@ public abstract class GeckoApp
 
         if (ACTION_ALERT_CALLBACK.equals(action)) {
             processAlertCallback(intent);
-        } else if (NotificationHelper.HELPER_BROADCAST_ACTION.equals(action)) {
-            NotificationHelper.getInstance(getApplicationContext()).handleNotificationIntent(intent);
         }
     }
 
@@ -2058,9 +2066,9 @@ public abstract class GeckoApp
                 }
             });
         } else if (ACTION_HOMESCREEN_SHORTCUT.equals(action)) {
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBookmarkLoadEvent(uri));
+            mLayerView.loadUri(uri, GeckoView.LOAD_SWITCH_TAB);
         } else if (Intent.ACTION_SEARCH.equals(action)) {
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createURILoadEvent(uri));
+            mLayerView.loadUri(uri, GeckoView.LOAD_NEW_TAB);
         } else if (ACTION_ALERT_CALLBACK.equals(action)) {
             processAlertCallback(intent);
         } else if (NotificationHelper.HELPER_BROADCAST_ACTION.equals(action)) {
@@ -2213,11 +2221,6 @@ public abstract class GeckoApp
                 }
 
                 editor.apply();
-
-                // In theory, the first browser session will not run long enough that we need to
-                // prune during it and we'd rather run it when the browser is inactive so we wait
-                // until here to register the prune service.
-                GeckoPreferences.broadcastHealthReportPrune(context);
             }
         });
 
@@ -2610,38 +2613,6 @@ public abstract class GeckoApp
     @Override
     public AbsoluteLayout getPluginContainer() { return mPluginContainer; }
 
-    // Accelerometer.
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createSensorEvent(event));
-    }
-
-    // Geolocation.
-    @Override
-    public void onLocationChanged(Location location) {
-        // No logging here: user-identifying information.
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createLocationEvent(location));
-    }
-
-    @Override
-    public void onProviderDisabled(String provider)
-    {
-    }
-
-    @Override
-    public void onProviderEnabled(String provider)
-    {
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras)
-    {
-    }
-
     private static final String CPU = "cpu";
     private static final String SCREEN = "screen";
 
@@ -2748,6 +2719,7 @@ public abstract class GeckoApp
 
         public FullScreenHolder(Context ctx) {
             super(ctx);
+            setBackgroundColor(0xff000000);
         }
 
         @Override
@@ -2956,5 +2928,11 @@ public abstract class GeckoApp
                 TextUtils.isEmpty(action) ? Intent.ACTION_VIEW : action, "");
 
         return IntentHelper.getHandlersForIntent(intent);
+    }
+
+    @Override
+    public String getDefaultChromeURI() {
+        // Use the chrome URI specified by Gecko's defaultChromeURI pref.
+        return null;
     }
 }

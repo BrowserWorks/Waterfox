@@ -10,6 +10,7 @@
 #include "mozIApplication.h"
 #include "nsCOMPtr.h"
 #include "mozilla/BasePrincipal.h"
+#include "nsPIWindowRoot.h"
 
 namespace mozilla {
 namespace dom {
@@ -136,6 +137,9 @@ public:
    */
   const nsAString& PresentationURL() const;
 
+  UIStateChangeType ShowAccelerators() const;
+  UIStateChangeType ShowFocusRings() const;
+
 protected:
   friend class MaybeInvalidTabContext;
 
@@ -154,6 +158,11 @@ protected:
   bool SetTabContext(const TabContext& aContext);
 
   /**
+   * Set the tab context's origin attributes to a private browsing value.
+   */
+  void SetPrivateBrowsingAttributes(bool aIsPrivateBrowsing);
+
+  /**
    * Set the TabContext for this frame. This can either be:
    *  - an app frame (with the given own app) inside the given owner app. Either
    *    apps can be null.
@@ -164,6 +173,8 @@ protected:
                      bool aIsPrerendered,
                      mozIApplication* aOwnApp,
                      mozIApplication* aAppFrameOwnerApp,
+                     UIStateChangeType aShowAccelerators,
+                     UIStateChangeType aShowFocusRings,
                      const DocShellOriginAttributes& aOriginAttributes,
                      const nsACString& aSignedPkgOriginNoSuffix,
                      const nsAString& aPresentationURL);
@@ -233,6 +244,12 @@ private:
    * The requested presentation URL.
    */
   nsString mPresentationURL;
+
+  /**
+   * Keyboard indicator state (focus rings, accelerators).
+   */
+  UIStateChangeType mShowAccelerators;
+  UIStateChangeType mShowFocusRings;
 };
 
 /**
@@ -253,6 +270,8 @@ public:
                 bool aIsPrerendered,
                 mozIApplication* aOwnApp,
                 mozIApplication* aAppFrameOwnerApp,
+                UIStateChangeType aShowAccelerators,
+                UIStateChangeType aShowFocusRings,
                 const DocShellOriginAttributes& aOriginAttributes,
                 const nsACString& aSignedPkgOriginNoSuffix = EmptyCString(),
                 const nsAString& aPresentationURL = EmptyString())
@@ -261,6 +280,8 @@ public:
                                      aIsPrerendered,
                                      aOwnApp,
                                      aAppFrameOwnerApp,
+                                     aShowAccelerators,
+                                     aShowFocusRings,
                                      aOriginAttributes,
                                      aSignedPkgOriginNoSuffix,
                                      aPresentationURL);

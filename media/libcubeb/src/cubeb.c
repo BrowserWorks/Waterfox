@@ -66,6 +66,7 @@ int
 validate_stream_params(cubeb_stream_params * input_stream_params,
                        cubeb_stream_params * output_stream_params)
 {
+  XASSERT(input_stream_params || output_stream_params);
   if (output_stream_params) {
     if (output_stream_params->rate < 1000 || output_stream_params->rate > 192000 ||
         output_stream_params->channels < 1 || output_stream_params->channels > 8) {
@@ -106,7 +107,7 @@ validate_stream_params(cubeb_stream_params * input_stream_params,
 int
 validate_latency(int latency)
 {
-  if (latency < 1 || latency > 2000) {
+  if (latency < 1 || latency > 96000) {
     return CUBEB_ERROR_INVALID_PARAMETER;
   }
   return CUBEB_OK;

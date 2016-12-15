@@ -9,7 +9,6 @@
 #include "MediaSegment.h"
 #include "nsCOMPtr.h"
 #include "gfxPoint.h"
-#include "nsAutoPtr.h"
 #include "ImageContainer.h"
 
 namespace mozilla {
@@ -30,7 +29,8 @@ public:
   {
     return mIntrinsicSize == aFrame.mIntrinsicSize &&
            mForceBlack == aFrame.mForceBlack &&
-           ((mForceBlack && aFrame.mForceBlack) || mImage == aFrame.mImage);
+           ((mForceBlack && aFrame.mForceBlack) || mImage == aFrame.mImage) &&
+           mPrincipalHandle == aFrame.mPrincipalHandle;
   }
   bool operator!=(const VideoFrame& aFrame) const
   {

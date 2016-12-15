@@ -15,6 +15,7 @@
 #include "mozilla/layers/CompositorOGL.h"  // for CompositorOGL
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/LayerManagerComposite.h"
+#include "mozilla/widget/InProcessCompositorWidget.h"
 #include "nsBaseWidget.h"
 #include "GLContext.h"
 #include "GLContextProvider.h"
@@ -52,7 +53,7 @@ public:
       RefPtr<GLContext> context = GLContextProvider::CreateOffscreen(
         IntSize(gCompWidth, gCompHeight), caps,
         CreateContextFlags::REQUIRE_COMPAT_PROFILE,
-        discardFailureId);
+        &discardFailureId);
       return context.forget().take();
     }
     return nullptr;
@@ -99,21 +100,21 @@ NS_IMPL_ISUPPORTS_INHERITED0(MockWidget, nsBaseWidget)
 struct LayerManagerData {
   RefPtr<MockWidget> mWidget;
   RefPtr<Compositor> mCompositor;
-  RefPtr<widget::CompositorWidgetProxy> mCompositorWidgetProxy;
+  RefPtr<widget::CompositorWidget> mCompositorWidget;
   RefPtr<LayerManagerComposite> mLayerManager;
 
   LayerManagerData(Compositor* compositor,
                    MockWidget* widget,
-                   widget::CompositorWidgetProxy* aProxy,
+                   widget::CompositorWidget* aWidget,
                    LayerManagerComposite* layerManager)
     : mWidget(widget)
     , mCompositor(compositor)
-    , mCompositorWidgetProxy(aProxy)
+    , mCompositorWidget(aWidget)
     , mLayerManager(layerManager)
   {}
 };
 
-static already_AddRefed<Compositor> CreateTestCompositor(LayersBackend backend, widget::CompositorWidgetProxy* widget)
+static already_AddRefed<Compositor> CreateTestCompositor(LayersBackend backend, widget::CompositorWidget* widget)
 {
   gfxPrefs::GetSingleton();
 
@@ -137,8 +138,8 @@ static already_AddRefed<Compositor> CreateTestCompositor(LayersBackend backend, 
     MOZ_CRASH(); // No support yet
 #endif
   }
-
-  if (!compositor || !compositor->Initialize()) {
+  nsCString failureReason;
+  if (!compositor || !compositor->Initialize(&failureReason)) {
     printf_stderr("Failed to construct layer manager for the requested backend\n");
     abort();
   }
@@ -157,7 +158,7 @@ static std::vector<LayerManagerData> GetLayerManagers(std::vector<LayersBackend>
     auto backend = aBackends[i];
 
     RefPtr<MockWidget> widget = new MockWidget();
-    RefPtr<widget::CompositorWidgetProxy> proxy = widget->NewCompositorWidgetProxy();
+    RefPtr<widget::CompositorWidget> proxy = new widget::InProcessCompositorWidget(widget);
     RefPtr<Compositor> compositor = CreateTestCompositor(backend, proxy);
 
     RefPtr<LayerManagerComposite> layerManager = new LayerManagerComposite(compositor);

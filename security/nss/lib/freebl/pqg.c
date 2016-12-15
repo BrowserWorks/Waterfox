@@ -176,9 +176,13 @@ static unsigned int
 HASH_ResultLen(HASH_HashType type)
 {
     const SECHashObject *hash_obj = HASH_GetRawHashObject(type);
+    PORT_Assert(hash_obj != NULL);
     if (hash_obj == NULL) {
-	return 0;
+        /* type is always a valid HashType. Thus a null hash_obj must be a bug */
+        PORT_SetError(SEC_ERROR_LIBRARY_FAILURE);
+        return 0;
     }
+    PORT_Assert(hash_obj->length != 0);
     return hash_obj->length;
 }
 
@@ -1326,19 +1330,6 @@ pqg_ParamGen(unsigned int L, unsigned int N, pqgGenType type,
     verify->arena = arena;
     seed = &verify->seed;
     arena = NULL;
-    /* Initialize bignums */
-    MP_DIGITS(&P) = 0;
-    MP_DIGITS(&Q) = 0;
-    MP_DIGITS(&G) = 0;
-    MP_DIGITS(&H) = 0;
-    MP_DIGITS(&l) = 0;
-    MP_DIGITS(&p0) = 0;
-    CHECK_MPI_OK( mp_init(&P) );
-    CHECK_MPI_OK( mp_init(&Q) );
-    CHECK_MPI_OK( mp_init(&G) );
-    CHECK_MPI_OK( mp_init(&H) );
-    CHECK_MPI_OK( mp_init(&l) );
-    CHECK_MPI_OK( mp_init(&p0) );
 
     /* Select Hash and Compute lengths. */
     /* getFirstHash gives us the smallest acceptable hash for this key

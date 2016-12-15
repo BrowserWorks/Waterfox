@@ -24,7 +24,7 @@
 #include "QuotaManager.h"
 #include "QuotaRequests.h"
 
-#define PROFILE_BEFORE_CHANGE_OBSERVER_ID "profile-before-change"
+#define PROFILE_BEFORE_CHANGE_QM_OBSERVER_ID "profile-before-change-qm"
 
 namespace mozilla {
 namespace dom {
@@ -257,7 +257,7 @@ QuotaManagerService::NoteLiveManager(QuotaManager* aManager)
 }
 
 void
-QuotaManagerService::NoteFinishedManager()
+QuotaManagerService::NoteShuttingDownManager()
 {
   MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
@@ -294,9 +294,10 @@ QuotaManagerService::Init()
       return NS_ERROR_FAILURE;
     }
 
-    nsresult rv = observerService->AddObserver(this,
-                                               PROFILE_BEFORE_CHANGE_OBSERVER_ID,
-                                               false);
+    nsresult rv =
+      observerService->AddObserver(this,
+                                   PROFILE_BEFORE_CHANGE_QM_OBSERVER_ID,
+                                   false);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -496,6 +497,7 @@ NS_IMPL_QUERY_INTERFACE(QuotaManagerService,
 NS_IMETHODIMP
 QuotaManagerService::GetUsageForPrincipal(nsIPrincipal* aPrincipal,
                                           nsIQuotaUsageCallback* aCallback,
+                                          bool aGetGroupUsage,
                                           nsIQuotaUsageRequest** _retval)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -508,7 +510,6 @@ QuotaManagerService::GetUsageForPrincipal(nsIPrincipal* aPrincipal,
   UsageParams params;
 
   PrincipalInfo& principalInfo = params.principalInfo();
-
   nsresult rv = PrincipalToPrincipalInfo(aPrincipal, &principalInfo);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
@@ -518,6 +519,8 @@ QuotaManagerService::GetUsageForPrincipal(nsIPrincipal* aPrincipal,
       principalInfo.type() != PrincipalInfo::TSystemPrincipalInfo) {
     return NS_ERROR_UNEXPECTED;
   }
+
+  params.getGroupUsage() = aGetGroupUsage;
 
   nsAutoPtr<PendingRequestInfo> info(new UsageRequestInfo(request, params));
 
@@ -637,7 +640,7 @@ QuotaManagerService::Observe(nsISupports* aSubject,
   MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (!strcmp(aTopic, PROFILE_BEFORE_CHANGE_OBSERVER_ID)) {
+  if (!strcmp(aTopic, PROFILE_BEFORE_CHANGE_QM_OBSERVER_ID)) {
     RemoveIdleObserver();
     return NS_OK;
   }

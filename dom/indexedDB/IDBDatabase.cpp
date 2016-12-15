@@ -38,6 +38,7 @@
 #include "mozilla/ipc/FileDescriptor.h"
 #include "mozilla/ipc/InputStreamParams.h"
 #include "mozilla/ipc/InputStreamUtils.h"
+#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsIDocument.h"
 #include "nsIObserver.h"
@@ -872,7 +873,7 @@ IDBDatabase::AbortTransactions(bool aShouldWarn)
           }
         }
 
-        transaction->Abort(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
+        transaction->Abort(NS_ERROR_DOM_INDEXEDDB_ABORT_ERR);
       }
 
       static const char kWarningMessage[] =

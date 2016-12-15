@@ -1,0 +1,460 @@
+/* vim:set ts=2 sw=2 sts=2 et: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Tooltip specific theme variables */
+
+.theme-dark {
+  --bezier-diagonal-color: #eee;
+  --bezier-grid-color: rgba(0, 0, 0, 0.2);
+}
+
+.theme-light {
+  --bezier-diagonal-color: rgba(0, 0, 0, 0.2);
+  --bezier-grid-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Tooltip widget (see devtools/client/shared/widgets/Tooltip.js) */
+
+.devtools-tooltip .panel-arrowcontent {
+  padding: 4px;
+}
+
+.devtools-tooltip .panel-arrowcontainer {
+  /* Reseting the transition used when panels are shown */
+  transition: none;
+  /* Panels slide up/down/left/right when they appear using a transform.
+  Since we want to remove the transition, we don't need to transform anymore
+  plus it can interfeer by causing mouseleave events on the underlying nodes */
+  transform: none;
+}
+
+.devtools-tooltip[clamped-dimensions] {
+  min-height: 100px;
+  max-height: 400px;
+  min-width: 100px;
+  max-width: 400px;
+}
+.devtools-tooltip[clamped-dimensions-no-min-height] {
+  min-height: 0;
+  max-height: 400px;
+  min-width: 100px;
+  max-width: 400px;
+}
+.devtools-tooltip[clamped-dimensions-no-max-or-min-height] {
+  min-width: 400px;
+  max-width: 400px;
+}
+.devtools-tooltip[clamped-dimensions] .panel-arrowcontent,
+.devtools-tooltip[clamped-dimensions-no-min-height] .panel-arrowcontent,
+.devtools-tooltip[clamped-dimensions-no-max-or-min-height] .panel-arrowcontent {
+  overflow: hidden;
+}
+.devtools-tooltip[wide] {
+  max-width: 600px;
+}
+
+/* Tooltip: Simple Text */
+
+.devtools-tooltip-simple-text {
+  max-width: 400px;
+  margin: 0 -4px; /* Compensate for the .panel-arrowcontent padding. */
+  padding: 8px 12px;
+  white-space: pre-wrap;
+}
+
+.devtools-tooltip-simple-text:first-child {
+  margin-top: -4px;
+}
+
+.devtools-tooltip-simple-text:last-child {
+  margin-bottom: -4px;
+}
+
+/* Tooltip: Alert Icon */
+
+.devtools-tooltip-alert-icon {
+  width: 32px;
+  height: 32px;
+  margin: 6px;
+  margin-inline-end: 20px;
+}
+
+.devtools-tooltip-alert-icon {
+  list-style-image: url("chrome://global/skin/icons/warning-32.png");
+}
+
+/* Tooltip: Variables View */
+
+.devtools-tooltip-variables-view-box {
+  margin: -4px; /* Compensate for the .panel-arrowcontent padding. */
+}
+
+.devtools-tooltip-variables-view-box .variable-or-property > .title {
+  padding-inline-end: 6px;
+}
+
+/* Tooltip: Tiles */
+
+.devtools-tooltip-tiles {
+  background-color: #eee;
+  background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc),
+    linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+.devtools-tooltip-iframe {
+  border: none;
+  background: transparent;
+}
+
+.tooltip-container {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  display: none;
+  background: transparent;
+  pointer-events: none;
+  overflow: hidden;
+  filter: drop-shadow(0 3px 4px var(--theme-tooltip-shadow));
+}
+
+.tooltip-xul-wrapper {
+  -moz-appearance: none;
+  background: transparent;
+  overflow: visible;
+  border-style: none;
+}
+
+.tooltip-xul-wrapper .tooltip-container {
+  position: absolute;
+}
+
+.tooltip-top {
+  flex-direction: column;
+}
+
+.tooltip-bottom {
+  flex-direction: column-reverse;
+}
+
+.tooltip-panel{
+  background-color: var(--theme-tooltip-background);
+  pointer-events: all;
+  flex-grow: 1;
+}
+
+.tooltip-visible {
+  display: flex;
+}
+
+.tooltip-hidden {
+  display: flex;
+  visibility: hidden;
+}
+
+/* Tooltip : flexible height styles */
+
+.tooltip-flexible-height .tooltip-panel {
+  /* In flexible mode the tooltip panel should only grow according to its content. */
+  flex-grow: 0;
+}
+
+.tooltip-flexible-height .tooltip-filler {
+  /* In flexible mode the filler should grow as much as possible. */
+  flex-grow: 1;
+}
+
+/* type="arrow" overrides: remove arrow decorations for the xul <panel> wrapper */
+
+.tooltip-xul-wrapper[type="arrow"] {
+  margin: 0;
+}
+
+/* The arrow image is hidden because the panel is opened using openPopupAtScreen(). */
+
+/* Remove all decorations on .panel-arrowcontent is the tooltip content container. */
+.tooltip-xul-wrapper[type="arrow"] .panel-arrowcontent {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Tooltip : arrow style */
+
+.tooltip-xul-wrapper .tooltip-container {
+  /* When displayed in a XUL panel the drop shadow would be abruptly cut by the panel */
+  filter: none;
+}
+
+.tooltip-container[type="arrow"] > .tooltip-panel {
+  position: relative;
+  min-height: 10px;
+  box-sizing: border-box;
+  width: 100%;
+
+  border: 3px solid var(--theme-tooltip-border);
+  border-radius: 5px;
+}
+
+.tooltip-top[type="arrow"] .tooltip-panel {
+  top: 0;
+}
+
+.tooltip-bottom[type="arrow"] .tooltip-panel {
+  bottom: 0;
+}
+
+.tooltip-arrow {
+  position: relative;
+  height: 16px;
+  width: 32px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* In RTL locales, only use RTL on the tooltip content, keep LTR for positioning */
+.tooltip-container:-moz-locale-dir(rtl) {
+  direction: ltr;
+}
+
+.tooltip-panel:-moz-locale-dir(rtl) {
+  direction: rtl;
+}
+
+.tooltip-top .tooltip-arrow {
+  margin-top: -3px;
+}
+
+.tooltip-bottom .tooltip-arrow {
+  margin-bottom: -3px;
+}
+
+.tooltip-arrow:before {
+  content: "";
+  position: absolute;
+  width: 21px;
+  height: 21px;
+  margin-left: 4px;
+  background: linear-gradient(-45deg,
+    var(--theme-tooltip-background) 50%, transparent 50%);
+  border-color: var(--theme-tooltip-border);
+  border-style: solid;
+  border-width: 0px 3px 3px 0px;
+  border-radius: 3px;
+  pointer-events: all;
+}
+
+.tooltip-bottom .tooltip-arrow:before {
+  margin-top: 4px;
+  transform: rotate(225deg);
+}
+
+.tooltip-top .tooltip-arrow:before {
+  margin-top: -12px;
+  transform: rotate(45deg);
+}
+
+/* Tooltip: Events */
+
+.event-header {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.event-header:first-child {
+  border-width: 0;
+}
+
+.event-header:not(:first-child) {
+  border-width: 1px 0 0 0;
+}
+
+.devtools-tooltip-events-container {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.event-tooltip-event-type,
+.event-tooltip-filename,
+.event-tooltip-attributes {
+  margin-inline-start: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.event-tooltip-event-type {
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.event-tooltip-filename {
+  margin: 0 5px;
+  font-size: 100%;
+  flex-shrink: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Force ellipsis to be displayed on the left */
+  direction: rtl;
+}
+
+.event-tooltip-debugger-icon {
+  width: 16px;
+  height: 16px;
+  margin-inline-end: 4px;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.event-tooltip-debugger-icon:hover {
+  opacity: 1;
+}
+
+.event-tooltip-content-box {
+  display: none;
+  height: 100px;
+  overflow: hidden;
+  margin-inline-end: 0;
+  border: 1px solid var(--theme-splitter-color);
+  border-width: 1px 0 0 0;
+}
+
+.event-toolbox-content-box iframe {
+  height: 100%;
+  border-style: none;
+}
+
+.event-tooltip-content-box[open] {
+  display: block;
+}
+
+.event-tooltip-source-container {
+  margin-top: 5px;
+  margin-bottom: 10px;
+  margin-inline-start: 5px;
+  margin-inline-end: 0;
+}
+
+.event-tooltip-source {
+  margin-bottom: 0;
+}
+
+.event-tooltip-attributes-container {
+  display: flex;
+  flex-shrink: 0;
+  flex-grow: 1;
+  justify-content: flex-end;
+}
+
+.event-tooltip-attributes-box {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  height: 14px;
+  border-radius: 3px;
+  padding: 2px;
+  margin-inline-start: 5px;
+  background-color: var(--theme-body-color-alt);
+  color: var(--theme-toolbar-background);
+}
+
+.event-tooltip-attributes {
+  margin: 0;
+  font-size: 9px;
+  padding-top: 2px;
+}
+
+/*
+ * Tooltip: JS stack traces
+ */
+
+.stack-trace-tooltip {
+  direction: ltr;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.stack-trace-tooltip > .stack-frame {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.stack-trace-tooltip > .stack-frame:first-child {
+  margin-top: 5px;
+}
+
+.stack-trace-tooltip > .stack-frame:last-child {
+  margin-bottom: 5px;
+}
+
+.stack-frame-call {
+  color: var(--theme-body-color-alt);
+  cursor: pointer;
+  display: flex;
+}
+
+.stack-frame-call:hover {
+  background-color: var(--theme-selection-background-semitransparent);
+}
+
+.stack-frame-async {
+  color: var(--theme-body-color-inactive);
+}
+
+.stack-frame-function-name {
+  color: var(--theme-highlight-blue);
+  max-width: 50%;
+  margin-inline-end: 1em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stack-frame-source-name {
+  flex: 1 1;
+  /* Makes the file name truncated (and ellipsis shown) on the left side */
+  direction: rtl;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Enforce LTR direction for the file name - fixes bug 1290056 */
+.stack-frame-source-name-inner {
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+.stack-frame-line {
+  color: var(--theme-highlight-orange);
+}
+
+/* Tooltip: HTML Search */
+
+#searchbox-panel-listbox {
+  width: 250px;
+  max-width: 250px;
+  overflow-x: hidden;
+}
+
+#searchbox-panel-listbox .autocomplete-item,
+#searchbox-panel-listbox .autocomplete-item[selected] {
+  overflow-x: hidden;
+}
+
+#searchbox-panel-listbox .autocomplete-item > .initial-value {
+  max-width: 130px;
+  margin-left: 15px;
+}
+
+#searchbox-panel-listbox .autocomplete-item > .autocomplete-value {
+  max-width: 150px;
+}

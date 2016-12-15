@@ -9,6 +9,7 @@
 #include <map>
 #include <stack>
 #include "mozilla/gfx/Types.h"
+#include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/RefPtr.h"
 #include "TextureClient.h"
 #include "mozilla/Mutex.h"
@@ -17,6 +18,7 @@ namespace mozilla {
 namespace layers {
 
 class TextureClientHolder;
+struct PlanarYCbCrData;
 
 class ITextureClientRecycleAllocator
 {
@@ -56,6 +58,21 @@ public:
   const TextureAllocationFlags mAllocationFlags;
 };
 
+class YCbCrTextureClientAllocationHelper : public ITextureClientAllocationHelper
+{
+public:
+  YCbCrTextureClientAllocationHelper(const PlanarYCbCrData& aData,
+                                     TextureFlags aTextureFlags);
+
+  bool IsCompatible(TextureClient* aTextureClient) override;
+
+  already_AddRefed<TextureClient> Allocate(CompositableForwarder* aAllocator) override;
+
+protected:
+  const PlanarYCbCrData& mData;
+};
+
+
 /**
  * TextureClientRecycleAllocator provides TextureClients allocation and
  * recycling capabilities. It expects allocations of same sizes and
@@ -88,6 +105,8 @@ public:
 
   void ShrinkToMinimumSize();
 
+  void Destroy();
+
 protected:
   virtual already_AddRefed<TextureClient>
   Allocate(gfx::SurfaceFormat aFormat,
@@ -112,6 +131,7 @@ protected:
   // stack is good from Graphics cache usage point of view.
   std::stack<RefPtr<TextureClientHolder> > mPooledClients;
   Mutex mLock;
+  bool mIsDestroyed;
 };
 
 } // namespace layers

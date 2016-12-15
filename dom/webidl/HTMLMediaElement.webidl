@@ -92,9 +92,7 @@ interface HTMLMediaElement : HTMLElement {
   readonly attribute AudioTrackList audioTracks;
   [Pref="media.track.enabled"]
   readonly attribute VideoTrackList videoTracks;
-  [Pref="media.webvtt.enabled"]
   readonly attribute TextTrackList? textTracks;
-  [Pref="media.webvtt.enabled"]
   TextTrack addTextTrack(TextTrackKind kind,
                          optional DOMString label = "",
                          optional DOMString language = "");
@@ -212,7 +210,5 @@ partial interface HTMLMediaElement {
  */
 partial interface HTMLMediaElement {
   [Throws, Pref="media.seekToNextFrame.enabled"]
-  void seekToNextFrame(); // This API should be an asynchronous one which
-                          // returns a Promise<void>. Bug 1276272 follows this
-                          // issue.
+  Promise<void> seekToNextFrame();
 };

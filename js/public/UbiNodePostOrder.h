@@ -7,6 +7,7 @@
 #ifndef js_UbiNodePostOrder_h
 #define js_UbiNodePostOrder_h
 
+#include "mozilla/Attributes.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/Move.h"
 
@@ -82,7 +83,7 @@ struct PostOrder {
     using Stack = js::Vector<OriginAndEdges, 256, js::SystemAllocPolicy>;
     using Set = js::HashSet<Node, js::DefaultHasher<Node>, js::SystemAllocPolicy>;
 
-    JSRuntime*               rt;
+    JSContext*               cx;
     Set                      seen;
     Stack                    stack;
 #ifdef DEBUG
@@ -90,7 +91,7 @@ struct PostOrder {
 #endif
 
   private:
-    bool fillEdgesFromRange(EdgeVector& edges, js::UniquePtr<EdgeRange>& range) {
+    MOZ_MUST_USE bool fillEdgesFromRange(EdgeVector& edges, js::UniquePtr<EdgeRange>& range) {
         MOZ_ASSERT(range);
         for ( ; !range->empty(); range->popFront()) {
             if (!edges.append(mozilla::Move(range->front())))
@@ -99,9 +100,9 @@ struct PostOrder {
         return true;
     }
 
-    bool pushForTraversing(const Node& node) {
+    MOZ_MUST_USE bool pushForTraversing(const Node& node) {
         EdgeVector edges;
-        auto range = node.edges(rt, /* wantNames */ false);
+        auto range = node.edges(cx, /* wantNames */ false);
         return range &&
             fillEdgesFromRange(edges, range) &&
             stack.append(OriginAndEdges(node, mozilla::Move(edges)));
@@ -114,8 +115,8 @@ struct PostOrder {
     // The traversal asserts that no GC happens in its runtime during its
     // lifetime via the `AutoCheckCannotGC&` parameter. We do nothing with it,
     // other than require it to exist with a lifetime that encloses our own.
-    PostOrder(JSRuntime* rt, AutoCheckCannotGC&)
-      : rt(rt)
+    PostOrder(JSContext* cx, AutoCheckCannotGC&)
+      : cx(cx)
       , seen()
       , stack()
 #ifdef DEBUG
@@ -124,11 +125,11 @@ struct PostOrder {
     { }
 
     // Initialize this traversal object. Return false on OOM.
-    bool init() { return seen.init(); }
+    MOZ_MUST_USE bool init() { return seen.init(); }
 
     // Add `node` as a starting point for the traversal. You may add
     // as many starting points as you like. Returns false on OOM.
-    bool addStart(const Node& node) {
+    MOZ_MUST_USE bool addStart(const Node& node) {
         if (!seen.put(node))
             return false;
         return pushForTraversing(node);
@@ -144,7 +145,7 @@ struct PostOrder {
     // Return false on OOM or error return from `onNode::operator()` or
     // `onEdge::operator()`.
     template<typename NodeVisitor, typename EdgeVisitor>
-    bool traverse(NodeVisitor onNode, EdgeVisitor onEdge) {
+    MOZ_MUST_USE bool traverse(NodeVisitor onNode, EdgeVisitor onEdge) {
 #ifdef DEBUG
         MOZ_ASSERT(!traversed, "Can only traverse() once!");
         traversed = true;

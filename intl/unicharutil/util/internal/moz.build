@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,14 +18,4 @@ LOCAL_INCLUDES += [
     '..',
 ]
 
-if CONFIG['ENABLE_INTL_API']:
-    CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']
-    LOCAL_INCLUDES += CONFIG['MOZ_ICU_INCLUDES']
-
 DIST_INSTALL = True
-
-if CONFIG['_MSC_VER']:
-    # This is intended as a temporary hack to support building with VS2015.
-    # 'noexcept' used with no exception handling mode specified;
-    # termination on exception is not guaranteed. Specify /EHsc
-    CXXFLAGS += ['-wd4577']

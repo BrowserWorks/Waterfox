@@ -7,6 +7,7 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Preferences.h"
 #include "nsCOMPtr.h"
+#include "nsContentUtils.h"
 #include "nsCSPParser.h"
 #include "nsCSPUtils.h"
 #include "nsIConsoleService.h"
@@ -996,6 +997,41 @@ nsCSPParser::reportURIList(nsTArray<nsCSPBaseSrc*>& outSrcs)
   }
 }
 
+/* Helper function for parsing sandbox flags. This function solely concatenates
+ * all the source list tokens (the sandbox flags) so the attribute parser
+ * (nsContentUtils::ParseSandboxAttributeToFlags) can parse them.
+ */
+void
+nsCSPParser::sandboxFlagList(nsTArray<nsCSPBaseSrc*>& outSrcs)
+{
+  nsAutoString flags;
+
+  // remember, srcs start at index 1
+  for (uint32_t i = 1; i < mCurDir.Length(); i++) {
+    mCurToken = mCurDir[i];
+
+    CSPPARSERLOG(("nsCSPParser::sandboxFlagList, mCurToken: %s, mCurValue: %s",
+                 NS_ConvertUTF16toUTF8(mCurToken).get(),
+                 NS_ConvertUTF16toUTF8(mCurValue).get()));
+
+    if (!nsContentUtils::IsValidSandboxFlag(mCurToken)) {
+      const char16_t* params[] = { mCurToken.get() };
+      logWarningErrorToConsole(nsIScriptError::warningFlag,
+                               "couldntParseInvalidSandboxFlag",
+                               params, ArrayLength(params));
+      continue;
+    }
+
+    flags.Append(mCurToken);
+    if (i != mCurDir.Length() - 1) {
+      flags.AppendASCII(" ");
+    }
+  }
+
+  nsCSPSandboxFlags* sandboxFlags = new nsCSPSandboxFlags(flags);
+  outSrcs.AppendElement(sandboxFlags);
+}
+
 // directive-value = *( WSP / <VCHAR except ";" and ","> )
 void
 nsCSPParser::directiveValue(nsTArray<nsCSPBaseSrc*>& outSrcs)
@@ -1007,6 +1043,13 @@ nsCSPParser::directiveValue(nsTArray<nsCSPBaseSrc*>& outSrcs)
   // special case handling in case the directive is report-uri.
   if (CSP_IsDirective(mCurDir[0], nsIContentSecurityPolicy::REPORT_URI_DIRECTIVE)) {
     reportURIList(outSrcs);
+    return;
+  }
+
+  // For the sandbox flag the source list is a list of flags, so we're special
+  // casing this directive
+  if (CSP_IsDirective(mCurDir[0], nsIContentSecurityPolicy::SANDBOX_DIRECTIVE)) {
+    sandboxFlagList(outSrcs);
     return;
   }
 
@@ -1057,7 +1100,8 @@ nsCSPParser::directiveName()
   // http://www.w3.org/TR/CSP11/#delivery-html-meta-element
   if (mDeliveredViaMetaTag &&
        ((CSP_IsDirective(mCurToken, nsIContentSecurityPolicy::REPORT_URI_DIRECTIVE)) ||
-        (CSP_IsDirective(mCurToken, nsIContentSecurityPolicy::FRAME_ANCESTORS_DIRECTIVE)))) {
+        (CSP_IsDirective(mCurToken, nsIContentSecurityPolicy::FRAME_ANCESTORS_DIRECTIVE)) ||
+        (CSP_IsDirective(mCurToken, nsIContentSecurityPolicy::SANDBOX_DIRECTIVE)))) {
     // log to the console to indicate that meta CSP is ignoring the directive
     const char16_t* params[] = { mCurToken.get() };
     logWarningErrorToConsole(nsIScriptError::warningFlag,
@@ -1113,7 +1157,7 @@ nsCSPParser::directive()
   // Make sure that the directive-srcs-array contains at least
   // one directive and one src.
   if (mCurDir.Length() < 1) {
-    const char16_t* params[] = { MOZ_UTF16("directive missing") };
+    const char16_t* params[] = { u"directive missing" };
     logWarningErrorToConsole(nsIScriptError::warningFlag, "failedToParseUnrecognizedSource",
                              params, ArrayLength(params));
     return;
@@ -1130,7 +1174,7 @@ nsCSPParser::directive()
   // by a directive name but does not include any srcs.
   if (cspDir->equals(nsIContentSecurityPolicy::BLOCK_ALL_MIXED_CONTENT)) {
     if (mCurDir.Length() > 1) {
-      const char16_t* params[] = { MOZ_UTF16("block-all-mixed-content") };
+      const char16_t* params[] = { u"block-all-mixed-content" };
       logWarningErrorToConsole(nsIScriptError::warningFlag,
                                "ignoreSrcForDirective",
                                params, ArrayLength(params));
@@ -1144,7 +1188,7 @@ nsCSPParser::directive()
   // by a directive name but does not include any srcs.
   if (cspDir->equals(nsIContentSecurityPolicy::UPGRADE_IF_INSECURE_DIRECTIVE)) {
     if (mCurDir.Length() > 1) {
-      const char16_t* params[] = { MOZ_UTF16("upgrade-insecure-requests") };
+      const char16_t* params[] = { u"upgrade-insecure-requests" };
       logWarningErrorToConsole(nsIScriptError::warningFlag,
                                "ignoreSrcForDirective",
                                params, ArrayLength(params));
@@ -1192,7 +1236,7 @@ nsCSPParser::directive()
       mHasHashOrNonce && mUnsafeInlineKeywordSrc) {
     mUnsafeInlineKeywordSrc->invalidate();
     // log to the console that unsafe-inline will be ignored
-    const char16_t* params[] = { MOZ_UTF16("'unsafe-inline'") };
+    const char16_t* params[] = { u"'unsafe-inline'" };
     logWarningErrorToConsole(nsIScriptError::warningFlag, "ignoringSrcWithinScriptStyleSrc",
                              params, ArrayLength(params));
   }

@@ -65,9 +65,10 @@
 
   <string name="bookmarks_title">&bookmarks_title;</string>
   <string name="history_title">&history_title;</string>
-  <string name="recent_tabs_title">&recent_tabs_title;</string>
 
   <string name="switch_to_tab">&switch_to_tab;</string>
+
+  <string name="tab_offline_version">&tab_offline_version;</string>
 
   <string name="crash_reporter_title">&crash_reporter_title;</string>
   <string name="crash_message2">&crash_message2;</string>
@@ -233,6 +234,14 @@
   <string name="pref_whats_new_notification">&pref_whats_new_notification;</string>
   <string name="pref_whats_new_notification_summary">&pref_whats_new_notification_summary;</string>
 
+  <string name="pref_category_experimental">&pref_category_experimental;</string>
+
+  <string name="pref_custom_tabs">&pref_custom_tabs;</string>
+  <string name="pref_custom_tabs_summary">&pref_custom_tabs_summary;</string>
+
+  <string name="pref_activity_stream">&pref_activity_stream;</string>
+  <string name="pref_activity_stream_summary">&pref_activity_stream_summary;</string>
+
   <string name="pref_char_encoding">&pref_char_encoding;</string>
   <string name="pref_char_encoding_on">&pref_char_encoding_on;</string>
   <string name="pref_char_encoding_off">&pref_char_encoding_off;</string>
@@ -314,6 +323,7 @@
   <string name="content_notification_updated_on">&content_notification_updated_on;</string>
 
   <string name="pref_default_browser">&pref_default_browser;</string>
+  <string name="pref_default_browser_mozilla_support_tablet">&pref_default_browser_mozilla_support_tablet;</string>
 
   <string name="pref_about_firefox">&pref_about_firefox;</string>
 
@@ -452,10 +462,11 @@
   <string name="home_clear_history_button">&home_clear_history_button;</string>
   <string name="home_clear_history_confirm">&home_clear_history_confirm;</string>
   <string name="home_bookmarks_empty">&home_bookmarks_empty;</string>
-  <string name="home_closed_tabs_title">&home_closed_tabs_title;</string>
-  <string name="home_last_tabs_title">&home_last_tabs_title;</string>
+  <string name="home_closed_tabs_title2">&home_closed_tabs_title2;</string>
   <string name="home_last_tabs_empty">&home_last_tabs_empty;</string>
-  <string name="home_open_all">&home_open_all;</string>
+  <string name="home_restore_all">&home_restore_all;</string>
+  <string name="home_closed_tabs_number">&home_closed_tabs_number;</string>
+  <string name="home_closed_tabs_one">&home_closed_tabs_one;</string>
   <string name="home_most_recent_empty">&home_most_recent_empty;</string>
   <string name="home_most_recent_emptyhint">&home_most_recent_emptyhint2;</string>
   <string name="home_default_empty">&home_default_empty;</string>
@@ -494,7 +505,6 @@
   <!-- Site identity popup -->
   <string name="identity_connection_secure">&identity_connection_secure;</string>
   <string name="identity_connection_insecure">&identity_connection_insecure;</string>
-  <string name="identity_login_insecure">&identity_login_insecure;</string>
   <string name="identity_connection_chromeui">&identity_connection_chromeui;</string>
 
   <string name="mixed_content_blocked_all">&mixed_content_blocked_all1;</string>

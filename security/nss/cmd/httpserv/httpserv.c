@@ -278,7 +278,7 @@ launch_threads(
                                           local)
                                              ? PR_LOCAL_THREAD
                                              : PR_GLOBAL_THREAD,
-                                         PR_UNJOINABLE_THREAD, 0);
+                                         PR_JOINABLE_THREAD, 0);
         if (slot->prThread == NULL) {
             printf("httpserv: Failed to launch thread!\n");
             slot->state = rs_idle;
@@ -307,13 +307,24 @@ launch_threads(
 void
 terminateWorkerThreads(void)
 {
-    VLOG(("httpserv: server_thead: waiting on stopping"));
+    int i;
+
+    VLOG(("httpserv: server_thread: waiting on stopping"));
     PZ_Lock(qLock);
     PZ_NotifyAllCondVar(jobQNotEmptyCv);
-    while (threadCount > 0) {
-        PZ_WaitCondVar(threadCountChangeCv, PR_INTERVAL_NO_TIMEOUT);
+    PZ_Unlock(qLock);
+
+    /* Wait for worker threads to terminate. */
+    for (i = 0; i < maxThreads; ++i) {
+        perThread *slot = threads + i;
+        if (slot->prThread) {
+            PR_JoinThread(slot->prThread);
+        }
     }
+
     /* The worker threads empty the jobQ before they terminate. */
+    PZ_Lock(qLock);
+    PORT_Assert(threadCount == 0);
     PORT_Assert(PR_CLIST_IS_EMPTY(&jobQ));
     PZ_Unlock(qLock);
 
@@ -640,6 +651,7 @@ handle_connection(
             if (isOcspRequest && caRevoInfos) {
                 CERTOCSPRequest *request = NULL;
                 PRBool failThisRequest = PR_FALSE;
+                PLArenaPool *arena = NULL;
 
                 if (ocspMethodsAllowed == ocspGetOnly && postData.len) {
                     failThisRequest = PR_TRUE;
@@ -660,11 +672,16 @@ handle_connection(
                  */
                 if (getData) {
                     if (urldecode_base64chars_inplace(getData) == SECSuccess) {
-                        NSSBase64_DecodeBuffer(NULL, &postData, getData, strlen(getData));
+                        /* The code below can handle a NULL arena */
+                        arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+                        NSSBase64_DecodeBuffer(arena, &postData, getData, strlen(getData));
                     }
                 }
                 if (postData.len) {
                     request = CERT_DecodeOCSPRequest(&postData);
+                }
+                if (arena) {
+                    PORT_FreeArena(arena, PR_FALSE);
                 }
                 if (!request || !request->tbsRequest ||
                     !request->tbsRequest->requestList ||
@@ -775,6 +792,7 @@ handle_connection(
                             PORT_FreeArena(arena, PR_FALSE);
                         }
                     }
+                    CERT_DestroyOCSPRequest(request);
                     break;
                 }
             } else if (local_file_fd) {
@@ -1367,6 +1385,7 @@ main(int argc, char **argv)
                 revoInfo->crl =
                     CERT_DecodeDERCrlWithFlags(NULL, &crlDER, SEC_CRL_TYPE,
                                                CRL_DECODE_DEFAULT_OPTIONS);
+                SECITEM_FreeItem(&crlDER, PR_FALSE);
                 if (!revoInfo->crl) {
                     fprintf(stderr, "unable to decode crl file %s\n",
                             revoInfo->crlFilename);

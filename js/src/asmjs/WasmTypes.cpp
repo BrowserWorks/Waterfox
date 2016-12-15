@@ -23,8 +23,10 @@
 #include "jslibmath.h"
 #include "jsmath.h"
 
-#include "asmjs/Wasm.h"
-#include "asmjs/WasmModule.h"
+#include "asmjs/WasmInstance.h"
+#include "asmjs/WasmSerialize.h"
+#include "asmjs/WasmSignalHandlers.h"
+#include "jit/MacroAssembler.h"
 #include "js/Conversions.h"
 #include "vm/Interpreter.h"
 
@@ -33,6 +35,32 @@
 using namespace js;
 using namespace js::jit;
 using namespace js::wasm;
+
+void
+Val::writePayload(uint8_t* dst) const
+{
+    switch (type_) {
+      case ValType::I32:
+      case ValType::F32:
+        memcpy(dst, &u.i32_, sizeof(u.i32_));
+        return;
+      case ValType::I64:
+      case ValType::F64:
+        memcpy(dst, &u.i64_, sizeof(u.i64_));
+        return;
+      case ValType::I8x16:
+      case ValType::I16x8:
+      case ValType::I32x4:
+      case ValType::F32x4:
+      case ValType::B8x16:
+      case ValType::B16x8:
+      case ValType::B32x4:
+        memcpy(dst, &u, jit::Simd128DataSize);
+        return;
+      case ValType::Limit:
+        MOZ_CRASH("Bad value type");
+    }
+}
 
 #if defined(JS_CODEGEN_ARM)
 extern "C" {
@@ -98,6 +126,9 @@ HandleTrap(int32_t trapIndex)
       case Trap::OutOfBounds:
         errorNumber = JSMSG_BAD_INDEX;
         break;
+      case Trap::UnalignedAccess:
+        errorNumber = JSMSG_WASM_UNALIGNED_ACCESS;
+        break;
       default:
         MOZ_CRASH("unexpected trap");
     }
@@ -131,99 +162,80 @@ CoerceInPlace_ToNumber(MutableHandleValue val)
     return true;
 }
 
-// Use an int32_t return type instead of bool since bool does not have a
-// specified width and the caller is assuming a word-sized return.
-static int32_t
-InvokeImport_Void(int32_t importIndex, int32_t argc, uint64_t* argv)
+static int64_t
+DivI64(uint32_t x_hi, uint32_t x_lo, uint32_t y_hi, uint32_t y_lo)
 {
-    WasmActivation* activation = JSRuntime::innermostWasmActivation();
-    JSContext* cx = activation->cx();
-
-    RootedValue rval(cx);
-    return activation->module().callImport(cx, importIndex, argc, argv, &rval);
+    int64_t x = ((uint64_t)x_hi << 32) + x_lo;
+    int64_t y = ((uint64_t)y_hi << 32) + y_lo;
+    MOZ_ASSERT(x != INT64_MIN || y != -1);
+    MOZ_ASSERT(y != 0);
+    return x / y;
 }
 
-// Use an int32_t return type instead of bool since bool does not have a
-// specified width and the caller is assuming a word-sized return.
-static int32_t
-InvokeImport_I32(int32_t importIndex, int32_t argc, uint64_t* argv)
+static int64_t
+UDivI64(uint32_t x_hi, uint32_t x_lo, uint32_t y_hi, uint32_t y_lo)
 {
-    WasmActivation* activation = JSRuntime::innermostWasmActivation();
-    JSContext* cx = activation->cx();
-
-    RootedValue rval(cx);
-    if (!activation->module().callImport(cx, importIndex, argc, argv, &rval))
-        return false;
-
-    int32_t i32;
-    if (!ToInt32(cx, rval, &i32))
-        return false;
-
-    argv[0] = i32;
-    return true;
+    uint64_t x = ((uint64_t)x_hi << 32) + x_lo;
+    uint64_t y = ((uint64_t)y_hi << 32) + y_lo;
+    MOZ_ASSERT(y != 0);
+    return x / y;
 }
 
-bool
-js::wasm::ReadI64Object(JSContext* cx, HandleValue v, int64_t* i64)
+static int64_t
+ModI64(uint32_t x_hi, uint32_t x_lo, uint32_t y_hi, uint32_t y_lo)
 {
-    if (!v.isObject()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_WASM_FAIL,
-                             "i64 JS value must be an object");
-        return false;
-    }
-
-    RootedObject obj(cx, &v.toObject());
-
-    int32_t* i32 = (int32_t*)i64;
-
-    RootedValue val(cx);
-    if (!JS_GetProperty(cx, obj, "low", &val))
-        return false;
-    if (!ToInt32(cx, val, &i32[0]))
-        return false;
-
-    if (!JS_GetProperty(cx, obj, "high", &val))
-        return false;
-    if (!ToInt32(cx, val, &i32[1]))
-        return false;
-
-    return true;
+    int64_t x = ((uint64_t)x_hi << 32) + x_lo;
+    int64_t y = ((uint64_t)y_hi << 32) + y_lo;
+    MOZ_ASSERT(x != INT64_MIN || y != -1);
+    MOZ_ASSERT(y != 0);
+    return x % y;
 }
 
-static int32_t
-InvokeImport_I64(int32_t importIndex, int32_t argc, uint64_t* argv)
+static int64_t
+UModI64(uint32_t x_hi, uint32_t x_lo, uint32_t y_hi, uint32_t y_lo)
 {
-    WasmActivation* activation = JSRuntime::innermostWasmActivation();
-    JSContext* cx = activation->cx();
-
-    RootedValue rval(cx);
-    if (!activation->module().callImport(cx, importIndex, argc, argv, &rval))
-        return false;
-
-    if (!ReadI64Object(cx, rval, (int64_t*)argv))
-        return false;
-
-    return true;
+    uint64_t x = ((uint64_t)x_hi << 32) + x_lo;
+    uint64_t y = ((uint64_t)y_hi << 32) + y_lo;
+    MOZ_ASSERT(y != 0);
+    return x % y;
 }
 
-// Use an int32_t return type instead of bool since bool does not have a
-// specified width and the caller is assuming a word-sized return.
-static int32_t
-InvokeImport_F64(int32_t importIndex, int32_t argc, uint64_t* argv)
+static int64_t
+TruncateDoubleToInt64(double input)
 {
-    WasmActivation* activation = JSRuntime::innermostWasmActivation();
-    JSContext* cx = activation->cx();
+    // Note: INT64_MAX is not representable in double. It is actually INT64_MAX + 1.
+    // Therefore also sending the failure value.
+    if (input >= double(INT64_MAX))
+        return 0x8000000000000000;
+    if (input < double(INT64_MIN))
+        return 0x8000000000000000;
+    return int64_t(input);
+}
 
-    RootedValue rval(cx);
-    if (!activation->module().callImport(cx, importIndex, argc, argv, &rval))
-        return false;
+static uint64_t
+TruncateDoubleToUint64(double input)
+{
+    // Note: UINT64_MAX is not representable in double. It is actually UINT64_MAX + 1.
+    // Therefore also sending the failure value.
+    if (input >= double(UINT64_MAX))
+        return 0x8000000000000000;
+    if (input <= -1.0)
+        return 0x8000000000000000;
+    return uint64_t(input);
+}
 
-    double dbl;
-    if (!ToNumber(cx, rval, &dbl))
-        return false;
+static double
+Int64ToFloatingPoint(int32_t x_hi, uint32_t x_lo)
+{
+    int64_t x = int64_t((uint64_t(x_hi) << 32)) + int64_t(x_lo);
+    return double(x);
+}
 
-    ((double*)argv)[0] = dbl;
-    return true;
+static double
+Uint64ToFloatingPoint(int32_t x_hi, uint32_t x_lo)
+{
+    uint64_t x = (uint64_t(x_hi) << 32) + uint64_t(x_lo);
+    return double(x);
 }
 
 template <class F>
@@ -245,28 +257,42 @@ wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
         return cx->runtimeAddressForJit();
       case SymbolicAddress::RuntimeInterruptUint32:
         return cx->runtimeAddressOfInterruptUint32();
-      case SymbolicAddress::StackLimit:
-        return cx->stackLimitAddressForJitCode(StackForUntrustedScript);
       case SymbolicAddress::ReportOverRecursed:
         return FuncCast(WasmReportOverRecursed, Args_General0);
       case SymbolicAddress::HandleExecutionInterrupt:
         return FuncCast(WasmHandleExecutionInterrupt, Args_General0);
       case SymbolicAddress::HandleTrap:
         return FuncCast(HandleTrap, Args_General1);
-      case SymbolicAddress::InvokeImport_Void:
-        return FuncCast(InvokeImport_Void, Args_General3);
-      case SymbolicAddress::InvokeImport_I32:
-        return FuncCast(InvokeImport_I32, Args_General3);
-      case SymbolicAddress::InvokeImport_I64:
-        return FuncCast(InvokeImport_I64, Args_General3);
-      case SymbolicAddress::InvokeImport_F64:
-        return FuncCast(InvokeImport_F64, Args_General3);
+      case SymbolicAddress::CallImport_Void:
+        return FuncCast(Instance::callImport_void, Args_General3);
+      case SymbolicAddress::CallImport_I32:
+        return FuncCast(Instance::callImport_i32, Args_General3);
+      case SymbolicAddress::CallImport_I64:
+        return FuncCast(Instance::callImport_i64, Args_General3);
+      case SymbolicAddress::CallImport_F64:
+        return FuncCast(Instance::callImport_f64, Args_General3);
       case SymbolicAddress::CoerceInPlace_ToInt32:
         return FuncCast(CoerceInPlace_ToInt32, Args_General1);
       case SymbolicAddress::CoerceInPlace_ToNumber:
         return FuncCast(CoerceInPlace_ToNumber, Args_General1);
       case SymbolicAddress::ToInt32:
         return FuncCast<int32_t (double)>(JS::ToInt32, Args_Int_Double);
+      case SymbolicAddress::DivI64:
+        return FuncCast(DivI64, Args_General4);
+      case SymbolicAddress::UDivI64:
+        return FuncCast(UDivI64, Args_General4);
+      case SymbolicAddress::ModI64:
+        return FuncCast(ModI64, Args_General4);
+      case SymbolicAddress::UModI64:
+        return FuncCast(UModI64, Args_General4);
+      case SymbolicAddress::TruncateDoubleToUint64:
+        return FuncCast(TruncateDoubleToUint64, Args_Int64_Double);
+      case SymbolicAddress::TruncateDoubleToInt64:
+        return FuncCast(TruncateDoubleToInt64, Args_Int64_Double);
+      case SymbolicAddress::Uint64ToFloatingPoint:
+        return FuncCast(Uint64ToFloatingPoint, Args_Double_IntInt);
+      case SymbolicAddress::Int64ToFloatingPoint:
+        return FuncCast(Int64ToFloatingPoint, Args_Double_IntInt);
 #if defined(JS_CODEGEN_ARM)
       case SymbolicAddress::aeabi_idivmod:
         return FuncCast(__aeabi_idivmod, Args_General2);
@@ -290,12 +316,7 @@ wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
       case SymbolicAddress::ModD:
         return FuncCast(NumberMod, Args_Double_DoubleDouble);
       case SymbolicAddress::SinD:
-#ifdef _WIN64
-        // Workaround a VS 2013 sin issue, see math_sin_uncached.
-        return FuncCast<double (double)>(js::math_sin_uncached, Args_Double_Double);
-#else
         return FuncCast<double (double)>(sin, Args_Double_Double);
-#endif
       case SymbolicAddress::CosD:
         return FuncCast<double (double)>(cos, Args_Double_Double);
       case SymbolicAddress::TanD:
@@ -337,23 +358,276 @@ wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
     MOZ_CRASH("Bad SymbolicAddress");
 }
 
-CompileArgs::CompileArgs(ExclusiveContext* cx)
+SignalUsage::SignalUsage()
   :
 #ifdef ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB
     // Signal-handling is only used to eliminate bounds checks when the OS page
     // size is an even divisor of the WebAssembly page size.
-    useSignalHandlersForOOB(cx->canUseSignalHandlers() &&
-                            gc::SystemPageSize() <= PageSize &&
-                            PageSize % gc::SystemPageSize() == 0),
+    forOOB(HaveSignalHandlers() &&
+           gc::SystemPageSize() <= PageSize &&
+           PageSize % gc::SystemPageSize() == 0 &&
+           !JitOptions.wasmExplicitBoundsChecks),
 #else
-    useSignalHandlersForOOB(false),
+    forOOB(false),
 #endif
-    useSignalHandlersForInterrupt(cx->canUseSignalHandlers())
+    forInterrupt(HaveSignalHandlers())
 {}
 
 bool
-CompileArgs::operator==(CompileArgs rhs) const
+SignalUsage::operator==(SignalUsage rhs) const
 {
-    return useSignalHandlersForOOB == rhs.useSignalHandlersForOOB &&
-           useSignalHandlersForInterrupt == rhs.useSignalHandlersForInterrupt;
+    return forOOB == rhs.forOOB && forInterrupt == rhs.forInterrupt;
+}
+
+static uint32_t
+GetCPUID()
+{
+    enum Arch {
+        X86 = 0x1,
+        X64 = 0x2,
+        ARM = 0x3,
+        MIPS = 0x4,
+        MIPS64 = 0x5,
+        ARCH_BITS = 3
+    };
+
+#if defined(JS_CODEGEN_X86)
+    MOZ_ASSERT(uint32_t(jit::CPUInfo::GetSSEVersion()) <= (UINT32_MAX >> ARCH_BITS));
+    return X86 | (uint32_t(jit::CPUInfo::GetSSEVersion()) << ARCH_BITS);
+#elif defined(JS_CODEGEN_X64)
+    MOZ_ASSERT(uint32_t(jit::CPUInfo::GetSSEVersion()) <= (UINT32_MAX >> ARCH_BITS));
+    return X64 | (uint32_t(jit::CPUInfo::GetSSEVersion()) << ARCH_BITS);
+#elif defined(JS_CODEGEN_ARM)
+    MOZ_ASSERT(jit::GetARMFlags() <= (UINT32_MAX >> ARCH_BITS));
+    return ARM | (jit::GetARMFlags() << ARCH_BITS);
+#elif defined(JS_CODEGEN_ARM64)
+    MOZ_CRASH("not enabled");
+#elif defined(JS_CODEGEN_MIPS32)
+    MOZ_ASSERT(jit::GetMIPSFlags() <= (UINT32_MAX >> ARCH_BITS));
+    return MIPS | (jit::GetMIPSFlags() << ARCH_BITS);
+#elif defined(JS_CODEGEN_MIPS64)
+    MOZ_ASSERT(jit::GetMIPSFlags() <= (UINT32_MAX >> ARCH_BITS));
+    return MIPS64 | (jit::GetMIPSFlags() << ARCH_BITS);
+#elif defined(JS_CODEGEN_NONE)
+    return 0;
+#else
+# error "unknown architecture"
+#endif
+}
+
+typedef uint32_t ImmediateType;  // for 32/64 consistency
+static const unsigned sImmediateBits = sizeof(ImmediateType) * 8 - 1;  // -1 for ImmediateBit
+static const unsigned sReturnBit = 1;
+static const unsigned sLengthBits = 4;
+static const unsigned sTypeBits = 2;
+static const unsigned sMaxTypes = (sImmediateBits - sReturnBit - sLengthBits) / sTypeBits;
+
+static bool
+IsImmediateType(ValType vt)
+{
+    MOZ_ASSERT(uint32_t(vt) > 0);
+    return (uint32_t(vt) - 1) < (1 << sTypeBits);
+}
+
+static bool
+IsImmediateType(ExprType et)
+{
+    return et == ExprType::Void || IsImmediateType(NonVoidToValType(et));
+}
+
+/* static */ bool
+SigIdDesc::isGlobal(const Sig& sig)
+{
+    unsigned numTypes = (sig.ret() == ExprType::Void ? 0 : 1) +
+                        (sig.args().length());
+    if (numTypes > sMaxTypes)
+        return true;
+
+    if (!IsImmediateType(sig.ret()))
+        return true;
+
+    for (ValType v : sig.args()) {
+        if (!IsImmediateType(v))
+            return true;
+    }
+
+    return false;
+}
+
+/* static */ SigIdDesc
+SigIdDesc::global(const Sig& sig, uint32_t globalDataOffset)
+{
+    MOZ_ASSERT(isGlobal(sig));
+    return SigIdDesc(Kind::Global, globalDataOffset);
+}
+
+static ImmediateType
+LengthToBits(uint32_t length)
+{
+    static_assert(sMaxTypes <= ((1 << sLengthBits) - 1), "fits");
+    MOZ_ASSERT(length <= sMaxTypes);
+    return length;
+}
+
+static ImmediateType
+TypeToBits(ValType type)
+{
+    static_assert(3 <= ((1 << sTypeBits) - 1), "fits");
+    MOZ_ASSERT(uint32_t(type) >= 1 && uint32_t(type) <= 4);
+    return uint32_t(type) - 1;
+}
+
+size_t
+Sig::serializedSize() const
+{
+    return sizeof(ret_) +
+           SerializedPodVectorSize(args_);
+}
+
+uint8_t*
+Sig::serialize(uint8_t* cursor) const
+{
+    cursor = WriteScalar<ExprType>(cursor, ret_);
+    cursor = SerializePodVector(cursor, args_);
+    return cursor;
+}
+
+const uint8_t*
+Sig::deserialize(const uint8_t* cursor)
+{
+    (cursor = ReadScalar<ExprType>(cursor, &ret_)) &&
+    (cursor = DeserializePodVector(cursor, &args_));
+    return cursor;
+}
+
+size_t
+Sig::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
+{
+    return args_.sizeOfExcludingThis(mallocSizeOf);
+}
+
+/* static */ SigIdDesc
+SigIdDesc::immediate(const Sig& sig)
+{
+    ImmediateType immediate = ImmediateBit;
+    uint32_t shift = 1;
+
+    if (sig.ret() != ExprType::Void) {
+        immediate |= (1 << shift);
+        shift += sReturnBit;
+
+        immediate |= TypeToBits(NonVoidToValType(sig.ret())) << shift;
+        shift += sTypeBits;
+    } else {
+        shift += sReturnBit;
+    }
+
+    immediate |= LengthToBits(sig.args().length()) << shift;
+    shift += sLengthBits;
+
+    for (ValType argType : sig.args()) {
+        immediate |= TypeToBits(argType) << shift;
+        shift += sTypeBits;
+    }
+
+    MOZ_ASSERT(shift <= sImmediateBits);
+    return SigIdDesc(Kind::Immediate, immediate);
+}
+
+size_t
+SigWithId::serializedSize() const
+{
+    return Sig::serializedSize() +
+           sizeof(id);
+}
+
+uint8_t*
+SigWithId::serialize(uint8_t* cursor) const
+{
+    cursor = Sig::serialize(cursor);
+    cursor = WriteBytes(cursor, &id, sizeof(id));
+    return cursor;
+}
+
+const uint8_t*
+SigWithId::deserialize(const uint8_t* cursor)
+{
+    (cursor = Sig::deserialize(cursor)) &&
+    (cursor = ReadBytes(cursor, &id, sizeof(id)));
+    return cursor;
+}
+
+size_t
+SigWithId::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
+{
+    return Sig::sizeOfExcludingThis(mallocSizeOf);
+}
+
+Assumptions::Assumptions(JS::BuildIdCharVector&& buildId)
+  : usesSignal(),
+    cpuId(GetCPUID()),
+    buildId(Move(buildId)),
+    newFormat(false)
+{}
+
+Assumptions::Assumptions()
+  : usesSignal(),
+    cpuId(GetCPUID()),
+    buildId(),
+    newFormat(false)
+{}
+
+bool
+Assumptions::initBuildIdFromContext(ExclusiveContext* cx)
+{
+    if (!cx->buildIdOp() || !cx->buildIdOp()(&buildId)) {
+        ReportOutOfMemory(cx);
+        return false;
+    }
+    return true;
+}
+
+bool
+Assumptions::operator==(const Assumptions& rhs) const
+{
+    return usesSignal == rhs.usesSignal &&
+           cpuId == rhs.cpuId &&
+           buildId.length() == rhs.buildId.length() &&
+           PodEqual(buildId.begin(), rhs.buildId.begin(), buildId.length()) &&
+           newFormat == rhs.newFormat;
+}
+
+size_t
+Assumptions::serializedSize() const
+{
+    return sizeof(usesSignal) +
+           sizeof(uint32_t) +
+           SerializedPodVectorSize(buildId) +
+           sizeof(bool);
+}
+
+uint8_t*
+Assumptions::serialize(uint8_t* cursor) const
+{
+    cursor = WriteBytes(cursor, &usesSignal, sizeof(usesSignal));
+    cursor = WriteScalar<uint32_t>(cursor, cpuId);
+    cursor = SerializePodVector(cursor, buildId);
+    cursor = WriteScalar<bool>(cursor, newFormat);
+    return cursor;
+}
+
+const uint8_t*
+Assumptions::deserialize(const uint8_t* cursor)
+{
+    (cursor = ReadBytes(cursor, &usesSignal, sizeof(usesSignal))) &&
+    (cursor = ReadScalar<uint32_t>(cursor, &cpuId)) &&
+    (cursor = DeserializePodVector(cursor, &buildId)) &&
+    (cursor = ReadScalar<bool>(cursor, &newFormat));
+    return cursor;
+}
+
+size_t
+Assumptions::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
+{
+    return buildId.sizeOfExcludingThis(mallocSizeOf);
 }

@@ -126,6 +126,47 @@ AudioCallbackAdapter::Terminated()
   mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
 }
 
+GMPAudioDecoderParams::GMPAudioDecoderParams(const CreateDecoderParams& aParams)
+  : mConfig(aParams.AudioConfig())
+  , mTaskQueue(aParams.mTaskQueue)
+  , mCallback(nullptr)
+  , mAdapter(nullptr)
+  , mCrashHelper(aParams.mCrashHelper)
+{}
+
+GMPAudioDecoderParams&
+GMPAudioDecoderParams::WithCallback(MediaDataDecoderProxy* aWrapper)
+{
+  MOZ_ASSERT(aWrapper);
+  MOZ_ASSERT(!mCallback); // Should only be called once per instance.
+  mCallback = aWrapper->Callback();
+  mAdapter = nullptr;
+  return *this;
+}
+
+GMPAudioDecoderParams&
+GMPAudioDecoderParams::WithAdapter(AudioCallbackAdapter* aAdapter)
+{
+  MOZ_ASSERT(aAdapter);
+  MOZ_ASSERT(!mAdapter); // Should only be called once per instance.
+  mCallback = aAdapter->Callback();
+  mAdapter = aAdapter;
+  return *this;
+}
+
+GMPAudioDecoder::GMPAudioDecoder(const GMPAudioDecoderParams& aParams)
+  : mConfig(aParams.mConfig)
+  , mCallback(aParams.mCallback)
+  , mGMP(nullptr)
+  , mAdapter(aParams.mAdapter)
+  , mCrashHelper(aParams.mCrashHelper)
+{
+  MOZ_ASSERT(!mAdapter || mCallback == mAdapter->Callback());
+  if (!mAdapter) {
+    mAdapter = new AudioCallbackAdapter(mCallback);
+  }
+}
+
 void
 GMPAudioDecoder::InitTags(nsTArray<nsCString>& aTags)
 {
@@ -191,7 +232,7 @@ GMPAudioDecoder::Init()
   nsTArray<nsCString> tags;
   InitTags(tags);
   UniquePtr<GetGMPAudioDecoderCallback> callback(new GMPInitDoneCallback(this));
-  if (NS_FAILED(mMPS->GetGMPAudioDecoder(&tags, GetNodeId(), Move(callback)))) {
+  if (NS_FAILED(mMPS->GetGMPAudioDecoder(mCrashHelper, &tags, GetNodeId(), Move(callback)))) {
     mInitPromise.Reject(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
   }
 

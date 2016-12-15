@@ -149,12 +149,6 @@ nsINode::~nsINode()
 {
   MOZ_ASSERT(!HasSlots(), "nsNodeUtils::LastRelease was not called?");
   MOZ_ASSERT(mSubtreeRoot == this, "Didn't restore state properly?");
-
-#ifdef MOZ_STYLO
-  if (mServoNodeData) {
-    Servo_DropNodeData(mServoNodeData);
-  }
-#endif
 }
 
 void*
@@ -1760,7 +1754,8 @@ nsINode::Before(const Sequence<OwningNodeOrString>& aNodes,
     return;
   }
 
-  nsINode* viablePreviousSibling = FindViablePreviousSibling(*this, aNodes);
+  nsCOMPtr<nsINode> viablePreviousSibling =
+    FindViablePreviousSibling(*this, aNodes);
 
   nsCOMPtr<nsINode> node =
     ConvertNodesOrStringsIntoNode(aNodes, OwnerDoc(), aRv);
@@ -1783,7 +1778,7 @@ nsINode::After(const Sequence<OwningNodeOrString>& aNodes,
     return;
   }
 
-  nsINode* viableNextSibling = FindViableNextSibling(*this, aNodes);
+  nsCOMPtr<nsINode> viableNextSibling = FindViableNextSibling(*this, aNodes);
 
   nsCOMPtr<nsINode> node =
     ConvertNodesOrStringsIntoNode(aNodes, OwnerDoc(), aRv);
@@ -1803,7 +1798,7 @@ nsINode::ReplaceWith(const Sequence<OwningNodeOrString>& aNodes,
     return;
   }
 
-  nsINode* viableNextSibling = FindViableNextSibling(*this, aNodes);
+  nsCOMPtr<nsINode> viableNextSibling = FindViableNextSibling(*this, aNodes);
 
   nsCOMPtr<nsINode> node =
     ConvertNodesOrStringsIntoNode(aNodes, OwnerDoc(), aRv);
@@ -1871,7 +1866,8 @@ nsINode::Prepend(const Sequence<OwningNodeOrString>& aNodes,
     return;
   }
 
-  InsertBefore(*node, mFirstChild, aRv);
+  nsCOMPtr<nsINode> refNode = mFirstChild;
+  InsertBefore(*node, refNode, aRv);
 }
 
 void
@@ -3054,10 +3050,21 @@ nsINode::AddAnimationObserverUnlessExists(
 }
 
 bool
-nsINode::HasApzAwareListeners() const
+nsINode::IsApzAware() const
 {
-  if (NodeMayHaveApzAwareListeners()) {
-    return EventTarget::HasApzAwareListeners();
-  }
-  return false;
+  return IsNodeApzAware();
 }
+
+bool
+nsINode::IsNodeApzAwareInternal() const
+{
+  return EventTarget::IsApzAware();
+}
+
+#ifdef MOZ_STYLO
+bool
+nsINode::IsStyledByServo() const
+{
+  return OwnerDoc()->IsStyledByServo();
+}
+#endif

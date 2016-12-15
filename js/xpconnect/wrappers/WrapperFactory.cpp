@@ -19,6 +19,7 @@
 #include "jsfriendapi.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/Likely.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "nsContentUtils.h"
 #include "nsXULAppAPI.h"
 
@@ -101,9 +102,11 @@ WrapperFactory::WaiveXray(JSContext* cx, JSObject* objArg)
     MOZ_ASSERT(!js::IsWindow(obj));
 
     JSObject* waiver = GetXrayWaiver(obj);
-    if (waiver)
-        return waiver;
-    return CreateXrayWaiver(cx, obj);
+    if (!waiver) {
+        waiver = CreateXrayWaiver(cx, obj);
+    }
+    MOZ_ASSERT(!ObjectIsMarkedGray(waiver));
+    return waiver;
 }
 
 /* static */ bool
@@ -167,6 +170,10 @@ WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
             return nullptr;
         }
         MOZ_ASSERT(js::IsWindowProxy(obj));
+        // We crossed a compartment boundary there, so may now have a gray
+        // object.  This function is not allowed to return gray objects, so
+        // don't do that.
+        ExposeObjectToActiveJS(obj);
     }
 
     // If we've got a WindowProxy, there's nothing special that needs to be
@@ -190,7 +197,7 @@ WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
     XPCWrappedNative* wn = XPCWrappedNative::Get(obj);
 
     JSAutoCompartment ac(cx, obj);
-    XPCCallContext ccx(JS_CALLER, cx, obj);
+    XPCCallContext ccx(cx, obj);
     RootedObject wrapScope(cx, scope);
 
     {
@@ -279,6 +286,7 @@ WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
 
     obj.set(&v.toObject());
     MOZ_ASSERT(IS_WN_REFLECTOR(obj), "bad object");
+    MOZ_ASSERT(!ObjectIsMarkedGray(obj), "Should never return gray reflectors");
 
     // Because the underlying native didn't have a PreCreate hook, we had
     // to a new (or possibly pre-existing) XPCWN in our compartment.
@@ -405,9 +413,7 @@ WrapperFactory::Rewrap(JSContext* cx, HandleObject existing, HandleObject obj)
                "wrapped object passed to rewrap");
     MOZ_ASSERT(!XrayUtils::IsXPCWNHolderClass(JS_GetClass(obj)), "trying to wrap a holder");
     MOZ_ASSERT(!js::IsWindow(obj));
-    // We sometimes end up here after nsContentUtils has been shut down but before
-    // XPConnect has been shut down, so check the context stack the roundabout way.
-    MOZ_ASSERT(XPCJSRuntime::Get()->GetJSContextStack()->Peek() == cx);
+    MOZ_ASSERT(dom::IsJSAPIActive());
 
     // Compute the information we need to select the right wrapper.
     JSCompartment* origin = js::GetObjectCompartment(obj);

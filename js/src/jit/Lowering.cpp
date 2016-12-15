@@ -8,6 +8,7 @@
 
 #include "mozilla/DebugOnly.h"
 
+#include "asmjs/WasmSignalHandlers.h"
 #include "jit/JitSpewer.h"
 #include "jit/LIR.h"
 #include "jit/MIR.h"
@@ -93,7 +94,7 @@ static void
 TryToUseImplicitInterruptCheck(MIRGraph& graph, MBasicBlock* backedge)
 {
     // Implicit interrupt checks require asm.js signal handlers to be installed.
-    if (!GetJitContext()->runtime->canUseSignalHandlers())
+    if (!wasm::HaveSignalHandlers())
         return;
 
     // To avoid triggering expensive interrupts (backedge patching) in
@@ -239,6 +240,14 @@ LIRGenerator::visitNewArrayDynamicLength(MNewArrayDynamicLength* ins)
 }
 
 void
+LIRGenerator::visitNewTypedArray(MNewTypedArray* ins)
+{
+    LNewTypedArray* lir = new(alloc()) LNewTypedArray(temp(), temp());
+    define(lir, ins);
+    assignSafepoint(lir, ins);
+}
+
+void
 LIRGenerator::visitNewObject(MNewObject* ins)
 {
     LNewObject* lir = new(alloc()) LNewObject(temp());
@@ -265,22 +274,13 @@ LIRGenerator::visitNewDeclEnvObject(MNewDeclEnvObject* ins)
 void
 LIRGenerator::visitNewCallObject(MNewCallObject* ins)
 {
-    LInstruction* lir;
-    if (ins->templateObject()->isSingleton()) {
-        LNewSingletonCallObject* singletonLir = new(alloc()) LNewSingletonCallObject(temp());
-        define(singletonLir, ins);
-        lir = singletonLir;
-    } else {
-        LNewCallObject* normalLir = new(alloc()) LNewCallObject(temp());
-        define(normalLir, ins);
-        lir = normalLir;
-    }
-
+    LNewCallObject* lir = new(alloc()) LNewCallObject(temp());
+    define(lir, ins);
     assignSafepoint(lir, ins);
 }
 
 void
-LIRGenerator::visitNewRunOnceCallObject(MNewRunOnceCallObject* ins)
+LIRGenerator::visitNewSingletonCallObject(MNewSingletonCallObject* ins)
 {
     LNewSingletonCallObject* lir = new(alloc()) LNewSingletonCallObject(temp());
     define(lir, ins);
@@ -388,9 +388,10 @@ LIRGenerator::visitCreateThis(MCreateThis* ins)
 void
 LIRGenerator::visitCreateArgumentsObject(MCreateArgumentsObject* ins)
 {
-    // LAllocation callObj = useRegisterAtStart(ins->getCallObject());
     LAllocation callObj = useFixed(ins->getCallObject(), CallTempReg0);
-    LCreateArgumentsObject* lir = new(alloc()) LCreateArgumentsObject(callObj, tempFixed(CallTempReg1));
+    LCreateArgumentsObject* lir = new(alloc()) LCreateArgumentsObject(callObj, tempFixed(CallTempReg1),
+                                                                      tempFixed(CallTempReg2),
+                                                                      tempFixed(CallTempReg3));
     defineReturn(lir, ins);
     assignSafepoint(lir, ins);
 }
@@ -496,8 +497,7 @@ LIRGenerator::visitCall(MCall* call)
         return;
     }
 
-    // Height of the current argument vector.
-    JSFunction* target = call->getSingleTarget();
+    WrappedFunction* target = call->getSingleTarget();
 
     LInstruction* lir;
 
@@ -852,10 +852,10 @@ LIRGenerator::visitTest(MTest* test)
             comp->compareType() == MCompare::Compare_UInt64)
         {
             JSOp op = ReorderComparison(comp->jsop(), &left, &right);
-            LCompare64AndBranch* lir = new(alloc()) LCompare64AndBranch(comp, op,
-                                                                        useInt64Register(left),
-                                                                        useInt64OrConstant(right),
-                                                                        ifTrue, ifFalse);
+            LCompareI64AndBranch* lir = new(alloc()) LCompareI64AndBranch(comp, op,
+                                                                          useInt64Register(left),
+                                                                          useInt64OrConstant(right),
+                                                                          ifTrue, ifFalse);
             add(lir, test);
             return;
         }
@@ -935,6 +935,9 @@ LIRGenerator::visitTest(MTest* test)
       case MIRType::Int32:
       case MIRType::Boolean:
         add(new(alloc()) LTestIAndBranch(useRegister(opd), ifTrue, ifFalse));
+        break;
+      case MIRType::Int64:
+        add(new(alloc()) LTestI64AndBranch(useInt64Register(opd), ifTrue, ifFalse));
         break;
       default:
         MOZ_CRASH("Bad type");
@@ -1095,7 +1098,7 @@ LIRGenerator::visitCompare(MCompare* comp)
         comp->compareType() == MCompare::Compare_UInt64)
     {
         JSOp op = ReorderComparison(comp->jsop(), &left, &right);
-        define(new(alloc()) LCompare64(op, useInt64Register(left), useInt64OrConstant(right)),
+        define(new(alloc()) LCompareI64(op, useInt64Register(left), useInt64OrConstant(right)),
                comp);
         return;
     }
@@ -1301,7 +1304,7 @@ LIRGenerator::visitRotate(MRotate* ins)
         auto* lir = new(alloc()) LRotate();
         lowerForShift(lir, ins, input, count);
     } else if (ins->type() == MIRType::Int64) {
-        auto* lir = new(alloc()) LRotate64();
+        auto* lir = new(alloc()) LRotateI64();
         lowerForShiftInt64(lir, ins, input, count);
     } else {
         MOZ_CRASH("unexpected type in visitRotate");
@@ -1456,7 +1459,7 @@ LIRGenerator::visitPopcnt(MPopcnt* ins)
         return;
     }
 
-    auto* lir = new(alloc()) LPopcntI64(useInt64RegisterAtStart(num), tempInt64());
+    auto* lir = new(alloc()) LPopcntI64(useInt64RegisterAtStart(num), temp());
     defineInt64(lir, ins);
 }
 
@@ -1713,7 +1716,7 @@ LIRGenerator::visitMul(MMul* ins)
         MOZ_ASSERT(lhs->type() == MIRType::Int64);
         ReorderCommutative(&lhs, &rhs, ins);
         LMulI64* lir = new(alloc()) LMulI64;
-        lowerForALUInt64(lir, ins, lhs, rhs);
+        lowerForMulInt64(lir, ins, lhs, rhs);
         return;
     }
 
@@ -2162,12 +2165,6 @@ void
 LIRGenerator::visitWrapInt64ToInt32(MWrapInt64ToInt32* ins)
 {
     define(new(alloc()) LWrapInt64ToInt32(useInt64AtStart(ins->input())), ins);
-}
-
-void
-LIRGenerator::visitExtendInt32ToInt64(MExtendInt32ToInt64* ins)
-{
-    defineInt64(new(alloc()) LExtendInt32ToInt64(useAtStart(ins->input())), ins);
 }
 
 void
@@ -2933,8 +2930,12 @@ LIRGenerator::visitNot(MNot* ins)
 void
 LIRGenerator::visitBoundsCheck(MBoundsCheck* ins)
 {
-     if (!ins->fallible())
-         return;
+    MOZ_ASSERT(ins->index()->type() == MIRType::Int32);
+    MOZ_ASSERT(ins->length()->type() == MIRType::Int32);
+    MOZ_ASSERT(ins->type() == MIRType::Int32);
+
+    if (!ins->fallible())
+        return;
 
     LInstruction* check;
     if (ins->minimum() || ins->maximum()) {
@@ -2952,6 +2953,8 @@ LIRGenerator::visitBoundsCheck(MBoundsCheck* ins)
 void
 LIRGenerator::visitBoundsCheckLower(MBoundsCheckLower* ins)
 {
+    MOZ_ASSERT(ins->index()->type() == MIRType::Int32);
+
     if (!ins->fallible())
         return;
 
@@ -4072,15 +4075,28 @@ LIRGenerator::visitHasClass(MHasClass* ins)
 }
 
 void
-LIRGenerator::visitAsmJSLoadGlobalVar(MAsmJSLoadGlobalVar* ins)
+LIRGenerator::visitWasmLoadGlobalVar(MWasmLoadGlobalVar* ins)
 {
-    define(new(alloc()) LAsmJSLoadGlobalVar, ins);
+    if (ins->type() == MIRType::Int64)
+        defineInt64(new(alloc()) LWasmLoadGlobalVarI64, ins);
+    else
+        define(new(alloc()) LWasmLoadGlobalVar, ins);
 }
 
 void
-LIRGenerator::visitAsmJSStoreGlobalVar(MAsmJSStoreGlobalVar* ins)
+LIRGenerator::visitWasmStoreGlobalVar(MWasmStoreGlobalVar* ins)
 {
-    add(new(alloc()) LAsmJSStoreGlobalVar(useRegisterAtStart(ins->value())), ins);
+    MDefinition* value = ins->value();
+    if (value->type() == MIRType::Int64)
+        add(new(alloc()) LWasmStoreGlobalVarI64(useInt64RegisterAtStart(value)), ins);
+    else
+        add(new(alloc()) LWasmStoreGlobalVar(useRegisterAtStart(value)), ins);
+}
+
+void
+LIRGenerator::visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr* ins)
+{
+    define(new(alloc()) LAsmJSLoadFuncPtr(useRegister(ins->index())), ins);
 }
 
 void
@@ -4094,7 +4110,27 @@ LIRGenerator::visitAsmJSParameter(MAsmJSParameter* ins)
 {
     ABIArg abi = ins->abi();
     if (abi.argInRegister()) {
+#if defined(JS_NUNBOX32)
+        if (abi.isGeneralRegPair()) {
+            defineInt64Fixed(new(alloc()) LAsmJSParameterI64, ins,
+                LInt64Allocation(LAllocation(AnyRegister(abi.gpr64().high)),
+                                 LAllocation(AnyRegister(abi.gpr64().low))));
+            return;
+        }
+#endif
         defineFixed(new(alloc()) LAsmJSParameter, ins, LAllocation(abi.reg()));
+        return;
+    }
+    if (ins->type() == MIRType::Int64) {
+        MOZ_ASSERT(!abi.argInRegister());
+        defineInt64Fixed(new(alloc()) LAsmJSParameterI64, ins,
+#if defined(JS_NUNBOX32)
+            LInt64Allocation(LArgument(abi.offsetFromArgBase() + INT64HIGH_OFFSET),
+                             LArgument(abi.offsetFromArgBase() + INT64LOW_OFFSET))
+#else
+            LInt64Allocation(LArgument(abi.offsetFromArgBase()))
+#endif
+        );
     } else {
         MOZ_ASSERT(IsNumberType(ins->type()) || IsSimdType(ins->type()));
         defineFixed(new(alloc()) LAsmJSParameter, ins, LArgument(abi.offsetFromArgBase()));
@@ -4105,6 +4141,13 @@ void
 LIRGenerator::visitAsmJSReturn(MAsmJSReturn* ins)
 {
     MDefinition* rval = ins->getOperand(0);
+
+    if (rval->type() == MIRType::Int64) {
+        LAsmJSReturnI64* lir = new(alloc()) LAsmJSReturnI64(useInt64Fixed(rval, ReturnReg64));
+        add(lir);
+        return;
+    }
+
     LAsmJSReturn* lir = new(alloc()) LAsmJSReturn;
     if (rval->type() == MIRType::Float32)
         lir->setOperand(0, useFixed(rval, ReturnFloat32Reg));
@@ -4114,25 +4157,34 @@ LIRGenerator::visitAsmJSReturn(MAsmJSReturn* ins)
         lir->setOperand(0, useFixed(rval, ReturnSimd128Reg));
     else if (rval->type() == MIRType::Int32)
         lir->setOperand(0, useFixed(rval, ReturnReg));
-#if JS_BITS_PER_WORD == 64
-    else if (rval->type() == MIRType::Int64)
-        lir->setOperand(0, useFixed(rval, ReturnReg));
-#endif
     else
         MOZ_CRASH("Unexpected asm.js return type");
+
+    // Preserve the TLS pointer we were passed in `WasmTlsReg`.
+    MDefinition* tlsPtr = ins->getOperand(1);
+    lir->setOperand(1, useFixed(tlsPtr, WasmTlsReg));
+
     add(lir);
 }
 
 void
 LIRGenerator::visitAsmJSVoidReturn(MAsmJSVoidReturn* ins)
 {
-    add(new(alloc()) LAsmJSVoidReturn);
+    auto* lir = new(alloc()) LAsmJSVoidReturn;
+
+    // Preserve the TLS pointer we were passed in `WasmTlsReg`.
+    MDefinition* tlsPtr = ins->getOperand(0);
+    lir->setOperand(0, useFixed(tlsPtr, WasmTlsReg));
+
+    add(lir);
 }
 
 void
 LIRGenerator::visitAsmJSPassStackArg(MAsmJSPassStackArg* ins)
 {
-    if (IsFloatingPointType(ins->arg()->type()) || IsSimdType(ins->arg()->type())) {
+    if (ins->arg()->type() == MIRType::Int64) {
+        add(new(alloc()) LAsmJSPassStackArgI64(useInt64OrConstantAtStart(ins->arg())), ins);
+    } else if (IsFloatingPointType(ins->arg()->type()) || IsSimdType(ins->arg()->type())) {
         MOZ_ASSERT(!ins->arg()->isEmittedAtUses());
         add(new(alloc()) LAsmJSPassStackArg(useRegisterAtStart(ins->arg())), ins);
     } else {
@@ -4159,7 +4211,12 @@ LIRGenerator::visitAsmJSCall(MAsmJSCall* ins)
             useFixed(ins->callee().dynamicPtr(), WasmTableCallPtrReg);
     }
 
-    LInstruction* lir = new(alloc()) LAsmJSCall(args, ins->numOperands());
+    LInstruction* lir;
+    if (ins->type() == MIRType::Int64)
+        lir = new(alloc()) LAsmJSCallI64(args, ins->numOperands());
+    else
+        lir = new(alloc()) LAsmJSCall(args, ins->numOperands());
+
     if (ins->type() == MIRType::None)
         add(lir, ins);
     else
@@ -4599,6 +4656,9 @@ LIRGenerator::definePhis()
         if (phi->type() == MIRType::Value) {
             defineUntypedPhi(*phi, lirIndex);
             lirIndex += BOX_PIECES;
+        } else if (phi->type() == MIRType::Int64) {
+            defineInt64Phi(*phi, lirIndex);
+            lirIndex += INT64_PIECES;
         } else {
             defineTypedPhi(*phi, lirIndex);
             lirIndex += 1;
@@ -4667,6 +4727,9 @@ LIRGenerator::visitBlock(MBasicBlock* block)
             if (phi->type() == MIRType::Value) {
                 lowerUntypedPhiInput(*phi, position, successor->lir(), lirIndex);
                 lirIndex += BOX_PIECES;
+            } else if (phi->type() == MIRType::Int64) {
+                lowerInt64PhiInput(*phi, position, successor->lir(), lirIndex);
+                lirIndex += INT64_PIECES;
             } else {
                 lowerTypedPhiInput(*phi, position, successor->lir(), lirIndex);
                 lirIndex += 1;

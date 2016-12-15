@@ -193,7 +193,7 @@ AccessibleCaret::EnsureApzAware()
   // If the caret element was cloned, the listener might have been lost. So
   // if that's the case we register a dummy listener if there isn't one on
   // the element already.
-  if (!CaretElement()->HasApzAwareListeners()) {
+  if (!CaretElement()->IsApzAware()) {
     CaretElement()->AddEventListener(NS_LITERAL_STRING("touchstart"),
                                      mDummyTouchListener, false);
   }

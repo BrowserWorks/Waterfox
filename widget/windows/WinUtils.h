@@ -78,7 +78,7 @@ class nsWindow;
 class nsWindowBase;
 struct KeyPair;
 
-#ifndef DPI_AWARENESS_CONTEXT_DECLARED
+#if !defined(DPI_AWARENESS_CONTEXT_DECLARED) && !defined(DPI_AWARENESS_CONTEXT_UNAWARE)
 
 DECLARE_HANDLE(DPI_AWARENESS_CONTEXT);
 
@@ -173,6 +173,12 @@ public:
   private:
     DPI_AWARENESS_CONTEXT mPrevContext;
   };
+
+  // Wrapper for DefWindowProc that will enable non-client dpi scaling on the
+  // window during creation.
+  static LRESULT WINAPI
+  NonClientDpiScalingDefWindowProcW(HWND hWnd, UINT msg,
+                                    WPARAM wParam, LPARAM lParam);
 
   /**
    * Get the system's default logical-to-physical DPI scaling factor,
@@ -286,8 +292,8 @@ public:
    * |                 |       |    window like dialog |                       |
    * +-----------------+-------+-----------------------+-----------------------+
    */
-  static HWND GetTopLevelHWND(HWND aWnd, 
-                              bool aStopIfNotChild = false, 
+  static HWND GetTopLevelHWND(HWND aWnd,
+                              bool aStopIfNotChild = false,
                               bool aStopIfNotPopup = true);
 
   /**
@@ -528,9 +534,9 @@ class AsyncFaviconDataReady final : public nsIFaviconDataCallback
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIFAVICONDATACALLBACK
-  
-  AsyncFaviconDataReady(nsIURI *aNewURI, 
-                        nsCOMPtr<nsIThread> &aIOThread, 
+
+  AsyncFaviconDataReady(nsIURI *aNewURI,
+                        nsCOMPtr<nsIThread> &aIOThread,
                         const bool aURLShortcut);
   nsresult OnFaviconDataNotAvailable(void);
 private:
@@ -608,7 +614,7 @@ public:
                                        nsCOMPtr<nsIThread> &aIOThread,
                                        bool aURLShortcut);
 
-  static nsresult HashURI(nsCOMPtr<nsICryptoHash> &aCryptoHash, 
+  static nsresult HashURI(nsCOMPtr<nsICryptoHash> &aCryptoHash,
                           nsIURI *aUri,
                           nsACString& aUriHash);
 
@@ -616,7 +622,7 @@ public:
                                     nsCOMPtr<nsIFile> &aICOFile,
                                     bool aURLShortcut);
 
-  static nsresult 
+  static nsresult
   CacheIconFileFromFaviconURIAsync(nsCOMPtr<nsIURI> aFaviconPageURI,
                                    nsCOMPtr<nsIFile> aICOFile,
                                    nsCOMPtr<nsIThread> &aIOThread,

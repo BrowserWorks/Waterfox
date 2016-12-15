@@ -1,9 +1,15 @@
-const {Ci, Cc, Cu, Cr} = require("chrome");
-Cu.import("resource://gre/modules/osfile.jsm");
-const {FileUtils} = Cu.import("resource://gre/modules/FileUtils.jsm");
-const {NetUtil} = Cu.import("resource://gre/modules/NetUtil.jsm");
-const Services = require("Services");
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+"use strict";
+
+const {Ci, Cc, Cr} = require("chrome");
+const {OS} = require("resource://gre/modules/osfile.jsm");
+const {FileUtils} = require("resource://gre/modules/FileUtils.jsm");
+const {NetUtil} = require("resource://gre/modules/NetUtil.jsm");
 const promise = require("promise");
+const defer = require("devtools/shared/defer");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const EventEmitter = require("devtools/shared/event-emitter");
 
@@ -65,7 +71,7 @@ function getResultText(code) {
 }
 
 function zipDirectory(zipFile, dirToArchive) {
-  let deferred = promise.defer();
+  let deferred = defer();
   let writer = Cc["@mozilla.org/zipwriter;1"].createInstance(Ci.nsIZipWriter);
   writer.open(zipFile, PR_RDWR | PR_CREATE_FILE | PR_TRUNCATE);
 
@@ -97,7 +103,7 @@ function uploadPackage(client, webappsActor, packageFile, progressCallback) {
 }
 
 function uploadPackageJSON(client, webappsActor, packageFile, progressCallback) {
-  let deferred = promise.defer();
+  let deferred = defer();
 
   let request = {
     to: webappsActor,
@@ -168,7 +174,7 @@ function uploadPackageJSON(client, webappsActor, packageFile, progressCallback) 
 }
 
 function uploadPackageBulk(client, webappsActor, packageFile, progressCallback) {
-  let deferred = promise.defer();
+  let deferred = defer();
 
   let request = {
     to: webappsActor,
@@ -227,7 +233,7 @@ function removeServerTemporaryFile(client, fileActor) {
  *  * totalBytes: The total number of bytes to send
  */
 function installPackaged(client, webappsActor, packagePath, appId, progressCallback) {
-  let deferred = promise.defer();
+  let deferred = defer();
   let file = FileUtils.File(packagePath);
   let packagePromise;
   if (file.isDirectory()) {
@@ -275,7 +281,7 @@ function installPackaged(client, webappsActor, packagePath, appId, progressCallb
 exports.installPackaged = installPackaged;
 
 function installHosted(client, webappsActor, appId, metadata, manifest) {
-  let deferred = promise.defer();
+  let deferred = defer();
   let request = {
     to: webappsActor,
     type: "install",
@@ -304,7 +310,7 @@ function getTargetForApp(client, webappsActor, manifestURL) {
   if (existingTarget)
     return promise.resolve(existingTarget);
 
-  let deferred = promise.defer();
+  let deferred = defer();
   let request = {
     to: webappsActor,
     type: "getAppActor",
@@ -376,7 +382,7 @@ function closeApp(client, webappsActor, manifestURL) {
 exports.closeApp = closeApp;
 
 function getTarget(client, form) {
-  let deferred = promise.defer();
+  let deferred = defer();
   let options = {
     form: form,
     client: client,
@@ -458,7 +464,7 @@ App.prototype = {
       return promise.resolve(this.iconURL);
     }
 
-    let deferred = promise.defer();
+    let deferred = defer();
 
     let request = {
       to: this.webappsActor,
@@ -763,7 +769,7 @@ AppActorFront.prototype = {
   },
 
   _install: function (request) {
-    let deferred = promise.defer();
+    let deferred = defer();
     let finalAppId = null, manifestURL = null;
     let installs = {};
 

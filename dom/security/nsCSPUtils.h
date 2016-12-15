@@ -92,8 +92,8 @@ static const char* CSPStrDirectives[] = {
   "upgrade-insecure-requests", // UPGRADE_IF_INSECURE_DIRECTIVE
   "child-src",                 // CHILD_SRC_DIRECTIVE
   "block-all-mixed-content",   // BLOCK_ALL_MIXED_CONTENT
-  "require-sri-for"            // REQUIRE_SRI_FOR
-
+  "require-sri-for",           // REQUIRE_SRI_FOR
+  "sandbox"                    // SANDBOX_DIRECTIVE
 };
 
 inline const char* CSP_CSPDirectiveToString(CSPDirective aDir)
@@ -175,6 +175,10 @@ inline CSPKeyword CSP_KeywordToEnum(const nsAString& aKey)
   NS_ASSERTION(false, "Can not convert unknown Keyword to Enum");
   return CSP_LAST_KEYWORD_VALUE;
 }
+
+nsresult CSP_AppendCSPFromHeader(nsIContentSecurityPolicy* aCsp,
+                                 const nsAString& aHeaderValue,
+                                 bool aReportOnly);
 
 /* =============== Helpers ================== */
 
@@ -332,6 +336,20 @@ class nsCSPReportURI : public nsCSPBaseSrc {
 
   private:
     nsCOMPtr<nsIURI> mReportURI;
+};
+
+/* =============== nsCSPSandboxFlags ================== */
+
+class nsCSPSandboxFlags : public nsCSPBaseSrc {
+  public:
+    explicit nsCSPSandboxFlags(const nsAString& aFlags);
+    virtual ~nsCSPSandboxFlags();
+
+    bool visit(nsCSPSrcVisitor* aVisitor) const;
+    void toString(nsAString& outStr) const;
+
+  private:
+    nsString mFlags;
 };
 
 /* =============== nsCSPSrcVisitor ================== */
@@ -557,6 +575,8 @@ class nsCSPPolicy {
                                           nsAString& outDirective) const;
 
     void getDirectiveAsString(CSPDirective aDir, nsAString& outDirective) const;
+
+    uint32_t getSandboxFlags() const;
 
     bool requireSRIForType(nsContentPolicyType aContentType);
 

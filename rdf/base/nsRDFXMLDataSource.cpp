@@ -51,7 +51,7 @@
 
   To turn on logging for this module, set
 
-    NSPR_LOG_MODULES=nsRDFXMLDataSource:5
+    MOZ_LOG=nsRDFXMLDataSource:5
 
  */
 
@@ -475,7 +475,6 @@ RDFXMLDataSourceImpl::BlockingParse(nsIURI* aURL, nsIStreamListener* aConsumer)
     // should be able to do by itself.
     
     nsCOMPtr<nsIChannel> channel;
-    nsCOMPtr<nsIRequest> request;
 
     // Null LoadGroup ?
     rv = NS_NewChannel(getter_AddRefs(channel),

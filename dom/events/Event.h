@@ -15,7 +15,6 @@
 #include "nsPIDOMWindow.h"
 #include "nsPoint.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsAutoPtr.h"
 #include "mozilla/dom/EventBinding.h"
 #include "nsIScriptGlobalObject.h"
 #include "Units.h"
@@ -243,6 +242,13 @@ public:
    */
   static nsIContent* GetShadowRelatedTarget(nsIContent* aCurrentTarget,
                                             nsIContent* aRelatedTarget);
+
+  void MarkUninitialized()
+  {
+    mEvent->mMessage = eVoidEvent;
+    mEvent->mSpecifiedEventTypeString.Truncate();
+    mEvent->mSpecifiedEventType = nullptr;
+  }
 
 protected:
 

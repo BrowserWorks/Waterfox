@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,6 +44,8 @@ EXPORTS.mozilla.dom += [
     'CustomEvent.h',
     'DataContainerEvent.h',
     'DataTransfer.h',
+    'DataTransferItem.h',
+    'DataTransferItemList.h',
     'DeviceMotionEvent.h',
     'DragEvent.h',
     'Event.h',
@@ -62,6 +64,7 @@ EXPORTS.mozilla.dom += [
     'ScrollAreaEvent.h',
     'SimpleGestureEvent.h',
     'StorageEvent.h',
+    'TextClause.h',
     'Touch.h',
     'TouchEvent.h',
     'TransitionEvent.h',
@@ -110,6 +113,7 @@ UNIFIED_SOURCES += [
     'ScrollAreaEvent.cpp',
     'SimpleGestureEvent.cpp',
     'StorageEvent.cpp',
+    'TextClause.cpp',
     'TextComposition.cpp',
     'Touch.cpp',
     'TouchEvent.cpp',
@@ -122,6 +126,8 @@ UNIFIED_SOURCES += [
 
 # nsEventStateManager.cpp should be built separately because of Mac OS X headers.
 SOURCES += [
+    'DataTransferItem.cpp',
+    'DataTransferItemList.cpp',
     'EventStateManager.cpp',
 ]
 

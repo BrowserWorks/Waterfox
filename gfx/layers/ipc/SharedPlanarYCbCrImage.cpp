@@ -14,6 +14,7 @@
 #include "mozilla/layers/ImageClient.h"  // for ImageClient
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor, etc
 #include "mozilla/layers/TextureClient.h"
+#include "mozilla/layers/TextureClientRecycleAllocator.h"
 #include "mozilla/layers/BufferTexture.h"
 #include "mozilla/layers/ImageDataSerializer.h"
 #include "mozilla/layers/ImageBridgeChild.h"  // for ImageBridgeChild
@@ -118,7 +119,7 @@ SharedPlanarYCbCrImage::AllocateAndGetNewBuffer(uint32_t aSize)
   }
 
   mTextureClient = TextureClient::CreateForYCbCrWithBufferSize(mCompositable->GetForwarder(),
-                                                               gfx::SurfaceFormat::YUV, size,
+                                                               size,
                                                                mCompositable->GetTextureFlags());
 
   // get new buffer _without_ setting mBuffer.
@@ -158,9 +159,14 @@ SharedPlanarYCbCrImage::AdoptData(const Data &aData)
   uint32_t cbOffset = aData.mCbChannel - base;
   uint32_t crOffset = aData.mCrChannel - base;
 
+  auto fwd = mCompositable->GetForwarder()->AsCompositableForwarder();
+  bool hasIntermediateBuffer = fwd ? ComputeHasIntermediateBuffer(gfx::SurfaceFormat::YUV,
+                                                                  fwd->GetCompositorBackendType())
+                                   : true;
+
   static_cast<BufferTextureData*>(mTextureClient->GetInternalData())->SetDesciptor(
     YCbCrDescriptor(aData.mYSize, aData.mCbCrSize, yOffset, cbOffset, crOffset,
-                    aData.mStereoMode)
+                    aData.mStereoMode, hasIntermediateBuffer)
   );
 
   return true;
@@ -176,11 +182,18 @@ SharedPlanarYCbCrImage::Allocate(PlanarYCbCrData& aData)
 {
   MOZ_ASSERT(!mTextureClient,
              "This image already has allocated data");
+  static const uint32_t MAX_POOLED_VIDEO_COUNT = 5;
 
-  mTextureClient = TextureClient::CreateForYCbCr(mCompositable->GetForwarder(),
-                                                 aData.mYSize, aData.mCbCrSize,
-                                                 aData.mStereoMode,
-                                                 mCompositable->GetTextureFlags());
+  if (!mCompositable->HasTextureClientRecycler()) {
+    // Initialize TextureClientRecycler
+    mCompositable->GetTextureClientRecycler()->SetMaxPoolSize(MAX_POOLED_VIDEO_COUNT);
+  }
+
+  {
+    YCbCrTextureClientAllocationHelper helper(aData, mCompositable->GetTextureFlags());
+    mTextureClient = mCompositable->GetTextureClientRecycler()->CreateOrRecycle(helper);
+  }
+
   if (!mTextureClient) {
     NS_WARNING("SharedPlanarYCbCrImage::Allocate failed.");
     return false;

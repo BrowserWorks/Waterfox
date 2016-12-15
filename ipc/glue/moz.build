@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,10 +35,15 @@ EXPORTS.mozilla.ipc += [
     'SharedMemory.h',
     'SharedMemoryBasic.h',
     'Shmem.h',
+    'TaskFactory.h',
     'Transport.h',
     'URIUtils.h',
     'WindowsMessageLoop.h',
 ]
+
+if CONFIG['MOZ_FAULTY'] == '1':
+    EXPORTS.mozilla.ipc += ['Faulty.h']
+    SOURCES += ['Faulty.cpp']
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     DEFINES['WEBRTC_WIN'] = True

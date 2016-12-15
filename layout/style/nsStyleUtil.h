@@ -31,6 +31,10 @@ public:
                                 const nsAString& aSelectorValue,
                                 const nsStringComparator& aComparator);
 
+ static bool ValueIncludes(const nsSubstring& aValueList,
+                           const nsSubstring& aValue,
+                           const nsStringComparator& aComparator);
+
   // Append a quoted (with 'quoteChar') and escaped version of aString
   // to aResult.  'quoteChar' must be ' or ".
   static void AppendEscapedCSSString(const nsAString& aString,
@@ -74,7 +78,6 @@ public:
 
   static void AppendStepsTimingFunction(nsTimingFunction::Type aType,
                                         uint32_t aSteps,
-                                        nsTimingFunction::StepSyntax aSyntax,
                                         nsAString& aResult);
   static void AppendCubicBezierTimingFunction(float aX1, float aY1,
                                               float aX2, float aY2,

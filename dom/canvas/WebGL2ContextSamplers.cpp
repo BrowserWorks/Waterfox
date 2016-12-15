@@ -12,24 +12,15 @@ namespace mozilla {
 already_AddRefed<WebGLSampler>
 WebGL2Context::CreateSampler()
 {
-    const char funcName[] = "createSampler";
-
     if (IsContextLost())
         return nullptr;
 
-    /*
     GLuint sampler;
     MakeContextCurrent();
     gl->fGenSamplers(1, &sampler);
 
     RefPtr<WebGLSampler> globj = new WebGLSampler(this, sampler);
     return globj.forget();
-    */
-
-    ErrorInvalidOperation("%s: Sampler objects are still under development, and are"
-                          " currently disabled.",
-                          funcName);
-    return nullptr;
 }
 
 void
@@ -212,6 +203,8 @@ WebGL2Context::SamplerParameterfv(WebGLSampler* sampler, GLenum pname, const dom
 void
 WebGL2Context::GetSamplerParameter(JSContext*, WebGLSampler* sampler, GLenum pname, JS::MutableHandleValue retval)
 {
+    retval.setNull();
+
     if (IsContextLost())
         return;
 
@@ -220,8 +213,6 @@ WebGL2Context::GetSamplerParameter(JSContext*, WebGLSampler* sampler, GLenum pna
 
     if (!ValidateSamplerParameterName(pname, "getSamplerParameter"))
         return;
-
-    retval.set(JS::NullValue());
 
     switch (pname) {
     case LOCAL_GL_TEXTURE_MIN_FILTER:

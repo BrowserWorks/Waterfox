@@ -5,11 +5,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/ArrayUtils.h"
+#include "nsIconURI.h"
 
+#include "mozilla/ArrayUtils.h"
 #include "mozilla/ipc/URIUtils.h"
 
-#include "nsIconURI.h"
 #include "nsIIOService.h"
 #include "nsIURL.h"
 #include "nsNetUtil.h"
@@ -192,7 +192,7 @@ nsMozIconURI::SetSpec(const nsACString& aSpec)
       }
 
       int32_t sizeValue = atoi(sizeString.get());
-      if (sizeValue) {
+      if (sizeValue > 0) {
         mSize = sizeValue;
       }
     }
@@ -453,6 +453,15 @@ nsMozIconURI::CloneIgnoringRef(nsIURI** result)
   // CloneIgnoringRef() is the same as Clone().
   return Clone(result);
 }
+
+NS_IMETHODIMP
+nsMozIconURI::CloneWithNewRef(const nsACString& newRef, nsIURI** result)
+{
+  // GetRef/SetRef not supported by nsMozIconURI, so
+  // CloneWithNewRef() is the same as Clone().
+  return Clone(result);
+}
+
 
 NS_IMETHODIMP
 nsMozIconURI::Resolve(const nsACString& relativePath, nsACString& result)

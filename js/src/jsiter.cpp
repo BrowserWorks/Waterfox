@@ -68,17 +68,7 @@ NativeIterator::trace(JSTracer* trc)
         TraceManuallyBarrieredEdge(trc, &iterObj_, "iterObj");
 }
 
-struct IdHashPolicy {
-    typedef jsid Lookup;
-    static HashNumber hash(jsid id) {
-        return JSID_BITS(id);
-    }
-    static bool match(jsid id1, jsid id2) {
-        return id1 == id2;
-    }
-};
-
-typedef HashSet<jsid, IdHashPolicy> IdSet;
+typedef HashSet<jsid, DefaultHasher<jsid>> IdSet;
 
 static inline bool
 NewKeyValuePair(JSContext* cx, jsid id, const Value& val, MutableHandleValue rval)
@@ -842,7 +832,7 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
     if (flags == JSITER_ENUMERATE) {
         // Check to see if this is the same as the most recent object which was
         // iterated over.
-        PropertyIteratorObject* last = cx->runtime()->nativeIterCache.last;
+        PropertyIteratorObject* last = cx->caches.nativeIterCache.last;
         if (last) {
             NativeIterator* lastni = last->getNativeIterator();
             if (!(lastni->flags & (JSITER_ACTIVE|JSITER_UNREUSABLE)) &&
@@ -882,7 +872,7 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
             } while (pobj);
         }
 
-        PropertyIteratorObject* iterobj = cx->runtime()->nativeIterCache.get(key);
+        PropertyIteratorObject* iterobj = cx->caches.nativeIterCache.get(key);
         if (iterobj) {
             NativeIterator* ni = iterobj->getNativeIterator();
             if (!(ni->flags & (JSITER_ACTIVE|JSITER_UNREUSABLE)) &&
@@ -896,7 +886,7 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
                 UpdateNativeIterator(ni, obj);
                 RegisterEnumerator(cx, iterobj, ni);
                 if (guards.length() == 2)
-                    cx->runtime()->nativeIterCache.last = iterobj;
+                    cx->caches.nativeIterCache.last = iterobj;
                 return true;
             }
         }
@@ -927,10 +917,10 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
 
     /* Cache the iterator object if possible. */
     if (guards.length())
-        cx->runtime()->nativeIterCache.set(key, iterobj);
+        cx->caches.nativeIterCache.set(key, iterobj);
 
     if (guards.length() == 2)
-        cx->runtime()->nativeIterCache.last = iterobj;
+        cx->caches.nativeIterCache.last = iterobj;
     return true;
 }
 

@@ -1,0 +1,171 @@
+/* vim:set ts=2 sw=2 sts=2 et: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Tabs General Styles */
+
+.tabs {
+  height: 100%;
+}
+
+.tabs .tabs-menu {
+  display: table;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tabs .tabs-menu-item {
+  display: inline-block;
+}
+
+.tabs .tabs-menu-item a {
+  display: block;
+  color: #A9A9A9;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Make sure panel content takes entire vertical space.
+  (minus the height of the tab bar) */
+.tabs .panels {
+  height: calc(100% - 24px);
+}
+
+.tabs .tab-panel-box,
+.tabs .tab-panel {
+  height: 100%;
+}
+
+/* Light Theme */
+
+.theme-dark .tabs,
+.theme-light .tabs {
+  background: var(--theme-tab-toolbar-background);
+}
+
+.theme-dark .tabs .tabs-navigation,
+.theme-light .tabs .tabs-navigation {
+  border-bottom: 1px solid var(--theme-splitter-color);
+}
+
+.theme-dark .tabs .tabs-menu-item,
+.theme-light .tabs .tabs-menu-item {
+  margin: 0;
+  padding: 0;
+  border-style: solid;
+  border-width: 0;
+  border-inline-start-width: 1px;
+  border-color: var(--theme-splitter-color);
+}
+
+.theme-dark .tabs .tabs-menu-item a,
+.theme-light .tabs .tabs-menu-item a {
+  color: var(--theme-content-color1);
+}
+
+.theme-dark .tabs .tabs-menu-item a:hover,
+.theme-dark .tabs .tabs-menu-item a,
+.theme-light .tabs .tabs-menu-item a:hover,
+.theme-light .tabs .tabs-menu-item a {
+  padding: 3px 15px;
+}
+
+.theme-dark .tabs .tabs-menu-item:hover:not(.is-active),
+.theme-light .tabs .tabs-menu-item:hover:not(.is-active) {
+  background-color: var(--toolbar-tab-hover);
+}
+
+.theme-dark .tabs .tabs-menu-item:hover:active:not(.is-active),
+.theme-light .tabs .tabs-menu-item:hover:active:not(.is-active) {
+  background-color: var(--toolbar-tab-hover-active);
+}
+
+.theme-dark .tabs .tabs-menu-item.is-active,
+.theme-light .tabs .tabs-menu-item.is-active {
+  background-color: var(--theme-selection-background);
+}
+
+.theme-dark .tabs .tabs-menu-item.is-active a,
+.theme-light .tabs .tabs-menu-item.is-active a {
+  color: var(--theme-selection-color);
+}
+
+/* Dark Theme */
+
+.theme-dark .tabs .tabs-menu-item a {
+  color: var(--theme-body-color-alt);
+}
+
+.theme-dark .tabs .tabs-menu-item:hover:not(.is-active) a {
+  color: #CED3D9;
+}
+
+.theme-dark .tabs .tabs-menu-item:hover:active a {
+  color: var(--theme-selection-color);
+}
+
+/* Firebug Theme */
+
+.theme-firebug .tabs {
+  background-color: rgb(219, 234, 249);
+  background-image: linear-gradient(rgba(253, 253, 253, 0.2), rgba(253, 253, 253, 0));
+}
+
+.theme-firebug .tabs .tabs-navigation {
+  padding-top: 3px;
+  padding-left: 3px;
+  height: 27px;
+  border-bottom: 1px solid rgb(170, 188, 207);
+}
+
+.theme-firebug .tabs .tabs-menu-item.is-active,
+.theme-firebug .tabs .tabs-menu-item.is-active:hover {
+  background-color: transparent;
+}
+
+.theme-firebug .tabs .tabs-menu-item {
+  position: relative;
+  border-inline-start-width: 0;
+}
+
+.theme-firebug .tabs .tabs-menu-item a {
+  font-family: var(--proportional-font-family);
+  font-weight: bold;
+  color: var(--theme-body-color);
+  border-radius: 4px 4px 0 0;
+}
+
+.theme-firebug .tabs .tabs-menu-item:hover:not(.is-active) a {
+  border: 1px solid #C8C8C8;
+  border-bottom: 1px solid transparent;
+  background-color: transparent;
+}
+
+.theme-firebug .tabs .tabs-menu-item.is-active a {
+  background-color: rgb(247, 251, 254);
+  border: 1px solid rgb(170, 188, 207);
+  border-bottom-color: transparent;
+  color: var(--theme-body-color);
+}
+
+.theme-firebug .tabs .tabs-menu-item:hover:active a {
+  background-color: var(--toolbar-tab-hover-active);
+}
+
+.theme-firebug .tabs .tabs-menu-item.is-active:hover:active a {
+  background-color: var(--theme-selection-background);
+  color: var(--theme-selection-color);
+}
+
+.theme-firebug .tabs .tabs-menu-item a {
+  border: 1px solid transparent;
+}
+
+.theme-firebug .tabs .tabs-menu-item a:hover,
+.theme-firebug .tabs .tabs-menu-item a {
+  padding: 4px 8px 4px 8px;
+}

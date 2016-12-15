@@ -36,7 +36,7 @@ nsMIMEInfoAndroid::LoadUriInternal(nsIURI * aURI)
     mimeType = NS_ConvertUTF8toUTF16(mType);
   }
 
-  if (widget::GeckoAppShell::OpenUriExternal(
+  if (java::GeckoAppShell::OpenUriExternal(
       NS_ConvertUTF8toUTF16(uriSpec), mimeType, EmptyString(),
       EmptyString(), EmptyString(), EmptyString())) {
     return NS_OK;
@@ -384,7 +384,7 @@ NS_IMPL_ISUPPORTS(nsMIMEInfoAndroid::SystemChooser, nsIHandlerApp)
 
 
 nsresult nsMIMEInfoAndroid::SystemChooser::GetName(nsAString & aName) {
-  aName.AssignLiteral(MOZ_UTF16("Android chooser"));
+  aName.AssignLiteral(u"Android chooser");
   return NS_OK;
 }
 
@@ -395,7 +395,7 @@ nsMIMEInfoAndroid::SystemChooser::SetName(const nsAString&) {
 
 nsresult
 nsMIMEInfoAndroid::SystemChooser::GetDetailedDescription(nsAString & aDesc) {
-  aDesc.AssignLiteral(MOZ_UTF16("Android's default handler application chooser"));
+  aDesc.AssignLiteral(u"Android's default handler application chooser");
   return NS_OK;
 }
 

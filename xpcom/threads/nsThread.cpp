@@ -33,6 +33,7 @@
 #include "mozilla/ChaosMode.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/unused.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "nsThreadSyncDispatch.h"
 #include "LeakRefPtr.h"
 
@@ -204,11 +205,6 @@ public:
   // completion state.
   void Wait()
   {
-    if (mInitialized) {
-      // Maybe avoid locking...
-      return;
-    }
-
     ReentrantMonitorAutoEnter mon(mMon);
     while (!mInitialized) {
       mon.Wait();
@@ -238,9 +234,11 @@ class DelayedRunnable : public Runnable,
                         public nsITimerCallback
 {
 public:
-  DelayedRunnable(already_AddRefed<nsIRunnable> aRunnable,
+  DelayedRunnable(already_AddRefed<nsIThread> aTargetThread,
+                  already_AddRefed<nsIRunnable> aRunnable,
                   uint32_t aDelay)
-    : mWrappedRunnable(aRunnable),
+    : mTargetThread(aTargetThread),
+      mWrappedRunnable(aRunnable),
       mDelayedFrom(TimeStamp::NowLoRes()),
       mDelay(aDelay)
   { }
@@ -254,6 +252,9 @@ public:
     NS_ENSURE_SUCCESS(rv, rv);
 
     MOZ_ASSERT(mTimer);
+    rv = mTimer->SetTarget(mTargetThread);
+
+    NS_ENSURE_SUCCESS(rv, rv);
     return mTimer->InitWithCallback(this, mDelay, nsITimer::TYPE_ONE_SHOT);
   }
 
@@ -291,6 +292,7 @@ public:
 private:
   ~DelayedRunnable() {}
 
+  nsCOMPtr<nsIThread> mTargetThread;
   nsCOMPtr<nsIRunnable> mWrappedRunnable;
   nsCOMPtr<nsITimer> mTimer;
   TimeStamp mDelayedFrom;
@@ -789,7 +791,9 @@ nsThread::DelayedDispatch(already_AddRefed<nsIRunnable> aEvent, uint32_t aDelayM
 {
   NS_ENSURE_TRUE(!!aDelayMs, NS_ERROR_UNEXPECTED);
 
-  RefPtr<DelayedRunnable> r = new DelayedRunnable(Move(aEvent), aDelayMs);
+  RefPtr<DelayedRunnable> r = new DelayedRunnable(Move(do_AddRef(this)),
+                                                  Move(aEvent),
+                                                  aDelayMs);
   nsresult rv = r->Init();
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1028,8 +1032,13 @@ nsThread::ProcessNextEvent(bool aMayWait, bool* aResult)
 
   ++mNestedEventLoopDepth;
 
+  // We only want to create an AutoNoJSAPI on threads that actually do DOM stuff
+  // (including workers).  Those are exactly the threads that have an
+  // mScriptObserver.
+  Maybe<dom::AutoNoJSAPI> noJSAPI;
   bool callScriptObserver = !!mScriptObserver;
   if (callScriptObserver) {
+    noJSAPI.emplace();
     mScriptObserver->BeforeProcessTask(reallyWait);
   }
 
@@ -1078,8 +1087,11 @@ nsThread::ProcessNextEvent(bool aMayWait, bool* aResult)
     obs->AfterProcessNextEvent(this, *aResult);
   }
 
-  if (callScriptObserver && mScriptObserver) {
-    mScriptObserver->AfterProcessTask(mNestedEventLoopDepth);
+  if (callScriptObserver) {
+    if (mScriptObserver) {
+      mScriptObserver->AfterProcessTask(mNestedEventLoopDepth);
+    }
+    noJSAPI.reset();
   }
 
   --mNestedEventLoopDepth;

@@ -36,6 +36,7 @@
 #include "nsQueryObject.h"
 
 // form submission
+#include "HTMLFormSubmissionConstants.h"
 #include "mozilla/dom/FormData.h"
 #include "mozilla/Telemetry.h"
 #include "nsIFormSubmitObserver.h"
@@ -50,7 +51,6 @@
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIWebProgress.h"
 #include "nsIDocShell.h"
-#include "nsFormSubmissionConstants.h"
 #include "nsIPrompt.h"
 #include "nsISecurityUITelemetry.h"
 #include "nsIStringBundle.h"
@@ -145,15 +145,8 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(HTMLFormElement,
                                                 nsGenericHTMLElement)
   tmp->Clear();
-  tmp->mExpandoAndGeneration.Unlink();
+  tmp->mExpandoAndGeneration.OwnerUnlinked();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
-
-NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(HTMLFormElement,
-                                               nsGenericHTMLElement)
-  if (tmp->PreservingWrapper()) {
-    NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mExpandoAndGeneration.expando)
-  }
-NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_ADDREF_INHERITED(HTMLFormElement, Element)
 NS_IMPL_RELEASE_INHERITED(HTMLFormElement, Element)
@@ -644,7 +637,7 @@ HTMLFormElement::DoSubmit(WidgetEvent* aEvent)
   mIsSubmitting = true;
   NS_ASSERTION(!mWebProgress && !mSubmittingRequest, "Web progress / submitting request should not exist here!");
 
-  nsAutoPtr<nsFormSubmission> submission;
+  nsAutoPtr<HTMLFormSubmission> submission;
 
   //
   // prepare the submission object
@@ -684,7 +677,7 @@ HTMLFormElement::DoSubmit(WidgetEvent* aEvent)
 }
 
 nsresult
-HTMLFormElement::BuildSubmission(nsFormSubmission** aFormSubmission,
+HTMLFormElement::BuildSubmission(HTMLFormSubmission** aFormSubmission,
                                  WidgetEvent* aEvent)
 {
   NS_ASSERTION(!mPendingSubmission, "tried to build two submissions!");
@@ -709,7 +702,8 @@ HTMLFormElement::BuildSubmission(nsFormSubmission** aFormSubmission,
   //
   // Get the submission object
   //
-  rv = GetSubmissionFromForm(this, originatingElement, aFormSubmission);
+  rv = HTMLFormSubmission::GetFromForm(this, originatingElement,
+                                       aFormSubmission);
   NS_ENSURE_SUBMIT_SUCCESS(rv);
 
   //
@@ -722,7 +716,7 @@ HTMLFormElement::BuildSubmission(nsFormSubmission** aFormSubmission,
 }
 
 nsresult
-HTMLFormElement::SubmitSubmission(nsFormSubmission* aFormSubmission)
+HTMLFormElement::SubmitSubmission(HTMLFormSubmission* aFormSubmission)
 {
   nsresult rv;
   nsIContent* originatingElement = aFormSubmission->GetOriginatingElement();
@@ -931,12 +925,12 @@ HTMLFormElement::DoSecureToInsecureSubmitCheck(nsIURI* aActionURL,
   nsAutoString message;
   nsAutoString cont;
   stringBundle->GetStringFromName(
-    MOZ_UTF16("formPostSecureToInsecureWarning.title"), getter_Copies(title));
+    u"formPostSecureToInsecureWarning.title", getter_Copies(title));
   stringBundle->GetStringFromName(
-    MOZ_UTF16("formPostSecureToInsecureWarning.message"),
+    u"formPostSecureToInsecureWarning.message",
     getter_Copies(message));
   stringBundle->GetStringFromName(
-    MOZ_UTF16("formPostSecureToInsecureWarning.continue"),
+    u"formPostSecureToInsecureWarning.continue",
     getter_Copies(cont));
   int32_t buttonPressed;
   bool checkState = false; // this is unused (ConfirmEx requires this parameter)
@@ -1033,7 +1027,7 @@ HTMLFormElement::NotifySubmitObservers(nsIURI* aActionURL,
 
 
 nsresult
-HTMLFormElement::WalkFormElements(nsFormSubmission* aFormSubmission)
+HTMLFormElement::WalkFormElements(HTMLFormSubmission* aFormSubmission)
 {
   nsTArray<nsGenericHTMLFormElement*> sortedControls;
   nsresult rv = mControls->GetSortedControls(sortedControls);
@@ -1609,7 +1603,7 @@ HTMLFormElement::FlushPendingSubmission()
   if (mPendingSubmission) {
     // Transfer owning reference so that the submissioin doesn't get deleted
     // if we reenter
-    nsAutoPtr<nsFormSubmission> submission = Move(mPendingSubmission);
+    nsAutoPtr<HTMLFormSubmission> submission = Move(mPendingSubmission);
 
     SubmitSubmission(submission);
   }
@@ -1756,7 +1750,7 @@ HTMLFormElement::GetActionURL(nsIURI** aActionURL,
     NS_ConvertUTF8toUTF16 reportScheme(scheme);
 
     const char16_t* params[] = { reportSpec.get(), reportScheme.get() };
-    CSP_LogLocalizedStr(MOZ_UTF16("upgradeInsecureRequest"),
+    CSP_LogLocalizedStr(u"upgradeInsecureRequest",
                         params, ArrayLength(params),
                         EmptyString(), // aSourceFile
                         EmptyString(), // aScriptSample

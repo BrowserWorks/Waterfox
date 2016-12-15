@@ -123,6 +123,11 @@ AllowContentXBLScope(JSCompartment* c);
 bool
 UseContentXBLScope(JSCompartment* c);
 
+// Clear out the content XBL scope (if any) on the given global.  This will
+// force creation of a new one if one is needed again.
+void
+ClearContentXBLScope(JSObject* global);
+
 bool
 IsInAddonScope(JSObject* obj);
 
@@ -284,7 +289,7 @@ private:
 
     static void FinalizeDOMString(const JSStringFinalizer* fin, char16_t* chars);
 
-    XPCStringConvert();         // not implemented
+    XPCStringConvert() = delete;
 };
 
 class nsIAddonInterposition;
@@ -504,6 +509,9 @@ bool
 SetAddonInterposition(const nsACString& addonId, nsIAddonInterposition* interposition);
 
 bool
+AllowCPOWsInAddon(const nsACString& addonId, bool allow);
+
+bool
 ExtraWarningsForSystemJS();
 
 class ErrorReport {
@@ -584,14 +592,27 @@ void AddGCCallback(xpcGCCallback cb);
 void RemoveGCCallback(xpcGCCallback cb);
 
 inline bool
+AreNonLocalConnectionsDisabled()
+{
+    static int disabledForTest = -1;
+    if (disabledForTest == -1) {
+        char *s = getenv("MOZ_DISABLE_NONLOCAL_CONNECTIONS");
+        if (s) {
+            disabledForTest = *s != '0';
+        } else {
+            disabledForTest = 0;
+        }
+    }
+    return disabledForTest;
+}
+
+inline bool
 IsInAutomation()
 {
     const char* prefName =
       "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer";
-    char *s;
     return mozilla::Preferences::GetBool(prefName) &&
-        (s = getenv("MOZ_DISABLE_NONLOCAL_CONNECTIONS")) &&
-        !!strncmp(s, "0", 1);
+        AreNonLocalConnectionsDisabled();
 }
 
 } // namespace xpc
@@ -604,6 +625,11 @@ namespace dom {
  * chrome or XBL scopes should be exposed.
  */
 bool IsChromeOrXBL(JSContext* cx, JSObject* /* unused */);
+
+/**
+ * Same as IsChromeOrXBL but can be used in worker threads as well.
+ */
+bool ThreadSafeIsChromeOrXBL(JSContext* cx, JSObject* obj);
 
 } // namespace dom
 } // namespace mozilla

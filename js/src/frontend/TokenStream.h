@@ -175,24 +175,6 @@ struct Token
     ModifierException modifierException; // Exception for this modifier
 #endif
 
-    // This constructor is necessary only for MSVC 2013 and how it compiles the
-    // initialization of TokenStream::tokens.  That field is initialized as
-    // tokens() in the constructor init-list.  This *should* zero the entire
-    // array, then (because Token has a non-trivial constructor, because
-    // TokenPos has a user-provided constructor) call the implicit Token
-    // constructor on each element, which would call the TokenPos constructor
-    // for Token::pos and do nothing.  (All of which is equivalent to just
-    // zeroing TokenStream::tokens.)  But MSVC 2013 (2010/2012 don't have this
-    // bug) doesn't zero out each element, so we need this extra constructor to
-    // make it do the right thing.  (Token is used primarily by reference or
-    // pointer, and it's only initialized a very few places, so having a
-    // user-defined constructor won't hurt perf.)  See also bug 920318.
-    Token()
-      : pos(0, 0)
-    {
-        MOZ_MAKE_MEM_UNDEFINED(&type, sizeof(type));
-    }
-
     // Mutators
 
     void setName(PropertyName* name) {
@@ -258,8 +240,7 @@ struct Token
 struct CompileError {
     JSErrorReport report;
     char* message;
-    ErrorArgumentsType argumentsType;
-    CompileError() : message(nullptr), argumentsType(ArgumentsAreUnicode) {}
+    CompileError() : message(nullptr) {}
     ~CompileError();
     void throwError(JSContext* cx);
 
@@ -454,16 +435,16 @@ class MOZ_STACK_CLASS TokenStream
 
   public:
     typedef Token::Modifier Modifier;
-    static MOZ_CONSTEXPR_VAR Modifier None = Token::None;
-    static MOZ_CONSTEXPR_VAR Modifier Operand = Token::Operand;
-    static MOZ_CONSTEXPR_VAR Modifier KeywordIsName = Token::KeywordIsName;
-    static MOZ_CONSTEXPR_VAR Modifier TemplateTail = Token::TemplateTail;
+    static constexpr Modifier None = Token::None;
+    static constexpr Modifier Operand = Token::Operand;
+    static constexpr Modifier KeywordIsName = Token::KeywordIsName;
+    static constexpr Modifier TemplateTail = Token::TemplateTail;
 
     typedef Token::ModifierException ModifierException;
-    static MOZ_CONSTEXPR_VAR ModifierException NoException = Token::NoException;
-    static MOZ_CONSTEXPR_VAR ModifierException NoneIsOperand = Token::NoneIsOperand;
-    static MOZ_CONSTEXPR_VAR ModifierException OperandIsNone = Token::OperandIsNone;
-    static MOZ_CONSTEXPR_VAR ModifierException NoneIsKeywordIsName = Token::NoneIsKeywordIsName;
+    static constexpr ModifierException NoException = Token::NoException;
+    static constexpr ModifierException NoneIsOperand = Token::NoneIsOperand;
+    static constexpr ModifierException OperandIsNone = Token::OperandIsNone;
+    static constexpr ModifierException NoneIsKeywordIsName = Token::NoneIsKeywordIsName;
 
     void addModifierException(ModifierException modifierException) {
 #ifdef DEBUG
@@ -1038,10 +1019,6 @@ class MOZ_STACK_CLASS TokenStream
     bool                mutedErrors;
     StrictModeGetter*   strictModeGetter;  // used to test for strict mode
 };
-
-// Steal one JSREPORT_* bit (see jsapi.h) to tell that arguments to the error
-// message have const char16_t* type, not const char*.
-#define JSREPORT_UC 0x100
 
 extern const char*
 TokenKindToDesc(TokenKind tt);

@@ -6,7 +6,7 @@
 
 #include "jit/arm/Architecture-arm.h"
 
-#if !defined(JS_ARM_SIMULATOR) && !defined(__APPLE__)
+#if !defined(JS_SIMULATOR_ARM) && !defined(__APPLE__)
 #include <elf.h>
 #endif
 
@@ -40,7 +40,6 @@
 
 namespace js {
 namespace jit {
-
 
 // Parse the Linux kernel cpuinfo features. This is also used to parse the
 // override features which has some extensions: 'armv7', 'align' and 'hardfp'.
@@ -187,7 +186,7 @@ InitARMFlags()
         return;
 
 #ifdef JS_SIMULATOR_ARM
-    flags = HWCAP_ARMv7 | HWCAP_VFP | HWCAP_VFPv3 | HWCAP_VFPv4 | HWCAP_NEON;
+    flags = HWCAP_ARMv7 | HWCAP_VFP | HWCAP_VFPv3 | HWCAP_VFPv4 | HWCAP_NEON | HWCAP_IDIVA;
 #else
 
 #if defined(__linux__)
@@ -269,6 +268,12 @@ GetARMFlags()
     return armHwCapFlags;
 }
 
+bool HasARMv7()
+{
+    MOZ_ASSERT(armHwCapFlags != HWCAP_UNINITIALIZED);
+    return armHwCapFlags & HWCAP_ARMv7;
+}
+
 bool HasMOVWT()
 {
     MOZ_ASSERT(armHwCapFlags != HWCAP_UNINITIALIZED);
@@ -345,9 +350,13 @@ Registers::FromName(const char* name)
 FloatRegisters::Code
 FloatRegisters::FromName(const char* name)
 {
-    for (size_t i = 0; i < Total; i++) {
-        if (strcmp(GetName(i), name) == 0)
-            return Code(i);
+    for (size_t i = 0; i < TotalSingle; ++i) {
+        if (strcmp(GetSingleName(Encoding(i)), name) == 0)
+            return VFPRegister(i, VFPRegister::Single).code();
+    }
+    for (size_t i = 0; i < TotalDouble; ++i) {
+        if (strcmp(GetDoubleName(Encoding(i)), name) == 0)
+            return VFPRegister(i, VFPRegister::Double).code();
     }
 
     return Invalid;
@@ -357,7 +366,7 @@ FloatRegisterSet
 VFPRegister::ReduceSetForPush(const FloatRegisterSet& s)
 {
     LiveFloatRegisterSet mod;
-    for (FloatRegisterIterator iter(s); iter.more(); iter++) {
+    for (FloatRegisterIterator iter(s); iter.more(); ++iter) {
         if ((*iter).isSingle()) {
             // Add in just this float.
             mod.addUnchecked(*iter);

@@ -13,10 +13,6 @@
 
 #include <string.h>
 
-#if defined(_MSC_VER) && _MSC_VER < 1900
-#define snprintf _snprintf
-#endif
-
 using namespace mozilla;
 
 // The presence of this address is the stack must stop the stack walk. If
@@ -38,14 +34,20 @@ static CriticalAddress gCriticalAddress;
 #include <dlfcn.h>
 #endif
 
-#define MOZ_STACKWALK_SUPPORTS_MACOSX \
-  (defined(XP_DARWIN) && \
-   (defined(__i386) || defined(__ppc__) || defined(HAVE__UNWIND_BACKTRACE)))
+#if (defined(XP_DARWIN) && \
+     (defined(__i386) || defined(__ppc__) || defined(HAVE__UNWIND_BACKTRACE)))
+#define MOZ_STACKWALK_SUPPORTS_MACOSX 1
+#else
+#define MOZ_STACKWALK_SUPPORTS_MACOSX 0
+#endif
 
-#define MOZ_STACKWALK_SUPPORTS_LINUX \
-  (defined(linux) && \
-   ((defined(__GNUC__) && (defined(__i386) || defined(PPC))) || \
-    defined(HAVE__UNWIND_BACKTRACE)))
+#if (defined(linux) && \
+     ((defined(__GNUC__) && (defined(__i386) || defined(PPC))) || \
+      defined(HAVE__UNWIND_BACKTRACE)))
+#define MOZ_STACKWALK_SUPPORTS_LINUX 1
+#else
+#define MOZ_STACKWALK_SUPPORTS_LINUX 0
+#endif
 
 #if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1)
 #define HAVE___LIBC_STACK_END 1
@@ -92,25 +94,6 @@ stack_callback(uint32_t aFrameNumber, void* aPc, void* aSp, void* aClosure)
   }
   gCriticalAddress.mAddr = aPc;
 }
-
-#if defined(MOZ_WIDGET_COCOA) && defined(DEBUG)
-#define MAC_OS_X_VERSION_10_7_HEX 0x00001070
-
-static int32_t OSXVersion()
-{
-  static int32_t gOSXVersion = 0x0;
-  if (gOSXVersion == 0x0) {
-    OSErr err = ::Gestalt(gestaltSystemVersion, (SInt32*)&gOSXVersion);
-    MOZ_ASSERT(err == noErr);
-  }
-  return gOSXVersion;
-}
-
-static bool OnLionOrLater()
-{
-  return (OSXVersion() >= MAC_OS_X_VERSION_10_7_HEX);
-}
-#endif
 
 static void
 my_malloc_logger(uint32_t aType,
@@ -168,12 +151,6 @@ StackWalkInitCriticalAddress()
   // restore the previous malloc logger
   malloc_logger = old_malloc_logger;
 
-  // On Lion, malloc is no longer called from pthread_cond_*wait*. This prevents
-  // us from finding the address, but that is fine, since with no call to malloc
-  // there is no critical address.
-#ifdef MOZ_WIDGET_COCOA
-  MOZ_ASSERT(OnLionOrLater() || gCriticalAddress.mAddr != nullptr);
-#endif
   MOZ_ASSERT(r == ETIMEDOUT);
   r = pthread_mutex_unlock(&mutex);
   MOZ_ASSERT(r == 0);
@@ -889,8 +866,9 @@ void DemangleSymbol(const char* aSymbol,
 #endif // MOZ_DEMANGLE_SYMBOLS
 }
 
-#define X86_OR_PPC (defined(__i386) || defined(PPC) || defined(__ppc__))
-#if X86_OR_PPC && (MOZ_STACKWALK_SUPPORTS_MACOSX || MOZ_STACKWALK_SUPPORTS_LINUX) // i386 or PPC Linux or Mac stackwalking code
+// {x86, ppc} x {Linux, Mac} stackwalking code.
+#if ((defined(__i386) || defined(PPC) || defined(__ppc__)) && \
+     (MOZ_STACKWALK_SUPPORTS_MACOSX || MOZ_STACKWALK_SUPPORTS_LINUX))
 
 MFBT_API bool
 MozStackWalk(MozWalkStackCallback aCallback, uint32_t aSkipFrames,

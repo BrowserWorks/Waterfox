@@ -102,7 +102,7 @@ BEGIN_TEST(testSavedStacks_RangeBasedForLoops)
 
     JS::Rooted<js::SavedFrame*> rf(cx, savedFrame);
     for (JS::Handle<js::SavedFrame*> frame : js::SavedFrame::RootedRange(cx, rf)) {
-        JS_GC(cx->runtime());
+        JS_GC(cx);
         CHECK(frame == rf);
         rf = rf->getParent();
     }
@@ -139,7 +139,7 @@ BEGIN_TEST(testSavedStacks_selfHostedFrames)
     JS::Rooted<js::SavedFrame*> savedFrame(cx, &obj->as<js::SavedFrame>());
 
     JS::Rooted<js::SavedFrame*> selfHostedFrame(cx, savedFrame->getParent());
-    CHECK(selfHostedFrame->isSelfHosted());
+    CHECK(selfHostedFrame->isSelfHosted(cx));
 
     // Source
     JS::RootedString str(cx);

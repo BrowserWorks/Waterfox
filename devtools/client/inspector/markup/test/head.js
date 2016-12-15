@@ -113,7 +113,7 @@ function* getFirstChildNodeValue(selector, testActor) {
  */
 function waitForChildrenUpdated({markup}) {
   info("Waiting for queued children updates to be handled");
-  let def = promise.defer();
+  let def = defer();
   markup._waitForChildren().then(() => {
     executeSoon(def.resolve);
   });
@@ -272,18 +272,6 @@ function searchUsingSelectorSearch(selector, inspector) {
 }
 
 /**
- * This shouldn't be used in the tests, but is useful when writing new tests or
- * debugging existing tests in order to introduce delays in the test steps
- * @param {Number} ms The time to wait
- * @return A promise that resolves when the time is passed
- */
-function wait(ms) {
-  let def = promise.defer();
-  setTimeout(def.resolve, ms);
-  return def.promise;
-}
-
-/**
  * Check to see if the inspector menu items for editing are disabled.
  * Things like Edit As HTML, Delete Node, etc.
  * @param {NodeFront} nodeFront
@@ -294,31 +282,25 @@ function wait(ms) {
  */
 var isEditingMenuDisabled = Task.async(
 function* (nodeFront, inspector, assert = true) {
-  let doc = inspector.panelDoc;
-  let deleteMenuItem = doc.getElementById("node-menu-delete");
-  let editHTMLMenuItem = doc.getElementById("node-menu-edithtml");
-  let pasteHTMLMenuItem = doc.getElementById("node-menu-pasteouterhtml");
-
   // To ensure clipboard contains something to paste.
   clipboard.set("<p>test</p>", "html");
 
-  let menu = inspector.nodemenu;
   yield selectNode(nodeFront, inspector);
-  yield reopenMenu(menu);
+  let allMenuItems = openContextMenuAndGetAllItems(inspector);
 
-  let isDeleteMenuDisabled = deleteMenuItem.hasAttribute("disabled");
-  let isEditHTMLMenuDisabled = editHTMLMenuItem.hasAttribute("disabled");
-  let isPasteHTMLMenuDisabled = pasteHTMLMenuItem.hasAttribute("disabled");
+  let deleteMenuItem = allMenuItems.find(i => i.id === "node-menu-delete");
+  let editHTMLMenuItem = allMenuItems.find(i => i.id === "node-menu-edithtml");
+  let pasteHTMLMenuItem = allMenuItems.find(i => i.id === "node-menu-pasteouterhtml");
 
   if (assert) {
-    ok(isDeleteMenuDisabled, "Delete menu item is disabled");
-    ok(isEditHTMLMenuDisabled, "Edit HTML menu item is disabled");
-    ok(isPasteHTMLMenuDisabled, "Paste HTML menu item is disabled");
+    ok(deleteMenuItem.disabled, "Delete menu item is disabled");
+    ok(editHTMLMenuItem.disabled, "Edit HTML menu item is disabled");
+    ok(pasteHTMLMenuItem.disabled, "Paste HTML menu item is disabled");
   }
 
-  return isDeleteMenuDisabled &&
-         isEditHTMLMenuDisabled &&
-         isPasteHTMLMenuDisabled;
+  return deleteMenuItem.disabled &&
+         editHTMLMenuItem.disabled &&
+         pasteHTMLMenuItem.disabled;
 });
 
 /**
@@ -332,50 +314,25 @@ function* (nodeFront, inspector, assert = true) {
  */
 var isEditingMenuEnabled = Task.async(
 function* (nodeFront, inspector, assert = true) {
-  let doc = inspector.panelDoc;
-  let deleteMenuItem = doc.getElementById("node-menu-delete");
-  let editHTMLMenuItem = doc.getElementById("node-menu-edithtml");
-  let pasteHTMLMenuItem = doc.getElementById("node-menu-pasteouterhtml");
-
   // To ensure clipboard contains something to paste.
   clipboard.set("<p>test</p>", "html");
 
-  let menu = inspector.nodemenu;
   yield selectNode(nodeFront, inspector);
-  yield reopenMenu(menu);
+  let allMenuItems = openContextMenuAndGetAllItems(inspector);
 
-  let isDeleteMenuDisabled = deleteMenuItem.hasAttribute("disabled");
-  let isEditHTMLMenuDisabled = editHTMLMenuItem.hasAttribute("disabled");
-  let isPasteHTMLMenuDisabled = pasteHTMLMenuItem.hasAttribute("disabled");
+  let deleteMenuItem = allMenuItems.find(i => i.id === "node-menu-delete");
+  let editHTMLMenuItem = allMenuItems.find(i => i.id === "node-menu-edithtml");
+  let pasteHTMLMenuItem = allMenuItems.find(i => i.id === "node-menu-pasteouterhtml");
 
   if (assert) {
-    ok(!isDeleteMenuDisabled, "Delete menu item is enabled");
-    ok(!isEditHTMLMenuDisabled, "Edit HTML menu item is enabled");
-    ok(!isPasteHTMLMenuDisabled, "Paste HTML menu item is enabled");
+    ok(!deleteMenuItem.disabled, "Delete menu item is enabled");
+    ok(!editHTMLMenuItem.disabled, "Edit HTML menu item is enabled");
+    ok(!pasteHTMLMenuItem.disabled, "Paste HTML menu item is enabled");
   }
 
-  return !isDeleteMenuDisabled &&
-         !isEditHTMLMenuDisabled &&
-         !isPasteHTMLMenuDisabled;
-});
-
-/**
- * Open a menu (closing it first if necessary).
- * @param {DOMNode} menu A menu that implements hidePopup/openPopup
- * @return a promise that resolves once the menu is opened.
- */
-var reopenMenu = Task.async(function* (menu) {
-  // First close it is if it is already opened.
-  if (menu.state == "closing" || menu.state == "open") {
-    let popuphidden = once(menu, "popuphidden", true);
-    menu.hidePopup();
-    yield popuphidden;
-  }
-
-  // Then open it and return once
-  let popupshown = once(menu, "popupshown", true);
-  menu.openPopup();
-  yield popupshown;
+  return !deleteMenuItem.disabled &&
+         !editHTMLMenuItem.disabled &&
+         !pasteHTMLMenuItem.disabled;
 });
 
 /**
@@ -383,7 +340,7 @@ var reopenMenu = Task.async(function* (menu) {
  * can be used with yield.
  */
 function promiseNextTick() {
-  let deferred = promise.defer();
+  let deferred = defer();
   executeSoon(deferred.resolve);
   return deferred.promise;
 }
@@ -420,13 +377,16 @@ function collapseSelectionAndShiftTab(inspector) {
  */
 function checkFocusedAttribute(attrName, editMode) {
   let focusedAttr = Services.focus.focusedElement;
-  is(focusedAttr ? focusedAttr.parentNode.dataset.attr : undefined,
-     attrName, attrName + " attribute editor is currently focused.");
-  is(focusedAttr ? focusedAttr.tagName : undefined,
-     editMode ? "input" : "span",
-     editMode
-     ? attrName + " is in edit mode"
-     : attrName + " is not in edit mode");
+  ok(focusedAttr, "Has a focused element");
+
+  let dataAttr = focusedAttr.parentNode.dataset.attr;
+  is(dataAttr, attrName, attrName + " attribute editor is currently focused.");
+  if (editMode) {
+    // Using a multiline editor for attributes, the focused element should be a textarea.
+    is(focusedAttr.tagName, "textarea", attrName + "is in edit mode");
+  } else {
+    is(focusedAttr.tagName, "span", attrName + "is not in edit mode");
+  }
 }
 
 /**
@@ -479,7 +439,7 @@ function createTestHTTPServer() {
   let server = new HttpServer();
 
   registerCleanupFunction(function* cleanup() {
-    let destroyed = promise.defer();
+    let destroyed = defer();
     server.stop(() => {
       destroyed.resolve();
     });
@@ -488,20 +448,6 @@ function createTestHTTPServer() {
 
   server.start(-1);
   return server;
-}
-
-/**
- * A helper that simulates a contextmenu event on the given chrome DOM element.
- */
-function contextMenuClick(element) {
-  let evt = element.ownerDocument.createEvent("MouseEvents");
-  let buttonRight = 2;
-
-  evt.initMouseEvent("contextmenu", true, true,
-    element.ownerDocument.defaultView, 1, 0, 0, 0, 0, false, false, false,
-    false, buttonRight, null);
-
-  element.dispatchEvent(evt);
 }
 
 /**
@@ -628,6 +574,32 @@ function* simulateNodeDrop(inspector, selector) {
 function* simulateNodeDragAndDrop(inspector, selector, xOffset, yOffset) {
   yield simulateNodeDrag(inspector, selector, xOffset, yOffset);
   yield simulateNodeDrop(inspector, selector);
+}
+
+/**
+ * Waits until the element has not scrolled for 30 consecutive frames.
+ */
+function* waitForScrollStop(doc) {
+  let el = doc.documentElement;
+  let win = doc.defaultView;
+  let lastScrollTop = el.scrollTop;
+  let stopFrameCount = 0;
+  while (stopFrameCount < 30) {
+    // Wait for a frame.
+    yield new Promise(resolve => win.requestAnimationFrame(resolve));
+
+    // Check if the element has scrolled.
+    if (lastScrollTop == el.scrollTop) {
+      // No scrolling since the last frame.
+      stopFrameCount++;
+    } else {
+      // The element has scrolled. Reset the frame counter.
+      stopFrameCount = 0;
+      lastScrollTop = el.scrollTop;
+    }
+  }
+
+  return lastScrollTop;
 }
 
 /**

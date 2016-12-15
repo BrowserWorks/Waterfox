@@ -11,7 +11,6 @@
 #include "mozilla/Preferences.h"
 #include "MurmurHash3.h"
 #include "nsPrintfCString.h"
-#include "nsTArray.h"
 #include <string>
 #include <vector>
 #include "WebGLContext.h"
@@ -43,6 +42,12 @@ ChooseValidatorCompileOptions(const ShBuiltInResources& resources,
     if (resources.MaxExpressionComplexity > 0) {
         options |= SH_LIMIT_EXPRESSION_COMPLEXITY;
     }
+
+    // Sampler arrays indexed with non-constant expressions are forbidden in
+    // GLSL 1.30 and later.
+    // ESSL 3 requires constant-integral-expressions for this as well.
+    // Just do it universally.
+    options |= SH_UNROLL_FOR_LOOP_WITH_SAMPLER_ARRAY_INDEX;
 
     if (gfxPrefs::WebGLAllANGLEOptions()) {
         return options |
@@ -79,11 +84,6 @@ ChooseValidatorCompileOptions(const ShBuiltInResources& resources,
             options |= SH_EMULATE_BUILT_IN_FUNCTIONS;
         }
 
-        // Work around bug 636926
-        if (gl->Vendor() == gl::GLVendor::NVIDIA) {
-            options |= SH_UNROLL_FOR_LOOP_WITH_SAMPLER_ARRAY_INDEX;
-        }
-
         // Work around that Mac drivers handle struct scopes incorrectly.
         options |= SH_REGENERATE_STRUCT_NAMES;
     }
@@ -117,7 +117,7 @@ ShaderOutput(gl::GLContext* gl)
         case 440: return SH_GLSL_440_CORE_OUTPUT;
         case 450: return SH_GLSL_450_CORE_OUTPUT;
         default:
-            MOZ_CRASH("Unexpected GLSL version.");
+            MOZ_CRASH("GFX: Unexpected GLSL version.");
         }
     }
 
@@ -130,13 +130,8 @@ WebGLContext::CreateShaderValidator(GLenum shaderType) const
     if (mBypassShaderValidation)
         return nullptr;
 
-    ShShaderSpec spec = IsWebGL2() ? SH_WEBGL2_SPEC : SH_WEBGL_SPEC;
-    ShShaderOutput outputLanguage = gl->IsGLES() ? SH_ESSL_OUTPUT
-                                                 : SH_GLSL_COMPATIBILITY_OUTPUT;
-
-    // If we're using WebGL2 we want a more specific version of GLSL
-    if (IsWebGL2())
-        outputLanguage = ShaderOutput(gl);
+    const auto spec = (IsWebGL2() ? SH_WEBGL2_SPEC : SH_WEBGL_SPEC);
+    const auto outputLanguage = ShaderOutput(gl);
 
     ShBuiltInResources resources;
     memset(&resources, 0, sizeof(resources));
@@ -254,7 +249,8 @@ ShaderValidator::CanLinkTo(const ShaderValidator* prev, nsCString* const out_log
         return false;
     }
 
-    if (ShGetShaderVersion(prev->mHandle) != ShGetShaderVersion(mHandle)) {
+    const auto shaderVersion = ShGetShaderVersion(mHandle);
+    if (ShGetShaderVersion(prev->mHandle) != shaderVersion) {
         nsPrintfCString error("Vertex shader version %d does not match"
                               " fragment shader version %d.",
                               ShGetShaderVersion(prev->mHandle),
@@ -289,67 +285,110 @@ ShaderValidator::CanLinkTo(const ShaderValidator* prev, nsCString* const out_log
             }
         }
     }
+
+    const auto& vertVaryings = ShGetVaryings(prev->mHandle);
+    const auto& fragVaryings = ShGetVaryings(mHandle);
+    if (!vertVaryings || !fragVaryings) {
+        nsPrintfCString error("Could not create varying list.");
+        *out_log = error;
+        return false;
+    }
+
     {
-        const std::vector<sh::Varying>* vertPtr = ShGetVaryings(prev->mHandle);
-        const std::vector<sh::Varying>* fragPtr = ShGetVaryings(mHandle);
-        if (!vertPtr || !fragPtr) {
-            nsPrintfCString error("Could not create varying list.");
-            *out_log = error;
-            return false;
-        }
+        std::vector<sh::ShaderVariable> staticUseVaryingList;
 
-        nsTArray<ShVariableInfo> staticUseVaryingList;
-
-        for (auto itrFrag = fragPtr->begin(); itrFrag != fragPtr->end(); ++itrFrag) {
-            const ShVariableInfo varInfo = { itrFrag->type,
-                                             (int)itrFrag->elementCount() };
-
+        for (const auto& fragVarying : *fragVaryings) {
             static const char prefix[] = "gl_";
-            if (StartsWith(itrFrag->name, prefix)) {
-                if (itrFrag->staticUse)
-                    staticUseVaryingList.AppendElement(varInfo);
-
+            if (StartsWith(fragVarying.name, prefix)) {
+                if (fragVarying.staticUse) {
+                    staticUseVaryingList.push_back(fragVarying);
+                }
                 continue;
             }
 
             bool definedInVertShader = false;
             bool staticVertUse = false;
 
-            for (auto itrVert = vertPtr->begin(); itrVert != vertPtr->end(); ++itrVert) {
-                if (itrVert->name != itrFrag->name)
+            for (const auto& vertVarying : *vertVaryings) {
+                if (vertVarying.name != fragVarying.name)
                     continue;
 
-                if (!itrVert->isSameVaryingAtLinkTime(*itrFrag)) {
+                if (!vertVarying.isSameVaryingAtLinkTime(fragVarying, shaderVersion)) {
                     nsPrintfCString error("Varying `%s`is not linkable between"
                                           " attached shaders.",
-                                          itrFrag->name.c_str());
+                                          fragVarying.name.c_str());
                     *out_log = error;
                     return false;
                 }
 
                 definedInVertShader = true;
-                staticVertUse = itrVert->staticUse;
+                staticVertUse = vertVarying.staticUse;
                 break;
             }
 
-            if (!definedInVertShader && itrFrag->staticUse) {
+            if (!definedInVertShader && fragVarying.staticUse) {
                 nsPrintfCString error("Varying `%s` has static-use in the frag"
                                       " shader, but is undeclared in the vert"
-                                      " shader.", itrFrag->name.c_str());
+                                      " shader.", fragVarying.name.c_str());
                 *out_log = error;
                 return false;
             }
 
-            if (staticVertUse && itrFrag->staticUse)
-                staticUseVaryingList.AppendElement(varInfo);
+            if (staticVertUse && fragVarying.staticUse) {
+                staticUseVaryingList.push_back(fragVarying);
+            }
         }
 
         if (!ShCheckVariablesWithinPackingLimits(mMaxVaryingVectors,
-                                                 staticUseVaryingList.Elements(),
-                                                 staticUseVaryingList.Length()))
+                                                 staticUseVaryingList))
         {
             *out_log = "Statically used varyings do not fit within packing limits. (see"
                        " GLSL ES Specification 1.0.17, p111)";
+            return false;
+        }
+    }
+
+    if (shaderVersion == 100) {
+        // Enforce ESSL1 invariant linking rules.
+        bool isInvariant_Position = false;
+        bool isInvariant_PointSize = false;
+        bool isInvariant_FragCoord = false;
+        bool isInvariant_PointCoord = false;
+
+        for (const auto& varying : *vertVaryings) {
+            if (varying.name == "gl_Position") {
+                isInvariant_Position = varying.isInvariant;
+            } else if (varying.name == "gl_PointSize") {
+                isInvariant_PointSize = varying.isInvariant;
+            }
+        }
+
+        for (const auto& varying : *fragVaryings) {
+            if (varying.name == "gl_FragCoord") {
+                isInvariant_FragCoord = varying.isInvariant;
+            } else if (varying.name == "gl_PointCoord") {
+                isInvariant_PointCoord = varying.isInvariant;
+            }
+        }
+
+        ////
+
+        const auto fnCanBuiltInsLink = [](bool vertIsInvariant, bool fragIsInvariant) {
+            if (vertIsInvariant)
+                return true;
+
+            return !fragIsInvariant;
+        };
+
+        if (!fnCanBuiltInsLink(isInvariant_Position, isInvariant_FragCoord)) {
+            *out_log = "gl_Position must be invariant if gl_FragCoord is. (see GLSL ES"
+                       " Specification 1.0.17, p39)";
+            return false;
+        }
+
+        if (!fnCanBuiltInsLink(isInvariant_PointSize, isInvariant_PointCoord)) {
+            *out_log = "gl_PointSize must be invariant if gl_PointCoord is. (see GLSL ES"
+                       " Specification 1.0.17, p39)";
             return false;
         }
     }
@@ -392,21 +431,6 @@ ShaderValidator::FindAttribUserNameByMappedName(const std::string& mappedName,
     for (auto itr = attribs.begin(); itr != attribs.end(); ++itr) {
         if (itr->mappedName == mappedName) {
             *out_userName = &(itr->name);
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool
-ShaderValidator::FindActiveOutputMappedNameByUserName(const std::string& userName,
-                                                      const std::string** const out_mappedName) const
-{
-    const std::vector<sh::OutputVariable>& varibles = *ShGetOutputVariables(mHandle);
-    for (auto itr = varibles.begin(); itr != varibles.end(); ++itr) {
-        if (itr->name == userName) {
-            *out_mappedName = &(itr->mappedName);
             return true;
         }
     }
@@ -536,6 +560,19 @@ ShaderValidator::FindUniformBlockByMappedName(const std::string& mappedName,
     }
 
     return false;
+}
+
+void
+ShaderValidator::EnumerateFragOutputs(std::map<nsCString, const nsCString> &out_FragOutputs) const
+{
+    const auto* fragOutputs = ShGetOutputVariables(mHandle);
+
+    if (fragOutputs) {
+        for (const auto& fragOutput : *fragOutputs) {
+            out_FragOutputs.insert({nsCString(fragOutput.name.c_str()),
+                                    nsCString(fragOutput.mappedName.c_str())});
+        }
+    }
 }
 
 } // namespace webgl

@@ -5,6 +5,7 @@
 
 #include "WebGLExtensions.h"
 
+#include "GLContext.h"
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
 #include "WebGLContext.h"
 
@@ -19,7 +20,7 @@ WebGLExtensionDepthTexture::WebGLExtensionDepthTexture(WebGLContext* webgl)
                               GLenum unpackType)
     {
         auto usage = fua->EditUsage(effFormat);
-        usage->isRenderable = true;
+        usage->SetRenderable();
 
         const webgl::PackingInfo pi = {unpackFormat, unpackType};
         const webgl::DriverUnpackInfo dui = {unpackFormat, unpackFormat, unpackType};

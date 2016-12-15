@@ -205,6 +205,27 @@ this.BrowserTestUtils = {
   },
 
   /**
+   * Waits for the selected browser to load in a new window. This
+   * is most useful when you've got a window that might not have
+   * loaded its DOM yet, and where you can't easily use browserLoaded
+   * on gBrowser.selectedBrowser since gBrowser doesn't yet exist.
+   *
+   * @param {win}
+   *        A newly opened window for which we're waiting for the
+   *        first browser load.
+   *
+   * @return {Promise}
+   * @resolves Once the selected browser fires its load event.
+   */
+  firstBrowserLoaded(win) {
+    let mm = win.messageManager;
+    return this.waitForMessage(mm, "browser-test-utils:loadEvent", (msg) => {
+      let selectedBrowser = win.gBrowser.selectedBrowser;
+      return msg.target == selectedBrowser;
+    });
+  },
+
+  /**
    * Waits for the web progress listener associated with this tab to fire a
    * STATE_STOP for the toplevel document.
    *
@@ -407,11 +428,13 @@ this.BrowserTestUtils = {
    *          remote:  A boolean indicating if the window should run
    *                   remote browser tabs or not. If omitted, the window
    *                   will choose the profile default state.
+   *          width: Desired width of window
+   *          height: Desired height of window
    *        }
    * @return {Promise}
    *         Resolves with the new window once it is loaded.
    */
-  openNewBrowserWindow(options={}) {
+  openNewBrowserWindow: Task.async(function*(options={}) {
     let argString = Cc["@mozilla.org/supports-string;1"].
                     createInstance(Ci.nsISupportsString);
     argString.data = "";
@@ -419,6 +442,13 @@ this.BrowserTestUtils = {
 
     if (options.private) {
       features += ",private";
+    }
+
+    if (options.width) {
+      features += ",width=" + options.width;
+    }
+    if (options.height) {
+      features += ",height=" + options.height;
     }
 
     if (options.hasOwnProperty("remote")) {
@@ -433,9 +463,17 @@ this.BrowserTestUtils = {
     // Wait for browser-delayed-startup-finished notification, it indicates
     // that the window has loaded completely and is ready to be used for
     // testing.
-    return TestUtils.topicObserved("browser-delayed-startup-finished",
-                                   subject => subject == win).then(() => win);
-  },
+    let startupPromise =
+      TestUtils.topicObserved("browser-delayed-startup-finished",
+                              subject => subject == win).then(() => win);
+
+    let loadPromise = this.firstBrowserLoaded(win);
+
+    yield startupPromise;
+    yield loadPromise;
+
+    return win;
+  }),
 
   /**
    * Closes a window.

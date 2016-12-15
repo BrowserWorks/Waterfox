@@ -11,6 +11,8 @@
 #ifndef nsCSSProps_h___
 #define nsCSSProps_h___
 
+#include <limits>
+#include <type_traits>
 #include "nsString.h"
 #include "nsCSSProperty.h"
 #include "nsStyleStructFwd.h"
@@ -329,11 +331,49 @@ enum nsStyleAnimType {
   eStyleAnimType_None
 };
 
+namespace mozilla {
+
+// Type trait that determines whether the integral or enum type Type can fit
+// within the integral type Storage without loss.
+template<typename T, typename Storage>
+struct IsEnumFittingWithin
+  : IntegralConstant<
+      bool,
+      std::is_integral<Storage>::value &&
+      std::numeric_limits<typename std::underlying_type<T>::type>::min() >=
+        std::numeric_limits<Storage>::min() &&
+      std::numeric_limits<typename std::underlying_type<T>::type>::max() <=
+        std::numeric_limits<Storage>::max()
+    >
+{};
+
+} // namespace mozilla
+
 class nsCSSProps {
 public:
   typedef mozilla::CSSEnabledState EnabledState;
 
-  struct KTableEntry {
+  struct KTableEntry
+  {
+    // KTableEntry objects can be initialized either with an int16_t value
+    // or a value of an enumeration type that can fit within an int16_t.
+
+    KTableEntry(nsCSSKeyword aKeyword, int16_t aValue)
+      : mKeyword(aKeyword)
+      , mValue(aValue)
+    {
+    }
+
+    template<typename T,
+             typename = typename std::enable_if<std::is_enum<T>::value>::type>
+    KTableEntry(nsCSSKeyword aKeyword, T aValue)
+      : mKeyword(aKeyword)
+      , mValue(static_cast<int16_t>(aValue))
+    {
+      static_assert(mozilla::IsEnumFittingWithin<T, int16_t>::value,
+                    "aValue must be an enum that fits within mValue");
+    }
+
     nsCSSKeyword mKeyword;
     int16_t mValue;
   };
@@ -409,11 +449,29 @@ public:
                           int32_t& aValue);
   // Return the first keyword in |aTable| that has the corresponding value |aValue|.
   // Return |eCSSKeyword_UNKNOWN| if not found.
-  static nsCSSKeyword ValueToKeywordEnum(int32_t aValue, 
+  static nsCSSKeyword ValueToKeywordEnum(int32_t aValue,
                                          const KTableEntry aTable[]);
+  template<typename T,
+           typename = typename std::enable_if<std::is_enum<T>::value>::type>
+  static nsCSSKeyword ValueToKeywordEnum(T aValue,
+                                         const KTableEntry aTable[])
+  {
+    static_assert(mozilla::IsEnumFittingWithin<T, int16_t>::value,
+                  "aValue must be an enum that fits within KTableEntry::mValue");
+    return ValueToKeywordEnum(static_cast<int16_t>(aValue), aTable);
+  }
   // Ditto but as a string, return "" when not found.
   static const nsAFlatCString& ValueToKeyword(int32_t aValue,
                                               const KTableEntry aTable[]);
+  template<typename T,
+           typename = typename std::enable_if<std::is_enum<T>::value>::type>
+  static const nsAFlatCString& ValueToKeyword(T aValue,
+                                              const KTableEntry aTable[])
+  {
+    static_assert(mozilla::IsEnumFittingWithin<T, int16_t>::value,
+                  "aValue must be an enum that fits within KTableEntry::mValue");
+    return ValueToKeyword(static_cast<int16_t>(aValue), aTable);
+  }
 
   static const nsStyleStructID kSIDTable[eCSSProperty_COUNT_no_shorthands];
   static const KTableEntry* const kKeywordTableTable[eCSSProperty_COUNT_no_shorthands];

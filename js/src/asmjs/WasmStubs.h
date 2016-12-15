@@ -19,19 +19,25 @@
 #ifndef wasm_stubs_h
 #define wasm_stubs_h
 
-#include "asmjs/WasmGenerator.h"
+#include "asmjs/WasmTypes.h"
 
 namespace js {
+
+namespace jit { class MacroAssembler; }
+
 namespace wasm {
 
+class FuncExport;
+class FuncImport;
+
 extern Offsets
-GenerateEntry(jit::MacroAssembler& masm, uint32_t target, const Sig& sig, bool usesHeap);
+GenerateEntry(jit::MacroAssembler& masm, const FuncExport& fe, bool usesHeap);
 
 extern ProfilingOffsets
-GenerateInterpExit(jit::MacroAssembler& masm, const Import& import, uint32_t importIndex);
+GenerateInterpExit(jit::MacroAssembler& masm, const FuncImport& fi, uint32_t funcImportIndex);
 
 extern ProfilingOffsets
-GenerateJitExit(jit::MacroAssembler& masm, const Import& import, bool usesHeap);
+GenerateJitExit(jit::MacroAssembler& masm, const FuncImport& fi, bool usesHeap);
 
 extern Offsets
 GenerateJumpTarget(jit::MacroAssembler& masm, JumpTarget target);

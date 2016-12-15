@@ -69,6 +69,7 @@ struct DefaultJitOptions
     bool limitScriptSize;
     bool osr;
     bool wasmTestMode;
+    bool wasmExplicitBoundsChecks;
     uint32_t baselineWarmUpThreshold;
     uint32_t exceptionBailoutThreshold;
     uint32_t frequentBailoutThreshold;
@@ -76,6 +77,11 @@ struct DefaultJitOptions
     uint32_t osrPcMismatchesBeforeRecompile;
     uint32_t smallFunctionMaxBytecodeLength_;
     uint32_t jumpThreshold;
+    uint32_t branchPruningHitCountFactor;
+    uint32_t branchPruningInstFactor;
+    uint32_t branchPruningBlockSpanFactor;
+    uint32_t branchPruningEffectfulInstFactor;
+    uint32_t branchPruningThreshold;
     mozilla::Maybe<uint32_t> forcedDefaultIonWarmUpThreshold;
     mozilla::Maybe<uint32_t> forcedDefaultIonSmallFunctionWarmUpThreshold;
     mozilla::Maybe<IonRegisterAllocator> forcedRegisterAllocator;

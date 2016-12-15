@@ -23,12 +23,12 @@
 #include "nsIDOMClientRect.h"
 #include "nsIDOMWakeLockListener.h"
 #include "nsIPowerManagerService.h"
-#include "nsINetworkLinkService.h"
 #include "nsISpeculativeConnect.h"
 #include "nsIURIFixup.h"
 #include "nsCategoryManagerUtils.h"
 #include "nsCDefaultURIFixup.h"
 #include "nsToolkitCompsCID.h"
+#include "nsGeoPosition.h"
 
 #include "mozilla/Services.h"
 #include "mozilla/Preferences.h"
@@ -42,9 +42,8 @@
 #include <pthread.h>
 #include <wchar.h>
 
-#include "mozilla/dom/ScreenOrientation.h"
 #ifdef MOZ_GAMEPAD
-#include "mozilla/dom/GamepadFunctions.h"
+#include "mozilla/dom/GamepadPlatformService.h"
 #include "mozilla/dom/Gamepad.h"
 #endif
 
@@ -60,7 +59,10 @@
 #endif
 
 #include "ANRReporter.h"
+#include "GeckoNetworkManager.h"
+#include "GeckoScreenOrientation.h"
 #include "PrefsHelper.h"
+#include "ThumbnailHelper.h"
 
 #ifdef DEBUG_ANDROID_EVENTS
 #define EVLOG(args...)  ALOG(args)
@@ -69,50 +71,14 @@
 #endif
 
 using namespace mozilla;
+typedef mozilla::dom::GamepadPlatformService GamepadPlatformService;
 
 nsIGeolocationUpdate *gLocationCallback = nullptr;
-nsAutoPtr<mozilla::AndroidGeckoEvent> gLastSizeChange;
 
 nsAppShell* nsAppShell::sAppShell;
 StaticAutoPtr<Mutex> nsAppShell::sAppShellLock;
 
 NS_IMPL_ISUPPORTS_INHERITED(nsAppShell, nsBaseAppShell, nsIObserver)
-
-class ThumbnailRunnable : public Runnable {
-public:
-    ThumbnailRunnable(nsIAndroidBrowserApp* aBrowserApp, int aTabId,
-                       const nsTArray<nsIntPoint>& aPoints, RefCountedJavaObject* aBuffer):
-        mBrowserApp(aBrowserApp), mPoints(aPoints), mTabId(aTabId), mBuffer(aBuffer) {}
-
-    virtual nsresult Run() {
-        const auto& buffer = jni::Object::Ref::From(mBuffer->GetObject());
-        nsCOMPtr<mozIDOMWindowProxy> domWindow;
-        nsCOMPtr<nsIBrowserTab> tab;
-        mBrowserApp->GetBrowserTab(mTabId, getter_AddRefs(tab));
-        if (!tab) {
-            widget::ThumbnailHelper::SendThumbnail(buffer, mTabId, false, false);
-            return NS_ERROR_FAILURE;
-        }
-
-        tab->GetWindow(getter_AddRefs(domWindow));
-        if (!domWindow) {
-            widget::ThumbnailHelper::SendThumbnail(buffer, mTabId, false, false);
-            return NS_ERROR_FAILURE;
-        }
-
-        NS_ASSERTION(mPoints.Length() == 1, "Thumbnail event does not have enough coordinates");
-
-        bool shouldStore = true;
-        nsresult rv = AndroidBridge::Bridge()->CaptureThumbnail(domWindow, mPoints[0].x, mPoints[0].y, mTabId, buffer, shouldStore);
-        widget::ThumbnailHelper::SendThumbnail(buffer, mTabId, NS_SUCCEEDED(rv), shouldStore);
-        return rv;
-    }
-private:
-    nsCOMPtr<nsIAndroidBrowserApp> mBrowserApp;
-    nsTArray<nsIntPoint> mPoints;
-    int mTabId;
-    RefPtr<RefCountedJavaObject> mBuffer;
-};
 
 class WakeLockListener final : public nsIDOMMozWakeLockListener {
 private:
@@ -122,7 +88,7 @@ public:
   NS_DECL_ISUPPORTS;
 
   nsresult Callback(const nsAString& topic, const nsAString& state) override {
-    widget::GeckoAppShell::NotifyWakeLockChanged(topic, state);
+    java::GeckoAppShell::NotifyWakeLockChanged(topic, state);
     return NS_OK;
   }
 };
@@ -131,35 +97,14 @@ NS_IMPL_ISUPPORTS(WakeLockListener, nsIDOMMozWakeLockListener)
 nsCOMPtr<nsIPowerManagerService> sPowerManagerService = nullptr;
 StaticRefPtr<WakeLockListener> sWakeLockListener;
 
-namespace {
-
-already_AddRefed<nsIURI>
-ResolveURI(const nsCString& uriStr)
-{
-    nsCOMPtr<nsIIOService> ioServ = do_GetIOService();
-    nsCOMPtr<nsIURI> uri;
-
-    if (NS_SUCCEEDED(ioServ->NewURI(uriStr, nullptr,
-                                    nullptr, getter_AddRefs(uri)))) {
-        return uri.forget();
-    }
-
-    nsCOMPtr<nsIURIFixup> fixup = do_GetService(NS_URIFIXUP_CONTRACTID);
-    if (fixup && NS_SUCCEEDED(
-            fixup->CreateFixupURI(uriStr, 0, nullptr, getter_AddRefs(uri)))) {
-        return uri.forget();
-    }
-    return nullptr;
-}
-
-} // namespace
-
 
 class GeckoThreadSupport final
-    : public widget::GeckoThread::Natives<GeckoThreadSupport>
+    : public java::GeckoThread::Natives<GeckoThreadSupport>
     , public UsesGeckoThreadProxy
 {
-    static uint32_t sPauseCount;
+    // When this number goes above 0, the app is paused. When less than or
+    // equal to zero, the app is resumed.
+    static int32_t sPauseCount;
 
 public:
     template<typename Functor>
@@ -174,7 +119,7 @@ public:
         return UsesGeckoThreadProxy::OnNativeCall(aCall);
     }
 
-    static void SpeculativeConnect(jni::String::Param uriStr)
+    static void SpeculativeConnect(jni::String::Param aUriStr)
     {
         if (!NS_IsMainThread()) {
             // We will be on the main thread if the call was queued on the Java
@@ -190,7 +135,7 @@ public:
             return;
         }
 
-        nsCOMPtr<nsIURI> uri = ResolveURI(uriStr->ToCString());
+        nsCOMPtr<nsIURI> uri = nsAppShell::ResolveURI(aUriStr->ToCString());
         if (!uri) {
             return;
         }
@@ -209,8 +154,10 @@ public:
     {
         MOZ_ASSERT(NS_IsMainThread());
 
-        if ((++sPauseCount) > 1) {
-            // Already paused.
+        sPauseCount++;
+        // If sPauseCount is now 1, we just crossed the threshold from "resumed"
+        // "paused". so we should notify observers and so on.
+        if (sPauseCount != 1) {
             return;
         }
 
@@ -241,8 +188,10 @@ public:
     {
         MOZ_ASSERT(NS_IsMainThread());
 
-        if (!sPauseCount || (--sPauseCount) > 0) {
-            // Still paused.
+        sPauseCount--;
+        // If sPauseCount is now 0, we just crossed the threshold from "paused"
+        // to "resumed", so we should notify observers and so on.
+        if (sPauseCount != 0) {
             return;
         }
 
@@ -272,11 +221,11 @@ public:
     }
 };
 
-uint32_t GeckoThreadSupport::sPauseCount;
+int32_t GeckoThreadSupport::sPauseCount;
 
 
 class GeckoAppShellSupport final
-    : public widget::GeckoAppShell::Natives<GeckoAppShellSupport>
+    : public java::GeckoAppShell::Natives<GeckoAppShellSupport>
     , public UsesGeckoThreadProxy
 {
 public:
@@ -311,6 +260,79 @@ public:
         obsServ->NotifyObservers(nullptr, aTopic->ToCString().get(),
                                  aData ? aData->ToString().get() : nullptr);
     }
+
+    static void OnSensorChanged(int32_t aType, float aX, float aY, float aZ,
+                                float aW, int32_t aAccuracy, int64_t aTime)
+    {
+        AutoTArray<float, 4> values;
+
+        switch (aType) {
+        // Bug 938035, transfer HAL data for orientation sensor to meet w3c
+        // spec, ex: HAL report alpha=90 means East but alpha=90 means West
+        // in w3c spec
+        case hal::SENSOR_ORIENTATION:
+            values.AppendElement(360.0f - aX);
+            values.AppendElement(-aY);
+            values.AppendElement(-aZ);
+            break;
+
+        case hal::SENSOR_LINEAR_ACCELERATION:
+        case hal::SENSOR_ACCELERATION:
+        case hal::SENSOR_GYROSCOPE:
+        case hal::SENSOR_PROXIMITY:
+            values.AppendElement(aX);
+            values.AppendElement(aY);
+            values.AppendElement(aZ);
+            break;
+
+        case hal::SENSOR_LIGHT:
+            values.AppendElement(aX);
+            break;
+
+        case hal::SENSOR_ROTATION_VECTOR:
+        case hal::SENSOR_GAME_ROTATION_VECTOR:
+            values.AppendElement(aX);
+            values.AppendElement(aY);
+            values.AppendElement(aZ);
+            values.AppendElement(aW);
+            break;
+
+        default:
+            __android_log_print(ANDROID_LOG_ERROR, "Gecko",
+                                "Unknown sensor type %d", aType);
+        }
+
+        hal::SensorData sdata(hal::SensorType(aType), aTime, values,
+                              hal::SensorAccuracyType(aAccuracy));
+        hal::NotifySensorChange(sdata);
+    }
+
+    static void OnLocationChanged(double aLatitude, double aLongitude,
+                                  double aAltitude, float aAccuracy,
+                                  float aBearing, float aSpeed, int64_t aTime)
+    {
+        if (!gLocationCallback) {
+            return;
+        }
+
+        RefPtr<nsIDOMGeoPosition> geoPosition(
+                new nsGeoPosition(aLatitude, aLongitude, aAltitude, aAccuracy,
+                                  aAccuracy, aBearing, aSpeed, aTime));
+        gLocationCallback->Update(geoPosition);
+    }
+
+    static void NotifyUriVisited(jni::String::Param aUri)
+    {
+#ifdef MOZ_ANDROID_HISTORY
+        nsCOMPtr<IHistory> history = services::GetHistoryService();
+        nsCOMPtr<nsIURI> visitedURI;
+        if (history &&
+            NS_SUCCEEDED(NS_NewURI(getter_AddRefs(visitedURI),
+                                   aUri->ToString()))) {
+            history->NotifyVisited(visitedURI);
+        }
+#endif
+    }
 };
 
 nsAppShell::nsAppShell()
@@ -333,10 +355,13 @@ nsAppShell::nsAppShell()
         GeckoAppShellSupport::Init();
         GeckoThreadSupport::Init();
         mozilla::ANRReporter::Init();
+        mozilla::GeckoNetworkManager::Init();
+        mozilla::GeckoScreenOrientation::Init();
         mozilla::PrefsHelper::Init();
+        mozilla::ThumbnailHelper::Init();
         nsWindow::InitNatives();
 
-        widget::GeckoThread::SetState(widget::GeckoThread::State::JNI_READY());
+        java::GeckoThread::SetState(java::GeckoThread::State::JNI_READY());
     }
 
     sPowerManagerService = do_GetService(POWERMANAGERSERVICE_CONTRACTID);
@@ -438,11 +463,11 @@ nsAppShell::Observe(nsISupports* aSubject,
         if (jni::IsAvailable()) {
             // See if we want to force 16-bit color before doing anything
             if (Preferences::GetBool("gfx.android.rgb16.force", false)) {
-                widget::GeckoAppShell::SetScreenDepthOverride(16);
+                java::GeckoAppShell::SetScreenDepthOverride(16);
             }
 
-            widget::GeckoThread::SetState(
-                    widget::GeckoThread::State::PROFILE_READY());
+            java::GeckoThread::SetState(
+                    java::GeckoThread::State::PROFILE_READY());
 
             // Gecko on Android follows the Android app model where it never
             // stops until it is killed by the system or told explicitly to
@@ -460,16 +485,16 @@ nsAppShell::Observe(nsISupports* aSubject,
     } else if (!strcmp(aTopic, "chrome-document-loaded")) {
         if (jni::IsAvailable()) {
             // Our first window has loaded, assume any JS initialization has run.
-            widget::GeckoThread::CheckAndSetState(
-                    widget::GeckoThread::State::PROFILE_READY(),
-                    widget::GeckoThread::State::RUNNING());
+            java::GeckoThread::CheckAndSetState(
+                    java::GeckoThread::State::PROFILE_READY(),
+                    java::GeckoThread::State::RUNNING());
         }
         removeObserver = true;
 
     } else if (!strcmp(aTopic, "quit-application-granted")) {
         if (jni::IsAvailable()) {
-            widget::GeckoThread::SetState(
-                    widget::GeckoThread::State::EXITING());
+            java::GeckoThread::SetState(
+                    java::GeckoThread::State::EXITING());
 
             // We are told explicitly to quit, perhaps due to
             // nsIAppStartup::Quit being called. We should release our hold on
@@ -583,6 +608,25 @@ nsAppShell::SyncRunEvent(Event&& event,
     }
 }
 
+already_AddRefed<nsIURI>
+nsAppShell::ResolveURI(const nsCString& aUriStr)
+{
+    nsCOMPtr<nsIIOService> ioServ = do_GetIOService();
+    nsCOMPtr<nsIURI> uri;
+
+    if (NS_SUCCEEDED(ioServ->NewURI(aUriStr, nullptr,
+                                    nullptr, getter_AddRefs(uri)))) {
+        return uri.forget();
+    }
+
+    nsCOMPtr<nsIURIFixup> fixup = do_GetService(NS_URIFIXUP_CONTRACTID);
+    if (fixup && NS_SUCCEEDED(
+            fixup->CreateFixupURI(aUriStr, 0, nullptr, getter_AddRefs(uri)))) {
+        return uri.forget();
+    }
+    return nullptr;
+}
+
 class nsAppShell::LegacyGeckoEvent : public Event
 {
     mozilla::UniquePtr<AndroidGeckoEvent> ae;
@@ -622,76 +666,6 @@ nsAppShell::LegacyGeckoEvent::Run()
         nsAppShell::Get()->NativeEventCallback();
         break;
 
-    case AndroidGeckoEvent::SENSOR_EVENT: {
-        AutoTArray<float, 4> values;
-        mozilla::hal::SensorType type = (mozilla::hal::SensorType) curEvent->Flags();
-
-        switch (type) {
-          // Bug 938035, transfer HAL data for orientation sensor to meet w3c
-          // spec, ex: HAL report alpha=90 means East but alpha=90 means West
-          // in w3c spec
-          case hal::SENSOR_ORIENTATION:
-            values.AppendElement(360 -curEvent->X());
-            values.AppendElement(-curEvent->Y());
-            values.AppendElement(-curEvent->Z());
-            break;
-          case hal::SENSOR_LINEAR_ACCELERATION:
-          case hal::SENSOR_ACCELERATION:
-          case hal::SENSOR_GYROSCOPE:
-          case hal::SENSOR_PROXIMITY:
-            values.AppendElement(curEvent->X());
-            values.AppendElement(curEvent->Y());
-            values.AppendElement(curEvent->Z());
-            break;
-
-        case hal::SENSOR_LIGHT:
-            values.AppendElement(curEvent->X());
-            break;
-
-        case hal::SENSOR_ROTATION_VECTOR:
-        case hal::SENSOR_GAME_ROTATION_VECTOR:
-            values.AppendElement(curEvent->X());
-            values.AppendElement(curEvent->Y());
-            values.AppendElement(curEvent->Z());
-            values.AppendElement(curEvent->W());
-            break;
-
-        default:
-            __android_log_print(ANDROID_LOG_ERROR,
-                                "Gecko", "### SENSOR_EVENT fired, but type wasn't known %d",
-                                type);
-        }
-
-        const hal::SensorAccuracyType &accuracy = (hal::SensorAccuracyType) curEvent->MetaState();
-        hal::SensorData sdata(type, curEvent->Time(), values, accuracy);
-        hal::NotifySensorChange(sdata);
-      }
-      break;
-
-    case AndroidGeckoEvent::LOCATION_EVENT: {
-        if (!gLocationCallback)
-            break;
-
-        nsGeoPosition* p = curEvent->GeoPosition();
-        if (p)
-            gLocationCallback->Update(curEvent->GeoPosition());
-        else
-            NS_WARNING("Received location event without geoposition!");
-        break;
-    }
-
-    case AndroidGeckoEvent::THUMBNAIL: {
-        if (!nsAppShell::Get()->mBrowserApp)
-            break;
-
-        int32_t tabId = curEvent->MetaState();
-        const nsTArray<nsIntPoint>& points = curEvent->Points();
-        RefCountedJavaObject* buffer = curEvent->ByteBuffer();
-        RefPtr<ThumbnailRunnable> sr = new ThumbnailRunnable(nsAppShell::Get()->mBrowserApp, tabId, points, buffer);
-        MessageLoop::current()->PostIdleTask(NewRunnableMethod(sr.get(), &ThumbnailRunnable::Run));
-        break;
-    }
-
     case AndroidGeckoEvent::ZOOMEDVIEW: {
         if (!nsAppShell::Get()->mBrowserApp)
             break;
@@ -699,7 +673,7 @@ nsAppShell::LegacyGeckoEvent::Run()
         const nsTArray<nsIntPoint>& points = curEvent->Points();
         float scaleFactor = (float) curEvent->X();
         RefPtr<RefCountedJavaObject> javaBuffer = curEvent->ByteBuffer();
-        const auto& mBuffer = jni::Object::Ref::From(javaBuffer->GetObject());
+        const auto& mBuffer = jni::ByteBuffer::Ref::From(javaBuffer->GetObject());
 
         nsCOMPtr<mozIDOMWindowProxy> domWindow;
         nsCOMPtr<nsIBrowserTab> tab;
@@ -789,90 +763,6 @@ nsAppShell::LegacyGeckoEvent::Run()
         break;
     }
 
-    case AndroidGeckoEvent::LOAD_URI: {
-        nsCOMPtr<nsICommandLineRunner> cmdline
-            (do_CreateInstance("@mozilla.org/toolkit/command-line;1"));
-        if (!cmdline)
-            break;
-
-        if (curEvent->Characters().Length() == 0)
-            break;
-
-        char *uri = ToNewUTF8String(curEvent->Characters());
-        if (!uri)
-            break;
-
-        char *flag = ToNewUTF8String(curEvent->CharactersExtra());
-
-        const char *argv[4] = {
-            "dummyappname",
-            "-url",
-            uri,
-            flag ? flag : ""
-        };
-        nsresult rv = cmdline->Init(4, argv, nullptr, nsICommandLine::STATE_REMOTE_AUTO);
-        if (NS_SUCCEEDED(rv))
-            cmdline->Run();
-        free(uri);
-        if (flag)
-            free(flag);
-        break;
-    }
-
-    case AndroidGeckoEvent::VISITED: {
-#ifdef MOZ_ANDROID_HISTORY
-        nsCOMPtr<IHistory> history = services::GetHistoryService();
-        nsCOMPtr<nsIURI> visitedURI;
-        if (history &&
-            NS_SUCCEEDED(NS_NewURI(getter_AddRefs(visitedURI),
-                                   curEvent->Characters()))) {
-            history->NotifyVisited(visitedURI);
-        }
-#endif
-        break;
-    }
-
-    case AndroidGeckoEvent::NETWORK_CHANGED: {
-        hal::NotifyNetworkChange(hal::NetworkInformation(curEvent->ConnectionType(),
-                                                         curEvent->IsWifi(),
-                                                         curEvent->DHCPGateway()));
-        nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
-        if (os) {
-            os->NotifyObservers(nullptr,
-                                NS_NETWORK_LINK_TYPE_TOPIC,
-                                nsString(curEvent->Characters()).get());
-        }
-        break;
-    }
-
-    case AndroidGeckoEvent::SCREENORIENTATION_CHANGED: {
-        nsresult rv;
-        nsCOMPtr<nsIScreenManager> screenMgr =
-            do_GetService("@mozilla.org/gfx/screenmanager;1", &rv);
-        if (NS_FAILED(rv)) {
-            NS_ERROR("Can't find nsIScreenManager!");
-            break;
-        }
-
-        nsIntRect rect;
-        int32_t colorDepth, pixelDepth;
-        int16_t angle;
-        dom::ScreenOrientationInternal orientation;
-        nsCOMPtr<nsIScreen> screen;
-
-        screenMgr->GetPrimaryScreen(getter_AddRefs(screen));
-        screen->GetRect(&rect.x, &rect.y, &rect.width, &rect.height);
-        screen->GetColorDepth(&colorDepth);
-        screen->GetPixelDepth(&pixelDepth);
-        orientation =
-            static_cast<dom::ScreenOrientationInternal>(curEvent->ScreenOrientation());
-        angle = curEvent->ScreenAngle();
-
-        hal::NotifyScreenConfigurationChange(
-            hal::ScreenConfiguration(rect, orientation, angle, colorDepth, pixelDepth));
-        break;
-    }
-
     case AndroidGeckoEvent::CALL_OBSERVER:
     {
         nsCOMPtr<nsIObserver> observer;
@@ -901,23 +791,10 @@ nsAppShell::LegacyGeckoEvent::Run()
         if (curEvent->MetaState() >= AndroidGeckoEvent::MEMORY_PRESSURE_MEDIUM) {
             nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
             if (os) {
-                os->NotifyObservers(nullptr,
-                                    "memory-pressure",
-                                    MOZ_UTF16("low-memory"));
+                os->NotifyObservers(nullptr, "memory-pressure", u"low-memory");
             }
         }
         break;
-
-    case AndroidGeckoEvent::NETWORK_LINK_CHANGE:
-    {
-        nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
-        if (os) {
-            os->NotifyObservers(nullptr,
-                                NS_NETWORK_LINK_TOPIC,
-                                curEvent->Characters().get());
-        }
-        break;
-    }
 
     case AndroidGeckoEvent::TELEMETRY_HISTOGRAM_ADD:
         // If the extras field is not empty then this is a keyed histogram.
@@ -933,16 +810,20 @@ nsAppShell::LegacyGeckoEvent::Run()
 
     case AndroidGeckoEvent::GAMEPAD_ADDREMOVE: {
 #ifdef MOZ_GAMEPAD
+            RefPtr<GamepadPlatformService> service;
+            service = GamepadPlatformService::GetParentService();
+            if (!service) {
+              break;
+            }
             if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_ADDED) {
-            int svc_id = dom::GamepadFunctions::AddGamepad("android",
-                                                           dom::GamepadMappingType::Standard,
-                                                           dom::kStandardGamepadButtons,
-                                                           dom::kStandardGamepadAxes);
-                widget::GeckoAppShell::GamepadAdded(curEvent->ID(),
-                                                    svc_id);
+              int svc_id = service->AddGamepad("android",
+                                               dom::GamepadMappingType::Standard,
+                                               dom::kStandardGamepadButtons,
+                                               dom::kStandardGamepadAxes);
+              java::GeckoAppShell::GamepadAdded(curEvent->ID(), svc_id);
             } else if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_REMOVED) {
-            dom::GamepadFunctions::RemoveGamepad(curEvent->ID());
-        }
+              service->RemoveGamepad(curEvent->ID());
+            }
 #endif
         break;
     }
@@ -950,19 +831,24 @@ nsAppShell::LegacyGeckoEvent::Run()
     case AndroidGeckoEvent::GAMEPAD_DATA: {
 #ifdef MOZ_GAMEPAD
             int id = curEvent->ID();
+            RefPtr<GamepadPlatformService> service;
+            service = GamepadPlatformService::GetParentService();
+            if (!service) {
+              break;
+            }
             if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_BUTTON) {
-            dom::GamepadFunctions::NewButtonEvent(id, curEvent->GamepadButton(),
-                                     curEvent->GamepadButtonPressed(),
-                                     curEvent->GamepadButtonValue());
+              service->NewButtonEvent(id, curEvent->GamepadButton(),
+                                      curEvent->GamepadButtonPressed(),
+                                      curEvent->GamepadButtonValue());
             } else if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_AXES) {
                 int valid = curEvent->Flags();
                 const nsTArray<float>& values = curEvent->GamepadValues();
                 for (unsigned i = 0; i < values.Length(); i++) {
                     if (valid & (1<<i)) {
-                    dom::GamepadFunctions::NewAxisMoveEvent(id, i, values[i]);
+                      service->NewAxisMoveEvent(id, i, values[i]);
+                    }
                 }
             }
-        }
 #endif
         break;
     }

@@ -35,9 +35,6 @@ Push Information
    the symbolic ref containing ``head_rev`` that should be pulled from
    ``head_repository``.
 
-``revision_hash``
-   The full-length revision string
-
 ``owner``
    Email address indicating the person who made the push.  Note that this
    value may be forged and *must not* be relied on for authentication.
@@ -83,3 +80,7 @@ with other ``mach taskgraph`` commands.
 ``target_tasks``
    (optional) The target set method ``from_parameters`` reads the target set, as
    a list of task labels, from this parameter.
+
+``optimize_target_tasks``
+   (optional; default True) If true, then target tasks are eligible for
+   optimization.

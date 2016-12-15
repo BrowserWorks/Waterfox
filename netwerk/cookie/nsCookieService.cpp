@@ -176,9 +176,9 @@ struct nsListIter
 #ifdef MOZ_LOGGING
 // in order to do logging, the following environment variables need to be set:
 //
-//    set NSPR_LOG_MODULES=cookie:3 -- shows rejected cookies
-//    set NSPR_LOG_MODULES=cookie:4 -- shows accepted and rejected cookies
-//    set NSPR_LOG_FILE=cookie.log
+//    set MOZ_LOG=cookie:3 -- shows rejected cookies
+//    set MOZ_LOG=cookie:4 -- shows accepted and rejected cookies
+//    set MOZ_LOG_FILE=cookie.log
 //
 #include "mozilla/Logging.h"
 #endif
@@ -1929,7 +1929,7 @@ nsCookieService::SetCookieString(nsIURI     *aHostURI,
         do_GetService("@mozilla.org/consoleservice;1");
     if (aConsoleService) {
       aConsoleService->LogStringMessage(
-        MOZ_UTF16("Non-null prompt ignored by nsCookieService."));
+        u"Non-null prompt ignored by nsCookieService.");
     }
   }
   return SetCookieStringCommon(aHostURI, aCookieHeader, nullptr, aChannel,
@@ -1952,7 +1952,7 @@ nsCookieService::SetCookieStringFromHttp(nsIURI     *aHostURI,
         do_GetService("@mozilla.org/consoleservice;1");
     if (aConsoleService) {
       aConsoleService->LogStringMessage(
-        MOZ_UTF16("Non-null prompt ignored by nsCookieService."));
+        u"Non-null prompt ignored by nsCookieService.");
     }
   }
   return SetCookieStringCommon(aHostURI, aCookieHeader, aServerTime, aChannel,
@@ -2134,7 +2134,7 @@ nsCookieService::NotifyThirdParty(nsIURI *aHostURI, bool aIsAccepted, nsIChannel
   } while (0);
 
   // This can fail for a number of reasons, in which kind we fallback to "?"
-  os->NotifyObservers(aHostURI, topic, MOZ_UTF16("?"));
+  os->NotifyObservers(aHostURI, topic, u"?");
 }
 
 // notify observers that the cookie list changed. there are five possible
@@ -2235,7 +2235,7 @@ nsCookieService::RemoveAll()
     }
   }
 
-  NotifyChanged(nullptr, MOZ_UTF16("cleared"));
+  NotifyChanged(nullptr, u"cleared");
   return NS_OK;
 }
 
@@ -2319,8 +2319,8 @@ nsCookieService::Add(const nsACString &aHost,
                                            aOriginAttributes,
                                            aCx,
                                            aArgc,
-                                           MOZ_UTF16("nsICookieManager2.add()"),
-                                           MOZ_UTF16("2"));
+                                           u"nsICookieManager2.add()",
+                                           u"2");
   NS_ENSURE_SUCCESS(rv, rv);
 
   return AddNative(aHost, aPath, aName, aValue, aIsSecure, aIsHttpOnly,
@@ -2426,7 +2426,7 @@ nsCookieService::Remove(const nsACString& aHost, const NeckoOriginAttributes& aA
 
   if (cookie) {
     // Everything's done. Notify observers.
-    NotifyChanged(cookie, MOZ_UTF16("deleted"));
+    NotifyChanged(cookie, u"deleted");
   }
 
   return NS_OK;
@@ -2448,8 +2448,8 @@ nsCookieService::Remove(const nsACString &aHost,
                                            aOriginAttributes,
                                            aCx,
                                            aArgc,
-                                           MOZ_UTF16("nsICookieManager.remove()"),
-                                           MOZ_UTF16(""));
+                                           u"nsICookieManager.remove()",
+                                           u"");
   NS_ENSURE_SUCCESS(rv, rv);
 
   return RemoveNative(aHost, aName, aPath, aBlocked, &attrs);
@@ -3311,6 +3311,11 @@ nsCookieService::SetCookieInternal(nsIURI                        *aHostURI,
     COOKIE_LOGFAILURE(SET_COOKIE, aHostURI, savedCookieHeader, "failed the path tests");
     return newCookie;
   }
+  // magic prefix checks. MUST be run after CheckDomain() and CheckPath()
+  if (!CheckPrefixes(cookieAttributes, isHTTPS)) {
+    COOKIE_LOGFAILURE(SET_COOKIE, aHostURI, savedCookieHeader, "failed the prefix tests");
+    return newCookie;
+  }
 
   // reject cookie if value contains an RFC 6265 disallowed character - see
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1191423
@@ -3462,7 +3467,7 @@ nsCookieService::AddInternal(const nsCookieKey             &aKey,
       if (aCookie->Expiry() <= currentTime) {
         COOKIE_LOGFAILURE(SET_COOKIE, aHostURI, aCookieHeader,
           "previously stored cookie was deleted");
-        NotifyChanged(oldCookie, MOZ_UTF16("deleted"));
+        NotifyChanged(oldCookie, u"deleted");
         return;
       }
 
@@ -3482,7 +3487,7 @@ nsCookieService::AddInternal(const nsCookieKey             &aKey,
     nsCookieEntry *entry = mDBState->hostTable.GetEntry(aKey);
     if (entry && entry->GetCookies().Length() >= mMaxCookiesPerHost) {
       nsListIter iter;
-      FindStaleCookie(entry, currentTime, iter);
+      FindStaleCookie(entry, currentTime, aHostURI, iter);
       oldCookie = iter.Cookie();
 
       // remove the oldest cookie from the domain
@@ -3513,11 +3518,10 @@ nsCookieService::AddInternal(const nsCookieKey             &aKey,
   // Now that list mutations are complete, notify observers. We do it here
   // because observers may themselves attempt to mutate the list.
   if (purgedList) {
-    NotifyChanged(purgedList, MOZ_UTF16("batch-deleted"));
+    NotifyChanged(purgedList, u"batch-deleted");
   }
 
-  NotifyChanged(aCookie, foundCookie ? MOZ_UTF16("changed")
-                                     : MOZ_UTF16("added"));
+  NotifyChanged(aCookie, foundCookie ? u"changed" : u"added");
 }
 
 /******************************************************************************
@@ -4050,6 +4054,53 @@ nsCookieService::CheckPath(nsCookieAttributes &aCookieAttributes,
   return true;
 }
 
+// CheckPrefixes
+//
+// Reject cookies whose name starts with the magic prefixes from
+// https://tools.ietf.org/html/draft-ietf-httpbis-cookie-prefixes-00
+// if they do not meet the criteria required by the prefix.
+//
+// Must not be called until after CheckDomain() and CheckPath() have
+// regularized and validated the nsCookieAttributes values!
+bool
+nsCookieService::CheckPrefixes(nsCookieAttributes &aCookieAttributes,
+                               bool aSecureRequest)
+{
+  static const char kSecure[] = "__Secure-";
+  static const char kHost[]   = "__Host-";
+  static const int kSecureLen = sizeof( kSecure ) - 1;
+  static const int kHostLen   = sizeof( kHost ) - 1;
+
+  bool isSecure = strncmp( aCookieAttributes.name.get(), kSecure, kSecureLen ) == 0;
+  bool isHost   = strncmp( aCookieAttributes.name.get(), kHost, kHostLen ) == 0;
+
+  if ( !isSecure && !isHost ) {
+    // not one of the magic prefixes: carry on
+    return true;
+  }
+
+  if ( !aSecureRequest || !aCookieAttributes.isSecure ) {
+    // the magic prefixes may only be used from a secure request and
+    // the secure attribute must be set on the cookie
+    return false;
+  }
+
+  if ( isHost ) {
+    // The host prefix requires that the path is "/" and that the cookie
+    // had no domain attribute. CheckDomain() and CheckPath() MUST be run
+    // first to make sure invalid attributes are rejected and to regularlize
+    // them. In particular all explicit domain attributes result in a host
+    // that starts with a dot, and if the host doesn't start with a dot it
+    // correctly matches the true host.
+    if ( aCookieAttributes.host[0] == '.' ||
+         !aCookieAttributes.path.EqualsLiteral( "/" )) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool
 nsCookieService::GetExpiry(nsCookieAttributes &aCookieAttributes,
                            int64_t             aServerTime,
@@ -4304,12 +4355,35 @@ nsCookieService::CookieExists(nsICookie2 *aCookie,
 void
 nsCookieService::FindStaleCookie(nsCookieEntry *aEntry,
                                  int64_t aCurrentTime,
+                                 nsIURI* aSource,
                                  nsListIter &aIter)
 {
-  aIter.entry = nullptr;
+  bool requireHostMatch = true;
+  nsAutoCString baseDomain, sourceHost, sourcePath;
+  if (aSource) {
+    GetBaseDomain(aSource, baseDomain, requireHostMatch);
+    aSource->GetAsciiHost(sourceHost);
+    aSource->GetPath(sourcePath);
+  }
 
-  int64_t oldestTime = 0;
   const nsCookieEntry::ArrayType &cookies = aEntry->GetCookies();
+
+  int64_t oldestNonMatchingSessionCookieTime = 0;
+  nsListIter oldestNonMatchingSessionCookie;
+  oldestNonMatchingSessionCookie.entry = nullptr;
+
+  int64_t oldestSessionCookieTime = 0;
+  nsListIter oldestSessionCookie;
+  oldestSessionCookie.entry = nullptr;
+
+  int64_t oldestNonMatchingNonSessionCookieTime = 0;
+  nsListIter oldestNonMatchingNonSessionCookie;
+  oldestNonMatchingNonSessionCookie.entry = nullptr;
+
+  int64_t oldestCookieTime = 0;
+  nsListIter oldestCookie;
+  oldestCookie.entry = nullptr;
+
   for (nsCookieEntry::IndexType i = 0; i < cookies.Length(); ++i) {
     nsCookie *cookie = cookies[i];
 
@@ -4320,12 +4394,69 @@ nsCookieService::FindStaleCookie(nsCookieEntry *aEntry,
       return;
     }
 
-    // Check if we've found the oldest cookie so far.
-    if (!aIter.entry || oldestTime > cookie->LastAccessed()) {
-      oldestTime = cookie->LastAccessed();
-      aIter.entry = aEntry;
-      aIter.index = i;
+    // Update our various records of oldest cookies fitting several restrictions:
+    // * session cookies
+    // * non-session cookies
+    // * cookies with paths and domains that don't match the cookie triggering this purge
+
+    uint32_t cookiePathLen = cookie->Path().Length();
+    if (cookiePathLen > 0 && cookie->Path().Last() == '/')
+      --cookiePathLen;
+
+    // This cookie is a candidate for eviction if we have no information about
+    // the source request, or if it is not a path or domain match against the
+    // source request.
+    bool isPrimaryEvictionCandidate = true;
+    if (aSource) {
+      bool pathMatches = StringBeginsWith(sourcePath, Substring(cookie->Path(), 0, cookiePathLen));
+      bool domainMatches = cookie->RawHost() == sourceHost ||
+          (cookie->IsDomain() && StringEndsWith(sourceHost, cookie->Host()));
+      isPrimaryEvictionCandidate = !pathMatches || !domainMatches;
     }
+
+    int64_t lastAccessed = cookie->LastAccessed();
+    if (cookie->IsSession()) {
+      if (!oldestSessionCookie.entry || oldestSessionCookieTime > lastAccessed) {
+        oldestSessionCookieTime = lastAccessed;
+        oldestSessionCookie.entry = aEntry;
+        oldestSessionCookie.index = i;
+      }
+
+      if (isPrimaryEvictionCandidate &&
+          (!oldestNonMatchingSessionCookie.entry ||
+           oldestNonMatchingSessionCookieTime > lastAccessed)) {
+        oldestNonMatchingSessionCookieTime = lastAccessed;
+        oldestNonMatchingSessionCookie.entry = aEntry;
+        oldestNonMatchingSessionCookie.index = i;
+      }
+    } else if (isPrimaryEvictionCandidate &&
+               (!oldestNonMatchingNonSessionCookie.entry ||
+                oldestNonMatchingNonSessionCookieTime > lastAccessed)) {
+      oldestNonMatchingNonSessionCookieTime = lastAccessed;
+      oldestNonMatchingNonSessionCookie.entry = aEntry;
+      oldestNonMatchingNonSessionCookie.index = i;
+    }
+
+    // Check if we've found the oldest cookie so far.
+    if (!oldestCookie.entry || oldestCookieTime > lastAccessed) {
+      oldestCookieTime = lastAccessed;
+      oldestCookie.entry = aEntry;
+      oldestCookie.index = i;
+    }
+  }
+
+  // Prefer to evict the oldest session cookies with a non-matching path/domain,
+  // followed by the oldest session cookie with a matching path/domain,
+  // followed by the oldest non-session cookie with a non-matching path/domain,
+  // resorting to the oldest non-session cookie with a matching path/domain.
+  if (oldestNonMatchingSessionCookie.entry) {
+    aIter = oldestNonMatchingSessionCookie;
+  } else if (oldestSessionCookie.entry) {
+    aIter = oldestSessionCookie;
+  } else if (oldestNonMatchingNonSessionCookie.entry) {
+    aIter = oldestNonMatchingNonSessionCookie;
+  } else {
+    aIter = oldestCookie;
   }
 }
 
@@ -4388,8 +4519,8 @@ nsCookieService::GetCookiesFromHost(const nsACString     &aHost,
                                   aOriginAttributes,
                                   aCx,
                                   aArgc,
-                                  MOZ_UTF16("nsICookieManager2.getCookiesFromHost()"),
-                                  MOZ_UTF16("2"));
+                                  u"nsICookieManager2.getCookiesFromHost()",
+                                  u"2");
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCookieKey key = nsCookieKey(baseDomain, attrs);

@@ -90,7 +90,6 @@
 #define JSITER_SYMBOLS    0x20  /* also include symbol property keys */
 #define JSITER_SYMBOLSONLY 0x40 /* exclude string property keys */
 
-#define TELEMETRY_DEFINE_GETTER_SETTER_THIS_NULL_UNDEFINED 25
 
 #define REGEXP_FLAGS_SLOT 2
 
@@ -99,5 +98,7 @@
 #define REGEXP_MULTILINE_FLAG   0x04
 #define REGEXP_STICKY_FLAG      0x08
 #define REGEXP_UNICODE_FLAG     0x10
+
+#define MODULE_OBJECT_ENVIRONMENT_SLOT 3
 
 #endif

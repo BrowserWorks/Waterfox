@@ -128,6 +128,30 @@ gfx::IntSize SizeFromBufferDescriptor(const BufferDescriptor& aDescriptor)
   }
 }
 
+Maybe<gfx::IntSize> CbCrSizeFromBufferDescriptor(const BufferDescriptor& aDescriptor)
+{
+  switch (aDescriptor.type()) {
+    case BufferDescriptor::TRGBDescriptor:
+      return Nothing();
+    case BufferDescriptor::TYCbCrDescriptor:
+      return Some(aDescriptor.get_YCbCrDescriptor().cbCrSize());
+    default:
+      MOZ_CRASH("GFX:  CbCrSizeFromBufferDescriptor");
+  }
+}
+
+Maybe<StereoMode> StereoModeFromBufferDescriptor(const BufferDescriptor& aDescriptor)
+{
+  switch (aDescriptor.type()) {
+    case BufferDescriptor::TRGBDescriptor:
+      return Nothing();
+    case BufferDescriptor::TYCbCrDescriptor:
+      return Some(aDescriptor.get_YCbCrDescriptor().stereoMode());
+    default:
+      MOZ_CRASH("GFX:  CbCrSizeFromBufferDescriptor");
+  }
+}
+
 uint8_t* GetYChannel(uint8_t* aBuffer, const YCbCrDescriptor& aDescriptor)
 {
   return aBuffer + aDescriptor.yOffset();
@@ -144,15 +168,27 @@ uint8_t* GetCrChannel(uint8_t* aBuffer, const YCbCrDescriptor& aDescriptor)
 }
 
 already_AddRefed<DataSourceSurface>
-DataSourceSurfaceFromYCbCrDescriptor(uint8_t* aBuffer, const YCbCrDescriptor& aDescriptor)
+DataSourceSurfaceFromYCbCrDescriptor(uint8_t* aBuffer, const YCbCrDescriptor& aDescriptor, gfx::DataSourceSurface* aSurface)
 {
   gfx::IntSize ySize = aDescriptor.ySize();
   gfx::IntSize cbCrSize = aDescriptor.cbCrSize();
   int32_t yStride = ySize.width;
   int32_t cbCrStride = cbCrSize.width;
 
-  RefPtr<DataSourceSurface> result =
-    Factory::CreateDataSourceSurface(ySize, gfx::SurfaceFormat::B8G8R8X8);
+  RefPtr<DataSourceSurface> result;
+  if (aSurface) {
+    MOZ_ASSERT(aSurface->GetSize() == ySize);
+    MOZ_ASSERT(aSurface->GetFormat() == gfx::SurfaceFormat::B8G8R8X8);
+    if (aSurface->GetSize() == ySize &&
+        aSurface->GetFormat() == gfx::SurfaceFormat::B8G8R8X8) {
+      result = aSurface;
+    }
+  }
+
+  if (!result) {
+    result =
+      Factory::CreateDataSourceSurface(ySize, gfx::SurfaceFormat::B8G8R8X8);
+  }
   if (NS_WARN_IF(!result)) {
     return nullptr;
   }

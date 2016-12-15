@@ -15,14 +15,13 @@ JSAPITest* JSAPITest::list;
 
 bool JSAPITest::init()
 {
-    rt = createRuntime();
-    if (!rt)
-        return false;
     cx = createContext();
     if (!cx)
         return false;
+    if (!JS::InitSelfHostedCode(cx))
+        return false;
     JS_BeginRequest(cx);
-    global.init(rt);
+    global.init(cx);
     createGlobal();
     if (!global)
         return false;
@@ -42,12 +41,8 @@ void JSAPITest::uninit()
     }
     if (cx) {
         JS_EndRequest(cx);
-        JS_DestroyContext(cx);
+        destroyContext();
         cx = nullptr;
-    }
-    if (rt) {
-        destroyRuntime();
-        rt = nullptr;
     }
 }
 

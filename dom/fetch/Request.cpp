@@ -16,7 +16,6 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/URL.h"
 #include "mozilla/dom/WorkerPrivate.h"
-#include "mozilla/dom/workers/bindings/URL.h"
 #include "mozilla/unused.h"
 
 #include "WorkerPrivate.h"
@@ -174,7 +173,7 @@ GetRequestURLFromChrome(const nsAString& aInput, nsAString& aRequestURL,
   CopyUTF8toUTF16(spec, aRequestURL);
 }
 
-already_AddRefed<workers::URL>
+already_AddRefed<URL>
 ParseURLFromWorker(const GlobalObject& aGlobal, const nsAString& aInput,
                    ErrorResult& aRv)
 {
@@ -183,8 +182,7 @@ ParseURLFromWorker(const GlobalObject& aGlobal, const nsAString& aInput,
   worker->AssertIsOnWorkerThread();
 
   NS_ConvertUTF8toUTF16 baseURL(worker->GetLocationInfo().mHref);
-  RefPtr<workers::URL> url =
-    workers::URL::Constructor(aGlobal, aInput, baseURL, aRv);
+  RefPtr<URL> url = URL::WorkerConstructor(aGlobal, aInput, baseURL, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     aRv.ThrowTypeError<MSG_INVALID_URL>(aInput);
   }
@@ -195,7 +193,7 @@ void
 GetRequestURLFromWorker(const GlobalObject& aGlobal, const nsAString& aInput,
                         nsAString& aRequestURL, ErrorResult& aRv)
 {
-  RefPtr<workers::URL> url = ParseURLFromWorker(aGlobal, aInput, aRv);
+  RefPtr<URL> url = ParseURLFromWorker(aGlobal, aInput, aRv);
   if (aRv.Failed()) {
     return;
   }
@@ -379,7 +377,7 @@ Request::Constructor(const GlobalObject& aGlobal,
           }
         }
       } else {
-        RefPtr<workers::URL> url = ParseURLFromWorker(aGlobal, referrer, aRv);
+        RefPtr<URL> url = ParseURLFromWorker(aGlobal, referrer, aRv);
         if (NS_WARN_IF(aRv.Failed())) {
           aRv.ThrowTypeError<MSG_INVALID_REFERRER_URL>(referrer);
           return nullptr;
@@ -415,6 +413,23 @@ Request::Constructor(const GlobalObject& aGlobal,
     request->SetReferrerPolicy(aInit.mReferrerPolicy.Value());
   }
 
+  if (NS_IsMainThread()) {
+    nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(global);
+    if (window) {
+      nsCOMPtr<nsIDocument> doc;
+      doc = window->GetExtantDoc();
+      if (doc) {
+        request->SetEnvironmentReferrerPolicy(doc->GetReferrerPolicy());
+      }
+    }
+  } else {
+    workers::WorkerPrivate* worker = workers::GetCurrentThreadWorkerPrivate();
+    if (worker) {
+      worker->AssertIsOnWorkerThread();
+      request->SetEnvironmentReferrerPolicy(worker->GetReferrerPolicy());
+    }
+  }
+
   if (mode != RequestMode::EndGuard_) {
     request->ClearCreatedByFetchEvent();
     request->SetMode(mode);
@@ -428,6 +443,14 @@ Request::Constructor(const GlobalObject& aGlobal,
   RequestCache cache = aInit.mCache.WasPassed() ?
                        aInit.mCache.Value() : fallbackCache;
   if (cache != RequestCache::EndGuard_) {
+    if (cache == RequestCache::Only_if_cached &&
+        request->Mode() != RequestMode::Same_origin) {
+      uint32_t t = static_cast<uint32_t>(request->Mode());
+      NS_ConvertASCIItoUTF16 modeString(RequestModeValues::strings[t].value,
+                                        RequestModeValues::strings[t].length);
+      aRv.ThrowTypeError<MSG_ONLY_IF_CACHED_WITHOUT_SAME_ORIGIN>(modeString);
+      return nullptr;
+    }
     request->ClearCreatedByFetchEvent();
     request->SetCacheMode(cache);
   }

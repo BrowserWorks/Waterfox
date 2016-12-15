@@ -12,6 +12,7 @@
 #include "nsCOMPtr.h"
 #include "nsIFrame.h"
 #include "nsINode.h"
+#include "nsISelectionController.h"
 #include "nsRange.h"
 
 class nsPresContext;
@@ -52,6 +53,8 @@ public:
   nsresult OnQueryCaretRect(WidgetQueryContentEvent* aEvent);
   // eQueryTextRect event handler
   nsresult OnQueryTextRect(WidgetQueryContentEvent* aEvent);
+  // eQueryTextRectArray event handler
+  nsresult OnQueryTextRectArray(WidgetQueryContentEvent* aEvent);
   // eQueryEditorRect event handler
   nsresult OnQueryEditorRect(WidgetQueryContentEvent* aEvent);
   // eQueryContentState event handler
@@ -69,7 +72,14 @@ public:
 protected:
   nsPresContext* mPresContext;
   nsCOMPtr<nsIPresShell> mPresShell;
+  // mSelection is typically normal selection but if OnQuerySelectedText()
+  // is called, i.e., handling eQuerySelectedText, it's the specified selection
+  // by WidgetQueryContentEvent::mInput::mSelectionType.
   RefPtr<Selection> mSelection;
+  // mFirstSelectedRange is the first selected range of mSelection.  If
+  // mSelection is normal selection, this must not be nullptr if Init()
+  // succeed.  Otherwise, this may be nullptr if there are no selection
+  // ranges.
   RefPtr<nsRange> mFirstSelectedRange;
   nsCOMPtr<nsIContent> mRootContent;
 
@@ -77,7 +87,14 @@ protected:
   nsresult Init(WidgetSelectionEvent* aEvent);
 
   nsresult InitBasic();
-  nsresult InitCommon();
+  nsresult InitCommon(SelectionType aSelectionType = SelectionType::eNormal);
+  /**
+   * InitRootContent() computes the root content of current focused editor.
+   *
+   * @param aNormalSelection    This must be a Selection instance whose type is
+   *                            SelectionType::eNormal.
+   */
+  nsresult InitRootContent(Selection* aNormalSelection);
 
 public:
   // FlatText means the text that is generated from DOM tree. The BR elements
@@ -284,6 +301,9 @@ protected:
                                   FontRangeArray& aFontRanges,
                                   uint32_t& aLength,
                                   LineBreakType aLineBreakType);
+  nsresult QueryTextRectByRange(nsRange* aRange,
+                                LayoutDeviceIntRect& aRect,
+                                WritingMode& aWritingMode);
 };
 
 } // namespace mozilla

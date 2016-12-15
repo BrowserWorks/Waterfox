@@ -12,10 +12,9 @@
 
 #include "gfx2DGlue.h"
 #include "gfxPlatform.h"
+#include "gfxPrefs.h"
 #include "gfxUtils.h"
 #include "gfxAlphaRecovery.h"
-
-static bool gDisableOptimize = false;
 
 #include "GeckoProfiler.h"
 #include "MainThreadUtils.h"
@@ -56,7 +55,7 @@ CreateLockedSurface(VolatileBuffer* vbuf,
     new VolatileBufferPtr<unsigned char>(vbuf);
   MOZ_ASSERT(!vbufptr->WasBufferPurged(), "Expected image data!");
 
-  int32_t stride = VolatileSurfaceStride(size, format);
+  const int32_t stride = VolatileSurfaceStride(size, format);
 
   // The VolatileBufferPtr is held by this DataSourceSurface.
   RefPtr<DataSourceSurface> surf =
@@ -82,6 +81,32 @@ AllocateBufferForImage(const IntSize& size, SurfaceFormat format)
   }
 
   return nullptr;
+}
+
+static bool
+ClearSurface(VolatileBuffer* aVBuf, const IntSize& aSize, SurfaceFormat aFormat)
+{
+  VolatileBufferPtr<unsigned char> vbufptr(aVBuf);
+  if (vbufptr.WasBufferPurged()) {
+    NS_WARNING("VolatileBuffer was purged");
+    return false;
+  }
+
+  int32_t stride = VolatileSurfaceStride(aSize, aFormat);
+  if (aFormat == SurfaceFormat::B8G8R8X8) {
+    // Skia doesn't support RGBX surfaces, so ensure the alpha value is set
+    // to opaque white. While it would be nice to only do this for Skia,
+    // imgFrame can run off main thread and past shutdown where
+    // we might not have gfxPlatform, so just memset everytime instead.
+    memset(vbufptr, 0xFF, stride * aSize.height);
+  } else if (aVBuf->OnHeap()) {
+    // We only need to memset it if the buffer was allocated on the heap.
+    // Otherwise, it's allocated via mmap and refers to a zeroed page and will
+    // be COW once it's written to.
+    memset(vbufptr, 0, stride * aSize.height);
+  }
+
+  return true;
 }
 
 // Returns true if an image of aWidth x aHeight is allowed and legal.
@@ -137,7 +162,7 @@ imgFrame::imgFrame()
   : mMonitor("imgFrame")
   , mDecoded(0, 0, 0, 0)
   , mLockCount(0)
-  , mTimeout(100)
+  , mTimeout(FrameTimeout::FromRawMilliseconds(100))
   , mDisposalMethod(DisposalMethod::NOT_SPECIFIED)
   , mBlendMethod(BlendMethod::OVER)
   , mHasNoAlpha(false)
@@ -150,13 +175,6 @@ imgFrame::imgFrame()
   , mSinglePixel(false)
   , mCompositingFailed(false)
 {
-  static bool hasCheckedOptimize = false;
-  if (!hasCheckedOptimize) {
-    if (PR_GetEnv("MOZ_DISABLE_IMAGE_OPTIMIZE")) {
-      gDisableOptimize = true;
-    }
-    hasCheckedOptimize = true;
-  }
 }
 
 imgFrame::~imgFrame()
@@ -218,15 +236,17 @@ imgFrame::InitForDecoder(const nsIntSize& aImageSize,
       mAborted = true;
       return NS_ERROR_OUT_OF_MEMORY;
     }
-    if (mVBuf->OnHeap()) {
-      int32_t stride = VolatileSurfaceStride(mFrameRect.Size(), mFormat);
-      VolatileBufferPtr<uint8_t> ptr(mVBuf);
-      memset(ptr, 0, stride * mFrameRect.height);
-    }
+
     mImageSurface = CreateLockedSurface(mVBuf, mFrameRect.Size(), mFormat);
 
     if (!mImageSurface) {
-      NS_WARNING("Failed to create VolatileDataSourceSurface");
+      NS_WARNING("Failed to create ImageSurface");
+      mAborted = true;
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+
+    if (!ClearSurface(mVBuf, mFrameRect.Size(), mFormat)) {
+      NS_WARNING("Could not clear allocated buffer");
       mAborted = true;
       return NS_ERROR_OUT_OF_MEMORY;
     }
@@ -278,10 +298,20 @@ imgFrame::InitWithDrawable(gfxDrawable* aDrawable,
       mAborted = true;
       return NS_ERROR_OUT_OF_MEMORY;
     }
-    if (mVBuf->OnHeap()) {
-      memset(ptr, 0, stride * mFrameRect.height);
-    }
+
     mImageSurface = CreateLockedSurface(mVBuf, mFrameRect.Size(), mFormat);
+
+    if (!mImageSurface) {
+      NS_WARNING("Failed to create ImageSurface");
+      mAborted = true;
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+
+    if (!ClearSurface(mVBuf, mFrameRect.Size(), mFormat)) {
+      NS_WARNING("Could not clear allocated buffer");
+      mAborted = true;
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
 
     target = gfxPlatform::GetPlatform()->
       CreateDrawTargetForData(ptr, mFrameRect.Size(), stride, mFormat);
@@ -302,7 +332,7 @@ imgFrame::InitWithDrawable(gfxDrawable* aDrawable,
   }
 
   // Draw using the drawable the caller provided.
-  RefPtr<gfxContext> ctx = gfxContext::ForDrawTarget(target);
+  RefPtr<gfxContext> ctx = gfxContext::CreateOrNull(target);
   MOZ_ASSERT(ctx);  // Already checked the draw target above.
   gfxUtils::DrawPixelSnapped(ctx, aDrawable, mFrameRect.Size(),
                              ImageRegion::Create(ThebesRect(mFrameRect)),
@@ -332,6 +362,23 @@ imgFrame::InitWithDrawable(gfxDrawable* aDrawable,
   return NS_OK;
 }
 
+bool
+imgFrame::CanOptimizeOpaqueImage()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(!ShutdownTracker::ShutdownHasStarted());
+  mMonitor.AssertCurrentThreadOwns();
+
+  // If we're using a surface format with alpha but the image has no alpha,
+  // change the format. This doesn't change the underlying data at all, but
+  // allows DrawTargets to avoid blending when drawing known opaque images.
+  // This optimization is free and safe, so we always do it when we can except
+  // if we have a Skia backend. Skia doesn't support RGBX so ensure we don't
+  // optimize to a RGBX surface.
+  return mHasNoAlpha && mFormat == SurfaceFormat::B8G8R8A8 && mImageSurface &&
+         (gfxPlatform::GetPlatform()->GetDefaultContentBackend() != BackendType::SKIA);
+}
+
 nsresult
 imgFrame::Optimize()
 {
@@ -340,9 +387,25 @@ imgFrame::Optimize()
   MOZ_ASSERT(mLockCount == 1,
              "Should only optimize when holding the lock exclusively");
 
+  // Check whether image optimization is disabled -- not thread safe!
+  static bool gDisableOptimize = false;
+  static bool hasCheckedOptimize = false;
+  if (!hasCheckedOptimize) {
+    if (PR_GetEnv("MOZ_DISABLE_IMAGE_OPTIMIZE")) {
+      gDisableOptimize = true;
+    }
+    hasCheckedOptimize = true;
+  }
+
   // Don't optimize during shutdown because gfxPlatform may not be available.
   if (ShutdownTracker::ShutdownHasStarted()) {
     return NS_OK;
+  }
+
+  // This optimization is basically free, so we perform it even if optimization is disabled.
+  if (CanOptimizeOpaqueImage()) {
+    mFormat = SurfaceFormat::B8G8R8X8;
+    mImageSurface = CreateLockedSurface(mVBuf, mFrameRect.Size(), mFormat);
   }
 
   if (!mOptimizable || gDisableOptimize) {
@@ -644,8 +707,10 @@ imgFrame::ImageUpdatedInternal(const nsIntRect& aUpdateRect)
 void
 imgFrame::Finish(Opacity aFrameOpacity /* = Opacity::SOME_TRANSPARENCY */,
                  DisposalMethod aDisposalMethod /* = DisposalMethod::KEEP */,
-                 int32_t aRawTimeout /* = 0 */,
-                 BlendMethod aBlendMethod /* = BlendMethod::OVER */)
+                 FrameTimeout aTimeout
+                   /* = FrameTimeout::FromRawMilliseconds(0) */,
+                 BlendMethod aBlendMethod /* = BlendMethod::OVER */,
+                 const Maybe<IntRect>& aBlendRect /* = Nothing() */)
 {
   MonitorAutoLock lock(mMonitor);
   MOZ_ASSERT(mLockCount > 0, "Image data should be locked");
@@ -655,8 +720,9 @@ imgFrame::Finish(Opacity aFrameOpacity /* = Opacity::SOME_TRANSPARENCY */,
   }
 
   mDisposalMethod = aDisposalMethod;
-  mTimeout = aRawTimeout;
+  mTimeout = aTimeout;
   mBlendMethod = aBlendMethod;
+  mBlendRect = aBlendRect;
   ImageUpdatedInternal(GetRect());
   mFinished = true;
 
@@ -834,14 +900,6 @@ imgFrame::UnlockImageData()
       return NS_OK;
     }
 
-    // If we're using a surface format with alpha but the image has no alpha,
-    // change the format. This doesn't change the underlying data at all, but
-    // allows DrawTargets to avoid blending when drawing known opaque images.
-    if (mHasNoAlpha && mFormat == SurfaceFormat::B8G8R8A8 && mImageSurface) {
-      mFormat = SurfaceFormat::B8G8R8X8;
-      mImageSurface = CreateLockedSurface(mVBuf, mFrameRect.Size(), mFormat);
-    }
-
     // Convert the data surface to a GPU surface or a single color if possible.
     // This will also release mImageSurface if possible.
     Optimize();
@@ -932,7 +990,7 @@ imgFrame::GetAnimationData() const
   bool hasAlpha = mFormat == SurfaceFormat::B8G8R8A8;
 
   return AnimationData(data, PaletteDataLength(), mTimeout, GetRect(),
-                       mBlendMethod, mDisposalMethod, hasAlpha);
+                       mBlendMethod, mBlendRect, mDisposalMethod, hasAlpha);
 }
 
 void

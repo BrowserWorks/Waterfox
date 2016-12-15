@@ -58,7 +58,7 @@ public:
   explicit CallbackObject(JSContext* aCx, JS::Handle<JSObject*> aCallback,
                           nsIGlobalObject* aIncumbentGlobal)
   {
-    if (aCx && JS::RuntimeOptionsRef(aCx).asyncStack()) {
+    if (aCx && JS::ContextOptionsRef(aCx).asyncStack()) {
       JS::RootedObject stack(aCx);
       if (!JS::CaptureCurrentStack(aCx, &stack)) {
         JS_ClearPendingException(aCx);
@@ -117,6 +117,17 @@ public:
     // Calling fromMarkedLocation() is safe because we trace our mCallback, and
     // because the value of mCallback cannot change after if has been set.
     return JS::Handle<JSObject*>::fromMarkedLocation(mCallback.address());
+  }
+
+  /*
+   * If the callback is known to be non-gray, then this method can be
+   * used instead of Callback() to avoid the overhead of
+   * ExposeObjectToActiveJS().
+   */
+  JS::Handle<JSObject*> CallbackKnownNotGray() const
+  {
+    MOZ_ASSERT(!JS::ObjectIsMarkedGray(mCallback.get()));
+    return CallbackPreserveColor();
   }
 
   nsIGlobalObject* IncumbentGlobalOrNull() const
@@ -230,7 +241,7 @@ protected:
                  nsIGlobalObject* aIncumbentGlobal,
                  const FastCallbackConstructor&)
   {
-    if (aCx && JS::RuntimeOptionsRef(aCx).asyncStack()) {
+    if (aCx && JS::ContextOptionsRef(aCx).asyncStack()) {
       JS::RootedObject stack(aCx);
       if (!JS::CaptureCurrentStack(aCx, &stack)) {
         JS_ClearPendingException(aCx);
@@ -362,11 +373,17 @@ public:
     NS_IF_ADDREF(aCallback);
   }
 
-  explicit CallbackObjectHolder(const CallbackObjectHolder& aOther)
+  CallbackObjectHolder(CallbackObjectHolder&& aOther)
     : mPtrBits(aOther.mPtrBits)
   {
-    NS_IF_ADDREF(GetISupports());
+    aOther.mPtrBits = 0;
+    static_assert(sizeof(CallbackObjectHolder) == sizeof(void*),
+                  "This object is expected to be as small as a pointer, and it "
+                  "is currently passed by value in various places. If it is "
+                  "bloating, we may want to pass it by reference then.");
   }
+
+  CallbackObjectHolder(const CallbackObjectHolder& aOther) = delete;
 
   CallbackObjectHolder()
     : mPtrBits(0)
@@ -391,12 +408,14 @@ public:
     NS_IF_ADDREF(aCallback);
   }
 
-  void operator=(const CallbackObjectHolder& aOther)
+  void operator=(CallbackObjectHolder&& aOther)
   {
     UnlinkSelf();
     mPtrBits = aOther.mPtrBits;
-    NS_IF_ADDREF(GetISupports());
+    aOther.mPtrBits = 0;
   }
+
+  void operator=(const CallbackObjectHolder& aOther) = delete;
 
   nsISupports* GetISupports() const
   {
@@ -407,6 +426,14 @@ public:
   explicit operator bool() const
   {
     return GetISupports();
+  }
+
+  CallbackObjectHolder Clone() const
+  {
+    CallbackObjectHolder result;
+    result.mPtrBits = mPtrBits;
+    NS_IF_ADDREF(GetISupports());
+    return result;
   }
 
   // Even if HasWebIDLCallback returns true, GetWebIDLCallback() might still

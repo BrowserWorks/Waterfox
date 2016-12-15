@@ -213,7 +213,7 @@ intrinsic_UnsafeCallWrappedFunction(JSContext* cx, unsigned argc, Value* vp)
     MOZ_RELEASE_ASSERT(fun->as<JSFunction>().isSelfHostedBuiltin());
 
     InvokeArgs args2(cx);
-    if (!args2.init(args.length() - 2))
+    if (!args2.init(cx, args.length() - 2))
         return false;
 
     args2.setThis(args[1]);
@@ -369,6 +369,16 @@ intrinsic_ThrowSyntaxError(JSContext* cx, unsigned argc, Value* vp)
     return false;
 }
 
+static bool
+intrinsic_ThrowInternalError(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    MOZ_ASSERT(args.length() >= 1);
+
+    ThrowErrorWithType(cx, JSEXN_INTERNALERR, args);
+    return false;
+}
+
 /**
  * Handles an assertion failure in self-hosted code just like an assertion
  * failure in C++ code. Information about the failure can be provided in args[0].
@@ -450,6 +460,13 @@ intrinsic_MakeDefaultConstructor(JSContext* cx, unsigned argc, Value* vp)
     RootedFunction ctor(cx, &args[0].toObject().as<JSFunction>());
 
     ctor->nonLazyScript()->setIsDefaultClassConstructor();
+
+    // Because self-hosting code does not allow top-level lexicals,
+    // class constructors are class expressions in top-level vars.
+    // Because of this, we give them a guessed atom. Since they
+    // will always be cloned, and given an explicit atom, instead
+    // overrule that.
+    ctor->clearGuessedAtom();
 
     args.rval().setUndefined();
     return true;
@@ -1697,7 +1714,7 @@ CallSelfHostedNonGenericMethod(JSContext* cx, const CallArgs& args)
     MOZ_ASSERT(selfHostedFun.toObject().is<JSFunction>());
 
     InvokeArgs args2(cx);
-    if (!args2.init(args.length() - 1))
+    if (!args2.init(cx, args.length() - 1))
         return false;
 
     for (size_t i = 0; i < args.length() - 1; i++)
@@ -1786,70 +1803,53 @@ js::ReportIncompatibleSelfHostedMethod(JSContext* cx, const CallArgs& args)
     return false;
 }
 
-// ES6, 25.4.1.6.
 static bool
 intrinsic_EnqueuePromiseReactionJob(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    MOZ_ASSERT(args.length() == 2);
-    MOZ_ASSERT(args[0].toObject().as<NativeObject>().getDenseInitializedLength() == 4);
+    MOZ_ASSERT(args.length() == 6);
 
-    // When using JS::AddPromiseReactions, no actual promise is created, so we
-    // might not have one here.
-    RootedObject promise(cx);
-    if (args[1].isObject())
-        promise = UncheckedUnwrap(&args[1].toObject());
+    RootedValue handler(cx, args[0]);
+    MOZ_ASSERT((handler.isNumber() &&
+                (handler.toNumber() == PROMISE_HANDLER_IDENTITY ||
+                 handler.toNumber() == PROMISE_HANDLER_THROWER)) ||
+               handler.toObject().isCallable());
 
-#ifdef DEBUG
-    MOZ_ASSERT_IF(promise, promise->is<PromiseObject>());
-    RootedNativeObject jobArgs(cx, &args[0].toObject().as<NativeObject>());
-    MOZ_ASSERT((jobArgs->getDenseElement(0).isNumber() &&
-                (jobArgs->getDenseElement(0).toNumber() == PROMISE_HANDLER_IDENTITY ||
-                 jobArgs->getDenseElement(0).toNumber() == PROMISE_HANDLER_THROWER)) ||
-               jobArgs->getDenseElement(0).toObject().isCallable());
-    MOZ_ASSERT(jobArgs->getDenseElement(2).toObject().isCallable());
-    MOZ_ASSERT(jobArgs->getDenseElement(3).toObject().isCallable());
-#endif
+    RootedValue handlerArg(cx, args[1]);
 
-    RootedAtom funName(cx, cx->names().empty);
-    RootedFunction job(cx, NewNativeFunction(cx, PromiseReactionJob, 0, funName,
-                                             gc::AllocKind::FUNCTION_EXTENDED));
-    if (!job)
+    RootedObject resolve(cx, &args[2].toObject());
+    MOZ_ASSERT(IsCallable(resolve));
+
+    RootedObject reject(cx, &args[3].toObject());
+    MOZ_ASSERT(IsCallable(reject));
+
+    RootedObject promise(cx, args[4].toObjectOrNull());
+    RootedObject objectFromIncumbentGlobal(cx, args[5].toObjectOrNull());
+
+    if (!EnqueuePromiseReactionJob(cx, handler, handlerArg, resolve, reject, promise,
+                                   objectFromIncumbentGlobal))
+    {
         return false;
-
-    job->setExtendedSlot(0, args[0]);
-    if (!cx->runtime()->enqueuePromiseJob(cx, job, promise))
-        return false;
+    }
     args.rval().setUndefined();
     return true;
 }
 
-// ES6, 25.4.1.6.
 static bool
 intrinsic_EnqueuePromiseResolveThenableJob(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-#ifdef DEBUG
-    MOZ_ASSERT(args.length() == 2);
-    MOZ_ASSERT(UncheckedUnwrap(&args[1].toObject())->is<PromiseObject>());
-    RootedNativeObject jobArgs(cx, &args[0].toObject().as<NativeObject>());
-    MOZ_ASSERT(jobArgs->getDenseInitializedLength() == 3);
-    MOZ_ASSERT(jobArgs->getDenseElement(0).toObject().isCallable());
-    MOZ_ASSERT(jobArgs->getDenseElement(1).isObject());
-    MOZ_ASSERT(UncheckedUnwrap(&jobArgs->getDenseElement(2).toObject())->is<PromiseObject>());
-#endif
+    MOZ_ASSERT(args.length() == 3);
+    MOZ_ASSERT(IsCallable(args[2]));
 
-    RootedAtom funName(cx, cx->names().empty);
-    RootedFunction job(cx, NewNativeFunction(cx, PromiseResolveThenableJob, 0, funName,
-                                             gc::AllocKind::FUNCTION_EXTENDED));
-    if (!job)
+    RootedValue promiseToResolve(cx, args[0]);
+    RootedValue thenable(cx, args[1]);
+    RootedValue then(cx, args[2]);
+
+    if (!EnqueuePromiseResolveThenableJob(cx, promiseToResolve, thenable, then))
         return false;
 
-    job->setExtendedSlot(0, args[0]);
-    RootedObject promise(cx, CheckedUnwrap(&args[1].toObject()));
-    if (!cx->runtime()->enqueuePromiseJob(cx, job, promise))
-        return false;
     args.rval().setUndefined();
     return true;
 }
@@ -1931,7 +1931,7 @@ intrinsic_ConstructFunction(JSContext* cx, unsigned argc, Value* vp)
     RootedArrayObject argsList(cx, &args[1].toObject().as<ArrayObject>());
     uint32_t len = argsList->length();
     ConstructArgs constructArgs(cx);
-    if (!constructArgs.init(len))
+    if (!constructArgs.init(cx, len))
         return false;
     for (uint32_t index = 0; index < len; index++)
         constructArgs[index].set(argsList->getDenseElement(index));
@@ -2002,6 +2002,48 @@ intrinsic_OriginalPromiseConstructor(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
+/**
+ * Returns an object created in the embedding-provided incumbent global.
+ *
+ * Really, we want the incumbent global itself so we can pass it to other
+ * embedding hooks which need it. Specifically, the enqueue promise hook
+ * takes an incumbent global so it can set that on the PromiseCallbackJob
+ * it creates.
+ *
+ * The reason for not just returning the global itself is that we'd need to
+ * wrap it into the current compartment, and later unwrap it. Unwrapping
+ * globals is tricky, though: we might accidentally unwrap through an inner
+ * to its outer window and end up with the wrong global. Plain objects don't
+ * have this problem, so we create one and return it. The code using it -
+ * e.g. EnqueuePromiseReactionJob - can then unwrap the object and get its
+ * global without fear of unwrapping too far.
+ */
+static bool
+intrinsic_GetObjectFromIncumbentGlobal(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    MOZ_ASSERT(args.length() == 0);
+
+    RootedObject obj(cx);
+    RootedObject global(cx, cx->runtime()->getIncumbentGlobal(cx));
+    if (global) {
+        MOZ_ASSERT(global->is<GlobalObject>());
+        AutoCompartment ac(cx, global);
+        obj = NewBuiltinClassInstance<PlainObject>(cx);
+        if (!obj)
+            return false;
+    }
+
+    RootedValue objVal(cx, ObjectOrNullValue(obj));
+
+    // The object might be from a different compartment, so wrap it.
+    if (obj && !cx->compartment()->wrap(cx, &objVal))
+        return false;
+
+    args.rval().set(objVal);
+    return true;
+}
+
 static bool
 intrinsic_RejectUnwrappedPromise(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -2052,7 +2094,7 @@ intrinsic_IsWrappedPromiseObject(JSContext* cx, unsigned argc, Value* vp)
     RootedObject obj(cx, &args[0].toObject());
     MOZ_ASSERT(!obj->is<PromiseObject>(),
                "Unwrapped promises should be filtered out in inlineable code");
-    args.rval().setBoolean(JS::IsPromiseObject(obj));
+    args.rval().setBoolean(CheckedUnwrap(obj)->is<PromiseObject>());
     return true;
 }
 
@@ -2080,23 +2122,6 @@ intrinsic_HostResolveImportedModule(JSContext* cx, unsigned argc, Value* vp)
     }
 
     args.rval().set(result);
-    return true;
-}
-
-static bool
-intrinsic_GetModuleEnvironment(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    MOZ_ASSERT(args.length() == 1);
-    RootedModuleObject module(cx, &args[0].toObject().as<ModuleObject>());
-    RootedModuleEnvironmentObject env(cx, module->environment());
-    args.rval().setUndefined();
-    if (!env) {
-        args.rval().setUndefined();
-        return true;
-    }
-
-    args.rval().setObject(*env);
     return true;
 }
 
@@ -2343,12 +2368,14 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_INLINABLE_FN("IsCallable",    intrinsic_IsCallable,              1,0, IntrinsicIsCallable),
     JS_INLINABLE_FN("IsConstructor", intrinsic_IsConstructor,           1,0,
                     IntrinsicIsConstructor),
+    JS_FN("IsFunctionObject",intrinsic_IsInstanceOfBuiltin<JSFunction>, 1,0),
     JS_FN("GetBuiltinConstructorImpl", intrinsic_GetBuiltinConstructor, 1,0),
     JS_FN("MakeConstructible",       intrinsic_MakeConstructible,       2,0),
     JS_FN("_ConstructFunction",      intrinsic_ConstructFunction,       2,0),
     JS_FN("ThrowRangeError",         intrinsic_ThrowRangeError,         4,0),
     JS_FN("ThrowTypeError",          intrinsic_ThrowTypeError,          4,0),
     JS_FN("ThrowSyntaxError",        intrinsic_ThrowSyntaxError,        4,0),
+    JS_FN("ThrowInternalError",      intrinsic_ThrowInternalError,      4,0),
     JS_FN("AssertionFailed",         intrinsic_AssertionFailed,         1,0),
     JS_FN("DumpMessage",             intrinsic_DumpMessage,             1,0),
     JS_FN("OwnPropertyKeys",         intrinsic_OwnPropertyKeys,         1,0),
@@ -2492,6 +2519,7 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_FN("CallWeakSetMethodIfWrapped",
           CallNonGenericSelfhostedMethod<Is<WeakSetObject>>, 2, 0),
 
+    JS_FN("_GetObjectFromIncumbentGlobal",  intrinsic_GetObjectFromIncumbentGlobal, 0, 0),
     JS_FN("IsPromise",                      intrinsic_IsInstanceOfBuiltin<PromiseObject>, 1,0),
     JS_FN("IsWrappedPromise",               intrinsic_IsWrappedPromiseObject,     1, 0),
     JS_FN("_EnqueuePromiseReactionJob",     intrinsic_EnqueuePromiseReactionJob,  2, 0),
@@ -2595,7 +2623,7 @@ static const JSFunctionSpec intrinsic_functions[] = {
     JS_FN("CallModuleMethodIfWrapped",
           CallNonGenericSelfhostedMethod<Is<ModuleObject>>, 2, 0),
     JS_FN("HostResolveImportedModule", intrinsic_HostResolveImportedModule, 2, 0),
-    JS_FN("GetModuleEnvironment", intrinsic_GetModuleEnvironment, 1, 0),
+    JS_FN("IsModuleEnvironment", intrinsic_IsInstanceOfBuiltin<ModuleEnvironmentObject>, 1, 0),
     JS_FN("CreateModuleEnvironment", intrinsic_CreateModuleEnvironment, 1, 0),
     JS_FN("CreateImportBinding", intrinsic_CreateImportBinding, 4, 0),
     JS_FN("CreateNamespaceBinding", intrinsic_CreateNamespaceBinding, 3, 0),
@@ -2714,26 +2742,16 @@ MaybePrintAndClearPendingException(JSContext* cx, FILE* file)
 class MOZ_STACK_CLASS AutoSelfHostingErrorReporter
 {
     JSContext* cx_;
-    bool prevDontReportUncaught_;
-    bool prevAutoJSAPIOwnsErrorReporting_;
-    JSErrorReporter oldReporter_;
+    JS::WarningReporter oldReporter_;
 
   public:
     explicit AutoSelfHostingErrorReporter(JSContext* cx)
-      : cx_(cx),
-        prevDontReportUncaught_(cx_->options().dontReportUncaught()),
-        prevAutoJSAPIOwnsErrorReporting_(cx_->options().autoJSAPIOwnsErrorReporting())
+      : cx_(cx)
     {
-        cx_->options().setDontReportUncaught(true);
-        cx_->options().setAutoJSAPIOwnsErrorReporting(true);
-
-        oldReporter_ = JS_SetErrorReporter(cx_->runtime(), selfHosting_WarningReporter);
+        oldReporter_ = JS::SetWarningReporter(cx_, selfHosting_WarningReporter);
     }
     ~AutoSelfHostingErrorReporter() {
-        cx_->options().setDontReportUncaught(prevDontReportUncaught_);
-        cx_->options().setAutoJSAPIOwnsErrorReporting(prevAutoJSAPIOwnsErrorReporting_);
-
-        JS_SetErrorReporter(cx_->runtime(), oldReporter_);
+        JS::SetWarningReporter(cx_, oldReporter_);
 
         // Exceptions in self-hosted code will usually be printed to stderr in
         // ErrorToException, but not all exceptions are handled there. For
@@ -3065,7 +3083,9 @@ JSRuntime::createLazySelfHostedFunctionClone(JSContext* cx, HandlePropertyName s
     if (!selfHostedFun)
         return false;
 
-    if (!selfHostedFun->hasGuessedAtom() && selfHostedFun->name() != selfHostedName) {
+    if (!selfHostedFun->isClassConstructor() && !selfHostedFun->hasGuessedAtom() &&
+        selfHostedFun->name() != selfHostedName)
+    {
         MOZ_ASSERT(selfHostedFun->getExtendedSlot(HAS_SELFHOSTED_CANONICAL_NAME_SLOT).toBoolean());
         funName = selfHostedFun->name();
     }

@@ -152,7 +152,8 @@ protected:
                                    const RequestHeaderTuples& changedHeaders,
                                    const uint32_t& loadFlags,
                                    const OptionalURIParams& apiRedirectUri,
-                                   const OptionalCorsPreflightArgs& aCorsPreflightArgs) override;
+                                   const OptionalCorsPreflightArgs& aCorsPreflightArgs,
+                                   const bool& aChooseAppcache) override;
   virtual bool RecvUpdateAssociatedContentSecurity(const int32_t& broken,
                                                    const int32_t& no) override;
   virtual bool RecvDocumentChannelCleanup() override;
@@ -184,6 +185,9 @@ protected:
   // Calls SendDeleteSelf and sets mIPCClosed to true because we should not
   // send any more messages after that. Bug 1274886
   bool DoSendDeleteSelf();
+  // Called to notify the parent channel to not send any more IPC messages.
+  virtual bool RecvDeletingChannel() override;
+  virtual bool RecvFinishInterceptedRedirect() override;
 
 private:
   void UpdateAndSerializeSecurityInfo(nsACString& aSerializedSecurityInfoOut);

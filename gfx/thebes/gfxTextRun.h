@@ -148,7 +148,7 @@ public:
         Range() : start(0), end(0) {}
         Range(uint32_t aStart, uint32_t aEnd)
             : start(aStart), end(aEnd) {}
-        explicit Range(gfxTextRun* aTextRun)
+        explicit Range(const gfxTextRun* aTextRun)
             : start(0), end(aTextRun->GetLength()) {}
     };
 
@@ -238,7 +238,9 @@ public:
         gfxContext* context;
         DrawMode drawMode = DrawMode::GLYPH_FILL;
         nscolor textStrokeColor = 0;
-        float textStrokeWidth = 0.0f;
+        gfxPattern* textStrokePattern = nullptr;
+        const mozilla::gfx::StrokeOptions *strokeOpts = nullptr;
+        const mozilla::gfx::DrawOptions *drawOpts = nullptr;
         PropertyProvider* provider = nullptr;
         // If non-null, the advance width of the substring is set.
         gfxFloat* advanceWidth = nullptr;
@@ -267,7 +269,7 @@ public:
      * Glyphs should be drawn in logical content order, which can be significant
      * if they overlap (perhaps due to negative spacing).
      */
-    void Draw(Range aRange, gfxPoint aPt, const DrawParams& aParams);
+    void Draw(Range aRange, gfxPoint aPt, const DrawParams& aParams) const;
 
     /**
      * Draws the emphasis marks for this text run. Uses only GetSpacing
@@ -276,7 +278,7 @@ public:
      */
     void DrawEmphasisMarks(gfxContext* aContext, gfxTextRun* aMark,
                            gfxFloat aMarkAdvance, gfxPoint aPt,
-                           Range aRange, PropertyProvider* aProvider);
+                           Range aRange, PropertyProvider* aProvider) const;
 
     /**
      * Computes the ReflowMetrics for a substring.
@@ -286,11 +288,11 @@ public:
     Metrics MeasureText(Range aRange,
                         gfxFont::BoundingBoxType aBoundingBoxType,
                         DrawTarget* aDrawTargetForTightBoundingBox,
-                        PropertyProvider* aProvider);
+                        PropertyProvider* aProvider) const;
 
     Metrics MeasureText(gfxFont::BoundingBoxType aBoundingBoxType,
                         DrawTarget* aDrawTargetForTightBoundingBox,
-                        PropertyProvider* aProvider = nullptr) {
+                        PropertyProvider* aProvider = nullptr) const {
         return MeasureText(Range(this), aBoundingBoxType,
                            aDrawTargetForTightBoundingBox, aProvider);
     }
@@ -303,9 +305,10 @@ public:
      * included in the advance width.
      */
     gfxFloat GetAdvanceWidth(Range aRange, PropertyProvider *aProvider,
-                             PropertyProvider::Spacing* aSpacing = nullptr);
+                             PropertyProvider::Spacing*
+                                 aSpacing = nullptr) const;
 
-    gfxFloat GetAdvanceWidth() {
+    gfxFloat GetAdvanceWidth() const {
         return GetAdvanceWidth(Range(this), nullptr);
     }
 
@@ -452,21 +455,21 @@ public:
 
     class GlyphRunIterator {
     public:
-        GlyphRunIterator(gfxTextRun *aTextRun, Range aRange)
+        GlyphRunIterator(const gfxTextRun *aTextRun, Range aRange)
           : mTextRun(aTextRun)
           , mStartOffset(aRange.start)
           , mEndOffset(aRange.end) {
             mNextIndex = mTextRun->FindFirstGlyphRunContaining(aRange.start);
         }
         bool NextRun();
-        GlyphRun *GetGlyphRun() { return mGlyphRun; }
-        uint32_t GetStringStart() { return mStringStart; }
-        uint32_t GetStringEnd() { return mStringEnd; }
+        const GlyphRun *GetGlyphRun() const { return mGlyphRun; }
+        uint32_t GetStringStart() const { return mStringStart; }
+        uint32_t GetStringEnd() const { return mStringEnd; }
     private:
-        gfxTextRun *mTextRun;
-        GlyphRun   *mGlyphRun;
-        uint32_t    mStringStart;
-        uint32_t    mStringEnd;
+        const gfxTextRun *mTextRun;
+        MOZ_INIT_OUTSIDE_CTOR const GlyphRun   *mGlyphRun;
+        MOZ_INIT_OUTSIDE_CTOR uint32_t    mStringStart;
+        MOZ_INIT_OUTSIDE_CTOR uint32_t    mStringEnd;
         uint32_t    mNextIndex;
         uint32_t    mStartOffset;
         uint32_t    mEndOffset;
@@ -512,6 +515,10 @@ public:
     void SortGlyphRuns();
     void SanitizeGlyphRuns();
 
+    const CompressedGlyph* GetCharacterGlyphs() const final {
+        MOZ_ASSERT(mCharacterGlyphs, "failed to initialize mCharacterGlyphs");
+        return mCharacterGlyphs;
+    }
     CompressedGlyph* GetCharacterGlyphs() final {
         MOZ_ASSERT(mCharacterGlyphs, "failed to initialize mCharacterGlyphs");
         return mCharacterGlyphs;
@@ -563,14 +570,14 @@ public:
      */
     void FetchGlyphExtents(DrawTarget* aRefDrawTarget);
 
-    uint32_t CountMissingGlyphs();
+    uint32_t CountMissingGlyphs() const;
     const GlyphRun *GetGlyphRuns(uint32_t *aNumGlyphRuns) {
         *aNumGlyphRuns = mGlyphRuns.Length();
         return mGlyphRuns.Elements();
     }
     // Returns the index of the GlyphRun containing the given offset.
     // Returns mGlyphRuns.Length() when aOffset is mCharacterCount.
-    uint32_t FindFirstGlyphRunContaining(uint32_t aOffset);
+    uint32_t FindFirstGlyphRunContaining(uint32_t aOffset) const;
 
     // Copy glyph data from a ShapedWord into this textrun.
     void CopyGlyphDataFrom(gfxShapedWord *aSource, uint32_t aStart);
@@ -638,7 +645,7 @@ public:
         mShapingState = aShapingState;
     }
 
-    int32_t GetAdvanceForGlyph(uint32_t aIndex)
+    int32_t GetAdvanceForGlyph(uint32_t aIndex) const
     {
         const CompressedGlyph& glyphData = mCharacterGlyphs[aIndex];
         if (glyphData.IsSimpleGlyph()) {
@@ -685,7 +692,7 @@ private:
     // **** general helpers **** 
 
     // Get the total advance for a range of glyphs.
-    int32_t GetAdvanceForGlyphs(Range aRange);
+    int32_t GetAdvanceForGlyphs(Range aRange) const;
 
     // Spacing for characters outside the range aSpacingStart/aSpacingEnd
     // is assumed to be zero; such characters are not passed to aProvider.
@@ -693,7 +700,8 @@ private:
     // it is not currently able to handle.
     bool GetAdjustedSpacingArray(Range aRange, PropertyProvider *aProvider,
                                  Range aSpacingRange,
-                                 nsTArray<PropertyProvider::Spacing> *aSpacing);
+                                 nsTArray<PropertyProvider::Spacing>*
+                                     aSpacing) const;
 
     CompressedGlyph& EnsureComplexGlyph(uint32_t aIndex)
     {
@@ -707,24 +715,26 @@ private:
 
     // if aProvider is null then mBeforeSpacing and mAfterSpacing are set to zero
     LigatureData ComputeLigatureData(Range aPartRange,
-                                     PropertyProvider *aProvider);
+                                     PropertyProvider *aProvider) const;
     gfxFloat ComputePartialLigatureWidth(Range aPartRange,
-                                         PropertyProvider *aProvider);
+                                         PropertyProvider *aProvider) const;
     void DrawPartialLigature(gfxFont *aFont, Range aRange,
                              gfxPoint *aPt, PropertyProvider *aProvider,
-                             TextRunDrawParams& aParams, uint16_t aOrientation);
+                             TextRunDrawParams& aParams,
+                             uint16_t aOrientation) const;
     // Advance aRange.start to the start of the nearest ligature, back
     // up aRange.end to the nearest ligature end; may result in
     // aRange->start == aRange->end.
-    void ShrinkToLigatureBoundaries(Range* aRange);
+    void ShrinkToLigatureBoundaries(Range* aRange) const;
     // result in appunits
-    gfxFloat GetPartialLigatureWidth(Range aRange, PropertyProvider *aProvider);
+    gfxFloat GetPartialLigatureWidth(Range aRange,
+                                     PropertyProvider *aProvider) const;
     void AccumulatePartialLigatureMetrics(gfxFont *aFont, Range aRange,
                                           gfxFont::BoundingBoxType aBoundingBoxType,
                                           DrawTarget* aRefDrawTarget,
                                           PropertyProvider *aProvider,
                                           uint16_t aOrientation,
-                                          Metrics *aMetrics);
+                                          Metrics *aMetrics) const;
 
     // **** measurement helper ****
     void AccumulateMetricsForRun(gfxFont *aFont, Range aRange,
@@ -733,12 +743,12 @@ private:
                                  PropertyProvider *aProvider,
                                  Range aSpacingRange,
                                  uint16_t aOrientation,
-                                 Metrics *aMetrics);
+                                 Metrics *aMetrics) const;
 
     // **** drawing helper ****
     void DrawGlyphs(gfxFont *aFont, Range aRange, gfxPoint *aPt,
                     PropertyProvider *aProvider, Range aSpacingRange,
-                    TextRunDrawParams& aParams, uint16_t aOrientation);
+                    TextRunDrawParams& aParams, uint16_t aOrientation) const;
 
     // XXX this should be changed to a GlyphRun plus a maybe-null GlyphRun*,
     // for smaller size especially in the super-common one-glyphrun case

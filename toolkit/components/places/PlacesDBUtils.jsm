@@ -690,13 +690,13 @@ this.PlacesDBUtils = {
     let fixVisitStats = DBConn.createAsyncStatement(
       `UPDATE moz_places
        SET visit_count = (SELECT count(*) FROM moz_historyvisits
-                          WHERE place_id = moz_places.id AND visit_type NOT IN (0,4,7,8)),
+                          WHERE place_id = moz_places.id AND visit_type NOT IN (0,4,7,8,9)),
            last_visit_date = (SELECT MAX(visit_date) FROM moz_historyvisits
                               WHERE place_id = moz_places.id)
        WHERE id IN (
          SELECT h.id FROM moz_places h
          WHERE visit_count <> (SELECT count(*) FROM moz_historyvisits v
-                               WHERE v.place_id = h.id AND visit_type NOT IN (0,4,7,8))
+                               WHERE v.place_id = h.id AND visit_type NOT IN (0,4,7,8,9))
             OR last_visit_date <> (SELECT MAX(visit_date) FROM moz_historyvisits v
                                    WHERE v.place_id = h.id)
        )`);
@@ -718,8 +718,14 @@ this.PlacesDBUtils = {
     // L.4 recalculate foreign_count.
     let fixForeignCount = DBConn.createAsyncStatement(
       `UPDATE moz_places SET foreign_count =
-       (SELECT count(*) FROM moz_bookmarks WHERE fk = moz_places.id )`);
+         (SELECT count(*) FROM moz_bookmarks WHERE fk = moz_places.id ) +
+         (SELECT count(*) FROM moz_keywords WHERE place_id = moz_places.id )`);
     cleanupStatements.push(fixForeignCount);
+
+    // L.5 recalculate missing hashes.
+    let fixMissingHashes = DBConn.createAsyncStatement(
+      `UPDATE moz_places SET url_hash = hash(url) WHERE url_hash = 0`);
+    cleanupStatements.push(fixMissingHashes);
 
     // MAINTENANCE STATEMENTS SHOULD GO ABOVE THIS POINT!
 

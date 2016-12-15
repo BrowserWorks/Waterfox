@@ -1,15 +1,17 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+/* eslint no-unused-vars: [2, {"vars": "local"}] */
+
 "use strict";
 
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
-Cu.import("resource://testing-common/Assert.jsm");
-
 var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
+var { Assert } = require("resource://testing-common/Assert.jsm");
 var { gDevTools } = require("devtools/client/framework/devtools");
 var { BrowserLoader } = Cu.import("resource://devtools/client/shared/browser-loader.js", {});
 var promise = require("promise");
+var defer = require("devtools/shared/defer");
 var Services = require("Services");
 var { DebuggerServer } = require("devtools/server/main");
 var { DebuggerClient } = require("devtools/shared/client/main");
@@ -45,13 +47,13 @@ function onNextAnimationFrame(fn) {
 }
 
 function setState(component, newState) {
-  var deferred = promise.defer();
+  var deferred = defer();
   component.setState(newState, onNextAnimationFrame(deferred.resolve));
   return deferred.promise;
 }
 
 function setProps(component, newState) {
-  var deferred = promise.defer();
+  var deferred = defer();
   component.setProps(newState, onNextAnimationFrame(deferred.resolve));
   return deferred.promise;
 }
@@ -141,34 +143,39 @@ var TEST_TREE = {
 /**
  * Frame
  */
-function checkFrameString({ frame, file, line, column, source, shouldLink, tooltip }) {
-  let el = frame.getDOMNode();
+function checkFrameString({ el, file, line, column, source, functionName, shouldLink, tooltip }) {
   let $ = selector => el.querySelector(selector);
 
+  let $func = $(".frame-link-function-display-name");
   let $source = $(".frame-link-source");
+  let $sourceInner = $(".frame-link-source-inner");
   let $filename = $(".frame-link-filename");
   let $line = $(".frame-link-line");
-  let $column = $(".frame-link-column");
 
   is($filename.textContent, file, "Correct filename");
   is(el.getAttribute("data-line"), line ? `${line}` : null, "Expected `data-line` found");
   is(el.getAttribute("data-column"), column ? `${column}` : null, "Expected `data-column` found");
-  is($source.getAttribute("title"), tooltip, "Correct tooltip");
+  is($sourceInner.getAttribute("title"), tooltip, "Correct tooltip");
   is($source.tagName, shouldLink ? "A" : "SPAN", "Correct linkable status");
   if (shouldLink) {
     is($source.getAttribute("href"), source, "Correct source");
   }
 
   if (line != null) {
-    is(+$line.textContent, +line);
+    let lineText = `:${line}`;
+    if (column != null) {
+      lineText += `:${column}`;
+    }
+
+    is($line.textContent, lineText, "Correct line number");
   } else {
     ok(!$line, "Should not have an element for `line`");
   }
 
-  if (column != null) {
-    is(+$column.textContent, +column);
+  if (functionName != null) {
+    is($func.textContent, functionName, "Correct function name");
   } else {
-    ok(!$column, "Should not have an element for `column`");
+    ok(!$func, "Should not have an element for `functionName`");
   }
 }
 
@@ -187,4 +194,19 @@ function shallowRenderComponent(component, props) {
   const renderer = TestUtils.createRenderer();
   renderer.render(el, {});
   return renderer.getRenderOutput();
+}
+
+/**
+ * Test that a rep renders correctly across different modes.
+ */
+function testRepRenderModes(modeTests, testName, componentUnderTest, gripStub) {
+  modeTests.forEach(({mode, expectedOutput, message}) => {
+    const modeString = typeof mode === "undefined" ? "no mode" : mode;
+    if (!message) {
+      message = `${testName}: ${modeString} renders correctly.`;
+    }
+
+    const rendered = renderComponent(componentUnderTest.rep, { object: gripStub, mode });
+    is(rendered.textContent, expectedOutput, message);
+  });
 }

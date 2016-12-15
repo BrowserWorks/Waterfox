@@ -130,15 +130,6 @@ interface Element : Node {
 
   // Mozilla extensions
 
-  /**
-   * Requests that this element be made the pointer-locked element, as per the DOM
-   * pointer lock api.
-   *
-   * @see <http://dvcs.w3.org/hg/pointerlock/raw-file/default/index.html>
-   */
-  [UnsafeInPrerendering]
-  void mozRequestPointerLock();
-
   // Obsolete methods.
   Attr? getAttributeNode(DOMString name);
   [Throws]
@@ -155,6 +146,16 @@ interface Element : Node {
    * layout flushing.
    */
   boolean scrollByNoFlush(long dx, long dy);
+
+  // Support reporting of Grid properties
+
+  /**
+   * If this element has a display:grid or display:inline-grid style,
+   * this property returns an object with computed values for grid
+   * tracks and lines.
+   */
+  [ChromeOnly, Pure]
+  sequence<Grid> getGridFragments();
 };
 
 // http://dev.w3.org/csswg/cssom-view/
@@ -263,4 +264,12 @@ partial interface Element {
   void requestFullscreen(optional any options);
   [Throws, UnsafeInPrerendering, BinaryName="requestFullscreen"]
   void mozRequestFullScreen(optional any options);
+};
+
+// https://w3c.github.io/pointerlock/#extensions-to-the-element-interface
+partial interface Element {
+  [UnsafeInPrerendering]
+  void requestPointerLock();
+  [UnsafeInPrerendering, BinaryName="requestPointerLock", Pref="pointer-lock-api.prefixed.enabled"]
+  void mozRequestPointerLock();
 };

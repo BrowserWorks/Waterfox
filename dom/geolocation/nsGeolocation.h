@@ -12,7 +12,6 @@
 
 #include "mozilla/StaticPtr.h"
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsTArray.h"
 #include "nsITimer.h"
 #include "nsIObserver.h"
@@ -190,8 +189,12 @@ private:
 
   ~Geolocation();
 
-  nsresult GetCurrentPosition(GeoPositionCallback& aCallback, GeoPositionErrorCallback& aErrorCallback, PositionOptions* aOptions);
-  nsresult WatchPosition(GeoPositionCallback& aCallback, GeoPositionErrorCallback& aErrorCallback, PositionOptions* aOptions, int32_t* aRv);
+  nsresult GetCurrentPosition(GeoPositionCallback aCallback,
+                              GeoPositionErrorCallback aErrorCallback,
+                              PositionOptions* aOptions);
+  nsresult WatchPosition(GeoPositionCallback aCallback,
+                         GeoPositionErrorCallback aErrorCallback,
+                         PositionOptions* aOptions, int32_t* aRv);
 
   bool RegisterRequestWithPrompt(nsGeolocationRequest* request);
 

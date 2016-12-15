@@ -14,9 +14,10 @@
  *  0 - invalid
  *  4 - EMBED
  *  7 - DOWNLOAD
- *  7 - FRAMED_LINK
+ *  8 - FRAMED_LINK
+ *  9 - RELOAD
  **/
-#define EXCLUDED_VISIT_TYPES "0, 4, 7, 8"
+#define EXCLUDED_VISIT_TYPES "0, 4, 7, 8, 9"
 
 /**
  * This triggers update visit_count and last_visit_date based on historyvisits
@@ -26,6 +27,7 @@
   "CREATE TEMP TRIGGER moz_historyvisits_afterinsert_v2_trigger " \
   "AFTER INSERT ON moz_historyvisits FOR EACH ROW " \
   "BEGIN " \
+    "SELECT store_last_inserted_id('moz_historyvisits', NEW.id); " \
     "UPDATE moz_places SET " \
       "visit_count = visit_count + (SELECT NEW.visit_type NOT IN (" EXCLUDED_VISIT_TYPES ")), "\
       "last_visit_date = MAX(IFNULL(last_visit_date, 0), NEW.visit_date) " \
@@ -93,20 +95,20 @@
 #define CREATE_PLACES_AFTERINSERT_TRIGGER NS_LITERAL_CSTRING( \
   "CREATE TEMP TRIGGER moz_places_afterinsert_trigger " \
   "AFTER INSERT ON moz_places FOR EACH ROW " \
-  "WHEN LENGTH(NEW.rev_host) > 1 " \
   "BEGIN " \
+    "SELECT store_last_inserted_id('moz_places', NEW.id); " \
     "INSERT OR REPLACE INTO moz_hosts (id, host, frecency, typed, prefix) " \
-    "VALUES (" \
-      "(SELECT id FROM moz_hosts WHERE host = fixup_url(get_unreversed_host(NEW.rev_host))), " \
-      "fixup_url(get_unreversed_host(NEW.rev_host)), " \
-      "MAX(IFNULL((SELECT frecency FROM moz_hosts WHERE host = fixup_url(get_unreversed_host(NEW.rev_host))), -1), NEW.frecency), " \
-      "MAX(IFNULL((SELECT typed FROM moz_hosts WHERE host = fixup_url(get_unreversed_host(NEW.rev_host))), 0), NEW.typed), " \
-      "(" HOSTS_PREFIX_PRIORITY_FRAGMENT \
-       "FROM ( " \
-          "SELECT fixup_url(get_unreversed_host(NEW.rev_host)) AS host " \
-        ") AS match " \
-      ") " \
-    "); " \
+    "SELECT " \
+        "(SELECT id FROM moz_hosts WHERE host = fixup_url(get_unreversed_host(NEW.rev_host))), " \
+        "fixup_url(get_unreversed_host(NEW.rev_host)), " \
+        "MAX(IFNULL((SELECT frecency FROM moz_hosts WHERE host = fixup_url(get_unreversed_host(NEW.rev_host))), -1), NEW.frecency), " \
+        "MAX(IFNULL((SELECT typed FROM moz_hosts WHERE host = fixup_url(get_unreversed_host(NEW.rev_host))), 0), NEW.typed), " \
+        "(" HOSTS_PREFIX_PRIORITY_FRAGMENT \
+         "FROM ( " \
+            "SELECT fixup_url(get_unreversed_host(NEW.rev_host)) AS host " \
+          ") AS match " \
+        ") " \
+    " WHERE LENGTH(NEW.rev_host) > 1; " \
   "END" \
 )
 

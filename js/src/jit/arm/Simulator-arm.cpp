@@ -39,6 +39,7 @@
 #include "jit/arm/Assembler-arm.h"
 #include "jit/arm/disasm/Constants-arm.h"
 #include "jit/AtomicOperations.h"
+#include "threading/LockGuard.h"
 #include "vm/Runtime.h"
 #include "vm/SharedMem.h"
 
@@ -358,11 +359,15 @@ class CachePage
 
 // Protects the icache() and redirection() properties of the
 // Simulator.
-class AutoLockSimulatorCache
+class AutoLockSimulatorCache : public LockGuard<Mutex>
 {
+    using Base = LockGuard<Mutex>;
+
   public:
-    explicit AutoLockSimulatorCache(Simulator* sim) : sim_(sim) {
-        PR_Lock(sim_->cacheLock_);
+    explicit AutoLockSimulatorCache(Simulator* sim)
+      : Base(sim->cacheLock_)
+      , sim_(sim)
+    {
         MOZ_ASSERT(!sim_->cacheLockHolder_);
 #ifdef DEBUG
         sim_->cacheLockHolder_ = PR_GetCurrentThread();
@@ -374,7 +379,6 @@ class AutoLockSimulatorCache
 #ifdef DEBUG
         sim_->cacheLockHolder_ = nullptr;
 #endif
-        PR_Unlock(sim_->cacheLock_);
     }
 
   private:
@@ -1124,7 +1128,6 @@ Simulator::Simulator()
 
     lastDebuggerInput_ = nullptr;
 
-    cacheLock_ = nullptr;
 #ifdef DEBUG
     cacheLockHolder_ = nullptr;
 #endif
@@ -1136,10 +1139,6 @@ Simulator::Simulator()
 bool
 Simulator::init()
 {
-    cacheLock_ = PR_NewLock();
-    if (!cacheLock_)
-        return false;
-
     if (!icache_.init())
         return false;
 
@@ -1226,7 +1225,6 @@ class Redirection
 Simulator::~Simulator()
 {
     js_free(stack_);
-    PR_DestroyLock(cacheLock_);
     Redirection* r = redirection_;
     while (r) {
         Redirection* next = r->next_;
@@ -1504,11 +1502,9 @@ Simulator::exclusiveMonitorClear()
 }
 
 int
-Simulator::readW(int32_t addr, SimInstruction* instr)
+Simulator::readW(int32_t addr, SimInstruction* instr, UnalignedPolicy f)
 {
-    // The regexp engine emits unaligned loads, so we don't check for them here
-    // like most of the other methods do.
-    if ((addr & 3) == 0 || !HasAlignmentFault()) {
+    if ((addr & 3) == 0 || (f == AllowUnaligned && !HasAlignmentFault())) {
         intptr_t* ptr = reinterpret_cast<intptr_t*>(addr);
         return *ptr;
     }
@@ -1529,9 +1525,9 @@ Simulator::readW(int32_t addr, SimInstruction* instr)
 }
 
 void
-Simulator::writeW(int32_t addr, int value, SimInstruction* instr)
+Simulator::writeW(int32_t addr, int value, SimInstruction* instr, UnalignedPolicy f)
 {
-    if ((addr & 3) == 0) {
+    if ((addr & 3) == 0 || (f == AllowUnaligned && !HasAlignmentFault())) {
         intptr_t* ptr = reinterpret_cast<intptr_t*>(addr);
         *ptr = value;
         return;
@@ -1594,10 +1590,10 @@ Simulator::writeExW(int32_t addr, int value, SimInstruction* instr)
             return 1;
         int32_t old = compareExchangeRelaxed(ptr, expected, int32_t(value));
         return old != expected;
-    } else {
-        printf("Unaligned write at 0x%08x, pc=%p\n", addr, instr);
-        MOZ_CRASH();
     }
+
+    printf("Unaligned write at 0x%08x, pc=%p\n", addr, instr);
+    MOZ_CRASH();
 }
 
 uint16_t
@@ -1609,6 +1605,15 @@ Simulator::readHU(int32_t addr, SimInstruction* instr)
         uint16_t* ptr = reinterpret_cast<uint16_t*>(addr);
         return *ptr;
     }
+
+    // See comments in readW.
+    if (wasm::IsPCInWasmCode(reinterpret_cast<void *>(get_pc()))) {
+        char* ptr = reinterpret_cast<char*>(addr);
+        uint16_t value;
+        memcpy(&value, ptr, sizeof(value));
+        return value;
+    }
+
     printf("Unaligned unsigned halfword read at 0x%08x, pc=%p\n", addr, instr);
     MOZ_CRASH();
     return 0;
@@ -1617,10 +1622,19 @@ Simulator::readHU(int32_t addr, SimInstruction* instr)
 int16_t
 Simulator::readH(int32_t addr, SimInstruction* instr)
 {
-    if ((addr & 1) == 0) {
+    if ((addr & 1) == 0 || !HasAlignmentFault()) {
         int16_t* ptr = reinterpret_cast<int16_t*>(addr);
         return *ptr;
     }
+
+    // See comments in readW.
+    if (wasm::IsPCInWasmCode(reinterpret_cast<void *>(get_pc()))) {
+        char* ptr = reinterpret_cast<char*>(addr);
+        int16_t value;
+        memcpy(&value, ptr, sizeof(value));
+        return value;
+    }
+
     printf("Unaligned signed halfword read at 0x%08x\n", addr);
     MOZ_CRASH();
     return 0;
@@ -1629,25 +1643,41 @@ Simulator::readH(int32_t addr, SimInstruction* instr)
 void
 Simulator::writeH(int32_t addr, uint16_t value, SimInstruction* instr)
 {
-    if ((addr & 1) == 0) {
+    if ((addr & 1) == 0 || !HasAlignmentFault()) {
         uint16_t* ptr = reinterpret_cast<uint16_t*>(addr);
         *ptr = value;
-    } else {
-        printf("Unaligned unsigned halfword write at 0x%08x, pc=%p\n", addr, instr);
-        MOZ_CRASH();
+        return;
     }
+
+    // See the comments above in readW.
+    if (wasm::IsPCInWasmCode(reinterpret_cast<void *>(get_pc()))) {
+        char* ptr = reinterpret_cast<char*>(addr);
+        memcpy(ptr, &value, sizeof(value));
+        return;
+    }
+
+    printf("Unaligned unsigned halfword write at 0x%08x, pc=%p\n", addr, instr);
+    MOZ_CRASH();
 }
 
 void
 Simulator::writeH(int32_t addr, int16_t value, SimInstruction* instr)
 {
-    if ((addr & 1) == 0) {
+    if ((addr & 1) == 0 || !HasAlignmentFault()) {
         int16_t* ptr = reinterpret_cast<int16_t*>(addr);
         *ptr = value;
-    } else {
-        printf("Unaligned halfword write at 0x%08x, pc=%p\n", addr, instr);
-        MOZ_CRASH();
+        return;
     }
+
+    // See the comments above in readW.
+    if (wasm::IsPCInWasmCode(reinterpret_cast<void *>(get_pc()))) {
+        char* ptr = reinterpret_cast<char*>(addr);
+        memcpy(ptr, &value, sizeof(value));
+        return;
+    }
+
+    printf("Unaligned halfword write at 0x%08x, pc=%p\n", addr, instr);
+    MOZ_CRASH();
 }
 
 uint16_t
@@ -2256,7 +2286,9 @@ typedef int64_t (*Prototype_General8)(int32_t arg0, int32_t arg1, int32_t arg2, 
 typedef double (*Prototype_Double_None)();
 typedef double (*Prototype_Double_Double)(double arg0);
 typedef double (*Prototype_Double_Int)(int32_t arg0);
+typedef double (*Prototype_Double_IntInt)(int32_t arg0, int32_t arg1);
 typedef int32_t (*Prototype_Int_Double)(double arg0);
+typedef int64_t (*Prototype_Int64_Double)(double arg0);
 typedef int32_t (*Prototype_Int_DoubleIntInt)(double arg0, int32_t arg1, int32_t arg2);
 typedef int32_t (*Prototype_Int_IntDoubleIntInt)(int32_t arg0, double arg1, int32_t arg2,
                                                  int32_t arg3);
@@ -2399,6 +2431,16 @@ Simulator::softwareInterrupt(SimInstruction* instr)
             setCallResult(result);
             break;
           }
+          case Args_Int64_Double: {
+            double dval0, dval1;
+            int32_t ival;
+            getFpArgs(&dval0, &dval1, &ival);
+            Prototype_Int64_Double target = reinterpret_cast<Prototype_Int64_Double>(external);
+            int64_t result = target(dval0);
+            scratchVolatileRegisters(/* scratchFloat = true */);
+            setCallResult(result);
+            break;
+          }
           case Args_Double_None: {
             Prototype_Double_None target = reinterpret_cast<Prototype_Double_None>(external);
             double dresult = target();
@@ -2441,6 +2483,13 @@ Simulator::softwareInterrupt(SimInstruction* instr)
           case Args_Double_Int: {
             Prototype_Double_Int target = reinterpret_cast<Prototype_Double_Int>(external);
             double dresult = target(arg0);
+            scratchVolatileRegisters(/* scratchFloat = true */);
+            setCallResultDouble(dresult);
+            break;
+          }
+          case Args_Double_IntInt: {
+            Prototype_Double_IntInt target = reinterpret_cast<Prototype_Double_IntInt>(external);
+            double dresult = target(arg0, arg1);
             scratchVolatileRegisters(/* scratchFloat = true */);
             setCallResultDouble(dresult);
             break;
@@ -3062,8 +3111,16 @@ Simulator::decodeType01(SimInstruction* instr)
             }
             break;
           case OpSbc:
+            alu_out = rn_val - shifter_operand - (getCarry() == 0 ? 1 : 0);
+            set_register(rd, alu_out);
+            if (instr->hasS())
+                MOZ_CRASH();
+            break;
           case OpRsc:
-            MOZ_CRASH();
+            alu_out = shifter_operand - rn_val - (getCarry() == 0 ? 1 : 0);
+            set_register(rd, alu_out);
+            if (instr->hasS())
+                MOZ_CRASH();
             break;
           case OpTst:
             if (instr->hasS()) {
@@ -3196,9 +3253,9 @@ Simulator::decodeType2(SimInstruction* instr)
         }
     } else {
         if (instr->hasL())
-            set_register(rd, readW(addr, instr));
+            set_register(rd, readW(addr, instr, AllowUnaligned));
         else
-            writeW(addr, get_register(rd), instr);
+            writeW(addr, get_register(rd), instr, AllowUnaligned);
     }
 }
 
@@ -3463,9 +3520,9 @@ Simulator::decodeType3(SimInstruction* instr)
         }
     } else {
         if (instr->hasL())
-            set_register(rd, readW(addr, instr));
+            set_register(rd, readW(addr, instr, AllowUnaligned));
         else
-            writeW(addr, get_register(rd), instr);
+            writeW(addr, get_register(rd), instr, AllowUnaligned);
     }
 }
 
@@ -4290,8 +4347,10 @@ Simulator::decodeSpecialCondition(SimInstruction* instr)
             while (r < regs) {
                 uint32_t data[2];
                 get_d_register(Vd + r, data);
-                writeW(address, data[0], instr);
-                writeW(address + 4, data[1], instr);
+                // TODO: We should AllowUnaligned here only if the alignment attribute of
+                // the instruction calls for default alignment.
+                writeW(address, data[0], instr, AllowUnaligned);
+                writeW(address + 4, data[1], instr, AllowUnaligned);
                 address += 8;
                 r++;
             }
@@ -4329,8 +4388,10 @@ Simulator::decodeSpecialCondition(SimInstruction* instr)
             int r = 0;
             while (r < regs) {
                 uint32_t data[2];
-                data[0] = readW(address, instr);
-                data[1] = readW(address + 4, instr);
+                // TODO: We should AllowUnaligned here only if the alignment attribute of
+                // the instruction calls for default alignment.
+                data[0] = readW(address, instr, AllowUnaligned);
+                data[1] = readW(address + 4, instr, AllowUnaligned);
                 set_d_register(Vd + r, data);
                 address += 8;
                 r++;

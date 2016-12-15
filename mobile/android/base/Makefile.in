@@ -65,6 +65,7 @@ JAVA_CLASSPATH += \
     $(ANDROID_CARDVIEW_V7_AAR_LIB) \
     $(ANDROID_DESIGN_AAR_LIB) \
     $(ANDROID_RECYCLERVIEW_V7_AAR_LIB) \
+    $(ANDROID_CUSTOMTABS_AAR_LIB) \
     $(NULL)
 
 # If native devices are enabled, add Google Play Services and some of the v7
@@ -106,6 +107,7 @@ java_bundled_libs := \
     $(ANDROID_CARDVIEW_V7_AAR_LIB) \
     $(ANDROID_DESIGN_AAR_LIB) \
     $(ANDROID_RECYCLERVIEW_V7_AAR_LIB) \
+    $(ANDROID_CUSTOMTABS_AAR_LIB) \
     $(NULL)
 
 ifdef MOZ_NATIVE_DEVICES
@@ -305,7 +307,17 @@ ANNOTATION_PROCESSOR_JAR_FILES := $(DEPTH)/build/annotationProcessors/annotation
 # GeneratedJNIWrappers.h and GeneratedJNINatives.h
 GeneratedJNIWrappers.cpp: $(ANNOTATION_PROCESSOR_JAR_FILES)
 GeneratedJNIWrappers.cpp: $(ALL_JARS)
-	$(JAVA) -classpath constants.jar:$(JAVA_BOOTCLASSPATH):$(JAVA_CLASSPATH):$(ANNOTATION_PROCESSOR_JAR_FILES) org.mozilla.gecko.annotationProcessors.AnnotationProcessor $(ALL_JARS)
+	# (bug 1278008) I added all_jars_classpath here but I'm not certain
+	# this is optimal. The annotation processor throws NoClassDefFoundError
+	# because it is missing the adjust SDK on its classpath so ideally,
+	# we'd just add that. However, another NoClassDefFoundError is thrown
+	# for HttpClient and I could not fix that.
+	#
+	# I don't want to spend too much time on this & it seems harmless to
+	# add the sources we're actively compiling to classpath of the
+	# annotation processor, which includes adjust & whatever lib we're
+	# missing for HttpClient, so I opted for this solution.
+	$(JAVA) -classpath $(all_jars_classpath):constants.jar:$(JAVA_BOOTCLASSPATH):$(JAVA_CLASSPATH):$(ANNOTATION_PROCESSOR_JAR_FILES) org.mozilla.gecko.annotationProcessors.AnnotationProcessor $(ALL_JARS)
 
 # Certain source files need to be preprocessed.  This special rule
 # generates these files into generated/org/mozilla/gecko for
@@ -380,33 +392,6 @@ all_resources = \
   $(ANDROID_GENERATED_RESFILES) \
   $(NULL)
 
-# For GeckoView, we want a zip of an Android res/ directory that
-# merges the contents of all the ANDROID_RES_DIRS.  The inner res/
-# directory must have the Android resource two-layer hierarchy.
-
-# The following helper zips files in a directory into a zip file while
-# maintaining the directory structure rooted below the directory.
-# (adding or creating said file as appropriate).  For example, if the
-# dir contains dir/subdir/file, calling with directory dir would
-# create a zip containing subdir/file.  Note: the trailing newline is
-# necessary.
-
-# $(1): zip file to add to (or create).
-# $(2): directory to zip contents of.
-define zip_directory_with_relative_paths
-cd $(2) && zip -q $(1) -r * -x $(subst *,\*,$(not_android_res_files))
-
-endef
-
-ifndef MOZ_DISABLE_GECKOVIEW
-# We delete the archive before updating so that resources removed from
-# the filesystem are removed from the archive.
-geckoview_resources.zip: $(all_resources) $(GLOBAL_DEPS)
-	$(REPORT_BUILD)
-	$(RM) -rf $@
-	$(foreach dir,$(ANDROID_RES_DIRS),$(call zip_directory_with_relative_paths,$(CURDIR)/$@,$(dir)))
-endif
-
 # All of generated/org/mozilla/gecko/R.java, gecko.ap_, and R.txt are
 # produced by aapt; this saves aapt invocations.  The trailing
 # semi-colon defines an empty recipe; defining no recipe at all causes
@@ -422,6 +407,7 @@ generated/android/support/v7/cardview/R.java: .aapt.deps ;
 generated/android/support/design/R.java: .aapt.deps ;
 generated/android/support/v7/mediarouter/R.java: .aapt.deps ;
 generated/android/support/v7/recyclerview/R.java: .aapt.deps ;
+generated/android/support/customtabs/R.java: .aapt.deps ;
 generated/com/google/android/gms/R.java: .aapt.deps ;
 generated/com/google/android/gms/ads/R.java: .aapt.deps ;
 generated/com/google/android/gms/base/R.java: .aapt.deps ;
@@ -535,11 +521,6 @@ gradle-omnijar:
 endif
 
 .PHONY: gradle-targets gradle-omnijar
-
-ifndef MOZ_DISABLE_GECKOVIEW
-libs:: geckoview_resources.zip
-	$(INSTALL) geckoview_resources.zip $(FINAL_TARGET)
-endif
 
 # GeneratedJNIWrappers.cpp target also generates
 # GeneratedJNIWrappers.h and GeneratedJNINatives.h

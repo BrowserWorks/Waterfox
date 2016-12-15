@@ -94,9 +94,6 @@ XPCOMUtils.defineLazyServiceGetter(this, "Profiler",
 XPCOMUtils.defineLazyModuleGetter(this, "SimpleServiceDiscovery",
                                   "resource://gre/modules/SimpleServiceDiscovery.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "ExtensionManagement",
-                                  "resource://gre/modules/ExtensionManagement.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "CharsetMenu",
                                   "resource://gre/modules/CharsetMenu.jsm");
 
@@ -133,7 +130,7 @@ var lazilyLoadedBrowserScripts = [
   ["CastingApps", "chrome://browser/content/CastingApps.js"],
   ["RemoteDebugger", "chrome://browser/content/RemoteDebugger.js"],
 ];
-if (AppConstants.NIGHTLY_BUILD) {
+if (!AppConstants.RELEASE_BUILD) {
   lazilyLoadedBrowserScripts.push(
     ["WebcompatReporter", "chrome://browser/content/WebcompatReporter.js"]);
 }
@@ -391,17 +388,7 @@ var BrowserApp = {
     Services.obs.addObserver(this, "Fonts:Reload", false);
     Services.obs.addObserver(this, "Vibration:Request", false);
 
-    // Register extension source files.
-    ExtensionManagement.registerScript("chrome://browser/content/ext-pageAction.js");
-
-    // Register extension schemas.
-    ExtensionManagement.registerSchema("chrome://browser/content/schemas/page_action.json");
-
     Messaging.addListener(this.getHistory.bind(this), "Session:GetHistory");
-
-    function showFullScreenWarning() {
-      Snackbars.show(Strings.browser.GetStringFromName("alertFullScreenToast"), Snackbars.LENGTH_LONG);
-    }
 
     window.addEventListener("fullscreen", function() {
       Messaging.sendRequest({
@@ -420,14 +407,7 @@ var BrowserApp = {
         type: doc.fullscreenElement ? "DOMFullScreen:Start" : "DOMFullScreen:Stop",
         rootElement: doc.fullscreenElement == doc.documentElement
       });
-
-      if (doc.fullscreenElement)
-        showFullScreenWarning();
     }, false);
-
-    // When a restricted key is pressed in DOM full-screen mode, we should display
-    // the "Press ESC to exit" warning message.
-    window.addEventListener("MozShowFullScreenWarning", showFullScreenWarning, true);
 
     NativeWindow.init();
     FormAssistant.init();
@@ -533,7 +513,7 @@ var BrowserApp = {
       InitLater(() => Services.obs.notifyObservers(window, "browser-delayed-startup-finished", ""));
       InitLater(() => Messaging.sendRequest({ type: "Gecko:DelayedStartup" }));
 
-      if (AppConstants.NIGHTLY_BUILD) {
+      if (!AppConstants.RELEASE_BUILD) {
         InitLater(() => WebcompatReporter.init());
       }
 
@@ -977,7 +957,7 @@ var BrowserApp = {
   },
 
   _migrateUI: function() {
-    const UI_VERSION = 2;
+    const UI_VERSION = 3;
     let currentUIVersion = 0;
     try {
       currentUIVersion = Services.prefs.getIntPref("browser.migration.version");
@@ -1039,6 +1019,20 @@ var BrowserApp = {
             Services.obs.notifyObservers(null, "default-search-engine-migrated", "");
           }
         });
+      }
+    }
+
+    if (currentUIVersion < 3) {
+      const kOldSafeBrowsingPref = "browser.safebrowsing.enabled";
+      // Default value is set to true, a user pref means that the pref was
+      // set to false.
+      if (Services.prefs.prefHasUserValue(kOldSafeBrowsingPref) &&
+          !Services.prefs.getBoolPref(kOldSafeBrowsingPref)) {
+        Services.prefs.setBoolPref("browser.safebrowsing.phishing.enabled",
+                                   false);
+        // Should just remove support for the pref entirely, even if it's
+        // only in about:config
+        Services.prefs.clearUserPref(kOldSafeBrowsingPref);
       }
     }
 
@@ -1355,6 +1349,8 @@ var BrowserApp = {
     if (cancelQuit.data) {
       return;
     }
+
+    Services.obs.notifyObservers(null, "quit-application-proceeding", null);
 
     // Tell session store to forget about this window
     if (aClear.dontSaveSession) {
@@ -1675,10 +1671,10 @@ var BrowserApp = {
         let flags = Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_THIRD_PARTY_FIXUP
                   | Ci.nsIWebNavigation.LOAD_FLAGS_FIXUP_SCHEME_TYPOS;
 
-        // Pass LOAD_FLAGS_DISALLOW_INHERIT_OWNER to prevent any loads from
+        // Pass LOAD_FLAGS_DISALLOW_INHERIT_PRINCIPAL to prevent any loads from
         // inheriting the currently loaded document's principal.
         if (data.userEntered) {
-          flags |= Ci.nsIWebNavigation.LOAD_FLAGS_DISALLOW_INHERIT_OWNER;
+          flags |= Ci.nsIWebNavigation.LOAD_FLAGS_DISALLOW_INHERIT_PRINCIPAL;
         }
 
         let delayLoad = ("delayLoad" in data) ? data.delayLoad : false;
@@ -3441,19 +3437,22 @@ Tab.prototype = {
     this.browser.setAttribute("type", "content-targetable");
     this.browser.setAttribute("messagemanagergroup", "browsers");
 
+    this.browser.permanentKey = {};
+
     // Make sure the previously selected panel remains selected. The selected panel of a deck is
     // not stable when panels are added.
     let selectedPanel = BrowserApp.deck.selectedPanel;
     BrowserApp.deck.insertBefore(this.browser, aParams.sibling || null);
     BrowserApp.deck.selectedPanel = selectedPanel;
 
+    let attrs = {};
     if (BrowserApp.manifestUrl) {
       let appsService = Cc["@mozilla.org/AppsService;1"].getService(Ci.nsIAppsService);
       let manifest = appsService.getAppByManifestURL(BrowserApp.manifestUrl);
       if (manifest) {
         let app = manifest.QueryInterface(Ci.mozIApplication);
         this.browser.docShell.frameType = Ci.nsIDocShell.FRAME_TYPE_APP;
-        this.browser.docShell.setOriginAttributes({appId: app.localId});
+        attrs['appId'] = app.localId;
       }
     }
 
@@ -3462,8 +3461,10 @@ Tab.prototype = {
 
     let isPrivate = ("isPrivate" in aParams) && aParams.isPrivate;
     if (isPrivate) {
-      this.browser.docShell.QueryInterface(Ci.nsILoadContext).usePrivateBrowsing = true;
+      attrs['privateBrowsingId'] = 1;
     }
+
+    this.browser.docShell.setOriginAttributes(attrs);
 
     // Set the new docShell load flags based on network state.
     if (Tabs.useCache) {
@@ -4158,7 +4159,7 @@ Tab.prototype = {
             return;
 
           jsonMessage = this.makeFeedMessage(target, type);
-        } else if (list.indexOf("[search]" != -1) && aEvent.type == "DOMLinkAdded") {
+        } else if (list.indexOf("[search]") != -1 && aEvent.type == "DOMLinkAdded") {
           this.sendOpenSearchMessage(target);
         }
         if (!jsonMessage)
@@ -4302,7 +4303,8 @@ Tab.prototype = {
         Messaging.sendRequest({
           type: "Content:PageShow",
           tabID: this.id,
-          userRequested: this.userRequested
+          userRequested: this.userRequested,
+          fromCache: Tabs.useCache
         });
 
         this.isSearch = false;
@@ -4673,12 +4675,10 @@ var BrowserEventHandler = {
 
     BrowserApp.deck.addEventListener("DOMUpdatePageReport", PopupBlockerObserver.onUpdatePageReport, false);
     BrowserApp.deck.addEventListener("MozMouseHittest", this, true);
+    BrowserApp.deck.addEventListener("OpenMediaWithExternalApp", this, true);
 
     InitLater(() => BrowserApp.deck.addEventListener("click", InputWidgetHelper, true));
     InitLater(() => BrowserApp.deck.addEventListener("click", SelectHelper, true));
-    if (AppConstants.NIGHTLY_BUILD) {
-      InitLater(() => BrowserApp.deck.addEventListener("InsecureLoginFormsStateChange", IdentityHandler.sendLoginInsecure, true));
-    }
 
     // ReaderViews support backPress listeners.
     Messaging.addListener(() => {
@@ -4699,6 +4699,21 @@ var BrowserEventHandler = {
       case 'MozMouseHittest':
         this._handleRetargetedTouchStart(aEvent);
         break;
+      case 'OpenMediaWithExternalApp': {
+        if (aEvent.target.moz_video_uuid) {
+          return;
+        }
+        let mediaSrc = aEvent.target.currentSrc || aEvent.target.src;
+        if (!aEvent.target.moz_video_uuid) {
+          aEvent.target.moz_video_uuid = uuidgen.generateUUID().toString();
+        }
+        Services.androidBridge.handleGeckoMessage({
+          type: "Video:Play",
+          uri: mediaSrc,
+          uuid: aEvent.target.moz_video_uuid
+        });
+        break;
+      }
     }
   },
 
@@ -5236,9 +5251,6 @@ var ErrorPageEventHandler = {
             // ....but add a notify bar as a reminder, so that they don't lose
             // track after, e.g., tab switching.
             NativeWindow.doorhanger.show(Strings.browser.GetStringFromName("safeBrowsingDoorhanger"), "safebrowsing-warning", [], BrowserApp.selectedTab.id);
-          } else if (target == errorDoc.getElementById("whyForbiddenButton")) {
-            // This is the "Why is this site blocked" button for family friendly browsing.
-            BrowserApp.selectedBrowser.loadURI("https://support.mozilla.org/kb/controlledaccess");
           }
         }
         break;
@@ -6387,18 +6399,6 @@ var IdentityHandler = {
     return this.TRACKING_MODE_UNKNOWN;
   },
 
-  sendLoginInsecure: function sendLoginInsecure() {
-    let loginInsecure = LoginManagerParent.hasInsecureLoginForms(BrowserApp.selectedBrowser);
-        if (loginInsecure) {
-          let message = {
-            type: "Content:LoginInsecure",
-            tabID: BrowserApp.selectedTab.id
-          };
-          Messaging.sendRequest(message);
-        }
-    },
-
-
   shieldHistogramAdd: function(browser, value) {
     if (PrivateBrowsingUtils.isBrowserPrivate(browser)) {
       return;
@@ -6778,7 +6778,7 @@ var SearchEngines = {
       }
     };
 
-    // Return valid, pre-sorted queryParams. 
+    // Return valid, pre-sorted queryParams.
     return formData.filter(a => a.name && a.value).sort((a, b) => {
       // nsIBrowserSearchService.hasEngineWithURL() ensures sort, but this helps.
       if (a.name > b.name) {
@@ -7148,8 +7148,6 @@ var Distribution = {
         } catch (e) {
           console.log("Unable to reinit search service.");
         }
-        // Make sure we don't reuse the original preferences
-        this._preferencesJSON = null;
         // Fall through.
 
       case "Distribution:Set":
@@ -7196,6 +7194,7 @@ var Distribution = {
   getPrefs: function dc_getPrefs() {
     if (this._preferencesJSON) {
         this.applyPrefs(this._preferencesJSON);
+        this._preferencesJSON = null;
         return;
     }
 
@@ -7413,25 +7412,6 @@ var Tabs = {
         // Clear the domain cache whenever a page is loaded into any browser.
         this._domains.clear();
 
-        // Notify if we are loading a page from cache.
-        if (this._useCache) {
-          let targetDoc = aEvent.originalTarget;
-          let isTopLevel = (targetDoc.defaultView.parent === targetDoc.defaultView);
-
-          // Ignore any about: pages, especially about:neterror since it means we failed to find the page in cache.
-          let targetURI = targetDoc.documentURI;
-          if (isTopLevel && !targetURI.startsWith("about:")) {
-            UITelemetry.addEvent("neterror.1", "toast", null, "usecache");
-            Snackbars.show(
-              Strings.browser.GetStringFromName("networkOffline.message2"),
-              Snackbars.LENGTH_INDEFINITE,
-              {
-                // link_blue
-                backgroundColor: "#0096DD"
-              }
-            );
-          }
-        }
         break;
       case "TabOpen":
         // Use opening a new tab as a trigger to expire the most stale tab.

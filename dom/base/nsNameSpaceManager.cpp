@@ -12,7 +12,6 @@
 #include "nsNameSpaceManager.h"
 
 #include "nscore.h"
-#include "nsAutoPtr.h"
 #include "mozilla/dom/NodeInfo.h"
 #include "nsCOMArray.h"
 #include "nsContentCreatorFunctions.h"
@@ -89,7 +88,7 @@ nsNameSpaceManager::RegisterNameSpace(const nsAString& aURI,
   }
 
   NS_POSTCONDITION(aNameSpaceID >= -1, "Bogus namespace ID");
-  
+
   return rv;
 }
 
@@ -117,10 +116,19 @@ nsNameSpaceManager::GetNameSpaceID(const nsAString& aURI)
     return kNameSpaceID_None; // xmlns="", see bug 75700 for details
   }
 
-  int32_t nameSpaceID;
-
   nsCOMPtr<nsIAtom> atom = NS_Atomize(aURI);
-  if (mURIToIDTable.Get(atom, &nameSpaceID)) {
+  return GetNameSpaceID(atom);
+}
+
+int32_t
+nsNameSpaceManager::GetNameSpaceID(nsIAtom* aURI)
+{
+  if (aURI == nsGkAtoms::_empty) {
+    return kNameSpaceID_None; // xmlns="", see bug 75700 for details
+  }
+
+  int32_t nameSpaceID;
+  if (mURIToIDTable.Get(aURI, &nameSpaceID)) {
     NS_POSTCONDITION(nameSpaceID >= 0, "Bogus namespace ID");
     return nameSpaceID;
   }
@@ -131,12 +139,13 @@ nsNameSpaceManager::GetNameSpaceID(const nsAString& aURI)
 nsresult
 NS_NewElement(Element** aResult,
               already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
-              FromParser aFromParser)
+              FromParser aFromParser,
+              const nsAString* aIs)
 {
   RefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
   int32_t ns = ni->NamespaceID();
   if (ns == kNameSpaceID_XHTML) {
-    return NS_NewHTMLElement(aResult, ni.forget(), aFromParser);
+    return NS_NewHTMLElement(aResult, ni.forget(), aFromParser, aIs);
   }
 #ifdef MOZ_XUL
   if (ns == kNameSpaceID_XUL) {

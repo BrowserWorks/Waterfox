@@ -68,7 +68,7 @@ class BaseProcess {
    * @param {string[]} strings
    *        The strings to convert into a C string array.
    *
-   * @returns {ctypes.char.ptr.array()}
+   * @returns {ctypes.char.ptr.array}
    */
   stringArray(strings) {
     let result = ctypes.char.ptr.array(strings.length + 1)();
@@ -88,6 +88,18 @@ class BaseProcess {
 }
 
 let requests = {
+  init(details) {
+    io.init(details);
+
+    return {data: {}};
+  },
+
+  shutdown() {
+    io.shutdown();
+
+    return {data: {}};
+  },
+
   close(pipeId, force = false) {
     let pipe = io.getPipe(pipeId);
 
@@ -149,9 +161,15 @@ let requests = {
                                   proc => [proc.id, proc.pid]));
     return {data};
   },
+
+  waitForNoProcesses() {
+    return Promise.all(Array.from(io.processes.values(), proc => proc.exitPromise));
+  },
 };
 
 onmessage = event => {
+  io.messageCount--;
+
   let {msg, msgId, args} = event.data;
 
   new Promise(resolve => {
@@ -190,4 +208,10 @@ onmessage = event => {
       error: {},
     });
   });
+};
+
+onclose = event => {
+  io.shutdown();
+
+  self.postMessage({msg: "close"});
 };

@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/mozalloc.h"
-#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsDebug.h"
 #include "nsError.h"
@@ -256,9 +255,9 @@ nsTransactionItem::RedoTransaction(nsTransactionManager *aTxMgr)
 {
   nsresult result;
 
-  nsCOMPtr<nsITransaction> kungfuDeathGrip(mTransaction);
-  if (mTransaction) {
-    result = mTransaction->RedoTransaction();
+  nsCOMPtr<nsITransaction> transaction(mTransaction);
+  if (transaction) {
+    result = transaction->RedoTransaction();
 
     NS_ENSURE_SUCCESS(result, result);
   }

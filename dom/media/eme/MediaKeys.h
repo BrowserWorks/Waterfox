@@ -19,6 +19,7 @@
 #include "mozilla/dom/MediaKeysBinding.h"
 #include "mozIGeckoMediaPluginService.h"
 #include "mozilla/DetailedPromise.h"
+#include "mozilla/WeakPtr.h"
 
 namespace mozilla {
 
@@ -36,18 +37,23 @@ typedef nsRefPtrHashtable<nsUint32HashKey, MediaKeySession> PendingKeySessionsHa
 typedef uint32_t PromiseId;
 
 // This class is used on the main thread only.
-// Note: it's addref/release is not (and can't be) thread safe!
+// Note: its addref/release is not (and can't be) thread safe!
 class MediaKeys final : public nsISupports,
-                        public nsWrapperCache
+                        public nsWrapperCache,
+                        public SupportsWeakPtr<MediaKeys>
 {
   ~MediaKeys();
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(MediaKeys)
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(MediaKeys)
 
   MediaKeys(nsPIDOMWindowInner* aParentWindow,
-            const nsAString& aKeySystem, const nsAString& aCDMVersion);
+            const nsAString& aKeySystem,
+            const nsAString& aCDMVersion,
+            bool aDistinctiveIdentifierRequired,
+            bool aPersistentStateRequired);
 
   already_AddRefed<DetailedPromise> Init(ErrorResult& aRv);
 
@@ -63,7 +69,7 @@ public:
 
   // JavaScript: MediaKeys.createSession()
   already_AddRefed<MediaKeySession> CreateSession(JSContext* aCx,
-                                                  SessionType aSessionType,
+                                                  MediaKeySessionType aSessionType,
                                                   ErrorResult& aRv);
 
   // JavaScript: MediaKeys.SetServerCertificate()
@@ -144,6 +150,8 @@ private:
   RefPtr<nsIPrincipal> mPrincipal;
   RefPtr<nsIPrincipal> mTopLevelPrincipal;
 
+  const bool mDistinctiveIdentifierRequired;
+  const bool mPersistentStateRequired;
 };
 
 } // namespace dom

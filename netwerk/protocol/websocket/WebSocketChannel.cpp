@@ -194,6 +194,9 @@ public:
 
     nsCOMPtr<nsIPrefBranch> prefService =
       do_GetService(NS_PREFSERVICE_CONTRACTID);
+    if (!prefService) {
+      return;
+    }
     bool boolpref = true;
     nsresult rv;
     rv = prefService->GetBoolPref("network.websocket.delay-failed-reconnects",
@@ -1402,7 +1405,8 @@ WebSocketChannel::BeginOpenInternal()
   }
 #endif
 
-  rv = localChannel->AsyncOpen(this, mHttpChannel);
+  rv = NS_MaybeOpenChannelUsingAsyncOpen2(localChannel, this);
+
   if (NS_FAILED(rv)) {
     LOG(("WebSocketChannel::BeginOpenInternal: cannot async open\n"));
     AbortSession(NS_ERROR_CONNECTION_REFUSED);
@@ -2179,14 +2183,16 @@ WebSocketChannel::PrimeNewOutgoingMessage()
     // Perform the sending mask. Never use a zero mask
     do {
       uint8_t *buffer;
-      nsresult rv = mRandomGenerator->GenerateRandomBytes(4, &buffer);
+      PR_STATIC_ASSERT(4 == sizeof(mask));
+      nsresult rv = mRandomGenerator->GenerateRandomBytes(sizeof(mask),
+                                                          &buffer);
       if (NS_FAILED(rv)) {
         LOG(("WebSocketChannel::PrimeNewOutgoingMessage(): "
              "GenerateRandomBytes failure %x\n", rv));
         StopSession(rv);
         return;
       }
-      mask = * reinterpret_cast<uint32_t *>(buffer);
+      memcpy(&mask, buffer, sizeof(mask));
       free(buffer);
     } while (!mask);
     NetworkEndian::writeUint32(payload - sizeof(uint32_t), mask);
@@ -3717,7 +3723,7 @@ WebSocketChannel::OnStartRequest(nsIRequest *aRequest,
                                  nsISupports *aContext)
 {
   LOG(("WebSocketChannel::OnStartRequest(): %p [%p %p] recvdhttpupgrade=%d\n",
-       this, aRequest, aContext, mRecvdHttpUpgradeTransport));
+       this, aRequest, mHttpChannel.get(), mRecvdHttpUpgradeTransport));
   MOZ_ASSERT(NS_IsMainThread(), "not main thread");
   MOZ_ASSERT(!mGotUpgradeOK, "OTA duplicated");
 
@@ -3878,7 +3884,7 @@ WebSocketChannel::OnStopRequest(nsIRequest *aRequest,
                                 nsresult aStatusCode)
 {
   LOG(("WebSocketChannel::OnStopRequest() %p [%p %p %x]\n",
-       this, aRequest, aContext, aStatusCode));
+       this, aRequest, mHttpChannel.get(), aStatusCode));
   MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   ReportConnectionTelemetry();
@@ -4041,7 +4047,7 @@ WebSocketChannel::OnDataAvailable(nsIRequest *aRequest,
                                     uint32_t aCount)
 {
   LOG(("WebSocketChannel::OnDataAvailable() %p [%p %p %p %llu %u]\n",
-         this, aRequest, aContext, aInputStream, aOffset, aCount));
+         this, aRequest, mHttpChannel.get(), aInputStream, aOffset, aCount));
 
   // This is the HTTP OnDataAvailable Method, which means this is http data in
   // response to the upgrade request and there should be no http response body

@@ -24,8 +24,8 @@ DEF_TEST(DeserializedStackFrameUbiStackFrames, {
     StackFrameId id = uint64_t(1) << 42;
     uint32_t line = 1337;
     uint32_t column = 9; // 3 space tabs!?
-    const char16_t* source = MOZ_UTF16("my-javascript-file.js");
-    const char16_t* functionDisplayName = MOZ_UTF16("myFunctionName");
+    const char16_t* source = u"my-javascript-file.js";
+    const char16_t* functionDisplayName = u"myFunctionName";
 
     MockDeserializedStackFrame mocked;
     mocked.id = id;
@@ -46,7 +46,7 @@ DEF_TEST(DeserializedStackFrameUbiStackFrames, {
     EXPECT_EQ(JS::ubi::AtomOrTwoByteChars(source), ubiFrame.source());
     EXPECT_EQ(JS::ubi::AtomOrTwoByteChars(functionDisplayName),
               ubiFrame.functionDisplayName());
-    EXPECT_FALSE(ubiFrame.isSelfHosted());
+    EXPECT_FALSE(ubiFrame.isSelfHosted(cx));
     EXPECT_FALSE(ubiFrame.isSystem());
 
     JS::RootedObject savedFrame(cx);

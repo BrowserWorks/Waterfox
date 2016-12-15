@@ -71,6 +71,15 @@ var WebChannelBroker = Object.create({
       eventTarget: event.objects.eventTarget,
       principal: event.principal,
     };
+    // data must be a string except for a few legacy origins allowed by browser-content.js.
+    if (typeof data == "string") {
+      try {
+        data = JSON.parse(data);
+      } catch (e) {
+        Cu.reportError("Failed to parse WebChannel data as a JSON object");
+        return;
+      }
+    }
 
     if (data && data.id) {
       if (!event.principal) {
@@ -162,7 +171,7 @@ this.WebChannel = function(id, originOrPermission) {
       // The permission manager operates on domain names rather than true
       // origins (bug 1066517).  To mitigate that, we explicitly check that
       // the scheme is https://.
-      let uri = Services.io.newURI(requestPrincipal.origin, null, null);
+      let uri = Services.io.newURI(requestPrincipal.originNoSuffix, null, null);
       if (uri.scheme != "https") {
         return false;
       }
@@ -174,7 +183,7 @@ this.WebChannel = function(id, originOrPermission) {
   } else {
     // a simple URI, so just check for an exact match.
     this._originCheckCallback = requestPrincipal => {
-      return originOrPermission.prePath === requestPrincipal.origin;
+      return originOrPermission.prePath === requestPrincipal.originNoSuffix;
     }
   }
   this._originOrPermission = originOrPermission;

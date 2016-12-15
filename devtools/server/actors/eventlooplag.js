@@ -2,60 +2,49 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 /**
  * The eventLoopLag actor emits "event-loop-lag" events when the event
  * loop gets unresponsive. The event comes with a "time" property (the
  * duration of the lag in milliseconds).
  */
 
-const {Ci, Cu} = require("chrome");
+const {Ci} = require("chrome");
 const Services = require("Services");
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-const protocol = require("devtools/shared/protocol");
-const {method, Arg, RetVal} = protocol;
+const {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
+const {Actor, ActorClassWithSpec} = require("devtools/shared/protocol");
 const events = require("sdk/event/core");
+const {eventLoopLagSpec} = require("devtools/shared/specs/eventlooplag");
 
-var EventLoopLagActor = exports.EventLoopLagActor = protocol.ActorClass({
-
-  typeName: "eventLoopLag",
-
+var EventLoopLagActor = exports.EventLoopLagActor = ActorClassWithSpec(eventLoopLagSpec, {
   _observerAdded: false,
-
-  events: {
-    "event-loop-lag" : {
-      type: "event-loop-lag",
-      time: Arg(0, "number") // duration of the lag in milliseconds.
-    }
-  },
 
   /**
    * Start tracking the event loop lags.
    */
-  start: method(function () {
+  start: function () {
     if (!this._observerAdded) {
       Services.obs.addObserver(this, "event-loop-lag", false);
       this._observerAdded = true;
     }
     return Services.appShell.startEventLoopLagTracking();
-  }, {
-    request: {},
-    response: {success: RetVal("number")}
-  }),
+  },
 
   /**
    * Stop tracking the event loop lags.
    */
-  stop: method(function () {
+  stop: function () {
     if (this._observerAdded) {
       Services.obs.removeObserver(this, "event-loop-lag");
       this._observerAdded = false;
     }
     Services.appShell.stopEventLoopLagTracking();
-  }, {request: {}, response: {}}),
+  },
 
   destroy: function () {
     this.stop();
-    protocol.Actor.prototype.destroy.call(this);
+    Actor.prototype.destroy.call(this);
   },
 
   // nsIObserver
@@ -68,12 +57,4 @@ var EventLoopLagActor = exports.EventLoopLagActor = protocol.ActorClass({
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
-});
-
-exports.EventLoopLagFront = protocol.FrontClass(EventLoopLagActor, {
-  initialize: function (client, form) {
-    protocol.Front.prototype.initialize.call(this, client);
-    this.actorID = form.eventLoopLagActor;
-    this.manage(this);
-  },
 });

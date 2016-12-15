@@ -8,6 +8,7 @@
 #define mozilla_dom_quota_QuotaManagerService_h
 
 #include "mozilla/dom/ipc/IdType.h"
+#include "nsAutoPtr.h"
 #include "nsIObserver.h"
 #include "nsIQuotaManagerService.h"
 
@@ -68,7 +69,7 @@ public:
   NoteLiveManager(QuotaManager* aManager);
 
   void
-  NoteFinishedManager();
+  NoteShuttingDownManager();
 
   // Called when a process is being shot down. Aborts any running operations
   // for the given process.

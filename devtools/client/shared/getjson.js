@@ -5,6 +5,7 @@
 "use strict";
 
 const {CC} = require("chrome");
+const defer = require("devtools/shared/defer");
 const promise = require("promise");
 const Services = require("Services");
 
@@ -24,7 +25,7 @@ const XMLHttpRequest = CC("@mozilla.org/xmlextras/xmlhttprequest;1");
  *         - Rejected with an error message in case of failure
  */
 exports.getJSON = function (prefName) {
-  let deferred = promise.defer();
+  let deferred = defer();
   let xhr = new XMLHttpRequest();
 
   // We used to store cached data in preferences, but now we use asyncStorage
@@ -41,7 +42,10 @@ exports.getJSON = function (prefName) {
 
   function readFromStorage(networkError) {
     asyncStorage.getItem(prefName + "_cache").then(function (json) {
-      deferred.resolve(json);
+      if (!json) {
+        return promise.reject("Empty cache for " + prefName);
+      }
+      return deferred.resolve(json);
     }).catch(function (e) {
       deferred.reject("JSON not available, CDN error: " + networkError +
                       ", storage error: " + e);

@@ -4,10 +4,12 @@
 
 from __future__ import print_function, unicode_literals
 
+import hashlib
 import os
 import re
 import subprocess
 import sys
+import urllib2
 
 from distutils.version import LooseVersion
 
@@ -74,7 +76,7 @@ We recommend the following tools for installing Python:
 
 # Upgrade Mercurial older than this.
 # This should match OLDEST_NON_LEGACY_VERSION from
-# tools/mercurial/hgsetup/wizard.py.
+# the hg setup wizard in version-control-tools.
 MODERN_MERCURIAL_VERSION = LooseVersion('3.7.3')
 
 # Upgrade Python older than this.
@@ -326,7 +328,7 @@ class BaseBootstrapper(object):
         if modern:
             print('Your version of Mercurial (%s) is sufficiently modern.' %
                   version)
-            return
+            return installed, modern
 
         self._ensure_package_manager_updated()
 
@@ -340,12 +342,14 @@ class BaseBootstrapper(object):
             print('You do not have Mercurial installed')
 
         if self.upgrade_mercurial(version) is False:
-            return
+            return installed, modern
 
         installed, modern, after = self.is_mercurial_modern()
 
         if installed and not modern:
             print(MERCURIAL_UPGRADE_FAILED % (MODERN_MERCURIAL_VERSION, after))
+
+        return installed, modern
 
     def upgrade_mercurial(self, current):
         """Upgrade Mercurial.
@@ -403,3 +407,18 @@ class BaseBootstrapper(object):
         Child classes should reimplement this.
         """
         print(PYTHON_UNABLE_UPGRADE % (current, MODERN_PYTHON_VERSION))
+
+    def http_download_and_save(self, url, dest, sha256hexhash):
+        f = urllib2.urlopen(url)
+        h = hashlib.sha256()
+        with open(dest, 'wb') as out:
+            while True:
+                data = f.read(4096)
+                if data:
+                    out.write(data)
+                    h.update(data)
+                else:
+                    break
+        if h.hexdigest() != sha256hexhash:
+            os.remove(dest)
+            raise ValueError('Hash of downloaded file does not match expected hash')

@@ -20,6 +20,7 @@
   {
     "namespace": "history",
     "description": "Use the <code>browser.history</code> API to interact with the browser's record of visited pages. You can add, remove, and query for URLs in the browser's history. To override the history page with your own version, see $(topic:override)[Override Pages].",
+    "permissions": ["history"],
     "types": [
       {
         "id": "TransitionType",
@@ -155,7 +156,6 @@
       },
       {
         "name": "getVisits",
-        "unsupported": true,
         "type": "function",
         "description": "Retrieves information about visits to a URL.",
         "async": "callback",
@@ -292,7 +292,6 @@
     "events": [
       {
         "name": "onVisited",
-        "unsupported": true,
         "type": "function",
         "description": "Fired when a URL is visited, providing the HistoryItem data for that URL.  This event fires before the page has loaded.",
         "parameters": [
@@ -304,7 +303,6 @@
       },
       {
         "name": "onVisitRemoved",
-        "unsupported": true,
         "type": "function",
         "description": "Fired when one or more URLs are removed from the history service.  When all visits have been removed the URL is purged from history.",
         "parameters": [
@@ -318,7 +316,6 @@
               },
               "urls": {
                 "type": "array",
-                "optional": true,
                 "items": {
                   "type": "string"
                 }

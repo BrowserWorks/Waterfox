@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,6 +66,3 @@ GENERATED_FILES += [
 langgroups = GENERATED_FILES['langGroups.properties.h']
 langgroups.script = 'props2arrays.py'
 langgroups.inputs = ['langGroups.properties']
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
-    CXXFLAGS += CONFIG['MOZ_QT_CFLAGS']

@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,6 +35,7 @@ EXTRA_JS_MODULES['services-sync'] += [
     'modules/service.js',
     'modules/status.js',
     'modules/SyncedTabs.jsm',
+    'modules/telemetry.js',
     'modules/userapi.js',
     'modules/util.js',
 ]
@@ -44,7 +45,7 @@ EXTRA_PP_JS_MODULES['services-sync'] += [
 ]
 
 # Definitions used by constants.js
-DEFINES['weave_version'] = '1.51.0'
+DEFINES['weave_version'] = '1.52.0'
 DEFINES['weave_id'] = '{340c2bbc-ce74-4362-90b5-7c26312808ef}'
 
 EXTRA_JS_MODULES['services-sync'].engines += [

@@ -4,15 +4,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* TODO:
-    - implement GtkTextDirection
-    - implement StyleFlags
-*/
-
 #include <dlfcn.h>
 #include <gtk/gtk.h>
 #include "WidgetStyleCache.h"
 #include "gtkdrawing.h"
+
+#define STATE_FLAG_DIR_LTR (1U << 7)
+#define STATE_FLAG_DIR_RTL (1U << 8)
+#if GTK_CHECK_VERSION(3,8,0)
+static_assert(GTK_STATE_FLAG_DIR_LTR == STATE_FLAG_DIR_LTR &&
+              GTK_STATE_FLAG_DIR_RTL == STATE_FLAG_DIR_RTL,
+              "incorrect direction state flags");
+#endif
 
 static GtkWidget* sWidgetStorage[MOZ_GTK_WIDGET_NODE_COUNT];
 static GtkStyleContext* sStyleStorage[MOZ_GTK_WIDGET_NODE_COUNT];
@@ -67,7 +70,7 @@ CreateCheckboxWidget()
 static GtkWidget*
 CreateRadiobuttonWidget()
 {
-  GtkWidget* widget = gtk_radio_button_new_with_label(NULL, "M");
+  GtkWidget* widget = gtk_radio_button_new_with_label(nullptr, "M");
   AddToWindowContainer(widget);
   return widget;
 }
@@ -117,6 +120,125 @@ CreateTooltipWidget()
 }
 
 static GtkWidget*
+CreateExpanderWidget()
+{
+  GtkWidget* widget = gtk_expander_new("M");
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateFrameWidget()
+{
+  GtkWidget* widget = gtk_frame_new(nullptr);
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateGripperWidget()
+{
+  GtkWidget* widget = gtk_handle_box_new();
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateToolbarWidget()
+{
+  GtkWidget* widget = gtk_toolbar_new();
+  gtk_container_add(GTK_CONTAINER(GetWidget(MOZ_GTK_GRIPPER)), widget);
+  gtk_widget_realize(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateToolbarSeparatorWidget()
+{
+  GtkWidget* widget = GTK_WIDGET(gtk_separator_tool_item_new());
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateInfoBarWidget()
+{
+  GtkWidget* widget = gtk_info_bar_new();
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateButtonWidget()
+{
+  GtkWidget* widget = gtk_button_new_with_label("M");
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateToggleButtonWidget()
+{
+  GtkWidget* widget = gtk_toggle_button_new();
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateButtonArrowWidget()
+{
+  GtkWidget* widget = gtk_arrow_new(GTK_ARROW_DOWN, GTK_SHADOW_OUT);
+  gtk_container_add(GTK_CONTAINER(GetWidget(MOZ_GTK_TOGGLE_BUTTON)), widget);
+  gtk_widget_realize(widget);
+  gtk_widget_show(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateSpinWidget()
+{
+  GtkWidget* widget = gtk_spin_button_new(nullptr, 1, 0);
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateEntryWidget()
+{
+  GtkWidget* widget = gtk_entry_new();
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateScrolledWindowWidget()
+{
+  GtkWidget* widget = gtk_scrolled_window_new(nullptr, nullptr);
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateTextViewWidget()
+{
+  GtkWidget* widget = gtk_text_view_new();
+  gtk_container_add(GTK_CONTAINER(GetWidget(MOZ_GTK_SCROLLED_WINDOW)),
+                    widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateMenuSeparatorWidget()
+{
+  GtkWidget* widget = gtk_separator_menu_item_new();
+  gtk_menu_shell_append(GTK_MENU_SHELL(GetWidget(MOZ_GTK_MENUPOPUP)),
+                        widget);
+  gtk_widget_realize(widget);
+  return widget;
+}
+
+
+static GtkWidget*
 CreateWidget(WidgetNodeType aWidgetType)
 {
   switch (aWidgetType) {
@@ -144,8 +266,34 @@ CreateWidget(WidgetNodeType aWidgetType)
       return CreateMenuItemWidget(MOZ_GTK_MENUBAR);
     case MOZ_GTK_MENUITEM:
       return CreateMenuItemWidget(MOZ_GTK_MENUPOPUP);
-    case MOZ_GTK_TOOLTIP:
-      return CreateTooltipWidget();
+    case MOZ_GTK_MENUSEPARATOR:
+      return CreateMenuSeparatorWidget();
+    case MOZ_GTK_EXPANDER:
+      return CreateExpanderWidget();
+    case MOZ_GTK_FRAME:
+      return CreateFrameWidget();
+    case MOZ_GTK_GRIPPER:
+      return CreateGripperWidget();
+    case MOZ_GTK_TOOLBAR:
+      return CreateToolbarWidget();
+    case MOZ_GTK_TOOLBAR_SEPARATOR:
+      return CreateToolbarSeparatorWidget();
+    case MOZ_GTK_INFO_BAR:
+      return CreateInfoBarWidget();
+    case MOZ_GTK_SPINBUTTON:
+      return CreateSpinWidget();
+    case MOZ_GTK_BUTTON:
+      return CreateButtonWidget();
+    case MOZ_GTK_TOGGLE_BUTTON:
+      return CreateToggleButtonWidget();
+    case MOZ_GTK_BUTTON_ARROW:
+      return CreateButtonArrowWidget();
+    case MOZ_GTK_ENTRY:
+      return CreateEntryWidget();
+    case MOZ_GTK_SCROLLED_WINDOW: 
+      return CreateScrolledWindowWidget();
+    case MOZ_GTK_TEXT_VIEW:
+      return CreateTextViewWidget();
     default:
       /* Not implemented */
       return nullptr;
@@ -166,8 +314,9 @@ GetWidget(WidgetNodeType aWidgetType)
 GtkStyleContext*
 CreateStyleForWidget(GtkWidget* aWidget, GtkStyleContext* aParentStyle)
 {
-  GtkWidgetPath* path =
-    gtk_widget_path_copy(gtk_style_context_get_path(aParentStyle));
+  GtkWidgetPath* path = aParentStyle ?
+    gtk_widget_path_copy(gtk_style_context_get_path(aParentStyle)) :
+    gtk_widget_path_new();
 
   // Work around https://bugzilla.gnome.org/show_bug.cgi?id=767312
   // which exists in GTK+ 3.20.
@@ -215,6 +364,17 @@ CreateChildCSSNode(const char* aName, WidgetNodeType aParentNodeType)
   return CreateCSSNode(aName, GetCssNodeStyleInternal(aParentNodeType));
 }
 
+static GtkStyleContext*
+GetWidgetStyleWithClass(WidgetNodeType aWidgetType, const gchar* aStyleClass)
+{
+  GtkStyleContext* style = gtk_widget_get_style_context(GetWidget(aWidgetType));
+  gtk_style_context_save(style);
+  MOZ_ASSERT(!sStyleContextNeedsRestore);
+  sStyleContextNeedsRestore = true;
+  gtk_style_context_add_class(style, aStyleClass);
+  return style;
+}
+
 /* GetCssNodeStyleInternal is used by Gtk >= 3.20 */
 static GtkStyleContext*
 GetCssNodeStyleInternal(WidgetNodeType aNodeType)
@@ -224,17 +384,25 @@ GetCssNodeStyleInternal(WidgetNodeType aNodeType)
     return style;
 
   switch (aNodeType) {
+    case MOZ_GTK_SCROLLBAR_CONTENTS_HORIZONTAL:
+      style = CreateChildCSSNode("contents",
+                                 MOZ_GTK_SCROLLBAR_HORIZONTAL);
+      break;
     case MOZ_GTK_SCROLLBAR_TROUGH_HORIZONTAL:
       style = CreateChildCSSNode(GTK_STYLE_CLASS_TROUGH,
-                                 MOZ_GTK_SCROLLBAR_HORIZONTAL);
+                                 MOZ_GTK_SCROLLBAR_CONTENTS_HORIZONTAL);
       break;
     case MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL:
       style = CreateChildCSSNode(GTK_STYLE_CLASS_SLIDER,
                                  MOZ_GTK_SCROLLBAR_TROUGH_HORIZONTAL);
       break;
+    case MOZ_GTK_SCROLLBAR_CONTENTS_VERTICAL:
+      style = CreateChildCSSNode("contents",
+                                 MOZ_GTK_SCROLLBAR_VERTICAL);
+      break;
     case MOZ_GTK_SCROLLBAR_TROUGH_VERTICAL:
       style = CreateChildCSSNode(GTK_STYLE_CLASS_TROUGH,
-                                 MOZ_GTK_SCROLLBAR_VERTICAL);
+                                 MOZ_GTK_SCROLLBAR_CONTENTS_VERTICAL);
       break;
     case MOZ_GTK_SCROLLBAR_THUMB_VERTICAL:
       style = CreateChildCSSNode(GTK_STYLE_CLASS_SLIDER,
@@ -262,29 +430,36 @@ GetCssNodeStyleInternal(WidgetNodeType aNodeType)
       style = CreateCSSNode("tooltip", nullptr, GTK_TYPE_TOOLTIP);
       gtk_style_context_add_class(style, GTK_STYLE_CLASS_BACKGROUND);
       break; 
+    case MOZ_GTK_GRIPPER:
+      // TODO - create from CSS node
+      return GetWidgetStyleWithClass(MOZ_GTK_GRIPPER,
+                                     GTK_STYLE_CLASS_GRIP);
+    case MOZ_GTK_INFO_BAR:
+      // TODO - create from CSS node
+      return GetWidgetStyleWithClass(MOZ_GTK_INFO_BAR,
+                                     GTK_STYLE_CLASS_INFO);
+    case MOZ_GTK_SPINBUTTON_ENTRY:
+      // TODO - create from CSS node
+      return GetWidgetStyleWithClass(MOZ_GTK_SPINBUTTON,
+                                     GTK_STYLE_CLASS_ENTRY);
+    case MOZ_GTK_SCROLLED_WINDOW:
+      // TODO - create from CSS node
+      return GetWidgetStyleWithClass(MOZ_GTK_SCROLLED_WINDOW,
+                                     GTK_STYLE_CLASS_FRAME);
+    case MOZ_GTK_TEXT_VIEW:
+      // TODO - create from CSS node
+      return GetWidgetStyleWithClass(MOZ_GTK_TEXT_VIEW,
+                                     GTK_STYLE_CLASS_VIEW);
+    case MOZ_GTK_FRAME_BORDER:
+      return CreateChildCSSNode("border", MOZ_GTK_FRAME);
     default:
       // TODO - create style from style path
       GtkWidget* widget = GetWidget(aNodeType);
       return gtk_widget_get_style_context(widget);
   }
 
-  if (style) {
-    sStyleStorage[aNodeType] = style;
-    return style;
-  }
-
-  MOZ_ASSERT_UNREACHABLE("missing style context for node type");
-  return nullptr;
-}
-
-static GtkStyleContext*
-GetWidgetStyleWithClass(WidgetNodeType aWidgetType, const gchar* aStyleClass)
-{
-  GtkStyleContext* style = gtk_widget_get_style_context(GetWidget(aWidgetType));
-  gtk_style_context_save(style);
-  MOZ_ASSERT(!sStyleContextNeedsRestore);
-  sStyleContextNeedsRestore = true;
-  gtk_style_context_add_class(style, aStyleClass);
+  MOZ_ASSERT(style, "missing style context for node type");
+  sStyleStorage[aNodeType] = style;
   return style;
 }
 
@@ -314,6 +489,37 @@ GetWidgetStyleInternal(WidgetNodeType aNodeType)
     case MOZ_GTK_PROGRESS_TROUGH:
       return GetWidgetStyleWithClass(MOZ_GTK_PROGRESSBAR,
                                      GTK_STYLE_CLASS_TROUGH);
+    case MOZ_GTK_TOOLTIP: {
+      GtkStyleContext* style = sStyleStorage[aNodeType];
+      if (style)
+        return style;
+
+      // The tooltip style class is added first in CreateTooltipWidget() so
+      // that gtk_widget_path_append_for_widget() in CreateStyleForWidget()
+      // will find it.
+      GtkWidget* tooltipWindow = CreateTooltipWidget();
+      style = CreateStyleForWidget(tooltipWindow, nullptr);
+      gtk_widget_destroy(tooltipWindow); // Release GtkWindow self-reference.
+      sStyleStorage[aNodeType] = style;
+      return style;
+    }
+    case MOZ_GTK_GRIPPER:
+      return GetWidgetStyleWithClass(MOZ_GTK_GRIPPER,
+                                     GTK_STYLE_CLASS_GRIP);
+    case MOZ_GTK_INFO_BAR:
+      return GetWidgetStyleWithClass(MOZ_GTK_INFO_BAR,
+                                     GTK_STYLE_CLASS_INFO);
+    case MOZ_GTK_SPINBUTTON_ENTRY:
+      return GetWidgetStyleWithClass(MOZ_GTK_SPINBUTTON,
+                                     GTK_STYLE_CLASS_ENTRY);
+    case MOZ_GTK_SCROLLED_WINDOW:
+      return GetWidgetStyleWithClass(MOZ_GTK_SCROLLED_WINDOW,
+                                     GTK_STYLE_CLASS_FRAME);
+    case MOZ_GTK_TEXT_VIEW:
+      return GetWidgetStyleWithClass(MOZ_GTK_TEXT_VIEW,
+                                     GTK_STYLE_CLASS_VIEW);
+    case MOZ_GTK_FRAME_BORDER:
+      return GetWidgetStyleInternal(MOZ_GTK_FRAME);
     default:
       GtkWidget* widget = GetWidget(aNodeType);
       MOZ_ASSERT(widget);
@@ -358,25 +564,49 @@ ClaimStyleContext(WidgetNodeType aNodeType, GtkTextDirection aDirection,
   MOZ_ASSERT(!sCurrentStyleContext);
   sCurrentStyleContext = style;
 #endif
+  bool stateChanged = false;
+  bool stateHasDirection = gtk_get_minor_version() >= 8;
   GtkStateFlags oldState = gtk_style_context_get_state(style);
-  GtkTextDirection oldDirection = gtk_style_context_get_direction(style);
-  if (oldState != aStateFlags || oldDirection != aDirection) {
-    // From GTK 3.8, set_state() will overwrite the direction, so set
-    // direction after state.
-    gtk_style_context_set_state(style, aStateFlags);
-    gtk_style_context_set_direction(style, aDirection);
-
-    // This invalidate is necessary for unsaved style contexts from GtkWidgets
-    // in pre-3.18 GTK, because automatic invalidation of such contexts
-    // was delayed until a resize event runs.
-    //
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1272194#c7
-    //
-    // Avoid calling invalidate on saved contexts to avoid performing
-    // build_properties() (in 3.16 stylecontext.c) unnecessarily early.
-    if (!sStyleContextNeedsRestore) {
-      gtk_style_context_invalidate(style);
+  MOZ_ASSERT(!(aStateFlags & (STATE_FLAG_DIR_LTR|STATE_FLAG_DIR_RTL)));
+  unsigned newState = aStateFlags;
+  if (stateHasDirection) {
+    switch (aDirection) {
+      case GTK_TEXT_DIR_LTR:
+        newState |= STATE_FLAG_DIR_LTR;
+        break;
+      case GTK_TEXT_DIR_RTL:
+        newState |= STATE_FLAG_DIR_RTL;
+        break;
+      default:
+        MOZ_FALLTHROUGH_ASSERT("Bad GtkTextDirection");
+      case GTK_TEXT_DIR_NONE:
+        // GtkWidget uses a default direction if neither is explicitly
+        // specified, but here DIR_NONE is interpreted as meaning the
+        // direction is not important, so don't change the direction
+        // unnecessarily.
+        newState |= oldState & (STATE_FLAG_DIR_LTR|STATE_FLAG_DIR_RTL);
     }
+  } else if (aDirection != GTK_TEXT_DIR_NONE) {
+    GtkTextDirection oldDirection = gtk_style_context_get_direction(style);
+    if (aDirection != oldDirection) {
+      gtk_style_context_set_direction(style, aDirection);
+      stateChanged = true;
+    }
+  }
+  if (oldState != newState) {
+    gtk_style_context_set_state(style, static_cast<GtkStateFlags>(newState));
+    stateChanged = true;
+  }
+  // This invalidate is necessary for unsaved style contexts from GtkWidgets
+  // in pre-3.18 GTK, because automatic invalidation of such contexts
+  // was delayed until a resize event runs.
+  //
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=1272194#c7
+  //
+  // Avoid calling invalidate on saved contexts to avoid performing
+  // build_properties() (in 3.16 stylecontext.c) unnecessarily early.
+  if (stateChanged && !sStyleContextNeedsRestore) {
+    gtk_style_context_invalidate(style);
   }
   return style;
 }

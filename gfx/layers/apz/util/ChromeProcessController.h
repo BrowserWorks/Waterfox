@@ -21,7 +21,7 @@ namespace mozilla {
 
 namespace layers {
 
-class APZCTreeManager;
+class IAPZCTreeManager;
 class APZEventState;
 
 // A ChromeProcessController is attached to the root of a compositor's layer
@@ -33,20 +33,18 @@ protected:
   typedef mozilla::layers::ScrollableLayerGuid ScrollableLayerGuid;
 
 public:
-  explicit ChromeProcessController(nsIWidget* aWidget, APZEventState* aAPZEventState, APZCTreeManager* aAPZCTreeManager);
+  explicit ChromeProcessController(nsIWidget* aWidget, APZEventState* aAPZEventState, IAPZCTreeManager* aAPZCTreeManager);
   ~ChromeProcessController();
   virtual void Destroy() override;
 
   // GeckoContentController interface
   virtual void RequestContentRepaint(const FrameMetrics& aFrameMetrics) override;
   virtual void PostDelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs) override;
-  virtual void HandleDoubleTap(const mozilla::CSSPoint& aPoint, Modifiers aModifiers,
-                               const ScrollableLayerGuid& aGuid) override;
-  virtual void HandleSingleTap(const mozilla::CSSPoint& aPoint, Modifiers aModifiers,
-                               const ScrollableLayerGuid& aGuid) override;
-  virtual void HandleLongTap(const mozilla::CSSPoint& aPoint, Modifiers aModifiers,
-                               const ScrollableLayerGuid& aGuid,
-                               uint64_t aInputBlockId) override;
+  virtual void HandleTap(TapType aType,
+                         const mozilla::LayoutDevicePoint& aPoint,
+                         Modifiers aModifiers,
+                         const ScrollableLayerGuid& aGuid,
+                         uint64_t aInputBlockId) override;
   virtual void NotifyAPZStateChange(const ScrollableLayerGuid& aGuid,
                                     APZStateChange aChange,
                                     int aArg) override;
@@ -56,13 +54,15 @@ public:
 private:
   nsCOMPtr<nsIWidget> mWidget;
   RefPtr<APZEventState> mAPZEventState;
-  RefPtr<APZCTreeManager> mAPZCTreeManager;
+  RefPtr<IAPZCTreeManager> mAPZCTreeManager;
   MessageLoop* mUILoop;
 
   void InitializeRoot();
   nsIPresShell* GetPresShell() const;
   nsIDocument* GetRootDocument() const;
   nsIDocument* GetRootContentDocument(const FrameMetrics::ViewID& aScrollId) const;
+  void HandleDoubleTap(const mozilla::CSSPoint& aPoint, Modifiers aModifiers,
+                       const ScrollableLayerGuid& aGuid);
 };
 
 } // namespace layers

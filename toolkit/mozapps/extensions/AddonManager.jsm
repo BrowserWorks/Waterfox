@@ -688,6 +688,7 @@ var AddonManagerInternal = {
   startupChanges: {},
   // Store telemetry details per addon provider
   telemetryDetails: {},
+  upgradeListeners: new Map(),
 
   recordTimestamp: function(name, value) {
     this.TelemetryTimestamps.add(name, value);
@@ -1471,7 +1472,7 @@ var AddonManagerInternal = {
                     AddonManager.shouldAutoUpdate(aAddon)) {
                   // XXX we really should resolve when this install is done,
                   // not when update-available check completes, no?
-                  logger.debug("Starting install of ${id}", aAddon);
+                  logger.debug(`Starting upgrade install of ${aAddon.id}`);
                   aInstall.install();
                 }
               },
@@ -2257,6 +2258,56 @@ var AddonManagerInternal = {
         pos++;
     }
   },
+  /*
+   * Adds new or overrides existing UpgradeListener.
+   *
+   * @param  aInstanceID
+   *         The instance ID of an addon to listen to register a listener for.
+   * @param  aCallback
+   *         The callback to invoke when updates are available for this addon.
+   * @throws if there is no addon matching the instanceID
+   */
+  addUpgradeListener: function(aInstanceID, aCallback) {
+   if (!aInstanceID || typeof aInstanceID != "symbol")
+     throw Components.Exception("aInstanceID must be a symbol",
+                                Cr.NS_ERROR_INVALID_ARG);
+
+  if (!aCallback || typeof aCallback != "function")
+    throw Components.Exception("aCallback must be a function",
+                               Cr.NS_ERROR_INVALID_ARG);
+
+   this.getAddonByInstanceID(aInstanceID).then(wrapper => {
+     if (!wrapper) {
+       throw Error("No addon matching instanceID:", aInstanceID.toString());
+     }
+     let addonId = wrapper.addonId();
+     logger.debug(`Registering upgrade listener for ${addonId}`)
+     this.upgradeListeners.set(addonId, aCallback);
+   });
+  },
+
+  /**
+   * Removes an UpgradeListener if the listener is registered.
+   *
+   * @param  aInstanceID
+   *         The instance ID of the addon to remove
+   */
+  removeUpgradeListener: function(aInstanceID) {
+    if (!aInstanceID || typeof aInstanceID != "symbol")
+      throw Components.Exception("aInstanceID must be a symbol",
+                                 Cr.NS_ERROR_INVALID_ARG);
+
+    this.getAddonByInstanceID(aInstanceID).then(addon => {
+      if (!addon) {
+        throw Error("No addon for instanceID:", aInstanceID.toString());
+      }
+      if (this.upgradeListeners.has(addon.id)) {
+        this.upgradeListeners.delete(addon.id);
+      } else {
+        throw Error("No upgrade listener registered for addon ID:", addon.id);
+      }
+    });
+  },
 
   /**
    * Installs a temporary add-on from a local file or directory.
@@ -2888,7 +2939,7 @@ var AddonManagerInternal = {
           this.copyProps(install, result);
           resolve(result);
         };
-        AddonManager.getInstallForURL(options.url, newInstall, "application/x-xpinstall");
+        AddonManager.getInstallForURL(options.url, newInstall, "application/x-xpinstall", options.hash);
       });
     },
 
@@ -3103,6 +3154,14 @@ this.AddonManagerPrivate = {
   get webExtensionsMinPlatformVersion() {
     return gWebExtensionsMinPlatformVersion;
   },
+
+  hasUpgradeListener: function(aId) {
+    return AddonManagerInternal.upgradeListeners.has(aId);
+  },
+
+  getUpgradeListener: function(aId) {
+    return AddonManagerInternal.upgradeListeners.get(aId);
+  },
 };
 
 /**
@@ -3123,14 +3182,16 @@ this.AddonManager = {
     ["STATE_DOWNLOADED", 3],
     // The download failed.
     ["STATE_DOWNLOAD_FAILED", 4],
+    // The install has been postponed.
+    ["STATE_POSTPONED", 5],
     // The add-on is being installed.
-    ["STATE_INSTALLING", 5],
+    ["STATE_INSTALLING", 6],
     // The add-on has been installed.
-    ["STATE_INSTALLED", 6],
+    ["STATE_INSTALLED", 7],
     // The install failed.
-    ["STATE_INSTALL_FAILED", 7],
+    ["STATE_INSTALL_FAILED", 8],
     // The install has been cancelled.
-    ["STATE_CANCELLED", 8],
+    ["STATE_CANCELLED", 9],
   ]),
 
   // Constants representing different types of errors while downloading an
@@ -3149,6 +3210,8 @@ this.AddonManager = {
     ["ERROR_SIGNEDSTATE_REQUIRED", -5],
     // The downloaded add-on had a different type than expected.
     ["ERROR_UNEXPECTED_ADDON_TYPE", -6],
+    // The addon did not have the expected ID
+    ["ERROR_INCORRECT_ID", -7],
   ]),
 
   // These must be kept in sync with AddonUpdateChecker.
@@ -3461,6 +3524,18 @@ this.AddonManager = {
 
   removeInstallListener: function(aListener) {
     AddonManagerInternal.removeInstallListener(aListener);
+  },
+
+  getUpgradeListener: function(aId) {
+    return AddonManagerInternal.upgradeListeners.get(aId);
+  },
+
+  addUpgradeListener: function(aInstanceID, aCallback) {
+    AddonManagerInternal.addUpgradeListener(aInstanceID, aCallback);
+  },
+
+  removeUpgradeListener: function(aInstanceID) {
+    AddonManagerInternal.removeUpgradeListener(aInstanceID);
   },
 
   addAddonListener: function(aListener) {

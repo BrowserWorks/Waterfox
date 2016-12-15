@@ -27,10 +27,10 @@ RawReader::~RawReader()
   MOZ_COUNT_DTOR(RawReader);
 }
 
-nsresult RawReader::ResetDecode(TargetQueues aQueues)
+nsresult RawReader::ResetDecode(TrackSet aTracks)
 {
   mCurrentFrame = 0;
-  return MediaDecoderReader::ResetDecode(aQueues);
+  return MediaDecoderReader::ResetDecode(aTracks);
 }
 
 nsresult RawReader::ReadMetadata(MediaInfo* aInfo,
@@ -60,10 +60,10 @@ nsresult RawReader::ReadMetadata(MediaInfo* aInfo,
   // Determine and verify frame display size.
   float pixelAspectRatio = static_cast<float>(mMetadata.aspectNumerator) /
                             mMetadata.aspectDenominator;
-  nsIntSize display(mMetadata.frameWidth, mMetadata.frameHeight);
+  nsIntSize display(uint32_t(mMetadata.frameWidth), uint32_t(mMetadata.frameHeight));
   ScaleDisplayByAspectRatio(display, pixelAspectRatio);
   mPicture = nsIntRect(0, 0, mMetadata.frameWidth, mMetadata.frameHeight);
-  nsIntSize frameSize(mMetadata.frameWidth, mMetadata.frameHeight);
+  nsIntSize frameSize(uint32_t(mMetadata.frameWidth), uint32_t(mMetadata.frameHeight));
   if (!IsValidVideoRegion(frameSize, mPicture, display)) {
     // Video track's frame sizes will overflow. Fail.
     return NS_ERROR_FAILURE;
@@ -156,7 +156,7 @@ bool RawReader::DecodeVideoFrame(bool &aKeyframeSkip,
       return false;
     }
 
-    a.mParsed++;
+    a.mStats.mParsedFrames++;
 
     if (currentFrameTime >= aTimeThreshold)
       break;
@@ -200,7 +200,7 @@ bool RawReader::DecodeVideoFrame(bool &aKeyframeSkip,
 
   mVideoQueue.Push(v);
   mCurrentFrame++;
-  a.mDecoded++;
+  a.mStats.mDecodedFrames++;
 
   return true;
 }

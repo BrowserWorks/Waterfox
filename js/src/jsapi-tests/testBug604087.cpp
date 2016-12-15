@@ -37,7 +37,7 @@ static JSObject*
 PreWrap(JSContext* cx, JS::HandleObject scope, JS::HandleObject obj,
         JS::HandleObject objectPassedToWrap)
 {
-    JS_GC(JS_GetRuntime(cx));
+    JS_GC(cx);
     return obj;
 }
 
@@ -54,7 +54,7 @@ static const JSWrapObjectCallbacks WrapObjectCallbacks = {
 
 BEGIN_TEST(testBug604087)
 {
-    js::SetWindowProxyClass(cx->runtime(), &OuterWrapperClass);
+    js::SetWindowProxyClass(cx, &OuterWrapperClass);
 
     js::WrapperOptions options;
     options.setClass(&OuterWrapperClass);
@@ -91,7 +91,7 @@ BEGIN_TEST(testBug604087)
         CHECK(next);
     }
 
-    JS_SetWrapObjectCallbacks(JS_GetRuntime(cx), &WrapObjectCallbacks);
+    JS_SetWrapObjectCallbacks(cx, &WrapObjectCallbacks);
     CHECK(JS_TransplantObject(cx, outerObj, next));
     return true;
 }

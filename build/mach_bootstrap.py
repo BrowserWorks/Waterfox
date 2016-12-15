@@ -31,26 +31,6 @@ want to export this environment variable from your shell's init scripts.
 Press ENTER/RETURN to continue or CTRL+c to abort.
 '''.lstrip()
 
-NO_MERCURIAL_SETUP = '''
-*** MERCURIAL NOT CONFIGURED ***
-
-mach has detected that you have never run `{mach} mercurial-setup`.
-
-Running this command will ensure your Mercurial version control tool is up
-to date and optimally configured for a better, more productive experience
-when working on Mozilla projects.
-
-Please run `{mach} mercurial-setup` now.
-
-Note: `{mach} mercurial-setup` does not make any changes without prompting
-you first.
-
-You can disable this check by setting NO_MERCURIAL_SETUP_CHECK=1 in your
-environment.
-'''.strip()
-
-MERCURIAL_SETUP_FATAL_INTERVAL = 31 * 24 * 60 * 60
-
 
 # TODO Bug 794506 Integrate with the in-tree virtualenv configuration.
 SEARCH_PATHS = [
@@ -65,12 +45,15 @@ SEARCH_PATHS = [
     'python/futures',
     'python/jsmin',
     'python/psutil',
+    'python/pylru',
     'python/which',
     'python/pystache',
     'python/pyyaml/lib',
     'python/requests',
     'python/slugid',
+    'python/voluptuous',
     'build',
+    'build/pymake',
     'config',
     'dom/bindings',
     'dom/bindings/parser',
@@ -138,12 +121,10 @@ MACH_MODULES = [
     'testing/mochitest/mach_commands.py',
     'testing/mozharness/mach_commands.py',
     'testing/talos/mach_commands.py',
-    'testing/taskcluster/mach_commands.py',
     'testing/web-platform/mach_commands.py',
     'testing/xpcshell/mach_commands.py',
     'tools/docs/mach_commands.py',
     'tools/lint/mach_commands.py',
-    'tools/mercurial/mach_commands.py',
     'tools/mach_commands.py',
     'tools/power/mach_commands.py',
     'mobile/android/mach_commands.py',
@@ -198,21 +179,6 @@ CATEGORIES = {
 TELEMETRY_SUBMISSION_FREQUENCY = 10
 
 
-def get_state_dir():
-    """Obtain the path to a directory to hold state.
-
-    Returns a tuple of the path and a bool indicating whether the value came
-    from an environment variable.
-    """
-    state_user_dir = os.path.expanduser('~/.mozbuild')
-    state_env_dir = os.environ.get('MOZBUILD_STATE_PATH', None)
-
-    if state_env_dir:
-        return state_env_dir, True
-    else:
-        return state_user_dir, False
-
-
 def bootstrap(topsrcdir, mozilla_dir=None):
     if mozilla_dir is None:
         mozilla_dir = topsrcdir
@@ -235,6 +201,7 @@ def bootstrap(topsrcdir, mozilla_dir=None):
     # like surprises.
     sys.path[0:0] = [os.path.join(mozilla_dir, path) for path in SEARCH_PATHS]
     import mach.main
+    from mozboot.util import get_state_dir
 
     def telemetry_handler(context, data):
         # We have not opted-in to telemetry
@@ -295,43 +262,6 @@ def bootstrap(topsrcdir, mozilla_dir=None):
 
         return False
 
-    def pre_dispatch_handler(context, handler, args):
-        """Perform global checks before command dispatch.
-
-        Currently, our goal is to ensure developers periodically run
-        `mach mercurial-setup` (when applicable) to ensure their Mercurial
-        tools are up to date.
-        """
-        # Don't do anything when...
-        if should_skip_dispatch(context, handler):
-            return
-
-        # User has disabled first run check.
-        if 'I_PREFER_A_SUBOPTIMAL_MERCURIAL_EXPERIENCE' in os.environ:
-            return
-        if 'NO_MERCURIAL_SETUP_CHECK' in os.environ:
-            return
-
-        # Mercurial isn't managing this source checkout.
-        if not os.path.exists(os.path.join(topsrcdir, '.hg')):
-            return
-
-        state_dir = get_state_dir()[0]
-        last_check_path = os.path.join(state_dir, 'mercurial',
-                                       'setup.lastcheck')
-
-        mtime = None
-        try:
-            mtime = os.path.getmtime(last_check_path)
-        except OSError as e:
-            if e.errno != errno.ENOENT:
-                raise
-
-        # No last run file means mercurial-setup has never completed.
-        if mtime is None:
-            print(NO_MERCURIAL_SETUP.format(mach=sys.argv[0]), file=sys.stderr)
-            sys.exit(2)
-
     def post_dispatch_handler(context, handler, args):
         """Perform global operations after command dispatch.
 
@@ -387,9 +317,6 @@ def bootstrap(topsrcdir, mozilla_dir=None):
 
         if key == 'topdir':
             return topsrcdir
-
-        if key == 'pre_dispatch_handler':
-            return pre_dispatch_handler
 
         if key == 'telemetry_handler':
             return telemetry_handler

@@ -13,7 +13,8 @@
 #include "mozilla/dom/MediaKeySession.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/UnionTypes.h"
-#include "mozilla/CDMProxy.h"
+#include "mozilla/Telemetry.h"
+#include "GMPCDMProxy.h"
 #include "mozilla/EMEUtils.h"
 #include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
@@ -48,11 +49,15 @@ NS_INTERFACE_MAP_END
 
 MediaKeys::MediaKeys(nsPIDOMWindowInner* aParent,
                      const nsAString& aKeySystem,
-                     const nsAString& aCDMVersion)
+                     const nsAString& aCDMVersion,
+                     bool aDistinctiveIdentifierRequired,
+                     bool aPersistentStateRequired)
   : mParent(aParent)
   , mKeySystem(aKeySystem)
   , mCDMVersion(aCDMVersion)
   , mCreatePromiseId(0)
+  , mDistinctiveIdentifierRequired(aDistinctiveIdentifierRequired)
+  , mPersistentStateRequired(aPersistentStateRequired)
 {
   EME_LOG("MediaKeys[%p] constructed keySystem=%s",
           this, NS_ConvertUTF16toUTF8(mKeySystem).get());
@@ -284,6 +289,26 @@ MediaKeys::ResolvePromise(PromiseId aId)
   MOZ_ASSERT(!mPromises.Contains(aId));
 }
 
+class MediaKeysGMPCrashHelper : public GMPCrashHelper
+{
+public:
+  explicit MediaKeysGMPCrashHelper(MediaKeys* aMediaKeys)
+    : mMediaKeys(aMediaKeys)
+  {
+    MOZ_ASSERT(NS_IsMainThread()); // WeakPtr isn't thread safe.
+  }
+  already_AddRefed<nsPIDOMWindowInner>
+  GetPluginCrashedEventTarget() override
+  {
+    MOZ_ASSERT(NS_IsMainThread()); // WeakPtr isn't thread safe.
+    EME_LOG("MediaKeysGMPCrashHelper::GetPluginCrashedEventTarget()");
+    return (mMediaKeys && mMediaKeys->GetParentObject()) ?
+      do_AddRef(mMediaKeys->GetParentObject()) : nullptr;
+  }
+private:
+  WeakPtr<MediaKeys> mMediaKeys;
+};
+
 already_AddRefed<DetailedPromise>
 MediaKeys::Init(ErrorResult& aRv)
 {
@@ -293,7 +318,11 @@ MediaKeys::Init(ErrorResult& aRv)
     return nullptr;
   }
 
-  mProxy = new CDMProxy(this, mKeySystem);
+  mProxy = new GMPCDMProxy(this,
+                           mKeySystem,
+                           new MediaKeysGMPCrashHelper(this),
+                           mDistinctiveIdentifierRequired,
+                           mPersistentStateRequired);
 
   // Determine principal (at creation time) of the MediaKeys object.
   nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(GetParentObject());
@@ -328,15 +357,15 @@ MediaKeys::Init(ErrorResult& aRv)
     return promise.forget();
   }
 
-  nsAutoString origin;
-  nsresult rv = nsContentUtils::GetUTFOrigin(mPrincipal, origin);
+  nsAutoCString origin;
+  nsresult rv = mPrincipal->GetOrigin(origin);
   if (NS_FAILED(rv)) {
     promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR,
                          NS_LITERAL_CSTRING("Couldn't get principal origin string in MediaKeys::Init"));
     return promise.forget();
   }
-  nsAutoString topLevelOrigin;
-  rv = nsContentUtils::GetUTFOrigin(mTopLevelPrincipal, topLevelOrigin);
+  nsAutoCString topLevelOrigin;
+  rv = mTopLevelPrincipal->GetOrigin(topLevelOrigin);
   if (NS_FAILED(rv)) {
     promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR,
                          NS_LITERAL_CSTRING("Couldn't get top-level principal origin string in MediaKeys::Init"));
@@ -348,8 +377,8 @@ MediaKeys::Init(ErrorResult& aRv)
 
   EME_LOG("MediaKeys[%p]::Create() (%s, %s), %s",
           this,
-          NS_ConvertUTF16toUTF8(origin).get(),
-          NS_ConvertUTF16toUTF8(topLevelOrigin).get(),
+          origin.get(),
+          topLevelOrigin.get(),
           (inPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"));
 
   // The CDMProxy's initialization is asynchronous. The MediaKeys is
@@ -364,8 +393,8 @@ MediaKeys::Init(ErrorResult& aRv)
   mCreatePromiseId = StorePromise(promise);
   AddRef();
   mProxy->Init(mCreatePromiseId,
-               origin,
-               topLevelOrigin,
+               NS_ConvertUTF8toUTF16(origin),
+               NS_ConvertUTF8toUTF16(topLevelOrigin),
                KeySystemToGMPName(mKeySystem),
                inPrivateBrowsing);
 
@@ -391,25 +420,12 @@ MediaKeys::OnCDMCreated(PromiseId aId, const nsACString& aNodeId, const uint32_t
                                         mKeySystem,
                                         MediaKeySystemStatus::Cdm_created);
 
-  if (aPluginId) {
-    // Prepare plugin crash reporter.
-    RefPtr<gmp::GeckoMediaPluginService> service =
-      gmp::GeckoMediaPluginService::GetGeckoMediaPluginService();
-    if (NS_WARN_IF(!service)) {
-      return;
-    }
-    if (NS_WARN_IF(!mParent)) {
-      return;
-    }
-    service->AddPluginCrashedEventTarget(aPluginId, mParent);
-    EME_LOG("MediaKeys[%p]::OnCDMCreated() registered crash handler for pluginId '%i'",
-            this, aPluginId);
-  }
+  Telemetry::Accumulate(Telemetry::VIDEO_CDM_CREATED, ToCDMTypeTelemetryEnum(mKeySystem));
 }
 
 already_AddRefed<MediaKeySession>
 MediaKeys::CreateSession(JSContext* aCx,
-                         SessionType aSessionType,
+                         MediaKeySessionType aSessionType,
                          ErrorResult& aRv)
 {
   if (!mProxy) {

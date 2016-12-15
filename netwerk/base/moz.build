@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,6 +48,7 @@ XPIDL_SOURCES += [
     'nsIFileURL.idl',
     'nsIForcePendingChannel.idl',
     'nsIFormPOSTActionChannel.idl',
+    'nsIHttpAuthenticatorCallback.idl',
     'nsIHttpPushListener.idl',
     'nsIIncrementalDownload.idl',
     'nsIIncrementalStreamLoader.idl',
@@ -134,6 +135,7 @@ XPIDL_SOURCES += [
     'nsIUploadChannel2.idl',
     'nsIURI.idl',
     'nsIURIClassifier.idl',
+    'nsIURIWithBlobImpl.idl',
     'nsIURIWithPrincipal.idl',
     'nsIURL.idl',
     'nsIURLParser.idl',
@@ -287,19 +289,10 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'NetworkInfoServiceCocoa.cpp',
         'nsNetworkInfoService.cpp',
     ]
-elif CONFIG['OS_TARGET'] == 'Linux':
+elif CONFIG['OS_ARCH'] == 'Linux':
     SOURCES += [
         'NetworkInfoServiceLinux.cpp',
         'nsNetworkInfoService.cpp',
-    ]
-elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
-    SOURCES += [
-        'NetworkInfoServiceLinux.cpp',
-        'nsNetworkInfoService.cpp',
-    ]
-
-if CONFIG['MOZ_ENABLE_QTNETWORK']:
-    SOURCES += [
     ]
 
 EXTRA_COMPONENTS += [
@@ -326,14 +319,6 @@ if 'rtsp' in CONFIG['NECKO_PROTOCOLS']:
         '/netwerk/protocol/rtsp/controller',
         '/netwerk/protocol/rtsp/rtsp',
     ]
-
-if CONFIG['MOZ_ENABLE_QTNETWORK']:
-    LOCAL_INCLUDES += [
-        '/netwerk/system/qt',
-    ]
-
-if CONFIG['MOZ_ENABLE_QTNETWORK']:
-    CXXFLAGS += CONFIG['MOZ_QT_CFLAGS']
 
 if CONFIG['GNU_CXX']:
     CXXFLAGS += ['-Wno-error=shadow']

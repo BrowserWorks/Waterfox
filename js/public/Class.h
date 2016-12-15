@@ -381,8 +381,8 @@ typedef bool
 /**
  * Function type for trace operation of the class called to enumerate all
  * traceable things reachable from obj's private data structure. For each such
- * thing, a trace implementation must call one of the JS_Call*Tracer variants
- * on the thing.
+ * thing, a trace implementation must call JS::TraceEdge on the thing's
+ * location.
  *
  * JSTraceOp implementation can assume that no other threads mutates object
  * state. It must not change state of the object or corresponding native
@@ -958,14 +958,26 @@ Valueify(const JSClass* c)
  * Enumeration describing possible values of the [[Class]] internal property
  * value of objects.
  */
-enum ESClassValue {
-    ESClass_Object, ESClass_Array, ESClass_Number, ESClass_String,
-    ESClass_Boolean, ESClass_RegExp, ESClass_ArrayBuffer, ESClass_SharedArrayBuffer,
-    ESClass_Date, ESClass_Set, ESClass_Map, ESClass_Promise, ESClass_MapIterator,
-    ESClass_SetIterator,
+enum class ESClass {
+    Object,
+    Array,
+    Number,
+    String,
+    Boolean,
+    RegExp,
+    ArrayBuffer,
+    SharedArrayBuffer,
+    Date,
+    Set,
+    Map,
+    Promise,
+    MapIterator,
+    SetIterator,
+    Arguments,
+    Error,
 
     /** None of the above. */
-    ESClass_Other
+    Other
 };
 
 /* Fills |vp| with the unboxed value for boxed types, or undefined otherwise. */

@@ -10,11 +10,12 @@ const SPECIALVALUES = new Set([
   "unset"
 ]);
 
+const {getCSSLexer} = require("devtools/shared/css-lexer");
+
 /**
  * This module is used to convert between various angle units.
  *
  * Usage:
- *   let {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
  *   let {angleUtils} = require("devtools/client/shared/css-angle");
  *   let angle = new angleUtils.CssAngle("180deg");
  *
@@ -66,7 +67,12 @@ CssAngle.prototype = {
   },
 
   get valid() {
-    return /^-?\d+\.?\d*(deg|rad|grad|turn)$/gi.test(this.authored);
+    let token = getCSSLexer(this.authored).nextToken();
+    if (!token) {
+      return false;
+    }
+    return (token.tokenType === "dimension"
+      && token.text.toLowerCase() in CssAngle.ANGLEUNIT);
   },
 
   get specialValue() {

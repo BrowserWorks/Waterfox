@@ -7,6 +7,8 @@
 #ifndef jit_RematerializedFrame_h
 #define jit_RematerializedFrame_h
 
+#include <algorithm>
+
 #include "jsfun.h"
 
 #include "jit/JitFrameIterator.h"
@@ -56,6 +58,7 @@ class RematerializedFrame
 
     Value returnValue_;
     Value thisArgument_;
+    Value newTarget_;
     Value slots_[1];
 
     RematerializedFrame(JSContext* cx, uint8_t* top, unsigned numActualArgs,
@@ -67,10 +70,10 @@ class RematerializedFrame
 
     // Rematerialize all remaining frames pointed to by |iter| into |frames|
     // in older-to-younger order, e.g., frames[0] is the oldest frame.
-    static bool RematerializeInlineFrames(JSContext* cx, uint8_t* top,
-                                          InlineFrameIterator& iter,
-                                          MaybeReadFallback& fallback,
-                                          Vector<RematerializedFrame*>& frames);
+    static MOZ_MUST_USE bool RematerializeInlineFrames(JSContext* cx, uint8_t* top,
+                                                       InlineFrameIterator& iter,
+                                                       MaybeReadFallback& fallback,
+                                                       Vector<RematerializedFrame*>& frames);
 
     // Free a vector of RematerializedFrames; takes care to call the
     // destructor. Also clears the vector.
@@ -121,7 +124,7 @@ class RematerializedFrame
         return scopeChain_;
     }
     void pushOnScopeChain(ScopeObject& scope);
-    bool initFunctionScopeObjects(JSContext* cx);
+    MOZ_MUST_USE bool initFunctionScopeObjects(JSContext* cx);
 
     bool hasCallObj() const {
         MOZ_ASSERT(callee()->needsCallObject());
@@ -180,12 +183,15 @@ class RematerializedFrame
     unsigned numActualArgs() const {
         return numActualArgs_;
     }
+    unsigned numArgSlots() const {
+        return (std::max)(numFormalArgs(), numActualArgs());
+    }
 
     Value* argv() {
         return slots_;
     }
     Value* locals() {
-        return slots_ + numActualArgs_ + isConstructing_;
+        return slots_ + numArgSlots();
     }
 
     Value& unaliasedLocal(unsigned i) {
@@ -209,12 +215,15 @@ class RematerializedFrame
         MOZ_ASSERT(isFunctionFrame());
         if (callee()->isArrow())
             return callee()->getExtendedSlot(FunctionExtended::ARROW_NEWTARGET_SLOT);
-        if (isConstructing())
-            return argv()[numActualArgs()];
-        return UndefinedValue();
+        MOZ_ASSERT_IF(!isConstructing(), newTarget_.isUndefined());
+        return newTarget_;
     }
 
-    Value returnValue() const {
+    void setReturnValue(const Value& value) {
+        returnValue_ = value;
+    }
+
+    Value& returnValue() {
         return returnValue_;
     }
 

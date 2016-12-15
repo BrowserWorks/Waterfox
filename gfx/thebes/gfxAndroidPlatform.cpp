@@ -25,10 +25,6 @@
 #include "cairo.h"
 #include "VsyncSource.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#include "AndroidBridge.h"
-#endif
-
 #ifdef MOZ_WIDGET_GONK
 #include <cutils/properties.h>
 #include "mozilla/layers/CompositorBridgeParent.h"
@@ -175,6 +171,7 @@ gfxAndroidPlatform::GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
 {
     static const char kDroidSansJapanese[] = "Droid Sans Japanese";
     static const char kMotoyaLMaru[] = "MotoyaLMaru";
+    static const char kNotoSansCJKJP[] = "Noto Sans CJK JP";
     static const char kNotoColorEmoji[] = "Noto Color Emoji";
 #ifdef MOZ_WIDGET_GONK
     static const char kFirefoxEmoji[] = "Firefox Emoji";
@@ -231,12 +228,14 @@ gfxAndroidPlatform::GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
         case 0xf9: case 0xfa:
             if (IsJapaneseLocale()) {
                 aFontList.AppendElement(kMotoyaLMaru);
+                aFontList.AppendElement(kNotoSansCJKJP);
                 aFontList.AppendElement(kDroidSansJapanese);
             }
             break;
         default:
             if (block >= 0x2e && block <= 0x9f && IsJapaneseLocale()) {
                 aFontList.AppendElement(kMotoyaLMaru);
+                aFontList.AppendElement(kNotoSansCJKJP);
                 aFontList.AppendElement(kDroidSansJapanese);
             }
             break;

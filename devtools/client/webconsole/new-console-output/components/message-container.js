@@ -13,35 +13,55 @@ const {
   PropTypes
 } = require("devtools/client/shared/vendor/react");
 
+const {
+  MESSAGE_SOURCE,
+  MESSAGE_TYPE
+} = require("devtools/client/webconsole/new-console-output/constants");
+
+const componentMap = new Map([
+  ["ConsoleApiCall", require("./message-types/console-api-call").ConsoleApiCall],
+  ["ConsoleCommand", require("./message-types/console-command").ConsoleCommand],
+  ["DefaultRenderer", require("./message-types/default-renderer").DefaultRenderer],
+  ["EvaluationResult", require("./message-types/evaluation-result").EvaluationResult],
+  ["PageError", require("./message-types/page-error").PageError]
+]);
+
 const MessageContainer = createClass({
+  displayName: "MessageContainer",
 
   propTypes: {
     message: PropTypes.object.isRequired
   },
 
-  displayName: "MessageContainer",
-
   render() {
     const { message } = this.props;
-    let MessageComponent = getMessageComponent(message.messageType);
+    let MessageComponent = createFactory(getMessageComponent(message));
     return MessageComponent({ message });
   }
 });
 
-function getMessageComponent(messageType) {
-  let MessageComponent;
-  switch (messageType) {
-    case "ConsoleApiCall":
-      MessageComponent = require("devtools/client/webconsole/new-console-output/components/message-types/console-api-call").ConsoleApiCall;
-      break;
-    case "EvaluationResult":
-      MessageComponent = require("devtools/client/webconsole/new-console-output/components/message-types/evaluation-result").EvaluationResult;
-      break;
-    case "PageError":
-      MessageComponent = require("devtools/client/webconsole/new-console-output/components/message-types/page-error").PageError;
-      break;
+function getMessageComponent(message) {
+  switch (message.source) {
+    case MESSAGE_SOURCE.CONSOLE_API:
+      return componentMap.get("ConsoleApiCall");
+    case MESSAGE_SOURCE.JAVASCRIPT:
+      switch (message.type) {
+        case MESSAGE_TYPE.COMMAND:
+          return componentMap.get("ConsoleCommand");
+        case MESSAGE_TYPE.RESULT:
+          return componentMap.get("EvaluationResult");
+        // @TODO this is probably not the right behavior, but works for now.
+        // Chrome doesn't distinguish between page errors and log messages. We
+        // may want to remove the PageError component and just handle errors
+        // with ConsoleApiCall.
+        case MESSAGE_TYPE.LOG:
+          return componentMap.get("PageError");
+        default:
+          componentMap.get("DefaultRenderer");
+      }
   }
-  return createFactory(MessageComponent);
+
+  return componentMap.get("DefaultRenderer");
 }
 
 module.exports.MessageContainer = MessageContainer;

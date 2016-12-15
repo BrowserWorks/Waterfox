@@ -6,19 +6,23 @@
     "atob": true,
     "btoa": true,
     "Components": true,
+    "CSSRule": true,
     "clearInterval": true,
     "clearTimeout": true,
     "console": true,
+    "DOMParser": true,
     "dump": true,
     "exports": true,
     "isWorker": true,
     "loader": true,
     "module": true,
+    "reportError": true,
     "require": true,
     "setInterval": true,
     "setTimeout": true,
-    "XMLHttpRequest": true,
+    "uneval": true,
     "URL": true,
+    "XMLHttpRequest": true,
     "_Iterator": true,
   },
   "rules": {
@@ -29,8 +33,9 @@
     "mozilla/mark-test-function-used": 1,
     "mozilla/no-aArgs": 1,
     "mozilla/no-cpows-in-tests": 2,
+    "mozilla/no-single-arg-cu-import": 2,
     // See bug 1224289.
-    "mozilla/reject-importGlobalProperties": 1,
+    "mozilla/reject-importGlobalProperties": 2,
     "mozilla/var-only-at-top-level": 1,
 
     // Rules from the React plugin
@@ -328,8 +333,10 @@
     "padded-blocks": [2, "never"],
     // Don't require quotes around object literal property names.
     "quote-props": 0,
-    // Double quotes should be used.
-    "quotes": [2, "double", "avoid-escape"],
+    // Double quotes should be used.  Other quote characters can be used around strings
+    // with embedded double quotes to avoid escaping them.  Template literals are allowed
+    // mainly for building multi-line messages where only some lines use substitution.
+    "quotes": [2, "double", {"avoidEscape": true, "allowTemplateLiterals": true}],
     // Require use of the second argument for parseInt().
     "radix": 2,
     // Always require use of semicolons wherever they are valid.

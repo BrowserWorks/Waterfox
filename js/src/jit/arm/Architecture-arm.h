@@ -274,11 +274,6 @@ class FloatRegisters
         return Names[code];
     }
 
-    static const char* GetName(uint32_t i) {
-        MOZ_ASSERT(i < Total);
-        return GetName(Encoding(i));
-    }
-
     static Code FromName(const char* name);
 
     static const Encoding Invalid = invalid_freg;
@@ -291,8 +286,9 @@ class FloatRegisters
     static uint32_t ActualTotalPhys();
 
     typedef uint64_t SetType;
-    static const SetType AllDoubleMask = ((1ull << 16) - 1) << 32;
-    static const SetType AllMask = ((1ull << 48) - 1);
+    static const SetType AllSingleMask = (1ull << TotalSingle) - 1;
+    static const SetType AllDoubleMask = ((1ull << TotalDouble) - 1) << TotalSingle;
+    static const SetType AllMask = AllDoubleMask | AllSingleMask;
 
     // d15 is the ScratchFloatReg.
     static const SetType NonVolatileDoubleMask =
@@ -373,18 +369,18 @@ class VFPRegister
     bool _isMissing : 1;
 
   public:
-    MOZ_CONSTEXPR VFPRegister(uint32_t r, RegType k)
+    constexpr VFPRegister(uint32_t r, RegType k)
       : kind(k), code_ (Code(r)), _isInvalid(false), _isMissing(false)
     { }
-    MOZ_CONSTEXPR VFPRegister()
+    constexpr VFPRegister()
       : kind(Double), code_(Code(0)), _isInvalid(true), _isMissing(false)
     { }
 
-    MOZ_CONSTEXPR VFPRegister(RegType k, uint32_t id, bool invalid, bool missing) :
+    constexpr VFPRegister(RegType k, uint32_t id, bool invalid, bool missing) :
         kind(k), code_(Code(id)), _isInvalid(invalid), _isMissing(missing) {
     }
 
-    explicit MOZ_CONSTEXPR VFPRegister(Code id)
+    explicit constexpr VFPRegister(Code id)
       : kind(Double), code_(id), _isInvalid(false), _isMissing(false)
     { }
     bool operator==(const VFPRegister& other) const {
@@ -580,6 +576,7 @@ class VFPRegister
 typedef VFPRegister FloatRegister;
 
 uint32_t GetARMFlags();
+bool HasARMv7();
 bool HasMOVWT();
 bool HasLDSTREXBHD();           // {LD,ST}REX{B,H,D}
 bool HasDMBDSBISB();            // DMB, DSB, and ISB

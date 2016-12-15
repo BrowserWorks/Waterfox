@@ -93,12 +93,33 @@ TextTrack::SetMode(TextTrackMode aValue)
   if (mMode != aValue) {
     mMode = aValue;
     if (aValue == TextTrackMode::Disabled) {
+      // Remove all the cues in MediaElement.
+      if (mTextTrackList) {
+        HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
+        if (mediaElement) {
+          for (size_t i = 0; i < mCueList->Length(); ++i) {
+            mediaElement->NotifyCueRemoved(*(*mCueList)[i]);
+          }
+        }
+      }
       SetCuesInactive();
-      //TODO: Apply the rules for text track cue rendering Bug 865407
+    } else {
+      // Add all the cues into MediaElement.
+      if (mTextTrackList) {
+        HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
+        if (mediaElement) {
+          for (size_t i = 0; i < mCueList->Length(); ++i) {
+            mediaElement->NotifyCueAdded(*(*mCueList)[i]);
+          }
+        }
+      }
     }
     if (mTextTrackList) {
       mTextTrackList->CreateAndDispatchChangeEvent();
     }
+    // Ensure the TimeMarchesOn is called in case that the mCueList
+    // is empty.
+    NotifyCueUpdated(nullptr);
   }
 }
 
@@ -119,8 +140,8 @@ TextTrack::AddCue(TextTrackCue& aCue)
   aCue.SetTrack(this);
   if (mTextTrackList) {
     HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
-    if (mediaElement) {
-      mediaElement->AddCue(aCue);
+    if (mediaElement && (mMode != TextTrackMode::Disabled)) {
+      mediaElement->NotifyCueAdded(aCue);
     }
   }
   SetDirty();
@@ -129,9 +150,13 @@ TextTrack::AddCue(TextTrackCue& aCue)
 void
 TextTrack::RemoveCue(TextTrackCue& aCue, ErrorResult& aRv)
 {
-  aCue.SetActive(false);
-
+  // Bug1304948, check the aCue belongs to the TextTrack.
   mCueList->RemoveCue(aCue, aRv);
+  if (aRv.Failed()) {
+    return;
+  }
+  aCue.SetActive(false);
+  aCue.SetTrack(nullptr);
   if (mTextTrackList) {
     HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
     if (mediaElement) {
@@ -193,7 +218,6 @@ TextTrack::UpdateActiveCueList()
 TextTrackCueList*
 TextTrack::GetActiveCues() {
   if (mMode != TextTrackMode::Disabled) {
-    UpdateActiveCueList();
     return mActiveCueList;
   }
   return nullptr;
@@ -203,7 +227,6 @@ void
 TextTrack::GetActiveCueArray(nsTArray<RefPtr<TextTrackCue> >& aCues)
 {
   if (mMode != TextTrackMode::Disabled) {
-    UpdateActiveCueList();
     mActiveCueList->GetArray(aCues);
   }
 }
@@ -264,6 +287,49 @@ void
 TextTrack::SetCuesInactive()
 {
   mCueList->SetCuesInactive();
+}
+
+void
+TextTrack::NotifyCueUpdated(TextTrackCue *aCue)
+{
+  mCueList->NotifyCueUpdated(aCue);
+  if (mTextTrackList) {
+    HTMLMediaElement* mediaElement = mTextTrackList->GetMediaElement();
+    if (mediaElement) {
+      mediaElement->NotifyCueUpdated(aCue);
+    }
+  }
+  SetDirty();
+}
+
+void
+TextTrack::GetLabel(nsAString& aLabel) const
+{
+  if (mTrackElement) {
+    mTrackElement->GetLabel(aLabel);
+  } else {
+    aLabel = mLabel;
+  }
+}
+void
+TextTrack::GetLanguage(nsAString& aLanguage) const
+{
+  if (mTrackElement) {
+    mTrackElement->GetSrclang(aLanguage);
+  } else {
+    aLanguage = mLanguage;
+  }
+}
+
+void
+TextTrack::DispatchAsyncTrustedEvent(const nsString& aEventName)
+{
+  RefPtr<TextTrack> self = this;
+  NS_DispatchToMainThread(
+    NS_NewRunnableFunction([self, aEventName]() {
+      self->DispatchTrustedEvent(aEventName);
+    })
+  );
 }
 
 } // namespace dom

@@ -66,7 +66,7 @@ public:
 class JSZoneParticipant : public nsCycleCollectionParticipant
 {
 public:
-  MOZ_CONSTEXPR JSZoneParticipant(): nsCycleCollectionParticipant()
+  constexpr JSZoneParticipant(): nsCycleCollectionParticipant()
   {
   }
 
@@ -143,7 +143,7 @@ protected:
   CycleCollectedJSRuntime();
   virtual ~CycleCollectedJSRuntime();
 
-  nsresult Initialize(JSRuntime* aParentRuntime,
+  nsresult Initialize(JSContext* aParentContext,
                       uint32_t aMaxBytes,
                       uint32_t aMaxNurseryBytes);
 
@@ -157,10 +157,6 @@ protected:
   virtual void CustomGCCallback(JSGCStatus aStatus) {}
   virtual void CustomOutOfMemoryCallback() {}
   virtual void CustomLargeAllocationFailureCallback() {}
-  virtual bool CustomContextCallback(JSContext* aCx, unsigned aOperation)
-  {
-    return true; // Don't block context creation.
-  }
 
   std::queue<nsCOMPtr<nsIRunnable>> mPromiseMicroTaskQueue;
   std::queue<nsCOMPtr<nsIRunnable>> mDebuggerPromiseMicroTaskQueue;
@@ -211,20 +207,28 @@ private:
 
   static void TraceBlackJS(JSTracer* aTracer, void* aData);
   static void TraceGrayJS(JSTracer* aTracer, void* aData);
-  static void GCCallback(JSRuntime* aRuntime, JSGCStatus aStatus, void* aData);
-  static void GCSliceCallback(JSRuntime* aRuntime, JS::GCProgress aProgress,
+  static void GCCallback(JSContext* aContext, JSGCStatus aStatus, void* aData);
+  static void GCSliceCallback(JSContext* aContext, JS::GCProgress aProgress,
                               const JS::GCDescription& aDesc);
-  static void GCNurseryCollectionCallback(JSRuntime* aRuntime,
+  static void GCNurseryCollectionCallback(JSContext* aContext,
                                           JS::GCNurseryProgress aProgress,
                                           JS::gcreason::Reason aReason);
   static void OutOfMemoryCallback(JSContext* aContext, void* aData);
   static void LargeAllocationFailureCallback(void* aData);
   static bool ContextCallback(JSContext* aCx, unsigned aOperation,
                               void* aData);
+  static JSObject* GetIncumbentGlobalCallback(JSContext* aCx);
   static bool EnqueuePromiseJobCallback(JSContext* aCx,
                                         JS::HandleObject aJob,
                                         JS::HandleObject aAllocationSite,
+                                        JS::HandleObject aIncumbentGlobal,
                                         void* aData);
+#ifdef SPIDERMONKEY_PROMISE
+  static void PromiseRejectionTrackerCallback(JSContext* aCx,
+                                              JS::HandleObject aPromise,
+                                              PromiseRejectionHandlingState state,
+                                              void* aData);
+#endif // SPIDERMONKEY_PROMISE
 
   virtual void TraceNativeBlackRoots(JSTracer* aTracer) { };
   void TraceNativeGrayRoots(JSTracer* aTracer);
@@ -326,6 +330,12 @@ public:
     return mJSRuntime;
   }
 
+  JSContext* Context() const
+  {
+    MOZ_ASSERT(mJSContext);
+    return mJSContext;
+  }
+
 protected:
   JSRuntime* MaybeRuntime() const { return mJSRuntime; }
 
@@ -362,15 +372,28 @@ public:
   void PrepareWaitingZonesForGC();
 
   // Queue an async microtask to the current main or worker thread.
-  virtual void DispatchToMicroTask(nsIRunnable* aRunnable);
+  virtual void DispatchToMicroTask(already_AddRefed<nsIRunnable> aRunnable);
 
   // Storage for watching rejected promises waiting for some client to
   // consume their rejection.
+#ifdef SPIDERMONKEY_PROMISE
+  // Promises in this list have been rejected in the last turn of the
+  // event loop without the rejection being handled.
+  // Note that this can contain nullptrs in place of promises removed because
+  // they're consumed before it'd be reported.
+  JS::PersistentRooted<JS::GCVector<JSObject*, 0, js::SystemAllocPolicy>> mUncaughtRejections;
+
+  // Promises in this list have previously been reported as rejected
+  // (because they were in the above list), but the rejection was handled
+  // in the last turn of the event loop.
+  JS::PersistentRooted<JS::GCVector<JSObject*, 0, js::SystemAllocPolicy>> mConsumedRejections;
+#else
   // We store values as `nsISupports` to avoid adding compile-time dependencies
   // from xpcom to dom/promise, but they can really only have a single concrete
   // type.
   nsTArray<nsCOMPtr<nsISupports /* Promise */>> mUncaughtRejections;
   nsTArray<nsCOMPtr<nsISupports /* Promise */ >> mConsumedRejections;
+#endif // SPIDERMONKEY_PROMISE
   nsTArray<nsCOMPtr<nsISupports /* UncaughtRejectionObserver */ >> mUncaughtRejectionObservers;
 
 private:
@@ -379,6 +402,7 @@ private:
   JSZoneParticipant mJSZoneCycleCollectorGlobal;
 
   JSRuntime* mJSRuntime;
+  JSContext* mJSContext;
 
   JS::GCSliceCallback mPrevGCSliceCallback;
   JS::GCNurseryCollectionCallback mPrevGCNurseryCollectionCallback;

@@ -19,7 +19,6 @@
 #include "mozilla/dom/ScriptSettings.h"
 
 #include "nsError.h"
-#include "nsAutoPtr.h"
 #include "nsContentUtils.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIScriptObjectPrincipal.h"
@@ -141,19 +140,6 @@ NS_IMETHODIMP
 nsDOMDataChannel::GetId(uint16_t *aId)
 {
   *aId = Id();
-  return NS_OK;
-}
-
-uint16_t
-nsDOMDataChannel::Stream() const
-{
-  return mDataChannel->GetStream();
-}
-
-NS_IMETHODIMP
-nsDOMDataChannel::GetStream(uint16_t *aStream)
-{
-  *aStream = Stream();
   return NS_OK;
 }
 

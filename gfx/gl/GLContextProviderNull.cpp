@@ -8,8 +8,16 @@
 namespace mozilla {
 namespace gl {
 
+using namespace mozilla::widget;
+
 already_AddRefed<GLContext>
-GLContextProviderNull::CreateForWindow(nsIWidget*, bool aForceAccelerated)
+GLContextProviderNull::CreateForCompositorWidget(CompositorWidget* aCompositorWidget, bool aForceAccelerated)
+{
+    return nullptr;
+}
+
+already_AddRefed<GLContext>
+GLContextProviderNull::CreateForWindow(nsIWidget* aWidget, bool aForceAccelerated)
 {
     return nullptr;
 }
@@ -24,15 +32,16 @@ already_AddRefed<GLContext>
 GLContextProviderNull::CreateOffscreen(const gfx::IntSize&,
                                        const SurfaceCaps&,
                                        CreateContextFlags,
-                                       nsACString& aFailureId)
+                                       nsACString* const out_failureId)
 {
-    aFailureId = NS_LITERAL_CSTRING("FEATURE_FAILURE_NULL");
+    *out_failureId = NS_LITERAL_CSTRING("FEATURE_FAILURE_NULL");
     return nullptr;
 }
 
 already_AddRefed<GLContext>
-GLContextProviderNull::CreateHeadless(CreateContextFlags)
+GLContextProviderNull::CreateHeadless(CreateContextFlags, nsACString* const out_failureId)
 {
+    *out_failureId = NS_LITERAL_CSTRING("FEATURE_FAILURE_NULL");
     return nullptr;
 }
 

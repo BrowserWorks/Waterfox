@@ -209,12 +209,12 @@ CacheEntry::CacheEntry(const nsACString& aStorageID,
 , mStorageID(aStorageID)
 , mUseDisk(aUseDisk)
 , mSkipSizeCheck(aSkipSizeCheck)
+, mIsDoomed(false)
 , mSecurityInfoLoaded(false)
 , mPreventCallbacks(false)
 , mHasData(false)
 , mPinned(aPin)
 , mPinningKnown(false)
-, mIsDoomed(false)
 , mState(NOTLOADED)
 , mRegistration(NEVERREGISTERED)
 , mWriter(nullptr)
@@ -1799,7 +1799,6 @@ NS_IMETHODIMP CacheOutputCloseListener::Run()
 size_t CacheEntry::SizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
 {
   size_t n = 0;
-  nsCOMPtr<nsISizeOf> sizeOf;
 
   n += mCallbacks.ShallowSizeOfExcludingThis(mallocSizeOf);
   if (mFile) {

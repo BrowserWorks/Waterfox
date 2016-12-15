@@ -44,17 +44,7 @@ var l10n = new WebConsoleUtils.L10n(STRINGS_URI);
 
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
-const MIXED_CONTENT_LEARN_MORE = "https://developer.mozilla.org/docs/Security/MixedContent";
-
-const TRACKING_PROTECTION_LEARN_MORE = "https://developer.mozilla.org/Firefox/Privacy/Tracking_Protection";
-
-const INSECURE_PASSWORDS_LEARN_MORE = "https://developer.mozilla.org/docs/Security/InsecurePasswords";
-
-const PUBLIC_KEY_PINS_LEARN_MORE = "https://developer.mozilla.org/docs/Web/Security/Public_Key_Pinning";
-
-const STRICT_TRANSPORT_SECURITY_LEARN_MORE = "https://developer.mozilla.org/docs/Security/HTTP_Strict_Transport_Security";
-
-const WEAK_SIGNATURE_ALGORITHM_LEARN_MORE = "https://developer.mozilla.org/docs/Security/Weak_Signature_Algorithm";
+const MIXED_CONTENT_LEARN_MORE = "https://developer.mozilla.org/docs/Web/Security/Mixed_content";
 
 const IGNORED_SOURCE_URLS = ["debugger eval code"];
 
@@ -245,6 +235,7 @@ function WebConsoleFrame(webConsoleOwner) {
   this.React = require("devtools/client/shared/vendor/react");
   this.ReactDOM = require("devtools/client/shared/vendor/react-dom");
   this.FrameView = this.React.createFactory(require("devtools/client/shared/components/frame"));
+  this.StackTraceView = this.React.createFactory(require("devtools/client/shared/components/stack-trace"));
 
   this._telemetry = new Telemetry();
 
@@ -510,8 +501,9 @@ WebConsoleFrame.prototype = {
   _initUI: function () {
     this.document = this.window.document;
     this.rootElement = this.document.documentElement;
-    this.NEW_CONSOLE_OUTPUT_ENABLED = !this.owner._browserConsole &&
-      Services.prefs.getBoolPref(PREF_NEW_FRONTEND_ENABLED);
+    this.NEW_CONSOLE_OUTPUT_ENABLED = !this.owner._browserConsole
+      && !this.owner.target.chrome
+      && Services.prefs.getBoolPref(PREF_NEW_FRONTEND_ENABLED);
 
     this._initDefaultFilterPrefs();
 
@@ -1487,7 +1479,9 @@ WebConsoleFrame.prototype = {
     let msgBody = node.getElementsByClassName("message-body")[0];
 
     // Add the more info link node to messages that belong to certain categories
-    this.addMoreInfoLink(msgBody, scriptError);
+    if (scriptError.exceptionDocURL) {
+      this.addLearnMoreWarningNode(msgBody, scriptError.exceptionDocURL);
+    }
 
     // Collect telemetry data regarding JavaScript errors
     this._telemetry.logKeyed("DEVTOOLS_JAVASCRIPT_ERROR_DISPLAYED",
@@ -1631,7 +1625,7 @@ WebConsoleFrame.prototype = {
 
     if (this.window.NetRequest) {
       this.window.NetRequest.onNetworkEvent({
-        client: this.webConsoleClient,
+        consoleFrame: this,
         response: networkInfo,
         node: messageNode,
         update: false
@@ -1667,48 +1661,6 @@ WebConsoleFrame.prototype = {
     });
   },
 
-  /**
-   * Adds a more info link node to messages based on the nsIScriptError object
-   * that we need to report to the console
-   *
-   * @param node
-   *        The node to which we will be adding the more info link node
-   * @param scriptError
-   *        The script error object that we are reporting to the console
-   */
-  addMoreInfoLink: function (node, scriptError) {
-    let url;
-    switch (scriptError.category) {
-      case "Insecure Password Field":
-        url = INSECURE_PASSWORDS_LEARN_MORE;
-        break;
-      case "Mixed Content Message":
-      case "Mixed Content Blocker":
-        url = MIXED_CONTENT_LEARN_MORE;
-        break;
-      case "Invalid HPKP Headers":
-        url = PUBLIC_KEY_PINS_LEARN_MORE;
-        break;
-      case "Invalid HSTS Headers":
-        url = STRICT_TRANSPORT_SECURITY_LEARN_MORE;
-        break;
-      case "SHA-1 Signature":
-        url = WEAK_SIGNATURE_ALGORITHM_LEARN_MORE;
-        break;
-      case "Tracking Protection":
-        url = TRACKING_PROTECTION_LEARN_MORE;
-        break;
-      default:
-        // If all else fails check for an error doc URL.
-        url = ErrorDocs.GetURL(scriptError.errorMessageName);
-        break;
-    }
-
-    if (url) {
-      this.addLearnMoreWarningNode(node, url);
-    }
-  },
-
   /*
    * Appends a clickable warning node to the node passed
    * as a parameter to the function. When a user clicks on the appended
@@ -1725,7 +1677,7 @@ WebConsoleFrame.prototype = {
     let moreInfoLabel = "[" + l10n.getStr("webConsoleMoreInfoLabel") + "]";
 
     let warningNode = this.document.createElementNS(XHTML_NS, "a");
-    warningNode.title = url;
+    warningNode.title = url.split("?")[0];
     warningNode.href = url;
     warningNode.draggable = false;
     warningNode.textContent = moreInfoLabel;
@@ -2340,10 +2292,16 @@ WebConsoleFrame.prototype = {
    *        The message node you want to clean up.
    */
   unmountMessage(node) {
-    // Select all `.message-location` within this node to ensure we get
-    // messages of stacktraces, which contain multiple location nodes.
-    for (let locationNode of node.querySelectorAll(".message-location")) {
+    // Unmount the Frame component with the message location
+    let locationNode = node.querySelector(".message-location");
+    if (locationNode) {
       this.ReactDOM.unmountComponentAtNode(locationNode);
+    }
+
+    // Unmount the StackTrace component if present in the message
+    let stacktraceNode = node.querySelector(".stacktrace");
+    if (stacktraceNode) {
+      this.ReactDOM.unmountComponentAtNode(stacktraceNode);
     }
   },
 
@@ -2557,36 +2515,33 @@ WebConsoleFrame.prototype = {
    * Creates the anchor that displays the textual location of an incoming
    * message.
    *
-   * @param {Object} aLocation
-   *        An object containing url, line and column number of the message
-   *        source (destructured).
+   * @param {Object} location
+   *        An object containing url, line and column number of the message source.
    * @return {Element}
    *         The new anchor element, ready to be added to the message node.
    */
-  createLocationNode: function ({url, line, column}) {
-    if (!url) {
-      url = "";
-    }
-
-    let fullURL = url.split(" -> ").pop();
-    let locationNode = this.document.createElementNS(XHTML_NS, "a");
-    locationNode.draggable = false;
+  createLocationNode: function (location) {
+    let locationNode = this.document.createElementNS(XHTML_NS, "div");
     locationNode.className = "message-location devtools-monospace";
 
     // Make the location clickable.
-    let onClick = () => {
-      let category = locationNode.parentNode.category;
+    let onClick = ({ url, line }) => {
+      let category = locationNode.closest(".message").category;
       let target = null;
 
-      if (category === CATEGORY_CSS) {
+      if (/^Scratchpad\/\d+$/.test(url)) {
+        target = "scratchpad";
+      } else if (category === CATEGORY_CSS) {
         target = "styleeditor";
       } else if (category === CATEGORY_JS || category === CATEGORY_WEBDEV) {
         target = "jsdebugger";
-      } else if (/^Scratchpad\/\d+$/.test(url)) {
-        target = "scratchpad";
-      } else if (/\.js$/.test(fullURL)) {
+      } else if (/\.js$/.test(url)) {
         // If it ends in .js, let's attempt to open in debugger
         // anyway, as this falls back to normal view-source.
+        target = "jsdebugger";
+      } else {
+        // Point everything else to debugger, if source not available,
+        // it will fall back to view-source.
         target = "jsdebugger";
       }
 
@@ -2595,24 +2550,26 @@ WebConsoleFrame.prototype = {
           this.owner.viewSourceInScratchpad(url, line);
           return;
         case "jsdebugger":
-          this.owner.viewSourceInDebugger(fullURL, line);
+          this.owner.viewSourceInDebugger(url, line);
           return;
         case "styleeditor":
-          this.owner.viewSourceInStyleEditor(fullURL, line);
+          this.owner.viewSourceInStyleEditor(url, line);
           return;
       }
       // No matching tool found; use old school view-source
-      this.owner.viewSource(fullURL, line);
+      this.owner.viewSource(url, line);
     };
 
+    const toolbox = gDevTools.getToolbox(this.owner.target);
+
+    let { url, line, column } = location;
+    let source = url ? url.split(" -> ").pop() : "";
+
     this.ReactDOM.render(this.FrameView({
-      frame: {
-        source: fullURL,
-        line,
-        column,
-        showEmptyPathAsHost: true,
-      },
+      frame: { source, line, column },
+      showEmptyPathAsHost: true,
       onClick,
+      sourceMapService: toolbox ? toolbox._sourceMapService : null,
     }), locationNode);
 
     return locationNode;
@@ -3272,10 +3229,15 @@ WebConsoleConnectionProxy.prototype = {
       response.messages.concat(...this.webConsoleClient.getNetworkEvents());
     messages.sort((a, b) => a.timeStamp - b.timeStamp);
 
-    this.webConsoleFrame.displayCachedMessages(messages);
-
-    if (!this._hasNativeConsoleAPI) {
-      this.webConsoleFrame.logWarningAboutReplacedAPI();
+    if (this.webConsoleFrame.NEW_CONSOLE_OUTPUT_ENABLED) {
+      for (let packet of messages) {
+        this.webConsoleFrame.newConsoleOutput.dispatchMessageAdd(packet);
+      }
+    } else {
+      this.webConsoleFrame.displayCachedMessages(messages);
+      if (!this._hasNativeConsoleAPI) {
+        this.webConsoleFrame.logWarningAboutReplacedAPI();
+      }
     }
 
     this.connected = true;

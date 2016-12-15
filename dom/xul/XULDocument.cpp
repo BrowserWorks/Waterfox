@@ -1434,7 +1434,7 @@ XULDocument::GetPopupNode(nsIDOMNode** aNode)
 
     if (node && nsContentUtils::CanCallerAccess(node)
         && GetScopeObjectOfNode(node)) {
-        node.swap(*aNode);
+        node.forget(aNode);
     }
 
     return NS_OK;
@@ -1546,7 +1546,7 @@ XULDocument::GetTooltipNode(nsIDOMNode** aNode)
     if (pm) {
         nsCOMPtr<nsIDOMNode> node = pm->GetLastTriggerTooltipNode(this);
         if (node && nsContentUtils::CanCallerAccess(node))
-            node.swap(*aNode);
+            node.forget(aNode);
     }
 
     return NS_OK;
@@ -3524,7 +3524,8 @@ XULDocument::ExecuteScript(nsXULPrototypeScript *aScript)
     // The script is in the compilation scope. Clone it into the target scope
     // and execute it. On failure, ~AutoScriptEntry will handle exceptions, so
     // there is no need to manually check the return value.
-    JS::CloneAndExecuteScript(cx, scriptObject);
+    JS::RootedValue rval(cx);
+    JS::CloneAndExecuteScript(cx, scriptObject, &rval);
 
     return NS_OK;
 }
@@ -3578,7 +3579,7 @@ XULDocument::CreateElementFromPrototype(nsXULPrototypeElement* aPrototype,
         if (NS_FAILED(rv)) return rv;
     }
 
-    result.swap(*aResult);
+    result.forget(aResult);
 
     return NS_OK;
 }

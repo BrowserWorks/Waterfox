@@ -4,12 +4,13 @@
 
 "use strict";
 
-const { Cc, Ci, Cr } = require("chrome");
+const { Cc, Ci, Cr, Cu } = require("chrome");
 const l10n = require("gcli/l10n");
 const Services = require("Services");
 const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
 const { getRect } = require("devtools/shared/layout/utils");
 const promise = require("promise");
+const defer = require("devtools/shared/defer");
 const { Task } = require("devtools/shared/task");
 
 loader.lazyImporter(this, "Downloads", "resource://gre/modules/Downloads.jsm");
@@ -32,7 +33,7 @@ const FILENAME_DEFAULT_VALUE = " ";
  * identical except that one runs on the client and one in the server.
  *
  * The server command is hidden, and is designed to be called from the client
- * command when the --chrome flag is *not* used.
+ * command.
  */
 
 /**
@@ -152,8 +153,8 @@ exports.items = [
         root.style.cursor = "pointer";
         root.addEventListener("click", () => {
           if (imageSummary.href) {
-            const gBrowser = context.environment.chromeWindow.gBrowser;
-            gBrowser.selectedTab = gBrowser.addTab(imageSummary.href);
+            let mainWindow = context.environment.chromeWindow;
+            mainWindow.openUILinkIn(imageSummary.href, "tab");
           } else if (imageSummary.filename) {
             const file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
             file.initWithPath(imageSummary.filename);
@@ -178,37 +179,15 @@ exports.items = [
     params: [
       filenameParam,
       standardParams,
-      {
-        group: l10n.lookup("screenshotAdvancedOptions"),
-        params: [
-          {
-            name: "chrome",
-            type: "boolean",
-            description: l10n.lookupFormat("screenshotChromeDesc2", [BRAND_SHORT_NAME]),
-            manual: l10n.lookupFormat("screenshotChromeManual2", [BRAND_SHORT_NAME])
-          },
-        ]
-      },
     ],
-    exec: function(args, context) {
-      if (args.chrome && args.selector) {
-        // Node screenshot with chrome option does not work as intended
-        // Refer https://bugzilla.mozilla.org/show_bug.cgi?id=659268#c7
-        // throwing for now.
-        throw new Error(l10n.lookup("screenshotSelectorChromeConflict"));
-      }
+    exec: function (args, context) {
+      // Re-execute the command on the server
+      const command = context.typed.replace(/^screenshot/, "screenshot_server");
+      let capture = context.updateExec(command).then(output => {
+        return output.error ? Promise.reject(output.data) : output.data;
+      });
 
-      let capture;
-      if (!args.chrome) {
-        // Re-execute the command on the server
-        const command = context.typed.replace(/^screenshot/, "screenshot_server");
-        capture = context.updateExec(command).then(output => {
-          return output.error ? Promise.reject(output.data) : output.data;
-        });
-      } else {
-        capture = captureScreenshot(args, context.environment.chromeDocument);
-      }
-
+      simulateCameraEffect(context.environment.chromeDocument, "shutter");
       return capture.then(saveScreenshot.bind(null, args, context));
     },
   },
@@ -219,11 +198,26 @@ exports.items = [
     hidden: true,
     returnType: "imageSummary",
     params: [ filenameParam, standardParams ],
-    exec: function(args, context) {
+    exec: function (args, context) {
       return captureScreenshot(args, context.environment.document);
     },
   }
 ];
+
+/**
+ * This function is called to simulate camera effects
+ */
+function simulateCameraEffect(document, effect) {
+  let window = document.defaultView;
+  if (effect === "shutter") {
+    const audioCamera = new window.Audio("resource://devtools/client/themes/audio/shutter.wav");
+    audioCamera.play();
+  }
+  if (effect == "flash") {
+    const frames = Cu.cloneInto({ opacity: [ 0, 1 ] }, window);
+    document.documentElement.animate(frames, 500);
+  }
+}
 
 /**
  * This function simply handles the --delay argument before calling
@@ -275,12 +269,15 @@ function createScreenshotData(document, args) {
   const currentX = window.scrollX;
   const currentY = window.scrollY;
 
+  let filename = getFilename(args.filename);
+
   if (args.fullpage) {
     // Bug 961832: GCLI screenshot shows fixed position element in wrong
     // position if we don't scroll to top
     window.scrollTo(0,0);
     width = window.innerWidth + window.scrollMaxX - window.scrollMinX;
     height = window.innerHeight + window.scrollMaxY - window.scrollMinY;
+    filename = filename.replace(".png", "-fullpage.png");
   }
   else if (args.selector) {
     ({ top, left, width, height } = getRect(window, args.selector, window));
@@ -317,12 +314,14 @@ function createScreenshotData(document, args) {
     window.scrollTo(currentX, currentY);
   }
 
+  simulateCameraEffect(document, "flash");
+
   return Promise.resolve({
     destinations: [],
     data: data,
     height: height,
     width: width,
-    filename: getFilename(args.filename),
+    filename: filename,
   });
 }
 
@@ -464,7 +463,7 @@ function DownloadListener(win, transfer) {
   }
 
   // Allow saveToFile to await completion for error handling
-  this._completedDeferred = promise.defer();
+  this._completedDeferred = defer();
   this.completed = this._completedDeferred.promise;
 }
 

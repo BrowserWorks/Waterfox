@@ -24,13 +24,13 @@
             '<(angle_path)/src/libANGLE/Config_unittest.cpp',
             '<(angle_path)/src/libANGLE/Fence_unittest.cpp',
             '<(angle_path)/src/libANGLE/HandleAllocator_unittest.cpp',
+            '<(angle_path)/src/libANGLE/HandleRangeAllocator_unittest.cpp',
             '<(angle_path)/src/libANGLE/Image_unittest.cpp',
             '<(angle_path)/src/libANGLE/ImageIndexIterator_unittest.cpp',
             '<(angle_path)/src/libANGLE/Program_unittest.cpp',
             '<(angle_path)/src/libANGLE/ResourceManager_unittest.cpp',
             '<(angle_path)/src/libANGLE/Surface_unittest.cpp',
             '<(angle_path)/src/libANGLE/TransformFeedback_unittest.cpp',
-            '<(angle_path)/src/libANGLE/validationES_unittest.cpp',
             '<(angle_path)/src/libANGLE/renderer/BufferImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/FramebufferImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/ProgramImpl_mock.h',
@@ -38,12 +38,15 @@
             '<(angle_path)/src/libANGLE/renderer/ImageImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/TextureImpl_mock.h',
             '<(angle_path)/src/libANGLE/renderer/TransformFeedbackImpl_mock.h',
+            '<(angle_path)/src/libANGLE/signal_utils_unittest.cpp',
+            '<(angle_path)/src/libANGLE/validationES_unittest.cpp',
             '<(angle_path)/src/tests/angle_unittests_utils.h',
             '<(angle_path)/src/tests/compiler_tests/API_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/BuiltInFunctionEmulator_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/CollectVariables_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/ConstantFolding_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/DebugShaderPrecision_test.cpp',
+            '<(angle_path)/src/tests/compiler_tests/EmulateGLFragColorBroadcast_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/ExpressionLimit_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/EXT_blend_func_extended_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/FragDepth_test.cpp',
@@ -52,6 +55,7 @@
             '<(angle_path)/src/tests/compiler_tests/MalformedShader_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/NV_draw_buffers_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/Pack_Unpack_test.cpp',
+            '<(angle_path)/src/tests/compiler_tests/PruneEmptyDeclarations_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/PruneUnusedFunctions_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/RecordConstantPrecision_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/RemovePow_test.cpp',
@@ -60,6 +64,7 @@
             '<(angle_path)/src/tests/compiler_tests/ShCompile_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/TypeTracking_test.cpp',
             '<(angle_path)/src/tests/compiler_tests/VariablePacker_test.cpp',
+            '<(angle_path)/src/tests/compiler_tests/WorkGroupSize_test.cpp',
             '<(angle_path)/src/tests/preprocessor_tests/char_test.cpp',
             '<(angle_path)/src/tests/preprocessor_tests/comment_test.cpp',
             '<(angle_path)/src/tests/preprocessor_tests/define_test.cpp',
@@ -133,6 +138,10 @@
         ['OS=="win"',
         {
             # TODO(cwallez): make this angle_enable_hlsl instead (requires gyp file refactoring)
+            'defines':
+            [
+                'ANGLE_ENABLE_HLSL',
+            ],
             'sources':
             [
                 '<@(angle_unittests_hlsl_sources)',

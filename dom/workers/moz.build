@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,16 +32,12 @@ EXPORTS.mozilla.dom.workers += [
 
 # Stuff needed for the bindings, not really public though.
 EXPORTS.mozilla.dom.workers.bindings += [
-    'Performance.h',
     'ServiceWorker.h',
     'ServiceWorkerClient.h',
     'ServiceWorkerClients.h',
     'ServiceWorkerWindowClient.h',
     'SharedWorker.h',
-    'URL.h',
-    'WorkerFeature.h',
-    'XMLHttpRequest.h',
-    'XMLHttpRequestUpload.h',
+    'WorkerHolder.h',
 ]
 
 XPIDL_MODULE = 'dom_workers'
@@ -54,7 +50,6 @@ XPIDL_SOURCES += [
 UNIFIED_SOURCES += [
     'ChromeWorkerScope.cpp',
     'FileReaderSync.cpp',
-    'Performance.cpp',
     'Principal.cpp',
     'RegisterBindings.cpp',
     'RuntimeService.cpp',
@@ -82,16 +77,14 @@ UNIFIED_SOURCES += [
     'ServiceWorkerUpdateJob.cpp',
     'ServiceWorkerWindowClient.cpp',
     'SharedWorker.cpp',
-    'URL.cpp',
     'WorkerDebuggerManager.cpp',
+    'WorkerHolder.cpp',
     'WorkerLocation.cpp',
     'WorkerNavigator.cpp',
     'WorkerPrivate.cpp',
     'WorkerRunnable.cpp',
     'WorkerScope.cpp',
     'WorkerThread.cpp',
-    'XMLHttpRequest.cpp',
-    'XMLHttpRequestUpload.cpp',
 ]
 
 IPDL_SOURCES += [

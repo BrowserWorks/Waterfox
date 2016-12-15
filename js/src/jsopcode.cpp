@@ -714,7 +714,7 @@ js::Disassemble(JSContext* cx, HandleScript script, bool lines, Sprinter* sp)
 }
 
 JS_FRIEND_API(bool)
-js::DumpPC(JSContext* cx)
+js::DumpPC(JSContext* cx, FILE* fp)
 {
     gc::AutoSuppressGC suppressGC(cx);
     Sprinter sprinter(cx);
@@ -722,17 +722,17 @@ js::DumpPC(JSContext* cx)
         return false;
     ScriptFrameIter iter(cx);
     if (iter.done()) {
-        fprintf(stdout, "Empty stack.\n");
+        fprintf(fp, "Empty stack.\n");
         return true;
     }
     RootedScript script(cx, iter.script());
     bool ok = DisassembleAtPC(cx, script, true, iter.pc(), false, &sprinter);
-    fprintf(stdout, "%s", sprinter.string());
+    fprintf(fp, "%s", sprinter.string());
     return ok;
 }
 
 JS_FRIEND_API(bool)
-js::DumpScript(JSContext* cx, JSScript* scriptArg)
+js::DumpScript(JSContext* cx, JSScript* scriptArg, FILE* fp)
 {
     gc::AutoSuppressGC suppressGC(cx);
     Sprinter sprinter(cx);
@@ -740,7 +740,7 @@ js::DumpScript(JSContext* cx, JSScript* scriptArg)
         return false;
     RootedScript script(cx, scriptArg);
     bool ok = Disassemble(cx, script, true, &sprinter);
-    fprintf(stdout, "%s", sprinter.string());
+    fprintf(fp, "%s", sprinter.string());
     return ok;
 }
 
@@ -891,7 +891,7 @@ js::Disassemble1(JSContext* cx, HandleScript script, jsbytecode* pc,
 
       case JOF_SCOPECOORD: {
         RootedValue v(cx,
-            StringValue(ScopeCoordinateName(cx->runtime()->scopeCoordinateNameCache, script, pc)));
+            StringValue(ScopeCoordinateName(cx->caches.scopeCoordinateNameCache, script, pc)));
         JSAutoByteString bytes;
         if (!ToDisassemblySource(cx, v, &bytes))
             return 0;
@@ -1143,7 +1143,7 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc)
         return write("(intermediate value)");
       }
       case JSOP_GETALIASEDVAR: {
-        JSAtom* atom = ScopeCoordinateName(cx->runtime()->scopeCoordinateNameCache, script, pc);
+        JSAtom* atom = ScopeCoordinateName(cx->caches.scopeCoordinateNameCache, script, pc);
         MOZ_ASSERT(atom);
         return write(atom);
       }
@@ -1213,7 +1213,7 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc)
         return decompilePCForStackOperand(pc, -int32_t(GET_ARGC(pc) + 2)) &&
                write("(...)");
       case JSOP_SPREADCALL:
-        return decompilePCForStackOperand(pc, -int32_t(3)) &&
+        return decompilePCForStackOperand(pc, -3) &&
                write("(...)");
       case JSOP_NEWARRAY:
         return write("[]");
@@ -2021,7 +2021,7 @@ GenerateLcovInfo(JSContext* cx, JSCompartment* comp, GenericPrinter& out)
 
     // Collect the list of scripts which are part of the current compartment.
     {
-        js::gc::AutoPrepareForTracing apft(rt, SkipAtoms);
+        js::gc::AutoPrepareForTracing apft(cx, SkipAtoms);
     }
     Rooted<ScriptVector> topScripts(cx, ScriptVector(cx));
     for (ZonesIter zone(rt, SkipAtoms); !zone.done(); zone.next()) {

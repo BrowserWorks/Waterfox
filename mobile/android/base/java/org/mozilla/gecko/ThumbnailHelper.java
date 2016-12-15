@@ -154,9 +154,11 @@ public final class ThumbnailHelper {
         }
 
         Log.d(LOGTAG, "Sending thumbnail event: " + mWidth + ", " + mHeight);
-        GeckoEvent e = GeckoEvent.createThumbnailEvent(tab.getId(), mWidth, mHeight, mBuffer);
-        GeckoAppShell.sendEventToGecko(e);
+        requestThumbnail(mBuffer, tab.getId(), mWidth, mHeight);
     }
+
+    @WrapForJNI
+    private static native void requestThumbnail(ByteBuffer data, int tabId, int width, int height);
 
     /* This method is invoked by JNI once the thumbnail data is ready. */
     @WrapForJNI(stubName = "SendThumbnail")
@@ -193,9 +195,7 @@ public final class ThumbnailHelper {
             Log.e(LOGTAG, "handleThumbnailData called with an unexpected ByteBuffer!");
         }
 
-        if (shouldUpdateThumbnail(tab)) {
-            processThumbnailData(tab, data, cachePolicy);
-        }
+        processThumbnailData(tab, data, cachePolicy);
     }
 
     private void processThumbnailData(Tab tab, ByteBuffer data, CachePolicy cachePolicy) {
@@ -214,9 +214,5 @@ public final class ThumbnailHelper {
             bitmap = BitmapUtils.decodeByteArray(compressed);
         }
         tab.updateThumbnail(bitmap, cachePolicy);
-    }
-
-    private boolean shouldUpdateThumbnail(Tab tab) {
-        return (Tabs.getInstance().isSelectedTab(tab) || (GeckoAppShell.getGeckoInterface() != null && GeckoAppShell.getGeckoInterface().areTabsShown()));
     }
 }

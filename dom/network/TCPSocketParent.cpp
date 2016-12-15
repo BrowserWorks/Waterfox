@@ -35,7 +35,7 @@ namespace mozilla {
 
 namespace net {
 //
-// set NSPR_LOG_MODULES=TCPSocket:5
+// set MOZ_LOG=TCPSocket:5
 //
 extern LazyLogModule gTCPSocketLog;
 #define TCPSOCKET_LOG(args)     MOZ_LOG(gTCPSocketLog, LogLevel::Debug, args)
@@ -274,7 +274,10 @@ TCPSocketParent::RecvStartTLS()
   NS_ENSURE_TRUE(mSocket, true);
   ErrorResult rv;
   mSocket->UpgradeToSecure(rv);
-  NS_ENSURE_FALSE(rv.Failed(), true);
+  if (NS_WARN_IF(rv.Failed())) {
+    rv.SuppressException();
+  }
+
   return true;
 }
 
@@ -292,7 +295,10 @@ TCPSocketParent::RecvResume()
   NS_ENSURE_TRUE(mSocket, true);
   ErrorResult rv;
   mSocket->Resume(rv);
-  NS_ENSURE_FALSE(rv.Failed(), true);
+  if (NS_WARN_IF(rv.Failed())) {
+    rv.SuppressException();
+  }
+
   return true;
 }
 

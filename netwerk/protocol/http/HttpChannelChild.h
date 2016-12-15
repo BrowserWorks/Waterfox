@@ -145,6 +145,7 @@ protected:
   bool RecvFlushedForDiversion() override;
   bool RecvDivertMessages() override;
   bool RecvDeleteSelf() override;
+  bool RecvFinishInterceptedRedirect() override;
 
   bool RecvReportSecurityMessage(const nsString& messageTag,
                                  const nsString& messageCategory) override;
@@ -245,6 +246,17 @@ private:
   // is synthesized.
   bool mSuspendParentAfterSynthesizeResponse;
 
+  // Needed to call AsyncOpen in FinishInterceptedRedirect
+  nsCOMPtr<nsIStreamListener> mInterceptedRedirectListener;
+  nsCOMPtr<nsISupports> mInterceptedRedirectContext;
+  // Needed to call CleanupRedirectingChannel in FinishInterceptedRedirect
+  RefPtr<HttpChannelChild> mInterceptingChannel;
+  // Used to call OverrideWithSynthesizedResponse in FinishInterceptedRedirect
+  RefPtr<Runnable> mOverrideRunnable;
+
+  void FinishInterceptedRedirect();
+  void CleanupRedirectingChannel(nsresult rv);
+
   // true after successful AsyncOpen until OnStopRequest completes.
   bool RemoteChannelExists() { return mIPCOpen && !mKeptAlive; }
 
@@ -284,7 +296,7 @@ private:
                       const nsHttpResponseHead& responseHead,
                       const nsACString& securityInfoSerialization,
                       const nsACString& channelId);
-  void Redirect3Complete();
+  bool Redirect3Complete(OverrideRunnable* aRunnable);
   void DeleteSelf();
 
   // Create a a new channel to be used in a redirection, based on the provided
@@ -297,6 +309,9 @@ private:
   // Perform a redirection without communicating with the parent process at all.
   void BeginNonIPCRedirect(nsIURI* responseURI,
                            const nsHttpResponseHead* responseHead);
+
+  // Override the default security info pointer during a non-IPC redirection.
+  void OverrideSecurityInfoForNonIPCRedirect(nsISupports* securityInfo);
 
   friend class AssociateApplicationCacheEvent;
   friend class StartRequestEvent;

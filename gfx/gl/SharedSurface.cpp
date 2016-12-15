@@ -306,10 +306,10 @@ SurfaceFactory::~SurfaceFactory()
     while (!mRecycleTotalPool.empty()) {
         RefPtr<layers::SharedSurfaceTextureClient> tex = *mRecycleTotalPool.begin();
         StopRecycling(tex);
-        tex->CancelWaitForCompositorRecycle();
+        tex->CancelWaitForRecycle();
     }
 
-    MOZ_RELEASE_ASSERT(mRecycleTotalPool.empty());
+    MOZ_RELEASE_ASSERT(mRecycleTotalPool.empty(),"GFX: Surface recycle pool not empty.");
 
     // If we mRecycleFreePool.clear() before StopRecycling(), we may try to recycle it,
     // fail, call StopRecycling(), then return here and call it again.
@@ -349,7 +349,7 @@ SurfaceFactory::StartRecycling(layers::SharedSurfaceTextureClient* tc)
     tc->SetRecycleCallback(&SurfaceFactory::RecycleCallback, static_cast<void*>(this));
 
     bool didInsert = mRecycleTotalPool.insert(tc);
-    MOZ_RELEASE_ASSERT(didInsert);
+    MOZ_RELEASE_ASSERT(didInsert, "GFX: Shared surface texture client was not inserted to recycle.");
     mozilla::Unused << didInsert;
 }
 
@@ -361,7 +361,7 @@ SurfaceFactory::StopRecycling(layers::SharedSurfaceTextureClient* tc)
     tc->ClearRecycleCallback();
 
     bool didErase = mRecycleTotalPool.erase(tc);
-    MOZ_RELEASE_ASSERT(didErase);
+    MOZ_RELEASE_ASSERT(didErase, "GFX: Shared texture surface client was not erased.");
     mozilla::Unused << didErase;
 }
 
@@ -569,7 +569,11 @@ ReadbackSharedSurface(SharedSurface* src, gfx::DrawTarget* dst)
             size_t alignment = 8;
             if (dstStride % 4 == 0)
                 alignment = 4;
-            ScopedPackAlignment autoAlign(gl, alignment);
+
+            ScopedPackState scopedPackState(gl);
+            if (alignment != 4) {
+                gl->fPixelStorei(LOCAL_GL_PACK_ALIGNMENT, alignment);
+            }
 
             gl->raw_fReadPixels(0, 0, width, height, readGLFormat, readType,
                                 dstBytes);
@@ -601,7 +605,7 @@ ReadPixel(SharedSurface* src)
 
     ScopedReadbackFB a(src);
     {
-        ScopedPackAlignment autoAlign(gl, 4);
+        ScopedPackState scopedPackState(gl);
 
         UniquePtr<uint8_t[]> bytes(new uint8_t[4]);
         gl->raw_fReadPixels(0, 0, 1, 1, LOCAL_GL_RGBA, LOCAL_GL_UNSIGNED_BYTE,

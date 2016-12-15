@@ -10,11 +10,11 @@
 
 class nsIWidget;
 class nsIPrintSettings;
-class gfxASurface;
 
 namespace mozilla {
 namespace gfx{
 class DrawEventRecorder;
+class PrintTarget;
 }
 }
 
@@ -25,6 +25,8 @@ class DrawEventRecorder;
 class nsIDeviceContextSpec : public nsISupports
 {
 public:
+  typedef mozilla::gfx::PrintTarget PrintTarget;
+
    NS_DECLARE_STATIC_IID_ACCESSOR(NS_IDEVICE_CONTEXT_SPEC_IID)
 
    /**
@@ -38,7 +40,7 @@ public:
                    nsIPrintSettings* aPrintSettings,
                    bool aIsPrintPreview) = 0;
 
-   NS_IMETHOD GetSurfaceForPrinter(gfxASurface **nativeSurface) = 0;
+   virtual already_AddRefed<PrintTarget> MakePrintTarget() = 0;
 
    /**
     * If required override to return a recorder to record the print.

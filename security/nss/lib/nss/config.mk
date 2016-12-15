@@ -79,6 +79,10 @@ SHARED_LIBRARY_DIRS = \
 	../pki \
 	../dev \
 	../base \
+	$(NULL)
+
+ifndef NSS_DISABLE_LIBPKIX
+SHARED_LIBRARY_DIRS += \
 	../libpkix/pkix/certsel \
 	../libpkix/pkix/checker \
 	../libpkix/pkix/params \
@@ -91,6 +95,7 @@ SHARED_LIBRARY_DIRS = \
 	../libpkix/pkix_pl_nss/system \
 	../libpkix/pkix_pl_nss/module \
 	$(NULL)
+endif
 
 ifeq (,$(filter-out WINNT WIN95,$(OS_TARGET)))
 ifndef NS_USE_GCC
@@ -99,4 +104,11 @@ ifndef NS_USE_GCC
 DEFINES += -DWIN32_NSS3_DLL_COMPAT
 DLLFLAGS += -EXPORT:mktemp=nss_mktemp,PRIVATE
 endif
+endif
+
+ifdef POLICY_FILE
+ifndef POLICY_PATH
+$(error You must define POLICY_PATH if you set POLICY_FILE)
+endif
+DEFINES += -DPOLICY_FILE=\"$(POLICY_FILE)\" -DPOLICY_PATH=\"$(POLICY_PATH)\"
 endif

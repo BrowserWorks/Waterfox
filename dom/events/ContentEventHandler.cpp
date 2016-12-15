@@ -6,6 +6,7 @@
 
 #include "ContentEventHandler.h"
 #include "mozilla/IMEStateManager.h"
+#include "mozilla/TextComposition.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLUnknownElement.h"
@@ -20,7 +21,6 @@
 #include "nsIContentIterator.h"
 #include "nsIPresShell.h"
 #include "nsISelection.h"
-#include "nsISelectionController.h"
 #include "nsIFrame.h"
 #include "nsIObjectFrame.h"
 #include "nsLayoutUtils.h"
@@ -126,27 +126,21 @@ ContentEventHandler::InitBasic()
 }
 
 nsresult
-ContentEventHandler::InitCommon()
+ContentEventHandler::InitRootContent(Selection* aNormalSelection)
 {
-  if (mSelection) {
-    return NS_OK;
-  }
+  MOZ_ASSERT(aNormalSelection);
 
-  nsresult rv = InitBasic();
-  NS_ENSURE_SUCCESS(rv, rv);
+  // Root content should be computed with normal selection because normal
+  // selection is typically has at least one range but the other selections
+  // not so.  If there is a range, computing its root is easy, but if
+  // there are no ranges, we need to use ancestor limit instead.
+  MOZ_ASSERT(aNormalSelection->Type() == SelectionType::eNormal);
 
-  nsCOMPtr<nsISelection> sel;
-  nsCopySupport::GetSelectionForCopy(mPresShell->GetDocument(),
-                                     getter_AddRefs(sel));
-  mSelection = static_cast<Selection*>(sel.get());
-  if (NS_WARN_IF(!mSelection)) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
-  if (!mSelection->RangeCount()) {
+  if (!aNormalSelection->RangeCount()) {
     // If there is no selection range, we should compute the selection root
     // from ancestor limiter or root content of the document.
-    rv = mSelection->GetAncestorLimiter(getter_AddRefs(mRootContent));
+    nsresult rv =
+      aNormalSelection->GetAncestorLimiter(getter_AddRefs(mRootContent));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return NS_ERROR_FAILURE;
     }
@@ -156,40 +150,121 @@ ContentEventHandler::InitCommon()
         return NS_ERROR_NOT_AVAILABLE;
       }
     }
-
-    // Assume that there is selection at beginning of the root content.
-    rv = nsRange::CreateRange(mRootContent, 0, mRootContent, 0,
-                              getter_AddRefs(mFirstSelectedRange));
-    if (NS_WARN_IF(NS_FAILED(rv)) || NS_WARN_IF(!mFirstSelectedRange)) {
-      return NS_ERROR_UNEXPECTED;
-    }
     return NS_OK;
   }
 
-  mFirstSelectedRange = mSelection->GetRangeAt(0);
-  if (NS_WARN_IF(!mFirstSelectedRange)) {
+  RefPtr<nsRange> range(aNormalSelection->GetRangeAt(0));
+  if (NS_WARN_IF(!range)) {
     return NS_ERROR_UNEXPECTED;
   }
 
   // If there is a selection, we should retrieve the selection root from
   // the range since when the window is inactivated, the ancestor limiter
-  // of mSelection was cleared by blur event handler of nsEditor but the
+  // of selection was cleared by blur event handler of EditorBase but the
   // selection range still keeps storing the nodes.  If the active element of
-  // the deactive window is <input> or <textarea>, we can compute the selection
-  // root from them.
-  nsINode* startNode = mFirstSelectedRange->GetStartParent();
-  NS_ENSURE_TRUE(startNode, NS_ERROR_FAILURE);
-  nsINode* endNode = mFirstSelectedRange->GetEndParent();
-  NS_ENSURE_TRUE(endNode, NS_ERROR_FAILURE);
+  // the deactive window is <input> or <textarea>, we can compute the
+  // selection root from them.
+  nsINode* startNode = range->GetStartParent();
+  nsINode* endNode = range->GetEndParent();
+  if (NS_WARN_IF(!startNode) || NS_WARN_IF(!endNode)) {
+    return NS_ERROR_FAILURE;
+  }
 
   // See bug 537041 comment 5, the range could have removed node.
-  NS_ENSURE_TRUE(startNode->GetUncomposedDoc() == mPresShell->GetDocument(),
-                 NS_ERROR_NOT_AVAILABLE);
+  if (NS_WARN_IF(startNode->GetUncomposedDoc() != mPresShell->GetDocument())) {
+    return NS_ERROR_FAILURE;
+  }
+
   NS_ASSERTION(startNode->GetUncomposedDoc() == endNode->GetUncomposedDoc(),
-               "mFirstSelectedRange crosses the document boundary");
+               "firstNormalSelectionRange crosses the document boundary");
 
   mRootContent = startNode->GetSelectionRootContent(mPresShell);
-  NS_ENSURE_TRUE(mRootContent, NS_ERROR_FAILURE);
+  if (NS_WARN_IF(!mRootContent)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
+}
+
+nsresult
+ContentEventHandler::InitCommon(SelectionType aSelectionType)
+{
+  if (mSelection && mSelection->Type() == aSelectionType) {
+    return NS_OK;
+  }
+
+  mSelection = nullptr;
+  mFirstSelectedRange = nullptr;
+  mRootContent = nullptr;
+
+  nsresult rv = InitBasic();
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<nsISelectionController> selectionController =
+    mPresShell->GetSelectionControllerForFocusedContent();
+  if (NS_WARN_IF(!selectionController)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  nsCOMPtr<nsISelection> selection;
+  rv = selectionController->GetSelection(ToRawSelectionType(aSelectionType),
+                                         getter_AddRefs(selection));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  mSelection = static_cast<Selection*>(selection.get());
+  if (NS_WARN_IF(!mSelection)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  RefPtr<Selection> normalSelection;
+  if (mSelection->Type() == SelectionType::eNormal) {
+    normalSelection = mSelection;
+  } else {
+    nsCOMPtr<nsISelection> domSelection;
+    nsresult rv =
+      selectionController->GetSelection(
+                             nsISelectionController::SELECTION_NORMAL,
+                             getter_AddRefs(domSelection));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return NS_ERROR_UNEXPECTED;
+    }
+    if (NS_WARN_IF(!domSelection)) {
+      return NS_ERROR_NOT_AVAILABLE;
+    }
+    normalSelection = domSelection->AsSelection();
+    if (NS_WARN_IF(!normalSelection)) {
+      return NS_ERROR_NOT_AVAILABLE;
+    }
+  }
+
+  rv = InitRootContent(normalSelection);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  if (mSelection->RangeCount()) {
+    mFirstSelectedRange = mSelection->GetRangeAt(0);
+    if (NS_WARN_IF(!mFirstSelectedRange)) {
+      return NS_ERROR_UNEXPECTED;
+    }
+    return NS_OK;
+  }
+
+  // Even if there are no selection ranges, it's usual case if aSelectionType
+  // is a special selection.
+  if (aSelectionType != SelectionType::eNormal) {
+    MOZ_ASSERT(!mFirstSelectedRange);
+    return NS_OK;
+  }
+
+  // But otherwise, we need to assume that there is a selection range at the
+  // beginning of the root content if aSelectionType is eNormal.
+  rv = nsRange::CreateRange(mRootContent, 0, mRootContent, 0,
+                            getter_AddRefs(mFirstSelectedRange));
+  if (NS_WARN_IF(NS_FAILED(rv)) || NS_WARN_IF(!mFirstSelectedRange)) {
+    return NS_ERROR_UNEXPECTED;
+  }
   return NS_OK;
 }
 
@@ -197,9 +272,52 @@ nsresult
 ContentEventHandler::Init(WidgetQueryContentEvent* aEvent)
 {
   NS_ASSERTION(aEvent, "aEvent must not be null");
+  MOZ_ASSERT(aEvent->mMessage == eQuerySelectedText ||
+             aEvent->mInput.mSelectionType == SelectionType::eNormal);
 
-  nsresult rv = InitCommon();
+  if (NS_WARN_IF(!aEvent->mInput.IsValidOffset()) ||
+      NS_WARN_IF(!aEvent->mInput.IsValidEventMessage(aEvent->mMessage))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // Note that we should ignore WidgetQueryContentEvent::Input::mSelectionType
+  // if the event isn't eQuerySelectedText.
+  SelectionType selectionType =
+    aEvent->mMessage == eQuerySelectedText ? aEvent->mInput.mSelectionType :
+                                             SelectionType::eNormal;
+  if (NS_WARN_IF(selectionType == SelectionType::eNone)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsresult rv = InitCommon(selectionType);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  // Be aware, WidgetQueryContentEvent::mInput::mOffset should be made absolute
+  // offset before sending it to ContentEventHandler because querying selection
+  // every time may be expensive.  So, if the caller caches selection, it
+  // should initialize the event with the cached value.
+  if (aEvent->mInput.mRelativeToInsertionPoint) {
+    MOZ_ASSERT(selectionType == SelectionType::eNormal);
+    RefPtr<TextComposition> composition =
+      IMEStateManager::GetTextCompositionFor(aEvent->mWidget);
+    if (composition) {
+      uint32_t compositionStart = composition->NativeOffsetOfStartComposition();
+      if (NS_WARN_IF(!aEvent->mInput.MakeOffsetAbsolute(compositionStart))) {
+        return NS_ERROR_FAILURE;
+      }
+    } else {
+      LineBreakType lineBreakType = GetLineBreakType(aEvent);
+      uint32_t selectionStart = 0;
+      rv = GetFlatTextLengthBefore(mFirstSelectedRange,
+                                   &selectionStart, lineBreakType);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        return NS_ERROR_FAILURE;
+      }
+      if (NS_WARN_IF(!aEvent->mInput.MakeOffsetAbsolute(selectionStart))) {
+        return NS_ERROR_FAILURE;
+      }
+    }
+  }
 
   aEvent->mSucceeded = false;
 
@@ -1081,6 +1199,8 @@ ContentEventHandler::HandleQueryContentEvent(WidgetQueryContentEvent* aEvent)
       return OnQueryCaretRect(aEvent);
     case eQueryTextRect:
       return OnQueryTextRect(aEvent);
+    case eQueryTextRectArray:
+      return OnQueryTextRectArray(aEvent);
     case eQueryEditorRect:
       return OnQueryEditorRect(aEvent);
     case eQueryContentState:
@@ -1122,6 +1242,15 @@ ContentEventHandler::OnQuerySelectedText(WidgetQueryContentEvent* aEvent)
     return rv;
   }
 
+  if (!mFirstSelectedRange) {
+    MOZ_ASSERT(aEvent->mInput.mSelectionType != SelectionType::eNormal);
+    MOZ_ASSERT(aEvent->mReply.mOffset == WidgetQueryContentEvent::NOT_FOUND);
+    MOZ_ASSERT(aEvent->mReply.mString.IsEmpty());
+    MOZ_ASSERT(!aEvent->mReply.mHasSelection);
+    aEvent->mSucceeded = true;
+    return NS_OK;
+  }
+
   nsINode* const startNode = mFirstSelectedRange->GetStartParent();
   nsINode* const endNode = mFirstSelectedRange->GetEndParent();
 
@@ -1142,37 +1271,33 @@ ContentEventHandler::OnQuerySelectedText(WidgetQueryContentEvent* aEvent)
   nsCOMPtr<nsINode> anchorNode, focusNode;
   int32_t anchorOffset, focusOffset;
   if (mSelection->RangeCount()) {
-    anchorNode = mSelection->GetAnchorNode();
-    focusNode = mSelection->GetFocusNode();
-    if (NS_WARN_IF(!anchorNode) || NS_WARN_IF(!focusNode)) {
-      return NS_ERROR_FAILURE;
-    }
-    anchorOffset = static_cast<int32_t>(mSelection->AnchorOffset());
-    focusOffset = static_cast<int32_t>(mSelection->FocusOffset());
-    if (NS_WARN_IF(anchorOffset < 0) || NS_WARN_IF(focusOffset < 0)) {
-      return NS_ERROR_FAILURE;
-    }
-
-    int16_t compare = nsContentUtils::ComparePoints(anchorNode, anchorOffset,
-                                                    focusNode, focusOffset);
-    aEvent->mReply.mReversed = compare > 0;
-
-    if (compare) {
-      RefPtr<nsRange> range;
-      if (mSelection->RangeCount() == 1) {
-        range = mFirstSelectedRange;
-      } else {
-        rv = nsRange::CreateRange(anchorNode, anchorOffset,
-                                  focusNode, focusOffset,
-                                  getter_AddRefs(range));
-        if (NS_WARN_IF(NS_FAILED(rv))) {
-          return rv;
-        }
-        if (NS_WARN_IF(!range)) {
-          return NS_ERROR_FAILURE;
-        }
+    // If there is only one selection range, the anchor/focus node and offset
+    // are the information of the range.  Therefore, we have the direction
+    // information.
+    if (mSelection->RangeCount() == 1) {
+      anchorNode = mSelection->GetAnchorNode();
+      focusNode = mSelection->GetFocusNode();
+      if (NS_WARN_IF(!anchorNode) || NS_WARN_IF(!focusNode)) {
+        return NS_ERROR_FAILURE;
       }
-      rv = GenerateFlatTextContent(range, aEvent->mReply.mString,
+      anchorOffset = static_cast<int32_t>(mSelection->AnchorOffset());
+      focusOffset = static_cast<int32_t>(mSelection->FocusOffset());
+      if (NS_WARN_IF(anchorOffset < 0) || NS_WARN_IF(focusOffset < 0)) {
+        return NS_ERROR_FAILURE;
+      }
+
+      int16_t compare = nsContentUtils::ComparePoints(anchorNode, anchorOffset,
+                                                      focusNode, focusOffset);
+      aEvent->mReply.mReversed = compare > 0;
+    }
+    // However, if there are 2 or more selection ranges, we have no information
+    // of that.
+    else {
+      aEvent->mReply.mReversed = false;
+    }
+
+    if (!mFirstSelectedRange->Collapsed()) {
+      rv = GenerateFlatTextContent(mFirstSelectedRange, aEvent->mReply.mString,
                                    lineBreakType);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
@@ -1268,6 +1393,85 @@ static nsINode* AdjustTextRectNode(nsINode* aNode,
     }
   }
   return node;
+}
+
+static
+nsIFrame*
+GetFirstFrameInRange(nsRange* aRange)
+{
+  // used to iterate over all contents and their frames
+  nsCOMPtr<nsIContentIterator> iter = NS_NewContentIterator();
+  iter->Init(aRange);
+
+  // get the starting frame
+  int32_t nodeOffset = aRange->StartOffset();
+  nsINode* node = iter->GetCurrentNode();
+  if (!node) {
+    node = AdjustTextRectNode(aRange->GetStartParent(), nodeOffset);
+  }
+  nsIFrame* firstFrame = nullptr;
+  GetFrameForTextRect(node, nodeOffset, true, &firstFrame);
+  return firstFrame;
+}
+
+nsresult
+ContentEventHandler::OnQueryTextRectArray(WidgetQueryContentEvent* aEvent)
+{
+  nsresult rv = Init(aEvent);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  LineBreakType lineBreakType = GetLineBreakType(aEvent);
+  RefPtr<nsRange> range = new nsRange(mRootContent);
+  uint32_t offset = aEvent->mInput.mOffset;
+
+  LayoutDeviceIntRect rect;
+  WritingMode writingMode;
+  while (aEvent->mInput.mLength > aEvent->mReply.mRectArray.Length()) {
+    rv = SetRangeFromFlatTextOffset(range, offset, 1, lineBreakType, true,
+                                    nullptr);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    // get the starting frame
+    nsIFrame* firstFrame = GetFirstFrameInRange(range);
+    if (NS_WARN_IF(!firstFrame)) {
+      return NS_ERROR_FAILURE;
+    }
+
+    // get the starting frame rect
+    nsRect frameRect(nsPoint(0, 0), firstFrame->GetRect().Size());
+    rv = ConvertToRootRelativeOffset(firstFrame, frameRect);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    int32_t nodeOffset = range->StartOffset();
+    AutoTArray<nsRect, 16> charRects;
+    rv = firstFrame->GetCharacterRectsInRange(
+           nodeOffset,
+           aEvent->mInput.mLength - aEvent->mReply.mRectArray.Length(),
+           charRects);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    for (size_t i = 0; i < charRects.Length(); i++) {
+      nsRect charRect = charRects[i];
+      charRect.x += frameRect.x;
+      charRect.y += frameRect.y;
+
+      rect = LayoutDeviceIntRect::FromUnknownRect(
+               charRect.ToOutsidePixels(mPresContext->AppUnitsPerDevPixel()));
+
+      aEvent->mReply.mRectArray.AppendElement(rect);
+    }
+    offset += charRects.Length();
+  }
+  aEvent->mSucceeded = true;
+  return NS_OK;
 }
 
 nsresult
@@ -1612,7 +1816,8 @@ ContentEventHandler::OnQueryCharacterAtPoint(WidgetQueryContentEvent* aEvent)
   }
 
   WidgetQueryContentEvent textRect(true, eQueryTextRect, aEvent->mWidget);
-  textRect.InitForQueryTextRect(offset, 1, aEvent->mUseNativeLineBreak);
+  WidgetQueryContentEvent::Options options(*aEvent);
+  textRect.InitForQueryTextRect(offset, 1, options);
   rv = OnQueryTextRect(&textRect);
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(textRect.mSucceeded, NS_ERROR_FAILURE);
@@ -1849,7 +2054,7 @@ ContentEventHandler::AdjustCollapsedRangeMaybeIntoTextNode(nsRange* aRange)
 
   // If the parent is not a text node but it has a text node at the offset,
   // we should adjust the range into the text node.
-  // NOTE: This is emulating similar situation of nsEditor.
+  // NOTE: This is emulating similar situation of EditorBase.
   nsINode* childNode = nullptr;
   int32_t offsetInChildNode = -1;
   if (!offsetInParentNode && parentNode->HasChildren()) {
@@ -1981,7 +2186,7 @@ ContentEventHandler::OnSelectionEvent(WidgetSelectionEvent* aEvent)
   nsresult rv =
     IMEStateManager::GetFocusSelectionAndRoot(getter_AddRefs(sel),
                                               getter_AddRefs(mRootContent));
-  mSelection = static_cast<Selection*>(sel.get());
+  mSelection = sel ? sel->AsSelection() : nullptr;
   if (rv != NS_ERROR_NOT_AVAILABLE) {
     NS_ENSURE_SUCCESS(rv, rv);
   } else {

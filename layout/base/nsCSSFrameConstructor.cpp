@@ -91,7 +91,7 @@
 #include "nsGfxScrollFrame.h"
 #include "nsPageFrame.h"
 #include "nsSimplePageSequenceFrame.h"
-#include "nsTableOuterFrame.h"
+#include "nsTableWrapperFrame.h"
 #include "nsIScrollableFrame.h"
 #include "nsBackdropFrame.h"
 #include "nsTransitionManager.h"
@@ -1114,7 +1114,7 @@ nsFrameConstructorState::GetGeometricParent(const nsStyleDisplay* aStyleDisplay,
   // table and the canvas or (2) teaching the canvas how to reflow positioned
   // elements. (1) has the usual problems when multiple frames share the same
   // content (notice all the special cases in this file dealing with inner
-  // tables and outer tables which share the same content). (2) requires some
+  // tables and table wrappers which share the same content). (2) requires some
   // work and possible factoring.
   //
   // XXXbz couldn't we just force position to "static" on roots and
@@ -1919,13 +1919,13 @@ nsCSSFrameConstructor::CreateGeneratedContentItem(nsFrameConstructorState& aStat
 // The term pseudo frame is being used instead of anonymous frame, since anonymous
 // frame has been used elsewhere to refer to frames that have generated content
 
-// Return whether the given frame is a table pseudo-frame.  Note that
+// Return whether the given frame is a table pseudo-frame. Note that
 // cell-content and table-outer frames have pseudo-types, but are always
 // created, even for non-anonymous cells and tables respectively.  So for those
 // we have to examine the cell or table frame to see whether it's a pseudo
-// frame.  In particular, a lone table caption will have an outer table as its
+// frame. In particular, a lone table caption will have a table wrapper as its
 // parent, but will also trigger construction of an empty inner table, which
-// will be the one we can examine to see whether the outer was a pseudo-frame.
+// will be the one we can examine to see whether the wrapper was a pseudo-frame.
 static bool
 IsTablePseudo(nsIFrame* aFrame)
 {
@@ -1940,7 +1940,7 @@ IsTablePseudo(nsIFrame* aFrame)
      (pseudoType == nsCSSAnonBoxes::cellContent &&
       aFrame->GetParent()->StyleContext()->GetPseudo() ==
         nsCSSAnonBoxes::tableCell) ||
-     (pseudoType == nsCSSAnonBoxes::tableOuter &&
+     (pseudoType == nsCSSAnonBoxes::tableWrapper &&
       (aFrame->PrincipalChildList().FirstChild()->StyleContext()->GetPseudo() ==
          nsCSSAnonBoxes::table ||
        aFrame->PrincipalChildList().FirstChild()->StyleContext()->GetPseudo() ==
@@ -1980,7 +1980,7 @@ nsCSSFrameConstructor::GetParentType(nsIAtom* aFrameType)
   }
   if (aFrameType == nsGkAtoms::rubyTextContainerFrame) {
     return eTypeRubyTextContainer;
-  } 
+  }
   if (aFrameType == nsGkAtoms::rubyFrame) {
     return eTypeRuby;
   }
@@ -2069,23 +2069,23 @@ nsCSSFrameConstructor::ConstructTable(nsFrameConstructorState& aState,
   nsStyleContext* const styleContext = aItem.mStyleContext;
   const uint32_t nameSpaceID = aItem.mNameSpaceID;
 
-  // create the pseudo SC for the outer table as a child of the inner SC
+  // create the pseudo SC for the table wrapper as a child of the inner SC
   RefPtr<nsStyleContext> outerStyleContext;
   outerStyleContext = mPresShell->StyleSet()->
-    ResolveAnonymousBoxStyle(nsCSSAnonBoxes::tableOuter, styleContext);
+    ResolveAnonymousBoxStyle(nsCSSAnonBoxes::tableWrapper, styleContext);
 
-  // Create the outer table frame which holds the caption and inner table frame
+  // Create the table wrapper frame which holds the caption and inner table frame
   nsContainerFrame* newFrame;
   if (kNameSpaceID_MathML == nameSpaceID)
     newFrame = NS_NewMathMLmtableOuterFrame(mPresShell, outerStyleContext);
   else
-    newFrame = NS_NewTableOuterFrame(mPresShell, outerStyleContext);
+    newFrame = NS_NewTableWrapperFrame(mPresShell, outerStyleContext);
 
   nsContainerFrame* geometricParent =
     aState.GetGeometricParent(outerStyleContext->StyleDisplay(),
                               aParentFrame);
 
-  // Init the table outer frame
+  // Init the table wrapper frame
   InitAndRestoreFrame(aState, content, geometricParent, newFrame);
 
   // Create the inner table frame
@@ -2137,7 +2137,7 @@ nsCSSFrameConstructor::ConstructTable(nsFrameConstructorState& aState,
   // Set the inner table frame's initial primary list
   innerFrame->SetInitialChildList(kPrincipalList, childItems);
 
-  // Set the outer table frame's secondary childlist lists
+  // Set the table wrapper frame's secondary childlist lists
   if (captionItems.NotEmpty()) {
     newFrame->SetInitialChildList(nsIFrame::kCaptionList, captionItems);
   }
@@ -2430,7 +2430,7 @@ nsCSSFrameConstructor::ConstructDocElementFrame(Element*                 aDocEle
   // this document.  Unlike in AddFrameConstructionItems, it's safe to
   // unset all element restyle flags, since we don't have any
   // siblings.
-  aDocElement->UnsetFlags(ELEMENT_ALL_RESTYLE_FLAGS);
+  aDocElement->UnsetRestyleFlagsIfGecko();
 
   // --------- CREATE AREA OR BOX FRAME -------
   // FIXME: Should this use ResolveStyleContext?  (The calls in this
@@ -2496,14 +2496,14 @@ nsCSSFrameConstructor::ConstructDocElementFrame(Element*                 aDocEle
   // Make sure to start any background image loads for the root element now.
   styleContext->StartBackgroundImageLoads();
 
-  nsFrameConstructorSaveState absoluteSaveState;
+  nsFrameConstructorSaveState docElementContainingBlockAbsoluteSaveState;
   if (mHasRootAbsPosContainingBlock) {
     // Push the absolute containing block now so we can absolutely position
     // the root element
     mDocElementContainingBlock->AddStateBits(NS_FRAME_CAN_HAVE_ABSPOS_CHILDREN);
     state.PushAbsoluteContainingBlock(mDocElementContainingBlock,
                                       mDocElementContainingBlock,
-                                      absoluteSaveState);
+                                      docElementContainingBlockAbsoluteSaveState);
   }
 
   // The rules from CSS 2.1, section 9.2.4, have already been applied
@@ -2519,6 +2519,8 @@ nsCSSFrameConstructor::ConstructDocElementFrame(Element*                 aDocEle
   nsContainerFrame* contentFrame;
   nsIFrame* newFrame;
   bool processChildren = false;
+
+  nsFrameConstructorSaveState absoluteSaveState;
 
   // Check whether we need to build a XUL box or SVG root frame
 #ifdef MOZ_XUL
@@ -2565,12 +2567,26 @@ nsCSSFrameConstructor::ConstructDocElementFrame(Element*                 aDocEle
                         contentFrame);
     newFrame = contentFrame;
     processChildren = true;
+
+    newFrame->AddStateBits(NS_FRAME_CAN_HAVE_ABSPOS_CHILDREN);
+    if (display->IsAbsPosContainingBlock(newFrame)) {
+      state.PushAbsoluteContainingBlock(contentFrame, newFrame,
+                                        absoluteSaveState);
+    }
+
   } else if (display->mDisplay == NS_STYLE_DISPLAY_GRID) {
     contentFrame = NS_NewGridContainerFrame(mPresShell, styleContext);
     InitAndRestoreFrame(state, aDocElement, mDocElementContainingBlock,
                         contentFrame);
     newFrame = contentFrame;
     processChildren = true;
+
+    newFrame->AddStateBits(NS_FRAME_CAN_HAVE_ABSPOS_CHILDREN);
+    if (display->IsAbsPosContainingBlock(newFrame)) {
+      state.PushAbsoluteContainingBlock(contentFrame, newFrame,
+                                        absoluteSaveState);
+    }
+
   } else if (display->mDisplay == NS_STYLE_DISPLAY_TABLE) {
     // We're going to call the right function ourselves, so no need to give a
     // function to this FrameConstructionData.
@@ -2675,7 +2691,7 @@ nsCSSFrameConstructor::ConstructRootFrame()
     // ServoStyleSets yet.
     styleSet->AsGecko()->SetBindingManager(mDocument->BindingManager());
   } else {
-    NS_ERROR("stylo: cannot get ServoStyleSheets from XBL bindings yet");
+    NS_WARNING("stylo: cannot get ServoStyleSheets from XBL bindings yet. See bug 1290276.");
   }
 
   // --------- BUILD VIEWPORT -----------
@@ -2723,7 +2739,7 @@ nsCSSFrameConstructor::SetUpDocElementContainingBlock(nsIContent* aDocElement)
         nsHTMLScrollFrame
           nsCanvasFrame [abs-cb]
             root element frame (nsBlockFrame, nsSVGOuterSVGFrame,
-                                nsTableOuterFrame, nsPlaceholderFrame)
+                                nsTableWrapperFrame, nsPlaceholderFrame)
 
   Galley presentation, XUL
 
@@ -2739,7 +2755,7 @@ nsCSSFrameConstructor::SetUpDocElementContainingBlock(nsIContent* aDocElement)
             nsPageContentFrame [fixed-cb]
               nsCanvasFrame [abs-cb]
                 root element frame (nsBlockFrame, nsSVGOuterSVGFrame,
-                                    nsTableOuterFrame, nsPlaceholderFrame)
+                                    nsTableWrapperFrame, nsPlaceholderFrame)
 
   Print-preview presentation, non-XUL
 
@@ -2750,7 +2766,7 @@ nsCSSFrameConstructor::SetUpDocElementContainingBlock(nsIContent* aDocElement)
               nsPageContentFrame [fixed-cb]
                 nsCanvasFrame [abs-cb]
                   root element frame (nsBlockFrame, nsSVGOuterSVGFrame,
-                                      nsTableOuterFrame, nsPlaceholderFrame)
+                                      nsTableWrapperFrame, nsPlaceholderFrame)
 
   Print/print preview of XUL is not supported.
   [fixed-cb]: the default containing block for fixed-pos content
@@ -3680,10 +3696,12 @@ nsCSSFrameConstructor::FindInputData(Element* aElement,
                                  nsCSSAnonBoxes::buttonContent) },
     // TODO: this is temporary until a frame is written: bug 635240.
     SIMPLE_INT_CREATE(NS_FORM_INPUT_NUMBER, NS_NewNumberControlFrame),
-    // TODO: this is temporary until a frame is written: bug 773205.
+    // TODO: this is temporary until a frame is written: bug 888320.
     SIMPLE_INT_CREATE(NS_FORM_INPUT_DATE, NS_NewTextControlFrame),
-    // TODO: this is temporary until a frame is written: bug 773205
+    // TODO: this is temporary until a frame is written: bug 888320
     SIMPLE_INT_CREATE(NS_FORM_INPUT_TIME, NS_NewTextControlFrame),
+    // TODO: this is temporary until a frame is written: bug 888320
+    SIMPLE_INT_CREATE(NS_FORM_INPUT_MONTH, NS_NewTextControlFrame),
     { NS_FORM_INPUT_SUBMIT,
       FCDATA_WITH_WRAPPING_BLOCK(0, NS_NewGfxButtonControlFrame,
                                  nsCSSAnonBoxes::buttonContent) },
@@ -4122,7 +4140,7 @@ nsCSSFrameConstructor::CreateAnonymousFrames(nsFrameConstructorState& aState,
     } else {
       FrameConstructionItemList items;
       {
-        // Skip parent display based style-fixup during our 
+        // Skip parent display based style-fixup during our
         // AddFrameConstructionItems() call:
         TreeMatchContext::AutoParentDisplayBasedStyleFixupSkipper
           parentDisplayBasedStyleFixupSkipper(aState.mTreeMatchContext);
@@ -5495,7 +5513,7 @@ nsCSSFrameConstructor::ShouldCreateItemsForChild(nsFrameConstructorState& aState
                                                  nsContainerFrame* aParentFrame)
 {
   aContent->UnsetFlags(NODE_DESCENDANTS_NEED_FRAMES | NODE_NEEDS_FRAME);
-  if (aContent->IsElement()) {
+  if (aContent->IsElement() && !aContent->IsStyledByServo()) {
     // We can't just remove our pending restyle flags, since we may
     // have restyle-later-siblings set on us.  But we _can_ remove the
     // "is possible restyle root" flags, and need to.  Otherwise we can
@@ -6166,11 +6184,11 @@ nsCSSFrameConstructor::GetAbsoluteContainingBlock(nsIFrame* aFrame,
       continue;
     }
 
-    // For tables, skip the inner frame and consider the outer table frame.
+    // For tables, skip the inner frame and consider the table wrapper frame.
     if (type == nsGkAtoms::tableFrame) {
       continue;
     }
-    // For outer table frames, we can just return absPosCBCandidate.
+    // For table wrapper frames, we can just return absPosCBCandidate.
     MOZ_ASSERT((nsContainerFrame*)do_QueryFrame(absPosCBCandidate),
                "abs.pos. containing block must be nsContainerFrame sub-class");
     return static_cast<nsContainerFrame*>(absPosCBCandidate);
@@ -6659,7 +6677,7 @@ GetAdjustedParentFrame(nsContainerFrame* aParentFrame,
                        nsIAtom*          aParentFrameType,
                        nsIContent*       aChildContent)
 {
-  NS_PRECONDITION(nsGkAtoms::tableOuterFrame != aParentFrameType,
+  NS_PRECONDITION(nsGkAtoms::tableWrapperFrame != aParentFrameType,
                   "Shouldn't be happening!");
 
   nsContainerFrame* newParent = nullptr;
@@ -7420,8 +7438,8 @@ nsCSSFrameConstructor::ContentAppended(nsIContent*     aContainer,
     InvalidateCanvasIfNeeded(mPresShell, child);
   }
 
-  // if the container is a table and a caption was appended, it needs to be put
-  // in the outer table frame's additional child list.
+  // If the container is a table and a caption was appended, it needs to be put
+  // in the table wrapper frame's additional child list.
   nsFrameItems captionItems;
   if (nsGkAtoms::tableFrame == frameType) {
     // Pull out the captions.  Note that we don't want to do that as we go,
@@ -7443,7 +7461,7 @@ nsCSSFrameConstructor::ContentAppended(nsIContent*     aContainer,
   // Notify the parent frame passing it the list of new frames
   // Append the flowed frames to the principal child list; captions
   // need special treatment
-  if (captionItems.NotEmpty()) { // append the caption to the outer table
+  if (captionItems.NotEmpty()) { // append the caption to the table wrapper
     NS_ASSERTION(nsGkAtoms::tableFrame == frameType, "how did that happen?");
     nsContainerFrame* outerTable = parentFrame->GetParent();
     AppendFrames(outerTable, nsIFrame::kCaptionList, captionItems);
@@ -7945,7 +7963,7 @@ nsCSSFrameConstructor::ContentRangeInserted(nsIContent*            aContainer,
   LAYOUT_PHASE_TEMP_REENTER();
 
   // If the container is a table and a caption will be appended, it needs to be
-  // put in the outer table frame's additional child list.
+  // put in the table wrapper frame's additional child list.
   // We make no attempt here to set flags to indicate whether the list
   // will be at the start or end of a block. It doesn't seem worthwhile.
   nsFrameItems frameItems, captionItems;
@@ -7959,7 +7977,7 @@ nsCSSFrameConstructor::ContentRangeInserted(nsIContent*            aContainer,
     }
 
     if (nsGkAtoms::tableFrame == frameType ||
-        nsGkAtoms::tableOuterFrame == frameType) {
+        nsGkAtoms::tableWrapperFrame == frameType) {
       PullOutCaptionFrames(frameItems, captionItems);
     }
   }
@@ -7972,7 +7990,7 @@ nsCSSFrameConstructor::ContentRangeInserted(nsIContent*            aContainer,
   // effect on the WipeContainingBlock above, since this should only happen
   // when neither parent is a ib-split frame and should not affect whitespace
   // handling inside table-related frames (and in fact, can only happen when
-  // one of the parents is an outer table and one is an inner table or when the
+  // one of the parents is a table wrapper and one is an inner table or when the
   // parent is a fieldset or fieldset content frame).  So it won't affect the
   // {ib} or XUL box cases in WipeContainingBlock(), and the table pseudo
   // handling will only be affected by us maybe thinking we're not inserting
@@ -7990,8 +8008,8 @@ nsCSSFrameConstructor::ContentRangeInserted(nsIContent*            aContainer,
                  !IsFramePartOfIBSplit(frame2),
                  "Neither should be ib-split");
     NS_ASSERTION((frame1->GetType() == nsGkAtoms::tableFrame &&
-                  frame2->GetType() == nsGkAtoms::tableOuterFrame) ||
-                 (frame1->GetType() == nsGkAtoms::tableOuterFrame &&
+                  frame2->GetType() == nsGkAtoms::tableWrapperFrame) ||
+                 (frame1->GetType() == nsGkAtoms::tableWrapperFrame &&
                   frame2->GetType() == nsGkAtoms::tableFrame) ||
                  frame1->GetType() == nsGkAtoms::fieldSetFrame ||
                  (frame1->GetParent() &&
@@ -8026,10 +8044,10 @@ nsCSSFrameConstructor::ContentRangeInserted(nsIContent*            aContainer,
   }
 
   // We might have captions; put them into the caption list of the
-  // outer table frame.
+  // table wrapper frame.
   if (captionItems.NotEmpty()) {
     NS_ASSERTION(nsGkAtoms::tableFrame == frameType ||
-                 nsGkAtoms::tableOuterFrame == frameType,
+                 nsGkAtoms::tableWrapperFrame == frameType,
                  "parent for caption is not table?");
     // We need to determine where to put the caption items; start with the
     // the parent frame that has already been determined and get the insertion
@@ -8059,12 +8077,12 @@ nsCSSFrameConstructor::ContentRangeInserted(nsIContent*            aContainer,
     if (GetCaptionAdjustedParent(captionInsertion.mParentFrame,
                                  captionItems.FirstChild(),
                                  &outerTable)) {
-      // If the parent is not an outer table frame we will try to add frames
-      // to a named child list that the parent does not honour and the frames
-      // will get lost
-      NS_ASSERTION(nsGkAtoms::tableOuterFrame == outerTable->GetType(),
+      // If the parent is not a table wrapper frame we will try to add frames
+      // to a named child list that the parent does not honor and the frames
+      // will get lost.
+      NS_ASSERTION(nsGkAtoms::tableWrapperFrame == outerTable->GetType(),
                    "Pseudo frame construction failure; "
-                   "a caption can be only a child of an outer table frame");
+                   "a caption can be only a child of a table wrapper frame");
 
       // If the parent of our current prevSibling is different from the frame
       // we'll actually use as the parent, then the calculated insertion
@@ -8693,7 +8711,7 @@ nsCSSFrameConstructor::CreateContinuingOuterTableFrame(nsIPresShell*     aPresSh
                                                        nsIContent*       aContent,
                                                        nsStyleContext*   aStyleContext)
 {
-  nsTableOuterFrame* newFrame = NS_NewTableOuterFrame(aPresShell, aStyleContext);
+  nsTableWrapperFrame* newFrame = NS_NewTableWrapperFrame(aPresShell, aStyleContext);
 
   newFrame->Init(aContent, aParentFrame, aFrame);
 
@@ -8710,7 +8728,7 @@ nsCSSFrameConstructor::CreateContinuingOuterTableFrame(nsIPresShell*     aPresSh
     NS_ASSERTION(!childFrame->GetNextSibling(),"there can be only one inner table frame");
   }
 
-  // Set the outer table's initial child list
+  // Set the table wrapper's initial child list
   newFrame->SetInitialChildList(kPrincipalList, newChildFrames);
 
   return newFrame;
@@ -8825,7 +8843,7 @@ nsCSSFrameConstructor::CreateContinuingFrame(nsPresContext*    aPresContext,
   } else if (nsGkAtoms::pageFrame == frameType) {
     nsContainerFrame* canvasFrame;
     newFrame = ConstructPageFrame(shell, aParentFrame, aFrame, canvasFrame);
-  } else if (nsGkAtoms::tableOuterFrame == frameType) {
+  } else if (nsGkAtoms::tableWrapperFrame == frameType) {
     newFrame =
       CreateContinuingOuterTableFrame(shell, aPresContext, aFrame, aParentFrame,
                                       content, styleContext);
@@ -9742,7 +9760,7 @@ nsCSSFrameConstructor::sPseudoParentData[eParentTypeCount] = {
     &nsCSSAnonBoxes::ruby
   },
   { // Ruby Base
-    FCDATA_DECL(FCDATA_USE_CHILD_ITEMS | 
+    FCDATA_DECL(FCDATA_USE_CHILD_ITEMS |
                 FCDATA_IS_LINE_PARTICIPANT |
                 FCDATA_DESIRED_PARENT_TYPE_TO_BITS(eTypeRubyBaseContainer) |
                 FCDATA_SKIP_FRAMESET,
@@ -10312,7 +10330,7 @@ nsCSSFrameConstructor::CreateNeededPseudoContainers(
         break;
       case eTypeColGroup:
         MOZ_CRASH("Colgroups should be suppresing non-col child items");
-      default: 
+      default:
         NS_ASSERTION(ourParentType == eTypeBlock, "Unrecognized parent type");
         if (IsRubyParentType(groupingParentType)) {
           wrapperType = eTypeRuby;
@@ -10528,13 +10546,16 @@ nsCSSFrameConstructor::AddFCItemsForAnonymousContent(
                  "CreateAnonymousFrames manually and not follow the standard "
                  "ProcessChildren() codepath for this frame");
 #endif
+    // Anything restyled by servo should already have the style data.
+    MOZ_ASSERT_IF(content->IsStyledByServo(), !!content->ServoData());
+    // Gecko-styled nodes should have no pending restyle flags.
+    MOZ_ASSERT_IF(!content->IsStyledByServo(),
+                  !content->IsElement() ||
+                  !(content->GetFlags() & ELEMENT_ALL_RESTYLE_FLAGS));
     // Assert some things about this content
     MOZ_ASSERT(!(content->GetFlags() &
                  (NODE_DESCENDANTS_NEED_FRAMES | NODE_NEEDS_FRAME)),
                "Should not be marked as needing frames");
-    MOZ_ASSERT(!content->IsElement() ||
-               !(content->GetFlags() & ELEMENT_ALL_RESTYLE_FLAGS),
-               "Should have no pending restyle flags");
     MOZ_ASSERT(!content->GetPrimaryFrame(),
                "Should have no existing frame");
     MOZ_ASSERT(!content->IsNodeOfType(nsINode::eCOMMENT) &&
@@ -10682,9 +10703,7 @@ nsCSSFrameConstructor::ProcessChildren(nsFrameConstructorState& aState,
 
       // Frame construction item construction should not post
       // restyles, so removing restyle flags here is safe.
-      if (child->IsElement()) {
-        child->UnsetFlags(ELEMENT_ALL_RESTYLE_FLAGS);
-      }
+      child->UnsetRestyleFlagsIfGecko();
       if (addChildItems) {
         AddFrameConstructionItems(aState, child, iter.XBLInvolved(), insertion,
                                   itemsToConstruct);
@@ -11994,13 +12013,12 @@ nsCSSFrameConstructor::BuildInlineChildItems(nsFrameConstructorState& aState,
           content->IsNodeOfType(nsINode::ePROCESSING_INSTRUCTION)) {
         continue;
       }
-      if (content->IsElement()) {
-        // See comment explaining why we need to remove the "is possible
-        // restyle root" flags in AddFrameConstructionItems.  But note
-        // that we can remove all restyle flags, just like in
-        // ProcessChildren and for the same reason.
-        content->UnsetFlags(ELEMENT_ALL_RESTYLE_FLAGS);
-      }
+
+      // See comment explaining why we need to remove the "is possible
+      // restyle root" flags in AddFrameConstructionItems.  But note
+      // that we can remove all restyle flags, just like in
+      // ProcessChildren and for the same reason.
+      content->UnsetRestyleFlagsIfGecko();
 
       RefPtr<nsStyleContext> childContext =
         ResolveStyleContext(parentStyleContext, content, &aState);

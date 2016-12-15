@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@ TEST_DIRS += ['test']
 
 XPIDL_SOURCES += [
     'mozIDOMWindow.idl',
-    'nsIConsoleAPIStorage.idl',
     'nsIContentPolicy.idl',
     'nsIContentPolicyBase.idl',
     'nsIDocumentEncoder.idl',
@@ -36,7 +35,6 @@ XPIDL_SOURCES += [
     'nsISimpleContentPolicy.idl',
     'nsISiteSpecificUserAgent.idl',
     'nsISlowScriptDebug.idl',
-    'nsIXMLHttpRequest.idl',
 ]
 
 XPIDL_MODULE = 'dom'
@@ -84,7 +82,6 @@ EXPORTS += [
     'nsHostObjectURI.h',
     'nsIAnimationObserver.h',
     'nsIAttribute.h',
-    'nsIConsoleReportCollector.h',
     'nsIContent.h',
     'nsIContentInlines.h',
     'nsIContentIterator.h',
@@ -112,7 +109,6 @@ EXPORTS += [
     'nsNameSpaceManager.h',
     'nsNodeInfoManager.h',
     'nsNodeUtils.h',
-    'nsPerformance.h',
     'nsPIDOMWindow.h',
     'nsPIDOMWindowInlines.h',
     'nsPIWindowRoot.h',
@@ -143,7 +139,6 @@ if CONFIG['MOZ_WEBRTC']:
     ]
 
 EXPORTS.mozilla += [
-    'ConsoleReportCollector.h',
     'CORSMode.h',
     'FeedWriterEnabled.h',
     'TextInputProcessor.h',
@@ -157,11 +152,12 @@ EXPORTS.mozilla.dom += [
     'BarProps.h',
     'BlobSet.h',
     'BodyUtil.h',
+    'BorrowedAttrInfo.h',
     'ChildIterator.h',
     'ChromeNodeList.h',
     'ChromeUtils.h',
     'Comment.h',
-    'Console.h',
+    'CustomElementsRegistry.h',
     'DirectionalityUtils.h',
     'DocumentFragment.h',
     'DocumentType.h',
@@ -194,12 +190,6 @@ EXPORTS.mozilla.dom += [
     'NodeInfo.h',
     'NodeInfoInlines.h',
     'NodeIterator.h',
-    'PerformanceEntry.h',
-    'PerformanceMark.h',
-    'PerformanceMeasure.h',
-    'PerformanceObserver.h',
-    'PerformanceObserverEntryList.h',
-    'PerformanceResourceTiming.h',
     'ProcessGlobal.h',
     'ResponsiveImageSelector.h',
     'SameProcessMessageQueue.h',
@@ -212,8 +202,6 @@ EXPORTS.mozilla.dom += [
     'SubtleCrypto.h',
     'Text.h',
     'TreeWalker.h',
-    'URL.h',
-    'URLSearchParams.h',
     'WebKitCSSMatrix.h',
     'WebSocket.h',
     'WindowOrientationObserver.h',
@@ -223,14 +211,15 @@ UNIFIED_SOURCES += [
     'AnonymousContent.cpp',
     'Attr.cpp',
     'BarProps.cpp',
+    'BlobSet.cpp',
     'BodyUtil.cpp',
+    'BorrowedAttrInfo.cpp',
     'ChildIterator.cpp',
     'ChromeNodeList.cpp',
     'ChromeUtils.cpp',
     'Comment.cpp',
-    'Console.cpp',
-    'ConsoleReportCollector.cpp',
     'Crypto.cpp',
+    'CustomElementsRegistry.cpp',
     'DirectionalityUtils.cpp',
     'DocumentFragment.cpp',
     'DocumentType.cpp',
@@ -308,7 +297,6 @@ UNIFIED_SOURCES += [
     'nsNodeInfoManager.cpp',
     'nsNodeUtils.cpp',
     'nsOpenURIInFrameParams.cpp',
-    'nsPerformance.cpp',
     'nsPlainTextSerializer.cpp',
     'nsPropertyTable.cpp',
     'nsQueryContentEventResult.cpp',
@@ -335,14 +323,7 @@ UNIFIED_SOURCES += [
     'nsWrapperCache.cpp',
     'nsXHTMLContentSerializer.cpp',
     'nsXMLContentSerializer.cpp',
-    'nsXMLHttpRequest.cpp',
     'nsXMLNameSpaceMap.cpp',
-    'PerformanceEntry.cpp',
-    'PerformanceMark.cpp',
-    'PerformanceMeasure.cpp',
-    'PerformanceObserver.cpp',
-    'PerformanceObserverEntryList.cpp',
-    'PerformanceResourceTiming.cpp',
     'PostMessageEvent.cpp',
     'ProcessGlobal.cpp',
     'ResponsiveImageSelector.cpp',
@@ -357,8 +338,6 @@ UNIFIED_SOURCES += [
     'TextInputProcessor.cpp',
     'ThirdPartyUtil.cpp',
     'TreeWalker.cpp',
-    'URL.cpp',
-    'URLSearchParams.cpp',
     'WebKitCSSMatrix.cpp',
     'WebSocket.cpp',
     'WindowNamedPropertiesHandler.cpp',
@@ -395,8 +374,6 @@ if CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['nsTextFragmentSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
 
 EXTRA_COMPONENTS += [
-    'ConsoleAPI.manifest',
-    'ConsoleAPIStorage.js',
     'contentAreaDropListener.js',
     'contentAreaDropListener.manifest',
     'messageWakeupService.js',

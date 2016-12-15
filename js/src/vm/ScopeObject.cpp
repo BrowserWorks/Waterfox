@@ -1994,7 +1994,7 @@ class DebugScopeProxy : public BaseProxyHandler
     static const char family;
     static const DebugScopeProxy singleton;
 
-    MOZ_CONSTEXPR DebugScopeProxy() : BaseProxyHandler(&family) {}
+    constexpr DebugScopeProxy() : BaseProxyHandler(&family) {}
 
     static bool isFunctionScopeWithThis(const JSObject& scope)
     {
@@ -2619,10 +2619,11 @@ DebugScopes::hasDebugScope(JSContext* cx, ScopeObject& scope)
 }
 
 bool
-DebugScopes::addDebugScope(JSContext* cx, ScopeObject& scope, DebugScopeObject& debugScope)
+DebugScopes::addDebugScope(JSContext* cx, Handle<ScopeObject*> scope,
+                           Handle<DebugScopeObject*> debugScope)
 {
-    MOZ_ASSERT(cx->compartment() == scope.compartment());
-    MOZ_ASSERT(cx->compartment() == debugScope.compartment());
+    MOZ_ASSERT(cx->compartment() == scope->compartment());
+    MOZ_ASSERT(cx->compartment() == debugScope->compartment());
 
     if (!CanUseDebugScopeMaps(cx))
         return true;
@@ -2631,7 +2632,7 @@ DebugScopes::addDebugScope(JSContext* cx, ScopeObject& scope, DebugScopeObject& 
     if (!scopes)
         return false;
 
-    return scopes->proxiedScopes.add(cx, &scope, &debugScope);
+    return scopes->proxiedScopes.add(cx, scope, debugScope);
 }
 
 DebugScopeObject*
@@ -2651,10 +2652,10 @@ DebugScopes::hasDebugScope(JSContext* cx, const ScopeIter& si)
 }
 
 bool
-DebugScopes::addDebugScope(JSContext* cx, const ScopeIter& si, DebugScopeObject& debugScope)
+DebugScopes::addDebugScope(JSContext* cx, const ScopeIter& si, Handle<DebugScopeObject*> debugScope)
 {
     MOZ_ASSERT(!si.hasSyntacticScopeObject());
-    MOZ_ASSERT(cx->compartment() == debugScope.compartment());
+    MOZ_ASSERT(cx->compartment() == debugScope->compartment());
     // Generators should always reify their scopes.
     MOZ_ASSERT_IF(si.type() == ScopeIter::Call, !si.fun().isGenerator());
 
@@ -2667,7 +2668,7 @@ DebugScopes::addDebugScope(JSContext* cx, const ScopeIter& si, DebugScopeObject&
 
     MissingScopeKey key(si);
     MOZ_ASSERT(!scopes->missingScopes.has(key));
-    if (!scopes->missingScopes.put(key, ReadBarriered<DebugScopeObject*>(&debugScope))) {
+    if (!scopes->missingScopes.put(key, ReadBarriered<DebugScopeObject*>(debugScope))) {
         ReportOutOfMemory(cx);
         return false;
     }
@@ -2675,8 +2676,8 @@ DebugScopes::addDebugScope(JSContext* cx, const ScopeIter& si, DebugScopeObject&
     // Only add to liveScopes if we synthesized the debug scope on a live
     // frame.
     if (si.withinInitialFrame()) {
-        MOZ_ASSERT(!scopes->liveScopes.has(&debugScope.scope()));
-        if (!scopes->liveScopes.put(&debugScope.scope(), LiveScopeVal(si))) {
+        MOZ_ASSERT(!scopes->liveScopes.has(&debugScope->scope()));
+        if (!scopes->liveScopes.put(&debugScope->scope(), LiveScopeVal(si))) {
             ReportOutOfMemory(cx);
             return false;
         }
@@ -2737,7 +2738,12 @@ DebugScopes::onPopCall(AbstractFramePtr frame, JSContext* cx)
          * but it simplifies later indexing logic.
          */
         Rooted<GCVector<Value>> vec(cx, GCVector<Value>(cx));
-        if (!frame.copyRawFrameSlots(&vec) || vec.length() == 0)
+        if (!frame.copyRawFrameSlots(&vec)) {
+            cx->recoverFromOutOfMemory();
+            return;
+        }
+
+        if (vec.length() == 0)
             return;
 
         /*
@@ -2758,7 +2764,7 @@ DebugScopes::onPopCall(AbstractFramePtr frame, JSContext* cx)
          */
         RootedArrayObject snapshot(cx, NewDenseCopiedArray(cx, vec.length(), vec.begin()));
         if (!snapshot) {
-            cx->clearPendingException();
+            cx->recoverFromOutOfMemory();
             return;
         }
 
@@ -2973,11 +2979,11 @@ GetDebugScopeForScope(JSContext* cx, const ScopeIter& si)
             return nullptr;
     }
 
-    DebugScopeObject* debugScope = DebugScopeObject::create(cx, *scope, enclosingDebug);
+    Rooted<DebugScopeObject*> debugScope(cx, DebugScopeObject::create(cx, *scope, enclosingDebug));
     if (!debugScope)
         return nullptr;
 
-    if (!DebugScopes::addDebugScope(cx, *scope, *debugScope))
+    if (!DebugScopes::addDebugScope(cx, scope, debugScope))
         return nullptr;
 
     return debugScope;
@@ -3007,7 +3013,7 @@ GetDebugScopeForMissing(JSContext* cx, const ScopeIter& si)
      * scopes must not be put on the frame's scope chain; instead, they are
      * maintained via DebugScopes hooks.
      */
-    DebugScopeObject* debugScope = nullptr;
+    Rooted<DebugScopeObject*> debugScope(cx);
     switch (si.type()) {
       case ScopeIter::Module:
           MOZ_CRASH(); // TODO: Implement debug scopes for modules.
@@ -3070,7 +3076,7 @@ GetDebugScopeForMissing(JSContext* cx, const ScopeIter& si)
     if (!debugScope)
         return nullptr;
 
-    if (!DebugScopes::addDebugScope(cx, si, *debugScope))
+    if (!DebugScopes::addDebugScope(cx, si, debugScope))
         return nullptr;
 
     return debugScope;
@@ -3533,7 +3539,7 @@ RemoveReferencedNames(JSContext* cx, HandleScript script, PropertyNameSet& remai
 
           case JSOP_GETALIASEDVAR:
           case JSOP_SETALIASEDVAR:
-            name = ScopeCoordinateName(cx->runtime()->scopeCoordinateNameCache, script, pc);
+            name = ScopeCoordinateName(cx->caches.scopeCoordinateNameCache, script, pc);
             break;
 
           default:

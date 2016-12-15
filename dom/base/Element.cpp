@@ -16,6 +16,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/dom/Animation.h"
 #include "mozilla/dom/Attr.h"
+#include "mozilla/dom/Grid.h"
 #include "nsDOMAttributeMap.h"
 #include "nsIAtom.h"
 #include "nsIContentInlines.h"
@@ -700,8 +701,8 @@ void
 Element::Scroll(double aXScroll, double aYScroll)
 {
   // Convert -Inf, Inf, and NaN to 0; otherwise, convert by C-style cast.
-  CSSIntPoint scrollPos(mozilla::ToZeroIfNonfinite(aXScroll),
-                        mozilla::ToZeroIfNonfinite(aYScroll));
+  auto scrollPos = CSSIntPoint::Truncate(mozilla::ToZeroIfNonfinite(aXScroll),
+                                         mozilla::ToZeroIfNonfinite(aYScroll));
 
   Scroll(scrollPos, ScrollOptions());
 }
@@ -740,8 +741,8 @@ Element::ScrollBy(double aXScrollDif, double aYScrollDif)
   nsIScrollableFrame *sf = GetScrollFrame();
   if (sf) {
     CSSIntPoint scrollPos = sf->GetScrollPositionCSSPixels();
-    scrollPos += CSSIntPoint(mozilla::ToZeroIfNonfinite(aXScrollDif),
-                             mozilla::ToZeroIfNonfinite(aYScrollDif));
+    scrollPos += CSSIntPoint::Truncate(mozilla::ToZeroIfNonfinite(aXScrollDif),
+                                       mozilla::ToZeroIfNonfinite(aYScrollDif));
     Scroll(scrollPos, ScrollOptions());
   }
 }
@@ -952,7 +953,6 @@ Element::GetClientRects()
           nsLayoutUtils::RECTS_ACCOUNT_FOR_TRANSFORMS);
   return rectList.forget();
 }
-
 
 //----------------------------------------------------------------------
 
@@ -1526,14 +1526,14 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     ClearSubtreeRootPointer();
 
     // Being added to a document.
-    SetInDocument();
+    SetIsInDocument();
 
     // Unset this flag since we now really are in a document.
     UnsetFlags(NODE_FORCE_XBL_BINDINGS |
                // And clear the lazy frame construction bits.
-               NODE_NEEDS_FRAME | NODE_DESCENDANTS_NEED_FRAMES |
-               // And the restyle bits
-               ELEMENT_ALL_RESTYLE_FLAGS);
+               NODE_NEEDS_FRAME | NODE_DESCENDANTS_NEED_FRAMES);
+    // And the restyle bits
+    UnsetRestyleFlagsIfGecko();
   } else if (IsInShadowTree()) {
     // We're not in a document, but we did get inserted into a shadow tree.
     // Since we won't have any restyle data in the document's restyle trackers,
@@ -1542,8 +1542,8 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     // Also clear all the other flags that are cleared above when we do get
     // inserted into a document.
     UnsetFlags(NODE_FORCE_XBL_BINDINGS |
-               NODE_NEEDS_FRAME | NODE_DESCENDANTS_NEED_FRAMES |
-               ELEMENT_ALL_RESTYLE_FLAGS);
+               NODE_NEEDS_FRAME | NODE_DESCENDANTS_NEED_FRAMES);
+    UnsetRestyleFlagsIfGecko();
   } else {
     // If we're not in the doc and not in a shadow tree,
     // update our subtree pointer.
@@ -1733,18 +1733,17 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
   if (HasPointerLock()) {
     nsIDocument::UnlockPointer();
   }
+  if (mState.HasState(NS_EVENT_STATE_FULL_SCREEN)) {
+    // The element being removed is an ancestor of the full-screen element,
+    // exit full-screen state.
+    nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
+                                    NS_LITERAL_CSTRING("DOM"), OwnerDoc(),
+                                    nsContentUtils::eDOM_PROPERTIES,
+                                    "RemovedFullscreenElement");
+    // Fully exit full-screen.
+    nsIDocument::ExitFullscreenInDocTree(OwnerDoc());
+  }
   if (aNullParent) {
-    if (IsFullScreenAncestor()) {
-      // The element being removed is an ancestor of the full-screen element,
-      // exit full-screen state.
-      nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
-                                      NS_LITERAL_CSTRING("DOM"), OwnerDoc(),
-                                      nsContentUtils::eDOM_PROPERTIES,
-                                      "RemovedFullscreenElement");
-      // Fully exit full-screen.
-      nsIDocument::ExitFullscreenInDocTree(OwnerDoc());
-    }
-
     if (GetParent() && GetParent()->IsInUncomposedDoc()) {
       // Update the editable descendant count in the ancestors before we
       // lose the reference to the parent.
@@ -1787,6 +1786,12 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
   }
 
   ClearInDocument();
+
+#ifdef MOZ_STYLO
+  // Drop any servo node data, since it will generally need to be recomputed on
+  // re-insertion anyway.
+  ServoData().reset();
+#endif
 
   // Editable descendant count only counts descendants that
   // are in the uncomposed document.
@@ -2206,7 +2211,7 @@ Element::MaybeCheckSameAttrVal(int32_t aNamespaceID,
   // listeners and don't plan to notify.  The check for aNotify here is an
   // optimization, the check for *aHasListeners is a correctness issue.
   if (*aHasListeners || aNotify) {
-    nsAttrInfo info(GetAttrInfo(aNamespaceID, aName));
+    BorrowedAttrInfo info(GetAttrInfo(aNamespaceID, aName));
     if (info.mValue) {
       // Check whether the old value is the same as the new one.  Note that we
       // only need to actually _get_ the old value if we have listeners or
@@ -2537,7 +2542,7 @@ Element::GetEventListenerManagerForAttr(nsIAtom* aAttrName,
   return GetOrCreateListenerManager();
 }
 
-Element::nsAttrInfo
+BorrowedAttrInfo
 Element::GetAttrInfo(int32_t aNamespaceID, nsIAtom* aName) const
 {
   NS_ASSERTION(nullptr != aName, "must have attribute name");
@@ -2545,14 +2550,22 @@ Element::GetAttrInfo(int32_t aNamespaceID, nsIAtom* aName) const
                "must have a real namespace ID!");
 
   int32_t index = mAttrsAndChildren.IndexOfAttr(aName, aNamespaceID);
-  if (index >= 0) {
-    return nsAttrInfo(mAttrsAndChildren.AttrNameAt(index),
-                      mAttrsAndChildren.AttrAt(index));
+  if (index < 0) {
+    return BorrowedAttrInfo(nullptr, nullptr);
   }
 
-  return nsAttrInfo(nullptr, nullptr);
+  return mAttrsAndChildren.AttrInfoAt(index);
 }
 
+BorrowedAttrInfo
+Element::GetAttrInfoAt(uint32_t aIndex) const
+{
+  if (aIndex >= mAttrsAndChildren.AttrCount()) {
+    return BorrowedAttrInfo(nullptr, nullptr);
+  }
+
+  return mAttrsAndChildren.AttrInfoAt(aIndex);
+}
 
 bool
 Element::GetAttr(int32_t aNameSpaceID, nsIAtom* aName,
@@ -3285,9 +3298,25 @@ Element::RequestFullscreen(JSContext* aCx, JS::Handle<JS::Value> aOptions,
 }
 
 void
-Element::MozRequestPointerLock()
+Element::RequestPointerLock()
 {
   OwnerDoc()->RequestPointerLock(this);
+}
+
+void
+Element::GetGridFragments(nsTArray<RefPtr<Grid>>& aResult)
+{
+  nsGridContainerFrame* frame =
+    nsGridContainerFrame::GetGridFrameWithComputedInfo(GetPrimaryFrame());
+
+  // If we get a nsGridContainerFrame from the prior call,
+  // all the next-in-flow frames will also be nsGridContainerFrames.
+  while (frame) {
+    aResult.AppendElement(
+      new Grid(this, frame)
+    );
+    frame = static_cast<nsGridContainerFrame*>(frame->GetNextInFlow());
+  }
 }
 
 already_AddRefed<Animation>
@@ -3646,7 +3675,8 @@ Element::InsertAdjacent(const nsAString& aWhere,
     }
     parent->InsertBefore(*aNode, this, aError);
   } else if (aWhere.LowerCaseEqualsLiteral("afterbegin")) {
-    static_cast<nsINode*>(this)->InsertBefore(*aNode, GetFirstChild(), aError);
+    nsCOMPtr<nsINode> refNode = GetFirstChild();
+    static_cast<nsINode*>(this)->InsertBefore(*aNode, refNode, aError);
   } else if (aWhere.LowerCaseEqualsLiteral("beforeend")) {
     static_cast<nsINode*>(this)->AppendChild(*aNode, aError);
   } else if (aWhere.LowerCaseEqualsLiteral("afterend")) {
@@ -3654,7 +3684,8 @@ Element::InsertAdjacent(const nsAString& aWhere,
     if (!parent) {
       return nullptr;
     }
-    parent->InsertBefore(*aNode, GetNextSibling(), aError);
+    nsCOMPtr<nsINode> refNode = GetNextSibling();
+    parent->InsertBefore(*aNode, refNode, aError);
   } else {
     aError.Throw(NS_ERROR_DOM_SYNTAX_ERR);
     return nullptr;
@@ -3772,7 +3803,7 @@ Element::FontSizeInflation()
 net::ReferrerPolicy
 Element::GetReferrerPolicyAsEnum()
 {
-  if (Preferences::GetBool("network.http.enablePerElementReferrer", false) &&
+  if (Preferences::GetBool("network.http.enablePerElementReferrer", true) &&
       IsHTMLElement()) {
     const nsAttrValue* referrerValue = GetParsedAttr(nsGkAtoms::referrerpolicy);
     if (referrerValue && referrerValue->Type() == nsAttrValue::eEnum) {

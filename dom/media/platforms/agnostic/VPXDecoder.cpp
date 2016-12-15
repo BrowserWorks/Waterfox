@@ -32,16 +32,13 @@ static int MimeTypeToCodec(const nsACString& aMimeType)
   return -1;
 }
 
-VPXDecoder::VPXDecoder(const VideoInfo& aConfig,
-                       ImageContainer* aImageContainer,
-                       TaskQueue* aTaskQueue,
-                       MediaDataDecoderCallback* aCallback)
-  : mImageContainer(aImageContainer)
-  , mTaskQueue(aTaskQueue)
-  , mCallback(aCallback)
+VPXDecoder::VPXDecoder(const CreateDecoderParams& aParams)
+  : mImageContainer(aParams.mImageContainer)
+  , mTaskQueue(aParams.mTaskQueue)
+  , mCallback(aParams.mCallback)
   , mIsFlushing(false)
-  , mInfo(aConfig)
-  , mCodec(MimeTypeToCodec(aConfig.mMimeType))
+  , mInfo(aParams.VideoConfig())
+  , mCodec(MimeTypeToCodec(aParams.VideoConfig().mMimeType))
 {
   MOZ_COUNT_CTOR(VPXDecoder);
   PodZero(&mVPX);
@@ -233,6 +230,20 @@ VPXDecoder::IsVPX(const nsACString& aMimeType, uint8_t aCodecMask)
           aMimeType.EqualsLiteral("video/webm; codecs=vp8")) ||
          ((aCodecMask & VPXDecoder::VP9) &&
           aMimeType.EqualsLiteral("video/webm; codecs=vp9"));
+}
+
+/* static */
+bool
+VPXDecoder::IsVP8(const nsACString& aMimeType)
+{
+  return IsVPX(aMimeType, VPXDecoder::VP8);
+}
+
+/* static */
+bool
+VPXDecoder::IsVP9(const nsACString& aMimeType)
+{
+  return IsVPX(aMimeType, VPXDecoder::VP9);
 }
 
 } // namespace mozilla

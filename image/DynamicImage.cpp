@@ -185,7 +185,7 @@ DynamicImage::GetFrameAtSize(const IntSize& aSize,
       "DynamicImage::GetFrame failed in CreateOffscreenContentDrawTarget";
     return nullptr;
   }
-  RefPtr<gfxContext> context = gfxContext::ForDrawTarget(dt);
+  RefPtr<gfxContext> context = gfxContext::CreateOrNull(dt);
   MOZ_ASSERT(context); // already checked the draw target above
 
   auto result = Draw(context, aSize, ImageRegion::Create(aSize),
@@ -195,10 +195,8 @@ DynamicImage::GetFrameAtSize(const IntSize& aSize,
 }
 
 NS_IMETHODIMP_(bool)
-DynamicImage::IsOpaque()
+DynamicImage::WillDrawOpaqueNow()
 {
-  // XXX(seth): For performance reasons it'd be better to return true here, but
-  // I'm not sure how we can guarantee it for an arbitrary gfxDrawable.
   return false;
 }
 

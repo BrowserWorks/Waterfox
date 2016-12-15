@@ -43,6 +43,7 @@
 #include "Telemetry.h"
 #include "TelemetryCommon.h"
 #include "TelemetryHistogram.h"
+#include "TelemetryScalar.h"
 #include "WebrtcTelemetry.h"
 #include "nsTHashtable.h"
 #include "nsHashKeys.h"
@@ -79,6 +80,7 @@ namespace {
 
 using namespace mozilla;
 using namespace mozilla::HangMonitor;
+using Telemetry::Common::AutoHashtable;
 
 // The maximum number of chrome hangs stacks that we're keeping.
 const size_t kMaxChromeStacksKept = 50;
@@ -1090,8 +1092,7 @@ TelemetryImpl::AddSQLInfo(JSContext *cx, JS::Handle<JSObject*> rootObj, bool mai
   if (!statsObj)
     return false;
 
-  AutoHashtable<SlowSQLEntryType> &sqlMap =
-    (privateSQL ? mPrivateSQL : mSanitizedSQL);
+  AutoHashtable<SlowSQLEntryType>& sqlMap = (privateSQL ? mPrivateSQL : mSanitizedSQL);
   AutoHashtable<SlowSQLEntryType>::ReflectEntryFunc reflectFunction =
     (mainThread ? ReflectMainThreadSQL : ReflectOtherThreadsSQL);
   if (!sqlMap.ReflectIntoJS(reflectFunction, cx, statsObj)) {
@@ -1887,6 +1888,7 @@ TelemetryImpl::GetCanRecordBase(bool *ret) {
 NS_IMETHODIMP
 TelemetryImpl::SetCanRecordBase(bool canRecord) {
   TelemetryHistogram::SetCanRecordBase(canRecord);
+  TelemetryScalar::SetCanRecordBase(canRecord);
   return NS_OK;
 }
 
@@ -1906,6 +1908,7 @@ TelemetryImpl::GetCanRecordExtended(bool *ret) {
 NS_IMETHODIMP
 TelemetryImpl::SetCanRecordExtended(bool canRecord) {
   TelemetryHistogram::SetCanRecordExtended(canRecord);
+  TelemetryScalar::SetCanRecordExtended(canRecord);
   return NS_OK;
 }
 
@@ -1925,10 +1928,13 @@ TelemetryImpl::CreateTelemetryInstance()
 {
   MOZ_ASSERT(sTelemetry == nullptr, "CreateTelemetryInstance may only be called once, via GetService()");
 
-  // First, initialize the TelemetryHistogram global state.
+  // First, initialize the TelemetryHistogram and TelemetryScalar global states.
   TelemetryHistogram::InitializeGlobalState(
                         XRE_IsParentProcess() || XRE_IsContentProcess(),
                         XRE_IsParentProcess() || XRE_IsContentProcess());
+
+  // Only record scalars from the parent process.
+  TelemetryScalar::InitializeGlobalState(XRE_IsParentProcess(), XRE_IsParentProcess());
 
   // Now, create and initialize the Telemetry global state.
   sTelemetry = new TelemetryImpl();
@@ -1951,16 +1957,17 @@ TelemetryImpl::ShutdownTelemetry()
   ClearIOReporting();
   NS_IF_RELEASE(sTelemetry);
 
-  // Lastly, de-initialise the TelemetryHistogram global state, so as to
-  // release any heap storage that would otherwise be kept alive by it.
+  // Lastly, de-initialise the TelemetryHistogram and TelemetryScalar global states,
+  // so as to release any heap storage that would otherwise be kept alive by it.
   TelemetryHistogram::DeInitializeGlobalState();
+  TelemetryScalar::DeInitializeGlobalState();
 }
 
 void
 TelemetryImpl::StoreSlowSQL(const nsACString &sql, uint32_t delay,
                             SanitizedState state)
 {
-  AutoHashtable<SlowSQLEntryType> *slowSQLMap = nullptr;
+  AutoHashtable<SlowSQLEntryType>* slowSQLMap = nullptr;
   if (state == Sanitized)
     slowSQLMap = &(sTelemetry->mSanitizedSQL);
   else
@@ -2116,7 +2123,7 @@ struct TrackedDBEntry
   const uint32_t mNameLength;
 
   // This struct isn't meant to be used beyond the static arrays below.
-  MOZ_CONSTEXPR
+  constexpr
   TrackedDBEntry(const char* aName, uint32_t aNameLength)
     : mName(aName)
     , mNameLength(aNameLength)
@@ -2130,7 +2137,7 @@ struct TrackedDBEntry
 
 // A whitelist of database names. If the database name exactly matches one of
 // these then its SQL statements will always be recorded.
-static MOZ_CONSTEXPR_VAR TrackedDBEntry kTrackedDBs[] = {
+static constexpr TrackedDBEntry kTrackedDBs[] = {
   // IndexedDB for about:home, see aboutHome.js
   TRACKEDDB_ENTRY("818200132aebmoouht.sqlite"),
   TRACKEDDB_ENTRY("addons.sqlite"),
@@ -2326,6 +2333,40 @@ TelemetryImpl::MsSinceProcessStart(double* aResult)
   return NS_OK;
 }
 
+// Telemetry Scalars IDL Implementation
+
+NS_IMETHODIMP
+TelemetryImpl::ScalarAdd(const nsACString& aName, JS::HandleValue aVal, JSContext* aCx)
+{
+  return TelemetryScalar::Add(aName, aVal, aCx);
+}
+
+NS_IMETHODIMP
+TelemetryImpl::ScalarSet(const nsACString& aName, JS::HandleValue aVal, JSContext* aCx)
+{
+  return TelemetryScalar::Set(aName, aVal, aCx);
+}
+
+NS_IMETHODIMP
+TelemetryImpl::ScalarSetMaximum(const nsACString& aName, JS::HandleValue aVal, JSContext* aCx)
+{
+  return TelemetryScalar::SetMaximum(aName, aVal, aCx);
+}
+
+NS_IMETHODIMP
+TelemetryImpl::SnapshotScalars(unsigned int aDataset, bool aClearScalars, JSContext* aCx,
+                               uint8_t optional_argc, JS::MutableHandleValue aResult)
+{
+  return TelemetryScalar::CreateSnapshots(aDataset, aClearScalars, aCx, optional_argc, aResult);
+}
+
+NS_IMETHODIMP
+TelemetryImpl::ClearScalars()
+{
+  TelemetryScalar::ClearScalars();
+  return NS_OK;
+}
+
 size_t
 TelemetryImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
 {
@@ -2333,6 +2374,7 @@ TelemetryImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
 
   // Ignore the hashtables in mAddonMap; they are not significant.
   n += TelemetryHistogram::GetMapShallowSizesOfExcludingThis(aMallocSizeOf);
+  n += TelemetryScalar::GetMapShallowSizesOfExcludingThis(aMallocSizeOf);
   n += mWebrtcTelemetry.SizeOfExcludingThis(aMallocSizeOf);
   { // Scope for mHashMutex lock
     MutexAutoLock lock(mHashMutex);
@@ -2355,13 +2397,60 @@ TelemetryImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
   }
 
   n += TelemetryHistogram::GetHistogramSizesofIncludingThis(aMallocSizeOf);
+  n += TelemetryScalar::GetScalarSizesOfIncludingThis(aMallocSizeOf);
 
   return n;
 }
 
+struct StackFrame
+{
+  uintptr_t mPC;      // The program counter at this position in the call stack.
+  uint16_t mIndex;    // The number of this frame in the call stack.
+  uint16_t mModIndex; // The index of module that has this program counter.
+};
+
+#ifdef MOZ_ENABLE_PROFILER_SPS
+static bool CompareByPC(const StackFrame &a, const StackFrame &b)
+{
+  return a.mPC < b.mPC;
+}
+
+static bool CompareByIndex(const StackFrame &a, const StackFrame &b)
+{
+  return a.mIndex < b.mIndex;
+}
+#endif
+
 } // namespace
 
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+//
+// EXTERNALLY VISIBLE FUNCTIONS in no name space
+// These are NOT listed in Telemetry.h
+
+NSMODULE_DEFN(nsTelemetryModule) = &kTelemetryModule;
+
+/**
+ * The XRE_TelemetryAdd function is to be used by embedding applications
+ * that can't use mozilla::Telemetry::Accumulate() directly.
+ */
+void
+XRE_TelemetryAccumulate(int aID, uint32_t aSample)
+{
+  mozilla::Telemetry::Accumulate((mozilla::Telemetry::ID) aID, aSample);
+}
+
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+//
+// EXTERNALLY VISIBLE FUNCTIONS in mozilla::
+// These are NOT listed in Telemetry.h
+
 namespace mozilla {
+
 void
 RecordShutdownStartTimeStamp() {
 #ifdef DEBUG
@@ -2427,110 +2516,17 @@ RecordShutdownEndTimeStamp() {
   PR_Rename(tmpName.get(), name.get());
 }
 
+} // namespace mozilla
+
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+//
+// EXTERNALLY VISIBLE FUNCTIONS in mozilla::Telemetry::
+// These are NOT listed in Telemetry.h
+
+namespace mozilla {
 namespace Telemetry {
-
-// The external API for controlling recording state
-void
-SetHistogramRecordingEnabled(ID aID, bool aEnabled)
-{
-  TelemetryHistogram::SetHistogramRecordingEnabled(aID, aEnabled);
-}
-
-void
-Accumulate(ID aHistogram, uint32_t aSample)
-{
-  TelemetryHistogram::Accumulate(aHistogram, aSample);
-}
-
-void
-Accumulate(ID aID, const nsCString& aKey, uint32_t aSample)
-{
-  TelemetryHistogram::Accumulate(aID, aKey, aSample);
-}
-
-void
-Accumulate(const char* name, uint32_t sample)
-{
-  TelemetryHistogram::Accumulate(name, sample);
-}
-
-void
-Accumulate(const char *name, const nsCString& key, uint32_t sample)
-{
-  TelemetryHistogram::Accumulate(name, key, sample);
-}
-
-void
-AccumulateTimeDelta(ID aHistogram, TimeStamp start, TimeStamp end)
-{
-  Accumulate(aHistogram,
-             static_cast<uint32_t>((end - start).ToMilliseconds()));
-}
-
-void
-ClearHistogram(ID aId)
-{
-  TelemetryHistogram::ClearHistogram(aId);
-}
-
-const char*
-GetHistogramName(ID id)
-{
-  return TelemetryHistogram::GetHistogramName(id);
-}
-
-bool
-CanRecordBase()
-{
-  return TelemetryHistogram::CanRecordBase();
-}
-
-bool
-CanRecordExtended()
-{
-  return TelemetryHistogram::CanRecordExtended();
-}
-
-void
-RecordSlowSQLStatement(const nsACString &statement,
-                       const nsACString &dbName,
-                       uint32_t delay)
-{
-  TelemetryImpl::RecordSlowStatement(statement, dbName, delay);
-}
-
-void
-RecordWebrtcIceCandidates(const uint32_t iceCandidateBitmask,
-                          const bool success, const bool loop)
-{
-  TelemetryImpl::RecordIceCandidates(iceCandidateBitmask, success, loop);
-}
-
-void Init()
-{
-  // Make the service manager hold a long-lived reference to the service
-  nsCOMPtr<nsITelemetry> telemetryService =
-    do_GetService("@mozilla.org/base/telemetry;1");
-  MOZ_ASSERT(telemetryService);
-}
-
-#if defined(MOZ_ENABLE_PROFILER_SPS)
-void RecordChromeHang(uint32_t duration,
-                      ProcessedStack &aStack,
-                      int32_t aSystemUptime,
-                      int32_t aFirefoxUptime,
-                      HangAnnotationsPtr aAnnotations)
-{
-  TelemetryImpl::RecordChromeHang(duration, aStack,
-                                  aSystemUptime, aFirefoxUptime,
-                                  Move(aAnnotations));
-}
-#endif
-
-void RecordThreadHangStats(ThreadHangStats& aStats)
-{
-  TelemetryImpl::RecordThreadHangStats(aStats);
-}
 
 ProcessedStack::ProcessedStack()
 {
@@ -2539,6 +2535,16 @@ ProcessedStack::ProcessedStack()
 size_t ProcessedStack::GetStackSize() const
 {
   return mStack.size();
+}
+
+size_t ProcessedStack::GetNumModules() const
+{
+  return mModules.size();
+}
+
+bool ProcessedStack::Module::operator==(const Module& aOther) const {
+  return  mName == aOther.mName &&
+    mBreakpadId == aOther.mBreakpadId;
 }
 
 const ProcessedStack::Frame &ProcessedStack::GetFrame(unsigned aIndex) const
@@ -2550,11 +2556,6 @@ const ProcessedStack::Frame &ProcessedStack::GetFrame(unsigned aIndex) const
 void ProcessedStack::AddFrame(const Frame &aFrame)
 {
   mStack.push_back(aFrame);
-}
-
-size_t ProcessedStack::GetNumModules() const
-{
-  return mModules.size();
 }
 
 const ProcessedStack::Module &ProcessedStack::GetModule(unsigned aIndex) const
@@ -2572,31 +2573,6 @@ void ProcessedStack::Clear() {
   mModules.clear();
   mStack.clear();
 }
-
-bool ProcessedStack::Module::operator==(const Module& aOther) const {
-  return  mName == aOther.mName &&
-    mBreakpadId == aOther.mBreakpadId;
-}
-
-struct StackFrame
-{
-  uintptr_t mPC;      // The program counter at this position in the call stack.
-  uint16_t mIndex;    // The number of this frame in the call stack.
-  uint16_t mModIndex; // The index of module that has this program counter.
-};
-
-
-#ifdef MOZ_ENABLE_PROFILER_SPS
-static bool CompareByPC(const StackFrame &a, const StackFrame &b)
-{
-  return a.mPC < b.mPC;
-}
-
-static bool CompareByIndex(const StackFrame &a, const StackFrame &b)
-{
-  return a.mIndex < b.mIndex;
-}
-#endif
 
 ProcessedStack
 GetStackAndModules(const std::vector<uintptr_t>& aPCs)
@@ -2669,7 +2645,7 @@ GetStackAndModules(const std::vector<uintptr_t>& aPCs)
   for (std::vector<StackFrame>::iterator i = rawStack.begin(),
          e = rawStack.end(); i != e; ++i) {
     const StackFrame &rawFrame = *i;
-    ProcessedStack::Frame frame = { rawFrame.mPC, rawFrame.mModIndex };
+    mozilla::Telemetry::ProcessedStack::Frame frame = { rawFrame.mPC, rawFrame.mModIndex };
     Ret.AddFrame(frame);
   }
 
@@ -2687,7 +2663,7 @@ GetStackAndModules(const std::vector<uintptr_t>& aPCs)
       basename = name.substr(pos + 1);
     }
 #endif
-    ProcessedStack::Module module = {
+    mozilla::Telemetry::ProcessedStack::Module module = {
       basename,
       info.GetBreakpadId()
     };
@@ -2696,83 +2672,6 @@ GetStackAndModules(const std::vector<uintptr_t>& aPCs)
 #endif
 
   return Ret;
-}
-
-void
-WriteFailedProfileLock(nsIFile* aProfileDir)
-{
-  nsCOMPtr<nsIFile> file;
-  nsresult rv = GetFailedProfileLockFile(getter_AddRefs(file), aProfileDir);
-  NS_ENSURE_SUCCESS_VOID(rv);
-  int64_t fileSize = 0;
-  rv = file->GetFileSize(&fileSize);
-  // It's expected that the file might not exist yet
-  if (NS_FAILED(rv) && rv != NS_ERROR_FILE_NOT_FOUND) {
-    return;
-  }
-  nsCOMPtr<nsIFileStream> fileStream;
-  rv = NS_NewLocalFileStream(getter_AddRefs(fileStream), file,
-                             PR_RDWR | PR_CREATE_FILE, 0640);
-  NS_ENSURE_SUCCESS_VOID(rv);
-  NS_ENSURE_TRUE_VOID(fileSize <= kMaxFailedProfileLockFileSize);
-  unsigned int failedLockCount = 0;
-  if (fileSize > 0) {
-    nsCOMPtr<nsIInputStream> inStream = do_QueryInterface(fileStream);
-    NS_ENSURE_TRUE_VOID(inStream);
-    if (!GetFailedLockCount(inStream, fileSize, failedLockCount)) {
-      failedLockCount = 0;
-    }
-  }
-  ++failedLockCount;
-  nsAutoCString bufStr;
-  bufStr.AppendInt(static_cast<int>(failedLockCount));
-  nsCOMPtr<nsISeekableStream> seekStream = do_QueryInterface(fileStream);
-  NS_ENSURE_TRUE_VOID(seekStream);
-  // If we read in an existing failed lock count, we need to reset the file ptr
-  if (fileSize > 0) {
-    rv = seekStream->Seek(nsISeekableStream::NS_SEEK_SET, 0);
-    NS_ENSURE_SUCCESS_VOID(rv);
-  }
-  nsCOMPtr<nsIOutputStream> outStream = do_QueryInterface(fileStream);
-  uint32_t bytesLeft = bufStr.Length();
-  const char* bytes = bufStr.get();
-  do {
-    uint32_t written = 0;
-    rv = outStream->Write(bytes, bytesLeft, &written);
-    if (NS_FAILED(rv)) {
-      break;
-    }
-    bytes += written;
-    bytesLeft -= written;
-  } while (bytesLeft > 0);
-  seekStream->SetEOF();
-}
-
-void
-InitIOReporting(nsIFile* aXreDir)
-{
-  // Never initialize twice
-  if (sTelemetryIOObserver) {
-    return;
-  }
-
-  sTelemetryIOObserver = new TelemetryIOInterposeObserver(aXreDir);
-  IOInterposer::Register(IOInterposeObserver::OpAllWithStaging,
-                         sTelemetryIOObserver);
-}
-
-void
-SetProfileDir(nsIFile* aProfD)
-{
-  if (!sTelemetryIOObserver || !aProfD) {
-    return;
-  }
-  nsAutoString profDirPath;
-  nsresult rv = aProfD->GetPath(profDirPath);
-  if (NS_FAILED(rv)) {
-    return;
-  }
-  sTelemetryIOObserver->AddPath(profDirPath, NS_LITERAL_STRING("{profile}"));
 }
 
 void
@@ -2856,18 +2755,265 @@ HangHistogram::operator==(const HangHistogram& aOther) const
   return mStack == aOther.mStack;
 }
 
-
 } // namespace Telemetry
 } // namespace mozilla
 
-NSMODULE_DEFN(nsTelemetryModule) = &kTelemetryModule;
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+//
+// EXTERNALLY VISIBLE FUNCTIONS in mozilla::Telemetry::
+// These are listed in Telemetry.h
+
+namespace mozilla {
+namespace Telemetry {
+
+// The external API for controlling recording state
+void
+SetHistogramRecordingEnabled(ID aID, bool aEnabled)
+{
+  TelemetryHistogram::SetHistogramRecordingEnabled(aID, aEnabled);
+}
+
+void
+Accumulate(ID aHistogram, uint32_t aSample)
+{
+  TelemetryHistogram::Accumulate(aHistogram, aSample);
+}
+
+void
+Accumulate(ID aID, const nsCString& aKey, uint32_t aSample)
+{
+  TelemetryHistogram::Accumulate(aID, aKey, aSample);
+}
+
+void
+Accumulate(const char* name, uint32_t sample)
+{
+  TelemetryHistogram::Accumulate(name, sample);
+}
+
+void
+Accumulate(const char *name, const nsCString& key, uint32_t sample)
+{
+  TelemetryHistogram::Accumulate(name, key, sample);
+}
+
+void
+AccumulateCategorical(ID id, const nsCString& label)
+{
+  TelemetryHistogram::AccumulateCategorical(id, label);
+}
+
+void
+AccumulateTimeDelta(ID aHistogram, TimeStamp start, TimeStamp end)
+{
+  Accumulate(aHistogram,
+             static_cast<uint32_t>((end - start).ToMilliseconds()));
+}
+
+void
+ClearHistogram(ID aId)
+{
+  TelemetryHistogram::ClearHistogram(aId);
+}
+
+const char*
+GetHistogramName(ID id)
+{
+  return TelemetryHistogram::GetHistogramName(id);
+}
+
+bool
+CanRecordBase()
+{
+  return TelemetryHistogram::CanRecordBase();
+}
+
+bool
+CanRecordExtended()
+{
+  return TelemetryHistogram::CanRecordExtended();
+}
+
+void
+RecordSlowSQLStatement(const nsACString &statement,
+                       const nsACString &dbName,
+                       uint32_t delay)
+{
+  TelemetryImpl::RecordSlowStatement(statement, dbName, delay);
+}
+
+void
+RecordWebrtcIceCandidates(const uint32_t iceCandidateBitmask,
+                          const bool success, const bool loop)
+{
+  TelemetryImpl::RecordIceCandidates(iceCandidateBitmask, success, loop);
+}
+
+void Init()
+{
+  // Make the service manager hold a long-lived reference to the service
+  nsCOMPtr<nsITelemetry> telemetryService =
+    do_GetService("@mozilla.org/base/telemetry;1");
+  MOZ_ASSERT(telemetryService);
+}
+
+#if defined(MOZ_ENABLE_PROFILER_SPS)
+void RecordChromeHang(uint32_t duration,
+                      ProcessedStack &aStack,
+                      int32_t aSystemUptime,
+                      int32_t aFirefoxUptime,
+                      HangAnnotationsPtr aAnnotations)
+{
+  TelemetryImpl::RecordChromeHang(duration, aStack,
+                                  aSystemUptime, aFirefoxUptime,
+                                  Move(aAnnotations));
+}
+#endif
+
+void RecordThreadHangStats(ThreadHangStats& aStats)
+{
+  TelemetryImpl::RecordThreadHangStats(aStats);
+}
+
+
+void
+WriteFailedProfileLock(nsIFile* aProfileDir)
+{
+  nsCOMPtr<nsIFile> file;
+  nsresult rv = GetFailedProfileLockFile(getter_AddRefs(file), aProfileDir);
+  NS_ENSURE_SUCCESS_VOID(rv);
+  int64_t fileSize = 0;
+  rv = file->GetFileSize(&fileSize);
+  // It's expected that the file might not exist yet
+  if (NS_FAILED(rv) && rv != NS_ERROR_FILE_NOT_FOUND) {
+    return;
+  }
+  nsCOMPtr<nsIFileStream> fileStream;
+  rv = NS_NewLocalFileStream(getter_AddRefs(fileStream), file,
+                             PR_RDWR | PR_CREATE_FILE, 0640);
+  NS_ENSURE_SUCCESS_VOID(rv);
+  NS_ENSURE_TRUE_VOID(fileSize <= kMaxFailedProfileLockFileSize);
+  unsigned int failedLockCount = 0;
+  if (fileSize > 0) {
+    nsCOMPtr<nsIInputStream> inStream = do_QueryInterface(fileStream);
+    NS_ENSURE_TRUE_VOID(inStream);
+    if (!GetFailedLockCount(inStream, fileSize, failedLockCount)) {
+      failedLockCount = 0;
+    }
+  }
+  ++failedLockCount;
+  nsAutoCString bufStr;
+  bufStr.AppendInt(static_cast<int>(failedLockCount));
+  nsCOMPtr<nsISeekableStream> seekStream = do_QueryInterface(fileStream);
+  NS_ENSURE_TRUE_VOID(seekStream);
+  // If we read in an existing failed lock count, we need to reset the file ptr
+  if (fileSize > 0) {
+    rv = seekStream->Seek(nsISeekableStream::NS_SEEK_SET, 0);
+    NS_ENSURE_SUCCESS_VOID(rv);
+  }
+  nsCOMPtr<nsIOutputStream> outStream = do_QueryInterface(fileStream);
+  uint32_t bytesLeft = bufStr.Length();
+  const char* bytes = bufStr.get();
+  do {
+    uint32_t written = 0;
+    rv = outStream->Write(bytes, bytesLeft, &written);
+    if (NS_FAILED(rv)) {
+      break;
+    }
+    bytes += written;
+    bytesLeft -= written;
+  } while (bytesLeft > 0);
+  seekStream->SetEOF();
+}
+
+void
+InitIOReporting(nsIFile* aXreDir)
+{
+  // Never initialize twice
+  if (sTelemetryIOObserver) {
+    return;
+  }
+
+  sTelemetryIOObserver = new TelemetryIOInterposeObserver(aXreDir);
+  IOInterposer::Register(IOInterposeObserver::OpAllWithStaging,
+                         sTelemetryIOObserver);
+}
+
+void
+SetProfileDir(nsIFile* aProfD)
+{
+  if (!sTelemetryIOObserver || !aProfD) {
+    return;
+  }
+  nsAutoString profDirPath;
+  nsresult rv = aProfD->GetPath(profDirPath);
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  sTelemetryIOObserver->AddPath(profDirPath, NS_LITERAL_STRING("{profile}"));
+}
+
+void CreateStatisticsRecorder()
+{
+  TelemetryHistogram::CreateStatisticsRecorder();
+}
+
+void DestroyStatisticsRecorder()
+{
+  TelemetryHistogram::DestroyStatisticsRecorder();
+}
+
+// Scalar API C++ Endpoints
 
 /**
- * The XRE_TelemetryAdd function is to be used by embedding applications
- * that can't use mozilla::Telemetry::Accumulate() directly.
+ * Adds the value to the given scalar.
+ *
+ * @param aId The scalar enum id.
+ * @param aValue The unsigned value to add to the scalar.
  */
 void
-XRE_TelemetryAccumulate(int aID, uint32_t aSample)
+ScalarAdd(mozilla::Telemetry::ScalarID aId, uint32_t aVal)
 {
-  mozilla::Telemetry::Accumulate((mozilla::Telemetry::ID) aID, aSample);
+  TelemetryScalar::Add(aId, aVal);
 }
+
+/**
+ * Sets the scalar to the given value.
+ *
+ * @param aId The scalar enum id.
+ * @param aValue The numeric, unsigned value to set the scalar to.
+ */
+void
+ScalarSet(mozilla::Telemetry::ScalarID aId, uint32_t aVal)
+{
+  TelemetryScalar::Set(aId, aVal);
+}
+
+/**
+ * Sets the scalar to the given value.
+ *
+ * @param aId The scalar enum id.
+ * @param aValue The string value to set the scalar to.
+ */
+void
+ScalarSet(mozilla::Telemetry::ScalarID aId, const nsAString& aVal)
+{
+  TelemetryScalar::Set(aId, aVal);
+}
+
+/**
+ * Sets the scalar to the maximum of the current and the passed value.
+ *
+ * @param aId The scalar enum id.
+ * @param aValue The unsigned value to set the scalar to.
+ */
+void
+ScalarSetMaximum(mozilla::Telemetry::ScalarID aId, uint32_t aVal)
+{
+  TelemetryScalar::SetMaximum(aId, aVal);
+}
+
+} // namespace Telemetry
+} // namespace mozilla

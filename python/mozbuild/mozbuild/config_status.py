@@ -62,7 +62,8 @@ files by running:
 
 
 def config_status(topobjdir='.', topsrcdir='.', defines=None,
-                  non_global_defines=None, substs=None, source=None):
+                  non_global_defines=None, substs=None, source=None,
+                  mozconfig=None):
     '''Main function, providing config.status functionality.
 
     Contrary to config.status, it doesn't use CONFIG_FILES or CONFIG_HEADERS
@@ -113,7 +114,8 @@ def config_status(topobjdir='.', topsrcdir='.', defines=None,
         topobjdir = os.path.abspath('.')
 
     env = ConfigEnvironment(topsrcdir, topobjdir, defines=defines,
-            non_global_defines=non_global_defines, substs=substs, source=source)
+            non_global_defines=non_global_defines, substs=substs,
+            source=source, mozconfig=mozconfig)
 
     # mozinfo.json only needs written if configure changes and configure always
     # passes this environment variable.
@@ -178,13 +180,3 @@ def config_status(topobjdir='.', topsrcdir='.', defines=None,
     if MachCommandConditions.is_android(env):
         if 'AndroidEclipse' not in options.backend:
             print(ANDROID_IDE_ADVERTISEMENT)
-
-    if env.substs.get('MOZ_ARTIFACT_BUILDS', False):
-        # Execute |mach artifact install| from the top source directory.
-        os.chdir(topsrcdir)
-        return subprocess.check_call([
-            sys.executable,
-            os.path.join(topsrcdir, 'mach'),
-            '--log-no-times',
-            'artifact',
-            'install'])

@@ -2,6 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
+
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 var Cu = Components.utils;
@@ -10,7 +11,9 @@ var CC = Components.Constructor;
 
 const { require } =
   Cu.import("resource://devtools/shared/Loader.jsm", {});
+const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
 const promise = require("promise");
+const defer = require("devtools/shared/defer");
 const { Task } = require("devtools/shared/task");
 
 const Services = require("Services");
@@ -209,8 +212,6 @@ function getFilePath(aName, aAllowMissing = false) {
   }
   return path.slice(filePrePath.length);
 }
-
-Cu.import("resource://gre/modules/NetUtil.jsm");
 
 /**
  * Wrapper around do_get_file to prefix files with the name of current test to

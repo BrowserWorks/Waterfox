@@ -603,7 +603,14 @@
      *   Stack: => null
      */ \
     macro(JSOP_NULL,      64, js_null_str,  js_null_str,  1,  0,  1, JOF_BYTE) \
-    macro(JSOP_UNUSED65,  65, "unused65",   NULL,         1,  0,  1, JOF_BYTE) \
+    /*
+     * Pushes 'JS_IS_CONSTRUCTING'
+     *   Category: Literals
+     *   Type: Constants
+     *   Operands:
+     *   Stack: => JS_IS_CONSTRUCTING
+     */ \
+    macro(JSOP_IS_CONSTRUCTING,  65, "is-constructing",   NULL,         1,  0,  1, JOF_BYTE) \
     /*
      * Pushes boolean value onto the stack.
      *   Category: Literals
@@ -2244,7 +2251,7 @@ static_assert((0 ==
 
 // Define JSOP_*_LENGTH constants for all ops.
 #define DEFINE_LENGTH_CONSTANT(op, val, name, image, len, ...) \
-    MOZ_CONSTEXPR_VAR size_t op##_LENGTH = len;
+    constexpr size_t op##_LENGTH = len;
 FOR_EACH_OPCODE(DEFINE_LENGTH_CONSTANT)
 #undef DEFINE_LENGTH_CONSTANT
 

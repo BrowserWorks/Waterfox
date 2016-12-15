@@ -5,18 +5,18 @@
 
 #include "TouchActionHelper.h"
 
+#include "mozilla/layers/APZCTreeManager.h"
 #include "nsContainerFrame.h"
-#include "nsIContent.h"
 #include "nsIScrollableFrame.h"
 #include "nsLayoutUtils.h"
-#include "nsStyleConsts.h"
-#include "nsView.h"
 
 namespace mozilla {
-namespace widget {
+namespace layers {
 
 void
-TouchActionHelper::UpdateAllowedBehavior(uint32_t aTouchActionValue, bool aConsiderPanning, mozilla::layers::TouchBehaviorFlags& aOutBehavior)
+TouchActionHelper::UpdateAllowedBehavior(uint32_t aTouchActionValue,
+                                         bool aConsiderPanning,
+                                         TouchBehaviorFlags& aOutBehavior)
 {
   if (aTouchActionValue != NS_STYLE_TOUCH_ACTION_AUTO) {
     // Double-tap-zooming need property value AUTO
@@ -43,16 +43,21 @@ TouchActionHelper::UpdateAllowedBehavior(uint32_t aTouchActionValue, bool aConsi
   }
 }
 
-mozilla::layers::TouchBehaviorFlags
-TouchActionHelper::GetAllowedTouchBehavior(nsIWidget* aWidget, const LayoutDeviceIntPoint& aPoint)
+TouchBehaviorFlags
+TouchActionHelper::GetAllowedTouchBehavior(nsIWidget* aWidget,
+                                           nsIFrame* aRootFrame,
+                                           const LayoutDeviceIntPoint& aPoint)
 {
-  nsView *view = nsView::GetViewFor(aWidget);
-  nsIFrame *viewFrame = view->GetFrame();
+  TouchBehaviorFlags behavior = AllowedTouchBehavior::VERTICAL_PAN | AllowedTouchBehavior::HORIZONTAL_PAN |
+                                AllowedTouchBehavior::PINCH_ZOOM | AllowedTouchBehavior::DOUBLE_TAP_ZOOM;
 
   nsPoint relativePoint =
-    nsLayoutUtils::GetEventCoordinatesRelativeTo(aWidget, aPoint, viewFrame);
+    nsLayoutUtils::GetEventCoordinatesRelativeTo(aWidget, aPoint, aRootFrame);
 
-  nsIFrame *target = nsLayoutUtils::GetFrameForPoint(viewFrame, relativePoint, nsLayoutUtils::IGNORE_ROOT_SCROLL_FRAME);
+  nsIFrame *target = nsLayoutUtils::GetFrameForPoint(aRootFrame, relativePoint, nsLayoutUtils::IGNORE_ROOT_SCROLL_FRAME);
+  if (!target) {
+    return behavior;
+  }
   nsIScrollableFrame *nearestScrollableParent = nsLayoutUtils::GetNearestScrollableFrame(target, 0);
   nsIFrame* nearestScrollableFrame = do_QueryFrame(nearestScrollableParent);
 
@@ -73,8 +78,6 @@ TouchActionHelper::GetAllowedTouchBehavior(nsIWidget* aWidget, const LayoutDevic
   // root frame but not the subframes.
 
   bool considerPanning = true;
-  TouchBehaviorFlags behavior = AllowedTouchBehavior::VERTICAL_PAN | AllowedTouchBehavior::HORIZONTAL_PAN |
-                                AllowedTouchBehavior::PINCH_ZOOM | AllowedTouchBehavior::DOUBLE_TAP_ZOOM;
 
   for (nsIFrame *frame = target; frame && frame->GetContent() && behavior; frame = frame->GetParent()) {
     UpdateAllowedBehavior(nsLayoutUtils::GetTouchActionFromFrame(frame), considerPanning, behavior);
@@ -89,5 +92,5 @@ TouchActionHelper::GetAllowedTouchBehavior(nsIWidget* aWidget, const LayoutDevic
   return behavior;
 }
 
-} // namespace widget
+} // namespace layers
 } // namespace mozilla

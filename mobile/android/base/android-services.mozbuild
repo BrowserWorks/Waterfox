@@ -1,4 +1,4 @@
-# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -814,7 +814,6 @@ sync_java_files = [TOPSRCDIR + '/mobile/android/services/src/main/java/org/mozil
     'browserid/verifier/BrowserIDVerifierException.java',
     'browserid/VerifyingPublicKey.java',
     'fxa/AccountLoader.java',
-    'fxa/AccountLoaderNative.java',
     'fxa/activities/CustomColorPreference.java',
     'fxa/activities/FxAccountAbstractActivity.java',
     'fxa/activities/FxAccountConfirmAccountActivityWeb.java',
@@ -834,6 +833,8 @@ sync_java_files = [TOPSRCDIR + '/mobile/android/services/src/main/java/org/mozil
     'fxa/authenticator/FxADefaultLoginStateMachineDelegate.java',
     'fxa/FirefoxAccounts.java',
     'fxa/FxAccountConstants.java',
+    'fxa/FxAccountDevice.java',
+    'fxa/FxAccountDeviceRegistrator.java',
     'fxa/login/BaseRequestDelegate.java',
     'fxa/login/Cohabiting.java',
     'fxa/login/Doghouse.java',
@@ -846,7 +847,6 @@ sync_java_files = [TOPSRCDIR + '/mobile/android/services/src/main/java/org/mozil
     'fxa/login/State.java',
     'fxa/login/StateFactory.java',
     'fxa/login/TokensAndKeysState.java',
-    'fxa/receivers/FxAccountDeletedReceiver.java',
     'fxa/receivers/FxAccountDeletedService.java',
     'fxa/receivers/FxAccountUpgradeReceiver.java',
     'fxa/sync/FxAccountNotificationManager.java',

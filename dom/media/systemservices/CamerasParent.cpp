@@ -5,7 +5,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "CamerasParent.h"
-#include "CamerasUtils.h"
 #include "MediaEngine.h"
 #include "MediaUtils.h"
 
@@ -670,9 +669,8 @@ static bool
 HasCameraPermission(const nsCString& aOrigin)
 {
   // Name used with nsIPermissionManager
-  static const char* cameraPermission = "camera";
+  static const char* cameraPermission = "MediaManagerVideo";
   bool allowed = false;
-  bool permanent = false;
   nsresult rv;
   nsCOMPtr<nsIPermissionManager> mgr =
     do_GetService(NS_PERMISSIONMANAGER_CONTRACTID, &rv);
@@ -691,19 +689,9 @@ HasCameraPermission(const nsCString& aOrigin)
                                                    &video);
         if (NS_SUCCEEDED(rv)) {
           allowed = (video == nsIPermissionManager::ALLOW_ACTION);
-          // Was allowed, now see if this is a persistent permission
-          // or a session one.
-          if (allowed) {
-            rv = mgr->TestExactPermanentPermission(principal,
-                                                   cameraPermission,
-                                                   &video);
-            if (NS_SUCCEEDED(rv)) {
-              permanent = (video == nsIPermissionManager::ALLOW_ACTION);
-            }
-          }
         }
         // Session permissions are removed after one use.
-        if (allowed && !permanent) {
+        if (allowed) {
           mgr->RemoveFromPrincipal(principal, cameraPermission);
         }
       }

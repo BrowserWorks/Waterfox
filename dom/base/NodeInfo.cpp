@@ -24,7 +24,6 @@
 #include "nsCRT.h"
 #include "nsContentUtils.h"
 #include "nsReadableUtils.h"
-#include "nsAutoPtr.h"
 #include "mozilla/Snprintf.h"
 #include "nsIDocument.h"
 #include "nsGkAtoms.h"
@@ -207,6 +206,7 @@ void
 NodeInfo::DeleteCycleCollectable()
 {
   RefPtr<nsNodeInfoManager> kungFuDeathGrip = mOwnerManager;
+  mozilla::Unused << kungFuDeathGrip; // Just keeping value alive for longer than this
   delete this;
 }
 

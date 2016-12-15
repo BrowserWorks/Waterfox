@@ -116,7 +116,7 @@ function OnInitialLoad()
     addEventListener("MozPaintWait", PaintWaitListener, true);
     addEventListener("MozPaintWaitFinished", PaintWaitFinishedListener, true);
 
-    LogWarning("Using browser remote="+ gBrowserIsRemote +"\n");
+    LogInfo("Using browser remote="+ gBrowserIsRemote +"\n");
 }
 
 function SetFailureTimeout(cb, timeout)
@@ -1144,5 +1144,10 @@ function SendUpdateCanvasForEvent(event, contentRootElement)
 #if REFTEST_B2G
 OnInitialLoad();
 #else
-addEventListener("load", OnInitialLoad, true);
+if (content.document.readyState == "complete") {
+  // load event has already fired for content, get started
+  OnInitialLoad();
+} else {
+  addEventListener("load", OnInitialLoad, true);
+}
 #endif

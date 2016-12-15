@@ -6,10 +6,6 @@
 #if defined(MOZ_WIDGET_GTK)
 #include "gfxPlatformGtk.h"
 #define gfxToolkitPlatform gfxPlatformGtk
-#elif defined(MOZ_WIDGET_QT)
-#include <qfontinfo.h>
-#include "gfxQtPlatform.h"
-#define gfxToolkitPlatform gfxQtPlatform
 #elif defined(XP_WIN)
 #include "gfxWindowsPlatform.h"
 #define gfxToolkitPlatform gfxWindowsPlatform
@@ -228,21 +224,4 @@ gfxFT2Font::AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
     aSizes->mFontInstances += aMallocSizeOf(this);
     AddSizeOfExcludingThis(aMallocSizeOf, aSizes);
 }
-
-#ifdef USE_SKIA
-already_AddRefed<mozilla::gfx::GlyphRenderingOptions>
-gfxFT2Font::GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams)
-{
-  mozilla::gfx::FontHinting hinting;
-
-  if (gfxPlatform::GetPlatform()->FontHintingEnabled()) {
-    hinting = mozilla::gfx::FontHinting::NORMAL;
-  } else {
-    hinting = mozilla::gfx::FontHinting::NONE;
-  }
-
-  // We don't want to force the use of the autohinter over the font's built in hints
-  return mozilla::gfx::Factory::CreateCairoGlyphRenderingOptions(hinting, false);
-}
-#endif
 

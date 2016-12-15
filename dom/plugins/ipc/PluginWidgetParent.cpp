@@ -84,9 +84,13 @@ PluginWidgetParent::SetParent(nsIWidget* aParent)
 // makes use of some of the utility functions as well.
 
 bool
-PluginWidgetParent::RecvCreate(nsresult* aResult)
+PluginWidgetParent::RecvCreate(nsresult* aResult, uint64_t* aScrollCaptureId,
+                               uintptr_t* aPluginInstanceId)
 {
   PWLOG("PluginWidgetParent::RecvCreate()\n");
+
+  *aScrollCaptureId = 0;
+  *aPluginInstanceId = 0;
 
   mWidget = do_CreateInstance(kWidgetCID, aResult);
   NS_ASSERTION(NS_SUCCEEDED(*aResult), "widget create failure");
@@ -143,6 +147,10 @@ PluginWidgetParent::RecvCreate(nsresult* aResult)
                mozilla::dom::kPluginWidgetContentParentProperty,
                GetTabParent()->Manager()->AsContentParent());
   NS_ASSERTION(winres, "SetPropW call failure");
+
+  *aScrollCaptureId = mWidget->CreateScrollCaptureContainer();
+  *aPluginInstanceId =
+    reinterpret_cast<uintptr_t>(mWidget->GetNativeData(NS_NATIVE_PLUGIN_ID));
 #endif
 
   // This is a special call we make to nsBaseWidget to register this

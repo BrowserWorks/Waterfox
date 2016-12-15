@@ -18,7 +18,6 @@
 #include "nsPoint.h"
 #include "nsSize.h"
 #include "nsIURI.h"
-#include "nsAutoPtr.h"
 #include "nsFrameMessageManager.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/Attributes.h"
@@ -374,6 +373,9 @@ private:
   // See nsIFrameLoader.idl. EVENT_MODE_NORMAL_DISPATCH automatically
   // forwards some input events to out-of-process content.
   uint32_t mEventMode;
+
+  // Holds the last known size of the frame.
+  mozilla::ScreenIntSize mLazySize;
 
   bool mIsPrerendered : 1;
   bool mDepthTooGreat : 1;

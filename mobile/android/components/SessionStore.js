@@ -39,6 +39,7 @@ function log(a) {
 
 const STATE_STOPPED = 0;
 const STATE_RUNNING = 1;
+const STATE_QUITTING = -1;
 
 const PRIVACY_NONE = 0;
 const PRIVACY_ENCRYPTED = 1;
@@ -46,6 +47,12 @@ const PRIVACY_FULL = 2;
 
 const PREFS_RESTORE_FROM_CRASH = "browser.sessionstore.resume_from_crash";
 const PREFS_MAX_CRASH_RESUMES = "browser.sessionstore.max_resumed_crashes";
+
+const MINIMUM_SAVE_DELAY = 2000;
+// We reduce the delay in background because we could be killed at any moment,
+// however we don't set it to 0 in order to allow for multiple events arriving
+// one after the other to be batched together in one write operation.
+const MINIMUM_SAVE_DELAY_BACKGROUND = 200;
 
 function SessionStore() { }
 
@@ -60,6 +67,7 @@ SessionStore.prototype = {
   _windows: {},
   _lastSaveTime: 0,
   _interval: 10000,
+  _minSaveDelay: MINIMUM_SAVE_DELAY,
   _maxTabsUndo: 5,
   _pendingWrite: 0,
   _scrollSavePending: null,
@@ -77,8 +85,10 @@ SessionStore.prototype = {
     // Get file references
     this._sessionFile = Services.dirsvc.get("ProfD", Ci.nsILocalFile);
     this._sessionFileBackup = this._sessionFile.clone();
+    this._sessionFileTemp = this._sessionFile.clone();
     this._sessionFile.append("sessionstore.js");
     this._sessionFileBackup.append("sessionstore.bak");
+    this._sessionFileTemp.append(this._sessionFile.leafName + ".tmp");
 
     this._loadState = STATE_STOPPED;
     this._startupRestoreFinished = false;
@@ -101,6 +111,7 @@ SessionStore.prototype = {
   _clearDisk: function ss_clearDisk() {
     OS.File.remove(this._sessionFile.path);
     OS.File.remove(this._sessionFileBackup.path);
+    OS.File.remove(this._sessionFileTemp.path);
   },
 
   observe: function ss_observe(aSubject, aTopic, aData) {
@@ -112,9 +123,13 @@ SessionStore.prototype = {
         observerService.addObserver(this, "domwindowopened", true);
         observerService.addObserver(this, "domwindowclosed", true);
         observerService.addObserver(this, "browser:purge-session-history", true);
+        observerService.addObserver(this, "quit-application-requested", true);
+        observerService.addObserver(this, "quit-application-proceeding", true);
+        observerService.addObserver(this, "quit-application", true);
         observerService.addObserver(this, "Session:Restore", true);
         observerService.addObserver(this, "Session:NotifyLocationChange", true);
         observerService.addObserver(this, "application-background", true);
+        observerService.addObserver(this, "application-foreground", true);
         observerService.addObserver(this, "ClosedTabs:StartNotifications", true);
         observerService.addObserver(this, "ClosedTabs:StopNotifications", true);
         observerService.addObserver(this, "last-pb-context-exited", true);
@@ -136,6 +151,36 @@ SessionStore.prototype = {
       case "domwindowclosed": // catch closed windows
         this.onWindowClose(aSubject);
         break;
+      case "quit-application-requested":
+        log("quit-application-requested");
+        // Get a current snapshot of all windows
+        if (this._pendingWrite) {
+          this._forEachBrowserWindow(function(aWindow) {
+            self._collectWindowData(aWindow);
+          });
+        }
+        break;
+      case "quit-application-proceeding":
+        log("quit-application-proceeding");
+        // Freeze the data at what we've got (ignoring closing windows)
+        this._loadState = STATE_QUITTING;
+        break;
+      case "quit-application":
+        log("quit-application");
+        observerService.removeObserver(this, "domwindowopened");
+        observerService.removeObserver(this, "domwindowclosed");
+        observerService.removeObserver(this, "quit-application-requested");
+        observerService.removeObserver(this, "quit-application-proceeding");
+        observerService.removeObserver(this, "quit-application");
+
+        // If a save has been queued, kill the timer and save now
+        if (this._saveTimer) {
+          this._saveTimer.cancel();
+          this._saveTimer = null;
+          this.flushPendingState();
+        }
+
+        break;
       case "browser:purge-session-history": // catch sanitization 
         this._clearDisk();
 
@@ -148,6 +193,8 @@ SessionStore.prototype = {
         if (this._loadState == STATE_RUNNING) {
           // Save the purged state immediately
           this.saveState();
+        } else if (this._loadState == STATE_QUITTING) {
+          this.saveStateDelayed();
         }
 
         Services.obs.notifyObservers(null, "sessionstore-state-purge-complete", "");
@@ -156,11 +203,13 @@ SessionStore.prototype = {
         }
         break;
       case "timer-callback":
-        // Timer call back for delayed saving
-        this._saveTimer = null;
-        log("timer-callback, pendingWrite = " + this._pendingWrite);
-        if (this._pendingWrite) {
-          this.saveState();
+        if (this._loadState == STATE_RUNNING) {
+          // Timer call back for delayed saving
+          this._saveTimer = null;
+          log("timer-callback, pendingWrite = " + this._pendingWrite);
+          if (this._pendingWrite) {
+            this.saveState();
+          }
         }
         break;
       case "Session:Restore": {
@@ -228,7 +277,17 @@ SessionStore.prototype = {
         // point without notice; therefore, we must synchronously write out any
         // pending save state to ensure that this data does not get lost.
         log("application-background");
+        // Tab events dispatched immediately before the application was backgrounded
+        // might actually arrive after this point, therefore save them without delay.
+        this._interval = 0;
+        this._minSaveDelay = MINIMUM_SAVE_DELAY_BACKGROUND; // A small delay allows successive tab events to be batched together.
         this.flushPendingState();
+        break;
+      case "application-foreground":
+        // Reset minimum interval between session store writes back to default.
+        log("application-foreground");
+        this._interval = Services.prefs.getIntPref("browser.sessionstore.interval");
+        this._minSaveDelay = MINIMUM_SAVE_DELAY;
         break;
       case "ClosedTabs:StartNotifications":
         this._notifyClosedTabs = true;
@@ -316,11 +375,19 @@ SessionStore.prototype = {
         }
         break;
       }
-      case "pageshow": {
+      case "pageshow":
+      case "AboutReaderContentReady": {
         let browser = aEvent.currentTarget;
 
         // Skip subframe pageshows.
         if (browser.contentDocument !== aEvent.originalTarget) {
+          return;
+        }
+
+        if (browser.currentURI.spec.startsWith("about:reader") &&
+            !browser.contentDocument.body.classList.contains("loaded")) {
+          // Don't restore the scroll position of an about:reader page at this point;
+          // wait for the custom event dispatched from AboutReader.jsm instead.
           return;
         }
 
@@ -329,7 +396,7 @@ SessionStore.prototype = {
         // or on load, whichever comes first.
         // In the latter case, our load handler runs before the MVM's one, which is the
         // wrong way around, so we have to use a later event instead.
-        log("pageshow for tab " + window.BrowserApp.getTabForBrowser(browser).id);
+        log(aEvent.type + " for tab " + window.BrowserApp.getTabForBrowser(browser).id);
         if (browser.__SS_restoreDataOnPageshow) {
           delete browser.__SS_restoreDataOnPageshow;
           this._restoreScrollPosition(browser.__SS_data.scrolldata, browser);
@@ -373,7 +440,7 @@ SessionStore.prototype = {
     }
 
     // Ignore non-browser windows and windows opened while shutting down
-    if (aWindow.document.documentElement.getAttribute("windowtype") != "navigator:browser") {
+    if (aWindow.document.documentElement.getAttribute("windowtype") != "navigator:browser" || this._loadState == STATE_QUITTING) {
       return;
     }
 
@@ -442,6 +509,7 @@ SessionStore.prototype = {
     // Gecko might set the initial zoom level after the JS "load" event,
     // so we have to restore zoom and scroll position after that.
     aBrowser.addEventListener("pageshow", this, true);
+    aBrowser.addEventListener("AboutReaderContentReady", this, true);
 
     // Use a combination of events to watch for text data changes
     aBrowser.addEventListener("change", this, true);
@@ -465,6 +533,7 @@ SessionStore.prototype = {
     aBrowser.removeEventListener("DOMTitleChanged", this, true);
     aBrowser.removeEventListener("load", this, true);
     aBrowser.removeEventListener("pageshow", this, true);
+    aBrowser.removeEventListener("AboutReaderContentReady", this, true);
     aBrowser.removeEventListener("change", this, true);
     aBrowser.removeEventListener("input", this, true);
     aBrowser.removeEventListener("DOMAutoComplete", this, true);
@@ -741,10 +810,10 @@ SessionStore.prototype = {
   saveStateDelayed: function ss_saveStateDelayed() {
     if (!this._saveTimer) {
       // Interval until the next disk operation is allowed
-      let minimalDelay = this._lastSaveTime + this._interval - Date.now();
+      let currentDelay = this._lastSaveTime + this._interval - Date.now();
 
       // If we have to wait, set a timer, otherwise saveState directly
-      let delay = Math.max(minimalDelay, 2000);
+      let delay = Math.max(currentDelay, this._minSaveDelay);
       if (delay > 0) {
         this._pendingWrite++;
         this._saveTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -755,8 +824,9 @@ SessionStore.prototype = {
         log("saveStateDelayed() no delay");
         this.saveState();
       }
+    } else {
+      log("saveStateDelayed() timer already running, taking no action");
     }
-    log("saveStateDelayed() timer already running, taking no action");
   },
 
   saveState: function ss_saveState() {
@@ -821,7 +891,7 @@ SessionStore.prototype = {
     } else {
       log("_saveState() writing empty normal data");
     }
-    this._writeFile(this._sessionFile, normalData, aAsync);
+    this._writeFile(this._sessionFile, this._sessionFileTemp, normalData, aAsync);
 
     // If we have private data, send it to Java; otherwise, send null to
     // indicate that there is no private data
@@ -905,10 +975,11 @@ SessionStore.prototype = {
    * Writes the session state to a disk file, while doing some telemetry and notification
    * bookkeeping.
    * @param aFile nsIFile used for saving the session
+   * @param aFileTemp nsIFile used as a temporary file in writing the data
    * @param aData JSON session state
    * @param aAsync boolelan used to determine the method of saving the state
    */
-  _writeFile: function ss_writeFile(aFile, aData, aAsync) {
+  _writeFile: function ss_writeFile(aFile, aFileTemp, aData, aAsync) {
     TelemetryStopwatch.start("FX_SESSION_RESTORE_SERIALIZE_DATA_MS");
     let state = JSON.stringify(aData);
     TelemetryStopwatch.finish("FX_SESSION_RESTORE_SERIALIZE_DATA_MS");
@@ -922,7 +993,7 @@ SessionStore.prototype = {
 
     log("_writeFile(aAsync = " + aAsync + "), _pendingWrite = " + this._pendingWrite);
     let pendingWrite = this._pendingWrite;
-    this._write(aFile, buffer, aAsync).then(() => {
+    this._write(aFile, aFileTemp, buffer, aAsync).then(() => {
       let stopWriteMs = Cu.now();
 
       // Make sure this._pendingWrite is the same value it was before we
@@ -944,23 +1015,27 @@ SessionStore.prototype = {
   /**
    * Writes the session state to a disk file, using async or sync methods
    * @param aFile nsIFile used for saving the session
+   * @param aFileTemp nsIFile used as a temporary file in writing the data
    * @param aBuffer UTF-8 encoded ArrayBuffer of the session state
    * @param aAsync boolelan used to determine the method of saving the state
    * @return Promise that resolves when the file has been written
    */
-  _write: function ss_write(aFile, aBuffer, aAsync) {
+  _write: function ss_write(aFile, aFileTemp, aBuffer, aAsync) {
     // Use async file writer and just return it's promise
     if (aAsync) {
       log("_write() writing asynchronously");
-      return OS.File.writeAtomic(aFile.path, aBuffer, { tmpPath: aFile.path + ".tmp" });
+      return OS.File.writeAtomic(aFile.path, aBuffer, { tmpPath: aFileTemp.path });
     }
 
     // Convert buffer to an encoded string and sync write to disk
     let bytes = String.fromCharCode.apply(null, new Uint16Array(aBuffer));
     let stream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(Ci.nsIFileOutputStream);
-    stream.init(aFile, 0x02 | 0x08 | 0x20, 0o666, 0);
+    stream.init(aFileTemp, 0x02 | 0x08 | 0x20, 0o666, 0);
     stream.write(bytes, bytes.length);
     stream.close();
+    // Mimic writeAtomic behaviour when tmpPath is set and write
+    // to a temp file which is then renamed at the end.
+    aFileTemp.renameTo(null, aFile.leafName);
     log("_write() writing synchronously");
 
     // Return a resolved promise to make the caller happy
@@ -1052,23 +1127,24 @@ SessionStore.prototype = {
       }
     }
 
-    if (aEntry.owner) {
+    if (aEntry.triggeringPrincipal) {
       try {
         let binaryStream = Cc["@mozilla.org/binaryoutputstream;1"].createInstance(Ci.nsIObjectOutputStream);
         let pipe = Cc["@mozilla.org/pipe;1"].createInstance(Ci.nsIPipe);
         pipe.init(false, false, 0, 0xffffffff, null);
         binaryStream.setOutputStream(pipe.outputStream);
-        binaryStream.writeCompoundObject(aEntry.owner, Ci.nsISupports, true);
+        binaryStream.writeCompoundObject(aEntry.triggeringPrincipal, Ci.nsIPrincipal, true);
         binaryStream.close();
 
         // Now we want to read the data from the pipe's input end and encode it.
         let scriptableStream = Cc["@mozilla.org/binaryinputstream;1"].createInstance(Ci.nsIBinaryInputStream);
         scriptableStream.setInputStream(pipe.inputStream);
-        let ownerBytes = scriptableStream.readByteArray(scriptableStream.available());
+        let triggeringPrincipalBytes = scriptableStream.readByteArray(scriptableStream.available());
         // We can stop doing base64 encoding once our serialization into JSON
         // is guaranteed to handle all chars in strings, including embedded
         // nulls.
-        entry.owner_b64 = btoa(String.fromCharCode.apply(null, ownerBytes));
+        entry.triggeringPrincipal_b64 =
+          btoa(String.fromCharCode.apply(null, triggeringPrincipalBytes));
       } catch (e) { dump(e); }
     }
 
@@ -1184,15 +1260,25 @@ SessionStore.prototype = {
       }
     }
 
+    // The field aEntry.owner_b64 got renamed to aEntry.triggeringPricipal_b64 in
+    // Bug 1286472. To remain backward compatible we still have to support that
+    // field for a few cycles before we can remove it within Bug 1289785.
     if (aEntry.owner_b64) {
-      let ownerInput = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
-      let binaryData = atob(aEntry.owner_b64);
-      ownerInput.setData(binaryData, binaryData.length);
-      let binaryStream = Cc["@mozilla.org/binaryinputstream;1"].createInstance(Ci.nsIObjectInputStream);
-      binaryStream.setInputStream(ownerInput);
+      aEntry.triggeringPricipal_b64 = aEntry.owner_b64;
+      delete aEntry.owner_b64;
+    }
+
+    if (aEntry.triggeringPrincipal_b64) {
+      let triggeringPrincipalInput = Cc["@mozilla.org/io/string-input-stream;1"]
+                                       .createInstance(Ci.nsIStringInputStream);
+      let binaryData = atob(aEntry.triggeringPrincipal_b64);
+      triggeringPrincipalInput.setData(binaryData, binaryData.length);
+      let binaryStream = Cc["@mozilla.org/binaryinputstream;1"]
+                           .createInstance(Ci.nsIObjectInputStream);
+      binaryStream.setInputStream(triggeringPrincipalInput);
       try { // Catch possible deserialization exceptions
-        shEntry.owner = binaryStream.readObject(true);
-      } catch (ex) { dump(ex); }
+        shEntry.triggeringPrincipal = binaryStream.readObject(true);
+      } catch (ex) { Cu.reportError("SessionStore: " + ex); }
     }
 
     if (aEntry.children && shEntry instanceof Ci.nsISHContainer) {
@@ -1597,7 +1683,12 @@ SessionStore.prototype = {
     delete this._windows[aWindow.__SSID];
     delete aWindow.__SSID;
 
-    this.saveState();
+    if (this._loadState == STATE_RUNNING) {
+      // Save the purged state immediately
+      this.saveState();
+    } else if (this._loadState == STATE_QUITTING) {
+      this.saveStateDelayed();
+    }
   }
 
 };

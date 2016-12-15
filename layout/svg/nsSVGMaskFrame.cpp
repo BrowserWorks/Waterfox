@@ -217,19 +217,7 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(gfxContext* aContext,
   }
   AutoMaskReferencer maskRef(this);
 
-  SVGMaskElement *maskElem = static_cast<SVGMaskElement*>(mContent);
-
-  uint16_t units =
-    maskElem->mEnumAttributes[SVGMaskElement::MASKUNITS].GetAnimValue();
-  gfxRect bbox;
-  if (units == SVG_UNIT_TYPE_OBJECTBOUNDINGBOX) {
-    bbox = nsSVGUtils::GetBBox(aMaskedFrame);
-  }
-
-  // Bounds in the user space of aMaskedFrame
-  gfxRect maskArea = nsSVGUtils::GetRelativeRect(units,
-                       &maskElem->mLengthAttributes[SVGMaskElement::ATTR_X],
-                       bbox, aMaskedFrame);
+  gfxRect maskArea = GetMaskArea(aMaskedFrame);
 
   // Get the clip extents in device space:
   // Minimizing the mask surface extents (using both the current clip extents
@@ -260,7 +248,7 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(gfxContext* aContext,
   gfxMatrix maskSurfaceMatrix =
     aContext->CurrentMatrix() * gfxMatrix::Translation(-maskSurfaceRect.TopLeft());
 
-  RefPtr<gfxContext> tmpCtx = gfxContext::ForDrawTarget(maskDT);
+  RefPtr<gfxContext> tmpCtx = gfxContext::CreateOrNull(maskDT);
   MOZ_ASSERT(tmpCtx); // already checked the draw target above
   tmpCtx->SetMatrix(maskSurfaceMatrix);
 
@@ -278,7 +266,10 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(gfxContext* aContext,
       m = static_cast<nsSVGElement*>(kid->GetContent())->
             PrependLocalTransformsTo(m);
     }
-    nsSVGUtils::PaintFrameWithEffects(kid, *tmpCtx, m);
+    DrawResult result = nsSVGUtils::PaintFrameWithEffects(kid, *tmpCtx, m);
+    if (result != DrawResult::SUCCESS) {
+      return nullptr;
+    }
   }
 
   RefPtr<SourceSurface> maskSnapshot = maskDT->Snapshot();
@@ -343,6 +334,26 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(gfxContext* aContext,
 
   *aMaskTransform = ToMatrix(maskSurfaceMatrix);
   return destMaskSurface.forget();
+}
+
+gfxRect
+nsSVGMaskFrame::GetMaskArea(nsIFrame* aMaskedFrame)
+{
+  SVGMaskElement *maskElem = static_cast<SVGMaskElement*>(mContent);
+
+  uint16_t units =
+    maskElem->mEnumAttributes[SVGMaskElement::MASKUNITS].GetAnimValue();
+  gfxRect bbox;
+  if (units == SVG_UNIT_TYPE_OBJECTBOUNDINGBOX) {
+    bbox = nsSVGUtils::GetBBox(aMaskedFrame);
+  }
+
+  // Bounds in the user space of aMaskedFrame
+  gfxRect maskArea = nsSVGUtils::GetRelativeRect(units,
+                       &maskElem->mLengthAttributes[SVGMaskElement::ATTR_X],
+                       bbox, aMaskedFrame);
+
+  return maskArea;
 }
 
 nsresult

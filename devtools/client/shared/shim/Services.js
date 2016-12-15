@@ -6,7 +6,7 @@
 
 "use strict";
 
-/* globals localStorage, window */
+/* globals localStorage, window, document, NodeFilter */
 
 // Some constants from nsIPrefBranch.idl.
 const PREF_INVALID = 0;
@@ -465,6 +465,117 @@ const Services = {
    * by devtools is implemented here.
    */
   prefs: new PrefBranch(null, "", ""),
+
+  /**
+   * An implementation of Services.appinfo that holds just the
+   * properties needed by devtools.
+   */
+  appinfo: {
+    get OS() {
+      const os = window.navigator.userAgent;
+      if (os) {
+        if (os.includes("Linux")) {
+          return "Linux";
+        } else if (os.includes("Windows")) {
+          return "WINNT";
+        } else if (os.includes("Mac")) {
+          return "Darwin";
+        }
+      }
+      return "Unknown";
+    },
+
+    // It's fine for this to be an approximation.
+    get name() {
+      return window.navigator.userAgent;
+    },
+
+    // It's fine for this to be an approximation.
+    get version() {
+      return window.navigator.appVersion;
+    },
+
+    // This is only used by telemetry, which is disabled for the
+    // content case.  So, being totally wrong is ok.
+    get is64Bit() {
+      return true;
+    },
+  },
+
+  /**
+   * A no-op implementation of Services.telemetry.  This supports just
+   * the subset of Services.telemetry that is used by devtools.
+   */
+  telemetry: {
+    getHistogramById: function (name) {
+      return {
+        add: () => {}
+      };
+    },
+
+    getKeyedHistogramById: function (name) {
+      return {
+        add: () => {}
+      };
+    },
+  },
+
+  /**
+   * An implementation of Services.focus that holds just the
+   * properties and methods needed by devtools.
+   * @see nsIFocusManager.idl for details.
+   */
+  focus: {
+    // These values match nsIFocusManager in order to make testing a
+    // bit simpler.
+    MOVEFOCUS_FORWARD: 1,
+    MOVEFOCUS_BACKWARD: 2,
+
+    get focusedElement() {
+      if (!document.hasFocus()) {
+        return null;
+      }
+      return document.activeElement;
+    },
+
+    moveFocus: function (window, startElement, type, flags) {
+      if (flags !== 0) {
+        throw new Error("shim Services.focus.moveFocus only accepts flags===0");
+      }
+      if (type !== Services.focus.MOVEFOCUS_FORWARD
+          && type !== Services.focus.MOVEFOCUS_BACKWARD) {
+        throw new Error("shim Services.focus.moveFocus only supports " +
+                        " MOVEFOCUS_FORWARD and MOVEFOCUS_BACKWARD");
+      }
+
+      if (!startElement) {
+        startElement = document.activeElement || document;
+      }
+
+      let iter = document.createTreeWalker(document, NodeFilter.SHOW_ELEMENT, {
+        acceptNode: function (node) {
+          let tabIndex = node.getAttribute("tabindex");
+          if (tabIndex === "-1") {
+            return NodeFilter.FILTER_SKIP;
+          }
+          node.focus();
+          if (document.activeElement == node) {
+            return NodeFilter.FILTER_ACCEPT;
+          }
+          return NodeFilter.FILTER_SKIP;
+        }
+      });
+
+      iter.currentNode = startElement;
+
+      // Sets the focus via side effect in the filter.
+      if (type === Services.focus.MOVEFOCUS_FORWARD) {
+        iter.nextNode();
+      } else {
+        iter.previousNode();
+      }
+    },
+  },
 };
 
 /**

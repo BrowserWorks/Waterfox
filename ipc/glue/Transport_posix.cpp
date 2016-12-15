@@ -10,8 +10,6 @@
 
 #include "base/eintr_wrapper.h"
 
-#include "chrome/common/child_process_info.h"
-
 #include "mozilla/ipc/Transport.h"
 #include "mozilla/ipc/FileDescriptor.h"
 #include "ProtocolUtils.h"
@@ -53,16 +51,17 @@ CreateTransport(base::ProcessId aProcIdOne,
   return NS_OK;
 }
 
-Transport*
+UniquePtr<Transport>
 OpenDescriptor(const TransportDescriptor& aTd, Transport::Mode aMode)
 {
-  return new Transport(aTd.mFd.fd, aMode, nullptr);
+  return MakeUnique<Transport>(aTd.mFd.fd, aMode, nullptr);
 }
 
-Transport*
+UniquePtr<Transport>
 OpenDescriptor(const FileDescriptor& aFd, Transport::Mode aMode)
 {
-  return new Transport(aFd.PlatformHandle(), aMode, nullptr);
+  auto rawFD = aFd.ClonePlatformHandle();
+  return MakeUnique<Transport>(rawFD.release(), aMode, nullptr);
 }
 
 TransportDescriptor

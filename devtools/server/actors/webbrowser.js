@@ -6,8 +6,11 @@
 
 "use strict";
 
+/* global XPCNativeWrapper */
+
 var { Ci, Cu } = require("chrome");
 var Services = require("Services");
+var { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 var promise = require("promise");
 var {
   ActorPool, createExtraActors, appendExtraActors, GeneratedLocation
@@ -18,12 +21,11 @@ var { assert } = DevToolsUtils;
 var { TabSources } = require("./utils/TabSources");
 var makeDebugger = require("./utils/make-debugger");
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-
 loader.lazyRequireGetter(this, "RootActor", "devtools/server/actors/root", true);
 loader.lazyRequireGetter(this, "ThreadActor", "devtools/server/actors/script", true);
 loader.lazyRequireGetter(this, "unwrapDebuggerObjectGlobal", "devtools/server/actors/script", true);
 loader.lazyRequireGetter(this, "BrowserAddonActor", "devtools/server/actors/addon", true);
+loader.lazyRequireGetter(this, "WebExtensionActor", "devtools/server/actors/webextension", true);
 loader.lazyRequireGetter(this, "WorkerActorList", "devtools/server/actors/worker", true);
 loader.lazyRequireGetter(this, "ServiceWorkerRegistrationActorList", "devtools/server/actors/worker", true);
 loader.lazyRequireGetter(this, "ProcessActorList", "devtools/server/actors/process", true);
@@ -316,10 +318,6 @@ BrowserTabList.prototype._getChildren = function (window) {
   });
 };
 
-BrowserTabList.prototype._isRemoteBrowser = function (browser) {
-  return browser.getAttribute("remote") == "true";
-};
-
 BrowserTabList.prototype.getList = function () {
   let topXULWindow = Services.wm.getMostRecentWindow(
     DebuggerServer.chromeWindowType);
@@ -368,21 +366,35 @@ BrowserTabList.prototype._getActorForBrowser = function (browser) {
   if (actor) {
     this._foundCount++;
     return actor.update();
-  } else if (this._isRemoteBrowser(browser)) {
-    actor = new RemoteBrowserTabActor(this._connection, browser);
-    this._actorByBrowser.set(browser, actor);
-    this._checkListening();
-    return actor.connect();
   }
 
   actor = new BrowserTabActor(this._connection, browser);
   this._actorByBrowser.set(browser, actor);
   this._checkListening();
-  return promise.resolve(actor);
+  return actor.connect();
 };
 
 BrowserTabList.prototype.getTab = function ({ outerWindowID, tabId }) {
   if (typeof outerWindowID == "number") {
+    // First look for in-process frames with this ID
+    let window = Services.wm.getOuterWindowWithId(outerWindowID);
+    // Safety check to prevent debugging top level window via getTab
+    if (window instanceof Ci.nsIDOMChromeWindow) {
+      return promise.reject({
+        error: "forbidden",
+        message: "Window with outerWindowID '" + outerWindowID + "' is chrome"
+      });
+    }
+    if (window) {
+      let iframe = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                         .getInterface(Ci.nsIDOMWindowUtils)
+                         .containerElement;
+      if (iframe) {
+        return this._getActorForBrowser(iframe);
+      }
+    }
+    // Then also look on registered <xul:browsers> when using outerWindowID for
+    // OOP tabs
     for (let browser of this._getBrowsers()) {
       if (browser.outerWindowID == outerWindowID) {
         return this._getActorForBrowser(browser);
@@ -549,34 +561,36 @@ BrowserTabList.prototype._listenForEventsIf =
  * @param aMessageNames array of strings
  *    An array of message names.
  */
-BrowserTabList.prototype._listenForMessagesIf = function (aShouldListen, aGuard, aMessageNames) {
-  if (!aShouldListen !== !this[aGuard]) {
-    let op = aShouldListen ? "addMessageListener" : "removeMessageListener";
-    for (let win of allAppShellDOMWindows(DebuggerServer.chromeWindowType)) {
-      for (let name of aMessageNames) {
-        win.messageManager[op](name, this);
+BrowserTabList.prototype._listenForMessagesIf =
+  function (shouldListen, guard, messageNames) {
+    if (!shouldListen !== !this[guard]) {
+      let op = shouldListen ? "addMessageListener" : "removeMessageListener";
+      for (let win of allAppShellDOMWindows(DebuggerServer.chromeWindowType)) {
+        for (let name of messageNames) {
+          win.messageManager[op](name, this);
+        }
       }
+      this[guard] = shouldListen;
     }
-    this[aGuard] = aShouldListen;
-  }
-};
+  };
 
 /**
  * Implement nsIMessageListener.
  */
-BrowserTabList.prototype.receiveMessage = DevToolsUtils.makeInfallible(function (message) {
-  let browser = message.target;
-  switch (message.name) {
-    case "DOMTitleChanged": {
-      let actor = this._actorByBrowser.get(browser);
-      if (actor) {
-        this._notifyListChanged();
-        this._checkListening();
+BrowserTabList.prototype.receiveMessage = DevToolsUtils.makeInfallible(
+  function (message) {
+    let browser = message.target;
+    switch (message.name) {
+      case "DOMTitleChanged": {
+        let actor = this._actorByBrowser.get(browser);
+        if (actor) {
+          this._notifyListChanged();
+          this._checkListening();
+        }
+        break;
       }
-      break;
     }
-  }
-});
+  });
 
 /**
  * Implement nsIDOMEventListener.
@@ -600,8 +614,7 @@ DevToolsUtils.makeInfallible(function (event) {
       break;
     }
     case "TabRemotenessChange": {
-      // We have to remove the cached actor as we have to create a new instance
-      // based on BrowserTabActor or RemoteBrowserTabActor.
+      // We have to remove the cached actor as we have to create a new instance.
       let actor = this._actorByBrowser.get(browser);
       if (actor) {
         this._actorByBrowser.delete(browser);
@@ -815,6 +828,10 @@ exports.BrowserTabList = BrowserTabList;
  *    This event fires when we switch the TabActor targeted document
  *    to one of its iframes, or back to its original top document.
  *    It is dispatched between window-destroyed and window-ready.
+ *  - stylesheet-added
+ *    This event is fired when a StyleSheetActor is created.
+ *    It contains the following attribute :
+ *     * actor (StyleSheetActor) The created actor.
  *
  * Note that *all* these events are dispatched in the following order
  * when we switch the context of the TabActor to a given iframe:
@@ -824,9 +841,8 @@ exports.BrowserTabList = BrowserTabList;
  *  - window-ready
  *  - navigate
  *
- * This class is subclassed by BrowserTabActor and
- * ContentActor. Subclasses are expected to implement a getter
- * for the docShell property.
+ * This class is subclassed by ContentActor and others.
+ * Subclasses are expected to implement a getter for the docShell property.
  *
  * @param connection DebuggerServerConnection
  *        The conection to the client.
@@ -877,6 +893,16 @@ function TabActor(connection) {
 
 TabActor.prototype = {
   traits: null,
+
+  // Optional console API listener options (e.g. used by the WebExtensionActor to
+  // filter console messages by addonID), set to an empty (no options) object by default.
+  consoleAPIListenerOptions: {},
+
+  // Optional TabSources filter function (e.g. used by the WebExtensionActor to filter
+  // sources by addonID), allow all sources by default.
+  _allowSource() {
+    return true;
+  },
 
   get exited() {
     return this._exited;
@@ -1048,7 +1074,7 @@ TabActor.prototype = {
 
   get sources() {
     if (!this._sources) {
-      this._sources = new TabSources(this.threadActor);
+      this._sources = new TabSources(this.threadActor, this._allowSource);
     }
     return this._sources;
   },
@@ -1122,10 +1148,7 @@ TabActor.prototype = {
       this.threadActor._tabClosed = true;
     }
 
-    if (this._detach()) {
-      this.conn.send({ from: this.actorID,
-                       type: "tabDetached" });
-    }
+    this._detach();
 
     Object.defineProperty(this, "docShell", {
       value: null,
@@ -1356,17 +1379,28 @@ TabActor.prototype = {
                          .getInterface(Ci.nsIDOMWindowUtils)
                          .outerWindowID;
       }
+
+      // Collect the addonID from the document origin attributes.
+      let addonID = window.document.nodePrincipal.originAttributes.addonId;
+
       return {
-        id: id,
+        id,
+        parentID,
+        addonID,
         url: window.location.href,
         title: window.document.title,
-        parentID: parentID
       };
     });
   },
 
   _notifyDocShellsUpdate(docshells) {
     let windows = this._docShellsToWindows(docshells);
+
+    // Do not send the `frameUpdate` event if the windows array is empty.
+    if (windows.length == 0) {
+      return;
+    }
+
     this.conn.send({ from: this.actorID,
                      type: "frameUpdate",
                      frames: windows
@@ -1516,6 +1550,9 @@ TabActor.prototype = {
     }
 
     this._attached = false;
+
+    this.conn.send({ from: this.actorID,
+                     type: "tabDetached" });
 
     return true;
   },
@@ -2016,7 +2053,7 @@ TabActor.prototype = {
       // We are very explicitly examining the "console" property of
       // the non-Xrayed object here.
       let console = window.wrappedJSObject.console;
-      isNative = new XPCNativeWrapper(console).IS_NATIVE_CONSOLE
+      isNative = new XPCNativeWrapper(console).IS_NATIVE_CONSOLE;
     } catch (ex) {
       // ignore
     }
@@ -2041,6 +2078,7 @@ TabActor.prototype = {
     this._styleSheetActors.set(styleSheet, actor);
 
     this._tabPool.addActor(actor);
+    events.emit(this, "stylesheet-added", actor);
 
     return actor;
   },
@@ -2068,41 +2106,35 @@ TabActor.prototype = {
   onResolveLocation(request) {
     let { url, line } = request;
     let column = request.column || 0;
-    let actor = this.sources.getSourceActorByURL(url);
+    const scripts = this.threadActor.dbg.findScripts({ url });
 
-    if (actor) {
-      // Get the generated source actor if this is source mapped
-      let generatedActor = actor.generatedSource ?
-        this.sources.createNonSourceMappedActor(actor.generatedSource) :
-        actor;
-      let generatedLocation = new GeneratedLocation(
-        generatedActor, line, column);
-
-      return this.sources.getOriginalLocation(generatedLocation).then(loc => {
-        // If no map found, return this packet
-        if (loc.originalLine == null) {
-          return {
-            from: this.actorID,
-            type: "resolveLocation",
-            error: "MAP_NOT_FOUND"
-          };
-        }
-
-        loc = loc.toJSON();
-        return {
-          from: this.actorID,
-          url: loc.source.url,
-          column: loc.column,
-          line: loc.line
-        };
+    if (!scripts[0] || !scripts[0].source) {
+      return promise.resolve({
+        from: this.actorID,
+        type: "resolveLocation",
+        error: "SOURCE_NOT_FOUND"
       });
     }
+    const source = scripts[0].source;
+    const generatedActor = this.sources.createNonSourceMappedActor(source);
+    let generatedLocation = new GeneratedLocation(
+      generatedActor, line, column);
+    return this.sources.getOriginalLocation(generatedLocation).then(loc => {
+      // If no map found, return this packet
+      if (loc.originalLine == null) {
+        return {
+          type: "resolveLocation",
+          error: "MAP_NOT_FOUND"
+        };
+      }
 
-    // Fall back to this packet when source is not found
-    return promise.resolve({
-      from: this.actorID,
-      type: "resolveLocation",
-      error: "SOURCE_NOT_FOUND"
+      loc = loc.toJSON();
+      return {
+        from: this.actorID,
+        url: loc.source.url,
+        column: loc.column,
+        line: loc.line
+      };
     });
   },
 };
@@ -2126,127 +2158,44 @@ TabActor.prototype.requestTypes = {
 exports.TabActor = TabActor;
 
 /**
- * Creates a tab actor for handling requests to a single in-process
- * <xul:browser> tab, or <html:iframe>.
- * Most of the implementation comes from TabActor.
- *
- * @param connection DebuggerServerConnection
- *        The connection to the client.
- * @param browser browser
- *        The frame instance that contains this tab.
- */
-function BrowserTabActor(connection, browser) {
-  TabActor.call(this, connection, browser);
-  this._browser = browser;
-  if (typeof browser.getTabBrowser == "function") {
-    this._tabbrowser = browser.getTabBrowser();
-  }
-
-  Object.defineProperty(this, "docShell", {
-    value: this._browser.docShell,
-    configurable: true
-  });
-}
-
-BrowserTabActor.prototype = Object.create(TabActor.prototype);
-
-BrowserTabActor.prototype.constructor = BrowserTabActor;
-
-Object.defineProperty(BrowserTabActor.prototype, "title", {
-  get() {
-    // On Fennec, we can check the session store data for zombie tabs
-    if (this._browser.__SS_restore) {
-      let sessionStore = this._browser.__SS_data;
-      // Get the last selected entry
-      let entry = sessionStore.entries[sessionStore.index - 1];
-      return entry.title;
-    }
-    let title = this.contentDocument.title || this._browser.contentTitle;
-    // If contentTitle is empty (e.g. on a not-yet-restored tab), but there is a
-    // tabbrowser (i.e. desktop Firefox, but not Fennec), we can use the label
-    // as the title.
-    if (!title && this._tabbrowser) {
-      let tab = this._tabbrowser._getTabForContentWindow(this.window);
-      if (tab) {
-        title = tab.label;
-      }
-    }
-    return title;
-  },
-  enumerable: true,
-  configurable: false
-});
-
-Object.defineProperty(BrowserTabActor.prototype, "url", {
-  get() {
-    // On Fennec, we can check the session store data for zombie tabs
-    if (this._browser.__SS_restore) {
-      let sessionStore = this._browser.__SS_data;
-      // Get the last selected entry
-      let entry = sessionStore.entries[sessionStore.index - 1];
-      return entry.url;
-    }
-    if (this.webNavigation.currentURI) {
-      return this.webNavigation.currentURI.spec;
-    }
-    return null;
-  },
-  enumerable: true,
-  configurable: true
-});
-
-Object.defineProperty(BrowserTabActor.prototype, "browser", {
-  get() {
-    return this._browser;
-  },
-  enumerable: true,
-  configurable: false
-});
-
-BrowserTabActor.prototype.disconnect = function () {
-  TabActor.prototype.disconnect.call(this);
-  this._browser = null;
-  this._tabbrowser = null;
-};
-
-BrowserTabActor.prototype.exit = function () {
-  TabActor.prototype.exit.call(this);
-  this._browser = null;
-  this._tabbrowser = null;
-};
-
-exports.BrowserTabActor = BrowserTabActor;
-
-/**
- * This actor is a shim that connects to a ContentActor in a remote
- * browser process. All RDP packets get forwarded using the message
- * manager.
+ * Creates a tab actor for handling requests to a single browser frame.
+ * Both <xul:browser> and <iframe mozbrowser> are supported.
+ * This actor is a shim that connects to a ContentActor in a remote browser process.
+ * All RDP packets get forwarded using the message manager.
  *
  * @param connection The main RDP connection.
- * @param browser XUL <browser> element to connect to.
+ * @param browser <xul:browser> or <iframe mozbrowser> element to connect to.
  */
-function RemoteBrowserTabActor(connection, browser) {
+function BrowserTabActor(connection, browser) {
   this._conn = connection;
   this._browser = browser;
   this._form = null;
 }
 
-RemoteBrowserTabActor.prototype = {
+BrowserTabActor.prototype = {
   connect() {
     let onDestroy = () => {
       this._form = null;
     };
-    let connect = DebuggerServer.connectToChild(
-      this._conn, this._browser, onDestroy);
+    let connect = DebuggerServer.connectToChild(this._conn, this._browser, onDestroy);
     return connect.then(form => {
       this._form = form;
       return this;
     });
   },
 
+  get _tabbrowser() {
+    if (typeof this._browser.getTabBrowser == "function") {
+      return this._browser.getTabBrowser();
+    }
+    return null;
+  },
+
   get _mm() {
-    return this._browser.QueryInterface(Ci.nsIFrameLoaderOwner).frameLoader
-           .messageManager;
+    // Get messageManager from XUL browser (which might be a specialized tunnel for RDM)
+    // or else fallback to asking the frameLoader itself.
+    return this._browser.messageManager ||
+           this._browser.frameLoader.messageManager;
   },
 
   update() {
@@ -2272,8 +2221,57 @@ RemoteBrowserTabActor.prototype = {
     return this.connect();
   },
 
+  /**
+   * If we don't have a title from the content side because it's a zombie tab, try to find
+   * it on the chrome side.
+   */
+  get title() {
+    // On Fennec, we can check the session store data for zombie tabs
+    if (this._browser.__SS_restore) {
+      let sessionStore = this._browser.__SS_data;
+      // Get the last selected entry
+      let entry = sessionStore.entries[sessionStore.index - 1];
+      return entry.title;
+    }
+    // If contentTitle is empty (e.g. on a not-yet-restored tab), but there is a
+    // tabbrowser (i.e. desktop Firefox, but not Fennec), we can use the label
+    // as the title.
+    if (this._tabbrowser) {
+      let tab = this._tabbrowser.getTabForBrowser(this._browser);
+      if (tab) {
+        return tab.label;
+      }
+    }
+    return "";
+  },
+
+  /**
+   * If we don't have a url from the content side because it's a zombie tab, try to find
+   * it on the chrome side.
+   */
+  get url() {
+    // On Fennec, we can check the session store data for zombie tabs
+    if (this._browser.__SS_restore) {
+      let sessionStore = this._browser.__SS_data;
+      // Get the last selected entry
+      let entry = sessionStore.entries[sessionStore.index - 1];
+      return entry.url;
+    }
+    return null;
+  },
+
   form() {
-    return this._form;
+    let form = Object.assign({}, this._form);
+    // In some cases, the title and url fields might be empty.  Zombie tabs (not yet
+    // restored) are a good example.  In such cases, try to look up values for these
+    // fields using other data in the parent process.
+    if (!form.title) {
+      form.title = this.title;
+    }
+    if (!form.url) {
+      form.url = this.url;
+    }
+    return form;
   },
 
   exit() {
@@ -2281,7 +2279,7 @@ RemoteBrowserTabActor.prototype = {
   },
 };
 
-exports.RemoteBrowserTabActor = RemoteBrowserTabActor;
+exports.BrowserTabActor = BrowserTabActor;
 
 function BrowserAddonList(connection) {
   this._connection = connection;
@@ -2295,7 +2293,12 @@ BrowserAddonList.prototype.getList = function () {
     for (let addon of addons) {
       let actor = this._actorByAddonId.get(addon.id);
       if (!actor) {
-        actor = new BrowserAddonActor(this._connection, addon);
+        if (addon.isWebExtension) {
+          actor = new WebExtensionActor(this._connection, addon);
+        } else {
+          actor = new BrowserAddonActor(this._connection, addon);
+        }
+
         this._actorByAddonId.set(addon.id, actor);
       }
     }
@@ -2321,11 +2324,6 @@ Object.defineProperty(BrowserAddonList.prototype, "onListChanged", {
 });
 
 BrowserAddonList.prototype.onInstalled = function (addon) {
-  if (this._actorByAddonId.get(addon.id)) {
-    // When an add-on gets upgraded or reloaded, it will not be uninstalled
-    // so this step is necessary to clear the cache.
-    this._actorByAddonId.delete(addon.id);
-  }
   this._notifyListChanged();
   this._adjustListener();
 };
@@ -2347,12 +2345,10 @@ BrowserAddonList.prototype._adjustListener = function () {
     // As long as the callback exists, we need to listen for changes
     // so we can notify about add-on changes.
     AddonManager.addAddonListener(this);
-  } else {
+  } else if (this._actorByAddonId.size === 0) {
     // When the callback does not exist, we only need to keep listening
     // if the actor cache will need adjusting when add-ons change.
-    if (this._actorByAddonId.size === 0) {
-      AddonManager.removeAddonListener(this);
-    }
+    AddonManager.removeAddonListener(this);
   }
 };
 

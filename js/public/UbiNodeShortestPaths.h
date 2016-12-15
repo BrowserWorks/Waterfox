@@ -7,6 +7,7 @@
 #ifndef js_UbiNodeShortestPaths_h
 #define js_UbiNodeShortestPaths_h
 
+#include "mozilla/Attributes.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/Move.h"
 
@@ -32,7 +33,7 @@ struct JS_PUBLIC_API(BackEdge)
 
     BackEdge() : predecessor_(), name_(nullptr) { }
 
-    bool init(const Node& predecessor, Edge& edge) {
+    MOZ_MUST_USE bool init(const Node& predecessor, Edge& edge) {
         MOZ_ASSERT(!predecessor_);
         MOZ_ASSERT(!name_);
 
@@ -68,7 +69,7 @@ struct JS_PUBLIC_API(BackEdge)
 /**
  * A path is a series of back edges from which we discovered a target node.
  */
-using Path = mozilla::Vector<BackEdge*>;
+using Path = JS::ubi::Vector<BackEdge*>;
 
 /**
  * The `JS::ubi::ShortestPaths` type represents a collection of up to N shortest
@@ -80,7 +81,7 @@ struct JS_PUBLIC_API(ShortestPaths)
   private:
     // Types, type aliases, and data members.
 
-    using BackEdgeVector = mozilla::Vector<BackEdge::Ptr>;
+    using BackEdgeVector = JS::ubi::Vector<BackEdge::Ptr>;
     using NodeToBackEdgeVectorMap = js::HashMap<Node, BackEdgeVector, js::DefaultHasher<Node>,
                                                 js::SystemAllocPolicy>;
 
@@ -244,7 +245,7 @@ struct JS_PUBLIC_API(ShortestPaths)
      * responsibility to handle and report the OOM.
      */
     static mozilla::Maybe<ShortestPaths>
-    Create(JSRuntime* rt, AutoCheckCannotGC& noGC, uint32_t maxNumPaths, const Node& root, NodeSet&& targets) {
+    Create(JSContext* cx, AutoCheckCannotGC& noGC, uint32_t maxNumPaths, const Node& root, NodeSet&& targets) {
         MOZ_ASSERT(targets.count() > 0);
         MOZ_ASSERT(maxNumPaths > 0);
 
@@ -254,7 +255,7 @@ struct JS_PUBLIC_API(ShortestPaths)
             return mozilla::Nothing();
 
         Handler handler(paths);
-        Traversal traversal(rt, handler, noGC);
+        Traversal traversal(cx, handler, noGC);
         traversal.wantNames = true;
         if (!traversal.init() || !traversal.addStart(root) || !traversal.traverse())
             return mozilla::Nothing();
@@ -289,7 +290,7 @@ struct JS_PUBLIC_API(ShortestPaths)
      * the given target, in which case `func` will not be invoked.
      */
     template <class Func>
-    bool forEachPath(const Node& target, Func func) {
+    MOZ_MUST_USE bool forEachPath(const Node& target, Func func) {
         MOZ_ASSERT(initialized());
         MOZ_ASSERT(targets_.has(target));
 

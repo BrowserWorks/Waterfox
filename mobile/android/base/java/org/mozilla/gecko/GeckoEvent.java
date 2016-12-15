@@ -15,11 +15,6 @@ import org.mozilla.gecko.gfx.ImmutableViewportMetrics;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorManager;
-import android.location.Address;
-import android.location.Location;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.SparseArray;
@@ -71,20 +66,12 @@ public class GeckoEvent {
     public enum NativeGeckoEvent {
         NATIVE_POKE(0),
         MOTION_EVENT(2),
-        SENSOR_EVENT(3),
-        LOCATION_EVENT(5),
-        LOAD_URI(12),
         NOOP(15),
         VIEWPORT(20),
-        VISITED(21),
-        NETWORK_CHANGED(22),
-        THUMBNAIL(25),
-        SCREENORIENTATION_CHANGED(27),
         NATIVE_GESTURE_EVENT(31),
         CALL_OBSERVER(33),
         REMOVE_OBSERVER(34),
         LOW_MEMORY(35),
-        NETWORK_LINK_CHANGE(36),
         TELEMETRY_HISTOGRAM_ADD(37),
         TELEMETRY_UI_SESSION_START(42),
         TELEMETRY_UI_SESSION_STOP(43),
@@ -133,14 +120,6 @@ public class GeckoEvent {
     private String mCharacters;
     private String mCharactersExtra;
     private String mData;
-    private Location mLocation;
-
-    private int     mConnectionType;
-    private boolean mIsWifi;
-    private int     mDHCPGateway;
-
-    private short mScreenOrientation;
-    private short mScreenAngle;
 
     private ByteBuffer mBuffer;
 
@@ -347,111 +326,6 @@ public class GeckoEvent {
         }
     }
 
-    private static int HalSensorAccuracyFor(int androidAccuracy) {
-        switch (androidAccuracy) {
-        case SensorManager.SENSOR_STATUS_UNRELIABLE:
-            return GeckoHalDefines.SENSOR_ACCURACY_UNRELIABLE;
-        case SensorManager.SENSOR_STATUS_ACCURACY_LOW:
-            return GeckoHalDefines.SENSOR_ACCURACY_LOW;
-        case SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM:
-            return GeckoHalDefines.SENSOR_ACCURACY_MED;
-        case SensorManager.SENSOR_STATUS_ACCURACY_HIGH:
-            return GeckoHalDefines.SENSOR_ACCURACY_HIGH;
-        }
-        return GeckoHalDefines.SENSOR_ACCURACY_UNKNOWN;
-    }
-
-    public static GeckoEvent createSensorEvent(SensorEvent s) {
-        int sensor_type = s.sensor.getType();
-        GeckoEvent event = null;
-
-        switch (sensor_type) {
-
-        case Sensor.TYPE_ACCELEROMETER:
-            event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
-            event.mFlags = GeckoHalDefines.SENSOR_ACCELERATION;
-            event.mMetaState = HalSensorAccuracyFor(s.accuracy);
-            event.mX = s.values[0];
-            event.mY = s.values[1];
-            event.mZ = s.values[2];
-            break;
-
-        case Sensor.TYPE_LINEAR_ACCELERATION:
-            event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
-            event.mFlags = GeckoHalDefines.SENSOR_LINEAR_ACCELERATION;
-            event.mMetaState = HalSensorAccuracyFor(s.accuracy);
-            event.mX = s.values[0];
-            event.mY = s.values[1];
-            event.mZ = s.values[2];
-            break;
-
-        case Sensor.TYPE_ORIENTATION:
-            event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
-            event.mFlags = GeckoHalDefines.SENSOR_ORIENTATION;
-            event.mMetaState = HalSensorAccuracyFor(s.accuracy);
-            event.mX = s.values[0];
-            event.mY = s.values[1];
-            event.mZ = s.values[2];
-            break;
-
-        case Sensor.TYPE_GYROSCOPE:
-            event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
-            event.mFlags = GeckoHalDefines.SENSOR_GYROSCOPE;
-            event.mMetaState = HalSensorAccuracyFor(s.accuracy);
-            event.mX = Math.toDegrees(s.values[0]);
-            event.mY = Math.toDegrees(s.values[1]);
-            event.mZ = Math.toDegrees(s.values[2]);
-            break;
-
-        case Sensor.TYPE_PROXIMITY:
-            event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
-            event.mFlags = GeckoHalDefines.SENSOR_PROXIMITY;
-            event.mMetaState = HalSensorAccuracyFor(s.accuracy);
-            event.mX = s.values[0];
-            event.mY = 0;
-            event.mZ = s.sensor.getMaximumRange();
-            break;
-
-        case Sensor.TYPE_LIGHT:
-            event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
-            event.mFlags = GeckoHalDefines.SENSOR_LIGHT;
-            event.mMetaState = HalSensorAccuracyFor(s.accuracy);
-            event.mX = s.values[0];
-            break;
-
-        case Sensor.TYPE_ROTATION_VECTOR:
-        case Sensor.TYPE_GAME_ROTATION_VECTOR: // API >= 18
-            event = GeckoEvent.get(NativeGeckoEvent.SENSOR_EVENT);
-            event.mFlags = (sensor_type == Sensor.TYPE_ROTATION_VECTOR ?
-                    GeckoHalDefines.SENSOR_ROTATION_VECTOR :
-                    GeckoHalDefines.SENSOR_GAME_ROTATION_VECTOR);
-            event.mMetaState = HalSensorAccuracyFor(s.accuracy);
-            event.mX = s.values[0];
-            event.mY = s.values[1];
-            event.mZ = s.values[2];
-            if (s.values.length >= 4) {
-                event.mW = s.values[3];
-            } else {
-                // s.values[3] was optional in API <= 18, so we need to compute it
-                // The values form a unit quaternion, so we can compute the angle of
-                // rotation purely based on the given 3 values.
-                event.mW = 1 - s.values[0] * s.values[0] - s.values[1] * s.values[1] - s.values[2] * s.values[2];
-                event.mW = (event.mW > 0.0) ? Math.sqrt(event.mW) : 0.0;
-            }
-            break;
-        }
-
-        // SensorEvent timestamp is in nanoseconds, Gecko expects microseconds.
-        event.mTime = s.timestamp / 1000;
-        return event;
-    }
-
-    public static GeckoEvent createLocationEvent(Location l) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.LOCATION_EVENT);
-        event.mLocation = l;
-        return event;
-    }
-
     public static GeckoEvent createViewportEvent(ImmutableViewportMetrics metrics, DisplayPortMetrics displayPort) {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.VIEWPORT);
         event.mCharacters = "Viewport:Change";
@@ -465,44 +339,6 @@ public class GeckoEvent {
         return event;
     }
 
-    public static GeckoEvent createURILoadEvent(String uri) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.LOAD_URI);
-        event.mCharacters = uri;
-        event.mCharactersExtra = "";
-        return event;
-    }
-
-    public static GeckoEvent createBookmarkLoadEvent(String uri) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.LOAD_URI);
-        event.mCharacters = uri;
-        event.mCharactersExtra = "-bookmark";
-        return event;
-    }
-
-    public static GeckoEvent createVisitedEvent(String data) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.VISITED);
-        event.mCharacters = data;
-        return event;
-    }
-
-    public static GeckoEvent createNetworkEvent(int connectionType, boolean isWifi, int DHCPGateway, String status) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.NETWORK_CHANGED);
-        event.mConnectionType = connectionType;
-        event.mIsWifi = isWifi;
-        event.mDHCPGateway = DHCPGateway;
-        event.mCharacters = status;
-        return event;
-    }
-
-    public static GeckoEvent createThumbnailEvent(int tabId, int bufw, int bufh, ByteBuffer buffer) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.THUMBNAIL);
-        event.mPoints = new Point[1];
-        event.mPoints[0] = new Point(bufw, bufh);
-        event.mMetaState = tabId;
-        event.mBuffer = buffer;
-        return event;
-    }
-
     public static GeckoEvent createZoomedViewEvent(int tabId, int x, int y, int bufw, int bufh, float scaleFactor, ByteBuffer buffer) {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.ZOOMEDVIEW);
         event.mPoints = new Point[2];
@@ -511,13 +347,6 @@ public class GeckoEvent {
         event.mX = (double) scaleFactor;
         event.mMetaState = tabId;
         event.mBuffer = buffer;
-        return event;
-    }
-
-    public static GeckoEvent createScreenOrientationEvent(short aScreenOrientation, short aScreenAngle) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.SCREENORIENTATION_CHANGED);
-        event.mScreenOrientation = aScreenOrientation;
-        event.mScreenAngle = aScreenAngle;
         return event;
     }
 
@@ -538,12 +367,6 @@ public class GeckoEvent {
     public static GeckoEvent createLowMemoryEvent(int level) {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.LOW_MEMORY);
         event.mMetaState = level;
-        return event;
-    }
-
-    public static GeckoEvent createNetworkLinkChangeEvent(String status) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.NETWORK_LINK_CHANGE);
-        event.mCharacters = status;
         return event;
     }
 

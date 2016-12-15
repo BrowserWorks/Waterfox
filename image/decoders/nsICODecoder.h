@@ -10,6 +10,7 @@
 #include "StreamingLexer.h"
 #include "Decoder.h"
 #include "imgFrame.h"
+#include "mozilla/gfx/2D.h"
 #include "nsBMPDecoder.h"
 #include "nsPNGDecoder.h"
 #include "ICOFileHeaders.h"
@@ -68,9 +69,10 @@ public:
   /// @return The offset from the beginning of the ICO to the first resource.
   size_t FirstResourceOffset() const;
 
-  virtual void WriteInternal(const char* aBuffer, uint32_t aCount) override;
-  virtual void FinishInternal() override;
-  virtual void FinishWithErrorInternal() override;
+  LexerResult DoDecode(SourceBufferIterator& aIterator,
+                       IResumable* aOnResume) override;
+  nsresult FinishInternal() override;
+  nsresult FinishWithErrorInternal() override;
 
 private:
   friend class DecoderFactory;
@@ -83,7 +85,7 @@ private:
   bool WriteToContainedDecoder(const char* aBuffer, uint32_t aCount);
 
   // Gets decoder state from the contained decoder so it's visible externally.
-  void GetFinalStateFromContainedDecoder();
+  nsresult GetFinalStateFromContainedDecoder();
 
   /**
    * Verifies that the width and height values in @aBIH are valid and match the
@@ -111,11 +113,12 @@ private:
 
   StreamingLexer<ICOState, 32> mLexer; // The lexer.
   RefPtr<Decoder> mContainedDecoder; // Either a BMP or PNG decoder.
+  RefPtr<SourceBuffer> mContainedSourceBuffer;  // SourceBuffer for mContainedDecoder.
   UniquePtr<uint8_t[]> mMaskBuffer;    // A temporary buffer for the alpha mask.
   char mBIHraw[bmp::InfoHeaderLength::WIN_ICO]; // The bitmap information header.
   IconDirEntry mDirEntry;              // The dir entry for the selected resource.
-  IntSize mBiggestResourceSize;        // Used to select the intrinsic size.
-  IntSize mBiggestResourceHotSpot;     // Used to select the intrinsic size.
+  gfx::IntSize mBiggestResourceSize;   // Used to select the intrinsic size.
+  gfx::IntSize mBiggestResourceHotSpot; // Used to select the intrinsic size.
   uint16_t mBiggestResourceColorDepth; // Used to select the intrinsic size.
   int32_t mBestResourceDelta;          // Used to select the best resource.
   uint16_t mBestResourceColorDepth;    // Used to select the best resource.

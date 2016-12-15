@@ -105,7 +105,7 @@ class TestWebIDLCodegenManager(unittest.TestCase):
         """generate_build_files() does the right thing from empty."""
         manager = self._get_manager()
         result = manager.generate_build_files()
-        self.assertEqual(len(result.inputs), 5)
+        self.assertEqual(len(result.inputs), 4)
 
         output = manager.expected_build_output_files()
         self.assertEqual(result.created, output)
@@ -249,15 +249,7 @@ class TestWebIDLCodegenManager(unittest.TestCase):
             args = self._get_manager_args()
             m1 = WebIDLCodegenManager(**args)
             with MockedOpen({fake_path: '# Original content'}):
-                old_exists = os.path.exists
                 try:
-                    def exists(p):
-                        if p == fake_path:
-                            return True
-                        return old_exists(p)
-
-                    os.path.exists = exists
-
                     result = m1.generate_build_files()
                     l = len(result.inputs)
 
@@ -271,7 +263,6 @@ class TestWebIDLCodegenManager(unittest.TestCase):
                     result = m2.generate_build_files()
                     self.assertEqual(len(result.inputs), 0)
                 finally:
-                    os.path.exists = old_exists
                     del sys.modules['mozwebidlcodegen.fakemodule']
 
     def test_copy_input(self):

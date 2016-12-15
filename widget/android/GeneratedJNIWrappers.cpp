@@ -8,9 +8,9 @@
 #include "mozilla/jni/Accessors.h"
 
 namespace mozilla {
-namespace widget {
+namespace java {
 
-template<> const char mozilla::jni::Context<ANRReporter, jobject>::name[] =
+const char ANRReporter::name[] =
         "org/mozilla/gecko/ANRReporter";
 
 constexpr char ANRReporter::GetNativeStack_t::name[];
@@ -22,13 +22,13 @@ constexpr char ANRReporter::ReleaseNativeStack_t::signature[];
 constexpr char ANRReporter::RequestNativeStack_t::name[];
 constexpr char ANRReporter::RequestNativeStack_t::signature[];
 
-template<> const char mozilla::jni::Context<AlarmReceiver, jobject>::name[] =
+const char AlarmReceiver::name[] =
         "org/mozilla/gecko/AlarmReceiver";
 
 constexpr char AlarmReceiver::NotifyAlarmFired_t::name[];
 constexpr char AlarmReceiver::NotifyAlarmFired_t::signature[];
 
-template<> const char mozilla::jni::Context<DownloadsIntegration, jobject>::name[] =
+const char DownloadsIntegration::name[] =
         "org/mozilla/gecko/DownloadsIntegration";
 
 constexpr char DownloadsIntegration::GetTemporaryDownloadDirectory_t::name[];
@@ -47,7 +47,7 @@ auto DownloadsIntegration::ScanMedia(mozilla::jni::String::Param a0, mozilla::jn
     return mozilla::jni::Method<ScanMedia_t>::Call(DownloadsIntegration::Context(), nullptr, a0, a1);
 }
 
-template<> const char mozilla::jni::Context<GeckoAppShell, jobject>::name[] =
+const char GeckoAppShell::name[] =
         "org/mozilla/gecko/GeckoAppShell";
 
 constexpr char GeckoAppShell::AddPluginViewWrapper_t::name[];
@@ -573,6 +573,9 @@ auto GeckoAppShell::NotifyDefaultPrevented(bool a0) -> void
     return mozilla::jni::Method<NotifyDefaultPrevented_t>::Call(GeckoAppShell::Context(), nullptr, a0);
 }
 
+constexpr char GeckoAppShell::NotifyUriVisited_t::name[];
+constexpr char GeckoAppShell::NotifyUriVisited_t::signature[];
+
 constexpr char GeckoAppShell::NotifyWakeLockChanged_t::name[];
 constexpr char GeckoAppShell::NotifyWakeLockChanged_t::signature[];
 
@@ -580,6 +583,12 @@ auto GeckoAppShell::NotifyWakeLockChanged(mozilla::jni::String::Param a0, mozill
 {
     return mozilla::jni::Method<NotifyWakeLockChanged_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
 }
+
+constexpr char GeckoAppShell::OnLocationChanged_t::name[];
+constexpr char GeckoAppShell::OnLocationChanged_t::signature[];
+
+constexpr char GeckoAppShell::OnSensorChanged_t::name[];
+constexpr char GeckoAppShell::OnSensorChanged_t::signature[];
 
 constexpr char GeckoAppShell::OpenUriExternal_t::name[];
 constexpr char GeckoAppShell::OpenUriExternal_t::signature[];
@@ -685,6 +694,14 @@ auto GeckoAppShell::ShowAlertNotificationWrapper(mozilla::jni::String::Param a0,
     return mozilla::jni::Method<ShowAlertNotificationWrapper_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5);
 }
 
+constexpr char GeckoAppShell::ShowPersistentAlertNotificationWrapper_t::name[];
+constexpr char GeckoAppShell::ShowPersistentAlertNotificationWrapper_t::signature[];
+
+auto GeckoAppShell::ShowPersistentAlertNotificationWrapper(mozilla::jni::String::Param a0, mozilla::jni::String::Param a1, mozilla::jni::String::Param a2, mozilla::jni::String::Param a3, mozilla::jni::String::Param a4, mozilla::jni::String::Param a5, mozilla::jni::String::Param a6) -> void
+{
+    return mozilla::jni::Method<ShowPersistentAlertNotificationWrapper_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5, a6);
+}
+
 constexpr char GeckoAppShell::StartMonitoringGamepad_t::name[];
 constexpr char GeckoAppShell::StartMonitoringGamepad_t::signature[];
 
@@ -744,7 +761,7 @@ auto GeckoAppShell::VibrateA(mozilla::jni::LongArray::Param a0, int32_t a1) -> v
     return mozilla::jni::Method<VibrateA_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
 }
 
-template<> const char mozilla::jni::Context<GeckoEditable, jobject>::name[] =
+const char GeckoEditable::name[] =
         "org/mozilla/gecko/GeckoEditable";
 
 constexpr char GeckoEditable::New_t::name[];
@@ -791,6 +808,9 @@ constexpr char GeckoEditable::OnImeAddCompositionRange_t::signature[];
 constexpr char GeckoEditable::OnImeReplaceText_t::name[];
 constexpr char GeckoEditable::OnImeReplaceText_t::signature[];
 
+constexpr char GeckoEditable::OnImeRequestCursorUpdates_t::name[];
+constexpr char GeckoEditable::OnImeRequestCursorUpdates_t::signature[];
+
 constexpr char GeckoEditable::OnImeSynchronize_t::name[];
 constexpr char GeckoEditable::OnImeSynchronize_t::signature[];
 
@@ -824,10 +844,18 @@ auto GeckoEditable::OnViewChange(mozilla::jni::Object::Param a0) const -> void
     return mozilla::jni::Method<OnViewChange_t>::Call(GeckoEditable::mCtx, nullptr, a0);
 }
 
-template<> const char mozilla::jni::Context<GeckoEditableListener, jobject>::name[] =
+constexpr char GeckoEditable::UpdateCompositionRects_t::name[];
+constexpr char GeckoEditable::UpdateCompositionRects_t::signature[];
+
+auto GeckoEditable::UpdateCompositionRects(mozilla::jni::ObjectArray::Param a0) const -> void
+{
+    return mozilla::jni::Method<UpdateCompositionRects_t>::Call(GeckoEditable::mCtx, nullptr, a0);
+}
+
+const char GeckoEditableListener::name[] =
         "org/mozilla/gecko/GeckoEditableListener";
 
-template<> const char mozilla::jni::Context<GeckoJavaSampler, jobject>::name[] =
+const char GeckoJavaSampler::name[] =
         "org/mozilla/gecko/GeckoJavaSampler";
 
 constexpr char GeckoJavaSampler::GetFrameNameJavaProfilingWrapper_t::name[];
@@ -889,7 +917,22 @@ auto GeckoJavaSampler::UnpauseJavaProfiling() -> void
     return mozilla::jni::Method<UnpauseJavaProfiling_t>::Call(GeckoJavaSampler::Context(), nullptr);
 }
 
-template<> const char mozilla::jni::Context<GeckoSmsManager, jobject>::name[] =
+const char GeckoNetworkManager::name[] =
+        "org/mozilla/gecko/GeckoNetworkManager";
+
+constexpr char GeckoNetworkManager::OnConnectionChanged_t::name[];
+constexpr char GeckoNetworkManager::OnConnectionChanged_t::signature[];
+
+constexpr char GeckoNetworkManager::OnStatusChanged_t::name[];
+constexpr char GeckoNetworkManager::OnStatusChanged_t::signature[];
+
+const char GeckoScreenOrientation::name[] =
+        "org/mozilla/gecko/GeckoScreenOrientation";
+
+constexpr char GeckoScreenOrientation::OnOrientationChange_t::name[];
+constexpr char GeckoScreenOrientation::OnOrientationChange_t::signature[];
+
+const char GeckoSmsManager::name[] =
         "org/mozilla/gecko/GeckoSmsManager";
 
 constexpr char GeckoSmsManager::NotifyCursorDone_t::name[];
@@ -934,7 +977,7 @@ constexpr char GeckoSmsManager::NotifySmsSent_t::signature[];
 constexpr char GeckoSmsManager::NotifyThreadCursorResult_t::name[];
 constexpr char GeckoSmsManager::NotifyThreadCursorResult_t::signature[];
 
-template<> const char mozilla::jni::Context<GeckoThread, jobject>::name[] =
+const char GeckoThread::name[] =
         "org/mozilla/gecko/GeckoThread";
 
 constexpr char GeckoThread::CheckAndSetState_t::name[];
@@ -997,7 +1040,7 @@ auto GeckoThread::MsgQueue(mozilla::jni::Object::Param a0) -> void
     return mozilla::jni::Field<MsgQueue_t>::Set(GeckoThread::Context(), nullptr, a0);
 }
 
-template<> const char mozilla::jni::Context<GeckoThread::State, jobject>::name[] =
+const char GeckoThread::State::name[] =
         "org/mozilla/gecko/GeckoThread$State";
 
 constexpr char GeckoThread::State::EXITED_t::name[];
@@ -1072,10 +1115,10 @@ auto GeckoThread::State::RUNNING() -> State::LocalRef
     return mozilla::jni::Field<RUNNING_t>::Get(State::Context(), nullptr);
 }
 
-template<> const char mozilla::jni::Context<GeckoView, jobject>::name[] =
+const char GeckoView::name[] =
         "org/mozilla/gecko/GeckoView";
 
-template<> const char mozilla::jni::Context<GeckoView::Window, jobject>::name[] =
+const char GeckoView::Window::name[] =
         "org/mozilla/gecko/GeckoView$Window";
 
 constexpr char GeckoView::Window::New_t::name[];
@@ -1092,6 +1135,9 @@ constexpr char GeckoView::Window::Close_t::signature[];
 constexpr char GeckoView::Window::DisposeNative_t::name[];
 constexpr char GeckoView::Window::DisposeNative_t::signature[];
 
+constexpr char GeckoView::Window::LoadUri_t::name[];
+constexpr char GeckoView::Window::LoadUri_t::signature[];
+
 constexpr char GeckoView::Window::Open_t::name[];
 constexpr char GeckoView::Window::Open_t::signature[];
 
@@ -1106,7 +1152,7 @@ auto GeckoView::Window::GlController() const -> mozilla::jni::Object::LocalRef
     return mozilla::jni::Field<GlController_t>::Get(Window::mCtx, nullptr);
 }
 
-template<> const char mozilla::jni::Context<PrefsHelper, jobject>::name[] =
+const char PrefsHelper::name[] =
         "org/mozilla/gecko/PrefsHelper";
 
 constexpr char PrefsHelper::CallPrefHandler_t::name[];
@@ -1137,81 +1183,21 @@ auto PrefsHelper::OnPrefChange(mozilla::jni::String::Param a0, int32_t a1, bool 
     return mozilla::jni::Method<OnPrefChange_t>::Call(PrefsHelper::Context(), nullptr, a0, a1, a2, a3, a4);
 }
 
-template<> const char mozilla::jni::Context<SurfaceBits, jobject>::name[] =
-        "org/mozilla/gecko/SurfaceBits";
-
-constexpr char SurfaceBits::New_t::name[];
-constexpr char SurfaceBits::New_t::signature[];
-
-auto SurfaceBits::New() -> SurfaceBits::LocalRef
-{
-    return mozilla::jni::Constructor<New_t>::Call(SurfaceBits::Context(), nullptr);
-}
-
-constexpr char SurfaceBits::Buffer_t::name[];
-constexpr char SurfaceBits::Buffer_t::signature[];
-
-auto SurfaceBits::Buffer() const -> mozilla::jni::Object::LocalRef
-{
-    return mozilla::jni::Field<Buffer_t>::Get(SurfaceBits::mCtx, nullptr);
-}
-
-auto SurfaceBits::Buffer(mozilla::jni::Object::Param a0) const -> void
-{
-    return mozilla::jni::Field<Buffer_t>::Set(SurfaceBits::mCtx, nullptr, a0);
-}
-
-constexpr char SurfaceBits::Format_t::name[];
-constexpr char SurfaceBits::Format_t::signature[];
-
-auto SurfaceBits::Format() const -> int32_t
-{
-    return mozilla::jni::Field<Format_t>::Get(SurfaceBits::mCtx, nullptr);
-}
-
-auto SurfaceBits::Format(int32_t a0) const -> void
-{
-    return mozilla::jni::Field<Format_t>::Set(SurfaceBits::mCtx, nullptr, a0);
-}
-
-constexpr char SurfaceBits::Height_t::name[];
-constexpr char SurfaceBits::Height_t::signature[];
-
-auto SurfaceBits::Height() const -> int32_t
-{
-    return mozilla::jni::Field<Height_t>::Get(SurfaceBits::mCtx, nullptr);
-}
-
-auto SurfaceBits::Height(int32_t a0) const -> void
-{
-    return mozilla::jni::Field<Height_t>::Set(SurfaceBits::mCtx, nullptr, a0);
-}
-
-constexpr char SurfaceBits::Width_t::name[];
-constexpr char SurfaceBits::Width_t::signature[];
-
-auto SurfaceBits::Width() const -> int32_t
-{
-    return mozilla::jni::Field<Width_t>::Get(SurfaceBits::mCtx, nullptr);
-}
-
-auto SurfaceBits::Width(int32_t a0) const -> void
-{
-    return mozilla::jni::Field<Width_t>::Set(SurfaceBits::mCtx, nullptr, a0);
-}
-
-template<> const char mozilla::jni::Context<ThumbnailHelper, jobject>::name[] =
+const char ThumbnailHelper::name[] =
         "org/mozilla/gecko/ThumbnailHelper";
 
 constexpr char ThumbnailHelper::SendThumbnail_t::name[];
 constexpr char ThumbnailHelper::SendThumbnail_t::signature[];
 
-auto ThumbnailHelper::SendThumbnail(mozilla::jni::Object::Param a0, int32_t a1, bool a2, bool a3) -> void
+auto ThumbnailHelper::SendThumbnail(mozilla::jni::ByteBuffer::Param a0, int32_t a1, bool a2, bool a3) -> void
 {
     return mozilla::jni::Method<SendThumbnail_t>::Call(ThumbnailHelper::Context(), nullptr, a0, a1, a2, a3);
 }
 
-template<> const char mozilla::jni::Context<Distribution, jobject>::name[] =
+constexpr char ThumbnailHelper::RequestThumbnail_t::name[];
+constexpr char ThumbnailHelper::RequestThumbnail_t::signature[];
+
+const char Distribution::name[] =
         "org/mozilla/gecko/distribution/Distribution";
 
 constexpr char Distribution::GetDistributionDirectories_t::name[];
@@ -1222,7 +1208,7 @@ auto Distribution::GetDistributionDirectories() -> mozilla::jni::ObjectArray::Lo
     return mozilla::jni::Method<GetDistributionDirectories_t>::Call(Distribution::Context(), nullptr);
 }
 
-template<> const char mozilla::jni::Context<DisplayPortMetrics, jobject>::name[] =
+const char DisplayPortMetrics::name[] =
         "org/mozilla/gecko/gfx/DisplayPortMetrics";
 
 constexpr char DisplayPortMetrics::New_t::name[];
@@ -1249,7 +1235,7 @@ auto DisplayPortMetrics::Resolution() const -> float
     return mozilla::jni::Field<Resolution_t>::Get(DisplayPortMetrics::mCtx, nullptr);
 }
 
-template<> const char mozilla::jni::Context<GLController, jobject>::name[] =
+const char GLController::name[] =
         "org/mozilla/gecko/gfx/GLController";
 
 constexpr char GLController::AttachToJava_t::name[];
@@ -1257,14 +1243,6 @@ constexpr char GLController::AttachToJava_t::signature[];
 
 constexpr char GLController::CreateCompositor_t::name[];
 constexpr char GLController::CreateCompositor_t::signature[];
-
-constexpr char GLController::CreateEGLSurface_t::name[];
-constexpr char GLController::CreateEGLSurface_t::signature[];
-
-auto GLController::CreateEGLSurface() const -> mozilla::jni::Object::LocalRef
-{
-    return mozilla::jni::Method<CreateEGLSurface_t>::Call(GLController::mCtx, nullptr);
-}
 
 constexpr char GLController::Destroy_t::name[];
 constexpr char GLController::Destroy_t::signature[];
@@ -1276,6 +1254,14 @@ auto GLController::Destroy() const -> void
 
 constexpr char GLController::DisposeNative_t::name[];
 constexpr char GLController::DisposeNative_t::signature[];
+
+constexpr char GLController::GetSurface_t::name[];
+constexpr char GLController::GetSurface_t::signature[];
+
+auto GLController::GetSurface() const -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetSurface_t>::Call(GLController::mCtx, nullptr);
+}
 
 constexpr char GLController::OnSizeChanged_t::name[];
 constexpr char GLController::OnSizeChanged_t::signature[];
@@ -1289,7 +1275,7 @@ constexpr char GLController::SyncInvalidateAndScheduleComposite_t::signature[];
 constexpr char GLController::SyncResumeResizeCompositor_t::name[];
 constexpr char GLController::SyncResumeResizeCompositor_t::signature[];
 
-template<> const char mozilla::jni::Context<GeckoLayerClient, jobject>::name[] =
+const char GeckoLayerClient::name[] =
         "org/mozilla/gecko/gfx/GeckoLayerClient";
 
 constexpr char GeckoLayerClient::ActivateProgram_t::name[];
@@ -1404,7 +1390,7 @@ auto GeckoLayerClient::SynthesizeNativeTouchPoint(int32_t a0, int32_t a1, int32_
     return mozilla::jni::Method<SynthesizeNativeTouchPoint_t>::Call(GeckoLayerClient::mCtx, nullptr, a0, a1, a2, a3, a4, a5);
 }
 
-template<> const char mozilla::jni::Context<ImmutableViewportMetrics, jobject>::name[] =
+const char ImmutableViewportMetrics::name[] =
         "org/mozilla/gecko/gfx/ImmutableViewportMetrics";
 
 constexpr char ImmutableViewportMetrics::New_t::name[];
@@ -1415,10 +1401,10 @@ auto ImmutableViewportMetrics::New(float a0, float a1, float a2, float a3, float
     return mozilla::jni::Constructor<New_t>::Call(ImmutableViewportMetrics::Context(), nullptr, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);
 }
 
-template<> const char mozilla::jni::Context<LayerRenderer, jobject>::name[] =
+const char LayerRenderer::name[] =
         "org/mozilla/gecko/gfx/LayerRenderer";
 
-template<> const char mozilla::jni::Context<LayerRenderer::Frame, jobject>::name[] =
+const char LayerRenderer::Frame::name[] =
         "org/mozilla/gecko/gfx/LayerRenderer$Frame";
 
 constexpr char LayerRenderer::Frame::BeginDrawing_t::name[];
@@ -1453,18 +1439,18 @@ auto LayerRenderer::Frame::EndDrawing() const -> void
     return mozilla::jni::Method<EndDrawing_t>::Call(Frame::mCtx, nullptr);
 }
 
-template<> const char mozilla::jni::Context<LayerView, jobject>::name[] =
+const char LayerView::name[] =
         "org/mozilla/gecko/gfx/LayerView";
 
 constexpr char LayerView::updateZoomedView_t::name[];
 constexpr char LayerView::updateZoomedView_t::signature[];
 
-auto LayerView::updateZoomedView(mozilla::jni::Object::Param a0) -> void
+auto LayerView::updateZoomedView(mozilla::jni::ByteBuffer::Param a0) -> void
 {
     return mozilla::jni::Method<updateZoomedView_t>::Call(LayerView::Context(), nullptr, a0);
 }
 
-template<> const char mozilla::jni::Context<NativePanZoomController, jobject>::name[] =
+const char NativePanZoomController::name[] =
         "org/mozilla/gecko/gfx/NativePanZoomController";
 
 constexpr char NativePanZoomController::AdjustScrollForSurfaceShift_t::name[];
@@ -1539,7 +1525,7 @@ auto NativePanZoomController::UpdateOverscrollVelocity(float a0, float a1) const
     return mozilla::jni::Method<UpdateOverscrollVelocity_t>::Call(NativePanZoomController::mCtx, nullptr, a0, a1);
 }
 
-template<> const char mozilla::jni::Context<ProgressiveUpdateData, jobject>::name[] =
+const char ProgressiveUpdateData::name[] =
         "org/mozilla/gecko/gfx/ProgressiveUpdateData";
 
 constexpr char ProgressiveUpdateData::New_t::name[];
@@ -1610,7 +1596,7 @@ auto ProgressiveUpdateData::Y(float a0) const -> void
     return mozilla::jni::Field<Y_t>::Set(ProgressiveUpdateData::mCtx, nullptr, a0);
 }
 
-template<> const char mozilla::jni::Context<StackScroller, jobject>::name[] =
+const char StackScroller::name[] =
         "org/mozilla/gecko/gfx/StackScroller";
 
 constexpr char StackScroller::New_t::name[];
@@ -1881,7 +1867,7 @@ auto StackScroller::SViscousFluidScale(float a0) -> nsresult
     return rv;
 }
 
-template<> const char mozilla::jni::Context<ViewTransform, jobject>::name[] =
+const char ViewTransform::name[] =
         "org/mozilla/gecko/gfx/ViewTransform";
 
 constexpr char ViewTransform::New_t::name[];
@@ -2009,7 +1995,7 @@ auto ViewTransform::Y(float a0) const -> void
     return mozilla::jni::Field<Y_t>::Set(ViewTransform::mCtx, nullptr, a0);
 }
 
-template<> const char mozilla::jni::Context<AudioFocusAgent, jobject>::name[] =
+const char AudioFocusAgent::name[] =
         "org/mozilla/gecko/media/AudioFocusAgent";
 
 constexpr char AudioFocusAgent::NotifyStartedPlaying_t::name[];
@@ -2028,7 +2014,7 @@ auto AudioFocusAgent::NotifyStoppedPlaying() -> void
     return mozilla::jni::Method<NotifyStoppedPlaying_t>::Call(AudioFocusAgent::Context(), nullptr);
 }
 
-template<> const char mozilla::jni::Context<Restrictions, jobject>::name[] =
+const char Restrictions::name[] =
         "org/mozilla/gecko/restrictions/Restrictions";
 
 constexpr char Restrictions::IsAllowed_t::name[];
@@ -2047,7 +2033,7 @@ auto Restrictions::IsUserRestricted() -> bool
     return mozilla::jni::Method<IsUserRestricted_t>::Call(Restrictions::Context(), nullptr);
 }
 
-template<> const char mozilla::jni::Context<MatrixBlobCursor, jobject>::name[] =
+const char MatrixBlobCursor::name[] =
         "org/mozilla/gecko/sqlite/MatrixBlobCursor";
 
 constexpr char MatrixBlobCursor::New_t::name[];
@@ -2090,7 +2076,7 @@ auto MatrixBlobCursor::AddRow(mozilla::jni::ObjectArray::Param a0) const -> void
     return mozilla::jni::Method<AddRow3_t>::Call(MatrixBlobCursor::mCtx, nullptr, a0);
 }
 
-template<> const char mozilla::jni::Context<SQLiteBridgeException, jobject>::name[] =
+const char SQLiteBridgeException::name[] =
         "org/mozilla/gecko/sqlite/SQLiteBridgeException";
 
 constexpr char SQLiteBridgeException::New_t::name[];
@@ -2109,7 +2095,7 @@ auto SQLiteBridgeException::New(mozilla::jni::String::Param a0) -> SQLiteBridgeE
     return mozilla::jni::Constructor<New2_t>::Call(SQLiteBridgeException::Context(), nullptr, a0);
 }
 
-template<> const char mozilla::jni::Context<Clipboard, jobject>::name[] =
+const char Clipboard::name[] =
         "org/mozilla/gecko/util/Clipboard";
 
 constexpr char Clipboard::ClearText_t::name[];
@@ -2144,7 +2130,7 @@ auto Clipboard::SetClipboardText(mozilla::jni::String::Param a0) -> void
     return mozilla::jni::Method<SetClipboardText_t>::Call(Clipboard::Context(), nullptr, a0);
 }
 
-template<> const char mozilla::jni::Context<HardwareCodecCapabilityUtils, jobject>::name[] =
+const char HardwareCodecCapabilityUtils::name[] =
         "org/mozilla/gecko/util/HardwareCodecCapabilityUtils";
 
 constexpr char HardwareCodecCapabilityUtils::FindDecoderCodecInfoForMimeType_t::name[];
@@ -2155,7 +2141,7 @@ auto HardwareCodecCapabilityUtils::FindDecoderCodecInfoForMimeType(mozilla::jni:
     return mozilla::jni::Method<FindDecoderCodecInfoForMimeType_t>::Call(HardwareCodecCapabilityUtils::Context(), nullptr, a0);
 }
 
-template<> const char mozilla::jni::Context<NativeJSContainer, jobject>::name[] =
+const char NativeJSContainer::name[] =
         "org/mozilla/gecko/util/NativeJSContainer";
 
 constexpr char NativeJSContainer::New_t::name[];
@@ -2172,7 +2158,7 @@ constexpr char NativeJSContainer::Clone2_t::signature[];
 constexpr char NativeJSContainer::DisposeNative_t::name[];
 constexpr char NativeJSContainer::DisposeNative_t::signature[];
 
-template<> const char mozilla::jni::Context<NativeJSObject, jobject>::name[] =
+const char NativeJSObject::name[] =
         "org/mozilla/gecko/util/NativeJSObject";
 
 constexpr char NativeJSObject::New_t::name[];

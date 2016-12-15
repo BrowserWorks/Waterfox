@@ -71,9 +71,9 @@ namespace jni {
  *   };
  */
 
-namespace {
+namespace detail {
 
-uintptr_t CheckNativeHandle(JNIEnv* env, uintptr_t handle)
+inline uintptr_t CheckNativeHandle(JNIEnv* env, uintptr_t handle)
 {
     if (!handle) {
         if (!env->ExceptionCheck()) {
@@ -173,7 +173,9 @@ struct NativePtr<Impl, /* UseWeakPtr = */ true>
     }
 };
 
-} // namespace
+} // namespace detail
+
+using namespace detail;
 
 /**
  * For C++ classes whose native methods all return void, they can choose to
@@ -217,7 +219,10 @@ struct UsesNativeCallProxy
     }
 };
 
-namespace {
+namespace detail {
+
+template<class Traits, class Impl, class Args, bool IsStatic, bool IsVoid>
+class NativeStubImpl;
 
 // ProxyArg is used to handle JNI ref arguments for proxies. Because a proxied
 // call may happen outside of the original JNI native call, we must save all
@@ -266,7 +271,7 @@ template<class Impl, class Owner, bool IsStatic,
 class ProxyNativeCall
 {
     template<class T, class I, class A, bool S, bool V>
-    friend class NativeStubImpl;
+    friend class detail::NativeStubImpl;
 
     // "this arg" refers to the Class::LocalRef (for static methods) or
     // Owner::LocalRef (for instance methods) that we optionally (as indicated
@@ -410,7 +415,7 @@ Dispatch(ProxyNativeCall<Impl, O, S, V, A...>&& call)
 template<typename T>
 void Dispatch(const T&) {}
 
-} // namespace
+} // namespace detail
 
 template<class Cls, class Impl> class NativeImpl;
 
@@ -424,9 +429,6 @@ namespace detail {
 // signatures (jobject vs jclass and Impl::*Method vs *Method).
 // We need specialization for return type, because void return type requires
 // us to not deal with the return value.
-
-template<class Traits, class Impl, class Args, bool IsStatic, bool IsVoid>
-class NativeStubImpl;
 
 // Bug 1207642 - Work around Dalvik bug by realigning stack on JNI entry
 #ifdef __i386__
@@ -635,7 +637,7 @@ struct NativeStub : detail::NativeStubImpl
 // Generate a JNINativeMethod from a native
 // method's traits class and a wrapped stub.
 template<class Traits, typename Ret, typename... Args>
-constexpr JNINativeMethod MakeNativeMethod(Ret (*stub)(JNIEnv*, Args...))
+constexpr JNINativeMethod MakeNativeMethod(MOZ_JNICALL Ret (*stub)(JNIEnv*, Args...))
 {
     return {
         Traits::name,
