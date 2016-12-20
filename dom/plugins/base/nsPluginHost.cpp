@@ -2050,7 +2050,7 @@ bool
 nsPluginHost::ShouldAddPlugin(nsPluginTag* aPluginTag)
 {
 // allow all plugins to run
-  return true;
+    return true;
 }
 
 void

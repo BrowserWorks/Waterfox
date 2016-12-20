@@ -26,7 +26,7 @@ MOZ_REQUIRE_SIGNING=0
 MOZ_ADDON_SIGNING=0
 
 mk_add_options AUTOCLOBBER=1
-mk_add_options MOZ_MAKE_FLAGS=-j8
+mk_add_options MOZ_MAKE_FLAGS=-j4
 mk_add_options MOZ_OBJDIR=objdir
 
 ac_add_options --disable-crashreporter

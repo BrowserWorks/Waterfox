@@ -20,7 +20,7 @@ namespace mscom {
 struct ArrayData;
 
 class MainThreadHandoff final : public IInterceptorSink
-                              , public ICallFrameWalker
+                        , public ICallFrameWalker
 {
 public:
   static HRESULT Create(IInterceptorSink** aOutput);

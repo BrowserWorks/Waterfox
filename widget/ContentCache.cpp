@@ -829,7 +829,7 @@ ContentCacheInParent::GetUnionTextRects(
     return false;
   }
 
-  if ((aRoundToExistingOffset && mTextRectArray.IsValid()) ||
+  if ((aRoundToExistingOffset && mTextRectArray.HasRects()) ||
       mTextRectArray.IsOverlappingWith(aOffset, aLength)) {
     aUnionTextRect =
       mTextRectArray.GetUnionRectAsFarAsPossible(aOffset, aLength,
@@ -1173,7 +1173,8 @@ ContentCache::TextRectArray::GetUnionRectAsFarAsPossible(
                                bool aRoundToExistingOffset) const
 {
   LayoutDeviceIntRect rect;
-  if (!aRoundToExistingOffset && !IsOverlappingWith(aOffset, aLength)) {
+  if (!HasRects() ||
+      (!aRoundToExistingOffset && !IsOverlappingWith(aOffset, aLength))) {
     return rect;
   }
   uint32_t startOffset = std::max(aOffset, mStart);
@@ -1183,6 +1184,9 @@ ContentCache::TextRectArray::GetUnionRectAsFarAsPossible(
   uint32_t endOffset = std::min(aOffset + aLength, EndOffset());
   if (aRoundToExistingOffset && endOffset < mStart + 1) {
     endOffset = mStart + 1;
+  }
+  if (NS_WARN_IF(endOffset < startOffset)) {
+    return rect;
   }
   for (uint32_t i = 0; i < endOffset - startOffset; i++) {
     rect = rect.Union(mRects[startOffset - mStart + i]);

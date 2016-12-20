@@ -1296,11 +1296,14 @@ HttpChannelParent::StartRedirect(uint32_t registrarId,
   }
 
   nsHttpResponseHead *responseHead = mChannel->GetResponseHead();
-  bool result = SendRedirect1Begin(registrarId, uriParams, redirectFlags,
-                                   responseHead ? *responseHead
-                                                : nsHttpResponseHead(),
-                                   secInfoSerialization,
-                                   channelId);
+  bool result = false;
+  if (!mIPCClosed) {
+    result = SendRedirect1Begin(registrarId, uriParams, redirectFlags,
+                                responseHead ? *responseHead
+                                             : nsHttpResponseHead(),
+                                secInfoSerialization,
+                                channelId);
+  }
   if (!result) {
     // Bug 621446 investigation
     mSentRedirect1BeginFailed = true;
@@ -1651,6 +1654,24 @@ HttpChannelParent::DoSendDeleteSelf()
   bool rv = SendDeleteSelf();
   mIPCClosed = true;
   return rv;
+}
+
+bool
+HttpChannelParent::RecvDeletingChannel()
+{
+  // We need to ensure that the parent channel will not be sending any more IPC
+  // messages after this, as the child is going away. DoSendDeleteSelf will
+  // set mIPCClosed = true;
+  return DoSendDeleteSelf();
+}
+
+bool
+HttpChannelParent::RecvFinishInterceptedRedirect()
+{
+  // We make sure not to send any more messages until the IPC channel is torn
+  // down by the child.
+  mIPCClosed = true;
+  return SendFinishInterceptedRedirect();
 }
 
 //-----------------------------------------------------------------------------
