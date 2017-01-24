@@ -8,6 +8,7 @@ Components.utils.import("resource://gre/modules/Task.jsm");
 Components.utils.import("resource:///modules/ShellService.jsm");
 Components.utils.import("resource:///modules/TransientPrefs.jsm");
 
+
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
 
@@ -27,7 +28,7 @@ var gMainPane = {
       document.getElementById(aId)
               .addEventListener(aEventType, aCallback.bind(gMainPane));
     }
-
+    this.updateLocale();
     if (AppConstants.HAVE_SHELL_SERVICE) {
       this.updateSetDefaultBrowser();
       if (AppConstants.platform == "win") {
@@ -83,6 +84,10 @@ var gMainPane = {
     setEventListener("chooseFolder", "command",
                      gMainPane.chooseFolder);
 
+    setEventListener("localeSelect", "command", function () {
+      gMainPane.updateLocale();
+    });
+
     if (AppConstants.E10S_TESTING_ONLY) {
       setEventListener("e10sAutoStart", "command",
                        gMainPane.enableE10SChange);
@@ -119,6 +124,16 @@ var gMainPane = {
     Components.classes["@mozilla.org/observer-service;1"]
               .getService(Components.interfaces.nsIObserverService)
               .notifyObservers(window, "main-pane-loaded", null);
+  },
+
+  updateLocale: function ()
+  {
+    let alertsService = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
+    let selectedLocale = document.getElementById("localeSelect").value;
+    Services.prefs.setCharPref('general.useragent.locale', selectedLocale);
+    if (selectedLocale) {
+      alertsService.showAlertNotification("",  "Restart Waterfox", "You'll need to restart Waterfox to see your selected locale.");
+    }
   },
 
   enableE10SChange: function ()
